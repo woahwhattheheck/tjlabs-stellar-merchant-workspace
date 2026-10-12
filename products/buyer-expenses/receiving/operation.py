@@ -1,5 +1,8 @@
-import os,pathlib,json,subprocess,datetime,hashlib,tempfile,shutil,sys,zipfile,traceback,gzip
+import os,pathlib,json,subprocess,datetime,hashlib,tempfile,shutil,sys,zipfile,traceback,gzip,signal
 os.umask(0o077)
+def interrupt_original_operation(signum,frame):
+ raise InterruptedError("Original financial receiving interrupted by signal "+str(signum))
+signal.signal(signal.SIGTERM,interrupt_original_operation)
 root=pathlib.Path(tempfile.mkdtemp(prefix="buyer-finance-6200-",dir=_original_source["temporary_directory"]))
 tmp=root/"tmp";tmp.mkdir(mode=0o700);os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ["AZCOPY_CONCURRENCY_VALUE"]="1";os.environ["PYTHONDONTWRITEBYTECODE"]="1"
@@ -14,19 +17,57 @@ def digest(path):
  with pathlib.Path(path).open("rb") as f:
   while chunk:=f.read(65536):h.update(chunk)
  return h.hexdigest()
+def stop_owned_group(process):
+ record={"pid":process.pid,"processGroup":process.pid,"signals":[]}
+ try:
+  os.killpg(process.pid,signal.SIGTERM);record["signals"].append("SIGTERM")
+ except ProcessLookupError:record["groupAlreadyExited"]=True
+ try:
+  process.wait(timeout=8)
+ except subprocess.TimeoutExpired:
+  try:
+   os.killpg(process.pid,signal.SIGKILL);record["signals"].append("SIGKILL")
+  except ProcessLookupError:pass
+  process.wait(timeout=8)
+ # End descendants that outlived their group leader before taking any archive.
+ try:
+  os.killpg(process.pid,signal.SIGKILL);record["signals"].append("SIGKILL_REMAINING_GROUP")
+ except ProcessLookupError:pass
+ record["exit"]=process.wait(timeout=8);record["leaderReaped"]=True
+ return record
 def run(label,args,cwd=None):
  operation["phase"]=label;save();show({"phase":label,"directory":str(root),"sourceCommit":source})
  stdout=root/(label+".stdout.json");stderr=root/(label+".stderr.log")
- with stdout.open("wb") as out,stderr.open("ab") as err:
-  process=subprocess.Popen(args,cwd=cwd,stdout=out,stderr=err)
-  operation["active"]={"label":label,"pid":process.pid,"argv":args};save()
-  code=process.wait()
- operation["active"]=None
- result={"phase":label,"exit":code,"stdout":stdout.name,"stderr":stderr.name};operation["phases"].append(result);save()
- if code:
-  show({**result,"error":stderr.read_text(errors="replace")[-6500:]})
-  raise RuntimeError(label+" exited "+str(code))
- return stdout
+ process=None
+ try:
+  with stdout.open("wb") as out,stderr.open("ab") as err:
+   process=subprocess.Popen(args,cwd=cwd,stdout=out,stderr=err,start_new_session=True)
+   operation["active"]={"label":label,"pid":process.pid,"processGroup":process.pid,"argv":args};save()
+   code=process.wait()
+  if code:
+   show({"phase":label,"exit":code,"stdout":stdout.name,"stderr":stderr.name,"error":stderr.read_text(errors="replace")[-6500:]})
+   raise RuntimeError(label+" exited "+str(code))
+  operation["active"]=None
+  result={"phase":label,"exit":code,"stdout":stdout.name,"stderr":stderr.name}
+  operation["phases"].append(result);save()
+  return stdout
+ except BaseException as error:
+  if process is not None:
+   active={"label":label,"pid":process.pid,"processGroup":process.pid,"argv":args}
+   operation["active"]=active
+   try:
+    cleanup=stop_owned_group(process)
+    operation["active"]=None
+    operation["phases"].append({"phase":label,"exit":process.returncode,"stdout":stdout.name,"stderr":stderr.name,
+      "interrupted":True,"error":{"type":type(error).__name__,"message":str(error)},"ownedChildCleanup":cleanup})
+    show({"phase":"owned-child-stopped","label":label,**cleanup})
+   except BaseException as cleanup_error:
+    active["cleanupError"]={"type":type(cleanup_error).__name__,"message":str(cleanup_error)}
+    show({"phase":"owned-child-stop-incomplete","active":active})
+   try:save()
+   except BaseException as journal_error:
+    show({"phase":"owned-child-result-journal-error","error":{"type":type(journal_error).__name__,"message":str(journal_error)}})
+  raise
 def preserve(path,label):
  path=pathlib.Path(path)
  info={"label":label,"file":str(path),"bytes":path.stat().st_size,"sha256":digest(path)}
@@ -167,6 +208,7 @@ except BaseException as error:
  save();show({"phase":"original-operation-ended","outcome":operation["outcome"],"error":operation["error"]})
 finally:
  try:
+  if operation.get("active") is not None:raise RuntimeError("Reconcile the original owned child before packaging its changing files")
   object_directory=root/"source-receiving"
   if object_directory.is_dir():
    with zipfile.ZipFile(root/"retained-original-source-cache.zip","x",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as cachezip:

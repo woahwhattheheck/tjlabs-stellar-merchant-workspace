@@ -106,7 +106,13 @@ before the foreground exits.
 
 The command prints structured progress as each actual phase starts. The
 original operation records its child PID and command, captures complete stdout
-and stderr, and waits for that child before proceeding:
+and stderr, and waits for that child before proceeding. Every native child has an owned
+process group. An interruption or journal/result failure ends that group and
+reaps its leader before artifact construction; the original PID, group and
+cleanup result remain in the operation. If shutdown cannot complete, retain
+that same active identity for reconciliation before packaging its files.
+
+The full sequence is:
 
 1. Verify the complete original source through `git-object-receiving.py`.
 2. Run the original `buildDistribution` with `selection: 'buyer-expenses'`
