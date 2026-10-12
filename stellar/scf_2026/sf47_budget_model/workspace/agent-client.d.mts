@@ -41,12 +41,28 @@ export interface GrantStatementDecision {
   tranche?: 0 | 1 | 2 | 3 | null;
   allocations?: GrantStatementAllocation[];
 }
-export interface GrantStatementInput {
-  source: { filename: string; contentBase64: string; observedAt: string; sourceUrl?: string };
+export interface GrantStatementSource {
+  filename: string;
+  contentBase64: string;
+  observedAt: string;
+  sourceUrl?: string;
+}
+export interface GrantStatementCommonInput {
+  source: GrantStatementSource;
   /** Stable nonsecret source account identity; case-sensitive and independent of the filename. */
   accountId: string;
   accountLabel?: string;
   currency: string;
+  defaultCategory?: GrantStatementCategory;
+  /** Supply both original signed balances together. Native bank formats use decimal text with no grouping. */
+  openingBalance?: string | null;
+  closingBalance?: string | null;
+  valuationNote?: string;
+  sourceReviewNote?: string;
+  decisions?: GrantStatementDecision[];
+}
+export interface GrantCsvStatementInput extends GrantStatementCommonInput {
+  sourceFormat?: 'CSV';
   format: {
     delimiter: ',' | ';' | '\t' | '|';
     decimalMark: '.' | ',';
@@ -60,15 +76,102 @@ export interface GrantStatementInput {
     date: string; reference: string; description?: string; amount?: string;
     debit?: string; credit?: string; currency?: string; usdValue?: string;
   };
-  defaultCategory?: GrantStatementCategory;
-  /** Original signed balances use the same selected decimal/thousands format. Supply both together. */
-  openingBalance?: string | null;
-  closingBalance?: string | null;
-  valuationNote?: string;
-  decisions?: GrantStatementDecision[];
+}
+export interface GrantMt940StatementOptions {
+  profile: 'TEXT_BODY' | 'FIN_ENVELOPE';
+  encoding: 'ASCII' | 'UTF-8' | 'ISO-8859-1';
+  debitCreditProfile: 'CD_ONLY' | 'CD_REVERSALS';
+  /** Explicit beginning of the original two-digit-year interpretation window, 1900 through 2000. */
+  yearWindowStart: number;
+  dateBasis: 'VALUE_DATE';
+  currencyScales: Record<string, 0 | 1 | 2 | 3 | 4 | 5 | 6>;
+}
+export interface GrantOfxStatementInput extends GrantStatementCommonInput {
+  /** Includes original QFX files. */
+  sourceFormat: 'OFX';
+  statementId: string;
+  statementOptions?: null | Record<string, never>;
+  format?: never;
+  columns?: never;
+}
+export interface GrantMt940StatementInput extends GrantStatementCommonInput {
+  sourceFormat: 'MT940';
+  statementId: string;
+  statementOptions: GrantMt940StatementOptions;
+  format?: never;
+  columns?: never;
+}
+export type GrantStatementInput = GrantCsvStatementInput | GrantOfxStatementInput | GrantMt940StatementInput;
+export type GrantStatementInspectionInput =
+  | { sourceFormat: 'OFX'; source: GrantStatementSource; statementOptions?: null | Record<string, never> }
+  | { sourceFormat: 'MT940'; source: GrantStatementSource; statementOptions: GrantMt940StatementOptions };
+export interface GrantStatementFinding {
+  code: string;
+  message: string;
+  severity: 'ERROR' | 'REVIEW' | 'INFO';
+}
+export interface GrantStatementSourceBalance {
+  date: GrantCivilDate;
+  amount: string;
+}
+export interface GrantStatementAccount {
+  id: string;
+  kind: 'BANK' | 'CREDITCARD';
+  label: string;
+  accountReference: string;
+  currency: string;
+  bankId: string | null;
+  accountType?: string | null;
+  nativeAccountSha256?: string;
+  from: GrantCivilDate | null;
+  until: GrantCivilDate | null;
+  rowCount: number;
+  pendingCount: number;
+  openingBalance: GrantStatementSourceBalance | null;
+  closingBalance: GrantStatementSourceBalance | null;
+  cashEligible: boolean;
+  findings: GrantStatementFinding[];
+  balanceSnapshots?: GrantObject[];
+}
+export interface GrantStatementInspection {
+  schema: 'stellar-forge.sf47-bank-statements.v1';
+  caseId: string;
+  expectedVersion: number;
+  source: {
+    filename: string; bytes: number; sha256: string; sourceUrl: string; observedAt: string;
+    sourceFormat: 'OFX' | 'MT940';
+  };
+  statements: GrantStatementAccount[];
+  inspectionSha256: string;
+}
+export interface GrantStatementBankSummary {
+  sourceFormat: 'OFX' | 'MT940';
+  statementId: string;
+  parserProfile: string;
+  parserReportSha256: string;
+  accountReference: string;
+  bankId: string | null;
+  kind: 'BANK' | 'CREDITCARD';
+  nativeAccountSha256: string | null;
+  dateBasis: 'OFX_DTPOSTED' | 'MT940_VALUE_DATE';
+  sourceOpeningBalance: GrantStatementSourceBalance | null;
+  sourceClosingBalance: GrantStatementSourceBalance | null;
+  pendingCount: number;
+  balanceSnapshots: GrantObject[];
+  findings: GrantStatementFinding[];
 }
 export interface GrantStatementRow {
+  /** CSV physical record line, or unique native account review ordinal. */
   rowNumber: number;
+  /** Native OFX or MT940 physical source line. */
+  sourceLine?: number;
+  identityBasis?: 'PROVIDER_REFERENCE' | 'STATEMENT_POSITION';
+  providerReference?: string;
+  nativeIdentity?: GrantObject;
+  corrected?: boolean;
+  originalRecordId?: string;
+  correctionSourceIds?: string[];
+  correctedRecord?: GrantObject;
   reference: string;
   date: GrantCivilDate | null;
   description: string;
@@ -97,9 +200,11 @@ export interface GrantStatementPreview {
   source: {
     filename: string; bytes: number; sha256: string; sourceUrl: string; observedAt: string;
     accountId: string; accountLabel: string; currency: string; editionSha256: string;
+    sourceFormat?: 'OFX' | 'MT940';
   };
   headers: string[];
   rows: GrantStatementRow[];
+  bank?: GrantStatementBankSummary;
   summary: {
     rows: number; newCount: number; existingCount: number; excludedCount: number; conflictCount: number;
     inflow: string; outflow: string; net: string; importInflow: string; importOutflow: string;
@@ -2414,6 +2519,7 @@ export class GrantWorkspaceClient {
   workIntakeUpload(caseId: string, body: GrantWorkIntakeUpload): Promise<GrantJsonResponse<GrantObject>>;
   workIntakeSave(caseId: string, body: GrantWorkIntakeWrite): Promise<GrantJsonResponse<GrantObject>>;
   workIntakeApply(caseId: string, body: GrantWorkIntakeWrite & {expectedPreviewSha256: string}): Promise<GrantJsonResponse<GrantObject>>;
+  statementInspect(caseId: string, expectedVersion: number, inputs: GrantStatementInspectionInput): Promise<GrantJsonResponse<GrantStatementInspection>>;
   statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
   statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
   accountReconciliationPreview(caseId: string, body: GrantAccountReconciliationInput): Promise<GrantJsonResponse<GrantAccountReconciliationPreview>>;

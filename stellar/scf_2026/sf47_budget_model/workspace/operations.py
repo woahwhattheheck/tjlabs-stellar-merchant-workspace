@@ -795,6 +795,11 @@ class Operations:
             context = deepcopy(self._context(identifier(program_id, "operation")))
         return buyer.preview(context, body)
 
+    def inspect_statement(self, program_id, body):
+        with self._snapshot():
+            context = deepcopy(self._completion_context(program_id, body, ("inputs",)))
+        return statements.inspect(context, body.get("inputs"))
+
     def preview_statement(self, program_id, body):
         with self._snapshot():
             context = deepcopy(self._completion_context(program_id, body, ("inputs",)))
