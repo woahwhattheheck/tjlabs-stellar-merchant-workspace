@@ -14,6 +14,10 @@ The [development architecture and delivery plan](https://github.com/woahwhattheh
 connects the original code, user interfaces, prospective Stellar integration
 roadmap, native acceptance and complete customer handover in one source.
 
+## Launch the first customer services
+
+Use the [complete customer launch playbook](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/CUSTOMER_LAUNCH.md) to agree the customer task and paid unit, prepare the original commissioning workorder, install the merchant and buyer together, operate recurring periods, and hand the complete service to its receiving engineer. The playbook connects the existing Installation, Buyer, recurring-work, Accounting and Cohort interfaces to the six funded delivery packages.
+
 ## Choose a workflow
 
 | Work to complete | Entry point | Result |
