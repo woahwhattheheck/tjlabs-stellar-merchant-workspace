@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><script src="/app.js" defer></script></head>
+<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><script src="/app.js" defer></script></head>
 <body>
 <header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">IA</span><div><strong>IATI</strong><span>Aid finance workspace</span></div></div>
 <div class="top-actions"><span class="connection" id="connection">Opening source workspace</span><button id="reload" type="button">Refresh saved work</button></div></header>
@@ -9,7 +9,7 @@
 <aside class="sidebar"><p class="eyebrow">Original publisher data</p><nav aria-label="Workspace">
 <button data-view="overview" class="active">Overview</button><button data-view="sources">Publisher sources</button>
 <button data-view="portfolios">Portfolio review</button><button data-view="query">Explore data</button>
-<button id="dqa-open" data-view="dqa">Data quality</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
+<button id="dqa-open" data-view="dqa">Data quality</button><button id="pub-open-view" data-view="publishing">Participant publishing</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
 <div class="sidebar-note"><strong>Source first</strong><p>Keep reported values, currencies, dates and transaction types together. Each saved portfolio retains its original XML and dataset lineage.</p></div></aside>
 <main id="main" aria-busy="true">
 <div id="status" role="status" aria-live="polite">Opening the original workspace…</div>
@@ -171,6 +171,118 @@
    <label>Provider notes<textarea id="dqa-provider-notes" rows="4" maxlength="16000"></textarea></label>
    <button type="submit" class="primary">Save provider edition</button>
   </form><article class="card"><h2>Saved provider editions</h2><div id="dqa-providers" class="empty">No providers loaded.</div></article></div>
+ </div>
+</section>
+
+
+<section data-panel="publishing" hidden id="publishing-panel">
+ <div class="section-heading"><div><p class="eyebrow">Participant publishing</p><h1>Prepare a reviewed publisher release</h1><p>Keep original feedback, correct the selected activities, compare finance and hand over the complete publisher edition.</p></div><button id="pub-refresh" type="button">Refresh participant work</button></div>
+ <div class="card pub-toolbar"><label>Saved participant work<select id="pub-project-select"></select></label><button id="pub-open" type="button">Open saved work</button><button id="pub-new" type="button">New participant work</button><label>Named operator<input id="pub-actor" maxlength="160" required placeholder="Your name"></label></div>
+ <div id="pub-pending" class="card pub-pending" hidden><strong>One action is saved for continuation</strong><p id="pub-pending-description"></p><button id="pub-retry" type="button">Continue saved action</button><button id="pub-reconcile" type="button">Read its saved result</button><button id="pub-revise" type="button" hidden>Revise the rejected selection</button></div>
+ <div class="pub-tabs" role="tablist" aria-label="Participant workflow">
+  <button data-pub-view="overview" type="button" role="tab" aria-selected="true">1. Publisher and cohort</button>
+  <button data-pub-view="feedback" type="button" role="tab">2. Feedback and evidence</button>
+  <button data-pub-view="corrections" type="button" role="tab">3. Correct source</button>
+  <button data-pub-view="review" type="button" role="tab">4. Finance and review</button>
+  <button data-pub-view="handover" type="button" role="tab">5. Release and receive</button>
+ </div>
+ <div id="pub-summary" class="metrics"></div>
+ <p class="fine" id="pub-mode">Select a saved participant or create one from a complete retained publisher source.</p>
+ <div data-pub-panel="overview">
+  <div class="grid two"><form id="pub-create-form" class="card"><h2>Agree the publisher and activity cohort</h2>
+   <label>Work name<input id="pub-name" maxlength="160" required></label>
+   <label>Complete original publisher source<select id="pub-source" required></select></label>
+   <label>Reporting organisation reference<input id="pub-publisher" maxlength="1000" required placeholder="GB-GOV-1"></label>
+   <label>Review cutoff date<input id="pub-cutoff" type="date" required></label>
+   <label>Selected original activity identifiers<textarea id="pub-activity-ids" rows="5" placeholder="One identifier per line; leave empty to select all activities for this reporting organisation"></textarea></label>
+   <label>Scope and source notes<textarea id="pub-notes" maxlength="16000" rows="4"></textarea></label>
+   <button type="submit" class="primary">Save participant work</button>
+  </form><article class="card"><h2>Source and methodology</h2><div id="pub-source-summary" class="empty">Open a saved participant.</div>
+   <p>The published 2026 methodology is retained as a dated reference. The 2028 methodology is scheduled for October 2027. Imported assessment findings retain their original author and scope.</p>
+   <p><a href="https://www.publishwhatyoufund.org/download/aid-transparency-index-2028-information-pack/" target="_blank" rel="noreferrer">2027–2028 programme</a> · <a href="https://www.publishwhatyoufund.org/download/2026-aid-transparency-index-technical-paper/" target="_blank" rel="noreferrer">2026 technical paper</a></p>
+   <details><summary>Reference indicator inventory</summary><div id="pub-methodology"></div></details>
+  </article></div>
+  <article class="card"><h2>Saved revision history</h2><div id="pub-history" class="empty">Each saved action retains its complete earlier revision.</div></article>
+ </div>
+ <div data-pub-panel="feedback" hidden>
+  <div class="grid two"><form id="pub-feedback-form" class="card"><h2>Retain the complete feedback</h2>
+   <p>Use the original assessment file, or a CSV transcription that keeps its finding identifiers, text and activity references. Keep the source assessment as evidence alongside a transcription.</p>
+   <label>Complete feedback CSV<input id="pub-feedback-file" type="file" accept=".csv,text/csv" required></label>
+   <div class="row"><button type="submit" class="primary" data-pub-edit>Import all feedback rows</button><button id="pub-feedback-template" type="button">Download column template</button></div>
+  </form><form id="pub-evidence-form" class="card"><h2>Retain a complete evidence file</h2>
+   <label>Evidence label<input id="pub-evidence-label" maxlength="160" required></label>
+   <label>Original document or capture<input id="pub-evidence-file" type="file" required></label>
+   <label>Original source URL or reference<input id="pub-evidence-url" maxlength="8000"></label>
+   <button type="submit" data-pub-edit>Save original evidence</button>
+  </form></div>
+  <article class="card"><div class="section-heading"><h2>Feedback register</h2><label>Filter findings<input id="pub-feedback-search" type="search" placeholder="Activity, text, owner or status"></label></div><div id="pub-feedback-table"></div></article>
+  <div class="grid two"><form id="pub-triage-form" class="card"><h2>Record a finding decision</h2>
+   <label>Original finding<select id="pub-finding" required></select></label><div id="pub-finding-original" class="pub-source-text"></div>
+   <label>Owner<input id="pub-finding-owner" maxlength="160"></label>
+   <label>Disposition<select id="pub-finding-status"><option value="open">Open</option><option value="planned">Correction planned</option><option value="resolved">Resolved and checked</option><option value="deferred">Explicitly deferred</option></select></label>
+   <label>Decision and supporting reason<textarea id="pub-finding-note" rows="5" maxlength="16000"></textarea></label>
+   <fieldset><legend>Retained supporting evidence</legend><div id="pub-finding-evidence" class="stack"></div></fieldset>
+   <button type="submit" data-pub-edit>Save finding decision</button>
+  </form><article class="card"><h2>Complete retained files</h2><div id="pub-evidence-list"></div></article></div>
+ </div>
+ <div data-pub-panel="corrections" hidden>
+  <article class="card"><div class="section-heading"><h2>Selected source activities</h2><div class="row"><button id="pub-activities-prev" type="button">Previous activities</button><span id="pub-activities-page"></span><button id="pub-activities-next" type="button">Next activities</button></div></div><div id="pub-activities-table"></div></article>
+  <div class="grid two"><form id="pub-correction-form" class="card"><h2>Correct an original field</h2>
+   <label>Activity on this page<select id="pub-activity" required></select></label><button id="pub-load-fields" type="button">Open original fields</button>
+   <label>Correction kind<select id="pub-kind"><option value="narrative">Narrative or translation</option><option value="organisation-reference">Participating organisation reference</option><option value="document-attributes">Document URL or format</option><option value="add-document">Add a publisher-approved document</option></select></label>
+   <label id="pub-field-label">Original field<select id="pub-field"></select></label>
+   <div id="pub-original-field" class="pub-source-text"></div>
+   <div data-pub-kind="narrative">
+    <label>Original narrative or new translation<select id="pub-narrative"></select></label>
+    <label>Narrative language<input id="pub-language" maxlength="80" placeholder="en; blank means inherited default"></label>
+    <label>Publisher-approved narrative<textarea id="pub-text" rows="6" maxlength="16000"></textarea></label>
+   </div>
+   <div data-pub-kind="organisation-reference" hidden><label>Publisher-approved organisation reference<input id="pub-org-ref" maxlength="1000"></label><p class="fine">Use the reference confirmed by the publisher or its original registration source.</p></div>
+   <div data-pub-kind="document-attributes add-document" hidden>
+    <label>Document URL<input id="pub-doc-url" type="url" maxlength="8000"></label>
+    <label>Document MIME type<input id="pub-doc-format" maxlength="200" placeholder="application/pdf"></label>
+   </div>
+   <div data-pub-kind="add-document" hidden>
+    <label>Document title<input id="pub-doc-title" maxlength="16000"></label><label>Title and document language<input id="pub-doc-language" maxlength="80" placeholder="en"></label>
+    <label>Document date<input id="pub-doc-date" type="date"></label>
+    <fieldset><legend>Original IATI document categories</legend><div id="pub-doc-categories" class="pub-category-grid"></div></fieldset>
+   </div>
+   <button type="submit" data-pub-edit>Add to correction preview</button>
+  </form><article class="card"><h2>Review the complete correction</h2><p>Only the selected fields change. The full publisher file, other activities and financial records remain in the retained source.</p>
+   <div id="pub-patches" class="empty">Choose an original field and prepare a correction.</div>
+   <div class="row"><button id="pub-preview" type="button" data-pub-edit>Validate and preview corrections</button><button id="pub-clear-patches" type="button">Clear unsubmitted corrections</button></div>
+   <div id="pub-preview-result"></div>
+   <label>Correction note<textarea id="pub-correction-note" rows="4" maxlength="16000"></textarea></label>
+   <button id="pub-apply" type="button" class="primary" data-pub-edit>Save reviewed candidate</button>
+  </article></div>
+  <form id="pub-candidate-form" class="card"><h2>Use a complete publisher-supplied edition</h2><p>Retain a new complete XML file in Publisher sources, then select it here. The agreed activity cohort remains explicit.</p>
+   <label>New complete source<select id="pub-candidate-source"></select></label><label>Publisher edition notes<textarea id="pub-candidate-note" rows="3" maxlength="16000" required></textarea></label><button type="submit" data-pub-edit>Save supplied candidate edition</button>
+  </form>
+ </div>
+ <div data-pub-panel="review" hidden>
+  <div class="grid two"><article class="card"><h2>Original schema validation</h2><div id="pub-validation"></div><p class="fine">The official 2.03 XSD checks the complete candidate. Publisher approval, document access and assessment findings remain separate review decisions.</p></article>
+  <article class="card"><h2>Compare the complete finance editions</h2><p>Build the native activity, transaction and budget editions for the agreed cohort. Keep each reported currency, type, value date and hierarchy in its original context.</p>
+   <button id="pub-finance" type="button" data-pub-edit>Prepare baseline and candidate comparison</button><div id="pub-finance-result"></div>
+   <div class="row"><button id="pub-open-finance" type="button">Open complete finance portfolio</button><button id="pub-download-finance" type="button">Download finance comparison and CSVs</button></div>
+  </article></div>
+  <form id="pub-review-form" class="card"><h2>Independent named review</h2><p>Use the named operator field above for a reviewer who is different from the last editor. Review every retained finding, explicit deferral, complete candidate and financial comparison.</p>
+   <label>Decision<select id="pub-review-decision"><option value="accepted">Accept this exact candidate</option><option value="needs-correction">Return for correction</option></select></label>
+   <label>Review note<textarea id="pub-review-note" rows="5" maxlength="16000" required></textarea></label>
+   <button type="submit" class="primary" data-pub-edit>Save named review</button><div id="pub-review-result"></div>
+  </form>
+ </div>
+ <div data-pub-panel="handover" hidden>
+  <div class="grid two"><form id="pub-release-form" class="card"><h2>Prepare the publisher handover</h2>
+   <label>Release label<input id="pub-release-label" maxlength="160" required></label>
+   <label>Release and publication instructions<textarea id="pub-release-note" rows="5" maxlength="16000" required></textarea></label>
+   <p>The release is ready for the publisher’s existing publication process. This workspace retains the review and complete release; it does not claim a registry submission or PWYF assessment.</p>
+   <button type="submit" class="primary" data-pub-edit>Save immutable release</button><div id="pub-release-result"></div>
+  </form><article class="card"><h2>Complete original deliverables</h2>
+   <label>Retained released revision<select id="pub-release-revision"></select></label>
+   <div class="stack"><button id="pub-download-release" type="button" class="primary">Download complete participant release</button><button id="pub-download-candidate" type="button">Download full candidate XML</button><button id="pub-download-baseline" type="button">Download full original XML</button></div>
+   <p>Includes all source editions, original feedback and evidence, full correction and review history, schema sources and results, complete native finance portfolios, activity census and the printable handover.</p>
+  </article></div>
+  <form id="pub-receive-form" class="card"><h2>Receive and reopen a complete release</h2><p>Use the original ZIP in an independent IATI workspace, or reconcile an existing saved delivery. Every selected byte and referenced native finance edition is checked.</p><label>Complete participant ZIP<input id="pub-receive-file" type="file" accept=".zip,application/zip" required></label><button type="submit" class="primary">Receive complete saved work</button><div id="pub-receive-result"></div></form>
  </div>
 </section>
 

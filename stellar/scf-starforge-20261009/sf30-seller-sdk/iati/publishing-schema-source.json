@@ -1,0 +1,47 @@
+{
+  "schema": "stellar-forge.iati-publishing-schema-source.v1",
+  "version": "2.03",
+  "entry": "iati-activities-schema.xsd",
+  "repository": "IATI/IATI-Schemas",
+  "ref": "b4ead00528d3785b336d9847928274c207704deb",
+  "license": {
+    "name": "Creative Commons Attribution 4.0 International",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "IATI Standard (http://iatistandard.org/)",
+    "sourceGitBlob": "f5512ded149cc4a53733d62a7851f3a0c725a99b",
+    "note": "The original schema LICENSE points to the retained complete guidance notice. Schema files and notice are unchanged."
+  },
+  "files": {
+    "iati-activities-schema.xsd": {
+      "bytes": 127500,
+      "sha256": "66aa6ce8a1cbdba9f18674913772199e1c640935ff805d780d699f6d6378e7e4",
+      "gitBlob": "13c3e6e0b40c92041413637a10e7a2147c557657",
+      "url": "https://github.com/IATI/IATI-Schemas/blob/b4ead00528d3785b336d9847928274c207704deb/iati-activities-schema.xsd"
+    },
+    "iati-common.xsd": {
+      "bytes": 12042,
+      "sha256": "322692e4ea1f4434b154855f381eb4bd972aaa2e1349dfaf9578b775ad6c9c6b",
+      "gitBlob": "60c8b20f0646452317ca3bcb29a3e82baad10810",
+      "url": "https://github.com/IATI/IATI-Schemas/blob/b4ead00528d3785b336d9847928274c207704deb/iati-common.xsd"
+    },
+    "xml.xsd": {
+      "bytes": 8836,
+      "sha256": "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c",
+      "gitBlob": "aea7d0db0a423b962247aa2b4d3d48fc73cda659",
+      "url": "https://github.com/IATI/IATI-Schemas/blob/b4ead00528d3785b336d9847928274c207704deb/xml.xsd"
+    },
+    "LICENSE": {
+      "bytes": 76,
+      "sha256": "2b962e0f5993967689792e993e6cb61b37c3ebc057093db034eafc4bfc595d95",
+      "gitBlob": "aa72176bd13c1a00ad6ff7f3b6f48b42b7adff9f",
+      "url": "https://github.com/IATI/IATI-Schemas/blob/b4ead00528d3785b336d9847928274c207704deb/LICENSE"
+    },
+    "IATI-LICENSE.rst": {
+      "bytes": 548,
+      "sha256": "60ba759d03c7cb53c501f2f33ef8ca866731d03adef1c236d06d202a26d88094",
+      "gitBlob": "f5512ded149cc4a53733d62a7851f3a0c725a99b",
+      "url": "https://github.com/IATI/IATI-Guidance/blob/main/en/license.rst"
+    }
+  },
+  "sourceObservedAt": "2026-10-12 12:51:09 UTC"
+}

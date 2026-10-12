@@ -1,0 +1,199 @@
+{
+  "source_sha256": "98a6bad80d60aa8deaa35fe1a593313515649a9fae7456895d1bfed4ac4a756d",
+  "activity_count": 1332,
+  "root_attributes": {
+    "version": "2.03",
+    "generated-datetime": "2026-09-24T05:45:02.027"
+  },
+  "selected": {
+    "id": "GB-GOV-1-400043",
+    "attributes": {
+      "{http://www.w3.org/XML/1998/namespace}lang": "en",
+      "default-currency": "GBP",
+      "hierarchy": "1"
+    },
+    "reporting_org": [
+      {
+        "attributes": {
+          "ref": "GB-GOV-1",
+          "type": "10"
+        },
+        "narratives": [
+          {
+            "attributes": {},
+            "text": "UK - Foreign, Commonwealth Development Office (FCDO)"
+          }
+        ]
+      }
+    ],
+    "titles": [
+      {
+        "attributes": {},
+        "text": "Water Adaptation and Desalination Infrastructure (WADI)"
+      }
+    ],
+    "descriptions": [
+      {
+        "attributes": {
+          "type": "1"
+        },
+        "narratives": [
+          {
+            "attributes": {},
+            "text": "This four-year programme aims to support Jordan’s highest priority adaptation project: the Aqaba-Amman Water Desalination and Conveyance Project (AAWDCP). The AAWDCP will be the largest freshwater scheme in the country’s history. It will produce 300 million cubic metres of desalinated water and deliver it 420km across the country. The UK will make a grant contribution to this project and complement it with research and technical assistance aimed at supporting the Government of Jordan (GoJ) in making evidence-based climate and water policies; as well as enhancing GoJ capability in attracting international climate financing."
+          }
+        ]
+      }
+    ],
+    "organisations": [
+      {
+        "attributes": {
+          "ref": "GB-GOV-1",
+          "type": "10",
+          "role": "1"
+        },
+        "narratives": [
+          {
+            "attributes": {},
+            "text": "Foreign, Commonwealth and Development Office (FCDO)"
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "ref": "GB-GOV-1",
+          "type": "10",
+          "role": "2"
+        },
+        "narratives": [
+          {
+            "attributes": {},
+            "text": "Foreign, Commonwealth and Development Office (FCDO)"
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "role": "4"
+        },
+        "narratives": [
+          {
+            "attributes": {},
+            "text": "PRICEWATERHOUSECOOPERS LLP"
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "ref": "1015479",
+          "role": "4"
+        },
+        "narratives": [
+          {
+            "attributes": {},
+            "text": "GOVERNMENT OF JORDAN MOPIC"
+          }
+        ]
+      }
+    ],
+    "documents": [
+      {
+        "attributes": {
+          "url": "http://iati.fcdo.gov.uk/iati_documents/S40004314.odt",
+          "format": "application/vnd.oasis.opendocument.text"
+        },
+        "title": [
+          {
+            "attributes": {},
+            "text": "Addendum to the Business Case (S40004314) 400043 (Published - January 2026)"
+          }
+        ],
+        "category": [
+          {
+            "code": "A02"
+          },
+          {
+            "code": "A03"
+          },
+          {
+            "code": "A04"
+          },
+          {
+            "code": "A05"
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "url": "http://iati.fcdo.gov.uk/iati_documents/S4000439.odt",
+          "format": "application/vnd.oasis.opendocument.text"
+        },
+        "title": [
+          {
+            "attributes": {},
+            "text": "Annual review (S4000439) 400043 (Published - January 2026)"
+          }
+        ],
+        "category": [
+          {
+            "code": "A07"
+          },
+          {
+            "code": "A08"
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "url": "http://iati.fcdo.gov.uk/iati_documents/S4000436.xlsx",
+          "format": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        },
+        "title": [
+          {
+            "attributes": {},
+            "text": "Logical Framework (S4000436) 400043 (Published - November 2025)"
+          }
+        ],
+        "category": [
+          {
+            "code": "A02"
+          },
+          {
+            "code": "A08"
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "url": "http://iati.fcdo.gov.uk/iati_documents/S4000438.odt",
+          "format": "application/vnd.oasis.opendocument.text"
+        },
+        "title": [
+          {
+            "attributes": {},
+            "text": "Business Case and Summary (S4000438) 400043 (Published - November 2025)"
+          }
+        ],
+        "category": [
+          {
+            "code": "A01"
+          },
+          {
+            "code": "A02"
+          },
+          {
+            "code": "A03"
+          },
+          {
+            "code": "A04"
+          },
+          {
+            "code": "A05"
+          }
+        ]
+      }
+    ],
+    "transactions": 0,
+    "budgets": 0
+  }
+}

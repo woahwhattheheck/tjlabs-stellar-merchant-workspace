@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),short=x=>String(x??'').slice(0,12);
 let token=location.hash.slice(1);
 try{token ||= sessionStorage.getItem('sf30.iati.token');if(token)sessionStorage.setItem('sf30.iati.token',token);
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch{}
-let dqaUi;
+let dqaUi, publishingUi;
 let state={sources:[],plans:[],builds:[],comparisons:[]},portfolios=[],presets=[];
 let source=null,portfolio=null,report=null,comparison=null,changesOffset=0,nextChanges=null;
 let currentQuery={},queryBase={},cursor=null,queryHistory=[],busy=false,savedPlan=null;
@@ -22,7 +22,7 @@ document.querySelectorAll('[data-go]').forEach(button=>button.addEventListener('
 async function request(path,options={}){
  const result=await fetch(path,{...options,redirect:'error',headers:{authorization:'Bearer '+token,...options.headers}});
  if(!result.ok){let value={};try{value=await result.json();}catch{}
-  throw new Error(value.error||'The original source operation returned HTTP '+result.status+'.');}
+  const error=new Error(value.error||'The original source operation returned HTTP '+result.status+'.');error.status=result.status;error.details=value;throw error;}
  return result;
 }
 const get=async path=>(await request(path)).json();
@@ -35,6 +35,7 @@ async function action(message,fn){
 }
 function buttons(){
  dqaUi?.buttons();
+ publishingUi?.buttons();
  $('query-next').disabled=busy||!cursor;$('query-prev').disabled=busy||!queryHistory.length;
  $('changes-next').disabled=busy||nextChanges===null;$('changes-download').disabled=busy||!comparison;
  for(const id of ['portfolio-download','report-download','report-json'])$(id).disabled=busy||!portfolio;
@@ -111,6 +112,7 @@ async function refresh(selected={}){
  metrics($('overview-counts'),[['Publisher editions',state.sources.length],['Saved portfolios',portfolios.length],['Native editions',state.builds.length],['Retained comparisons',state.comparisons.length]]);
  cards($('overview-portfolios'),portfolios,async item=>{show('portfolios');await openPortfolio(item.id);},'No saved portfolios yet. Retain publisher XML to begin.');
  cards($('overview-sources'),state.sources,async item=>{show('sources');await openSource(item.id);},'The original source workspace is empty.');
+ await publishingUi?.refresh();
  $('connection').textContent='Private source workspace';buildSummary();buttons();
 }
 async function openSource(id){
@@ -258,6 +260,7 @@ $('transfer-download').onclick=()=>action('Preparing a complete saved portfolio 
  const q=new URLSearchParams({portfolio:id});if($('transfer-revision').value)q.set('revision',$('transfer-revision').value);return download('/api/iati/export?'+q,'iati-portfolio.zip');});
 $('reload').onclick=()=>action('Refreshing the original saved workspace…',async()=>{await refresh();status('Retained source, portfolio and native edition inventory refreshed.');});
 dqaUi=window.IatiDqaUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state});
+publishingUi=window.IatiPublishingUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state,refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
 action('Opening the original private IATI workspace…',async()=>{
  if(!token)throw new Error('Open the private console URL printed by this original process.');
  await refresh();const catalogue=await get('/api/iati/presets');presets=presetList(catalogue);select('preset-select',presets);
