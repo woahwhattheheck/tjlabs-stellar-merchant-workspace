@@ -1,6 +1,8 @@
 // MIT. Compare complete original API-pass snapshots without changing their allowance.
 export const SERVICE_PERIOD_SCHEMA='stellar-forge.merchant-service-period.v1';
 const NATIVE='stellar-forge.sf101.api-pass-export.v1';
+const PERIOD_IDENTITY=['orderRef','eventId','routeId','method','network','amountAtomic','assetDigest','recipientDigest',
+    'entitledAt','planId','planRevision','planSha256','manifestSha256','unitsPurchased'];
 const RESERVED=new Set(['IN_FLIGHT','RECOVERY_REQUIRED']);
 const USED=new Set(['COMPLETED','CONSUMED']);
 const TRANSITIONS={
@@ -26,6 +28,13 @@ function completeNative(usage,name){
     'COMPLETE_NATIVE_PERIOD_SOURCE_REQUIRED','Choose the complete original API-pass export for the '+name+' snapshot.');
   return usage.orders[0];
 }
+/** The exact immutable pass fields compared by the native service-period compiler. */
+export function servicePeriodCaptureIdentity(usage){
+  const order=completeNative(usage,'selected');
+  need(typeof order.eventId==='string'&&typeof order.entitledAt==='string','SERVICE_PERIOD_ENTITLEMENT_REQUIRED',
+    'Choose a snapshot of the original entitled API pass.');
+  return Object.fromEntries(PERIOD_IDENTITY.map(key=>[key,order[key]]));
+}
 function callIndex(order){
   const result=new Map();
   for(const call of order.calls){
@@ -45,8 +54,7 @@ export function compileServicePeriod({opening,closing,openingSource=null,closing
   const from=Date.parse(opening.createdAt),until=Date.parse(closing.createdAt);
   need(Number.isFinite(from)&&Number.isFinite(until)&&until>from,'SERVICE_PERIOD_ORDER',
     'Choose a closing snapshot captured after the opening snapshot.');
-  const identity=['orderRef','eventId','routeId','method','network','amountAtomic','assetDigest','recipientDigest',
-    'entitledAt','planId','planRevision','planSha256','manifestSha256','unitsPurchased'];
+  const identity=PERIOD_IDENTITY;
   need(identity.every(key=>first[key]===last[key]),'SERVICE_PERIOD_IDENTITY_CHANGED',
     'Both snapshots must describe the same original order, entitlement, purchased plan and allowance.');
   need(typeof first.eventId==='string'&&typeof first.entitledAt==='string','SERVICE_PERIOD_ENTITLEMENT_REQUIRED',
