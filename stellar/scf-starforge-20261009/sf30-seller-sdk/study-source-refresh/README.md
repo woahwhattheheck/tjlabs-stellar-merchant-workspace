@@ -18,7 +18,7 @@ python3 stellar/scf-starforge-20261009/sf30-seller-sdk/study-source-refresh/cli.
 
 The host listens on loopback. Its private connection.json contains the current address and operator token. The open option passes the token to the browser fragment; the page removes the fragment after opening. The host prints the connection-file path and address.
 
-The industrial interface has eight areas: Workspace, Sources, Portfolio, Export mapping, Editions, Comparison & review, Delivery & reopen, and Property research. The [property research guide](PROPERTY_RESEARCH.md) covers full original-document intake, editable survey schedules, source revisions, purpose-specific comparable selection, and complete report/CSV/ZIP receiving. CLI and HTTP use the same application operations.
+The industrial interface has nine areas: Workspace, Sources, Portfolio, Export mapping, Editions, Comparison & review, Delivery & reopen, Property research, and Survey spreadsheets. The [property research guide](PROPERTY_RESEARCH.md) covers full original-document intake, editable survey schedules, source revisions, purpose-specific comparable selection, and complete report/CSV/ZIP receiving. CLI and HTTP use the same application operations. The [survey spreadsheet guide](PROPERTY_ONBOARDING.md) covers complete retained CSV/XLSX mapping, source revision, explicit row review and original Property receiving.
 
 ## Complete operator flow
 

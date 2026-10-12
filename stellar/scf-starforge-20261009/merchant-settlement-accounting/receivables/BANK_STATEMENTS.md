@@ -78,6 +78,8 @@ A shared original bank transaction ID identifies the same source payment across 
 
 A distinct-payment reason applies to coincident date, amount or reference matches belonging to separate actual payments without a shared original transaction ID. The original matching facts and the operator's reason remain in the retained posting.
 
+When several original receipt payments share the same date, amount or reference, choose the exact **Original payment coverage** in the editor. The selection retains the native coverageKey with its original bank source and amount. Agent callers can send that same key on a LINK or CORRECT split.
+
 Ignored credit rows retain their reason and source identity. Restore an ignored row when it needs customer matching. Closing requires every actual cash credit to have a retained disposition; reopening preserves previous postings and permits explicit restoration or correction.
 
 ## Review and post

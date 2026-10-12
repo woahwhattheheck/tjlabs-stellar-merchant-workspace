@@ -10,6 +10,7 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_ledger_intake as ledger_intake
 
 
 def register(subparsers, common):
@@ -43,6 +44,33 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
+    target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
+    target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
+    target.add_argument("--expected-version", type=int)
+    target = command("performance-export", "Export the reviewed report, all CSVs, offline HTML and complete operating case", case=True)
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--expected-report-sha256", required=True)
+    target.add_argument("--output", required=True)
+    command("ledger-intake", "Read table fields, templates and all recorded bulk intakes", case=True, output=True)
+    target = command("ledger-intake-original", "Reopen every original file and its recorded row-to-record mapping", case=True, output=True)
+    target.add_argument("--source", required=True)
+    target.add_argument("--document-only", action="store_true", help="Emit the complete intake input for reuse")
+    target = command("ledger-intake-template", "Write original CSV or TSV headers for a record table")
+    target.add_argument("--kind", choices=ledger_intake.KINDS, required=True)
+    target.add_argument("--format", choices=("csv", "tsv"), default="csv")
+    target.add_argument("--output", required=True)
+    target = command("ledger-intake-build", "Compile explicit sourceFile paths into a portable original-file intake document", output=True)
+    target.add_argument("--input", required=True)
+    target = command("ledger-intake-preview", "Review every resulting native record before recording the complete intake", case=True, output=True)
+    target.add_argument("--input", required=True, help="Complete intake JSON or downloaded browser desk")
+    target.add_argument("--expected-version", type=int)
+    target = command("ledger-intake-apply", "Record all files and native rows in one original workspace transaction", case=True, output=True)
+    target.add_argument("--input", required=True)
+    target.add_argument("--expected-preview-sha256", required=True)
+    mutation(target, version=True)
     target = command("history", "Page the original operations event history", case=True, output=True)
     target.add_argument("--after", type=int, default=0)
     target.add_argument("--limit", type=int, default=100)
@@ -239,6 +267,49 @@ def read_bytes(filename, maximum=MAX_BUNDLE):
     return raw
 
 
+def ledger_document(filename, compile_sources=False):
+    original = Path(filename).expanduser().resolve()
+    document = ledger_intake._json(read_bytes(original, 64 * 1024 * 1024), decimal_strings=False)
+    raw_defaults = {}
+    if isinstance(document, dict) and document.get("schema") == "stellar-forge.sf47-ledger-desk.v1":
+        raw_defaults = document.get("rawDefaults", {})
+        document = document.get("document")
+        if not isinstance(raw_defaults, dict):
+            raise Problem("The downloaded desk defaults must be an object.", 422, "INVALID_LEDGER_INTAKE")
+    if not isinstance(document, dict) or document.get("schema") != ledger_intake.SCHEMA:
+        raise Problem("Use a complete ledger-intake document or downloaded browser desk.", 422, "INVALID_LEDGER_INTAKE")
+    files = document.get("files")
+    if not isinstance(files, list) or not 1 <= len(files) <= ledger_intake.MAX_FILES:
+        raise Problem("Select one through twenty original source files.", 422, "INVALID_LEDGER_INTAKE")
+    total = 0
+    for spec in files:
+        if not isinstance(spec, dict):
+            raise Problem("Each source file needs its explicit table specification.", 422, "INVALID_LEDGER_INTAKE")
+        if "sourceFile" in spec:
+            if not compile_sources:
+                raise Problem("Compile sourceFile paths with ledger-intake-build before preview or apply.", 422, "INVALID_LEDGER_INTAKE")
+            selected = spec.pop("sourceFile")
+            if not isinstance(selected, str) or not selected or "\x00" in selected or "contentBase64" in spec:
+                raise Problem("Choose one explicit sourceFile path or original contentBase64 for each file.", 422, "INVALID_LEDGER_INTAKE")
+            source = Path(selected).expanduser()
+            if not source.is_absolute():
+                source = original.parent / source
+            raw = read_bytes(source, MAX_SOURCE)
+            spec.setdefault("filename", source.name)
+            spec["contentBase64"] = base64.b64encode(raw).decode()
+        if spec.get("id") in raw_defaults:
+            selected = raw_defaults[spec["id"]]
+            if not isinstance(selected, str):
+                raise Problem("Retained table defaults must be JSON text.", 422, "INVALID_LEDGER_INTAKE")
+            spec["defaults"] = ledger_intake._json(selected or "{}", decimal_strings=False)
+        if compile_sources:
+            inspection = ledger_intake.inspect(spec)
+            total += inspection["bytes"]
+    if total > ledger_intake.MAX_BYTES or len(canonical(document).encode()) > MAX_BUNDLE:
+        raise Problem("The complete intake supports twelve MiB of original source bytes.", 413, "LEDGER_INTAKE_LIMIT")
+    return document
+
+
 def publish(filename, raw):
     """Private exact output; an existing destination is never replaced."""
     destination = Path(filename).expanduser().absolute()
@@ -270,6 +341,29 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "performance":
+        result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
+    elif action == "performance-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_performance(
+            args.case, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
+    elif action == "ledger-intake":
+        result = ops.ledger_intake(args.case)
+    elif action == "ledger-intake-original":
+        result = ops.ledger_intake_original(args.case, args.source)
+        if args.document_only:
+            result = result["document"]
+    elif action == "ledger-intake-template":
+        return {"kind": args.kind, "format": args.format,
+                "output": publish(args.output, ledger_intake.template(args.kind, args.format).encode())}
+    elif action == "ledger-intake-build":
+        result = ledger_document(args.input, compile_sources=True)
+    elif action == "ledger-intake-preview":
+        result = ops.preview_ledger_intake(args.case, {"document": ledger_document(args.input),
+            **({"expectedVersion": args.expected_version} if args.expected_version is not None else {})})
+    elif action == "ledger-intake-apply":
+        result = ops.apply_ledger_intake(args.case, {"document": ledger_document(args.input),
+            "expectedVersion": args.expected_version, "expectedPreviewSha256": args.expected_preview_sha256,
+            "actor": args.actor, "note": args.note, "requestId": args.request_id})
     elif action == "history":
         result = ops.history(args.case, args.after, args.limit)
     elif action == "forecasts":

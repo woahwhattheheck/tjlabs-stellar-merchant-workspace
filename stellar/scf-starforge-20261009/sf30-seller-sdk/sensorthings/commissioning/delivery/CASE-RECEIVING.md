@@ -8,7 +8,7 @@ This is the complete commercial continuation of the merged source-to-FROST commi
 - Case: `datacove-sensorthings-commissioning-20261012`.
 - Case receiving operation: `datacove-complete-workshare-intake-0c7a-20261012`.
 - Company delivery operation: `DATACOVE-SENSORTHINGS-COMMISSIONING-0C7A-20261012`.
-- Prepared packet: `delivery/datacove-case-receiving.json`, 38,688 UTF-8 bytes, SHA-256 `bbe2b4884edbcbcdbdb7800fba13193c6db8c43974dbe4dab572bb206abf3f10`.
+- Prepared packet: `delivery/datacove-case-receiving.json`, 38,686 UTF-8 bytes, SHA-256 `8cb5bc3256d7e1bebe154cce7017a6e4510f0784643ffb79cc9235be1b7a97a7`.
 - Original case: https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791815080790189?thread_ts=1791803620.539009
 
 0C7A retains the existing company, case and sole sender. A favorable human reply moves subsequent relationship messages to Bryce. This receiving command preserves current mail and relationship state; it does not send an email or infer customer acceptance.
@@ -72,3 +72,10 @@ The renderer embeds an available DejaVu Sans family, uses two explicit pages, an
 ## Product operation
 
 See [OPERATOR.md](../OPERATOR.md), [RUNTIME.md](../RUNTIME.md) and [RECEIVING.md](../RECEIVING.md) for the actual source-to-target workflow. The original 5403 asset operation, original FROST target/runtime selection and the single full native/browser receiver remain their existing operations. The commercial receiving command does not create a target service or launch them.
+
+
+## Original relationship source binding
+
+The Workshare case source selects the case's exact partner URL, `https://datacove.eu/contact/`, and buyer URL, `https://datacove.eu/services/`. The maintained `sourceFromCase` in Workshare blob `be94987ae5c38317474f691909535ba6a0f77692` derives IDs from the literal URLs: `case-party-d22719fd9b3a4faf` and `case-buyer-d7e17374980e46c2`, giving `DSR-case-party-d22719fd9b3a4faf--case-buyer-d7e17374980e46c2`. The receiver checks these source/plan bindings before any case mutation. The services page remains the issuer evidence and the original claim's supporting URL.
+
+This corrects the unapplied prepared relationship identifiers and source URL. It preserves the company case, campaign, original `datacove-complete-workshare-intake-0c7a-20261012` receiving operation, complete commercial scope and already-sent contact. No native case or Workshare save had completed from the earlier input.

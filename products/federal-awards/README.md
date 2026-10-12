@@ -13,6 +13,10 @@ This product turns original federal award records and funding actions into a sav
 
 The original [USAspending transaction contract](https://github.com/fedspendingtransparency/usaspending-api/blob/master/usaspending_api/api_contracts/contracts/v2/transactions.md) supplies the provider fields and pagination. Source amounts retain their exact decimal values. Award obligations, transaction obligations, exercised contract value, all-options value and outlays remain distinct throughout analysis and delivery.
 
+## Publish and receive a funding report
+
+Choose **Funding reports** in the original browser to turn a completed transaction history and saved assessment into a full report. Review its public narrative, exact funding totals, chronology and any comparison, then publish the selected edition. Its original SF30 file-product merchant and SF88 buyer carry the complete report, source pages and editable receiving. The [funding-report guide](FUNDING_REPORTS.md) covers the complete browser, CLI, native tools, merchant, customer and recovery workflow.
+
 ## Install the selected product
 
 The maintained distribution selection is **federal-awards**. Build it from one immutable commit of this repository:
@@ -66,6 +70,7 @@ The product includes its original source, browser assets, source-owned provider 
 
 ## Detailed guides
 
+- [Complete funding report and customer delivery](FUNDING_REPORTS.md)
 - [Operating the complete product](OPERATING.md)
 - [Receiving and reopening the work](RECEIVING.md)
 - [Award transactions and modifications](../../stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/TRANSACTIONS.md)

@@ -8,13 +8,15 @@ import { projectReport, reportCsv, reportHtml } from "./reports.mjs";
 import { parseRetainedSource, decodeSource, SourceEncodingError } from "./source-encoding.mjs";
 import { SchemaError, validateSchemaCollections } from "./schema-domain.mjs";
 import { dispatchSchema } from "./schema-workflow.mjs";
+import { serviceLevelAction, validateServiceLevels, ServiceLevelError } from "./service-levels.mjs";
 
 const APP_ROOT = dirname(fileURLToPath(import.meta.url));
 const LEGACY_APPLICATION_FILES = ["LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","package.json","protocol.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","store.mjs","style.css"];
 export const VERSION_2_APPLICATION_FILES = ["LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","PRODUCERS.md","PRODUCER_RECEIVING.mjs","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","package.json","producer.d.mts","producer.mjs","protocol.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","source-encoding.mjs","store.mjs","style.css"];
 export const VERSION_3_NATIVE_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","source-encoding.mjs","store.mjs","style.css"];
-export const APPLICATION_VERSION = 3;
-export const APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","source-encoding.mjs","store.mjs","style.css"];
+export const VERSION_3_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","source-encoding.mjs","store.mjs","style.css"];
+export const APPLICATION_VERSION = 4;
+export const APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SERVICE_LEVELS.md","SERVICE_LEVELS_OPERATOR.md","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","service-levels-browser.js","service-levels-catalog.mjs","service-levels-cli.mjs","service-levels-client.d.mts","service-levels-client.mjs","service-levels-example.json","service-levels.css","service-levels.html","service-levels.mjs","source-encoding.mjs","store.mjs","style.css"];
 const HASH = /^[0-9a-f]{64}$/;
 export class WorkspaceError extends Error {
   constructor(message, status = 400, details = undefined) { super(message); this.status = status; this.details = details; }
@@ -54,6 +56,10 @@ function validateSchemas(state, complete = false) {
   try { return validateSchemaCollections(state, { complete }); }
   catch (error) { if (error instanceof SchemaError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
 }
+function validateServices(state, deep = false) {
+  try { validateServiceLevels(state, { deep }); return state; }
+  catch (error) { if (error instanceof ServiceLevelError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+}
 function validateState(state) {
   if (!state || state.schema !== FORMAT || typeof state.workspaceId !== "string" || (!Number.isSafeInteger(state.revision) || state.revision < 0)) throw new WorkspaceError("Invalid workspace state");
   for (const name of ["sources", "events", "editions", "reviews", "results", "operations"]) if (!Array.isArray(state[name])) throw new WorkspaceError("Invalid workspace " + name);
@@ -63,6 +69,7 @@ function validateState(state) {
     events.add(item.id);
   }
   for (const edition of state.editions) if (!Array.isArray(edition.eventIds) || edition.eventIds.some(id => !events.has(id))) throw new WorkspaceError("Edition references an absent event");
+  validateServices(state);
   return validateSchemas(state);
 }
 export class LineageWorkspace {
@@ -296,6 +303,10 @@ export class LineageWorkspace {
       try { return await dispatchSchema(this, action, args); }
       catch (error) { if (error instanceof SchemaError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
     }
+    if (typeof action === "string" && action.startsWith("service-levels.")) {
+      try { return await serviceLevelAction(this, action, args); }
+      catch (error) { if (error instanceof ServiceLevelError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+    }
     if (action === "workspace.metadata") return this.metadata();
     if (action === "records.read") return this.readRecords(args);
     if (action === "object.read") return this.readObjectRange(args.id, args);
@@ -392,6 +403,7 @@ export function verifyBundle(bytes) {
     objects.set(item.id, data);
   }
   reconstructSources(state, objects);
+  validateServices(state, true);
   const resultIds = new Set();
   for (const result of state.results) {
     if (typeof result.id !== "string" || resultIds.has(result.id)) throw new WorkspaceError("Invalid or duplicate result identity");
@@ -411,12 +423,16 @@ export function verifyBundle(bytes) {
   }
   validateSchemas(state, true);
   const application = new Map();
-  if (payload.applicationVersion !== undefined && ![2, 3].includes(payload.applicationVersion)) throw new WorkspaceError("Unsupported application source edition");
+  if (payload.applicationVersion !== undefined && ![2, 3, 4].includes(payload.applicationVersion)) throw new WorkspaceError("Unsupported application source edition");
   if (payload.applicationVersion === undefined && state.sources.some(source => source.contentEncoding === "gzip"))
     throw new WorkspaceError("Compressed sources require their complete version 2 application edition");
   const hasSchemaRecords = Boolean((state.schemaComparisons ?? []).length || (state.schemaReviews ?? []).length);
-  if (payload.applicationVersion !== 3 && hasSchemaRecords)
-    throw new WorkspaceError("Saved schema comparisons and decisions require their complete version 3 application edition");
+  if (![3, 4].includes(payload.applicationVersion) && hasSchemaRecords)
+    throw new WorkspaceError("Saved schema comparisons and decisions require a complete schema-capable application edition");
+  const hasServiceRecords = Boolean((state.serviceLevels?.policies ?? []).length ||
+    (state.serviceLevels?.assessments ?? []).length || (state.serviceLevels?.incidents ?? []).length);
+  if (payload.applicationVersion !== 4 && hasServiceRecords)
+    throw new WorkspaceError("Saved service-level policies, assessments and decisions require their complete version 4 application edition");
   const applicationEntries = payload.application ?? [];
   if (!Array.isArray(applicationEntries)) throw new WorkspaceError("Application source must be a complete file list");
   const nativeVersion3 = payload.applicationVersion === 3 &&
@@ -425,7 +441,8 @@ export function verifyBundle(bytes) {
   if (nativeVersion3 && hasSchemaRecords)
     throw new WorkspaceError("Saved schema comparisons and decisions require the complete schema-capable application");
   const expectedApplication = nativeVersion3 ? VERSION_3_NATIVE_APPLICATION_FILES :
-    payload.applicationVersion === 3 ? APPLICATION_FILES :
+    payload.applicationVersion === 4 ? APPLICATION_FILES :
+    payload.applicationVersion === 3 ? VERSION_3_APPLICATION_FILES :
     payload.applicationVersion === 2 ? VERSION_2_APPLICATION_FILES : LEGACY_APPLICATION_FILES;
   for (const item of applicationEntries) {
     if (!expectedApplication.includes(item.path) || application.has(item.path)) throw new WorkspaceError("Unexpected application path");

@@ -113,10 +113,11 @@ const bankSourceInput = {
 const bankAllocation = object({invoiceId: uuid, amount: money, allocatedDate: date}, ['invoiceId', 'amount']);
 const bankSplit = object({
   action: {type: 'string', enum: ['CREATE', 'LINK', 'CORRECT']}, customerId: uuid, receiptId: uuid, amount: money,
+  coverageKey: hash,
   allocations: {type: 'array', maxItems: 100, items: bankAllocation},
   residualAllocations: {type: 'array', maxItems: 100, items: bankAllocation},
   effectiveDate: date, reason: text(3000), dateDifferenceReason: text(3000),
-}, ['action', 'amount', 'allocations']);
+}, ['action', 'amount']);
 const bankSelections = {type: 'array', minItems: 1, maxItems: 100,
   items: object({rowId: hash, distinctPaymentReason: text(3000), sourceResolutionReason: text(3000),
     splits: {type: 'array', minItems: 1, maxItems: 100, items: bankSplit}}, ['rowId', 'splits'])};

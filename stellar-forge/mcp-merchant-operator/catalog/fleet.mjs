@@ -1,6 +1,7 @@
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { CLIENT_EXPORT_MANIFEST, CLIENT_EXPORT_FILES } from '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/developer/client-export-contracts.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
+import { fleetCampaignTools } from './fleet-campaigns.mjs';
 
 const digest = { type: 'string', pattern: '^[0-9a-f]{64}$' };
 
@@ -135,6 +136,7 @@ function fleetControlTools(tool) {
     ...fleetClientTools(tool),
     ...fleetDiscoveryTools(tool),
     ...fleetDeliveryTools(tool),
+    ...fleetCampaignTools(tool),
     tool('merchant_fleet_plan', 'Inspect the host-configured original fleet: plan digest, tenant/slot/package aliases, listener ports and limits. Reads original release stores without starting a process or exposing private paths.', {}, [], { readOnly: true, idempotent: true }),
     tool('merchant_fleet_status', 'Read this MCP process ownership and the original live fleet revision, candidates, exact release mapping, retained rollback history, active requests and drain state. A stopped fleet remains stopped.', {}, [], { readOnly: true, idempotent: true }),
     tool('merchant_fleet_start', 'Start or reopen the original retained multi-store fleet using the exact inspected host-plan digest. Starts its original selected merchant sessions and gateway; does not request a paid resource.', { expectedPlanDigest: digest }, ['expectedPlanDigest'], { openWorld: true }),

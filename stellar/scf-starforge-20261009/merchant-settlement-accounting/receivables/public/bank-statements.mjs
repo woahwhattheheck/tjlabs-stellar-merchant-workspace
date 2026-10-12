@@ -335,7 +335,7 @@ export function createBankUi(host) {
 
 
   function newSplit(row,{action='CREATE',receipt=null,customerId=''}={}) {
-    return {key:crypto.randomUUID(),action,customerId:customerId||receipt?.customerId||'',receiptId:receipt?.id||'',
+    return {key:crypto.randomUUID(),action,customerId:customerId||receipt?.customerId||'',receiptId:receipt?.id||'',coverageKey:'',
       amount:receipt?.amount||row.amount,allocations:[],residualAllocations:[],effectiveDate:action==='LINK'?(receipt?.accountingDate||receipt?.receivedDate||row.bookedDate):action==='CORRECT'?getAsOf():row.bookedDate,
       reason:'',dateDifferenceReason:'',funds:null};
   }
@@ -346,6 +346,24 @@ export function createBankUi(host) {
       if(item?.id && item.status!=='VOID' && currencyKey(item.currency)===currencyKey(row.currency))map.set(item.id,item);
     const rank=new Map(candidates.map((value,index)=>[value.receipt.id,index]));
     return [...map.values()].sort((a,b)=>(rank.get(a.id)??Number.MAX_SAFE_INTEGER)-(rank.get(b.id)??Number.MAX_SAFE_INTEGER));
+  }
+  function receiptCoverageOptions(receipt) {
+    const groups=new Map();
+    for(const source of receipt?.bankSources||[])
+      if(/^[a-f0-9]{64}$/.test(source.coverageKey||'')) {
+        const group=groups.get(source.coverageKey);
+        if(group)group.originals.push(source);else groups.set(source.coverageKey,{key:source.coverageKey,source,originals:[source]});
+      }
+    return [...groups.values()];
+  }
+  function renderCoverageChoice(split,original) {
+    const groups=receiptCoverageOptions(original);if(!groups.length)return '';
+    return label('Original payment coverage','<select name="coverageKey"><option value="">Use the matching original source payment</option>'+
+      groups.map(({key,source,originals})=>'<option value="'+e(key)+'"'+(key===split.coverageKey?' selected':'')+'>'+
+        e((source.bookedDate||'Original source')+' · '+(source.splitAmount||source.sourceAmount||'')+' · '+
+          (source.reference||source.bankReference||source.transactionId||source.sourceName||source.bankImportId||'')+' / '+key.slice(0,12)+(originals.length>1?' · '+originals.length+' retained statements':''))+
+        '</option>').join('')+'</select>',true,
+      'Select the exact original payment if several retained source payments share the same date, amount or reference.');
   }
   function allInvoices(split) {
     const row=state.editor?.row,map=new Map();
@@ -417,6 +435,7 @@ export function createBankUi(host) {
         receiptOptions.map(item=>'<option value="'+e(item.id)+'"'+(item.id===split.receiptId?' selected':'')+'>'+
           e((item.reference||item.id)+' · '+customerName(item.customerId)+' · '+item.currency.code+' '+item.amount+' · '+item.receivedDate)+'</option>').join('')+
         '</select>',true):'')+
+      (split.action!=='CREATE'&&original?renderCoverageChoice(split,original):'')+
       label('Customer payment amount',input('amount',split.amount,' inputmode="decimal" required'))+
       label(split.action==='LINK'?'Original accounting date':split.action==='CORRECT'?'Correction accounting date':'Effective accounting date',
         input('effectiveDate',split.effectiveDate,' type="date" required'+(split.action==='LINK'?' readonly':'')))+
@@ -464,9 +483,10 @@ export function createBankUi(host) {
       const field=name=>section.querySelector('[name="'+name+'"]')?.value;
       const previous={action:split.action,customerId:split.customerId,receiptId:split.receiptId};
       split.action=field('action');split.customerId=field('customerId')??split.customerId??'';
-      split.receiptId=field('receiptId')||'';split.amount=field('amount');split.effectiveDate=field('effectiveDate');
+      split.receiptId=field('receiptId')||'';split.coverageKey=field('coverageKey')??split.coverageKey??'';split.amount=field('amount');split.effectiveDate=field('effectiveDate');
       split.reason=field('reason')??split.reason??'';split.dateDifferenceReason=field('dateDifferenceReason')??split.dateDifferenceReason??'';
       const original=allReceipts(editor.row).find(row=>row.id===split.receiptId);
+      if(split.coverageKey&&!receiptCoverageOptions(original).some(row=>row.key===split.coverageKey))split.coverageKey='';
       if(split.action==='LINK')split.customerId=original?.customerId||'';
       if(previous.action!==split.action) {
         split.effectiveDate=split.action==='CORRECT'?getAsOf():editor.row.bookedDate;
@@ -477,7 +497,7 @@ export function createBankUi(host) {
         split.allocations=[];split.funds=null;
       }
       split.residualAllocations ||= [];
-      if(previous.action!==split.action||previous.receiptId!==split.receiptId){split.residualAllocations=[];split.residualFunds=null;}
+      if(previous.action!==split.action||previous.receiptId!==split.receiptId){split.residualAllocations=[];split.residualFunds=null;split.coverageKey='';}
       for(const tr of section.querySelectorAll('[data-bank-allocation]')) {
         const item=split.allocations.find(value=>value.key===tr.dataset.bankAllocation);if(!item)continue;
         item.invoiceId=tr.querySelector('[name=invoiceId]').value;item.amount=tr.querySelector('[name=allocationAmount]').value;
@@ -499,6 +519,7 @@ export function createBankUi(host) {
       if(split.action!=='CREATE'&&!split.receiptId)throw new Error('Choose the original receipt to link or correct.');
       if(host.units(split.amount,currency)<=0n)throw new Error('Every customer split must have a positive original-currency amount.');
       if(split.action==='CORRECT'&&!split.reason.trim())throw new Error('Enter the reason for correcting the original receipt.');
+      if(split.coverageKey&&!/^[a-f0-9]{64}$/.test(split.coverageKey))throw new Error('Choose an original source payment coverage.');
       const allocations=split.allocations.map(item=>{
         if(!item.invoiceId)throw new Error('Select the original invoice for every allocation.');
         if(host.units(item.amount,currency)<=0n)throw new Error('Each invoice allocation needs a positive amount.');
@@ -518,7 +539,7 @@ export function createBankUi(host) {
       return {action:split.action,amount:split.amount,
         ...(residualAllocations.length?{residualAllocations}:{}),
         ...(split.customerId?{customerId:split.customerId}:{}),
-        ...(split.action!=='CREATE'?{receiptId:split.receiptId}:{}),allocations,
+        ...(split.action!=='CREATE'?{receiptId:split.receiptId,...(split.coverageKey?{coverageKey:split.coverageKey}:{})}:{}),allocations,
         ...(split.effectiveDate?{effectiveDate:split.effectiveDate}:{}),
         ...(split.reason.trim()?{reason:split.reason.trim()}:{}),
         ...(split.dateDifferenceReason.trim()?{dateDifferenceReason:split.dateDifferenceReason.trim()}:{})};
@@ -662,8 +683,21 @@ export function createBankUi(host) {
         (split.releasedAllocations?.length?'<h4 class="bank-original">Original allocations released</h4>'+allocationReviewTable(split.releasedAllocations,currency,true):'')+
         (split.allocations?.length?'<h4 class="bank-original">Invoice allocations</h4>'+allocationReviewTable(split.allocations,currency,false):
           '<p class="hint bank-original">No new invoice allocation is included in this customer split.</p>')+
+        reviewLinkedCoverage(split,currency)+
         reviewRemainingReceipt(split,currency)+
         (split.replacementReceiptIds?.length?'<details class="bank-original"><summary>Original receipt relationships</summary><dl class="definition"><dt>Original receipt</dt><dd>'+e(split.originalReceipt?.id)+'</dd><dt>Replacement receipts</dt><dd>'+split.replacementReceiptIds.map(e).join('<br>')+'</dd></dl></details>':'')+'</div>').join('')+'</section>';
+  }
+  function reviewLinkedCoverage(split,currency) {
+    const value=split.sourceCoverage;if(split.action!=='LINK'||!value)return '';
+    return '<section class="section bank-original"><h4>Original payment coverage</h4><p class="hint">'+
+      e(value.repeatedSource?'Previously linked source payment':'Additional original source coverage')+'</p><dl class="definition">'+
+      '<dt>Original receipt amount</dt><dd>'+money(value.receiptAmount,currency)+'</dd>'+
+      '<dt>Already matched</dt><dd>'+money(value.beforeMatchedAmount,currency)+'</dd>'+
+      '<dt>This source payment</dt><dd>'+money(value.coveredByThisSource,currency)+'</dd>'+
+      '<dt>Additional amount matched</dt><dd>'+money(value.newlyMatchedAmount,currency)+'</dd>'+
+      '<dt>Matched after posting</dt><dd>'+money(value.afterMatchedAmount,currency)+'</dd>'+
+      '<dt>Remaining amount to match</dt><dd>'+money(value.remainingUnmatchedAmount,currency)+'</dd>'+
+      '</dl><details><summary>Original coverage identity</summary><p class="mono">'+e(value.key)+'</p></details></section>';
   }
   function reviewRemainingReceipt(split,currency) {
     const row=split.residualReceipt;if(!row)return '';

@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "federal-awards",
   "title": "Federal awards and workshares",
-  "description": "Original federal award and modification history, source-bound workshare research, complete dossiers and customer receiving, and a shared browser, native merchant and managed application.",
+  "description": "Original federal awards, funding actions, source-bound workshares and complete customer funding reports through one saved browser, native merchant and managed application.",
   "base": {
     "commands": [
       "installation",
@@ -182,7 +182,16 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/operation-ticket.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/request-headers.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/request-body.mjs"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/request-body.mjs",
+    "products/federal-awards/FUNDING_REPORTS.md",
+    "stellar-forge/mcp-merchant-operator/usaspending-reports.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/usaspending-reports.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/asset-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/source.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/files.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/web/funding-reports.html",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/web/funding-reports.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/web/funding-reports.css"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

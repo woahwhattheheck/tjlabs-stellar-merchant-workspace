@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video receiving</title><link rel="stylesheet" href="/assets/style.css"></head>
+<body><main><header><div><p class="eyebrow">TJLabs · Receiving workspace</p><h1>Video receiving</h1>
+<p class="intro">Continue an accepted video job and keep the complete result.</p></div><span id="state" class="badge">Opening</span></header>
+<div id="notice" role="status" aria-live="polite"></div>
+<div class="grid"><section aria-labelledby="job-heading"><h2 id="job-heading">Current job</h2>
+<dl><dt>Receiving ID</dt><dd id="job-id" class="mono">—</dd><dt>Source</dt><dd id="source">—</dd>
+<dt>Latest response</dt><dd id="response">—</dd><dt>Retained at</dt><dd id="retained">—</dd>
+<dt>Next status check</dt><dd id="next-poll">—</dd></dl>
+<div class="actions"><button id="poll">Check status</button><button id="receive" class="primary">Receive video</button>
+<button id="pause" disabled>Pause receiving</button></div>
+<p class="help">Receiving continues against the same accepted job. Pausing stops this receiver; the provider continues its generation.</p>
+</section><section aria-labelledby="result-heading"><h2 id="result-heading">Received video</h2>
+<p id="empty-result" class="empty">The completed video will appear here.</p>
+<video id="video" controls preload="metadata" hidden aria-label="Received video"></video>
+<dl id="result-info" hidden><dt>Complete file</dt><dd id="result-bytes">—</dd><dt>SHA-256</dt><dd id="result-hash" class="mono">—</dd></dl>
+<a id="download" class="button" href="/api/video/download" hidden>Download video</a></section></div>
+<section class="handover" aria-labelledby="handover-heading"><div><h2 id="handover-heading">Workspace handover</h2>
+<p>Save the original job document, status responses, receiving history and complete video together.</p>
+<p id="archive-info" class="help">The exported workspace reopens on another installation.</p></div>
+<div class="actions"><button id="export">Export workspace</button><a id="archive" class="button" href="/api/archive" hidden>Download workspace</a></div></section>
+<footer>Private status URLs remain in the authorized workspace. This page displays receiving progress and local results.</footer>
+</main><script type="module" src="/assets/app.mjs"></script></body></html>

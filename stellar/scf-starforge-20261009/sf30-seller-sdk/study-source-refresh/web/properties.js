@@ -404,6 +404,13 @@
   $('pr-go-receive').onclick = () => view('delivery');
   window.propertyResearch = {
     load: refreshProperty,
+    openReview: async result => {
+      await refreshProperty();
+      view('properties'); section('review');
+      $('pr-candidate').value = result.edition.id;
+      $('pr-review').value = result.review.id;
+      await readReview(0);
+    },
     received: async selection => {
       view('properties'); section('delivery'); $('pr-delivery-selection').value = selection.id;
       $('pr-delivery-label').value = selection.label; await previewReport();

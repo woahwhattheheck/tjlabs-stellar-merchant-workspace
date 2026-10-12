@@ -5,7 +5,8 @@ import { validateFredReview } from '../review.mjs';
 import { BRIEFING_SPEC, BRIEFING_MODEL, BRIEFING_COMPARISONS, normalizeFredBriefing, buildFredBriefingModel, pageFredBriefing } from './model.mjs';
 
 export const FRED_BRIEFING_TEMPLATE = 'stellar-forge.fred-briefing-template.v1';
-export const FRED_BRIEFING_MATERIALIZATION = 'stellar-forge.fred-briefing-materialization.v1';
+export const FRED_BRIEFING_MATERIALIZATION_V1 = 'stellar-forge.fred-briefing-materialization.v1';
+export const FRED_BRIEFING_MATERIALIZATION = 'stellar-forge.fred-briefing-materialization.v2';
 export const FRED_BRIEFING_CHANGES = 'stellar-forge.fred-briefing-changes.v1';
 export const FRED_BRIEFING_SUCCESSOR = 'stellar-forge.fred-briefing-successor.v1';
 export const FRED_TEMPLATE_ANCHORS = Object.freeze(['latest_all', 'latest_any']);
@@ -150,7 +151,10 @@ function materializationIdentity(value) {
 }
 
 /** Select a calendar window from original observation labels, including missing observations. */
-export function materializeFredBriefingTemplate({ template, model, captureId, anchorDate = null } = {}) {
+export function materializeFredBriefingTemplate({ template, model, captureId, anchorDate = null,
+  schema = FRED_BRIEFING_MATERIALIZATION } = {}) {
+  need(schema === FRED_BRIEFING_MATERIALIZATION || schema === FRED_BRIEFING_MATERIALIZATION_V1,
+    'Choose a supported original calendar materialization.', 'FRED_TEMPLATE_INVALID');
   template = validateFredBriefingTemplate(template);
   need(SHA.test(captureId ?? '') && Array.isArray(model?.series) && Array.isArray(model?.rows),
     'Select a complete original retained source capture.', 'FRED_TEMPLATE_SOURCE_REQUIRED');
@@ -178,7 +182,10 @@ export function materializeFredBriefingTemplate({ template, model, captureId, an
   const endingMonth = yearMonth(chosenAnchor) - template.window.lagMonths;
   const start = calendarDate(endingMonth - template.window.months + 1);
   const end = calendarDate(endingMonth, true);
-  const selection = normalizeFredBriefing({ ...clone(template.briefing), start, end }, model);
+  const suffix = ' · ' + start + '–' + end;
+  const recurringName = template.name.trim().slice(0, 160 - suffix.length).replace(/[\uD800-\uDBFF]$/, '').trimEnd();
+  const title = schema === FRED_BRIEFING_MATERIALIZATION_V1 ? template.briefing.title : recurringName + suffix;
+  const selection = normalizeFredBriefing({ ...clone(template.briefing), title, start, end }, model);
   const meaningChanges = [];
   for (const previous of template.seriesMeaning) {
     const current = seriesMeaning(metadata.get(previous.id));
@@ -199,7 +206,7 @@ export function materializeFredBriefingTemplate({ template, model, captureId, an
       lastSourceMissing: Boolean(last.missing), lastWindowMissing: windowLast === null ? null : Boolean(windowLast.missing),
       rowsAfterWindow: original.filter(row => row.date > end).length };
   });
-  const value = { schema: FRED_BRIEFING_MATERIALIZATION, templateId: template.id,
+  const value = { schema, templateId: template.id,
     originReviewId: template.origin.reviewId, originCaptureId: template.origin.captureId, captureId,
     selection, window: { anchorDate: chosenAnchor, observedAnchorDate: observedAnchor,
       anchorBasis: anchorDate === null ? template.window.anchor : 'explicit',
@@ -212,7 +219,8 @@ export function materializeFredBriefingTemplate({ template, model, captureId, an
 export function validateFredBriefingMaterialization(value) {
   exactKeys(value, ['schema', 'previewId', 'templateId', 'originReviewId', 'originCaptureId', 'captureId',
     'selection', 'window', 'coverage', 'meaningChanges'], 'briefing materialization');
-  need(value.schema === FRED_BRIEFING_MATERIALIZATION && SHA.test(value.previewId ?? '') &&
+  need((value.schema === FRED_BRIEFING_MATERIALIZATION || value.schema === FRED_BRIEFING_MATERIALIZATION_V1) &&
+    SHA.test(value.previewId ?? '') &&
     TEMPLATE_ID.test(value.templateId ?? '') && SHA.test(value.originReviewId ?? '') &&
     SHA.test(value.originCaptureId ?? '') && SHA.test(value.captureId ?? '') &&
     plain(value.selection) && plain(value.window) && Array.isArray(value.coverage) && Array.isArray(value.meaningChanges),
@@ -262,8 +270,9 @@ export function validateFredBriefingMaterialization(value) {
   return clone(value);
 }
 
-export function previewFredBriefingTemplate({ template, model, captureId, anchorDate = null, offset = 0, limit = 100 } = {}) {
-  const materialization = materializeFredBriefingTemplate({ template, model, captureId, anchorDate });
+export function previewFredBriefingTemplate({ template, model, captureId, anchorDate = null, offset = 0, limit = 100,
+  schema = FRED_BRIEFING_MATERIALIZATION } = {}) {
+  const materialization = materializeFredBriefingTemplate({ template, model, captureId, anchorDate, schema });
   const report = buildFredBriefingModel({ model, captureId, selection: materialization.selection });
   return { ...materialization, briefing: pageFredBriefing(report, { offset, limit }) };
 }

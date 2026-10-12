@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-economics",
   "title": "Merchant economics",
-  "description": "Original API merchant supplier costs, tariff pricing and recorded usage performance through customer quotation, accepted implementation, Service adjustments, full customer receiving and seller-release continuation.",
+  "description": "Original merchant supplier costs, tariffs and recorded usage through customer quotation, accepted implementation, invoice preparation, recurring service billing, payments, customer receiving and seller-release continuation.",
   "base": {
     "commands": [
       "installation",
@@ -47,7 +47,9 @@
       "merchant-accounting",
       "merchant-accounting-workspace",
       "merchant-accounting-adjustments",
-      "buyer-expenses"
+      "buyer-expenses",
+      "merchant-accounting-pricing",
+      "merchant-accounting-recovery"
     ],
     "exports": [
       "./runtime-profile",
@@ -109,7 +111,8 @@
       "./merchant/accounting-workspace",
       "./merchant/accountant",
       "./merchant/accounting-adjustments",
-      "./merchant/accounting-adjustments/operations"
+      "./merchant/accounting-adjustments/operations",
+      "./merchant/accounting-pricing"
     ],
     "features": [
       "schema",
@@ -158,7 +161,12 @@
     "merchant-provider-buyer-expenses",
     "accounting-connections",
     "buyer-expenses",
-    "merchant-service-adjustments"
+    "merchant-service-adjustments",
+    "merchant-receivables",
+    "merchant-payment-plans",
+    "receivables-agent",
+    "customer-closing",
+    "merchant-service-agreements"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -202,7 +210,10 @@
     "stellar/scf-starforge-20261009/sf70-merchant-intake",
     "products/merchant-support",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk",
+    "products/merchant-receivables",
+    "products/merchant-payment-plans",
+    "products/merchant-service-agreements"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -223,14 +234,22 @@
     "stellar-forge/mcp-merchant-operator/COSTS.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
     "stellar/scf_2026/sf49_data_commissioning/source-edition-archive.py",
-    "products/merchant-workspace/OPERATING.md"
+    "products/merchant-workspace/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md",
+    "products/merchant-receivables/README.md",
+    "products/merchant-payment-plans/README.md",
+    "products/merchant-service-agreements/README.md",
+    "stellar-forge/mcp-paid-agent/package.json",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant economics: supplier costs, exact tariff pricing and recorded usage performance, complete customer quotations and implementation, original Service and buyer/accountant continuation, workspace receiving and seller releases.",
+    "description": "Merchant economics: original supplier costs, tariff and usage performance, customer quotations, invoicing, recurring service billing, complete receiving and the same native merchant operation.",
     "readme": "products/merchant-economics/OPERATING.md"
   }
 }

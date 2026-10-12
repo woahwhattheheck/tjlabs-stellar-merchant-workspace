@@ -593,7 +593,7 @@ async function perform(intent,retrying=false){
         throw new Error('Saved state changed before dispatch. Your draft is retained; review it against the current state. No new request was sent.');
       }
       command=await makeStoredCommand(intent);
-      await writeLocal({draft:snapshotDraft(),command});pending=command;recovery.dirty=false;renderRecovery();
+      await writeLocal({draft:snapshotDraft(),command});pending=command;recovery.dirty=false;renderRecovery();controls();
     }
     const value=await api(command.path,command.body,{bodyText:command.bodyText});
     const result=await finishPending(command,value);

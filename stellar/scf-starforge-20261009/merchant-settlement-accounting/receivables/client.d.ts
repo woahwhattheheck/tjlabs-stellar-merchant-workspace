@@ -1,4 +1,11 @@
 import type {
+  BankFormat, BankAccountStatus, BankImportStatus, BankDirection, BankRowStatus, BankDateBasis, BankCsvColumns, BankCsvLayout, BankCsvInspectionLayout, BankCsvNormalizedLayout, BankStatementOptions, BankAccountInput, BankAccount, BankAccountsQuery, BankAccountsPage, BankAccountsInventory, BankSourceFile, BankSourceInspectionInput, BankSourceImportInput, BankSourceIdentity, BankSourceIssue, BankSourceSection, BankRawRow, BankSourceSample, BankSourceInspection, BankSourceRow, BankSourceMatch, BankRowDecision, BankRow, BankImportSummary, BankImportsQuery, BankImportsPage, BankImportsInventory, BankImportView, BankImportQuery, BankFileMetadata, BankFileName, BankDownload, BankImportRows, BankImportDetail, BankImportInventory, BankAllocationInput, BankPostingSplitInput, BankPostingSelectionInput, BankPostingPreviewInput, BankReviewedAllocation, BankReleasedAllocation, BankReceiptSourceBinding, BankSourceCoverage, BankResidualReceipt, BankOriginalReceipt, BankPostingSplit, BankPostingSelection, BankPostingProposal, BankReceiptBalance, BankInvoiceBalance, BankBalancePeriod, BankBalanceEffect, BankPostingTotals, BankPostingBalanceEffects, BankPostingPreview, PostBankReceiptsInput, IgnoreBankRowsInput, RestoreBankRowsInput, CloseBankImportInput, BankPostingSummary, BankMutationResult, BankAccountMutationResult, BankImportMutationResult, BankPostingMutationResult
+} from "./bank-client-types.d.ts";
+export type {
+  BankFormat, BankAccountStatus, BankImportStatus, BankDirection, BankRowStatus, BankDateBasis, BankCsvColumns, BankCsvLayout, BankCsvInspectionLayout, BankCsvNormalizedLayout, BankStatementOptions, BankAccountInput, BankAccount, BankAccountsQuery, BankAccountsPage, BankAccountsInventory, BankSourceFile, BankSourceInspectionInput, BankSourceImportInput, BankSourceIdentity, BankSourceIssue, BankSourceSection, BankRawRow, BankSourceSample, BankSourceInspection, BankSourceRow, BankSourceMatch, BankRowDecision, BankRow, BankImportSummary, BankImportsQuery, BankImportsPage, BankImportsInventory, BankImportView, BankImportQuery, BankFileMetadata, BankFileName, BankDownload, BankImportRows, BankImportDetail, BankImportInventory, BankAllocationInput, BankPostingSplitInput, BankPostingSelectionInput, BankPostingPreviewInput, BankReviewedAllocation, BankReleasedAllocation, BankReceiptSourceBinding, BankSourceCoverage, BankResidualReceipt, BankOriginalReceipt, BankPostingSplit, BankPostingSelection, BankPostingProposal, BankReceiptBalance, BankInvoiceBalance, BankBalancePeriod, BankBalanceEffect, BankPostingTotals, BankPostingBalanceEffects, BankPostingPreview, PostBankReceiptsInput, IgnoreBankRowsInput, RestoreBankRowsInput, CloseBankImportInput, BankPostingSummary, BankMutationResult, BankAccountMutationResult, BankImportMutationResult, BankPostingMutationResult
+} from "./bank-client-types.d.ts";
+
+import type {
   CustomerFundsQuery, CustomerFunds, RefundPreviewInput, RefundPreview,
   CommitRefundInput, RefundQuery, RefundPage, RefundDetail,
   CancelRefundInput, ReverseRefundInput, ReportRefundReturnInput, ReceiveRefundInput,
@@ -21,6 +28,12 @@ export type {
   CreditDispositionRecord, CreditDispositionMutationResult, CustomerFundsCurrency, CustomerFundsReceipt,
   CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
 } from './refund-client-types.d.ts';
+
+import type {CollectionsQuery, CollectionsReport, CollectionDetail, SaveCollectionCase, CollectionActivityInput,
+  CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
+export type {CollectionPriority, CollectionStatus, CollectionActivityKind, CollectionTerms, CollectionEvent, CollectionRecord,
+  CollectionSummary, CollectionsQuery, CollectionsReport, CollectionDetail, CollectionContext, SaveCollectionCase, CollectionActivityInput,
+  CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
 
 export type Money = string;
 export type DateOnly = string;
@@ -79,7 +92,9 @@ export interface CreditRecord {
 export type Credit = CreditSummary;
 export interface Receipt {
   id: string; customerId: string; customer: Customer; currency: Currency; amount: Money; allocated: Money; available: Money;
-  receivedDate: DateOnly; method: string; reference: string; note: string; status: 'RECORDED' | 'VOID';
+  receivedDate: DateOnly; accountingDate: DateOnly; replacesReceiptId?: string | null; replacedByReceiptId?: string | null;
+  replacementReceiptIds?: string[]; replacementRole?: 'CORRECTION' | 'RESIDUAL';
+  bankSources?: BankReceiptSourceBinding[]; method: string; reference: string; note: string; status: 'RECORDED' | 'VOID';
   voidDate?: DateOnly | null; sourceKey: string; source: {kind: string; runId?: string; eventId?: string; [key: string]: unknown};
   refunded: Money; reserved: Money; netAmount: Money; availableBeforeUnreconciledRefunds: Money;
   unreconciledRefunds: Array<Record<string, unknown>>; unreconciledRefundAmount: Money; refundDeficit: Money;
@@ -120,6 +135,7 @@ export type QuoteImportInput = MutationContext & {
 export interface Operation {
   id: string; action: string; actor: string; at: string; intentSha256: string; replayed: boolean;
   result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; refundId?: string; refundReturnId?: string; creditDispositionId?: string;
+    bankAccountId?: string; bankImportId?: string; bankPostingId?: string; receiptIds?: string[];
     invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
@@ -186,8 +202,15 @@ export interface CreatePaymentRequestInput extends MutationContext {
 export interface ReturnedPaymentInput extends MutationContext {
   /** Exact 64-character lowercase hexadecimal wallet transaction hash. */
   transaction: string;
-  /** Optional operation sender; the verifier derives the actual payer when omitted. */
-  payer?: string | null; note?: string;
+  /**
+   * Optional operation sender. For an existing transaction, omission preserves its current
+   * sender constraint. Before verification, an explicit account changes the constraint;
+   * explicit null clears it so the verifier derives the payer from the matching transfer.
+   * A changed or cleared constraint requires note.
+   */
+  payer?: string | null;
+  /** Operator note; required when correcting the sender of an existing unverified reference. */
+  note?: string;
 }
 export interface ReceivePaymentRequestInput extends MutationContext {
   returnId: string;
@@ -267,6 +290,16 @@ export class ReceivablesApiError extends Error {
 export class ReceivablesClient {
   constructor(options?: ClientOptions);
   state(query?: {asOf?: DateOnly}): Promise<ReceivablesState>;
+  collectionCases(query?: CollectionsQuery, options?: RequestOptions): Promise<CollectionsReport>;
+  collectionCase(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionDetail>;
+  saveCollectionCase(value:SaveCollectionCase, options?:RequestOptions):Promise<CollectionMutationResult>;
+  recordCollectionActivity(id:string, value:CollectionActivityInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  closeCollectionCase(id:string, value:CollectionTransitionInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  reopenCollectionCase(id:string, value:CollectionTransitionInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  collectionReminder(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionReminder>;
+  collectionFile(id:string, name:CollectionFileName, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<Response>;
+  collectionsFile(name:'collections.json'|'collections.csv', query?:CollectionsQuery, options?:RequestOptions):Promise<Response>;
+  collectionOperation(requestId:string, options?:RequestOptions):Promise<CollectionOperationResult>;
   settings(value: Issuer & MutationContext): Promise<MutationResult & {issuer: Issuer}>;
   saveDraft(value: SaveDraft): Promise<MutationResult & {invoice: InvoiceSummary}>;
   importQuote(value: QuoteImportInput): Promise<MutationResult & {invoice: InvoiceSummary}>;
@@ -297,6 +330,20 @@ export class ReceivablesClient {
   refundBytes(id: string, name: RefundFileName, options?: RequestOptions): Promise<RefundDownload>;
   previewCreditDisposition(value: CreditDispositionPreviewInput, options?: RequestOptions): Promise<CreditDispositionPreview>;
   applyCreditDisposition(value: ApplyCreditDispositionInput, options?: RequestOptions): Promise<CreditDispositionMutationResult>;
+  bankAccounts(query?: BankAccountsQuery, options?: RequestOptions): Promise<BankAccountsPage>;
+  saveBankAccount(value: BankAccountInput, options?: RequestOptions): Promise<BankAccountMutationResult>;
+  inspectBankSource(value: BankSourceInspectionInput, options?: RequestOptions): Promise<BankSourceInspection>;
+  importBankSource(value: BankSourceImportInput, options?: RequestOptions): Promise<BankImportMutationResult>;
+  bankImports(query?: BankImportsQuery, options?: RequestOptions): Promise<BankImportsPage>;
+  bankImport<V extends BankImportView = BankImportView>(id: string, query?: BankImportQuery & {view?: V},
+    options?: RequestOptions): Promise<BankImportDetail<V>>;
+  previewBankPosting(id: string, value: BankPostingPreviewInput, options?: RequestOptions): Promise<BankPostingPreview>;
+  postBankReceipts(id: string, value: PostBankReceiptsInput, options?: RequestOptions): Promise<BankPostingMutationResult>;
+  ignoreBankRows(id: string, value: IgnoreBankRowsInput, options?: RequestOptions): Promise<BankImportMutationResult>;
+  restoreBankRows(id: string, value: RestoreBankRowsInput, options?: RequestOptions): Promise<BankImportMutationResult>;
+  closeBankImport(id: string, value: CloseBankImportInput, options?: RequestOptions): Promise<BankImportMutationResult>;
+  bankImportFile(id: string, name: BankFileName, options?: RequestOptions): Promise<Response>;
+  bankImportBytes(id: string, name: BankFileName, options?: RequestOptions): Promise<BankDownload>;
   issue(id: string, value: MutationContext & {expectedVersion: number; previewSha256: string}): Promise<MutationResult & {invoice: InvoiceSummary}>;
   voidInvoice(id: string, value: MutationContext & {voidDate: DateOnly; reason: string}): Promise<MutationResult & {invoice: InvoiceSummary}>;
   credit(id: string, value: CreditInput): Promise<MutationResult & {credit: CreditRecord; invoice: InvoiceSummary}>;

@@ -72,6 +72,19 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function performanceQuery(args, exported = false) {
+  const values = new URLSearchParams();
+  if (args.startDate !== undefined && args.startDate !== null && args.startDate !== '')
+    values.set('startDate', completionDate(args.startDate));
+  if (args.endDate !== undefined) values.set('endDate', completionDate(args.endDate));
+  if (args.expectedVersion !== undefined || exported)
+    values.set('expectedVersion', String(integer(args.expectedVersion, 'Reviewed case version')));
+  if (exported) {
+    completionDate(args.endDate);
+    values.set('expectedReportSha256', sha(args.expectedReportSha256));
+  }
+  return values.size ? '?' + values.toString() : '';
+}
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
     'GRANT_INVALID_INPUT', 'Select at most 20 distinct original frozen cohort reviews.');
@@ -386,6 +399,9 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
+      'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
@@ -434,6 +450,25 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  ledgerIntakeInspect(caseId, file) {
+    id(caseId, 'operation'); object(file, 'Original intake file');
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-inspect', {body:{file}, mutation:false});
+  }
+  ledgerIntakePreview(caseId, body) {
+    id(caseId, 'operation'); exact(body, ['document', 'expectedVersion'], ['document']);
+    object(body.document, 'Complete ledger intake');
+    if (body.expectedVersion !== undefined) integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-preview', {body, mutation:false});
+  }
+  ledgerIntakeApply(caseId, body) {
+    id(caseId, 'operation');
+    exact(body, ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor', 'note'],
+      ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor']);
+    object(body.document, 'Complete ledger intake');
+    integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    sha(body.expectedPreviewSha256); requestId(body.requestId);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
@@ -666,6 +701,7 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
       'delivery-queue':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-queue/export.zip' +

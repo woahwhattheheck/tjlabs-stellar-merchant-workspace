@@ -65,6 +65,16 @@ export class ReceivablesClient {
     return payload;
   }
   state(query) { return this.request('/state' + queryString(query)); }
+  collectionCases(query, {signal} = {}) { return this.request('/collections' + queryString(query), {signal}); }
+  collectionCase(id, query, {signal} = {}) { return this.request('/collections/' + segment(id) + queryString(query), {signal}); }
+  saveCollectionCase(value, {signal} = {}) { return this.request('/collections', {method:'POST', body:value, signal}); }
+  recordCollectionActivity(id, value, {signal} = {}) { return this.request('/collections/' + segment(id) + '/activities', {method:'POST', body:value, signal}); }
+  closeCollectionCase(id, value, {signal} = {}) { return this.request('/collections/' + segment(id) + '/close', {method:'POST', body:value, signal}); }
+  reopenCollectionCase(id, value, {signal} = {}) { return this.request('/collections/' + segment(id) + '/reopen', {method:'POST', body:value, signal}); }
+  collectionReminder(id, query, {signal} = {}) { return this.request('/collections/' + segment(id) + '/reminder' + queryString(query), {signal}); }
+  collectionFile(id, name, query, {signal} = {}) { return this.request('/collections/' + segment(id) + '/files/' + segment(name) + queryString(query), {binary:true, signal}); }
+  collectionsFile(name, query, {signal} = {}) { return this.request('/collections/export' + queryString({...query,name}), {binary:true, signal}); }
+  collectionOperation(requestId, {signal} = {}) { return this.request('/collections/operations/' + segment(requestId), {signal}); }
   settings(value) { return this.request('/settings', {method: 'POST', body: value}); }
   saveDraft(value) { return this.request('/invoices', {method: 'POST', body: value}); }
   importQuote(value) { return this.request('/import-quote', {method: 'POST', body: value}); }
@@ -158,6 +168,56 @@ export class ReceivablesClient {
   }
   applyCreditDisposition(value, {signal} = {}) {
     return this.request('/credit-dispositions', {method: 'POST', body: value, signal});
+  }
+
+  bankAccounts(query, {signal} = {}) {
+    return this.request('/bank-accounts' + queryString(query), {signal});
+  }
+  saveBankAccount(value, {signal} = {}) {
+    return this.request('/bank-accounts', {method: 'POST', body: value, signal});
+  }
+  inspectBankSource(value, {signal} = {}) {
+    return this.request('/bank-imports/inspect', {method: 'POST', body: value, signal});
+  }
+  importBankSource(value, {signal} = {}) {
+    return this.request('/bank-imports', {method: 'POST', body: value, signal});
+  }
+  bankImports(query, {signal} = {}) {
+    return this.request('/bank-imports' + queryString(query), {signal});
+  }
+  bankImport(id, query, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + queryString(query), {signal});
+  }
+  previewBankPosting(id, value, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + '/preview', {method: 'POST', body: value, signal});
+  }
+  postBankReceipts(id, value, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + '/post', {method: 'POST', body: value, signal});
+  }
+  ignoreBankRows(id, value, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + '/ignore', {method: 'POST', body: value, signal});
+  }
+  restoreBankRows(id, value, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + '/restore', {method: 'POST', body: value, signal});
+  }
+  closeBankImport(id, value, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + '/close', {method: 'POST', body: value, signal});
+  }
+  bankImportFile(id, name, {signal} = {}) {
+    return this.request('/bank-imports/' + segment(id) + '/files/' + segment(name), {binary: true, signal});
+  }
+  async bankImportBytes(id, name, options) {
+    const response = await this.bankImportFile(id, name, options);
+    try {
+      return {name, type: response.headers.get('content-type') || 'application/octet-stream',
+        bytes: new Uint8Array(await response.arrayBuffer())};
+    } catch (error) {
+      if (error?.name === 'AbortError') throw error;
+      throw new ReceivablesApiError('The bank import file could not be read. Download that same file again.', {
+        status: response.status, code: 'DOWNLOAD_FAILED',
+        details: {name, cause: String(error?.message || error), outcome: 'read_failed'},
+      });
+    }
   }
   issue(id, value) { return this.request('/invoices/' + segment(id) + '/issue', {method: 'POST', body: value}); }
   voidInvoice(id, value) { return this.request('/invoices/' + segment(id) + '/void', {method: 'POST', body: value}); }
