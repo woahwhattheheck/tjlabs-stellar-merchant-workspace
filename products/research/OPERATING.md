@@ -1095,48 +1095,142 @@ Keep complete backups of the Research workspace, actual merchant state/outbox, B
 
 ## Review the registered protocol and planned methods
 
-Open the intended dossier in the existing Research application and choose **Protocol and methods**. Select the original capture's complete `source-bundle.json`, choose its existing question, and use **Inspect captured source** followed by **Preview question changes**. Review the selected source, page-linked planned methods and expected dossier revision before **Save to this question**.
+The installed **Protocol and methods** view keeps the complete original capture beside the selected dossier and question. It shows the PDF, full extracted page text, the authored methods map, and the original SourceBundle preview. Source acquisition, the previewed question changes, and a reviewer’s appraisal remain separately identifiable in the same dossier.
 
 The NCT03529110 capture retains the complete registered PDF, all 117 extracted pages, the registry selection and the original extraction provenance. **Open PDF page** and **Read complete page text** show the retained original material. The registry labels the document *Study Protocol and Statistical Analysis Plan*; the PDF is protocol DS8201-A-U302 version 6.0, dated 25 September 2020, and refers some details to a separate SAP. These are planned methods from the source. Continue the original extraction and appraisal workflow to record the analyst's decisions.
 
-For terminal review of an already completed capture:
+Use the capture already retained by the original programme. The maintained `research-study-protocol` command owns capture and the complete source-inclusive handover; `research-protocol-review` supplies the browser-compatible inspect, prepare, receive and reconcile workflow. Opening a completed capture reads its retained files. A fresh PDF acquisition additionally uses the installation’s original Poppler executables.
+
+1. Open the intended dossier, then **Protocol and methods**.
+2. Select the complete retained `source-bundle.json` and the existing question.
+3. Choose **Inspect captured source**. Read the original PDF and complete page text at the relevant methods links.
+4. Choose **Preview question changes**. Review the source terms, method observations, question selection and expected revision.
+5. Choose **Save to this question**. Keep the returned source edition and original revision with the existing programme.
+
+The original importer receives the entire source bundle. A method observation is a source finding; its presence does not record an appraisal decision. The existing appraisal view records that judgment against the actual selected study and source.
+
+For terminal operation, use the same capture and private original connection:
 
 ~~~sh
 starforge research-protocol-review inspect \
-  --source /ABS/original-protocol-capture/source-bundle.json \
-  --out /ABS/private-review/source-inspection.json
+  --source /absolute/original-protocol-capture/source-bundle.json \
+  --out /absolute/private-protocol-review/source-inspection.json
 
 starforge research-protocol-review prepare \
-  --source /ABS/original-protocol-capture/source-bundle.json \
-  --connection /PRIVATE/original-application-url.json \
-  --workspace-id research_ACTUAL_WORKSPACE_ID \
-  --dossier d_ACTUAL_DOSSIER_ID \
-  --question ACTUAL_QUESTION_ID \
-  --directory /ABS/private-review
+  --source /absolute/original-protocol-capture/source-bundle.json \
+  --connection /absolute/private/research-connection.json \
+  --workspace-id ORIGINAL_WORKSPACE_ID \
+  --dossier ORIGINAL_DOSSIER_ID \
+  --question ORIGINAL_QUESTION_ID \
+  --directory /absolute/private-protocol-review
 ~~~
 
-Use the actual original connection and identifiers. `REVIEW.json` contains the full source, inspection, preview and immutable request; it also opens in the browser. Repeating preparation in the same directory validates that original review. The original `research-study-protocol capture` command remains available to the existing source owner when a capture is still needed.
+The uppercase selections are the actual values returned by the existing workspace. Preparation writes a complete `REVIEW.json` containing the original source, inspection, preview and fixed request. The browser accepts that same file. Reusing its directory reopens the first saved selection.
 
-Before resubmitting a request whose reply was lost, inspect its original result:
+After the original review, receive or reconcile that exact request:
 
 ~~~sh
 starforge research-protocol-review reconcile \
-  --review /ABS/private-review/REVIEW.json \
-  --connection /PRIVATE/original-application-url.json
+  --review /absolute/private-protocol-review/REVIEW.json \
+  --connection /absolute/private/research-connection.json
+
+starforge research-protocol-review receive \
+  --review /absolute/private-protocol-review/REVIEW.json \
+  --connection /absolute/private/research-connection.json \
+  --directory /absolute/private-protocol-review
 ~~~
 
-This reads the source's original import state and distinguishes `ALREADY_RECEIVED` from `NOT_RECEIVED`. After reviewing the selected request, receive it through the original SourceBundle operation:
+Reconciliation reads whether the selected bundle is already present in that question. Its original result distinguishes `ALREADY_RECEIVED` from `NOT_RECEIVED`. Receiving retains `RECEIVED.json` with the actual metadata response and source edition. A lost reply can be recovered from the same original request even when later dossier revisions exist. A new source or question receives an explicit new review directory.
+
+The browser commits its full request to IndexedDB before sending it. **Read original import state** and **Recover original import** use that same request after an uncertain response. **Download complete review** and **Download exact request** preserve the original recovery material. If another tab saved the draft, reopening adopts that saved draft and its storage revision together; the other local copy remains available for an explicit separate save. Keep a downloaded unsaved review if browser storage is unavailable.
+
+For an attached SDK client, use its original `client.studyProtocol()` methods: `inspectFile`, `prepareFile`, `reconcile`, `receive` and `receiveCapture`. Await the operation and close the borrowed client when its work is complete. The attachment does not own the Research listener.
+
+The [complete protocol operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md) includes all methods, original registered-document semantics, current-engine handover commands and receiving recovery.
+
+## Continue the paid delivery from Python
+
+The installed Python `ResearchWorkspace.commerce()` attachment operates the same publication, Buyer and editable-customer delivery described above. Select the original installed source, private seller or receiving connection, and its existing Python client directory. These selections keep the saved calls associated with the correct native workspace.
+
+~~~python
+import json
+from pathlib import Path
+from stellar_forge_buyer import ResearchWorkspace
+
+request = json.loads(
+    Path("/absolute/private/original-publication-request.json").read_text()
+)
+
+with ResearchWorkspace(
+    checkout="/absolute/installed/source",
+    connection_file="/absolute/private/seller-research-connection.json",
+    directory="/absolute/private/python-seller",
+) as seller:
+    commerce = seller.commerce()
+    configuration = commerce.configuration()
+    result = commerce.prepare_publication(
+        request,
+        call_id="original-publication-review",
+        resume=True,
+    )
+    native_review = result["result"]["review"]
+~~~
+
+The request contains the original UUID, configured merchant alias, saved dossier, frozen delivery, selected revision, title, summary and usage. Its optional source-workspace selection carries the complete original source workspace. Review the returned original checkout before calling `enroll_publication` with that same publication ID and actual `reviewSha256`. Export its public publication through `commerce.export`; the returned file descriptor refers to the complete verified file.
+
+The customer’s original Python workspace then follows the existing full delivery:
+
+| Step | Original operation and retained selection |
+|---|---|
+| Receive the publication | `receive_publication_file` retains its complete original bytes, Buyer alias and intake request UUID. |
+| Prepare | `purchase(..., refresh=True)` supplies the current paid-file revision; `prepare_purchase` receives that revision, original request UUID, exact atomic budget strings and configured claim environment name. |
+| Execute | `execute` receives the original purchase ID, action UUID and prepared hash, and reaches the existing Buyer approval and payment process. |
+| Retrieve | `retrieve` keeps the same purchase/prepared hash and its own original action UUID. |
+| Receive editable work | `receive_dossier` imports the complete purchased dossier, reports and optional source workspace through the original receiver. |
+| Continue the project | Use the returned actual dossier and revision with the normal customer-update, extraction, appraisal and source interfaces. |
+| Preserve the complete archive | `export("purchases", id, "archive", ...)` retains the original compressed archive and exact promised identity. |
+
+Each durable Python call has a stable local call ID as well as the native UUID contained in its original input. Resume the first complete input; changing the selected source or native UUID means an explicit new operation. Monetary amounts remain the exact original atomic strings. The claim field names an existing environment variable; its secret value stays with the native operator.
+
+The installed module command exposes the same workflow:
 
 ~~~sh
-starforge research-protocol-review receive \
-  --review /ABS/private-review/REVIEW.json \
-  --connection /PRIVATE/original-application-url.json \
-  --directory /ABS/private-review
+python -m stellar_forge_buyer.research_cli \
+  --checkout /absolute/installed/source \
+  --connection /absolute/private/seller-research-connection.json \
+  --directory /absolute/private/python-seller \
+  commerce-publication-prepare \
+  --input /absolute/private/original-publication-request.json \
+  --call-id original-publication-review --resume \
+  --output /absolute/private/original-publication-review.json
 ~~~
 
-`RECEIVED.json` retains the actual source edition and saved revision. The same request recovers an accepted import even after later dossier edits. In the browser, full drafts and pending requests survive navigation; a conflicting edit remains a separate saved copy. A transport or server failure leaves the outcome unresolved so the exact original request can be reconciled.
+Use `commerce-list` and the complete publication/purchase views to inspect saved work. `commerce-export` saves the whole selected file. The original command help and [Python paid-delivery guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH-COMMERCE.md) contain the full input and action names, typed records, complete two-workspace programme and archive reader.
 
-The original typed attachment exposes `ResearchWorkspaceClient.studyProtocol()` for inspect, prepare, reconcile and receive. It shares the existing workspace identity and request lifecycle. The [complete operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md) gives all client inputs, source-file choices, request recovery and revision-specific HTML, Markdown and editable-dossier downloads.
+### Reopen calls, cancel and receive locally
+
+`saved(call_id)` reads the first completed local reply and checks its files. `recover(call_id)` continues that same durable attempt or returns its retained result. `operation(call_id)` reads the underlying native records. The terminal equivalents are `commerce-saved`, `commerce-resume` and `commerce-operation`.
+
+An explicit `replay(call_id, replay_id=...)` creates a distinct durable attempt with the unchanged native request. It preserves the original attempt and does not allocate a replacement native UUID. Use replay when the original operation requires that explicit recovery action; a completed local call can simply reopen.
+
+For an execution still running, the original `cancel` input includes its real execution UUID, purchase ID, prepared hash and a separate cancellation request UUID. Cancellation can run through a separate Python call while the original execution is pending. Follow the native purchase/run state after interruption, and keep its original recover/finalize/reconcile selections.
+
+A complete acquired archive can be received locally with the listener stopped:
+
+~~~sh
+python -m stellar_forge_buyer.research_cli \
+  --checkout /absolute/installed/source \
+  --directory /absolute/private/python-local-receiving \
+  commerce-archive-receive \
+  --file /absolute/private/research-customer.handover.gz \
+  --sha256 ACTUAL_ARCHIVE_SHA256 --bytes ACTUAL_ARCHIVE_BYTES \
+  --manifest-sha256 ACTUAL_HANDOVER_MANIFEST_SHA256 \
+  --call-id original-local-archive --resume
+~~~
+
+Take all three expected values from the original publication and handover. The same native archive receiver checks the complete compressed file and publishes every original member. `ResearchCommerceArchive` exposes the complete handover, four reports, work snapshot, editable dossier and optional source workspace through the original file readers. Its compressed-file limit is the original paid-file route’s 32 MiB; all member limits remain the native contracts.
+
+The original Python context manager joins active calls before closing its runtime. Keep the saved directory after interruption; it contains the original request and completed or uncertain outcome. The separate local receive keeps the original source identity while allowing further customer editing in its receiving workspace.
 
 ## Review original RIS source editions
 
@@ -1147,24 +1241,24 @@ The browser saves the complete draft in its own storage and can download or reop
 The installed commands use the same listener and dossier:
 
 ~~~sh
-starforge research-ris ris-list \\
+starforge research-ris ris-list \
   --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER"
 
-starforge research-ris ris-prepare \\
-  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+starforge research-ris ris-prepare \
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \
   --input "$RIS_PRIVATE/files-and-review.json"
 
-starforge research-ris ris-request \\
-  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+starforge research-ris ris-request \
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \
   --request "$RIS_ORIGINAL_REQUEST"
 
-starforge research-ris ris-export \\
-  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+starforge research-ris ris-export \
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \
   --edition "$RIS_EDITION" --format source --out "$RIS_PRIVATE/original-source.json"
 
-starforge research-ris ris-export-comparison \\
-  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
-  --before "$RIS_EARLIER_EDITION" --after "$RIS_LATER_EDITION" \\
+starforge research-ris ris-export-comparison \
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \
+  --before "$RIS_EARLIER_EDITION" --after "$RIS_LATER_EDITION" \
   --format html --out "$RIS_PRIVATE/edition-comparison.html"
 ~~~
 
