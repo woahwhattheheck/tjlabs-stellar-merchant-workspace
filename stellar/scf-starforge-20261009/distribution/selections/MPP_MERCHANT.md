@@ -182,7 +182,7 @@ Use `customer-intake`, `customer-review` and `customer-configure` against the li
 
 The complete flags and typed interfaces are in `products/mpp-workspace/OPERATING.md` and `products/mpp-workspace/RECEIVING.md` below installed `source/`. Product Stop drains its agent, original jobs and merchant listener before releasing the same workspace. Reopening preserves original purchases, customer files, reviews and exports.
 
-The following receiving driver at `operations/native-mpp-product-receiving-20261012/execute.mjs` is an original operation source, bound to its recorded source files and the retained merchant/customer workspaces, SDK runtime and `customer-private.json`. Continue it with its exact receiving-input file after the original SDK and Applications owners close; its source pin and receiving record belong in the same operator delivery.
+Use the separately retained [original receiving-operation checkout at ecee567090d752d77b258fdb56a7350678b4c5df](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ecee567090d752d77b258fdb56a7350678b4c5df/operations/native-mpp-product-receiving-20261012) for `execute.mjs` and its guide. That operation is supplied separately from the selected customer archive. It binds its recorded original source files and the retained merchant/customer workspaces, SDK runtime and `customer-private.json`. Continue it with its exact receiving-input file after the original SDK and Applications owners close; retain its source pin and receiving record in the same operator delivery.
 
 ## Retained operating sources
 
