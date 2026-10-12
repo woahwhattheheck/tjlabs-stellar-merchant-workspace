@@ -31,7 +31,7 @@ The browser retains each local amendment draft in IndexedDB with its own identit
 
 Before dispatch, the exact native request is retained in the local draft. If its reply is lost, **Retry exact request** sends that same body and request ID. A committed result is recovered through the original native replay mechanism. Its saved amendment identity is applied to the originating draft on normal completion and replay. A later local edit remains local; it cannot create a duplicate proposal merely because the original reply was uncertain.
 
-An authentication failure retains the pending request. Renew access through the existing workspace sign-in and reopen the same draft. A known native rejection can be explicitly resolved while keeping the entered text. Download the complete local draft when handing an unresolved browser operation to the same original operator.
+An authentication failure retains the pending request. Renew access through the existing workspace sign-in and reopen the same draft. A known native rejection can be explicitly resolved while keeping the entered text. Download the complete local draft when handing an unresolved browser operation to the same original operator. If browser retention fails, a persistent recovery panel appears without replacing the visible fields. Its complete download includes proposal inputs, review statement and sources, application note and displayed acknowledgment. **Download fields and reopen saved draft** retains that current selection as a file before loading the original saved browser edition; the native pending request remains available for exact replay.
 
 ## Native API
 

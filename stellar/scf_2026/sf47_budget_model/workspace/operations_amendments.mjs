@@ -93,7 +93,16 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
   let active=true,hostBusy=false,busy=false,caseNow=current,index=null,desk=null,drafts=[],detail=null,preview=null,error='',storageFault=false,serial=Promise.resolve(),opening=0;
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
-  function showError(value){error=value?.message||String(value);if(available()){const node=$('[data-amend-error]');if(node)node.textContent=error;}}
+  function storageRecovery(){
+    if(!available())return;
+    let panel=$('[data-amend-storage-recovery]');
+    if(!panel&&storageFault){panel=document.createElement('section');panel.dataset.amendStorageRecovery='';root.prepend(panel);}
+    if(!panel)return;
+    panel.hidden=!storageFault;panel.className='amend-warning';
+    if(storageFault&&!panel.hasChildNodes())panel.innerHTML='<h4>Keep the current fields and recover browser storage</h4><p>The visible proposal, review and application fields remain here. Download them before reopening the retained browser edition. Reopening also downloads that complete current selection first.</p><div class="amend-actions">'+button('Download all current fields','draft-export')+button('Download fields and reopen saved draft','reload-local')+'</div>';
+    if(!storageFault)panel.replaceChildren();
+  }
+  function showError(value){error=value?.message||String(value);if(available()){const node=$('[data-amend-error]');if(node)node.textContent=error;controls();}}
   function validDesk(value){
     if(!value||value.schema!==SCHEMA||value.caseId!==caseId||value.planId!==planId||!value.id||!value.draft?.token||!Number.isInteger(value.sequence))throw new Error('This local amendment draft belongs to another case or format.');
     if(value.pending&&(value.pending.caseId!==caseId||value.pending.planId!==planId))throw new Error('The retained request belongs to another original case.');
@@ -146,24 +155,33 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     if(!available()||chosen!==opening||desk.selection?.id!==id||(revision&&desk.selection?.revision!==revision))return;
     detail=received;render();
   }
-  function fieldValue(target){return target.multiple?[...target.selectedOptions].map(o=>o.value):target.value;}
+  function fieldValue(target){return target.type==='checkbox'?target.checked:target.multiple?[...target.selectedOptions].map(o=>o.value):target.value;}
+  function fieldInto(next,name,value){
+    if(name==='selectedRevision'){
+      const row=index?.revisions.find(v=>String(v.revision)===String(value));
+      next.draft.inputs.selectedRevision=row?.revision??null;next.draft.inputs.expectedContentSha256=row?.sha256??'';
+    }else if(name==='reason'||name==='asOfDate')next.draft.inputs[name]=value;
+    else if(name.startsWith('basis.'))next.draft.inputs.basis[name.slice(6)]=value===''&&name==='basis.date'?null:value;
+    else if(name.startsWith('review.'))next.review[name.slice(7)]=value;
+    else if(name==='applyNote')next.applyNote=value;
+    else if(name==='acknowledgeBaselineChange')next.displayedAcknowledgment=Boolean(value);
+  }
+  function visibleDraft(){
+    if(!desk)throw new Error('Open the original local draft before exporting its fields.');
+    const retained=clone(desk);
+    for(const el of root.querySelectorAll('[data-amend-form] [name],[data-amend-review] [name],[data-amend-apply] [name]'))fieldInto(retained,el.name,fieldValue(el));
+    return retained;
+  }
   function inputChange(target){
     const name=target.name,value=fieldValue(target);
     if(!desk||!name)return;
     preview=null;
-    const changed=retain(next=>{
-      if(name==='selectedRevision'){
-        const row=index?.revisions.find(v=>String(v.revision)===String(value));
-        next.draft.inputs.selectedRevision=row?.revision??null;next.draft.inputs.expectedContentSha256=row?.sha256??'';
-      }else if(name==='reason'||name==='asOfDate')next.draft.inputs[name]=value;
-      else if(name.startsWith('basis.'))next.draft.inputs.basis[name.slice(6)]=value===''&&name==='basis.date'?null:value;
-      else if(name.startsWith('review.'))next.review[name.slice(7)]=value;
-      else if(name==='applyNote')next.applyNote=value;
-    });
+    const changed=retain(next=>fieldInto(next,name,value));
     changed.then(()=>{if(available()){const b=$('[data-amend-action="save"]');if(b)b.disabled=true;}}).catch(showError);
   }
   function controls(){
     if(!available())return;
+    storageRecovery();
     root.setAttribute('aria-busy',String(busy||hostBusy));
     root.querySelectorAll('button').forEach(b=>{b.disabled=Boolean(b.dataset.amendFixed)||busy||hostBusy;});
     root.querySelectorAll('input,select,textarea').forEach(el=>{el.disabled=hostBusy||!desk||storageFault;});
@@ -182,10 +200,10 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     root.innerHTML='<header><div><h3>Plan amendments</h3><p>Select an actual saved native planning revision for this existing Delivery case. Keep the original package identities, sources and recorded work while reviewing a changed budget or schedule.</p></div><div class="amend-actions">'+button('Refresh case and plans','refresh')+button('Sources','sources')+button('Export complete case','export-case')+'</div></header>'
       +'<p>Case <code>'+esc(caseId)+'</code> · version '+caseNow.program.version+' · current baseline revision '+caseNow.program.planRevision+' · '+esc(caseNow.program.mode)+'</p>'
       +'<p role="alert" data-amend-error>'+esc(error)+'</p>'
-      +(storageFault?'<p class="amend-warning">Browser retention stopped. Download the displayed draft before reopening its latest saved browser edition.</p>':'')
+      +'<section data-amend-storage-recovery hidden></section>'
       +(pending?'<section class="amend-warning"><h4>Original request retained</h4><p>'+esc(pending.body.action)+' · <code>'+esc(pending.body.requestId)+'</code> · original case version '+pending.body.expectedVersion+'</p><p>'+esc(pending.error?.message||'Recover this request through the original transaction before recording another mutation.')+'</p><div class="amend-actions">'+button('Retry exact request','retry')+button('Download retained request','request-export')+(pending.error?.rejected?button('Keep draft and resolve rejected request','resolve-rejected'):'')+'</div></section>':'')
-      +'<section><h4>Local work</h4><div class="amend-actions">'+input('Retained browser draft','localDraft',desk?.id||'',{options:[['','Select a retained draft'],...drafts.map(v=>[v.id,(v.draft.inputs.reason||'New amendment').slice(0,90)+' · '+v.updatedAt+(v.pending?' · request pending':'')])]})+button('New amendment draft','new')+(desk?button('Download local draft','draft-export'):'')+(storageFault?button('Reopen retained browser edition','reload-local'):'')+'</div>'
-      +(d?'<form data-amend-form><div class="amend-fields">'+input('Saved native planning revision','selectedRevision',d.inputs.selectedRevision??'',{required:true,options:[['','Select an exact saved revision'],...items.filter(v=>v.revision!==caseNow.program.planRevision).map(v=>[v.revision,'Revision '+v.revision+' · '+v.savedAt+' · '+(v.note||'')])],help:'Save a partial change in the original planner, then select that complete revision here.'})
+      +'<section><h4>Local work</h4><div class="amend-actions">'+input('Retained browser draft','localDraft',desk?.id||'',{options:[['','Select a retained draft'],...drafts.map(v=>[v.id,(v.draft.inputs.reason||'New amendment').slice(0,90)+' · '+v.updatedAt+(v.pending?' · request pending':'')])]})+button('New amendment draft','new')+(desk?button('Download local draft','draft-export'):'')+'</div>'
+      +(d?'<form data-amend-form><div class="amend-fields">'+input('Saved native planning revision','selectedRevision',d.inputs.selectedRevision??'',{required:true,options:[['','Select an exact saved revision'],...items.filter(v=>v.revision!==caseNow.program.planRevision||v.revision===d.inputs.selectedRevision).map(v=>[v.revision,'Revision '+v.revision+' · '+v.savedAt+' · '+(v.note||'')])],help:'Save a partial change in the original planner, then select that complete revision here.'})
       +input('Comparison date','asOfDate',d.inputs.asOfDate,{type:'date',required:true})
       +input('Reason and intended change','reason',d.inputs.reason,{area:true,required:true,wide:true})
       +input('Decision basis','basis.kind',d.inputs.basis.kind,{options:[['INTERNAL_PLAN','Internal planning choice'],['ISSUER_DECISION','Original issuer decision'],['CUSTOMER_DECISION','Original customer decision'],...(caseNow.program.mode==='WALKTHROUGH'?[['WALKTHROUGH','Labelled walkthrough']]:[])]})
@@ -286,16 +304,12 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     run(async()=>{
       if(action==='draft-export'){
         await serial.catch(()=>{});
-        const retained=clone(desk);for(const el of root.querySelectorAll('[data-amend-form] [name]')){
-          const value=fieldValue(el),name=el.name;
-          if(name==='selectedRevision'){const row=index?.revisions.find(v=>String(v.revision)===String(value));retained.draft.inputs.selectedRevision=row?.revision??null;retained.draft.inputs.expectedContentSha256=row?.sha256??'';}
-          else if(name.startsWith('basis.'))retained.draft.inputs.basis[name.slice(6)]=value;
-          else retained.draft.inputs[name]=value;
-        }
-        download(retained,retained.id+'.json');return;
+        const retained=visibleDraft();download(retained,retained.id+'.json');return;
       }
       if(action==='reload-local'){
-        const id=desk.id;serial=Promise.resolve();storageFault=false;await openDraft(id);return;
+        await serial.catch(()=>{});const retained=visibleDraft();
+        download(retained,retained.id+'-before-browser-reopen.json');
+        const id=desk.id;serial=Promise.resolve();await openDraft(id);return;
       }
       if(action==='sources'){onSources?.();return;}
       if(action==='export-case'){const response=await saveApi(base+'/export.zip',undefined,{download:true});download(await response.blob(),caseId+'-complete.zip','application/zip');return;}
