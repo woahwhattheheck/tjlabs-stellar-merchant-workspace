@@ -119,8 +119,78 @@ For a customer quotation based on an existing SF97 pricing workspace, carry the 
 
 That original adapter checks the quote and pricing source, attaches the complete backup through the existing case writer, uses the same whole-case package exporter, and restores the selected pricing plan and original supplier files at the receiver. The native pricing workspace remains independently editable after restoration.
 
+
+## Receive the Service adjustment and buyer/accountant work
+
+The selected Merchant Support recipe includes the original accounting and buyer providers, their native workspace source, the Service adjustment CLI and the complete native receiving entry. Its saved Applications settings can select the same private accounting and buyer connections used by the Support agent.
+
+A customer handover has three related originals:
+
+| Original | What to retain |
+| --- | --- |
+| Support case | Complete case package, captured history, Service report, commissioning proposal/intent/outcome materials and referenced source bundles |
+| Selected adjustment delivery | Native JSON/CSV/HTML, exact buyer source, report/customer files and the CLI completion manifest for the selected proposal and case revision |
+| Buyer and accountant delivery | Complete buyer project, issued period and credit coding, original accountant files, handoff/return identities and the receiving result |
+
+### Capture the exact selected delivery
+
+Use the running original Support listener and the actual saved proposal:
+
+```json
+{
+  "method": "delivery",
+  "args": {
+    "id": "ACTUAL_CASE_UUID",
+    "proposalId": "ACTUAL_PROPOSAL_UUID"
+  }
+}
+```
+
+```sh
+starforge merchant-service-adjustments \
+  --url http://127.0.0.1:8784/ \
+  --request-file /absolute/private/adjustment-delivery-request.json \
+  --out /absolute/private/adjustment-delivery
+```
+
+The first operation retains its selected case revision, proposal identity, creation time and complete file plan. The same request and output resume missing files and reproduce the final manifest from those originals, including after a later case edit. Each member is received from the original API with its returned hash; final publication uses the original immutable case-artifact writer.
+
+Export the complete Support case through its existing Complete delivery operation after retaining the final adjustment and buyer materials. The original buyer exporter retains its complete project and every selected native source. Use that original export and trusted receiving operation for the receiver's buyer workspace. Accountant files retain their own selected handoff and revision.
+
+At the recipient, inspect and receive the complete Support package, then open the actual receiving case. Inspect its saved Service report, proposal, native capture, buyer issue/close history and complete file downloads. Configure local accounting/buyer aliases to the independently received original stores. The selected case's historical source identities remain visible while subsequent work uses the recipient's current native workspace revisions.
+
+### Operate the complete original receiving programme
+
+The installed entry `merchant-service-adjustment-receiving` composes the original Service programme and the complete adjustment/buyer/accountant continuation. It uses the same Service case and its retained `operation.json`. If that original Service programme is incomplete, it resumes its native seller, incident, report and case work first.
+
+The receiving selection explicitly uses the retained development operation `SCF-WOO-REFUNDS-NATIVE-20261011-7737`. Its original order, export, proofs, terms and captured RPC transcripts are inputs to this programme. The entry captures their complete unchanged bytes from their original paths into its owned fixture packet, verifies their selected identities, and creates its receiving copy. The original producer workspace remains the source of that copy.
+
+```sh
+starforge merchant-service-adjustment-receiving \
+  --directory /absolute/private/service-adjustment-receiving \
+  --service-directory /absolute/private/original-service-receiving \
+  --fixture-packet /absolute/private/service-adjustment-receiving/original-7737-inputs.json \
+  --original-directory /absolute/private/original-7737-operation \
+  --outbox-directory /absolute/private/original-order-outbox \
+  --source-commit ACTUAL_FULL_SELECTED_COMMIT \
+  --chromium /absolute/runtime/chromium \
+  --playwright-module /absolute/runtime/playwright/index.js
+```
+
+Use the actual installed Chromium and Playwright module. The buyer operation uses the selected Python interpreter; `--python /absolute/runtime/python3` can select it. The same flags also apply to the source entry at `stellar/scf-starforge-20261009/sf74-merchant-support-console/service-adjustment-native.mjs`.
+
+If the fixture packet already exists, the entry verifies and reuses it. To capture the original inputs before execution, use its existing `--capture-original-fixture` mode with the same fixture, producer and outbox paths. Keep that complete private packet with the selected original operation.
+
+The full programme prepares a source-bound adjustment from the actual retained Service report; records and verifies it through the original adjustment owner and official decoder; captures native and buyer files; receives purchase and credit coding into the selected buyer workspace; closes its reviewed period; captures and receives the accountant handoff and return; and verifies the complete browser/CLI delivery. Its original request and phase journals retain completed actions and exact pending requests through restart.
+
+The browser exercises the product's existing forms, save/replay controls and original file downloads. The selected development context and actual asset units remain in the native source and buyer period. The programme's returned result reports the observed phase outcomes and full artifact paths.
+
+Repeat the original command with the same receiving directory to continue. Preserve its `operation.json`, fixture packet, original case and native directories, request journals and completed outputs. The original case lease protects that selected state. The final `service-adjustment-native-result.json` identifies the retained result and its complete artifacts.
+
+The [Service adjustment operating guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_ADJUSTMENT_HANDOVER.md) documents the full entry and the underlying case/native contracts. The [buyer receiving guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_BUYER_HANDOVER.md) defines its buyer and accountant selection, exact source files, periods, returned records and receiving behavior.
+
 ## Deliver the installation handover
 
 The handover should contain the actual selected source archive and its receipt, the original runtime profile/lock or complete runtime transfer, the whole case package and manifest, the receiving result, and the private host configuration under the customer's existing custody.
 
-Record the installed source commit, recipe, actual runtime location, saved application ID, receiving case UUID, current revision and the case/source/package directories in the customer's operating notes. Keep credential values in the original private environment. These are the inputs needed to reopen the same application and continue its work.
+Record the installed source commit, recipe, actual runtime location, saved application ID, receiving case UUID, current revision, selected accounting/buyer aliases and the case/source/package/native workspace directories in the customer's operating notes. Keep credential values in the original private environment. These are the inputs needed to reopen the same application and continue its work.
