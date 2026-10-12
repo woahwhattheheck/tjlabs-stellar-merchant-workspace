@@ -21,6 +21,7 @@ They retain its original dependency manifests and lock.
 | STAC catalog and local retained explorer | Original Node source and local file-lock support |
 | STAC merchant/customer receiving | Native Stellar packages, `schema`, and `openapi`, as specified by the original GIS receiving guide |
 | Incident watcher and case desk | Original Node source and local file-lock support; configured Slack/webhook credentials when notifications are selected |
+| Supplier costs and native pricing browser | Original Node source and local file-lock support; add the original merchant MCP runtime for agent operation |
 | Accounting provider operations | The existing merchant MCP runtime and original selected QuickBooks/Xero workspace configuration |
 | Merchant pricing, supplier costs and scenario planning | The same installed merchant runtime, original seller configuration and selected operations source or retained exports |
 | Material catalog | The catalog guide's original runtime feature and provider configuration |
@@ -423,6 +424,11 @@ workspace. A new process can reconcile that same request without recreating the
 financial operation.
 
 ## 8A. Operate supplier costs, pricing and full workspace receiving
+
+The [complete merchant economics guide](../merchant-economics/OPERATING.md)
+connects original source intake, exact period and route coverage, allocation,
+pricing decisions, host-declared agent inputs and complete receiving. The
+following steps keep this workflow in the same installed Applications product.
 
 Open **Applications → New application → Merchant pricing and scenario
 planning** in the same installed product. Select the merchant's original seller
