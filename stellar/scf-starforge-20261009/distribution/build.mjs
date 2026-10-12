@@ -26,15 +26,15 @@ function isRuntimeFile(path, explicitRuntime = false) {
   // Retained source data can have an original fixtures path. Only explicitly
   // declared data gets this exception; executable fixtures stay excluded.
   const declaredData = explicitRuntime && /\.(?:csv|json|txt|parquet)$/i.test(path);
-  // Explicit scientific references include original PDF, R/Rd and package metadata.
-  // Keep these formats out of the automatic runtime-directory expansion.
+  // An explicit original file is an exact source selection, not a directory
+  // expansion hint. Its extension cannot override that declaration. Keep the
+  // heuristic format list for automatic component/import discovery; all paths
+  // still pass the same directory, exclusion, Git type/hash and byte limits.
   return !parts.some(part => part.startsWith('.') ||
     (excludedDirs.has(part) && !(part === 'fixtures' && declaredData))) &&
     (explicitRuntime || !excludedName.test(parts.at(-1))) &&
-    (supported.test(path) || (explicitRuntime && /\.(?:zip|parquet|pdf|r|rd|gz|rst|conf)$/i.test(path)) ||
-      ['LICENSE', 'go.mod', 'Cargo.lock'].includes(parts.at(-1)) ||
-      (explicitRuntime && (['COPYING', 'DESCRIPTION', 'metadat-DESCRIPTION'].includes(parts.at(-1)) ||
-        /^(?:LICENSE|NOTICE)[.-][A-Za-z0-9][A-Za-z0-9._-]*$/i.test(parts.at(-1)))));
+    (explicitRuntime || supported.test(path) ||
+      ['LICENSE', 'go.mod', 'Cargo.lock'].includes(parts.at(-1)));
 }
 function valuesDeep(value) {
   return typeof value === 'string' ? [value] : Object.values(value).flatMap(valuesDeep);
