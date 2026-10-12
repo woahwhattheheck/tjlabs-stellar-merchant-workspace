@@ -1,0 +1,43 @@
+{
+  "schema": "commons.iati-document-following-source-transfer.v1",
+  "encoding": "gzip+base64url-parts",
+  "json": {
+    "bytes": 5702867,
+    "sha256": "00c7031d8c1b94413cd631c58199b51fe1aea694b323d89ac5f8e3db5515b19e"
+  },
+  "gzip": {
+    "bytes": 1706584,
+    "sha256": "77fb083eddc53e45b3da4d04ac798e076511d835c9ca17e6a7a7aeac0789d1fb"
+  },
+  "sourceFiles": 229,
+  "sourceBytes": 5169868,
+  "sourceSha256": "2aca428ed4e35e99e73595d66dd8202961ac504512f118ac7a2221fb58b4689c",
+  "publicationCommit": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+  "parts": [
+    {
+      "name": "source-capsule.base64.part01",
+      "bytes": 500000,
+      "sha256": "fc6f738f3137c4f7c3b3373afbcbefde7092f839345d1925031cd1a665c942c6"
+    },
+    {
+      "name": "source-capsule.base64.part02",
+      "bytes": 500000,
+      "sha256": "62e9acbcd60179260f0a326b495879ec1d93126d6d132dc651995144f918cef7"
+    },
+    {
+      "name": "source-capsule.base64.part03",
+      "bytes": 500000,
+      "sha256": "299a99ddc169b1ed9566c19bae2f33d315d51b5d51152300952a6ac788e152be"
+    },
+    {
+      "name": "source-capsule.base64.part04",
+      "bytes": 500000,
+      "sha256": "446c3d1ef3591120ee3d3257f77e8f0e7a65a6230717e991f679c539bd54d13b"
+    },
+    {
+      "name": "source-capsule.base64.part05",
+      "bytes": 275446,
+      "sha256": "613e9006bf61bc68e3a5a29c0044b3de0e0dfcd5078f8bfb4f85d19108d57413"
+    }
+  ]
+}
