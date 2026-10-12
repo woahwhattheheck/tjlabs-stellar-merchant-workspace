@@ -1,0 +1,11 @@
+# Haystack original Git source bootstrap
+
+This is the source-transfer input for the existing HAYSTACK-DISTRIBUTION-6804-20261012 programme. It retains the exact signed base commit a7629861dd3c1b9adfebbe5bf1b88bd5a82eb14d, all 10,254 original recursive-tree entries and the 12 complete maintained bootstrap/receiver source files.
+
+The gzip contains one UTF-8 JSON object. Its compressed bytes are 452753, SHA-256 063bfde949b8a18107c09743a7870858e468f348017c257de8076c1f09392ed2; decoded JSON is 2034776 bytes, SHA-256 70b7a6dd062a8ff4ae42a661c879dfb564a017e8adf22b68f8909f84fa614233. Every file includes its full original Git blob, byte count and SHA-256. All 1,016 directory tree objects and the signed commit were independently reconstructed and matched. The receiver remains original distribution/git-object-receiving.py 3d402bc7e20e0da26193d099ad9429d0b47feef2.
+
+## Use the maintained receiver
+
+Verify the complete gzip and decoded JSON before materialization. Write each files[].content only after checking its declared full path, Git blob and SHA-256. The metadata object is the complete native receiver input; its initial requiredPaths select the 11 original builder/installer modules. Invoke the unchanged Python receiver with that metadata, the original commit, one owned cache directory, and the existing read-only donor repositories/source directories selected by the operator. Additional original paths required by the unchanged builder continue through the receiver's supported --additional-path option. The receiver outputs an ordinary repository.git; it does not modify borrowed Git objects or refs.
+
+This bootstrap is not a completed installed product or customer result. The full 43-file Haystack cohort remains public-commons-sprint-2026 blob e292354f4dec907475c1cf324e0f691986908523; the original complete distribution programme is its same four-file source packet 47ac952fa89974927246788e4a6a18b35ee9e653, with the reviewed lifecycle/archive corrections owned in the original SCF thread. Preserve its exact input, original Charlie bytes and existing native directory/lease before dispatch. The complete original source selection, runtime installation, Applications, Merchant, independent receive and archive run remain the programme's responsibility.
