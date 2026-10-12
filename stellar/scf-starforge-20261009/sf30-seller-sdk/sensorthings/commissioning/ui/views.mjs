@@ -127,7 +127,7 @@ export function plans(ctx){
     content.append(scopedForm(ctx,'plan-review-'+planId,'Record plan review',[
       field('Decision','decision',{type:'select',options:[{value:'accept',label:'Accept the displayed plan'},{value:'revise',label:'Return for revision'}]}),field('Reviewer','actor',{required:true,value:ctx.state.actor??''}),field('Review note','note',{type:'textarea',required:true}),
       field('I reviewed the displayed issues, source selection and metadata additions','acknowledgeIssues',{type:'checkbox'})
-    ],x=>{ctx.state.actor=x.actor;ctx.save();return ctx.act('commissioning.plan.review',{projectId:pId(ctx),planId,decision:x.decision,actor:x.actor,note:x.note,acknowledgeIssues:x.acknowledgeIssues},{selectResult:'reviewId'});},{label:'Retain plan decision'}));
+    ],x=>{const acknowledgeIssues=x.acknowledgeIssues?list(page.issues).map(issue=>{if(typeof issue.id!=='string'||!issue.id)throw new Error('The displayed plan is missing an original issue identity. Reopen that plan.');return issue.id;}):[];ctx.state.actor=x.actor;ctx.save();return ctx.act('commissioning.plan.review',{projectId:pId(ctx),planId,decision:x.decision,actor:x.actor,note:x.note,acknowledgeIssues},{selectResult:'reviewId'});},{label:'Retain plan decision'}));
     const reviews=projectRecords(ctx,'reviews').filter(r=>r.planId===planId);
     content.append(panel('Original plan decisions',recordTable(ctx,reviews,[{label:'Decision',key:'decision'},{label:'Actor',key:'actor'},{label:'Use',render:r=>button('Select review',()=>pick(ctx,'reviewId',recordId(r)))}])));
     content.append(scopedForm(ctx,'start-plan-'+planId,'Execute this reviewed plan',[
