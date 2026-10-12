@@ -249,7 +249,10 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
         button('Remove allocation','remove-allocation',{id:String(index)})+'</fieldset>').join('')+
       button('Add allocation','add-allocation',{disabled:data.allocations.length>=200})+'</div>';
     return '<section class="supplier-editor"><h4>'+esc(draft.label)+'</h4><p>Supplier: '+esc(accountName(data.contributorId||draft.contributorId||session.contributorId))+
-      ' · Original case version '+draft.expectedVersion+'</p><form data-pa-editor><div class="supplier-fields">'+fields+
+      ' · Original case version '+draft.expectedVersion+'</p>'+
+      (draft.reconciledRecord?'<section class="supplier-reconciliation"><h5>Current original record at this version</h5><p>The retained form is your earlier input. Compare it with the current original record before saving.</p>'+
+        '<pre>'+esc(pretty(draft.reconciledRecord))+'</pre>'+button('Use current original record in the form','use-current-record')+'</section>':'')+
+      '<form data-pa-editor><div class="supplier-fields">'+fields+
       (transition?'<p class="supplier-wide">Review the original record and retain the reason for this state change.</p><details class="supplier-wide"><summary>Original record</summary><pre>'+esc(pretty(draft.before))+'</pre></details>':sourceFields(data))+
       field(transition?'Reason for this change':'Recording note','draftReason',draft.reason||'',{area:true,wide:true,required:transition})+
       '</div><div class="supplier-actions">'+button('Review original change','review-draft')+
@@ -341,7 +344,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     target[bits.at(-1)]=['costId','dueDate','usdValue'].includes(bits.at(-1))&&value===''?null:value;
   }
   async function prepareRequest(action,data,after={}){
-    const body={expectedVersion:action==='source.add'?current.program.version:session.draft.expectedVersion,
+    const body={expectedVersion:session.draft?.expectedVersion??current.program.version,
       actor:recordingActor(),note:action==='source.add'?'Retain original supplier account document.':session.draft.reason||'',action,data:clone(data)};
     body.requestId=await mutationId('operations:'+caseId,body);
     session.pending={body,after,preparedAt:new Date().toISOString()};await persist();render();await dispatch();
@@ -421,7 +424,11 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     });return;}
     if(action==='reopen-rejected'&&session.pending?.rejected){run(async()=>{
       const next=await api(prefix),pending=session.pending;session.previousRequest=clone(pending);session.pending=null;session.reviewed=null;
-      if(session.draft)session.draft.expectedVersion=next.program.version;
+      if(session.draft){
+        session.draft.expectedVersion=next.program.version;
+        const kind={contributor:'contributors',invoice:'invoices',work:'work',cash:'cash'}[session.draft.action.split('.')[0]];
+        session.draft.reconciledRecord=session.draft.data.id?clone(next.records[kind]?.find(row=>row.id===session.draft.data.id)||null):null;
+      }
       await persist();await onCase(next,{version:next.program.version,action:'reconcile'});
     });return;}
     if(session.pending)return;
@@ -450,6 +457,12 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
       download(state(),caseId+'-supplier-desk-closed-'+Date.now()+'.json');session.draft=null;session.reviewed=null;schedule();render();return;
     }
     if(!session.draft)return;
+    if(action==='use-current-record'&&session.draft.reconciledRecord){
+      const action=session.draft.action;
+      if(['contributor.save','work.save','invoice.save'].includes(action))session.draft.data=clone(session.draft.reconciledRecord);
+      else session.draft.before=clone(session.draft.reconciledRecord);
+      session.draft.reconciledRecord=null;session.reviewed=null;schedule();render();return;
+    }
     if(action==='add-line'){session.draft.data.lines.push({id:'line-'+crypto.randomUUID(),costId:null,description:'',amountUsd:'',workIds:[]});}
     else if(action==='remove-line'){session.draft.data.lines.splice(Number(id),1);}
     else if(action==='add-allocation'){session.draft.data.allocations.push({invoiceId:'',amountUsd:''});}

@@ -55,7 +55,7 @@ Account Statements receives source statement rows through its own parser and ori
 
 ### Retain original documents
 
-The editor's **Attach original document** retains the exact file through the native `source.add` command. A successful attachment is linked back to that same retained draft. The draft advances to the resulting source version so its later record save follows the original case sequence.
+The editor's **Attach original document** retains the exact file through the native `source.add` command. A successful attachment is linked back to that same retained draft. The source attachment uses that draft's reviewed case version. A successful attachment advances the same draft to the resulting source version so its later record save follows the original case sequence.
 
 The Sources view and source buttons download the original retained bytes. Each source keeps its native filename, content identity, byte count, media type and observed date. The ordinary source bounds remain 8 MiB per file and 24 MiB / 200 files per case.
 
@@ -91,7 +91,7 @@ The complete browser desk retains the chosen supplier/dates, unfinished original
 - A browser save reads and compares the stored revision inside the same write transaction. A newer draft in another tab is preserved. The current tab can download its full input, then open the saved desk.
 - **Download desk input** preserves the complete original input and pending request. **Open desk input** receives that desk for the same original case.
 - An interrupted response keeps the original command body and request ID. **Retry original request** submits that exact request and receives the native saved result when it already committed.
-- A definitive rejected native request can reopen its input at the refreshed case version. The previous complete request remains retained. Review the form again before a new save.
+- A definitive rejected native request can reopen its input at the refreshed case version. The previous complete request remains retained. The current original record is shown beside the earlier input, with an action to load that current record into the form. Review the reconciled form again before a new save.
 - An original document from a rejected attachment remains in the retained request. **Record retained source document** can send those complete original bytes without reading the file again.
 - Closing a draft downloads the complete desk first. A completed source attachment remains linked to its original draft even if navigation interrupted the response.
 
