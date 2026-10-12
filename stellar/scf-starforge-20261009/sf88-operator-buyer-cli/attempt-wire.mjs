@@ -1,8 +1,8 @@
 // MIT. Private original SF88 HTTP/signing checkpoints; SF31/SF81 retain payment authority.
-import { lstat, open, readdir, rename } from './dataset-location.mjs';
+import { lstat, open, readdir, rename, datasetLocation } from './dataset-location.mjs';
 import { constants } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative, sep } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/diagnostics.mjs';
 import {
@@ -521,6 +521,78 @@ async function readSelection(options) {
   const read=await originalFile(options.selectionPath,HISTORY_LIMIT);
   return {...read,value:validateSelection(read.value,options)};
 }
+function checkpointContent(value) {
+  const {sha256,directoryIdentity,lockIdentity,files,...binding}=value;
+  return {...binding,files:files.map(({device,inode,...file})=>file)};
+}
+/** A native Dataset receive changes filesystem identities. Its immutable
+ * portable manifest proves the original selected bytes; a separate location
+ * record binds those same bytes to the current received inodes. Neither the
+ * original selection nor its checkpoint/retirement digests is rewritten. */
+async function retainedCheckpoint(options,selected,actual) {
+  const location=options.kind==='dataset'?datasetLocation():null;
+  const locationPath=location?.archiveSha256?
+    join(options.directory,'wire-location-'+location.archiveSha256+'.json'):null;
+  const prior=locationPath && await exists(locationPath)?
+    await originalFile(locationPath,HISTORY_LIMIT):null;
+  if(!prior && same(actual,selected.value.checkpoint))return actual;
+  need(location && HASH.test(location.archiveSha256??'') &&
+    HASH.test(location.manifestSha256??'') &&
+    same(checkpointContent(actual),checkpointContent(selected.value.checkpoint)),
+    'PREAPPROVAL_WIRE_ARCHIVE_CHANGED');
+  const member=path=>{
+    const selectedPath=relative(location.sourceDirectory,path);
+    need(selectedPath && selectedPath!=='..' && !selectedPath.startsWith('..'+sep) &&
+      !selectedPath.startsWith(sep),'DATASET_UNPAID_WIRE_RECEIVED_PATH');
+    return selectedPath.split(sep).join('/');
+  };
+  const manifest=await originalFile(join(location.sourceDirectory,'.sf88-portable-history',
+    location.archiveSha256+'.json'),32*1024*1024);
+  need(manifest.sha256===location.manifestSha256 &&
+    manifest.value.schema==='stellar-forge.sf88.dataset-session-archive.v1' &&
+    manifest.value.sourceDirectory===location.sourceDirectory &&
+    manifest.value.sessionSha256===location.sessionSha256 &&
+    manifest.value.configurationSha256===location.configurationSha256 &&
+    Array.isArray(manifest.value.files) && Array.isArray(manifest.value.directories),
+    'DATASET_UNPAID_WIRE_RECEIVED_MANIFEST_CHANGED');
+  const selectedMember=(path,sha256,bytes)=>{
+    const rows=manifest.value.files.filter(file=>file.path===member(path));
+    need(rows.length===1 && rows[0].sha256===sha256 &&
+      (bytes===undefined || rows[0].bytes===bytes),
+      'DATASET_UNPAID_WIRE_NOT_IN_RECEIVED_MANIFEST');
+  };
+  selectedMember(options.selectionPath,selected.sha256,selected.bytes);
+  selectedMember(join(options.directory,'plan.json'),options.planSha256);
+  const roots=[wirePath(options.cfg),options.archiveDirectory].map(member)
+    .filter(root=>manifest.value.directories.some(item=>item.path===root));
+  need(roots.length===1,'DATASET_UNPAID_WIRE_RECEIVED_SELECTION_CHANGED');
+  const prefix=roots[0]+'/';
+  const members=manifest.value.files.filter(file=>file.path.startsWith(prefix))
+    .map(file=>({name:file.path.slice(prefix.length),bytes:file.bytes,sha256:file.sha256}))
+    .sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
+  need(!manifest.value.directories.some(item=>item.path.startsWith(prefix)) &&
+    same(members,checkpointContent(actual).files),
+    'DATASET_UNPAID_WIRE_RECEIVED_BYTES_CHANGED');
+  const root=await lstat(location.sourceDirectory);
+  const binding={schema:DATASET_UNPAID_WIRE+'.location',intentId:options.cfg.operation.intentId,
+    planSha256:options.planSha256,sourceAttemptSha256:options.sourceAttemptSha256,
+    selectionSha256:selected.sha256,checkpointSha256:selected.value.checkpoint.sha256,
+    sourceDirectory:location.sourceDirectory,receivedDirectory:location.directory,
+    archiveSha256:location.archiveSha256,manifestSha256:location.manifestSha256,
+    receivedRootIdentity:{device:root.dev,inode:root.ino},originalWireMember:roots[0]};
+  if(prior) {
+    const {checkpoint,...saved}=prior.value;
+    need(same(saved,binding) && checkpoint?.sha256===checkpointHash(checkpoint) &&
+      same(checkpoint,actual),'DATASET_UNPAID_WIRE_RECEIVED_LOCATION_CHANGED');
+  } else {
+    const raw=jsonBytes({...binding,checkpoint:actual});
+    need(raw.length<=HISTORY_LIMIT,'PREAPPROVAL_WIRE_HISTORY_LIMIT');
+    await writeBytes(locationPath,raw,{exclusive:true});
+    need((await originalFile(locationPath,HISTORY_LIMIT)).sha256===digest(raw),
+      'DATASET_UNPAID_WIRE_RECEIVED_LOCATION_CHANGED');
+  }
+  return actual;
+}
 async function archivedCheckpoint(options,selected,{releaseOrphans=false}={}) {
   if(!selected.value.checkpoint.exists) {
     need(!await exists(options.archiveDirectory),'PREAPPROVAL_WIRE_ARCHIVE_CHANGED');
@@ -531,7 +603,7 @@ async function archivedCheckpoint(options,selected,{releaseOrphans=false}={}) {
   need(held,'PREAPPROVAL_WIRE_ARCHIVE_ACTIVE');
   try {
     const actual=await captureWire(options.cfg,options.body,options.archiveDirectory,held);
-    need(same(actual,selected.value.checkpoint),'PREAPPROVAL_WIRE_ARCHIVE_CHANGED');
+    await retainedCheckpoint(options,selected,actual);
     if(releaseOrphans) {
       await releaseUnpublishedWireCapacity(options.archiveDirectory,actual);
       need(same(await captureWire(options.cfg,options.body,options.archiveDirectory,held),actual),
@@ -604,11 +676,11 @@ async function withWireHistory(options,work,kind) {
     const originalVerification=JSON.parse(jsonBytes(await verifyOriginal()));
     let selected=await readSelection(selectedOptions);
     const alreadyArchived=selected && await exists(archiveDirectory);
+    let currentCheckpoint=selected?.value.checkpoint;
     if(!alreadyArchived) {
       const actual=await acquireWire(cfg,body,{createMissingLock:true});
       held=actual.held;
-      if(selected)need(same(selected.value.checkpoint,actual.checkpoint),
-        'PREAPPROVAL_NEW_WIRE_EXISTS');
+      if(selected)currentCheckpoint=await retainedCheckpoint(selectedOptions,selected,actual.checkpoint);
       else {
         if(selectedOptions.expected)need(matchingCheckpoint(selectedOptions.expected,actual.checkpoint,
           {allowCreatedLock:true}),'PREAPPROVAL_WIRE_SOURCE_CHANGED');
@@ -619,8 +691,9 @@ async function withWireHistory(options,work,kind) {
         const raw=jsonBytes(value);
         need(raw.length<=HISTORY_LIMIT,'PREAPPROVAL_WIRE_HISTORY_LIMIT');
         selected={value,raw,sha256:digest(raw),bytes:raw.length};
+        currentCheckpoint=actual.checkpoint;
       }
-    } else await archivedCheckpoint(selectedOptions,selected);
+    } else currentCheckpoint=await archivedCheckpoint(selectedOptions,selected);
     validateSelection({...selected.value,originalVerification},selectedOptions);
     // A completed or partially published archive belongs to the selected old
     // attempt. Its replacement canonical wire is never a retirement candidate.
@@ -630,8 +703,8 @@ async function withWireHistory(options,work,kind) {
     // dead future slots can supply the space needed to preserve their history.
     if(alreadyArchived)await archivedCheckpoint(selectedOptions,selected,{releaseOrphans:true});
     else if(selected.value.checkpoint.exists) {
-      await releaseUnpublishedWireCapacity(wirePath(cfg),selected.value.checkpoint);
-      need(same(await captureWire(cfg,body,wirePath(cfg),held),selected.value.checkpoint),
+      await releaseUnpublishedWireCapacity(wirePath(cfg),currentCheckpoint);
+      need(same(await captureWire(cfg,body,wirePath(cfg),held),currentCheckpoint),
         'PREAPPROVAL_WIRE_SOURCE_CHANGED');
     }
     const receipt=retirementReceipt(selectedOptions,selected),receiptRaw=jsonBytes(receipt);
@@ -649,7 +722,7 @@ async function withWireHistory(options,work,kind) {
     need(retained.sha256===selected.sha256,'PREAPPROVAL_WIRE_SELECTION_CHANGED');
     if(selected.value.checkpoint.exists && !alreadyArchived) {
       const actual=await captureWire(cfg,body,wirePath(cfg),held);
-      need(same(actual,selected.value.checkpoint),'PREAPPROVAL_WIRE_SOURCE_CHANGED');
+      need(same(actual,currentCheckpoint),'PREAPPROVAL_WIRE_SOURCE_CHANGED');
       need((await lstat(directory)).dev===actual.directoryIdentity.device,
         'PREAPPROVAL_WIRE_SAME_FILESYSTEM_REQUIRED');
       await rename(wirePath(cfg),archiveDirectory);

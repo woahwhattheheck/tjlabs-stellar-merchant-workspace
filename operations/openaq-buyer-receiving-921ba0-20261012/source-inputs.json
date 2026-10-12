@@ -33,14 +33,14 @@
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
       "bytes": 34897,
-      "sha256": "012fb09b0bca1b6e8b72e134940c39988f67071951ae3b742104fc37499b151b",
-      "gitBlob": "4a7a6a4292ae2cef2ec8c9525e2c905c8faeb12f"
+      "sha256": "59aca8c6d4a7dedc54c117a268749d7972438325cc77af49c1a337e612fe4894",
+      "gitBlob": "2c59ab261d4de476297d44da5697a383cdd390fb"
     },
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
-      "bytes": 63682,
-      "sha256": "edd67af8c43352246e87f846ed0bcc6cd9ca8e93fc4fdb6345128b596fb4d3c7",
-      "gitBlob": "78a78fbb66eb409a132408a3850e5eb35ceec77d"
+      "bytes": 68151,
+      "sha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+      "gitBlob": "a17c25b28fe1d5509d1df8c6e1b2c77d942de985"
     }
   ],
   "nativeContinuation": {
@@ -109,7 +109,7 @@
     "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
     "sourceManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c",
     "assetsSha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
-    "packetSha256": "edd67af8c43352246e87f846ed0bcc6cd9ca8e93fc4fdb6345128b596fb4d3c7",
+    "packetSha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
     "reason": "Preserve the original Dataset unsigned wire and linked SF82 checkout records in its existing unpaid history before explicit same-page continuation.",
     "files": [
       {
@@ -121,9 +121,9 @@
         },
         "after": {
           "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs",
-          "bytes": 39066,
-          "sha256": "ccdef9b82f839014e38baa41fc188c4a4967b96fac461a922951687a4fc72fca",
-          "gitBlob": "8413914688d195bcb23a3ed4b21d6dfecb22c813"
+          "bytes": 43462,
+          "sha256": "055e76e4f6f4655a1cce000dc8b13cec2a24d733d746d6f43be68dbe4978cf2c",
+          "gitBlob": "092304ce9ed33fe7a2c1d483501a091e3db6c7b9"
         }
       },
       {
@@ -143,10 +143,10 @@
     ],
     "packet": {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
-      "bytes": 63682,
-      "sha256": "edd67af8c43352246e87f846ed0bcc6cd9ca8e93fc4fdb6345128b596fb4d3c7",
-      "gitBlob": "78a78fbb66eb409a132408a3850e5eb35ceec77d"
+      "bytes": 68151,
+      "sha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+      "gitBlob": "a17c25b28fe1d5509d1df8c6e1b2c77d942de985"
     }
   },
-  "runtimeSourceBytesAfterCorrections": 10774533
+  "runtimeSourceBytesAfterCorrections": 10778929
 }
