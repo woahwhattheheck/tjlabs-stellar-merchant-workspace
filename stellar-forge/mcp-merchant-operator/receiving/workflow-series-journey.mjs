@@ -13,6 +13,7 @@ import { MerchantWorkflowSeriesClient, writeWorkflowSeriesFile } from '../consol
 import { reopenWorkflowSeriesHandover } from '../console/workflow-series-handover.mjs';
 import { cycleId } from '../console/workflow-series-records.mjs';
 import { receiveMerchantWorkflowRecipes } from './workflow-recipes-journey.mjs';
+import { verifyNativeArtifacts, prepareNativeArtifactReport, retainNativeInspection, nativeReceivingAccessToken, writeNativeArtifactSelection } from './workflow-native-artifacts.mjs';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const delay = ms => new Promise(done => setTimeout(done, ms));
@@ -25,6 +26,78 @@ function planningWindow() {
   return { from: new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10),
     to: new Date(Date.UTC(year, month + 2, 0)).toISOString().slice(0, 10) };
 }
+async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, openSession }) {
+  const token = await nativeReceivingAccessToken(directory), hosts = [], clients = [];
+  const observed = { operationId: report.operationId, sourceCommit, directory,
+    seriesId: report.seriesId, reopenedAt: new Date().toISOString(), workspaces: [], customers: [] };
+  try {
+    for (const role of ['source', 'receiver']) {
+      const host = await openSession({ configPath: join(directory, 'merchant', 'merchant-mcp.json'), port: 0,
+        environment: { ...process.env, MCP_ACCESS_TOKEN: token }, consoleDirectory: join(directory, role + '-console') });
+      hosts.push(host);
+      const selected = new MerchantWorkflowSeriesClient({ url: host.consoleUrl, environment: { MCP_ACCESS_TOKEN: token } });
+      clients.push(selected);
+      const current = await selected.host();
+      assert.equal(current.console.workspaceId, report.workspaces[role]);
+      assert.equal(current.operator.managesRunningSeller, false);
+      const series = await selected.series(report.seriesId);
+      assert.equal(series.total, 2);
+      assert.equal(series.cycles.filter(value => value.state === 'COMPLETE').length, 2);
+      const customerProfile = await selected.profile(report.profileId);
+      const baselineProfile = await selected.profile(report.baseline.profileId);
+      assert.equal(customerProfile.calls.length, 24); assert.equal(baselineProfile.calls.length, 7);
+      const calls = [...report.originalRecipe.nativeCalls, ...report.periods.flatMap(period => period.nativeCalls)];
+      assert.equal(calls.length, 24);
+      for (const call of calls) {
+        const retained = await selected.console.json('call/' + call.id);
+        assert.equal(retained.state, 'COMPLETE'); assert.equal(retained.tool, call.tool);
+        assert.equal(retained.argumentsSha256, call.argumentsSha256);
+        assert.equal(retained.resultSha256, call.resultSha256);
+        assert.equal(sha(retained.resultJson), call.resultSha256);
+      }
+      for (const period of report.periods) {
+        const reopened = await selected.cycle(period.id);
+        assert.equal(reopened.run.id, period.run.id); assert.equal(reopened.run.state, 'COMPLETE');
+        assert.equal(reopened.cycle.contentSha256, period.cycle.contentSha256);
+      }
+      const installed = await selected.console.installation(report.workflowId);
+      assert.equal(installed.installation.contentSha256, recipe.installation.contentSha256);
+      assert.equal(installed.definition.revision, 1); assert.equal(installed.currentDefinitionRevision, 2);
+      observed.workspaces.push({ role, id: current.console.workspaceId,
+        recurringProfileCalls: customerProfile.calls.length, baselineCalls: baselineProfile.calls.length });
+    }
+    const receiver = clients[1];
+    const baseline = await optional(join(directory, 'workflow-native-run.json'));
+    const customers = [{ id: baseline.customerId, files: baseline.customerFiles, archive: baseline.customerArchive },
+      { id: recipe.customerId, files: recipe.customerFiles, archive: recipe.customerArchive },
+      ...report.periods.map(period => ({ id: period.customer.id, files: period.customer.files, archive: period.archive }))];
+    for (const customer of customers) {
+      assert.equal(customer.files.length, 6);
+      const archive = await receiver.console.response('customer-archive/' + customer.id, {},
+        async value => Buffer.from(await value.arrayBuffer()));
+      assert.equal(sha(archive), customer.archive.sha256);
+      for (const file of customer.files) {
+        const bytes = await receiver.console.response('customer-file/' + customer.id + '?file=' + encodeURIComponent(file.name), {},
+          async value => Buffer.from(await value.arrayBuffer()));
+        assert.equal(bytes.length, file.bytes); assert.equal(sha(bytes), file.sha256);
+      }
+      observed.customers.push({ id: customer.id, files: customer.files.length, archiveSha256: customer.archive.sha256 });
+    }
+    const handover = await reopenWorkflowSeriesHandover({ directory: join(directory, 'series-customer-handover') });
+    assert.equal(handover.contentSha256, report.handover.contentSha256);
+    observed.handoverSha256 = handover.contentSha256;
+  } finally {
+    for (const selected of clients) selected.close();
+    await Promise.all(hosts.map(host => host.close()));
+  }
+  observed.result = 'PASS';
+  const path = join(directory, 'workflow-series-reopened.json'), temporary = path + '.tmp';
+  await writeFile(temporary, JSON.stringify(observed, null, 2) + '\n', { mode: 0o600 });
+  await rename(temporary, path);
+  process.stdout.write(JSON.stringify({ stage: 'completed-workspaces-reopened', ...observed }) + '\n');
+  return observed;
+}
+
 export async function receiveMerchantWorkflowSeries({
   directory, chromiumPath, playwrightModule, sourceCommit, openSession = startMerchantMcp
 } = {}) {
@@ -38,13 +111,10 @@ export async function receiveMerchantWorkflowSeries({
   const prior = await optional(completed);
   if (prior?.result === 'PASS') {
     assert.equal(prior.operationId, recipe.operationId);
-    for (const file of prior.artifacts) {
-      const bytes = await readFile(join(directory, file.name));
-      assert.equal(bytes.length, file.bytes); assert.equal(sha(bytes), file.sha256);
-    }
-    const handover = await reopenWorkflowSeriesHandover({ directory: join(directory, 'series-customer-handover') });
-    assert.equal(handover.contentSha256, prior.handover.contentSha256);
-    return { ...prior, reused: true };
+    await verifyNativeArtifacts(directory, prior);
+    const reopened = await reopenCompletedSeries({ directory, report: prior, recipe, sourceCommit, openSession });
+    await writeNativeArtifactSelection(directory);
+    return { ...prior, reused: true, reopened };
   }
   const suffix = sha(directory).slice(0, 18), seriesId = 'customer-series-' + suffix;
   const report = await optional(checkpoint) ?? {
@@ -57,6 +127,7 @@ export async function receiveMerchantWorkflowSeries({
     baseline: recipe.baseline, ports: { ...recipe.ports }, workspaces: { ...recipe.workspaces },
     planning: planningWindow(), requests: {}, periods: [], artifacts: [], stages: [], browserErrors: [], result: 'RUNNING'
   };
+  prepareNativeArtifactReport(report);
   assert.equal(report.operationId, recipe.operationId); assert.equal(report.directory, directory);
   assert.equal(report.profileId, recipe.targetProfile); assert.equal(report.workflowId, recipe.requests.install.id);
   assert.equal(report.seriesId, seriesId);
@@ -97,7 +168,7 @@ export async function receiveMerchantWorkflowSeries({
       await delay(100);
     }
   };
-  const token = (await readFile(join(directory, 'native-access-token'), 'utf8')).trim();
+  const token = await nativeReceivingAccessToken(directory);
   const configuration = join(directory, 'merchant', 'merchant-mcp.json');
   const open = async role => {
     const host = await openSession({ configPath: configuration, port: report.ports[role] ?? 0,
@@ -128,12 +199,9 @@ export async function receiveMerchantWorkflowSeries({
   };
   const screenshot = async (name, viewport) => {
     if (viewport) await page.setViewportSize(viewport);
-    const existing = report.artifacts.find(file => file.name === name);
-    if (existing) {
-      const bytes = await readFile(join(directory, name));
-      assert.equal(bytes.length, existing.bytes); assert.equal(sha(bytes), existing.sha256); return existing;
-    }
-    return retain(name, await page.screenshot({ fullPage: true, animations: 'disabled' }));
+    const inspection = await retainNativeInspection(directory, report, name,
+      await page.screenshot({ fullPage: true, animations: 'disabled' }));
+    await save(); return inspection;
   };
   const bind = async selected => {
     const host = await selected.host(), value = await selected.profile(report.profileId);
@@ -400,6 +468,7 @@ export async function receiveMerchantWorkflowSeries({
     assert.deepEqual(report.browserErrors, []);
     report.result = 'PASS'; report.completedAt = new Date().toISOString(); await save();
     await writeFile(completed, JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });
+    await writeNativeArtifactSelection(directory);
     process.stdout.write(JSON.stringify({ result: report.result, operationId: report.operationId,
       continuation: report.continuation, directory, seriesId, periods: report.periods.map(value => ({
         cycleId: value.id, runId: value.run.id, customerId: value.customer.id, archiveSha256: value.archive.sha256
@@ -420,5 +489,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     chromiumPath: flags.get('--chromium') ?? process.env.STARFORGE_CHROMIUM,
     playwrightModule: flags.get('--playwright-module') ?? process.env.STARFORGE_PLAYWRIGHT_MODULE,
     sourceCommit: flags.get('--source-commit') })
-    .catch(error => { process.stderr.write(error.stack + '\n'); process.exitCode = 1; });
+    .catch(async error => {
+      try { await writeNativeArtifactSelection(flags.get('--directory')); }
+      catch (selectionError) { process.stderr.write('Native delivery selection: ' + selectionError.message + '\n'); }
+      process.stderr.write(error.stack + '\n'); process.exitCode = 1;
+    });
 }
