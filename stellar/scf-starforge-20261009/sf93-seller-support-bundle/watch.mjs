@@ -6,9 +6,11 @@ import {applyObservation,validateDelivery} from './incident-model.mjs';
 import {destinationForEvent,deliverNotification,applyDelivery,updateIncidentNotificationState} from './notifications.mjs';
 import {prepareSlackRequest} from './notifications-slack.mjs';
 import {collectObjectObservation} from './object-source.mjs';
+import {collectCkanObservation} from './ckan-source.mjs';
 
 async function collectMerchant(merchant,signal) {
   if(merchant.object)return collectObjectObservation(merchant,signal);
+  if(merchant.ckan)return collectCkanObservation(merchant,signal);
   let packet;
   try {packet=await readSupportBundle({...merchant,signal});}
   catch(error) {
