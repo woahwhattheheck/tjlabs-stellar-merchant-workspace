@@ -43,7 +43,22 @@ lease=(root/"delivery-controller.lock").open("a+b")
 fcntl.flock(lease.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
 source_identity={"operation":OP,"capsule_sha256":payload["capsule_sha256"],"installed_source_ref":payload["installed_source_ref"],"installed_runner_sha256":payload["installed_runner_sha256"],"original_request":payload["original_request"]}
 retained=read_json(root/"delivery-input.json")
-if retained and retained!=source_identity:raise RuntimeError("The retained original delivery source and request differ.")
+if retained and retained!=source_identity:
+    successor=payload.get("installed_source_successor",{})
+    expected=dict(retained);expected["installed_source_ref"]=successor.get("to")
+    if (retained.get("installed_source_ref")!=successor.get("from") or source_identity!=expected
+        or successor.get("from")!="3038f81d9a99f785be987281824df0ee537c187a"
+        or successor.get("to")!="a78709d02d323924446702a851e85bcf256f2437"
+        or successor.get("source_owner_reply")!="1791837691.027549"
+        or (root/"installed/installed-browser-journey.json").exists()):
+        raise RuntimeError("The retained original delivery source and request differ.")
+    selection={"selected_at":stamp(),"previous":retained,"selected":source_identity,"source_owner":successor}
+    selection_path=root/"run-history"/"installed-source-selection-a78709d.json"
+    prior_selection=read_json(selection_path)
+    if prior_selection:
+        if any(prior_selection.get(k)!=selection[k] for k in ("previous","selected","source_owner")):raise RuntimeError("The original installed selection history differs.")
+    else:save_json(selection_path,selection)
+    emit("datasette_installed_source_selected",previous=successor["from"],selected=successor["to"],source_owner_reply=successor["source_owner_reply"])
 save_json(root/"delivery-input.json",source_identity)
 (root/"delivery-payload.json").write_text(json.dumps(payload,separators=(",",":")),encoding="utf-8")
 (root/"run-delivery.py").write_text('import json\nfrom pathlib import Path\npayload=json.loads((Path(__file__).parent/"delivery-payload.json").read_bytes())\nexec(compile(payload["driver"],"<Datasette complete original delivery>","exec"))\n',encoding="utf-8")
@@ -182,6 +197,19 @@ except BaseException as error:
 finally:
     done.set()
 outcome["finished_at"]=stamp()
+capacity={"observed_at":stamp(),"cgroup":{},"filesystems":{}}
+for name in ("memory.stat","memory.current","memory.max","memory.events"):
+    path=P("/sys/fs/cgroup")/name
+    try:capacity["cgroup"][name]=path.read_text(encoding="utf-8").strip()
+    except OSError as error:capacity["cgroup"][name]={"error":type(error).__name__,"errno":error.errno}
+for selected_path in ("/workspace/scratch/49aa6abb32bb","/dev/shm","/dev","/mnt/data"):
+    try:
+        value=os.statvfs(selected_path)
+        capacity["filesystems"][selected_path]={"total_bytes":value.f_blocks*value.f_frsize,"free_bytes":value.f_bfree*value.f_frsize,"available_bytes":value.f_bavail*value.f_frsize,"free_inodes":value.f_favail}
+    except OSError as error:capacity["filesystems"][selected_path]={"error":type(error).__name__,"errno":error.errno}
+outcome["host_capacity_at_save"]=capacity
+save_json(root/"host-capacity-at-save.json",capacity)
+emit("datasette_host_capacity_at_save",**capacity)
 report=root/"Datasette_Publisher_Installed_Operating_Result.json"
 save_json(report,outcome)
 prior_manifest=root/"complete-checkpoint-manifest.json"
