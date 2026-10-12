@@ -591,6 +591,152 @@ explains source intake, query history, browser recovery and receiving. The
 [Merchant attachment guide](../../stellar-forge/mcp-merchant-operator/EUROPE_PMC.md)
 gives all twenty tool names, declared original-file inputs and six export kinds.
 
+## Operate a complete eligibility programme
+
+Open the saved question in **Eligibility**. The programme retains the question,
+each original source occurrence, complete protocol editions, named reviewer
+decisions, resolutions, explicit study/report links and selected applications
+inside that dossier. The existing source, Documents, citation, literature and
+Analysis work remains available from the same application.
+
+Begin by reading the actual retained occurrences for the question. Select the
+complete reports you intend to assess; an occurrence identifies a particular
+question, edition and original source row. The same DOI appearing in another
+question or source edition remains a different retained occurrence.
+
+Create the review with its complete protocol. Record stage names, eligibility
+criteria, exclusion reasons, reviewer assignments and the decision counts
+required by the selected method. Create a work set against that exact saved
+protocol edition and its explicit occurrence IDs. The application then walks
+the selected assignments through title/abstract and any full-text stages in
+that protocol.
+
+Each decision records its original actor, criterion answers, disposition, reason
+and retained source basis. Open the original file or source locator while making
+the decision. An unavailable full text is retained as unavailable. Correct a
+decision by selecting its previous decision ID; the earlier decision remains in
+history. Read all current decision IDs before resolving a disagreement, and
+record the method and rationale used for that resolution.
+
+The study workspace groups reports only through explicit retained evidence.
+Add the source locators establishing that the reports concern the same study.
+Use the resulting current resolutions to apply the chosen outcomes to the
+original source selections. The existing supports/contradicts/background
+classification and analyst note are preserved unless the application action
+explicitly changes them.
+
+After an updated search, source edition, question or protocol, use **Impact** to
+review what changed. Retain the affected original occurrence and reason, create
+the appropriate new work set, complete its decisions, and record the actual
+impact disposition. This keeps the earlier completed review readable at its
+original revision while the programme progresses.
+
+The [eligibility operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ELIGIBILITY-OPERATOR.md)
+covers the complete browser flow, drafts, conflict recovery and source files.
+The [native method and action contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ELIGIBILITY_REVIEW.md)
+defines each full action payload and the source-linked method.
+
+### Work through the original CLI and Merchant attachment
+
+The installed client exposes the same complete programme:
+
+~~~sh
+starforge research-client eligibility-help
+
+starforge research-client eligibility-view \
+  --connection-file /absolute/private/research-connection.json \
+  --directory /absolute/private/research-workspace \
+  --id ORIGINAL_DOSSIER --review ORIGINAL_REVIEW \
+  --section queue --revision SELECTED_REVISION --offset 0 --limit 100
+
+starforge research-client eligibility-review \
+  --connection-file /absolute/private/research-connection.json \
+  --directory /absolute/private/research-workspace \
+  --id ORIGINAL_DOSSIER --input /absolute/private/original-request.json
+~~~
+
+Replace the uppercase selections with the actual saved identifiers. The request
+file contains the original request ID, observed revision, named actor, action,
+review ID when required, and complete action data. After a lost response, resend
+that unchanged file. A corrected request receives a new ID after the original
+outcome and current dossier revision have been reconciled.
+
+The configured Merchant Research attachment provides
+`merchant_research_eligibility` and
+`merchant_research_eligibility_review`.
+Read a whole section by retaining the first page's revision through every
+subsequent cursor. Use `merchant_research_export` with
+`eligibility-json` or `eligibility-csv`,
+the original dossier revision and required review ID. Its retained file ledger,
+chunk reader and original portable receiving remain the same delivery path.
+
+### Use Python and typed clients on the saved programme
+
+Set Python's module path to the installed release's actual `source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python`
+directory. The `--checkout` argument names that release's
+**source root**, the directory containing `stellar/`
+and `stellar-forge/`.
+
+~~~python
+from stellar_forge_buyer.research_workspace import ResearchWorkspace
+
+with ResearchWorkspace(
+    checkout="/absolute/installed-research/source",
+    connection_file="/absolute/private/research-connection.json",
+    directory="/absolute/private/python-research-client",
+) as workspace:
+    review = workspace.eligibility(actual_dossier_id)
+    queue = list(review.iter_rows(
+        section="queue", review_id=actual_review_id,
+        revision=selected_revision,
+    ))
+~~~
+
+Prepare/save/submit, every original review action and exact-request recovery
+are available on that `review` object. The client retains its
+first workspace identity and call history in the same private caller directory.
+
+The selected package exports
+`./buyer/research-dossiers/eligibility` and its adjacent typed
+declaration. `readEligibility`,
+`iterateEligibility`, `submitEligibility`
+and `exportEligibility` borrow the original authenticated
+`ResearchWorkspaceClient`. Their receipt checks bind the
+complete request, actor, original and resulting revisions and operation hashes.
+
+The [complete Python and customer guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_ELIGIBILITY.md)
+includes all eight action methods, selected report downloads, complete portable
+receiving and every installed Python CLI command.
+
+### Deliver the entire selected programme
+
+Use the installed customer command after the original programme has saved the
+intended review and revision:
+
+~~~sh
+starforge research-eligibility-customer \
+  --checkout /absolute/installed-research/source \
+  --connection /absolute/private/research-connection.json \
+  --directory /absolute/private/customer-eligibility \
+  --dossier-id ORIGINAL_DOSSIER --review-id ORIGINAL_REVIEW \
+  --revision SELECTED_REVISION \
+  --operation-id ORIGINAL_CUSTOMER_CONTINUATION \
+  --python /absolute/existing/python3
+~~~
+
+The command attaches to the existing listener. It freezes the complete selected
+review, every section and original revision list; exports the original dossier
+JSON and gzip, HTML and Markdown, eligibility JSON and seven full CSV tables;
+receives both portable formats; builds `Eligibility_Delivery.zip`;
+and reopens that exact ZIP into independent editable customer workspaces.
+
+`complete.json` names the original selection, source file
+hashes, all twelve original file hashes, the exact archive and complete receiving
+results. `RECEIVING.md` travels beside the archive. The ZIP
+contains source and review history without the private connection file or caller
+logs. The [receiving instructions](RECEIVING.md#12-receive-the-complete-eligibility-programme)
+cover continued operation and a customer transfer.
+
 ## Deliver and reopen complete work
 
 Export both an editable portable and the readable report:
