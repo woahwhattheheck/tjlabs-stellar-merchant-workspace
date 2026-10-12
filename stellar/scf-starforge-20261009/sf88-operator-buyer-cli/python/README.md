@@ -696,3 +696,30 @@ resumes the same application checkpoints, and exports a portable customer packag
 See [AGENT_CUSTOMERS.md](AGENT_CUSTOMERS.md) for setup, the installed
 `stellar-forge-agent` command and the complete original customer example.
 
+
+
+## Portable resource collections
+
+The existing resource-review client can export a saved collection with every
+original file, receive it into an independent editable workspace, preserve local
+annotations on reopen, and return a later collection revision. The SDK provides
+ResourceLibrary.export_collection, inspect_collection, receive_collection and
+ResourceLibrary.from_collection through the maintained native archive and file
+transfer. Full collection members can be streamed with iter_collection_members.
+
+Use the existing installed command:
+
+    stellar-forge-review --checkout /absolute/checkout --state /private/library \
+      collection export COLLECTION_ID --revision ACTUAL_REVISION \
+      --out /private/delivery/collection.tar
+
+Receive and open the original collection browser:
+
+    stellar-forge-review --checkout /absolute/checkout --state /private/receiver \
+      collection receive --input /private/incoming/collection.tar \
+      --sha256 ACTUAL_ARCHIVE_SHA256 --out /private/received-collection --serve
+
+[Complete collection handover](COLLECTION_HANDOVER.md) covers SDK and CLI
+receiving, exact-revision transfer resume, full original resource identities,
+local annotation and collection revisions, and a complete return to another
+operator.
