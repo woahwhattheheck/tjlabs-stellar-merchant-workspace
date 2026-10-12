@@ -83,6 +83,8 @@ async function observe(profile, options, environment) {
   for (const [role, path] of Object.entries({
     product: profile.directory, projects: profile.projectsDirectory, operator: profile.operatorDirectory,
     inputs: profile.inputsDirectory, receiving: profile.receivingDirectory,
+    releases: resolve(dirname(profile.configuration), raw.releaseStore),
+    exports: resolve(dirname(profile.configuration), raw.exportsDirectory),
   })) directories.push(await directoryIdentity(role, path));
   const files = entries.map(entry => entry.metadata);
   const authorization = { mode: options.browserOnly ? 'browser-only' : mcpOAuth ? 'oauth' : 'fixed-bearer',

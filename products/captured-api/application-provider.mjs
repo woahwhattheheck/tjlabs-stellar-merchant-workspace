@@ -30,11 +30,12 @@ function launchReview(selected) {
       : 'Attach the existing browser; its original application controls its lifetime.' },
     { label: 'Browser port', value: selected.consoleOwnership === 'EXTERNAL'
       ? 'Retained by the existing browser' : port(value.port) },
+    { label: 'Source workflows', value: 'Captured network traffic (HAR) and OpenAPI' },
     { label: 'Merchant agent', value: value.browserOnly ? 'Browser only' : 'Original merchant MCP with workspace alias merchant' },
   ];
   if (!value.browserOnly) rows.push(
     { label: 'Agent port', value: port(value.mcpPort) },
-    { label: 'Agent authorization', value: value.authorizationMode },
+    { label: 'Agent authorization', value: value.authorizationMode === 'oauth' ? 'Original OAuth resource configuration' : 'Existing fixed bearer token' },
     { label: 'Token environment name', value: value.tokenEnv });
   return {
     schema: 'stellar-forge.application-review-content.v1',
@@ -78,7 +79,7 @@ export async function prepareCapturedApiApplication(settings, context) {
   'APPLICATION_CAPTURED_API_BINDING_CHANGED', 'Review the retained captured API product with its original configuration.');
   for (const item of selected.directories) {
     need(plain(item) && typeof item.path === 'string', 'APPLICATION_CAPTURED_API_INPUT_CHANGED');
-    const input = await inputPath(item.path, 'directory', false, true);
+    const input = await inputPath(item.path, 'directory', false, ['product', 'projects'].includes(item.role));
     need(String(input.dev) === String(item.dev) && String(input.ino) === String(item.ino),
       'APPLICATION_CAPTURED_API_INPUT_CHANGED');
     inputs.push({ ...input, role: item.role });
