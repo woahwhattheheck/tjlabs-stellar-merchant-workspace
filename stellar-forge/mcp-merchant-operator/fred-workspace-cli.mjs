@@ -24,7 +24,8 @@ export const FRED_WORKSPACE_HELP = [
   '',
   'Inspect and review:',
   '  status | inputs | input-inspect --input ALIAS',
-  '  records --kind captures|reviews|publications|operations [--offset 0 --limit 50 --revision N]',
+  '  records --kind captures|reviews|publications|operations|briefingTemplates|briefingSuccessors',
+  '      |releaseCaptures|releaseWatches|releasePlans [--offset 0 --limit 50 --revision N]',
   '  record --kind KIND --id ID [--revision N]',
   '  operation --id ORIGINAL_ID | wait --id ORIGINAL_ID [--wait-ms 60000]',
   '  observations --capture SHA [--series UNRATE --offset 0]',
@@ -51,6 +52,24 @@ export const FRED_WORKSPACE_HELP = [
   '  publish --id ID --revision N --review SHA --profile HOST_PROFILE',
   '  abandon --id ID --revision N --pending ORIGINAL_ID',
   '',
+  'Release calendars, watches and exact vintage catch-up:',
+  '  release-captures [--offset 0 --limit 50 --revision N]',
+  '  release-capture --release-capture SHA [--section series|releases|calendar|vintages --offset 0 --limit 100]',
+  '  release-import --id ID --revision N --input RELEASE_SOURCE_ALIAS [--sha256 FILE_SHA --release-capture SHA]',
+  '      Continue an already staged import with the same --id and --release-capture SHA.',
+  '  release-acquire --id ID --revision N [--selection-file RELEASE_SELECTION.json]',
+  '      A new acquisition requires selection; an omitted selection resumes the same pending acquisition.',
+  '  release-watches [--kind watches|plans|catchUps --offset 0 --limit 50 --revision N]',
+  '  release-watch-save --id ID --revision N --name NAME --observation-start YYYY-MM-DD',
+  '      --baseline-as-of YYYY-MM-DD [--watch-series PPIACO,GDP | --template TEMPLATE_ID]',
+  '      [--observation-end as_of|YYYY-MM-DD --catch-up all_vintages|latest_vintage --page-size 1000 --max-rows 1000000]',
+  '  release-plan-preview --watch WATCH_ID --after-release SHA [--before-release SHA]',
+  '      [--section acquisitions|calendarChanges|vintageChanges|events|schedule --offset 0 --limit 100]',
+  '  release-plan-save --id ID --revision N --watch WATCH_ID --after-release SHA --preview-id SHA',
+  '      [--before-release SHA]',
+  '  release-plan --plan PLAN_ID [--section acquisitions|calendarChanges|vintageChanges|events|schedule --offset 0 --limit 100]',
+  '  release-vintage-capture --id ID --revision N --plan PLAN_ID --as-of YYYY-MM-DD',
+  '',
   'Run the configured merchant and original customer:',
   '  merchant-start --publication SHA | merchant-stop --publication SHA',
   '  publication --publication SHA',
@@ -63,6 +82,8 @@ export const FRED_WORKSPACE_HELP = [
   '',
   'Complete retained downloads and local project receiving:',
   '  download --kind source --capture SHA --out NEW_FILE [--sha256 FILE_SHA]',
+  '  download --kind release-source --release-capture SHA --out NEW_CAPTURE.json [--sha256 FILE_SHA]',
+  '  download --kind release-plan --plan PLAN_ID --out NEW_PLAN.json [--sha256 FILE_SHA]',
   '  download --kind comparison --before SHA --after SHA --out NEW_FILE',
   '  download --kind briefing --review SHA --format html|csv|json|manifest --out NEW_FILE',
   '  download --kind briefing-successor --successor SUCCESSOR_ID --format html|csv|json --out NEW_FILE',
@@ -83,12 +104,16 @@ const fail = message => { throw new FredWorkspaceError('FRED_CLI_USAGE', message
 const remote = new Set(['workspaces','status','inputs','input-inspect','records','record','operation','observations','compare','briefing-preview','briefing',
   'configure','capture','import','combine','select','review','publish','abandon','merchant-start','merchant-stop',
   'publication','requests','preview','prepare','buy','recover','disconnect',
-  'briefing-templates','briefing-template-save','briefing-successor-preview','briefing-successor-save','briefing-successor']);
+  'briefing-templates','briefing-template-save','briefing-successor-preview','briefing-successor-save','briefing-successor',
+  'release-captures','release-capture','release-import','release-acquire','release-watches','release-watch-save',
+  'release-plan-preview','release-plan-save','release-plan','release-vintage-capture']);
 const allowed = new Set(['connection','workspace','args-file','out','console-url-file','project-id','binding-sha','label',
   'inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','kind','id','capture','series','offset','limit','revision','before','after','input','sha256',
   'captures','review','profile','pending','publication','intent','query','file','accept','view-sha','selection-file',
   'policy-file','note-file','briefing-file','format','previous-file','wait-ms','source','project','help',
-  'template','successor','name','window-file','previous-template','anchor-date','baseline-review','previous-successor','preview-id','changes-only']);
+  'template','successor','name','window-file','previous-template','anchor-date','baseline-review','previous-successor','preview-id','changes-only',
+  'release-capture','watch','plan','before-release','after-release','section','as-of','watch-series',
+  'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows']);
 function parse(values) {
   const argv = [...values], command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'help', flags = {};
   while (argv.length) {
@@ -166,11 +191,15 @@ async function toolArgs(flags, workspace) {
     input:'input', sha256:'expectedSha256', review:'reviewId', profile:'profile', pending:'pendingId',
     publication:'publicationId', intent:'intentId', query:'query', file:'file', format:'format', 'view-sha':'expectedViewSha256',
     template:'templateId', successor:'successorId', name:'name', 'previous-template':'previousTemplateId',
-    'anchor-date':'anchorDate', 'baseline-review':'baselineReviewId', 'previous-successor':'previousSuccessorId', 'preview-id':'previewId' };
+    'anchor-date':'anchorDate', 'baseline-review':'baselineReviewId', 'previous-successor':'previousSuccessorId', 'preview-id':'previewId',
+    'release-capture':'releaseCaptureId', watch:'watchId', plan:'planId', 'before-release':'beforeCaptureId',
+    'after-release':'afterCaptureId', section:'section', 'as-of':'asOf', 'observation-start':'observationStart',
+    'observation-end':'observationEnd', 'baseline-as-of':'baselineAsOf', 'catch-up':'catchUp' };
   for (const [flag, key] of Object.entries(strings)) if (flags[flag] !== undefined) put(key, flags[flag]);
-  for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex' }))
+  for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
     if (flags[flag] !== undefined) put(key, number(flags[flag], flag));
   if (flags.captures !== undefined) put('captureIds', flags.captures.split(','));
+  if (flags['watch-series'] !== undefined) put('series', flags['watch-series'].split(','));
   for (const [flag, key] of Object.entries({ 'selection-file':'selection', 'policy-file':'policy', 'previous-file':'previous', 'briefing-file':'briefing', 'window-file':'window' }))
     if (flags[flag] !== undefined) put(key, await jsonFile(flags[flag]));
   if (flags['note-file'] !== undefined) put('note', (await readFredHostFile(flags['note-file'], 32768)).toString('utf8'));

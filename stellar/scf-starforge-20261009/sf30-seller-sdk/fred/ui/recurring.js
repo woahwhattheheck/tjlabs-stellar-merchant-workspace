@@ -261,5 +261,13 @@ export function mountFredRecurring({ api, download, table, select, getState, ref
     sessionStorage.removeItem(requestKey()); await refresh();
     message('Browser request cleared. The project history is available; preview a new selection to continue.');
   });
-  return { onState };
+  return { onState, async useCapture({ templateId, captureId }) {
+    if (!(state().briefingTemplates ?? []).some(item => item.id === templateId) ||
+        !state().captures.some(item => item.id === captureId))
+      throw new Error('Choose the saved template and original observation capture from this project.');
+    $('recurring-template').value = templateId; refreshTemplateDetails();
+    $('recurring-capture').value = captureId; invalidate();
+    current = { mode: 'preview', selection: selection() };
+    await openCurrent();
+  } };
 }

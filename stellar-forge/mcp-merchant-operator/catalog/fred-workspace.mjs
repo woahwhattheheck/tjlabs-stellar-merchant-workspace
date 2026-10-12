@@ -13,7 +13,8 @@ const publication = { ...workspace, publicationId: digest };
 const purchase = { ...publication, intentId: operation };
 const read = { readOnly: true, idempotent: true };
 const change = { idempotent: true };
-const records = ['captures', 'reviews', 'publications', 'operations'];
+const records = ['captures', 'reviews', 'publications', 'operations', 'briefingTemplates', 'briefingSuccessors',
+  'releaseCaptures', 'releaseWatches', 'releasePlans'];
 export const fredBriefingSelection = {
   type: 'object', additionalProperties: false,
   properties: {
@@ -44,9 +45,30 @@ export const fredBriefingTemplateWindow = {
     lagMonths: { type: 'integer', minimum: 0, maximum: 1200 }
   }
 };
+
+const releaseWatchId = { type: 'string', pattern: '^fred-release-watch-[a-f0-9]{64}$' };
+const releasePlanId = { type: 'string', pattern: '^fred-release-plan-[a-f0-9]{64}$' };
+const releasePlanSection = { type: 'string', enum: ['acquisitions', 'calendarChanges', 'vintageChanges', 'events', 'schedule'] };
+const releasePage = { offset, limit: { type: 'integer', minimum: 1, maximum: 500 } };
+const releasePlanSelection = { watchId: releaseWatchId, beforeCaptureId: digest, afterCaptureId: digest };
+const releaseSeries = { type: 'array', minItems: 1, maxItems: 50, uniqueItems: true,
+  items: { type: 'string', minLength: 1, maxLength: 120 } };
+export const fredReleaseSelection = {
+  type: 'object', additionalProperties: false,
+  required: ['series', 'asOf', 'calendarStart', 'calendarEnd', 'vintageStart', 'vintageEnd'],
+  properties: {
+    schema: { type: 'string', enum: ['stellar-forge.fred-release-selection.v1'] },
+    series: releaseSeries, asOf: calendarDate, calendarStart: calendarDate, calendarEnd: calendarDate,
+    vintageStart: calendarDate, vintageEnd: calendarDate,
+    pageSize: { type: 'integer', minimum: 1, maximum: 10000 },
+    maxRows: { type: 'integer', minimum: 1, maximum: 1000000 }
+  }
+};
+
 export const fredFileSelection = {
-  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor'] },
+  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan'] },
   captureId: digest, before: digest, after: digest, publicationId: digest, intentId: operation, reviewId: digest, successorId,
+  releaseCaptureId: digest, planId: releasePlanId,
   format: { type: 'string', enum: ['html', 'csv', 'json', 'manifest'] }
 };
 export function fredWorkspaceTools(tool) {
@@ -55,10 +77,10 @@ export function fredWorkspaceTools(tool) {
     tool('merchant_fred_status', 'Inspect the original project, revision, source and publication counts, native merchant, buyer configuration and pending acquisition.', workspace, ['workspace'], read),
     tool('merchant_fred_inputs', 'List host-retained source aliases and the complete configured public merchant/payment profiles.', workspace, ['workspace'], read),
     tool('merchant_fred_input_inspect', 'Read the exact complete host input and return its original source metadata, byte count and SHA256 before import.', { ...workspace, input: alias }, ['workspace', 'input'], read),
-    tool('merchant_fred_records', 'Page saved captures, reviews, publications or operations from one original project revision. Keep expectedRevision across pages.', {
+    tool('merchant_fred_records', 'Page saved captures, reviews, publications, operations, recurring briefing definitions or release records from one original project revision. Keep expectedRevision across pages.', {
       ...workspace, kind: { type: 'string', enum: records }, offset, limit, expectedRevision: revision
     }, ['workspace', 'kind'], read),
-    tool('merchant_fred_record', 'Read one complete saved capture metadata, review, publication or original operation from the same project.', {
+    tool('merchant_fred_record', 'Read one complete saved capture metadata, review, publication, original operation, recurring definition or release watch/plan summary from the same project.', {
       ...workspace, kind: { type: 'string', enum: records }, id: { type: 'string', minLength: 1, maxLength: 96 }, expectedRevision: revision
     }, ['workspace', 'kind', 'id'], read),
     tool('merchant_fred_operation', 'Recover the durable original project operation and pending source-acquisition progress after an interrupted response.', {
@@ -92,6 +114,40 @@ export function fredWorkspaceTools(tool) {
     tool('merchant_fred_briefing_successor', 'Open one retained successor, its exact preceding report and paged full comparison. changesOnly=false includes unchanged economic values and their source-context changes. Complete JSON/CSV/HTML is available through file_read with kind briefing-successor.', {
       ...workspace, successorId, ...changePage
     }, ['workspace', 'successorId'], read),
+    tool('merchant_fred_release_captures', 'Page complete retained release capture descriptors from the original project. Each capture preserves series metadata, exact calendar/vintage intervals and original response counts. Keep expectedRevision while following nextOffset.', {
+      ...workspace, offset, limit, expectedRevision: revision
+    }, ['workspace'], read),
+    tool('merchant_fred_release_capture', 'Read a selected original release capture in series, releases, calendar or vintages pages. Calendar dates and information available as of a date have distinct meanings. Use file_read kind release-source for every original response and byte identity.', {
+      ...workspace, releaseCaptureId: digest,
+      section: { type: 'string', enum: ['series', 'releases', 'calendar', 'vintages'] }, ...releasePage
+    }, ['workspace', 'releaseCaptureId'], read),
+    tool('merchant_fred_release_import', 'Import a complete host-configured release-capture input, retaining exact requests and full source responses. Supply input and optional expectedSha256; releaseCaptureId may also pin its identity. For an interrupted staged import, use the same id and revision with its original releaseCaptureId.', {
+      ...recorded, input: alias, expectedSha256: digest, releaseCaptureId: digest
+    }, ['workspace', 'id', 'expectedRevision'], change),
+    tool('merchant_fred_release_acquire', 'Capture the exact selected series metadata, series/release mapping, complete per-release calendar and series vintage-date pages through the original host FRED key binding. Reuse the same original operation and selection for continuation; an omitted selection resumes that original pending acquisition.', {
+      ...recorded, selection: fredReleaseSelection
+    }, ['workspace', 'id', 'expectedRevision'], { ...change, openWorld: true }),
+    tool('merchant_fred_release_watches', 'Page saved release watches, plan summaries or completed catch-up bindings from one project revision. kind selects watches, plans or catchUps; keep expectedRevision while following nextOffset.', {
+      ...workspace, kind: { type: 'string', enum: ['watches', 'plans', 'catchUps'] }, offset, limit, expectedRevision: revision
+    }, ['workspace'], read),
+    tool('merchant_fred_release_watch_save', 'Save an immutable watch over a complete series list or every series of a retained briefing template. Select original observation coverage, baselineAsOf and all_vintages or latest_vintage catch-up. The watch preserves exact source meaning and template lineage.', {
+      ...recorded, name: { type: 'string', minLength: 1, maxLength: 200 }, series: releaseSeries, templateId,
+      observationStart: calendarDate, observationEnd: { type: 'string', pattern: '^(as_of|\\d{4}-\\d{2}-\\d{2})$' },
+      baselineAsOf: calendarDate, catchUp: { type: 'string', enum: ['all_vintages', 'latest_vintage'] },
+      pageSize: { type: 'integer', minimum: 1, maximum: 100000 }, maxRows: { type: 'integer', minimum: 1, maximum: 1000000 }
+    }, ['workspace', 'id', 'expectedRevision', 'name', 'observationStart', 'baselineAsOf'], change),
+    tool('merchant_fred_release_plan_preview', 'Preview a complete source-span release catch-up plan from one saved watch and selected after capture, with optional preceding capture. Page actual acquisitions, calendar/vintage changes, events or schedule. Retain previewId, project revision and the exact watch/source pair before saving.', {
+      ...workspace, ...releasePlanSelection, section: releasePlanSection, ...releasePage
+    }, ['workspace', 'watchId', 'afterCaptureId'], read),
+    tool('merchant_fred_release_plan_save', 'Save the exact reviewed release preview under the original operation and current project revision. Preserve watchId, beforeCaptureId, afterCaptureId and previewId; the immutable plan retains its complete source basis and completion snapshot.', {
+      ...recorded, ...releasePlanSelection, previewId: digest
+    }, ['workspace', 'id', 'expectedRevision', 'watchId', 'afterCaptureId', 'previewId'], change),
+    tool('merchant_fred_release_plan', 'Open one saved release plan and page its acquisitions, calendar changes, vintage changes, events or schedule. Completed original observation captures retain planId and asOf. Use file_read kind release-plan for the full immutable plan and kind project for portable v4 receiving.', {
+      ...workspace, planId: releasePlanId, section: releasePlanSection, ...releasePage
+    }, ['workspace', 'planId'], read),
+    tool('merchant_fred_release_vintage_capture', 'Acquire one exact asOf selection already present in the saved release plan through original captureFred and the existing private key binding. All watched series retain that coherent information date. Keep the original operation ID for recovery; the resulting capture enters the original analyst and recurring-briefing workflow.', {
+      ...recorded, planId: releasePlanId, asOf: calendarDate
+    }, ['workspace', 'id', 'expectedRevision', 'planId', 'asOf'], { ...change, openWorld: true }),
     tool('merchant_fred_configure', 'Save the complete original FRED selection with its stable operation ID and reviewed project revision.', {
       ...recorded, selection: object
     }, ['workspace', 'id', 'expectedRevision', 'selection'], change),
@@ -135,7 +191,7 @@ export function fredWorkspaceTools(tool) {
       ['workspace', 'publicationId', 'intentId'], { openWorld: true }),
     tool('merchant_fred_recover', 'Recover the original intent, native receipt and retained response without preparing another payment. Use file_read for the complete delivered bytes.', purchase,
       ['workspace', 'publicationId', 'intentId'], { idempotent: true, openWorld: true }),
-    tool('merchant_fred_file_read', 'Read complete original source, comparison, analyst briefing, recurring successor, project export or saved customer-delivery bytes in retained chunks. Continue the returned readId/offset; verify the complete file SHA256.', {
+    tool('merchant_fred_file_read', 'Read complete original source, release source or saved plan, comparison, analyst briefing, recurring successor, project export or saved customer-delivery bytes in retained chunks. Continue the returned readId/offset; verify the complete file SHA256.', {
       ...workspace, ...fredFileSelection, expectedSha256: digest,
       readId: { type: 'string', minLength: 1, maxLength: 96 }, offset: { type: 'integer', minimum: 0, maximum: 268435456 },
       limit: { type: 'integer', minimum: 1, maximum: MAX_RETAINED_CHUNK_BYTES }

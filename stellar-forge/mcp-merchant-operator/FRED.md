@@ -2,7 +2,7 @@
 
 Operate a retained FRED economic product from the installed command, a typed JavaScript client, or the existing authenticated merchant MCP host. All three paths attach to the original economic workspace: the same project, source captures, reviews, publication, merchant listener, configured SF88 buyer and saved customer intents.
 
-The client covers official source intake, complete public-table imports, combined macro editions, observations and revision comparisons, projection review, publication, merchant control, customer preparation/execution/recovery, complete downloads and project receiving. The MCP family contains 35 tools and loads its runtime only when that configured family is used.
+The client covers official source intake, complete public-table imports, combined macro editions, observations and revision comparisons, projection review, publication, merchant control, customer preparation/execution/recovery, complete downloads and project receiving. The MCP family contains 45 tools and loads its runtime only when that configured family is used.
 
 ## Start or reconnect the original workspace
 
@@ -323,3 +323,178 @@ const file = await saveFredFile(client, {
 ~~~
 
 merchant_fred_briefing_templates pages either templates or successors. merchant_fred_briefing_template_save and merchant_fred_briefing_successor_save retain the original operation ID and expected revision. The preview and saved comparison tools expose the original source changes before publication. merchant_fred_file_read accepts kind briefing-successor with successorId and format, using the existing complete-file chunks, read IDs and SHA256 checks.
+
+
+## Release calendars, watched sources and vintage catch-up
+
+The release workflow connects complete original FRED source captures to the existing economic project. Acquire or import series metadata, each series' actual release mapping, every selected release-calendar page and every selected vintage-date page. Save a watch over an original series list or a retained recurring briefing template, inspect and save a source-based plan, then acquire its chosen observation editions through the same original FRED capture path.
+
+Release metadata, raw calendar dates, vintage dates and observation periods keep their separate meanings. The official [per-release dates endpoint](https://fred.stlouisfed.org/docs/api/fred/release_dates.html) describes publisher release dates; those dates do not determine when the corresponding values become available in FRED. The [series vintage-date endpoint](https://fred.stlouisfed.org/docs/api/fred/series_vintagedates.html) lists dates on which values were added or revised. Original [real-time intervals](https://fred.stlouisfed.org/docs/api/fred/realtime_period.html) are closed at both ends and describe information known during that interval. The captured selection and each original request retain all three distinctions.
+
+### Acquire and import complete release source
+
+A release selection declares every series, its metadata as-of date, an explicit calendar interval, an explicit vintage interval, the source page size and the complete combined row capacity. The distributed [PPIACO selection](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/examples/ppiaco-release-selection.json) requests the actual PPIACO release mapping with metadata/vintage end 2026-10-12, calendar 2026-09-01 through 2026-12-31, and vintages 2026-09-01 through 2026-10-12. Its two-row source pages exercise complete original pagination; the row capacity is 100000. This file is an acquisition selection.
+
+~~~sh
+starforge fred-workspace release-acquire --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_RELEASE_SOURCE_OPERATION --revision CURRENT_REVISION \
+  --selection-file stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/examples/ppiaco-release-selection.json
+
+starforge fred-workspace release-captures --connection /PRIVATE/fred-client.json \
+  --workspace macro --offset 0 --limit 50 --revision CURRENT_REVISION
+
+starforge fred-workspace release-capture --connection /PRIVATE/fred-client.json \
+  --workspace macro --release-capture RELEASE_CAPTURE_SHA \
+  --section calendar --offset 0 --limit 100
+~~~
+
+Within an installed distribution, these retained source paths are under its source directory. The workspace uses its existing private apiKeyEnv binding to acquire the selected sources. The installed client sends the declared selection and original operation; the key stays on that host. The source graph follows each returned page count and offset through completion, preserving the full original JSON response text, selected public response headers, receipt times and byte hashes. A calendar date with no data remains in the retained calendar.
+
+For source captured on another equipped native host, declare an input alias in the existing private connection configuration:
+
+~~~json
+{
+  "ppiaco-releases": {
+    "kind": "release-capture",
+    "label": "Original PPIACO release source",
+    "path": "/PRIVATE/ORIGINAL_RELEASE_OPERATION/capture.json"
+  }
+}
+~~~
+
+The alias supports the same optional sha256 field as other complete inputs. It pins the whole file; captureSha256 identifies the complete normalized release source envelope. Inspect and import that same input:
+
+~~~sh
+starforge fred-workspace input-inspect --connection /PRIVATE/fred-client.json \
+  --workspace macro --input ppiaco-releases
+starforge fred-workspace release-import --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_RELEASE_IMPORT_OPERATION --revision CURRENT_REVISION \
+  --input ppiaco-releases --sha256 ORIGINAL_COMPLETE_FILE_SHA
+~~~
+
+input-inspect returns the source selection, byte identity, original retrieval interval and counts of series, releases, calendar rows, vintage rows and raw records. The importer uses one stable complete-file read and validates the original source graph. An observation input uses the existing import command; a release-capture input uses release-import.
+
+The source has immutable captureSha256 identity. Page its series, releases, calendar and vintages sections by following nextOffset through null. Source and plan row pages accept 1–500 rows, defaulting to 100. Inventories accept 1–100, defaulting to 50; keep their returned project revision in --revision while reading later inventory pages.
+
+### Save a complete watch
+
+A source watch declares the observation range to acquire, a baseline information date and a catch-up policy. all_vintages, the default, selects each eligible original missed vintage. latest_vintage selects the latest available eligible vintage while retaining the triggering dates and reasons. A watch can bind a saved recurring template; its whole original series list and template meaning remain together.
+
+~~~sh
+starforge fred-workspace release-watch-save --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_RELEASE_WATCH_OPERATION --revision CURRENT_REVISION \
+  --name "PPI source editions" --watch-series PPIACO \
+  --observation-start 1947-01-01 --observation-end as_of --baseline-as-of 2026-09-01 \
+  --catch-up all_vintages --page-size 1000 --max-rows 1000000
+
+starforge fred-workspace release-watches --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind watches --offset 0 --limit 50 --revision CURRENT_REVISION
+~~~
+
+For a retained analyst workflow, use --template ORIGINAL_TEMPLATE_ID to select every series of that saved definition. If --watch-series is also supplied, it must agree with the complete template series list. A saved watch has a fred-release-watch- ID and is immutable; a new definition receives its own ID. observationEnd as_of means each planned capture ends on its selected information date. An explicit date retains a fixed observation end.
+
+### Review and save the exact release plan
+
+Choose the saved watch and selected complete source capture. Supply --before-release for a preceding source snapshot when comparing two source editions; omit it for the first retained snapshot.
+
+~~~sh
+starforge fred-workspace release-plan-preview --connection /PRIVATE/fred-client.json \
+  --workspace macro --watch ORIGINAL_WATCH_ID \
+  --before-release PRECEDING_RELEASE_SHA --after-release SELECTED_RELEASE_SHA \
+  --section acquisitions --offset 0 --limit 100
+
+starforge fred-workspace release-plan-preview --connection /PRIVATE/fred-client.json \
+  --workspace macro --watch ORIGINAL_WATCH_ID \
+  --before-release PRECEDING_RELEASE_SHA --after-release SELECTED_RELEASE_SHA \
+  --section vintageChanges --offset 0 --limit 100
+
+starforge fred-workspace release-plan-save --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_RELEASE_PLAN_OPERATION --revision PREVIEW_PROJECT_REVISION \
+  --watch ORIGINAL_WATCH_ID --before-release PRECEDING_RELEASE_SHA \
+  --after-release SELECTED_RELEASE_SHA --preview-id REVIEWED_RELEASE_PREVIEW_SHA
+~~~
+
+The preview and saved plan expose acquisitions, calendarChanges, vintageChanges, events and schedule pages. Read coverage and summary with each page. A newly discovered date inside the overlapping captured interval is LATE_DISCOVERED_VINTAGE, even when its date is at or before the watched baseline. Dates entering or leaving a selected interval retain their coverage classification. Source updates can make an existing date eligible for rechecking, while the saved completion snapshot belongs to this watch and this exact selected source capture.
+
+The complete plan also retains requiredSourceSelections, sourceChanges and meaningChanges. If vintage coverage does not include the full requested catch-up period, requiredSourceSelections supplies the complete next source selection to acquire. Download the full plan JSON to inspect every source field and continuation selection. The saved plan has a fred-release-plan- ID derived from its complete descriptor; its reviewed watch, source pair, coverage and completion snapshot stay intact as later captures are added.
+
+### Acquire the planned observation editions
+
+Select an actual acquisition asOf returned by the saved plan:
+
+~~~sh
+starforge fred-workspace release-vintage-capture --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_PLANNED_VINTAGE_OPERATION --revision CURRENT_REVISION \
+  --plan ORIGINAL_SAVED_PLAN_ID --as-of ORIGINAL_PLANNED_DATE
+~~~
+
+The command sends the plan's complete original observation selection to captureFred. Every watched series is captured at the same selected information date, with its original units, frequency, seasonal adjustment and missing values. A common as-of date can be meaningful even when only one watched series changed that day; the official [observations endpoint](https://fred.stlouisfed.org/docs/api/fred/series_observations.html) supports selecting dates independently of each series' change dates.
+
+The result returns captureId, watchId, planId, asOf, selection and the original catchUp record. Its observation capture is now available to observations, compare, review and briefing-successor-preview. For a template watch, use that same template and returned capture to create the next reviewed report, save the successor, and continue through the existing publication and customer workflow.
+
+This typed-client loop reads every selected plan acquisition before applying them. Its operation ID is stable for each complete plan identity and date:
+
+~~~js
+const acquisitions = [];
+for (let offset = 0; ; ) {
+  const value = await client.releasePlan({
+    planId: savedPlan.planId, section: 'acquisitions', offset, limit: 100
+  });
+  acquisitions.push(...value.plan.rows);
+  if (value.plan.nextOffset === null) break;
+  offset = value.plan.nextOffset;
+}
+for (const selected of acquisitions) {
+  const current = await client.state();
+  const result = await client.acquirePlannedVintage({
+    id: 'fv-' + savedPlan.planId.slice(-64) + '-' + selected.asOf,
+    expectedRevision: current.project.revision,
+    planId: savedPlan.planId,
+    asOf: selected.asOf
+  });
+  console.log({ captureId: result.captureId, asOf: result.asOf, revision: result.revision });
+}
+~~~
+
+The native project reuses the saved capture for an already completed plan/date. After an interrupted mutation, inspect operation with its original ID and continue that same selection. A pending release acquisition can resume with release-acquire using the original ID and revision while omitting --selection-file; a completed operation replays with its original selection. A staged release import can continue with the same --id, --revision and --release-capture SHA. Both continue the retained original preparation.
+
+### Complete files and version 4 receiving
+
+~~~sh
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind release-source --release-capture RELEASE_CAPTURE_SHA \
+  --out /PRIVATE/original-release-source.json
+
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind release-plan --plan ORIGINAL_SAVED_PLAN_ID \
+  --out /PRIVATE/saved-release-plan.json
+
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind project --out /PRIVATE/fred-release-project.json
+
+starforge fred-workspace receive --source /PRIVATE/fred-release-project.json \
+  --project /PRIVATE/RECEIVED_FRED_PROJECT --sha256 ORIGINAL_BUNDLE_FILE_SHA
+~~~
+
+release-source and release-plan are complete JSON files. Their downloaded bytes are validated against the selected original capture or plan identity, and every download returns the full file length and SHA256. The existing save operation preserves a different destination and reuses an identical already-saved file. Authenticated tools expose both file kinds through merchant_fred_file_read with the same retained readId, offsets and complete-file identity; merchant_fred_file_release closes that read.
+
+A project containing release work exports stellar-forge.fred-project-bundle.v4 with its original project state, observation captures, publication plans and analyst files, plus every complete release capture and saved plan. The release state includes watches and exact completed catch-up bindings. A series-only watch can carry an empty briefings array. The client verifies the full versioned identity, original source/plan graph and completed-operation lineage before receiving through the maintained project receiver. Projects without release state retain their original v1–v3 bundle identity. Reopen the received directory with the original fred serve command and retain its current private connection record.
+
+### Installed methods and agent tools
+
+| Client method | Installed command / merchant_fred_ suffix | Purpose |
+|---|---|---|
+| releaseCaptures | release-captures / release_captures | Page retained release source descriptors |
+| releaseCapture | release-capture / release_capture | Page one complete source's series, releases, calendar or vintages |
+| importReleaseCapture | release-import / release_import | Import a configured complete release input or resume its staged operation |
+| acquireReleaseCapture | release-acquire / release_acquire | Acquire all original selected source pages |
+| releaseWatches | release-watches / release_watches | Page watches, saved plans or catchUps at a pinned revision |
+| saveReleaseWatch | release-watch-save / release_watch_save | Save the immutable source or template watch |
+| previewReleasePlan | release-plan-preview / release_plan_preview | Inspect the exact source pair and planned editions |
+| saveReleasePlan | release-plan-save / release_plan_save | Save the reviewed preview and its original completion snapshot |
+| releasePlan | release-plan / release_plan | Open a saved plan, chosen section and completed capture bindings |
+| acquirePlannedVintage | release-vintage-capture / release_vintage_capture | Acquire the saved plan's exact coherent observation edition |
+
+The JavaScript inventory methods return their complete original envelopes; the installed CLI and authenticated tools provide revision-pinned inventory pages. The public declarations reference the maintained source, watch, planner and project model types. FredReleasePlanSummary is the domain's numeric summary; FredReleasePlanRecord is the saved project index descriptor. FredReleaseCapturePage selects typed source rows by its section, and the plan methods select the exact row type for the requested plan section. Configured source inputs declare kind release-capture; complete file selections add release-source with releaseCaptureId and release-plan with planId. The original private workspace connection and retained-file protocol serve every path.
+
+The [native release operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/README.md) describes exact source intake and pagination, and the [project guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/PROJECT.md) describes durable capture, watch, plan and receiving operations.

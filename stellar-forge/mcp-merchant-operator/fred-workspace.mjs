@@ -2,7 +2,7 @@
 import { basename } from 'node:path';
 import { RetainedFileReads } from './retained-file-reads.mjs';
 import { FredWorkspaceClient, FredWorkspaceError, readFredWorkspaceConfiguration, readFredHostFile,
-  canonicalFredJSON, fredDigest, FRED_WORKSPACE_CONNECTION_SCHEMA, FRED_CLIENT_MAX_BYTES } from './fred-workspace-client.mjs';
+  canonicalFredJSON, fredDigest, inspectFredReleaseCapture, FRED_WORKSPACE_CONNECTION_SCHEMA, FRED_CLIENT_MAX_BYTES } from './fred-workspace-client.mjs';
 import { fredWorkspaceTools, fredFileSelection } from './catalog/fred-workspace.mjs';
 export { readFredWorkspaceConfiguration, FRED_WORKSPACE_CONNECTION_SCHEMA };
 export { fredWorkspaceTools } from './catalog/fred-workspace.mjs';
@@ -56,16 +56,21 @@ function purchaseView(result) {
     download: 'merchant_fred_file_read with kind customer and the same publicationId/intentId' } };
 }
 function projectSummary(project) {
-  const { captures, reviews, publications, operations, briefingTemplates = [], briefingSuccessors = [], ...state } = project;
+  const { captures, reviews, publications, operations, briefingTemplates = [], briefingSuccessors = [],
+    releaseCaptures = [], releaseWatches = [], releasePlans = [], releaseCatchUps = [], ...state } = project;
   return { ...state, counts: { captures: captures.length, reviews: reviews.length, publications: publications.length,
-    operations: operations.length, briefingTemplates: briefingTemplates.length, briefingSuccessors: briefingSuccessors.length } };
+    operations: operations.length, briefingTemplates: briefingTemplates.length, briefingSuccessors: briefingSuccessors.length,
+    releaseCaptures: releaseCaptures.length, releaseWatches: releaseWatches.length, releasePlans: releasePlans.length,
+    releaseCatchUps: releaseCatchUps.length } };
 }
 const actionMethods = new Map([
   ['merchant_fred_configure', 'configure'], ['merchant_fred_capture', 'capture'], ['merchant_fred_combine', 'combine'],
   ['merchant_fred_select', 'select'], ['merchant_fred_review', 'review'], ['merchant_fred_abandon', 'abandon'],
   ['merchant_fred_merchant_start', 'startMerchant'], ['merchant_fred_merchant_stop', 'stopMerchant'],
   ['merchant_fred_preview', 'preview'], ['merchant_fred_prepare', 'prepare'],
-  ['merchant_fred_briefing_template_save', 'saveBriefingTemplate'], ['merchant_fred_briefing_successor_save', 'saveBriefingSuccessor']
+  ['merchant_fred_briefing_template_save', 'saveBriefingTemplate'], ['merchant_fred_briefing_successor_save', 'saveBriefingSuccessor'],
+  ['merchant_fred_release_acquire', 'acquireReleaseCapture'], ['merchant_fred_release_watch_save', 'saveReleaseWatch'],
+  ['merchant_fred_release_plan_save', 'saveReleasePlan'], ['merchant_fred_release_vintage_capture', 'acquirePlannedVintage']
 ]);
 
 export class MerchantFredWorkspaces {
@@ -109,7 +114,8 @@ export class MerchantFredWorkspaces {
         input.kind === 'capture' && !['stellar-forge.fred-capture.v1', 'stellar-forge.fred-public-table-capture.v1',
           'stellar-forge.fred-public-table-set-capture.v1'].includes(value?.schema))
       fail('FRED_MCP_INPUT_INVALID', 'The complete input does not have its declared original source format.');
-    return { input, bytes, sha256, value };
+    const release = input.kind === 'release-capture' ? inspectFredReleaseCapture(value) : null;
+    return { input, bytes, sha256, value, release };
   }
   async #state(alias, expectedRevision) {
     const value = await this.#client(alias).state();
@@ -132,6 +138,9 @@ export class MerchantFredWorkspaces {
         seriesId: original.series_id ?? null, observationCount: original.observation_count ?? null,
         originalTableBytes: original.bytes ?? null, originalTableSha256: original.sha256 ?? null,
         captureSha256: original.captureSha256 ?? null, selection: original.selection ?? null,
+        ...(source.release ? { release: { captureSha256: source.release.captureSha256, source: source.release.source,
+          counts: { series: source.release.series.length, releases: source.release.releases.length,
+            calendar: source.release.calendar.length, vintages: source.release.vintages.length, records: original.records.length } } } : {}),
         tables: Array.isArray(original.tables) ? original.tables.map(table => ({ seriesId: table.series_id,
           sourceUrl: table.source_url, retrievedAt: table.retrieved_at, bytes: table.bytes, sha256: table.sha256 })) : undefined };
     }
@@ -151,7 +160,7 @@ export class MerchantFredWorkspaces {
     }
     if (name === 'merchant_fred_records' || name === 'merchant_fred_record') {
       const { project } = await this.#state(alias, args.expectedRevision);
-      const values = project[args.kind];
+      const values = project[args.kind] ?? [];
       if (name === 'merchant_fred_records') return { projectId: project.id, revision: project.revision, kind: args.kind, ...page(values, args) };
       const record = values.find(item => item.id === args.id);
       if (!record) fail('FRED_MCP_RECORD_NOT_FOUND', 'The selected record does not belong to this original project.');
@@ -176,8 +185,39 @@ export class MerchantFredWorkspaces {
       return client.previewBriefingSuccessor(input);
     }
     if (name === 'merchant_fred_briefing_successor') return client.briefingSuccessor(args);
+    if (name === 'merchant_fred_release_captures' || name === 'merchant_fred_release_watches') {
+      const sources = name === 'merchant_fred_release_captures';
+      const result = sources ? await client.releaseCaptures() : await client.releaseWatches();
+      if (args.expectedRevision !== undefined && result.revision !== args.expectedRevision)
+        fail('FRED_MCP_REVISION_CHANGED', 'The release inventory changed. Continue from its current project revision.', { revision: result.revision });
+      const kind = sources ? 'captures' : args.kind ?? 'watches';
+      return { projectId: result.projectId, revision: result.revision, kind,
+        counts: sources ? { captures: result.captures.length } :
+          { watches: result.watches.length, plans: result.plans.length, catchUps: result.catchUps.length },
+        ...page(result[kind], args) };
+    }
+    if (name === 'merchant_fred_release_capture') return client.releaseCapture(args);
+    if (name === 'merchant_fred_release_plan') return client.releasePlan(args);
+    if (name === 'merchant_fred_release_plan_preview') {
+      const { workspace: _, ...input } = args;
+      return client.previewReleasePlan(input);
+    }
+    if (name === 'merchant_fred_release_import') {
+      if (args.input === undefined) {
+        if (args.releaseCaptureId === undefined || args.expectedSha256 !== undefined)
+          fail('FRED_MCP_INPUT_INVALID', 'Continue the same staged release import with its original releaseCaptureId, or select a complete configured release input.');
+        return client.importReleaseCapture({ id: args.id, expectedRevision: args.expectedRevision, releaseCaptureId: args.releaseCaptureId });
+      }
+      const source = await this.#input(alias, args.input, args.expectedSha256);
+      if (source.input.kind !== 'release-capture')
+        fail('FRED_MCP_INPUT_INVALID', 'Release import selects a complete host input declared as release-capture.');
+      return client.importReleaseCapture({ id: args.id, expectedRevision: args.expectedRevision, capture: source.value,
+        ...(args.releaseCaptureId === undefined ? {} : { releaseCaptureId: args.releaseCaptureId }) });
+    }
     if (name === 'merchant_fred_import') {
       const source = await this.#input(alias, args.input, args.expectedSha256);
+      if (source.input.kind === 'release-capture')
+        fail('FRED_MCP_INPUT_INVALID', 'Use release_import for this original release source; observation import selects an observation capture or public table.');
       return client.importCapture({ id: args.id, expectedRevision: args.expectedRevision, capture: source.value });
     }
     if (name === 'merchant_fred_publish') {

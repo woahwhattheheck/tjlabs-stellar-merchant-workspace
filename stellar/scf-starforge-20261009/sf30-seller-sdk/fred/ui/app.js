@@ -1,5 +1,6 @@
 import { mountFredBriefing } from './briefing.js';
 import { mountFredRecurring } from './recurring.js';
+import { mountFredReleases } from './releases.js';
 // MIT. Original economic project controls; source text is rendered as text.
 const $ = id => document.getElementById(id);
 let token = location.hash.slice(1);
@@ -69,6 +70,17 @@ const recurring = mountFredRecurring({ api, download, event, table, select, getS
     $('briefing-saved').value = reviewId; $('briefing-open').click();
     $('briefing-report-panel').scrollIntoView({ block: 'start' });
   } });
+const releases = mountFredReleases({ api, download, table, select, getState: () => state, refresh, message,
+  openObservations: async captureId => {
+    document.querySelector('[data-tab="source"]').click();
+    $('capture-select').value = captureId; $('row-series').value = ''; rowOffset = 0; await showRows();
+    $('observations').scrollIntoView({ block: 'start' });
+  },
+  openBriefing: async selection => {
+    document.querySelector('[data-tab="recurring"]').click();
+    await recurring.useCapture(selection);
+    $('recurring-report-panel').scrollIntoView({ block: 'start' });
+  } });
 const labelCapture = item => (item.sourceMode === 'PUBLIC_TABLE' ? item.retrievalWindow ? 'Collected through ' : 'Captured ' : 'Vintage ') + item.selection.asOf + ' · ' + item.selection.series.join(', ') + ' · ' + item.rowCount + ' rows · ' + item.id.slice(0, 10);
 function renderState(value) {
   state = value.project; $('project-title').textContent = state.title + ' · revision ' + state.revision;
@@ -105,6 +117,7 @@ function renderState(value) {
   table('history', [...state.operations].reverse(), ['id','kind','completedAt','result']);
   briefing.onState();
   recurring.onState();
+  releases.onState();
 }
 async function refresh() { renderState(await api('/api/state')); }
 async function action(actionName, payload = {}) {
