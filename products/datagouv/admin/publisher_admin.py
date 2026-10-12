@@ -305,9 +305,31 @@ def stage(root,bundle,operation_id):
     os.rename(stage_path,target);sync_dir(target.parent)
     return release(root,rid)
 
+def mapped_account_id(value,kind):
+    path=pathlib.Path('/proc/self')/(kind+'_map')
+    try:
+        with path.open('r',encoding='ascii') as stream:
+            raw=stream.read(65537)
+    except (OSError,UnicodeError) as error:
+        raise AdminError('SERVICE_ACCOUNT_MAPPING','Cannot inspect the current Linux '+kind+' mapping: '+str(error)) from error
+    require(len(raw)<=65536,'The current Linux account mapping is too large','SERVICE_ACCOUNT_MAPPING')
+    ranges=[]
+    for line in raw.splitlines():
+        fields=line.split()
+        require(len(fields)==3 and all(field.isdecimal() for field in fields),'The current Linux account mapping is malformed','SERVICE_ACCOUNT_MAPPING')
+        start,outer,count=map(int,fields)
+        require(count>0 and start+count<=2**32 and outer+count<=2**32,'The current Linux account mapping is malformed','SERVICE_ACCOUNT_MAPPING')
+        ranges.append((start,start+count))
+    require(bool(ranges),'The current Linux account mapping is empty','SERVICE_ACCOUNT_MAPPING')
+    return any(start<=value<end for start,end in ranges)
+
 def user_identity(name):
     user=pwd.getpwnam(name) if name else pwd.getpwuid(os.geteuid())
+    require(user.pw_uid!=0,'Select an existing unprivileged service account','SERVICE_ACCOUNT_ROOT')
     require(os.geteuid()==0 or user.pw_uid==os.geteuid(),'Only root can select another service user')
+    require(mapped_account_id(user.pw_uid,'uid') and mapped_account_id(user.pw_gid,'gid'),
+            'The selected service UID/GID is not mapped in this Linux user namespace. Use an existing Linux host where this unprivileged account is mapped; no workspace was initialized.',
+            'SERVICE_ACCOUNT_UNMAPPED')
     return {'user':user.pw_name,'uid':user.pw_uid,'gid':user.pw_gid}
 
 def child_options(runtime,provider_env=None):
@@ -658,10 +680,11 @@ def initialize_workspace(root,op,selected,runtime,target,title):
     return target
 
 def install(args):
+    # Check the selected OS account before creating any installation directory.
+    user=user_identity(args.user)
     root=managed(args.root,True)
     with administration(root):
         current=state(root,optional=True)
-        user=user_identity(args.user)
         node=str(pathlib.Path(args.node).resolve())
         workspace_path=absolute(args.workspace)
         body={'release_sha256':args.sha256,'release_file':str(absolute(args.release,True)),'workspace':str(workspace_path),'initialize':args.initialize,'title':args.title if args.initialize else None,'node':node,'user':user,'port':args.port}
@@ -822,9 +845,16 @@ def render_unit(args):
         sys.stdout.write(text)
         return None
 
+def preflight(args):
+    runtime=runtime_probe(args.node,user_identity(args.user),args.port)
+    return {'schema':'datagouv.linux-administration-preflight/v1','ready':True,
+            'runtime':runtime,'workspace_created':False,'service_started':False}
+
 def parser():
     result=argparse.ArgumentParser(description=__doc__)
     commands=result.add_subparsers(dest='command',required=True)
+    check=commands.add_parser('preflight',help='Check the selected Linux service account and runtime without creating an installation')
+    check.add_argument('--node',required=True);check.add_argument('--user');check.add_argument('--port',type=int,default=8429)
     package=commands.add_parser('pack',help='Package exactly the native application inventory')
     package.add_argument('--source',required=True);package.add_argument('--source-ref',required=True);package.add_argument('--output',required=True)
     install=commands.add_parser('install',help='Install one selected release and existing or explicitly new workspace')
@@ -850,7 +880,9 @@ def main(argv=None):
     require(sys.platform=='linux' and sys.version_info>=(3,10),'Linux with Python3.10+ is required')
     os.umask(0o077)
     args=parser().parse_args(argv)
-    if args.command=='pack':
+    if args.command=='preflight':
+        value=preflight(args)
+    elif args.command=='pack':
         value=pack(args)
     elif args.command=='install':
         value=install(args)
