@@ -93,8 +93,10 @@ function makePlan(bytes,expected,signal){
   const members=result.members.map(file=>({path:'result/'+file.filename,filename:file.filename,bytes:file.bytes.length,sha256:file.sha256}));
   const view={identity,families,originals,reports,choices,members};
   add('index.html',Buffer.from(renderReceivedLabResult(view)),'customer-entry-page');
-  const sorted=files.map(file=>file.path).sort();
-  for(let i=1;i<sorted.length;i++)need(!sorted[i].startsWith(sorted[i-1]+'/'),'LAB_RESULT_MEMBER_PATH','A file collides with a result directory.');
+  for(const {path}of files){
+    for(let end=path.indexOf('/');end!==-1;end=path.indexOf('/',end+1))
+      need(!seen.has(path.slice(0,end)),'LAB_RESULT_MEMBER_PATH','A file collides with a result directory: '+path.slice(0,end));
+  }
   const declarations=files.map(({data,...file})=>file).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
   const receipt={
     schema:LAB_RESULT_FOLDER_SCHEMA,status:'COMPLETE',layoutVersion:1,identity,
