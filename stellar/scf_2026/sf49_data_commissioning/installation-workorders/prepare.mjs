@@ -2,14 +2,17 @@
 /** Native local file preparation; publication/save stays in the original SF47 app. */
 import {readFile, mkdir, open, link, unlink, lstat, realpath} from "node:fs/promises";
 import {dirname, resolve, join} from "node:path";
-import {fileURLToPath} from "node:url";
 import {createHash, randomUUID} from "node:crypto";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
+import {isProfileId, profileCatalog, readProfile} from "./profiles.mjs";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const usage = "node prepare.mjs template|prepare --profile cocart|blockscout|queryfarm|ars-air-quality --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]";
+const usage = "node prepare.mjs profiles | template|prepare --profile PROFILE --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]";
 function parse(argv) {
   const [command, ...args] = argv;
+  if (command === "profiles") {
+    if (args.length) throw new Error(usage);
+    return {command};
+  }
   if (!["template", "prepare"].includes(command)) throw new Error(usage);
   const result = {command};
   for (let i = 0; i < args.length; i += 2) {
@@ -18,7 +21,7 @@ function parse(argv) {
       throw new Error(usage);
     result[key] = args[i + 1];
   }
-  if (!["cocart", "blockscout", "queryfarm", "ars-air-quality"].includes(result.profile) || !result.seed || !result.out ||
+  if (!isProfileId(result.profile) || !result.seed || !result.out ||
       (command === "prepare" && !result.bindings) || (command === "template" && result.bindings)) throw new Error(usage);
   return result;
 }
@@ -66,8 +69,11 @@ async function retain(path, raw) {
 }
 try {
   const args = parse(process.argv.slice(2));
+  if (args.command === "profiles") {
+    console.log(JSON.stringify({schema: "stellar-forge.installation-workorder-catalog.v1", profiles: profileCatalog()}, null, 2));
+  } else {
   const seed = await readJson(args.seed);
-  const profile = await readJson(join(here, args.profile + ".json"));
+  const profile = readProfile(args.profile);
   const out = await privateDirectory(args.out);
   if (args.command === "template") {
     const result = bindingTemplate(seed.value, profile.value);
@@ -85,5 +91,6 @@ try {
     delete preparation.document; delete preparation.preview;
     const receipt = await retain(join(out, "preparation.json"), encode(preparation));
     console.log(JSON.stringify({...receipt, outputs, selections: result.selections}, null, 2));
+  }
   }
 } catch (error) { console.error(error.message); process.exitCode = 1; }
