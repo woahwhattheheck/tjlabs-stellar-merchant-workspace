@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "research-workspace",
-  "title": "Research Documents and Pipelines",
-  "description": "Original research questions, complete Documents and managed Pipelines, Python Analysis/workbooks, retained source editions, merchant operation and customer receiving",
+  "title": "Research workspace",
+  "description": "Original research questions, retained source editions, citation update review, complete Documents and managed Pipelines, Python Analysis/workbooks, merchant operation and customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -139,14 +139,19 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED_PIPELINES.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/unstructured-partition.mjs",
     "stellar-forge/mcp-merchant-operator/research-documents.mjs",
-    "stellar-forge/mcp-merchant-operator/catalog/research-documents.mjs"
+    "stellar-forge/mcp-merchant-operator/catalog/research-documents.mjs",
+    "stellar-forge/mcp-merchant-operator/research-citation-updates.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/research-citation-updates.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION_REVIEW.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Source-linked research, original Documents and managed Pipelines, full analytical workbooks, retained exports and editable customer receiving",
+    "description": "Source-linked research, explicit citation review, original Documents and managed Pipelines, full analytical workbooks, retained exports and editable customer receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

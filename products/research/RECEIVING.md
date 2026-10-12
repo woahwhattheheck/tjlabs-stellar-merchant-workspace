@@ -1,6 +1,6 @@
-# Install and receive Research Documents and Pipelines
+# Install and receive the complete Research workspace
 
-This guide takes the maintained Research product from its original Git source to an installed application, a reviewed document or managed processing job, complete delivered files and a reopened research dossier. Use the same customer workspace, configured source directories and operation identities throughout an upgrade or restart.
+This guide takes the maintained Research product from its original Git source to an installed application, reviewed source editions and citation decisions, original Documents and managed Pipelines, complete delivered files and a reopened research dossier. Use the same customer workspace, configured source directories and operation identities throughout an upgrade or restart.
 
 The [operating guide](OPERATING.md) is the analyst-facing workflow. The [Documents and Pipelines contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_DOCUMENTS.md) gives complete SDK, command, merchant and request fields. Original provider configuration belongs to the [Documents source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED.md) and [managed Pipelines source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED_PIPELINES.md).
 
@@ -338,6 +338,51 @@ Its cold reader checks the original workspace ID, immutable table row count, sav
 
 The complete [Python operating contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_DOCUMENTS.md) includes original source limits, lossless large-file parts, reconstructed file roles, live Document/Pipeline actions, all runtime recovery states and the standalone `restore_archive` interface.
 
+## 9. Receive the citation-review product
+
+The same Research selection includes the full citation-review engine, browser, authenticated client, Merchant tools and portable receiver. Its installed commands also include `research-crossref-documents` and `research-citation-workflow`. The selected source contains the complete operator guides and the original five-file Crossref example. Keep the original source archive and release identity with the receiving product.
+
+For a customer's existing dossier, open **Update review** in the original running Research workspace and follow the [analyst workflow](OPERATING.md#review-registered-citation-updates). A received source edition supplies the registered notices and their original records. The review saves explicit evidence and finding changes together; its original request and resulting revision stay in the same dossier history.
+
+### Receive retained original Crossref documents
+
+A complete metadata edition can be built from existing original source documents and their observed transfer provenance. The source-owned builder reads every declared input, verifies its full hash, and retains the original bodies and source URLs. The [Crossref document guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md) defines the complete provenance and source roles.
+
+The selected release includes the original work, retraction notice, registered-updates list, provenance and source note beneath:
+
+~~~text
+stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/
+  examples/crossref-retraction-1758835919874651/
+~~~
+
+Select the installed source directory and create its full edition:
+
+~~~sh
+CITATION_INPUT=/absolute/installed-source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/examples/crossref-retraction-1758835919874651
+
+starforge research-crossref-documents \
+  --provenance "$CITATION_INPUT/provenance.json" \
+  --source-dir "$CITATION_INPUT" \
+  --query "How does the registered retraction affect this cited work?" \
+  --doi 10.1177/1758835919874651 \
+  --doi 10.1177/17588359211061903 \
+  --updates-doi 10.1177/1758835919874651 \
+  --supporting README.md \
+  --output /srv/starforge/inputs/crossref-document-edition.json
+~~~
+
+Keep the returned complete file identity with the edition. The original Research receive command or declared source handle can receive these exact bytes into the selected question. Original document transfer details remain available after receiving, including fields that the upstream representation did not expose.
+
+### Reopen selected citation reports and history
+
+Select the saved review's original, reviewed or current revision before exporting. The same installed client accepts `--revision` for HTML, Markdown, JSON and compressed JSON. The existing Merchant export tool accepts that same revision and retains its complete file under the original export identity. Recover that identity through the existing export inventory after an interrupted reply.
+
+Receive the selected portable with the original `research-client reopen` command in section 7 and its complete returned SHA-256. Both JSON and compressed JSON carry the original source editions and saved review history. The original importer validates the review changes against their earlier source/evidence/finding state before publishing the received dossier.
+
+The complete prepared native journey is available through `research-citation-workflow`. It accepts the original edition file and SHA-256, a persistent customer run directory, operation identity and the actual installed Playwright/Chromium runtime. Its full [source contract and commands](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION_REVIEW.md) cover two questions, browser drafts and concurrent review, interrupted-save recovery, original/reviewed/current report selection, the same Merchant attachment, complete exports and cold receiving of both portable formats.
+
+Retain the original run directory and operation identity on restart. The workflow's completed result names the original dossier/review revisions and each complete selected output. Deliver those files with their reported identities. Original connection records, browser profiles and source/workspace directories retain their established private custody; the existing application owner controls its listener lifecycle.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
@@ -352,15 +397,21 @@ The complete [Python operating contract](../../stellar/scf-starforge-20261009/sf
 | Local file download reply | Inspect the returned published destination/file result before choosing another output |
 | Merchant export/read | Recover the original export ID and continue its retained cursor |
 | Portable receiving | Reopen the same complete portable with its recorded digest and receiving workspace |
+| Citation draft or concurrent edit | Reopen the retained complete draft; compare its original base with the current dossier and save the explicit resolution |
+| Citation save reply | Reuse the exact original request ID and complete review payload to reopen its saved result |
+| Citation report/portable delivery | Select the original saved revision and recover its retained export; reopen the same complete portable |
 | Python source/workbook receiving | Reopen its original caller directory, source selection, native job IDs and saved query/workbook/archive receipts |
 
 The completed operating handover retains the source commit/recipe, actual archive/runtime identity, original application and customer paths, dossier/question/edition IDs, original provider operation/job IDs, final file receipts and reopened dossier. The application's owner controls process shutdown; client detachment closes only its own attachment.
 
 ## Source relationship
 
-This standalone adoption carries the original Documents/Pipelines client cohort from [public source PR2015](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2015), merged at `4358385d48f54c1391109074beb59b7ba2a8dce8`, onto the maintained original Research backends and browser already present in this repository. The source-owned Research contribution retains the standalone `products/research` operating component while adding the original client and command exports. The same product carries the complete Python Research/Analysis customer receiver from [public source PR2066](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2066), merged at `b59f7f560668d729e3bf718852d0264feb1656bb`. Its additive Python entrypoint, exports and Runtime target are composed onto this repository's current original files. The selected release manifest identifies the exact final standalone commit and all included original source objects.
+This standalone adoption carries the original Documents/Pipelines client cohort from [public source PR2015](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2015), merged at `4358385d48f54c1391109074beb59b7ba2a8dce8`, onto the maintained original Research backends and browser already present in this repository. The source-owned Research contribution retains the standalone `products/research` operating component while adding the original client and command exports. The same product carries the complete Python Research/Analysis customer receiver from [public source PR2066](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2066), merged at `b59f7f560668d729e3bf718852d0264feb1656bb`. Its additive Python entrypoint, exports and Runtime target are composed onto this repository's current original files. The citation-review cohort comes from [public source PR2061](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2061), merged at `d9c2e3e6f6b86883d76befb74cd252caacb0e698`. It includes the original source-document intake, complete browser/client/Merchant workflow and portable review history. This adoption composes the citation report sections with the standalone product's existing report renderer and preserves its complete Documents, Pipelines and Python receiving work. The selected release manifest identifies the exact final standalone commit and all included original source objects.
 
 - [Analyst operating guide](OPERATING.md)
+- [Citation browser drafts, review decisions and report selection](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)
+- [Complete citation source, native workflow and portable receiving](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION_REVIEW.md)
+- [Retained original Crossref document intake](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md)
 - [Python Analysis, workbook and full workspace receiving](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_DOCUMENTS.md)
 - [Complete Documents and Pipelines API, commands and merchant contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_DOCUMENTS.md)
 - [Research client and file receiving](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_CLIENT.md)
