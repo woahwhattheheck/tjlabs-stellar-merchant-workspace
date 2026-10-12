@@ -11,7 +11,7 @@ const field=(name,label,type='path',required=false,description='')=>({name,label
 export function merchantSupportApplication(common=[]) {
   return {id:'merchant-support',command:'support-console',requiredSource:SOURCE+'/managed-launch.mjs',
     title:'Merchant support',terminal:false,
-    description:'Operate merchant cases, incidents, implementation work, service commitments, adjustments, buyer period close, accountant handoff and complete customer receiving.',
+    description:'Operate merchant cases, original tariff quotations, implementation, service commitments, adjustments, buyer period close, accountant handoff and complete customer receiving.',
     fields:[
       field('workspaceDirectory','Private merchant case directory','path',true,
         'Reopen the original case directory, or create one folder in an existing private parent.'),
@@ -141,5 +141,7 @@ export async function merchantSupportStartup(request,text) {
   if(!plain(announcement)||announcement.schema!==STARTUP)return null;
   const selected=launchArguments(request);
   const {readSupportLaunch}=await import('../../sf74-merchant-support-console/managed-launch.mjs');
-  return readSupportLaunch(announcement,selected);
+  const launch=await readSupportLaunch(announcement,selected);
+  // The original reader has matched this loopback listener to the reviewed native source and private selection.
+  return {...launch,links:[{label:'Commercial quotations',url:new URL('/commercial',launch.url).href}]};
 }

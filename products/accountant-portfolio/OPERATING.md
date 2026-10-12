@@ -11,8 +11,8 @@ Use a separate configured buyer alias when the source is the original
 That document carries its frozen expense and credit allocations, source
 observations, period history and outstanding reservations. The original
 accountant validates the complete source and keeps its native amounts and
-financial context. A buyer alias uses source startup, accountant returns, Xero
-and operating recovery; firm Portfolio and Runbooks operations keep their
+financial context. A buyer alias uses source startup, accountant returns,
+QuickBooks, Xero, chart changes and operating recovery; firm Portfolio and Runbooks operations keep their
 merchant aliases.
 
 Save the host's accounting declaration with the real original file and chosen
@@ -40,7 +40,7 @@ private directory. This example declares only the source needed for startup:
 
 Resolve these paths relative to the actual host configuration. Add
 `accountantReturns` and `platformInputs` aliases only for the original return
-and Xero files being supplied. The complete [buyer host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md)
+and QuickBooks/Xero files being supplied. The complete [buyer host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md)
 includes initialization of the existing MCP host and its original authentication.
 An existing host can add this declaration under `accounting`, preserving its
 other providers. Omit merchant outbox, proof, terms, Runbooks and Portfolio
@@ -74,7 +74,10 @@ provides the exact JSON and commands for each retained operation:
 | Review retained source | Read `startup` and `retained-source` against the saved source digest. | Complete paged allocations and source observations with the current accountant revision. |
 | Create the first handoff | Preview `--action handoff`, save its full request, then explicitly execute it. | The startup's original handoff ID, named review and exact create-request identity. |
 | Recover a handoff | Reconcile the same operation directory and request. | Its accepted native handoff; a changed request under that ID remains a conflict. |
-| Continue bookkeeping | Select `--platform xero` on this alias and use the actual handoff, context, explicit fiat/chart decisions and original response. | Retained draft/posted observations, reviewed accountant return and the buyer-return file. |
+| Continue bookkeeping | Select `--platform qbo` or `--platform xero` on this alias and use the actual handoff, company/context, explicit allocation/fiat/chart decisions and original response. | Retained native journal observations, reviewed accountant return and the buyer-return file. |
+| Adopt a changed chart | Preview and save the original platform's source-change review, inspect its complete mappings, then explicitly apply its current revision and confirmations. | The original cancellation/successor application, recoverable by its retained request and complete handoff file. |
+
+The [buyer QuickBooks instructions](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md#continue-quickbooks-from-the-issued-buyer-handoff) cover every include/exclude allocation choice, exact home valuation and same-book source reservation. The [chart-change guide](../../stellar-forge/mcp-merchant-operator/accounting-source-changes.md) covers the full native review, original-application recovery and complete retained download.
 
 The existing original buyer source and accountant writers own these operations.
 Startup and handoff recovery do not create provider journals. A zero-native

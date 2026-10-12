@@ -36,6 +36,7 @@ BOOT_FILES = (
     "operations_completion.py",
     "operations_cohort.py","operations_implementation.py",
     "operations_installations.py",
+    "operations_workshare_installations.py",
     "forecast.py",
     "portfolio.py",
     "portfolio_schedule.py",

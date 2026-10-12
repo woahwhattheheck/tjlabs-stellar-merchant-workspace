@@ -32,10 +32,10 @@ const HELP = `merchant-mcp pricing
   tariff-load|tariff-manifest --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID
   tariff-selection --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --comparison-id SHA256
   tariff-download --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --out PRIVATE_DIRECTORY
-  tariff-bundle --url MCP_ENDPOINT --workspace ALIAS [--portfolio-sha256 SHA256]
+  tariff-bundle --url MCP_ENDPOINT --workspace ALIAS [--selection-request-id UUID] [--portfolio-sha256 SHA256]
   tariff-portfolio-download --url MCP_ENDPOINT --workspace ALIAS --out PRIVATE_DIRECTORY
-      [--portfolio-sha256 SHA256] [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
-  tariff-receive --url MCP_ENDPOINT --workspace ALIAS --portfolio-file PRIVATE_PORTFOLIO_JSON
+      [--selection-request-id UUID] [--portfolio-sha256 SHA256] [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
+  tariff-inspect|tariff-receive --url MCP_ENDPOINT --workspace ALIAS --portfolio-file PRIVATE_PORTFOLIO_JSON
   tariff-price-source|tariff-review-manifest --url MCP_ENDPOINT --workspace ALIAS --version UUID
   tariff-price-preview|tariff-price-save|tariff-price-stage --url MCP_ENDPOINT --input PRIVATE_JSON
   tariff-price-manifest --url MCP_ENDPOINT --workspace ALIAS --decision UUID
@@ -80,12 +80,12 @@ See PRICING.md for scenarios, exact quote conversion and the complete saved work
 const flags=new Set(['--url','--workspace','--input','--version','--plan-id','--scenario-id',
   '--view','--offset','--limit','--suggestion-kind','--out','--token-env','--manifest-sha256','--chunk-bytes',
   '--kind','--id','--source-id','--edition','--after','--input-alias','--expected-sha256','--expected-bytes','--decision',
-  '--comparison-id','--portfolio-sha256','--portfolio-file']);
+  '--comparison-id','--portfolio-sha256','--portfolio-file','--selection-request-id']);
 const fieldFlags={'--workspace':'workspace','--version':'version','--plan-id':'planId',
   '--scenario-id':'scenarioId','--view':'view','--offset':'offset','--limit':'limit','--suggestion-kind':'suggestionKind',
   '--kind':'kind','--id':'id','--source-id':'sourceId','--edition':'edition','--after':'after',
   '--input-alias':'input','--expected-sha256':'expectedSha256','--expected-bytes':'expectedBytes','--decision':'decision',
-  '--comparison-id':'comparisonId','--portfolio-sha256':'portfolioSha256'};
+  '--comparison-id':'comparisonId','--portfolio-sha256':'portfolioSha256','--selection-request-id':'selectionRequestId'};
 function options(args) {
   const result=new Map();
   for (let i=0;i<args.length;i+=2) {
@@ -129,7 +129,8 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
     args[key]=value;
   }
   if(values.has('--portfolio-file')) {
-    if(operation!=='tariff-receive')throw fail('ARGUMENTS','--portfolio-file belongs to tariff-receive.');
+    if(!['tariff-inspect','tariff-receive'].includes(operation))
+      throw fail('ARGUMENTS','--portfolio-file belongs to tariff-inspect or tariff-receive.');
     const bundle=await inputFile(values.get('--portfolio-file'),64*1024*1024);
     if(Object.hasOwn(args,'bundle')&&JSON.stringify(args.bundle)!==JSON.stringify(bundle))
       throw fail('ARGUMENTS','The selected portfolio differs from the retained input bundle.');
@@ -143,7 +144,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
     let result;
     const tariffDownloads={
       'tariff-download':{run:downloadMerchantTariffPlan,fields:['workspace','planId']},
-      'tariff-portfolio-download':{run:downloadMerchantTariffPortfolio,fields:['workspace','portfolioSha256']},
+      'tariff-portfolio-download':{run:downloadMerchantTariffPortfolio,fields:['workspace','portfolioSha256','selectionRequestId']},
       'tariff-review-download':{run:downloadMerchantTariffPricingReview,fields:['workspace','version']}
     };
     if(Object.hasOwn(tariffDownloads,operation)) {

@@ -11,7 +11,7 @@ export type {
   RationalUnitUsd, TariffQuote, TariffComparison, TariffBoundary, TariffReview,
   TariffSelectionInput, TariffSelection, TariffCommitSelectionInput,
   TariffCommitSelectionResult, TariffWorkspaceState, TariffSource, TariffBundle,
-  TariffRepricingInput
+  TariffRepricingInput, TariffBundleOptions, TariffPortfolioSelection, TariffPortfolioInspection
 } from '../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/client.mjs';
 
 export interface MerchantTariffConnection {
@@ -34,6 +34,34 @@ export interface MerchantTariffReadOptions extends MerchantTariffRequestOptions 
 export interface MerchantTariffBundleOptions extends MerchantTariffReadOptions {
   /** Reopen these exact retained original bytes after later saves or process restart. */
   readonly portfolioSha256?: string;
+  /** Original pricingRequestId; with a digest, verifies that same retained selected export. */
+  readonly selectionRequestId?: string;
+}
+
+/** The full input is validated by the native inspector; this reply lists its source bindings. */
+export interface MerchantTariffPortfolioInspection {
+  readonly schema: 'stellar-forge.merchant-tariff-portfolio-inspection.v1';
+  readonly sourceReviewSchema: 'stellar-forge.merchant-tariff-portfolio-review.v1';
+  readonly portfolioSha256: string;
+  readonly planCount: number;
+  readonly selectionCount: number;
+  readonly plans: readonly {
+    readonly planId: string;
+    readonly version: string;
+    readonly label: string;
+    readonly sourceLabel: string;
+    readonly tariffReviewSha256: string;
+  }[];
+  readonly selections: readonly {
+    readonly id: string;
+    readonly planId: string;
+    readonly comparisonId: string;
+    readonly planRequestId: string;
+    readonly pricingRequestId: string;
+    readonly completed: boolean;
+    readonly scenarioPlanId: string | null;
+    readonly pricingVersion: string | null;
+  }[];
 }
 export interface MerchantTariffFile extends TariffDownload {
   readonly sha256: string;
@@ -51,6 +79,7 @@ export const TARIFF_MCP_OPERATIONS: Readonly<{
   commitSelection:'merchant_pricing_tariff_commit_selection';
   download:'merchant_pricing_tariff_download';
   bundle:'merchant_pricing_tariff_bundle';
+  inspectPortfolio:'merchant_pricing_tariff_inspect_portfolio';
   receive:'merchant_pricing_tariff_receive';
   repricingSource:'merchant_pricing_tariff_repricing_source';
   downloadRepricing:'merchant_pricing_tariff_download_repricing';
@@ -76,6 +105,7 @@ export class MerchantTariffClient {
   download(planId:string,name:string,options?:MerchantTariffReadOptions):Promise<MerchantTariffFile>;
   /** Receives complete original JSON by verified chunks from its retained export. */
   bundle(options?:MerchantTariffBundleOptions):Promise<TariffBundle>;
+  inspectPortfolio(bundle:TariffBundle,options?:MerchantTariffRequestOptions):Promise<MerchantTariffPortfolioInspection>;
   receive(bundle:TariffBundle,options?:MerchantTariffRequestOptions):Promise<JsonValue>;
   repricingSource(version:string,options?:MerchantTariffRequestOptions):Promise<JsonValue>;
   downloadRepricing(decision:string,name:string,options?:MerchantTariffReadOptions):Promise<MerchantTariffFile>;
@@ -114,6 +144,7 @@ export interface MerchantTariffSavedDownload {
   readonly version?:string;
   readonly tariffReviewSha256?:string;
   readonly portfolioSha256?:string;
+  readonly selectionRequestId?:string;
   readonly planCount?:number;
   readonly selectionCount?:number;
   readonly sellerSha256?:string;
@@ -125,7 +156,7 @@ export interface MerchantTariffManifestInspection {
 }
 export function downloadMerchantTariffPlan(options:MerchantTariffDownloadOptions&{readonly planId:string}):Promise<MerchantTariffSavedDownload>;
 export function inspectMerchantTariffPlan(options:MerchantTariffClientOptions&{readonly planId:string}):Promise<MerchantTariffManifestInspection>;
-export function downloadMerchantTariffPortfolio(options:MerchantTariffDownloadOptions&{readonly portfolioSha256?:string}):Promise<MerchantTariffSavedDownload>;
+export function downloadMerchantTariffPortfolio(options:MerchantTariffDownloadOptions&{readonly portfolioSha256?:string;readonly selectionRequestId?:string}):Promise<MerchantTariffSavedDownload>;
 export function inspectMerchantTariffPortfolio(options:MerchantTariffClientOptions&{readonly portfolioSha256:string}):Promise<MerchantTariffManifestInspection>;
 export function downloadMerchantTariffPricingReview(options:MerchantTariffDownloadOptions&{readonly version:string}):Promise<MerchantTariffSavedDownload>;
 export function inspectMerchantTariffPricingReview(options:MerchantTariffClientOptions&{readonly version:string}):Promise<MerchantTariffManifestInspection>;
