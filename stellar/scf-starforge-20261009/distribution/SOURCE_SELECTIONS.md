@@ -68,6 +68,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `tind-migration` | Original OAI editions, native TIND MARCXML and file receiving, staff metadata reconciliation, complete editable migration handover | TIND scholarly migration; OAI repository workspace; Runtime management | [Complete installation and operation](../../../products/tind/OPERATING.md) |
 | `haystack-turnover` | Native building grids, source-local equipment and points, typed tag review, saved editions and complete editable turnover receiving | Haystack building turnover; Runtime management | [Complete installed operator guide](../../../products/haystack/OPERATING.md) |
 | `groundwater-reports` | Original groundwater sources, scenarios and native results, frozen report publication, buyer receiving, Operations association and complete scientific/desk handover | Groundwater scientific and Report Desk browsers; Buyer runbook; Merchant console | [Complete installation and operation](../../../products/groundwater/OPERATING.md) |
 | `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |
