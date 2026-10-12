@@ -8,6 +8,7 @@ import {queueNotification,destinationForEvent,MAX_PENDING,terminalNotification,u
 import {parseWorkspace,MAX_WORKSPACE_BYTES} from '../sf74-merchant-support-console/workspace-file.mjs';
 import {inspectRuntimeFiles,exportRuntimeHandoff,RUNTIME_SCHEMA} from '../sf74-merchant-support-console/runtime-support.mjs';
 import {caseMetadata} from '../sf74-merchant-support-console/case-store.mjs';
+import {assertRecoveryDeliveryAllowed} from './incident-recovery-model.mjs';
 
 const fail=code=>{throw new Error('SF93_'+code);};
 const note=value=>{
@@ -72,6 +73,7 @@ export async function operateNotification({directory,id,expectedAttempts,action,
     if(action==='cancel') {
       event.status='CANCELLED';event.lastReason='OPERATOR_CANCELLED';event.nextAttemptAt=null;
     } else {
+      assertRecoveryDeliveryAllowed(state,event);
       if(!['PAUSED','EXHAUSTED'].includes(event.status))fail('NOTIFICATION_ALREADY_SCHEDULED');
       const destination=destinationForEvent(state,event,environment);
       if(destination.reason)fail(destination.reason+'_USE_NOTIFY_FOR_A_NEW_DESTINATION');

@@ -9,6 +9,7 @@ import {freshMerchant,pruneRecords} from './incident-model.mjs';
 import {checkPayload} from './notifications.mjs';
 import {slackTimestamp,validSlackReceipt,validSlackRequest} from './notifications-slack.mjs';
 import {OBJECT_FILES,readObjectObservationFiles} from './object-observation.mjs';
+import {validateRecoveryState,recoveryView} from './incident-recovery-model.mjs';
 
 export const STATE_SCHEMA='stellar-forge.seller-incidents.v1';
 const CAPTURE_SCHEMA='stellar-forge.seller-incident-capture.v1';
@@ -91,6 +92,7 @@ function validateState(state) {
     const row=state.merchants[merchant.id];
     if(!row||typeof row.binding!=='string'||!row.conditions||typeof row.conditions!=='object')fail('MERCHANT_STATE_INVALID');
   }
+  validateRecoveryState(state);
   return state;
 }
 function references(state) {
@@ -171,6 +173,16 @@ export async function openIncidentStore(directory) {
       if(!readonly)await collectStaging();
       let census=readonly?null:await collect(state);
       const io={
+        async readStateBytes() {
+          const bytes=await readPrivateFile(statePath,MAX_STATE);
+          if(JSON.stringify(validateState(decode(bytes)))!==JSON.stringify(state))fail('SNAPSHOT_STATE_CHANGED');
+          lease.assertHeld();return bytes;
+        },
+        async readCaptureBytes(ref) {
+          if(!ref||!/^[a-f0-9]{64}$/.test(ref.id??''))fail('CAPTURE_REFERENCE_INVALID');
+          const bytes=await readPrivateFile(join(captureDirectory,'capture-'+ref.id+'.json'),MAX_CAPTURE);
+          parseCapture(bytes,ref.id);lease.assertHeld();return bytes;
+        },
         async capture(packet) {
           if(readonly)fail('READ_ONLY_TRANSACTION');
           const object=packet.kind==='OBJECT_SESSION',names=object?OBJECT_FILES:PACKET_FILES;
@@ -233,7 +245,7 @@ export async function initializeIncidentStore({directory,config}) {
 }
 export function statusView(state,{details=false}={}) {
   return {schema:STATE_SCHEMA,directoryRevision:state.revision,configRevision:state.configRevision,
-    configHash:state.configHash,worker:state.worker,
+    configHash:state.configHash,worker:state.worker,recovery:recoveryView(state),
     notificationDestination:state.config.notification ? {
       transport:state.config.notification.transport ?? 'webhook',id:state.config.notification.id,
       ...(state.config.notification.transport === 'slack' ? {
@@ -248,3 +260,6 @@ export function statusView(state,{details=false}={}) {
     notificationCapacityEvents:state.notificationCapacityEvents};
 }
 
+
+export {validateState as validateIncidentState,references as incidentCaptureReferences,parseCapture as validateIncidentCapture};
+export const INCIDENT_STORE_LIMITS=Object.freeze({stateBytes:MAX_STATE,captureBytes:MAX_CAPTURE});
