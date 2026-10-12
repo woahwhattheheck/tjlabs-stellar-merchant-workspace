@@ -44,11 +44,15 @@ export async function initializeSupportAgent({directory,connection,name='Merchan
   if(await realpath(dirname(root))!==dirname(root))
     throw failure('SUPPORT_SETUP_PATH','Use an existing canonical parent for the private agent directory.');
   await folder(root);
-  const requestPath=join(root,'support-agent-setup.json'),entries=await readdir(root);
-  if(entries.length&&!entries.includes('support-agent-setup.json'))
-    throw failure('SUPPORT_SETUP_OUTPUT','Use a new empty agent directory or this setup\'s retained directory.');
   const request={schema:SUPPORT_AGENT_SETUP_SCHEMA,name,connection:source,connectionSha256:selected.sha256};
-  await retainCaseArtifact(requestPath,encode(request));
+  const requestBytes=encode(request),requestPath=join(root,'support-agent-setup.json');
+  const marker='setup-'+digest(requestBytes),entries=await readdir(root);
+  if(entries.length&&!entries.includes('support-agent-setup.json')&&!entries.includes(marker))
+    throw failure('SUPPORT_SETUP_OUTPUT','Use a new empty agent directory or this setup\'s retained directory.');
+  // The request-specific private directory is atomic. It survives an interrupted
+  // first immutable publication, including an original publisher staging file.
+  if(!entries.includes('support-agent-setup.json'))await folder(join(root,marker));
+  await retainCaseArtifact(requestPath,requestBytes);
   // The original Linux initializer resumes its first state under its native lease.
   await initReleaseStore(join(root,'releases'),{resume:true});
   await folder(join(root,'customer-exports'));
