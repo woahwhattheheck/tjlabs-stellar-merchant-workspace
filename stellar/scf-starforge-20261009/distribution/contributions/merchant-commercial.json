@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-commercial",
+  "description": "Complete original merchant quotation, pricing workspace receiving and customer handover",
+  "components": [
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops"
+  ],
+  "supportFiles": [],
+  "commands": {
+    "merchant-commercial": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-commercial": "Prepare customer quotations, retain original pricing and full workspaces, receive responses and deliver complete editable cases"
+  },
+  "exports": {
+    "./merchant/commercial": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-quote.mjs",
+    "./merchant/case-commercial": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/case-commercial.mjs",
+    "./merchant/commercial-pricing": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-pricing.mjs",
+    "./merchant/commercial-receiving": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/receiving.mjs",
+    "./merchant/commercial-receiving-operator": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/operator.mjs"
+  }
+}

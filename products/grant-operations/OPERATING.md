@@ -1,6 +1,6 @@
 # Grant Operations — installed operating and receiving guide
 
-Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, complete customer installations, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
+Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, complete customer installations, original implementation reviews, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
 
 The maintained source selection is **grant-operations**. Open **Applications → Grant planning and delivery**, or use **starforge grant-workspace**. The selection includes the complete SF47 model and operator, the original Node and Python buyer receiving sources, merchant-support readers, the Grant Application, its Merchant MCP provider, and the existing installation and transfer controls. It uses the canonical [Stellar merchant workspace repository](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace).
 
@@ -15,6 +15,7 @@ This guide is also retained at `package/source/products/grant-operations/OPERATI
 | Forecast and Portfolio | Complete input, case version and source snapshot; dated cash assumptions, every remaining task, capacity calendars, alternatives, selected work dates and the original reviewed event release. |
 | Buyer and Support receiving | Exact exported files, original job/purchase/deployment identities, selected associations, reader results, native previews and same-request receipts. |
 | Customer installations | Complete commissioning and commercial source, useful task and priced unit, source population, exact payment and aggregate task budget, receiving application and maintainer, original funded assignments and acceptance records; immutable editions and complete selected-edition handover. |
+| Implementation evidence | Exact commissioning/workspace/Support source, complete original-file inventory, source cutoff and producer fingerprints, explicit observation-to-case links, selected Installation editions and immutable reviews. |
 | Cohort and Completion | Explicit measurement populations and cutoff, original observations, immutable frozen evidence, payment-derived completion clocks, assignments, prepared forms and actual issuer receipts when supplied. |
 | Receiving | A complete planning or operating-case export with its manifest, source bytes, history, forecasts, portfolios and reviews, reopened through the original importer. |
 
@@ -235,7 +236,40 @@ A later edition keeps earlier editions readable. **Export complete handover** in
 
 The six typed Merchant calls—merchant_grant_installations, merchant_grant_installation, merchant_grant_installation_history, merchant_grant_installation_seed, merchant_grant_installation_preview and merchant_grant_installation_save—operate this same service. Use merchant_grant_export with kind installation and the saved revision for the complete selected handover. Continue large responses through the existing exact snapshot, byte and row paging operations.
 
-The selected product includes both matching managed-launch readers and all 43 original runtime files they bind. After adopting a new source edition, review and reopen the managed application, then continue its original case and saved request identities.
+The selected product includes both matching managed-launch readers and the complete original runtime files they bind, including the Installation and implementation-evidence modules. After adopting a new source edition, review and reopen the managed application, then continue its original case and saved request identities.
+
+
+### Review original implementation evidence
+
+Open **Implementation evidence** in the same operating case. Attach the complete original commissioning JSON, merchant workspace or Merchant Support handoff through the existing Sources intake. Select it by its actual filename, byte count and SHA-256, then **Read original implementation**. The installed SF74 producer supplies the original tasks, measurements, receiving records, comparisons and readable report.
+
+Enter the observation cutoff as canonical UTC with milliseconds, such as `2026-10-12T12:00:00.000Z`. Both an observation's effective time and recorded time must fall at or before that cutoff. The source retains its complete current task and workorder definitions and later history; the review labels those definitions explicitly.
+
+**Original files** contains the complete source-bundle inventory, including earlier editions and files without a task assignment. Embedded bytes are already retained. Attach each missing external original through Sources, then select the exact SHA-256 and byte-count match. The draft records these bindings as `originalFileRefs:[{sha256,sourceId}]`. Identical bytes can share a retained source while each original manifest path remains visible. A missing original stays an explicit finding. A complete evidence export requires the frozen review itself to contain every required binding; adding an attachment later does not rewrite an earlier review.
+
+Inspect **Tasks**, **Receiving** and **Measurements**, open the complete original observations, and select **Use evidence** or **Keep as context**. Associate the actual existing deployment, work, purchase and outcome records and enter the reason for each link. Choose any applicable saved Installation editions by their exact ID, revision and SHA. The selection can contain up to 200 distinct observations and 20 Installation editions.
+
+Technical receiving, customer receiving, task completion and measured outcomes keep the producer's separate meanings. A purchase link records the entered association. It does not establish settlement, approval of work, customer acceptance or an issuer decision. Negative and changes-required observations remain useful evidence of what occurred.
+
+Choose **Preview selected evidence**, read the full findings and current-link snapshots, then **Freeze evidence review**. The original transaction retains the current case version, exact inputs, preview SHA, operator, note and request ID. A review can be saved with findings; its later use in Completion evaluates those findings and the current source again.
+
+The same workflow is available through the installed CLI:
+
+~~~sh
+grant operations --workspace "$GRANT_DATA" implementation-source --case CASE_ID --source SOURCE_ID --as-of 2026-10-12T12:00:00.000Z --expected-version CASE_VERSION --output /absolute/working/implementation-source.json
+grant operations --workspace "$GRANT_DATA" implementation-preview --case CASE_ID --expected-version CASE_VERSION --inputs /absolute/working/implementation-inputs.json --output /absolute/working/implementation-preview.json
+grant operations --workspace "$GRANT_DATA" implementation-prepare --case CASE_ID --expected-version CASE_VERSION --inputs /absolute/working/implementation-inputs.json --expected-preview-sha256 PREVIEW_SHA256 --actor "Reviewing operator" --note "Original implementation observations and explicit case associations" --request-id ORIGINAL_IMPLEMENTATION_REQUEST
+grant operations --workspace "$GRANT_DATA" implementation-export --case CASE_ID --review REVIEW_ID --output /absolute/delivery/implementation-evidence.zip
+grant operations --workspace "$GRANT_DATA" implementation-original --case CASE_ID --source SOURCE_ID --sha256 ORIGINAL_FILE_SHA256 --output /absolute/delivery/original-file
+~~~
+
+Use the source response's initial review inputs as the entered input object and retain its exact `sourceId`, `sourceSha256` and `asOfAt`. Its selections identify the original observation `kind` and `id`, `use`, explicit link arrays and note. Preserve native IDs from the original source and existing case. Read the current case version after each committed mutation.
+
+An interrupted freeze continues through **Continue original freeze** or the identical CLI request. **Read back accepted review** retrieves the first committed result. A case-version conflict preserves the draft and source; explicitly adopt the current version and preview the reconciled draft. An already frozen review remains immutable. **Use as new draft** provides the deliberate successor workflow.
+
+**Download complete evidence** includes the full review and inputs, original producer report, every source-bundle manifest and original file, linked source attachments, CSV tables and the exact member manifest. The source attachment bound is 8 MiB, the native projection bound is 16 MiB, and an individual frozen review has an 8 MiB bound. The complete evidence ZIP and its expanded selected members retain the original 32 MiB bound. An over-limit or incomplete export retains its actual error and original files.
+
+Keep the installed producer and reader identity with each frozen review. A new case import, current Completion use and review export re-run the original inspector over the retained bytes and cutoff, then compare its complete projection and reader fingerprints. A reader mismatch requires the original published reader edition to verify that historical review. An already committed identical import recovers its original request before requiring a current reader. The complete operating case retains these reviews, source files and history.
 
 ## 7. Measure a cohort and prepare completion
 
@@ -264,7 +298,7 @@ Open Tranche completion. The original recorded previous payment and any issuer-c
 
 Seed the assignments for the selected tranche. Retain owners, the original work-package IDs, work dates, completed work, deployments, source IDs and explanatory notes. Preview against the actual payment-derived calendar and save the reviewed assignments.
 
-Prepare the original completion files with its native data object. Optionally select exact frozen cohortReviewIds; the original preview checks their tranche, cutoff, measurement source and proposed-target findings. Omitting them preserves the earlier completion contract. Preparation retains the chosen evidence; it does not submit an issuer form.
+Prepare the original completion files with its native data object. Optionally select exact frozen cohortReviewIds and implementationReviewIds. The original preview checks the cohort's tranche, cutoff, measurement source and proposed-target findings; implementation evidence also verifies the original producer, complete files, saved Installation editions, current links and retained findings. Select up to 20 distinct implementation reviews in the intended order. The two optional fields compose, and requests that omit them retain their earlier input semantics. Preparation retains the chosen evidence; it does not submit an issuer form.
 
 ~~~sh
 grant operations --workspace "$GRANT_DATA" completion-calendar --case CASE_ID --as-of YYYY-MM-DD --output /absolute/working/completion-calendar.json
@@ -318,11 +352,11 @@ node "$GRANT_TOOLKIT/runtime-install-cli.mjs" run --dir "$GRANT_RUNTIME" -- merc
 
 An existing Merchant configuration can add grantWorkspaceConnection with that same absolute connection path. The original [Merchant Grant guide](../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md) and [typed client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) describe the current complete tool catalog.
 
-Start with merchant_grant_workspaces and inspect the selected source hash. Open the exact alias with its expectedSelectionSha256, then read plans or cases and their native current versions. Use original preview/save pairs for forecasts, portfolios, buyer and support receiving, cohort preparation and completion. Each deliberate mutation has its own stable request ID and exact reviewed payload.
+Start with merchant_grant_workspaces and inspect the selected source hash. Open the exact alias with its expectedSelectionSha256, then read plans or cases and their native current versions. Use original preview/save pairs for forecasts, portfolios, buyer and support receiving, customer installations, implementation evidence, cohort preparation and completion. Each deliberate mutation has its own stable request ID and exact reviewed payload.
 
 Successful responses retain the full original bytes, size, SHA and launch/source identity. Compact arrays refer to explicit original JSON pointers. Use merchant_grant_rows for array pages and native history cursors for further history responses. A large row remains available in the complete source file.
 
-For source-based inputs, verify the whole retained file's SHA before using an optional inputPointer. The pointer selects the original object after verification; it does not replace the whole-file identity. Buyer and Support consume the complete handoff bytes and filename.
+For source-based inputs, verify the whole retained file's SHA before using an optional inputPointer. The pointer selects the original object after verification; it does not replace the whole-file identity. Buyer and Support consume the complete handoff bytes and filename. Implementation source inspection reads the selected original case attachment. Use merchant_grant_implementation_source, merchant_grant_implementation_preview and merchant_grant_implementation_prepare for the same source, preview and immutable review; merchant_grant_export supports implementation and implementation-original. Preserve the exact preview, original request ID and native case version.
 
 Use merchant_grant_file_read with the exact snapshot/SHA and returned offsets for full binary or JSON downloads. Receive larger files through the original begin/chunk/status/commit transfer path, then explicitly import the completed transfer. A successful transfer alone does not change a plan or operating case.
 
@@ -337,9 +371,10 @@ Choose the native export matching the intended scope:
 | Plan ZIP | Selected immutable planning revision, scenario, reports, full plan history and manifest. |
 | Planning collection ZIP | All native planning packages; it is not the operating-case export. |
 | Forecast or Portfolio ZIP | Exact selected input, source, calculation and readable/CSV result. |
+| Implementation evidence ZIP | Exact immutable review and producer report, source-bundle manifests, complete original files, selected source attachments, linked snapshots, CSVs and manifest. |
 | Cohort or Completion ZIP | The selected frozen review/preparation and all included original evidence. |
 | Customer installation ZIP | The exact selected immutable edition and readable handover, plus the whole operating case, all installation editions, sources and history. |
-| Complete operating-case ZIP | Pinned planning package, case records and sources, full history, forecasts, portfolios, installation editions, cohort/completion work and reviews. |
+| Complete operating-case ZIP | Pinned planning package, case records and sources, full history, forecasts, portfolios, installation editions, implementation evidence, cohort/completion work and reviews. |
 
 For a whole delivery, export the complete operating case after reading its current version. Preserve the exact output bytes and import them through the original receiving workspace:
 
@@ -370,6 +405,8 @@ Runtime transfer and business export have different purposes. Use the maintained
 | File read expired | Reopen the same snapshot and SHA at the required byte offset. |
 | Transfer incomplete | Resume only missing original offsets, then commit the same declared file. |
 | Browser or managed process restarted | Reopen the same workspace and explicit port; recover the saved request and verify the new actual launch. |
+| Implementation reader differs from a frozen review | Keep the original source and review; select its published reader edition for new import, current Completion use or evidence export. |
+| Required source-bundle original is unavailable | Attach the actual complete file and create a newly reviewed draft with its exact binding; preserve the earlier frozen review and its findings. |
 | Source selection changed | Review the intended scenario, Python and installed source edition against the retained host binding. |
 
 Keep the request files, selected inputs, exact source hashes and original result receipts. An error or incomplete report remains part of its actual history. Original applications, client APIs and immutable exports provide the recovery seams; no replacement business store is required.
@@ -378,7 +415,7 @@ Keep the request files, selected inputs, exact source hashes and original result
 
 The release owner runs the original receiving workflow against the exact installed source, selected runtime profile and actual authorized input case. Reuse an accepted result when its exact source/input scope already covers a step. An archive or source publication alone is not a native receiving result.
 
-For the full buyer/cohort continuation, use the maintained [Buyer receiving journey](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_RECEIVING_JOURNEY.md), its buyer-receiving-runtime.json and original buyer-operations-receiving.mjs. Its private configuration can enable cohortReceiving. The complete original Inbox and operating-case inputs remain with their existing owner. Preserve the selected manifest's explicit Git blobs and the receiving helper's current provider binding; update those through the original source owner when integrating an intentional new provider edition.
+For the full buyer/cohort continuation, use the maintained [Buyer receiving journey](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_RECEIVING_JOURNEY.md), its buyer-receiving-runtime.json and original buyer-operations-receiving.mjs. Its private configuration can enable cohortReceiving and the source owner's implementationReceiving phase. That phase consumes the actual complete implementation carrier, external originals and explicit observation IDs in the same original case, browser and agent continuation. Only the original receiving owner selects a new complete configuration before dispatch or through its supported continuation; retain any already-started configuration and operation. The complete original Inbox and operating-case inputs remain with their existing owner. Preserve the selected manifest's explicit Git blobs and the receiving helper's current provider binding; update those through the original source owner when integrating an intentional new provider edition.
 
 One completed installed handover should establish:
 
@@ -388,7 +425,7 @@ One completed installed handover should establish:
 4. Contributor/invoice/cash work and its source-linked report; actual and conditional values remain distinguishable.
 5. A saved forecast, full Portfolio allocation and selected forecast with the original commercial release clock preserved.
 6. Original buyer and support handoff preview/receive/readback, including an exact same-request recovery and preserved peer records.
-7. A complete customer installation through original source/commissioning, payment and aggregate budget, funded assignment, receiving/maintenance, reviewed immutable editions and selected-edition receiving; then the actual cohort result and deliberate Completion evidence selection.
+7. A complete customer installation through original source/commissioning, payment and aggregate budget, funded assignment, receiving/maintenance, reviewed immutable editions and selected-edition receiving; then a reviewed original implementation source with all required files, unchanged underlying case facts and saved evidence, the actual cohort result and deliberate Completion evidence selection.
 8. Full CLI and Merchant client reads, original row/byte pages and exact downloaded source identities.
 9. Complete case export, original import into the receiving workspace, reopened history/source/review checks and closed owned services.
 
@@ -406,6 +443,7 @@ The delivered set consists of the selected TGZ and manifest, installation/profil
 | Delivery, API and intake | [Operations](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS.md), [API](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-API.md), [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) |
 | Resource and cash assumptions | [Forecast](../../stellar/scf_2026/sf47_budget_model/workspace/FORECAST.md), [Portfolio](../../stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md) |
 | Customer installation | [Commissioning, editions and complete handover](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md) |
+| Implementation source and receiving | [Complete implementation contract](../../stellar/scf_2026/sf47_budget_model/workspace/IMPLEMENTATION_EVIDENCE.md) |
 | Native evidence | [Buyer](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_OPERATIONS.md), [Support](../../stellar/scf_2026/sf47_budget_model/workspace/SUPPORT_DELIVERY.md), [Cohort](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md), [Completion](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) |
 | Agent and installed lifecycle | [Grant client](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md), [Merchant MCP](../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md), [Applications](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md) |
 
