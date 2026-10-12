@@ -383,6 +383,54 @@ The complete prepared native journey is available through `research-citation-wor
 
 Retain the original run directory and operation identity on restart. The workflow's completed result names the original dossier/review revisions and each complete selected output. Deliver those files with their reported identities. Original connection records, browser profiles and source/workspace directories retain their established private custody; the existing application owner controls its listener lifecycle.
 
+## 10. Receive the complete Python citation analyst
+
+The selected source includes all original Python/Analysis modules and the new
+citation client, CLI, full draft/request editor, portable delivery and customer
+receiver. Install the buyer Python package from this same source as described
+in section 8. Use its existing `workbooks` extra for the full workbook path.
+
+After the original citation-review workflow in section 9 has completed and
+closed its listener, continue that same workspace:
+
+~~~sh
+starforge research-citation-python-receive \
+  --existing-run /srv/starforge/customer/original-citation-review \
+  --directory /srv/starforge/customer/python-citation-analyst \
+  --checkout /absolute/installed-source \
+  --python /absolute/existing/python3 \
+  --operation-id ORIGINAL_PYTHON_CONTINUATION_ID \
+  --with-workbook
+~~~
+
+Select actual original paths and a stable receiving operation ID. The command
+reads the completed original result and selected review, starts the same
+Research listener under its original lock, and invokes the complete Python
+analyst. It verifies the original saved request before recovering it, then
+retains twelve revision-specific exports, proves both portable readers, produces
+the original Analysis/SQL/typed/workbook/archive outputs and cold reopens the
+full customer handover.
+
+The returned `complete.json` records source, workspace, review, request, selected
+revisions and all original artifact byte counts and SHA-256 values. Its
+`Citation_Analyst_Complete_Handover.zip` includes the selected reports and complete
+portable history, exact received request bytes, full analytical outputs and
+editable Analysis workspace ZIP. Private connection files and browser profiles
+remain outside this selection.
+
+A received customer can use `citation-unpack` with the exact whole ZIP digest,
+then `citation-receive` with the matching Node source. Existing identical files
+are reused; different customer files are preserved and reported. The original
+portable readers validate source bodies and replay each saved review from its
+original previous state.
+
+The [full Python citation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_CITATIONS.md)
+also covers an ordinary live analyst: pinned notice/detail reads, complete JSON
+request editing, explicit draft revisions, exact saved-request recovery and
+standalone export/receive/workbook commands. A known completed receiving operation
+returns its original verified receipt; an interrupted original native job stays
+with its existing owner and output selection.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
