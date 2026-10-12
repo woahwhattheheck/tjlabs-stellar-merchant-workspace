@@ -67,8 +67,8 @@ export function renderGrantMarkdown(markdown) {
       need(rows.length >= 2 && rows[1].every(cell => /^:?-{3,}:?$/.test(cell)), 'Keep a header and separator in each application table.');
       const width = rows[0].length;
       need(width > 0 && rows.every(row => row.length === width), 'Keep all application table columns complete.');
-      output.push('<div class="table-scroll"><table><thead><tr>' + rows[0].map(cell => '<th scope="col">' + inline(cell) + '</th>').join('') + '</tr></thead><tbody>' +
-        rows.slice(2).map(row => '<tr>' + row.map(cell => '<td>' + inline(cell) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>');
+      output.push('<div class="table-scroll" role="region" aria-label="' + escape(rows[0].map(cell => cell.replace(/[*\x60]/g, '')).join(' / ')) + '" tabindex="0"><table><thead><tr>' + rows[0].map(cell => '<th scope="col">' + inline(cell) + '</th>').join('') + '</tr></thead><tbody>' +
+        rows.slice(2).map(row => '<tr>' + row.map((cell, column) => column === 0 ? '<th scope="row">' + inline(cell) + '</th>' : '<td>' + inline(cell) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>');
       continue;
     }
     need(!/^(?:\x60{3}|~{3}|>|[-*+]\s|\d+\.\s)/.test(line), 'The reviewer answer uses a prose or table construct that requires an explicit renderer update: ' + line.slice(0,80));
