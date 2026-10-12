@@ -500,8 +500,9 @@ async function portableFiles(directory) {
         await walk(absolutePath, path + '/'); continue;
       }
       if (!portablePath(path)) {
-        // The managed listener record is ephemeral and contains the private operator token.
-        if (path === 'allium.connection.json') continue;
+        // Listener credentials and the retained kernel writer lease belong to this host.
+        // Keep the original dataset lease held while exporting only customer data.
+        if (path === 'allium.connection.json' || path === 'merchant/versions/writer.lease') continue;
         if (['publisher.lock', 'writer.lock', 'control.json', 'control.sock'].includes(item.name) || item.name.startsWith('.pending-') || item.name.startsWith('.state-')) continue;
         throw fault('PORTABLE_FILE_UNKNOWN', 'A retained file has no portable mapping: ' + path);
       }
