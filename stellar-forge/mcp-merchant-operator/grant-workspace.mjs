@@ -402,7 +402,7 @@ export class MerchantGrantWorkspaces {
     if (verb === 'browser') return client.browser();
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
-    const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', cases:'cases', case:'case',
+    const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',

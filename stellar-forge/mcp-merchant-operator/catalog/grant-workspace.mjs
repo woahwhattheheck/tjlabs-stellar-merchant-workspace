@@ -12,6 +12,7 @@ const ws = {workspace:alias};
 const requestIdentifier = {type:'string', pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$'};
 const originalRequest = {requestId:requestIdentifier, actor:nonempty(300), note:str(12000)};
 const planSelection = {planId:id('plan'), expectedRevision:{type:'integer', minimum:1, maximum:1000000}};
+const planComparisonRevision = {type:'integer',minimum:1,maximum:1000000};
 const caseSelection = {caseId:id('operation'), expectedVersion:integer};
 const inputRef = {type:'object', additionalProperties:false,
   properties:{hostInput:alias, snapshotId:{type:'string'}, transferId:{type:'string'}, sourceWorkspace:alias},
@@ -170,6 +171,9 @@ export const grantWorkspaceTools = [
     {...ws, planId:id('plan'), revision:integer}, ['workspace','planId'], true),
   tool('plan_history', 'Read the original saved revision history for a selected plan.',
     {...ws, planId:id('plan')}, ['workspace','planId'], true),
+  tool('plan_comparison', 'Compare two explicit retained grant plan revisions, including a named alternative. Returns complete input and report changes, work-package/payment/milestone/staffing/delivery scope, exact decimal funding and capacity deltas, full daily cash rows and both source snapshots. The returned comparison SHA selects the full receiving package and CSV/HTML exports.',
+    {...ws,planId:id('plan'),fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest},
+    ['workspace','planId','fromRevision','toRevision'],true),
   tool('plan_estimate', 'Preview the original SF47 planning engine using its current revision and supplied original scenario/planning changes. This saves no revision.',
     {...ws, ...planSelection, scenarioPatch:object, planning:object}, ['workspace','planId','expectedRevision'], true),
   tool('plan_save', 'Save an original plan revision with its reviewed current revision, note and stable request ID.',
@@ -381,9 +385,10 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, completion preparation, selected installation handover, complete dated delivery queue, commercial customer account, selected budget performance report, complete supplier account and whole case, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','implementation','implementation-original','delivery-queue','performance','supplier-account','commercial']},
+  tool('export', 'For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, completion preparation, selected installation handover, complete dated delivery queue, commercial customer account, selected budget performance report, complete supplier account and whole case, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','implementation','implementation-original','delivery-queue','performance','supplier-account','commercial']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
+      fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),billingId:commercialIdentifier,revision:installationRevision,sha256:digest,asOfDate:supportDate,
       contributorId:id('person'),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},
     ['workspace','kind'], true),
