@@ -251,24 +251,13 @@ function receiveCustomer(customer, attached) {
 }
 let options, input;
 const nativeMutations = [];
-try {
-  options = parse(process.argv.slice(2));
-  options.out = resolve(options.out);
-  privateDirectory(options.out);
-  const loaded = readInputs(); input = loaded.value;
-  const original = current();
-  const request = {schema, options, inputsSha256: hash(loaded.bytes)};
-  retain(join(options.out, "receiving-input.json"), json(request));
-  const results = [];
-  for (const customer of input.customers) {
-    const attached = customer.files.map(file => ({...file, source: receiveFile(file)}));
-    results.push(receiveCustomer(customer, attached));
-  }
-  const final = current();
-  const selection = results.map(row => row.installation);
-  const exportName = "Complete_Customer_Installations-" + hash(json({selection, version: final.program.version})).slice(0, 24) + ".zip";
-  const exportPath = join(options.out, exportName);
-  const selected = selection[selection.length - 1];
+function finishReceiving(intent) {
+  if (intent.schema !== schema || intent.original.caseId !== options.case ||
+      intent.original.planId !== options.plan || !Array.isArray(intent.installations) ||
+      !/^Complete_Customer_Installations-[a-f0-9]{24}\.zip$/.test(intent.exportName))
+    fail("Retain the original complete receiving checkpoint.");
+  const exportPath = join(options.out, intent.exportName);
+  const selected = intent.installations[intent.installations.length - 1].installation;
   let archive;
   if (existsSync(exportPath)) {
     const raw = regular(exportPath, 128 * 1024 * 1024);
@@ -284,21 +273,60 @@ try {
   nativeMutations.push(imported);
   if (typeof imported.id !== "string") fail("The original import did not return its receiving case identity.");
   const received = current(options["receiving-workspace"], imported.id);
-  const reopened = results.map(row => {
+  for (const row of intent.installations) {
     const saved = native(["installation-show", "--case", imported.id, "--installation", row.installation.id,
       "--revision", String(row.installation.revision)], options["receiving-workspace"]);
-    if (saved.sha256 !== row.installation.sha256 || !same(saved.preview.document, row.original.preview.document))
+    if (saved.sha256 !== row.installation.sha256 || saved.preview.document.workshare.caseId !== row.workshareCaseId)
       fail("The imported original customer Installation differs from its saved edition.");
-    return {profile: row.profile, workshareCaseId: row.workshareCaseId, installation: row.installation,
-      workorder: row.workorder, pendingSelections: row.pendingSelections};
-  });
-  const completion = {schema, original: {workspace: options.workspace, caseId: options.case,
-      planId: options.plan, startedVersion: original.program.version, completedVersion: final.program.version},
-    receiving: {workspace: options["receiving-workspace"], caseId: received.program.id,
-      planId: received.program.planId, version: received.program.version, actor: options["receiving-actor"]},
-    archive, installations: reopened, nativeMutations};
-  const result = retain(join(options.out, "received-" + archive.sha256.slice(0, 24) + ".json"), json(completion));
-  console.log(JSON.stringify({...completion, output: result}, null, 2));
+  }
+  const path = join(options.out, "RECEIVED.json");
+  let completion;
+  if (existsSync(path)) {
+    completion = JSON.parse(regular(path).toString("utf8"));
+    if (completion.archive?.sha256 !== archive.sha256 || completion.receiving?.caseId !== imported.id ||
+        !same(completion.installations, intent.installations))
+      fail("The completed receiving checkpoint describes a different original operation.");
+  } else {
+    completion = {schema, original: {...intent.original, completedVersion: imported.version},
+      receiving: {workspace: options["receiving-workspace"], caseId: received.program.id,
+        planId: received.program.planId, importedVersion: imported.version, actor: options["receiving-actor"]},
+      archive, installations: intent.installations, nativeMutations};
+    retain(path, json(completion));
+  }
+  const raw = regular(path);
+  console.log(JSON.stringify({...completion, currentReceivingVersion: received.program.version,
+    output: {path, bytes: raw.length, sha256: hash(raw)}}, null, 2));
+}
+try {
+  options = parse(process.argv.slice(2));
+  options.out = resolve(options.out);
+  privateDirectory(options.out);
+  const loaded = readInputs(); input = loaded.value;
+  const request = {schema, options, inputsSha256: hash(loaded.bytes)};
+  retain(join(options.out, "receiving-input.json"), json(request));
+  const checkpoint = join(options.out, "receiving-export.json");
+  if (existsSync(checkpoint)) {
+    finishReceiving(JSON.parse(regular(checkpoint).toString("utf8")));
+  } else {
+    const original = current();
+    const results = [];
+    for (const customer of input.customers) {
+      const attached = customer.files.map(file => ({...file, source: receiveFile(file)}));
+      results.push(receiveCustomer(customer, attached));
+    }
+    const final = current();
+    const installations = results.map(row => ({
+      profile: row.profile, workshareCaseId: row.workshareCaseId, installation: row.installation,
+      document: row.document, workorder: row.workorder, pendingSelections: row.pendingSelections
+    }));
+    const exportName = "Complete_Customer_Installations-" +
+      hash(json({installations, version: final.program.version})).slice(0, 24) + ".zip";
+    const intent = {schema, original: {workspace: options.workspace, caseId: options.case,
+        planId: options.plan, startedVersion: original.program.version, selectedVersion: final.program.version},
+      exportName, installations};
+    retain(checkpoint, json(intent));
+    finishReceiving(intent);
+  }
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;
