@@ -2,11 +2,11 @@
 
 'use strict';
 const $=id=>document.getElementById(id),ACTIVE=new Set(['QUEUED','RUNNING','CANCELLING']);
-const S={session:null,key:null,epoch:0,state:null,route:null,detail:null,call:null,sequence:0,drafts:new Map(),draftWrites:new Map(),running:new Set(),actions:[],timer:null,refreshing:null,panel:null,panelId:null,panelModule:null,remote:new Map()};
+const S={session:null,key:null,epoch:0,state:null,route:null,detail:null,call:null,sequence:0,drafts:new Map(),draftWrites:new Map(),running:new Set(),actions:[],timer:null,refreshing:null,panel:null,panelId:null,panelModule:null,remote:new Map(),portfolioSelection:new Set(),portfolioPage:null};
 const LABELS={'refresh':'Refresh allowance','call':'Send saved request','recover':'Recover original result','prepare-purchase':'Prepare original purchase','review-purchase':'Review original purchase','execute-purchase':'Run reviewed purchase','recover-purchase':'Reopen original purchase','finalize-purchase':'Reconcile purchase','report-purchase':'Export buyer history','inspect-lost-output':'Inspect original lost output','recover-lost-output':'Recover selected payment','read-lost-output':'Authenticate saved recovery','export-lost-output':'Export payment proof'};
 const clean=value=>value===null||value===undefined?'—':typeof value==='object'?JSON.stringify(value):String(value);
 const fail=(code,status)=>Object.assign(new Error(code),{code,status});
-const errorText=error=>({WORKSPACE_AUTHENTICATION_REQUIRED:'The workspace key expired. Reopen the current private startup link.',SESSION_CHANGED:'This action belongs to the previous workspace session. Its exact request is still saved.',WORKSPACE_REVISION_CHANGED:'The workspace changed. Refresh and review this action before rebasing it.',PURCHASE_OPERATION_ACTIVE:'This purchase already has an active original operation.',REQUEST_OPERATION_ACTIVE:'This request already has an active operation.',ORIGINAL_REQUEST_INPUTS_NOT_RETAINED_USE_RECOVER:'Use result recovery for this original merchant request.',ORIGINAL_APPROVAL_CAPABILITY_REQUIRED:'This retained native runtime uses its original terminal approval.',ORIGINAL_BROWSER_APPROVAL_UNAVAILABLE:'This selected native runtime uses its original terminal approval.'}[error?.code]??error?.code??error?.message??'Operation failed');
+const errorText=error=>({INVALID_LOW_ALLOWANCE_THRESHOLD:'Enter a whole number of units from 0 to 1,000,000,000.',REPLACEMENT_GATEWAY_CHANGED:'Use the original pass gateway for its replacement purchase.',REPLACEMENT_REQUIRES_NEW_ORDER:'Load a new merchant order for this replacement.',REPLACEMENT_ALREADY_PREPARED:'This pass already has a retained replacement. Open that purchase from the portfolio.',PURCHASE_ORDER_ALREADY_CONNECTED:'This order is already connected. Open its existing pass.',INVALID_PORTFOLIO_REFRESH_SELECTION:'Select at least one pass to refresh.',WORKSPACE_AUTHENTICATION_REQUIRED:'The workspace key expired. Reopen the current private startup link.',SESSION_CHANGED:'This action belongs to the previous workspace session. Its exact request is still saved.',WORKSPACE_REVISION_CHANGED:'The workspace changed. Refresh and review this action before rebasing it.',PURCHASE_OPERATION_ACTIVE:'This purchase already has an active original operation.',REQUEST_OPERATION_ACTIVE:'This request already has an active operation.',ORIGINAL_REQUEST_INPUTS_NOT_RETAINED_USE_RECOVER:'Use result recovery for this original merchant request.',ORIGINAL_APPROVAL_CAPABILITY_REQUIRED:'This retained native runtime uses its original terminal approval.',ORIGINAL_BROWSER_APPROVAL_UNAVAILABLE:'This selected native runtime uses its original terminal approval.'}[error?.code]??error?.code??error?.message??'Operation failed');
 function node(tag,text,cls){const out=document.createElement(tag);if(text!==undefined&&text!==null)out.textContent=clean(text);if(cls)out.className=cls;return out;}
 function append(parent,...children){for(const child of children.flat())if(child!==null&&child!==undefined)parent.append(typeof child==='string'?document.createTextNode(child):child);return parent;}
 function button(title,action,{primary=false,disabled=false}={}){const b=node('button',title,primary?'primary':'');b.type='button';b.disabled=disabled;b.addEventListener('click',()=>Promise.resolve().then(action).catch(showError));return b;}
@@ -126,6 +126,8 @@ function routes(){
  const parts=location.hash.replace(/^#/,'').split('/');
  if(parts[0]==='pass'&&parts[1]){const page=Number(parts[3]??0);return {kind:'pass',id:parts[1],tab:parts[2]??'overview',offset:Number.isSafeInteger(page)&&page>=0?page:0};}
  if(parts[0]==='call'&&parts[1])return {kind:'call',id:parts[1]};
+ if(parts[0]==='replenish'&&parts[1])return {kind:'replenish',id:parts[1]};
+ if(parts[0]==='recovery'){const page=Number(parts[1]??0);return {kind:'recovery',offset:Number.isSafeInteger(page)&&page>=0?page:0};}
  return {kind:['connect','purchase','attach','actions'].includes(parts[0])?parts[0]:'home'};
 }
 const profilePath=route=>'/api/profiles/'+route.id+(route.tab==='history'?'?offset='+route.offset:'');
@@ -133,29 +135,171 @@ function disposeApproval(){S.panel?.dispose();S.panel=null;S.panelId=null;}
 async function renderRoute(){
  if(!S.session)return;const seq=++S.sequence;S.route=routes();disposeApproval();$('view').replaceChildren();renderShell();
  if(S.route.kind==='home')return renderHome();
+ if(S.route.kind==='recovery'){await loadPortfolioRecovery(seq);return;}
  if(S.route.kind==='actions'){await refreshActions();if(seq===S.sequence)renderActions();return;}
  if(['connect','purchase','attach'].includes(S.route.kind))return renderAdd(S.route.kind);
  const scope=currentScope();
+ if(S.route.kind==='replenish'){
+  const value=await api('/api/profiles/'+S.route.id,{scope});if(seq!==S.sequence)return;
+  S.detail=value;renderReplacement(value.profile);return;
+ }
  if(S.route.kind==='call'){const value=await api('/api/calls/'+S.route.id,{scope});if(seq!==S.sequence)return;S.call=value.call;renderCall(value.call);return;}
  const value=await api(profilePath(S.route),{scope});if(seq!==S.sequence)return;S.detail=value;renderPass(value);
 }
-function renderHome(){
- const view=$('view');append(view,header('API passes','Purchased allowances, original requests and retained results in one workspace.',button('Connect a pass',()=>{location.hash='connect';},{primary:true})));
- const grid=node('div',null,'card-grid');for(const p of S.state.profiles){const card=link('','#pass/'+p.id);card.className='pass-card';append(card,node('h2',p.label),node('p',p.orderReference,'mono'),status(p.archived?'ARCHIVED':p.detail?.native?.state??(p.mode==='purchase'?'PURCHASE':'CONNECTED')),facts([['Gateway',p.gatewayBaseUrl],['Available',p.detail?.usage?.availableUnits??p.detail?.usage?.available],['Requests',p.callCount],['Last refreshed',p.checkedAt]]));grid.append(card);}
- view.append(grid);if(!S.state.profiles.length)view.append(panel(null,node('p','Connect an existing purchased pass or open its original saved purchase.','empty')));
+function portfolioPass(id){return S.state?.portfolio?.passes.find(row=>row.id===id);}
+async function preferPass(id){
+ const settings=S.state.portfolio.settings;
+ return act('/api/portfolio/configure',{selectedProfileId:id,lowUnitsThreshold:settings.lowUnitsThreshold},'Choose default pass for new requests',{navigate:false});
 }
-function renderAdd(kind){
- const info={connect:['Connect a pass','Use the original order, purchased plan hash and the host’s claim environment name.'],purchase:['New original purchase','Load the merchant’s full checkout handoff. Preparation, review and payment use the original Buyer and Inbox.'],attach:['Open saved purchase','Reopen the original ApiAccessPurchase directory with the configured Buyer workspace.']}[kind];
- const f=form('add:'+kind,async f=>{
+async function refreshPasses(ids){
+ const profileIds=[...new Set(ids)].filter(id=>profile(id)&&!profile(id).archived);
+ if(!profileIds.length)throw fail('INVALID_PORTFOLIO_REFRESH_SELECTION');
+ return act('/api/portfolio/refresh',{profileIds},'Refresh selected pass allowances',{navigate:false});
+}
+function allowanceCell(p){
+ const out=node('div',null,'allowance-cell');
+ if(!p.usage){out.append(node('span','Refresh required','muted'));return out;}
+ for(const [label,key]of [['Available','availableUnits'],['Purchased','allowanceUnits'],['Consumed','consumedUnits'],['Reserved','reservedUnits']])
+  append(out,append(node('div'),node('span',label),node('strong',p.usage[key])));
+ if(p.routes.length){
+  const detail=node('details');detail.append(node('summary','Remaining calls by route'));
+  for(const route of p.routes)detail.append(node('div',route.id+': '+route.remainingCalls+' call(s) · '+route.units+' unit(s) each','route-allowance'));
+  out.append(detail);
+ }
+ return out;
+}
+function portfolioRequestRows(items){
+ return items.map(row=>{
+  const p=profile(row.profileId),controls=node('div',null,'actions');
+  append(controls,link('Open request','#call/'+row.id),button('Recover result',()=>queue(row.profileId,'recover',{callId:row.id}),{disabled:busy(row.profileId,row.id)||!p||p.archived||!p.claimAvailable}));
+  return [append(node('div'),link(row.label,'#call/'+row.id),node('small',row.requestId,'mono')),
+   append(node('div'),link(row.passLabel,'#pass/'+row.profileId),node('small',row.orderReference,'mono')),
+   row.method+' '+row.path,status(row.status),row.error?.code??'—',controls];
+ });
+}
+function renderPortfolioAttention(host,page,{preview=false}={}){
+ host.replaceChildren(node('h2','Requests needing recovery'));
+ if(!page.items.length){host.append(node('p','Saved requests are ready to continue from their original pass.','muted'));return;}
+ host.append(table(['Request','Pass / original order','Route','State','Last response',''],portfolioRequestRows(page.items)));
+ if(preview)host.append(link('Open recovery queue ('+page.pagination.total+')','#recovery/0'));
+}
+function renderPortfolioLive(){
+ const data=S.state.portfolio,summary=$('portfolio-summary'),preferred=$('portfolio-preferred'),host=$('portfolio-table');
+ if(!data||!summary||!preferred||!host)return;
+ summary.replaceChildren();
+ for(const [label,value]of [['Active passes',data.summary.activePasses],['Passes ready',data.summary.availablePasses],['Low / exhausted',data.summary.lowPasses+' / '+data.summary.exhaustedPasses],['Requests to recover',data.summary.attentionRequests]])
+  summary.append(append(node('div',null,'metric'),node('strong',value),node('span',label)));
+ preferred.replaceChildren();
+ const selected=data.passes.find(row=>row.selected);
+ if(selected)append(preferred,append(node('div'),node('strong','Default for new requests: '+selected.label),node('small',selected.orderReference,'mono')),
+  link('Prepare a new request','#pass/'+selected.id+'/compose'),button('Clear default',()=>preferPass(null)));
+ else append(preferred,node('span','Choose a default pass from the portfolio.'),link('Prepare a purchase','#purchase'));
+ const filter=draft('portfolio-view'),query=(filter.query??'').trim().toLowerCase(),state=filter.status??'ACTIVE';
+ const rows=data.passes.filter(p=>(state==='ALL'||state==='ACTIVE'&&!p.archived||state===p.status)&&
+  (!query||[p.label,p.orderReference,p.gatewayBaseUrl,p.manifestSha256].some(value=>String(value).toLowerCase().includes(query))));
+ for(const id of S.portfolioSelection)if(!data.passes.some(p=>p.id===id&&!p.archived))S.portfolioSelection.delete(id);
+ const records=rows.map(p=>{
+  const select=node('input');select.type='checkbox';select.checked=S.portfolioSelection.has(p.id);select.disabled=p.archived;select.setAttribute('aria-label','Select '+p.label+' for allowance refresh');
+  select.addEventListener('change',()=>{select.checked?S.portfolioSelection.add(p.id):S.portfolioSelection.delete(p.id);renderPortfolioSelection();});
+  const title=append(node('div'),link(p.label,'#pass/'+p.id),node('small',p.orderReference,'mono'),node('small',p.gatewayBaseUrl));
+  if(p.selected)title.append(node('small','Default for new requests'));
+  if(p.replaces)title.append(link('Previous pass: '+p.replaces.label,'#pass/'+p.replaces.profileId));
+  const requests=append(node('div'),link(p.requests.total+' saved request(s)','#pass/'+p.id+'/history'),
+   node('small',p.requests.prepared+' prepared · '+p.requests.active+' active · '+p.requests.attention+' recovery'));
+  const controls=append(node('div',null,'actions'),link('Open','#pass/'+p.id));
+  if(!p.archived)append(controls,button(p.selected?'Default selected':'Use for new requests',()=>preferPass(p.id),{disabled:p.selected}),
+   link('New request','#pass/'+p.id+'/compose'));
+  if(p.replacement)controls.append(link('Open replacement','#pass/'+p.replacement.profileId));
+  else if(S.state.purchaseEnabled)controls.append(link('Prepare replacement','#replenish/'+p.id));
+  const stateCell=append(node('div'),status(p.status),p.error?node('small',p.error.code):null,p.activeTasks?node('small',p.activeTasks+' operation(s) active'):null);
+  return [select,title,stateCell,allowanceCell(p),requests,p.checkedAt??'Awaiting first refresh',controls];
+ });
+ host.replaceChildren(node('p',rows.length+' of '+data.passes.length+' passes','muted'));
+ if(records.length)host.append(table(['','Pass','Availability','Units on this pass','Saved work','Last refreshed',''],records));
+ else host.append(node('p',data.passes.length?'No passes match these filters.':'Connect a purchased pass or load a merchant handoff to begin.','empty'));
+ renderPortfolioSelection();
+ renderPortfolioAttention($('portfolio-attention'),data.attention,{preview:true});
+}
+function renderPortfolioSelection(){
+ const b=$('portfolio-refresh-selected');if(!b)return;
+ b.textContent='Refresh selected ('+S.portfolioSelection.size+')';b.disabled=S.portfolioSelection.size===0;
+}
+function renderHome(){
+ const view=$('view');
+ append(view,header('Pass portfolio','Review each purchased allowance and continue the requests saved against it.',
+  button('Refresh active passes',()=>refreshPasses(S.state.profiles.filter(p=>!p.archived).map(p=>p.id)),{disabled:!S.state.profiles.some(p=>!p.archived)}),
+  link('Connect a pass','#connect')));
+ const metrics=node('div',null,'metrics');metrics.id='portfolio-summary';view.append(metrics);
+ const preferred=node('section',null,'portfolio-preferred');preferred.id='portfolio-preferred';view.append(preferred);
+ const workspace=panel('Purchased passes'),filters=form('portfolio-view',()=>renderPortfolioLive());
+ const search=formField(filters,'query','Find a pass',{value:filters.data.query,help:'Search name, order, gateway or purchased plan hash.'});
+ const states=[['ACTIVE','Active passes'],['ALL','All passes'],['AVAILABLE','Available'],['LOW','Low allowance'],['EXHAUSTED','Exhausted'],['REFRESH_REQUIRED','Needs refresh'],['CLAIM_UNAVAILABLE','Claim unavailable'],['ARCHIVED','Archived']];
+ const choice=formField(filters,'status','Availability',{type:'select',value:filters.data.status??'ACTIVE',choices:states});
+ for(const input of [search,choice])input.addEventListener('input',renderPortfolioLive);
+ const selected=button('Refresh selected (0)',()=>refreshPasses([...S.portfolioSelection]),{disabled:true});selected.id='portfolio-refresh-selected';
+ filters.append(append(node('div',null,'form-actions'),selected,button('Clear selection',()=>{S.portfolioSelection.clear();renderPortfolioLive();})));
+ const rows=node('div');rows.id='portfolio-table';append(workspace,filters,rows);view.append(workspace);
+ const attention=panel();attention.id='portfolio-attention';view.append(attention);
+ const settings=form('portfolio-settings',async f=>{
+  const value=Number(f.elements.namedItem('lowUnitsThreshold').value);
+  await act('/api/portfolio/configure',{selectedProfileId:S.state.portfolio.settings.selectedProfileId,lowUnitsThreshold:value},'Save low allowance threshold',{navigate:false});
+ });
+ const threshold=formField(settings,'lowUnitsThreshold','Low allowance threshold (units per pass)',{type:'number',value:settings.data.lowUnitsThreshold??S.state.portfolio.settings.lowUnitsThreshold,required:true,
+  help:'A pass is low when its available units reach this threshold. Route costs also determine whether another call fits.'});
+ threshold.min='0';threshold.max='1000000000';threshold.step='1';submit(settings,'Save threshold');
+ view.append(panel('Portfolio settings',settings));
+ renderPortfolioLive();
+}
+async function loadPortfolioRecovery(seq=S.sequence){
+ const scope=currentScope(),offset=S.route.offset??0,page=await api('/api/portfolio/requests?offset='+offset+'&limit=100',{scope});
+ if(seq!==S.sequence||S.route?.kind!=='recovery')return;
+ S.portfolioPage=page;
+ const view=$('view');view.replaceChildren(header('Request recovery','Open a saved request or recover its original response from the pass that owns it.',link('Back to portfolio','#home')));
+ const host=panel();renderPortfolioAttention(host,page);view.append(host);
+ const pager=node('nav',null,'actions'),p=page.pagination;pager.setAttribute('aria-label','Recovery queue pages');
+ if(p.offset>0)append(pager,link('First page','#recovery/0'),link('Previous page','#recovery/'+Math.max(0,p.offset-p.limit)));
+ if(p.nextOffset!==null)pager.append(link('Next page','#recovery/'+p.nextOffset));
+ append(view,node('p',page.items.length?'Requests '+(p.offset+1)+'–'+(p.offset+page.items.length)+' of '+p.total:'No requests on this page.','muted'),pager);
+}
+function renderReplacement(p){
+ if(p.replacementProfileId){
+  const successor=profile(p.replacementProfileId);
+  append($('view'),header('Retained replacement purchase',p.label+' · '+p.orderReference),
+   panel('Continue the saved purchase',node('p','The replacement for this pass is already retained.'),
+    link(successor?.label??'Open replacement purchase','#pass/'+p.replacementProfileId)),
+   panel('Original pass',link('Open original requests','#pass/'+p.id+'/history')));
+  return;
+ }
+ renderAdd('purchase',p);
+}
+function replacementComparison(parent,text){
+ const out=panel('Review the merchant handoff');
+ let handoff;try{handoff=JSON.parse(text||'');}catch{
+  out.append(node('p','Load the complete new merchant handoff to compare its order and payment terms.','muted'));return out;
+ }
+ const previous=parent.handoff??{},next=handoff&&typeof handoff==='object'?handoff:{};
+ const fields=[['Order',parent.orderReference,next.orderReference],['Purchased plan SHA-256',parent.manifestSha256,next.file?.sha256],
+  ['Amount (atomic units)',previous.payment?.amount,next.payment?.amount],['Asset',previous.payment?.asset,next.payment?.asset],
+  ['Network',previous.payment?.network,next.payment?.network],['Recipient',previous.payment?.payTo,next.payment?.payTo],
+  ['Payment timeout (seconds)',previous.payment?.maxTimeoutSeconds,next.payment?.maxTimeoutSeconds],
+  ['Purchase URL',previous.purchaseUrl,next.purchaseUrl]];
+ out.append(table(['Term','Current pass','New merchant handoff'],fields.map(row=>row.map(value=>clean(value)))));
+ if(next.orderReference===parent.orderReference)out.append(node('p','Choose a new merchant order for this replacement.','error'));
+ out.append(node('p','Save this handoff, then prepare and review the purchase from its pass page. The native review presents the payment before execution.','muted'));
+ return out;
+}
+function renderAdd(kind,parent=null){
+ const replacement=parent!==null;const info=replacement?['Prepare replacement purchase','Load a new merchant handoff for '+parent.label+'. Its original requests remain available from the previous pass.']:{connect:['Connect a pass','Use the original order, purchased plan hash and the host’s claim environment name.'],purchase:['New original purchase','Load the merchant’s full checkout handoff. Preparation, review and payment use the original Buyer and Inbox.'],attach:['Open saved purchase','Reopen the original ApiAccessPurchase directory with the configured Buyer workspace.']}[kind];
+ const f=form(replacement?'replace:'+parent.id:'add:'+kind,async f=>{
   const d={...f.data};for(const input of f.elements)if(input.name&&input.type!=='file')d[input.name]=input.value;
-  const path=kind==='connect'?'/api/passes/connect':kind==='purchase'?'/api/purchases/prepare':'/api/purchases/attach';
+  const path=replacement?'/api/profiles/'+parent.id+'/replenish':kind==='connect'?'/api/passes/connect':kind==='purchase'?'/api/purchases/prepare':'/api/purchases/attach';
   const value=kind==='attach'?{label:d.label,purchaseDirectory:d.purchaseDirectory}:kind==='connect'?{label:d.label,gatewayBaseUrl:d.gatewayBaseUrl,orderReference:d.orderReference,manifestSha256:d.manifestSha256,claimEnv:d.claimEnv}:{label:d.label,gatewayBaseUrl:d.gatewayBaseUrl,intentId:d.intentId,claimEnv:d.claimEnv,handoff:d.handoff};
   await act(path,value,info[0]);});
- const d=f.data;formField(f,'label','Pass name',{value:d.label,required:true});
+ const d=f.data;formField(f,'label','Pass name',{value:d.label??(replacement?parent.label+' replacement':''),required:true});
  if(kind==='attach')formField(f,'purchaseDirectory','Original purchase directory',{value:d.purchaseDirectory,required:true,help:'Absolute host path containing the original customer.json and handoff.json.'});
  else{
-  formField(f,'gatewayBaseUrl','API gateway origin',{value:d.gatewayBaseUrl,required:true,help:'HTTPS origin or the explicit local gateway, for example http://127.0.0.1:43112.'});
-  formField(f,'claimEnv','Host claim environment',{type:'select',value:d.claimEnv??S.state.claimEnvs[0],choices:S.state.claimEnvs,help:'The token value remains on the host.'});
+  const gateway=formField(f,'gatewayBaseUrl','API gateway origin',{value:replacement?parent.gatewayBaseUrl:d.gatewayBaseUrl,required:true,help:'HTTPS origin or the explicit local gateway, for example http://127.0.0.1:43112.'});if(replacement)gateway.readOnly=true;
+  formField(f,'claimEnv','Host claim environment',{type:'select',value:d.claimEnv??parent?.claimEnv??S.state.claimEnvs[0],choices:S.state.claimEnvs,help:'The token value remains on the host.'});
   if(kind==='connect'){formField(f,'orderReference','Original order reference',{value:d.orderReference,required:true});formField(f,'manifestSha256','Purchased plan SHA-256',{value:d.manifestSha256,required:true,full:true});}
   else{
    formField(f,'intentId','Stable original purchase intent',{value:d.intentId??('api-pass-'+crypto.randomUUID()),required:true});
@@ -168,12 +312,24 @@ function renderAdd(kind){
   const scope=currentScope();d.intentId='api-pass-'+crypto.randomUUID();f.elements.namedItem('intentId').value=d.intentId;
   await retainDraft(f.draftKey);checkScope(scope);notice('A new purchase intent is saved. Review its handoff before preparing it.');
  }));
- append($('view'),header(...info),panel(null,f));
+ append($('view'),header(...info));
+ if(replacement){
+  const allowance=portfolioPass(parent.id);
+  $('view').append(panel('Current purchased pass',facts([['Pass',parent.label],['Original order',parent.orderReference],['Available units',allowance?.usage?.availableUnits],['Saved requests',parent.callCount]]),
+   link('Open original request history','#pass/'+parent.id+'/history')));
+ }
+ $('view').append(panel(null,f));
+ if(replacement){
+  const host=node('div');host.id='replacement-comparison';
+  const paint=()=>host.replaceChildren(replacementComparison(parent,f.elements.namedItem('handoff').value));
+  f.elements.namedItem('handoff').addEventListener('input',paint);
+  f.append(button('Compare loaded handoff',paint));paint();$('view').append(host);
+ }
  if(kind!=='connect'&&!S.state.purchaseEnabled)$('view').append(panel('Original Buyer setup',node('p','Configure this customer workspace with the original --buyer-workspace before preparing or adopting a purchase.')));
 }
 function passTabs(p){const nav=node('nav',null,'tabs');for(const [id,label]of [['overview','Overview'],['compose','New request'],['history','Saved requests'],['merchant','Merchant history']]){const a=link(label,'#pass/'+p.id+'/'+id);if((S.route.tab??'overview')===id)a.setAttribute('aria-current','page');nav.append(a);}return nav;}
 function renderPass(detail){
- const p=detail.profile,view=$('view');append(view,header(p.label,p.orderReference,button('Refresh allowance',()=>queue(p.id,'refresh'),{disabled:busy(p.id)}),button('Export customer history',()=>download('/api/profiles/'+p.id+'/export','api-pass-customer-history.json'))),passTabs(p));
+ const p=detail.profile,view=$('view');append(view,header(p.label,p.orderReference,button('Refresh allowance',()=>queue(p.id,'refresh'),{disabled:busy(p.id)}),button('Export customer history',()=>download('/api/profiles/'+p.id+'/export','api-pass-customer-history.json')),p.replacementProfileId?link('Open replacement','#pass/'+p.replacementProfileId):S.state.purchaseEnabled?link('Prepare replacement','#replenish/'+p.id):null),passTabs(p));
  const live=node('div');live.id='pass-live';view.append(live);renderPassLive(p);
  if(S.route.tab==='compose')renderComposer(p);
  else if(S.route.tab==='history')renderHistory(detail);
@@ -188,7 +344,11 @@ function renderPassLive(p){
  if(p.error)host.append(node('p',p.error.code,'error'));if(p.archived)host.append(node('p','This pass is archived. Restore it below to dispatch requests.','error'));
 }
 function renderOverview(p,detail){
- const view=$('view');view.append(panel('Purchased access',facts([['Gateway',p.gatewayBaseUrl],['Plan SHA-256',p.manifestSha256],['Claim environment',p.claimEnv+(p.claimAvailable?' · available':' · unavailable')],['Order state',p.detail?.native?.state],['Access controls',p.detail?.native?.access],['Last refreshed',p.checkedAt],['Manifest',p.detail?.manifest]])));
+ const view=$('view'),entry=portfolioPass(p.id);
+ if(entry)view.append(panel('Portfolio',facts([['Availability',entry.status],['Default for new requests',entry.selected?'Selected':'Available to select']]),
+  append(node('div',null,'actions'),button(entry.selected?'Default selected':'Use for new requests',()=>preferPass(p.id),{disabled:p.archived||entry.selected}),
+   entry.replaces?link('Previous pass: '+entry.replaces.label,'#pass/'+entry.replaces.profileId):null,
+   entry.replacement?link('Replacement: '+entry.replacement.label,'#pass/'+entry.replacement.profileId):null)));view.append(panel('Purchased access',facts([['Gateway',p.gatewayBaseUrl],['Plan SHA-256',p.manifestSha256],['Claim environment',p.claimEnv+(p.claimAvailable?' · available':' · unavailable')],['Order state',p.detail?.native?.state],['Access controls',p.detail?.native?.access],['Last refreshed',p.checkedAt],['Manifest',p.detail?.manifest]])));
  const routes=p.detail?.plan?.routes??[];view.append(panel('Purchased routes',routes.length?table(['Route','Method','Path','Units'],routes.map(r=>[r.id,r.method,code(r.path),r.units])):node('p','Refresh the pass to read its original purchased routes.','muted')));
  const f=form('edit:'+p.id,async f=>act('/api/profiles/'+p.id+'/update',{label:f.elements.namedItem('label').value,archived:f.elements.namedItem('archived').value==='yes'},'Update pass',{navigate:false}));
  formField(f,'label','Pass name',{value:f.data.label??p.label,required:true});formField(f,'archived','Workspace availability',{type:'select',value:f.data.archived??(p.archived?'yes':'no'),choices:[['no','Active'],['yes','Archived']]});submit(f,'Save pass');view.append(panel('Workspace settings',f));
@@ -248,7 +408,7 @@ async function renderMerchant(id,after){
  if(page.nextAfter)host.append(button('Next merchant page',()=>renderMerchant(id,page.nextAfter)));host.append(button('First merchant page',()=>renderMerchant(id)));
 }
 function renderCall(c){
- const p=profile(c.profileId),view=$('view');append(view,header(c.label,c.requestId,link('Back to pass','#pass/'+c.profileId+'/history')),panel('Original request',facts([['Pass',p?.label],['Method / path',c.method+' '+c.path],['Route / units',c.routeId+' · '+c.units],['State',c.status],['Content type',c.contentType],['Query parameters',c.query],['Body',c.body?c.body.bytes+' bytes / '+c.body.sha256:'Absent'],['Request fingerprint',c.fingerprint],['Created',c.createdAt]])));
+ const p=profile(c.profileId),view=$('view');append(view,header(c.label,c.requestId,link('Back to pass','#pass/'+c.profileId+'/history')),panel('Original request',facts([['Pass',p?.label],['Original order',p?.orderReference],['Method / path',c.method+' '+c.path],['Route / units',c.routeId+' · '+c.units],['State',c.status],['Content type',c.contentType],['Query parameters',c.query],['Body',c.body?c.body.bytes+' bytes / '+c.body.sha256:'Absent'],['Request fingerprint',c.fingerprint],['Created',c.createdAt]])));
  const controls=node('div',null,'actions');if(!c.recoveryOnly)controls.append(button(c.result?'Replay same saved request':'Send saved request',()=>queue(c.profileId,'call',{callId:c.id}),{primary:!c.result,disabled:busy(c.profileId,c.id)||p?.archived}));
  controls.append(button('Recover original result',()=>queue(c.profileId,'recover',{callId:c.id}),{disabled:busy(c.profileId,c.id)||p?.archived}),button('Inspect saved body',()=>inspectFile('/api/calls/'+c.id+'/body','Saved request body')));
  view.append(controls);if(c.error)view.append(node('p',c.error.code,'error'));
@@ -334,7 +494,8 @@ async function refreshCurrent({force=false}={}){
   renderPassLive(value.profile);renderTasks(value.tasks);
   if(S.route.tab==='overview'&&S.state.approvalMode==='ORIGINAL_BROWSER_BROKER')await refreshApproval(value.profile.id);
  }else if(S.route?.kind==='call'){const scope=currentScope(),seq=S.sequence,value=await api('/api/calls/'+S.route.id,{scope});if(seq!==S.sequence)return;S.call=value.call;$('view').replaceChildren();renderCall(value.call);}
- else if(S.route?.kind==='home'){$('view').replaceChildren();renderHome();}
+ else if(S.route?.kind==='home'){if($('portfolio-table'))renderPortfolioLive();else renderHome();}
+ else if(S.route?.kind==='recovery')await loadPortfolioRecovery();
 }
 async function refresh({rebuild=false}={}){
  if(!S.session)return;if(S.refreshing)return S.refreshing;
@@ -344,7 +505,7 @@ async function refresh({rebuild=false}={}){
 }
 function schedule(){clearTimeout(S.timer);if(S.session&&!document.hidden&&S.state?.tasks.some(t=>ACTIVE.has(t.status)))S.timer=setTimeout(()=>void refresh(),1500);}
 function lock(){
- S.epoch++;S.key=null;S.session=null;S.state=null;S.detail=null;S.call=null;S.sequence++;S.refreshing=null;S.actions=[];S.drafts.clear();S.remote.clear();clearTimeout(S.timer);disposeApproval();sessionStorage.removeItem('sf101-api-pass-key');if($('document-dialog').open)$('document-dialog').close();$('notice').hidden=true;
+ S.epoch++;S.key=null;S.session=null;S.state=null;S.detail=null;S.call=null;S.sequence++;S.refreshing=null;S.actions=[];S.drafts.clear();S.remote.clear();S.portfolioSelection.clear();S.portfolioPage=null;clearTimeout(S.timer);disposeApproval();sessionStorage.removeItem('sf101-api-pass-key');if($('document-dialog').open)$('document-dialog').close();$('notice').hidden=true;
  $('workspace').hidden=true;$('login').hidden=false;$('access-key').value='';
 }
 async function login(key){

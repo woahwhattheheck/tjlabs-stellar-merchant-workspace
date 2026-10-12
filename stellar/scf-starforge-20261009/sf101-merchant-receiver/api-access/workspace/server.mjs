@@ -4,6 +4,7 @@ import {randomBytes,timingSafeEqual} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {readBrowserAssets} from '../../../distribution/browser-assets.mjs';
 import {MAX_BODY_BYTES,check,fail,uuid} from './configuration.mjs';
+import {attachCloseRecovery} from './close-owner.mjs';
 
 const ASSETS=await readBrowserAssets(new URL('./browser-assets.json',import.meta.url));
 const same=(left,right)=>typeof left==='string'&&Buffer.byteLength(left)===Buffer.byteLength(right)&&timingSafeEqual(Buffer.from(left),Buffer.from(right));
@@ -59,6 +60,9 @@ export async function startApiPassWorkspace({model,port=0,host='127.0.0.1'}){
      approvalMode:state.approvalMode,purchaseEnabled:state.purchaseEnabled});return;
    }
    if(request.method==='GET'&&path==='/api/state'){send(response,200,await model.snapshot());return;}
+   if(request.method==='GET'&&path==='/api/portfolio/requests'){
+    send(response,200,await model.portfolioRequests({offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??100)}));return;
+   }
    let match;
    if(request.method==='GET'&&(match=/^\/api\/profiles\/([^/]+)$/.exec(path))){
     send(response,200,await model.detail(uuid(match[1]),{offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??100)}));return;
@@ -94,9 +98,12 @@ export async function startApiPassWorkspace({model,port=0,host='127.0.0.1'}){
    }
    if(request.method==='POST'){
     const value=await body(request);let result;
-    if(path==='/api/passes/connect')result=await model.connectPass(value);
+    if(path==='/api/portfolio/configure')result=await model.configurePortfolio(value);
+    else if(path==='/api/portfolio/refresh')result=await model.refreshPortfolio(value);
+    else if(path==='/api/passes/connect')result=await model.connectPass(value);
     else if(path==='/api/purchases/prepare')result=await model.preparePurchase(value);
     else if(path==='/api/purchases/attach')result=await model.attachPurchase(value);
+    else if((match=/^\/api\/profiles\/([^/]+)\/replenish$/.exec(path)))result=await model.prepareReplacement(uuid(match[1]),value);
     else if((match=/^\/api\/profiles\/([^/]+)\/update$/.exec(path)))result=await model.editPass(uuid(match[1]),value);
     else if((match=/^\/api\/profiles\/([^/]+)\/calls$/.exec(path)))result=await model.prepareCall(uuid(match[1]),value);
     else if((match=/^\/api\/profiles\/([^/]+)\/tasks$/.exec(path)))result=await model.enqueue(uuid(match[1]),value);
@@ -116,21 +123,49 @@ export async function startApiPassWorkspace({model,port=0,host='127.0.0.1'}){
  });
  server.requestTimeout=30000;server.headersTimeout=15000;
  server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket));});
- try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});}
- catch(error){await model.close();throw error;}
- const actual=server.address().port;origin=new URL('http://127.0.0.1:'+actual).origin;
- hosts.add('127.0.0.1:'+actual);hosts.add(new URL(origin).host);
- return {server,model,url:origin+'/#'+token,origin,port:actual,workspaceId:model.state.id,
-  close(){
-   if(closingPromise)return closingPromise;closing=true;
-   closingPromise=(async()=>{
-    const stopped=new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
+ let requestedBeforeRelease,listenerStop,listenerStopped=false,timer,callbackCompleted=false;
+ const finishUnderLease=async()=>{
+  while(pending.size)await Promise.allSettled([...pending]);
+  await listenerStop;
+  if(!callbackCompleted){await requestedBeforeRelease?.();callbackCompleted=true;}
+ };
+ const owner={server,model,
+  close({beforeRelease}={}){
+   check(beforeRelease===undefined||typeof beforeRelease==='function','WORKSPACE_CLOSE_CALLBACK_REQUIRED');
+   if(requestedBeforeRelease!==undefined&&beforeRelease!==undefined)check(requestedBeforeRelease===beforeRelease,'WORKSPACE_CLOSE_CALLBACK_CHANGED',409);
+   if(beforeRelease!==undefined&&requestedBeforeRelease===undefined){check(!callbackCompleted,'WORKSPACE_CLOSE_CALLBACK_TOO_LATE',409);requestedBeforeRelease=beforeRelease;}
+   if(closingPromise)return closingPromise;
+   closing=true;
+   if(!listenerStop){
+    listenerStop=new Promise((resolve,reject)=>{
+     if(!server.listening){listenerStopped=true;resolve();return;}
+     server.close(error=>{if(error)reject(error);else{listenerStopped=true;resolve();}});
+    });
+    listenerStop.catch(()=>{});
     server.closeIdleConnections?.();
-    const timer=setTimeout(()=>{for(const socket of sockets)socket.destroy();},20000);timer.unref?.();
+    timer=setTimeout(()=>{for(const socket of sockets)socket.destroy();},20000);timer.unref?.();
+   }
+   const operation=(async()=>{
     try{
-     await model.close();await Promise.allSettled([...pending]);await stopped;
-    }finally{clearTimeout(timer);}
-   })();return closingPromise;
+     await model.close({beforeRelease:finishUnderLease});
+     await listenerStop;
+     while(pending.size)await Promise.allSettled([...pending]);
+    }catch(error){throw attachCloseRecovery(error,owner,error.closePhase??'closing-http');}
+    finally{if(listenerStopped&&!pending.size)clearTimeout(timer);}
+   })();
+   closingPromise=operation;
+   operation.then(()=>{if(closingPromise===operation)closingPromise=null;},()=>{if(closingPromise===operation)closingPromise=null;});
+   return operation;
   }
  };
+ try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});}
+ catch(error){
+  try{await owner.close();}catch(closeError){throw attachCloseRecovery(closeError,owner,closeError.closePhase??'starting-http');}
+  throw error;
+ }
+ const actual=server.address().port;origin=new URL('http://127.0.0.1:'+actual).origin;
+ hosts.add('127.0.0.1:'+actual);hosts.add(new URL(origin).host);
+ Object.assign(owner,{url:origin+'/#'+token,origin,port:actual,workspaceId:model.state.id});
+ return owner;
+
 }
