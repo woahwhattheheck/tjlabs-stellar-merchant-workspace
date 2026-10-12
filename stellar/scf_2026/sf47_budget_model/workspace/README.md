@@ -252,6 +252,12 @@ The matching Python and Node managed launch readers identify the full installed 
 
 The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete SF74 commissioning source into the existing operating case. Operators select exact task, measurement and separate technical/customer receiving observations, link the original work/purchases/deployments and saved Installation editions, and freeze a source-verified review. The original Completion, typed client/MCP, CLI and full case export/reopen retain the same evidence and request identities. The [original receiving journey](BUYER_RECEIVING_JOURNEY.md) can include this phase on its explicitly selected original case.
 
+## Operate complete cash accounts and corrections
+
+**Delivery operations → Cash / issuer** now joins exact dated cash accounts, full original payment/refund allocations, native quantities, source documents and complete correction history. Review an observation's financial effect before recording its original void and replacement in one native case transaction. Current forecast inputs follow the recorded successor chain; original completion receipts and submitted reviews remain attached.
+
+**Download complete account** exports the full report, CSVs, offline HTML, correction sources and original operating case. Import that whole ZIP to reopen the same dates and exact account. The [Cash accounts guide](CASH_ACCOUNTS.md) covers the full browser, original source/recovery, Statements/Completion/Forecast, CLI, typed client, Merchant MCP and receiving workflow.
+
 ## Operate a complete supplier account
 
 **Delivery operations → Supplier accounts** brings the selected contributor or supplier, original work, invoice lines, review states, source documents and observed payments/refunds into one account. Operators can record and edit original supplier/work/invoice data, attach documents, retain actual cash allocations, and review opening/period/closing balances and invoice aging for selected dates.

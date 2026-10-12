@@ -1244,7 +1244,7 @@
     "financial_application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012",
     "reviewer_front": {
       "operation": "SCF-REVIEWER-FRONT-B669-20261012",
-      "source_commit": "0b005caa01350f7763a1905dcec9ce9edd45d781",
+      "source_commit": "b10e0de739f93ecb5ca2125f3757641c601048f1",
       "previous_application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
       "retained_answer_identities": 9,
       "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",

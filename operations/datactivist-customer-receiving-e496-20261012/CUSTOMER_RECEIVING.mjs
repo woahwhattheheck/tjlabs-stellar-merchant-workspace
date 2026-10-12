@@ -22,10 +22,11 @@ const python=args.python??process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3';
 const sourceFile=resolve(args.sourceFile),archiveFile=resolve(args.archiveFile);
 const originalResultFile=resolve(args.originalResult),installer=resolve(args.installer);
 await mkdir(logs,{recursive:true,mode:0o700});
-const selectedSource=await readFile(sourceFile),selectedArchive=await readFile(archiveFile);
+let selectedSource=await readFile(sourceFile),selectedArchive=await readFile(archiveFile);
 need(hash(selectedSource)===args.sourceSha256,'The complete selected source JSON differs from its supplied SHA-256.');
 need(hash(selectedArchive)===args.archiveSha256,'The original publisher workspace archive differs from its supplied SHA-256.');
-const archive=JSON.parse(selectedArchive),original=await readJSON(originalResultFile);
+let archive=JSON.parse(selectedArchive);
+const original=await readJSON(originalResultFile);
 need(original.operationId===operation&&original.complete===true,'Continue the completed original publisher operation.');
 need(archive.schema==='stellar-forge.datagouv-portable-workspace.v1'&&archive.complete===true,'Use the original complete native DataGouv archive.');
 const archivedStage=original.stages.find(stage=>stage.name==='complete_archive_and_independent_receiving');
@@ -35,6 +36,8 @@ need(typeof workspaceId==='string'&&typeof publicationId==='string'&&typeof snap
 const pin={schema:'stellar-forge.datagouv-customer-receiving-pin.v1',operationId:operation,
  sourceSha256:args.sourceSha256,archiveSha256:args.archiveSha256,originalResultSha256:hash(await readFile(originalResultFile)),
  workspaceId,publicationId,snapshot};
+// Keep the verified archive on disk; its full database/source body is no longer needed in the browser process.
+selectedSource=null;selectedArchive=null;archive=null;
 const pinFile=join(root,'source-pin.json');
 if(await exists(pinFile))need(JSON.stringify(await readJSON(pinFile))===JSON.stringify(pin),'Continue this exact selected original source and saved case.');
 else await writeFile(pinFile,encoded(pin),{flag:'wx',mode:0o600});
