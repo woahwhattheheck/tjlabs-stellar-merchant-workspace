@@ -1,0 +1,10 @@
+{
+  "schema": "tjlabs.merchant-fleet.application-selection.v1",
+  "runtimeWorkspace": "/srv/starforge/runtime-workspace",
+  "runtimeId": "COPY_THE_RETURNED_24_CHARACTER_RUNTIME_ID",
+  "runtimeDirectory": "/srv/starforge/runtimes/merchant-fleet",
+  "label": "Merchant fleet operations",
+  "planFile": "/srv/starforge/fleet/fleet-plan.json",
+  "directory": "/srv/starforge/fleet",
+  "port": 0
+}

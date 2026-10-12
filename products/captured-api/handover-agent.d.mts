@@ -1,3 +1,5 @@
+import type { CapturedEditionSelection, CapturedReceivingDecisionInput, CapturedReceivingDecisionSaveInput,
+  CapturedEditionFileReadInput, CapturedEditionFileRelease } from './handover-client.mjs';
 import type { CapturedDraftForm, CapturedDraftResolutions } from './draft-reconciliation.mjs';
 /** Typed commands for the original merchant handover companion. */
 export type SHA256=string;
@@ -8,6 +10,7 @@ export interface SnapshotPage extends Page {expectedSnapshot?:SHA256}
 export interface SourceSelection {kind:'capture'|'refresh';id:SHA256;revision?:SHA256}
 export interface PackageSelection {name:string;manifestSha256:SHA256}
 export type HandoverJobRequest=
+  | {id:UUID;command:'COMPARE';draftId:UUID;revision:SHA256;baselines:Record<string,string|null>}
   | {id:UUID;command:'PREPARE'|'INSPECT'|'REVIEW';draftId:UUID;revision:SHA256}
   | {id:UUID;command:'PUBLISH'|'RECEIVE';sourceJob:UUID;reviewSha256:SHA256}
   | {id:UUID;command:'IMPORT';uploadId:UUID}
@@ -32,6 +35,11 @@ export interface HandoverToolArguments {
     expectedRevision:SHA256;working:CapturedDraftForm;resolutions?:CapturedDraftResolutions;reviewSha256:SHA256};
   merchant_handover_working_export:HandoverScope & {id:UUID;baseRevision:SHA256;working:CapturedDraftForm};
   merchant_handover_working_import:HandoverScope & {content:string;expectedSha256?:SHA256};
+  merchant_handover_editions:HandoverScope & CapturedEditionSelection;
+  merchant_handover_edition_review:HandoverScope & CapturedReceivingDecisionInput;
+  merchant_handover_edition_save:HandoverScope & CapturedReceivingDecisionSaveInput;
+  merchant_handover_edition_file:HandoverScope & CapturedEditionFileReadInput;
+  merchant_handover_edition_file_release:HandoverScope & CapturedEditionFileRelease;
   merchant_handover_jobs:HandoverScope & Page;
   merchant_handover_job:HandoverScope & SnapshotPage & {id:UUID;
     view?:'summary'|'selection'|'packages'|'sources'|'names'};

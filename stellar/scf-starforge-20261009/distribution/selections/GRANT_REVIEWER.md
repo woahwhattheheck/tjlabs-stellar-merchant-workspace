@@ -1,6 +1,7 @@
-# Grant purchase reviewer
+# SCF application and grant purchase reviewer
 
-Install the original grant purchase workbench, review the retained source and
+Read the complete reviewed SCF application and financing. Install the original
+grant purchase workbench, review the retained source and
 payment outcome, read both complete Buyer results, then export the closed view
 for another receiving operator. The `grant-reviewer` selection packages this
 whole workflow through the maintained distribution and runtime installer.
@@ -83,6 +84,44 @@ The commands below use `starforge` from this READY runtime. When its executable
 is not on PATH, use the same installer command above with
 `run --dir /absolute/grant-reviewer-runtime --` followed by the command and
 arguments, for example `runtime-workspace status --workspace /private/runtime-desk`.
+
+## Read the complete application and financing
+
+The selected package includes the manuscript author's reviewed application,
+the product and financing companion, the original six-package budget and the
+source index. Open them through the shared source server:
+
+~~~sh
+starforge grant-application --port 8787
+~~~
+
+Open the exact local URL printed at startup, normally
+`http://127.0.0.1:8787/grant.html`. Choose `--port 0` when another service already
+uses that port. If the same package's `cocart-setup` listener is already open,
+read `/grant.html` at its existing origin.
+
+The application page provides the complete original Markdown downloads,
+`budget.csv`, `source-index.json`, the preserved economic briefing and the
+published presentation links. The four direct local downloads are:
+
+| Download | Local path |
+| --- | --- |
+| Primary application | `/grant-data/application.md` |
+| Product and financing companion | `/grant-data/product-and-finance.md` |
+| Six-package budget | `/grant-data/budget.csv` |
+| Source and measure index | `/grant-data/source-index.json` |
+
+These six original grant files come from the reviewed source at
+`f7fe93c07355b1688a550bbcd349a5590fa1d680`; their contents remain unchanged.
+The source index retains the underlying manuscript and financial source
+identities. Read the published film and editable companion at the original
+release links on the page. The local package contains the application and
+economic-report source downloads.
+
+Ctrl+C closes this reader. Reopen the same command to read the same installed
+source. For a checkout, the original entry is
+`node stellar-forge/developer-site/grant.mjs --port 8787`.
+The retained purchase workbench below keeps its own saved packet and lifecycle.
 
 ## Open through Applications
 
@@ -238,6 +277,50 @@ merchant/client path. It takes the same controller lock as the managed
 Applications continuation and preserves the accepted direct result. Its actual
 completion is recorded separately from those completed direct phases.
 
+## Deliver through the saved Merchant operator
+
+This selected product also includes **Merchant operator** in Applications. Save
+the original reviewer merchant configuration and a private operator directory,
+then use **Review Start → Start → Open**. The original merchant process serves
+the Console, native calls, saved workflow history and complete customer files
+on one listener.
+
+For a direct operator, add the retained Console directory to the same command:
+
+~~~sh
+starforge merchant-mcp serve \
+  --config /private/reviewer-merchant/merchant-mcp.json \
+  --operator-console-dir /private/reviewer-merchant/operator-console \
+  --port 3211 --token-env MCP_ACCESS_TOKEN
+~~~
+
+Select a named profile and open **Customers → Reviewer customer delivery**.
+Its five sections connect the actual workbench, review a complete packet,
+receive and inspect the original Buyer, export the closed packet and prepare
+a reusable delivery or receiving recipe. The fourteen-step delivery recipe
+retains the original result and export before receiving them in a second
+configured workbench. The six-step receiving recipe begins with the selected
+export ID and complete manifest SHA-256.
+
+Customers retains every original file and its manifest. The receiving packet
+downloads as the exact `grant-reviewer-packet.json`. An interrupted transfer
+continues its saved directory and verified prefix. Profile export includes the
+original requests, saved workflow and run, complete customer identities and
+immutable host bindings. Receiving that history preserves the destination's
+selected host and its existing native work.
+
+The installed guides are:
+
+- `source/products/grant-reviewer/OPERATING.md`
+- `source/stellar-forge/mcp-merchant-operator/console/CUSTOMER_REVIEWER.md`
+- `source/stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md`
+
+The original `console/REVIEWER_RECEIVING.mjs` continues the completed reviewer
+and merchant journals through this full Console workflow, actual recipe
+installation, complete file and profile receiving, and cold reopen of both
+operator workspaces. Use its original operation directory and existing browser
+runtime.
+
 ## Preserve the installed source and receiving identity
 
 The selection retains six original component roots in their relative layout.
@@ -252,13 +335,18 @@ runtime declarations.
 | `stellar-forge/mcp-paid-agent` | Native Buyer, quote/result stores, computed console assets, browser client and declared MCP runtime inputs |
 | `stellar-forge/mcp-merchant-operator` | Original merchant host, provider registry, retained file readers/downloads and computed operator assets |
 | `stellar/scf-starforge-20261009/sf82-seller-pilot` | Original release-store setup, selection and native release lifecycle |
+| `stellar-forge/developer-site` | Complete reviewed application, budget and companion downloads, retained economic report and shared local source server |
 
 The selected command catalog contains `installation`, `runtime-profile`,
-`runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-demo`,
-`merchant-mcp` and `merchant-grant-reviewer`.
-Its Applications provider is `grant-reviewer` and its merchant provider is
-`grant-reviewer-workbenches`; its public workbench import is
-`@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. Use
+`runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
+`grant-demo`,
+`merchant-mcp`, `merchant-grant-reviewer` and
+`merchant-console-application-receive`.
+Its Applications providers are `grant-reviewer` and `merchant-console`; its
+merchant provider is `grant-reviewer-workbenches`. Its public workbench import is
+`@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. The application
+reader is also available through
+`@tokenjunkielabs/starforge-merchant/grant/application-server`. Use
 `starforge --help` and `starforge registrations` for the actual installed
 declarations.
 

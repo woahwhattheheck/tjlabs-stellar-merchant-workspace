@@ -9,7 +9,7 @@ import { openCapturedHandoverClient } from './handover-client.mjs';
 import { openCapturedHandoverArchive } from './handover-archive.mjs';
 import { readCapturedWorkingEdit } from './draft-reconciliation.mjs';
 import { capturedHandoverTools, HANDOVER_SHA, HANDOVER_UUID } from './handover-catalog.mjs';
-import { canonical, decode, exact, operation, requireEmptyOperation, publishJSON, publishBytes, readJSON, bytes } from './handover-files.mjs';
+import { canonical, decode, exact, operation, requireEmptyOperation, publishJSON, publishBytes, readJSON, bytes, present, METADATA_LIMIT } from './handover-files.mjs';
 
 const REQUEST='stellar-forge.captured-handover-command.v1';
 const OPERATION='stellar-forge.captured-handover-terminal-operation.v1';
@@ -47,6 +47,11 @@ const HELP=String.raw`Captured handover agent and terminal
       --connection ORIGINAL_HAR_CONNECTION.json
       --workspace ORIGINAL_ALIAS --product ORIGINAL_PRODUCT_SHA
       --file ORIGINAL_WORKING_EDIT.json --directory PRIVATE_IMPORT_DIRECTORY
+  starforge captured-api handover remote edition-export
+      --connection ORIGINAL_HAR_CONNECTION.json
+      --workspace ORIGINAL_ALIAS --product ORIGINAL_PRODUCT_SHA
+      --job ORIGINAL_COMPARE_UUID --comparison-sha256 ORIGINAL_COMPARISON_SHA
+      --directory PRIVATE_COMPLETE_EXPORT_DIRECTORY
   starforge captured-api handover remote wait
       --connection ORIGINAL_HAR_CONNECTION.json
       --workspace ORIGINAL_ALIAS --product ORIGINAL_PRODUCT_SHA
@@ -78,7 +83,12 @@ form and a ready merge-review command. Both reuse their original private directo
 and completed native reply when reopened. Continue merge_review and merge_save
 through call with the same complete reviewed fields and original request UUID.
 
-See products/captured-api/AGENT.md for the whole reviewed collection, transfer,
+edition-export retains the original comparison index and ALL complete installed,
+incoming and comparison JSON files. Interrupted output publication resumes from
+the same immutable index/file hashes. A completed export reopens with its host
+stopped; each original native read uses a retained snapshot and bounded chunks.
+
+See products/captured-api/EDITIONS.md and AGENT.md for the whole reviewed collection, transfer,
 receiving and reopen workflow, including typed client examples.
 `;
 
@@ -305,6 +315,81 @@ async function runWorking(command,values) {
       throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The retained original working-edit file changed.');
   }});
 }
+async function runEditionExport(values) {
+  const selection={command:'edition-export',connection:resolve(values.get('--connection')),
+    workspace:values.get('--workspace'),productId:checked(values.get('--product'),HANDOVER_SHA,'product identity'),
+    id:checked(values.get('--job'),HANDOVER_UUID,'original COMPARE UUID'),
+    comparisonSha256:checked(values.get('--comparison-sha256'),HANDOVER_SHA,'original comparison SHA-256')};
+  const output=resolve(values.get('--directory'));
+  const indexName='native-inputs/edition-index.json';
+  function validate(index) {
+    const native=index.result;
+    if(index.schema!=='stellar-forge.captured-edition-export.v1'||index.productId!==selection.productId||
+      native?.schema!=='stellar-forge.captured-incoming-editions.v1'||native.id!==selection.id||
+      native.comparisonSha256!==selection.comparisonSha256||!Array.isArray(native.packages)||
+      native.packages.length>1000||sf61Hash(Buffer.from(canonical(native.binding.product)))!==selection.productId)
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the original complete comparison export and product identity.');
+    const {comparisonSha256,...core}=native;
+    if(sf61Hash(Buffer.from(canonical(core)))!==comparisonSha256)
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The retained original comparison index changed.');
+    return native;
+  }
+  async function complete(root) {
+    let client,issue;
+    const connected=async()=>{
+      if(!client)client=await openCapturedHandoverClient(
+        definition(await configuration(selection.connection),selection.workspace),{expectedProductId:selection.productId});
+      return client;
+    };
+    try {
+      let index=await readJSON(root,indexName,true);
+      if(!index) {
+        const original=await (await connected()).json('/job?'+new URLSearchParams({id:selection.id}));
+        if(original.command!=='COMPARE'||original.state!=='COMPLETE'||original.id!==selection.id)
+          throw failure('CAPTURED_HANDOVER_COMPARISON_PENDING','Finish the original COMPARE job before exporting all its complete files.');
+        index={schema:'stellar-forge.captured-edition-export.v1',productId:selection.productId,result:original.result};
+        validate(index);await publishJSON(root,indexName,index);
+      }
+      const native=validate(index),files=[];
+      for(const row of native.packages) {
+        if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(row.name??''))
+          throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The original comparison package name changed.');
+        for(const side of ['current','incoming','comparison']) {
+          const file=row.files[side],name='native-inputs/'+row.name+'-'+side+'.json';
+          if(!HANDOVER_SHA.test(file?.sha256??'')||!Number.isSafeInteger(file.bytes)||file.bytes<1||file.bytes>METADATA_LIMIT)
+            throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The original comparison file metadata changed.');
+          if(!await present(join(root,name))) {
+            const downloaded=await (await connected()).downloadEditionFile({
+              id:selection.id,name:row.name,side,expectedComparisonSha256:selection.comparisonSha256,
+              expectedSha256:file.sha256,
+            });
+            if(downloaded.file.bytes!==file.bytes)
+              throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The original complete comparison file length changed.');
+            await publishBytes(root,name,downloaded.content);
+          }
+          const original=await bytes(root,name,METADATA_LIMIT);
+          if(original.length!==file.bytes||sf61Hash(original)!==file.sha256)
+            throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The retained comparison export file changed: '+name);
+          files.push({name,path:join(root,name),bytes:file.bytes,sha256:file.sha256});
+        }
+      }
+      return {command:selection.command,workspace:selection.workspace,productId:selection.productId,
+        id:selection.id,comparisonSha256:selection.comparisonSha256,directory:root,
+        index:join(root,indexName),packages:native.packages.length,files};
+    } catch(error){issue=error;throw error;}
+    finally {
+      if(client)try{await client.close();}
+      catch(error){if(issue)issue.closeError=error;else throw error;}
+    }
+  }
+  return retained(output,selection,complete,{reopen:async(saved,root)=>{
+    // Existing complete files are verified before opening any connection.
+    // Recovery publishes only missing original files from their exact source.
+    const original=await complete(root);
+    if(canonical(saved)!==canonical(original))
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the exact original complete comparison export directory.');
+  }});
+}
 async function waitJob(values) {
   const id=checked(values.get('--job'),HANDOVER_UUID,'job UUID');
   const requestSha256=checked(values.get('--request-sha256'),HANDOVER_SHA,'job request SHA-256');
@@ -348,6 +433,9 @@ export async function runCapturedHandoverRemoteCLI(args=process.argv.slice(2)) {
     const common=['--connection','--workspace','--product','--directory'];
     const extra=command==='working-export'?['--draft','--base','--form']:['--file'];
     result=await runWorking(command,options(rest,[...common,...extra],[...common,...extra]));
+  } else if(command==='edition-export') {
+    const required=['--connection','--workspace','--product','--job','--comparison-sha256','--directory'];
+    result=await runEditionExport(options(rest,required,required));
   } else if(command==='wait') {
     const required=['--connection','--workspace','--product','--job','--request-sha256'];
     result=await waitJob(options(rest,[...required,'--wait-ms','--interval-ms'],required));

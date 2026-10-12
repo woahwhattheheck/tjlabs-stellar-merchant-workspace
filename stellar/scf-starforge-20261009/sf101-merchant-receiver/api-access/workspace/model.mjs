@@ -3,6 +3,8 @@ import {mkdir,readdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {EventEmitter} from 'node:events';
+import {portfolioSettings,validatePortfolio,portfolioView,portfolioAttention} from './portfolio.mjs';
+import {attachCloseRecovery} from './close-owner.mjs';
 import {ApiAccessClient,createApiAccessPurchase,openApiAccessPurchase} from '../purchase.mjs';
 import {validateHandoff} from '../../checkout-config.mjs';
 import {Buyer} from '../../../sf88-operator-buyer-cli/node/index.mjs';
@@ -51,6 +53,7 @@ function validateState(state,config){
  for(const key of ['profiles','calls','tasks']){
   const seen=new Set();for(const row of state[key]){check(row&&UUID.test(row.id??'')&&!seen.has(row.id),'INVALID_WORKSPACE_RECORD',409);seen.add(row.id);}
  }
+ validatePortfolio(state,check);
  return state;
 }
 async function exactFile(path,bytes){
@@ -63,6 +66,8 @@ async function exactFile(path,bytes){
 export async function openApiPassWorkspace({config:rawConfig,environment=process.env,approvals=null,expectedWorkspaceSha256}){
  const config=compileConfig(rawConfig);await privateDirectory(config.directory);
  const lease=await acquireStateLease(config.directory);
+ let model,openingClose;
+ const openingOwner={close:options=>model?model.close(options):(openingClose??=Promise.resolve().then(()=>lease.close()))};
  try{
   for(const name of ['inputs','bodies','results','reviews','reports','purchases'])await privateDirectory(join(config.directory,name));
   const path=join(config.directory,'workspace.json');
@@ -81,7 +86,7 @@ export async function openApiPassWorkspace({config:rawConfig,environment=process
   delete nativeEnvironment.SF81_APPROVAL_SOCKET;delete nativeEnvironment.SF81_APPROVAL_TOKEN;
   const buyer=new Buyer({runtimeDirectory:config.runtimeDirectory,stateDirectory:config.buyerStateDirectory,
    environment:{...nativeEnvironment,...(approvals?.environment??{})}});
-  const model=new ApiPassWorkspace(config,state,lease,buyer,nativeEnvironment,approvals);
+  model=new ApiPassWorkspace(config,state,lease,buyer,nativeEnvironment,approvals);
   const interrupted=state.tasks.filter(row=>ACTIVE.has(row.status));
   if(interrupted.length)await model.serial(async()=>{
    const next=clone(model.state);
@@ -92,7 +97,10 @@ export async function openApiPassWorkspace({config:rawConfig,environment=process
    model.history(next,'startup-recovered',{tasks:interrupted.length});await model.commit(next);
   });
   return model;
- }catch(error){await lease.close();throw error;}
+ }catch(error){
+  try{await openingOwner.close();}catch(closeError){throw attachCloseRecovery(closeError,model??openingOwner,closeError.closePhase??'opening-workspace');}
+  throw error;
+ }
 }
 export class ApiPassWorkspace extends EventEmitter{
  constructor(config,state,lease,buyer,environment,approvals){
@@ -128,6 +136,7 @@ export class ApiPassWorkspace extends EventEmitter{
    orderReference:row.binding.orderReference,gatewayBaseUrl:row.binding.gatewayBaseUrl,manifestSha256:row.binding.manifestSha256,
    claimEnv:row.binding.claimEnv,claimAvailable:typeof this.environment[row.binding.claimEnv]==='string'&&this.environment[row.binding.claimEnv].length>0,
    intentId:row.binding.intentId??null,purchasePrepared:!!row.purchaseBinding,
+   replacesProfileId:row.replacesProfileId??null,replacementProfileId:this.state.profiles.find(item=>item.replacesProfileId===row.id)?.id??null,
    handoff:row.handoff?{purchaseUrl:row.handoff.purchaseUrl,payment:clone(row.handoff.payment),file:clone(row.handoff.file)}:null,
    detail:clone(row.detail??null),checkedAt:row.checkedAt??null,error:clone(row.error??null),native:clone(row.native??null),
    review:row.review?{id:row.review.id,sha256:row.review.sha256,reviewedAt:row.review.reviewedAt,downloadUrl:'/api/profiles/'+row.id+'/review'}:null,
@@ -142,10 +151,50 @@ export class ApiPassWorkspace extends EventEmitter{
    .filter(key=>row[key]!==undefined).map(key=>[key,clone(row[key])]));
  }
  async snapshot(){
-  return this.serial(()=>({schema:STATE_SCHEMA,id:this.state.id,title:this.config.title,revision:this.state.revision,
+  return this.serial(()=>{const profiles=this.state.profiles.map(row=>this.profileView(row));return {schema:STATE_SCHEMA,id:this.state.id,title:this.config.title,revision:this.state.revision,
    purchaseEnabled:this.config.buyerWorkspace!==null,approvalMode:this.approvals?'ORIGINAL_BROWSER_BROKER':'ORIGINAL_TERMINAL',
-   claimEnvs:[...this.config.claimEnvs],profiles:this.state.profiles.map(row=>this.profileView(row)),
-   tasks:this.state.tasks.slice(-150).reverse().map(row=>this.taskView(row)),history:clone(this.state.history.slice(-100).reverse())}));
+   claimEnvs:[...this.config.claimEnvs],profiles,
+   portfolio:portfolioView(this.state,profiles),
+   tasks:this.state.tasks.slice(-150).reverse().map(row=>this.taskView(row)),history:clone(this.state.history.slice(-100).reverse())};});
+ }
+ async portfolioRequests({offset=0,limit=100}={}){
+  check(Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=200,'INVALID_REQUEST_PAGE');
+  return this.serial(()=>({revision:this.state.revision,
+   ...portfolioAttention(this.state.calls,this.state.profiles.map(row=>this.profileView(row)),{offset,limit})}));
+ }
+ async refreshPortfolio(value){
+  check(Array.isArray(value.profileIds)&&value.profileIds.length>=1&&value.profileIds.length<=MAX_PROFILES,'PORTFOLIO_PASS_SELECTION_REQUIRED');
+  const ids=value.profileIds.map(uuid);check(new Set(ids).size===ids.length,'PORTFOLIO_PASS_SELECTION_REPEATED');
+  const input={profileIds:ids.slice().sort()};
+  const result=await this.mutate('portfolio-refresh-requested',value,input,async next=>{
+   const selected=input.profileIds.map(id=>this.profile(id,next)),tasks=[],skipped=[];
+   for(const profile of selected){
+    if(profile.archived){skipped.push({profileId:profile.id,reason:'ARCHIVED'});continue;}
+    if(typeof this.environment[profile.binding.claimEnv]!=='string'||!this.environment[profile.binding.claimEnv]){
+     skipped.push({profileId:profile.id,reason:'CLAIM_UNAVAILABLE'});continue;
+    }
+    const active=next.tasks.find(row=>row.profileId===profile.id&&row.kind==='refresh'&&ACTIVE.has(row.status));
+    if(active){tasks.push({profileId:profile.id,taskId:active.id,reused:true});continue;}
+    check(next.tasks.length<MAX_TASKS,'WORKSPACE_TASK_LIMIT',429);
+    check(next.tasks.filter(row=>ACTIVE.has(row.status)).length<256,'WORKSPACE_QUEUE_FULL',429);
+    const taskId=randomUUID();next.tasks.push({id:taskId,profileId:profile.id,kind:'refresh',status:'QUEUED',createdAt:now(),error:null,result:null});
+    tasks.push({profileId:profile.id,taskId,reused:false});
+   }
+   return {tasks,skipped};
+  });
+  this.pump();return result;
+ }
+ async configurePortfolio(value){
+  const input={selectedProfileId:value.selectedProfileId===null?null:uuid(value.selectedProfileId),
+   lowUnitsThreshold:value.lowUnitsThreshold};
+  check(Number.isSafeInteger(input.lowUnitsThreshold)&&input.lowUnitsThreshold>=0&&input.lowUnitsThreshold<=1000000000,'INVALID_LOW_ALLOWANCE_THRESHOLD');
+  return this.mutate('portfolio-configured',value,input,async next=>{
+   if(input.selectedProfileId!==null)check(!this.profile(input.selectedProfileId,next).archived,'PASS_IS_ARCHIVED',409);
+   next.portfolio={...input};return {selectedProfileId:input.selectedProfileId};
+  });
+ }
+ async prepareReplacement(id,value){
+  return this.preparePurchase({...value,replacesProfileId:uuid(id)});
  }
  async detail(id,{offset=0,limit=100}={}){
   check(Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=200,'INVALID_REQUEST_PAGE');
@@ -187,16 +236,29 @@ export class ApiPassWorkspace extends EventEmitter{
   check(typeof value.handoff==='string'&&Buffer.byteLength(value.handoff)<=65536,'ORIGINAL_HANDOFF_JSON_REQUIRED');
   const handoffBytes=Buffer.from(value.handoff),handoff=validateHandoff(parseJson(handoffBytes));
   const input={label:label(value.label),handoffSha256:digest(handoffBytes),intentId:requestId(value.intentId),
-   gatewayBaseUrl:gatewayOrigin(value.gatewayBaseUrl),claimEnv:allowedClaim(this.config,value.claimEnv)};
+   gatewayBaseUrl:gatewayOrigin(value.gatewayBaseUrl),claimEnv:allowedClaim(this.config,value.claimEnv),
+   ...(value.replacesProfileId===undefined?{}:{replacesProfileId:uuid(value.replacesProfileId)})};
   const result=await this.mutate('purchase-connected',value,input,async next=>{
+   if(input.replacesProfileId){
+    const previous=this.profile(input.replacesProfileId,next);
+    check(input.gatewayBaseUrl===previous.binding.gatewayBaseUrl,'REPLACEMENT_GATEWAY_CHANGED',409);
+    check(handoff.orderReference!==previous.binding.orderReference,'REPLACEMENT_REQUIRES_NEW_ORDER',409);
+    const existing=next.profiles.find(row=>row.replacesProfileId===previous.id);
+    if(existing){
+     check(existing.binding.handoffSha256===input.handoffSha256&&existing.binding.intentId===input.intentId&&
+      existing.binding.claimEnv===input.claimEnv&&existing.label===input.label,'REPLACEMENT_ALREADY_PREPARED',409);
+     return {profileId:existing.id,replacesProfileId:previous.id,alreadyConnected:true};
+    }
+   }
    const duplicate=next.profiles.find(row=>row.binding.gatewayBaseUrl===input.gatewayBaseUrl&&row.binding.orderReference===handoff.orderReference);
    check(!duplicate,'PURCHASE_ORDER_ALREADY_CONNECTED',409);check(next.profiles.length<MAX_PROFILES,'PASS_LIMIT',429);
    const id=randomUUID(),handoffFile=join(this.config.directory,'inputs',id+'.handoff.json');
    await exactFile(handoffFile,handoffBytes);
    next.profiles.push({id,label:input.label,mode:'purchase',archived:false,createdAt:now(),updatedAt:now(),handoff:clone(handoff),
+    ...(input.replacesProfileId?{replacesProfileId:input.replacesProfileId}:{}),
     binding:{gatewayBaseUrl:input.gatewayBaseUrl,orderReference:handoff.orderReference,manifestSha256:handoff.file.sha256,claimEnv:input.claimEnv,
      intentId:input.intentId,purchaseDirectory:join(this.config.directory,'purchases',id),handoffFile,handoffSha256:input.handoffSha256}});
-   return {profileId:id};
+   return {profileId:id,...(input.replacesProfileId?{replacesProfileId:input.replacesProfileId}:{})};
   });
   return result;
  }
@@ -222,7 +284,9 @@ export class ApiPassWorkspace extends EventEmitter{
   const input={profileId:uuid(id),label:label(value.label),archived:value.archived};
   check(typeof input.archived==='boolean','ARCHIVE_CHOICE_REQUIRED');
   return this.mutate('pass-updated',value,input,async next=>{
-   const profile=this.profile(id,next);profile.label=input.label;profile.archived=input.archived;profile.updatedAt=now();return {profileId:id};
+   const profile=this.profile(id,next);profile.label=input.label;profile.archived=input.archived;profile.updatedAt=now();
+   if(input.archived&&portfolioSettings(next).selectedProfileId===id)next.portfolio={...portfolioSettings(next),selectedProfileId:null};
+   return {profileId:id};
   });
  }
  async prepareCall(id,value){
@@ -515,15 +579,42 @@ export class ApiPassWorkspace extends EventEmitter{
    profile:this.profileView(this.profile(id)),calls:this.state.calls.filter(row=>row.profileId===id).map(row=>this.callView(row)),
    tasks:this.state.tasks.filter(row=>row.profileId===id).map(row=>this.taskView(row)),revision:this.state.revision}));
  }
- async close(){
-  if(this.closed)return;if(this.closing)return this.closingPromise;
-  this.closing=true;
-  return this.closingPromise=(async()=>{
-   await this.pumping;
-   for(const slot of this.reads.values())slot.controller.abort();
-   for(const [id,slot]of this.active){slot.controller.abort();if(PURCHASE.has(slot.kind))await Promise.resolve(this.approvals?.revoke(this.profile(this.task(id).profileId).binding.intentId)).catch(()=>{});}
-   await Promise.allSettled([...this.active.values(),...this.reads.values()].map(slot=>slot.promise));await this.tail;
-   this.closed=true;await this.approvals?.close();await this.lease.close();this.removeAllListeners();
+ async close({beforeRelease}={}){
+  check(beforeRelease===undefined||typeof beforeRelease==='function','WORKSPACE_CLOSE_CALLBACK_REQUIRED');
+  if(this.closeCallback!==undefined&&beforeRelease!==undefined)check(this.closeCallback===beforeRelease,'WORKSPACE_CLOSE_CALLBACK_CHANGED',409);
+  if(this.closeStarted&&beforeRelease!==undefined&&this.closeCallback===undefined)check(!this.closeStages?.callback,'WORKSPACE_CLOSE_CALLBACK_TOO_LATE',409);
+  if(this.closed)return;
+  if(beforeRelease!==undefined)this.closeCallback=beforeRelease;
+  this.closing=true;this.closeStarted=true;this.closeStages??={};
+  if(this.closingPromise)return this.closingPromise;
+  const operation=(async()=>{
+   try{
+    this.closePhase='draining-work';await this.pumping;
+    this.closeIntents??=[...new Set([...this.active].filter(([,slot])=>PURCHASE.has(slot.kind))
+     .map(([id])=>this.profile(this.task(id).profileId).binding.intentId))];
+    this.closeRevoked??=new Set();
+    for(const slot of this.reads.values())slot.controller.abort();
+    for(const slot of this.active.values())slot.controller.abort();
+    const revocations=await Promise.allSettled(this.closeIntents.filter(intent=>!this.closeRevoked.has(intent)).map(async intent=>{
+     await this.approvals?.revoke(intent);this.closeRevoked.add(intent);
+    }));
+    if(!this.closeStages.drained){
+     await Promise.allSettled([...this.active.values(),...this.reads.values()].map(slot=>slot.promise));await this.tail;
+     this.closeStages.drained=true;
+    }
+    const revokeFailure=revocations.find(row=>row.status==='rejected');if(revokeFailure)throw revokeFailure.reason;
+    this.closePhase='closing-approvals';
+    if(!this.closeStages.approvals){await this.approvals?.close();this.closeStages.approvals=true;}
+    this.closePhase='before-release';
+    if(!this.closeStages.callback){this.lease.assertHeld();await this.closeCallback?.();this.closeStages.callback=true;}
+    this.closePhase='releasing-lease';
+    this.leaseClosing??=Promise.resolve().then(()=>this.lease.close());
+    await this.leaseClosing;this.closeStages.lease=true;
+    this.closed=true;this.closePhase='closed';this.removeAllListeners();
+   }catch(error){throw attachCloseRecovery(error,this,this.closePhase);}
   })();
+  this.closingPromise=operation;
+  try{return await operation;}finally{if(this.closingPromise===operation)this.closingPromise=null;}
  }
+
 }

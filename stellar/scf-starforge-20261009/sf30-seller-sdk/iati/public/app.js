@@ -5,6 +5,7 @@ const $=id=>document.getElementById(id),short=x=>String(x??'').slice(0,12);
 let token=location.hash.slice(1);
 try{token ||= sessionStorage.getItem('sf30.iati.token');if(token)sessionStorage.setItem('sf30.iati.token',token);
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch{}
+let dqaUi;
 let state={sources:[],plans:[],builds:[],comparisons:[]},portfolios=[],presets=[];
 let source=null,portfolio=null,report=null,comparison=null,changesOffset=0,nextChanges=null;
 let currentQuery={},queryBase={},cursor=null,queryHistory=[],busy=false,savedPlan=null;
@@ -33,6 +34,7 @@ async function action(message,fn){
  finally{busy=false;enabled.forEach(el=>el.disabled=false);$('main').setAttribute('aria-busy','false');buttons();}
 }
 function buttons(){
+ dqaUi?.buttons();
  $('query-next').disabled=busy||!cursor;$('query-prev').disabled=busy||!queryHistory.length;
  $('changes-next').disabled=busy||nextChanges===null;$('changes-download').disabled=busy||!comparison;
  for(const id of ['portfolio-download','report-download','report-json'])$(id).disabled=busy||!portfolio;
@@ -255,6 +257,7 @@ $('receive-form').addEventListener('submit',event=>{event.preventDefault();actio
 $('transfer-download').onclick=()=>action('Preparing a complete saved portfolio handover…',()=>{const id=$('transfer-portfolio').value;if(!id)throw new Error('Choose a saved portfolio.');
  const q=new URLSearchParams({portfolio:id});if($('transfer-revision').value)q.set('revision',$('transfer-revision').value);return download('/api/iati/export?'+q,'iati-portfolio.zip');});
 $('reload').onclick=()=>action('Refreshing the original saved workspace…',async()=>{await refresh();status('Retained source, portfolio and native edition inventory refreshed.');});
+dqaUi=window.IatiDqaUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state});
 action('Opening the original private IATI workspace…',async()=>{
  if(!token)throw new Error('Open the private console URL printed by this original process.');
  await refresh();const catalogue=await get('/api/iati/presets');presets=presetList(catalogue);select('preset-select',presets);

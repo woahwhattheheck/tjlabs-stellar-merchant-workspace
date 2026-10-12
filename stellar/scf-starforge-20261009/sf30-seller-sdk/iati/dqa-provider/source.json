@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.iati-dqa-provider-source.v1",
+  "repository": "https://github.com/zimmerman-team/iati-cloud.dqa",
+  "commit": "61a5e02420b936a39ebaf79dea7212fc0ce36683",
+  "license": "MIT",
+  "files": {
+    "README.md": {
+      "gitBlob": "235b1c874a9bae6279b5dba7ad3e792f9ce3b4bb"
+    },
+    "VALIDATOR_RULES.md": {
+      "gitBlob": "b7d2e7255fce8a8c9f2d7986c84fdf513b1f2832"
+    },
+    "LICENSE.MD": {
+      "gitBlob": "5c5c67561069320e2ad575949489a8209abf2ca0"
+    }
+  }
+}

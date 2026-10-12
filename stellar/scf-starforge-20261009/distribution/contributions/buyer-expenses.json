@@ -1,8 +1,18 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-expenses",
-  "description": "buyer expenses original Applications",
+  "description": "Original buyer expense browser, governed source readers, customer SDK and complete project receiving",
   "applicationProviders": {
     "buyer-expenses": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/buyer-expenses.mjs"
+  },
+  "exports": {
+    "./merchant/buyer-expenses": "./source/stellar-forge/mcp-merchant-operator/buyer-expenses.mjs",
+    "./merchant/buyer-expenses/client": "./source/stellar-forge/mcp-merchant-operator/buyer-expense-client.mjs",
+    "./merchant/buyer-expenses/catalog": "./source/stellar-forge/mcp-merchant-operator/catalog/buyer-expenses.mjs",
+    "./merchant/buyer-expenses/protocol": "./source/stellar-forge/mcp-merchant-operator/buyer-expense-protocol.mjs",
+    "./buyer/expense-statement": "./source/stellar-forge/mcp-paid-agent/expense-statement.mjs",
+    "./buyer/governed-expense-statement": "./source/stellar-forge/mcp-paid-agent/expense-governed-statement.mjs",
+    "./buyer/spending-binding": "./source/stellar-forge/mcp-paid-agent/native-spend-binding.mjs",
+    "./buyer/spending-configuration": "./source/stellar-forge/mcp-paid-agent/native-spend-configuration.mjs"
   }
 }

@@ -352,6 +352,40 @@ starforge research-client export \
 
 The same selection supports Markdown, JSON and compressed JSON. The report includes the citation review and its source-linked decisions. The portable contains the selected revision's complete original editions and history, so the receiving workspace reopens the same evidence, findings and saved reviews.
 
+## Python citation analyst
+
+The same installed Research source now includes the complete Python citation
+analyst. `ResearchWorkspace.citations(dossier_id)` and the installed
+`stellar-forge-research` command list notices at a pinned revision, expose the
+full original detail, retain editable request revisions and recover the exact
+same atomic save after an interrupted reply.
+
+The [complete Python citation guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_CITATIONS.md)
+covers the original workspace handshake, full JSON editor, compare-and-set local
+drafts and immutable pending request. The submitted selection includes all
+evidence changes, full findings and reasoned dispositions. A stale draft remains
+on its original source revision until the analyst explicitly creates a revised
+selection; an uncertain save keeps its original request ID and body.
+
+Delivery freezes the original, reviewed and current revisions and retains every
+HTML, Markdown, JSON and gzip export. Both original portable readers validate
+the complete history before the final ZIP is created. A partial download or
+missing receipt recovers the first saved bytes, and a changed receiving file is
+preserved for operator review.
+
+For analytical handover, the original Analysis workspace imports the complete
+selected audit, saves SQL and produces full JSONL, CSV and SQLite exports plus a
+workbook. Text previews are explicitly labeled; full records and original source
+remain in the typed exports. The same receiver archives and cold reopens the
+editable workspace.
+
+The selected runtime exposes `starforge research-citation-python-receive --help`.
+It continues an already completed original citation customer run, verifies the
+saved review before exact request recovery, and returns the complete analyst
+handover and customer receiving receipt. Use its existing native operation or
+an explicit continuation after the original listener has closed. The command
+does not start another provider acquisition or create another review.
+
 ## Attach merchant and agent tools
 
 Create a private host selection pointing at the existing Research listener:
@@ -392,6 +426,86 @@ Use `merchant_research_export` for `document-file`, `document-response`, `docume
 
 The client rereads the original connection file after a managed restart. Its authenticated workspace and instance checks bind each request to the selected original application. Detaching drains the attachment's requests and temporary file readers; Applications continues to own the listener and saved acquisition.
 
+## Use the original Analysis browser and native agent
+
+The selected Research product also includes the complete Analysis Research intake.
+An operator can select the actual saved document or retained managed output in the
+Analysis browser, review its full edition identity and capture the complete source.
+The browser, Python commands and native MCP actions use the same original jobs,
+source revisions, mapping, database, workbook and archive.
+
+Use the buyer Python package and the complete Node source from this release, as in
+[the Python installation step](RECEIVING.md#8-receive-the-complete-python-analysis-and-workbook).
+The host selects a private registry with schema
+`stellar-forge.analysis-research-connections.v1`. Its `connections` array names
+each allowed Research connection with `name`, `label`, absolute
+`connection_file` and the actual `expected_workspace_id`. Optional
+`request_timeout_ms` selects the original client deadline. Copy the workspace
+identity from the original Research listener; keep its capability in the private
+connection file. The complete [registry and intake contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_INTAKE.md)
+includes the exact JSON shape and supported bounds.
+
+Start the existing Analysis service with that registry:
+
+~~~sh
+python3 -m stellar_forge_buyer.analysis_workspace \
+  --database /srv/starforge/customer/analysis \
+  --checkout /absolute/installed-source \
+  --research-connections /srv/starforge/private/analysis-research-connections.json \
+  serve --port 0
+~~~
+
+Open its private local URL and select **Research**.
+
+1. Select a named connection and load its original dossier inventory. Choose the
+   intended dossier and the Documents or Pipelines family.
+2. Open an actual saved purchase, retained job output or received edition. Review
+   its digest, document/source metadata and original element pages. Display
+   filters affect the viewed elements; capture keeps the full selected edition.
+3. Choose the Analysis source name, its reviewed current revision, a title and
+   the explicit capture timestamp. Capture saves the exact request before
+   dispatch and retains one original `research-capture` job.
+4. Open the completed capture's original source in **Responses**. Its displayed
+   provenance, revision and eighteen-column mapping belong to that exact
+   captured edition. Preview exhausts the mapped source; import uses the
+   reviewed preview digest and returns an immutable database version.
+5. Activate that version under the intended SQL view, save the useful query and
+   continue through the existing full query export, workbook and whole-workspace
+   archive controls.
+
+After a lost reply, use **Refresh capture** or the saved request's reopen action.
+An interrupted capture resumes its original request. A completed registration is
+recovered from the local source closure before the client reconnects to Research.
+In **Activity**, an interrupted response preview or import can continue with its
+same original ID and request; import keeps the original completed preview and
+source version. Earlier complete outcomes stay available when the source alias
+advances.
+
+The native agent operates this same running Analysis service. Register its
+existing host-owned database using the selected package's original command:
+
+~~~sh
+starforge mcp-native analysis-register \
+  --dir /srv/starforge/private/native-mcp-buyer \
+  --name customer \
+  --database /srv/starforge/customer/analysis
+~~~
+
+The original MCP tool uses `action: analysis` and the registered
+`analysisWorkspace: customer`. Its eight Research operations list configured
+connections, dossiers and saved sources; review the selected edition and elements;
+capture the full source; page capture history; and cancel the original local
+capture. The existing `job` operation reads the complete original receipt.
+The [complete native Analysis guide](../../stellar-forge/mcp-paid-agent/ANALYSIS.md#saved-research-documents-and-managed-outputs)
+provides the exact operation bodies, pagination, preview/import and archive
+bindings. The selected installation includes the full native buyer/Analysis
+component and its original `mcp-native`, `mcp-stdio`,
+`mcp-client-config` and `mcp-analysis-archive` commands.
+
+Use the [complete interactive customer receiver](RECEIVING.md#11-receive-the-interactive-analysis-and-native-agent-workflow)
+to continue this actual saved source through the browser, full workbook and
+independent cold restore.
+
 ## Build the analytical workbook from a received document
 
 The same installed source also supplies the Python Research client and its complete document-to-workbook receiver. A reviewed original Document or Pipeline edition becomes one native Analysis source with every original occurrence, full text and provider metadata, source files and retained identity. The original Analysis engine then performs mapping preview/import, immutable version activation, saved query, complete typed exports, workbook delivery and full workspace restoration.
@@ -423,6 +537,59 @@ The complete receiver keeps eighteen source columns, one row per original occurr
 The delivered workspace archive includes the original database, sources, query and workbook. Reopen the same retained customer operation with the receiver's `reopen` command. Its cold reader verifies the original workspace, immutable table rows, saved query, workbook and every registered source file.
 
 The [complete Python Research/Analysis contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_DOCUMENTS.md) covers live Document/Pipeline control, retained request recovery, original-file source reconstruction, all delivered paths and full archive receiving.
+
+## Run a literature update with Europe PMC
+
+Open **Literature searches** in the Research header. It uses the running Research
+application and the same private connection. The neutral workbench brings saved
+search definitions, original provider pages, records, comparisons and receiving
+together.
+
+1. Save a named search with its complete Europe PMC query, page size, maximum
+   pages, synonym setting and retained source terms. A later edit creates another
+   saved definition while keeping the earlier source editions.
+2. Select that saved revision and retain an edition through **Acquire original
+   pages** or **Prepare file intake**. File intake accepts the complete original
+   core JSON pages with their actual source URLs. Inspect the returned coverage.
+3. Open **Records & review**. Read full metadata, abstract, licence and every
+   original occurrence; retain an include, exclude, uncertain or follow-up
+   decision with the operator's note. Complete drafts survive a refresh, and a
+   concurrent change is resolved against the saved review revision.
+4. Compare the required earlier and later editions. Inspect query-scope changes,
+   added and absent records, and full native metadata differences. Download the
+   complete comparison and the selected edition's JSON, RIS, CSV or review history.
+5. Use **Dossier receiving** to select an existing dossier and question, review
+   its current revision and append the chosen original source edition. Continue
+   evidence selection, findings, citation review and reports in that dossier.
+6. Export the complete Europe PMC source workspace from **Activity & receiving**
+   and retain it with the dossier portable and readable report. Its separate
+   received copy keeps every query, source page, decision and receiving receipt.
+
+Large searches use explicitly linked parts. When an edition reaches its source
+or normalized size limit, the exact boundary page and next cursor remain saved.
+Continue from that original part; inspect the combined chain and receive each
+required edition into the intended question. The operator guide specifies the
+actual byte limits and complete source coverage fields.
+
+The installed command operates the same listener:
+
+~~~sh
+starforge research-europe-pmc list \
+  --connection /srv/starforge/private/research-connection.json
+
+starforge research-europe-pmc query --id ORIGINAL_QUERY_ID \
+  --connection /srv/starforge/private/research-connection.json
+~~~
+
+Use `starforge research-europe-pmc help` for all acquisition, review, comparison,
+export and receiving commands. Save complete request JSON with `--input` to
+preserve the query, note, original request ID and expected revision. The existing
+client exposes the same operations through `client.europePmc()`.
+
+The [complete literature operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/EUROPE-PMC-OPERATOR.md)
+explains source intake, query history, browser recovery and receiving. The
+[Merchant attachment guide](../../stellar-forge/mcp-merchant-operator/EUROPE_PMC.md)
+gives all twenty tool names, declared original-file inputs and six export kinds.
 
 ## Deliver and reopen complete work
 

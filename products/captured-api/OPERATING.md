@@ -770,7 +770,58 @@ Keep the complete base and proposed worksheet JSON when moving unfinished
 pricing work. Native file hashes and source/asset binding govern its import and
 reconciliation.
 
+### Compare an incoming merchant edition
+
+After importing the complete collection, save its receiving draft and open
+**Incoming editions**. Load the installed merchant choices and select the
+baseline for each incoming package. The default follows the saved receiving
+name; an explicit installed name or no baseline can be selected independently.
+
+Choose **Compare this saved receiving edition**. The original retained COMPARE
+job saves full current/incoming plans, exact route prices, OpenAPI source,
+facades, compiled configuration and file identities. Page the complete changes
+or download the original JSON snapshots.
+
+Choose the desired receiving names in the same form, then select **Review
+selected receiving names**. Review actual target conflicts and the complete
+source/baseline binding. **Save reviewed receiving decision** retains that exact
+choice through the existing immutable draft writer. **Review this saved
+decision for receiving** continues into the original REVIEW, RECEIVE and REOPEN
+operations. A new native package name keeps the prior installed edition
+available for the original merchant and release workflow.
+
+The existing merchant agent exposes the same comparison, decision and full-file
+reads. The original terminal's edition-export command retains the complete
+comparison index and all three files for every merchant. Repeating its retained
+output directory completes an interrupted export or reopens all original files
+after the product host stops.
+
+[EDITIONS.md](EDITIONS.md) covers the complete browser, agent, typed-client and
+terminal journey, source-only collections, peer draft changes and native
+receiving recovery. Saved operator procedures and source refresh continue
+through the original host and merchant controls described above.
+
 ## 9. Recover and upgrade
+
+### Complete operating snapshots and disaster receiving
+
+Use `starforge captured-api recovery` to preserve the full retained product and
+its configured external source, release, export and browser OAuth stores.
+The complete path is source inspection → saved exact plan → original SF101
+encrypted capture → authenticated native restore → explicit original-path
+receiving → ordinary product open. The original product, release and OAuth
+leases compose the stopped-source capture and final receiving.
+
+The [complete recovery guide](RECOVERY.md) includes all commands, complete
+selection and target-file schemas, private environment references, the original
+runtime/archive path, partial-copy and saved-request continuation, and cold
+reopening. Completed capture requests reopen their original snapshot after later
+source edits. Complete receiving returns its original saved result while later
+ordinary product work continues. Saved handover archives and in-flight uploads
+retain their native identity through explicit restored-file bindings.
+
+### Reopen and upgrade the current product
+
 
 ~~~sh
 starforge captured-api inspect --dir /private/state/captured-api
@@ -802,7 +853,15 @@ alongside the saved process session.
 | Browser handover draft or reply is interrupted | Original saved draft edition and retained request under Merchant handover |
 | Whole handover file transfer stops | Same original download or saved file upload; resume the retained byte range/chunk |
 | Handover browser uses a new port after restart | Open the original server-side Drafts, Operations, Files or Received entry |
+| Incoming-edition comparison stops | Same COMPARE job/request SHA and its retained original current/incoming snapshots |
+| Installed baseline changes during receiving review | New comparison against the changed original merchant; prior comparison history remains available |
+| Incoming-edition decision reply is lost | Same exact draft base, complete form, comparison/review hashes and original save UUID |
+| Complete edition export stops | Same original terminal command/output directory; resume missing files or reopen completed files offline |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
+| Complete operating capture stops | Same saved recovery plan, bundle, operation and actual plan SHA with the selected source stopped |
+| Encrypted restore stops | Same snapshot hash, bundle and restore operation; retain the native output and continue its original restore |
+| Original-path receiving stops | Same full target declaration, review SHA and receiving operation; retained file prefixes and native bindings resume |
+| Lost operating recovery reply | `recovery status --operation ORIGINAL_DIRECTORY` and its original saved result |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
 

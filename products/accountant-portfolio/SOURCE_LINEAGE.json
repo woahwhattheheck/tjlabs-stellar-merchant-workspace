@@ -1,0 +1,425 @@
+{
+  "schema": "tokenjunkielabs.client-close-source-adoption.v1",
+  "product": "accountant-portfolio",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "foundationCommit": "c474fa805952f841f4f417d858b8a261e66bfa74",
+  "standaloneBaseCommit": "3a69c2110fda6aa903c0ba23234c7921edf2f6d3",
+  "upstream": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "runbooksMerge": "fed105a63745796c6a9f4b68b39733580e57d776",
+    "portfolioMerge": "d436c11f082df901e4ff9be8cdfde34faa3ce9e9",
+    "pullRequests": [
+      1813,
+      2068
+    ]
+  },
+  "scope": "Original client Runbooks and firm Portfolio engines, browser, native CLI, merchant clients and retained-file/Applications lifecycle",
+  "composition": [
+    "Preserve standalone accounting admission, existing configured source behavior and original merchant workspace binding.",
+    "Compose original Runbooks/Portfolio hooks into the existing Applications registry and complete workspace resource locks.",
+    "Retain original immutable native engines, procedure/portfolio browsers and typed-client source.",
+    "Use the generated selected distribution manifest for the final full package and recipe identity."
+  ],
+  "files": [
+    {
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_PORTFOLIO.md",
+      "mode": "100644",
+      "gitBlob": "f84938817e703a044663072b4b67d2c144d0bb58",
+      "bytes": 20044,
+      "sha256": "3bc20f3a96f7643cc1d4b01e16cd5e3d48bd1d8cf2908790e8d1cd60833d64a8",
+      "upstreamGitBlob": "f84938817e703a044663072b4b67d2c144d0bb58",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/ACCOUNTING_RUNBOOKS.md",
+      "mode": "100644",
+      "gitBlob": "19b45a43dfd50639a0ac548a1ab9b460cc724618",
+      "bytes": 15837,
+      "sha256": "e208a2f89f64f05f27c63f19d5bcd06f6efbcbaf7d88d001f8f09e1780d0356b",
+      "upstreamGitBlob": "19b45a43dfd50639a0ac548a1ab9b460cc724618",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-maintenance-client.mjs",
+      "mode": "100644",
+      "gitBlob": "78c23ec21360dd8be489d2e8b393720fecc6778c",
+      "bytes": 12378,
+      "sha256": "c20c7f38ea400c1259912781258a3a8defc6cfd5d30a9ed6202700be1ddaf901",
+      "upstreamGitBlob": "d4f6421f0dd2404eaa97636efc61ad78a7bca8d6",
+      "standalonePreviousGitBlob": "bfdcbebcaff718fc149f5db4766e889ccd2c0ff9",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-portfolio-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "bd91f82c2fc4e2b96a2ee6b1890e89219a4229c7",
+      "bytes": 15473,
+      "sha256": "ed811d2559179eabffc0a938275ad4544ef2a703d37fe682ad9729f984e13ab4",
+      "upstreamGitBlob": "bd91f82c2fc4e2b96a2ee6b1890e89219a4229c7",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-portfolio-client.mjs",
+      "mode": "100644",
+      "gitBlob": "ea945b8fe9f08b0940c5cace34b4b977e958afa2",
+      "bytes": 12711,
+      "sha256": "e85dc4e687136c77641539dec5114e290aeedfdbf7e3d5ca1950d48cad6715b5",
+      "upstreamGitBlob": "ea945b8fe9f08b0940c5cace34b4b977e958afa2",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-portfolio-contract.mjs",
+      "mode": "100644",
+      "gitBlob": "0e6ee76d63add2c609f39fe625502b50462a829d",
+      "bytes": 12503,
+      "sha256": "e1909eacf3799ec5466dbd986d5f2e09627c6a34fd1487e8f854e95f2c4b8d97",
+      "upstreamGitBlob": "0e6ee76d63add2c609f39fe625502b50462a829d",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-portfolio.mjs",
+      "mode": "100644",
+      "gitBlob": "81ac7121b2a927e6ce24dc486d2576d859cacb79",
+      "bytes": 19085,
+      "sha256": "8c01dd86352f8817286dba71a2fd28d9b9c59e913e18ac432d13fcce0a8b6109",
+      "upstreamGitBlob": "81ac7121b2a927e6ce24dc486d2576d859cacb79",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-runbooks-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "5dd595f250707c693c9b83473c71e225befa9c90",
+      "bytes": 12076,
+      "sha256": "02423ca426866a488a6bfd9d66651704427bc0ca2582379ea1c2a55378bce6f4",
+      "upstreamGitBlob": "5dd595f250707c693c9b83473c71e225befa9c90",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-runbooks-client.mjs",
+      "mode": "100644",
+      "gitBlob": "93da60bb0b124dbb0678c30baf14e7a7dd08975e",
+      "bytes": 8568,
+      "sha256": "b1ce103fae22a5fc5744eb807ece7b8c8f68cd705f3c81363033403a284fcc74",
+      "upstreamGitBlob": "93da60bb0b124dbb0678c30baf14e7a7dd08975e",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-runbooks-contract.mjs",
+      "mode": "100644",
+      "gitBlob": "01bae39165bfd8031afa7bdd7a5ef703fc352dc5",
+      "bytes": 9672,
+      "sha256": "8340e0405e9321d5a3b78f355cf27df460e0d7ccce43d5e20f781570b13b8f81",
+      "upstreamGitBlob": "01bae39165bfd8031afa7bdd7a5ef703fc352dc5",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting-runbooks.mjs",
+      "mode": "100644",
+      "gitBlob": "f4413f08794654a5e91f3e1e003e494c09231ca1",
+      "bytes": 16115,
+      "sha256": "902a12ddbfa0b8914a26daf82e9239e5503b29a17f8642a155831751ef170de4",
+      "upstreamGitBlob": "f4413f08794654a5e91f3e1e003e494c09231ca1",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/accounting.mjs",
+      "mode": "100644",
+      "gitBlob": "c12cc7b15cbcca1c4e7f2be171797be57bfb08b3",
+      "bytes": 49831,
+      "sha256": "b28deb8b8577c325c0962c514edc7204b6f1a137c833e23b035daa25864df428",
+      "upstreamGitBlob": "5c09a7b46245cba5fec2863e40d9de489e287cd2",
+      "standalonePreviousGitBlob": "96fe73b2bbebd32bf8eeeb4ad4208a7656eb0f75",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/catalog/accounting.mjs",
+      "mode": "100644",
+      "gitBlob": "ad951799bd99f9cfa0cf7b84f1af80eb3384aaf6",
+      "bytes": 25407,
+      "sha256": "2eb4c82f7d649b7cb1f35f5f8982fdc9c45d449e1c177e985a7c9978b63772da",
+      "upstreamGitBlob": "5178a5d892c948ec37c5055d706313ee1f7b720a",
+      "standalonePreviousGitBlob": "76caaea8a995d2343931184bbe8af2f2a6170fdb",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs",
+      "mode": "100644",
+      "gitBlob": "21ebe7a21886cd9bd53930998c373d1dd9ddd18f",
+      "bytes": 4143,
+      "sha256": "00053178f29db56d8a453ea5c0396859cc27c4afa359ca360b7bba30cc48843d",
+      "upstreamGitBlob": "4196eb103b808a441ff9f2411c63f35c8a4487a1",
+      "standalonePreviousGitBlob": "76cf9a23fc82202eb97d70b2151c4712eff6154f",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/accounting-portfolio.json",
+      "mode": "100644",
+      "gitBlob": "563cda97c285101c9640fdbaa250213610685f63",
+      "bytes": 1203,
+      "sha256": "c026941af814398a8fc2a4ecad62d3366fc49ab3a655732223dd01a2cbb738e0",
+      "upstreamGitBlob": "563cda97c285101c9640fdbaa250213610685f63",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/accounting-runbooks.json",
+      "mode": "100644",
+      "gitBlob": "d39bcc6c0fcdf1547dea38b2afe2dee73d4f14bd",
+      "bytes": 814,
+      "sha256": "22723805434cc9de1bbb2fd5af700fc59cadd41f8bcea7f8de7dc963f5381cbf",
+      "upstreamGitBlob": "d39bcc6c0fcdf1547dea38b2afe2dee73d4f14bd",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-cryptoworth.mjs",
+      "mode": "100644",
+      "gitBlob": "1b42f714e670a331fc113080a00711ff5b095c0b",
+      "bytes": 5093,
+      "sha256": "2e65156b4acddf6a7338b59237a8d3d27e51c804eaaebb71e8b78fe2cd5a9f31",
+      "upstreamGitBlob": "1b42f714e670a331fc113080a00711ff5b095c0b",
+      "standalonePreviousGitBlob": "6a75d5a4faff31286f0ab3ae6c15a6ad57b2ab5c",
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-portfolio.mjs",
+      "mode": "100644",
+      "gitBlob": "ab5d0e61cd1af922675df2ef646fcaa8a67a9081",
+      "bytes": 8114,
+      "sha256": "1b70405b0406626e5d946d746616c9b7b7021c67894c6fdf6767d29cd190dcaf",
+      "upstreamGitBlob": "ab5d0e61cd1af922675df2ef646fcaa8a67a9081",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-runbooks.mjs",
+      "mode": "100644",
+      "gitBlob": "c19bed1dea3a426cfd1cfb3388a4b9b3ac145460",
+      "bytes": 745,
+      "sha256": "f9c194649571a91a298dee52469bf6fd09cb86da3492cbf86d6308b286bf0ba1",
+      "upstreamGitBlob": "c19bed1dea3a426cfd1cfb3388a4b9b3ac145460",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications.mjs",
+      "mode": "100644",
+      "gitBlob": "f4088b6affa905349054b52e91305d39ae4abf89",
+      "bytes": 27026,
+      "sha256": "c59b621f37c8b88317b3a76eabb4575744168cabf8a193ecbdd3dfb94197cc72",
+      "upstreamGitBlob": "69584d66f789ae6e0caef4ec85987650af24ebd0",
+      "standalonePreviousGitBlob": "6fd1cdae6094d90ec0b00ea9ec430aef5d3ba56d",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/cryptoworth.mjs",
+      "mode": "100644",
+      "gitBlob": "53f04897a44dbca074e7c69862961ddccab62f8e",
+      "bytes": 1357,
+      "sha256": "7f6025bcc99e80181047359ea917128ac41f8773017b02863f5ac7d1d406e91f",
+      "upstreamGitBlob": "53f04897a44dbca074e7c69862961ddccab62f8e",
+      "standalonePreviousGitBlob": "e82cb5e8607a7d27ad0167a31c49e11d83ed59a0",
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/portfolio.mjs",
+      "mode": "100644",
+      "gitBlob": "97c5407787a8574703419668485db0c948c75921",
+      "bytes": 1108,
+      "sha256": "8fd9046edec77ded044cbd71a6a229de340d91ac3715164783ffa91dc9c4dbfe",
+      "upstreamGitBlob": "97c5407787a8574703419668485db0c948c75921",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/PORTFOLIO_GUIDE.md",
+      "mode": "100644",
+      "gitBlob": "bcde349c54a9d61580f731185fc8c266b38b2882",
+      "bytes": 16107,
+      "sha256": "8c517e9e5b6f23f36cd1d970a0ef40e2c96f220b0886c05d7c25e293557506e3",
+      "upstreamGitBlob": "bcde349c54a9d61580f731185fc8c266b38b2882",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/RUNBOOKS.md",
+      "mode": "100644",
+      "gitBlob": "2e17a0909a7a4564bc35b2454b640ff0e5d970b5",
+      "bytes": 13121,
+      "sha256": "0b850cabf844ac51e837d8fe0bfb3435f54015be8fda6acbd28c3961b3364bee",
+      "upstreamGitBlob": "2e17a0909a7a4564bc35b2454b640ff0e5d970b5",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/browser-assets.json",
+      "mode": "100644",
+      "gitBlob": "94a17e6c0410b25dba19ea284c383727dbfffef5",
+      "bytes": 5004,
+      "sha256": "88f8e818721afc96244fe6977bcf945aa600f66ce868f2baab1a4c70edd5982f",
+      "upstreamGitBlob": "182094a45f729e331dad83ce836da4ea89d342a2",
+      "standalonePreviousGitBlob": "5f6bd456e03850e637dfbcef980cec21eb23bad6",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/portfolio-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "4d23da25a6b86d266d30bf5eb35df9307f1ff823",
+      "bytes": 14344,
+      "sha256": "750bd2fdbbf7344f7d0a839d51eb63cce875881c821e068637d2941354dc9b79",
+      "upstreamGitBlob": "4d23da25a6b86d266d30bf5eb35df9307f1ff823",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/portfolio-connections.mjs",
+      "mode": "100644",
+      "gitBlob": "24076bc5bd74e7c2e7b6c5e6248f1885c7a821b3",
+      "bytes": 11671,
+      "sha256": "4647c201669dd985cfba6ee0b00562af6b80cdc6a1e925772634a1335772ac71",
+      "upstreamGitBlob": "24076bc5bd74e7c2e7b6c5e6248f1885c7a821b3",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/portfolio-schedule.mjs",
+      "mode": "100644",
+      "gitBlob": "187d48a8aa535f4324ee2e532369cbc480be7840",
+      "bytes": 8920,
+      "sha256": "2db4abe237c7fd9b2274c6bd69c2d970ffc982d87790e351aa97ff3e48872a0e",
+      "upstreamGitBlob": "187d48a8aa535f4324ee2e532369cbc480be7840",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/portfolio-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "d28cce38c298251816b05ff19dccdf10489d4b28",
+      "bytes": 56217,
+      "sha256": "cdea7fc1ac9b616fc2c59dd448ac5eb6089138ffda56a13ca72632176148dc0f",
+      "upstreamGitBlob": "d28cce38c298251816b05ff19dccdf10489d4b28",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/index.html",
+      "mode": "100644",
+      "gitBlob": "7ae74de96d8d37afb8f6fcf98c4267b879d31c52",
+      "bytes": 17697,
+      "sha256": "ef0b2a345d865aec0c0112b23f5a40a615c6e02a358579a1646213cf8e588898",
+      "upstreamGitBlob": "f81cb8b7e0f8078e059fd8131a1c84f4143e60c0",
+      "standalonePreviousGitBlob": "d54ba588461e9183e31c6ab92ededdbf1ed45a20",
+      "adoption": "composed-standalone-join"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/portfolio.css",
+      "mode": "100644",
+      "gitBlob": "c2245082af98c64e880590e9b435f4b8ed073578",
+      "bytes": 10695,
+      "sha256": "f35ded432d84e8f50814e05383e06538e94848d540007700b15d2c964f614280",
+      "upstreamGitBlob": "c2245082af98c64e880590e9b435f4b8ed073578",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/portfolio.html",
+      "mode": "100644",
+      "gitBlob": "98c79b108ca2aee256dfefc6a27e9fa63ced69a0",
+      "bytes": 7521,
+      "sha256": "41c5662c043ec8fcadbb5e747c970188d64cdf16676b4b5b80eccb9bfdead279",
+      "upstreamGitBlob": "98c79b108ca2aee256dfefc6a27e9fa63ced69a0",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/portfolio.mjs",
+      "mode": "100644",
+      "gitBlob": "bb134a0a5c8e664d2b4fd3554e3727d4dad87648",
+      "bytes": 117232,
+      "sha256": "5cb34eb7064f9bc8b64f2137eeb08c5826e737dc0ee86b51632d52c155abee4f",
+      "upstreamGitBlob": "bb134a0a5c8e664d2b4fd3554e3727d4dad87648",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/runbooks.css",
+      "mode": "100644",
+      "gitBlob": "f05cb5895ecabc07350ff9e2d832d2dd1859a7e2",
+      "bytes": 13410,
+      "sha256": "30fdf8a84abd0034b0715f7363fb69b56725f27a5a05aff72d20d9b6f44daf7b",
+      "upstreamGitBlob": "f05cb5895ecabc07350ff9e2d832d2dd1859a7e2",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/runbooks.html",
+      "mode": "100644",
+      "gitBlob": "71f5b330bd03ff01035f2aec8a02124f39db86c2",
+      "bytes": 10318,
+      "sha256": "96b95b66a9b2f455b6993160291afd06763b830ef276c7b72f610a6ebd732569",
+      "upstreamGitBlob": "71f5b330bd03ff01035f2aec8a02124f39db86c2",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/public/runbooks.mjs",
+      "mode": "100644",
+      "gitBlob": "9ca67a7ae8cc9517e7ba3d2af679f3a785b9d43f",
+      "bytes": 83708,
+      "sha256": "58c71e2af04470f54bfe527e1d72bf685ed299a2df8a03825adbffbcf3a656b5",
+      "upstreamGitBlob": "9ca67a7ae8cc9517e7ba3d2af679f3a785b9d43f",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/recovery-controller.mjs",
+      "mode": "100644",
+      "gitBlob": "2360711c05bf7ee55ef77ea821908b6f047165f6",
+      "bytes": 23433,
+      "sha256": "be8e1f998648c13a5cfe25199b3961b8e96f3b507058e24dcc2f2b88d5e3cca4",
+      "upstreamGitBlob": "2360711c05bf7ee55ef77ea821908b6f047165f6",
+      "standalonePreviousGitBlob": "b24d91a326e114a1499a9dee5d754c039262cac3",
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/runbooks-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "5cb8720851a95e6ba76eb8d97a609babd46b929c",
+      "bytes": 15831,
+      "sha256": "86751b4105e95702df22b1773bf7f5218b79dbf06f3ddfce3532d2e2f899f08e",
+      "upstreamGitBlob": "5cb8720851a95e6ba76eb8d97a609babd46b929c",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/runbooks-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "1975a2a3e2d58f9ee37efde96bbddefee7ed89f9",
+      "bytes": 57806,
+      "sha256": "d62b3890201b3a3c8563762fc155cf155123908a873b94af808cecc0d00e637b",
+      "upstreamGitBlob": "1975a2a3e2d58f9ee37efde96bbddefee7ed89f9",
+      "standalonePreviousGitBlob": null,
+      "adoption": "original-source"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/server.mjs",
+      "mode": "100644",
+      "gitBlob": "bb7f97a96db17f1651ed04473a7d8dcd02114975",
+      "bytes": 31033,
+      "sha256": "552c112d1236324b811919804b4d6ee7466340e394515273818e85ac14d36f30",
+      "upstreamGitBlob": "1cfc3f83c1b50f713bc8c558ddba72b784c8467c",
+      "standalonePreviousGitBlob": "8d40e928595d29500d14f2ffba28c9d6c72d579d",
+      "adoption": "composed-standalone-join"
+    }
+  ]
+}

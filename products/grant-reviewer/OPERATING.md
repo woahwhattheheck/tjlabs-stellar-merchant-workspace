@@ -1,4 +1,4 @@
-# Review a retained grant purchase and hand it over
+# Read the SCF application and operate its retained grant purchase
 
 Open the original public purchase as an operating reviewer workspace. Review its
 source and terms, read both complete native results, export a closed Buyer view,
@@ -8,6 +8,44 @@ This workflow uses the retained purchase. The original transaction, quote
 identities, seller outcomes and source documents remain part of that packet.
 Opening, reading, exporting and receiving it do not dispatch another payment
 or refresh the source data.
+
+## Read the complete application and financing
+
+The selected package includes the manuscript author's reviewed application,
+the product and financing companion, the original six-package budget and the
+source index. Open them through the shared source server:
+
+~~~sh
+starforge grant-application --port 8787
+~~~
+
+Open the exact local URL printed at startup, normally
+`http://127.0.0.1:8787/grant.html`. Choose `--port 0` when another service already
+uses that port. If the same package's `cocart-setup` listener is already open,
+read `/grant.html` at its existing origin.
+
+The application page provides the complete original Markdown downloads,
+`budget.csv`, `source-index.json`, the preserved economic briefing and the
+published presentation links. The four direct local downloads are:
+
+| Download | Local path |
+| --- | --- |
+| Primary application | `/grant-data/application.md` |
+| Product and financing companion | `/grant-data/product-and-finance.md` |
+| Six-package budget | `/grant-data/budget.csv` |
+| Source and measure index | `/grant-data/source-index.json` |
+
+These six original grant files come from the reviewed source at
+`f7fe93c07355b1688a550bbcd349a5590fa1d680`; their contents remain unchanged.
+The source index retains the underlying manuscript and financial source
+identities. Read the published film and editable companion at the original
+release links on the page. The local package contains the application and
+economic-report source downloads.
+
+Ctrl+C closes this reader. Reopen the same command to read the same installed
+source. For a checkout, the original entry is
+`node stellar-forge/developer-site/grant.mjs --port 8787`.
+The retained purchase workbench below keeps its own saved packet and lifecycle.
 
 ## Open the reviewer
 
@@ -158,5 +196,64 @@ This standalone edition includes the complete source from
 merge `ddde47d69aac27cae5021a17bc6b3d15d43fc884`. The complete
 [merchant receiving continuation](../../stellar/scf_2026/presentation/reviewer/merchant/RECEIVING.mjs)
 extends the same original closed reviewer operation and both saved result files.
-Its new twelve-phase run is pending runtime admission; the completed original
-fourteen-phase browser outcome and original payment count remain unchanged.
+The Console continuation follows that same operation and its existing merchant
+journal through complete customer delivery and independent receiving.
+
+## Complete customer delivery in the operator workspace
+
+The `grant-reviewer` product selection includes both **Grant purchase reviewer**
+and **Merchant operator** in Applications. Keep the original workbench open
+through its owning application. Initialize its merchant connection with the
+command above, then save **Merchant operator** using that
+`merchant-mcp.json`, a private saved operator directory and the original token
+environment name. **Review Start → Start → Open** leads to the authenticated
+operator workspace on that same merchant listener.
+
+The direct command opens the same workspace:
+
+~~~sh
+starforge merchant-mcp serve \
+  --config /srv/starforge/reviewer-merchant/merchant-mcp.json \
+  --operator-console-dir /srv/starforge/reviewer-merchant/operator-console \
+  --port 3211 --token-env MCP_ACCESS_TOKEN
+~~~
+
+Select or create a named profile, then open **Customers → Reviewer customer
+delivery**. Work through the five sections:
+
+1. Load the configured workbench aliases and open the original source state.
+2. Review the bundled purchase, a declared host file, or a complete local packet.
+   Inspect the saved selection and its revision before receiving it.
+3. Open the original Buyer and read its complete saved history, both quote
+   outcomes, full result files and source documents.
+4. Close the Buyer and export the selected packet. **Receive these original
+   files** retains its complete manifest and every original file in Customers.
+   Download the full receiving packet, or choose an individual retained file.
+5. Prepare the complete delivery or receiving recipe. The existing Workflow
+   Recipes editor reviews its actual inputs and native contracts, then installs
+   a named immutable workflow edition.
+
+The delivery recipe has fourteen native steps, with pauses at source inspection,
+the complete saved result, closed export, receiving review and received history.
+The six-step receiving recipe starts from an existing reviewed export. Its
+destination is another configured workbench. Each original action UUID stays
+with its saved request; a lost response continues that request and revision.
+
+A completed workflow export can be reopened in Customers with its exact
+workbench alias, export ID and manifest SHA-256. Receiving resumes the retained
+file checkpoints after interruption. The complete packet remains
+`grant-reviewer-packet.json`; its accompanying manifest and operation file are
+also available individually.
+
+**Export profile** carries the original requests, workflow installation and run,
+complete customer identities and immutable host-binding history. The receiving
+operator imports that history into its own retained Console, then receives the
+original files from the selected export. After a host change, **Host → Review
+host** compares the actual configured tools and declarations before the operator
+saves the displayed binding.
+
+The [complete Reviewer Customer Delivery guide](../../stellar-forge/mcp-merchant-operator/console/CUSTOMER_REVIEWER.md)
+includes the exact recipe inputs, response recovery, full-file controls and
+original native receiving continuation. The
+[Merchant operator Applications guide](../../stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md)
+covers saved launch, current private Open, drained Stop and cold reopen.

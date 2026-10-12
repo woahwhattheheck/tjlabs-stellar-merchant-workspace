@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><script src="/app.js" defer></script></head>
 <body>
 <header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">IA</span><div><strong>IATI</strong><span>Aid finance workspace</span></div></div>
 <div class="top-actions"><span class="connection" id="connection">Opening source workspace</span><button id="reload" type="button">Refresh saved work</button></div></header>
@@ -9,7 +9,7 @@
 <aside class="sidebar"><p class="eyebrow">Original publisher data</p><nav aria-label="Workspace">
 <button data-view="overview" class="active">Overview</button><button data-view="sources">Publisher sources</button>
 <button data-view="portfolios">Portfolio review</button><button data-view="query">Explore data</button>
-<button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
+<button id="dqa-open" data-view="dqa">Data quality</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
 <div class="sidebar-note"><strong>Source first</strong><p>Keep reported values, currencies, dates and transaction types together. Each saved portfolio retains its original XML and dataset lineage.</p></div></aside>
 <main id="main" aria-busy="true">
 <div id="status" role="status" aria-live="polite">Opening the original workspace…</div>
@@ -78,6 +78,102 @@
 <div id="receive-result"></div></form><article class="card"><h2>Export a saved portfolio</h2><label>Portfolio<select id="transfer-portfolio"></select></label>
 <label>Revision<input id="transfer-revision" type="number" min="1" placeholder="Latest revision"></label><button id="transfer-download">Download full portfolio packet</button>
 <p class="fine">Use the command line or the existing source-workspace MCP for a declared original console connection and complete retained file receiving.</p></article></div></section>
+
+<section id="dqa-panel" data-panel="dqa" hidden>
+ <div class="heading"><div><p class="eyebrow">Data quality assessment</p><h1>Publisher quality, reviewed.</h1>
+ <p class="lede">Run the selected DQA service, review its original findings and retain each customer decision with the complete assessment history.</p></div></div>
+ <div id="dqa-counts" class="metrics"></div>
+ <nav class="dqa-tabs" aria-label="Data quality work">
+  <button type="button" data-dqa-view="assess">Assessments</button><button type="button" data-dqa-view="case">Customer cases</button>
+  <button type="button" data-dqa-view="compare">Compare refreshes</button><button type="button" data-dqa-view="provider">Provider settings</button>
+ </nav>
+ <div class="dqa-operation"><p id="dqa-operation-status" role="status"></p><button id="dqa-retry" type="button" hidden>Retry original request</button></div>
+ <div data-dqa-section="assess">
+  <div class="grid two"><form id="dqa-capture-form" class="card"><h2>Capture an assessment</h2>
+   <label>Provider edition<select id="dqa-capture-provider" required></select></label>
+   <label>Assessment label<input id="dqa-capture-label" maxlength="160" required placeholder="Publisher · reporting period"></label>
+   <label>Receiving analyst<input id="dqa-operator" maxlength="160" required></label>
+   <label>Organisation identifiers, one per line<textarea id="dqa-organisation" rows="3" required placeholder="GB-GOV-1"></textarea></label>
+   <details><summary>Coverage and native rules</summary>
+    <div class="grid two"><label>Country codes, one per line<textarea id="dqa-countries" rows="2"></textarea></label>
+     <label>Region codes, one per line<textarea id="dqa-regions" rows="2"></textarea></label></div>
+    <label>Sector codes, one per line<textarea id="dqa-sectors" rows="2"></textarea></label>
+    <label class="dqa-check"><input id="dqa-require-funding" type="checkbox">Require funding and accountable organisations</label>
+    <label class="dqa-check"><input id="dqa-include-exemptions" type="checkbox" checked>Send the provider's include-exemptions option</label>
+    <label class="dqa-check"><input id="dqa-check-acronyms" type="checkbox">Enable the native acronym rule</label>
+    <label class="dqa-check"><input id="dqa-budget-filter" type="checkbox">Use the provider's financial-year budget filter</label>
+    <label class="dqa-check"><input id="dqa-skip-cache" type="checkbox">Request a fresh assessment through the native cache option</label>
+    <label class="dqa-check"><input id="dqa-failed-activities" type="checkbox" checked>Include the full returned activity findings</label>
+    <p class="fine">The selected provider determines rule behavior, source coverage, financial year and cache behavior. Each actual request and response is retained.</p>
+   </details>
+   <label>Analyst notes<textarea id="dqa-capture-notes" rows="3" maxlength="16000"></textarea></label>
+   <button type="submit" class="primary">Capture native assessment</button>
+  </form><article class="card"><h2>Saved assessments</h2><div id="dqa-assessments" class="empty">No assessments loaded.</div></article></div>
+  <article class="card"><h2>Selected assessment</h2><div id="dqa-assessment-detail" class="empty">Open a saved assessment.</div>
+   <div class="row dqa-downloads"><button id="dqa-response-download" type="button">Original response</button>
+    <button id="dqa-request-download" type="button">Original request</button><button id="dqa-before-download" type="button">Configuration before</button>
+    <button id="dqa-after-download" type="button">Configuration after</button></div>
+  </article>
+  <article class="card"><div class="card-title"><h2>Native rule findings</h2><span id="dqa-findings-page" class="fine"></span></div>
+   <form id="dqa-findings-form" class="dqa-filter"><label>Find an activity or rule<input id="dqa-findings-search" maxlength="1000" type="search"></label>
+    <label>Native result<select id="dqa-findings-status"><option value="">All returned results</option value="fail">Fail</option><option value="pass">Pass</option><option value="not_applicable">Not applicable</option></select></label>
+    <button type="submit">Find results</button></form>
+   <div id="dqa-findings" class="empty">Select an assessment with its original returned findings.</div>
+   <div class="row"><button id="dqa-findings-prev" type="button">Previous findings</button><button id="dqa-findings-next" type="button">Next findings</button></div>
+   <div id="dqa-finding-detail"></div>
+  </article>
+ </div>
+ <div data-dqa-section="case" hidden>
+  <div class="grid two"><article class="card"><div class="card-title"><h2>Saved customer cases</h2><button id="dqa-new-case" type="button">New case</button></div><div id="dqa-cases" class="empty">No cases loaded.</div></article>
+  <form id="dqa-case-form" class="card"><h2>Case selection and review</h2><p id="dqa-case-edition" class="fine">New customer case.</p>
+   <label>Case name<input id="dqa-case-name" maxlength="160" required></label><label>Client<input id="dqa-case-client" maxlength="160" required></label>
+   <fieldset><legend>Complete assessment editions</legend><div id="dqa-case-assessments" class="dqa-choices"></div></fieldset>
+   <fieldset><legend>Optional original finance portfolios</legend><div id="dqa-case-portfolios" class="dqa-choices"></div></fieldset>
+   <label>Case notes<textarea id="dqa-case-notes" rows="3" maxlength="32000"></textarea></label>
+   <label>Review status<select id="dqa-case-status"><option value="draft">Draft</option><option value="reviewed">Reviewed</option><option value="needs-correction">Needs correction</option></select></label>
+   <label>Reviewer<input id="dqa-case-reviewer" maxlength="160"></label><label>Review note<textarea id="dqa-case-note" rows="3" maxlength="16000"></textarea></label>
+   <button type="submit" class="primary">Save complete case revision</button>
+  </form></div>
+  <article class="card"><div class="card-title"><h2>Selected case and full history</h2><button id="dqa-case-export" type="button">Export complete customer package</button></div>
+   <div id="dqa-case-detail" class="empty">Create or open a customer case.</div><div id="dqa-case-history"></div>
+  </article>
+  <div class="grid two"><form id="dqa-review-form" class="card"><h2>Named finding decision</h2><p id="dqa-review-selection" class="fine">Open an original finding from an assessment in this case.</p>
+   <label>Decision<select id="dqa-review-status"><option value="open">Open</option><option value="investigate">Investigate</option><option value="addressed">Addressed</option><option value="accepted">Accepted</option></select></label>
+   <label>Action owner<input id="dqa-review-owner" maxlength="160"></label><label>Due date<input id="dqa-review-due" type="date"></label>
+   <label>Decision and follow-up<textarea id="dqa-review-note" rows="5" maxlength="16000"></textarea></label>
+   <button type="submit" class="primary">Save decision in case history</button><button id="dqa-review-remove" type="button">Remove saved decision</button>
+  </form><article class="card"><h2>Saved finding decisions</h2><div id="dqa-actions" class="empty">Decisions are attached to original findings and a named case revision.</div></article></div>
+  <form id="dqa-receive-form" class="card"><h2>Receive a complete customer package</h2>
+   <label>Original customer ZIP<input id="dqa-receive-file" type="file" accept=".zip,application/zip" required></label>
+   <p class="fine">Restore every selected assessment, provider edition, case revision, original response, comparison and included finance portfolio.</p>
+   <button type="submit">Receive and reopen complete case</button><div id="dqa-receive-result"></div>
+  </form>
+ </div>
+ <div data-dqa-section="compare" hidden>
+  <form id="dqa-comparison-form" class="card"><h2>Compare two saved native assessments</h2>
+   <div class="grid two"><label>Earlier assessment<select id="dqa-compare-before" required></select></label>
+    <label>Refreshed assessment<select id="dqa-compare-after" required></select></label></div>
+   <p class="fine">Review the original outcome totals, scope and configuration alongside activity membership changes in the returned failure lists.</p>
+   <button type="submit" class="primary">Compare complete assessments</button>
+  </form><article class="card"><h2>Native refresh comparison</h2><div id="dqa-comparison-detail" class="empty">Choose two retained assessment editions.</div>
+   <div id="dqa-comparison-changes"></div><p id="dqa-comparison-page" class="fine"></p>
+   <div class="row"><button id="dqa-comparison-prev" type="button">Previous changes</button><button id="dqa-comparison-next" type="button">Next changes</button></div>
+  </article>
+ </div>
+ <div data-dqa-section="provider" hidden>
+  <div class="grid two"><form id="dqa-provider-form" class="card"><h2>Save a provider edition</h2>
+   <label>Name<input id="dqa-provider-name" maxlength="160" required></label>
+   <label>Service endpoint<input id="dqa-provider-endpoint" type="url" required placeholder="http://127.0.0.1:8080/dqa"></label>
+   <label>Authorization environment variable<input id="dqa-provider-env" maxlength="160" required placeholder="IATI_DQA_AUTHORIZATION"></label>
+   <p class="fine">Configure the native Authorization value on the console's host. Save its variable name here.</p>
+   <label>Response timeout, seconds<input id="dqa-provider-timeout" type="number" min="1" max="900" value="300" required></label>
+   <label>Previous provider edition, if updating<select id="dqa-provider-previous"><option value="">New provider</option></select></label>
+   <label>Provider notes<textarea id="dqa-provider-notes" rows="4" maxlength="16000"></textarea></label>
+   <button type="submit" class="primary">Save provider edition</button>
+  </form><article class="card"><h2>Saved provider editions</h2><div id="dqa-providers" class="empty">No providers loaded.</div></article></div>
+ </div>
+</section>
+
 <footer>IATI source workspace · Original XML retained · Native SF30 datasets</footer>
 </main></div>
 </body></html>

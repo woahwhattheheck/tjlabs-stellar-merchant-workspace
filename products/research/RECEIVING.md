@@ -383,6 +383,217 @@ The complete prepared native journey is available through `research-citation-wor
 
 Retain the original run directory and operation identity on restart. The workflow's completed result names the original dossier/review revisions and each complete selected output. Deliver those files with their reported identities. Original connection records, browser profiles and source/workspace directories retain their established private custody; the existing application owner controls its listener lifecycle.
 
+## 10. Receive the complete Python citation analyst
+
+The selected source includes all original Python/Analysis modules and the new
+citation client, CLI, full draft/request editor, portable delivery and customer
+receiver. Install the buyer Python package from this same source as described
+in section 8. Use its existing `workbooks` extra for the full workbook path.
+
+After the original citation-review workflow in section 9 has completed and
+closed its listener, continue that same workspace:
+
+~~~sh
+starforge research-citation-python-receive \
+  --existing-run /srv/starforge/customer/original-citation-review \
+  --directory /srv/starforge/customer/python-citation-analyst \
+  --checkout /absolute/installed-source \
+  --python /absolute/existing/python3 \
+  --operation-id ORIGINAL_PYTHON_CONTINUATION_ID \
+  --with-workbook
+~~~
+
+Select actual original paths and a stable receiving operation ID. The command
+reads the completed original result and selected review, starts the same
+Research listener under its original lock, and invokes the complete Python
+analyst. It verifies the original saved request before recovering it, then
+retains twelve revision-specific exports, proves both portable readers, produces
+the original Analysis/SQL/typed/workbook/archive outputs and cold reopens the
+full customer handover.
+
+The returned `complete.json` records source, workspace, review, request, selected
+revisions and all original artifact byte counts and SHA-256 values. Its
+`Citation_Analyst_Complete_Handover.zip` includes the selected reports and complete
+portable history, exact received request bytes, full analytical outputs and
+editable Analysis workspace ZIP. Private connection files and browser profiles
+remain outside this selection.
+
+A received customer can use `citation-unpack` with the exact whole ZIP digest,
+then `citation-receive` with the matching Node source. Existing identical files
+are reused; different customer files are preserved and reported. The original
+portable readers validate source bodies and replay each saved review from its
+original previous state.
+
+The [full Python citation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_CITATIONS.md)
+also covers an ordinary live analyst: pinned notice/detail reads, complete JSON
+request editing, explicit draft revisions, exact saved-request recovery and
+standalone export/receive/workbook commands. A known completed receiving operation
+returns its original verified receipt; an interrupted original native job stays
+with its existing owner and output selection.
+
+## 11. Receive the interactive Analysis and native agent workflow
+
+The complete `research-workspace` selection includes the Analysis Research
+intake, its original browser, all eight native MCP actions and the complete
+browser/workbook receiving programme. Install the original Python workbook extra
+from this same release as in step 8. Use the actual selected Node, Playwright and
+Chromium installations on the receiving Linux host; the programme starts its
+original Analysis service and browser together and keeps their temporary files
+inside the explicitly selected private temporary root.
+
+The source must already be a saved Documents purchase/edition or a retained
+Pipelines output/edition in the existing Research workspace. Prepare the private
+connection registry described in
+[the operating workflow](OPERATING.md#use-the-original-analysis-browser-and-native-agent).
+Select the actual source through the original review endpoint or browser and
+retain a JSON selection with these exact fields:
+
+| Field | Original value |
+| --- | --- |
+| `connection` | A name from the launcher-selected Research registry |
+| `expected_workspace_id` | That connection's actual `research_<64 hex>` identity |
+| `dossier_id` | The existing `d_<UUID>` dossier, retaining its UUID hyphens |
+| `family` | `documents` or `pipelines` |
+| `selection` | Documents: `{purchaseId}` or `{editionId}`; Pipelines: `{operationId,outputId}` or `{editionId}`, with the actual returned IDs |
+| `expected_edition_sha256` | The complete edition digest returned by that exact source review |
+| `name` | `document_elements`, the original receiving programme's source/view name |
+| `title` | The reviewed source title, at most 160 characters with no control characters |
+
+These fields are a source selection, not a provider submission. Keep the complete
+selection and registry in the private receiving operation. The registry retains
+only the source connection path and identity; the existing connection file owns
+its capability.
+
+Run the complete original receiving programme against that exact saved source:
+
+~~~sh
+python3 /absolute/installed-source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_intake_workbook.py \
+  --directory /srv/starforge/customer/research-analysis-receiving \
+  --checkout /absolute/installed-source \
+  --research-connections /srv/starforge/private/analysis-research-connections.json \
+  --node /absolute/runtime/bin/node \
+  --playwright /absolute/runtime/node_modules/playwright/index.mjs \
+  --chromium /absolute/runtime/chrome-headless-shell \
+  --temporary-root /dev \
+  receive --selection /srv/starforge/private/reviewed-analysis-source.json
+~~~
+
+Use an existing writable process-private temporary root appropriate to that
+host. The operation directory and returned customer files remain persistent.
+
+The programme opens the original browser, chooses the exact retained source,
+records the capture request before POST, observes and discards one accepted
+capture reply, and reopens that same original job. It follows the actual mapping,
+complete preview and immutable import. A previously interrupted preview/import
+uses the original Activity continuation with its unchanged request and ID.
+The underlying maintained workbook receiver then activates the imported version,
+saves SQL, produces complete typed exports and workbook/handoff files, exports
+the whole original workspace, and cold-restores it.
+
+| Retained delivery | Original result |
+| --- | --- |
+| `operation.json`, `records/` | The actual source selection, capture/preview/import requests and subsequent query/export/workbook/archive identities |
+| `analysis/` | Captured original source revisions, imported data, saved queries, jobs and complete output history |
+| `browser/` | Actual capture and restored-view receipts plus their desktop/mobile images |
+| `deliveries/query/` | Complete JSONL, CSV and SQLite rows, including full text and provider metadata |
+| `deliveries/workbook/` | Every occurrence in the workbook and the complete typed-source handoff |
+| `deliveries/workspace/workspace.zip` | Original database, source-document files and selected query/workbook outputs |
+| `restored-analysis/` | Source-local receiving workspace with the original analytical identity |
+
+Repeat the same command and operation directory after interruption. It checks the
+retained selection and exact request identities before continuing. Completed
+browser phases verify and reuse their original images and receipts. The
+`inspect`, `finish --preview-sha256` and `reopen` actions operate that same
+saved programme. A source or selection change needs a separately reviewed
+operation.
+
+The restored browser opens its original capture, source inspection, mapping and
+imported rows without the earlier Research connection. The programme also
+verifies the original query digest, workbook and registered source files using
+the maintained archive receiver. It preserves complete/failed outcomes and
+existing customer edits when reopening an already-received archive.
+
+For agent receiving, register the same original Analysis listener under a native
+workspace alias and follow
+[the native Research capture programme](../../stellar-forge/mcp-paid-agent/ANALYSIS.md#saved-research-documents-and-managed-outputs).
+Read complete jobs through `job`; the reviewed response digest is
+`preview.result.preview_sha256`. The original native archive downloader and
+portable workspace receiver retain their existing complete-file and restore
+identities.
+
+The operating result records belong to the actual selected source and receiving
+host. The original managed-document and self-hosted source operations retain
+their provider, job and payment custody throughout this customer continuation.
+
+## Receive the complete Europe PMC source workspace
+
+The selected Research product includes the original Europe PMC source adapter,
+browser, authenticated client, `research-europe-pmc` command and complete
+Merchant family. Its source-owned Research contribution carries the provider
+component, existing shared rate-state helpers and Merchant guide into the same
+installed archive. The current Research recipe also retains its direct Analysis
+browser/native-agent intake and complete Python/workbook receiving.
+
+Deliver the source workspace and the dossier together:
+
+| File or selection | Work carried to the receiver |
+| --- | --- |
+| Complete Europe PMC workspace JSON/gzip | Every saved query version, original plan and page, edition, decision, continuation and dossier receiving receipt |
+| Dossier portable JSON/gzip | Research questions, original received editions, evidence selections, findings, citation-review history and saved revisions |
+| Readable dossier HTML or Markdown | The selected saved report revision for the recipient |
+| Selected edition JSON/RIS/CSV and review JSON | Complete native source records and the associated metadata review |
+| Original source-page downloads | The exact provider-response or retained-document bytes and their recorded provenance |
+
+Create a complete workbench export through **Activity & receiving**, or use the
+installed CLI with a retained request file containing an original `requestId`
+and `actor`:
+
+~~~sh
+starforge research-europe-pmc backup \
+  --connection /srv/starforge/private/research-connection.json \
+  --input /srv/starforge/private/literature-export-request.json \
+  --file /srv/starforge/delivery/Europe_PMC_Workspace.json.gz
+~~~
+
+Retain the returned byte count and SHA-256. On the receiving Research application,
+use **Reopen and select received copy**, or run:
+
+~~~sh
+starforge research-europe-pmc restore \
+  --connection /srv/starforge/private/receiving-research-connection.json \
+  --request-id ORIGINAL_RECEIVING_REQUEST_ID --actor OPERATOR_NAME \
+  --file /srv/starforge/delivery/Europe_PMC_Workspace.json.gz \
+  --sha256 ORIGINAL_WORKSPACE_FILE_SHA256
+~~~
+
+The receiver verifies the complete archive and every original member, query
+revision, review, source binding, continuation and receiving receipt. It selects
+a separate received library. Use the existing dossier portable receiver for the
+paired research project, then confirm its original questions, source editions and
+chosen report revision.
+
+Merchant receiving uses the same application attachment. Discover the current
+library with `merchant_research_europe_pmc_list`; carry that exact library in
+later actions. Prepare the original workspace export, retain it through
+`merchant_research_export` with `kind: "europe-pmc-workspace"`, then read every
+chunk through the existing immutable export file API. The
+[full Merchant guide](../../stellar-forge/mcp-merchant-operator/EUROPE_PMC.md)
+documents all operation/export selections and the complete native customer
+receiving helper.
+
+A lost export reply reuses its original export request and retained file. A lost
+dossier receiving reply reopens its saved request and resulting edition. After a
+restore, list and explicitly select the received library before making a later
+change. Continue a partially acquired query from its saved parent plan and actual
+next cursor. Original query and review drafts remain in their browser workspace;
+commit the intended decisions before exporting the source handover.
+
+For large programmes, agree the complete source selection against the actual
+limits: 16 MiB per original page, 24 MiB raw source budget per part, 64 MiB per
+normalized edition and 128 MiB per full portable. Record count alone does not
+determine source size. Preserve all required original parts and inspect their
+complete continuation coverage.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
