@@ -58,6 +58,31 @@ const proposal = object({
   networkPassphrase: text(200, 1), amountAtomic: {type: 'string', pattern: '^[1-9][0-9]*$'}, uri: text(10000, 1),
 }, ['schema', 'id', 'invoice', 'invoiceAmount', 'network', 'networkPassphrase', 'destination', 'asset',
   'stellarAmount', 'amountAtomic', 'memo', 'msg', 'expiresAt', 'valuationNote', 'uri'], true);
+
+const funding = {type: 'array', maxItems: 1000,
+  items: object({allocationId: uuid, amount: money, replacementAllocationId: nullableId}, ['allocationId', 'amount'])};
+const dispositionAllocations = {type: 'array', maxItems: 1000,
+  items: object({invoiceId: uuid, amount: money, allocationId: uuid}, ['invoiceId', 'amount'])};
+const stellarAmount = {type: 'string', pattern: '^(0|[1-9][0-9]{0,18})(?:[.][0-9]{1,7})?$'};
+const refundPayout = {anyOf: [
+  object({kind: {type: 'string', enum: ['OPERATOR_RECORDED']}, method: text(100, 1),
+    reference: text(300, 1), refundDate: date, replacesRefundId: nullableId}, ['kind', 'method', 'reference', 'refundDate']),
+  object({kind: {type: 'string', enum: ['STELLAR_TRANSFER']}, sourceAccount: account,
+    destination: account, network, asset, stellarAmount, valuationNote: text(4000,1), msg: text(300)},
+    ['kind', 'sourceAccount', 'destination', 'network', 'asset', 'stellarAmount', 'valuationNote']),
+  object({kind: {type: 'string', enum: ['STELLAR_TRANSFER']}, originalRefundId: uuid,
+    originalReturnId: uuid, valuationNote: text(4000,1)}, ['kind', 'originalRefundId', 'originalReturnId', 'valuationNote']),
+  object({kind: {type: 'string', enum: ['ORIGINAL_STELLAR_ADJUSTMENT']}, adjustmentId: uuid,
+    valuationNote: text(4000,1)}, ['kind', 'adjustmentId', 'valuationNote'])
+]};
+const refundTerms = {id: uuid, receiptId: uuid, amount: money, effectiveDate: date, reason: text(3000, 1), customerNote:text(3000),
+  funding, payout: refundPayout};
+const dispositionTerms = {id: uuid, receiptId: uuid, effectiveDate: date, reason: text(3000, 1), customerNote:text(3000),
+  funding, allocations: dispositionAllocations};
+// Review replies carry the complete original source snapshots, proposal seal and
+// dated balance effects. Their native owner validates the exact retained proposal.
+const reviewedNativeProposal = object({}, [], true);
+
 const read = (suffix, description, properties = {}, required = []) =>
   [PREFIX + suffix, description, {...base, ...properties}, ['workspace', ...required], readOnly];
 const mutate = (suffix, description, properties = {}, required = []) =>
@@ -68,9 +93,11 @@ export const receivablesFileNames = Object.freeze([
   'manifest.json', 'status.json', 'quote.json', 'response.json', 'source.json', 'review.json',
   'preview.json', 'preview.csv', 'preview.html', 'payment-request.json', 'payment-request.html',
   'payment-request.uri', 'receiving.json', 'proof.json', 'account.json', 'invoices.csv', 'account.html', 'account.tar',
+  'request.json', 'request.html', 'request.csv', 'refund.json', 'refund.html', 'refund.csv',
+  'reversal.json', 'reversal.html', 'reversal.csv', 'disposition.json', 'disposition.html', 'disposition.csv',
 ]);
 export const receivablesFileSelectors = Object.freeze([
-  'documentId', 'invoiceId', 'paymentRequestId', 'returnId', 'customerId', 'asOf',
+  'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'returnId', 'customerId', 'asOf',
 ]);
 export const receivablesDefinitions = [
   read('status', 'Read original invoice, receipt, credit, allocation, aging or operation-journal rows. Summary returns issuer, scoped counts and the current accounting revision.',
@@ -136,6 +163,31 @@ export const receivablesDefinitions = [
   mutate('payment_receive', 'Verify the saved returned transaction through the original Stellar network. A matching public transfer creates the original receipt and optional dated allocation; test-network and incomplete observations retain their original proof and state.',
     {paymentRequestId: uuid, returnId: uuid, allocate: {type: 'boolean'},
       allocationAmount: money, allocatedDate: date, note: text(4000)}, ['paymentRequestId', 'returnId']),
+
+  read('customer_funds', 'Read dated customer cash, refundable paid credits, actual target invoices and original verified payout returns or adjustments. Select an original receipt and exact eligible allocation identities for refund or credit disposition.',
+    {customerId: uuid, asOf: date}),
+  read('refund_preview', 'Review returning an original customer payment. Select unapplied receipt value or release exact paid-credit allocations; the original owner checks all later dates and returns the complete proposal, reviewSha256 and before-and-after balances. Choose a completed operator refund, a Stellar payout, a verified original adjustment or a retained unresolved original return.',
+    refundTerms, ['receiptId', 'amount', 'effectiveDate', 'reason', 'payout']),
+  mutate('refund_commit', 'Commit the complete original refund proposal from refund_preview with its reviewSha256. Completed operator and adopted original payouts record cash leaving; a public Stellar wallet request reserves its reviewed amount until native receiving. Test-network requests retain observations with no commercial balance changes.',
+    {proposal: reviewedNativeProposal, reviewSha256: hash}, ['proposal', 'reviewSha256']),
+  read('refund_list', 'Page original refund rows with their actual customer, receipt, payout kind, accounting scope, dated status and reserved/refunded amounts. The original response retains its refunds array.',
+    {customerId: uuid, receiptId: uuid, asOf: date,
+      status: {type: 'string', enum: ['AWAITING_TRANSFER', 'RECORDED', 'CANCELLED', 'REVERSED']},
+      ...nativePage}),
+  read('refund_detail', 'Open one original refund with its reviewed proposal, balance effects, returned transactions, receiving observations, operation history and original files.',
+    {refundId: uuid, asOf: date}, ['refundId']),
+  mutate('refund_cancel', 'Cancel the unspent part of an original Stellar refund request on the selected date. Retain its reviewed credit release, source payment, returns and files; a later actual payout remains receivable against its original proof.',
+    {refundId: uuid, cancelledDate: date, reason: text(3000, 1)}, ['refundId', 'cancelledDate', 'reason']),
+  mutate('refund_reverse', 'Correct an operator-recorded refund with a dated reversal and reason. Keep the original refund document and record the restored customer cash under the same receipt.',
+    {refundId: uuid, reversedDate: date, reason: text(3000, 1)}, ['refundId', 'reversedDate', 'reason']),
+  mutate('refund_return', 'Retain a wallet transaction hash against its original refund. Receiving uses the reviewed merchant sender, customer destination, network, asset, amount and memo.',
+    {refundId: uuid, transaction: hash, note: text(4000)}, ['refundId', 'transaction']),
+  mutate('refund_receive', 'Verify the original returned refund through the native Stellar verifier and retain its exact proof. Matching public receiving records the payout once; a cash-allocation conflict retains the original observation for correction and receiving of that same return. Extra actual returns can be adopted through a new exact refund review.',
+    {refundId: uuid, returnId: uuid}, ['refundId', 'returnId']),
+  read('credit_disposition_preview', 'Review moving an original paid credit or unapplied payment to actual issued invoices for that same customer and currency. Release selected original allocations, preserve their exact residual replacements and leave any chosen remainder unapplied. Returns the complete native proposal, reviewSha256 and dated balance effects.',
+    dispositionTerms, ['receiptId', 'effectiveDate', 'reason', 'allocations']),
+  mutate('credit_disposition_apply', 'Apply the exact reviewed credit-disposition proposal and reviewSha256 through the original accounting journal. Original allocation history and every affected later receipt and invoice balance remain bound to that review.',
+    {proposal: reviewedNativeProposal, reviewSha256: hash}, ['proposal', 'reviewSha256']),
   read('request_lookup', 'Recover the exact original receivables operation by requestId after an uncertain response. Returns found, the retained operation and current original invoice/payment/receipt result identities.',
     {requestId, asOf: date}, ['requestId']),
 ];
