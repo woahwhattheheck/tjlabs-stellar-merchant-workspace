@@ -9,14 +9,19 @@
       "FHIR49 connected actions2096",
       "eLTSS native/browser/Applications2204",
       "eLTSS77 connected actions2206",
-      "Complete portable eLTSS browser and installed Applications receiving PR2251"
+      "Complete portable eLTSS browser and installed Applications receiving PR2251",
+      "Gravity-compatible shared eLTSS source and original receiving continuation PR2275/2289/2295",
+      "Complete original loopback response and upload transport PR2311",
+      "Complete original FHIR response and upload transport PR2318",
+      "Portable original FHIR connected receiving PR2326"
     ],
     "supplementalSource": [
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
-        "gitBlob": "89635f23cfde434232f6893ee4214312d6ad1ef0",
-        "bytes": 46794,
-        "reason": "Complete portable receiving of original saved native result and editable workspace"
+        "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+        "bytes": 47554,
+        "reason": "Retain stable sequence and exact request identity for interrupted original eLTSS receiving actions.",
+        "commit": "078b172f40f5bc37c81cce58ecf473b31bc6f86b"
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/README.md",
@@ -51,12 +56,99 @@
         "bytes": 10325,
         "commit": "074252b2e690728ba845e6744cfa663d5729e090",
         "reason": "Complete original browser and Applications receiving at an explicit restored workspace"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_source.py",
+        "gitBlob": "75e71cb4caba906a8bfb0e746490532026817d2d",
+        "bytes": 25961,
+        "reason": "Raise the existing complete published-resource parser ceiling from 5,000 to 10,000 resources.",
+        "commit": "1f2c804460216bbeeb7fceb4780dba5563a344cc"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/contracts.mjs",
+        "gitBlob": "6436e62b12a1aeabc83de567f4a24aeb7921f2e7",
+        "bytes": 5464,
+        "reason": "Allow the existing export and connection parser to select the Gravity schema and file kinds while preserving its original defaults.",
+        "commit": "8a81dc55e8f99b7920fdd37c4f62bde92e65c979"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
+        "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+        "bytes": 19671,
+        "reason": "Compose the original operator lifecycle with the selected Gravity native descriptor and outer receiving identity. Use the original Node HTTP response stream for authenticated loopback requests, preserving native early error replies, complete upload delivery and workspace reconciliation.",
+        "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/runtime.mjs",
+        "gitBlob": "5054f5efb2a2efaf6f64f0e00b6ba15c3de75c1c",
+        "bytes": 26582,
+        "reason": "Reuse the original Merchant runtime with explicit Gravity tools, schemas, routes and whole-file uploads.",
+        "commit": "8a81dc55e8f99b7920fdd37c4f62bde92e65c979"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/files.mjs",
+        "gitBlob": "8668e5b252184ceed2c96a05e336bf26eeff861a",
+        "bytes": 7429,
+        "reason": "Retain complete response bytes and declared lengths; cancel interrupted responses and remove only the transfer's own incomplete output file.",
+        "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
+        "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+        "bytes": 19190,
+        "reason": "Preserve complete original FHIR loopback responses and uploads, including early native error replies and original workspace import reconciliation.",
+        "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/files.mjs",
+        "gitBlob": "f43e314876c15a34605f7cfe28cddcfe461cb5da",
+        "bytes": 7500,
+        "reason": "Retain complete FHIR response bytes and lengths, cancel interrupted transfers and clean only the transfer's own incomplete file.",
+        "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/RECEIVING.mjs",
+        "gitBlob": "2fc7f3524eb4fefe6c0cb83a69e78ad30829d31c",
+        "bytes": 29789,
+        "reason": "Continue the original FHIR connected receiving at an explicitly restored workspace and existing Playwright module, preserving native result bytes, source identity and the original default journal binding.",
+        "commit": "29d1028c8b02939480dc025bb661166f1e4f500b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/README.md",
+        "gitBlob": "0a5b5742c99a592896569f727b37a4bd92e02798",
+        "bytes": 17530,
+        "reason": "Continue the original FHIR connected receiving at an explicitly restored workspace and existing Playwright module, preserving native result bytes, source identity and the original default journal binding.",
+        "commit": "29d1028c8b02939480dc025bb661166f1e4f500b"
       }
-    ]
+    ],
+    "connectedTransportPublication": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2311,
+      "merge": "31a7b7e7efae5f5256f8e490280db49c96c57509",
+      "head": "9baa0297107d94ab98dd64376028ecb34bb55918",
+      "completeSourceDelta": "ee4257e8287a28da2f718ee0ac71c8b6978c7cbf"
+    },
+    "fhirTransportPublication": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2318,
+      "merge": "7244656f2fe1a3fb1a569a888b03b034ff471080",
+      "completeSourceDelta": "468988501cf7fc9aed0cdd197970c35fabeb5a9e"
+    },
+    "fhirReceivingPublication": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2326,
+      "merge": "29d1028c8b02939480dc025bb661166f1e4f500b",
+      "completeSourceDelta": "73682fae8e7a1e9372eb7e818ed1aeac08f2f4c4"
+    },
+    "completeReceivingClosure": {
+      "gitBlob": "e1cb1073942a082d343efa9f64e78824154e61f0",
+      "files": 181,
+      "bytes": 3420989
+    }
   },
   "destination": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "reviewedBaseCommit": "814b2de4779b5e793835a1105991e93d725edf79",
+    "reviewedBaseCommit": "866079d7efa4af5bea5cb94dceb9c0c50efbc2d7",
     "selection": "healthcare-interoperability",
     "recipe": "stellar/scf-starforge-20261009/distribution/selections/healthcare-interoperability.json"
   },
@@ -118,13 +210,13 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/README.md",
-      "gitBlob": "12f616b7b2d2d83346ec808b8b7fc3d8099c0ae7",
-      "bytes": 14652
+      "gitBlob": "0a5b5742c99a592896569f727b37a4bd92e02798",
+      "bytes": 17530
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/RECEIVING.mjs",
-      "gitBlob": "9a58650080e3875f98e8727f20a2476bc674cd6e",
-      "bytes": 28867
+      "gitBlob": "2fc7f3524eb4fefe6c0cb83a69e78ad30829d31c",
+      "bytes": 29789
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/catalog.mjs",
@@ -148,8 +240,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
-      "gitBlob": "515f71265c3c55d8044561f042329798ce19c63e",
-      "bytes": 15441
+      "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+      "bytes": 19190
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/contracts.mjs",
@@ -158,8 +250,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/files.mjs",
-      "gitBlob": "5b2e606dfdde1a85bf5d0782b6042316aa4a6c10",
-      "bytes": 7434
+      "gitBlob": "f43e314876c15a34605f7cfe28cddcfe461cb5da",
+      "bytes": 7500
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/provider.mjs",
@@ -303,8 +395,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
-      "gitBlob": "89635f23cfde434232f6893ee4214312d6ad1ef0",
-      "bytes": 46794
+      "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+      "bytes": 47554
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/catalog.mjs",
@@ -328,18 +420,18 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
-      "gitBlob": "30a554b64d7ed63a31fcb4e812cd057c7fbae41a",
-      "bytes": 15491
+      "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+      "bytes": 19671
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/contracts.mjs",
-      "gitBlob": "b411c72405430fcb6cc7608e01d8330f167dd36f",
-      "bytes": 5404
+      "gitBlob": "6436e62b12a1aeabc83de567f4a24aeb7921f2e7",
+      "bytes": 5464
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/files.mjs",
-      "gitBlob": "0880029481d7d8d39c0d80d4d801d84c8725cf28",
-      "bytes": 7363
+      "gitBlob": "8668e5b252184ceed2c96a05e336bf26eeff861a",
+      "bytes": 7429
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/provider.mjs",
@@ -348,8 +440,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/runtime.mjs",
-      "gitBlob": "5eaffafb1d7b3261100431f8a5a1f4faeadf7105",
-      "bytes": 25312
+      "gitBlob": "5054f5efb2a2efaf6f64f0e00b6ba15c3de75c1c",
+      "bytes": 26582
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/setup.mjs",
@@ -398,8 +490,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_source.py",
-      "gitBlob": "396f7909c823a6ce4786dab97f35e8462690fc46",
-      "bytes": 25960
+      "gitBlob": "75e71cb4caba906a8bfb0e746490532026817d2d",
+      "bytes": 25961
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_validation.py",
@@ -468,7 +560,7 @@
     }
   ],
   "originalFileCount": 81,
-  "originalSourceBytes": 1894808,
+  "originalSourceBytes": 1908760,
   "additionalOriginalSupport": [
     {
       "path": "stellar/scf-starforge-20261009/sf103-native-buyer-signer/diagnostics.mjs",
@@ -933,5 +1025,92 @@
         "bytes": 39012
       }
     ]
+  },
+  "sharedProductContinuity": {
+    "gravityProduct": {
+      "pullRequest": 207,
+      "merge": "263a0ba5d2c93f02472f9f95f27fb7e00eba37d4"
+    },
+    "connectedTransport": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2311,
+      "merge": "31a7b7e7efae5f5256f8e490280db49c96c57509",
+      "head": "9baa0297107d94ab98dd64376028ecb34bb55918",
+      "completeSourceDelta": "ee4257e8287a28da2f718ee0ac71c8b6978c7cbf"
+    },
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_source.py",
+        "gitBlob": "75e71cb4caba906a8bfb0e746490532026817d2d",
+        "bytes": 25961,
+        "commit": "1f2c804460216bbeeb7fceb4780dba5563a344cc"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/contracts.mjs",
+        "gitBlob": "6436e62b12a1aeabc83de567f4a24aeb7921f2e7",
+        "bytes": 5464,
+        "commit": "8a81dc55e8f99b7920fdd37c4f62bde92e65c979"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
+        "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+        "bytes": 19671,
+        "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/runtime.mjs",
+        "gitBlob": "5054f5efb2a2efaf6f64f0e00b6ba15c3de75c1c",
+        "bytes": 26582,
+        "commit": "8a81dc55e8f99b7920fdd37c4f62bde92e65c979"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
+        "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+        "bytes": 47554,
+        "commit": "078b172f40f5bc37c81cce58ecf473b31bc6f86b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/files.mjs",
+        "gitBlob": "8668e5b252184ceed2c96a05e336bf26eeff861a",
+        "bytes": 7429,
+        "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
+        "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+        "bytes": 19190,
+        "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/files.mjs",
+        "gitBlob": "f43e314876c15a34605f7cfe28cddcfe461cb5da",
+        "bytes": 7500,
+        "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/RECEIVING.mjs",
+        "gitBlob": "2fc7f3524eb4fefe6c0cb83a69e78ad30829d31c",
+        "bytes": 29789,
+        "commit": "29d1028c8b02939480dc025bb661166f1e4f500b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/README.md",
+        "gitBlob": "0a5b5742c99a592896569f727b37a4bd92e02798",
+        "bytes": 17530,
+        "commit": "29d1028c8b02939480dc025bb661166f1e4f500b"
+      }
+    ],
+    "fhirTransport": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2318,
+      "merge": "7244656f2fe1a3fb1a569a888b03b034ff471080",
+      "completeSourceDelta": "468988501cf7fc9aed0cdd197970c35fabeb5a9e"
+    },
+    "fhirReceiving": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2326,
+      "merge": "29d1028c8b02939480dc025bb661166f1e4f500b",
+      "completeSourceDelta": "73682fae8e7a1e9372eb7e818ed1aeac08f2f4c4"
+    }
   }
 }

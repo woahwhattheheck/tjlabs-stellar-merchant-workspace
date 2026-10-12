@@ -1,0 +1,57 @@
+{
+  "schema": "stellar-forge.supplier-account-completed-delivery.v1",
+  "operation": "SCF-SUPPLIER-ACCOUNT-WORKSPACE-84EB-20261012",
+  "completedAt": "2026-10-12T11:38:31.598Z",
+  "product": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "dffaea9bf479fbf27be07c007df61f927a5773f1",
+    "pullRequest": 1898
+  },
+  "originalRoot": "/dev/shm/supplier-account-workspace-84eb",
+  "originalSource": {
+    "path": "/workspace/scratch/84ebf86ab95a/native-merchant-application-84eb/upstreams.json",
+    "sha256": "11becf66fa3bee3b160f51925d48002fa207e9d7c9263955eeef354bffde89e6"
+  },
+  "workspaceReceiving": {
+    "schema": "stellar-forge.supplier-account-workspace.v1",
+    "status": "RECEIVED",
+    "workspaceId": "e62d9800-c4ae-4703-aef7-63ca6947ca1e",
+    "directory": "/dev/shm/supplier-account-workspace-84eb/received-workspace",
+    "upstreamsFile": "/dev/shm/supplier-account-workspace-84eb/receiving-source/upstreams.json",
+    "backupSha256": "c8e0b05ad9c0f9d02be34fe9363c5d32c64c68234e77c834cebcf0f236671ec7",
+    "changes": 6,
+    "events": 16
+  },
+  "finalReceiving": {
+    "workspaceId": "e62d9800-c4ae-4703-aef7-63ca6947ca1e",
+    "changes": 8,
+    "events": 23,
+    "sha256": "11becf66fa3bee3b160f51925d48002fa207e9d7c9263955eeef354bffde89e6"
+  },
+  "members": {
+    "operation.json": {
+      "bytes": 24141,
+      "sha256": "912211cdd42753bce1a170d723889988b363ec7c142818cbbc218cf2d4294a4e"
+    },
+    "private-workspace-backup.json": {
+      "bytes": 37257,
+      "sha256": "610a1387175b34fb0a7d758896c06818f33b810f77b2564cf3f278c411974ef7"
+    },
+    "operator-report.json": {
+      "bytes": 27345,
+      "sha256": "2485d2961093b23bf0a882ae35eaf76e35de4991bdfcb132d7a8a239176300fd"
+    },
+    "supplier-account-journey.mjs": {
+      "bytes": 16065,
+      "sha256": "9649f760224a29254ae6d868ffab9fd258a9b9295e38cf52b7f0f58515045cc9"
+    },
+    "upstreams.original.json": {
+      "bytes": 1027,
+      "sha256": "11becf66fa3bee3b160f51925d48002fa207e9d7c9263955eeef354bffde89e6"
+    },
+    "RECEIVING.md": {
+      "bytes": 4999,
+      "sha256": "447db4385e963a1e63d684c1d1c2c7140254ad87eb5d723dabc868573f7cf2af"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-tariffs",
-  "description": "Graduated and volume merchant tariff planning with retained comparisons and original pricing review adoption",
+  "description": "Graduated and volume tariff planning, selected original pricing portfolios, read-only inspection and complete customer receiving",
   "components": [
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops"
   ],
@@ -13,7 +13,7 @@
     "merchant-tariffs": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/cli.mjs"
   },
   "commandDescriptions": {
-    "merchant-tariffs": "Plan graduated and volume tariffs, compare exact quantities and retain selected merchant pricing reviews"
+    "merchant-tariffs": "Plan original tariffs, retain pricing selections, export complete or selected portfolios, inspect and receive their original sources"
   },
   "exports": {
     "./merchant/tariffs": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/model.mjs",

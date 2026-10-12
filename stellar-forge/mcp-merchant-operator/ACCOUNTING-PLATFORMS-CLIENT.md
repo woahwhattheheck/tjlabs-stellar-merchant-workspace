@@ -123,7 +123,7 @@ starforge merchant-accounting-platforms reconcile --dir "$CASE_DIR/handoff-opera
 
 The first-handoff UUID comes from original Store startup. The operation also binds native workspace/source identity, exact issued bytes, named handoff and the original create-request digest. Recovery matches all these values against compact retained handoff metadata. It does not infer acceptance from a matching UUID alone or invoke accountant create during reconcile. Native accepted retries retain the same request before checking an older revision.
 
-Use `--platform xero` on this same configured alias for the existing context, valuation, plan, response and return workflow below. It consumes the handoff already retained by buyer startup. Provider actions and explicit fiat/chart choices stay in those original Xero operations.
+Use `--platform qbo` or `--platform xero` on this same configured alias for the existing company/context, valuation, plan, response and return workflow below. Both consume the handoff already retained by buyer startup. The [buyer QuickBooks workflow](ACCOUNTING_BUYER.md#continue-quickbooks-from-the-issued-buyer-handoff) describes its complete allocation decisions, exact home values, production source requirements and original buyer return. Provider actions remain explicit in the selected original controller.
 
 ### Complete original source and accountant files
 
@@ -142,7 +142,7 @@ starforge merchant-accounting-platforms download \
   --out "$CASE_DIR/original-issued-buyer-source.json"
 ~~~
 
-The maintained file reader retains its native handle and selectors, verifies every offset and complete SHA-256, and releases unfinished reads on caller disconnect. Output is the unchanged issued JSON, including every source and allocation record; review pagination does not truncate it. For an accountant packet use `kind: "accountant"` with its actual `handoffId`, optional returned `revisionId` and native `file` descriptor, retaining that file's own SHA-256. Xero files stay under `--platform xero`.
+The maintained file reader retains its native handle and selectors, verifies every offset and complete SHA-256, and releases unfinished reads on caller disconnect. Output is the unchanged issued JSON, including every source and allocation record; review pagination does not truncate it. For an accountant packet use `kind: "accountant"` with its actual `handoffId`, optional returned `revisionId` and native `file` descriptor, retaining that file's own SHA-256. QuickBooks and Xero files use their respective `--platform qbo` and `--platform xero` selectors.
 
 The SDK traverses a complete source view through native pages:
 
@@ -467,6 +467,10 @@ Return application uses the original comparison. Its preview shows conflicts, mi
 A pending Xero return is recovered through the original return intent's returnId and previewSha256. Reconciliation follows the retained return link and sourceReturnSha256. It does not mint another return ID, import another response or start a provider request.
 
 The native cancellation record exposes its retained reason but not a separate cancelling-actor field. A reconciled cancellation therefore reports its identity basis explicitly: original plan UUID and retained reason. The client does not claim an actor match absent from that record.
+
+## Chart changes through the same saved client operation
+
+Both bookkeeping platforms expose `source-change-status`, `source-change-inspect` and `source-change-detail` reads, native `source-change-prepare` and `source-change-apply` previews, and the original `source-change-resume` continuation. Use the same durable `preview` → `prepare` → `execute` → `reconcile` workflow. The [complete chart-change guide](accounting-source-changes.md) describes native input aliases, chart/valuation decisions, original workspace and request digests, explicit application confirmations, lost-reply recovery and full handoff download. Buyer startup remains selected by `--platform buyer`; its retained handoff continues under the actual `qbo` or `xero` platform on that same alias.
 
 ## Original files and exact downloads
 

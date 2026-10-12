@@ -59,6 +59,20 @@ To operate Service adjustments and buyer/accountant handovers, select **Private 
 
 For a checkout, invoke the same command entry at `stellar/scf-starforge-20261009/sf74-merchant-support-console/server.mjs`. The native source archive engine uses Python; `SCF_PYTHON` can select the installed executable.
 
+## Original tariff pricing through customer receiving
+
+This edition includes **Merchant pricing and scenario planning**, its **Tariff planning** link, and **Merchant support → Commercial quotations**. Both applications use their original private workspaces and native owners.
+
+Prepare graduated or volume tariffs against the original saved merchant source. Save the plan, choose the positive request quantity and complete its original scenario/pricing selection. The saved tariff total, derived uniform per-request rate and rounding remain explicit.
+
+In the customer's quotation desk, open **Tariff sources** and select that original pricing directory, seller file and saved snapshot or history. Capture the completed selection with its full pricing backup, inspect the retained source, and attach it to the current saved case with its three retained case request UUIDs. The editor then selects the matching original pricing source and quantity for the quotation.
+
+A changed monthly quantity shows the original tier calculation alongside the charge at the saved uniform rate. A new rate starts with a new completed native selection and a new quote edition. The customer document carries the original schedule, selected quantity, saved rate and rounding; the machine quote retains the complete source identities.
+
+Record the actual customer response and continue through the accepted-scope workflow below. The full case package retains quote editions, responses, tariff material, original pricing backup and delivery history. After receiving the case, restore its retained pricing workspace and receive the selected tariff portfolio through the original engine. The same saved plan, comparison and both native outcomes reopen there.
+
+Use `starforge merchant-tariffs` for the original planner and selected portfolio export/inspection. Use `starforge merchant-commercial tariffs` for customer source capture, inspection, attachment, quotation review, exact downloads and restoration. The existing Pricing and Support providers expose those same operations through the installed merchant agent. The complete [tariff customer guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/TARIFFS.md) contains every private input and receiving command; the [Merchant economics guide](../merchant-economics/OPERATING.md) covers supplier costs, original tariff planning and pricing adoption.
+
 ## Accepted quotations and change orders
 
 Open **Commercial** for the saved merchant case. Prepare its quotation from the retained implementation, service and pricing sources, and record the customer's response against the exact saved quote edition.

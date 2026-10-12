@@ -25,7 +25,9 @@ records the complete commit, source selection, contribution declarations and
 every included file. The recipe is
 [distribution/selections/baserow-rails.json](../../stellar/scf-starforge-20261009/distribution/selections/baserow-rails.json).
 It includes the complete Ruby support inventory, all fourteen Rails operator
-files, native Python receiver modules and original browser assets.
+files, native Python receiver modules, original browser assets, managed
+data-edition receiving and the connected client/MCP contribution. The selected
+MCP feature uses the existing installed dependency profile.
 
 A retained build continues with its existing output:
 
@@ -357,6 +359,85 @@ performs installation, the existing source customer program, real Rails HTTP,
 stopped export, offline receiving while its producer is unavailable, full
 target/history verification and recipient reopening as one retained journey.
 
+## Continue data editions on the same completed customer
+
+The [managed data-edition continuation](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/examples/customer-editions.mjs)
+opens the completed managed customer result and its exact archived application.
+It uses the selected original Ruby/Bundler identity and current runtime support:
+
+~~~sh
+node "$INSTALLED_SOURCE/stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/examples/customer-editions.mjs" \
+  --managed-directory "$ORIGINAL_COMPLETED_MANAGED_CUSTOMER"
+~~~
+
+The default source is the customer's own complete received packet. To apply an
+actual later completed packet, add all three source options:
+
+~~~sh
+node "$INSTALLED_SOURCE/stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/examples/customer-editions.mjs" \
+  --managed-directory "$ORIGINAL_COMPLETED_MANAGED_CUSTOMER" \
+  --format baserow --source-directory "$NEXT_RECEIVED_CUSTOMER" \
+  --manifest-sha256 "$NEXT_CUSTOMER_MANIFEST_SHA256"
+~~~
+
+The retained input selects the complete source and each native stage, review,
+commit, verification, export and receiving UUID. The program reads the real
+customer desk, receives the complete packet, saves the original full preview
+and receipt, and verifies the working application's current targets and history.
+It then exports the revised application, temporarily makes the working producer
+unavailable, receives the whole archive into a different runtime, and opens the
+actual authenticated Rails application there.
+
+Its result is **application-editions/application-editions-result.json** under
+the original managed customer directory. It contains the exact selected source
+and review, observed row changes, receipt and output file descriptors, actual
+HTTP receiving, and original/recipient target-history observations. Repeating
+the command checks the full received application's original file inventory and
+receipt. The original working directory is restored after the receiving phase.
+
+The [edition guide](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/README.md)
+gives the browser, CLI and native source contracts, including empty completed
+snapshots, retained removed records and a new review after working data changes.
+
+## Continue the same customer through the connected client
+
+The [complete connected continuation](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/connected/examples/customer-agent.mjs)
+opens the same original managed result and commissioned customer. Select that
+existing customer ID and an available receiving application's loopback port:
+
+~~~sh
+node "$INSTALLED_SOURCE/stellar/scf-starforge-20261009/distribution/ruby-runtime/connected/examples/customer-agent.mjs" \
+  --managed-directory "$ORIGINAL_COMPLETED_MANAGED_CUSTOMER" \
+  --customer-id "$ORIGINAL_CUSTOMER_ID" \
+  --recipient-port "$CONNECTED_APPLICATION_PORT"
+~~~
+
+The program retains its original customer/result hashes and all operation and
+transfer UUIDs before using the real stdio client. It reads the customer's
+complete result file, begins downloading the original runtime TAR, and retains
+the first durable byte cursor. It closes that connection and continues the same
+full archive over authenticated HTTP MCP.
+
+The complete original TAR is then uploaded through MCP to a dedicated receiving
+runtime under this same journey. Receiving uses the original Ruby/Bundler
+selection and cached bundle. The program launches the actual received Rails
+application, establishes its private browser session, receives a rendered
+application page, stops that listener, and checks the current dataset, mapped
+target rows and full original edition history. It finally closes and reopens the
+same receiving application.
+
+The saved result is **connected-customer/connected-result.json** under the
+original managed directory. It retains both transport observations, the
+original customer/registration IDs, complete downloaded file descriptors,
+native receive/verify IDs, actual application HTTP result and independently
+received dataset/history observation. Repeating the same command reopens this
+original result and its retained files and application operation.
+
+Use the data-edition continuation above for a later source snapshot. Both
+continuations retain the original managed customer identity and their separate
+explicit phase records; the connected continuation receives the original
+managed result's selected archive.
+
 ## Other existing finalized datasets
 
 The same selected product includes the original direct SF100 customer entry:
@@ -380,6 +461,10 @@ public product PRs [1952](https://github.com/woahwhattheheck/public-commons-spri
 at original source **03baf7a1b9da6dff74c54fbbb9534e1545c488d4**.
 The managed Ruby environment and complete application receiving come from
 [PR2188](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2188).
+Original-source commissioning comes from
+[PR2230](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2230),
+and complete working-application revisions from
+[PR2277](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2277).
 The standalone source selection, product command and guides compose those
 original modules. Original shared native APIs remain the selected standalone
 runtime's source.

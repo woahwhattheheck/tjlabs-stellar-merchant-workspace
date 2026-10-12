@@ -1,7 +1,7 @@
 // MIT. Accountant handoffs consume the original retained accounting workspace.
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
-import {lstat,mkdir,open,rm} from 'node:fs/promises';
+import {lstat,mkdir,open,link,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {createHandoff,importReturn,inspectHandoff,renderCsv,renderHtml,validateHandoff,validateRevision} from '../accountant/engine.mjs';
@@ -35,33 +35,93 @@ async function readExact(path,expected,{max=FILE_LIMIT}={}){
   }finally{await file.close();}
 }
 async function privateDirectory(path,{create=false}={}){
-  if(create)await mkdir(path,{mode:0o700});
-  const info=await lstat(path);check(info.isDirectory()&&!info.isSymbolicLink()&&!(info.mode&0o077),'PRIVATE_DIRECTORY_REQUIRED','Use the original private accountant workspace directory.');
+  if(create)try{await mkdir(path,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;}
+  const info=await lstat(path);check(info.isDirectory()&&!info.isSymbolicLink()&&!(info.mode&0o077)&&
+    info.uid===(process.geteuid?.()??process.getuid?.()??info.uid),'PRIVATE_DIRECTORY_REQUIRED','Use the original private accountant workspace directory.');
 }
 async function syncDirectory(path){const file=await open(path,'r');try{await file.sync();}finally{await file.close();}}
+async function retainedJson(directory,name,{max=FILE_LIMIT}={}){
+  let file;try{file=await open(join(directory,name),constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);}
+  catch(error){if(error.code==='ENOENT')return null;throw error;}
+  try{
+    const before=await file.stat();check(before.isFile()&&before.size>0&&before.size<=max&&!(before.mode&0o077)&&
+      before.uid===(process.geteuid?.()??process.getuid?.()??before.uid),
+      'ACCOUNTANT_PACKET_CHANGED','Keep the original private packet and reopen its retained request.',409);
+    const bytes=await file.readFile(),after=await file.stat();
+    check(bytes.length===before.size&&before.dev===after.dev&&before.ino===after.ino&&before.size===after.size&&
+      before.mtimeMs===after.mtimeMs&&before.ctimeMs===after.ctimeMs,'ACCOUNTANT_PACKET_CHANGED','The retained packet changed while being read.',409);
+    try{return JSON.parse(bytes.toString('utf8'));}catch{check(false,'ACCOUNTANT_PACKET_INCOMPLETE','An earlier packet contains incomplete JSON. Preserve it for original recovery; it cannot be overwritten.',409);}
+  }finally{await file.close();}
+}
+const canonicalTime=value=>typeof value==='string'&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value;
+async function packetTime(directory,{kind,id:packetId,requestSha256,createdAt,legacyName}){
+  const intent=await retainedJson(directory,'packet-intent.json',{max:1_000_000});
+  if(intent){
+    check(intent.schema==='stellar-forge.accountant-packet-intent.v1'&&intent.kind===kind&&intent.id===packetId&&
+      intent.requestSha256===requestSha256&&canonicalTime(intent.createdAt),
+      'ACCOUNTANT_PACKET_REQUEST_CONFLICT','This retained packet belongs to a different original request.',409);
+    if(createdAt!==undefined)check(createdAt===intent.createdAt,'ACCOUNTANT_PACKET_REQUEST_CONFLICT','Keep the timestamp of the original packet request.',409);
+    return intent.createdAt;
+  }
+  // Completed older records return before here. An interrupted older packet may
+  // supply its first immutable timestamp, but every byte must still match below.
+  const legacy=await retainedJson(directory,legacyName);
+  if(legacy){check(legacy.id===packetId&&canonicalTime(legacy.createdAt),'ACCOUNTANT_PACKET_CHANGED','The original packet identity changed.',409);
+    if(createdAt!==undefined)check(createdAt===legacy.createdAt,'ACCOUNTANT_PACKET_REQUEST_CONFLICT','Keep the original packet timestamp.',409);
+    return legacy.createdAt;}
+  return createdAt??new Date().toISOString();
+}
+// Publish only a fully synced file. An uncertain commit never removes original
+// packet members; the same request verifies and reuses them after Store reopen.
 async function writeFile(directory,name,bytes){
   bytes=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes);
-  const file=await open(join(directory,name),'wx',0o600);
-  try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
-  return {name,bytes:bytes.length,sha256:hash(bytes)};
-}
-async function writePacket(directory,files,archiveNames){
-  const retained=[];
-  for(const [name,bytes] of Object.entries(files))retained.push(await writeFile(directory,name,bytes));
-  const packetManifest={schema:'stellar-forge.accountant-packet.v1',files:retained.filter(file=>archiveNames.includes(file.name))};
-  retained.push(await writeFile(directory,'packet-manifest.json',json(packetManifest)));
-  const archive=await open(join(directory,'accountant-handoff.tar'),'wx',0o600);
+  check(bytes.length<=FILE_LIMIT,'ACCOUNTANT_PACKET_LIMIT','A retained accountant packet member exceeds 256 MiB.');
+  const descriptor={name,bytes:bytes.length,sha256:hash(bytes)},temporary=join(directory,'.'+name+'.'+randomUUID()+'.pending');
+  const file=await open(temporary,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
   try{
-    await new Promise((resolve,reject)=>{
-      const process=spawn('tar',['-cf','-','-C',directory,'--',...archiveNames,'packet-manifest.json'],{stdio:['ignore',archive.fd,'pipe']});
-      let message='';process.stderr.on('data',chunk=>{if(message.length<2000)message+=chunk;});process.once('error',reject);
-      process.once('exit',code=>code===0?resolve():reject(new Error('The accountant archive could not be completed: '+message)));
-    });
-    await archive.sync();
-  }finally{await archive.close();}
-  const file=await open(join(directory,'accountant-handoff.tar'),'r');
-  try{const bytes=await file.readFile();retained.push({name:'accountant-handoff.tar',bytes:bytes.length,sha256:hash(bytes)});}finally{await file.close();}
-  await syncDirectory(directory);return retained;
+    try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
+    try{await link(temporary,join(directory,name));}
+    catch(error){if(error.code!=='EEXIST')throw error;await readExact(join(directory,name),descriptor);}
+  }finally{await rm(temporary,{force:true});}
+  await syncDirectory(directory);return descriptor;
+}
+async function writePacket(directory,files,archiveNames,{kind,id:packetId,requestSha256,createdAt}){
+  const intent={schema:'stellar-forge.accountant-packet-intent.v1',kind,id:packetId,requestSha256,createdAt,
+    files:Object.entries(files).map(([name,value])=>{const bytes=Buffer.isBuffer(value)?value:Buffer.from(value);return {name,bytes:bytes.length,sha256:hash(bytes)};})};
+  const intentBytes=json(intent),intentFile={name:'packet-intent.json',bytes:intentBytes.length,sha256:hash(intentBytes)};
+  const expected=[intentFile,...intent.files],names=[...archiveNames,'packet-intent.json'];
+  const packetManifest={schema:'stellar-forge.accountant-packet.v1',files:expected.filter(file=>names.includes(file.name))};
+  const manifestBytes=json(packetManifest),manifestFile={name:'packet-manifest.json',bytes:manifestBytes.length,sha256:hash(manifestBytes)};
+  // A legacy orphan has no stored request hash. Check every already-present
+  // canonical member BEFORE allowing this request to publish its first intent.
+  for(const descriptor of [...expected,manifestFile]){
+    try{await readExact(join(directory,descriptor.name),descriptor);}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+  }
+  const retained=[await writeFile(directory,'packet-intent.json',intentBytes)];
+  for(const [name,bytes] of Object.entries(files))retained.push(await writeFile(directory,name,bytes));
+  retained.push(await writeFile(directory,'packet-manifest.json',manifestBytes));
+  const temporary=join(directory,'.accountant-handoff.'+randomUUID()+'.pending'),archive=await open(temporary,'wx',0o600);
+  try{
+    try{
+      await new Promise((resolve,reject)=>{
+        // Fixed archive metadata lets the same complete packet compare exactly
+        // after interruption. The original tar delivery format is retained.
+        const child=spawn('tar',['--format=ustar','--mtime=@0','--owner=0','--group=0','--numeric-owner','--mode=0600',
+          '-cf','-','-C',directory,'--',...names,'packet-manifest.json'],{stdio:['ignore',archive.fd,'pipe']});
+        let message='';child.stderr.on('data',chunk=>{if(message.length<2000)message+=chunk;});child.once('error',reject);
+        child.once('close',code=>code===0?resolve():reject(new Error('The accountant archive could not be completed: '+message)));
+      });
+      await archive.sync();
+    }finally{await archive.close();}
+    const file=await open(temporary,constants.O_RDONLY|constants.O_NOFOLLOW);let descriptor;
+    try{const info=await file.stat();check(info.isFile()&&info.size<=FILE_LIMIT,'ACCOUNTANT_PACKET_LIMIT','The complete accountant archive exceeds 256 MiB.');
+      const bytes=await file.readFile();descriptor={name:'accountant-handoff.tar',bytes:bytes.length,sha256:hash(bytes)};}
+    finally{await file.close();}
+    try{await link(temporary,join(directory,descriptor.name));}
+    catch(error){if(error.code!=='EEXIST')throw error;await readExact(join(directory,descriptor.name),descriptor);}
+    retained.push(descriptor);await syncDirectory(directory);return retained;
+  }finally{await rm(temporary,{force:true});}
 }
 
 export class AccountantWorkspace{
@@ -153,6 +213,7 @@ export class AccountantWorkspace{
       ...(adjustments?{adjustments:{source:adjustments.source,summary:adjustments.summary}}:{})};
   }
   async create(value){
+    value=copy(value);
     const workspace=this.workspace;
     return workspace.serial(async()=>{
       const startup=value.buyerStartup!==undefined;
@@ -162,26 +223,26 @@ export class AccountantWorkspace{
       const prior=records(workspace).find(item=>item.id===handoffId);
       if(prior){check(prior.requestSha256===requestSha256,'HANDOFF_REQUEST_CONFLICT','This request ID already belongs to another handoff.',409);return {record:copy(prior),duplicate:true,state:workspace.view()};}
       workspace.expected(value.revision);check(records(workspace).length<2000,'ACCOUNTANT_HANDOFF_LIMIT','This workspace already retains 2,000 accountant handoffs.');
-      const selected=await this.source(request),createdAt=new Date().toISOString();
-      const handoff=createHandoff({...selected,name,actor,labels:request.labels,createdAt,id:handoffId});
+      const selected=await this.source(request);
       const root=join(workspace.directory,'accountant');
       try{await privateDirectory(root,{create:true});}catch(error){if(error.code!=='EEXIST')throw error;await privateDirectory(root);}
       const directory=this.directory(handoffId);await privateDirectory(directory,{create:true});
-      let committed=false;
-      try{
-        await privateDirectory(join(directory,'returns'),{create:true});
+      const createdAt=await packetTime(directory,{kind:'handoff',id:handoffId,requestSha256,legacyName:'handoff.json'});
+      const handoff=createHandoff({...selected,name,actor,labels:request.labels,createdAt,id:handoffId});
+      await privateDirectory(join(directory,'returns'),{create:true});
+      {
         const files={'handoff.json':json(handoff),'accountant.csv':renderCsv(handoff),'review.html':renderHtml(handoff)};
         if(selected.buyerSourceBytes)files['original-buyer-source.json']=selected.buyerSourceBytes;
         else Object.assign(files,{'original-report.json':selected.reportBytes,'original-manifest.json':selected.manifestBytes,'input-manifest.json':selected.inputManifestBytes});
         const archiveNames=Object.keys(files);
         if(selected.periodCloseBytes){files['period-close.json']=selected.periodCloseBytes;files['review-notes.json']=selected.reviewNotesBytes;archiveNames.push('period-close.json','review-notes.json');}
         if(selected.adjustmentFiles)for(const [filename,bytes] of Object.entries(selected.adjustmentFiles)){files[filename]=bytes;archiveNames.push(filename);}
-        const savedFiles=await writePacket(directory,files,archiveNames);
+        const savedFiles=await writePacket(directory,files,archiveNames,{kind:'handoff',id:handoffId,requestSha256,createdAt});
         const record={id:handoffId,name,actor,createdAt,requestSha256,source:handoff.source,rowCount:handoff.rows.length,summary:handoff.summary,files:savedFiles,revisions:[]};
         workspace.state.accountantHandoffs??=[];workspace.state.accountantHandoffs.unshift(record);
-        await syncDirectory(root);await workspace.commit('accountant_handoff_created',actor,{handoffId,runId:handoff.source.runId,closeId:handoff.source.periodClose?.id??null,reportSha256:handoff.source.reportSha256});committed=true;
+        await syncDirectory(root);await workspace.commit('accountant_handoff_created',actor,{handoffId,runId:handoff.source.runId,closeId:handoff.source.periodClose?.id??null,reportSha256:handoff.source.reportSha256});
         return {record:copy(record),duplicate:false,state:workspace.view()};
-      }finally{if(!committed)await rm(directory,{recursive:true,force:true});}
+      }
     });
   }
   async detail(handoffId,{revisionId}={}){
@@ -204,6 +265,7 @@ export class AccountantWorkspace{
     return {revision:proposed,workspaceRevision:this.workspace.state.revision,expectedParentId:parent?.id??null};
   }
   async apply(handoffId,value){
+    value=copy(value);
     const workspace=this.workspace;
     return workspace.serial(async()=>{
       const record=this.row(handoffId),returnId=id(value.id),csvBytes=bytesFromBase64(value.csvBase64),name=label(value.name,'return name'),actor=label(value.actor,'operator',1000);
@@ -211,10 +273,12 @@ export class AccountantWorkspace{
       const prior=record.revisions.find(item=>item.id===returnId);
       if(prior){check(prior.requestSha256===requestSha256,'ACCOUNTANT_RETURN_REQUEST_CONFLICT','This request ID already belongs to a different accountant return.',409);return {record:copy(record),savedReturn:copy(prior),duplicate:true,state:workspace.view()};}
       workspace.expected(value.revision);check(record.revisions.length<2000,'ACCOUNTANT_RETURN_LIMIT','This handoff already retains 2,000 accountant returns.');
-      const preview=await this.preview(handoffId,value),result=preview.revision;
+      const directory=join(this.directory(handoffId),'returns',returnId);await privateDirectory(directory,{create:true});
+      const createdAt=await packetTime(directory,{kind:'return',id:returnId,requestSha256,createdAt:value.createdAt,legacyName:'return.json'});
+      const preview=await this.preview(handoffId,{...value,createdAt}),result=preview.revision;
       check(typeof value.previewSha256==='string'&&value.previewSha256===result.integrity.sha256,'ACCOUNTANT_PREVIEW_CHANGED','Preview the current returned file before saving its matched changes.',409);
-      const handoff=await this.readHandoff(handoffId),directory=join(this.directory(handoffId),'returns',returnId);await privateDirectory(directory,{create:true});let committed=false;
-      try{
+      const handoff=await this.readHandoff(handoffId);
+      {
         const files={'return.json':json(result),'returned.csv':csvBytes,'accountant.csv':renderCsv(handoff,result),'review.html':renderHtml(handoff,result),'handoff.json':json(handoff)};
         for(const filename of ['original-buyer-source.json','original-report.json','original-manifest.json','input-manifest.json','period-close.json','review-notes.json','adjustments.json','adjustments.csv','adjustments.html']){
           const original=record.files.find(file=>file.name===filename);if(original)files[filename]=await readExact(join(this.directory(handoffId),filename),original);
@@ -223,12 +287,12 @@ export class AccountantWorkspace{
           const revisions=[];for(const saved of record.revisions)revisions.push(await this.readRevision(record,handoff,saved.id));revisions.push(result);
           files['buyer-return.json']=json(createBuyerReturnPacket({handoff,revisions,buyerSourceBytes:files['original-buyer-source.json']}));
         }
-        const savedFiles=await writePacket(directory,files,Object.keys(files));
+        const savedFiles=await writePacket(directory,files,Object.keys(files),{kind:'return',id:returnId,requestSha256,createdAt:result.createdAt});
         const saved={id:returnId,name,actor,createdAt:result.createdAt,requestSha256,parentRevisionId:result.parentRevisionId,importSha256:result.importSha256,summary:result.summary,integrity:result.integrity,files:savedFiles};
         record.revisions.push(saved);await syncDirectory(join(this.directory(handoffId),'returns'));
-        await workspace.commit('accountant_return_imported',actor,{handoffId,returnId,parentRevisionId:result.parentRevisionId,importSha256:result.importSha256,summary:result.summary});committed=true;
+        await workspace.commit('accountant_return_imported',actor,{handoffId,returnId,parentRevisionId:result.parentRevisionId,importSha256:result.importSha256,summary:result.summary});
         return {record:copy(record),savedReturn:copy(saved),duplicate:false,state:workspace.view()};
-      }finally{if(!committed)await rm(directory,{recursive:true,force:true});}
+      }
     });
   }
   async file(handoffId,name,{revisionId}={}){

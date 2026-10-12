@@ -17,8 +17,8 @@ export function validateBuyerAccountingDefinition(definition){
  need(['outboxDir','proofDir','termsFile'].every(key=>definition[key]===undefined),
   'ACCOUNTING_CONFIGURATION_ERROR','A buyer-only accountant retains its issued source; omit merchant outbox, proof and terms directories.');
  need(merchantMaps.every(key=>Object.keys(definition[key]??{}).length===0)&&
-  !definition.bitwave&&!definition.platforms?.qbo&&definition.collectionHttpsProxyEnv===undefined&&definition.adjustmentHttpsProxyEnv===undefined,
-  'ACCOUNTING_CONFIGURATION_ERROR','Declare buyer source, accountant-return and Xero inputs for buyer mode. Merchant collection, sales, runbook, portfolio and platform inputs retain their original merchant workspace.');
+  !definition.bitwave&&definition.collectionHttpsProxyEnv===undefined&&definition.adjustmentHttpsProxyEnv===undefined,
+  'ACCOUNTING_CONFIGURATION_ERROR','Declare buyer source, accountant-return and QuickBooks/Xero inputs for buyer mode. Merchant collection, sales, runbook and portfolio inputs retain their original merchant workspace.');
 }
 export function requireBuyerAccounting(definition){
  need(configuredAccountingMode(definition)==='buyer','ACCOUNTING_BUYER_MODE_REQUIRED','Choose a host-declared buyer-only accountant workspace.');
@@ -36,7 +36,7 @@ function briefStartup(value){
 export function buyerAccountingCapabilities(definition){
  const mode=configuredAccountingMode(definition);
  return {sourceMode:mode,issuedBuyerStartup:mode==='buyer',
-  accountant:true,xero:true,merchantSources:mode==='merchant',nativeRecovery:Boolean(definition.recovery)};
+  accountant:true,qbo:true,xero:true,merchantSources:mode==='merchant',nativeRecovery:Boolean(definition.recovery)};
 }
 export function buyerAccountingState(workspace){
  requireBuyerAccounting({sourceMode:accountingSourceMode(workspace.state)});
@@ -106,10 +106,10 @@ export function requireBuyerOperation(workspace,operation,args){
  const ordinary=new Set(['merchant_accounting_status','merchant_accounting_file','merchant_accounting_file_release',
   'merchant_accounting_accountant_buyer_prepare','merchant_accounting_accountant_buyer_create','merchant_accounting_accountant',
   'merchant_accounting_accountant_rows','merchant_accounting_accountant_preview','merchant_accounting_accountant_apply']);
- need(ordinary.has(operation)||operation.startsWith('merchant_accounting_buyer_')||operation.startsWith('merchant_accounting_xero_'),
-  'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','This alias retains an issued buyer period. Use its buyer, accountant, Xero and recovery operations; merchant-source operations belong to a merchant alias.');
- if(operation==='merchant_accounting_file')need(['buyer-source','accountant','xero'].includes(args.kind),
-  'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','Choose the retained buyer source, accountant packet or original Xero file for this buyer alias.');
+ need(ordinary.has(operation)||operation.startsWith('merchant_accounting_buyer_')||operation.startsWith('merchant_accounting_qbo_')||operation.startsWith('merchant_accounting_xero_'),
+  'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','This alias retains an issued buyer period. Use its buyer, accountant, QuickBooks, Xero and recovery operations; merchant-source operations belong to a merchant alias.');
+ if(operation==='merchant_accounting_file')need(['buyer-source','accountant','qbo','xero','qbo-source-change','xero-source-change'].includes(args.kind),
+  'ACCOUNTING_MERCHANT_SOURCE_REQUIRED','Choose the retained buyer source, accountant packet, original QuickBooks/Xero file or chart-change handoff for this buyer alias.');
 }
 export async function callBuyerAccounting(workspace,accountant,operation,args){
  const startup=await readBuyerStartup(workspace.directory,workspace.state);
