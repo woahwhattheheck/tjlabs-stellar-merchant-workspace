@@ -111,8 +111,30 @@ export async function runConnectedReceiving({root,python='python3'}={}){
   return current;
  }
  async function invoke(args,{connected=true}={}){
-  return command([connected?cli:connectionCli,...(connected?['connected']:[]),...args,
-   '--connection',connectionFile,'--requests',journalDirectory]);
+  // The CLI and API client share one original request journal and its lease.
+  // Keep the original server running while each reader owns that journal.
+  const reconnect=Boolean(client);let value,failure;
+  if(client){const previous=client;client=null;await previous.close();}
+  try{
+   value=await command([connected?cli:connectionCli,...(connected?['connected']:[]),...args,
+    '--connection',connectionFile,'--requests',journalDirectory]);
+  }catch(error){failure=error;}
+  finally{
+   if(reconnect&&running){
+    try{
+     const markerRaw=await readPrivate(join(activeWorkspace,'desk.json'),65536),marker=JSON.parse(markerRaw);
+     need(marker.workspaceId===native.workspaceId,'The original workspace marker changed during CLI receiving.');
+     client=await openConnectedCiimDesk({connectionFile,journalDirectory,expectedWorkspaceId:marker.workspaceId,
+      expectedMarkerSha256:digest(markerRaw)});
+     const binding=await client.connection();
+     need(binding.workspaceId===native.workspaceId,'The connected CLI reopened a different original listener.');
+    }catch(error){
+     if(failure)failure.reconnectError=safeError(error);else failure=error;
+    }
+   }
+  }
+  if(failure)throw failure;
+  return value;
  }
  async function exactDownload(descriptor){
   const actual=await fileHash(descriptor.file);
