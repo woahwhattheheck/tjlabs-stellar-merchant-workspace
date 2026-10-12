@@ -266,7 +266,7 @@ export function recoverQcewPurchase(options: { directory: string; buyer: QcewBuy
 export function exportQcewPurchase(options: { directory: string; buyer: QcewBuyer; intentId: string }): Promise<QcewDeliveredFile>;
 export function receiveQcewPurchase(options: { directory: string; buyer: QcewBuyer; intentId: string; receivingDirectory?: string | null }):
   Promise<QcewReportReceiving & { directory: string; reused: boolean; intentId: string; publicationId: QcewSha256 }>;
-export function listQcewPurchases(directory: string): Promise<QcewSavedPurchase[]>;
+export function listQcewPurchases(directory: string, options?: { merchant?: QcewMerchantView | null }): Promise<QcewSavedPurchase[]>;
 export function readQcewPurchaseReceiving(options: { directory: string; intentId: string }):
   Promise<QcewReceivedReport & { intentId: string; publicationId: QcewSha256 }>;
 export function exportQcewPurchaseReceiving(options: { directory: string; intentId: string; file?: string; editionId?: QcewSha256 | null }):
