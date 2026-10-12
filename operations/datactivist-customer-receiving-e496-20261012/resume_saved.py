@@ -27,10 +27,11 @@ def resume(config):
     if acquired.returncode:raise RuntimeError("Original checkpoint materialization failed; retained helper output: "+str(retained/"checkpoint-materialize.stderr"))
     archive=archive_path.read_bytes()
     if len(archive)!=saved["bytes"] or digest(archive)!=saved["sha256"]:raise ValueError("The saved original operating archive differs")
+    archive=None
     workspace=root/"original-operation/workspace"
     has_workspace=(workspace/"operations.sqlite").is_file()
     source_history=root/"original-operation/operations/source-editions";source_history.mkdir(parents=True,exist_ok=True)
-    members=0
+    members=0;latest_native_result=None
     with zipfile.ZipFile(archive_path) as z:
         for item in z.infolist():
             if item.is_dir() or not item.filename.startswith("Datactivist_Original/"):continue
@@ -39,7 +40,7 @@ def resume(config):
                 old=z.read(item);previous=json.loads(old)
                 destination=source_history/(previous["sourceCommit"]+".json")
             elif relative=="DATACTIVIST_NATIVE_RUN_RESULT.json":
-                old=z.read(item);destination=source_history/"original-native-result.json"
+                old=z.read(item);latest_native_result=old;destination=source_history/"original-native-result.json"
             elif relative=="Original_Public_Source.zip":
                 old=z.read(item);destination=root/relative
             elif relative.startswith("original-operation/"):
@@ -54,6 +55,20 @@ def resume(config):
             destination=destination.resolve()
             if not destination.is_relative_to(root):raise ValueError("Unsafe retained original member")
             destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(old);members+=1
+    # The outer result describes this saved package. A retained history member may
+    # share its restoration path; preserve that earlier record before selecting
+    # the outer package's current result after every archive member is restored.
+    if latest_native_result is not None:
+        selected_result=source_history/"original-native-result.json"
+        if selected_result.is_file():
+            historical=selected_result.read_bytes()
+            if historical!=latest_native_result:
+                history=source_history/"native-results";history.mkdir(mode=0o700,exist_ok=True)
+                previous_result=history/(digest(historical)+".json")
+                if previous_result.exists() and previous_result.read_bytes()!=historical:
+                    raise ValueError("A retained native result history differs")
+                previous_result.write_bytes(historical)
+        selected_result.write_bytes(latest_native_result)
     # Native workspaces are private directories; ZIP recreation must preserve that contract.
     if workspace.is_symlink():raise ValueError("The retained workspace must not be a symlink")
     for directory in [workspace]+[p for p in workspace.rglob("*") if p.is_dir()]:
