@@ -89,11 +89,63 @@ export async function runGrantReviewBrowser({
     await persist(state.phase==='RECEIVING'?'RECEIVING':'WORKING');return matches[0];
   }
   async function download(button,path,type){
+    const retained=state.artifacts.find(x=>x.path===path);
+    if(retained){need(retained.mime===type,'Retain the original download type for '+path);return verifyFile(retained);}
     const pending=observed(page.waitForEvent('download',{timeout:timeoutMs}));
     await button.click();const selected=await pending,error=await selected.failure();need(!error,'The original browser download failed: '+error);
     const stream=await selected.createReadStream();need(stream,'The original complete download is unavailable.');
     const chunks=[];let bytes=0;for await(const chunk of stream){bytes+=chunk.length;need(bytes<=64*1024*1024+65536,'Retain the download within its original complete allowance.');chunks.push(chunk);}
     await idle();const row=file(path,Buffer.concat(chunks),type);put(row);return verifyFile(row);
+  }
+  async function saveSelectedBrowserCopy({key,round,exportText,phase,sourceRecordId}){
+    const roundSha256=sha(Buffer.from(JSON.stringify(round),'utf8'));
+    need(same(await importReviewRound(exportText),round),'Retain the complete selected browser-copy input.');
+    state.copyIntents??={};
+    let intent=state.copyIntents[key];
+    if(!intent){
+      const existingRecordIds=await page.evaluate(async()=>{const store=await import('./drafts.mjs');return (await store.listDrafts()).map(x=>x.id);});
+      need(Array.isArray(existingRecordIds)&&new Set(existingRecordIds).size===existingRecordIds.length,'Retain the original browser-store selection.');
+      intent={schema:'stellar-forge.grant-review-browser-copy-intent.v1',key,operationId,phase,sourceRecordId,
+        roundId:round.id,roundSha256,exportSha256:sha(Buffer.from(exportText,'utf8')),exportText,
+        existingRecordIds,createdAt:new Date().toISOString(),destinationRecordId:null};
+      state.copyIntents[key]=intent;
+      // The original destination intent is durable before the UI can create its new store ID.
+      await persist(phase);
+    }
+    need(intent.schema==='stellar-forge.grant-review-browser-copy-intent.v1'&&intent.key===key&&intent.operationId===operationId&&
+      intent.phase===phase&&intent.sourceRecordId===sourceRecordId&&intent.roundId===round.id&&intent.roundSha256===roundSha256&&
+      sha(Buffer.from(intent.exportText,'utf8'))===intent.exportSha256&&same(await importReviewRound(intent.exportText),round)&&
+      Array.isArray(intent.existingRecordIds)&&new Set(intent.existingRecordIds).size===intent.existingRecordIds.length,
+      'Resume the exact original full browser-copy intent.');
+    const inspect=async()=>page.evaluate(async ({intent,round})=>{
+      const store=await import('./drafts.mjs');
+      if(intent.destinationRecordId){const selected=await store.loadDraft(intent.destinationRecordId);return selected?[selected]:[];}
+      const found=[];
+      for(const meta of await store.listDrafts())if(!intent.existingRecordIds.includes(meta.id)&&meta.name===round.folder){
+        const row=await store.loadDraft(meta.id);
+        if(row?.input?.schema===round.schema&&row.input.id===round.id&&JSON.stringify(row.input)===JSON.stringify(round))found.push(row);
+      }
+      return found;
+    },{intent:{destinationRecordId:intent.destinationRecordId,existingRecordIds:intent.existingRecordIds},round});
+    let candidates=await inspect();
+    need(candidates.length<=1,'Reconcile the original selected browser copy; multiple matching new records exist.');
+    if(intent.destinationRecordId)need(candidates.length===1,'Keep the original saved browser-copy destination; it is no longer available.');
+    if(!candidates.length){
+      await upload(page.locator('#review-open-round'),intent.exportText,'selected-complete-review.json');
+      await page.locator('#review-save-copy').click();await idle();
+      const id=await page.locator('#review-workspace').getAttribute('data-review-record-id');
+      need(id&&!intent.existingRecordIds.includes(id)&&id!==sourceRecordId,'The original UI must create a separate browser record.');
+      const saved=await page.evaluate(async id=>{const store=await import('./drafts.mjs');return store.loadDraft(id);},id);
+      candidates=saved?[saved]:[];
+    }
+    const saved=candidates[0];
+    need(saved?.id&&!intent.existingRecordIds.includes(saved.id)&&saved.id!==sourceRecordId&&same(saved.input,round),
+      'The selected new browser record must retain the exact complete original round.');
+    intent.destinationRecordId=saved.id;intent.browserRevision=saved.revision;
+    await persist(phase);
+    const selectedUrl=new URL('grant-review-round.html',base);selectedUrl.searchParams.set('review',saved.id);
+    await page.goto(selectedUrl.href,{waitUntil:'networkidle',timeout:timeoutMs});await idle();
+    return saved.id;
   }
   async function viewReceipt(name,width,height=980){
     const path='views/'+name+'-'+width+'.png',prior=state.artifacts.find(x=>x.path===path);
@@ -124,12 +176,12 @@ export async function runGrantReviewBrowser({
       if(!stored||!same(stored.input,recovered)){
         need(!stored||same(stored.input.events,recovered.events.slice(0,stored.input.events.length)),
           'Reconcile the concurrently changed original browser review before selecting its preserved unsaved result.');
-        await upload(page.locator('#review-open-round'),state.recoveredRoundExport,'retained-original-review.json');
-        await page.locator('#review-save-copy').click();await idle();
+        const recoveredId=await saveSelectedBrowserCopy({
+          key:'recovered:'+sha(Buffer.from(JSON.stringify(recovered),'utf8')),round:recovered,exportText:state.recoveredRoundExport,
+          phase:retainedPhase,sourceRecordId:retainedId||null});
         state.previousRecordIds=[...(state.previousRecordIds||[]),retainedId].filter(Boolean);
-        state.recordId=await page.locator('#review-workspace').getAttribute('data-review-record-id');
-        need(state.recordId,'The recovered complete review did not save.');
-        if(retainedPhase==='RECEIVING')state.receivedRecordId=state.recordId;else state.originalRecordId=state.recordId;
+        state.recordId=recoveredId;
+        if(retainedPhase==='RECEIVING')state.receivedRecordId=recoveredId;else state.originalRecordId=recoveredId;
       }
       state.recoveredRoundExport=null;await persist(retainedPhase);
     }
@@ -237,10 +289,9 @@ export async function runGrantReviewBrowser({
       const originalUrl=new URL('grant-review-round.html',base);originalUrl.searchParams.set('review',state.originalRecordId);
       await page.goto(originalUrl.href,{waitUntil:'networkidle',timeout:timeoutMs});await idle();
       const before=await current();need(same(before.round,selected),'The original browser record advanced after its completed export; retain that new work and use its saved receiving checkpoint explicitly.');
-      await upload(page.locator('#review-open-round'),state.originalRoundExport,'complete-original-review.json');
-      await page.locator('#review-save-copy').click();await idle();
-      state.receivedRecordId=await page.locator('#review-workspace').getAttribute('data-review-record-id');
-      need(state.receivedRecordId&&state.receivedRecordId!==state.originalRecordId,'Receive into a separate original-store record without replacing the earlier one.');
+      state.receivedRecordId=await saveSelectedBrowserCopy({key:'independent-receive',round:selected,exportText:state.originalRoundExport,
+        phase:'UI_COMPLETE',sourceRecordId:state.originalRecordId});
+      need(state.receivedRecordId!==state.originalRecordId,'Receive into a separate original-store record without replacing the earlier one.');
       state.recordId=state.receivedRecordId;await persist('RECEIVING');
     }
     const receivedUrl=new URL('grant-review-round.html',base);receivedUrl.searchParams.set('review',state.receivedRecordId);

@@ -8,7 +8,7 @@ The example field and participants are explicitly labeled automated receiving ob
 
 ## Exact complete artifacts
 
-`complete-model-artifacts.json` is one lossless UTF-8 carrier. Its SHA-256 is `3e22564b8fc40c8e4db4464b14d598be81b6836db333e0751d6e38841276f724`; Git blob `e941bd14495e90231db0bd53a04c9cd1ed7c2af3`. Its base64 payload is gzip of the complete original JSON envelope, with independent compressed and expanded size/SHA descriptors. That envelope contains every original file, the full model result, the eight exact product source identities and the capture descriptors needed by the browser callback. No artifact is a partial download or a link-only substitute.
+`complete-model-artifacts.json` is one lossless UTF-8 carrier. Its SHA-256 is `8dc4f25a0e5e06b6988b81745331023e8481bbf9432f37bc0008b38e24b894e7`; Git blob `2274d5f56421e64892adefb83e2b7d1bd77c4fc6`. Its base64 payload is gzip of the complete original JSON envelope, with independent compressed and expanded size/SHA descriptors. That envelope contains every original file, the full model result, the eight exact product source identities and the capture descriptors needed by the browser callback. No artifact is a partial download or a link-only substitute.
 
 `model-result.json` is the complete readable native-source result. `current-native-compatibility.json` records the separate actual validation of all three untouched exports against the subsequently merged planning-aware submission core, its original planning module and unchanged shared store. This does not relabel the earlier complete model exercise as a run of a newer source body.
 
@@ -24,7 +24,7 @@ import {runGrantReviewBrowser} from '../../stellar-forge/developer-site/GRANT_RE
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const carrierBytes = await readFile(new URL('./complete-model-artifacts.json', import.meta.url));
-if (sha(carrierBytes) !== '3e22564b8fc40c8e4db4464b14d598be81b6836db333e0751d6e38841276f724') throw new Error('The selected full carrier changed.');
+if (sha(carrierBytes) !== '8dc4f25a0e5e06b6988b81745331023e8481bbf9432f37bc0008b38e24b894e7') throw new Error('The selected full carrier changed.');
 const carrier = JSON.parse(carrierBytes);
 if (carrier.schema !== 'stellar-forge.grant-review-model-artifact-carrier.v1') throw new Error('Select the complete original carrier.');
 const compressed = Buffer.from(carrier.content, 'base64');
@@ -60,7 +60,7 @@ const result = await runGrantReviewBrowser({
 
 The last variables are supplied by the original receiving owner. `sourceFiles` must select the actual complete bytes served at all four new review routes, `grant-submission-core.mjs`, `drafts.mjs`, and the native core's actual module closure, including the original `grant-plan-core.mjs`. Every descriptor has route, bytes, sha256 and gitBlob. Do not substitute the older submission editor source for the current planning/handover version.
 
-Use the original receiving writer to retain every returned checkpoint and complete artifact. Preserve the actual original Page and the full error/checkpoint on interruption. A frozen UI export is selected before separate-record import/reopen, so retry retains the original export timestamps, screenshot identities and event prefix. Only the received browser copy is explicitly reopened; the original review stays complete.
+Use the original receiving writer to retain every returned checkpoint and complete artifact. Preserve the actual original Page and the full error/checkpoint on interruption. A frozen UI export is selected before separate-record import/reopen, so retry retains the original export timestamps, screenshot identities and event prefix. Only the received browser copy is explicitly reopened; the original review stays complete. Completed individual downloads are verified and reused before another UI click. Both independent receiving and recovery retain the exact full copy intent and pre-existing store identities before Save copy; continuation reconciles that original new record before another save.
 
 ## Whole application integration
 
