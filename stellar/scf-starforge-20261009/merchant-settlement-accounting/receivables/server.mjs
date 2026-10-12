@@ -136,6 +136,19 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   let result;
   if (method === 'GET') {
     if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'credit-control') result = await receivables.creditControl({
+      customerId:search.get('customerId')||undefined,search:search.get('search')||undefined,
+    });
+    else if (parts[0] === 'credit-control' && parts[1] === 'policies' && parts.length === 3)
+      result = await receivables.creditPolicy(parts[2]);
+    else if (parts[0] === 'credit-control' && parts[1] === 'decisions' && parts.length === 3)
+      result = await receivables.creditDecision(parts[2]);
+    else if (parts[0] === 'credit-control' && parts[1] === 'decisions' && parts[3] === 'files' && parts.length === 5) {
+      const selected=await receivables.creditDecisionFile(parts[2],parts[4]);
+      return {file:selected,type:selected.type};
+    }
+    else if (parts[0] === 'credit-control' && parts[1] === 'operations' && parts.length === 3)
+      result = await receivables.creditControlOperation(parts[2]);
     else if (route === 'cash-plans') result = await receivables.cashPlans({status:search.get('status')||undefined,search:search.get('search')||undefined});
     else if (route === 'cash-plans/compare') result = await receivables.compareCashPlans(cashComparisonQuery());
     else if (route === 'cash-plans/compare/export') {
@@ -219,6 +232,13 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'credit-control/policies') result = await receivables.saveCreditPolicy(value);
+    else if (parts[0] === 'credit-control' && parts[1] === 'invoices' && parts[3] === 'assessment' && parts.length === 4)
+      result = await receivables.previewCreditAssessment(parts[2],value);
+    else if (parts[0] === 'credit-control' && parts[1] === 'invoices' && parts[3] === 'decisions' && parts.length === 4)
+      result = await receivables.saveCreditDecision(parts[2],value);
+    else if (parts[0] === 'credit-control' && parts[1] === 'decisions' && parts[3] === 'withdraw' && parts.length === 4)
+      result = await receivables.withdrawCreditDecision(parts[2],value);
     else if (route === 'cash-plans/preview') result = await receivables.previewCashPlan(value);
     else if (route === 'cash-plans') result = await receivables.saveCashPlan(value);
     else if (parts[0] === 'cash-plans' && parts.length === 3) {
