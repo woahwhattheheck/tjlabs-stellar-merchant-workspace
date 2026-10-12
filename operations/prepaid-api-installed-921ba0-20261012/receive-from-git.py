@@ -5,15 +5,16 @@ parser=argparse.ArgumentParser(description='Continue the original selected prepa
 parser.add_argument('--repository',default='/workspace/scratch/921ba0f574ac/prepaid-selected-source')
 parser.add_argument('--dependencies')
 parser.add_argument('--npm-cache')
+parser.add_argument('--bulk-directory')
 selected=parser.parse_args()
-for value in (selected.repository,selected.dependencies,selected.npm_cache):
+for value in (selected.repository,selected.dependencies,selected.npm_cache,selected.bulk_directory):
  if value is not None and (not pathlib.Path(value).is_absolute() or os.path.normpath(value)!=value):raise RuntimeError('PREPAID_ABSOLUTE_SELECTED_PATH_REQUIRED')
 REPO=pathlib.Path(selected.repository)
 INPUTS=pathlib.Path('/dev/shm/921ba0-prepaid-installed-inputs-20261012')
 OP=pathlib.Path('/dev/shm/921ba0-prepaid-installed-native-20261012')
 SOURCE='6e4a2bebf22cf809587406087efbce9c11d4e449'
 REMOTE='https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.git'
-CARRIER='288df62a196d103e0326da834913cf6d749a3bd2'
+CARRIER='74f40464c2aa0c012c50cfef2fb287fd15d469bf'
 # This invocation owns every child it starts. Linux subreaper adoption keeps
 # orphaned descendants within the same retained lifetime as their original leader.
 libc=ctypes.CDLL(None,use_errno=True)
@@ -185,12 +186,12 @@ if run(git+['rev-parse','--verify','HEAD'],capture=True).decode().strip()!=SOURC
 if run(git+['status','--porcelain','--untracked-files=no'],capture=True):raise RuntimeError('PREPAID_SOURCE_WORKTREE_CHANGED')
 print(json.dumps({'source':'ACTUAL_GIT_CHECKOUT','commit':SOURCE,'repository':str(REPO),'sparseWorkingTree':True,'sourceAcquisition':'ORIGINAL_BATCHED_PROMISOR_FETCH'}),flush=True)
 url='https://raw.githubusercontent.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/'+CARRIER+'/operations/prepaid-api-installed-921ba0-20261012/operate.mjs'
-with urllib.request.urlopen(url,timeout=30) as response:driver=response.read(40001)
-if len(driver)>40000 or hashlib.sha1(b'blob '+str(len(driver)).encode()+b'\0'+driver).hexdigest()!='8baa57941e6bba1d6d0d033bd160bfa6a5675786':raise RuntimeError('PREPAID_ORIGINAL_DRIVER_CHANGED')
+with urllib.request.urlopen(url,timeout=30) as response:driver=response.read(131073)
+if len(driver)>131072 or hashlib.sha1(b'blob '+str(len(driver)).encode()+b'\0'+driver).hexdigest()!='4a3b092e065e8bb9ff5debe627e6e76b0f398bc0':raise RuntimeError('PREPAID_ORIGINAL_DRIVER_CHANGED')
 storefile=REPO/'stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs'
 import base64
 writer="import {readFile,lstat} from 'node:fs/promises';import {pathToFileURL} from 'node:url';const [module,file,b64]=process.argv.slice(1);const {writeBytes}=await import(pathToFileURL(module));const wanted=Buffer.from(b64,'base64');let old;try{const st=await lstat(file);if(!st.isFile()||st.isSymbolicLink())throw new Error('ORIGINAL_PREPAID_INPUT_CHANGED');old=await readFile(file);}catch(e){if(e.code!=='ENOENT')throw e;await writeBytes(file,wanted,{exclusive:true});old=await readFile(file);}if(!old.equals(wanted))throw new Error('ORIGINAL_PREPAID_INPUT_CHANGED');"
-driverfile=INPUTS/'operate-source-online.mjs'
+driverfile=INPUTS/'operate-bulk-workspace.mjs'
 run(['node','--input-type=module','-e',writer,str(storefile),str(driverfile),base64.b64encode(driver).decode()])
 checkout_path=pathlib.Path('/dev/shm/921ba0-api-native-20261011/checkout.json')
 checkout=json.loads(checkout_path.read_bytes())
@@ -205,5 +206,6 @@ print(json.dumps({'request':str(request_file),'requestSha256':hashlib.sha256(req
 args=['node',str(driverfile),'--repo',str(REPO),'--directory',str(OP),'--request',str(request_file),'--python','python3','--source-online']
 if selected.dependencies:args.extend(['--dependencies',selected.dependencies])
 if selected.npm_cache:args.extend(['--npm-cache',selected.npm_cache])
+if selected.bulk_directory:args.extend(['--bulk-directory',selected.bulk_directory])
 if OP.exists():args.append('--resume')
 run(args)

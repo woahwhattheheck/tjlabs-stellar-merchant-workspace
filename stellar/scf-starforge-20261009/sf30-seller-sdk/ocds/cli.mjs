@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. Complete command-line operation of the source-owned Open Contracting workspace.
 import { parseArgs } from 'node:util';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { OcdsWorkspace, failure, sha256 } from './workspace.mjs';
@@ -25,6 +25,17 @@ const HELP = [
   'package                  Export a complete portable workspace JSON package',
   'receive --file FILE      Merge a portable package with --expected-revision',
   'receiving --package-id ID        Read a retained receiving record',
+  'source-state             Read saved publisher selections, document acquisitions and assigned work',
+  'source-select --file JSON --expected-revision N   Save an explicit publisher selection',
+  'source-refresh --name NAME [--selection-id ID]   Run a fresh publisher/document window',
+  'source-resume --window-id ID     Continue the same saved source/document work',
+  'source-review --review-id ID --file PATCH_JSON    Save an assigned review with its revision',
+  'source-observe --selection-id ID --file SOURCE_JSON --observation JSON [--window-id ID --expected-revision N]',
+  'source-original --selection-id ID --file ORIGINAL --observation JSON [--ocid OCID]',
+  'source-document --document-id ID [--sha256 SHA] --out FILE   Save exact original bytes',
+  'source-export --ocid OCID --directory NEW_FOLDER   Complete editable source handoff',
+  'source-receive --directory HANDOFF_FOLDER --expected-revision N',
+  'source-receiving --package-id ID   Read complete received source context',
   'merchant-prepare         Prepare the selected process datasets with original SF30',
   'merchant-preview --merchant DIRECTORY   Read the prepared dataset locally',
   'merchant-serve --merchant DIRECTORY     Start its configured native merchant',
@@ -48,9 +59,10 @@ const options = Object.fromEntries([
   'expected-revision', 'disposition', 'owner', 'next-action', 'note', 'shortlist',
   'before', 'after', 'package-id', 'host', 'port', 'merchant', 'delivery', 'payment',
   'origin', 'path', 'default-limit', 'max-limit', 'query', 'facilitator',
-  'expected-bundle-sha256', 'availability-directory', 'name'
+  'expected-bundle-sha256', 'availability-directory', 'name', 'window-id', 'review-id', 'document-id', 'sha256', 'directory', 'observation', 'baseline'
 ].map(name => [name, { type: 'string' }]));
 options.ocid = { type: 'string', multiple: true };
+options['selection-id'] = { type: 'string', multiple: true };
 options.help = { type: 'boolean', short: 'h' };
 options['allow-local-facilitator'] = { type: 'boolean' };
 function integer(value, name, fallback) {
@@ -60,8 +72,8 @@ function integer(value, name, fallback) {
   if (!Number.isSafeInteger(number)) throw failure('INVALID_NUMBER', name + ' is outside the supported integer range');
   return number;
 }
-function one(values, name) {
-  if (!values?.length || values.length !== 1) throw failure('ONE_OCID_REQUIRED', name + ' requires exactly one --ocid');
+function one(values, name, flag = '--ocid') {
+  if (!values?.length || values.length !== 1) throw failure('ONE_SELECTION_REQUIRED', name + ' requires exactly one ' + flag);
   return values[0];
 }
 function need(value, name) { if (value === undefined || value === '') throw failure('ARGUMENT_REQUIRED', name + ' is required'); return value; }
@@ -127,6 +139,49 @@ export async function main(args = process.argv.slice(2)) {
   try {
     let result;
     switch (command) {
+      case 'source-state': case 'source-select': case 'source-refresh': case 'source-resume':
+      case 'source-review': case 'source-original': case 'source-observe': case 'source-document': case 'source-export':
+      case 'source-receive': case 'source-receiving': {
+        const {SourceOperations} = await import('./source-window.mjs');
+        const operations = new SourceOperations(workspace);
+        if (command==='source-state') result=operations.state();
+        else if (command==='source-select') result=operations.saveSelection((await sourceFile(need(value.file,'--file'))).document,{expectedRevision});
+        else if (command==='source-refresh' || command==='source-resume') {
+          const input = command==='source-resume' ? {windowId:need(value['window-id'],'--window-id')}
+            : {name:need(value.name,'--name'),selectionIds:value['selection-id'],
+              baseline:value.baseline ? await (async()=>{const prior=(await sourceFile(value.baseline)).document;return prior.current || prior.baseline;})() : undefined};
+          const controller = new AbortController(), stop=()=>controller.abort(failure('SOURCE_WINDOW_INTERRUPTED','Source window interrupted',499));
+          process.once('SIGINT',stop);process.once('SIGTERM',stop);
+          try { result=await operations.run(input,{signal:controller.signal,
+            onProgress:progress=>process.stderr.write(JSON.stringify({sourceWindow:progress})+'\n')}); }
+          finally {process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+        } else if (command==='source-review') {
+          const patch=(await sourceFile(need(value.file,'--file'))).document;
+          if (expectedRevision!==undefined) patch.expectedRevision=expectedRevision;
+          result=operations.reviewWork(need(value['review-id'],'--review-id'),patch);
+        } else if (command==='source-observe') {
+          const observation=(await sourceFile(need(value.observation,'--observation'))).document;
+          const filename=resolve(need(value.file,'--file'));
+          if((await stat(filename)).size>64*1024*1024)throw failure('SOURCE_ORIGINAL_IDENTITY','The publisher source exceeds the native source capacity',413);
+          const original=await sourceFile(filename);
+          result=operations.adoptSourceObservation({selectionId:one(value['selection-id'],'source-observe','--selection-id'),
+            windowId:value['window-id'],expectedWindowRevision:expectedRevision,name:value.name,rawBytes:original.bytes,observation,
+            baseline:value.baseline?await(async()=>{const prior=(await sourceFile(value.baseline)).document;return prior.current||prior.baseline;})():undefined});
+        } else if (command==='source-original') {
+          const observation=(await sourceFile(need(value.observation,'--observation'))).document;
+          const filename=resolve(need(value.file,'--file'));
+          if((await stat(filename)).size>operations.maxDocumentBytes)throw failure('DOCUMENT_CAPACITY','The original file exceeds the configured document capacity',413);
+          const body=await readFile(filename);
+          result=operations.importOriginalDocument({selectionId:one(value['selection-id'],'source-original','--selection-id'),
+            ocid:value.ocid?one(value.ocid,'source-original'):undefined,documentId:value['document-id'],body,observation});
+        } else if (command==='source-document') {
+          const original=operations.document(need(value['document-id'],'--document-id'),{sha256:value.sha256});
+          return output(original.body,need(value.out,'--out'),true);
+        } else if (command==='source-export') result=await operations.exportDirectory(need(value.directory,'--directory'),{ocids:value.ocid});
+        else if (command==='source-receive') result=await operations.receiveHandoff(need(value.directory,'--directory'),{expectedRevision});
+        else result=operations.receiving(need(value['package-id'],'--package-id'));
+        break;
+      }
       case 'init': case 'status': result = workspace.view(); break;
       case 'import': {
         const original = await sourceFile(need(value.file, '--file'));

@@ -148,6 +148,28 @@ The original SF74 operating documents are included at:
 - [Full commercial receiving](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/RECEIVING.md).
 - [Receivables source/operator guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/README.md).
 
+### Quotes with a selected tariff
+
+The same import accepts the original tariff-bearing quotation and its response. **Tariff at quote import** shows the saved selection volume, quoted monthly volume, accepted uniform rate, original tariff total and unit-rounding difference. The service-agreement desk presents the same basis beside each accepted quote edition and its billing preview.
+
+The quoted route amount remains the amount to bill. The original tariff comparison may show a different total when a revised quotation changes its monthly request volume. For example, the [original tariff receiving journey](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/tariff-receiving-native.mjs) selects 1,250 requests, then publishes a revision for 1,500 requests. That revision retains the saved USD 0.0114 uniform rate and quotes USD 17.10 per month; its separately retained tier comparison at 1,500 requests totals USD 16.50. Selecting two recurring periods therefore imports USD 34.20 at two-place invoice precision.
+
+The importer checks the tariff binding against the quote's selected pricing source, its original file-descriptor identity, scenario plan, selected route, quoted volume and uniform rate. It preserves the source pricing version and the tariff operation's completed pricing version as their separate original identities. The quote's original canonical seal, draft seal, review seal, calculated line totals and matching response are checked by the existing importer.
+
+The complete selected tariff binding is retained in `source.json`, including original material identity and byte hash, both tariff file descriptors, native selection UUID, plan and comparison identities, tier schedule, and the saved-versus-quoted calculation basis. Its associated pricing source retains its original material and five file descriptors. Each selected route line also carries its tariff source and comparison identities. `review.json` identifies the included invoice line, whole period count, original monthly amount and imported charge.
+
+The original `quote.json` and `response.json` bytes remain downloadable beside that source and review. An implementation-only import retains the tariff as quotation context; its selected invoice lines remain the one-time implementation charges. Recurring import includes the original service and planned-route lines for the chosen monthly periods. Later invoice edits retain the import's original source and its visible changed-draft indicator.
+
+Accepted tariff quotations can also supply the [service-agreement calendar](../merchant-service-agreements/README.md). Each period uses that same importer, and the agreement's source JSON, calculation review and complete source downloads carry the tariff through billing and later export.
+
+### Accepted revisions informed by recorded usage
+
+A revised Commercial quote may also carry its original `sourceBindings.performance`. The same import retains this complete binding and joins its explicit proposed monthly volume, target tariff/pricing source, accepted unit rate and original extended amount to the revised quote's route. The measured quote and selected historical tariff keep their own identities; a revision may intentionally choose a different saved tariff.
+
+Both billing operators display the earlier quote, observed period and quantity basis, saved price and tier comparison at that quantity, then the revised monthly volume and accepted charge. The saved native cost view, individual source counts, usage version/revision and full source identities remain available with that review. Billing uses the accepted revised monthly amount for the selected whole periods.
+
+`source.json` retains the native performance source ID, saved review ID/hash, original material and source-file descriptors, measured quote/tariff/selection, observed period/basis, recorded quote/tariff/cost view, original issues and complete proposed pricing fields. `review.json` keeps that same binding and identifies its included invoice line and selected amount. The raw quotation and matching customer response continue through the ordinary source downloads and agreement export. The complete underlying usage export remains in the original Commercial case and its recipient package, addressed by the retained file and material identities.
+
 ## Issue and deliver the invoice
 
 Create a manual invoice or continue an imported quotation draft. Monetary fields are decimal strings at an explicit currency precision. Quantities support six decimal places. Line discounts, invoice discounts and tax amounts are explicit.

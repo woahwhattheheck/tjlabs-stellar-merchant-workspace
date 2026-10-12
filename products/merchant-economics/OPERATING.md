@@ -433,6 +433,57 @@ Use the [complete Performance operator guide](../../stellar/scf-starforge-202610
 
 The installed typed exports are `./merchant/performance-client` and `./merchant/commercial-performance-client`. The original Pricing and Support MCP providers expose the corresponding native operations through their existing registrations.
 
+## 10. Carry the accepted revision into invoices and the service calendar
+
+The same installed Merchant economics product includes Receivables, Service agreements and billing, customer payment plans and statement closing. They use the original merchant accounting workspace and customer directory. The selected tariff, measured usage and revised quotation continue through their existing source import.
+
+### Select the accepted quotation and customer
+
+In the saved Commercial case, select the published revised quotation and download its complete `QUOTE_JSON` material. Download the matching `ACCEPTED` response material from that quote's customer-response history. The quotation edition, response, receiving-case identity and source bytes remain bound together.
+
+Open **Applications → Merchant receivables**, or **Applications → Service agreements and billing** for the recurring calendar. Select the merchant's initialized accounting directory and its existing customer. The same directory supplies issuer settings, billing addresses, payments, credits and statements. The original application checks that workspace and its source configuration when it opens.
+
+The command line opens the same combined service-calendar and receivables server:
+
+~~~sh
+starforge service-agreements serve \
+  --directory /private/merchant/accounting
+~~~
+
+Use that process's original Receivables and Customers views. Its accounting lease remains the one active writer for that directory. The [Receivables guide](../merchant-receivables/README.md) gives the original first-initialization inputs when the accounting workspace has not yet been created.
+
+### Review the billable amount
+
+Import the original quotation and accepted response, choose the accounting customer, and review the intended scope, dates and currency precision.
+
+| Scope | Amount carried into the invoice |
+| --- | --- |
+| Implementation | The accepted one-time implementation lines, charged once. |
+| Recurring | The accepted service and planned route amounts for the explicit number of complete monthly periods. |
+
+The invoice and agreement views show the measured quote, observed period and quantity basis alongside the revised monthly request volume and accepted price. Their tariff view retains the saved selection, quoted volume, uniform rate, original tier total and unit rounding. Billing uses the accepted quotation's extended amount. A later comparison of the tariff at a different volume remains visible in the source review.
+
+For a recurring invoice, choose an explicit period count and a meaningful period label, then enter its issue and due dates. Review the resulting editable draft, issuer and customer details, individual lines, tax and rounding before issuing it. The original invoice writer produces its numbered JSON, printable HTML, CSV and retained file manifest.
+
+### Maintain the recurring calendar
+
+Create a service agreement from the same accepted source, with the original start date, monthly term, billing interval, invoice timing and payment term. Its calendar shows the accepted quotation edition for each period, dates, amount and any existing invoice.
+
+Preview the selected period and retain its complete approved request. Preparing that period uses the original agreement version, preview hash and request identity to create its Receivables draft. Reopen that invoice to review and issue it. Later accepted quote editions, whole-month renewals and cancellation use the original calendar operations, preserving previous bills and source documents.
+
+The installed [service-agreement guide](../merchant-service-agreements/README.md) includes the complete typed client and pending-operation flow. Invoice allocation, Stellar collection, installment plans, paid credits, refunds and statement closing continue through their maintained modules in that same accounting directory.
+
+### Keep the complete customer handover together
+
+Retain the Commercial case package and its complete Performance material, the original Pricing backup and tariff portfolio, and the accounting workspace's invoice, agreement and account exports. Invoice source downloads retain the original quotation, response, import source and calculation review. Agreement exports carry the accepted editions, calendar, source documents and invoice references.
+
+The installed commands are `receivables`, `service-agreements`, `payment-plans`, `customer-closing` and `merchant-accounting-receivables`, alongside the original Accounting pricing and recovery commands. The existing Accounting merchant provider serves its enabled receivables operations; the service-agreement provider continues to use the original agreement controller. The selected product also retains the original browser manifests and every served asset.
+
+- [Complete invoice, payment and refund operation](../merchant-receivables/README.md)
+- [Accepted service agreements and recurring billing](../merchant-service-agreements/README.md)
+- [Payment plans and dated collections](../merchant-payment-plans/README.md)
+- [Full merchant financial workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md)
+
 ## Continue the original complete receiving operation
 
 The [merchant economics receiving operation](../../operations/merchant-economics-receiving-20261012/README.md) retains the portable driver, exact published source-file manifest, original request identities, input hashes and continuation procedure for the completed Linkup quotation workspace. It restores the original full backup, exercises the native MCP and CLI cost/pricing/file workflows, and reopens the received state. The operation uses the retained observations and original cost allocation; its own saved report records each receiving stage and the actual outcome.

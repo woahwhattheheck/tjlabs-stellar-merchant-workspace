@@ -107,13 +107,23 @@ location. Its reopened paths are derived from that received package, so the
 merchant uses the received operation database and retained responses. Keep the
 stable operation key available under the plan's original environment name.
 
-For agent operation, stop the Applications-owned workspace and declare that
-same directory in the original
+For agent operation, declare the same directory with mode: "managed" in the
 [merchant MCP connection](../../../../../stellar-forge/mcp-merchant-operator/TENDERLY-WORKSPACE.md).
-The MCP then opens its own browser/model instance; its agent tools and returned
-browser URL operate that same saved workspace. Close through
-merchant_tenderly_close with the current instance ID before returning the
-directory to another original operator instance.
+The MCP attaches to this running Applications listener. The browser and tools
+share its original live profile, operation controller and saved observations.
+merchant_tenderly_close with the current instance ID drains tool calls and
+detaches that client; Applications retains the server and controls Stop/reopen.
+
+The original server publishes its private tenderly.connection.json with the
+actual instance, workspace identity and authenticated loopback origin.
+Applications retains that connection hash alongside the original startup.
+After Stop/reopen, old attachments report TENDERLY_INSTANCE_CHANGED; close that
+attachment and open the current alias. Owned MCP mode remains available for a
+directory whose server the merchant host will start and close.
+
+The [complete selected product guide](../../../../../products/tenderly/OPERATING.md)
+connects installation, managed tools, the typed Node client, native customer
+delivery and retained simulation analysis.
 
 ## Original CLI binding
 

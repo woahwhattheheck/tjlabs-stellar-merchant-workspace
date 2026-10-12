@@ -346,3 +346,27 @@ Open **Service levels** in the original OpenLineage workspace to save per-job ti
 Use `starforge openlineage service-levels --help` for the same local or HTTP workflow. The typed `./seller/openlineage/service-levels` export and six native/merchant tools call the original revisioned writer. Customer reports include policy versions, exact observed source/event references and complete incident history; the existing full workspace export retains these records and the editable service-level application.
 
 The [service-level guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS.md) defines completion freshness, observed duration, failure windows, historical selections and receiving. The [operator desk guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS_OPERATOR.md) covers ordinary operation and exact interrupted-request recovery.
+
+## Google catalog commissioning
+
+The companion `starforge openlineage-google` carries a saved original source edition through Google project/quota-project review, explicit event approval, Data Lineage import, stable request recovery, exact table-edge receiving and a complete editable package. Its wrapper retains both the original source application and the current receiver; the original workspace format and application version remain intact.
+
+Use the [Google catalog operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/DATAPLEX.md) for preparation, customer credentials, genuine OpenLineage 1.x requirements, expected catalog identities and independent reopening. Source editions retain every original event and facet, including event kinds outside Google's importer contract. Receiving preserves all API attempts and distinguishes field edges from table edges.
+
+## Operate dataset quality
+
+Open **Quality** in the original OpenLineage workspace to inspect original metric and assertion history, select an exact dataset and run, save threshold or assertion rules, retain evaluations and record reasoned dispositions against individual saved findings. Producer assertion success, severity and run completion state remain separate. Missing measurements remain unreported.
+
+The desk shares the existing workspace, selected edition, server connection, source browser and pending-request recovery. HTML, JSON and CSV quality reports retain the selected evaluation; the original complete workspace export carries the rules, immutable evaluations, decision history and editable quality application.
+
+The typed `@tokenjunkielabs/starforge-merchant/seller/openlineage/quality` export exposes `QualityClient` through the original HTTP action owner. The complete [quality operator and client guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/QUALITY_OPERATOR.md) covers source semantics, rule configuration, evaluation, decisions, reports, recovery and independent receiving.
+
+## Operate the upstream asynchronous Python producer
+
+The existing `starforge openlineage native-python-async` command uses the upstream OpenLineage Python 1.53.0 asynchronous HTTP transport with its original worker, queue, retry policy and START/terminal ordering. Prepare the selected Python environment, configure the retained producer directory, emit the original input selection, inspect status and resume that same directory after an interrupted return.
+
+The producer preserves the first serialized wire request, verifies the workspace's original source receipt, and retains a writer lease until its native worker has exited. A submitted queue entry is distinct from a confirmed workspace receipt. Complete producer archives include the original input, exact first wire bytes, native attempts and acknowledgements; independent receiving retains the same saved operation.
+
+Use the [async producer operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/ASYNC_PYTHON_PRODUCER.md) for the library API, CLI, credentials, queue/timeout selection, interrupted close, original request recovery and complete customer continuation. `ASYNC_PRODUCER_RECEIVING.mjs` composes the original workspace and selected SDK environment, then receives the full source and saved producer on a second local workspace.
+
+Application version 6 carries all 80 portable files. It preserves the exact earlier 35-, 40-, 48-, 55-, 66- and 76-file editions when receiving old packages. The running Quality v5 operation continues with its own selected 76-file edition; the cumulative async edition follows that original receiving.

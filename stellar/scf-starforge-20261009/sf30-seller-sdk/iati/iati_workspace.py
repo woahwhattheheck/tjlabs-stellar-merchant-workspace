@@ -284,6 +284,8 @@ class IatiWorkspace(Workspace):
         self.refresh = IatiRefresh(self)
         from organisation_reconciliation import OrganisationReconciliation
         self.reconciliation = OrganisationReconciliation(self)
+        from results.workspace import IatiResults
+        self.results = IatiResults(self)
 
     def presets(self):
         return source_presets()
@@ -300,6 +302,7 @@ class IatiWorkspace(Workspace):
             result["portfolios"] = self.portfolios()
             result["publishing"] = {"projects":len(self.publishing.list())}
             result["refresh"] = {"plans": len(self.refresh.plans())}
+            result["results"] = {"projects": len(self.results.inventory()["projects"])}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -812,6 +815,9 @@ class IatiWorkspace(Workspace):
         from organisation.portable import PACKET as ORGANISATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
             return self.organisation.receive({"path": path})
+        from results.transfer import PACKET as RESULTS_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RESULTS_PACKET:
+            return self.results.receive(path)
         from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
             return self.reconciliation.receive({"path": path})

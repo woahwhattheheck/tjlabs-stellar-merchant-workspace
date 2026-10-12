@@ -203,6 +203,18 @@ An original return may be `NOT_FOUND` before the RPC has the transaction. Later 
 
 The wallet handoff follows the [original SEP-0007 standard](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md). The selected network, destination, exact received amount, issued-asset code/issuer and memo are retained in the native proposal.
 
+## Correct a reported transaction across refunds and invoice collection
+
+A reported hash and its unsuccessful observations remain in the original history. Ownership follows a verified receiving result, so an unverified report against the wrong refund or invoice can be corrected in the intended workflow.
+
+- **An incoming invoice payment was reported as a refund:** open the correct invoice's issued payment request, report the original hash there and receive it against that invoice's wallet terms. The unsuccessful refund report stays available for review.
+- **An outgoing refund was reported against an invoice or another refund:** open the intended reviewed refund, report the original hash and receive it against that refund's source account, beneficiary, network, asset, memo and amount. An unverified or unsuccessful report in the earlier location does not reserve the outgoing payment.
+- **Another form of a fee-bump hash was reported:** receiving compares both the inner and outer transaction hashes. A verified return keeps ownership of both forms. Reopen that original return to continue receiving or recover its operation.
+
+A verified outgoing transfer retains ownership even when its observation is `REFUND_FUNDS_CONFLICT`, `REFUND_SOURCE_CONFLICT`, `ADDITIONAL_TRANSFER`, or a timing conflict. The cash has already moved. Use its original return and the cash-reconciliation workflow below to resolve the source, funding or accounting record. The retained transaction must not become a second invoice receipt or unrelated refund.
+
+Recorded incoming receipts, including reversed receipts, accepted test-network invoice observations, recorded refunds and original refund adjustments keep their transfer identities. Changing an entered hash to its fee-bump alias does not release those identities.
+
 ## Reconcile an outgoing transfer that already happened
 
 A real early, additional or post-cancellation outgoing transfer can require its own refund record. The original receiving history retains that transaction, and `customer-funds.availableRefundReturns` provides the exact eligible source.

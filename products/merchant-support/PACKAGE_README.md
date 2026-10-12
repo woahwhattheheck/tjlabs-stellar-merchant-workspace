@@ -58,9 +58,24 @@ The full customer case carries the performance source as an original material. I
 
 The package includes `starforge merchant-performance`, `starforge merchant-commercial performance`, the typed `./merchant/performance-client` and `./merchant/commercial-performance-client` exports, and the original Pricing and Support MCP methods. Both linked performance guides describe the exact inputs, source identities, native request UUIDs, downloads and continuation.
 
+## Accepted quotations through billing and the service calendar
+
+Select the published quotation in the saved customer case and download its complete quotation JSON and matching accepted response. Open **Applications → Merchant receivables** or **Applications → Service agreements and billing** with the merchant's original initialized accounting directory and customer.
+
+The invoice import retains the selected tariff and measured-usage source alongside the accepted revised amount. Its view separates the observed period and quantity from the explicitly quoted monthly volume and uniform rate. Review the source, billing scope, dates and resulting draft, then issue it through the original Receivables writer.
+
+For ongoing work, create the service agreement from that same accepted source. Review its original monthly boundaries, billing periods and current quotation edition. Preparing a period creates the original invoice draft; later editions, renewals and cancellation preserve the previous calendar and bills. The same combined server exposes customer records, receivables and the service calendar under one accounting lease.
+
+The package includes the original payment plans, Stellar collection, paid credits, refunds and customer statement closing. Its typed clients and merchant tools continue to use the original Accounting and service-agreement controllers.
+
+- [Complete invoicing, payment and refund workflow](source/products/merchant-receivables/README.md)
+- [Accepted agreements and recurring billing](source/products/merchant-service-agreements/README.md)
+- [Payment plans and dated collections](source/products/merchant-payment-plans/README.md)
+- [Complete financial operation](source/products/merchant-workspace/FINANCIAL_OPERATIONS.md)
+
 ## Commands
 
-The installed `starforge` command includes `support-console`, `support-watch`, `merchant-implementation`, `merchant-services`, `merchant-commercial`, `merchant-tariffs`, `merchant-performance`, `merchant-support-agent`, `merchant-service-adjustments`, `merchant-service-adjustment-receiving`, `merchant-accounting-adjustments`, `buyer-expenses`, the original merchant MCP launchers, and the maintained runtime installation and transfer commands.
+The installed `starforge` command includes `receivables`, `service-agreements`, `payment-plans`, `customer-closing`, `merchant-accounting-receivables`, `merchant-accounting-pricing`, `merchant-accounting-recovery`, `support-console`, `support-watch`, `merchant-implementation`, `merchant-services`, `merchant-commercial`, `merchant-tariffs`, `merchant-performance`, `merchant-support-agent`, `merchant-service-adjustments`, `merchant-service-adjustment-receiving`, `merchant-accounting-adjustments`, `buyer-expenses`, the original merchant MCP launchers, and the maintained runtime installation and transfer commands.
 
 Read the setup command's original options:
 

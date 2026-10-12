@@ -87,7 +87,7 @@ The original organisation receiver requires the complete installed Python source
 
 The default named reviewer is the actual internal operator identity “Commons financial receiving operator CB2A”. Supply `--actor` with the actual operating reviewer when another operator runs the programme.
 
-The complete browser continuation is embedded in the programme. Supply the accepting host’s existing absolute Playwright module entry and Chromium executable through the required `--playwright` and `--chromium` arguments. It opens the original application, operates the source/match/review/history controls at desktop size, reads the separate dated revision and historical comparison, downloads the complete three report files, recovers the named review by its original request, captures the reviewed case at phone size, and receives the complete packet into the original second workspace. Screens and complete downloaded files are retained under merchant/browser/.
+The complete browser continuation is embedded in the programme. Supply the accepting host’s existing absolute Playwright module entry and Chromium executable through the required `--playwright` and `--chromium` arguments. It opens the original application, operates the source/match/review/history controls at desktop size, reads the separate dated revision and historical comparison, downloads the complete three report files, recovers the named review by its original request, captures the reviewed case at phone size, and receives the complete packet into the original second workspace. Screens and complete downloaded files are retained under merchant/editions/<source-sha256>/browser/ for the installed source edition used by that operation.
 
 ## One case through the complete journey
 
@@ -111,36 +111,44 @@ No currency conversion, proration, duplicate activity editions or mixed parent/c
 
 ## Retained output
 
-Open delivery/index.html for the complete financial review and both selected scopes. Its neutral, responsive opening page links the full reports and portable packet and presents the original publisher qualification.
+Open delivery/index.html for the current complete financial review and both selected scopes. Its neutral, responsive opening page links the matching reports and portable packet and presents the original publisher qualification. Every complete installed source edition also has an immutable opening page and packet under delivery/editions/<source-sha256>/. The exact directory and file identities appear in operation-state.json.
 
 The private operation directory is the continuation point. It contains:
 
 | Output | Purpose |
 | --- | --- |
-| operation-state.json | Original operation identity, phases, source/plan/case selections, actual result metadata and continuation attempts |
+| operation-state.json | Original operation identity, source/plan/case selections, current sourceEdition, per-edition phases, actual result metadata and continuation attempts |
 | publisher/source-context.json | Parsed original financial records, complete FCDO planning qualification, source identities and raw/default status provenance |
 | publisher/*-acquisition.json and activity-receipt.json | Original publisher acquisition records |
 | requests/ | Exact organisation, portfolio, financial save/review and historical comparison commands |
 | reports/full-year-review.json | Complete reviewed four-quarter case |
 | reports/final-case.json | Complete current reviewed three-quarter selection |
 | reports/historical-comparison.json | Changed selection over the same retained original source editions |
-| delivery/index.html | Readable opening page with both reviewed scopes, their reports, original publisher qualification and full receiving packet |
-| delivery/FCDO_WADI_Full_Year_Reviewed.html, .csv, .json | Complete full-year review in three usable formats |
-| delivery/FCDO_WADI_Current_Selection_Reviewed.html, .csv, .json | Complete current-scope review in three usable formats |
-| delivery/FCDO_WADI_Financial_Reconciliation.zip | Complete financial history and original nested source packets |
-| delivery/Received_FCDO_WADI_Current_Selection.html, .csv, .json | Reports reproduced through independent native receiving |
+| delivery/index.html | Current readable opening page with both reviewed scopes, their reports, original publisher qualification and matching full receiving packet |
+| delivery/editions/<source-sha256>/index.html | Retained opening page for one complete installed source edition |
+| delivery/editions/<source-sha256>/FCDO_WADI_Full_Year_Reviewed.html, .csv, .json | Complete full-year review in three usable formats |
+| delivery/editions/<source-sha256>/FCDO_WADI_Current_Selection_Reviewed.html, .csv, .json | Complete current-scope review in three usable formats |
+| delivery/editions/<source-sha256>/FCDO_WADI_Financial_Reconciliation.zip | Complete financial history and original nested source packets |
+| delivery/editions/<source-sha256>/Received_FCDO_WADI_Current_Selection.html, .csv, .json | Reports reproduced through independent native receiving |
 | sender-workspace/ and receiver-workspace/ | Both original native application workspaces |
-| merchant/operation-result.json | Complete actual client, merchant and browser continuation result |
-| merchant/browser/ | Desktop and phone views, original separate-dates view, and complete browser-downloaded HTML/CSV/JSON |
-| reports/receiver-final-request.json | Committed final review readback after operator disposal and native reopen |
+| merchant/editions/<source-sha256>/operation-result.json | Complete actual client, merchant and browser continuation result for this source edition |
+| merchant/editions/<source-sha256>/browser/ | Desktop and phone views, original separate-dates view, and complete browser-downloaded HTML/CSV/JSON |
+| reports/editions/<source-sha256>/installed-source.json | Exact original managed source map and complete nested organisation packet source map |
+| reports/editions/<source-sha256>/receiver-final-request.json | Committed final review readback after operator disposal and native reopen |
 
 The complete JSON files preserve every source row, issue, decision, date, financial dimension and selected immutable revision. The human-readable reports retain the selected scope and publisher planning qualification.
 
 ## Continue an interrupted operation
 
-Rerun the same command with the same original output directory and inputs. The programme keeps complete phase outputs and exact request inputs. Original product request IDs recover already committed operations. Completed native preparation and independent receiving are reused; the remaining operator continuation resumes against their original saved selections.
+One process lock covers the complete operation, including source preparation, native workspace close/reopen, browser continuation and final reports. A second caller can continue after the original process exits. Retained requests, reports and copied files are written to a private temporary file, closed and verified before they are atomically published. A failed write, including a full disk, leaves the final path available for the same original request to resume; that invocation removes its own incomplete temporary file. Existing complete files and all original request/revision identities remain intact.
 
-A nonzero continuation result records its exact phase and a local diagnostic under reports. Resolve that specific operation failure in the composed original source and rerun the same operation. Preserve the original request/result history and inputs.
+Rerun the same command with the same original output directory and inputs. The programme keeps the original organisation assessment, activity portfolio, all five financial comparison revisions and exact request inputs. Original product request IDs recover already committed operations. It records native receiving and operator completion separately for each complete installed source edition, so completed phases from an earlier edition cannot skip the current receiving journey.
+
+A nonzero continuation result records its exact phase and a local diagnostic under reports/editions/<source-sha256>/. Resolve that specific operation failure in the composed original source and rerun the same operation. The programme reopens the original saved case and exports its existing reviews and complete request history into a new source-edition directory. It then receives the new compatible packet into the same original receiver and continues the full client, Merchant and browser operation. Source changes do not create replacement organisation plans, portfolios or financial revisions.
+
+The source-edition key combines the original managed.inspect_binding(...)["source"] map with organisation.portable.source_files(), using the original file_digest for every member. The first map is the application's maintained installed source inventory; the second includes every organisation support asset and all recursive IATI/XML Python bodies retained by the nested organisation packet. Workspace inode, path and Python process identities do not enter this key. Complete HTML/CSV/JSON files, packets, native receiving reports and Merchant outputs use that exact source directory. Earlier completed source editions remain available, and delivery/index.html is updated to the current edition.
+
+An operation created by an earlier programme with a single fixed delivery path can resume in the same output directory. Its previous packet and output metadata are retained under previousDeliveries in the operation state, and its saved case is re-exported into the current source-edition directory. A source change while a process is running is recorded as a continuation point; rerunning the same command completes the new edition with the same saved work. The final COMPLETE operation state names completedSourceEdition; the CLI result prints sourceEdition and the current packet explicitly.
 
 The private connection files are transient product credentials. The deliverable reports and final result contain stable selections and file identities; they do not require the bearer-token contents.
 

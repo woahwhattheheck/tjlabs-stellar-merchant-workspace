@@ -27,6 +27,25 @@ covers the browser, command, typed client, Merchant Source Workspaces and delive
 workflow. [The complete FCDO receiving programme](receiving/ORGANISATION.md) runs
 those interfaces against the retained original publication.
 
+## Financial coverage across organisation and activity editions
+
+[Financial reconciliation](ORGANISATION_RECONCILIATION.md) compares explicitly
+selected organisation budgets or expenditure with the retained activity
+portfolios in this same workspace. Open **Financial reconciliation** to inspect
+the source rows, choose the activity coverage and comparison basis, retain
+context and issue decisions, and save a named review. Reported values remain
+exact decimals; unlike units, currencies, periods, recipient classifications or
+value dates stay visible without being silently combined.
+
+The original `reconciliation` command, `client.organisationReconciliation`
+methods and Merchant tools operate the same saved case and request identities.
+Full HTML, CSV and JSON reports and the complete nested source package are
+available for download and independent receiving. Reimporting an earlier package
+preserves a later local case revision.
+[The complete financial receiving programme](RECONCILIATION_RECEIVING.md)
+continues the original FCDO operation through the native engine, CLI, client,
+Merchant tools and browser.
+
 ## Operator workflow
 
 1. Retain the publisher's complete XML file. Source identity is the SHA-256 of its exact bytes.
@@ -82,7 +101,7 @@ The base workspace keeps sources, mappings, builds and comparisons in its existi
 
 Open IatiWorkspace(root, create=True) for a new private workspace or omit create to reopen it. Close the workspace before another operator acquires it.
 
-The inherited add_source, save_plan, build, query, compare, comparison_page, export_dataset and export_packet methods retain their native contracts. import_packet accepts both an original complete dataset packet and a complete IATI portfolio packet.
+The inherited add_source, save_plan, build, query, compare, comparison_page, export_dataset and export_packet methods retain their native contracts. import_packet dispatches original dataset, portfolio, DQA, publishing, refresh, organisation, Results and financial reconciliation packets to their original complete receivers.
 
 IATI-specific methods are presets(), profile(source_id), portfolios(), portfolio(id, revision=None), history(id), save_portfolio(request), report(id, revision=None), compare_portfolio(request), write_report(id, output, revision=None), export_portfolio(id, output, revision=None) and receive_portfolio(path).
 
@@ -111,3 +130,12 @@ A portfolio can select up to 32 complete sources and one million distinct activi
 ## Native data quality engagements
 
 The same IATI application includes [native DQA assessments, named customer cases, finding review and complete receiving](DQA.md). Capture the original Zimmerman service's complete result and configuration observations, compare refreshed assessments, and carry full case history and selected original finance portfolios through the browser, CLI, typed client and source-workspace MCP. The full original provider and installed receiving workflow are under `receiving/dqa-source/` and `receiving/DQA.md`.
+
+
+## Results monitoring and editable receiving
+
+The Results workspace now uses the same original IATI reader, source custody, SQLite writer and private console. Inspect complete result/indicator/baseline/period coverage, preserve multilingual source meaning and dimensions, select explicit target/actual comparisons, save a named review, compare following reporting revisions and receive the full editable project. Original numeric values stay strings; source changes remain separate from reporting-filter changes. Existing finance, DQA and participant publishing remain available.
+
+See [RESULTS.md](RESULTS.md) for the full operator workflow, calculation meanings, source and revision contracts, seventeen typed JavaScript methods, twelve Merchant tools and the original CLI/HTTP routes. The complete [receiving programme](results/receiving.py) uses selected real publisher XML, the original workspace and one retained operation through review, request recovery, export, independent receiving, local-head preservation and cold reopen.
+
+The [programme desk](results/PROGRAMME.md) extends this same Results interface with the operator’s programme selection, source evidence, review and complete handover. Its [SNV SP2194 source notice and receiving instructions](results/examples/snv-sp2194/RECEIVING.md) preserve the original D-Portal representation, full attribution and the existing source-owned programme.

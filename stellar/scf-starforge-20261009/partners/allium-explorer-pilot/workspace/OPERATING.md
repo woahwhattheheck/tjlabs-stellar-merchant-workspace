@@ -122,3 +122,9 @@ Original implementation entry points are `../explorer.mjs`, `sf30-seller-sdk/dat
 Portable export takes the original dataset writer lock and validates its saved generations without collecting expired versions. An export therefore retains every still-stored acquisition, dataset generation, original publisher candidate and buyer artifact. It does not change version state or extend a snapshot's expiry. The existing live merchant start, refresh and explicit collection operations continue to enforce their original retention settings.
 
 Portable import retains the exact data files and version state. It records the import in the workspace and rebases the original publisher directory to the receiving location. Export metadata consequently has a new identity and source directory; the retained source and customer files keep their original bytes. This also allows a stopped workspace to be archived after a retention deadline without silently deleting its inactive saved dataset first.
+
+## Managed Applications and typed customer tools
+
+The maintained `allium-data-workspace` source selection exposes this original workspace through Applications → **Allium data workspace** and 29 typed `merchant_allium_*` tools. Create or receive the original workspace with the commands above, then start `starforge allium-managed --workspace /absolute/private/workspace --port 0` or its saved Applications entry. Both interfaces use the same original writer and native model. The private connection record stays outside complete portable exports.
+
+The complete installation, host configuration, typed SDK, merchant/publisher, export and receiving workflow is in [the Allium product operating guide](../../../../../products/allium/OPERATING.md).

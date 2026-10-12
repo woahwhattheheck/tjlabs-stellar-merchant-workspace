@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning, contributor delivery and cash, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning and handover, implementation evidence, measured cohorts and portable operating cases.",
+  "description": "Original grant planning with complete source-table authoring, contributor delivery and cash, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases.",
   "base": {
     "commands": [
       "installation",
@@ -43,7 +43,8 @@
   "contributions": [
     "grant-workspace",
     "grant-agent",
-    "merchant-provider-grant-workspaces"
+    "merchant-provider-grant-workspaces",
+    "grant-source-tables"
   ],
   "components": [
     "stellar/scf_2026/sf47_budget_model",
@@ -53,7 +54,8 @@
     "stellar/scf-starforge-20261009/sf74-merchant-support-console",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
     "stellar/scf-starforge-20261009/distribution/python-runtime",
-    "stellar/scf-starforge-20261009/sf46-release"
+    "stellar/scf-starforge-20261009/sf46-release",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
   ],
   "supportFiles": [
     "stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md",
@@ -76,6 +78,7 @@
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/worker.mjs",
     "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.mjs",
     "stellar/scf-starforge-20261009/sf101-merchant-receiver/checkout-application.py",
     "stellar/scf-starforge-20261009/sf101-merchant-receiver/checkout-config.mjs",
     "stellar/scf-starforge-20261009/sf101-merchant-receiver/purchase.mjs",
@@ -187,7 +190,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grant Operations: retained plans, native currencies and sourced FX, delivery/cash forecasting and resource portfolios, buyer/support sources, customer installations, implementation evidence and receiving, cohort reviews and tranche completion.",
+    "description": "Grant Operations: retained plans, native currencies and sourced FX, statement receiving, delivery/cash forecasting and resource portfolios, buyer/support sources, customer installations, implementation evidence and receiving, cohort reviews and tranche completion.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

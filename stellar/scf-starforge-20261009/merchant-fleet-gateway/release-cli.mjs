@@ -1,12 +1,25 @@
 #!/usr/bin/env node
 // MIT. Foreground terminal over the same original fleet release lifecycle object.
 import { createInterface } from 'node:readline';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { constants } from 'node:fs';
+import { open, link, unlink } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { openFleetReleaseOperator } from './release-operator.mjs';
 import { bootstrapFleet, readFleetBootstrapStatus } from './release-bootstrap.mjs';
 
 const COMMANDS = `status
+campaign-list
+campaign-inspect ID
+campaign-save JSON_OR_@FILE
+campaign-review ID REVISION
+campaign-advance JSON_OR_@FILE
+campaign-pause JSON_OR_@FILE
+campaign-review-rollback ID REVISION [TARGET_NATIVE_REVISION]
+campaign-rollback JSON_OR_@FILE
+campaign-retire JSON_OR_@FILE
+campaign-export ID [FILE]
 catalog TENANT SLOT
 operations TENANT SLOT INSTANCE_ID
 discovery TENANT
@@ -56,6 +69,8 @@ Tenant enrollment, reviewed signing and native buyer discovery use that same
 foreground owner. See DISCOVERY.md for original-source and withdrawal commands.
 Original settlement delivery keeps each store’s native journal and destination
 cursors through upgrades. See DELIVERY.md for its worker and receiving workflow.
+Saved rollout waves use the same native owner. See CAMPAIGNS.md and the MCP
+FLEET_CAMPAIGN_CLIENT.md for exact-request recovery and separate pause controls.
 
 Session commands:
 ${COMMANDS}`;
@@ -64,7 +79,101 @@ function revision(value) {
   if (!/^[1-9]\d*$/.test(value ?? '') || !Number.isSafeInteger(Number(value))) throw new TypeError('A positive revision is required.');
   return Number(value);
 }
+
+const CAMPAIGN_REQUEST_COMMANDS = Object.freeze({
+  'campaign-save': 'campaignSave', 'campaign-advance': 'campaignAdvance',
+  'campaign-pause': 'campaignPause', 'campaign-rollback': 'campaignRollback',
+  'campaign-retire': 'campaignRetire',
+});
+const CAMPAIGN_READ_COMMANDS = new Set(['status', 'help', 'campaign-list', 'campaign-inspect', 'campaign-export']);
+const MAX_CAMPAIGN_JSON_BYTES = 8 * 1024 * 1024;
+const MAX_CAMPAIGN_EXPORT_BYTES = 32 * 1024 * 1024;
+const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+function campaignPath(value) {
+  const path = value.startsWith('"') ? JSON.parse(value) : value;
+  if (typeof path !== 'string' || !path || path.includes('\0')) throw new TypeError('Provide an exact local filename.');
+  return resolve(path);
+}
+async function readCampaignFile(path, maximum = MAX_CAMPAIGN_JSON_BYTES) {
+  const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const before = await file.stat({ bigint: true });
+    if (!before.isFile() || before.size > BigInt(maximum))
+      throw new TypeError('Use a regular JSON file within the selected byte limit.');
+    const bytes = await file.readFile(), after = await file.stat({ bigint: true });
+    if (BigInt(bytes.length) !== after.size || ['dev', 'ino', 'size', 'mtimeNs', 'ctimeNs'].some(key => before[key] !== after[key]))
+      throw new Error('The selected JSON file changed while it was being read.');
+    return bytes;
+  } finally { await file.close(); }
+}
+async function campaignInput(value) {
+  const bytes = value.startsWith('@') ? await readCampaignFile(campaignPath(value.slice(1))) : Buffer.from(value, 'utf8');
+  if (bytes.length > MAX_CAMPAIGN_JSON_BYTES) throw new TypeError('Campaign JSON exceeds 8 MiB.');
+  const input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  if (!plain(input)) throw new TypeError('Supply one original campaign request JSON object, inline or through @FILE.');
+  return input;
+}
+async function writeCampaignExport(document, destination) {
+  const path = campaignPath(destination), bytes = Buffer.from(JSON.stringify(document, null, 2) + '\n');
+  if (bytes.length > MAX_CAMPAIGN_EXPORT_BYTES) throw new TypeError('Campaign export exceeds 32 MiB.');
+  const temporary = path + '.pending-' + randomUUID();
+  let file, created = false, reopened = false;
+  try {
+    file = await open(temporary, 'wx', 0o600);
+    created = true;
+    await file.writeFile(bytes); await file.sync(); await file.close(); file = null;
+    try { await link(temporary, path); }
+    catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      const retained = await readCampaignFile(path, MAX_CAMPAIGN_EXPORT_BYTES);
+      if (!retained.equals(bytes)) throw new Error('The export destination already contains different bytes. Select another filename.');
+      reopened = true;
+    }
+    await unlink(temporary); created = false;
+    const directory = await open(dirname(path), constants.O_RDONLY | constants.O_DIRECTORY);
+    try { await directory.sync(); } finally { await directory.close(); }
+    return { schema: 'stellar-forge.fleet-campaign-file.v1', id: document.plan.id,
+      planDigest: document.planDigest, revision: document.plan.revision,
+      controlRevision: document.control.revision, documentSha256: document.sha256,
+      file: { path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }, reopened };
+  } finally {
+    if (file) await file.close();
+    if (created) await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  }
+}
+async function dispatchCampaignCommand(operator, action, suffix) {
+  if (Object.hasOwn(CAMPAIGN_REQUEST_COMMANDS, action)) {
+    if (!suffix) throw new TypeError('Use ' + action + ' JSON or ' + action + ' @FILE; retain the complete original requestId and body.');
+    return operator[CAMPAIGN_REQUEST_COMMANDS[action]](await campaignInput(suffix));
+  }
+  if (action === 'campaign-list') {
+    if (suffix) throw new TypeError('Use campaign-list.');
+    return operator.campaignList();
+  }
+  if (action === 'campaign-inspect') {
+    if (!/^[a-z][a-z0-9-]{0,63}$/.test(suffix)) throw new TypeError('Use campaign-inspect ID.');
+    return operator.campaignInspect({ id: suffix });
+  }
+  if (action === 'campaign-export') {
+    const selected = /^([a-z][a-z0-9-]{0,63})(?:\s+(.+))?$/.exec(suffix);
+    if (!selected) throw new TypeError('Use campaign-export ID [FILE]. Quote a filename containing spaces as a JSON string.');
+    const document = await operator.campaignExport({ id: selected[1] });
+    return selected[2] === undefined ? document : writeCampaignExport(document, selected[2]);
+  }
+  if (action === 'campaign-review' || action === 'campaign-review-rollback') {
+    const selected = /^([a-z][a-z0-9-]{0,63})\s+([1-9]\d*)(?:\s+([1-9]\d*))?$/.exec(suffix);
+    if (!selected || action === 'campaign-review' && selected[3] !== undefined)
+      throw new TypeError(action === 'campaign-review' ? 'Use campaign-review ID REVISION.' : 'Use campaign-review-rollback ID REVISION [TARGET_NATIVE_REVISION].');
+    const input = { id: selected[1], expectedRevision: revision(selected[2]),
+      ...(selected[3] === undefined ? {} : { targetRevision: revision(selected[3]) }) };
+    return action === 'campaign-review' ? operator.campaignReview(input) : operator.campaignRollbackReview(input);
+  }
+  throw new TypeError(COMMANDS);
+}
+
 export async function dispatchFleetCommand(operator, line) {
+  const campaign = /^(campaign-[a-z-]+)(?:\s+([\s\S]*))?$/.exec(line.trim());
+  if (campaign) return dispatchCampaignCommand(operator, campaign[1], campaign[2] ?? '');
   const words = line.trim().split(/\s+/), action = words[0]; let args = words.slice(1);
   const download = /^client-download\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$/.exec(line.trim());
   if (download) {
@@ -185,6 +294,8 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (!flags.has('--plan')) throw new TypeError(USAGE);
   let operator, lines, requestedClose = false;
+  let commandQueue = Promise.resolve(), activeCommand = null;
+  const concurrentCommands = new Set();
   const requestClose = () => {
     requestedClose = true;
     if (operator) void operator.close().then(() => lines?.close(), error => {
@@ -203,17 +314,39 @@ export async function main(args = process.argv.slice(2)) {
     lines.on('SIGINT', requestClose);
     if (process.stdin.isTTY) lines.setPrompt('fleet> ');
     lines.prompt();
+    // Ordinary commands retain input order. The original pause control and
+    // current reads can run while an approved wave awaits its native result.
     for await (const line of lines) {
       if (requestedClose || line.trim() === 'quit') break;
-      if (line.trim()) {
+      if (!line.trim()) { if (!requestedClose) lines.prompt(); continue; }
+      const action = line.trim().split(/\s+/, 1)[0];
+      const execute = async () => {
+        if (requestedClose) return;
         try { print(await dispatchFleetCommand(operator, line)); }
-        catch (error) { print({ error: error.message, status: error.status ?? null }); }
-      }
-      if (!requestedClose) lines.prompt();
+        catch (error) { print({ error: error.message, code: error.code ?? null, status: error.status ?? null }); }
+        if (!requestedClose) lines.prompt();
+      };
+      if (action === 'campaign-pause' ||
+          ['campaign-advance', 'campaign-rollback'].includes(activeCommand) && CAMPAIGN_READ_COMMANDS.has(action)) {
+        const pending = execute(); concurrentCommands.add(pending);
+        void pending.then(() => concurrentCommands.delete(pending), () => concurrentCommands.delete(pending));
+      } else commandQueue = commandQueue.then(async () => {
+        activeCommand = action;
+        try { await execute(); } finally { activeCommand = null; }
+      });
     }
   } finally {
-    await operator?.close(); lines?.close();
-    process.removeListener('SIGINT', requestClose); process.removeListener('SIGTERM', requestClose);
+    try {
+      const settled = await Promise.allSettled([commandQueue, ...concurrentCommands]);
+      const failures = settled.filter(result => result.status === 'rejected').map(result => result.reason);
+      if (failures.length) throw new AggregateError(failures, 'Accepted terminal commands did not finish cleanly.');
+    } finally {
+      try { await operator?.close(); }
+      finally {
+        lines?.close();
+        process.removeListener('SIGINT', requestClose); process.removeListener('SIGTERM', requestClose);
+      }
+    }
   }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))

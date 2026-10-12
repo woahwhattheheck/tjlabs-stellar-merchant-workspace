@@ -1,4 +1,5 @@
 /** MIT. Original decimal strings and pinned source/revision identities. */
+import type { OrganisationBudgetRow, OrganisationSourceEntry } from './organisation_client.mjs';
 export type Sha256 = string;
 export type DecimalString = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
@@ -19,7 +20,7 @@ export interface Eligibility {
 }
 export interface FinancialRow {
   id: Sha256;
-  collection: string;
+  collection: 'budgets' | 'transactions';
   activityId?: string | null;
   reportingOrgRef?: string | null;
   hierarchy?: string | null;
@@ -33,27 +34,30 @@ export interface FinancialRow {
   transactionType?: string | null;
   eligibility?: Eligibility | boolean | string | null;
   recipients?: JsonValue;
-  sourceId?: Sha256;
-  buildId?: Sha256;
-  rowId?: Sha256;
+  sourceId: Sha256;
+  nativeRowId: Sha256;
+  buildIds: Sha256[];
+  portfolios: RevisionSelection[];
+  dimensions: Record<string, unknown>;
+  originalIssues: JsonValue;
   metadata?: Record<string, unknown>;
   [key: string]: unknown;
 }
-export interface OrganisationFinancialRow {
-  id: Sha256;
-  period?: Period | null;
-  [key: string]: unknown;
-  organisationKey?: Sha256;
-  family?: 'total-budget' | 'recipient-org-budget' | 'recipient-country-budget' | 'recipient-region-budget' | 'total-expenditure';
-  recipient?: Record<string, unknown> | null;
-  status?: { raw: string | null; effective: string | null; source: string | null } | null;
-  value?: { text: string | null; currency: string | null; valueDate: string | null; [key: string]: unknown };
-  calculation?: {
-    eligible: boolean; amount: DecimalString | null;
-    context?: Record<string, unknown>; [key: string]: unknown;
+/** Assessed native organisation rows retain their nested value/calculation shape. */
+export interface OrganisationFinancialRow extends OrganisationBudgetRow {
+  calculation: {
+    eligible: boolean;
+    amount: DecimalString | null;
+    context: Record<string, unknown>;
   };
-  issues?: unknown[];
-  originalXML?: string;
+  [key: string]: unknown;
+}
+export interface SelectedOrganisation extends OrganisationSourceEntry {
+  name: string;
+  sourceId: Sha256;
+  candidateSha256: Sha256;
+  snapshotSha256: Sha256;
+  plan: RevisionSelection;
 }
 export interface ComparisonDefinition {
   organisationRowId: Sha256;
@@ -113,6 +117,8 @@ export interface FinancialComparison {
 export interface ReconciliationPreview {
   schema: string;
   selection: ReconciliationSelector;
+  organisation: SelectedOrganisation;
+  portfolios: Array<RevisionSelection & { name: string; definitionSha256: Sha256; selection: Record<string, unknown> }>;
   organisationRows: OrganisationFinancialRow[];
   activityRows: FinancialRow[];
   comparisons: FinancialComparison[];
@@ -128,6 +134,9 @@ export interface Review {
   acknowledgedIssueIds: Sha256[];
   [key: string]: unknown;
 }
+export interface SavedReview extends Review {
+  reportSha256: Sha256;
+}
 export interface ReviewReconciliation extends Review {
   requestId: string;
   id: Sha256;
@@ -140,9 +149,12 @@ export interface ReconciliationCase {
   name: string;
   definition: ReconciliationDefinition;
   report: ReconciliationPreview;
-  review: Review | null;
+  review: SavedReview | null;
+  previousRevision: number | null;
+  /** Original Unix timestamps in seconds, including fractional seconds. */
   createdAt: number;
-  updatedAt?: number;
+  updatedAt: number;
+  summary: Record<string, unknown>;
   [key: string]: unknown;
 }
 export interface Status {
@@ -166,7 +178,7 @@ export interface RegisterPage<Row> {
   offset: number;
   limit: number;
   snapshotSha256: Sha256;
-  organisation?: { identifier?: string | null; name?: string | null; sourceId?: Sha256; snapshotSha256?: Sha256; [key: string]: unknown };
+  organisation?: SelectedOrganisation;
   portfolios?: unknown[];
   [key: string]: unknown;
 }
@@ -186,21 +198,42 @@ export interface RevisionComparison {
   sourceChanges: { before: ReconciliationSelector; after: ReconciliationSelector };
   added: FinancialComparison[];
   removed: FinancialComparison[];
-  changed: Array<{ context: Record<string, unknown>; before: Sha256; after: Sha256; fields: Record<string, { before: unknown; after: unknown }> }>;
-  ambiguous: Array<{ context: Record<string, unknown>; before: FinancialComparison[]; after: FinancialComparison[] }>;
+  changed: Array<{
+    context: Record<string, unknown>;
+    before: Sha256;
+    after: Sha256;
+    fields: Record<string, { before: unknown; after: unknown }>;
+  }>;
+  ambiguous: Array<{
+    context: Record<string, unknown>;
+    before: FinancialComparison[];
+    after: FinancialComparison[];
+  }>;
   unchanged: Sha256[];
-  definitionChanges: Record<string, { before: unknown; after: unknown }>;
-  reviewChange: { before: Review | null; after: Review | null } | null;
-  issueChanges: { added: ReconciliationIssue[]; removed: ReconciliationIssue[]; changed: unknown[] };
-  summary: { added: number; removed: number; changed: number; ambiguous: number; unchanged: number;
-    definitionChanged: boolean; reviewChanged: boolean; issuesAdded: number; issuesRemoved: number; issuesChanged: number };
-  [key: string]: unknown;
+  definitionChanges: Partial<Record<keyof ReconciliationDefinition, { before: unknown; after: unknown }>>;
+  reviewChange: { before: SavedReview | null; after: SavedReview | null } | null;
+  issueChanges: {
+    added: ReconciliationIssue[];
+    removed: ReconciliationIssue[];
+    changed: Array<{ id: Sha256; before: ReconciliationIssue; after: ReconciliationIssue }>;
+  };
+  summary: Record<'added' | 'removed' | 'changed' | 'ambiguous' | 'unchanged', number> & {
+    definitionChanged: boolean;
+    reviewChanged: boolean;
+    issuesAdded: number;
+    issuesRemoved: number;
+    issuesChanged: number;
+  };
 }
 export interface ReceiveResult {
   state: 'COMPLETE';
   case: ReconciliationCase;
   currentCase: ReconciliationCase;
   reused: boolean;
+  revisions: number;
+  organisationEditions: number;
+  activityEditions: number;
+  packet: { bytes: number; sha256: Sha256 };
   [key: string]: unknown;
 }
 export interface OrganisationReconciliationClient {

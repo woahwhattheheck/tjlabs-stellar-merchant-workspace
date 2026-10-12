@@ -8,10 +8,11 @@ dated comparison, review, changed selection, reporting, export and receiving.
 from __future__ import annotations
 
 import argparse
-from contextlib import ExitStack, redirect_stdout
+from contextlib import ExitStack, contextmanager, redirect_stdout
 from copy import deepcopy
 from datetime import datetime, timezone
 from decimal import Decimal
+import fcntl
 import gzip
 import hashlib
 import html
@@ -24,6 +25,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -33,6 +35,7 @@ from iati_workspace import IatiWorkspace, json_bytes, load_json
 from cli import published_connection
 from server import OperatorServer
 from managed import inspect_binding
+from organisation.portable import source_files as organisation_source_files
 
 OPERATION = "fcdo-financial-reconciliation-cb2a-20261012"
 SCHEMA = "stellar-forge.iati-financial-reconciliation-receiving.v1"
@@ -97,19 +100,64 @@ def private_directory(path):
     return path
 
 
+@contextmanager
+def operation_guard(output):
+    """Keep one producer across preparation, independent receiving and reports."""
+    descriptor = os.open(
+        output / ".reconciliation-receiving.lock",
+        os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    try:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError(
+                "This original receiving operation already has an active producer") from error
+        yield
+    finally:
+        os.close(descriptor)
+
+
+@contextmanager
+def complete_retained_file(path, expected):
+    """Publish a complete file only after its bytes are closed and verified."""
+    path = Path(path)
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    temporary = path.with_name("." + path.name + ".incoming-" + uuid.uuid4().hex)
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            yield stream
+            stream.flush()
+            os.fsync(stream.fileno())
+        require(digest_file(temporary) == expected,
+                "The complete retained output changed before publication: " + path.name)
+        try:
+            os.link(temporary, path, follow_symlinks=False)
+        except FileExistsError:
+            require(not path.is_symlink() and path.is_file()
+                    and digest_file(path) == expected,
+                    "A retained operation file belongs to another result: " + path.name)
+        directory = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        # Only this invocation's exclusively created, unpublished temporary file.
+        temporary.unlink(missing_ok=True)
+
+
 def retained(path, value):
     path = Path(path)
     data = value if isinstance(value, bytes) else json_bytes(value)
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if path.exists():
-        require(not path.is_symlink() and path.read_bytes() == data,
+    if path.exists() or path.is_symlink():
+        require(not path.is_symlink() and path.is_file() and path.read_bytes() == data,
                 "A retained operation file belongs to another result: " + path.name)
         return path
-    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(descriptor, "wb") as stream:
+    expected = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+    with complete_retained_file(path, expected) as stream:
         stream.write(data)
-        stream.flush()
-        os.fsync(stream.fileno())
     return path
 
 
@@ -117,24 +165,20 @@ def retained_copy(path, source):
     path, source = Path(path), Path(source)
     identity = digest_file(source)
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if path.exists():
-        require(not path.is_symlink() and digest_file(path) == identity,
+    if path.exists() or path.is_symlink():
+        require(not path.is_symlink() and path.is_file() and digest_file(path) == identity,
                 "An existing complete output differs: " + path.name)
         return identity
-    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(descriptor, "wb") as target, source.open("rb") as original:
+    with complete_retained_file(path, identity) as target, source.open("rb") as original:
         shutil.copyfileobj(original, target, 1024 * 1024)
-        target.flush()
-        os.fsync(target.fileno())
-    require(digest_file(path) == identity, "The complete output changed during delivery")
     return identity
 
 
-def checkpoint(path, state):
+def checkpoint(path, value):
     temporary = Path(path).with_name("." + Path(path).name + ".next")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(descriptor, "wb") as stream:
-        stream.write(json_bytes(state))
+        stream.write(value if isinstance(value, bytes) else json_bytes(value))
         stream.flush()
         os.fsync(stream.fileno())
     os.replace(temporary, path)
@@ -150,6 +194,61 @@ def phase(output, state, name, **details):
     print(json.dumps({"operation": OPERATION, "phase": name, **{
         k: state[k] for k in ("caseId", "finalRevision") if k in state
     }}, sort_keys=True), flush=True)
+
+
+def installed_source_edition(output):
+    """Use the original managed and nested packet source inventories verbatim."""
+    binding = inspect_binding(output / "sender-workspace")
+    files = {
+        "application": binding["source"],
+        "organisation": {name: digest_file(path)
+                         for name, path in organisation_source_files().items()},
+    }
+    return {"schema": "stellar-forge.iati-receiving-source-edition.v1",
+            "sha256": hashlib.sha256(json_bytes(files)).hexdigest(), "files": files}
+
+
+def require_source_edition(output, edition):
+    require(installed_source_edition(output) == edition,
+            "The installed source changed during this operation; rerun the same command and output directory")
+
+
+def edition_record(state):
+    return state["sourceEditions"][state["sourceEdition"]]
+
+
+def edition_directory(output, state, kind):
+    return private_directory(output / kind / "editions" / state["sourceEdition"])
+
+
+def edition_phase(output, state, name, **details):
+    entry = edition_record(state)
+    entry.update(details)
+    entry["updatedAt"] = datetime.now(timezone.utc).isoformat()
+    if name not in entry["stages"]:
+        entry["stages"].append(name)
+    phase(output, state, name, **details)
+
+
+def activate_source_edition(output, state, edition):
+    identifier = edition["sha256"]
+    if not state.get("sourceEdition") and state.get("nativePacket"):
+        # Earlier programme editions used one delivery path. Keep their actual
+        # outputs available while the same saved case receives a current export.
+        previous = {key: deepcopy(state[key]) for key in (
+            "nativePacket", "files", "deliveryIndex", "receiving", "operatorResult"
+        ) if key in state}
+        state.setdefault("previousDeliveries", {}).setdefault(
+            state["nativePacket"]["sha256"], previous)
+    state.setdefault("sourceEditions", {}).setdefault(identifier, {
+        "sha256": identifier, "stages": [], "state": "IN_PROGRESS",
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+    })
+    state["sourceEdition"] = identifier
+    report = edition_directory(output, state, "reports") / "installed-source.json"
+    retained(report, edition)
+    edition_record(state)["installedSource"] = str(report.relative_to(output))
+    checkpoint(output / "operation-state.json", state)
 
 
 def local_tag(element):
@@ -413,11 +512,11 @@ def review_request(work, output, label, case, actor, note):
     return result, request
 
 
-def report_files(work, output, name, case):
+def report_files(work, output, name, case, directory=None):
     result = {}
     for kind, extension in (("report", "html"), ("csv", "csv"), ("json", "json")):
         descriptor = work.file({"id": case["id"], "revision": case["revision"], "kind": kind})
-        target = output / "delivery" / (name + "." + extension)
+        target = (directory or output / "delivery") / (name + "." + extension)
         identity = retained_copy(target, descriptor["path"])
         require(identity == {k: descriptor[k] for k in ("bytes", "sha256")},
                 "The complete original report descriptor differs")
@@ -426,7 +525,7 @@ def report_files(work, output, name, case):
     return result
 
 
-def delivery_index(output, source, full_year, current):
+def delivery_index(output, source, full_year, current, directory, link_prefix="", current_index=False):
     escape = lambda value: html.escape(str(value), quote=True)
     full, changed = comparison_context(full_year["report"]), comparison_context(current["report"])
     rows = []
@@ -435,7 +534,7 @@ def delivery_index(output, source, full_year, current):
         ("Current reviewed three-quarter selection", "FCDO_WADI_Current_Selection_Reviewed", current, changed),
     ):
         amount = format(Decimal(comparison["selectedAmount"]), ",f")
-        links = " · ".join('<a href="' + stem + "." + suffix + '">' + label + "</a>"
+        links = " · ".join('<a href="' + escape(link_prefix + stem + "." + suffix) + '">' + label + "</a>"
                            for suffix, label in (("html", "Read report"), ("csv", "CSV"), ("json", "Complete JSON")))
         rows.append("<tr><th scope=\"row\">" + escape(label) + "</th><td>" + str(case["revision"])
                     + "</td><td>GBP " + escape(amount) + "</td><td>" + str(comparison["eligibleCount"])
@@ -471,7 +570,7 @@ def delivery_index(output, source, full_year, current):
         "the selected child and periods.</p>"
         "<h2>Original publisher qualification</h2><div class=\"source\"><p>"
         + escape(source["publisherQualification"]).replace("\n\n", "</p><p>") + "</p></div>"
-        "<h2>Open the complete retained work</h2><p><a href=\"FCDO_WADI_Financial_Reconciliation.zip\">"
+        "<h2>Open the complete retained work</h2><p><a href=\"" + escape(link_prefix + "FCDO_WADI_Financial_Reconciliation.zip") + "\">"
         "Download the complete financial receiving packet</a>. It carries all five comparison revisions, "
         "their original requests and named reviews, and both complete original organisation and activity packets.</p>"
         "<p>Case <code>" + escape(current["id"]) + "</code>. Named internal reviewer: "
@@ -480,7 +579,14 @@ def delivery_index(output, source, full_year, current):
         "<li><a href=\"" + escape(ACTIVITY_SOURCE["url"]) + "\">Original complete FCDO activity publication</a></li></ul>"
         "<p>The packet retains the exact source editions used for these reports.</p></main></html>"
     ).encode("utf-8")
-    path = retained(output / "delivery" / "index.html", page)
+    path = directory / "index.html"
+    if current_index:
+        require(not path.is_symlink(), "The current delivery index must be an original regular file")
+        if path.exists() and path.read_bytes() != page:
+            retained(directory / ("index-before-" + digest_file(path)["sha256"] + ".html"), path.read_bytes())
+        checkpoint(path, page)
+    else:
+        retained(path, page)
     return {"file": str(path.relative_to(output)), **digest_file(path)}
 
 
@@ -613,11 +719,52 @@ def prepare(args, output, state):
                     "fullReview": full_review_request, "changed": changed_request,
                     "changedReview": changed_review_request, "compare": compare_request}
         retained(output / "reports" / "requests.json", requests)
+        retained(output / "reports" / "final-case.json", final)
+        phase(output, state, "changed-selection-comparison-saved",
+              changedRevision=changed["revision"], finalRevision=final["revision"],
+              reviewActor=args.actor, selectionChange=historical["summary"])
+
+    return requests
+
+
+def publish_source_edition(output, state, edition):
+    entry = edition_record(state)
+    completed = "changed-selection-comparison-and-complete-nested-export" in entry["stages"]
+    if completed:
+        for key in ("files", "deliveryIndex", "currentDeliveryIndex", "nativePacket"):
+            state[key] = entry[key]
+        packet = output / entry["nativePacket"]["file"]
+        files_present = all((output / descriptor["file"]).is_file()
+                            and not (output / descriptor["file"]).is_symlink()
+                            for scope in entry["files"].values() for descriptor in scope.values())
+        if packet.is_file() and not packet.is_symlink() and files_present:
+            require(digest_file(packet) == {key: entry["nativePacket"][key]
+                                           for key in ("bytes", "sha256")},
+                    "The retained complete source-edition packet changed")
+            source = load_json((output / "publisher" / "source-context.json").read_bytes())
+            full_year = load_json((output / "reports" / "full-year-review.json").read_bytes())
+            final = load_json((output / "reports" / "final-case.json").read_bytes())
+            current = delivery_index(output, source, full_year, final, private_directory(output / "delivery"),
+                                     "editions/" + state["sourceEdition"] + "/", current_index=True)
+            entry["currentDeliveryIndex"] = state["currentDeliveryIndex"] = current
+            checkpoint(output / "operation-state.json", state)
+            return
+
+    require_source_edition(output, edition)
+    delivery = edition_directory(output, state, "delivery")
+    source = load_json((output / "publisher" / "source-context.json").read_bytes())
+    with IatiWorkspace(output / "sender-workspace") as workspace:
+        work = workspace.reconciliation
+        full_year = work.plan(state["caseId"], state["reviewedRevision"])
+        final = work.plan(state["caseId"], state["finalRevision"])
+        require(full_year == load_json((output / "reports" / "full-year-review.json").read_bytes())
+                and final == load_json((output / "reports" / "final-case.json").read_bytes()),
+                "Export the original saved reviews and request history without creating a new comparison revision")
         files = {
-            "fullYear": report_files(work, output, "FCDO_WADI_Full_Year_Reviewed", reviewed),
-            "currentSelection": report_files(work, output, "FCDO_WADI_Current_Selection_Reviewed", final),
+            "fullYear": report_files(work, output, "FCDO_WADI_Full_Year_Reviewed", full_year, delivery),
+            "currentSelection": report_files(work, output, "FCDO_WADI_Current_Selection_Reviewed", final, delivery),
         }
-        packet = output / "delivery" / "FCDO_WADI_Financial_Reconciliation.zip"
+        packet = delivery / "FCDO_WADI_Financial_Reconciliation.zip"
         exported = work.export({"id": final["id"], "revision": final["revision"], "output": packet})
         require(exported["state"] == "COMPLETE", "Finish the complete original nested financial receiving archive")
         with zipfile.ZipFile(packet) as archive:
@@ -626,16 +773,17 @@ def prepare(args, output, state):
                     and len([x for x in names if x.startswith("sources/") and x.endswith(".zip")]) == 2,
                     "Retain both complete original organisation and activity packets in the financial archive")
             history = load_json(archive.read("history.json"))
-            require(history[-1] == final and history[reviewed["revision"] - 1] == reviewed,
+            require(history[-1] == final and history[full_year["revision"] - 1] == full_year,
                     "The complete original reviewed history must survive export")
-        retained(output / "reports" / "final-case.json", final)
-        index = delivery_index(output, source, reviewed, final)
-        phase(output, state, "changed-selection-comparison-and-complete-nested-export",
-              changedRevision=changed["revision"], finalRevision=final["revision"],
-              files=files, deliveryIndex=index, nativePacket={**digest_file(packet), "file": str(packet.relative_to(output)),
-                                         "members": len(names), "sourceRefs": exported["sourceRefs"]},
-              reviewActor=args.actor, selectionChange=historical["summary"])
-    return requests
+        require_source_edition(output, edition)
+        index = delivery_index(output, source, full_year, final, delivery)
+        current = delivery_index(output, source, full_year, final, private_directory(output / "delivery"),
+                                 "editions/" + state["sourceEdition"] + "/", current_index=True)
+        edition_phase(output, state, "changed-selection-comparison-and-complete-nested-export",
+              files=files, deliveryIndex=index, currentDeliveryIndex=current,
+              nativePacket={**digest_file(packet), "file": str(packet.relative_to(output)),
+                            "members": len(names), "sourceRefs": exported["sourceRefs"],
+                            "sourceEdition": state["sourceEdition"]})
 
 
 def cli_call(workspace, arguments):
@@ -647,6 +795,8 @@ def cli_call(workspace, arguments):
 
 
 def closed_workspace_receiving(output, state, requests):
+    reports = edition_directory(output, state, "reports")
+    delivery = edition_directory(output, state, "delivery")
     sender, receiver = output / "sender-workspace", output / "receiver-workspace"
     final = load_json((output / "reports" / "final-case.json").read_bytes())
     current = cli_call(sender, ["reconciliation", "plan", "--id", state["caseId"],
@@ -655,8 +805,8 @@ def closed_workspace_receiving(output, state, requests):
     lost_ack = cli_call(sender, ["reconciliation", "request", "--request-id", requests["changed"]["requestId"]])
     require(lost_ack["state"] == "RECORDED" and lost_ack["case"]["revision"] == state["changedRevision"],
             "The original request readback must survive complete workspace close/reopen")
-    retained(output / "reports" / "sender-cli-plan.json", current)
-    retained(output / "reports" / "sender-cli-lost-ack.json", lost_ack)
+    retained(reports / "sender-cli-plan.json", current)
+    retained(reports / "sender-cli-lost-ack.json", lost_ack)
     if not receiver.exists():
         with IatiWorkspace(receiver, create=True):
             pass
@@ -675,12 +825,12 @@ def closed_workspace_receiving(output, state, requests):
         record = workspace.reconciliation.request(requests["changedReview"]["requestId"])
         require(record["state"] == "RECORDED" and record["case"] == final,
                 "The receiving workspace must retain the committed final named-review request")
-        receiver_files = report_files(workspace.reconciliation, output, "Received_FCDO_WADI_Current_Selection", final)
+        receiver_files = report_files(workspace.reconciliation, output, "Received_FCDO_WADI_Current_Selection", final, delivery)
     require({k: {x: v[x] for x in ("bytes", "sha256")} for k, v in receiver_files.items()} ==
             {k: {x: v[x] for x in ("bytes", "sha256")} for k, v in state["files"]["currentSelection"].items()},
             "The complete HTML, CSV and JSON outputs must reproduce after independent receiving")
-    retained(output / "reports" / "receiver-cli-plan.json", reopened)
-    phase(output, state, "original-cli-close-reopen-and-independent-native-receiving",
+    retained(reports / "receiver-cli-plan.json", reopened)
+    edition_phase(output, state, "original-cli-close-reopen-and-independent-native-receiving",
           receiving={"caseId": final["id"], "revision": final["revision"],
                      "historyRevisions": result["revisions"], "organisationEditions": result["organisationEditions"],
                      "activityEditions": result["activityEditions"], "files": receiver_files})
@@ -1003,9 +1153,10 @@ try {
 def continue_operator(args, output, state, requests):
     require(NODE_CONTINUATION.strip(), "Install the complete receiving programme with its original operator continuation")
     private = private_directory(output / "connections")
-    temporary = private_directory(output / "temporary")
-    exports = private_directory(output / "merchant-exports")
-    merchant_output = private_directory(output / "merchant")
+    temporary = edition_directory(output, state, "temporary")
+    exports = edition_directory(output, state, "merchant-exports")
+    merchant_output = edition_directory(output, state, "merchant")
+    reports = edition_directory(output, state, "reports")
     driver_body = NODE_CONTINUATION.encode("utf-8")
     driver_name = "reconciliation-continuation-" + hashlib.sha256(driver_body).hexdigest() + ".mjs"
     driver = retained(output / driver_name, driver_body)
@@ -1036,10 +1187,11 @@ def continue_operator(args, output, state, requests):
             stack.enter_context(published_connection(private / (name + ".url"), server.url))
         binding = inspect_binding(sender.root)
         binding_name = "installed-source-binding-" + hashlib.sha256(json_bytes(binding)).hexdigest() + ".json"
-        retained(output / "reports" / binding_name, binding)
+        retained(reports / binding_name, binding)
         state.setdefault("installedSourceBindings", [])
-        if binding_name not in state["installedSourceBindings"]:
-            state["installedSourceBindings"].append(binding_name)
+        binding_file = str((reports / binding_name).relative_to(output))
+        if binding_file not in state["installedSourceBindings"]:
+            state["installedSourceBindings"].append(binding_file)
         checkpoint(output / "operation-state.json", state)
         config = {
             "iatiDirectory": str(IATI),
@@ -1072,10 +1224,11 @@ def continue_operator(args, output, state, requests):
             "stdout": clean(result.stdout), "stderr": clean(result.stderr),
         }
         receipt_name = "operator-continuation-" + hashlib.sha256(json_bytes(observation)).hexdigest() + ".json"
-        retained(output / "reports" / receipt_name, observation)
+        retained(reports / receipt_name, observation)
         state.setdefault("continuationAttempts", [])
-        if receipt_name not in state["continuationAttempts"]:
-            state["continuationAttempts"].append(receipt_name)
+        receipt_file = str((reports / receipt_name).relative_to(output))
+        if receipt_file not in state["continuationAttempts"]:
+            state["continuationAttempts"].append(receipt_file)
         checkpoint(output / "operation-state.json", state)
         require(result.returncode == 0,
                 "Continue the original operator operation from its retained phase: " + clean(result.stderr[-4000:]))
@@ -1083,15 +1236,17 @@ def continue_operator(args, output, state, requests):
         require(operator["state"] == "COMPLETE" and operator["caseId"] == state["caseId"]
                 and operator["revision"] == state["finalRevision"],
                 "The original operator continuation must finish this exact retained case")
-        phase(output, state, "original-http-client-mcp-and-applications-continuation",
-              operatorResult=operator)
+        edition_phase(output, state, "original-http-client-mcp-and-applications-continuation",
+              operatorResult=operator,
+              operatorResultFile=str((merchant_output / "operation-result.json").relative_to(output)))
     request = cli_call(output / "receiver-workspace", [
         "reconciliation", "request", "--request-id", requests["changedReview"]["requestId"]])
     require(request["state"] == "RECORDED"
             and request["case"] == load_json((output / "reports" / "final-case.json").read_bytes()),
             "Final native request readback must survive operator connection disposal and workspace reopen")
-    retained(output / "reports" / "receiver-final-request.json", request)
-    phase(output, state, "final-independent-request-reopen")
+    retained(reports / "receiver-final-request.json", request)
+    edition_phase(output, state, "final-independent-request-reopen",
+                  finalRequestFile=str((reports / "receiver-final-request.json").relative_to(output)))
 
 
 def main(argv=None):
@@ -1109,40 +1264,62 @@ def main(argv=None):
     parser.add_argument("--chromium", required=True, help="Existing absolute installed Chromium executable path")
     args = parser.parse_args(argv)
     output = private_directory(args.output)
-    require(all(output != root and root not in output.parents
-                for root in (IATI, (IATI.parent / "xml").resolve())),
-            "Keep the private receiving operation outside the installed IATI and XML source trees")
-    state_path = output / "operation-state.json"
-    state = load_json(state_path.read_bytes()) if state_path.exists() else {
-        "schema": SCHEMA, "operation": OPERATION, "state": "IN_PROGRESS",
-        "createdAt": datetime.now(timezone.utc).isoformat(), "stages": [], "continuationAttempts": [],
-    }
-    require(state.get("schema") == SCHEMA and state.get("operation") == OPERATION,
-            "Use this operation's original receiving directory")
-    state["state"] = "IN_PROGRESS"
-    checkpoint(state_path, state)
-    try:
-        if "changed-selection-comparison-and-complete-nested-export" not in state["stages"]:
-            requests = prepare(args, output, state)
-        else:
-            requests = load_json((output / "reports" / "requests.json").read_bytes())
-        if "original-cli-close-reopen-and-independent-native-receiving" not in state["stages"]:
-            closed_workspace_receiving(output, state, requests)
-        if "final-independent-request-reopen" not in state["stages"]:
-            continue_operator(args, output, state, requests)
-        state["state"] = "COMPLETE"
-        phase(output, state, "complete")
-        print(json.dumps({"state": "COMPLETE", "operation": OPERATION,
-            "caseId": state["caseId"], "fullYearReviewedRevision": state["reviewedRevision"],
-            "currentReviewedRevision": state["finalRevision"], "receiving": state["receiving"],
-            "packet": state["nativePacket"], "output": str(output)}, sort_keys=True), flush=True)
-        return 0
-    except Exception as error:
-        state["state"] = "CONTINUE"
-        state["lastError"] = {"type": type(error).__name__, "message":
-                             re.sub(r"#[A-Za-z0-9_-]{32,256}", "#[redacted]", str(error))}
+    with operation_guard(output):
+        require(all(output != root and root not in output.parents
+                    for root in (IATI, (IATI.parent / "xml").resolve())),
+                "Keep the private receiving operation outside the installed IATI and XML source trees")
+        state_path = output / "operation-state.json"
+        state = load_json(state_path.read_bytes()) if state_path.exists() else {
+            "schema": SCHEMA, "operation": OPERATION, "state": "IN_PROGRESS",
+            "createdAt": datetime.now(timezone.utc).isoformat(), "stages": [], "continuationAttempts": [],
+        }
+        require(state.get("schema") == SCHEMA and state.get("operation") == OPERATION,
+                "Use this operation's original receiving directory")
+        state["state"] = "IN_PROGRESS"
         checkpoint(state_path, state)
-        raise
+        try:
+            sender = output / "sender-workspace"
+            if not sender.exists():
+                with IatiWorkspace(sender, create=True):
+                    pass
+            edition = installed_source_edition(output)
+            activate_source_edition(output, state, edition)
+            if not any(stage in state["stages"] for stage in (
+                    "changed-selection-comparison-saved", "changed-selection-comparison-and-complete-nested-export")):
+                requests = prepare(args, output, state)
+            else:
+                requests = load_json((output / "reports" / "requests.json").read_bytes())
+            publish_source_edition(output, state, edition)
+            entry = edition_record(state)
+            if "original-cli-close-reopen-and-independent-native-receiving" not in entry["stages"]:
+                closed_workspace_receiving(output, state, requests)
+            else:
+                state["receiving"] = entry["receiving"]
+            if "final-independent-request-reopen" not in entry["stages"]:
+                continue_operator(args, output, state, requests)
+            else:
+                state["operatorResult"] = entry["operatorResult"]
+                state["operatorResultFile"] = entry["operatorResultFile"]
+                state["finalRequestFile"] = entry["finalRequestFile"]
+            require_source_edition(output, edition)
+            state.pop("lastError", None)
+            state["state"] = "COMPLETE"
+            entry["state"] = "COMPLETE"
+            edition_phase(output, state, "complete", completedSourceEdition=state["sourceEdition"])
+            print(json.dumps({"state": "COMPLETE", "operation": OPERATION,
+                "caseId": state["caseId"], "fullYearReviewedRevision": state["reviewedRevision"],
+                "currentReviewedRevision": state["finalRevision"], "receiving": state["receiving"],
+                "sourceEdition": state["sourceEdition"], "packet": state["nativePacket"],
+                "operatorResultFile": state["operatorResultFile"], "output": str(output)}, sort_keys=True), flush=True)
+            return 0
+        except Exception as error:
+            state["state"] = "CONTINUE"
+            if state.get("sourceEdition") in state.get("sourceEditions", {}):
+                edition_record(state)["state"] = "CONTINUE"
+            state["lastError"] = {"type": type(error).__name__, "message":
+                                 re.sub(r"#[A-Za-z0-9_-]{32,256}", "#[redacted]", str(error))}
+            checkpoint(state_path, state)
+            raise
 
 
 if __name__ == "__main__":

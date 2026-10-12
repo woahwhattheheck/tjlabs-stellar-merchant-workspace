@@ -86,6 +86,40 @@ notification destinations. The
 [Slack operating guide](../sf93-seller-support-bundle/SLACK_OPERATIONS.md)
 describes workspace/channel IDs and the token environment reference.
 
+## Complete store snapshots and recovery
+
+An incident source may set an optional `recoveryDirectory` beside its existing
+`directory`. This is an already-created, private `0700` directory under the
+same user; it must be separate from the source store and distinct from every
+other base source's recovery root. Relative paths resolve beside the source
+configuration file. For example, add `"recoveryDirectory": "recovery"` to the
+`merchant-operations` row above.
+
+The same Incident sources panel then exposes **Snapshots and recovery**. Save
+a reviewed live revision, verify every selected capture and manifest entry,
+receive a separate store, and explicitly open it in the original source
+selector. Resume an interrupted snapshot from its saved operation; active source
+pins protect its captures while the watcher advances. A reasoned abandonment
+releases that protection while retaining the original request and partial files.
+
+A received store holds unfinished notifications. Review its exact queue,
+configuration, original attempt deadlines and receipts before confirming that
+the original writer has stopped and releasing the global hold. Previously
+unfinished events still require their own original **Retry delivery** action.
+Opening or reconciling a store never starts its watcher or sends notifications.
+
+Browser actions bind the actual source/recovery directory identity and retain
+their exact operation requests before dispatch. A fresh browser can also resume
+the original request from an incomplete saved row. After restarting Support,
+open the same received row from its base source. Up to eight received profiles
+can be open in one console instance; their current incidents and captures use
+the original case preparation, save and reopen workflow.
+
+See the [complete recovery guide](../sf93-seller-support-bundle/INCIDENT_RECOVERY.md)
+for exact CLI inputs, native module/API shapes, private transfer, capacity limits
+and reconciliation behavior. Its manifest download describes a complete saved
+directory; it is not a substitute for transferring that directory's files.
+
 ## Operate the original watcher and queue
 
 Opening the console reads retained state. **Start watcher here** starts the
@@ -187,7 +221,9 @@ loopback Host, same-origin requests, route syntax and bounded JSON bodies.
 | `start(sourceId, input)` | `expectedConfigRevision,expectedConfigHash` | Source and current worker state after the original watcher becomes ready |
 | `stop(sourceId)` | None | Source and worker state after this console's worker drains |
 | `prepareCase(sourceId, incidentId, input)` | `expectedRevision,workspaceText,routeId` | `source,incidentId,revision,handoff,html,report` |
-| `close()` | None | Idempotent promise that drains all console-owned workers |
+| `recoveryOverview(sourceId, input)` | Optional `offset,limit` | Exact recovery workspace, source revision, active pin metadata and paged snapshots/received stores |
+| `recoveryOperation(sourceId, action, envelope)` | `{workspaceId,input}` bound to the current private recovery selection | Original snapshot, inspection, receiving, explicit open, abandonment or reconciliation result |
+| `close()` | None | Idempotent promise that aborts and drains recovery operations and all console-owned workers |
 
 The `expectedNotificationId` property is required by the console method.
 Use the latest displayed event UUID, or explicit `null` when the incident has

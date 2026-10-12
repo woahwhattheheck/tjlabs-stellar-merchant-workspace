@@ -21,6 +21,7 @@ PROJECT_BYTES = 497098
 SOURCE_COMMIT = "27347f1b1a9ae0f1ab7979803dd471f26c5185cf"
 SOURCE_TREE = "ab96fa5fe8686f7f8461d18c0f65a5ebc33ff7df"
 OPERATION = "BUYER-FINANCE-STANDALONE-6200-20261012"
+SOURCE_INPUT_MAX_BYTES = 64 * 1024 * 1024
 
 
 def need(value, message):
@@ -106,7 +107,7 @@ def main():
     need(packet.get("format") == "deflate-raw" and
          packet.get("source_bytes") == manifest["decodedInput"]["bytes"] and
          packet.get("source_sha256") == manifest["decodedInput"]["sha256"] and
-         0 < packet["source_bytes"] <= 8 * 1024 * 1024,
+         0 < packet["source_bytes"] <= SOURCE_INPUT_MAX_BYTES,
          "The retained original source input identity changed")
     compressed = base64.b64decode(packet["base64"], validate=True)
     need(len(compressed) == packet["compressed_bytes"], "Original compressed input length changed")
@@ -122,6 +123,9 @@ def main():
          source["metadata"]["source"]["commit"] == SOURCE_COMMIT and
          source["metadata"]["source"]["tree"] == SOURCE_TREE,
          "The original receiver is bound to a different product or Git tree")
+    # The verified parsed source owns these bytes for the original operation.
+    # Release the encoded and decoded carrier copies before any native child.
+    del packet, compressed, decoder, raw
 
     receiving, _, receiving_sha = file_digest(args.original_receiving)
     need(receiving_sha == OUTER_SHA256, "The complete original F232 receiving ZIP changed")
@@ -133,7 +137,11 @@ def main():
     source["donor_sources"] = [directory(path) for path in args.donor_source]
     source["donor_archives"] = [[digest, str(Path(path).resolve(strict=True))] for digest, path in args.donor_archive]
     source["incoming_directories"] = [directory(path) for path in args.incoming]
-    source["additional_paths"] = list(args.additional_path)
+    additional_paths = source.get("additional_paths", [])
+    need(isinstance(additional_paths, list) and
+         all(isinstance(path, str) for path in additional_paths),
+         "The retained original additional source paths changed")
+    source["additional_paths"] = list(dict.fromkeys(additional_paths + args.additional_path))
     if args.node_headers:
         source["node_headers"] = directory(args.node_headers)
     if args.archive_directory:
@@ -175,7 +183,8 @@ def main():
                           "originalReceivingSha256": OUTER_SHA256,
                           "originalProjectSha256": PROJECT_SHA256,
                           "requiredSourcePaths": len(source["metadata"]["requiredPaths"]),
-                          "incomingOriginalObjects": len(source["incoming"])}), flush=True)
+                          "incomingOriginalObjects": len(source["incoming"]),
+                          "additionalSourcePaths": len(source["additional_paths"])}), flush=True)
         exec(operation_code, {"_original_source": source, "__name__": "__main__"})
 
 

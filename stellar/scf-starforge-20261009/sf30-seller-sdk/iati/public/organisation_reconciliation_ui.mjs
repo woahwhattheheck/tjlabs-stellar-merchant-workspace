@@ -18,6 +18,7 @@ window.IatiOrganisationReconciliationUi = function(api) {
   let comparisons = [], decisions = new Map(), selectedActivity = new Set(), selectedOrganisation = null;
   let report = null, editing = -1, organisationOffset = 0, activityOffset = 0, dirty = false, selectionDirty = true;
   let pending = null, workspaceKey = null, mounted = false, database = null, activeTab = 'sources';
+  let sourceDraft = null, restoredAction = null;
   const memory = new Map();
   const fresh = () => !current || catalogue.cases.find(item => item.id === current.id)?.revision === current.revision;
   const caseFrom = value => value?.case ?? value?.plan ?? value;
@@ -37,6 +38,31 @@ window.IatiOrganisationReconciliationUi = function(api) {
     element.replaceChildren(new Option(empty, ''));
     for (const item of items) element.add(new Option(item.label, item.id));
     element.value = items.some(item => String(item.id) === String(previous)) ? String(previous) : '';
+  }
+  function retainOption(element, value, label) {
+    if (value !== undefined && value !== null && value !== '' && ![...element.options].some(option => option.value === String(value)))
+      element.add(new Option(label, String(value)));
+    element.value = value === undefined || value === null ? '' : String(value);
+  }
+  function sourceFormDraft() {
+    return { organisation: { id: $('org-plan').value, revision: $('org-revision').value, organisationKey: $('org-key').value },
+      portfolios: [...$('portfolios').querySelectorAll('[data-portfolio]')].map(input => ({
+        id: input.dataset.portfolio, revision: input.closest('tr').querySelector('input[type="number"]').value, selected: input.checked
+      })) };
+  }
+  function rememberSourceDraft() { sourceDraft = sourceFormDraft(); }
+  function restoredView() {
+    $('restored').hidden = !restoredAction;
+    $('restored-summary').textContent = restoredAction ? 'Original ' + restoredAction.route + ' request '
+      + restoredAction.input.requestId + ' is retained unchanged. Its values are restored for correction.'
+      + (restoredAction.input.id ? ' The original case and expected revision ' + restoredAction.input.expectedRevision + ' are preserved.' : '')
+      + (restoredAction.warning ? ' ' + restoredAction.warning : '') : '';
+  }
+  function downloadAction(value, filename) {
+    if (!value) return;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + '\n'], { type: 'application/json' }));
+    const link = node('a'); link.href = url; link.download = filename; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function tab(name) {
     activeTab = name;
@@ -64,27 +90,62 @@ window.IatiOrganisationReconciliationUi = function(api) {
     return database;
   }
   async function storeRequest(mode, value, suffix = 'pending') {
-    const key = workspaceKey + ':' + suffix;
+    const key = workspaceKey + ':' + suffix, fallbackKey = 'sf30.iati.reconciliation.' + key;
+    const marker = 'sf30.iati.reconciliation.fallback.v1';
+    function fallback() {
+      if (memory.has(key)) return memory.get(key);
+      try {
+        const raw = sessionStorage.getItem(fallbackKey);
+        if (raw === null) return null;
+        const saved = JSON.parse(raw);
+        return saved?.schema === marker ? saved : { schema: marker, state: 'value', value: saved };
+      } catch { return null; }
+    }
+    function retainFallback(record) {
+      memory.set(key, record);
+      try { sessionStorage.setItem(fallbackKey, JSON.stringify(record)); }
+      catch {
+        // A previous fallback must not become the owner of a later primary write.
+        try { sessionStorage.removeItem(fallbackKey); } catch {}
+        let older = null;
+        try { older = sessionStorage.getItem(fallbackKey); } catch {}
+        if (older !== null) throw new Error('The browser could not replace its older recovery record. Download the retained action before changing browser storage.');
+      }
+    }
+    function retireFallback() {
+      // Keep the new in-memory owner if storage cleanup is unavailable.
+      try { sessionStorage.removeItem(fallbackKey); memory.delete(key); } catch {}
+    }
+    function valueOf(record) {
+      if (record.state === 'deleted') return undefined;
+      if (record.state !== 'value') throw new Error('The retained browser action has an unknown recovery state.');
+      return record.value;
+    }
+    if (mode === 'read') {
+      const owned = fallback();
+      if (owned !== null) return valueOf(owned);
+    } else {
+      // The fallback explicitly owns this key until the primary transaction commits.
+      // A deletion marker also suppresses an older primary value after a failed delete.
+      retainFallback(mode === 'delete' ? { schema: marker, state: 'deleted' }
+        : { schema: marker, state: 'value', value: clone(value) });
+    }
     try {
       const db = await openDatabase();
-      return await new Promise((resolve, reject) => {
+      const answer = await new Promise((resolve, reject) => {
         const tx = db.transaction('requests', mode === 'read' ? 'readonly' : 'readwrite');
         const store = tx.objectStore('requests');
         const operation = mode === 'read' ? store.get(key) : mode === 'delete' ? store.delete(key) : store.put(value, key);
-        let answer;
-        operation.onsuccess = () => { answer = operation.result; };
-        tx.oncomplete = () => resolve(answer);
+        let result;
+        operation.onsuccess = () => { result = operation.result; };
+        tx.oncomplete = () => resolve(result);
         tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
       });
+      if (mode !== 'read') retireFallback();
+      return answer;
     } catch {
-      const fallback = 'sf30.iati.reconciliation.' + key;
-      if (mode === 'read') {
-        try { return JSON.parse(sessionStorage.getItem(fallback) || 'null') ?? memory.get(key); }
-        catch { return memory.get(key); }
-      }
-      if (mode === 'delete') { memory.delete(key); try { sessionStorage.removeItem(fallback); } catch {} return; }
-      memory.set(key, value);
-      try { sessionStorage.setItem(fallback, JSON.stringify(value)); } catch {}
+      const owned = fallback();
+      return owned === null ? undefined : valueOf(owned);
     }
   }
   function pendingView() {
@@ -113,6 +174,8 @@ window.IatiOrganisationReconciliationUi = function(api) {
       '<div id="rec-pending" class="card" hidden><h2>Retained action</h2><p id="rec-pending-summary"></p><div class="row">' +
       '<button id="rec-reconcile">Read saved result</button><button id="rec-retry">Continue same action</button>' +
       '<button id="rec-revise-rejected">Edit rejected selection</button><button id="rec-pending-download">Download action record</button></div></div>' +
+      '<div id="rec-restored" class="card" hidden><h2>Restored rejected action</h2><p id="rec-restored-summary"></p>' +
+      '<button id="rec-restored-download">Download original rejected action</button></div>' +
       '<div class="rec-tabs" role="tablist" aria-label="Financial reconciliation stages">' +
       '<button data-rec-tab="sources" role="tab">1. Sources</button><button data-rec-tab="matches" role="tab">2. Record comparisons</button>' +
       '<button data-rec-tab="review" role="tab">3. Findings and review</button><button data-rec-tab="history" role="tab">4. History and delivery</button></div>' +
@@ -122,7 +185,7 @@ window.IatiOrganisationReconciliationUi = function(api) {
       '<label>Organisation plan<select id="rec-org-plan"></select></label><div class="rec-pair"><label>Saved plan revision<input id="rec-org-revision" type="number" min="1" step="1"></label>' +
       '<button id="rec-org-open">Read organisation choices</button></div><label>Organisation<select id="rec-org-key"></select></label>' +
       '<div id="rec-org-identity" class="fine rec-identity"></div></article><article class="card"><h2>Activity portfolios</h2>' +
-      '<p>Select the saved portfolios and their exact revisions.</p><div id="rec-portfolios"></div></article></div>' +
+      '<p>Select the saved portfolios and their exact revisions. Use <strong>Add saved revision</strong> to compare distinct editions of the same portfolio.</p><div id="rec-portfolios" class="table-scroll"></div></article></div>' +
       '<div class="card"><button id="rec-load" class="primary">Load financial records</button><p id="rec-selection-state" class="fine"></p>' +
       '<div id="rec-source-summary"></div></div></div>' +
       '<div data-rec-panel="matches" hidden><div class="rec-grid rec-registers">' +
@@ -134,11 +197,11 @@ window.IatiOrganisationReconciliationUi = function(api) {
       '<div class="row"><label class="rec-check"><input id="rec-selected-only" type="checkbox"> Show selected rows</label>' +
       '<button id="rec-select-filtered">Select filtered rows</button><button id="rec-clear-selected">Clear selection</button><span id="rec-selected-count" class="fine"></span></div>' +
       '<div id="rec-activity-register"></div><div id="rec-activity-page" class="row"></div></article></div>' +
-      '<article class="card"><h2 id="rec-editor-title">Add a comparison</h2><div class="rec-pair">' +
+      '<article class="card"><h2 id="rec-editor-title">Add a comparison</h2>' +
+      '<label class="rec-check"><input id="rec-no-activity" type="checkbox"> Record no selected activity coverage</label>' +
+      '<p class="fine">This explicit selection retains an empty activity-row list and the native no-activity-selection finding. It does not assert that the organisation has no activity spending.</p><div class="rec-pair">' +
       '<label>Coverage<select id="rec-coverage"><option value="selected">Selected activity coverage</option><option value="complete">Complete organisation coverage</option></select></label>' +
       '<label>Value dates<select id="rec-value-dates"><option value="separate">Keep value dates separate</option><option value="nominal">Compare reported nominal amounts</option></select></label></div>' +
-      '<label class="rec-empty-coverage"><input id="rec-empty-coverage" type="checkbox">Record empty activity coverage</label>' +
-      '<p class="fine">Use this when the selected organisation record has no activity financial rows in the stated scope. The report retains an empty selection and its finding.</p>' +
       '<label>Scope statement<textarea id="rec-scope" rows="3" placeholder="Describe the activity coverage and why these records belong together."></textarea></label>' +
       '<div class="row"><button id="rec-add" class="primary">Add explicit record comparison</button><button id="rec-cancel-edit" hidden>Cancel comparison edit</button></div>' +
       '<p class="fine">The calculated report retains original currency, periods, value dates, budget versions, hierarchy and every exclusion.</p></article>' +
@@ -183,35 +246,63 @@ window.IatiOrganisationReconciliationUi = function(api) {
     const portfolios = [...$('portfolios').querySelectorAll('[data-portfolio]:checked')].map(input => ({
       id: input.dataset.portfolio, revision: positive(input.closest('tr').querySelector('input[type="number"]').value, 'portfolio')
     }));
-    if (!portfolios.length) throw new Error('Select at least one saved activity portfolio.');
+    if (!portfolios.length || portfolios.length > 32) throw new Error('Select 1–32 saved activity portfolio revisions.');
+    if (new Set(portfolios.map(item => JSON.stringify([item.id, item.revision]))).size !== portfolios.length)
+      throw new Error('Select each saved portfolio revision once. Distinct revisions of the same portfolio may be selected together.');
+    portfolios.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : a.revision - b.revision);
     return { organisation: { id, revision: positive($('org-revision').value, 'organisation'), organisationKey }, portfolios };
   }
   function sourceChanged() {
+    rememberSourceDraft();
     selectionDirty = true; dirty = true; report = null;
     renderReport();
     $('selection-state').textContent = 'Load the selected saved revisions before editing their financial comparisons.';
     buttons();
   }
-  function renderPortfolios(selected = loadedSelection?.portfolios ?? []) {
-    const known = new Map(selected.map(item => [item.id, item.revision]));
+  function renderPortfolios(selected = loadedSelection?.portfolios ?? [], draftRows = null) {
+    const rows = draftRows === null ? selected.map(item => ({ id: item.id, revision: String(item.revision), selected: true }))
+      : clone(draftRows);
+    const known = new Set(rows.map(item => item.id));
+    for (const item of catalogue.activityPortfolios) if (!known.has(item.id))
+      rows.push({ id: item.id, revision: String(item.revision), selected: false });
+    const names = new Map(catalogue.activityPortfolios.map(item => [item.id, item]));
     clear($('portfolios'));
     const t = node('table'), head = node('thead'), tr = node('tr'), body = node('tbody');
-    ['Use', 'Portfolio', 'Revision'].forEach(label => tr.append(node('th', label)));
+    ['Use', 'Portfolio / saved edition', 'Revision'].forEach(label => tr.append(node('th', label)));
     head.append(tr); t.append(head, body);
-    for (const item of catalogue.activityPortfolios) {
+    rows.forEach((item, index) => {
+      const original = names.get(item.id), label = original?.name || short(item.id);
       const row = node('tr'), checkCell = node('td'), nameCell = node('td'), revisionCell = node('td');
-      const check = node('input'); check.type = 'checkbox'; check.dataset.portfolio = item.id; check.checked = known.has(item.id);
-      check.setAttribute('aria-label', 'Include ' + (item.name || short(item.id))); check.onchange = sourceChanged;
-      checkCell.append(check); nameCell.append(node('strong', item.name || short(item.id)), node('small', short(item.id), 'fine rec-block'));
-      const number = node('input'); number.type = 'number'; number.min = '1'; number.step = '1'; number.value = known.get(item.id) ?? item.revision;
-      number.setAttribute('aria-label', 'Saved revision for ' + (item.name || short(item.id))); number.onchange = sourceChanged;
+      const check = node('input'); check.type = 'checkbox'; check.dataset.portfolio = item.id; check.checked = Boolean(item.selected);
+      check.setAttribute('aria-label', 'Include ' + label + ' edition ' + (index + 1)); check.onchange = sourceChanged;
+      checkCell.append(check); nameCell.append(node('strong', label), node('small', short(item.id), 'fine rec-block'));
+      if (!original) nameCell.append(node('small', 'Retained portfolio identity is absent from the current inventory.', 'fine rec-block'));
+      const controls = node('div', undefined, 'row'), add = node('button', 'Add saved revision'); add.type = 'button'; add.className = 'rec-small'; add.dataset.recSourceEdit = 'true';
+      add.onclick = () => {
+        const draft = sourceFormDraft();
+        draft.portfolios.splice(index + 1, 0, { id: item.id, revision: '', selected: false });
+        renderPortfolios([], draft.portfolios); sourceChanged();
+      };
+      controls.append(add);
+      if (rows.filter(value => value.id === item.id).length > 1) {
+        const remove = node('button', 'Remove edition'); remove.type = 'button'; remove.className = 'rec-small'; remove.dataset.recSourceEdit = 'true';
+        remove.onclick = () => {
+          const draft = sourceFormDraft(); draft.portfolios.splice(index, 1);
+          renderPortfolios([], draft.portfolios); sourceChanged();
+        };
+        controls.append(remove);
+      }
+      nameCell.append(controls);
+      const number = node('input'); number.type = 'number'; number.min = '1'; number.step = '1'; number.value = item.revision;
+      number.placeholder = 'Revision'; number.setAttribute('aria-label', 'Saved revision for ' + label + ' edition ' + (index + 1));
+      number.oninput = sourceChanged;
       revisionCell.append(number); row.append(checkCell, nameCell, revisionCell); body.append(row);
-    }
-    if (!catalogue.activityPortfolios.length) $('portfolios').append(node('p', 'Save an activity portfolio in Portfolio review to select it here.', 'fine'));
+    });
+    if (!rows.length) $('portfolios').append(node('p', 'Save an activity portfolio in Portfolio review to select it here.', 'fine'));
     else $('portfolios').append(t);
   }
   async function readOrganisationChoices(id, selectedRevision, key) {
-    if (!id) { optionList($('org-key'), [], '', 'Choose an organisation plan first'); return; }
+    if (!id) { selectedOrgPlan = null; optionList($('org-key'), [], '', 'Choose an organisation plan first'); $('org-identity').textContent = ''; rememberSourceDraft(); return; }
     selectedOrgPlan = await get('/api/iati/organisation/plan?' + q({ id, revision: selectedRevision }));
     const keys = selectedOrgPlan.organisationKeys ?? [];
     const enriched = catalogue.organisationPlans.find(item => item.id === id && item.revision === selectedOrgPlan.revision)?.organisations;
@@ -223,10 +314,14 @@ window.IatiOrganisationReconciliationUi = function(api) {
       ].filter(Boolean).join(' · ')]));
     }
     optionList($('org-key'), keys.map((item, index) => ({ id: item, label: names.get(item) || 'Organisation ' + (index + 1) + ' · ' + short(item) })), key);
-    if (!$('org-key').value && keys.length === 1) $('org-key').value = keys[0];
+    if (key !== undefined) retainOption($('org-key'), key, 'Original organisation identity · ' + short(key));
+    else if (!$('org-key').value && keys.length === 1) $('org-key').value = keys[0];
     $('org-identity').textContent = (selectedOrgPlan.name || 'Organisation plan') + ' · revision ' + selectedOrgPlan.revision;
+    rememberSourceDraft();
   }
   async function refresh() {
+    if (sourceDraft !== null) rememberSourceDraft();
+    const draft = sourceDraft === null ? null : clone(sourceDraft);
     const next = await get(BASE + 'status');
     if (!Array.isArray(next.cases) || !Array.isArray(next.organisationPlans) || !Array.isArray(next.activityPortfolios))
       throw new Error('The complete reconciliation inventory was not returned.');
@@ -238,17 +333,22 @@ window.IatiOrganisationReconciliationUi = function(api) {
       pending = await storeRequest('read') ?? null; pendingView();
     }
     optionList($('case-select'), catalogue.cases.map(item => ({ id: item.id, label: item.name + ' · revision ' + item.revision })), current?.id);
-    const oldPlan = loadedSelection?.organisation.id ?? $('org-plan').value;
+    const oldPlan = draft?.organisation.id ?? loadedSelection?.organisation.id ?? $('org-plan').value;
     optionList($('org-plan'), catalogue.organisationPlans.map(item => ({ id: item.id, label: item.name + ' · revision ' + item.revision })), oldPlan);
-    if (!$('org-plan').value && catalogue.organisationPlans.length === 1) {
-      $('org-plan').value = catalogue.organisationPlans[0].id;
-      $('org-revision').value = catalogue.organisationPlans[0].revision;
-      await readOrganisationChoices($('org-plan').value, Number($('org-revision').value));
+    if (draft !== null) {
+      retainOption($('org-plan'), draft.organisation.id, 'Retained organisation plan · ' + short(draft.organisation.id));
+      $('org-revision').value = draft.organisation.revision;
+      retainOption($('org-key'), draft.organisation.organisationKey, 'Original organisation identity · ' + short(draft.organisation.organisationKey));
+      renderPortfolios([], draft.portfolios);
+    } else {
+      renderPortfolios(loadedSelection?.portfolios ?? []);
+      if (!$('org-plan').value && catalogue.organisationPlans.length === 1) {
+        $('org-plan').value = catalogue.organisationPlans[0].id;
+        $('org-revision').value = catalogue.organisationPlans[0].revision;
+        await readOrganisationChoices($('org-plan').value, Number($('org-revision').value));
+      }
     }
-    const preserved = [...$('portfolios').querySelectorAll('[data-portfolio]:checked')].map(input => ({
-      id: input.dataset.portfolio, revision: Number(input.closest('tr').querySelector('input[type="number"]').value)
-    }));
-    renderPortfolios(preserved.length ? preserved : loadedSelection?.portfolios ?? []);
+    rememberSourceDraft();
     metrics($('counts'), [['Saved reconciliations', catalogue.cases.length], ['Organisation plans', catalogue.organisationPlans.length], ['Activity portfolios', catalogue.activityPortfolios.length]]);
     buttons();
   }
@@ -354,7 +454,7 @@ window.IatiOrganisationReconciliationUi = function(api) {
       const tr = node('tr'), use = node('td'), identity = node('td'), dates = node('td'), money = node('td'), tools = node('td');
       const check = node('input'); check.type = 'checkbox'; check.value = row.id; check.checked = selectedActivity.has(row.id);
       check.setAttribute('aria-label', 'Include ' + (row.activityId || 'activity record') + ' ' + dateLabel(row));
-      check.onchange = () => { if (check.checked) selectedActivity.add(row.id); else selectedActivity.delete(row.id); $('selected-count').textContent = selectedActivity.size + ' selected rows'; buttons(); };
+      check.onchange = () => { if (check.checked) { selectedActivity.add(row.id); $('no-activity').checked = false; } else selectedActivity.delete(row.id); $('selected-count').textContent = selectedActivity.size + ' selected rows'; buttons(); };
       use.append(check); identity.append(node('strong', row.activityId || short(row.id)),
         node('small', [row.collection, row.budgetType && 'budget type ' + row.budgetType, row.budgetStatus && 'status ' + row.budgetStatus,
           row.transactionType && 'transaction ' + row.transactionType, row.hierarchy && 'hierarchy ' + row.hierarchy].filter(Boolean).join(' · '), 'fine rec-block'));
@@ -368,15 +468,14 @@ window.IatiOrganisationReconciliationUi = function(api) {
     buttons();
   }
   function editorClear() {
-    editing = -1; selectedActivity.clear(); selectedOrganisation = null; $('empty-coverage').checked = false;
-    $('scope').value = ''; $('coverage').value = 'selected'; $('value-dates').value = 'separate';
+    editing = -1; selectedActivity.clear(); selectedOrganisation = null;
+    $('scope').value = ''; $('coverage').value = 'selected'; $('value-dates').value = 'separate'; $('no-activity').checked = false;
     $('editor-title').textContent = 'Add a comparison'; $('add').textContent = 'Add explicit record comparison'; $('cancel-edit').hidden = true;
     renderOrganisation(); renderActivity();
   }
   function editComparison(index) {
     const item = comparisons[index]; editing = index; selectedOrganisation = item.organisationRowId; selectedActivity = new Set(item.activityRowIds);
-    $('empty-coverage').checked = item.activityRowIds.length === 0;
-    $('scope').value = item.scopeStatement; $('coverage').value = item.coverage; $('value-dates').value = item.valueDatePolicy ?? 'separate';
+    $('scope').value = item.scopeStatement; $('coverage').value = item.coverage; $('value-dates').value = item.valueDatePolicy ?? 'separate'; $('no-activity').checked = item.activityRowIds.length === 0;
     $('editor-title').textContent = 'Edit comparison ' + (index + 1); $('add').textContent = 'Save comparison changes'; $('cancel-edit').hidden = false;
     $('org-search').value = ''; $('activity-search').value = ''; $('currency').value = ''; $('collection').value = ''; $('selected-only').checked = true;
     organisationOffset = activityOffset = 0; renderOrganisation(); renderActivity(); tab('matches');
@@ -385,7 +484,7 @@ window.IatiOrganisationReconciliationUi = function(api) {
     recordTable($('comparison-drafts'), ['Comparison', 'Organisation record', 'Activity rows', 'Coverage / dates', 'Scope', ''], comparisons, item => {
       const index = comparisons.indexOf(item), row = node('tr'), target = organisationMap.get(item.organisationRowId);
       row.append(node('td', index + 1), node('td', target ? [target.family || target.collection, currency(target), dateLabel(target)].filter(Boolean).join(' · ') : short(item.organisationRowId)),
-        node('td', item.activityRowIds.length), node('td', item.coverage + ' · ' + (item.valueDatePolicy ?? 'separate')), node('td', item.scopeStatement));
+        node('td', item.activityRowIds.length ? item.activityRowIds.length : 'No selected activity coverage'), node('td', item.coverage + ' · ' + (item.valueDatePolicy ?? 'separate')), node('td', item.scopeStatement));
       const controls = node('td'), edit = node('button', 'Edit'), remove = node('button', 'Remove'); edit.type = remove.type = 'button';
       edit.onclick = () => editComparison(index); remove.onclick = () => { comparisons.splice(index, 1); touch(true); renderDrafts(); };
       controls.append(edit, remove); row.append(controls); return row;
@@ -399,7 +498,11 @@ window.IatiOrganisationReconciliationUi = function(api) {
     return { name, notes: $('notes').value, ...clone(loadedSelection), comparisons: clone(comparisons), decisions: [...decisions.values()].map(clone) };
   }
   function renderIssues() {
-    const issues = report?.issues ?? [];
+    const issues = [...(report?.issues ?? [])], known = new Set(issues.map(issue => issue.id));
+    for (const decision of decisions.values()) if (!known.has(decision.issueId)) issues.push({
+      id: decision.issueId, code: 'Retained issue decision', severity: 'Review against the corrected selection',
+      message: 'This original decision remains in the working definition. Preview the corrected records to identify its current finding, or clear its decision to remove it.'
+    });
     clear($('issues'), issues.length ? '' : 'This preview has no recorded findings.');
     for (const issue of issues) {
       const item = node('article', undefined, 'rec-issue'), previous = decisions.get(issue.id);
@@ -473,17 +576,17 @@ window.IatiOrganisationReconciliationUi = function(api) {
     if (!id) throw new Error('Choose saved reconciliation work.');
     const saved = await get(BASE + 'plan?' + q({ id, revision: selectedRevision }));
     if (!saved?.definition || !saved.report || saved.id !== id) throw new Error('The selected complete reconciliation was not returned.');
-    current = saved; history = (await get(BASE + 'history?' + q({ id }))).history ?? [];
+    current = saved; restoredAction = null; restoredView(); history = (await get(BASE + 'history?' + q({ id }))).history ?? [];
     history.sort((a, b) => a.revision - b.revision);
     $('name').value = saved.definition.name; $('notes').value = saved.definition.notes ?? '';
     loadedSelection = clone({ organisation: saved.definition.organisation, portfolios: saved.definition.portfolios });
-    $('org-plan').value = loadedSelection.organisation.id; $('org-revision').value = loadedSelection.organisation.revision;
+    retainOption($('org-plan'), loadedSelection.organisation.id, 'Retained organisation plan · ' + short(loadedSelection.organisation.id)); $('org-revision').value = loadedSelection.organisation.revision;
     await readOrganisationChoices(loadedSelection.organisation.id, loadedSelection.organisation.revision, loadedSelection.organisation.organisationKey);
-    renderPortfolios(loadedSelection.portfolios);
+    renderPortfolios(loadedSelection.portfolios); rememberSourceDraft();
     comparisons = clone(saved.definition.comparisons); decisions = new Map((saved.definition.decisions ?? []).map(item => [item.issueId, clone(item)]));
     report = saved.report; organisationRows = report.organisationRows ?? []; activityRows = report.activityRows ?? [];
     organisationMap = new Map(organisationRows.map(row => [row.id, row])); activityMap = new Map(activityRows.map(row => [row.id, row]));
-    selectedOrganisation = null; selectedActivity.clear(); editing = -1; dirty = false; selectionDirty = false;
+    selectedOrganisation = null; selectedActivity.clear(); editing = -1; $('no-activity').checked = false; dirty = false; selectionDirty = false;
     organisationOffset = activityOffset = 0; $('case-select').value = id;
     $('selection-state').textContent = 'Saved organisation revision ' + loadedSelection.organisation.revision + ' and '
       + loadedSelection.portfolios.length + ' activity portfolio revisions. Load financial records to extend the selected rows.';
@@ -544,7 +647,8 @@ window.IatiOrganisationReconciliationUi = function(api) {
   function addComparison() {
     if (selectionDirty || !loadedSelection) throw new Error('Load the selected saved records first.');
     if (!selectedOrganisation) throw new Error('Choose an organisation financial record.');
-    if (!selectedActivity.size && !$('empty-coverage').checked) throw new Error('Choose activity financial rows or explicitly record empty activity coverage.');
+    if (!selectedActivity.size && !$('no-activity').checked) throw new Error('Choose the activity financial rows, or explicitly record no selected activity coverage.');
+    if (selectedActivity.size && $('no-activity').checked) throw new Error('Choose activity rows or no selected activity coverage, not both.');
     const scopeStatement = $('scope').value.trim(); if (!scopeStatement) throw new Error('Describe this comparison scope.');
     const value = { organisationRowId: selectedOrganisation, activityRowIds: [...selectedActivity].sort(),
       coverage: $('coverage').value, valueDatePolicy: $('value-dates').value, scopeStatement };
@@ -552,7 +656,7 @@ window.IatiOrganisationReconciliationUi = function(api) {
     touch(true); editorClear(); renderDrafts(); status('The explicit record comparison is retained in this working selection.');
   }
   function applyDecisions() {
-    if (!report) throw new Error('Preview the financial findings first.');
+    if (!report && !decisions.size) throw new Error('Preview the financial findings first.');
     const next = new Map();
     for (const item of $('issues').querySelectorAll('[data-issue]')) {
       const decision = item.querySelector('[data-issue-decision]').value;
@@ -564,7 +668,7 @@ window.IatiOrganisationReconciliationUi = function(api) {
     decisions = next; dirty = true; renderReport(); buttons(); status('Named issue decisions are ready to save with this reconciliation.');
   }
   function newCase() {
-    current = null; history = []; comparisons = []; decisions.clear(); report = null; dirty = true;
+    current = null; history = []; comparisons = []; decisions.clear(); report = null; dirty = true; restoredAction = null; restoredView();
     $('name').value = ''; $('notes').value = ''; $('case-select').value = '';
     editorClear(); historyView(); renderDrafts(); renderReport(); buttons(); tab('sources');
   }
@@ -581,34 +685,78 @@ window.IatiOrganisationReconciliationUi = function(api) {
     $('open').disabled = busy || !$('case-select').value;
     $('open-revision').disabled = busy || !current || !$('revision').value;
     $('org-open').disabled ||= !$('org-plan').value;
-    if (selectedActivity.size) $('empty-coverage').checked = false;
-    $('add').disabled ||= !loadedSelection || selectionDirty || !selectedOrganisation || (!selectedActivity.size && !$('empty-coverage').checked);
+    $('add').disabled ||= !loadedSelection || selectionDirty || !selectedOrganisation || (!selectedActivity.size && !$('no-activity').checked);
+    $('panel').querySelectorAll('[data-rec-source-edit]').forEach(button => button.disabled = busy || held);
     const usable = Boolean(loadedSelection && !selectionDirty && comparisons.length && !held);
     for (const id of ['preview', 'preview-review']) $(id).disabled = busy || !usable;
     for (const id of ['save', 'save-review']) $(id).disabled = busy || !usable || !fresh();
-    $('apply-decisions').disabled ||= !report;
+    $('apply-decisions').disabled ||= !report && !decisions.size;
     $('review-submit').disabled = busy || held || !current || dirty || !fresh();
     $('compare-submit').disabled = busy || !current || history.length < 2;
     for (const id of ['file-report', 'file-csv', 'file-json', 'export']) $(id).disabled = busy || !current;
     for (const id of ['reconcile', 'retry', 'pending-download']) $(id).disabled = busy || !pending;
     $('revise-rejected').disabled = busy || !pending?.rejected;
+    $('restored-download').disabled = busy || !restoredAction;
     $('case-state').textContent = current ? 'Revision ' + current.revision + (fresh() ? ' · latest saved work' : ' · historical work')
       + (dirty ? ' · working changes' : '') : 'New reconciliation';
     pendingView();
+  }
+  async function restoreRejectedAction(retained) {
+    const input = clone(retained.input);
+    if (!['save', 'review'].includes(retained.route)) throw new Error('This retained action has no editable financial form.');
+    if (input.id) await openCase(input.id, positive(input.expectedRevision, 'reconciliation'));
+    else if (retained.route === 'review') throw new Error('The original review case identity is missing.');
+    else newCase();
+    if (retained.route === 'review') {
+      $('review-actor').value = input.actor; $('review-note').value = input.note;
+      retainOption($('review-decision'), input.decision, 'Original rejected decision · ' + text(input.decision));
+      const acknowledged = new Set(input.acknowledgedIssueIds ?? []), present = new Set();
+      for (const check of $('review-issues').querySelectorAll('input')) { check.checked = acknowledged.has(check.value); present.add(check.value); }
+      for (const id of acknowledged) if (!present.has(id)) {
+        const label = node('label', undefined, 'rec-check'), check = node('input');
+        check.type = 'checkbox'; check.value = id; check.checked = true;
+        label.append(check, node('span', 'Original issue outside this saved report · ' + id + '. Clear it to remove it from the corrected review.'));
+        $('review-issues').append(label);
+      }
+      tab('review'); return '';
+    }
+    if (!input.organisation || !Array.isArray(input.portfolios) || !Array.isArray(input.comparisons))
+      throw new Error('The retained save is missing its complete original definition.');
+    const selection = clone({ organisation: input.organisation, portfolios: input.portfolios });
+    $('name').value = input.name; $('notes').value = input.notes ?? '';
+    retainOption($('org-plan'), selection.organisation.id, 'Retained organisation plan · ' + short(selection.organisation.id));
+    $('org-revision').value = selection.organisation.revision;
+    optionList($('org-key'), [], '', 'Read the selected organisation');
+    retainOption($('org-key'), selection.organisation.organisationKey, 'Original organisation identity · ' + short(selection.organisation.organisationKey));
+    renderPortfolios(selection.portfolios); rememberSourceDraft();
+    comparisons = clone(input.comparisons); decisions = new Map((input.decisions ?? []).map(item => [item.issueId, clone(item)]));
+    loadedSelection = null; selectedOrgPlan = null; report = null; organisationRows = []; activityRows = [];
+    organisationMap = new Map(); activityMap = new Map(); dirty = true; selectionDirty = true;
+    clear($('source-summary')); editorClear(); renderDrafts(); renderReport();
+    const warnings = [];
+    try { await readOrganisationChoices(selection.organisation.id, selection.organisation.revision, selection.organisation.organisationKey); }
+    catch (error) { warnings.push('Organisation choices could not be reread: ' + error.message); }
+    try { await loadRecords(selection, true); }
+    catch (error) {
+      warnings.push('Load the exact source registers before saving: ' + error.message);
+      $('selection-state').textContent = 'The complete original selections and comparison definitions are restored. Correct or reload their saved sources before saving.';
+    }
+    dirty = true; renderDrafts(); renderReport(); rememberSourceDraft();
+    tab(selectionDirty ? 'sources' : 'matches');
+    return warnings.join(' ');
   }
   function submit(id, message, operation) {
     $(id).addEventListener('submit', event => { event.preventDefault(); run(message, operation); });
   }
   function wire() {
-    $('empty-coverage').onchange = () => { if ($('empty-coverage').checked) selectedActivity.clear(); renderActivity(); buttons(); };
     $('name').oninput = $('notes').oninput = () => { dirty = true; buttons(); };
     $('case-select').onchange = buttons;
     $('org-plan').onchange = () => {
       const selected = catalogue.organisationPlans.find(item => item.id === $('org-plan').value);
-      $('org-revision').value = selected?.revision ?? ''; sourceChanged();
+      $('org-revision').value = selected?.revision ?? ''; optionList($('org-key'), [], '', 'Read the selected organisation plan'); selectedOrgPlan = null; sourceChanged();
       run('Reading saved organisation choices…', () => readOrganisationChoices(selected?.id, selected?.revision));
     };
-    $('org-revision').onchange = $('org-key').onchange = sourceChanged;
+    $('org-revision').oninput = $('org-key').onchange = sourceChanged;
     $('org-open').onclick = () => run('Reading the selected organisation revision…', async () => {
       await readOrganisationChoices($('org-plan').value, positive($('org-revision').value, 'organisation')); sourceChanged();
     });
@@ -618,8 +766,9 @@ window.IatiOrganisationReconciliationUi = function(api) {
     $('new').onclick = newCase;
     $('org-search').oninput = () => { organisationOffset = 0; renderOrganisation(); };
     $('activity-search').oninput = $('currency').onchange = $('collection').onchange = $('selected-only').onchange = () => { activityOffset = 0; renderActivity(); };
-    $('select-filtered').onclick = () => { filteredActivity().forEach(row => selectedActivity.add(row.id)); renderActivity(); };
+    $('select-filtered').onclick = () => { filteredActivity().forEach(row => selectedActivity.add(row.id)); if (selectedActivity.size) $('no-activity').checked = false; renderActivity(); };
     $('clear-selected').onclick = () => { selectedActivity.clear(); renderActivity(); };
+    $('no-activity').onchange = () => { if ($('no-activity').checked) selectedActivity.clear(); renderActivity(); };
     $('add').onclick = () => run('Retaining the explicit record comparison…', addComparison);
     $('cancel-edit').onclick = editorClear;
     for (const id of ['preview', 'preview-review']) $(id).onclick = () => run('Calculating complete financial coverage…', preview);
@@ -666,18 +815,23 @@ window.IatiOrganisationReconciliationUi = function(api) {
       const value = await get(BASE + 'request?' + q({ requestId: pending.input.requestId }));
       if (value.state === 'RECORDED') { await resolveRequest(pending.input.requestId); return; }
       if (value.state !== 'NOT_RECORDED') throw new Error('The original action state could not be resolved.');
-      await storeRequest('write', pending, 'rejected:' + pending.input.requestId); await storeRequest('delete');
-      pending = null; pendingView(); buttons(); status('The rejected request is retained. Edit and save the corrected selection.');
+      const original = clone(pending);
+      await storeRequest('write', original, 'rejected:' + original.input.requestId);
+      const warning = await restoreRejectedAction(original);
+      await storeRequest('delete'); pending = null;
+      restoredAction = { ...original, warning }; restoredView(); pendingView(); buttons();
+      status('The complete rejected ' + original.route + ' values are restored. Edit and save the correction with a new request ID.' + (warning ? ' ' + warning : ''));
     });
-    $('pending-download').onclick = () => {
-      const url = URL.createObjectURL(new Blob([JSON.stringify(pending, null, 2) + '\n'], { type: 'application/json' }));
-      const link = node('a'); link.href = url; link.download = 'IATI_Reconciliation_Pending_Action.json'; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    $('pending-download').onclick = () => downloadAction(pending, 'IATI_Reconciliation_Pending_Action.json');
+    $('restored-download').onclick = () => {
+      if (!restoredAction) return;
+      const { warning, ...original } = restoredAction;
+      downloadAction(original, 'IATI_Reconciliation_Rejected_Action.json');
     };
   }
   mount();
   return { mount, refresh, buttons, openCase, async newFromOrganisation(id, selectedRevision, organisationKey) {
-    newCase(); $('org-plan').value = id; $('org-revision').value = selectedRevision;
+    newCase(); retainOption($('org-plan'), id, 'Retained organisation plan · ' + short(id)); $('org-revision').value = selectedRevision;
     await readOrganisationChoices(id, selectedRevision, organisationKey); sourceChanged(); api.show('reconciliation');
   } };
 };

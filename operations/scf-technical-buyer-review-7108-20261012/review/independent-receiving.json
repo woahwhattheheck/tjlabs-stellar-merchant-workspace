@@ -1,0 +1,51 @@
+{
+  "schema": "stellar-forge.grant-technical-review-receiving.v1",
+  "state": "COMPLETE",
+  "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "execution": "Unmodified original draft/review source functions in an independently initialized V8 module set; UTF-8 SHA-256 and Git SHA-1 verified. No filesystem, browser, issuer or payment operation.",
+  "receivedAt": "2026-10-12T19:06:04.149Z",
+  "originalReview": {
+    "bytes": 412862,
+    "sha256": "63e0a76a0f9fe9a812de45628de421cae2bc96628eb179b40f89eca1e488491e",
+    "gitBlob": "72b2e34d780cdb2423de19cd146928a03477ba8d"
+  },
+  "receivedReview": {
+    "bytes": 412862,
+    "sha256": "63e0a76a0f9fe9a812de45628de421cae2bc96628eb179b40f89eca1e488491e",
+    "gitBlob": "72b2e34d780cdb2423de19cd146928a03477ba8d"
+  },
+  "byteIdentical": true,
+  "originalReviewState": "COMPLETE",
+  "originalActions": 47,
+  "originalRequestReplayed": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-application-application",
+  "replayPreservedLaterActions": true,
+  "proposedDraft": {
+    "bytes": 204893,
+    "sha256": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+    "gitBlob": "6a8a5ac61825cf518f02ef33c8584d7b8fdf15fe"
+  },
+  "reopenedReview": {
+    "bytes": 413590,
+    "sha256": "7ea8ab1ce071307693362a269708cd475298e737a7466825f81f22a7b8845664",
+    "gitBlob": "b8a82fb1af55d1e30d9d5bb209906974a64748a1"
+  },
+  "reopenedState": "OPEN",
+  "reopenedActions": 48,
+  "retainedEditions": [
+    {
+      "id": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+      "draftSha256": "b0d2a2e4cc9db29f062cd0cdc96752138e8f3d55b06d210b158f50938bd699c5",
+      "bytes": 119992
+    },
+    {
+      "id": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+      "draftSha256": "ed7fc11f6561c1eab3ea5db5adef0e9de0ce02803a591a8dbb877c78e703871a",
+      "bytes": 204893
+    }
+  ],
+  "sourceGitBlob": "cd05c693938a0adcbfa1358a12bcddf061d6eaed",
+  "sourceSha256": "0072100fe6edf1ea1b5e5cca74efc20423b24792eca5ab194327eb736a62616c",
+  "originalSourceVersions": 1,
+  "originalDraftVersions": 1,
+  "issuerFields": 0
+}

@@ -6,9 +6,9 @@ The browser entry is **Financial reconciliation** in the existing IATI console. 
 
 ## Complete operator workflow
 
-1. Open **Financial reconciliation → Sources**. Name the reconciliation and choose the saved organisation plan, its exact revision and the organisation within that plan. Select each activity portfolio and its saved revision.
+1. Open **Financial reconciliation → Sources**. Name the reconciliation and choose the saved organisation plan, its exact revision and the organisation within that plan. Select each activity portfolio and its saved revision. **Add saved revision** creates another selectable edition row for the same portfolio; enter its exact saved revision and select that row. Distinct revisions remain separate, while the same ID and revision can be selected only once.
 2. Choose **Load financial records**. Both complete registers are read through their native pages. The browser keeps the returned snapshot identity and detects a changed register while loading.
-3. In **Record comparisons**, select one organisation financial record and the exact activity rows to compare. Search and filter the complete loaded activity register by activity, recipient, record family or currency. **Select filtered rows** records an explicit selection of all rows matching the current filters; selections remain visible through **Show selected rows**.
+3. In **Record comparisons**, select one organisation financial record and the exact activity rows to compare. Search and filter the complete loaded activity register by activity, recipient, record family or currency. **Select filtered rows** records an explicit selection of all rows matching the current filters; selections remain visible through **Show selected rows**. To retain an organisation record without selecting activity coverage, explicitly choose **Record no selected activity coverage**. This writes the native empty activity-row selection and retains its `no-activity-selection` review finding. Selecting activity rows clears that choice. Clearing selected rows alone does not assert the empty-coverage choice.
 4. Describe the scope. Choose **Selected activity coverage** for a selected cohort or **Complete organisation coverage** only when that is the intended coverage of the comparison. Set the value-date policy for this comparison.
 5. Add the comparison. Repeat for the other organisation records and activity scopes. Each comparison keeps its own coverage statement and date policy. Existing comparisons can be edited or removed before saving.
 6. Preview the financial findings, or save the complete selection directly. The saved result contains the native calculation and every included or excluded financial row. Review detail exposes exclusion reasons and original financial context.
@@ -16,6 +16,8 @@ The browser entry is **Financial reconciliation** in the existing IATI console. 
 8. Use **History and delivery** to compare revisions, download the report HTML, comparison CSV or full JSON, or export the complete nested-source ZIP. Receiving that ZIP in another existing workspace reopens its retained reconciliation and source work.
 
 The browser performs display and row selection. The native financial engine performs the calculations. Reported monetary amounts remain decimal strings throughout the browser and JavaScript client.
+
+Routine workspace refresh preserves unfinished source controls, including the selected organisation plan, raw revision inputs, distinct editions of one portfolio and an explicitly empty portfolio selection. It does not substitute the last loaded selection for an unfinished edit. Financial records must still be loaded from 1–32 selected saved portfolio editions before comparisons can be saved.
 
 ### Financial interpretation
 
@@ -38,13 +40,16 @@ There is no browser-side currency conversion, prorating or inferred recipient we
 
 Each save and review carries a stable request ID. The browser records the exact action before sending it and retains that same payload after an interrupted response.
 
+Recovery storage records which copy owns each request key. A fallback write remains authoritative when IndexedDB later becomes readable; a successful primary write retires its fallback copy. Deletion records an explicit marker until the primary delete completes, so an older request cannot reappear after a storage failure.
+
 - **Read saved result** resolves the existing request and opens its saved historical revision.
 - **Continue same action** resends the retained request ID and complete original payload.
-- A rejected action can be corrected after its original request is confirmed unrecorded; its rejected payload remains in local recovery history.
+- **Edit rejected selection** first confirms that the original request is unrecorded and retains its complete rejected payload. It restores a save's name, notes, organisation selector, every portfolio edition, comparisons and named issue decisions; an update reopens its original case and expected revision. For a rejected review, it reopens that exact revision and restores the reviewer, note, decision and acknowledged issue IDs. Only after restoring the editable form does it release the pending action. The correction receives a new request ID when the operator explicitly saves it.
+- The restored-action notice offers **Download original rejected action**. The original payload also remains in local recovery history. A source-read failure leaves the full definition visible and requires the operator to correct or reload its exact sources before saving. Retained issue decisions stay visible and editable even while a corrected report cannot yet be previewed.
 - **Recover a saved action** also accepts an original request ID directly.
 - **Download action record** preserves the active request as JSON.
 
-Updating a case uses its ID and expected revision. Historical revisions remain readable and exportable. Open the latest saved revision before updating that case, or create a new reconciliation with the desired source selections.
+Updating a case uses its ID and expected revision. Historical revisions remain readable and exportable. Restoring a rejected action preserves that original expected revision; it does not silently rebase the request onto newer work. Open the latest saved revision before updating that case, or create a new reconciliation with the desired source selections. A restored empty activity-row comparison remains explicit when opened for editing, previewed, reviewed and exported; its coverage finding does not assert zero organisation activity spending.
 
 ## Native HTTP interface
 
@@ -231,9 +236,7 @@ Receiving accepts exactly one configured packet file or retained exportId. An ex
 
 A reconciliation ZIP uses retained kind reconciliation. An individual HTML/CSV/JSON file uses reconciliation-file. Both use the existing native descriptor verification. This preserves complete source delivery through the same carrier used by the other IATI workflows.
 
-## Empty financial coverage and historical interpretation
-
-Select **Record empty activity coverage** when an assessed organisation financial record has no selected activity financial rows in the stated scope. This explicit choice saves an empty `activityRowIds` array and the native finding. The financial subtotal remains absent. Choosing activity records returns the comparison to an explicit populated selection. Explain the scope before saving either choice.
+## Historical interpretation
 
 Historical comparison retains changes in the financial records together with definition changes, named review changes, and added, removed or changed issues. A review-only revision is visible even when its numerical comparison records are unchanged. Case `createdAt` and `updatedAt` are native Unix timestamp numbers; source monetary values remain decimal strings.
 
@@ -308,6 +311,8 @@ Keep the current organisation, refresh, results and publishing entries in those 
 ### Original MCP dispatcher and complete-file carrier
 
 Append organisationReconciliationTools(tool) to the current source-workspace catalogue.
+
+Keep the generic original SHA preflight for every existing tool. For `merchant_source_iati_reconciliation_compare` only, leave `before` and `after` objects for its dispatcher to validate their nested IDs and revisions. This preserves the native pinned comparison contract.
 
 Before the original source-workspace switch, dispatch the reconciliation prefix using the existing callbacks:
 

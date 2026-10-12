@@ -10,6 +10,7 @@ import sys
 from .errors import BuyerError
 from .review_library import ResourceLibrary, ReviewError, ReviewTransferError
 from .storage import parse, read
+from .review_serve import browser_arguments, serve_foreground
 
 
 def _print(value):
@@ -31,6 +32,7 @@ def parser():
     root.add_argument("--state", required=True, help="Absolute native library state directory")
     root.add_argument("--node", default="node")
     root.add_argument("--timeout", type=float, default=360)
+    root.add_argument("--received-collection", help="Open this original received collection directory in --state")
     commands = root.add_subparsers(dest="command", required=True)
     init = commands.add_parser("init", help="Initialize an original source or a portable-review receiver")
     init.add_argument("--receiver", action="store_true")
@@ -39,6 +41,16 @@ def parser():
     init.add_argument("--files-root", action="append")
     init.add_argument("--max-file-bytes", type=int)
     init.add_argument("--index-bytes", type=int)
+    serve = commands.add_parser("serve", help="Open the original browser on this Python-owned native library")
+    serve.add_argument("--receiver", action="store_true", help="Create a portable-review receiver if needed")
+    browser_arguments(serve)
+    receive = commands.add_parser("receive", help="Receive a complete handover into an independent editable workspace")
+    receive.add_argument("--input", required=True)
+    receive.add_argument("--operation-id", required=True, help="Reuse the same identity to recover a lost reply")
+    receive.add_argument("--sha256")
+    receive.add_argument("--stage-return", action="store_true", help="Stage against a comparison already present here")
+    receive.add_argument("--serve", action="store_true", help="Continue directly into the original browser")
+    browser_arguments(receive)
     commands.add_parser("status")
     commands.add_parser("capabilities", help="Actual selected native engine features and action names")
     commands.add_parser("scan")
@@ -71,6 +83,28 @@ def parser():
             _page(c)
     save = collections.add_parser("save")
     save.add_argument("--input", required=True)
+    members = collections.add_parser("members", help="Read full immutable collection members")
+    members.add_argument("id")
+    members.add_argument("--revision", type=int)
+    members.add_argument("--all", action="store_true", help="Stream all members of one pinned revision as NDJSON")
+    _page(members)
+    collection_export = collections.add_parser("export", help="Export one exact revision with every original file")
+    collection_export.add_argument("id")
+    collection_export.add_argument("--revision", required=True, type=int)
+    collection_export.add_argument("--max-bytes", type=int)
+    _download(collection_export)
+    collection_inspect = collections.add_parser("inspect", help="Verify the complete original archive before receiving")
+    _collection_archive_input(collection_inspect)
+    collection_receive = collections.add_parser("receive", help="Receive, adopt and open an independently editable collection")
+    _collection_archive_input(collection_receive)
+    collection_receive.add_argument("--out", required=True, help="New private collection source directory")
+    collection_receive.add_argument("--resume", action="store_true", help="Continue receipt of this same original archive")
+    collection_receive.add_argument("--serve", action="store_true")
+    browser_arguments(collection_receive)
+    collection_open = collections.add_parser("open", help="Reopen the same original received directory")
+    collection_open.add_argument("--directory", required=True)
+    collection_open.add_argument("--serve", action="store_true")
+    browser_arguments(collection_open)
     compare = commands.add_parser("compare").add_subparsers(dest="subcommand", required=True)
     run = compare.add_parser("run", help="Begin and finish the original worker in this process")
     run.add_argument("--before", required=True)
@@ -142,6 +176,12 @@ def parser():
     return root
 
 
+def _collection_archive_input(parser):
+    parser.add_argument("--input", required=True, help="Original complete collection TAR")
+    parser.add_argument("--sha256", help="Expected complete archive SHA-256")
+    parser.add_argument("--max-bytes", type=int, help="Maximum complete archive bytes")
+
+
 def _page(parser):
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--limit", type=int, default=100)
@@ -172,6 +212,14 @@ def _all(items):
 
 def execute(library, a):
     command, sub = a.command, getattr(a, "subcommand", None)
+    if command == "serve":
+        return serve_foreground(library, a)
+    if command == "receive":
+        if a.stage_return:
+            received = library.stage_return(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
+        else:
+            received = library.import_review(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
+        return serve_foreground(library, a, received=received) if a.serve else received
     if command in ("init", "status"):
         return library.status()
     if command == "capabilities":
@@ -192,6 +240,16 @@ def execute(library, a):
         if sub == "list":return library.collections(offset=a.offset, limit=a.limit)
         if sub == "show":return library.collection(a.id, revision=a.revision)
         if sub == "history":return library.collection_history(a.id, offset=a.offset, limit=a.limit)
+        if sub == "members":
+            return (_all(library.iter_collection_members(a.id, revision=a.revision, page_size=a.limit))
+                if a.all else library.collection_members(a.id, revision=a.revision, offset=a.offset, limit=a.limit))
+        if sub == "export":
+            return library.export_collection(a.id, a.out, revision=a.revision, max_bytes=a.max_bytes,
+                transfer_directory=a.transfer_directory, chunk_bytes=a.chunk_bytes)
+        if sub == "inspect":return library.inspect_collection(a.input, expected_sha256=a.sha256, max_bytes=a.max_bytes)
+        if sub in ("receive", "open"):
+            received = {"kind": "collection", "receipt": library.collection_receipt, "library": library.status()}
+            return serve_foreground(library, a, received=received) if a.serve else received
         return library.invoke("collections.save", _json_file(a.input))
     if command == "compare":
         if sub == "run":
@@ -237,7 +295,22 @@ def main(argv=None):
     args = p.parse_args(argv)
     options = dict(checkout=args.checkout, state=args.state, node=args.node, timeout=args.timeout)
     try:
-        if args.command == "init":
+        collection_command = args.command == "collection" and args.subcommand in ("receive", "open", "inspect")
+        if args.received_collection:
+            if collection_command or args.command in ("init", "receive") or (args.command == "serve" and args.receiver):
+                p.error("--received-collection selects one existing source; use it with a resource, collection, review or serve action")
+            library = ResourceLibrary.from_collection(**options, directory=args.received_collection)
+        elif collection_command:
+            if args.subcommand == "receive":
+                library = ResourceLibrary.from_collection(**options, directory=args.out, archive=args.input,
+                    resume=args.resume, expected_sha256=args.sha256, max_bytes=args.max_bytes)
+            elif args.subcommand == "open":
+                library = ResourceLibrary.from_collection(**options, directory=args.directory)
+            else:
+                library = ResourceLibrary.receiver(**options)
+        elif args.command == "receive" or (args.command == "serve" and args.receiver):
+            library = ResourceLibrary.receiver(**options)
+        elif args.command == "init":
             if args.receiver:
                 if args.source or args.files_root:
                     p.error("--receiver uses its own original empty source; omit --source and --files-root")

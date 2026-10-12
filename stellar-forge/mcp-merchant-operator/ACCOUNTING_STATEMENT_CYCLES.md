@@ -245,3 +245,86 @@ Give a customer their own delivery directory. The whole cycle includes multiple
 customers' reviews and belongs with the merchant's receiving operator. The full
 cycle can resume through its recorded original connection; the exported customer
 files remain independently readable.
+
+## Deliver one handover per customer
+
+A customer may have several purchased passes, service periods and retained statements in the same closing cycle. Customer handovers group that customer's original cycle rows into one portable folder. Each original statement keeps its own plan, period, source files, corrections and withdrawal history.
+
+Use **Customer handover** in the [customer closing workbench](ACCOUNTING_STATEMENT_WORKBENCH.md), or the installed commands below. The workbench has one customer group with expandable pass and period rows, saved statement status, a preview and a complete download.
+
+~~~sh
+starforge merchant-accounting-statements cycle-customers \
+  --dir /private/customer-closes/service-close
+
+starforge merchant-accounting-statements cycle-customer-export \
+  --dir /private/customer-closes/service-close \
+  --customer-id ORIGINAL_CUSTOMER_UUID \
+  --out /private/customer-handovers/customer-reference
+~~~
+
+The output parent must already be a private directory owned by this operator (mode 0700). The command creates the customer output directory when necessary, binds it to the original cycle and customer, then publishes a complete immutable child named by its `snapshotSha256`. Subsequent calls reuse that child when its saved statement, status, register and file contents are unchanged.
+
+The result contains `directory`, `snapshotSha256`, the original cycle and customer identities, `complete`, `counts`, every selected `statements` row and the full `files` list. Each file has a relative `path`, original SHA256 and byte length. `files` includes the shareable `dossier.json` exactly once. `totalBytes` covers all listed files and `reused` identifies an existing unchanged snapshot.
+
+| Customer handover file | Contents |
+| --- | --- |
+| `index.html` | Printable customer overview, all selected statements, their pass and service periods, observed status and links to each complete original packet |
+| `statements.csv` | Every selected cycle row, including pending rows, original request and statement IDs, lifecycle references, pass labels and packet location |
+| `periods.csv` | Actual native service periods, immutable plan revisions, original opening and closing capture identities, balances and native period activity |
+| `dossier.json` | Customer and cycle identity, selected statement rows, complete payload file metadata and immutable snapshot digest |
+| `statements/<statement UUID>/` | Complete original native artifacts, original `status.json` history, customer `index.html` and `delivery.json` |
+
+Period packets retain `statement.json`, `statement.csv`, `usage.csv`, `statement.html`, `manifest.json`, `period.csv`, `period-summary.csv`, `usage-opening.json` and `usage-closing.json`. Cumulative packets retain their original five native artifacts. Their status, customer index and exporter record accompany both kinds. Original file bytes and SHA256 values are preserved while copying.
+
+### Finish a partial customer handover
+
+At least one selected row must have its complete original delivery before a customer folder can be exported. A partial handover includes every completed packet and visibly records every pending selected row. Its `complete` value is false, and the export command exits 3. Complete exports and read commands exit 0; operation errors exit 2.
+
+Resume the original cycle with `cycle-execute` or `cycle-reconcile`, then export the customer again to the same output root. The newly completed saved inputs produce another immutable snapshot. The earlier partial folder stays independently readable. If a copy is interrupted, repeat the same export; already completed exact files in its staging folder are reused.
+
+To include a later correction or withdrawal, refresh the delivered statements through the existing cycle reconciliation before exporting again. The resulting packet retains the observed native statement status, complete history, replacement references and withdrawal reason. Every earlier immutable snapshot remains the observation it originally recorded.
+
+### Reopen the customer folder
+
+Open the exported `index.html` in a browser. Its relative links continue to work after copying the customer directory or extracting the workbench archive. A receiving operator can also inspect the copied folder and verify every payload:
+
+~~~sh
+starforge merchant-accounting-statements customer-dossier \
+  --dir /private/received/customer-service-close \
+  --verify-files true
+~~~
+
+The copied directory can be renamed. Preserve its private file modes when receiving it: directory mode 0700 and regular file mode 0600. This read uses the saved manifest and files independently of the original merchant connection. The default `--verify-files false` validates the saved manifest and its digest; `true` also streams every payload to check its SHA256 and byte length.
+
+### Use the original library functions
+
+The installed accounting statement operations entry exports these functions and their declarations. Direct source users can import them from `accounting-statement-customer-dossier.mjs`.
+
+~~~js
+const groups = await inspectAccountingStatementCustomerDossiers({
+  directory: cycleDirectory,
+  signal
+});
+const customer = groups.customers.find(row => row.customerId === customerId);
+
+const exported = await exportAccountingStatementCustomerDossier({
+  directory: cycleDirectory,
+  customerId: customer.customerId,
+  outputDirectory: customerOutputRoot,
+  signal
+});
+
+const received = await readAccountingStatementCustomerDossier({
+  directory: exported.directory,
+  verifyFiles: true,
+  signal
+});
+~~~
+
+The inspector returns schema `stellar-forge.accounting-statement-customer-dossier-groups.v1`, the original `cycle` and sorted `customers`. Each customer has its stable `customerId`, `reference`, `name`, zero-based original `rowIndexes`, `counts`, `complete` and `rows`. Counts include total, retained, delivered, pending, current, superseded and withdrawn statements.
+
+Rows keep the original request ID, preview SHA, phase, statement identity, service period, usage source and source observation time. `plan`, when one service pass is selected, contains `{id, revision, label, orderRef, orderLabel}`. `passes` retains every original purchase as `{orderRef, label, plan: {id, revision, label} | null}`. Labels come from the complete saved original review; cumulative rows can have several passes.
+
+Inspection uses the original cycle's read-only observer and does not take its writer lease. Rows can advance during observation. Export acquires the original cycle lease and its customer output lease, so its source set is consistent while copied. The caller must let the exporter own these leases. The workbench offers customer export after the same cycle's active operation finishes and keeps different customer exports in the same cycle serial.
+
+Snapshot identity uses retained source identities and generated file contents. It excludes fresh polling time. Each service pass keeps its own unit basis and original balance pair; the period register uses the native admitted, consumed and released units, reserved and available deltas, new calls and result recoveries. Financial amounts and asset details remain in the original customer statement files.

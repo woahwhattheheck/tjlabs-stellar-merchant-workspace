@@ -1,0 +1,258 @@
+{
+  "schema": "tjlabs.scf.application-contribution",
+  "schemaVersion": 1,
+  "operationId": "SCF-APP-NATIVE-PAYMENT-CUSTOMER-UNITS-20261012",
+  "preparedOn": "2026-10-12",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "intendedPath": "operations/scf-customer-launch-05c7-20261012/application-contribution.json",
+  "purpose": "Strengthen the existing Open Track merchant workspace application with phase-specific deployment commitments, precise native-payment responsibilities and customer-outcome units.",
+  "applicationMethod": {
+    "source": "Apply each exact before/after replacement to the latest canonical file.",
+    "concurrentEdits": "Preserve all surrounding sections and later chapters. Where the canonical wording has moved, reconcile that replacement with the corresponding passage instead of replacing the file from this source snapshot.",
+    "budget": "Carry forward the existing budget, tranche schedule, named ownership and original application structure."
+  },
+  "preservedCommitments": {
+    "track": "Open",
+    "round": 46,
+    "amountUsdEquivalent": 38000,
+    "plannedDeliveryHours": 400,
+    "planningRateUsdPerHour": 95,
+    "daysFromActualAwardAcceptance": 150,
+    "merchantInstallations": 2,
+    "independentBuyerOperators": 2,
+    "t2": {
+      "network": "testnet",
+      "independentlyOperatedFacilitators": 2,
+      "completedPurchasesTotalAcrossBothBuyers": 10,
+      "consecutiveCalendarDays": 7
+    },
+    "t3": {
+      "network": "mainnet",
+      "merchantInstallations": 2,
+      "completedPurchasesTotalAcrossBothBuyers": 30,
+      "consecutiveCalendarDays": 14,
+      "bothBuyersReturnOnAnotherDay": true
+    },
+    "paymentPercentages": [
+      10,
+      20,
+      30,
+      40
+    ],
+    "existingNamedOwnership": "Preserved.",
+    "packages": [
+      {
+        "id": "T1-resource",
+        "title": "Merchant-resource integration",
+        "tranche": 1,
+        "startDay": 1,
+        "endDay": 30,
+        "hours": 80,
+        "amountUsd": 7600
+      },
+      {
+        "id": "T1-handover",
+        "title": "Authority and handover",
+        "tranche": 1,
+        "startDay": 1,
+        "endDay": 30,
+        "hours": 40,
+        "amountUsd": 3800
+      },
+      {
+        "id": "T2-provider",
+        "title": "Provider and ledger deployment",
+        "tranche": 2,
+        "startDay": 31,
+        "endDay": 90,
+        "hours": 70,
+        "amountUsd": 6650
+      },
+      {
+        "id": "T2-threat",
+        "title": "Deployed threat response",
+        "tranche": 2,
+        "startDay": 31,
+        "endDay": 90,
+        "hours": 50,
+        "amountUsd": 4750
+      },
+      {
+        "id": "T3-mainnet",
+        "title": "Mainnet merchant rollout",
+        "tranche": 3,
+        "startDay": 91,
+        "endDay": 150,
+        "hours": 90,
+        "amountUsd": 8550
+      },
+      {
+        "id": "T3-recovery",
+        "title": "Production recovery and handover",
+        "tranche": 3,
+        "startDay": 91,
+        "endDay": 150,
+        "hours": 70,
+        "amountUsd": 6650
+      }
+    ]
+  },
+  "targetFiles": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
+      "sourcePreimageBlob": "da4565ee2826336939fd18d73489b19874caf8c4",
+      "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/dist/grant-data/application.md",
+      "replacementCount": 3,
+      "replacements": [
+        {
+          "id": "phase-specific-provider-scope",
+          "before": "The funded outcome is **two independently operated merchants, two independent buyer operators, and the same useful service operating through two independently operated facilitators**.",
+          "after": "The funded outcome is **two independently operated merchants and two independent buyer operators**. T2 operates the same useful service through **two independently operated testnet facilitators**; T3 establishes **both merchant installations on mainnet**.",
+          "match": "exact-once"
+        },
+        {
+          "id": "native-payment-and-application-identity",
+          "before": "Stellar settles the operation the buyer approved. The approval binds the request to its network, asset, recipient and integer atomic amount. The native Stellar SDK and selected payment service verify and settle the authorization; the application connects that outcome to the original source, useful result and merchant fulfillment. Buyers retain signing and aggregate spending authority. Merchants retain control of their resources, terms and order actions.",
+          "after": "Stellar supplies native payment authorization and settlement for the customer’s reviewed operation. In the [x402 Exact Stellar flow](https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar), the buyer signs a Soroban authorization entry for a token transfer with its payer, recipient, atomic amount and expiration. The facilitator submits the authorization under the selected network and fee policy. Sponsored settlement lets the buyer pay in the selected supported token while the facilitator covers the transaction fee. Existing Stellar wallets, token contracts and payment services provide this native foundation.\n\nThe merchant and buyer workspaces retain the HTTP endpoint and method or MCP tool and arguments, request-body identity, selected source or query, and accepted payment option. Their approval and signer integration check the original operation before dispatch. The retained purchase then connects the native transfer to its complete received output and required fulfillment. Buyers keep wallet and aggregate spending authority; merchants keep control of resources, terms and order actions. The grant applies these native-payment and application responsibilities to the selected customers’ actual installations.",
+          "match": "exact-once"
+        },
+        {
+          "id": "purchase-task-and-allowance-units",
+          "before": "A completed purchase joins a distinct approved intent, an independently observed native transfer and complete useful output. Native transactions are counted once within each network. Independent organizations or people are counted once across their agents and wallets. A returning buyer’s distinct completed purchase increases purchases without adding a buyer; reopening an acquired result or resuming its download continues the original purchase.\n\nCohort reporting includes completed/attempted purchases, complete/started parent datasets or files, returning buyers, accepted handovers and partial, unresolved, canceled and refunded outcomes. Required fulfillment remains separately visible. This makes the funded targets assessable against the whole observation window.",
+          "after": "The funded purchase targets are ten in total across the two independent buyers during T2’s seven-day window and thirty in total across the two buyers during T3’s fourteen-day window. A completed purchase joins a distinct approved payment intent, an independently observed native transfer and its complete purchased output. Transactions count once within their network. Independent people or organizations count once across their wallets and agent clients.\n\nThe same cohort report shows the complete customer work served by those purchases:\n\n| Measure | Original record and counting unit |\n| --- | --- |\n| Completed and attempted purchases | Distinct approved payment intents and their original native settlement and delivery outcomes. These supply the funded 10/30 counts. |\n| Complete and started customer tasks | The original acquisition, job or application run, joined to every selected page, file and required receiving result. Its paid requests remain attached as child operations. |\n| Prepaid service use | The original purchased order, application request and units consumed or remaining. Calls using an existing allowance contribute delivered tasks and usage; another paid purchase is recorded when another payment occurs. |\n| Native payment activity | Original transaction identities and exact settled amounts, refunds and network fees, grouped by network and asset. |\n| Returning independent buyers | The same buyer completing a distinct later purchase and useful task; the workorder records the fresh period, changed edition or new customer request. |\n\nThe completed Queens HPD operation illustrates the units: two paid pages of 100 and 44 rows produced one complete 144-row customer task. Its two 10,000-stroop transfers remain two purchases and a total of 20,000 native testnet stroops, with fees separate. Reopening that edition or resuming its files continues the original task and purchases.\n\nThe existing cohort window uses original attempt and completion clocks and retains partial, unresolved, canceled and refunded outcomes alongside successful work. Required fulfillment and receiving remain separately visible. Each report therefore presents both the funded payment activity and the complete customer outcomes delivered over the same window.",
+          "match": "exact-once"
+        }
+      ]
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "sourcePreimageBlob": "e1be1daa193318ceb61fa64f752ebeb3ccbb2018",
+      "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "replacementCount": 1,
+      "replacements": [
+        {
+          "id": "paid-purchases-customer-tasks-and-prepaid-use",
+          "before": "Count each independent organization or person once across agents and wallets. A completed purchase joins one distinct approved intent, an independently observed native transfer and complete useful output. Transactions are deduplicated within their network; amounts and fees retain their asset and atomic units. Required fulfillment remains separately visible.\n\nReport completed/attempted purchases, complete/started parent tasks, returning buyers and accepted handovers. Keep partial, unresolved, canceled and refunded outcomes in the same cohort. A result reopen, delivery retry or transport chunk continues the original result. Returning use follows a fresh period, input or customer request. Payment, full output and recovery retain separate actual clocks.",
+          "after": "Count each independent organization or person once across agents and wallets. The funded payment counts remain ten completed purchases in total across the two buyers in the T2 window and thirty in total in the T3 window. Each purchase joins its distinct approved payment intent, native transfer and complete purchased output. Transactions are deduplicated within their network; amounts, refunds and fees retain their own asset and atomic units.\n\nReport the associated customer tasks separately using their original acquisition, job or application-run identity. A paginated acquisition retains its parent and all child page intents. The Queens HPD example therefore contains two 10,000-stroop purchases and one complete 144-row task. Its 100-row and 44-row pages remain available inside the same receiving edition. Report every started parent alongside its completed result and required fulfillment.\n\nPrepaid operation retains the purchased order and each subsequent application request. The completed eight-unit plan example contains one 10,000-stroop purchase; its first useful request consumed two units and retained six. A later call using that order records another application outcome and its units. A new native payment records another purchase. Reopening a saved response, resuming a download or recovering the same execution retains the original identities.\n\nThese units are already present in the product. The dataset session carries its `sessionId`, page `intentId`, completed-page and acquired-row state. The prepaid application retains `orderRef`, `requestId`, `requestSha256` and `units` against the original reservation. Cohort reporting joins those records with actual native settlement and receiving outcomes. Use the original first-attempt and completion clocks for the selected observation window and include partial, unresolved, canceled and refunded outcomes. Returning use identifies the fresh period, changed edition or distinct customer request.",
+          "match": "exact-once"
+        }
+      ]
+    }
+  ],
+  "replacementCount": 4,
+  "integrationNotes": [
+    "Use the existing working merchant product as the starting point for the six prospective delivery packages; the funded outcome is customer operation and mainnet adoption.",
+    "Keep paid purchases, complete customer tasks and prepaid usage as distinct counting units. Existing child page purchases still supply the 10/30 funded counts, while a full parent acquisition records the delivered customer outcome.",
+    "Native transfer authorization and application request identity are joined through the existing approval, signer, purchase and delivery records. The native token-transfer authorization does not itself encode the entire HTTP or MCP operation.",
+    "T2 requires two independently operated testnet facilitators. T3 places both merchant installations on mainnet; the application does not add a two-mainnet-facilitator obligation.",
+    "Retain the original acquisition, reservation, order and execution identities and their actual timestamps in the cohort report.",
+    "The source references support the embedded explanation. The complete application narrative remains self-contained for review."
+  ],
+  "existingCodeHooks": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/buyer.mjs",
+      "gitBlob": "04de96e3445a4928d213b036bbb6c2b1c5e92077",
+      "symbols": [
+        "X402BuyerClient.call()",
+        "approve(intent)"
+      ],
+      "responsibility": "Freezes the application intent with URL, method, accepted terms, body presence, bytes and SHA-256; requests approval before signing and checks the returned envelope against the chosen requirement, resource and extensions.",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf31-buyer-client/buyer.mjs"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs",
+      "gitBlob": "b2a9e3161273eecf047f05e9fa94db8ecb351896",
+      "symbols": [
+        "validateSigningRequest()",
+        "createNativeBuyerSigner()"
+      ],
+      "responsibility": "Checks the host-owned operation identity, HTTP request, selected offer, network, asset, recipient, amount cap, timeout and sponsorship before invoking the native Exact Stellar scheme. Application request checks and native token-transfer authorization have distinct responsibilities.",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-session.mjs",
+      "gitBlob": "e688937e354a2ae2947050e95604efcd6785a320",
+      "symbols": [
+        "createDatasetSession()",
+        "inspectDatasetSession()",
+        "deliverDatasetSession()",
+        "readRetainedDatasetAttempt()",
+        "accountDatasetSession()"
+      ],
+      "responsibility": "Retains parent sessionId, child page intentId, completed pages and acquired-row state for one complete customer acquisition. capAllocatedAtomic records allocated spending caps; settled charges come from the original reservations and native observations.",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-session.mjs"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-application/allowance.py",
+      "gitBlob": "24fdf03883a6ed7d8993a2fc2973f03139be1ff1",
+      "symbols": [
+        "admission()",
+        "matched_execution()",
+        "recover()"
+      ],
+      "responsibility": "Uses the original live prepaid reservation and retains orderRef, requestId, routeId, method, path, requestSha256 and units. An allowance-backed application execution may complete without a new native settlement; recovery attaches the original completed result.",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-application/allowance.py"
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md",
+      "gitBlob": "04d04676025edd850b0768d99fcd04cd6bf1548b",
+      "symbols": [
+        "First-attempt-time membership",
+        "Original completion clocks"
+      ],
+      "responsibility": "Defines cohort membership from the original first attempt and requires payment, complete output and applicable order completion within the selected window. Later observation retains the actual completion time and all partial or unresolved outcomes.",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md"
+    }
+  ],
+  "originalOfficialSources": [
+    {
+      "id": "scf46",
+      "url": "https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg",
+      "title": "SCF #46",
+      "kind": "Current round",
+      "supports": "Build submission deadline November 8, 2026; panel review November 11–18; community vote November 23–December 3. Submit interest to obtain the full application invitation."
+    },
+    {
+      "id": "open-track",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/open-track",
+      "title": "SCF Build Open Track",
+      "kind": "Program criteria",
+      "supports": "Original ecosystem contribution, domain and Stellar capability, competitive positioning and measurable on-chain growth support the retained Open Track positioning."
+    },
+    {
+      "id": "submission-criteria",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria",
+      "title": "SCF Build submission criteria",
+      "kind": "Program criteria",
+      "supports": "The application should stand on its own and establish validated need or traction, meaningful Stellar use, deliverable costs and a mainnet outcome. These replacements put the operating model and measurement units inside the application."
+    },
+    {
+      "id": "budget-deliverables",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines",
+      "title": "SCF budget and deliverable guidelines",
+      "kind": "Program criteria",
+      "supports": "Build uses prospective development costs, three deliverable tranches and four payments at 10%, 20%, 30% and 40%. The existing six packages, $38,000 budget and 150-day delivery duration are preserved."
+    },
+    {
+      "id": "official-rules",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions",
+      "title": "SCF official rules for submissions",
+      "kind": "Governing program terms",
+      "supports": "Section 5.3 gives the official rules precedence over conflicting program material. Section 5.6 determines the XLM conversion using the price on the day the award is paid."
+    },
+    {
+      "id": "stellar-x402",
+      "url": "https://developers.stellar.org/docs/build/agentic-payments/x402",
+      "title": "Stellar x402 payments",
+      "kind": "Native payment documentation",
+      "supports": "Stellar x402 signs native Soroban authorization entries. The current facilitator list includes OpenZeppelin on testnet and mainnet and Coinbase and Vellar on testnet. Testnet provider diversity and mainnet merchant deployment remain phase-specific commitments."
+    },
+    {
+      "id": "stellar-exact",
+      "url": "https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar",
+      "title": "x402 built on Stellar",
+      "kind": "Native payment documentation",
+      "supports": "The Exact Stellar flow authorizes a token transfer through a signed Soroban authorization entry. The facilitator can sponsor the transaction fee while the buyer pays in the selected supported token. HTTP or MCP operation identity remains an application responsibility."
+    }
+  ]
+}

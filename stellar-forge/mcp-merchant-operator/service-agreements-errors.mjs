@@ -7,8 +7,14 @@ export function serviceAgreementToolErrorView(error) {
   const details = object(error?.details) ? error.details : {};
   const prepared = details.agreementBillingPrepared === true;
   const durable = error?.code === 'WORKSPACE_COMMIT_UNKNOWN';
-  if (!prepared && !durable) return {};
+  const assigned = error?.code === 'AGREEMENT_RENEWAL_ALREADY_ASSIGNED';
+  if (!prepared && !durable && !assigned) return {};
   const result = {};
+  if (assigned) {
+    result.details = {};
+    for (const name of ['agreementId', 'sourceId', 'editionId'])
+      if (typeof details[name] === 'string' && uuid.test(details[name])) result.details[name] = details[name];
+  }
   if (prepared) {
     result.details = {agreementBillingPrepared: true};
     if (typeof details.billingId === 'string' && uuid.test(details.billingId))
