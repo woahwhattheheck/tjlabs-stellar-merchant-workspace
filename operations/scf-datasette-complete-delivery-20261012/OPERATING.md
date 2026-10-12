@@ -22,6 +22,8 @@ The first real publisher invocation failed while client-generator.mjs read a mis
 
 With those files present, the original native workflow advanced to MCP_RECEIVING_PREPARED. The receiver's export provider then required its merchant-exports private directory. The complete run-receiving.mjs postimage creates and validates that directory inside openOwner(), after the existing journal binding and initial directory checks and before constructing the original provider. Source, publisher, request, export and receiving identities remain unchanged.
 
+A subsequent actual restore reached the existing MCP journal and exposed a comparison of native modification times as if they were source content. Native file descriptors include receiving-host modifiedAt values. The receiver now preserves its complete original observed inventory and compares the full file membership, paths, byte counts, SHA256 values, workspace, schema and kind across restores. It retains the new physical modification times in the current observation. During each live run, it still compares the entire fresh native inventory before and after receiving. Any content or membership difference saves the complete changed inventory and identifies the differing paths.
+
 The previous saved checkpoint also retained its predecessor's generated manifest at the archive root. The continuation verifies that preceding manifest as an ordinary pinned member and retains the new manifest separately in run-history. Following archives keep those previous manifests in run-history and contain one current complete-checkpoint-manifest.json.
 
 ## Whole programme
