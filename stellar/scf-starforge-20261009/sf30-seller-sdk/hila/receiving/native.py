@@ -234,6 +234,51 @@ def run(config):
         action_results[name] = value
         return value
 
+    def retained_native_query(workspace, edition, name, selected_rows):
+        path = output / "native" / (name + "-query.json")
+        prior = strict_json(path.read_bytes()) if path.exists() else None
+        observed = workspace.query(edition["build"]["id"], {"limit": "1000"})
+        check(observed.get("ok") is True and observed.get("dataset") == edition["build"]["native"],
+              "Original Dataset query returned another complete native selection")
+        response = observed.get("response", {})
+        result = response.get("body", {})
+        check(response.get("status") == 200 and isinstance(result.get("rows"), list) and
+              result.get("page", {}).get("returned") == result.get("page", {}).get("total") == edition["rows"] and
+              result.get("page", {}).get("nextCursor") is None and len(result["rows"]) == len(selected_rows),
+              "Complete original Dataset query did not return every selected source record")
+        for actual_row, original_row in zip(result["rows"], selected_rows):
+            check(actual_row["recordId"] == original_row["recordId"] and
+                  str(actual_row["sourceRow"]) == str(original_row["sourceRow"]) and
+                  actual_row["sourceRowSha256"] == original_row["sourceRowSha256"] and
+                  strict_json(actual_row["answers"]) == original_row["answers"] and
+                  (actual_row["consent"] or None) == (original_row["consent"] or None),
+                  "Original Dataset query changed a complete coded source row")
+        comparable = lambda value: {key: item for key, item in value.items() if key != "id"}
+        if prior is not None:
+            check(comparable(prior) == comparable(observed),
+                  "Repeated native query changed its original complete response")
+        actual = canonical(observed)
+        publish(output / "native-observations" / (name + "-query-" + digest(actual) + ".json"), actual)
+        selected = prior if prior is not None else observed
+        emit("native/" + name + "-query.json", selected)
+        return selected
+
+    def retained_receive(workspace, name, packet):
+        packet = Path(packet)
+        emit("receiving/" + name + "-input.json", {"file": str(packet), **checked_size(packet)})
+        path = output / "receiving" / (name + "-result.json")
+        prior = strict_json(path.read_bytes()) if path.exists() else None
+        observed = workspace.receive_review(packet)
+        if prior is not None:
+            comparable = lambda value: {key: item for key, item in value.items() if key != "currentRevision"}
+            check(comparable(prior) == comparable(observed) and observed["currentRevision"] >= prior["currentRevision"],
+                  "Original complete receive result changed or lost its later local history")
+        actual = canonical(observed)
+        publish(output / "receiving-observations" / (name + "-" + digest(actual) + ".json"), actual)
+        selected = prior if prior is not None else observed
+        emit("receiving/" + name + "-result.json", selected)
+        return selected
+
     def retained_report_export(name, legacy_key, call):
         """Reuse the first complete returned descriptor; retain later reuse observations."""
         path = output / "native" / (name + "-export.json")
@@ -283,7 +328,7 @@ def run(config):
 
     @contextmanager
     def model(path):
-        workspace = HilaWorkspace(path, create=True)
+        workspace = HilaWorkspace(path, create=not Path(path).exists())
         try:
             yield workspace
         finally:
@@ -362,8 +407,7 @@ def run(config):
                           "Original Dataset omitted or duplicated a complete source record")
                     check(all(not any(key in row["answers"] for key in form["excludedFromAnalysis"]) for row in rows),
                           "Private free-text fields entered the analysis projection")
-                    query = ws.query(edition["build"]["id"], {"limit": "1000"})
-                    emit("native/round-%d-query.json" % (index + 1), query)
+                    retained_native_query(ws, edition, "round-" + str(index + 1), rows)
                     emit("native/round-%d-coded-rows.json" % (index + 1), rows)
                     native_rows.append(rows)
                     editions.append(edition)
@@ -471,10 +515,10 @@ def run(config):
                 emit("source-complete.json", source_state)
             # The source model/engine is closed before opening the detached original receiver.
             with model(config["receiverDirectory"]) as receiver:
-                received_old = receiver.receive_review(Path(old_packet["file"]))
+                received_old = retained_receive(receiver, "initial-old", old_packet["file"])
                 check(received_old["review"]["revision"] == 2, "Old packet selected the wrong historical revision")
-                received = receiver.receive_review(Path(final_packet["file"]))
-                repeated = receiver.receive_review(Path(final_packet["file"]))
+                received = retained_receive(receiver, "full", final_packet["file"])
+                repeated = retained_receive(receiver, "repeated", final_packet["file"])
                 check(received["review"] == final and repeated["review"] == final,
                       "Full detached receiving or replay changed the original selected review")
                 check(receiver.report(final["id"], final["revision"]) == report,
@@ -488,7 +532,7 @@ def run(config):
                               "expectedRevision": final["revision"],
                               "notes": final["notes"] + "\nIndependent recipient retained this separate local review continuation."})
                 later = action(receiver, "receiver-local-review", "review.save", local, receiver.save_review)
-                restored_old = receiver.receive_review(Path(old_packet["file"]))
+                restored_old = retained_receive(receiver, "older-prefix", old_packet["file"])
                 check(restored_old["review"]["revision"] == 2 and receiver.review(final["id"]) == later and later["revision"] == 5,
                       "Older packet replaced a later local continuation")
                 local_packet = receiver.export_review(final["id"], output / "receiver-complete-history.zip", later["revision"])
