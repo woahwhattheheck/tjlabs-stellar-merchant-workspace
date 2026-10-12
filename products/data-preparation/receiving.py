@@ -418,6 +418,9 @@ def main():
                     except subprocess.TimeoutExpired:
                         child.kill()
                         child.wait()
+            if child:
+                process_result.update({'pid': child.pid, 'returncode': child.poll(),
+                    'signal': -child.returncode if child.returncode is not None and child.returncode < 0 else None})
             process_result['seconds'] = round(time.monotonic()-started, 3)
             process_result['after'] = resources()
             write(attempt/'native-process.json', (json.dumps(process_result, indent=2)+'\n').encode())
@@ -564,14 +567,16 @@ def main():
             receipt_path = attempt/'library-save-receipts.jsonl'
             provider_requests = attempt/'library-provider-requests'
             write(request_path, (json.dumps(request)+'\n').encode())
-            worker = """import sys
-    from pathlib import Path
-    helpers=Path(sys.argv[1]).resolve()
-    sys.path.insert(0,str(helpers))
-    from native_library_delivery import _worker
-    sys.exit(_worker(helpers,Path(sys.argv[2]),Path(sys.argv[3]),Path(sys.argv[4]),
-        Path(sys.argv[5]),Path(sys.argv[6]),upload_mode="returned-put"))
-    """
+            worker = '\n'.join([
+                'import sys',
+                'from pathlib import Path',
+                'helpers=Path(sys.argv[1]).resolve()',
+                'sys.path.insert(0,str(helpers))',
+                'from native_library_delivery import _worker',
+                'sys.exit(_worker(helpers,Path(sys.argv[2]),Path(sys.argv[3]),Path(sys.argv[4]),',
+                '    Path(sys.argv[5]),Path(sys.argv[6]),upload_mode="returned-put"))',
+                '',
+            ])
             saved = subprocess.run([sys.executable, '-c', worker, str(helpers), str(request_path),
                 str(saved_path), str(receipt_path), str(attempt), str(provider_requests)],
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300)
