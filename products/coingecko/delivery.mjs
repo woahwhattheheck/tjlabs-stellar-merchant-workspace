@@ -2,7 +2,7 @@
 // Complete customer files over the original CoinGecko archive and restore engine.
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { open, lstat, mkdir, realpath, rename, unlink } from 'node:fs/promises';
+import { open, lstat, mkdir, realpath, rename, link, unlink } from 'node:fs/promises';
 import { resolve, join, dirname, isAbsolute, relative, sep } from 'node:path';
 import { readProjectArchive } from '../../stellar/scf-starforge-20261009/partners/coingecko-stellar-market/workspace/recovery.mjs';
 import { lockPrivateDirectory } from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/private-directory-lock.mjs';
@@ -80,6 +80,18 @@ async function syncDirectory(path) {
   const handle = await open(path, constants.O_RDONLY);
   try { await handle.sync(); } finally { await handle.close(); }
 }
+async function publishImmutable(temporary, destination, path, bytes, sha256) {
+  try {
+    // link creates the final name atomically and never replaces an existing customer file.
+    await link(temporary, destination);
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const current = await readRegular(destination);
+    need(current.length === bytes && hash(current) === sha256,
+      'DELIVERY_OUTPUT_CHANGED', 'Keep the existing customer file; choose a new delivery directory for a different edition: ' + path);
+  }
+  await syncDirectory(dirname(destination));
+}
 async function saveImmutable(root, path, bytes) {
   need(bytes instanceof Uint8Array && bytes.length <= MAX_FILE, 'DELIVERY_FILE_TOO_LARGE');
   const destination = await safeParent(root, path), expected = hash(bytes);
@@ -94,9 +106,7 @@ async function saveImmutable(root, path, bytes) {
   try {
     handle = await open(temporary, 'wx', 0o600);
     await handle.writeFile(bytes); await handle.sync(); await handle.close(); handle = null;
-    // The original directory lease serializes our writer. Recheck external edits before rename.
-    need(!await exists(destination), 'DELIVERY_OUTPUT_CHANGED', path);
-    await rename(temporary, destination); await syncDirectory(dirname(destination));
+    await publishImmutable(temporary, destination, path, bytes.length, expected);
   } finally {
     await handle?.close().catch(() => {});
     await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; });
@@ -117,12 +127,7 @@ async function saveGenerated(root, path, chunks) {
     }
     await handle.sync(); await handle.close(); handle = null;
     const sha256 = digest.digest('hex');
-    if (await exists(destination)) {
-      const current = await readRegular(destination);
-      need(current.length === bytes && hash(current) === sha256, 'DELIVERY_OUTPUT_CHANGED', path);
-    } else {
-      await rename(temporary, destination); await syncDirectory(dirname(destination));
-    }
+    await publishImmutable(temporary, destination, path, bytes, sha256);
     return { path, bytes, sha256 };
   } finally {
     await handle?.close().catch(() => {});
