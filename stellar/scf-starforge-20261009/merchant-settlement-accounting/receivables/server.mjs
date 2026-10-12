@@ -134,6 +134,22 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   let result;
   if (method === 'GET') {
     if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'funds') result = await receivables.customerFunds({
+      customerId: search.get('customerId') || undefined, asOf: search.get('asOf') || undefined,
+    });
+    else if (parts[0] === 'customers' && parts[2] === 'funds' && parts.length === 3)
+      result = await receivables.customerFunds({customerId: parts[1], asOf: search.get('asOf') || undefined});
+    else if (route === 'refunds') result = await receivables.refunds({
+      customerId: search.get('customerId') || undefined, receiptId: search.get('receiptId') || undefined,
+      status: search.get('status') || undefined, asOf: search.get('asOf') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'refunds' && parts.length === 2)
+      result = await receivables.refund(parts[1], {asOf: search.get('asOf') || undefined});
+    else if (parts[0] === 'refunds' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.refundFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'payment-requests') result = await receivables.paymentRequests({
       invoiceId: search.get('invoiceId') || undefined, customerId: search.get('customerId') || undefined,
       status: search.get('status') || undefined, asOf: search.get('asOf') || undefined,
@@ -172,6 +188,17 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'refunds/preview') result = await receivables.previewRefund(value);
+    else if (route === 'refunds') result = await receivables.commitRefund(value);
+    else if (route === 'credit-dispositions/preview') result = await receivables.previewCreditDisposition(value);
+    else if (route === 'credit-dispositions') result = await receivables.applyCreditDisposition(value);
+    else if (parts[0] === 'refunds' && parts.length === 3) {
+      if (parts[2] === 'cancel') result = await receivables.cancelRefund(parts[1], value);
+      else if (parts[2] === 'reverse') result = await receivables.reverseRefund(parts[1], value);
+      else if (parts[2] === 'returns') result = await receivables.reportRefundReturn(parts[1], value);
+      else if (parts[2] === 'receive') result = await receivables.receiveRefund(parts[1], value);
+      else throw problem('NOT_FOUND', 'This customer refund operation does not exist.', 404);
+    }
     else if (route === 'invoices') result = await receivables.saveDraft(value);
     else if (route === 'import-quote') result = await receivables.importQuote(value);
     else if (route === 'receipts') result = await receivables.receipt(value);

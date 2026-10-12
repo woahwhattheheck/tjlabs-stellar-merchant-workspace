@@ -198,3 +198,7 @@ For the payment-backed service, prepare with the original `--payment PAYMENT.jso
 Attach the original READY runtime in the runtime workspace. In **Applications**, select **Federal awards and workshares**, choose the private research folder and optional receiving folder, review the selection, and save it. The shared save action creates approved new private directories. Start review then reopens that selection and launches the source-owned application.
 
 Open the retained application URL. Stop from the same saved application and reopen it to continue the original awards, transactions, assessments and receiving history. The launcher and startup observer verify the same workspace and live process before the URL is retained. The full [application guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/APPLICATION.md) covers the original controller's operations.
+
+## Funding-report delivery
+
+The [complete funding-report workflow](FUNDING_REPORTS.md) joins reviewed original award transactions, report publication, SF30 file-product merchant preparation, the original SF88 buyer, full source receiving and report revisions. It uses this same private workspace and portable backup. Open **Funding reports** from the award or transaction browser to continue the saved work.

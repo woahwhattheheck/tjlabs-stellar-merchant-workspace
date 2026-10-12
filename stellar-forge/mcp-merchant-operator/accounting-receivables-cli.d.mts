@@ -1,6 +1,6 @@
 // MIT. Declarations for original receivables command line operations and file delivery.
 import type {
-  AccountingReceivablesClient, CompleteInvoicePreview, NativeRecord, PaymentRequestPreview,
+  AccountingReceivablesClient, CompleteInvoicePreview, NativeRecord, PaymentRequestPreview, RefundPreview, CreditDispositionPreview,
   ReceivablesArgumentsMap, ReceivablesFileMetadata, ReceivablesFileSelection, ReceivablesMutation,
   ReceivablesMutationResult, RequestLookupResult
 } from './accounting-receivables-client.mjs';
@@ -15,7 +15,9 @@ export type ReceivablesPrepareArguments<K extends ReceivablesMutation = Receivab
 export type ReceivablesPreparePreview =
   ReceivablesOperationConnection & {actor: string; requestId?: string; arguments?: never} &
   ({kind: 'invoice_issue'; preview: CompleteInvoicePreview} |
-    {kind: 'payment_create'; preview: PaymentRequestPreview});
+    {kind: 'payment_create'; preview: PaymentRequestPreview} |
+    {kind: 'refund_commit'; preview: RefundPreview} |
+    {kind: 'credit_disposition_apply'; preview: CreditDispositionPreview});
 export type ReceivablesPrepareOptions = ReceivablesPrepareArguments | ReceivablesPreparePreview;
 export interface PreparedReceivablesOperation<K extends ReceivablesMutation = ReceivablesMutation> {
   directory: string; kind: K; requestSha256: string; arguments: ReceivablesArgumentsMap[K]; phase: 'PREPARED';
@@ -30,6 +32,12 @@ export function prepareAccountingReceivablesOperation(
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPreparePreview & {kind: 'payment_create'},
 ): Promise<PreparedReceivablesOperation<'payment_create'>>;
+export function prepareAccountingReceivablesOperation(
+  options: ReceivablesPreparePreview & {kind: 'refund_commit'},
+): Promise<PreparedReceivablesOperation<'refund_commit'>>;
+export function prepareAccountingReceivablesOperation(
+  options: ReceivablesPreparePreview & {kind: 'credit_disposition_apply'},
+): Promise<PreparedReceivablesOperation<'credit_disposition_apply'>>;
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPrepareOptions,
 ): Promise<PreparedReceivablesOperation>;

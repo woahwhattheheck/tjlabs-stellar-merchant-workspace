@@ -273,4 +273,8 @@ OpenLineage provenance and upstream license information in SOURCE_CONTRACT.md.
 
 ## Schema change review and staff resolution
 
-Open **Schema changes** to compare two named saved editions, inspect original field observations and declared downstream paths, assign follow-up and retain complete staff decision history. Reviews use the existing workspace writer and saved-request recovery. HTML, CSV and JSON reports and version-3 editable workspace receiving carry the complete comparison, original sources and evidence. See [SCHEMA_OPERATIONS.md](SCHEMA_OPERATIONS.md) for the full UI, SDK, CLI, receiving and operating programme.
+Open **Schema changes** to compare two named saved editions, inspect original field observations and declared downstream paths, assign follow-up and retain complete staff decision history. Reviews use the existing workspace writer and saved-request recovery. HTML, CSV and JSON reports and editable workspace receiving carry the complete comparison, original sources and evidence. See [SCHEMA_OPERATIONS.md](SCHEMA_OPERATIONS.md) for the full UI, SDK, CLI, receiving and operating programme.
+
+## Pipeline service levels
+
+Open **Service levels** from the workspace header to maintain per-job freshness, duration and failure policies; evaluate original events at a stated time; and assign, acknowledge, resolve or accept incidents with complete decision history. The same workflow is available through `scf-lineage service-levels`, the typed service-levels client and the original native/merchant tools. See [SERVICE_LEVELS.md](SERVICE_LEVELS.md) for policy semantics, complete customer reports and editable receiving, and [SERVICE_LEVELS_OPERATOR.md](SERVICE_LEVELS_OPERATOR.md) for the operator desk.

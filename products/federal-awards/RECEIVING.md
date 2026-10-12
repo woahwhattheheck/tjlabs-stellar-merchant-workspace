@@ -118,3 +118,7 @@ node stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/application-nati
 That mode uses the maintained runtime inspector and runtime workspace model: attach, application review/save, original adoption, fresh start preparation, managed worker, authenticated private browser, stop, controller reopen and saved application reopen. It covers an existing original workspace and a new workspace whose approved directories are created by the original save flow. Each application receiving run takes its own new output directory.
 
 The original complete receiving directories provide the working customer result and the source errors needed to repair an interrupted run. Preserve them with the operation so further work continues against the same original record.
+
+## Funding-report delivery
+
+The [complete funding-report workflow](FUNDING_REPORTS.md) joins reviewed original award transactions, report publication, SF30 file-product merchant preparation, the original SF88 buyer, full source receiving and report revisions. It uses this same private workspace and portable backup. Open **Funding reports** from the award or transaction browser to continue the saved work.

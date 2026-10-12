@@ -139,6 +139,33 @@ Optional `allocatedDate` chooses the accounting allocation date. It must be on o
 
 The merchant's selected `invoiceAmount` determines the invoice-currency receipt value. The complete original asset, atomic amount, destination, payer, memo, network, ledger, transaction fingerprint and valuation note remain attached to its source.
 
+### Correct a reported transaction or sending account
+
+In the operator workspace, open the invoice's payment request and its transaction receiving history.
+
+- **Transaction reported against the wrong invoice:** keep that report in its original history. Open the correct invoice's issued request and record the same transaction hash there. An unverified or unsuccessful report does not reserve the payment. Receiving checks the selected request's exact wallet terms.
+- **Incorrect transaction hash:** record the correct hash as another transaction reference. Each reference keeps its original hash, operator note and observations.
+- **Incorrect optional sending account:** choose **Correct sending account** on the saved reference, enter the correct G account or leave it blank to use the payment's actual sender, and provide the reason. Then choose **Inspect and receive** again.
+
+The sending account can be corrected before the reference has a verified transfer. Its returned-reference ID, original hash, original report note and previous observations remain in place. The request history records the previous account, new account, operator, correction time and reason. A successful public-network receipt or test-network verification keeps the verified account fixed.
+
+The same correction is available through the existing `payment-return` command and `reportPaymentReturn` client method. Reuse the saved payment-request ID and transaction hash, with the current revision and a new operation ID. Include an explicit account string to change the sender constraint, or `"payer": null` to clear it:
+
+```json
+{
+  "revision": 44,
+  "actor": "Merchant accounts",
+  "requestId": "A_NEW_CORRECTION_OPERATION_UUID",
+  "transaction": "THE_ORIGINAL_SAVED_64_CHARACTER_TRANSACTION_HASH",
+  "payer": null,
+  "note": "Use the account that sent the payment; the earlier optional account was entered incorrectly."
+}
+```
+
+Omitting `payer` preserves the saved account constraint. Replaying an uncertain correction uses the same operation ID and unchanged input. A further correction uses a new operation ID and current revision.
+
+Verified receiving owns the transfer. A transaction already recorded as a receipt, including a later reversed receipt, cannot create another receipt. Accepted test-network receiving also remains unique. The receiver compares both inner and outer transaction hashes for fee-bump transactions, so changing the reported form of the same transaction does not duplicate it. Open the existing receiving result to reconcile an already verified payment.
+
 ### Test network and incomplete observations
 
 The same reviewed request and original-network verification are available on `stellar:testnet`. A matching test-network transfer produces `TESTNET_VERIFIED` and retains its original observation and proof. The commercial receipt and allocation path applies to verified public-network transfers.

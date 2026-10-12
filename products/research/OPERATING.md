@@ -973,6 +973,171 @@ The original streaming importer validates the selected bytes and retained histor
 
 Merchant exports use the same complete sources. `merchant_research_exports` lists durable receipts; `merchant_research_file_read` returns resumable chunks for a selected export identity. Carry the returned offset, verify the complete decoded byte count and SHA-256, and release the temporary reader when finished. The retained delivery remains available after detachment.
 
+## Publish and receive a paid customer delivery
+
+The installed product includes the original SF101 merchant, Buyer Runbook and Research paid-delivery application. A frozen customer delivery remains the source for publication. Its actual merchant configuration supplies the network, asset, recipient and amount; a service quote or grant budget does not become an API transaction price.
+
+The complete source-owned walkthrough is [Paid Research delivery](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-commerce/OPERATING.md). The Research and Zotero selections retain that guide, the whole Buyer application and its typed agent, the complete SF101 receiver, all Research customer-commerce source and the existing retained-download helpers.
+
+### Select the existing hosts in Applications
+
+In **Applications → Research dossiers**, set **Original paid Research host configuration** (`customerCommerceHost`) to the private JSON file that declares the existing merchant and Buyer aliases. It composes with the same Zotero, extraction Python, Object, document-pipeline and source-workspace settings. When no explicit Research connection path is selected, the existing application writes `research-connection.json` in its private Research directory.
+
+The original host schema is:
+
+~~~json
+{
+  "schema": "sf88-research-customer-commerce-host/v1",
+  "merchants": {
+    "research-report": {
+      "label": "Research reports",
+      "checkoutFile": "/absolute/private/research-checkout.json",
+      "claimEnv": "SF101_CLAIM_TOKEN"
+    }
+  },
+  "buyers": {
+    "research-acquisition": {
+      "label": "Research acquisition",
+      "agentFile": "/absolute/private/research-buyer-agent.json",
+      "workspace": "research-acquisition"
+    }
+  }
+}
+~~~
+
+A seller-only or buyer-only host can omit the other collection. Relative configuration paths resolve from this file's directory. Keep the file private to the launching account. The original reader validates its exact schema and alias declarations. Applications review retains the complete host file's identity and the referenced checkout and Buyer agent configuration files; a changed selection is reviewed through the original application workflow.
+
+The original Buyer agent configuration names the existing Buyer workspace, launch file, actual selection digest and distinct private agent storage. Obtain those values from that application's saved launch. Its configured whole-file/export limits must fit the actual selected archive, whose paid route supports at most 32 MiB. The complete original Buyer setup and recovery guides travel under `stellar/scf-starforge-20261009/buyer-runbook/`.
+
+**Review**, **Save**, **Start** and **Open** remain the original managed actions. Startup checks the selected Research listener and connection identity, then uses its original authenticated client to read the paid-delivery configuration. It confirms that this listener opened the selected host file. Alias-specific merchant or Buyer setup errors remain visible through the original configuration view; startup does not invent a merchant, payer, budget or payment.
+
+The ordinary launcher also accepts the same selection:
+
+~~~sh
+starforge research-workspace \
+  --dir /absolute/private/research \
+  --connection-file /absolute/private/research-connection.json \
+  --customer-commerce-host /absolute/private/research-commerce.json \
+  --port 8846
+
+starforge research-client commerce-configuration \
+  --connection-file /absolute/private/research-connection.json
+~~~
+
+For a new native merchant, use the existing `paid-file-checkout` command's `inspect`, `init` and `serve` actions against its actual configuration. An existing deployment preserves its checkout state, outbox, facilitator and signed notice receiver. The original `buyer-runbook` and `buyer-agent` commands operate and attach to the selected Buyer application. Paid delivery borrows those existing owners and their approval flow.
+
+### Publish one exact frozen package
+
+Finish the customer brief, source selection, work record and frozen delivery in **Customer updates**. In **Paid delivery → Publications**, select that dossier, saved delivery revision and declared merchant. Supply the customer-facing title, summary and usage. If the full Europe PMC source workspace belongs in the delivery, select its actual original source request and actor.
+
+**Review publication** creates the original complete handover/archive and reads the actual checkout. Review its frozen dossier/work/reports, complete member byte counts and hashes, archive SHA-256, payment terms, source configuration and existing state/outbox identities. **Enroll this publication** uses that same review and original SF101 order. Download the complete **Publication** JSON for the customer.
+
+Keep its one publication request UUID. The native order is `research-` plus that UUID. An interrupted enrollment inspects or reopens this original order. An already completed publication continues to identify its frozen original files after later customer work.
+
+The installed CLI calls the same implementation:
+
+~~~sh
+starforge research-client commerce-publication-prepare \
+  --connection-file /absolute/private/research-connection.json \
+  --input /absolute/private/publication-request.json \
+  --run-directory /absolute/private/operations/publication-review
+
+starforge research-client commerce-publication-enroll \
+  --connection-file /absolute/private/research-connection.json \
+  --input /absolute/private/publication-enroll.json \
+  --run-directory /absolute/private/operations/publication-enroll
+
+starforge research-client commerce-export \
+  --connection-file /absolute/private/research-connection.json \
+  --kind publications --id ORIGINAL_PUBLICATION_UUID --part publication \
+  --run-directory /absolute/private/exports/publication \
+  --out /absolute/private/customer-publication.json
+~~~
+
+The preparation input carries the actual `requestId`, merchant alias, `dossierId`, `deliveryId`, saved `revision`, title, summary and usage. Enrollment carries that publication ID and the `reviewSha256` returned by its completed review. Use the complete original input examples in the paid-delivery guide.
+
+### Receive through the original Buyer
+
+In **Paid delivery → Purchases**, receive the exact publication and choose the existing Buyer alias. Refresh its original paid-file state. Enter the actual total and daily atomic-unit budgets and existing claim environment name, then **Prepare purchase** with the refreshed native revision. This creates the original reviewed plan/run against the publication and full archive.
+
+**Execute** reaches the original Buyer approval. The existing browser or terminal operator reviews the actual payer, network, asset, amount and resource through that native application. Refresh and cancel keep the same returned run/execution identity. **Retrieve**, **Recover** and **Finalize** continue the original paid-file operation as indicated by its saved native state.
+
+After the full file is available, **Receive editable Research dossier** verifies the complete original Buyer export and archive, reopens the full handover, and receives the dossier/history and selected source workspace into the existing Research engines. It retains the exact four frozen reports and saved customer work. Continue a customer correction in the received dossier; the acquired delivery remains frozen.
+
+The same receiving input can be used with:
+
+~~~sh
+starforge research-client commerce-receive-dossier \
+  --connection-file /absolute/private/customer-research-connection.json \
+  --input /absolute/private/receive-dossier.json \
+  --run-directory /absolute/private/operations/dossier-receiving
+~~~
+
+Use the actual purchase ID, a retained receiving request UUID, returned `preparedSha256` and selected `sourceActor` when the source workspace travels. Do not substitute a new purchase for an interrupted download or a later customer correction.
+
+### Continue and recover the same operation
+
+Every CLI write retains its complete input, request and result in the original `--run-directory`. Reopening a completed operation does not need a live connection:
+
+~~~sh
+starforge research-client commerce-receive-dossier \
+  --run-directory /absolute/private/operations/dossier-receiving
+
+starforge research-client commerce-operation \
+  --run-directory /absolute/private/operations/dossier-receiving
+~~~
+
+If the original agent reports an uncertain native action, use `commerce-reconcile` with the original request ID and current native selection. Explicit `commerce-replay` uses a separate local replay directory while submitting the same native request; it preserves the first completed result. Browser **History** and **Working forms** retain the corresponding original requests, unfinished edits and imported form provenance.
+
+**Stop** drains this same Research controller and its accepted downloads/receiving. It closes the original owners and listener. Repeating Stop retries an unfinished owner; it does not erase retained requests or native state. Restart through the same saved Applications definition and use its newly written original connection.
+
+Keep complete backups of the Research workspace, actual merchant state/outbox, Buyer workspace, immutable publication/purchase operation directories and customer handover. The paid archive is one complete gzip-framed stream with exact member order and hashes. Larger programmes use the original complete non-paid handover or an explicitly smaller selected delivery; no member is silently truncated.
+
+## Review the registered protocol and planned methods
+
+Open the intended dossier in the existing Research application and choose **Protocol and methods**. Select the original capture's complete `source-bundle.json`, choose its existing question, and use **Inspect captured source** followed by **Preview question changes**. Review the selected source, page-linked planned methods and expected dossier revision before **Save to this question**.
+
+The NCT03529110 capture retains the complete registered PDF, all 117 extracted pages, the registry selection and the original extraction provenance. **Open PDF page** and **Read complete page text** show the retained original material. The registry labels the document *Study Protocol and Statistical Analysis Plan*; the PDF is protocol DS8201-A-U302 version 6.0, dated 25 September 2020, and refers some details to a separate SAP. These are planned methods from the source. Continue the original extraction and appraisal workflow to record the analyst's decisions.
+
+For terminal review of an already completed capture:
+
+~~~sh
+starforge research-protocol-review inspect \
+  --source /ABS/original-protocol-capture/source-bundle.json \
+  --out /ABS/private-review/source-inspection.json
+
+starforge research-protocol-review prepare \
+  --source /ABS/original-protocol-capture/source-bundle.json \
+  --connection /PRIVATE/original-application-url.json \
+  --workspace-id research_ACTUAL_WORKSPACE_ID \
+  --dossier d_ACTUAL_DOSSIER_ID \
+  --question ACTUAL_QUESTION_ID \
+  --directory /ABS/private-review
+~~~
+
+Use the actual original connection and identifiers. `REVIEW.json` contains the full source, inspection, preview and immutable request; it also opens in the browser. Repeating preparation in the same directory validates that original review. The original `research-study-protocol capture` command remains available to the existing source owner when a capture is still needed.
+
+Before resubmitting a request whose reply was lost, inspect its original result:
+
+~~~sh
+starforge research-protocol-review reconcile \
+  --review /ABS/private-review/REVIEW.json \
+  --connection /PRIVATE/original-application-url.json
+~~~
+
+This reads the source's original import state and distinguishes `ALREADY_RECEIVED` from `NOT_RECEIVED`. After reviewing the selected request, receive it through the original SourceBundle operation:
+
+~~~sh
+starforge research-protocol-review receive \
+  --review /ABS/private-review/REVIEW.json \
+  --connection /PRIVATE/original-application-url.json \
+  --directory /ABS/private-review
+~~~
+
+`RECEIVED.json` retains the actual source edition and saved revision. The same request recovers an accepted import even after later dossier edits. In the browser, full drafts and pending requests survive navigation; a conflicting edit remains a separate saved copy. A transport or server failure leaves the outcome unresolved so the exact original request can be reconciled.
+
+The original typed attachment exposes `ResearchWorkspaceClient.studyProtocol()` for inspect, prepare, reconcile and receive. It shares the existing workspace identity and request lifecycle. The [complete operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md) gives all client inputs, source-file choices, request recovery and revision-specific HTML, Markdown and editable-dossier downloads.
+
 ## Operating source
 
 - [Citation update review, complete browser drafts and selected reports](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)

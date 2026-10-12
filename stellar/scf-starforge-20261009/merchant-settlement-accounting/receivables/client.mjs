@@ -109,6 +109,56 @@ export class ReceivablesClient {
       });
     }
   }
+
+  customerFunds(query, {signal} = {}) {
+    return this.request('/funds' + queryString(query), {signal});
+  }
+  previewRefund(value, {signal} = {}) {
+    return this.request('/refunds/preview', {method: 'POST', body: value, signal});
+  }
+  commitRefund(value, {signal} = {}) {
+    return this.request('/refunds', {method: 'POST', body: value, signal});
+  }
+  refunds(query, {signal} = {}) {
+    return this.request('/refunds' + queryString(query), {signal});
+  }
+  refund(id, query, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + queryString(query), {signal});
+  }
+  cancelRefund(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/cancel', {method: 'POST', body: value, signal});
+  }
+  reverseRefund(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/reverse', {method: 'POST', body: value, signal});
+  }
+  reportRefundReturn(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/returns', {method: 'POST', body: value, signal});
+  }
+  receiveRefund(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/receive', {method: 'POST', body: value, signal});
+  }
+  refundFile(id, name, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/files/' + segment(name), {binary: true, signal});
+  }
+  async refundBytes(id, name, options) {
+    const response = await this.refundFile(id, name, options);
+    try {
+      return {name, type: response.headers.get('content-type') || 'application/octet-stream',
+        bytes: new Uint8Array(await response.arrayBuffer())};
+    } catch (error) {
+      if (error?.name === 'AbortError') throw error;
+      throw new ReceivablesApiError('The refund file could not be read. Download that same file again.', {
+        status: response.status, code: 'DOWNLOAD_FAILED',
+        details: {name, cause: String(error?.message || error), outcome: 'read_failed'},
+      });
+    }
+  }
+  previewCreditDisposition(value, {signal} = {}) {
+    return this.request('/credit-dispositions/preview', {method: 'POST', body: value, signal});
+  }
+  applyCreditDisposition(value, {signal} = {}) {
+    return this.request('/credit-dispositions', {method: 'POST', body: value, signal});
+  }
   issue(id, value) { return this.request('/invoices/' + segment(id) + '/issue', {method: 'POST', body: value}); }
   voidInvoice(id, value) { return this.request('/invoices/' + segment(id) + '/void', {method: 'POST', body: value}); }
   credit(id, value) { return this.request('/invoices/' + segment(id) + '/credits', {method: 'POST', body: value}); }

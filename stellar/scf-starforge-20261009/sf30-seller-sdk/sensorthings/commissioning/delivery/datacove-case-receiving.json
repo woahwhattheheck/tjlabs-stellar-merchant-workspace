@@ -19,7 +19,7 @@
           "id": "datacove-sensorthings-commissioning-20261012-source",
           "type": "SOURCE_VERIFIED",
           "occurred_at": "2026-10-12T17:14:16Z",
-          "evidence_kind": "PARTNER_SOURCE",
+          "evidence_kind": "ISSUER_SOURCE",
           "evidence_url": "https://datacove.eu/services/"
         },
         {

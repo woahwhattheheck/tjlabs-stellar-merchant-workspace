@@ -28,15 +28,28 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables payment-receive --directory /private/accounting --id UUID --input /private/receive-payment.json\n' +
   'starforge receivables payment-cancel --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
   'starforge receivables payment-file --directory /private/accounting --id UUID --name payment-request.html --out /private/new-request.html\n\n' +
-  'Actions: settings, customer, draft, import-quote, issue, credit, void-invoice, receipt, import-settlement, allocate, release, void-receipt, payment-create, payment-cancel, payment-return, payment-receive.\n' +
+  'Customer refunds and credit disposition:\n' +
+  'starforge receivables funds --directory /private/accounting [--customer UUID] [--as-of YYYY-MM-DD]\n' +
+  'starforge receivables refunds --directory /private/accounting [--customer UUID] [--receipt UUID] [--status RECORDED] [--as-of YYYY-MM-DD] [--offset 0] [--limit 100]\n' +
+  'starforge receivables refund --directory /private/accounting --id UUID [--as-of YYYY-MM-DD]\n' +
+  'starforge receivables refund-preview --directory /private/accounting --input /private/refund-terms.json [--out /private/refund-review.json]\n' +
+  'starforge receivables refund-commit --directory /private/accounting --input /private/reviewed-refund.json\n' +
+  'starforge receivables refund-cancel|refund-reverse|refund-return|refund-receive --directory /private/accounting --id UUID --input /private/operation.json\n' +
+  'starforge receivables refund-file --directory /private/accounting --id UUID --name refund.html --out /private/new-refund.html\n' +
+  'starforge receivables credit-disposition-preview --directory /private/accounting --input /private/disposition.json [--out /private/disposition-review.json]\n' +
+  'starforge receivables credit-disposition-apply --directory /private/accounting --input /private/reviewed-disposition.json\n\n' +
+  'Actions: settings, customer, draft, import-quote, issue, credit, void-invoice, receipt, import-settlement, allocate, release, void-receipt, payment-create, payment-cancel, payment-return, payment-receive, refund-commit, refund-cancel, refund-reverse, refund-return, refund-receive, credit-disposition-apply.\n' +
   'Mutation JSON supplies the current revision, operator actor and a stable requestId. Draft updates also supply expectedVersion; issue supplies the reviewed previewSha256.\n' +
   'Payment preview JSON holds the proposal and reviewSha256. To create it, retain those fields and its revision, and add actor and requestId. Payment command JSON uses the same mutation context as apply.\n' +
   'Payment files: payment-request.json, payment-request.html, payment-request.uri, status.json, receiving.json and proof-RETURN_UUID.json.\n' +
+  'Refund and disposition previews save the exact proposal, reviewSha256 and revision. Commit JSON retains those fields and adds actor and a stable requestId.\n' +
+  'Refund return JSON carries the wallet transaction; receiving verifies the reviewed source account, destination, network and exact amount.\n' +
+  'Refund files include request/refund/reversal JSON, HTML and CSV, status.json, receiving.json and proof-OBSERVATION_UUID.json.\n' +
   'Reopen the initialized accounting directory. To initialize merchant accounting, also pass --outbox /private/outbox --proof-dir /private/proofs --terms /private/terms.json.\n';
 
 export function parseReceivablesArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
-  const known = new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','as-of','id','run','invoice','customer','offset','limit','action','input','name','out','expected-workspace-id','expected-sources-sha256']);
+  const known = new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','as-of','id','run','invoice','customer','receipt','status','offset','limit','action','input','name','out','expected-workspace-id','expected-sources-sha256']);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) && rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
       'INVALID_RECEIVABLES_ARGUMENT', 'Use a documented option followed by its value.');
@@ -95,8 +108,30 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     else if (command === 'detail') result = await receivables.detail(flags.id, {asOf});
     else if (command === 'preview') result = await receivables.preview(flags.id);
     else if (command === 'ledger') result = await receivables.ledger({runId: flags.run, customerId: flags.customer, offset: flags.offset, limit: flags.limit});
+    else if (command === 'funds') result = await receivables.customerFunds({customerId: flags.customer, asOf});
+    else if (command === 'refunds') result = await receivables.refunds({
+      customerId: flags.customer, receiptId: flags.receipt, status: flags.status, asOf,
+      offset: flags.offset, limit: flags.limit,
+    });
+    else if (command === 'refund') result = await receivables.refund(flags.id, {asOf});
+    else if (command === 'refund-preview' || command === 'credit-disposition-preview') {
+      const method = command === 'refund-preview' ? 'previewRefund' : 'previewCreditDisposition';
+      result = await receivables[method](await input(flags.input));
+      if (flags.out) await newFile(flags.out, Buffer.from(json(result)));
+    } else if (command === 'refund-commit') result = await receivables.commitRefund(await input(flags.input));
+    else if (command === 'credit-disposition-apply') result = await receivables.applyCreditDisposition(await input(flags.input));
+    else if (command === 'refund-cancel') result = await receivables.cancelRefund(flags.id, await input(flags.input));
+    else if (command === 'refund-reverse') result = await receivables.reverseRefund(flags.id, await input(flags.input));
+    else if (command === 'refund-return') result = await receivables.reportRefundReturn(flags.id, await input(flags.input));
+    else if (command === 'refund-receive') result = await receivables.receiveRefund(flags.id, await input(flags.input));
+    else if (command === 'refund-file') {
+      const file = await receivables.refundFile(flags.id, flags.name);
+      await newFile(flags.out, file.bytes);
+      result = {path: flags.out, name: file.name, bytes: file.bytes.length, type: file.type,
+        sha256: createHash('sha256').update(file.bytes).digest('hex')};
+    }
     else if (command === 'payment-requests') result = await receivables.paymentRequests({
-      invoiceId: flags.invoice, customerId: flags.customer, asOf, offset: flags.offset, limit: flags.limit,
+      invoiceId: flags.invoice, customerId: flags.customer, status: flags.status, asOf, offset: flags.offset, limit: flags.limit,
     });
     else if (command === 'payment-request') result = await receivables.paymentRequest(flags.id, {asOf});
     else if (command === 'payment-preview') {
@@ -114,10 +149,13 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     } else if (command === 'apply') {
       const value = await input(flags.input);
       const direct = {settings: 'settings', customer: 'saveCustomer', draft: 'saveDraft', 'import-quote': 'importQuote',
-        receipt: 'receipt', 'import-settlement': 'importSettlement', allocate: 'allocate'};
+        receipt: 'receipt', 'import-settlement': 'importSettlement', allocate: 'allocate',
+        'refund-commit': 'commitRefund', 'credit-disposition-apply': 'applyCreditDisposition'};
       const selected = {issue: 'issue', credit: 'credit', 'void-invoice': 'voidInvoice', release: 'release', 'void-receipt': 'voidReceipt',
         'payment-create': 'createPaymentRequest', 'payment-cancel': 'cancelPaymentRequest',
-        'payment-return': 'reportPaymentReturn', 'payment-receive': 'receivePaymentRequest'};
+        'payment-return': 'reportPaymentReturn', 'payment-receive': 'receivePaymentRequest',
+        'refund-cancel': 'cancelRefund', 'refund-reverse': 'reverseRefund',
+        'refund-return': 'reportRefundReturn', 'refund-receive': 'receiveRefund'};
       if (Object.hasOwn(direct, flags.action)) result = await receivables[direct[flags.action]](value);
       else if (Object.hasOwn(selected, flags.action)) result = await receivables[selected[flags.action]](flags.id, value);
       else need(false, 'UNKNOWN_RECEIVABLE_ACTION', 'Choose a documented mutation action.');

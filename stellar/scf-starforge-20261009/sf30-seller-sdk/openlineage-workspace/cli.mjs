@@ -21,6 +21,7 @@ const HELP = [
   "  scf-lineage producer-config --connection FILE --out NEW_FILE [--token-file FILE] [--client python|java] [--compression gzip|identity] [--timeout SECONDS]",
   "  scf-lineage native-python emit|resume|status --directory DIR [--python EXECUTABLE] ...",
   "  scf-lineage native-java prepare|emit --runtime DIR ...",
+  "  scf-lineage service-levels status|policy|evaluate|record|incident|report ...",
   "  scf-lineage import --workspace DIR --input EVENTS [--name NAME] [--source URL] --operation-id ID [--revision N] [--content-encoding identity|gzip]",
   "  scf-lineage status --workspace DIR [--edition ID]",
   "  scf-lineage action ACTION --workspace DIR --input ARGUMENTS.json",
@@ -70,6 +71,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "native-java") {
     print(await (await import("./JAVA_PRODUCER.mjs")).javaProducerCommand(args)); return 0;
   }
+  if (command === "service-levels") return (await import("./service-levels-cli.mjs")).serviceLevelMain(args);
   const { result: options, positional } = parse(args);
   if (command === "producer") {
     if (positional.length !== 1) throw new Error("Choose one producer action: status, profiles, configure, emit, connection or reconnect");

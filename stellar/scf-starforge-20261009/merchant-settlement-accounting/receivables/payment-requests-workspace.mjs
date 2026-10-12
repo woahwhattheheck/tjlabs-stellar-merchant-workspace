@@ -5,6 +5,7 @@ import {open, mkdir, lstat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {json, sha, need, plain, field, identifier, dateValue, currencyKey, minor, money,
   today, invoiceSummary, receiptSummary} from './core.mjs';
+import {refundRows, refundTransferFingerprints} from './refunds.mjs';
 import {PAYMENT_REQUEST_SCHEMA, compilePaymentProposal, paymentDocument, requestRows,
   paymentRequestSummary, paymentRequestHtml, paymentReturnInput, validatePaymentVerification,
   requestTransactionFingerprints, timestamp} from './payment-requests.mjs';
@@ -40,13 +41,21 @@ function sameTransfer(source, network, fingerprints) {
 function requireUniqueTransfer(data, request, returned, fingerprints) {
   need(!data.receipts.some(row => sameTransfer(row.source, request.proposal.network, fingerprints)),
     'STELLAR_PAYMENT_ALREADY_RECORDED', 'This original Stellar transaction already has a payment receipt. Open that receipt instead of importing it again.', 409);
+  need(!refundRows(data).some(row => row.proposal.payout.network === request.proposal.network &&
+    refundTransferFingerprints(row).some(value => fingerprints.has(value))), 'STELLAR_PAYMENT_ASSIGNED_AS_REFUND',
+  'This original transaction already belongs to a customer refund. Recover that refund record.', 409);
   for (const row of requestRows(data)) for (const item of row.returns ?? []) {
     if (row.id === request.id && item.id === returned.id) continue;
     if (row.proposal.network !== request.proposal.network) continue;
-    const aliases = new Set([sha(item.transaction), ...(item.observations ?? []).flatMap(observation =>
+    // A reported hash is evidence to check, not a reservation of someone else's transfer.
+    // Retain wrong-request and unsuccessful reports while allowing the correct request to receive it.
+    const accepted = (item.observations ?? []).filter(observation =>
+      observation.status === 'RECORDED' || observation.status === 'TESTNET_VERIFIED');
+    if (!item.receiptId && !accepted.length) continue;
+    const aliases = new Set([sha(item.transaction), ...accepted.flatMap(observation =>
       requestTransactionFingerprints(observation.verification))]);
     need(![...aliases].some(value => fingerprints.has(value)), 'STELLAR_PAYMENT_REFERENCE_ALREADY_ASSIGNED',
-      'This transaction belongs to another saved payment reference. Recover that original reference.', 409);
+      'This transaction already has a verified receiving result on another saved reference. Open that original reference.', 409);
   }
 }
 function allocationCapacity(invoice, data, allocatedDate) {
@@ -280,8 +289,19 @@ export class PaymentRequestsWorkspace {
       const row = this._request(id), selected = paymentReturnInput(input);
       const existing = row.returns.find(item => item.transaction === selected.transaction);
       if (existing) {
-        need(!existing.payer || !selected.payer || existing.payer === selected.payer, 'PAYMENT_RETURN_PAYER_CHANGED',
-          'This saved transaction reference has a different sending account.', 409);
+        // Omitting payer is a replay/reselection of the existing reference. Explicit null
+        // clears an unverified sender constraint so the original envelope can determine it.
+        if (Object.hasOwn(input, 'payer') && (existing.payer ?? null) !== selected.payer) {
+          need(!existing.receiptId && !(existing.observations ?? []).some(observation =>
+            observation.verification?.status === 'VERIFIED'), 'PAYMENT_RETURN_PAYER_LOCKED',
+          'The sending account cannot change after this reference has a verified transfer. Open its original receiving result.', 409);
+          const correctionNote = field(input.note, 'payer correction note', 4000);
+          const previousPayer = existing.payer ?? null, correctedAt = timestamp();
+          existing.payer = selected.payer;
+          row.history.push({at: correctedAt, actor, action: 'transaction_payer_corrected',
+            paymentReturnId: existing.id, transaction: existing.transaction,
+            previousPayer, payer: selected.payer, note: correctionNote});
+        }
         return {invoiceId: row.invoiceId, paymentRequestId: id, paymentReturnId: existing.id,
           ...(existing.receiptId ? {receiptId: existing.receiptId} : {}),
           ...(existing.allocationId ? {allocationId: existing.allocationId} : {})};
@@ -322,8 +342,9 @@ export class PaymentRequestsWorkspace {
       }
       const observationId = randomUUID();
       let planned = null;
-      if (status === 'RECORDED') {
+      if (status === 'RECORDED' || status === 'TESTNET_VERIFIED')
         requireUniqueTransfer(data, row, returned, new Set(verification.transactionFingerprints));
+      if (status === 'RECORDED') {
         const invoice = this.receivables._invoice(row.invoiceId);
         await this.receivables._file(row.invoiceId, 'invoice.json');
         planned = receiptPlan(data, invoice, row, returned, verification, input, actor, recordedAt);
