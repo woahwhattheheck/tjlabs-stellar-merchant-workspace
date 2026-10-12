@@ -57,21 +57,20 @@ The source receiver consumes existing inputs through its maintained interface:
 | Additional original blobs supplied by exact object ID | `--incoming /absolute/original-blobs` |
 | A concrete source path requested by the selected builder | `--additional-path stellar/original/path` |
 
-These flags may be repeated. Donor repositories, source trees and archives are
-read-only inputs to the original receiver. The retained previous operation ZIP
-contains `retained-original-source-cache.zip`; its
-`source-receiving/repository.git` is a reusable donor after that archive has
-been received into a private directory. The new receiving owns its separate
-object database.
+The complete retained packet supplies every original object for this fixed
+receiving selection. No Git donor is required for its 1,944 selected and
+additional paths. These optional flags remain available through the unchanged
+receiver interface. Donor repositories, source trees and archives are read-only
+inputs; the new receiving owns its separate object database.
 
 The acquired object set includes the original eleven builder/installer modules,
 the three original VGI receiving files, the source-job resolution limit and OAuth
-browser, and the 97 runtime dependency files requested by the selected builder's
-actual receiving. It also carries the complete 814-body original reference cache
-acquired from that same signed tree. The packet retains 1,130 original required
-paths, adds 814 exact paths through the receiver's existing additional-path
-interface, and carries 950 acquired original source bodies. Every body retains
-its unchanged Git blob identity.
+browser, the 97 runtime dependencies requested by the selected builder's actual
+receiving, and the complete 814-path original reference cache. The packet retains
+1,130 original required paths and 814 additional exact paths, backed by all
+1,942 unique original Git objects. Two paths share existing object bytes. Every
+body retains its unchanged Git blob identity, and the original receiver verifies
+all objects before the selected builder starts.
 
 This broader cache includes the maintained accounting-provider and merchant-host
 modules, original managed-workspace helpers, native seller dependencies, readers
@@ -86,13 +85,19 @@ source-receiving capacity. Saved additional paths are kept when repeated
 `--additional-path` arguments are supplied. Existing packets without that optional
 list retain their original behavior.
 
-If the chosen worker's donors lack other selected
-objects, the receiver reports their exact IDs and paths in
-`missing-objects.json`, and preserves its full cache in the operation output.
-Supply those exact original blobs through `--incoming`, or use an existing
-complete donor. A selected builder dependency discovered later is retained in
-`build-source-issue.json` and can be supplied through the same original source
-path and object mechanism.
+The launcher releases the verified packet's encoded and decoded carrier copies
+after parsing its source. The operation then writes and verifies the original
+bootstrap modules, Git objects and metadata, and releases those JSON bodies
+before it starts the source receiver and native children. The parsed original
+financial input, saved configuration and complete on-disk source remain available
+for every later phase and for failure retention.
+
+If an explicitly added source path requests another object, the receiver reports
+its exact ID and path in `missing-objects.json` and preserves its full cache in
+the operation output. Supply that exact original blob through `--incoming`.
+A selected builder dependency discovered later is retained in
+`build-source-issue.json` and uses the same original source path and object
+mechanism.
 
 The selected customer package explicitly includes its product README and
 operating guide. This repository receiving directory carries the complete frozen
@@ -110,9 +115,7 @@ runtime dependencies.
 python3 products/buyer-expenses/receiving/run_native_receiving.py \
   --original-receiving /absolute/private/GOVERNED_BUYER_FINANCE_Receiving_20261012.zip \
   --temporary-directory /absolute/private/native-work \
-  --archive-directory /absolute/private/financial-receiving-archives \
-  --donor-repository /absolute/retained/source-receiving/repository.git \
-  --donor-source /absolute/installed/original/source
+  --archive-directory /absolute/private/financial-receiving-archives
 ~~~
 
 For the original installer's complete offline npm route, append:
