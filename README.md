@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
 | Operate site weather and deliver original observations | **Applications → Site weather operations** or `starforge nws-product` | [Complete selected installation](products/nws-site-weather/README.md), retained NWS source and wire bytes, 30 merchant tools, original Applications reopen and customer receiving |
 | Receive scientific data and review a provider handoff | [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md) | Original grid/station-table capture, native dataset editions, reviewed provider profile, merchant delivery and complete customer receiving |
@@ -122,6 +123,12 @@ and support observations, cohort review, and tranche completion in one retained
 workspace. Build its complete installed application with
 `--selection grant-operations`; its browser, CLI and agent service share the same
 case versions, saved requests, review history and complete receiving workflow.
+
+The [CoCart merchant and customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/cocart/OPERATING.md)
+connects the local saved-file setup page, pinned native SDK, original Woo checkout,
+merchant agent connection, managed Applications and complete customer receiving.
+Build its complete installed product with `--selection cocart-merchant`; open
+`starforge cocart-setup --port 8787` to prepare the customer's original files.
 
 ## Open the source product
 
