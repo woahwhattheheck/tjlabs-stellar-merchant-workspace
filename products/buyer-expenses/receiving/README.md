@@ -64,9 +64,20 @@ contains `retained-original-source-cache.zip`; its
 been received into a private directory. The new receiving owns its separate
 object database.
 
-The initial acquired object set includes the original eleven builder/installer
-modules and the three original VGI receiving files found missing by the previous
-native source reception. If the chosen worker's donors lack other selected
+The acquired object set includes the original eleven builder/installer modules,
+the three original VGI receiving files, the source-job resolution limit and OAuth
+browser, and the 97 runtime dependency files requested by the selected builder's
+actual receiving. The packet now selects 1,130 original paths and carries
+136 acquired original source bodies. Each body retains its unchanged Git blob
+identity under the complete signed source tree.
+
+The default packet includes the maintained accounting-provider and merchant-host
+modules, original managed-workspace helpers, native seller dependencies and their
+shared browser inputs. The original builder follows their static imports as it
+assembles the selected archive; its actual source manifest remains the packaged
+file inventory.
+
+If the chosen worker's donors lack other selected
 objects, the receiver reports their exact IDs and paths in
 `missing-objects.json`, and preserves its full cache in the operation output.
 Supply those exact original blobs through `--incoming`, or use an existing
