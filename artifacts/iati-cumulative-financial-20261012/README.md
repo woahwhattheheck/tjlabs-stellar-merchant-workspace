@@ -1,18 +1,18 @@
 # Complete cumulative IATI application source
 
-This is the complete source and original public publisher input selection `9d9c9e01c6be9552a10e120b26235908404d26dbacd99da9c6856c2dc2898826` for the existing FCDO financial receiving operation. It composes Results author commit `7f010cbc26344f840c8b864ea59edbabec5d02d5`, financial author commit `ae8a650025f6e9ec53275751aa36d7770d58b25f`, the reviewed operator corrections, and the original complete receiving programme. The combined product branch publication remains separately guarded; this capsule does not claim an invented combined source commit.
+This is the complete source and original public publisher input selection `46bd2a8204c99f239901811fa77361057f787e97e0afae6747c524ecac33882f` for the existing FCDO financial receiving operation. It composes Results author commit `7f010cbc26344f840c8b864ea59edbabec5d02d5`, financial author commit `ae8a650025f6e9ec53275751aa36d7770d58b25f`, the reviewed operator corrections, and the original complete receiving programme. The combined product branch publication remains separately guarded; this capsule does not claim an invented combined source commit.
 
 ## Exact source
 
 - 156 complete members: 154 UTF-8 source files and two original binary publisher inputs.
-- Total materialized source/input bytes: 3679433.
+- Total materialized source/input bytes: 3682009.
 - Both installed native and Applications source declarations contain the same 122 member names.
-- Complete gzip: 1356234 bytes, SHA256 `16b47a862197774812b59c3d7680355c17e1198a7df060e0624ce579d096a24b`.
-- Decoded JSON: 4071421 bytes, SHA256 `6b574b07abf5e352161421200708d9df59ac1446e4dc9ba0cb9de9d33d068c8b`.
+- Complete gzip: 1352755 bytes, SHA256 `fa485c4fcf9fc7fae7ed7d95df5c4eb2d6ca650f0ee7906a81c1fd7cc3e6bdb1`.
+- Decoded JSON: 4074063 bytes, SHA256 `9f31e8011efc34e04b230aed7362ba1b99f4bb4a25231fffc61214ec9959b160`.
 
 The packet schema is `stellar-forge.iati-results-complete-source.v2`. Every `files[]` record contains path, complete content, bytes and SHA256. Binary records additionally use `encoding: "base64"`. `sourceCommit` is null; the exact prepared source is bound by `sourceSelectionSha256`, original parent identities and the complete member inventory. The complete input gzip and every materialized file are independently checked by the supplied original create-only installer.
 
-The current edition retains the published Results renderer ac7e985b. Its original SNV receipt ordering correction remains with the Results source/programme owners. The financial programme supports receiving a following installed source edition while preserving its original financial case and request identities.
+The current edition includes the five complete native-receiving/financial source corrections and retains the published Results renderer ac7e985b. Its original SNV receipt ordering correction remains with the Results source/programme owners. The financial programme supports receiving a following installed source edition while preserving its original financial case and request identities.
 
 ## Materialize the complete source
 
@@ -51,10 +51,10 @@ The same gzip is also stored as four unchanged ASCII base64 parts, each within t
 
 | File | ASCII bytes | SHA256 |
 | --- | ---: | --- |
-| complete-source.base64.part01 | 500000 | 27a23c9e3605e51ba061d2142cae72e571be45ff20c504e954587bb6c5179b58 |
-| complete-source.base64.part02 | 500000 | 52f7cb1103c7de7a6c54af4c24b0c1c84ba91ea503383d8baa67439319699707 |
-| complete-source.base64.part03 | 500000 | 4a5a8cbb55328bfca0114122757beef7940fb3f0da3e4a043899bec0fbec0110 |
-| complete-source.base64.part04 | 308312 | 1009f4a25f24dda97c5a427b7568096cef2e82f768b68b35f2485293dc917d0e |
+| complete-source.base64.part01 | 500000 | 21c1e3abe88d74147bcc2015cfde4f0ebb26701e8bee2d37bbf9a87d6c0eceed |
+| complete-source.base64.part02 | 500000 | 2089fde95c9d704f961c54c1f6c9240a9f100be78867cc47bc92aeec0c35a6b7 |
+| complete-source.base64.part03 | 500000 | bb5dc0afbdff51a482385b663539958146e7505137d906b913bbecf6d18f8db3 |
+| complete-source.base64.part04 | 303676 | ef6a7eed4b7826f217e12c66a00bd5fbffbdba95fdd5c349ef4dfdaae4fad3cd |
 
 Concatenate their exact ASCII bodies in part order and base64-decode once. The result must match the original gzip size/SHA above. Inflate once and verify the whole JSON identity before running the original installer. These transport leaves do not change the source packet or source selection.
 
@@ -63,8 +63,14 @@ import base64, hashlib
 from pathlib import Path
 parts = [Path('complete-source.base64.part%02d' % index).read_bytes() for index in range(1, 5)]
 packed = base64.b64decode(b''.join(parts), validate=True)
-assert len(packed) == 1356234
-assert hashlib.sha256(packed).hexdigest() == '16b47a862197774812b59c3d7680355c17e1198a7df060e0624ce579d096a24b'
+assert len(packed) == 1352755
+assert hashlib.sha256(packed).hexdigest() == 'fa485c4fcf9fc7fae7ed7d95df5c4eb2d6ca650f0ee7906a81c1fd7cc3e6bdb1'
 # Retain this complete verified byte sequence through the original private
 # create-only file publication before passing its path to prepare_source.py.
 ```
+
+## Corrections from the original financial receiving
+
+The selected `reconciliation_receiving.py` reads the ordinary installed source through its original `digest_file`; private workspace files retain their original privacy checks. The selected `client.mjs` carries private HTTP/1.0 response streams with Node’s native HTTP transport while preserving the existing Request/Response body APIs, request lengths, cancellation and timeouts. This addresses the observed Node 24.19 bundled Undici socket-EOF assertion during a complete streamed download. The precise historical comparison declarations and generic MCP comparison preflight are the current original financial author’s complete postimages.
+
+These source corrections are part of the existing receiving operation. The packet does not contain an executed customer workspace, private console URL, account credential or a claim that every receiving phase has completed. The Results renderer and transfer remain their currently selected original sources; the original SNV receiving owner retains its separate legacy-packet continuation.

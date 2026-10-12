@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import ast
 import base64
+import binascii
 import gzip
 import hashlib
 import io
@@ -22,17 +23,21 @@ import tempfile
 import urllib.request
 
 SOURCE_COMMIT = None
-SOURCE_SELECTION_SHA256 = "9d9c9e01c6be9552a10e120b26235908404d26dbacd99da9c6856c2dc2898826"
-PACKET_COMMIT = None
+SOURCE_SELECTION_SHA256 = "46bd2a8204c99f239901811fa77361057f787e97e0afae6747c524ecac33882f"
+PACKET_COMMIT = "fd1287f7169d96607dc4d372722749fdd347a904"
 RELATIVE = "stellar/scf-starforge-20261009/sf30-seller-sdk/iati"
-PACKET_URL = None  # Exact complete source is received through the declared source carrier.
-PACKET_BYTES = 1356234
-PACKET_SHA256 = "16b47a862197774812b59c3d7680355c17e1198a7df060e0624ce579d096a24b"
-DECODED_BYTES = 4071421
-DECODED_SHA256 = "6b574b07abf5e352161421200708d9df59ac1446e4dc9ba0cb9de9d33d068c8b"
+PACKET_URL = ("https://raw.githubusercontent.com/woahwhattheheck/"
+              "tjlabs-stellar-merchant-workspace/" + PACKET_COMMIT + "/" +
+              "artifacts/iati-cumulative-financial-20261012/complete-source.json.gz")
+PACKET_BYTES = 1352755
+PACKET_SHA256 = "fa485c4fcf9fc7fae7ed7d95df5c4eb2d6ca650f0ee7906a81c1fd7cc3e6bdb1"
+DECODED_BYTES = 4074063
+DECODED_SHA256 = "9f31e8011efc34e04b230aed7362ba1b99f4bb4a25231fffc61214ec9959b160"
 SCHEMA = "stellar-forge.iati-results-complete-source.v2"
-FILE_COUNT = 156
-SOURCE_BYTES = 3679433
+FILE_COUNT = 154
+SOURCE_BYTES = 3017781
+BINARY_COUNT = 2
+BINARY_BYTES = 664228
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -107,8 +112,6 @@ def read_packet(packet_file=None):
     if packet_file:
         compressed = regular_bytes(Path(packet_file), PACKET_BYTES)
     else:
-        require(PACKET_URL is not None,
-                "Pass --packet-file with the exact complete source received from its declared carrier")
         request = urllib.request.Request(PACKET_URL, headers={
             "User-Agent": "IATI-results-source-receiving/1.0",
             "Accept": "application/octet-stream"})
@@ -126,15 +129,16 @@ def read_packet(packet_file=None):
             envelope.get("sourceSelectionSha256") == SOURCE_SELECTION_SHA256,
             "The source envelope names another application")
     records = envelope.get("files")
-    require(isinstance(records, list) and len(records) == FILE_COUNT,
-            "The complete application file closure is required")
+    require(isinstance(records, list) and len(records) == FILE_COUNT + BINARY_COUNT,
+            "The complete application and original binary source closure is required")
     files = {}
+    source_total = binary_total = source_count = binary_count = 0
     for record in records:
         require(isinstance(record, dict) and
                 (set(record) == {"path", "content", "bytes", "sha256"} or
                  set(record) == {"path", "content", "encoding", "bytes", "sha256"}
                  and record.get("encoding") == "base64"),
-                "Invalid source record")
+                "Invalid complete source record")
         name = record["path"]
         require(isinstance(name, str) and name and "\\" not in name and
                 not any(ord(c) < 32 for c in name), "Unsafe source member name")
@@ -145,16 +149,25 @@ def read_packet(packet_file=None):
         require(isinstance(record["content"], str),
                 "Source must retain its complete encoded bytes")
         if record.get("encoding") == "base64":
-            data = base64.b64decode(record["content"], validate=True)
+            try:
+                data = base64.b64decode(record["content"], validate=True)
+            except (ValueError, binascii.Error) as exc:
+                raise ValueError("Binary source encoding is invalid") from exc
             require(base64.b64encode(data).decode("ascii") == record["content"],
-                    "Binary source must use canonical complete base64")
+                    "Binary source must retain canonical complete base64")
+            binary_count += 1
+            binary_total += len(data)
         else:
             data = record["content"].encode("utf-8")
+            source_count += 1
+            source_total += len(data)
         require(type(record["bytes"]) is int and len(data) == record["bytes"] and
                 digest(data) == record["sha256"], "Source member identity mismatch")
         files[name] = data
-    require(sum(map(len, files.values())) == SOURCE_BYTES,
-            "The complete source byte inventory differs")
+    require(source_count == FILE_COUNT and source_total == SOURCE_BYTES,
+            "The complete text source inventory differs")
+    require(binary_count == BINARY_COUNT and binary_total == BINARY_BYTES,
+            "The complete original binary source inventory differs")
     return compressed, decoded, files
 
 def prepare(root, *, packet_file=None, node=None):
@@ -186,7 +199,9 @@ def prepare(root, *, packet_file=None, node=None):
         "sourceCommit": SOURCE_COMMIT, "packetCommit": PACKET_COMMIT,
         "sourceSelectionSha256": SOURCE_SELECTION_SHA256,
         "packetSha256": PACKET_SHA256, "source": str(source),
-        "files": len(files), "bytes": SOURCE_BYTES,
+        "files": len(files), "sourceFiles": FILE_COUNT,
+        "sourceBytes": SOURCE_BYTES, "binaryFiles": BINARY_COUNT,
+        "binaryBytes": BINARY_BYTES, "bytes": SOURCE_BYTES + BINARY_BYTES,
         "pythonParsed": python_files, "javascriptParsed": javascript_files,
         "node": selected_node,
         "receivingExecuted": False,
