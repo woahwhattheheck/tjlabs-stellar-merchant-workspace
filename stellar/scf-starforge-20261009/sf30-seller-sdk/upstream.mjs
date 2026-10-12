@@ -5,6 +5,7 @@ import { isIP } from 'node:net';
 import { readFile, stat } from 'node:fs/promises';
 import { isPublicAddress } from '../sf31-buyer-client/public-transport.mjs';
 import { createUpstreamHandler } from './upstream-handler.mjs';
+import { compileQueryEnvironment, resolveQueryEnvironment, assertQueryCredentialSeparation } from './upstream-query-credentials.mjs';
 import { compileAvailabilityPolicy, protectUpstream } from './upstream-readiness.mjs';
 import { compileResponseContract } from './response-contract.mjs';
 import { compileUpstreamIdempotency, configuredUpstreamIdempotency } from './upstream-idempotency-config.mjs';
@@ -29,7 +30,7 @@ const plain = value => value !== null && typeof value === 'object' && !Array.isA
   [Object.prototype,null].includes(Object.getPrototypeOf(value));
 const reserved = /^(?:host|connection|keep-alive|content-length|transfer-encoding|te|trailer|upgrade|expect|proxy-.*|cookie|set-cookie|accept-encoding|content-encoding|content-type|origin|referer|forwarded|x-forwarded-.*|sec-.*|payment-.*|x-payment.*|extension-responses|settlement-overrides|x402-.*|www-authenticate)$/i;
 const responseAllowed = new Set(['content-type','content-language','etag','last-modified','content-disposition','x-credits-remaining','x-ratelimit-limit','x-ratelimit-remaining','x-ratelimit-reset']);
-const bindingKeys = new Set(['origin','path','method','query','requestHeaders','headerEnv','responseHeaders','responseMode','timeoutMs','maxResponseBytes','maxRequestBytes','bodyType','maxInFlight','availability','responseContract','idempotency','cache','oauth2','oauthConnection','stream','supplierAccount','tls','transport','retainErrorResponse']);
+const bindingKeys = new Set(['origin','path','method','query','queryEnv','requestHeaders','headerEnv','responseHeaders','responseMode','timeoutMs','maxResponseBytes','maxRequestBytes','bodyType','maxInFlight','availability','responseContract','idempotency','cache','oauth2','oauthConnection','stream','supplierAccount','tls','transport','retainErrorResponse']);
 const bad = text => { throw new TypeError(text); };
 const handlerRuntimes = new WeakMap();
 const handlerSupplierQuotas = new WeakMap();
@@ -114,6 +115,7 @@ export function upstreamCredentialReferences(config) {
       if (!plain(binding.headerEnv)) bad('Invalid headerEnv');
       for (const value of Object.values(binding.headerEnv)) add(value);
     }
+    for (const reference of Object.values(compileQueryEnvironment(binding.queryEnv))) add(reference);
     if (binding.oauth2 !== undefined) {
       if (!plain(binding.oauth2)) bad('Invalid OAuth declaration');
       add(binding.oauth2.clientIdEnv); add(binding.oauth2.clientSecretEnv);
@@ -168,6 +170,10 @@ export function compileUpstreamBindings(config,{allowLoopback=false,env=process.
       credentialRefs[key] = variable;
     }
     const credentials = deferCredentials ? Object.freeze(Object.create(null)) : resolveCredentialHeaders(credentialRefs,env);
+    const query = queryMapping(raw.query), queryCredentialRefs = compileQueryEnvironment(raw.queryEnv);
+    assertQueryCredentialSeparation(query,queryCredentialRefs);
+    // Eager launch validates values, but compiled query configuration keeps references.
+    if (!deferCredentials) resolveQueryEnvironment(queryCredentialRefs,env);
     const oauth2 = raw.oauth2 === undefined ? undefined : compileOAuthClientCredentials(raw.oauth2,
       {allowLoopback,env,validateCredentials:!deferCredentials});
     const oauthConnection = raw.oauthConnection === undefined ? undefined : compileOAuthConnection(raw.oauthConnection,{resourceOrigin:url.origin,allowLoopback});
@@ -198,7 +204,7 @@ export function compileUpstreamBindings(config,{allowLoopback=false,env=process.
       admissionNames.add(idempotency.admission); operationDirectories.add(idempotency.stateDir);
     }
     const binding = {origin:url.origin,hostname:url.hostname,local:url.protocol === 'http:',
-      path:raw.path,pathKeys:Object.freeze(keys),method,query:queryMapping(raw.query),
+      path:raw.path,pathKeys:Object.freeze(keys),method,query,queryCredentialRefs,
       bodyType,maxRequestBytes:integer(raw.maxRequestBytes,1_048_576,16*1_048_576,'maxRequestBytes'),
       requestHeaders:Object.freeze(requestHeaders),responseHeaders:Object.freeze(responseHeaders),
       credentials,...(deferCredentials ? {credentialRefs:Object.freeze(credentialRefs)} : {}),responseMode,...(idempotency ? {idempotency} : {}),
@@ -335,6 +341,7 @@ export function createUpstreamHandlers(config,{allowLoopback=false,env=process.e
       ...(tls ? {tls} : {}),
       bodyType:binding.bodyType,maxRequestBytes:binding.maxRequestBytes,
       query:binding.query,headers:binding.credentialRefs ? () => resolveCredentialHeaders(binding.credentialRefs,env) : binding.credentials,
+      queryCredentials:() => resolveQueryEnvironment(binding.queryCredentialRefs,env),
       requestHeaders:binding.requestHeaders,
       responseHeaders:[...new Set(['content-type',...binding.responseHeaders])],responseType:binding.responseMode,
       ...(binding.stream ? {stream:binding.stream} : {}),

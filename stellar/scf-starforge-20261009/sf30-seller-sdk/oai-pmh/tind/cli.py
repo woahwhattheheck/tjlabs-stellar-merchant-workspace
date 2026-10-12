@@ -35,6 +35,13 @@ def main():
     command.add_argument("--project", required=True); command.add_argument("--offset", type=int, default=0)
     command.add_argument("--limit", type=int, default=50); command.add_argument("--query", default="")
     command = sub.add_parser("record"); command.add_argument("--project", required=True); command.add_argument("--identifier", required=True)
+    command = sub.add_parser("files")
+    command.add_argument("--project", required=True); command.add_argument("--offset", type=int, default=0)
+    command.add_argument("--limit", type=int, default=50); command.add_argument("--query", default="")
+    command = sub.add_parser("file-history")
+    command.add_argument("--project", required=True); command.add_argument("--identifier", required=True); command.add_argument("--file", required=True)
+    command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("file-receipt"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     command = sub.add_parser("export-batch"); command.add_argument("--id", required=True); command.add_argument("--out", required=True)
     command = sub.add_parser("handover"); command.add_argument("--out", required=True); command.add_argument("--metadata-only", action="store_true")
     command = sub.add_parser("receive"); command.add_argument("--archive", required=True); command.add_argument("--destination", required=True)
@@ -77,6 +84,15 @@ def main():
                     result = workspace.apply(document(args.request))
                 elif args.command == "records":
                     result = workspace.records(args.project, args.offset, args.limit, args.query)
+                elif args.command == "files":
+                    with workspace.mutex:
+                        result = workspace.files(args.project, args.offset, args.limit, args.query)
+                elif args.command == "file-history":
+                    with workspace.mutex:
+                        result = workspace.file_history(args.project, args.identifier, args.file, args.offset, args.limit)
+                elif args.command == "file-receipt":
+                    with workspace.mutex:
+                        result = workspace.file_receipt(args.project, args.id)
                 elif args.command == "record":
                     with workspace.mutex:
                         result = workspace.preview(workspace.project(args.project), args.identifier)

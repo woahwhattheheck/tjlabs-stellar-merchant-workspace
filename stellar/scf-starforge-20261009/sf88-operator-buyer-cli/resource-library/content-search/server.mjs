@@ -4,11 +4,15 @@ import {readingExchangeExtension} from '../reading-exchange/server.mjs';
 import {serveLibrary} from '../server.mjs';
 import {openContentSearch} from './engine.mjs';
 import {reportDownload} from './reports.mjs';
+import {projectDownload} from './project.mjs';
 import {requireValue} from '../files.mjs';
 export async function contentSearchExtension(search){
   let work=null,lastJob=null,closing=false;
   const reading=await readingExchangeExtension(search);
   const additionalAssets=await Promise.all([['/research','index.html','text/html'],['/research.js','app.js','text/javascript'],['/research.css','style.css','text/css']].map(async([route,file,type])=>({route,type,bytes:await readFile(new URL(file,import.meta.url))})));
+  const page=additionalAssets.find(asset=>asset.route==='/research');
+  page.bytes=Buffer.from(page.bytes.toString('utf8').replace('</head>','<link rel="stylesheet" href="/research-project.css"><script type="module" src="/research-project.js"></script></head>'));
+  for(const [route,file,type]of [['/research-project.js','project-ui.mjs','text/javascript'],['/research-project.css','project.css','text/css']])additionalAssets.push({route,type,bytes:await readFile(new URL(file,import.meta.url))});
   additionalAssets.push(...reading.additionalAssets);
   const authenticatedRoute=async(context)=>{
     if(await reading.authenticatedRoute(context))return true;
@@ -29,6 +33,7 @@ export async function contentSearchExtension(search){
     else if(action==='/saved'&&method==='GET')send({items:search.listSaved()});
     else if(action==='/saved'&&method==='PUT')send(search.saveQuery(await body()));
     else if(action==='/saved'&&method==='DELETE')send(search.deleteQuery(await body()));
+    else if(action==='/project'&&method==='POST'){await body();send(await registerDownload(signal=>projectDownload(search,{},signal)));}
     else if(action==='/export'&&method==='POST'){const options=await body();send(await registerDownload(signal=>reportDownload(search,options,signal)));}
     else requireValue(false,'RESEARCH_ROUTE_NOT_FOUND',404);
     return true;

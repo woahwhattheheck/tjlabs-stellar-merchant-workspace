@@ -6,6 +6,10 @@ This is an extension of the original SF47 planning workspace. It preserves budge
 
 `GET /api/operations/{case}/delivery-queue?asOfDate=YYYY-MM-DD` returns the complete current-head work queue. `GET /api/operations/{case}/delivery-queue/export.zip?asOfDate=YYYY-MM-DD` returns its report and complete native case. Omit the date for the current UTC date. Save optional installation coordination with the existing `installation.save` command; receive the full queue ZIP through the existing case import route. [Installation delivery queue](DELIVERY_QUEUE.md) documents the source fields, dated classifications, typed selections and receiving identity.
 
+## Work and invoice intake
+
+The original Operations service adds `list_work_intakes`, `work_intake` and `preview_work_intake`. The `work-intake.upload`, `work-intake.save` and `work-intake.apply` actions execute inside its existing request transaction. Full case exports retain `workIntakes` and current `workIntakeRefs`; receiving validates complete immutable editions and their native record links. Older cases keep their original snapshot shape. [Complete work/invoice source contract](WORK_INTAKE.md) describes fields, routes, CLI and typed/MCP access.
+
 ## Public interfaces
 
 `operations.py`: `Operations(workspace)` with `list(plan_id=None)`, `create(body)`, `read(id)`, `command(id,body)`, `history(id,after=0,limit=100)`, `source(id,source_id)`, `report(id)`, `export(id)`, `import_bundle(raw,name,request_id,actor)`.

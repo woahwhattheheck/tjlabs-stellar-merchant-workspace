@@ -4,6 +4,46 @@ This application carries a saved OpenLineage Service Levels incident into the ex
 
 The module uses the existing Service Levels engine, configured Lineage HTTP client, Support case store, commissioning command and private export writer. Its nine MCP tools and installed command operate those original components. The full application requires the selected distribution’s Lineage and Support source components and their existing owner dependencies.
 
+## Build the complete installed source selection
+
+The maintained `lineage-support` source selection combines the complete original
+Merchant Support and OpenLineage selections, including the bridge contribution
+and the existing Support, accounting, buyer and Lineage owners. The original
+`merchant-support` and `openlineage-operations` recipes remain available for
+their separate installations.
+
+Build the selected committed source with the existing distribution builder:
+
+```sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/original-checkout \
+  --ref ACTUAL_SELECTED_COMMIT \
+  --selection lineage-support \
+  --out /absolute/private/lineage-support-package \
+  --offline
+```
+
+The checkout must contain that commit and its Git objects. The builder retains
+the complete original source, recipe, contribution identities, declared native
+resources and package archive. If the original build is interrupted, use the
+same output, commit and selection with `--resume`. Continue with the returned
+archive through the existing Runtime installation and managed-profile workflow.
+
+The package's ordinary `starforge` entry provides the same application commands
+and configuration readers. Inspect its actual installed registrations:
+
+```sh
+starforge registrations --source lineage-support
+starforge registrations --command lineage-support
+starforge registrations --source openlineage-workspace
+starforge lineage-support sources --config /private/original-merchant.json
+```
+
+Use the original runtime profile and credential-file selections. The async
+producer's prepared Python SDK environment is selected separately through its
+existing `--python` argument; the bridge continues through the configured
+native Lineage client and original Support case store.
+
 ## Prepare the existing host
 
 Use the host’s original merchant configuration. Its supportConnection points to the existing private Support configuration and cases directory. Its openlineageWorkspaceConnection points to the original Lineage workspace configuration. Choose an alias returned by merchant_lineage_workspaces or merchant_lineage_support_sources.

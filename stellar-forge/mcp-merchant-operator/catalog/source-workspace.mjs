@@ -1,6 +1,7 @@
 import { organisationReconciliationTools } from '../organisation_reconciliation_mcp.mjs';
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
+import { iatiAmpTools } from './source-iati-amp.mjs';
 import { iatiOrganisationTools } from './source-iati-organisation.mjs';
 
 const SHA = /^[0-9a-f]{64}$/;
@@ -105,6 +106,7 @@ function sourceWorkspaceTools(tool) {
     tool('merchant_source_iati_results_preview', 'Preview the complete original results definition, source coverage, selected explicit period pairs and exact decimal calculations before saving a new review revision.', { ...selection, definition:{type:'object'} }, ['workspace','definition'], read),
     tool('merchant_source_iati_results_action', 'Save, compare or explicitly select a results revision with the original requestId and revision basis. Cancel only an exact uncommitted original input under that same journal; completed reviews and observations are never withdrawn by this action.', { ...selection, action:{type:'string',enum:['save','compare','adopt','cancel']}, definition:{type:'object'} }, ['workspace','action','definition'], {idempotent:true}),
     tool('merchant_source_iati_results_export', 'Retain a complete editable results project or report-only ZIP through the original full-file reader. Project packets include all original XML, report revisions, named reviews, source comparisons and prior receiving closure; receive editable packets with merchant_source_import.', { ...selection, project:digest, revision:{type:'integer',minimum:1}, kind:{type:'string',enum:['project','report']} }, ['workspace','project','kind'], {}),
+    ...iatiAmpTools(tool, { selection, digest, page, read }),
   ];
 }
 

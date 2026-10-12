@@ -1231,7 +1231,8 @@ def continue_operator(args, output, state, requests):
             state["continuationAttempts"].append(receipt_file)
         checkpoint(output / "operation-state.json", state)
         require(result.returncode == 0,
-                "Continue the original operator operation from its retained phase: " + clean(result.stderr[-4000:]))
+                "The original operator returned " + str(result.returncode)
+                + ". Continue this saved operation from its retained phase: " + clean(result.stderr[-4000:]))
         operator = load_json((merchant_output / "operation-result.json").read_bytes())
         require(operator["state"] == "COMPLETE" and operator["caseId"] == state["caseId"]
                 and operator["revision"] == state["finalRevision"],

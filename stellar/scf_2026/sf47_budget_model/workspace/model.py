@@ -579,10 +579,20 @@ class Workspace:
                                 f"Copied from {current['name']} revision {current['revision']}")
         return self._transaction(request_id, payload, action)
 
-    def export(self, plan_id):
+    def export(self, plan_id, revision=None):
+        """Export a complete saved edition and its consecutive original history.
+
+        Selecting an earlier immutable revision leaves the active plan intact.
+        The complete bundle represents that selected edition, so later working
+        revisions stay in the source workspace for their own future delivery.
+        """
         with self.mutex:
-            current = self._read(plan_id)
-            revisions = [self._read(plan_id, row["revision"]) for row in reversed(self.history(plan_id))]
+            current = self._read(plan_id, revision)
+            revisions = [self._read(plan_id, row["revision"])
+                         for row in reversed(self.history(plan_id))
+                         if row["revision"] <= current["revision"]]
+            for record in revisions:
+                record["currentRevision"] = current["revision"]
             source_row = self.db.execute("SELECT source_json,source_bytes FROM plans WHERE id=?", (plan_id,)).fetchone()
             original, raw_source = json.loads(source_row[0]), source_row[1]
             if raw_source is None or hashlib.sha256(raw_source).hexdigest() != current["source"]["sha256"]:

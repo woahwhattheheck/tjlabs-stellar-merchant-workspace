@@ -16,6 +16,7 @@ import organisation_http
 import organisation_reconciliation_http
 import refresh_http
 import results.http as results_http
+import amp_http
 
 HERE = Path(__file__).resolve().parent
 SHARED = HERE.parent / "xml"
@@ -85,7 +86,7 @@ class Handler(_original.Handler):
         target = urlsplit(self.path)
         if results_http.asset(self, target.path):
             return
-        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/organisation.js", "/organisation.css", "/organisation_reconciliation_ui.mjs", "/organisation_reconciliation.css", "/refresh.js", "/refresh.css"}:
+        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/organisation.js", "/organisation.css", "/organisation_reconciliation_ui.mjs", "/organisation_reconciliation.css", "/refresh.js", "/refresh.css", "/amp.js", "/amp.css"}:
             self._gate(api=False)
             name = target.path[1:]
             media = "text/javascript; charset=utf-8" if name.endswith((".js", ".mjs")) else "text/css; charset=utf-8"
@@ -101,6 +102,8 @@ class Handler(_original.Handler):
             raise InputError("Repeated IATI query parameters are not accepted")
         q = {key: items[0] for key, items in values.items()}
         ws = self.server.workspace
+        if amp_http.get(self, target.path, q):
+            return
         if refresh_http.get(self, target.path, q):
             return
         if organisation_reconciliation_http.get(self, target.path, q):
@@ -164,6 +167,8 @@ class Handler(_original.Handler):
         if target.query:
             raise InputError("IATI actions take a body, not query parameters")
         ws = self.server.workspace
+        if amp_http.post(self, target.path):
+            return
         if refresh_http.post(self, target.path):
             return
         if organisation_reconciliation_http.post(self, target.path):

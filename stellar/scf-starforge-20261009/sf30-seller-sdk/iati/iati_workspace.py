@@ -286,6 +286,8 @@ class IatiWorkspace(Workspace):
         self.reconciliation = OrganisationReconciliation(self)
         from results.workspace import IatiResults
         self.results = IatiResults(self)
+        from amp import AmpWorkspace
+        self.amp = AmpWorkspace(self)
 
     def presets(self):
         return source_presets()
@@ -303,6 +305,7 @@ class IatiWorkspace(Workspace):
             result["publishing"] = {"projects":len(self.publishing.list())}
             result["refresh"] = {"plans": len(self.refresh.plans())}
             result["results"] = {"projects": len(self.results.inventory()["projects"])}
+            result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -821,4 +824,7 @@ class IatiWorkspace(Workspace):
         from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
             return self.reconciliation.receive({"path": path})
+        from amp.portable import SCHEMA as AMP_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
+            return self.amp.receive(path)
         return super().import_packet(path)

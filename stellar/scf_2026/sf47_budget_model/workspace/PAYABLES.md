@@ -1,8 +1,8 @@
 # Supplier accounts
 
-Supplier accounts brings one original contributor or supplier's work, invoices, source documents and observed payment allocations into a complete dated account. The same case, native record commands and financial positions remain available in Budget performance, Bulk ledger intake, Contributor Engagements and Account Statements.
+Supplier accounts brings one original contributor or supplier's work, invoices, source documents and observed payment allocations into a complete dated account. It uses the same original contributor, work, invoice and cash records as the existing Grant Operations desks. Budget performance, Bulk ledger intake and Account statements open directly from the account.
 
-Open **Delivery operations → Supplier accounts**. Select the supplier and period end, optionally enter a period start, and choose **Open selected account**. A blank supplier selects the first original contributor by name.
+Open **Delivery operations → Supplier accounts**. Select the supplier and period end, optionally enter a period start, and choose **Open selected account**. A blank supplier selects the first original contributor by name. Changing the supplier or dates clears the displayed report and its downloads until that selection opens successfully. A retained original draft keeps its own supplier identity and reviewed version while you navigate accounts.
 
 ## Complete operator workflow
 
@@ -18,7 +18,7 @@ The selected report carries the original case identity/version and a report iden
 
 **Record work** and **Edit original work** retain the actual description, dates, hours, funding basis, work package and source references through `work.save`. Editing follows the original Logged state. Submit, accept, reopen and void are the existing state transitions and require a reason.
 
-**Start invoice with this work** carries its original description, package and work identity into a new invoice line. Enter the actual invoiced amount from the source. An invoice link establishes an association; it does not establish a rate or prove complete billing. Contributor Engagements retains its own named agreements, terms, rates and availability.
+**Start invoice with this work** carries its original description, package and work identity into a new invoice line. Enter the actual invoiced amount from the source. An invoice link establishes an association; it does not establish a rate or prove complete billing. Keep any agreed rates and availability with their original agreement source.
 
 The **Work without invoice link** view means no nonvoid invoice link with an issue date through the account end. Voided work and future work are excluded from this attention count. Every source work record remains available in the full account JSON and CSV.
 
@@ -50,6 +50,8 @@ Add the original USD allocation for each invoice. Mixed supplier observations re
 A payment uses the original Out direction. A received supplier refund uses In with Refund category, reducing net paid on its allocated invoices. The source command validates the original reference, distinct invoice allocations, recorded valuation and allocation capacity.
 
 Open any observation to see its complete original quantity, recorded valuation, all supplier allocations, selected-account amount, other-account allocations and unallocated recorded USD value. Cash observations are immutable. Void an erroneous observation with its reason, then record its correction using its actual original source.
+
+**Account statements** opens the current statement desk while retaining this supplier selection, dates and original draft. Return through **Supplier accounts** after receiving a statement to read the updated original cash records. A retained draft keeps its reviewed case version for deliberate reconciliation.
 
 Account Statements receives source statement rows through its own parser and original native cash commands. The supplier account sees those same cash records when they carry original invoice allocations. Bulk ledger intake supplies the same source records from CSV/TSV/native JSON. An unallocated observation gains no inferred supplier identity.
 

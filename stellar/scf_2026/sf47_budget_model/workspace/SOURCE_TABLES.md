@@ -140,6 +140,8 @@ The complete portable project is **planning-source-tables.json**. It includes th
 
 The native planning revision retains that complete JSON text inside its source-table field. Retaining the original text preserves Source Tables review identities through native JSON serialization, SQLite, saved revisions and full ZIP exports.
 
+The headless save command can finish after an interruption between the original native commit and ZIP publication. Repeat the same preview, note, request ID and output directory. It recovers the original saved revision and exports that revision with its complete earlier history. Later saved work stays in the active authoring workspace. A completed original ZIP is reopened and verified before the same delivery is returned.
+
 The original planning ZIP keeps its eleven existing entries, including workspace.json and planning.json. Source-table material is part of that native planning state. **Planning edition** in **Prepare submission** receives the complete ZIP through the same existing importer and retains the original source bytes and native revisions.
 
 To continue authoring after receiving a native planning ZIP, import that ZIP into the original Grant Operations workspace, select the imported plan and open **Source tables**. Rebase on the received plan's current saved identity before preparing further source imports.

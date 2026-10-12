@@ -86,6 +86,19 @@ def file_digest(path, limit=MAX_FILE):
         raise InputError("Source file changed during the retained read")
     return {"sha256": h.hexdigest(), "bytes": count}
 
+def file_receiving(entry, observed=None, target_id=None):
+    """Compare the retained native observation with this exact planned file."""
+    observed = observed if observed is not None else entry.get("destination")
+    identity = bool(observed and observed.get("sha256") == entry["sha256"] and observed.get("bytes") == entry["bytes"])
+    binding = bool(identity and target_id and observed.get("nativeRecordId") == target_id)
+    attachment = observed.get("attachment") if observed else None
+    policy = bool(binding and isinstance(attachment, dict) and
+                  attachment.get("role") == entry["role"] and
+                  attachment.get("access") == entry["access"])
+    return {"bytesObserved": identity, "recordMatched": binding,
+            "bytesConfirmed": binding, "policyObserved": isinstance(attachment, dict),
+            "policyConfirmed": policy, "complete": binding and policy}
+
 class ObjectWriter:
     def __init__(self, owner):
         self.owner = owner
@@ -211,6 +224,9 @@ class Migration:
             CREATE TABLE IF NOT EXISTS tind_batch_records(batch_id TEXT NOT NULL,identifier TEXT NOT NULL,body TEXT NOT NULL,
                 PRIMARY KEY(batch_id,identifier));
             CREATE TABLE IF NOT EXISTS tind_receipts(id TEXT PRIMARY KEY,batch_id TEXT NOT NULL,body TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS tind_file_receipts(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,
+                identifier TEXT NOT NULL,file_id TEXT NOT NULL,body TEXT NOT NULL);
+            CREATE INDEX IF NOT EXISTS tind_file_receiving ON tind_file_receipts(project_id,identifier,file_id);
             CREATE TABLE IF NOT EXISTS tind_operations(id TEXT PRIMARY KEY,request_sha TEXT NOT NULL,response TEXT NOT NULL);
         """)
 
@@ -787,7 +803,10 @@ class Migration:
         entry = decode(row["body"])
         if value.get("sha256") != entry["sha256"] or value.get("bytes") != entry["bytes"]:
             raise InputError("Native file result must carry the retained file's exact checksum and byte count")
-        destination = {"nativeRecordId": plain(value.get("nativeRecordId"), "native record ID", 4096),
+        destination = {"schema": "stellar-forge.tind-file-receipt.v1",
+                       "id": sha(jbytes(["tind-file-receipt", operation])),
+                       "projectId": project["id"], "identifier": identifier, "fileId": file_id,
+                       "nativeRecordId": plain(value.get("nativeRecordId"), "native record ID", 4096),
                        "nativeFileId": plain(value.get("nativeFileId"), "native file/object ID", 4096),
                        "url": https_url(value.get("url"), "native file URL"),
                        "sha256": value["sha256"], "bytes": value["bytes"],
@@ -795,9 +814,79 @@ class Migration:
                        "operator": plain(value.get("operator"), "file receiving operator", 256),
                        "original": self.object(plain(value.get("original"), "original native file result", MAX_JSON).encode()),
                        "operationId": operation}
+        previous = entry.get("destination")
+        if previous and not previous.get("id"):
+            legacy = {**previous, "schema": "stellar-forge.tind-file-receipt.v1",
+                      "id": sha(jbytes(["tind-file-receipt", previous["operationId"]])),
+                      "projectId": project["id"], "identifier": identifier, "fileId": file_id}
+            self.db.execute("INSERT OR IGNORE INTO tind_file_receipts VALUES(?,?,?,?,?)",
+                            (legacy["id"], project["id"], identifier, file_id, jbytes(legacy).decode()))
+        if previous and previous.get("attachment") and all(previous.get(key) == destination.get(key)
+                for key in ("nativeRecordId", "nativeFileId", "sha256", "bytes")):
+            destination["attachment"] = previous["attachment"]
+        attachment = value.get("attachment")
+        if attachment is not None:
+            if not isinstance(attachment, dict):
+                raise InputError("Supply the actual observed attachment role and access as an object")
+            observed_access = access(attachment.get("access"))
+            if "unreviewed" in (observed_access["metadata"], observed_access["files"]):
+                raise InputError("Choose the actual observed native visibility")
+            destination["attachment"] = {
+                "role": plain(attachment.get("role"), "observed native attachment role", 256),
+                "access": observed_access,
+                "observedAt": timestamp(attachment.get("observedAt"), "attachment policy observation time"),
+                "sourceUrl": https_url(attachment.get("sourceUrl"), "native attachment policy source URL"),
+                "original": self.object(plain(attachment.get("original"), "original native attachment and access result", MAX_JSON).encode())
+            }
+        self.db.execute("INSERT INTO tind_file_receipts VALUES(?,?,?,?,?)",
+                        (destination["id"], project["id"], identifier, file_id, jbytes(destination).decode()))
         entry["destination"] = destination
         self.db.execute("UPDATE tind_files SET body=? WHERE project_id=? AND identifier=? AND id=?", (jbytes(entry).decode(), project["id"], identifier, file_id))
         return {"identifier": identifier, "fileId": file_id, "destination": destination}
+
+    def files(self, project_id, offset=0, limit=50, query=""):
+        page_values(offset, limit)
+        project = self.project(project_id)
+        if not isinstance(query, str) or len(query) > 4096:
+            raise InputError("File query exceeds the supported length")
+        clause, args = "project_id=?", [project_id]
+        if query:
+            clause += " AND (instr(identifier,?)>0 OR instr(id,?)>0 OR instr(body,?)>0)"
+            args += [query, query, query]
+        total = self.db.execute("SELECT COUNT(*) FROM tind_files WHERE " + clause, args).fetchone()[0]
+        rows = self.db.execute("SELECT body FROM tind_files WHERE " + clause + " ORDER BY identifier,id LIMIT ? OFFSET ?", args + [limit, offset]).fetchall()
+        items, records = [], {}
+        for row in rows:
+            entry = decode(row["body"])
+            identifier = entry["identifier"]
+            if identifier not in records:
+                records[identifier] = self.preview(project, identifier)
+            target_id = records[identifier]["targetId"]
+            items.append({"file": entry, "recordTitle": records[identifier]["title"], "targetId": target_id,
+                          "receiving": file_receiving(entry, target_id=target_id)})
+        return {"items": items, "total": total, "offset": offset,
+                "next": offset + len(items) if offset + len(items) < total else None}
+
+    def file_history(self, project_id, identifier, file_id, offset=0, limit=50):
+        page_values(offset, limit)
+        self.project(project_id)
+        args = (project_id, identifier, file_id)
+        total = self.db.execute("SELECT COUNT(*) FROM tind_file_receipts WHERE project_id=? AND identifier=? AND file_id=?", args).fetchone()[0]
+        rows = self.db.execute("SELECT body FROM tind_file_receipts WHERE project_id=? AND identifier=? AND file_id=? ORDER BY rowid DESC LIMIT ? OFFSET ?",
+                               (*args, limit, offset)).fetchall()
+        return {"items": [decode(row[0]) for row in rows], "total": total, "offset": offset,
+                "next": offset + len(rows) if offset + len(rows) < total else None}
+
+    def file_receipt(self, project_id, identity):
+        receipt = self._get("tind_file_receipts", identity)
+        if receipt["projectId"] != project_id:
+            raise InputError("Native file result belongs to another migration")
+        result = dict(receipt)
+        result["originalText"] = self.object_path(receipt["original"]).read_text(encoding="utf-8")
+        if receipt.get("attachment"):
+            result["attachment"] = {**receipt["attachment"],
+                "originalText": self.object_path(receipt["attachment"]["original"]).read_text(encoding="utf-8")}
+        return result
 
     def _reconcile(self, project, value, operation):
         batch = self._owned_batch(project, value["batchId"])
@@ -813,7 +902,7 @@ class Migration:
             receipt = self._get("tind_receipts", identity)
             for row in receipt["records"]:
                 results[row["identifier"]] = row
-        counts = {"confirmed": 0, "remaining": 0, "filesConfirmed": 0}
+        counts = {"confirmed": 0, "remaining": 0, "fileBytesConfirmed": 0, "filePolicyConfirmed": 0, "filesConfirmed": 0}
         report = ObjectWriter(self)
         try:
             for row in self.db.execute("SELECT identifier,body FROM tind_batch_records WHERE batch_id=? ORDER BY identifier", (batch["id"],)):
@@ -821,6 +910,8 @@ class Migration:
                 native_result = results.get(row["identifier"], {})
                 target_id = native_result.get("nativeId") or frozen.get("targetId")
                 issues = []
+                if frozen.get("targetId") and native_result.get("nativeId") and native_result["nativeId"] != frozen["targetId"]:
+                    issues.append("Native result names a different record than the reviewed destination")
                 if frozen["action"] == "withdraw":
                     if native_result.get("status") != "withdrawn":
                         issues.append("Receive the native withdrawal result")
@@ -832,17 +923,33 @@ class Migration:
                         issues.append("Receive the destination record in the current native export")
                     else:
                         actual, expected = grouped(decode(target_row["body"])), grouped(frozen["record"])
-                        for key, fields in expected.items():
+                        before = {}
+                        if frozen.get("targetId"):
+                            before_row = self.db.execute(
+                                "SELECT body FROM tind_destination_records WHERE snapshot_id=? AND native_id=?",
+                                (batch.get("snapshotId"), frozen["targetId"])).fetchone()
+                            if before_row:
+                                before = grouped(decode(before_row["body"]))
+                            else:
+                                issues.append("Receive the original reviewed destination before-state")
+                        for key in dict.fromkeys([*before, *expected]):
                             if key in {"001", "005"} or key.startswith("856"):
                                 continue
-                            if actual.get(key, []) != fields:
+                            if actual.get(key, []) != expected.get(key, []):
                                 issues.append("Native field group differs: " + key.replace(" ", "_"))
                     for entry in frozen["files"]:
                         current = self.db.execute("SELECT body FROM tind_files WHERE project_id=? AND identifier=? AND id=?", (project["id"], row["identifier"], entry["id"])).fetchone()
                         observed = decode(current["body"]).get("destination") if current else None
-                        if not observed or observed["nativeRecordId"] != target_id or observed["sha256"] != entry["sha256"] or observed["bytes"] != entry["bytes"]:
-                            issues.append("Receive native file identity and checksum: " + entry["id"])
+                        receiving = file_receiving(entry, observed, target_id)
+                        if receiving["bytesConfirmed"]:
+                            counts["fileBytesConfirmed"] += 1
                         else:
+                            issues.append("Receive native file identity and checksum: " + entry["id"])
+                        if receiving["policyConfirmed"]:
+                            counts["filePolicyConfirmed"] += 1
+                        else:
+                            issues.append("Receive the native attachment role and access terms: " + entry["id"])
+                        if receiving["complete"]:
                             counts["filesConfirmed"] += 1
                 if snapshot["provenance"].get("fieldCoverage") != "complete":
                     issues.append("Receive the actual native export with complete selected record fields and its permissions")
@@ -856,8 +963,11 @@ class Migration:
                                            "nativeId": target_id, "confirmedAt": stamp()})
                     if batch["projectRevision"] >= newest:
                         current["baseline"] = frozen["sourceMapped"]
-                        current.setdefault("staff", {})["targetId"] = target_id
-                        current["staff"]["decisions"] = {}
+                        # The native outcome advances delivery lineage, not a later
+                        # operator's choice of target or field-level resolution.
+                        if current.get("staff", {}) == frozen.get("staff", {}):
+                            current.setdefault("staff", {})["targetId"] = target_id
+                            current["staff"]["decisions"] = {}
                     self.db.execute("UPDATE tind_records SET body=? WHERE project_id=? AND identifier=?", (jbytes(current).decode(), project["id"], row["identifier"]))
                     frozen["status"] = "confirmed"
                 else:
@@ -926,6 +1036,22 @@ class Migration:
                         archive.write(self.object_path(receipt["original"]), "receipts/" + identity + ".txt")
                     for index, receipt in enumerate(batch["reconciliations"]):
                         archive.write(self.object_path(receipt["report"]), "receiving/" + str(index + 1) + ".jsonl")
+                    file_receipts = set()
+                    for row in self.db.execute("SELECT body FROM tind_batch_records WHERE batch_id=?", (batch["id"],)):
+                        frozen = decode(row[0])
+                        for entry in frozen["files"]:
+                            observations = self.db.execute("SELECT body FROM tind_file_receipts WHERE project_id=? AND identifier=? AND file_id=? ORDER BY rowid",
+                                (batch["projectId"], frozen["identifier"], entry["id"]))
+                            for original in observations:
+                                receipt = decode(original[0])
+                                if receipt["id"] in file_receipts or (receipt["sha256"], receipt["bytes"]) != (entry["sha256"], entry["bytes"]):
+                                    continue
+                                file_receipts.add(receipt["id"])
+                                prefix = "file-receipts/" + receipt["id"]
+                                archive.writestr(prefix + ".json", jbytes(receipt))
+                                archive.write(self.object_path(receipt["original"]), prefix + ".txt")
+                                if receipt.get("attachment"):
+                                    archive.write(self.object_path(receipt["attachment"]["original"]), prefix + "-attachment.txt")
                 raw.flush(); os.fsync(raw.fileno())
             return {"path": str(output), **file_digest(output, MAX_PACKAGE)}
 

@@ -220,7 +220,33 @@ The values above illustrate the complete row shape; retain the publisher's actua
 
 Select the original local file directory with **Bind source directory**, then **Verify original bytes**. The workspace binds the directory's real device/inode identity and hashes regular files by streaming their bytes. Relative paths remain inside that original directory. A single original file can be up to 1 TiB.
 
-The same file identity preserves its prior source-byte observation and native destination result when a staff manifest edit changes its description or access terms. A changed file hash or byte length receives its own current byte check and native file result.
+The same file identity preserves its prior source-byte observation and native destination result when a staff manifest edit changes its description or access terms. The original native observation keeps its own role, access terms and time. The receiving desk compares that observation with the current planned file, so a changed access policy remains visible even when the bytes still match. A changed file hash or byte length receives its own current byte check and native file result.
+
+### File receiving desk
+
+In **Destination and files**, use **Native file receiving** to search the complete file inventory. Each row shows the source record and filename, intended role/access, selected native record, byte result and attachment/access result. Pagination continues through the full retained inventory. **Receive result** opens the exact file in the receiving form. **Working file** downloads its complete editable record, and **History** opens the retained original native observations.
+
+Byte receiving records the native record and file/object IDs, original native URL, actual SHA-256 and length, observation time, operator and complete returned text. Select **Include the observed native attachment role and access settings** when the actual native attachment and policy result is available. Record its role, metadata/file visibility, original release date, restriction wording and licence URL, together with its separate observation time, native source URL and original returned text.
+
+The byte observation and attachment observation retain their own source text. A later byte observation for the same native object preserves an earlier attachment observation with that observation's original timestamp. Each complete file result has its own retained ID and remains available through history. Current source file edits therefore preserve the earlier native history while exposing any difference in intended access or role.
+
+The local commands expose the same complete file desk:
+
+```sh
+starforge tind-migration --workspace /private/repository files \
+  --project ACTUAL_PROJECT_ID --query "original-file.pdf" --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository file-history \
+  --project ACTUAL_PROJECT_ID --identifier ACTUAL_SOURCE_IDENTIFIER \
+  --file ACTUAL_FILE_ID --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository file-receipt \
+  --project ACTUAL_PROJECT_ID --id ACTUAL_FILE_OBSERVATION_ID
+```
+
+Use the returned `next` offset to continue each complete selection. A downloaded observation contains both original native response texts and their retained byte identities.
+
+The `file-receipt` save operation accepts an optional `attachment` object with `role`, `access`, `observedAt`, `sourceUrl` and `original`. Its `access` object uses the same explicit `metadata`, `files`, `releaseDate`, `restriction` and `licenseURI` fields as the reviewed file. All values describe the observed selected institution; the original returned text retains the provider's native field names and values.
 
 ## Prepare, deliver and reconcile
 
@@ -263,11 +289,13 @@ For large native objects, TIND's original file workflow has separate upload and 
 
 Receive the actual batch uploader job ID, selected institution's job URL, observed timestamp, operator, original returned text and record results. Each record result identifies the exact source identifier and observed status: accepted, pending, failed or withdrawn. Accepted and withdrawn results include the native record ID; failed results retain the original error. A linked transfer ID joins this result to the original outgoing request.
 
-Receive each actual native file result separately, with its source identifier and file ID, native record and object/file IDs, destination URL, SHA-256, bytes, observation time, operator and original returned text. The checksum and length must match that original file's retained identity.
+Receive each actual native file result separately through the file receiving desk. The checksum and length must match the original retained file. Receive the actual attachment role and access observation as part of that same file result when it is available. Byte identity, correct native record association and observed role/access each appear in the current receiving state.
 
-After native delivery, receive a current native destination export and choose **Reconcile current native export** on the batch. Reconciliation joins the frozen metadata, observed native record IDs, current native MARC groups and original file identities. The batch records confirmed and remaining records with their concrete receiving issues.
+After native delivery, receive a current native destination export and choose **Reconcile current native export** on the batch. Reconciliation joins the frozen metadata, observed native record IDs, current native MARC groups and original file identities. It compares the union of reviewed native before-state groups and proposed groups, including groups removed by the source update. An update or withdrawal keeps the exact reviewed native record ID.
 
-Successful receiving updates the last delivered source baseline. Later source editions can therefore preserve staff edits in the destination. Repeated receiving does not duplicate deliveries, and an earlier batch cannot replace a newer delivered baseline.
+Each file is reconciled against the frozen batch's original byte identity, intended native record, attachment role and access/release terms. Results expose `fileBytesConfirmed`, `filePolicyConfirmed` and `filesConfirmed` separately; a complete file has both observed bytes and the matching attachment/access result. The batch records confirmed and remaining records with their concrete receiving issues. The complete batch ZIP includes original native file observations and their attachment/access source texts under `file-receipts/`.
+
+Successful receiving updates the last delivered source baseline. Later source editions can therefore preserve staff edits in the destination. A staff decision edited after batch preparation remains the current working decision when the older delivery is reconciled; only the unchanged frozen decision receives the delivered target binding and cleared field choices. Repeated receiving does not duplicate deliveries, and an earlier batch cannot replace a newer delivered baseline.
 
 A prepared batch can be withdrawn before native submission. A batch already sent continues through its original native result; a revised selection is frozen as a new batch. An explicit OAI deletion requires the staff withdrawal or exclusion decision and actual native withdrawal result.
 

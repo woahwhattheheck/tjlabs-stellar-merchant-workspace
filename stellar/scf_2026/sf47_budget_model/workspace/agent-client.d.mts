@@ -15,6 +15,7 @@ export type GrantCheckState = 'OPEN' | 'IN_PROGRESS' | 'ACCEPTED' | 'CHANGES_REQ
 export type GrantDeliveryPriority = 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
 export type GrantDeliveryDueStatus = 'COMPLETE' | 'INACTIVE' | 'UNDATED' | 'OVERDUE' | 'TODAY' | 'UPCOMING';
 export type GrantCaseAction =
+  | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply'
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
   | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
@@ -126,6 +127,64 @@ export interface GrantStatementReceipt {
   previewSha256: string;
 }
 
+export type GrantWorkIntakeKind = 'WORK' | 'INVOICES';
+export type GrantWorkIntakeField = 'externalId' | 'contributor' | 'costId' | 'description' | 'startDate' | 'endDate' | 'hours' | 'fundingBasis' | 'number' | 'issuedDate' | 'dueDate' | 'lineId' | 'amountUsd' | 'currency' | 'workIds';
+export interface GrantWorkIntakeFormat {
+  encoding: 'utf-8-sig' | 'utf-16' | 'cp1252';
+  delimiter: ',' | '\t' | ';' | '|';
+  headerRow: number;
+  dateFormat: 'ISO' | 'DAY_FIRST' | 'MONTH_FIRST';
+  decimalSeparator: '.' | ',';
+  groupSeparator: '' | ',' | '.' | ' ';
+}
+export interface GrantWorkIntakeDocument {
+  format: GrantWorkIntakeFormat;
+  mapping: Partial<Record<GrantWorkIntakeField, {column: number} | {value: string}>>;
+  contributors: {sourceValue: string; contributorId: string}[];
+  costs: {sourceValue: string; costId: string}[];
+  rowEdits: {row: number; values: Partial<Record<GrantWorkIntakeField, string>>; skip: boolean; reason: string}[];
+  recordDecisions: {key: string; action: 'CREATE' | 'REUSE' | 'SKIP'; recordId: string; reason: string}[];
+  sourceSystem: string;
+}
+export interface GrantWorkIntakeSummary {
+  id: string; name: string; kind: GrantWorkIntakeKind; state: 'DRAFT' | 'APPLIED';
+  revision: number; caseVersion: number; sourceId: string; sourceSha256: string;
+  createdAt: string; updatedAt: string; actor: string; sha256: string;
+  previewSummary: GrantWorkIntakeTotals | null;
+}
+export interface GrantWorkIntakeTotals {
+  sourceRows: number; excludedRows: number; proposedRecords: number; newRecords: number;
+  matchedRecords: number; excludedRecords: number; issueCount: number; ready: boolean;
+  newHours: string; matchedHours: string; newInvoiceUsd: string; matchedInvoiceUsd: string;
+}
+export interface GrantWorkIntakeEdition extends GrantWorkIntakeSummary {
+  schema: 'stellar-forge.sf47-work-intake.v1';
+  document: GrantWorkIntakeDocument; previewSha256: string | null;
+  previousSha256: string | null; note: string;
+  applied: null | {caseVersion: number; appliedAt: string; actor: string; previewSha256: string;
+    summary: GrantWorkIntakeTotals; links: {key: string; kind: 'work' | 'invoices'; recordId: string;
+      operation: 'CREATED' | 'REUSED'; rows: number[]; externalIds: string[]; fingerprint: string; snapshot: GrantObject}[]};
+}
+export interface GrantWorkIntakeView {
+  intake: GrantWorkIntakeEdition; source: GrantObject;
+  columns: {index: number; label: string}[];
+  rows: {row: number; lineStart: number; lineEnd: number; cells: string[]}[];
+  history: GrantWorkIntakeSummary[]; caseVersion: number;
+}
+export interface GrantWorkIntakePreview extends GrantObject {
+  schema: 'stellar-forge.sf47-work-intake.v1.preview';
+  caseId: string; caseVersion: number; intakeId: string; intakeRevision: number;
+  intakeSha256: string; kind: GrantWorkIntakeKind; document: GrantWorkIntakeDocument;
+  summary: GrantWorkIntakeTotals; previewSha256: string;
+  columns: {index: number; label: string}[]; rows: GrantObject[]; candidates: GrantObject[]; issues: GrantObject[];
+}
+export interface GrantWorkIntakeWrite extends GrantOperationRequest {
+  intakeId: string; expectedRevision: number; document?: GrantWorkIntakeDocument; expectedPreviewSha256?: string;
+}
+export interface GrantWorkIntakeUpload extends GrantOperationRequest {
+  name: string; kind: GrantWorkIntakeKind; format?: Partial<GrantWorkIntakeFormat>;
+  sourceId?: string; file?: {filename: string; contentBase64: string; mediaType?: string; sourceUrl?: string; observedAt?: string};
+}
 export interface GrantCommercialConnectionInput {
   id: string;
   label: string;
@@ -862,6 +921,8 @@ export interface GrantInstallationSaveReceipt extends GrantObject {
   sha256: string;
 }
 export interface GrantCaseView extends GrantObject {
+  workIntakes: GrantWorkIntakeSummary[];
+  workIntakeRefs?: {id: string; revision: number; sha256: string; state: 'DRAFT' | 'APPLIED'}[];
   program: { id: string; name: string; version: number; state: string; [key: string]: unknown };
 }
 export interface GrantCaseImportReceipt extends GrantObject {
@@ -1305,7 +1366,89 @@ export interface GrantPlanComparison {
   snapshots: Record<'before' | 'after', GrantObject & { scenario: GrantObject; planning: GrantObject; report: GrantObject }>;
 }
 
+export type GrantDeliveryCalendarKind =
+  | 'GRANT_RECEIPT' | 'SUBMISSION_DEADLINE' | 'PLANNED_SUBMISSION'
+  | 'DELIVERABLE' | 'DELIVERABLE_COMPLETED' | 'FORM_SUBMISSION' | 'EXTENSION_CONFIRMATION';
+export interface GrantDeliveryCalendarEntry extends GrantObject {
+  id: string;
+  kind: GrantDeliveryCalendarKind;
+  tranche: number | null;
+  title: string;
+  /** Recorded civil bounds are inclusive; an unknown bound remains null. */
+  startDate: GrantCivilDate | null;
+  endDate: GrantCivilDate | null;
+  sortDate: GrantCivilDate | null;
+  datePrecision: 'RANGE' | 'DAY' | 'START_ONLY' | 'FINISH_ONLY' | 'UNDATED';
+  status: string;
+  active: boolean;
+  detail: string;
+  sourceId: string;
+  costId: string | null;
+  ownerIds: string[];
+  ownerNames: string[];
+  originalDeadlineOn?: GrantCivilDate | null;
+  deadlineSource?: string;
+  daysRemaining?: number | null;
+  sourceIds: string[];
+  dateBasis: string;
+  calendarStatus: 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED';
+  dateStatus?: string;
+  confirmedDeadlineOn?: GrantCivilDate;
+  submittedDeadlineOn?: GrantCivilDate;
+  planningAssignments?: GrantObject[];
+}
+export interface GrantDeliveryCalendarSummary extends GrantObject {
+  entries: number;
+  undated: number;
+  activeDeadlines: number;
+  overdueDeadlines: number;
+  dueToday: number;
+  submittedDeadlines: number;
+  openDeliverables: number;
+  completedDeliverables: number;
+  nextDeadlineOn: GrantCivilDate | null;
+  byKind: Partial<Record<GrantDeliveryCalendarKind, number>>;
+}
+export interface GrantDeliveryCalendar extends GrantObject {
+  schema: 'stellar-forge.sf47-delivery-calendar.v1';
+  case: {
+    id: string;
+    name: string;
+    mode: 'OPERATIONS' | 'WALKTHROUGH';
+    state: 'OPEN' | 'CLOSED';
+    version: number;
+  };
+  asOfDate: GrantCivilDate;
+  generatedAt: string;
+  source: {
+    planId: string;
+    planRevision: number;
+    planContentSha256: string;
+    planSourceSha256: string;
+    calendarStart: GrantCivilDate | null;
+    caseUpdatedAt: string;
+    caseCreatedAt: string;
+    completionPlans: GrantObject[];
+  };
+  rule: GrantObject;
+  entries: GrantDeliveryCalendarEntry[];
+  undated: GrantDeliveryCalendarEntry[];
+  summary: GrantDeliveryCalendarSummary;
+  basis: string[];
+  sha256: string;
+}
+export interface GrantDeliveryCalendarSelection {
+  caseId: string;
+  asOfDate?: GrantCivilDate;
+  expectedVersion?: number;
+}
+export interface GrantDeliveryCalendarDownloadSelection extends GrantDeliveryCalendarSelection {
+  /** A complete case snapshot. Screen filters do not affect exports. Defaults to ICS. */
+  format?: 'ics' | 'csv' | 'json';
+}
+
 export interface GrantReadSelection {
+  intakeId?: string;
   planId?: string;
   caseId?: string;
   forecastId?: string;
@@ -1333,6 +1476,7 @@ export interface GrantDownloadSelections {
   forecast: { caseId: string; forecastId: string };
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
+  'delivery-calendar': GrantDeliveryCalendarDownloadSelection;
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
@@ -1356,8 +1500,11 @@ export class GrantWorkspaceClient {
   read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
+  read(view: 'work-intakes', selection: {caseId: string}): Promise<GrantJsonResponse<{intakes: GrantWorkIntakeSummary[]}>>;
+  read(view: 'work-intake', selection: {caseId: string; intakeId: string; revision?: number}): Promise<GrantJsonResponse<GrantWorkIntakeView>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
   read(view: 'supplier-account', selection: GrantSupplierAccountSelection): Promise<GrantJsonResponse<GrantSupplierAccountReport>>;
+  read(view: 'delivery-calendar', selection: GrantDeliveryCalendarSelection): Promise<GrantJsonResponse<GrantDeliveryCalendar>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;
@@ -1369,6 +1516,10 @@ export class GrantWorkspaceClient {
   plan<T = GrantObject>(action: 'estimate' | 'save' | 'restore' | 'clone', planId: string, body: GrantObject): Promise<GrantJsonResponse<T>>;
   createCase<T = GrantObject>(body: { planId: string; selectedRevision: number; expectedContentSha256: string; name: string; mode: 'OPERATIONS' | 'WALKTHROUGH'; calendarStart?: GrantCivilDate; actor: string; requestId: string }): Promise<GrantJsonResponse<T>>;
   command<T = GrantObject>(caseId: string, body: GrantOperationRequest & { action: GrantCaseAction; data: GrantObject }): Promise<GrantJsonResponse<T>>;
+  workIntakePreview(caseId: string, body: {expectedVersion: number; intakeId: string; revision?: number; document?: GrantWorkIntakeDocument}): Promise<GrantJsonResponse<GrantWorkIntakePreview>>;
+  workIntakeUpload(caseId: string, body: GrantWorkIntakeUpload): Promise<GrantJsonResponse<GrantObject>>;
+  workIntakeSave(caseId: string, body: GrantWorkIntakeWrite): Promise<GrantJsonResponse<GrantObject>>;
+  workIntakeApply(caseId: string, body: GrantWorkIntakeWrite & {expectedPreviewSha256: string}): Promise<GrantJsonResponse<GrantObject>>;
   statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
   statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
   ledgerIntakeInspect(caseId: string, file: GrantLedgerFile): Promise<GrantJsonResponse<GrantLedgerInspection>>;

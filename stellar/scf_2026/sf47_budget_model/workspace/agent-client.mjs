@@ -138,6 +138,17 @@ function planComparisonQuery(args, exported = false) {
     values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
   return '?' + values.toString();
 }
+function deliveryCalendarQuery(args) {
+  const query = new URLSearchParams();
+  if (args.asOfDate !== undefined) query.set('asOfDate', completionDate(args.asOfDate));
+  if (args.expectedVersion !== undefined)
+    query.set('expectedVersion', String(integer(args.expectedVersion, 'Selected calendar case version')));
+  return query.size ? '?' + query : '';
+}
+function deliveryCalendarFormat(value = 'ics') {
+  need(['ics','csv','json'].includes(value), 'GRANT_INVALID_INPUT', 'Choose the ICS, CSV or JSON calendar format.');
+  return value;
+}
 function performanceQuery(args, exported = false) {
   const values = new URLSearchParams();
   if (args.startDate !== undefined && args.startDate !== null && args.startDate !== '')
@@ -478,6 +489,9 @@ export class GrantWorkspaceClient {
       'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
+      'work-intakes':() => '/api/operations/' + cid() + '/work-intakes',
+      'work-intake':() => '/api/operations/' + cid() + '/work-intakes/' + id(args.intakeId, 'intake') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Intake edition', 1, 10000000)),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
@@ -491,6 +505,7 @@ export class GrantWorkspaceClient {
       'installation-history':() => '/api/operations/' + cid() + '/installations/' + id(args.installationId,'installation') +
         '/history?limit=' + integer(args.limit ?? 25,'Installation history page',1,100) +
         (args.before === undefined ? '' : '&before=' + integer(args.before,'Earlier installation edition',1,500)),
+      'delivery-calendar':() => '/api/operations/' + cid() + '/delivery-calendar' + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + cid() + '/completion' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
     };
@@ -554,6 +569,35 @@ export class GrantWorkspaceClient {
     sha(body.expectedPreviewSha256); object(body.inputs, 'Statement inputs');
     const {inputs, expectedPreviewSha256, ...original} = body;
     return this.command(caseId, {...original, action:'statement.receive', data:{inputs, expectedPreviewSha256}});
+  }
+  workIntakePreview(caseId, body) {
+    id(caseId, 'operation');
+    exact(body, ['expectedVersion', 'intakeId', 'revision', 'document'], ['expectedVersion', 'intakeId']);
+    integer(body.expectedVersion, 'Current case version'); id(body.intakeId, 'intake');
+    if (body.revision !== undefined) integer(body.revision, 'Saved intake edition', 1, 10000000);
+    if (body.document !== undefined) object(body.document, 'Complete intake document');
+    return this.#request('/api/operations/' + caseId + '/work-intake-preview', {body, mutation:false});
+  }
+  workIntakeUpload(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'name', 'kind', 'sourceId', 'file', 'format'],
+      ['expectedVersion', 'requestId', 'actor', 'name', 'kind']);
+    const {expectedVersion, requestId, actor, note, ...data} = body;
+    need((data.sourceId !== undefined) !== (data.file !== undefined), 'GRANT_INVALID_INPUT',
+      'Select one original case source or supply the original file.');
+    return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
+      action:'work-intake.upload', data});
+  }
+  workIntakeSave(caseId, body) { return this.#workIntakeWrite(caseId, body, 'save'); }
+  workIntakeApply(caseId, body) { return this.#workIntakeWrite(caseId, body, 'apply'); }
+  #workIntakeWrite(caseId, body, action) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'intakeId', 'expectedRevision', 'document', 'expectedPreviewSha256'],
+      ['expectedVersion', 'requestId', 'actor', 'intakeId', 'expectedRevision', ...(action === 'apply' ? ['expectedPreviewSha256'] : [])]);
+    const {expectedVersion, requestId, actor, note, ...data} = body;
+    id(data.intakeId, 'intake'); integer(data.expectedRevision, 'Saved intake edition', 1, 10000000);
+    if (data.document !== undefined) object(data.document, 'Complete intake document');
+    if (data.expectedPreviewSha256 !== undefined) sha(data.expectedPreviewSha256);
+    return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
+      action:'work-intake.' + action, data});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
@@ -877,6 +921,8 @@ export class GrantWorkspaceClient {
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
+      'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +
+        deliveryCalendarFormat(args.format) + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',
       cohort:() => '/api/operations/' + id(args.caseId,'operation') + '/cohort-reviews/' + id(args.reviewId,'review') + '/export.zip',
       implementation:() => '/api/operations/' + id(args.caseId,'operation') + '/implementation-reviews/' + id(args.reviewId,'review') + '/export.zip',
