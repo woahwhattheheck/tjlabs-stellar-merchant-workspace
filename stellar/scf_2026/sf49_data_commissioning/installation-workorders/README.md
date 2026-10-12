@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart, Blockscout, Query.Farm, ARS air-quality, supplier-catalogue or supplier-order programme. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart, Blockscout, Query.Farm, ARS air-quality, supplier-catalogue, supplier-order, Stellarcarbon or CFCE/GiveCredit programme. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -15,6 +15,9 @@ The maintained commercial importer remains the entry for an original customer Wo
 | prepare-core.mjs | Pure preparation functions, selected-source checks and complete workorder rendering |
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
+| stellarcarbon.json | Whole source edition → customer/project assignments → complete statements → original accounting and editable receiving |
+| cfce-givecredit.json | Registry/receipt/ledger intake → provider funding → carbon associations → donor/initiative statements and editable receiving |
+| CARBON_REPORTING.md | Complete source bindings, commercial setup, statement operations and independent native receiving for both reporting desks |
 | queryfarm.json | Complete result acquisition → retained VGI/SQL use → deliberate next edition → original receiving task |
 | ars-air-quality.json | Complete source intake → named air-quality review → client report/delivery → correction and original receiving task |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
@@ -23,7 +26,7 @@ The maintained commercial importer remains the entry for an original customer Wo
 | SUPPLIER_WORKSHARES.md | Full source preparation, phase-ID correction, commissioning, original native receiving and commercial/funding treatment |
 | CUSTOMER_PROGRAMMES.md | Customer task selection, source semantics, recurring-use cadence and original-case commissioning for Query.Farm and ARS |
 
-The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. All six complete profiles and their operating guide are included in its selected source.
+The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. All complete profiles and their operating guides are included in its selected source.
 
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library and makes no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
@@ -54,7 +57,7 @@ The [original Installation guide](../../sf47_budget_model/workspace/INSTALLATION
 
 ## 2. Prepare customer bindings
 
-Choose cocart, blockscout, queryfarm or ars-air-quality for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys.
+Choose cocart, blockscout, queryfarm, ars-air-quality, supplier-catalogues, supplier-orders, stellarcarbon or cfce-givecredit for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
 
 ~~~sh
 node prepare.mjs template --profile cocart \
@@ -194,7 +197,7 @@ The tool uses the existing native schema. Its complete output continues through 
 
 ## Complete native receiving in one operation
 
-The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and all six complete profiles.
+The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and all complete profiles.
 
 Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. Optional bytes verifies the exact original length; optional mediaType retains an additional source document's actual type (application/json remains the default). Commissioning and packet roles use application/json. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm and ARS use their own complete original commissioning sources and receiving packets with their matching profile IDs.
 

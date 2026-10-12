@@ -13,6 +13,8 @@ from operations_commercial_http import handle as commercial_http
 def register_static(static):
     static.update({"/operations_task_outcomes.mjs": ("operations_task_outcomes.mjs", "text/javascript; charset=utf-8"),
                    "/operations_task_outcomes.css": ("operations_task_outcomes.css", "text/css; charset=utf-8")})
+    static.update({"/operations_account_reconciliation.mjs": ("operations_account_reconciliation.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_account_reconciliation.css": ("operations_account_reconciliation.css", "text/css; charset=utf-8")})
     static["/operations_amendment_calendar.mjs"] = ("operations_amendment_calendar.mjs", "text/javascript; charset=utf-8")
     static.update({"/operations_cash_accounts.mjs": ("operations_cash_accounts.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cash_accounts.css": ("operations_cash_accounts.css", "text/css; charset=utf-8")})
@@ -41,6 +43,8 @@ def register_static(static):
                    "/operations_cohort_planning.css": ("operations_cohort_planning.css", "text/css; charset=utf-8"),
                    "/operations_cohort.mjs": ("operations_cohort.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort.css": ("operations_cohort.css", "text/css; charset=utf-8"),
+                   "/operations_commercial_installations.mjs": ("operations_commercial_installations.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_commercial_installations.css": ("operations_commercial_installations.css", "text/css; charset=utf-8"),
                    "/operations_installations.mjs": ("operations_installations.mjs", "text/javascript; charset=utf-8"),
                    "/operations_installation_workflows.mjs": ("operations_installation_workflows.mjs", "text/javascript; charset=utf-8"),
                    "/operations_installations.css": ("operations_installations.css", "text/css; charset=utf-8"),
@@ -80,7 +84,7 @@ def read(handler, parsed):
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|task-outcomes(?:/task-outcomes-[a-f0-9]{32}(?:/export.zip)?)?|engagements(?:/review-[a-f0-9]{32}(?:/export.zip)?)?|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|task-outcomes(?:/task-outcomes-[a-f0-9]{32}(?:/export.zip)?)?|engagements(?:/review-[a-f0-9]{32}(?:/export.zip)?)?|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|account-reconciliation(?:/export.zip)?|account-reconciliation-statements/source-[a-f0-9]{32}/inputs|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -130,6 +134,22 @@ def read(handler, parsed):
         handler.send(200, ops.history(ident, int(query.get("after", ["0"])[0]), int(query.get("limit", ["100"])[0])))
     elif action == "export.zip":
         handler.send(200, ops.export(ident), "application/zip", ident + ".zip")
+    elif action in ("account-reconciliation", "account-reconciliation/export.zip"):
+        try:
+            supplied = query.get("expectedVersion", [None])[0]
+            expected = int(supplied) if supplied is not None else None
+            revision = query.get("revision", [None])[0]
+            revision = int(revision) if revision is not None else None
+        except ValueError as exc:
+            raise Problem("Use the original case version and reconciliation edition.", 422, "INVALID_RECONCILIATION_SELECTION") from exc
+        selected = {"reconciliationId": query.get("reconciliationId", [None])[0], "revision": revision}
+        if action.endswith("/export.zip"):
+            handler.send(200, ops.export_account_reconciliation(ident, selected, expected,
+                query.get("expectedReportSha256", [None])[0]), "application/zip", ident + "-account-reconciliation.zip")
+        else:
+            handler.send(200, ops.account_reconciliation(ident, selected, expected))
+    elif action.startswith("account-reconciliation-statements/"):
+        handler.send(200, ops.account_reconciliation_statement_inputs(ident, action.split("/")[1]))
     elif action in ("cash-account", "cash-account/export.zip"):
         account_query = parse_qs(parsed.query, keep_blank_values=True)
         selection = {key: account_query.get(key, [None])[0] for key in
@@ -281,7 +301,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|task-outcomes-seed|task-outcomes-preview|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|task-outcomes-seed|task-outcomes-preview|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -291,6 +311,8 @@ def write(handler, parsed):
             return True
         methods = {"command": ops.command,
                    "task-outcomes-seed": ops.seed_task_outcomes, "task-outcomes-preview": ops.preview_task_outcomes,
+                   "account-reconciliation-preview": ops.account_reconciliation_preview,
+                   "account-reconciliation": ops.account_reconciliation_apply,
                    "engagement-seed": ops.seed_engagement, "engagement-preview": ops.preview_engagement,
                    "engagement-forecast": ops.preview_engagement_forecast, "engagement-portfolio": ops.preview_engagement_portfolio,
                    "cash-correction-preview": ops.cash_correction_preview,
@@ -302,6 +324,8 @@ def write(handler, parsed):
                    "implementation-preview": ops.preview_implementation, "cohort-seed": ops.seed_cohort, "cohort-preview": ops.preview_cohort, "installation-seed": ops.seed_installation,
                    "installation-workflows": ops.installation_workflows,
                    "installation-workflow-seed": ops.seed_workflow_installation,
+                   "installation-commercial": ops.installation_commercial,
+                   "installation-commercial-seed": ops.seed_commercial_installation,
                    "installation-workshares": ops.installation_workshares,
                    "installation-workshare-seed": ops.seed_workshare_installation,
                    "installation-preview": ops.preview_installation, "completion-seed": ops.seed_completion, "completion-preview": ops.preview_completion,
