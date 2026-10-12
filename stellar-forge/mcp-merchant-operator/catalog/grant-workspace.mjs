@@ -46,6 +46,22 @@ const retainedFxRate = {type:'object', additionalProperties:false,
     sourceUrl:str(4000), sourceIds:{type:'array', items:id('source'), uniqueItems:true, maxItems:200},
     sourceReference:str(4000), note:str(4000)},
   required:['id','baseCurrency','quoteCurrency','rate','observationDate','basis','rounding']};
+const intakeFormat = {type:'object',additionalProperties:false,properties:{
+  encoding:{enum:['utf-8-sig','utf-16','cp1252']},delimiter:{enum:[',','\t',';','|']},
+  headerRow:{type:'integer',minimum:0,maximum:5001},dateFormat:{enum:['ISO','DAY_FIRST','MONTH_FIRST']},
+  decimalSeparator:{enum:['.',',']},groupSeparator:{enum:['',',','.',' ']}
+}};
+const intakeDocument = {...object,description:'Complete source format, positional field mappings, exact contributor/package choices, source row corrections and native record decisions. Use the document returned by work_intake or work_intake_preview. The source bytes remain the original case attachment.',
+  properties:{format:intakeFormat,mapping:object,sourceSystem:str(300),
+    contributors:{type:'array',maxItems:5000,items:{type:'object',additionalProperties:false,
+      properties:{sourceValue:nonempty(12000),contributorId:id('contributor')},required:['sourceValue','contributorId']}},
+    costs:{type:'array',maxItems:5000,items:{type:'object',additionalProperties:false,
+      properties:{sourceValue:nonempty(12000),costId:nonempty(100)},required:['sourceValue','costId']}},
+    rowEdits:{type:'array',maxItems:5000,items:object},
+    recordDecisions:{type:'array',maxItems:5000,items:{type:'object',additionalProperties:false,properties:{
+      key:nonempty(100),action:{enum:['CREATE','REUSE','SKIP']},recordId:str(100),reason:nonempty(4000)},
+      required:['key','action','recordId','reason']}}}};
+const intakeModelInput = {...modelInput,inputs:intakeDocument};
 const forecastReceiptInput = {...object, properties:{amountNative:nonempty(80)}};
 const forecastCommercialInput = {...object, properties:{nativePricing,
   receipts:{type:'array', items:forecastReceiptInput, maxItems:30}}};
@@ -151,6 +167,22 @@ export const grantWorkspaceTools = [
   tool('intake', 'Adopt a complete original source-intake packet through the existing SF47 intake authority, preserving source purchase and deployment identity.',
     {...ws, ...originalInput, ...Object.fromEntries(Object.entries(createCase).filter(([key]) => key !== 'mode'))},
     ['workspace','input','expectedInputSha256','planId','selectedRevision','expectedContentSha256','name','actor','requestId']),
+  tool('work_intakes', 'List saved recorded-work and supplier-invoice source intakes in the original case, including current draft/applied editions.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('work_intake', 'Read an original intake, positional source rows, complete mapping, edition history and applied native record links.',
+    {...ws,caseId:id('operation'),intakeId:id('intake'),revision:integer},['workspace','caseId','intakeId'],true),
+  tool('work_intake_upload', 'Open a work or invoice intake from an exact existing case source. Use source_attach for original file bytes. Reopening the same source and kind returns its existing intake.',
+    {...ws,...caseSelection,...originalRequest,sourceId:id('source'),name:nonempty(300),kind:{enum:['WORK','INVOICES']},format:intakeFormat},
+    ['workspace','caseId','expectedVersion','requestId','actor','sourceId','name','kind']),
+  tool('work_intake_preview', 'Preview every original source row, grouped invoice, exact native amount and duplicate decision against the reviewed case. Inputs may select a complete edited document inline or from an original input/snapshot; omission uses the saved edition.',
+    {...ws,...caseSelection,intakeId:id('intake'),revision:integer,...intakeModelInput},
+    ['workspace','caseId','expectedVersion','intakeId'],true),
+  tool('work_intake_save', 'Retain a full intake mapping edition, row corrections and record decisions in the original case. Supply the current case version, intake edition and original request ID; omission of inputs keeps the saved mapping.',
+    {...ws,...caseSelection,...originalRequest,intakeId:id('intake'),expectedRevision:integer,...intakeModelInput,expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','requestId','actor','intakeId','expectedRevision']),
+  tool('work_intake_apply', 'Apply the complete reviewed work/invoice intake in one original transaction. The exact preview SHA, case version, intake edition and request ID preserve all native created/matched records and original source links.',
+    {...ws,...caseSelection,...originalRequest,intakeId:id('intake'),expectedRevision:integer,...intakeModelInput,expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','requestId','actor','intakeId','expectedRevision','expectedPreviewSha256']),
   tool('forecasts', 'Read all original immutable forecast summaries for a case.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
   tool('forecast', 'Reopen the complete saved forecast, source snapshot and current source-change comparison.',

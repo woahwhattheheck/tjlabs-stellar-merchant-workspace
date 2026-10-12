@@ -43,6 +43,32 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("work-intakes", "List retained work and invoice source intakes", case=True, output=True)
+    target = command("work-intake-show", "Read source rows, saved mappings, editions and original record links", case=True, output=True)
+    target.add_argument("--intake", required=True)
+    target.add_argument("--revision", type=int)
+    target = command("work-intake-upload", "Open an intake from an original CSV/TSV file or case source", case=True, output=True)
+    mutation(target, version=True)
+    original = target.add_mutually_exclusive_group(required=True)
+    original.add_argument("--file", help="Original delimited file, up to the native source limit")
+    original.add_argument("--source", help="Existing original case source ID")
+    target.add_argument("--name", required=True)
+    target.add_argument("--kind", choices=("WORK", "INVOICES"), required=True)
+    target.add_argument("--format", help="UTF-8 JSON with explicit delimiter, encoding, header row, dates and decimal separators")
+    target.add_argument("--source-url", default="")
+    target.add_argument("--observed-at")
+    target = command("work-intake-preview", "Review proposed original records and duplicate decisions without changing the case", case=True, output=True)
+    target.add_argument("--intake", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--revision", type=int)
+    target.add_argument("--document", help="Complete edited intake document JSON; omission uses the saved edition")
+    for verb in ("save", "apply"):
+        target = command("work-intake-" + verb, "Save mapping corrections" if verb == "save" else "Apply the complete reviewed import in one original transaction", case=True, output=True)
+        mutation(target, version=True)
+        target.add_argument("--intake", required=True)
+        target.add_argument("--expected-revision", type=int, required=True)
+        target.add_argument("--document", help="Complete intake document JSON; omission uses the current saved edition")
+        target.add_argument("--expected-preview-sha256", required=verb == "apply")
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -280,6 +306,48 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "work-intakes":
+        result = {"intakes": ops.list_work_intakes(args.case)}
+    elif action == "work-intake-show":
+        result = ops.work_intake(args.case, args.intake, args.revision)
+    elif action in ("work-intake-upload", "work-intake-preview", "work-intake-save", "work-intake-apply"):
+        def intake_json(filename):
+            try:
+                value = json.loads(read_bytes(filename))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Use a complete UTF-8 JSON intake object.", 422, "INVALID_JSON") from exc
+            if not isinstance(value, dict):
+                raise Problem("Use a complete intake object.", 422, "INVALID_JSON")
+            return value
+        if action == "work-intake-upload":
+            data = {"name": args.name, "kind": args.kind}
+            if args.format:
+                data["format"] = intake_json(args.format)
+            if args.source:
+                data["sourceId"] = args.source
+            else:
+                data["file"] = {"filename": Path(args.file).name,
+                    "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii"),
+                    "mediaType": "text/tab-separated-values" if Path(args.file).suffix.lower() == ".tsv" else "text/csv",
+                    "sourceUrl": args.source_url}
+                if args.observed_at:
+                    data["file"]["observedAt"] = args.observed_at
+        else:
+            data = {"intakeId": args.intake}
+            if args.document:
+                data["document"] = intake_json(args.document)
+            if action == "work-intake-preview":
+                if args.revision is not None:
+                    data["revision"] = args.revision
+            else:
+                data["expectedRevision"] = args.expected_revision
+                if args.expected_preview_sha256:
+                    data["expectedPreviewSha256"] = args.expected_preview_sha256
+        if action == "work-intake-preview":
+            result = ops.preview_work_intake(args.case, {"expectedVersion": args.expected_version, **data})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "requestId": args.request_id,
+                "actor": args.actor, "note": args.note, "action": action.replace("work-intake-", "work-intake."), "data": data})
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":

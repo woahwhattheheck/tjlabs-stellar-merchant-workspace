@@ -23,6 +23,7 @@ import operations_installations as installations
 import operations_dispatch as dispatch
 import operations_performance as performance
 import operations_implementation as implementation
+import operations_work_intake as work_intake
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -98,6 +99,7 @@ class Operations:
             """)
             completion.install(workspace.db)
             installations.install(workspace.db)
+            work_intake.install(workspace.db)
             row = workspace.db.execute("SELECT value FROM ops_metadata WHERE key='schema'").fetchone()
             if row and row[0] != SCHEMA:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
@@ -127,6 +129,9 @@ class Operations:
         refs = installations.latest_refs(installations.load_heads(self, program_id))
         if refs:
             result["installationRefs"] = refs
+        intake_refs = work_intake.refs(work_intake.load(self, program_id))
+        if intake_refs:
+            result["workIntakeRefs"] = intake_refs
         return result
 
     @staticmethod
@@ -139,6 +144,8 @@ class Operations:
             result["completionPlans"] = context["completionPlans"]
         if context.get("installationRefs"):
             result["installationRefs"] = context["installationRefs"]
+        if context.get("workIntakeRefs"):
+            result["workIntakeRefs"] = context["workIntakeRefs"]
         return result
 
     def _read(self, program_id):
@@ -148,6 +155,7 @@ class Operations:
         result["completion"] = completion.dashboard(context)
         cohort_history = self._cohort_history(program_id)
         result["installations"] = installations.latest_summaries(installations.load_heads(self, program_id))
+        result["workIntakes"] = [work_intake.summary(row) for row in work_intake.heads(work_intake.load(self, program_id))]
         result["reviews"] = [{**{key: row[key] for key in ("id", "version", "createdAt", "actor", "note", "businessSha256")},
                               "purpose": row.get("purpose"),
                               **({"completionTranche": row["completion"]["clock"]["tranche"],
@@ -284,6 +292,15 @@ class Operations:
                 if result["unchanged"]:
                     return {"id": program_id, "version": expected, "action": command, "kind": kind,
                             "recordId": record_id, **extra_receipt}
+            elif command in work_intake.ACTIONS:
+                result = work_intake.command(self, context, command, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {key: value for key, value in result.items()
+                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
+                if result["unchanged"]:
+                    return {"id": program_id, "version": expected, "action": command, "kind": kind,
+                            "recordId": record_id, **extra_receipt}
             elif command == "implementation.prepare":
                 result = implementation.prepare(self, context, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -411,6 +428,24 @@ class Operations:
                     **extra_receipt, **({"businessSha256": after["businessSha256"]} if command == "review" else {})}
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
+
+    def list_work_intakes(self, program_id):
+        with self.workspace.mutex:
+            self._program(identifier(program_id, "operation"))
+            return [work_intake.summary(row) for row in work_intake.heads(work_intake.load(self, program_id))]
+
+    def work_intake(self, program_id, intake_id, revision=None):
+        with self.workspace.mutex:
+            return work_intake.get(self, self._context(identifier(program_id, "operation")), intake_id, revision)
+
+    def preview_work_intake(self, program_id, body):
+        with self.workspace.mutex:
+            work_intake.keys(body, ("expectedVersion", "intakeId", "revision", "document"), "Intake preview")
+            context = self._context(identifier(program_id, "operation"))
+            expected = domain.integer(body.get("expectedVersion"), "Reviewed case version", 1, 10000000)
+            if context["program"]["version"] != expected:
+                domain.fail("The case changed. Refresh it and preview the retained intake again.", "OPERATIONS_CONFLICT", 409)
+            return work_intake.preview_selected(self, context, {key: value for key, value in body.items() if key != "expectedVersion"})
 
     def _cohort_history(self, program_id):
         events = [json.loads(row[0]) for row in self.db.execute(
@@ -762,10 +797,13 @@ class Operations:
             saved_portfolios = [json.loads(row[0]) for row in self.db.execute(
                 "SELECT body_json FROM ops_portfolios WHERE program_id=? ORDER BY rowid", (program_id,))]
             saved_installations = installations.load(self, program_id)
+            saved_work_intakes = work_intake.load(self, program_id)
             document = {"schema": SCHEMA, "exportedAt": now(), **context, "sources": list(context["sources"].values()),
                         "reviews": reviews, "events": events, "forecasts": saved_forecasts, "portfolios": saved_portfolios}
             if saved_installations:
                 document["installations"] = saved_installations
+            if saved_work_intakes:
+                document["workIntakes"] = saved_work_intakes
             report = domain.report(**context)
             files = {"planning.zip": original,
                      "operations.json": (canonical(document) + "\n").encode(),
@@ -966,6 +1004,10 @@ class Operations:
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
             domain.fail("The selected installation heads differ from their complete retained editions.")
+        saved_work_intakes = work_intake.validate_import(context, document.get("workIntakes", []), events, files)
+        intake_refs = work_intake.refs(saved_work_intakes)
+        if document.get("workIntakeRefs", []) != intake_refs:
+            domain.fail("The current work/invoice intake selections differ from their complete saved editions.", "INTAKE_RECEIVING")
         selected_installation = installations.selection_from_files(document, files)
         saved_forecasts = document.get("forecasts", [])
         if not isinstance(saved_forecasts, list) or len(saved_forecasts) > forecasts.MAX_FORECASTS:
@@ -1060,6 +1102,8 @@ class Operations:
             for value in saved_installations:
                 self.db.execute("INSERT INTO ops_installations VALUES(?,?,?,?)",
                                 (pid, value["id"], value["revision"], canonical(value)))
+            for value in saved_work_intakes:
+                work_intake.save_row(self, pid, value)
             for value in saved_forecasts:
                 self.db.execute("INSERT INTO ops_forecasts VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             for value in saved_portfolios:

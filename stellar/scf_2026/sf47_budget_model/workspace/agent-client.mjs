@@ -402,6 +402,9 @@ export class GrantWorkspaceClient {
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
+      'work-intakes':() => '/api/operations/' + cid() + '/work-intakes',
+      'work-intake':() => '/api/operations/' + cid() + '/work-intakes/' + id(args.intakeId, 'intake') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Intake edition', 1, 10000000)),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
@@ -448,6 +451,35 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  workIntakePreview(caseId, body) {
+    id(caseId, 'operation');
+    exact(body, ['expectedVersion', 'intakeId', 'revision', 'document'], ['expectedVersion', 'intakeId']);
+    integer(body.expectedVersion, 'Current case version'); id(body.intakeId, 'intake');
+    if (body.revision !== undefined) integer(body.revision, 'Saved intake edition', 1, 10000000);
+    if (body.document !== undefined) object(body.document, 'Complete intake document');
+    return this.#request('/api/operations/' + caseId + '/work-intake-preview', {body, mutation:false});
+  }
+  workIntakeUpload(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'name', 'kind', 'sourceId', 'file', 'format'],
+      ['expectedVersion', 'requestId', 'actor', 'name', 'kind']);
+    const {expectedVersion, requestId, actor, note, ...data} = body;
+    need((data.sourceId !== undefined) !== (data.file !== undefined), 'GRANT_INVALID_INPUT',
+      'Select one original case source or supply the original file.');
+    return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
+      action:'work-intake.upload', data});
+  }
+  workIntakeSave(caseId, body) { return this.#workIntakeWrite(caseId, body, 'save'); }
+  workIntakeApply(caseId, body) { return this.#workIntakeWrite(caseId, body, 'apply'); }
+  #workIntakeWrite(caseId, body, action) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'intakeId', 'expectedRevision', 'document', 'expectedPreviewSha256'],
+      ['expectedVersion', 'requestId', 'actor', 'intakeId', 'expectedRevision', ...(action === 'apply' ? ['expectedPreviewSha256'] : [])]);
+    const {expectedVersion, requestId, actor, note, ...data} = body;
+    id(data.intakeId, 'intake'); integer(data.expectedRevision, 'Saved intake edition', 1, 10000000);
+    if (data.document !== undefined) object(data.document, 'Complete intake document');
+    if (data.expectedPreviewSha256 !== undefined) sha(data.expectedPreviewSha256);
+    return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
+      action:'work-intake.' + action, data});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
