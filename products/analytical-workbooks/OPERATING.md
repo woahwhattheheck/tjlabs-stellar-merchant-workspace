@@ -31,7 +31,7 @@ Measures support source row count, non-null count, distinct non-null count, SUM,
 
 Filters use the original typed native comparison. All filter clauses are joined with AND. NULL inclusion is explicit. IN/NOT IN and BETWEEN retain their complete declared values; BETWEEN includes both endpoints. Pass large integers and decimal values as exact strings in browser JSON or agent arguments. The original Python importer conversion and explicit native casts preserve their types.
 
-A selected pivot creates one measure column for each chosen value. NULL and other non-null values can each be included explicitly. The result records selected and unselected source-row coverage. Overall totals are computed directly from the selected source rows; averages and distinct counts are never obtained by adding grouped results.
+A selected pivot creates one measure column for each chosen value. Categories must remain distinct after native conversion to the source column type; different decimal spellings, values that round to the same FLOAT, and equal timestamp instants cannot create overlapping columns. NULL and other non-null values can each be included explicitly. The result records selected and unselected source-row coverage. Overall totals are computed directly from the selected source rows; averages and distinct counts are never obtained by adding grouped results.
 
 The reviewed definition includes SQL, bound parameters, original source identity and field meanings. A preview contains at most100 rows and is labeled. Execution materializes every native result group and retains its complete ordered typed fingerprint, exact original query recipe and separately computed source totals.
 

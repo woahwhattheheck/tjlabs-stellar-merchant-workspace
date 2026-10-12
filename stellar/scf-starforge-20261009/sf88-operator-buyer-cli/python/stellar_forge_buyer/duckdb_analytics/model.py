@@ -128,6 +128,10 @@ class Analytics:
         edition = self.workspace._record(db, "sf_editions", _hex(definition.get("edition_id")))
         compiled = compile_definition(definition, edition)
         parameters = compiled["parameters"]
+        pivot_validation = compiled["pivot_validation"]
+        if (pivot_validation is not None and not db.execute(
+                pivot_validation["sql"], pivot_validation["parameters"]).fetchone()[0]):
+            fail("DUPLICATE_PIVOT_SELECTION")
         cursor = db.execute("SELECT * FROM (" + compiled["sql"] + ") AS reviewed LIMIT 0", parameters)
         result_columns = columns_of(cursor)
         filtered = db.execute(compiled["source_count_sql"], compiled["filter_parameters"]).fetchone()[0]

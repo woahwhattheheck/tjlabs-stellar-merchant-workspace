@@ -202,6 +202,7 @@ def compile_definition(value, edition):
                 fail("ZERO_RULE_REQUIRES_NUMERIC_SUM_OR_AVERAGE")
     pivot = value.get("pivot")
     pivots = [(None, None)]
+    pivot_validation = None
     if pivot is not None:
         fields(pivot, ("column", "values"), ("include_null", "include_other", "null_label", "other_label"))
         column = _column(columns, pivot["column"])
@@ -227,6 +228,16 @@ def compile_definition(value, edition):
             bound = bindings.value(item["value"], column)
             selected.append(bound)
             pivots.append((item_label, expression + " IS NOT DISTINCT FROM " + bound))
+        if len(selected) > 1:
+            # Use the engine's typed equality, including decimal scale, FLOAT
+            # rounding and equal timestamp instants, before accepting a partition.
+            pivot_validation = {
+                "sql": "SELECT count(*) = count(DISTINCT value) FROM (VALUES "
+                       + ",".join("(" + bound + ")" for bound in selected)
+                       + ") AS selected_values(value)",
+                "parameters": {key: bound for key, bound in bindings.values.items()
+                               if key not in filter_parameters},
+            }
         if pivot["include_null"]:
             if pivot["null_label"].casefold() in seen_labels:
                 fail("DUPLICATE_PIVOT_LABEL")
@@ -300,4 +311,5 @@ def compile_definition(value, edition):
             "source_count_sql": "SELECT count(*)" + from_sql,
             "totals_sql": totals_sql, "dimensions": dimension_records, "measures": metric_records,
             "output_names": output_names, "row_order_column": _ROW,
+            "pivot_validation": pivot_validation,
             "pivot_conditions": [{"label": title, "sql": condition} for title, condition in pivots if condition is not None]}
