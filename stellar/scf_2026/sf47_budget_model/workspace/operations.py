@@ -739,6 +739,10 @@ class Operations:
                          "Open through the existing workspace's operations import. This bundle preserves the original planner history, selected immutable plan, recorded source attachments, operations events, close reviews complete saved operating forecasts and delivery allocation portfolios.\n"
                          "Conditional planning amounts are separate from recorded cash. Testnet purchases are product operations. A work review or case close does not create an award, payment, customer agreement or external tranche acceptance.\n"
                          "Private access keys are not included.\n").encode()}
+            node_view = buyer.node_observations(context)
+            if node_view:
+                files["node-accounting-observations.json"] = (canonical(node_view) + "\n").encode()
+                files["node-accounting-observations.csv"] = csv_bytes(buyer.NODE_CSV_FIELDS, buyer.node_csv_rows(context))
             for metadata in context["sources"].values():
                 _, raw = self.source(program_id, metadata["id"])
                 files["sources/" + metadata["id"]] = raw
@@ -799,6 +803,10 @@ class Operations:
         # Original completion plans and source records retain their native validation below.
         if "completion-calendar.json" in files:
             expected.add("completion-calendar.json")
+        node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
+        if node_names.intersection(files) or any(isinstance(row.get("buyerHandoff"), dict)
+                and row["buyerHandoff"].get("sourceSchema") == buyer.NODE_SCHEMA for row in document["sources"]):
+            expected.update(node_names)
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
@@ -896,6 +904,16 @@ class Operations:
                 domain.fail("The complete original review snapshot and report are required.")
             if digest(review["snapshot"]) != review["businessSha256"]:
                 domain.fail("A frozen review differs from its retained business snapshot.")
+        has_node = buyer.validate_node_import(context, events, reviews, files)
+        node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
+        node_view = buyer.node_observations(context)
+        if bool(node_view) != node_names.issubset(files):
+            domain.fail("The complete Node source report set is missing or unbound.", "BUYER_NODE_RECEIVING_SOURCE")
+        if node_view:
+            if (files["node-accounting-observations.json"] != (canonical(node_view) + "\n").encode()
+                    or files["node-accounting-observations.csv"] != csv_bytes(buyer.NODE_CSV_FIELDS, buyer.node_csv_rows(context))
+                    or json.loads(files["summary.json"]).get("delivery", {}).get("nodeAccounting") != buyer.node_report(context)):
+                domain.fail("A Node operating report differs from its original source associations.", "BUYER_NODE_RECEIVING_SOURCE")
         cohort.validate_import(reviews, events)
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
         saved_installations = document.get("installations", [])
