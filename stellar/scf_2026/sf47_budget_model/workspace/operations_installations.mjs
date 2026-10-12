@@ -1,6 +1,7 @@
 // Complete customer installations in the original SF47 operating case.
 import {mountCommercialInstallations} from './operations_commercial_installations.mjs';
 import { workflowBoundCheck, workflowReportView, workflowIntakePanel } from './operations_installation_workflows.mjs';
+import {captureUseCalendar,useCalendarFields,useCalendarAction,useCalendarReport} from './operations_use_calendar.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const copy=value=>structuredClone(value);
 const title=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
@@ -81,7 +82,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note]');
+      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]');
       const save=el.dataset.installationAction==='save';
       el.disabled=el.dataset.installationFixed==='true'||hostBusy||
         (save&&(!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||
@@ -103,6 +104,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       assign(value.document,path,selected);
     }
     captureCoordination(value);
+    captureUseCalendar(root,value.document,value.calendarUI??={});
     value.note=$('[data-installation-note]')?.value??value.note;
     value.dirty=true;
     if(previewDraft&&!same(previewDraft.document,value.document))preview=null;
@@ -264,6 +266,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         f('Original delivery outcomes','checks.'+index+'.outcomeIds',{choices:recordOptions('outcomes'),multiple:true,wide:true})+
         '</div>'+button('Remove acceptance step','remove-check','data-index="'+index+'"',!editable()||boundCheck(check))+'</details>').join('')+
       button('Add acceptance step','add-check','',!editable()||d.checks.length>=100)+'</fieldset>';
+    html+=useCalendarFields(d,caseValue,value.calendarUI??={});
     return html;
   }
   function reportView(value){
@@ -274,7 +277,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       '</strong></div><div><span>Selected source files</span><strong>'+report.sourceFiles+
       '</strong></div><div><span>Entered task amount</span><strong>'+esc(report.pricedTaskAtomic??'Unentered')+'</strong><small>Original atomic units</small></div></div>'+
       (report.findings.length?table(['Field or step','Current decision or observation'],report.findings.map(row=>[esc(row.field),esc(row.message)])):note('All entered configuration decisions and required acceptance steps are complete.'))+
-      workflowReportView(value)+
+      workflowReportView(value)+useCalendarReport(report.useCalendar)+
       '<h4>Original work and funded packages</h4>'+
       table(['Funding basis','Work package','Recorded hours','Accepted hours'],report.work.map(row=>[esc(row.fundingBasis),esc(row.costId||'Unassigned'),esc(row.recordedHours),esc(row.acceptedHours)]))+
       table(['Package','Tranche','Original planned hours','Original planned USD'],report.packages.map(row=>[esc(row.id),esc(row.tranche),esc(row.estimated_hours),esc(row.amount_usd)]))+
@@ -754,7 +757,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   root.addEventListener('submit',event=>{if(event.target.matches('[data-installation-editor]')){event.preventDefault();run(previewDraftInput);}});
   root.addEventListener('input',event=>{
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note],[data-use-field],[data-use-pattern]')){capture();controls();}
     if(event.target.matches('[data-installation-filter]')){session.filter=event.target.value;const start=event.target.selectionStart;render();const input=$('[data-installation-filter]');input.focus();try{input.setSelectionRange(start,start);}catch{}}
   });
   root.addEventListener('change',event=>{
@@ -777,7 +780,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(key==='sourceId'||key==='packetSourceId'){workshareInventory=null;session.workshareIntake.caseId='';}
       persist();render();return;
     }
-    if(event.target.matches('[data-installation-field],[data-installation-coordination]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern]')){capture();controls();}
     if(event.target.matches('[data-installation-file]')&&event.target.files[0])run(()=>importDraft(event.target.files[0]));
   });
   root.addEventListener('click',event=>{
@@ -824,6 +827,25 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         if(own(epoch)&&same(session.selected,selected)){historyRows.push(...page.editions);nextBefore=page.nextBefore;}return;
       }
       capture();const value=draft();if(!value||!editable())return;
+      if(action.startsWith('use-calendar-')){
+        const originalDocument=copy(value.document),originalUI=copy(value.calendarUI??{}),workingUI=copy(originalUI);
+        const workingDocument=copy(originalDocument),identity={key:value.key,token:value.token,installationId:value.installationId,expectedRevision:value.expectedRevision};
+        const result=await useCalendarAction(action,target,{document:workingDocument,context:caseValue,ui:workingUI,api,prefix,expectedVersion:caseValue.program.version});
+        const next=result.document||workingDocument;
+        if(value.token!==identity.token||!same(value.document,originalDocument)){
+          if(!same(next,originalDocument)){
+            const key='calendar-'+crypto.randomUUID();
+            session.drafts[key]={key,token:crypto.randomUUID(),installationId:identity.installationId,expectedRevision:identity.expectedRevision,
+              document:copy(next),calendarUI:workingUI,note:'',dirty:true,label:'Customer-use expansion'};
+            session.notice='Kept the complete calendar result as a separate retained draft. Your later form edits remain open.';
+          }
+        }else{
+          value.document=copy(next);value.dirty=true;
+          if(same(value.calendarUI??{},originalUI))value.calendarUI=workingUI;
+          if(result.message)session.notice=result.message;
+        }
+        preview=null;previewDraft=null;persist();return;
+      }
       if(action==='add-facilitator')value.document.payment.facilitators.push({operatorId:'',endpoint:'',sourceIds:[],note:''});
       if(action==='remove-facilitator')value.document.payment.facilitators.splice(Number(target.dataset.index),1);
       if(action==='add-check')value.document.checks.push({id:'step-'+crypto.randomUUID().slice(0,8),title:'New acceptance step',criterion:'',
@@ -864,7 +886,10 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         'Opened the installation delivery assignment. Review and save the complete edition when ready.';
     }else if(request.edit)session.notice='This operating case is closed. Opened the saved edition for review.';
     delete session.requestOpen;persist();render();
-    if(session.mode==='edit')focusCoordination(request.taskId);
+    if(request.focusUseCalendar){
+      const target=$('[data-use-editor]')||$('[data-installation-editor]')||root;
+      target.scrollIntoView({block:'start'});target.querySelector('[data-use-field],button')?.focus({preventScroll:true});
+    }else if(session.mode==='edit')focusCoordination(request.taskId);
   }
   async function initialize(){
     if(session.inflight)await session.inflight.catch(()=>{});

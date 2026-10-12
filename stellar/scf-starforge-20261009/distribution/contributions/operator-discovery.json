@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "operator-discovery",
-  "description": "Search installed registrations and source-owned capabilities; match product requirements, prepare original source reviews and retain complete product plans.",
+  "description": "Search installed registrations and source-owned capabilities; match product requirements, prepare original source reviews, retain complete product plans and save customer operating procedures.",
   "components": [
     "stellar/scf-starforge-20261009/distribution/discovery"
   ],
@@ -9,7 +9,7 @@
     "discover": "stellar/scf-starforge-20261009/distribution/discovery/cli.mjs"
   },
   "commandDescriptions": {
-    "discover": "Find installed commands, match complete product requirements, export original registrations and prepare source build review requests"
+    "discover": "Find installed commands, match complete product requirements, prepare source build reviews and save customer operating plans with original registrations and revision history"
   },
   "exports": {
     "./operator/discovery": {
@@ -33,6 +33,10 @@
     "./operator/product-plans": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/source-product-plans.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/source-product-plans.mjs"
+    },
+    "./operator/operating-plans": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs"
     }
   },
   "applicationProviders": {

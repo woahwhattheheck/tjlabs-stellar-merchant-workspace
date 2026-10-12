@@ -18,6 +18,12 @@ function identifier(value, label) {
     'BAZAAR_DISCOVERY_INPUT_INVALID', 'Supply the original ' + label + '.');
   return value;
 }
+function pathInput(value) {
+  requireValue(plain(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value)) &&
+    Object.values(value).every(item => typeof item === 'string'),
+  'BAZAAR_DISCOVERY_INPUT_INVALID', 'Supply explicit HTTP path parameter values as a string map.');
+  return value;
+}
 function continuationRequest(mode, current, continuation) {
   if (continuation === null) return null;
   requireValue(plain(continuation) && continuation.tool === toolFor(mode) && plain(continuation.arguments),
@@ -141,6 +147,7 @@ export async function openBazaarDiscoveryClient({
   async function preview(request, options) {
     requireValue(plain(request), 'BAZAAR_DISCOVERY_INPUT_INVALID', 'Supply an original handle and explicit input.');
     identifier(request.handle, 'resource handle');
+    if (plain(request.input) && request.input.path !== undefined) pathInput(request.input.path);
     const value = await invoke('bazaar_preview', request, options);
     requireValue(text(value.quoteId) && value.status === 'PREVIEWED' && text(value.requestUrl),
       'BAZAAR_DISCOVERY_QUOTE_INVALID', 'The buyer did not return the prepared original quote.');
@@ -154,6 +161,11 @@ export async function openBazaarDiscoveryClient({
     searchPages: (request, options) => pages('search', request, options),
     describe,
     preview,
+    previewHttp({ handle, path, query = {}, acceptIndex = 0 } = {}, options) {
+      requireValue(plain(query), 'BAZAAR_DISCOVERY_INPUT_INVALID', 'Supply the actual HTTP query object.');
+      if (path !== undefined) pathInput(path);
+      return preview({ handle, acceptIndex, input: { query, ...(path === undefined ? {} : { path }) } }, options);
+    },
     previewHttpQuery({ handle, query, acceptIndex = 0 } = {}, options) {
       requireValue(plain(query), 'BAZAAR_DISCOVERY_INPUT_INVALID', 'Supply the actual HTTP query object.');
       return preview({ handle, acceptIndex, input: { query } }, options);

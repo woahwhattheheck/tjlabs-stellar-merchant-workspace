@@ -46,6 +46,25 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    command("task-outcomes", "List saved customer task comparisons and their current editions", case=True, output=True)
+    target = command("task-outcomes-seed", "Prepare a new complete customer task comparison input", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target = command("task-outcomes-show", "Read the complete selected comparison, source and revision history", case=True, output=True)
+    target.add_argument("--comparison", required=True)
+    target.add_argument("--revision", type=int)
+    target.add_argument("--inputs-only", action="store_true", help="Emit complete editable inputs based on this selected revision")
+    target = command("task-outcomes-preview", "Compare both complete methods using exact effort and costs", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--inputs", required=True, help="Complete task comparison inputs JSON")
+    target = command("task-outcomes-save", "Save a reviewed immutable edition in the original case transaction", case=True, output=True)
+    mutation(target, version=True)
+    target.add_argument("--inputs", required=True)
+    target.add_argument("--expected-preview-sha256", required=True)
+    target = command("task-outcomes-export", "Export the selected customer report, complete source case and all revisions", case=True)
+    target.add_argument("--comparison", required=True)
+    target.add_argument("--revision", type=int, required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--output", required=True)
     target = command("supplier-account", "Read the complete supplier account, original records and dated balances", case=True, output=True)
     target.add_argument("--contributor", help="Original contributor or supplier record ID; defaults to the first supplier")
     target.add_argument("--start-date")
@@ -227,6 +246,23 @@ def register(subparsers, common):
     target.add_argument("--source", required=True)
     target.add_argument("--sha256", required=True)
     target.add_argument("--output", required=True)
+    for name in ("customer-use-calendar", "customer-use-calendar-export", "customer-use-calendar-cohort"):
+        target = command(name, "Read saved customer-use editions, export complete dated use or open the original Cohort input",
+                         case=True, output=name != "customer-use-calendar-export")
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--installation-refs", help="JSON array of exact saved id/revision/optional sha256 selections; omission selects current editions")
+        target.add_argument("--as-of", help="YYYY-MM-DD for the calendar; original ISO timestamp for the Cohort observation cutoff")
+        if name == "customer-use-calendar-export":
+            target.add_argument("--format", choices=("json", "csv", "ics"), default="json")
+            target.add_argument("--output", required=True)
+        if name == "customer-use-calendar-cohort":
+            target.add_argument("--group", required=True, help="Original window group ID returned by customer-use-calendar")
+            target.add_argument("--inputs-only", action="store_true", help="Output native inputs directly for original cohort-preview/prepare")
+    target = command("customer-use-calendar-expand", "Expand explicit working dates into an editable complete Installation document", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--document", required=True, help="Complete editable Installation JSON")
+    target.add_argument("--pattern", required=True, help="Explicit task/buyer/weekday/include/exclude date expansion JSON")
+    target.add_argument("--document-only", action="store_true", help="Output the complete Installation document directly for original preview/save")
     target = command("cohort-seed", "Open the original proposed 7/14-day acceptance rule and explicit input", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -596,6 +632,29 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "task-outcomes":
+        result = {"comparisons": ops.list_task_outcomes(args.case)}
+    elif action == "task-outcomes-seed":
+        result = ops.seed_task_outcomes(args.case, {"expectedVersion": args.expected_version})["inputs"]
+    elif action == "task-outcomes-show":
+        result = ops.task_outcomes(args.case, args.comparison, args.revision)
+        if args.inputs_only:
+            result = {"id": result["edition"]["id"], "expectedRevision": result["history"][0]["revision"],
+                      "document": result["edition"]["document"]}
+    elif action in ("task-outcomes-preview", "task-outcomes-save"):
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the complete UTF-8 customer comparison inputs.", 422, "INVALID_TASK_OUTCOMES") from exc
+        if action == "task-outcomes-preview":
+            result = ops.preview_task_outcomes(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+        else:
+            result = ops.command(args.case, {"action": "task-outcomes.save", "expectedVersion": args.expected_version,
+                "actor": args.actor, "note": args.note, "requestId": args.request_id,
+                "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "task-outcomes-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_task_outcomes(
+            args.case, args.comparison, args.revision, args.expected_version))}
     elif action == "supplier-account":
         result = ops.supplier_account(args.case, args.contributor, args.start_date, args.end_date, args.expected_version)
     elif action == "supplier-account-export":
@@ -800,6 +859,34 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "implementation.prepare",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action.startswith("customer-use-calendar"):
+        def calendar_json(filename, maximum=MAX_SOURCE):
+            try:
+                return json.loads(read_bytes(filename, maximum))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Use complete UTF-8 customer-use selection, pattern or Installation JSON.",
+                              422, "INVALID_CUSTOMER_USE_CALENDAR") from exc
+        body = {"expectedVersion": args.expected_version}
+        if action == "customer-use-calendar-expand":
+            from operations_installations import MAX_DOCUMENT_BYTES
+            body.update(document=calendar_json(args.document, MAX_DOCUMENT_BYTES), pattern=calendar_json(args.pattern, 131072))
+            result = ops.expand_customer_use_calendar(args.case, body)
+            if args.document_only:
+                result = result["document"]
+        else:
+            if args.installation_refs:
+                body["installationRefs"] = calendar_json(args.installation_refs, 32768)
+            if action == "customer-use-calendar-cohort":
+                body.update(groupId=args.group, asOfAt=args.as_of)
+                result = ops.seed_customer_use_cohort(args.case, body)
+                if args.inputs_only:
+                    result = result["inputs"]
+            else:
+                body["asOfDate"] = args.as_of
+                if action == "customer-use-calendar-export":
+                    return {"caseId": args.case, "format": args.format,
+                            "output": publish(args.output, ops.export_customer_use_calendar(args.case, body, args.format))}
+                result = ops.customer_use_calendar(args.case, body)
     elif action == "cohort-seed":
         result = ops.seed_cohort(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "cohort-export":

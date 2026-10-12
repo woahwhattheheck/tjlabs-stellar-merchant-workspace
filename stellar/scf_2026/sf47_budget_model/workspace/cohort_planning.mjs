@@ -280,6 +280,23 @@ function payment(raw, label) {
   }
   return result;
 }
+function capacityPool(raw, label) {
+  const row = fields(object(raw, label), ["id", "label", "hoursByWeekday", "dateOverrides", "sourceIds", "sourceNote"], label);
+  const weekly = fields(object(row.hoursByWeekday ?? {}, label + ".hoursByWeekday"), ["1", "2", "3", "4", "5", "6", "7"], label + ".hoursByWeekday");
+  const hoursByWeekday = {};
+  for (let day = 1; day <= 7; day++)
+    hoursByWeekday[day] = nullableDecimal(weekly[day], label + ".hoursByWeekday." + day);
+  const seen = new Set();
+  const dateOverrides = array(row.dateOverrides ?? [], label + ".dateOverrides").map((rawOverride, i) => {
+    const key = label + ".dateOverrides[" + i + "]";
+    const entry = fields(object(rawOverride, key), ["date", "availableHours", "label"], key);
+    const date = dateValue(entry.date, key + ".date");
+    if (seen.has(date)) fail("DUPLICATE_PLAN_DATE", label + " repeats override " + date + ".", key);
+    seen.add(date);
+    return { date, availableHours: nullableDecimal(entry.availableHours, key + ".availableHours"), label: optionalText(entry.label, key + ".label", 500) };
+  }).sort((a, b) => a.date.localeCompare(b.date));
+  return { id: id(row.id, label + ".id"), label: textValue(row.label, label + ".label", true, 500), hoursByWeekday, dateOverrides, ...evidence(row, label) };
+}
 function cadence(raw, label, globalWeekdays) {
   const value = object(raw, label);
   const kind = enumValue(value.kind, ["WEEKDAYS", "EVERY_N_DAYS", "EXPLICIT_DATES"], label + ".kind");
@@ -295,7 +312,7 @@ function cadence(raw, label, globalWeekdays) {
 }
 export function normalizeCohortPlan(raw) {
   const value = fields(object(raw, "plan"), ["schema", "draftId", "name", "source", "rule", "asOfAt", "windowStart", "calendar",
-    "buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "sensitivity", "note"], "plan");
+    "buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools", "sensitivity", "note"], "plan");
   if (value.schema !== COHORT_PLAN_SCHEMA) fail("INVALID_PLAN_SCHEMA", "Use " + COHORT_PLAN_SCHEMA + ".", "schema");
   const rule = validateRule(value.rule), source = sourceValue(value.source);
   const cal = fields(object(value.calendar ?? {}, "calendar"), ["timezone", "weekdays", "excludedDates"], "calendar");
@@ -315,14 +332,18 @@ export function normalizeCohortPlan(raw) {
     };
   }), "operations");
   const operationIds = new Set(operations.map(x => x.id));
+  const capacityPools = distinct(array(value.capacityPools ?? [], "capacityPools", 1000).map((x, i) => capacityPool(x, "capacityPools[" + i + "]")), "capacityPools");
+  const capacityPoolIds = new Set(capacityPools.map(x => x.id));
   const schedules = distinct(array(value.schedules ?? [], "schedules", 1000).map((rawSchedule, i) => {
-    const label = "schedules[" + i + "]", row = fields(object(rawSchedule, label), ["id", "label", "operationId", "buyerId", "facilitatorId", "cadence", "tasksPerDate", "requestsPerTask", "timeUtc", "deliveryDelayMinutes", "excludedDates", "payment", "economics", "note"], label);
+    const label = "schedules[" + i + "]", row = fields(object(rawSchedule, label), ["id", "label", "operationId", "buyerId", "facilitatorId", "cadence", "tasksPerDate", "requestsPerTask", "timeUtc", "deliveryDelayMinutes", "excludedDates", "payment", "economics", "capacityPoolId", "note"], label);
     const operationId = id(row.operationId, label + ".operationId"), buyerId = id(row.buyerId, label + ".buyerId");
     const facilitatorId = row.facilitatorId ? id(row.facilitatorId, label + ".facilitatorId") : null;
     if (!operationIds.has(operationId) || !buyerIds.has(buyerId) || (facilitatorId && !facilitatorIds.has(facilitatorId)))
       fail("UNKNOWN_PLAN_REFERENCE", "Select existing plan operation, buyer and facilitator identities.", label);
+    const capacityPoolId = row.capacityPoolId ? id(row.capacityPoolId, label + ".capacityPoolId") : null;
+    if (capacityPoolId && !capacityPoolIds.has(capacityPoolId)) fail("UNKNOWN_PLAN_REFERENCE", "Select an existing delivery capacity pool.", label + ".capacityPoolId");
     return {
-      id: id(row.id, label + ".id"), label: optionalText(row.label, label + ".label", 500), operationId, buyerId, facilitatorId,
+      id: id(row.id, label + ".id"), label: optionalText(row.label, label + ".label", 500), operationId, buyerId, facilitatorId, capacityPoolId,
       cadence: cadence(row.cadence, label + ".cadence", calendar.weekdays),
       tasksPerDate: integer(row.tasksPerDate, label + ".tasksPerDate", 0),
       requestsPerTask: integer(row.requestsPerTask, label + ".requestsPerTask", 1),
@@ -339,12 +360,15 @@ export function normalizeCohortPlan(raw) {
     for (const key of ["fee", "hours", "hourlyCost", "otherCosts"]) result[key] = nullableDecimal(row[key], label + "." + key);
     return result;
   }), "workshares");
-  const sensitivity = fields(object(value.sensitivity ?? {}, "sensitivity"), ["effortIncreasesPct", "completionSharesPct"], "sensitivity");
+  const sensitivity = fields(object(value.sensitivity ?? {}, "sensitivity"), ["effortIncreasesPct", "completionSharesPct", "minimumMarginPct"], "sensitivity");
+  const minimumMarginPct = sensitivity.minimumMarginPct === undefined || sensitivity.minimumMarginPct === null || sensitivity.minimumMarginPct === "" ? null : percentage(sensitivity.minimumMarginPct, "sensitivity.minimumMarginPct");
+  if (minimumMarginPct === "100") fail("INVALID_PLAN_DECIMAL", "A service price margin must be below 100 percent.", "sensitivity.minimumMarginPct");
   return {
     schema: COHORT_PLAN_SCHEMA, draftId: id(value.draftId, "draftId"), name: textValue(value.name, "name", true, 500), source, rule,
     asOfAt: stamp(value.asOfAt, "asOfAt"), windowStart: dateValue(value.windowStart, "windowStart"), calendar,
-    buyers, merchants, facilitators, operations, schedules, workshares,
+    buyers, merchants, facilitators, operations, schedules, workshares, capacityPools,
     sensitivity: {
+      minimumMarginPct,
       effortIncreasesPct: [...new Set(array(sensitivity.effortIncreasesPct ?? ["0", "20", "25"], "sensitivity.effortIncreasesPct", 30).map(x => decimalText(decimal(x, "Effort increase"))))],
       completionSharesPct: [...new Set(array(sensitivity.completionSharesPct ?? ["100", "90", "75"], "sensitivity.completionSharesPct", 30).map(x => percentage(x, "Completion share")))]
     },
@@ -457,6 +481,151 @@ function compareSource(input, nativeSeed) {
   return { status: ruleMatches && compared.every(row => row.match) ? "MATCH" : "CHANGED", fields: compared,
     ruleMatches, currentSource, currentRule };
 }
+function positive(value) { return value.n > 0n ? value : ZERO; }
+function decimalCeilingDivide(a, b, precision = 12) {
+  if (!b.n) return null;
+  const numerator = a.n * power(b.s + precision), denominator = b.n * power(a.s);
+  return { n: (numerator + denominator - 1n) / denominator, s: precision };
+}
+function capacitySummary(rows) {
+  let available = ZERO, required = ZERO, minimumExtra = ZERO, unknownAvailabilityDates = 0, unknownEffortOccurrences = 0;
+  const overloadedDates = [];
+  for (const row of rows) {
+    if (row.availableHours === null) unknownAvailabilityDates++; else available = decimalAdd(available, computedDecimal(row.availableHours, "Available hours"));
+    required = decimalAdd(required, computedDecimal(row.knownRequiredHours, "Known required hours"));
+    minimumExtra = decimalAdd(minimumExtra, computedDecimal(row.additionalHoursKnownMinimum, "Additional hours"));
+    unknownEffortOccurrences += row.unknownEffortOccurrences;
+    if (row.status === "OVERALLOCATED") overloadedDates.push(row.date);
+  }
+  const complete = unknownAvailabilityDates === 0 && unknownEffortOccurrences === 0;
+  return {
+    availableHours: unknownAvailabilityDates ? null : decimalText(available), knownAvailableHours: decimalText(available),
+    requiredHours: unknownEffortOccurrences ? null : decimalText(required), knownRequiredHours: decimalText(required),
+    headroomHours: complete ? decimalText(decimalSubtract(available, required)) : null,
+    additionalHoursKnownMinimum: decimalText(minimumExtra), overloadedDates, unknownAvailabilityDates, unknownEffortOccurrences,
+    status: overloadedDates.length ? "OVERALLOCATED" : complete ? "WITHIN_CAPACITY" : "INCOMPLETE"
+  };
+}
+function planDeliveryCapacity(input, days, occurrences, finding) {
+  const configured = input.capacityPools.length > 0, schedules = new Map(input.schedules.map(row => [row.id, row]));
+  const poolDays = new Map(), pools = [];
+  for (const pool of input.capacityPools) {
+    const overrides = new Map(pool.dateOverrides.map(row => [row.date, row]));
+    const rows = days.map(day => {
+      const override = overrides.get(day.date);
+      const result = {
+        poolId: pool.id, date: day.date, weekday: day.weekday,
+        weekStart: dateAfter(day.date, 1 - day.weekday),
+        availableHours: override ? override.availableHours : pool.hoursByWeekday[day.weekday],
+        availabilityBasis: override ? "DATE_OVERRIDE" : "WEEKDAY", availabilityNote: override?.label || "",
+        scheduledTasks: 0, scheduleIds: [], knownHours: ZERO, unknownEffortOccurrences: 0
+      };
+      poolDays.set(canonical([pool.id, day.date]), result);
+      return result;
+    });
+    pools.push({ ...clone(pool), rows });
+  }
+  const unassigned = [];
+  for (const occurrence of occurrences) {
+    const schedule = schedules.get(occurrence.scheduleId);
+    const rawHours = schedule.economics?.activeHoursPerTask ?? null;
+    const required = occurrence.scheduledTasks === 0 ? ZERO : rawHours === null ? null : decimalCount(decimal(rawHours, "Task effort"), occurrence.scheduledTasks);
+    if (!schedule.capacityPoolId) {
+      if (occurrence.scheduledTasks && (required === null || required.n > 0n))
+        unassigned.push({ scheduleId: schedule.id, date: occurrence.date, scheduledTasks: occurrence.scheduledTasks, requiredHours: required === null ? null : decimalText(required) });
+      continue;
+    }
+    const row = poolDays.get(canonical([schedule.capacityPoolId, occurrence.date]));
+    row.scheduledTasks = addCount(row.scheduledTasks, occurrence.scheduledTasks);
+    row.scheduleIds.push(schedule.id);
+    if (required === null) row.unknownEffortOccurrences++; else row.knownHours = decimalAdd(row.knownHours, required);
+  }
+  const resultPools = pools.map(pool => {
+    const rows = pool.rows.map(({ knownHours, ...row }) => {
+      const available = row.availableHours === null ? null : decimal(row.availableHours, "Available hours");
+      const minimumExtra = available === null ? ZERO : positive(decimalSubtract(knownHours, available));
+      const complete = available !== null && row.unknownEffortOccurrences === 0;
+      return { ...row, scheduleIds: [...new Set(row.scheduleIds)], knownRequiredHours: decimalText(knownHours),
+        requiredHours: row.unknownEffortOccurrences ? null : decimalText(knownHours),
+        headroomHours: complete ? decimalText(decimalSubtract(available, knownHours)) : null,
+        additionalHoursKnownMinimum: decimalText(minimumExtra),
+        utilizationPercent: complete && available.n ? decimalText(decimalDivide(decimalCount(knownHours, 100), available, 6)) : null,
+        status: minimumExtra.n > 0n ? "OVERALLOCATED" : complete ? "WITHIN_CAPACITY" : "INCOMPLETE"
+      };
+    });
+    const weeks = [...new Set(rows.map(row => row.weekStart))].map(weekStart => {
+      const selected = rows.filter(row => row.weekStart === weekStart);
+      return { poolId: pool.id, weekStart, start: selected[0].date, end: selected.at(-1).date, includedCalendarDays: selected.length, ...capacitySummary(selected) };
+    });
+    const { rows: ignored, ...definition } = pool;
+    const summary = capacitySummary(rows);
+    if (summary.overloadedDates.length) finding("DELIVERY_CAPACITY_SHORTFALL", pool.label + " needs at least " + summary.additionalHoursKnownMinimum + " additional active hours across " + summary.overloadedDates.length + " overloaded UTC date(s).", "capacityPool", pool.id);
+    if (summary.unknownAvailabilityDates || summary.unknownEffortOccurrences) finding("DELIVERY_CAPACITY_INCOMPLETE", "Complete " + pool.label + "'s daily availability and assigned task effort to evaluate its full workload.", "capacityPool", pool.id);
+    return { ...definition, ...summary, days: rows, weeks };
+  });
+  if (configured && unassigned.length) finding("DELIVERY_CAPACITY_UNASSIGNED", unassigned.length + " scheduled occurrence(s) with positive or unknown effort have no delivery pool.", "capacity");
+  return {
+    status: !configured ? "NOT_CONFIGURED" : resultPools.some(row => row.status === "OVERALLOCATED") ? "OVERALLOCATED" : unassigned.length || resultPools.some(row => row.status === "INCOMPLETE") ? "INCOMPLETE" : "WITHIN_CAPACITY",
+    basis: "Active effort is required on each scheduled UTC date. Capacity is shared across all schedules assigned to a pool; unused hours on another date do not erase a daily deficit.",
+    pools: resultPools, unassigned,
+    sensitivity: input.sensitivity.effortIncreasesPct.flatMap(increase => {
+      const pct = decimal(increase, "Effort increase"), factor = decimalAdd(ONE, { n: pct.n, s: pct.s + 2 });
+      return resultPools.map(pool => {
+        const scaled = pool.days.map(row => {
+          const hours = decimalMultiply(computedDecimal(row.knownRequiredHours, "Known hours"), factor);
+          const extra = row.availableHours === null ? ZERO : positive(decimalSubtract(hours, decimal(row.availableHours, "Available hours")));
+          return { ...row, knownRequiredHours: decimalText(hours), additionalHoursKnownMinimum: decimalText(extra), status: extra.n > 0n ? "OVERALLOCATED" : row.unknownEffortOccurrences || row.availableHours === null ? "INCOMPLETE" : "WITHIN_CAPACITY" };
+        });
+        return { poolId: pool.id, label: pool.label, effortIncreasePct: increase, ...capacitySummary(scaled) };
+      });
+    })
+  };
+}
+function planServicePricing(input, occurrences, finding) {
+  const schedules = new Map(input.schedules.map(row => [row.id, row])), groups = new Map();
+  for (const occurrence of occurrences) {
+    const schedule = schedules.get(occurrence.scheduleId), terms = schedule.payment;
+    const key = terms.kind === "PREPAID" && terms.passGroupId ? "shared:" + terms.passGroupId : "schedule:" + schedule.id;
+    if (!groups.has(key)) groups.set(key, {
+      id: key, label: terms.kind === "PREPAID" && terms.passGroupId ? terms.passGroupId : schedule.label || schedule.id,
+      scheduleIds: new Set(), currency: schedule.economics?.currency ?? null, paymentKind: terms.kind,
+      unitRevenue: schedule.economics?.unitRevenue ?? null, chargeUnits: 0, scheduledTasks: 0, known: { revenue: ZERO, supplierCost: ZERO, paymentFees: ZERO, laborCost: ZERO },
+      unknown: { revenue: 0, supplierCost: 0, paymentFees: 0, laborCost: 0 }
+    });
+    const group = groups.get(key); group.scheduleIds.add(schedule.id);
+    group.chargeUnits = addCount(group.chargeUnits, occurrence.plannedPaymentRequests);
+    group.scheduledTasks = addCount(group.scheduledTasks, occurrence.scheduledTasks);
+    for (const name of Object.keys(group.known)) {
+      const value = occurrence.economics?.[name] ?? null;
+      if (value === null) group.unknown[name]++; else group.known[name] = decimalAdd(group.known[name], computedDecimal(value, name));
+    }
+  }
+  return [...groups.values()].map(group => {
+    const costsKnown = !["supplierCost", "paymentFees", "laborCost"].some(key => group.unknown[key]);
+    const cost = costsKnown ? decimalAdd(decimalAdd(group.known.supplierCost, group.known.paymentFees), group.known.laborCost) : null;
+    const revenue = group.unknown.revenue ? null : group.known.revenue;
+    const units = { n: BigInt(group.chargeUnits), s: 0 };
+    const breakEven = cost === null || !units.n ? null : decimalCeilingDivide(cost, units);
+    const target = input.sensitivity.minimumMarginPct;
+    const margin = target === null ? null : decimal(target, "Minimum margin");
+    const targetShare = margin === null ? null : decimalSubtract(ONE, { n: margin.n, s: margin.s + 2 });
+    const targetPrice = breakEven === null || targetShare === null ? null : decimalCeilingDivide(cost, decimalMultiply(units, targetShare));
+    const shortfall = cost === null || revenue === null ? null : positive(decimalSubtract(cost, revenue));
+    const status = cost === null ? "INCOMPLETE" : !units.n ? cost.n ? "NO_NEW_CHARGES" : "NO_COST" : shortfall?.n > 0n ? "BELOW_COST" : revenue === null ? "UNVALUED_REVENUE" : "COVERS_COST";
+    if (status === "BELOW_COST" || status === "NO_NEW_CHARGES") finding("SERVICE_COST_UNCOVERED", group.label + " has " + (shortfall === null ? decimalText(cost) : decimalText(shortfall)) + " " + (group.currency || "") + " of modeled cost outside this window's new-charge revenue.", "servicePricing", group.id);
+    return {
+      id: group.id, label: group.label, scheduleIds: [...group.scheduleIds], currency: group.currency, paymentKind: group.paymentKind,
+      scheduledTasks: group.scheduledTasks, chargeUnits: group.chargeUnits, unitRevenue: group.unitRevenue,
+      totalCost: cost === null ? null : decimalText(cost), revenue: revenue === null ? null : decimalText(revenue),
+      uncoveredCost: shortfall === null ? null : decimalText(shortfall), minimumMarginPct: target,
+      breakEvenUnitRevenue: breakEven === null ? null : decimalText(breakEven), targetUnitRevenue: targetPrice === null ? null : decimalText(targetPrice),
+      unitRevenueIncrease: group.unitRevenue === null || (targetPrice ?? breakEven) === null ? null : decimalText(positive(decimalSubtract(targetPrice ?? breakEven, decimal(group.unitRevenue, "Unit revenue")))),
+      unknownRecordCounts: group.unknown, status,
+      priceBasis: "Currency value per newly charged request or acquired prepaid pass over this complete selected service group; ceiling rounded to 12 decimal places."
+    };
+  });
+}
+
 export function evaluateCohortPlan(raw, options = {}) {
   const input = normalizeCohortPlan(raw);
   const sourceComparison = compareSource(input, options.nativeSeed);
@@ -672,7 +841,10 @@ export function evaluateCohortPlan(raw, options = {}) {
       laborCost: adjustedLabor === null ? null : decimalText(adjustedLabor), totalCost: totalCost === null ? null : decimalText(totalCost),
       contribution: contribution === null ? null : decimalText(contribution) });
   }
+  const capacity = planDeliveryCapacity(input, days, occurrences, finding);
+  const servicePricing = planServicePricing(input, occurrences, finding);
   const result = {
+    capacity, servicePricing,
     schema: COHORT_PLAN_REPORT_SCHEMA, kind: "PLAN", source: clone(input.source), rule: clone(rule), input, sourceComparison,
     window: { start: input.windowStart, end: windowEnd, calendarDays, requiredCalendarDays: calendarDays, tranche, expectedEnvironment, asOfAt: input.asOfAt, asOfDay },
     summary, days, occurrences, excluded, buyers: buyerRows, merchants: merchantRows, operations: operationRows, facilitators: facilitatorRows,
@@ -723,6 +895,19 @@ export function exportCohortPlanCsv(report) {
     add("PREPAID", row.id, "", key, row[key], "", "", row.network, row.asset);
   for (const row of report.sensitivity.completion) add("COMPLETION_SENSITIVITY", row.completionSharePct, "", "potentialCompletedWholePurchases", row.potentialCompletedWholePurchases, JSON.stringify(row));
   for (const row of report.sensitivity.effort) add("EFFORT_SENSITIVITY", row.effortIncreasePct, "", "contribution", row.contribution, JSON.stringify(row), row.currency);
+  if (report.capacity) {
+    add("CAPACITY", "", "", "status", report.capacity.status, report.capacity.basis);
+    for (const pool of report.capacity.pools) {
+      for (const row of pool.days) for (const key of ["availableHours", "requiredHours", "knownRequiredHours", "headroomHours", "additionalHoursKnownMinimum", "utilizationPercent", "status"])
+        add("CAPACITY_DAY", pool.id, row.date, key, row[key], JSON.stringify({ label: pool.label, scheduleIds: row.scheduleIds, availabilityBasis: row.availabilityBasis, availabilityNote: row.availabilityNote, unknownEffortOccurrences: row.unknownEffortOccurrences }));
+      for (const row of pool.weeks) for (const key of ["availableHours", "requiredHours", "headroomHours", "additionalHoursKnownMinimum", "status"])
+        add("CAPACITY_WEEK", pool.id, row.weekStart, key, row[key], JSON.stringify({ start: row.start, end: row.end, includedCalendarDays: row.includedCalendarDays }));
+    }
+    for (const row of report.capacity.unassigned) add("CAPACITY_UNASSIGNED", row.scheduleId, row.date, "requiredHours", row.requiredHours, JSON.stringify(row));
+    for (const row of report.capacity.sensitivity) add("CAPACITY_SENSITIVITY", row.poolId, "", "additionalHoursKnownMinimum", row.additionalHoursKnownMinimum, JSON.stringify(row));
+  }
+  for (const row of report.servicePricing || []) for (const key of ["chargeUnits", "totalCost", "revenue", "uncoveredCost", "breakEvenUnitRevenue", "targetUnitRevenue", "unitRevenueIncrease", "status"])
+    add("SERVICE_PRICING", row.id, "", key, row[key], JSON.stringify({ scheduleIds: row.scheduleIds, minimumMarginPct: row.minimumMarginPct, priceBasis: row.priceBasis, unknownRecordCounts: row.unknownRecordCounts }), row.currency || "");
   for (const row of report.findings) add("FINDING", row.id, "", row.code, row.severity, row.message);
   return output.map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }

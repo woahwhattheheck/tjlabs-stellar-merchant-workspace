@@ -257,18 +257,73 @@ def normalize_document(value, context, original_statements):
     return document
 
 
+def _cash_before_void(context, event, after):
+    """Read one original native void through its exact command/source binding."""
+    def invalid():
+        fail("The saved reconciliation requires the original cash void history.", "RECONCILIATION_HISTORY")
+
+    if not isinstance(event, dict) or event.get("version") != after["version"]:
+        invalid()
+    if event.get("action") == "cash.void":
+        if event.get("kind") != "cash" or event.get("after") != after:
+            invalid()
+        before = event.get("before")
+    elif event.get("action") == "settlement.correct":
+        try:
+            original = event["after"]
+            review = original["review"]
+            change = event["sourceChange"]
+            source_before, source_after = change["before"], change["after"]
+            retained = context["sources"][review["sourceId"]]
+            history = retained["settlementHandoff"]["reviews"]
+            position = next(index for index, value in enumerate(history) if value["id"] == review["id"])
+            changes = review["cashChanges"]
+            selected = [value for value in changes if value.get("after") == after]
+            if (event.get("kind") != "settlementReceiving"
+                    or review.get("schema") != "scf.operations.settlement-receiving.v1.review"
+                    or review.get("type") != "CORRECTION" or review["version"] != event["version"]
+                    or review["id"] != event["recordId"] or review["requestId"] != event["requestId"]
+                    or review["actor"] != event["actor"]
+                    or digest({key: value for key, value in review.items() if key != "sha256"}) != review["sha256"]
+                    or history[position] != review or position == 0
+                    or event["before"].get("reviewId") != review["previousReviewId"]
+                    or review["previousReviewId"] != history[position - 1]["id"]
+                    or source_before["id"] != retained["id"] or source_after["id"] != retained["id"]
+                    or any(value != retained["sha256"] for value in
+                           (source_before["sha256"], source_after["sha256"],
+                            review["sourceSha256"], original["sourceSha256"]))
+                    or source_before["settlementHandoff"]["reviews"] != history[:position]
+                    or source_after["settlementHandoff"]["reviews"] != history[:position + 1]
+                    or event["before"].get("cash") != [value.get("before") for value in changes]
+                    or original.get("cash") != [value.get("after") for value in changes]
+                    or len(selected) != 1
+                    or review["selectionInputs"].get("decision") not in ("CORRECT_CASH", "VOID_CASH")
+                    or review["selectionInputs"].get("expectedCashId") != after["id"]):
+                invalid()
+            before = selected[0].get("before")
+        except (KeyError, TypeError, AttributeError, StopIteration):
+            invalid()
+    else:
+        invalid()
+    if (not isinstance(before, dict) or before.get("id") != after["id"]
+            or before.get("state") != "OBSERVED" or after.get("state") != "VOID"
+            or not isinstance(before.get("version"), int) or before["version"] >= after["version"]
+            or set(before) - set(after)
+            or set(after) - set(before) - {"reviewedBy", "reviewNote"}
+            or any(after.get(key) != value for key, value in before.items()
+                   if key not in ("state", "version", "updatedAt", "reviewedBy", "reviewNote"))):
+        invalid()
+    return deepcopy(before)
+
+
 def context_at(context, events, version, identity=None):
-    """Reopen original immutable cash, its one native void and retained sources."""
+    """Reopen original cash across ordinary and compound native voids."""
     event_map = {event["version"]: event for event in events}
     cash = []
     for current in context["records"]["cash"]:
         row = deepcopy(current)
         if row["state"] == "VOID" and row["version"] > version:
-            event = event_map.get(row["version"])
-            if (not event or event.get("action") != "cash.void" or event.get("after") != row
-                    or not isinstance(event.get("before"), dict)):
-                fail("The saved reconciliation requires the original cash void history.", "RECONCILIATION_HISTORY")
-            row = deepcopy(event["before"])
+            row = _cash_before_void(context, event_map.get(row["version"]), row)
         if row["version"] <= version:
             cash.append(row)
     sources = deepcopy(context["sources"])

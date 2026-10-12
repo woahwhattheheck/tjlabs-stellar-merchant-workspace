@@ -173,3 +173,8 @@ The complete publisher case at application commit `1025cb17d9f38d1285d474a931d9f
 The installed browser's source and workspace downloads now join the download listener and click in the same handled operation. Full-workspace downloads use the native server's 360-second request window. The controller records the actual response status, request failure, downloaded byte count, and any returned error body in the existing attempt log directory. It also watches the original server process, so a server exit becomes an immediate native failure rather than an unexplained download timeout. These observations carry no private connection headers.
 
 The installed server's stdout and stderr stream directly into their existing attempt files for the whole process lifetime. Browser failures still run the normal context, service, and owned-process cleanup, while the actual server output remains available for the same-case continuation and delivery save.
+
+
+### Restoring the current saved result
+
+An operating archive may contain both its current top-level native result and earlier copies under the retained source-history directory. The restorer selects the archive's top-level result after all members are restored. It preserves any earlier result under its own SHA-256 filename before that selection. This keeps the completed publisher's source, archive, and original identity checks tied to the saved package being resumed, so earlier history cannot cause the current completed publisher to run again.
