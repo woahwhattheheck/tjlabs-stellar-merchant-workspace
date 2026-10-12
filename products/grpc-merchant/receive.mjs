@@ -204,7 +204,16 @@ export async function receiveOriginalGrpcProduct({ runtimeDirectory, nativeWorkD
       });
       active = await product.openGrpcProduct({ directory: productDirectory, tokenEnv: 'GRPC_HEALTH_MCP_TOKEN' }, { environment: env });
       session.productId = active.productId; session.instanceId = active.instanceId;
-      session.nativeInstanceId = active.nativeInstanceId; await save();
+      session.nativeInstanceId = active.nativeInstanceId;
+      need(UUID.test(active.operatorWorkspaceId ?? '') && HASH.test(active.operatorSourceSha256 ?? '') &&
+        active.operatorDirectory === join(productDirectory, 'operator-console'),
+      'Retain the complete installed Merchant Console with its original native workspace.', 'ORIGINAL_CONSOLE_REQUIRED');
+      const operatorConsole = { directory: active.operatorDirectory, workspaceId: active.operatorWorkspaceId,
+        sourceSha256: active.operatorSourceSha256 };
+      if (result.operatorConsole) equal(operatorConsole, result.operatorConsole,
+        'Reopen the same retained Merchant Console and installed source.');
+      else result.operatorConsole = operatorConsole;
+      session.operatorConsole = operatorConsole; await save();
       const client = new GrpcProductClient({ directory: productDirectory, productId: active.productId,
         workspace: identity.workspace, environment: env });
       const full = async (value, label) => {
@@ -279,7 +288,7 @@ export async function receiveOriginalGrpcProduct({ runtimeDirectory, nativeWorkD
           requestSha256: digestJSON(request), clientFiles: identity.customer.manifest.files.length };
       });
     } finally {
-      // The aggregate owner closes both its merchant agent and native console.
+      // The aggregate owner drains the persistent Merchant Console, agent and native owner.
       // Keep the reference when close fails so the outer cleanup can continue it.
       if (active) { await active.close(); active = null; }
       session.closed = true; await save();

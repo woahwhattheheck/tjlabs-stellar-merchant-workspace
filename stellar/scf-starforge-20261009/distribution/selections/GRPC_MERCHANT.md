@@ -1,13 +1,19 @@
 # Install the gRPC merchant product
 
 This selected product delivers the maintained gRPC source engine, native
-authoring browser, merchant agent, original seller release lifecycle, contract
-upgrades, durable service health and complete customer receiving.
+authoring browser, merchant agent, persistent Merchant Console, original seller
+release lifecycle, contract upgrades, durable service health and complete
+customer receiving.
 
 Its recipe is `grpc-merchant.json`, schema
 `stellar-forge.distribution-source-selection.v1`. It selects complete
 original contributions and keeps the existing distribution builder, installer,
-source manifest, runtime lock and Applications lifecycle.
+source manifest, runtime lock and Applications lifecycle. The selected original
+contributions include `merchant-console` together with the nine gRPC product
+contributions. The complete `stellar-forge/mcp-merchant-operator/console`
+component carries the customer page, saved recipes, pure receiving records,
+archive implementation, styles and full guide. Its maintained launch source
+binds all 39 Console files, alongside the original gRPC managed source.
 
 ## Build the selected source
 
@@ -84,15 +90,34 @@ Register the READY runtime in the Runtime workspace. In **Applications**, choose
 **gRPC merchant product**, select the initialized private product directory and
 its private environment file, then **Review → Save → Start → Open**. Review
 binds the product inputs, native directory inode, current contract revision,
-original managed source, agent port and authorization configuration.
+original managed source, complete Console source, its selected private store,
+agent port and authorization configuration.
 
 The product opens one native gRPC owner and connects its merchant provider to
-that owner's private URL. **Stop** drains both original listeners, release work
-and native channels. **Start** opens the same state and refreshes its connection
+that owner's private URL. The same merchant listener owns the persistent
+Console at `operator-console/` beneath the private product. **Merchant operator**
+opens its returned `operatorUrl`; `connection.json` also retains its directory,
+workspace UUID and reviewed source SHA. **Stop** drains the Console and its
+receiving, both original listeners, release work and native channels. **Start** opens the same state and refreshes its connection
 file. The original gRPC authoring-only application remains registered for
 operators who already manage its agent separately.
 
 ## Work and hand over
+
+In Merchant operator, select a named profile and bind the configured Host.
+**Customer files → gRPC / Customer workspace** loads the original configured
+workspace and its retained preparations, sources, calls, reviews and health
+observations. Saved Workflow Recipes carry complete customer/source delivery,
+contract-upgrade delivery, a selected frozen health prefix and retained-call
+receiving. Review the original definitions and saved inputs, then complete each
+manifest pause through the same native customer downloader.
+
+The resulting tar.gz keeps `grpc/grpc-workspace-export.json` and every native
+member path, including the complete `grpc/client/` package. Original individual
+files, profile export, saved request recovery and the CLI's offline inspector
+use that same manifest and full source bytes. The installed [Console customer
+guide](../../../../stellar-forge/mcp-merchant-operator/console/CUSTOMER_GRPC.md)
+provides the full procedure and receiving flow.
 
 Use the installed [operating guide](../../../../products/grpc-merchant/OPERATING.md)
 for source capture/reflection, message authoring, merchant preparation, release

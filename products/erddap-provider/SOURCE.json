@@ -5,12 +5,23 @@
     "repository": "woahwhattheheck/public-commons-sprint-2026",
     "implementationMerge": "3585e7620cc8e8c6f7fed24a5eb031415195c078",
     "executionHead": "00acbcddd9a5646f3006b46a6e87d8f17d452162",
-    "completeSourceCommit": "8a9a7d238473d6ac5a5ba420054b9cc67a67c876",
-    "erddapTree": "56d6e84edbd0b39ca27ce402f5fc6ef4ace17073"
+    "completeSourceCommit": "bcdeeb2fe3e32f1f9340a892a2f82a1137bcbe75",
+    "erddapTree": "1af5b4890991a3f5c4663997c8bd0ee23a956bd4",
+    "sourceHistory": [
+      {
+        "completeSourceCommit": "8a9a7d238473d6ac5a5ba420054b9cc67a67c876",
+        "erddapTree": "56d6e84edbd0b39ca27ce402f5fc6ef4ace17073",
+        "destinationMerge": "3c25fdc8ded02bc7fc7678aebde3e002b433851d",
+        "destinationSourceManifest": "518e4f3b12454c4906e13420056ef426db1c68ff"
+      }
+    ],
+    "providerHistoryMerge": "bcdeeb2fe3e32f1f9340a892a2f82a1137bcbe75",
+    "providerHistoryHead": "e9164502e2f2f1db6895ea39ba48c1947baf2b44"
   },
   "destination": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "baseCommit": "7e1ed722ff1c0ed7eac0cc4cfa428869d68e8982"
+    "baseCommit": "9048149a4f3327634abfa8d157685f8445280b12",
+    "previousBaseCommit": "7e1ed722ff1c0ed7eac0cc4cfa428869d68e8982"
   },
   "sourceFiles": [
     {
@@ -29,23 +40,23 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/PROVIDER_CLIENT.md",
-      "bytes": 13896,
-      "sha256": "75f3439a79d67ab9b4b6667e3ec0f86ff875beed7f3acddb55f4f8530c60f316",
-      "gitBlob": "46deb144a53eda2f54bffb10dd81c452aa9edfab",
+      "bytes": 17266,
+      "sha256": "499fd33ef89e4af149ffe097d2be37b3cf7b8e5a2ca39649e09a22b95e8f3bbe",
+      "gitBlob": "cf48b51aa37c1912dd4fd0457239f65d5b77eed6",
       "mode": "100644"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/PROVIDER_HANDOFF.md",
-      "bytes": 17894,
-      "sha256": "a9f875a46553b07427c1541fc5091a3283bdaef970ab475ae55fe20b837cdca2",
-      "gitBlob": "151ac05c25c1f54ecc37b8a433a0cf1009569c6f",
+      "bytes": 20061,
+      "sha256": "d4743881c2083e8b5b23e16ab0a5122f7e91a3eca660acf0dbd3cbd66296d499",
+      "gitBlob": "2815a1dfbaf0b37bc3e0f80e04e092ffcece2583",
       "mode": "100644"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/README.md",
-      "bytes": 24327,
-      "sha256": "1e80aae9783ee1759d9fdd50e5444dcc7742fa53bd0d7e41ce76d00872329531",
-      "gitBlob": "d03cc50761776788b6a71727e9307b7dac13d8fb",
+      "bytes": 27347,
+      "sha256": "f1dd11d4ba7d51f97545a7c37f55af9c179095e555eef9b712c8028e632fd67a",
+      "gitBlob": "8e1403fd3e5059c649fa4886a7ffe418a05cc8b5",
       "mode": "100644"
     },
     {
@@ -99,16 +110,16 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-owner.py",
-      "bytes": 16469,
-      "sha256": "1a85fcf502c76b9ac0bcf67ce2e6e2858ae58a76969b56ac7753894caddf2314",
-      "gitBlob": "ec707127dcd66b37c195b3653626456dbc9682dc",
+      "bytes": 17249,
+      "sha256": "759d0d4a966db9df74b420724a1fedfd36151f27804d9318151a9079d52f3b59",
+      "gitBlob": "c4f62e14e77cd0448b22442a56535505c921ea6e",
       "mode": "100644"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-phase.cjs",
-      "bytes": 39923,
-      "sha256": "2eb50abaabbdecec837af218e71206dcf287f2376683e5ce3ac834b652089015",
-      "gitBlob": "693f8e0f3a5bed767e8d055788202962178605ce",
+      "bytes": 42064,
+      "sha256": "c81be3bbd8050a0dde711bcb774c46cafd38eef0c895bde6d6949604d236f30f",
+      "gitBlob": "4258b324ea689b272219505db714fb4c526f2ab6",
       "mode": "100644"
     },
     {
@@ -267,9 +278,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/native-receive.py",
-      "bytes": 17220,
-      "sha256": "6288ad4062462362618594bb4c3dbcb0ba7a105bd036a249bad4d480e881476d",
-      "gitBlob": "27f9cb659c3b94035af4648e8dc9a12c68cce68a",
+      "bytes": 17868,
+      "sha256": "36b98faf10c24888021aba9d11384ba9d4bbb55f5af373461103e9d3ab27faec",
+      "gitBlob": "5c27539130f924ccc5987b0360ed31aa55252fec",
       "mode": "100644"
     },
     {
@@ -281,9 +292,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/provider-native-receive.py",
-      "bytes": 28410,
-      "sha256": "d7eadf7634f30facd79ea5bc18c03f3da1b848318a8f132e7abc4876d549d2f1",
-      "gitBlob": "75a9530bd4365a201ef4ad2e7973a6810dcc5869",
+      "bytes": 28694,
+      "sha256": "6460533dff6890cbdd7f8c36ff7d4b6f25b499ca82d85fa9008419a81d7f2a2d",
+      "gitBlob": "c7ab2191bc970d96898907694bb0b910a444e514",
       "mode": "100644"
     },
     {
@@ -295,9 +306,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/erddap_source.py",
-      "bytes": 32553,
-      "sha256": "d7795bb145fc1da431cd2072ffb7fe3c4a681447c7c0d409d805b6b4b7365e44",
-      "gitBlob": "f02e3475564c90aab09d282a4ffb24b5e6298b20",
+      "bytes": 32829,
+      "sha256": "4fe7d0c569dbfd85cc4a31e6ccfdf37de1bc69568d3f7961bd62e6752dcec19d",
+      "gitBlob": "de617431fbd2393d98f49db49d6fcfb0b2661955",
       "mode": "100644"
     },
     {
@@ -365,9 +376,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider_handoff.py",
-      "bytes": 46575,
-      "sha256": "fb3676d6201c0b933adc45e1a2ba04a36e0f1cf36ae3aa30692e083472bce392",
-      "gitBlob": "c170ad931f6478e2633be2ba1ab95d6ab41d934e",
+      "bytes": 51531,
+      "sha256": "c51a24c8a6d4eec7d1ad5a322abb84ea6dcd6308b88a43b9288e5ac0f1a4df93",
+      "gitBlob": "2cb1c101e4d347c277d854977bf498df4e496f20",
       "mode": "100644"
     },
     {
@@ -379,9 +390,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider_handoff_workspace.py",
-      "bytes": 13140,
-      "sha256": "74c024be4db116de3c2b5885cfdeb841af83fdd6f72050ff7efc3ed5fc219c41",
-      "gitBlob": "c12d13a07d870148ec7bdb8ea3890a3d4bcabb0d",
+      "bytes": 14295,
+      "sha256": "7fa9ccfe885f89d85d25283fa78cdedcc2e0bda1f9929046a4d754f62e390972",
+      "gitBlob": "c2cee3c53770f9943d4a8d6ab6fcc8312cffe71e",
       "mode": "100644"
     },
     {
@@ -433,7 +444,63 @@
     "browserOwner": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-owner.py",
     "status": "Use the maintained native helper and browser owner with the same retained operation directory, source ZIP and saved profile. Preserve each completed phase when reopening.",
     "completeCaptureHelper": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/native-receive.py",
-    "captureGuide": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/CAPTURE_IMPORT.md"
+    "captureGuide": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/CAPTURE_IMPORT.md",
+    "providerEvaluation": {
+      "schema": "stellar-forge.erddap-provider-evaluation.v1",
+      "readiness": "1.0.0",
+      "csvComparison": "decimal-v1",
+      "supportedHistoricalComparisons": [
+        "lexical-v1",
+        "decimal-v1"
+      ],
+      "historicalRule": "Reproduce the complete unversioned review under a supported evaluator; preserve its original identity and exact bytes."
+    },
+    "originalNative": {
+      "sourceSha256": "e52246a67df21d4acf58749e9b08ec76f32cc9d36f9d0595ed4f6040c4c48540",
+      "rows": 144,
+      "csvPolicy": "canonical-json",
+      "status": "ERDDAP_NATIVE_RECEIVING_COMPLETE",
+      "result": {
+        "path": "native/native-result.json",
+        "bytes": 14560,
+        "sha256": "31c402a6663b84b6003e608a7947d9c51a1c923a916b5abd1be299aaba4b1b7a"
+      },
+      "provider": {
+        "status": "ERDDAP_PROVIDER_NATIVE_RECEIVING_COMPLETE",
+        "result": {
+          "path": "provider-native/provider-result.json",
+          "bytes": 285049,
+          "sha256": "35a65afd2747c6141129391fa6a75d9970f34c8b85b7e4e2f9cc777f686e5701"
+        },
+        "retainedHead": "b538d84749d9edc41261481adb87e246fad7d9d26de9d0a0b63dc79776279afb"
+      }
+    },
+    "historicalCompatibility": {
+      "status": "ORIGINAL_PROVIDER_EVALUATION_COMPATIBILITY_COMPLETE",
+      "result": {
+        "path": "provider-native/evaluation-compatibility/result.json",
+        "bytes": 6460,
+        "sha256": "844446d299546b0f7769f77cc95bcdab7559108de77e9ac553497260fcbe32ab"
+      },
+      "originalHistoryUnchanged": true,
+      "originalBundleBytesPreserved": true,
+      "bundles": [
+        {
+          "revision": "c18412668ff1f4738f1901f2e5972ee5b5e277c8720ab6ca83ca335bea9c4d3e",
+          "bytes": 21254,
+          "sha256": "8ea7e6ae49723a3f755d094911b8899bbc4fcf72b036f226b49c9bc84e67728d"
+        },
+        {
+          "revision": "b538d84749d9edc41261481adb87e246fad7d9d26de9d0a0b63dc79776279afb",
+          "bytes": 27375,
+          "sha256": "a52c8878e5e957b33c13acdb7fee42c043666d50dbf9ddb64b20fac24dd22239"
+        }
+      ],
+      "currentDeclaredAndKnownUnversionedDecimalReceived": true,
+      "changedReviewAndUnknownVersionRejected": true
+    },
+    "browserStatus": "Prepared for the same original workspace and reviewed profile; completed browser receipt will be retained by that owner.",
+    "installedStatus": "Selected source is integrated; complete maintained build/install receiving remains the original product continuation."
   },
   "capturedReferences": [
     {

@@ -10,6 +10,7 @@ import {
   openHandoverFile, handoverFileIdentity, readHandoverRange,
   writeHandoverBytes, hashHandoverFile, syncAndCloseHandoverFile,
 } from './handover-archive.mjs';
+import { matchCapturedHandoverRecovery } from './handover-recovery-files.mjs';
 
 export const CAPTURED_HANDOVER_UPLOAD_SCHEMA = 'stellar-forge.captured-api-handover-upload.v1';
 export const CAPTURED_HANDOVER_UPLOAD_CHUNK_BYTES = 1024 * 1024;
@@ -74,7 +75,9 @@ async function payload(root,metadata,{create=false,writable=false}={}) {
       fail('CAPTURED_HANDOVER_CHANGED', 'The retained upload exceeds its original complete length.');
     const binding = {schema:PAYLOAD_SCHEMA,device:held.identity.device,inode:held.identity.inode};
     if (retained) {
-      if (canonical(retained) !== canonical(binding))
+      if (canonical(retained) !== canonical(binding) &&
+          !await matchCapturedHandoverRecovery(root,{kind:'upload',file:PAYLOAD,
+            identity:held.identity,records:{'operation.json':metadata,'records/payload.json':retained},mode:'payload'}))
         fail('CAPTURED_HANDOVER_CHANGED', 'The original upload payload inode changed.');
     } else {
       if (!create || held.bytes !== 0)
@@ -114,13 +117,17 @@ async function pendingChunk(root,metadata,held) {
   await unlink(join(root,PENDING)); await syncDirectory(join(root,'records'));
   return null;
 }
-function completeRecord(value,metadata,held,stat) {
+async function completeRecord(root,value,metadata,held,stat) {
   if (value?.schema !== COMPLETE_SCHEMA || value.id !== metadata.id ||
       value.inputSha256 !== digest(Buffer.from(canonical(metadata))) ||
       value.bytes !== metadata.totalBytes || !HASH.test(value.sha256 ?? '') ||
-      metadata.expectedSha256 !== undefined && metadata.expectedSha256 !== value.sha256 ||
-      canonical(value.identity) !== canonical(handoverFileIdentity(stat)) ||
-      held.identity.device !== value.identity?.device || held.identity.inode !== value.identity?.inode)
+      metadata.expectedSha256 !== undefined && metadata.expectedSha256 !== value.sha256)
+    fail('CAPTURED_HANDOVER_CHANGED', 'The original finished upload or completion record changed.');
+  if ((canonical(value.identity) !== canonical(handoverFileIdentity(stat)) ||
+       held.identity.device !== value.identity?.device || held.identity.inode !== value.identity?.inode) &&
+      !await matchCapturedHandoverRecovery(root,{kind:'upload',file:PAYLOAD,
+        identity:handoverFileIdentity(stat),records:{'operation.json':metadata,
+          'records/payload.json':await readJSON(root,'records/payload.json'),'received.json':value},mode:'complete'}))
     fail('CAPTURED_HANDOVER_CHANGED', 'The original finished upload or completion record changed.');
   return value;
 }
@@ -130,7 +137,7 @@ async function view(root,metadata,held,{pending}={}) {
   const common = {id:metadata.id,name:metadata.name,totalBytes:metadata.totalBytes,
     receivedBytes,chunkBytes:CAPTURED_HANDOVER_UPLOAD_CHUNK_BYTES};
   if (complete) {
-    completeRecord(complete,metadata,held,stat);
+    await completeRecord(root,complete,metadata,held,stat);
     return {...common,state:'COMPLETE',path:held.path,sha256:complete.sha256};
   }
   return {...common,state:receivedBytes === metadata.totalBytes ? 'READY_TO_FINISH' : 'UPLOADING',

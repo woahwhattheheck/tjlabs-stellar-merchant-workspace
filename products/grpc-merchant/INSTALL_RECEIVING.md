@@ -4,7 +4,9 @@ The complete gRPC health operation retains its original source, workspace,
 native call, merchant preparation, release history and downloaded customer
 files. The installed receiving command opens that saved workspace with the
 selected product and completes its handover through the actual installed
-merchant client.
+merchant client. The same product session opens the persistent Merchant Console;
+its workspace UUID and installed source identity remain in the receiving journal
+and are checked again after a resumed open.
 
 The command is `grpc-product-receive`. Ordinary customer downloads continue
 to use `grpc-product receive`, described in [RECEIVING.md](RECEIVING.md).

@@ -3,8 +3,9 @@
 Open an existing gRPC service as a reviewed Stellar merchant, keeping its original
 protobuf contract, typed requests, calls, merchant editions and customer files.
 
-The product combines the original **gRPC authoring browser** and its
-**authenticated merchant agent** in one owned session. It includes native
+The product combines the original **gRPC authoring browser**, its
+**authenticated merchant agent** and a **persistent Merchant Console** in one
+owned session. It includes native
 reflection v1/v1alpha, unary and server-streaming methods, client and bidirectional
 message sequences, saved contract upgrade review, and standard Check/List/Watch
 service-health observations.
@@ -33,8 +34,15 @@ prepared customer files, release history, upgrade reviews and health journals.
 
 Provide the selected upstream credentials and `MCP_ACCESS_TOKEN` through the
 original process environment. Startup returns the original private browser URL,
-agent endpoint and stable `connection.json` file. The URL capability belongs
+agent endpoint, `operatorUrl` and stable `connection.json` file. The URL capability belongs
 to this native session; the client rereads the file after a later reopen.
+
+The Console stays in `operator-console/` beneath this private product directory.
+Open **Merchant operator**, connect using the configured merchant token, and
+select a named profile. **Customer files → gRPC / Customer workspace** keeps
+saved requests, complete customer/source receiving, contract reviews, frozen
+health history and retained stream returns. Four complete Workflow Recipes
+carry the same original selections through review, download and reopen.
 
 The [operating guide](OPERATING.md) covers the full source, merchant and customer
 workflow. The [receiving guide](RECEIVING.md) covers all seven generated customer
@@ -53,9 +61,15 @@ starforge grpc-product receive --dir /srv/private/grpc-product \
 starforge grpc-product inspect-received --out /srv/private/received-grpc
 ~~~
 
+Use `grpc-product inspect --dir ...` or `GrpcProductClient.ready()` to read the
+retained `operatorUrl`, `operatorDirectory`, `operatorWorkspaceId` and
+`operatorSourceSha256`. A reopened product keeps the Console workspace ID and
+refreshes its live address.
+
 Save native operation UUIDs and the returned immutable export IDs before
-continuing. Stop drains the original merchant agent and native workspace.
-A later Open keeps the same authoring and receiving state.
+continuing. Stop drains the merchant Console, its downloads, the original agent
+and native workspace. A later Open keeps the same authoring, named profiles,
+saved procedures and receiving state.
 
 ## Installed receiving from the original native operation
 

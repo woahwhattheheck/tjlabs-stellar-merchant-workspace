@@ -538,6 +538,59 @@ The delivered workspace archive includes the original database, sources, query a
 
 The [complete Python Research/Analysis contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_DOCUMENTS.md) covers live Document/Pipeline control, retained request recovery, original-file source reconstruction, all delivered paths and full archive receiving.
 
+## Run a literature update with Europe PMC
+
+Open **Literature searches** in the Research header. It uses the running Research
+application and the same private connection. The neutral workbench brings saved
+search definitions, original provider pages, records, comparisons and receiving
+together.
+
+1. Save a named search with its complete Europe PMC query, page size, maximum
+   pages, synonym setting and retained source terms. A later edit creates another
+   saved definition while keeping the earlier source editions.
+2. Select that saved revision and retain an edition through **Acquire original
+   pages** or **Prepare file intake**. File intake accepts the complete original
+   core JSON pages with their actual source URLs. Inspect the returned coverage.
+3. Open **Records & review**. Read full metadata, abstract, licence and every
+   original occurrence; retain an include, exclude, uncertain or follow-up
+   decision with the operator's note. Complete drafts survive a refresh, and a
+   concurrent change is resolved against the saved review revision.
+4. Compare the required earlier and later editions. Inspect query-scope changes,
+   added and absent records, and full native metadata differences. Download the
+   complete comparison and the selected edition's JSON, RIS, CSV or review history.
+5. Use **Dossier receiving** to select an existing dossier and question, review
+   its current revision and append the chosen original source edition. Continue
+   evidence selection, findings, citation review and reports in that dossier.
+6. Export the complete Europe PMC source workspace from **Activity & receiving**
+   and retain it with the dossier portable and readable report. Its separate
+   received copy keeps every query, source page, decision and receiving receipt.
+
+Large searches use explicitly linked parts. When an edition reaches its source
+or normalized size limit, the exact boundary page and next cursor remain saved.
+Continue from that original part; inspect the combined chain and receive each
+required edition into the intended question. The operator guide specifies the
+actual byte limits and complete source coverage fields.
+
+The installed command operates the same listener:
+
+~~~sh
+starforge research-europe-pmc list \
+  --connection /srv/starforge/private/research-connection.json
+
+starforge research-europe-pmc query --id ORIGINAL_QUERY_ID \
+  --connection /srv/starforge/private/research-connection.json
+~~~
+
+Use `starforge research-europe-pmc help` for all acquisition, review, comparison,
+export and receiving commands. Save complete request JSON with `--input` to
+preserve the query, note, original request ID and expected revision. The existing
+client exposes the same operations through `client.europePmc()`.
+
+The [complete literature operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/EUROPE-PMC-OPERATOR.md)
+explains source intake, query history, browser recovery and receiving. The
+[Merchant attachment guide](../../stellar-forge/mcp-merchant-operator/EUROPE_PMC.md)
+gives all twenty tool names, declared original-file inputs and six export kinds.
+
 ## Deliver and reopen complete work
 
 Export both an editable portable and the readable report:

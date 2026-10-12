@@ -525,6 +525,75 @@ The operating result records belong to the actual selected source and receiving
 host. The original managed-document and self-hosted source operations retain
 their provider, job and payment custody throughout this customer continuation.
 
+## Receive the complete Europe PMC source workspace
+
+The selected Research product includes the original Europe PMC source adapter,
+browser, authenticated client, `research-europe-pmc` command and complete
+Merchant family. Its source-owned Research contribution carries the provider
+component, existing shared rate-state helpers and Merchant guide into the same
+installed archive. The current Research recipe also retains its direct Analysis
+browser/native-agent intake and complete Python/workbook receiving.
+
+Deliver the source workspace and the dossier together:
+
+| File or selection | Work carried to the receiver |
+| --- | --- |
+| Complete Europe PMC workspace JSON/gzip | Every saved query version, original plan and page, edition, decision, continuation and dossier receiving receipt |
+| Dossier portable JSON/gzip | Research questions, original received editions, evidence selections, findings, citation-review history and saved revisions |
+| Readable dossier HTML or Markdown | The selected saved report revision for the recipient |
+| Selected edition JSON/RIS/CSV and review JSON | Complete native source records and the associated metadata review |
+| Original source-page downloads | The exact provider-response or retained-document bytes and their recorded provenance |
+
+Create a complete workbench export through **Activity & receiving**, or use the
+installed CLI with a retained request file containing an original `requestId`
+and `actor`:
+
+~~~sh
+starforge research-europe-pmc backup \
+  --connection /srv/starforge/private/research-connection.json \
+  --input /srv/starforge/private/literature-export-request.json \
+  --file /srv/starforge/delivery/Europe_PMC_Workspace.json.gz
+~~~
+
+Retain the returned byte count and SHA-256. On the receiving Research application,
+use **Reopen and select received copy**, or run:
+
+~~~sh
+starforge research-europe-pmc restore \
+  --connection /srv/starforge/private/receiving-research-connection.json \
+  --request-id ORIGINAL_RECEIVING_REQUEST_ID --actor OPERATOR_NAME \
+  --file /srv/starforge/delivery/Europe_PMC_Workspace.json.gz \
+  --sha256 ORIGINAL_WORKSPACE_FILE_SHA256
+~~~
+
+The receiver verifies the complete archive and every original member, query
+revision, review, source binding, continuation and receiving receipt. It selects
+a separate received library. Use the existing dossier portable receiver for the
+paired research project, then confirm its original questions, source editions and
+chosen report revision.
+
+Merchant receiving uses the same application attachment. Discover the current
+library with `merchant_research_europe_pmc_list`; carry that exact library in
+later actions. Prepare the original workspace export, retain it through
+`merchant_research_export` with `kind: "europe-pmc-workspace"`, then read every
+chunk through the existing immutable export file API. The
+[full Merchant guide](../../stellar-forge/mcp-merchant-operator/EUROPE_PMC.md)
+documents all operation/export selections and the complete native customer
+receiving helper.
+
+A lost export reply reuses its original export request and retained file. A lost
+dossier receiving reply reopens its saved request and resulting edition. After a
+restore, list and explicitly select the received library before making a later
+change. Continue a partially acquired query from its saved parent plan and actual
+next cursor. Original query and review drafts remain in their browser workspace;
+commit the intended decisions before exporting the source handover.
+
+For large programmes, agree the complete source selection against the actual
+limits: 16 MiB per original page, 24 MiB raw source budget per part, 64 MiB per
+normalized edition and 128 MiB per full portable. Record count alone does not
+determine source size. Preserve all required original parts and inspect their
+complete continuation coverage.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |

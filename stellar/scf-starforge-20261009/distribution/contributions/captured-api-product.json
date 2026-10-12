@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "captured-api-product",
-  "description": "Captured API source authoring, exact route prices and policies, persistent merchant workflows, managed browser/agent launch, seller releases, collaborative saved handover drafts, installed/incoming edition comparison and complete reviewed browser, agent, terminal and file receiving.",
+  "description": "Captured API source authoring, exact route prices and policies, persistent merchant workflows, managed browser/agent launch, seller releases, collaborative saved handover drafts, installed/incoming edition comparison and complete reviewed browser, agent, terminal and file receiving, complete encrypted operating recovery and original-path cold reopening.",
   "components": [
     "products/captured-api"
   ],
@@ -9,7 +9,7 @@
     "captured-api": "products/captured-api/cli.mjs"
   },
   "commandDescriptions": {
-    "captured-api": "Initialize and operate captured API sources, route pricing/policies, the persistent operator workspace, native releases and complete receiving."
+    "captured-api": "Initialize and operate captured API sources, route pricing/policies, the persistent operator workspace, native releases and complete receiving, full operating snapshot/restore and recovered product reopening."
   },
   "exports": {
     "./products/captured-api": "./source/products/captured-api/workspace.mjs",
@@ -21,7 +21,8 @@
     "./products/captured-api/handover-client": "./source/products/captured-api/handover-client.mjs",
     "./products/captured-api/handover-agent": "./source/products/captured-api/handover-agent.mjs",
     "./products/captured-api/draft-reconciliation": "./source/products/captured-api/draft-reconciliation.mjs",
-    "./products/captured-api/edition-comparison": "./source/products/captured-api/edition-comparison.mjs"
+    "./products/captured-api/edition-comparison": "./source/products/captured-api/edition-comparison.mjs",
+    "./products/captured-api/recovery": "./source/products/captured-api/recovery/workspace.mjs"
   },
   "applicationProviders": {
     "captured-api": "products/captured-api/application-provider.mjs"
