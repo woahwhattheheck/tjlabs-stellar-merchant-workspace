@@ -83,7 +83,9 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
   }
   async function runtimePage(url) {
     const current = await page();
-    await responseFor(current, '/api/state', 'GET', () => current.goto(url));
+    const state = await responseFor(current, '/api/state', 'GET', () => current.goto(url));
+    await current.waitForFunction(directory => document.getElementById('workspace-location')?.textContent === directory,
+      state.directory);
     await current.locator('button[data-view="source-builds"]').first().click();
     await current.locator('#source-build-workspace').waitFor({ state: 'visible' });
     return current;
@@ -166,12 +168,19 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
   }
   async function runtimeReady(current, runtimeId, archiveId, profile) {
     await current.locator('#refresh').click();
+    const choosing = current.waitForResponse(value => new URL(value.url()).pathname === '/api/state'
+      && new URL(value.url()).searchParams.get('runtimeId') === runtimeId);
     await current.locator('#runtime-list button[data-runtime-id=' + cssValue(runtimeId) + ']').click();
-    await current.locator('#selected-name').waitFor({ state: 'visible' });
+    const chosen = await returned(await choosing);
+    need(chosen.selected?.id === runtimeId, 'RECEIVING_VISIBLE_RUNTIME_CHANGED');
+    await current.waitForFunction(label => document.getElementById('selected-name')?.textContent === label,
+      chosen.selected.label);
     await capture(current, 'installed-runtime', current.locator('#selected-name'));
     await current.locator('button[data-view="profile"]').first().click();
-    const source = await responseFor(current, '/api/catalog', 'GET',
-      () => current.locator('#archive-select').selectOption(archiveId));
+    const selecting = current.waitForResponse(value => new URL(value.url()).pathname === '/api/catalog'
+      && new URL(value.url()).searchParams.get('archiveId') === archiveId);
+    await current.locator('#archive-select').selectOption(archiveId);
+    const source = await returned(await selecting);
     const expectedFeatures = Object.keys(source.catalog.groups).filter(name => name !== 'native').sort();
     await current.waitForFunction(names => JSON.stringify([...document.querySelectorAll('#features input')]
       .map(input => input.value).sort()) === JSON.stringify(names), expectedFeatures);
