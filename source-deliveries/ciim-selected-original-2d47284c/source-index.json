@@ -1,0 +1,2318 @@
+{
+  "schema": "stellar-forge.original-source-donor.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceCommit": "2d47284c866c8d5fdd6b21c8ca49d0bcc3e80e43",
+  "sourceTree": "ae2e9d54b73cfed72328ba40f48525675925fbce",
+  "selectedFiles": 323,
+  "selectedBytes": 4064047,
+  "archive": {
+    "name": "ciim-selected-2d47284c.tar.gz",
+    "format": "ustar+gzip",
+    "bytes": 1241221,
+    "sha256": "77f20666d4dfa88ad1d92e12f87aad42826c444cf69ec3ab757885031c29ed69",
+    "expandedBytes": 4304896,
+    "expandedSha256": "8ec82b0b5a636952cc4eb6d1ca78e07eb0edc6fc97b026e050c3a68f775793ed",
+    "encoding": "base64",
+    "encodedBytes": 1654964,
+    "parts": [
+      {
+        "name": "ciim-selected-2d47284c.part-001.b64",
+        "bytes": 262144,
+        "sha256": "c2ba8df90736d960388fbd45216bb89049559bc1df7364a4964c9add1560ef42"
+      },
+      {
+        "name": "ciim-selected-2d47284c.part-002.b64",
+        "bytes": 262144,
+        "sha256": "72af6676954ddb6cbd67debd001030913088d5fab87696850374b807d266e06f"
+      },
+      {
+        "name": "ciim-selected-2d47284c.part-003.b64",
+        "bytes": 262144,
+        "sha256": "7de400022b6146ae63a4c24e246b86fce666c12e2960077caaa01d59604f65b0"
+      },
+      {
+        "name": "ciim-selected-2d47284c.part-004.b64",
+        "bytes": 262144,
+        "sha256": "fafde2ca04f6b12344b65d77f00266715483effa7b91c19814ee9c7a8747a8a4"
+      },
+      {
+        "name": "ciim-selected-2d47284c.part-005.b64",
+        "bytes": 262144,
+        "sha256": "c33ed855a7acbb44a1144b838b35a2f45e18df52c9360218a43ab97930b963b0"
+      },
+      {
+        "name": "ciim-selected-2d47284c.part-006.b64",
+        "bytes": 262144,
+        "sha256": "5943d8e111de3d879099632021853f80e552d3367f63b8e95be607b8b5f1afee"
+      },
+      {
+        "name": "ciim-selected-2d47284c.part-007.b64",
+        "bytes": 82100,
+        "sha256": "3f661fcfa9931948dc255d7364aea000800323b41029e858a23818f415779be5"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "bytes": 1091,
+      "gitBlobSha": "2d2a35a69e3896b7c6b885c1faebae2f2f8bc9c1",
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
+    },
+    {
+      "path": "products/ciim-receiving/README.md",
+      "mode": "100644",
+      "bytes": 11371,
+      "gitBlobSha": "b590e4ce7db24c02eea9ec4fe88cd7d0743af1e8",
+      "sha256": "b07c37d2a331ab7ceb2571c5951a773d8d11db2672d8a0be1941cac8fc304e37"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/package.json",
+      "mode": "100644",
+      "bytes": 360,
+      "gitBlobSha": "25c40f788e9be3ac932b3337bbce02bf7c37e64f",
+      "sha256": "fd61bd40d16db97d0f6fe40d0b479b094ab8c215c24a8c0a1a33d4cf1dc33102"
+    },
+    {
+      "path": "stellar-forge/payment-auto-catalog/package.json",
+      "mode": "100644",
+      "bytes": 206,
+      "gitBlobSha": "496a5107a7ed40b470cc105e5b1171080189bd4a",
+      "sha256": "7850fb459afa96ace487b29e9dabbdf057ec13fcf4b92bde4277f0ea2a162ea4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/BROWSER_ASSETS.md",
+      "mode": "100644",
+      "bytes": 3026,
+      "gitBlobSha": "044b843bde769ebabc3f1358d3adfaf3b0712e74",
+      "sha256": "efd18017024a101618c63abf114d66a5036f292e17ac7b5cbb296ef826883ef1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+      "mode": "100644",
+      "bytes": 4571,
+      "gitBlobSha": "63801fa838c0479e6ae156d9f155461f02df0cfb",
+      "sha256": "1aaa548c7982d80aa1c73715bf0322822d063cdc3d570172a5ee15487be9a2e9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/build-state.mjs",
+      "mode": "100644",
+      "bytes": 20720,
+      "gitBlobSha": "eb9543e9ad3e594e4c343bb15375918a42149a9a",
+      "sha256": "b6cde7d57c04dcb924b948c319987706dadd06c656348334d2e79409d81ace90"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "mode": "100644",
+      "bytes": 20028,
+      "gitBlobSha": "4eed9f08057ff8e28f41c39609cc6926c7d346bb",
+      "sha256": "13957c02e932d901862d57f5e9cfaa35d25c265cfe26d1e84306a3e6041043ab"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+      "mode": "100644",
+      "bytes": 11961,
+      "gitBlobSha": "c809fe4b9e5d776177be91b30c319ce2f857dc76",
+      "sha256": "4300161dbb7b2acfafd5c9cd23df1744d47ccb04aa7383da99a553a7e746c77a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/cli.mjs",
+      "mode": "100644",
+      "bytes": 24144,
+      "gitBlobSha": "9b3d69072f534ac2148f5a1e4309657fabff5a1c",
+      "sha256": "865438ebf4f62bcbf361d383daef2903cc509ecf42d77b08e7a511335a6c3f12"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/CONTRIBUTIONS.md",
+      "mode": "100644",
+      "bytes": 8018,
+      "gitBlobSha": "80e7404566f102ee930a5607e3bb479ee6330868",
+      "sha256": "b01b2f4278a63ce33f80f821ce61e95016de02ff737e0ce03d36c3edbf3cc8f6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/ciim-desk.json",
+      "mode": "100644",
+      "bytes": 1591,
+      "gitBlobSha": "5942a5e327f25f9bf7b1d29752e1ede581fc15a7",
+      "sha256": "6ced3b65427934d94eaa1141b7eea9d59fcd3d367950dfdf186db3e51e4e02b1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/distribution.json",
+      "mode": "100644",
+      "bytes": 77697,
+      "gitBlobSha": "816323e44397b4d389fc7472156f415ca51caf9d",
+      "sha256": "98dc81cf0b68ae5d34fd3a22934e04b57c0e545adf1d1e5d82c1d1e1407219f4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md",
+      "mode": "100644",
+      "bytes": 2790,
+      "gitBlobSha": "df51dc4b345d8074d05ff44bfcc60efe61117550",
+      "sha256": "0056efde5146f2787e4e284b74e531ca7aeb2f2c5502ac923b0d92d93846a28b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/FINAGE.md",
+      "mode": "100644",
+      "bytes": 15008,
+      "gitBlobSha": "30d2286e576a28bbdb738a246768f456659bd21a",
+      "sha256": "4b9e26b4981b5fd922f78e840f20d1528331e49674ad0329eaa4bfbff77945eb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/GIT_OBJECT_RECEIVING.md",
+      "mode": "100644",
+      "bytes": 17104,
+      "gitBlobSha": "8bfd8f0a87784effa2a52fa85c0b3b290089a502",
+      "sha256": "ded7e3dfc230e0c381c8ae09e081d4638c59f259505cb10b5726d6aceb0da706"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/git-object-receiving.py",
+      "mode": "100644",
+      "bytes": 48086,
+      "gitBlobSha": "6fe4119a46e89c2a5831abe9a5c5726f4dc5668a",
+      "sha256": "fedc33b92a755fe6e0cdbe7fe9a06f53c7bc19ab49e8115ea2d51512b4025c58"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/git-source.mjs",
+      "mode": "100644",
+      "bytes": 9121,
+      "gitBlobSha": "3d2a0c9f34d27cce9b6ef64e39cf130dc620f8d7",
+      "sha256": "6241276146e7e2b9a938caf5efa97bd8de812e215bb6f3d0b8e5c3ae32d972c8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/INTRINIO.md",
+      "mode": "100644",
+      "bytes": 10838,
+      "gitBlobSha": "dc1380ef8f51db9b572d3e63ee6dc1024200d822",
+      "sha256": "71ed198a1c6ad8ac407da510cb24977749e34a30e21612efedcd6ebb4cda8067"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/MCP_OAUTH.md",
+      "mode": "100644",
+      "bytes": 19768,
+      "gitBlobSha": "8ecba65421ea462110d322b0baef03225763807b",
+      "sha256": "afdf3ca60e1584c71adcc06b36e89fff786cc70ac17d40ea692fb1de463b9bf8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/NODE_AGENTS.md",
+      "mode": "100644",
+      "bytes": 7856,
+      "gitBlobSha": "73425d98b801e7691cef5583d7f20961de67c07f",
+      "sha256": "42085ddd2e01550885d0e0b0b1c415dce99ad433b615ae4f291a8420e4c1feba"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+      "mode": "100644",
+      "bytes": 3764,
+      "gitBlobSha": "2c668933f214f201137ac6d3c6b7410525955c9b",
+      "sha256": "e1f33fd1940b62c7ede90288ff2ad36da529a197b06e059e8b3b6e27fba1e76d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/application-lifecycle.mjs",
+      "mode": "100644",
+      "bytes": 17696,
+      "gitBlobSha": "cce55e31b6c3e1491f84fa234249b9fc2b6e02a6",
+      "sha256": "e2364a3c36c953dc25a1c5a63e09fd80084881fc23f3905cb71ac36d37819da6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/command-binding.mjs",
+      "mode": "100644",
+      "bytes": 9426,
+      "gitBlobSha": "8531088fcd877937b002f3abf7c9d10b0fdee421",
+      "sha256": "b1610ca8ecb62a6cd16aa098ffcfa884750b1d71f789f649bc4616eaff04801b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/engine.py",
+      "mode": "100644",
+      "bytes": 38111,
+      "gitBlobSha": "137022659fbfd2739f3f3a707266642fc82393c0",
+      "sha256": "7d3b13587edf00b065c23aa76a63ba76468b60f7d9c98ddf1a9d5845e251f96b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/NATIVE_RECEIVING.md",
+      "mode": "100644",
+      "bytes": 21627,
+      "gitBlobSha": "342681883490fdb59e611f68f84d36ba9a2c823a",
+      "sha256": "6fab1cc081b7f78d407d980f7fda9b0bebd1f2ac83a0e00736ccd8696bce3655"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/native_receiving.py",
+      "mode": "100644",
+      "bytes": 65150,
+      "gitBlobSha": "fcb0cb58700a3e4bb6554867540a59d34d4d7fc3",
+      "sha256": "cd28219540fc18a3d64e48de28687d770923afb53c3e74e0f4dae94fbfcb275e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/README.md",
+      "mode": "100644",
+      "bytes": 6407,
+      "gitBlobSha": "e5dae0b499e442f7aea5a9f9886c924b2f78cc95",
+      "sha256": "f41a7723d5eb35faa5c0e1e0e6fd194cfc23ddc830470ffb59d2347d034bcbe7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/WORKSPACE.md",
+      "mode": "100644",
+      "bytes": 16372,
+      "gitBlobSha": "8964e31012f2433c7559e52395d08a53ed053cf1",
+      "sha256": "9181d8fc60cf42855bacf4a4e0e159606c4b3a0adec642b8ff2568b2c54ace1a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/workspace.mjs",
+      "mode": "100644",
+      "bytes": 31876,
+      "gitBlobSha": "626333e2ef12143b754fe058d9ff430021cee03c",
+      "sha256": "057218439ae38338c7e4d63b70e04e0e347630cf6036234ed605a7cc875058b5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/README.md",
+      "mode": "100644",
+      "bytes": 280814,
+      "gitBlobSha": "447ab955fd892a2a9907a98e240275bbcfe522b5",
+      "sha256": "f22fabe40d16684f1f3e249444690158244964d914bef98fd2b10950bcecc8e4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/d7ca-buyer-workspace/input-manifest.json",
+      "mode": "100644",
+      "bytes": 2755,
+      "gitBlobSha": "7ab0419b319d5308b2f8bc15d1637cd20a794325",
+      "sha256": "6d7ea79bbd324d30b56991d96e0263fbf55c34b61b378d239d518bcaca0fe3d3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/d7ca-buyer-workspace/README.md",
+      "mode": "100644",
+      "bytes": 6829,
+      "gitBlobSha": "5ec5e32d71bd31a11389c3d0da98758d5abb14f2",
+      "sha256": "f9406e045774fc501f6c290384da2a86a6b42b2c23acf7c929fe6376517588cc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/d7ca-buyer-workspace/receive_buyer_managed_application.mjs",
+      "mode": "100644",
+      "bytes": 50764,
+      "gitBlobSha": "2c139f19f03dac34a21038e6631186e36bb96fe1",
+      "sha256": "24d4b8cbd3cd659529dc8184ac913c7714ac620e0db8b50e3fdf8c93f8460fd5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/MPP_MANAGED_RECEIVING.md",
+      "mode": "100644",
+      "bytes": 10649,
+      "gitBlobSha": "bcb81ac89334507c0bf177656af494b40626c68d",
+      "sha256": "e997b6f1caf5f9311c39237637f0b1204fb42c2e6a4c5ab3c568b03603764993"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/mpp-managed-reception.mjs",
+      "mode": "100755",
+      "bytes": 33723,
+      "gitBlobSha": "e9fdd60207a7c706ab547ba68d60f53f504e53ec",
+      "sha256": "5d5e3e593b8bbbca122891b147b46cec1625ca6264fcdeb6335248e77753e50b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/OPENAPI_MANAGED_RECEIVING.md",
+      "mode": "100644",
+      "bytes": 10172,
+      "gitBlobSha": "5c9cfaf587f6b4482cd1168e505a9921b0d5af09",
+      "sha256": "1b88eefb92a170198a2915e45cb97d2061ee0eea1d4fb717ca66f1761d6d7cc6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/OPENAPI_SETUP_RECEIVING.md",
+      "mode": "100644",
+      "bytes": 11441,
+      "gitBlobSha": "a205fff81b55f72ce31a48376ba3e3c7e6a43584",
+      "sha256": "d05ae46ec230ccc01b87cd3af7ab54395304a928e89311111073462307a02fb4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/openapi-managed-reception.mjs",
+      "mode": "100644",
+      "bytes": 25378,
+      "gitBlobSha": "56bd2b429522ebdef24badfd97633ff9fd6dcf09",
+      "sha256": "1ca26e762d6a3fd2cce386f9c797a2cca01bae56b14d2fe6db380cdd897cab94"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/openapi-setup-reception.mjs",
+      "mode": "100644",
+      "bytes": 24499,
+      "gitBlobSha": "ca3e784f0d1d44b11c3bc45654795c2a5579d82b",
+      "sha256": "33a9afe0ec7abadadf7318d193e7d7d268d6e68a3304661e5bc7760be11ba5bf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/application-provider.mjs",
+      "mode": "100644",
+      "bytes": 8904,
+      "gitBlobSha": "a8839dcaa3cd871ec94823be65ece89830c3aa74",
+      "sha256": "27194116d7ce9a3972e33fca476313714d5f41fa4887e1678aab1a288564072c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/application.rb",
+      "mode": "100644",
+      "bytes": 18315,
+      "gitBlobSha": "f055fb8926efadfd51d57621fef58b0fa4325fad",
+      "sha256": "1051bdecacb808d2dce215e6497c59843b3f97f6d9da6f97173d9d0a8c8d6328"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/cli.mjs",
+      "mode": "100644",
+      "bytes": 10503,
+      "gitBlobSha": "7718f8ca5f251dce9f8161e5ee25f192a1337be7",
+      "sha256": "7b4a7f279752003b5dbb34b193e74cf4acfd3417a8991b65bb0ea6032b339115"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/engine.rb",
+      "mode": "100644",
+      "bytes": 50445,
+      "gitBlobSha": "07bd96ce8381535558737adab4e56a3826980c78",
+      "sha256": "676ce2d36cda27b5eb5175f04c96090ac44861cb4208a9833b60bca62209b549"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/examples/customer-runtime.mjs",
+      "mode": "100644",
+      "bytes": 16260,
+      "gitBlobSha": "858b853a099546d4a9fb94c2d779f36a66393e5a",
+      "sha256": "5120ff46d00abd3d4fd33fd882b484e2720e6287845ca34b8eccaa1d2390bf3e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/files.mjs",
+      "mode": "100644",
+      "bytes": 11135,
+      "gitBlobSha": "ce7897b9d51d32ef6f3ca291670a084f821387d6",
+      "sha256": "132b7a39155f2abfc63561a18bf04e0d499ed8c2cb383ca5fc71b9547cc39e0e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/model.mjs",
+      "mode": "100644",
+      "bytes": 40865,
+      "gitBlobSha": "9dac14fdd99f2bf20b8ed8ddd3bf02239087c39a",
+      "sha256": "c40c0b4809d96fed2b6ded2925cd3a483a80821afdfbaacbd56fd6d7883f9dba"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/README.md",
+      "mode": "100644",
+      "bytes": 13670,
+      "gitBlobSha": "cd0e27747910d45084fd28db90b84d1fc005ad8c",
+      "sha256": "bd6e840631672d9b220be5f5021bc94e2c609f16cec995fa393248fae0b02516"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/worker.mjs",
+      "mode": "100644",
+      "bytes": 884,
+      "gitBlobSha": "9ca74f2da7ed50051727674bec44385fed20e02f",
+      "sha256": "d6174625291bdf9f3d5c18f88575e85c44c35441ee5a23833ff4837df1e53b13"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/browser-assets.json",
+      "mode": "100644",
+      "bytes": 400,
+      "gitBlobSha": "a6187d13b00062bcaf6cd0022ed8ef77d7bd220f",
+      "sha256": "caa7c83aaa9efa71e857044745cb18bee4e3283a252acbafd625bdfd8821a4aa"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/browser.mjs",
+      "mode": "100644",
+      "bytes": 34556,
+      "gitBlobSha": "9a250837ca86a6a60b93be420ef5511d8af2233d",
+      "sha256": "eaed4fe2d6c121e23610120a2e01d9a504eb94b13edf05cb0cb8237ae98c90a3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/cli.mjs",
+      "mode": "100644",
+      "bytes": 4919,
+      "gitBlobSha": "41b5d5b3e33405c5d831b50bf632a1e21d6f37c7",
+      "sha256": "b36a61f72026c8ba870a35986590bff4db43c7163462b54c5dd824a7ff164276"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/index.html",
+      "mode": "100644",
+      "bytes": 13665,
+      "gitBlobSha": "de1913d5fbdfb6bdb95d82225105061ff643688d",
+      "sha256": "d2493e55299b145df677cbaa467a177edab5452ece37eeb7f9a60d9f47542c8a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/launch.mjs",
+      "mode": "100644",
+      "bytes": 4794,
+      "gitBlobSha": "7745ffa5f406089624ef73aa93dc3fe0306890ca",
+      "sha256": "7a16344206150a966402ff5d2401e463d1990f03dac46ce0413b404a46bf32af"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/README.md",
+      "mode": "100644",
+      "bytes": 10836,
+      "gitBlobSha": "9f51938e7896916505e98f8ff7acb673c74d2a52",
+      "sha256": "13b50e19f53c90e6131441d8390ad05b457ef173b4bc128b207b402510109fdc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/server.mjs",
+      "mode": "100644",
+      "bytes": 13264,
+      "gitBlobSha": "24ac30bcedfc602b01812ff66d16dea1e439947e",
+      "sha256": "2fe6674e845a64e2ea6ce63d9ebac235ece9ba4a82bbd0a17360c61a4517c624"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/style.css",
+      "mode": "100644",
+      "bytes": 6936,
+      "gitBlobSha": "f24068bb7c9de5d45dbd29783aec99205a36fd3b",
+      "sha256": "65438dd9f11e916a3df3a2cba59e5da0298db00e9f4df66d1e68b261f2618883"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/ruby-runtime/workspace/uploads.mjs",
+      "mode": "100644",
+      "bytes": 13199,
+      "gitBlobSha": "9c56f2212d42af889f22b326225d0d37b75881a3",
+      "sha256": "30f8d8c637673930f55963a2f8b464350dbc35bf41adcce447bb07ca35f01c70"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md",
+      "mode": "100644",
+      "bytes": 20866,
+      "gitBlobSha": "26a6f4ed03492673bcbca178b4df4ccbf4667d56",
+      "sha256": "3fbd5950e5e390e7804c07fed5db1926c0b0ea0facb1abe32c131c52013d9d51"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md",
+      "mode": "100644",
+      "bytes": 17166,
+      "gitBlobSha": "0aaa979a95219257e969c130e658a9b91bd6df9f",
+      "sha256": "bd2a87386ec01343e94b46d5f8df47221d66befb65a82585162f26e0cf49c34d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs",
+      "mode": "100644",
+      "bytes": 6803,
+      "gitBlobSha": "e9079549ce8644041c62779dec6109752a4b3251",
+      "sha256": "b39d2233ded727cd24b1a0599705a0a121df68bc5a2570b696400dd726375cf2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
+      "mode": "100644",
+      "bytes": 36763,
+      "gitBlobSha": "6d9374932166d7c597fb55148912be193116fa7b",
+      "sha256": "ee5c46c75b4cc58a6e949228f9128ba51be4d067f7b453e3de4faa66f06df591"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-profile-cli.mjs",
+      "mode": "100644",
+      "bytes": 4338,
+      "gitBlobSha": "ee8bf9750cd44a977b83967c574908e5008b7942",
+      "sha256": "7deb9267729ad586b2c25c629a61dd233f24386b4e7d0b7482b7634d74463b7e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
+      "mode": "100644",
+      "bytes": 25916,
+      "gitBlobSha": "dd2ecfa155a5806dec9feed4f4d9a5bd15005d95",
+      "sha256": "56e0100812ffb62d05ff71fd9354fe529299ccad62fd9b6309982a197318dfdc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-transfer-cli.mjs",
+      "mode": "100644",
+      "bytes": 6655,
+      "gitBlobSha": "070b482944e0771b2309ae64555cf3c0b0499fe2",
+      "sha256": "68d7da57f010f6503583f71137dafed4ec86353b47e51d19caeac5052ac28e48"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-transfer-lock.mjs",
+      "mode": "100644",
+      "bytes": 12890,
+      "gitBlobSha": "e1d6aa1d35dd5c507bb17d3fbdfcfb941a41dc32",
+      "sha256": "fb2a235cb9492a6f8b236ad3400665cfb2643319535e1d76d86e3d3f22a5684c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-transfer.mjs",
+      "mode": "100644",
+      "bytes": 42382,
+      "gitBlobSha": "a94628fc394df3d1a26268b4776d5bcdd63241ee",
+      "sha256": "4930b03a3316a051c44e57ba9dcb6e451ce35a9e8fcd1956f59e318e4e39ea78"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+      "mode": "100644",
+      "bytes": 9595,
+      "gitBlobSha": "6981dc29e20a6795c9b656d8956b0976d2434ffc",
+      "sha256": "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/360GIVING_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 15467,
+      "gitBlobSha": "cb44b715325dad5bb99d033acda9564df9bd02c5",
+      "sha256": "d14e0c4ffe3622cd43a822b231e12926e076818fd781c792cf3a34e156a863e5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/360giving-agent-receiving.mjs",
+      "mode": "100644",
+      "bytes": 35388,
+      "gitBlobSha": "321cfbb3e84c7ac29a5164d940f82a74fd63d166",
+      "sha256": "9f280c15b0967929d4c4b860802aa5db22eceb297291d2f160a1580348b49b1b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/360giving-receiving.mjs",
+      "mode": "100644",
+      "bytes": 35264,
+      "gitBlobSha": "3f1327d1f65fc49ffe74c5ae511d9f1486fc1f8c",
+      "sha256": "942ce34c6994877953cbc7996df979a79714449f3c8500077628f9e149dd513a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_DSPACE.md",
+      "mode": "100644",
+      "bytes": 5438,
+      "gitBlobSha": "113fc96859f0e49e76a77bbc3d434aa002b3920d",
+      "sha256": "bef9ae7e124d2155be863677c5a4602c30eacd5c8d17d8ec5f0829ac16974728"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md",
+      "mode": "100644",
+      "bytes": 13116,
+      "gitBlobSha": "bbdd6679801196e72b222d93105c2ffe196e2164",
+      "sha256": "8f65321f132e922d0f004c7dd0600c8abd0f464dd2cb5e52b92c1ca3e8359e29"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-360giving.mjs",
+      "mode": "100644",
+      "bytes": 11977,
+      "gitBlobSha": "2e3815dd9b1768146e653520d94b18423c6d462e",
+      "sha256": "5b710d171649a1a06c1823e4c6e5a3fd76bb40be04a1ab3876bc5099cca61940"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-accounting.mjs",
+      "mode": "100644",
+      "bytes": 14809,
+      "gitBlobSha": "bc1b31179832dfa100a3692019a7abe3bd634089",
+      "sha256": "efc14de89d1e27dca501af37b640db4ca69ccff5bc56ca5b5fe56d85218bf2be"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-arcgis.mjs",
+      "mode": "100644",
+      "bytes": 7364,
+      "gitBlobSha": "0e306e577138895077093d9fc25575889a3c13f4",
+      "sha256": "b3fcdc0bfb305dff8af0fa5514cc749a99037229155738647cadb311cefaa77e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-atlas.mjs",
+      "mode": "100644",
+      "bytes": 6493,
+      "gitBlobSha": "9bdcec49f3ee511e6f8a3dc828b1d5573c560115",
+      "sha256": "2d1597462229b8e202669662def7b97557dfe492f2b3ef83d685d1033c5b0e3a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-baserow.mjs",
+      "mode": "100644",
+      "bytes": 8143,
+      "gitBlobSha": "a7bcc1bd93908862a9f0ac22c82739bdeaf37c7b",
+      "sha256": "567f3bea8cfa8103f040d2f3b7d7cb633a96f656e9e6f62519c40725941aa996"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-blockscout.mjs",
+      "mode": "100644",
+      "bytes": 7641,
+      "gitBlobSha": "cc7c1dbbcb3d5a74f819931b910513022de58f61",
+      "sha256": "94228b53baeb5c3da75fa899688432faa43b97f6fed50797c43f79df1c8f1cbb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-browser-wallet.mjs",
+      "mode": "100644",
+      "bytes": 9401,
+      "gitBlobSha": "b612490d53e9ab495c4288d3ebf9f6badb30ed9f",
+      "sha256": "37cd32bd5f630be3156c7ad97d06c561962fa21cc90d9d79bb4db54b6fd47a28"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-buyer-runbook.mjs",
+      "mode": "100644",
+      "bytes": 11162,
+      "gitBlobSha": "45c0c5b2ddc354608f6ebf6249b4b882bdcc4249",
+      "sha256": "550679e7efa9206830f5c4196788f2db0b6cf606c415ca0ffa901bc5ae580288"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-census-geocoder.mjs",
+      "mode": "100644",
+      "bytes": 7020,
+      "gitBlobSha": "2317539f2541da8cf187497c1595986896ba6901",
+      "sha256": "d38e032084bff8f3656922009e7ec95044184c8fea2de98b38abdf07d88883b9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-cheesecake.mjs",
+      "mode": "100644",
+      "bytes": 7040,
+      "gitBlobSha": "bd60e0c6dd7b0e2b94b8c30b4cf4b4ad244967be",
+      "sha256": "386430acdb1e58ff533e61abd7083b3efe3a0ca07d3fe198b122389b8986da95"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-ckan.mjs",
+      "mode": "100644",
+      "bytes": 5590,
+      "gitBlobSha": "8d6c1f24be41987e997fb64754ec6c3a0e6d9a46",
+      "sha256": "6f2cd0e9b930b2bab4b30c46e47ed70e63535690600c17d666aa2fd44ad73adf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-cocart.mjs",
+      "mode": "100644",
+      "bytes": 9128,
+      "gitBlobSha": "a355c5cf9ffe99e2c6ed663f23171ec8343928c7",
+      "sha256": "144d907a468cf815bb08f78b96da40a32464be4cc95374b6a8d1048f5ee27bc1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-coingecko.mjs",
+      "mode": "100644",
+      "bytes": 13446,
+      "gitBlobSha": "eb596f5f8c4cee768d8f3ebfe3731c3fcfb57281",
+      "sha256": "a500954b9bcae75ad423eb3f0b7a8f210b78d26333cc53651a4c5044b7fdeb09"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-collections.mjs",
+      "mode": "100644",
+      "bytes": 11191,
+      "gitBlobSha": "7672d53c9b29f3eff3749ab1726a74b1ce67bee2",
+      "sha256": "0edb044aa853bdb6b667053545406dcc3ffaa97633eb47b0aa0dae8cfdf552a8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-command.mjs",
+      "mode": "100644",
+      "bytes": 6375,
+      "gitBlobSha": "d2f6bb39cb2e165ebfef072a60e4409d0400d59f",
+      "sha256": "412819454deb28d2c848ae60e059ca061b0409aaf440d74c125c43f2a74a5f76"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-cryptoworth.mjs",
+      "mode": "100644",
+      "bytes": 5093,
+      "gitBlobSha": "1b42f714e670a331fc113080a00711ff5b095c0b",
+      "sha256": "2e65156b4acddf6a7338b59237a8d3d27e51c804eaaebb71e8b78fe2cd5a9f31"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-databento.mjs",
+      "mode": "100644",
+      "bytes": 9460,
+      "gitBlobSha": "48b7fcdb6ae639261d1b39acef4eddca56657360",
+      "sha256": "490f8d089f9062157408ea70f0c2be9ac6934a6a8dd46b3133bdd5d82c2e7d72"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-dataset-buyer.mjs",
+      "mode": "100644",
+      "bytes": 7900,
+      "gitBlobSha": "ab261afcd3cb74d56e3ae914e5ef777e26baf7bf",
+      "sha256": "0a6502fa74f0c814ea0a9c9b57a519ec59db9d24adec930a3a8d7bb6677a1862"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-dspace.mjs",
+      "mode": "100644",
+      "bytes": 5848,
+      "gitBlobSha": "d632384f28b667b0f55da974fe8c9abdcb05298e",
+      "sha256": "d441fb95f27b09091852f8d87649bcbdd87dd7e5501e78ee2fd44d65bc47a338"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-duckdb-agent.mjs",
+      "mode": "100644",
+      "bytes": 9755,
+      "gitBlobSha": "ba2a5ed2e7468ffa32bb57dc661944e0522a1e6c",
+      "sha256": "f150d6bb925c12fb8ba4c709b913c91619465a450be06ece9d8643f727646691"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs",
+      "mode": "100644",
+      "bytes": 1894,
+      "gitBlobSha": "9320041597a7d04afd9f15c707a303bd3cc25042",
+      "sha256": "03f1e1d6e185f0df57eed8522200d0b9c59af7da4677fea44b2f3c28935ff683"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-event-feed.mjs",
+      "mode": "100644",
+      "bytes": 23567,
+      "gitBlobSha": "0ff99ddc13fc7cc25a78200bb75d7435212712ae",
+      "sha256": "1814cf67939e81ce4084e3157c5d8d71a900c629698cb8c40e8fcab3ae27c7be"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-fiscaldata.mjs",
+      "mode": "100644",
+      "bytes": 8225,
+      "gitBlobSha": "24fb2452f8f079cb32de362f6e568a27ec02c48c",
+      "sha256": "cc962231052937f62c72072130a004755e545d57b4bbdc897fecaf900a64e0ed"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-fred.mjs",
+      "mode": "100644",
+      "bytes": 7511,
+      "gitBlobSha": "86aaa6b496fb6aef836ac2b390abeeebe6d1476c",
+      "sha256": "9bb1fe4896a6348a76f9d3cc443f3ffcad0b0378d8a1d7ffa20c7a0c355b148f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-grant.mjs",
+      "mode": "100644",
+      "bytes": 6111,
+      "gitBlobSha": "98549f091593fb836d4cfc2efaea8a26e6e52e22",
+      "sha256": "10600af10727d2c3ddeff4cd0d50e2f76f652ed44643b6fe3c43cf221c764aa5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-grantsgov.mjs",
+      "mode": "100644",
+      "bytes": 7677,
+      "gitBlobSha": "8d47a748bcf8f566224102d47d864615b2043db8",
+      "sha256": "46c1947d5b5d16e46bb3c1307173f24ede458d8c58c91fead8c505261684c4b5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-grpc.mjs",
+      "mode": "100644",
+      "bytes": 14635,
+      "gitBlobSha": "05ac6ec2576d10e90fc82bd02c45dcbdb65196bd",
+      "sha256": "eac7821da6135268f2403f0663a2324487a70d8248c04301758c1e37ac4f09db"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-history.mjs",
+      "mode": "100644",
+      "bytes": 4732,
+      "gitBlobSha": "25915b98ad02093b6775669d21237fec9dbed0c7",
+      "sha256": "e2073ec7fb040035466f0025a045bbc3a0788f36cb39007e5e9d714c2c41d3a4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-iati.mjs",
+      "mode": "100644",
+      "bytes": 9864,
+      "gitBlobSha": "bdf6f1600c35ec05b9cc2caef4302adb9f68a048",
+      "sha256": "198cc72d54877229239764662e87d18498efabff3f48653c3aaea7796ab90c01"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-job-checkout.mjs",
+      "mode": "100644",
+      "bytes": 9537,
+      "gitBlobSha": "45f01c5b3279c58c697a4bb88aa93a5adc6ba2b8",
+      "sha256": "0aa2a6e889d4d26c5f80566e90da4e4f2ea36e8fb8860d47707992f288839205"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-job-result-receiver.mjs",
+      "mode": "100644",
+      "bytes": 8067,
+      "gitBlobSha": "94fd63eaf88f5e3221879d4911b25f9efc788b5a",
+      "sha256": "75ab59c128027aea6ffd8571597773fea85ce29bb0d9e63a0d4b348ca8e328dd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-kafka.mjs",
+      "mode": "100644",
+      "bytes": 11548,
+      "gitBlobSha": "b8b8dc6767e2a442531566e9ada145d0b40551fd",
+      "sha256": "781ca910077931f7d1330a677fd6a27501ede19e8527550b617a1af4e421899c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-local-dataset.mjs",
+      "mode": "100644",
+      "bytes": 8613,
+      "gitBlobSha": "f3b80ca323611b1feae913da9a80645f015626b4",
+      "sha256": "b949bc1e7b761b377fc0e8bfd8a6fa70aed5aa7a88fb5f4e3dce51d8cbd77cfa"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-merchant-fleet.mjs",
+      "mode": "100644",
+      "bytes": 9717,
+      "gitBlobSha": "c5a3244e1444a228393c1567d4a9edd72d118268",
+      "sha256": "b289e2ac5d6ca86b83c86a00835c391af340d7c327ed2729d770f79c782539d0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-merchant-support.mjs",
+      "mode": "100644",
+      "bytes": 5411,
+      "gitBlobSha": "4c29b662babd920cf2c25c1364dd61fa08ec0b23",
+      "sha256": "ffe4a03bd8f2ba01c6f0aef77f3504b529599bc4b44e2c7d74c4f3dc1515f772"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-mpp.mjs",
+      "mode": "100644",
+      "bytes": 13819,
+      "gitBlobSha": "5ed7245bb56df28f0e731579b0c8b317010519f1",
+      "sha256": "8e7e747ae30ef149ccaee000a930f3acc4b4c6b0889df84648fcd4907f830f13"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-n8n.mjs",
+      "mode": "100644",
+      "bytes": 9094,
+      "gitBlobSha": "e21f03b29d8d18570b11d291e32db99f7c7d433e",
+      "sha256": "1d40b818593da476b3ecf5a4e8073ace4b171b0eaccf0e1a0eb53b7158fb4fbc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-ndjson.mjs",
+      "mode": "100644",
+      "bytes": 9839,
+      "gitBlobSha": "7f4f2297ffd32c78a8b9fd60293a2308b0cf65fc",
+      "sha256": "3122b586dbba9d51372bf2fb70f4ca1d9c2de7c12656bbf9ceb7db4bf94558dd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-nocodb.mjs",
+      "mode": "100644",
+      "bytes": 8198,
+      "gitBlobSha": "7c9bbce5a1ffd565a11070611c6cbc72c1977fe0",
+      "sha256": "18ed352771412bee16db09b9eb89cb600b24765a7985f6650be8ccc7dc888015"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-nws.mjs",
+      "mode": "100644",
+      "bytes": 7979,
+      "gitBlobSha": "4b46739c86ddad6d7a4a3c057c49cbdf44507b61",
+      "sha256": "91734bdfbfc29e26d9100188f2e255bf54bbd8a1d0b431b9e6221e8fc158a42e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-oai.mjs",
+      "mode": "100644",
+      "bytes": 8873,
+      "gitBlobSha": "b4e3e5580df895ee7f523ab639b93130d93c81ca",
+      "sha256": "90fe098d796b17fdf0e6b00985d072e844e9732ab5f6ab357b2e7f0009a07b4c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-openapi.mjs",
+      "mode": "100644",
+      "bytes": 9413,
+      "gitBlobSha": "3ac9949743ea4ce89d29668b50e5bfdd07e9d22d",
+      "sha256": "651f915b86fb951054004ef4e845db9aeca65b193a4437e981cf9eb7c89d3d77"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-opencage.mjs",
+      "mode": "100644",
+      "bytes": 4804,
+      "gitBlobSha": "71c0101af885278c1417a3423324500a8762e7ff",
+      "sha256": "b199831a69e774740e524be785ee302ef3cded7ccd4e8ba6cd87f8c78a4be9a7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-portfolio.mjs",
+      "mode": "100644",
+      "bytes": 8114,
+      "gitBlobSha": "ab5d0e61cd1af922675df2ef646fcaa8a67a9081",
+      "sha256": "1b70405b0406626e5d946d746616c9b7b7021c67894c6fdf6767d29cd190dcaf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-pricing.mjs",
+      "mode": "100644",
+      "bytes": 12869,
+      "gitBlobSha": "1336473fd13b33edde47ffffda42e8688982e293",
+      "sha256": "79f074abd41c6aa61d56099571d35b84ae640e54bcb94422780b445a4dbd95fb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+      "mode": "100644",
+      "bytes": 7132,
+      "gitBlobSha": "8ee253de89866a761ed415412e654e6c79235ff1",
+      "sha256": "584c5db3d682e203b1d8da8637148fdc3dd14bed81adb54afeaf0ce095687ebd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-providers.mjs",
+      "mode": "100644",
+      "bytes": 8694,
+      "gitBlobSha": "efdd7afc7f9fed49830e17eee6742e8738ee4c7a",
+      "sha256": "8c41cc75bd16d374d215dc8086837c5702e395aa078bc8c01d735a5342aaf077"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-qwc.mjs",
+      "mode": "100644",
+      "bytes": 12285,
+      "gitBlobSha": "b2d29d1090db5ca53e12c10cc7754758812ed702",
+      "sha256": "be6ff7319aa59946014dbea8b7c772bd91b65ed798d27ad6ca2db7bf962a256d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-redis.mjs",
+      "mode": "100644",
+      "bytes": 10529,
+      "gitBlobSha": "e36787636c38b4a0b7538e16c074612a6ae1b10c",
+      "sha256": "0bfaca69da857a4a8d0097c94c24ead97de14411d596342c44b075b5cc6392c9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-research-connection.mjs",
+      "mode": "100644",
+      "bytes": 2240,
+      "gitBlobSha": "b025bf3f33537d32cf987bfdd5e5ac502d0dca9e",
+      "sha256": "9a2fef02610688b0c0d6ad377e6ff9e500440d87df657bbc16011b4495fbb178"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-rss-atom.mjs",
+      "mode": "100644",
+      "bytes": 9980,
+      "gitBlobSha": "a491996d2c0e43f3e470fe9e4829114a81193ae5",
+      "sha256": "44a393aa4fad1637c02c14b8a928e9de2569b5c760a1e2423fdf65d7a8930bbf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-runbooks.mjs",
+      "mode": "100644",
+      "bytes": 745,
+      "gitBlobSha": "c19bed1dea3a426cfd1cfb3388a4b9b3ac145460",
+      "sha256": "f9c194649571a91a298dee52469bf6fd09cb86da3492cbf86d6308b286bf0ba1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-s3-merchant.mjs",
+      "mode": "100644",
+      "bytes": 12396,
+      "gitBlobSha": "a49dbcf8725869446c80930f7c9dded5a7ed2764",
+      "sha256": "d58c949f1aaba4f77cc2b998bf9f07597c293817693d2e95ebc311b5448869f3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-sec-edgar.mjs",
+      "mode": "100644",
+      "bytes": 6157,
+      "gitBlobSha": "b5b3a26248676759c69f6fa49be50491e422de7e",
+      "sha256": "7e1d2d0cd820bad81e7b7a8055a48085d5e004cb6b1222f6110f825bffa75f3a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-sensorthings.mjs",
+      "mode": "100644",
+      "bytes": 5840,
+      "gitBlobSha": "63938b2660efa605384db62da218bf17c6948d07",
+      "sha256": "15591dda4a5a791314d9c1395eb3bc915f713add14bdcca313d63053a3c77d2a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-sheets.mjs",
+      "mode": "100644",
+      "bytes": 9250,
+      "gitBlobSha": "1c1c0111c094f493c1fead0acc2dc7568173e71e",
+      "sha256": "7e5f7778fd7d10a43e3c3ef89b4b76543f5d7c395417f840f017533b034cf0b9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-stac.mjs",
+      "mode": "100644",
+      "bytes": 11949,
+      "gitBlobSha": "054686bc37406aac0894f7383c3138c1f2ab8a6f",
+      "sha256": "a5f955b8231891532c2ca987bca9c6154f558d61de80cd61efc342337abd09be"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-stellar-expert.mjs",
+      "mode": "100644",
+      "bytes": 7112,
+      "gitBlobSha": "7ba7c45a0242ac3d0c59b9a2539f82727b74144f",
+      "sha256": "fdb029e214f6467cb427f890a1cc52d8628a5394377bdc2c5706cdf294c5b2e0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-tenderly.mjs",
+      "mode": "100644",
+      "bytes": 7257,
+      "gitBlobSha": "6554b2f7a68bdb054cd7fc4dd5cffcc06281ed6b",
+      "sha256": "2425226ddaa52f6cf0f6d28934257f0b96f8c679e4c89df32edf22f4b7c7ba76"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-terminal.py",
+      "mode": "100644",
+      "bytes": 19412,
+      "gitBlobSha": "674cece44f61b4c951972ff6f9c74221b57f6cdf",
+      "sha256": "3d944c263ceda0f610f72d91f1a2265dc2f818223c38863dcc08e545c742dcb6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-timescale.mjs",
+      "mode": "100644",
+      "bytes": 7537,
+      "gitBlobSha": "70cece7144cfbbe9f4dccb053ce5482f081e3a0e",
+      "sha256": "bea4d125b52b9cdcb41f231f16a254ab9ca3975b77e7009ba35850152f840949"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-usgs-facilities.mjs",
+      "mode": "100644",
+      "bytes": 4644,
+      "gitBlobSha": "b09ec470fd36a489fd501bf25d463bc5bd0f7e89",
+      "sha256": "45cc1ed42bc6839554609fed51055e5712a6ad875478ab8333889d1b4a564493"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-usgs-water.mjs",
+      "mode": "100644",
+      "bytes": 9592,
+      "gitBlobSha": "999308dec0c990691016a94d197b91b68ec5fa25",
+      "sha256": "8f29ed7c3a1afc4f1103d78ea10a87419b32f7a09ba596030320c8e06b868e39"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-webdav.mjs",
+      "mode": "100644",
+      "bytes": 7037,
+      "gitBlobSha": "1c43b7243938a3ce9106eb450b5129a5615c16d7",
+      "sha256": "ed6d8e2cade9a7b1a695a9d50f5dbefa84a75dda9e3f95862ce8be576d1184e3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-woo.mjs",
+      "mode": "100644",
+      "bytes": 11591,
+      "gitBlobSha": "460bc2a70d794408b2c2b11079ad4fbba4031a4c",
+      "sha256": "137ac9c841026ab928a23b4fafcc6ed02233942624581b2c5cf9272f124fd81b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-worldbank.mjs",
+      "mode": "100644",
+      "bytes": 8740,
+      "gitBlobSha": "531309d139528547d157fcd7dc906f6fa83c2deb",
+      "sha256": "c5e80a7d3fc870f053b166b48eab94413d2f7fc833c7d8a4128925b98d641c12"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-wqx-water-quality.mjs",
+      "mode": "100644",
+      "bytes": 9087,
+      "gitBlobSha": "3e48bb6c92e440b3dbfcf32566944265d484f236",
+      "sha256": "d451a7981470ebb87450b8b3da7023bd3dfa4d68607994734dc193ed6c955723"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 84905,
+      "gitBlobSha": "a7fd61eb95f3ccae192dd5a671c7062cd160f850",
+      "sha256": "e729b8039416223475f80bf946c49e9091a36023e9bd014ca7426951b8237467"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications.mjs",
+      "mode": "100644",
+      "bytes": 27026,
+      "gitBlobSha": "f4088b6affa905349054b52e91305d39ae4abf89",
+      "sha256": "c59b621f37c8b88317b3a76eabb4575744168cabf8a193ecbdd3dfb94197cc72"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/BUYER_RECEIVING_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 6240,
+      "gitBlobSha": "da33487509088f89935fc7bb9a68c73bbbedc20f",
+      "sha256": "009d6733736d79af45d4aabce38e32bfa29239605090730c736016631f240b60"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs",
+      "mode": "100644",
+      "bytes": 14776,
+      "gitBlobSha": "533f10f054f76fa6c778a28b00df9b327f8f02d5",
+      "sha256": "2609368dc6d52091de81c4232688b2e77b2c90a4ae1a27af74611107b6e58b1f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/COINGECKO_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 9888,
+      "gitBlobSha": "2d544b393ca833fab11aa6937deac61b7e85825f",
+      "sha256": "5407145155e78fee26f6ea7fcda7cbb3a71e7733156a9ca0efa16a8f7680d159"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/COLLECTIONS_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 13478,
+      "gitBlobSha": "7e3e468e9027e987d4846cd735592685bac275c1",
+      "sha256": "6ef92cc68d8a8ef720e384d9ce9d552b4ecf9467da8f73988cd60fd0484f4163"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/DATABENTO_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 13697,
+      "gitBlobSha": "6ba90092f49b2241d4642bb30930b2859d1e0d8e",
+      "sha256": "4930c0447c9ef770dbb35caec4541b8049f7274798c58e707a85a499d16dea7e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/DATASET_BUYER_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 6969,
+      "gitBlobSha": "4945a14f3fc213e1bb84554b1bc9295cbd21933a",
+      "sha256": "da93bd2d13ae7aef4b8a8ba32375ad5b08114babc44dfe42cf68adc321f9a4a7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/EVENT_FEED_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 17153,
+      "gitBlobSha": "17684ecdee737e7c46666e9c01cf5ecce8270c2b",
+      "sha256": "5a0af483f1b05cf36bfa986f72813246b88a0b0fd87b183f85c619648a3d7c68"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/FISCALDATA_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 12101,
+      "gitBlobSha": "c10e6e9e55f12ac4f5c70610c49d0c9e3e8af624",
+      "sha256": "a47e20ade4a4721cf5213a6b9b77a4a2feffbe779fba8ec7f70eb8f196b71e35"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/FRED_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 6163,
+      "gitBlobSha": "5f0147b807742d77e328fba8a61c29ae2ce4f50f",
+      "sha256": "3a3f056e4095473f7906def9ae1c0e510121d770040414b5dd2e0a9a3daf747b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/GRANT_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 8861,
+      "gitBlobSha": "ae324c12dd92fa5f9a2c5fe6745a24760cd3b4cc",
+      "sha256": "850a14a9efef2e8a152e1ecc94259718065695cea9e0f2bd70355d4dad04e508"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/GRPC_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 12248,
+      "gitBlobSha": "b49d9c2071f509b1cc4184cb6720c5c019037930",
+      "sha256": "3ce5d4c57c9c076bc31cb888668d600593a107694da8bd51cc2c085e8dfc118f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/IMAGE_OPERATIONS.md",
+      "mode": "100644",
+      "bytes": 10615,
+      "gitBlobSha": "fbea8a7618b5884f1d56a54ced5600a4e94cd4a8",
+      "sha256": "9df8b5a7ce6af56c8a5a63358447fc8487c35c6a3ecadc1f763bba1ecdaabad1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/image-workspace.mjs",
+      "mode": "100644",
+      "bytes": 34793,
+      "gitBlobSha": "14a4024e48e0b7424b8e98f5b94d8f3c85684705",
+      "sha256": "96ddabfeeb7699c389e122479853ae9c4c1ad98a79a6f3d1f7c7bae178d8b323"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/JOB_RESULT_RECEIVER.md",
+      "mode": "100644",
+      "bytes": 17803,
+      "gitBlobSha": "adf7c67588eef3fc40732fe35083af5cd756d1ac",
+      "sha256": "020d8525dca68fba83fd242c43bba47e6f8294e2556b91be695a8236d1fb7bd1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/MANAGED_OPERATIONS.md",
+      "mode": "100644",
+      "bytes": 10737,
+      "gitBlobSha": "3a98f860538efdac7bed4bc84794ae4482a5627b",
+      "sha256": "5f7b661df36296dd8ea9990d13dfb49bf634c0d4e704fe321d3aa7d2dfa83869"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
+      "mode": "100644",
+      "bytes": 6005,
+      "gitBlobSha": "8e31d3688f5826cc71a0e68341aae59d6ec76ca1",
+      "sha256": "69e63f84aac6dcd0c6034126806c2a0e8262addcbffb1f5348797a978fd79d0f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-workspace.mjs",
+      "mode": "100644",
+      "bytes": 27092,
+      "gitBlobSha": "5983b0b2b7d1c4c924d02adc861958b6996baf99",
+      "sha256": "6e27294ce2b96a2a9fe3a1d0dccb1f93d3c163087b6e296dd2a42bc7fbab37bb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/MERCHANT_SUPPORT_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 9748,
+      "gitBlobSha": "bd505d4b2d7cf141d9514f96f26a002adf993d08",
+      "sha256": "640066e55f2f0926706cea2ce765cca68465f2a5cae449bc015059c9861a47a3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
+      "mode": "100644",
+      "bytes": 38822,
+      "gitBlobSha": "9ba69b5e83693a5bbad8aff6677673991f5fe70b",
+      "sha256": "865a33306f874759423091a778bf3cd4c82ea2274e89cb87678a1be093f1fc7a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/MPP_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 10746,
+      "gitBlobSha": "66006aa4f89ff79894b8d8d81b75006cd721f384",
+      "sha256": "aec628902e19ce6e3a1a068c0c1b2122fd0f225bcf0e71b869696a1a94dda542"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/N8N_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 7697,
+      "gitBlobSha": "e781e6d643d2e0e796682d66db10b27af8b0b749",
+      "sha256": "e73e4405dc6f783dcbce1fa08fdca8c017b702342141e564b6784439d45ef91d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OAI_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 4292,
+      "gitBlobSha": "572686a53025e169abeb2b22b77f68a7b27bfc92",
+      "sha256": "f77b92265b6520a64a3c1dc03b49be78c52400f5deb0ffe943ab43fe827b363e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OPENAPI_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 14312,
+      "gitBlobSha": "9d085d163d65bcb6b71f56bb8ad950c1abefcc59",
+      "sha256": "d0ff47364412cdf8d486128e42c1f952584f72dd388616fe00c6fb8cbe7ef37c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OPENAPI_CONNECTION_SETUP.md",
+      "mode": "100644",
+      "bytes": 20960,
+      "gitBlobSha": "c1d5f02d1a8e3ee9ff5e4cb1ee4f4ece087d00e1",
+      "sha256": "ce4cc91f586db130e816f77e28c784db0fd13e8b0f99f7ded9b3390da466e43d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/openapi-connection-setup.d.mts",
+      "mode": "100644",
+      "bytes": 3008,
+      "gitBlobSha": "0254c25652d65946aa2e2e528867d97fa1f6294a",
+      "sha256": "c232756daaa2f6debb498e5f325554cfad840f0fbeb452329f9924a855c93292"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/openapi-connection-setup.mjs",
+      "mode": "100644",
+      "bytes": 13549,
+      "gitBlobSha": "c55fc024dc38812e218abbdd3ce51ab6451f4bd2",
+      "sha256": "7f7a835ecb476e3e37d61e2cb347469a1ec758276d806f44b55b01c5152c2397"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 12635,
+      "gitBlobSha": "baf6a76c138b7028c2fbba263dd209f956a8724d",
+      "sha256": "760892958372e01c592186f2232ee1979066fb223910aa6c3e9e2161ad5c8456"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/process-identity.mjs",
+      "mode": "100644",
+      "bytes": 4101,
+      "gitBlobSha": "810a88bcee49e7230136cfe4eb549e45c8534fe7",
+      "sha256": "75e863d5f9b89d5cb135319113b0aff477193310c9f4d8b4510b289fe41d934b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/api-pass.mjs",
+      "mode": "100644",
+      "bytes": 1725,
+      "gitBlobSha": "87afca438c46bcc6a942acb952812fdeec395749",
+      "sha256": "29e93dfbbfc5b6649b414f08a331eaa103f2def7746b294c72189e310fbb33c0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/arcgis.mjs",
+      "mode": "100644",
+      "bytes": 1465,
+      "gitBlobSha": "c2a402bd4d93f9802e2b572b000c2cbb93fddfb5",
+      "sha256": "1b06547476ab30bb6fd8aba0699c5d90aa5af8b90865a9d78bd3bfdd5d9bb060"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/atlas.mjs",
+      "mode": "100644",
+      "bytes": 1335,
+      "gitBlobSha": "1de25b0b036c732f44b1ffc1a402a00ff953734e",
+      "sha256": "40f66697674605c509899a567b042f62c5b01fd3bdb13c15a9d398c0b3e5c3fc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/baserow.mjs",
+      "mode": "100644",
+      "bytes": 1382,
+      "gitBlobSha": "b5ac1c865a43312ea60c46c76c08436a7b2c3698",
+      "sha256": "4ad50a55ae0dbf5eeee5290ad97e7ff8ded3a30d55a74df54ad3d0d990f07d50"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/blockscout.mjs",
+      "mode": "100644",
+      "bytes": 1314,
+      "gitBlobSha": "a9605bd82375b36e74f4df23ac1b1c3341db01cf",
+      "sha256": "a8c39e5c51418e8affb6c67120ca2fcaa3da8c31011338be7cbf878146a84fcc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/browser-wallet.mjs",
+      "mode": "100644",
+      "bytes": 1468,
+      "gitBlobSha": "6f08767c85ae3683183ded264ccdc80f46211294",
+      "sha256": "9bd292aa4d45257ce729bde3166eceeb913b1b30e838713cfaa335e47a850c7d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/buyer-expenses.mjs",
+      "mode": "100644",
+      "bytes": 2395,
+      "gitBlobSha": "ca555cf51cee43f2a0eac8880ceabb7d60b95b39",
+      "sha256": "c4923331296f4d00eb49316499021dc34a23ce64bc3e0566a00f1e093473a773"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/buyer-runbook.mjs",
+      "mode": "100644",
+      "bytes": 1330,
+      "gitBlobSha": "a633d31c817c3edcb2f938720ecfeeffe02c1ace",
+      "sha256": "902a30b42e492a0a2b637c1c088473c0bf8dbc37bc788514376c54f164edc6ae"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/census-geocoder.mjs",
+      "mode": "100644",
+      "bytes": 1283,
+      "gitBlobSha": "9533e2f292e18b4b0f2fd501378af8519911eb4a",
+      "sha256": "adfc97ae3557ad9bca7e1057da3b34da840ddc13a882a15f3eb0bb42359108c8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/cocart.mjs",
+      "mode": "100644",
+      "bytes": 1459,
+      "gitBlobSha": "4df5098dae162f8badcebc37d3006ab42892dd0f",
+      "sha256": "aaf6c71a6cabf18cf8ff67578460a389a25f182ca58b98159a70aa264e545979"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/coingecko.mjs",
+      "mode": "100644",
+      "bytes": 1401,
+      "gitBlobSha": "ba50fe16de3bd6785a3e74890fc6d3d10fcb66e2",
+      "sha256": "4013314bec7ba704f2a2c7257f2d865c5afe739b96b43c2a4a808649ce5b7625"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/collections.mjs",
+      "mode": "100644",
+      "bytes": 1318,
+      "gitBlobSha": "d34cb28b41858eb6d0ca6e57e3e11e72f457724c",
+      "sha256": "64f67281cc28534973f07215ca5a0efb8a1b8ccd7d53c3efe4c66a89abd3883e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/commerce.mjs",
+      "mode": "100644",
+      "bytes": 2159,
+      "gitBlobSha": "a12ee0ee61cabe2fdee713462929cbba44ab9f95",
+      "sha256": "d345519060c701864c34810f458f4d629ca93c373bf97b58a238bb2132ecae89"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/cryptoworth.mjs",
+      "mode": "100644",
+      "bytes": 1357,
+      "gitBlobSha": "53f04897a44dbca074e7c69862961ddccab62f8e",
+      "sha256": "7f6025bcc99e80181047359ea917128ac41f8773017b02863f5ac7d1d406e91f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/databento.mjs",
+      "mode": "100644",
+      "bytes": 1552,
+      "gitBlobSha": "3bfce0f412e63558b1d82c60ecff3973119234cd",
+      "sha256": "9d900de268f0b4aac50669b26d9102427bdfee882f2cca45152c8f15a202656b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/dataset-buyer.mjs",
+      "mode": "100644",
+      "bytes": 1342,
+      "gitBlobSha": "52c05f869ca3b9d469d6958774a13162e6dd43cd",
+      "sha256": "1734f60c356cae8937673b541b2bc7e125ab326a6c146380106fb52f0e379cdc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/dataset.mjs",
+      "mode": "100644",
+      "bytes": 2174,
+      "gitBlobSha": "19ea96f24c709f9cdf94e5a2819a88dc6679dc1d",
+      "sha256": "94123c73d83cccabe4d1fec65204474a7f51db969be9e4e1e04beb039055e593"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/dbnomics.mjs",
+      "mode": "100644",
+      "bytes": 3003,
+      "gitBlobSha": "ab6001dabea948206a7b34ad7c4c74c2366d84b5",
+      "sha256": "bbf5053eb60e32f670f31b4c31a05af0f41f6a240bdecc1eb1b6d5d97c9ec346"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/dspace.mjs",
+      "mode": "100644",
+      "bytes": 1015,
+      "gitBlobSha": "115c94a61aabb00435675e03a5d71c5c0ff48f5b",
+      "sha256": "601097649236403039936344aa7ccd40ef92e6402793b9922838cc9d282ec305"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/duckdb-agent.mjs",
+      "mode": "100644",
+      "bytes": 1503,
+      "gitBlobSha": "42c3e704e4f24863b58083678cdf229fd25890d4",
+      "sha256": "71e828668dab0f8a0bf20b18726d444c270e695671e6ea5b17e4571b973042a3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/eurostat.mjs",
+      "mode": "100644",
+      "bytes": 2988,
+      "gitBlobSha": "dd4c7b82577298140e195caa45451e080fca888f",
+      "sha256": "4eee9fa7e05aed4a627d898410524e729558a0296f22333ce04470d4df6963a3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/event-feed.mjs",
+      "mode": "100644",
+      "bytes": 1620,
+      "gitBlobSha": "d1a90956bf7743550b65f5a6d02fc84c725c844a",
+      "sha256": "a7232d4d6f5734dd0833763a808327224ce1983301e1443c802e57f560c2e96a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/feeds.mjs",
+      "mode": "100644",
+      "bytes": 1430,
+      "gitBlobSha": "9b99f289ef694ceb3e9ba933554a0a4018069e1e",
+      "sha256": "42d2dd803d68fb4a9365753130d5ddd3357d91632a30bc9dbe1192640c6515c8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/fiscaldata.mjs",
+      "mode": "100644",
+      "bytes": 1577,
+      "gitBlobSha": "eb0453faa82063f163b33b38d0ff8fa67a16967e",
+      "sha256": "d6d81592a1d0c73260ad47ec80c1208b6bb166d43fa10034590300aba870dbde"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/fred.mjs",
+      "mode": "100644",
+      "bytes": 1297,
+      "gitBlobSha": "7e82a513d9d560df3de7ac76fa8f1fbde8bcb633",
+      "sha256": "e4a68e6f8281a3e9230781516e2c006a93e48a2d687b2858a1897d4fb0c76c4a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/goldrush.mjs",
+      "mode": "100644",
+      "bytes": 3181,
+      "gitBlobSha": "5d9e1334c5933accb2226e63e24e25b988c3fca1",
+      "sha256": "18643dfbe97bd0a8bd30ca88a41eda1a3c66dbcee30c6d0e81b450a8397e472f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/grant-workspace.mjs",
+      "mode": "100644",
+      "bytes": 1398,
+      "gitBlobSha": "3ae699e0cd485e15e5ff4a7eb90aa315dafced64",
+      "sha256": "05247352abe12a7e5a23cc20e7b96f1cfca3b1c18da317e4d4dec5768db634fe"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/grantsgov.mjs",
+      "mode": "100644",
+      "bytes": 1394,
+      "gitBlobSha": "1451a7c66b4ffd6b8372b1a99052f57244ad5f4d",
+      "sha256": "e4017e7e30415fd379173903ad996e06a7972625f2b08dbcf844bd0bdf82be8f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/grpc.mjs",
+      "mode": "100644",
+      "bytes": 1354,
+      "gitBlobSha": "2597db4293a1b33772ff72344c78788bfe0373f7",
+      "sha256": "9e994611807b62e1ebab8f79470d1389c00413ffe2ca7cf39a6f5032ad55b405"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/iati.mjs",
+      "mode": "100644",
+      "bytes": 1342,
+      "gitBlobSha": "cdf19432d7240d977fdf44d23985bfc0b3e62f74",
+      "sha256": "337a21e8ca6006da38b0fefb2371659f8a67955ff67d600507a1d54812393e04"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/job-checkout.mjs",
+      "mode": "100644",
+      "bytes": 1525,
+      "gitBlobSha": "588f7540c05bc73a0f941fe2381c9dd60ea00b4b",
+      "sha256": "47f4b0eb2cd6620ba3d5f4bbf28bbe9d0f53219c964593f80f82a73e4ff91cbd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/job-result-receiver.mjs",
+      "mode": "100644",
+      "bytes": 1635,
+      "gitBlobSha": "d422860fc78bf8bc8c6d38f72751bd26589ab7ed",
+      "sha256": "f7dd342ee718e2fdaeb047956b4914834b9f86382ac09a6548699ffadcdccc3f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/kafka.mjs",
+      "mode": "100644",
+      "bytes": 1261,
+      "gitBlobSha": "8093ed68031d9a193b21a07ba21901cc828306e1",
+      "sha256": "0569345f5388c18154e73e69d3248393d789d18c3830c674076ee6aa4d1fe8c9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/local-dataset-workspace.mjs",
+      "mode": "100644",
+      "bytes": 1287,
+      "gitBlobSha": "2ffbf18c55f894fa735e039e48c3caca2a14aadc",
+      "sha256": "5db42514a068166f099409ab23418060d6381b283cdacec9a9a4c4fd3c22b791"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-fleet.mjs",
+      "mode": "100644",
+      "bytes": 1287,
+      "gitBlobSha": "5318de6d65feb52dc08e32bd1c8204bf586d5e43",
+      "sha256": "2e135a70adba85c83f514139ddac0462d61202c1ce0fbb37496efd77e9623a1c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-recovery.mjs",
+      "mode": "100644",
+      "bytes": 4158,
+      "gitBlobSha": "e0cc33ab2e872bbe2e8a1976aac1caf0b2c96f15",
+      "sha256": "eab74cbf341838a78159e550df7c6a030751dc25ae57eca32f94705d906bb584"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-support.mjs",
+      "mode": "100644",
+      "bytes": 1392,
+      "gitBlobSha": "9907958ff67d6966e52bc7a287f0a99b70a5d361",
+      "sha256": "b26f1316c2448dacf02af8768a0d6061b43bae074e97507b034df2318209fe3e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/mpp.mjs",
+      "mode": "100644",
+      "bytes": 1393,
+      "gitBlobSha": "80e566be4b8799a5031404395bf532a7bd59b608",
+      "sha256": "8ae94161b54be7e498e86b08c481c3b4074443370aef44fade754dbd754344ae"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/n8n.mjs",
+      "mode": "100644",
+      "bytes": 1281,
+      "gitBlobSha": "d5e74fc2506fdb35b739e3acca9fdb8ab314b180",
+      "sha256": "5d5a3f287f109056878df188fdbe3fc92b4cd625541135b581499a62aececd34"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/ndjson-360giving.mjs",
+      "mode": "100644",
+      "bytes": 1646,
+      "gitBlobSha": "b8b1007e5113adba9a1febeb1fc4c393c5ce1005",
+      "sha256": "743466f9f4774f0562a74688c6b514cb3ae67f4b73bc7b4509b79d0c969fc3d9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/ndjson.mjs",
+      "mode": "100644",
+      "bytes": 1364,
+      "gitBlobSha": "cf1388bee9352cb1acf9137276ba2ad4519fed4f",
+      "sha256": "817e5c2e9e49fab130248a50f084d2d405e1bc0da51e8bb6f0c8d3ad41310545"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/nocodb.mjs",
+      "mode": "100644",
+      "bytes": 1364,
+      "gitBlobSha": "1d5398db4fcfd6f9884b443f071a190af26fbd6c",
+      "sha256": "c5a3c42e95e5cd0a579ac6f69be4f69e9fcc1ecf6a799619761a6ec59b9bd972"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/oai.mjs",
+      "mode": "100644",
+      "bytes": 1386,
+      "gitBlobSha": "ec41115314b6a5df7caed9891b4ea5158826ccf2",
+      "sha256": "45d0335e66c89a296fc2327dbeb277c47e120eb79312109dec27b1536df58be5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/object-buyer.mjs",
+      "mode": "100644",
+      "bytes": 5326,
+      "gitBlobSha": "952d13113f61f4d3cbcf5fbd364b38b033eff35c",
+      "sha256": "98ba09c487e4e507d6fc8cca65f5c382d02646a937f0a43a2d1a900f59788408"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/odata.mjs",
+      "mode": "100644",
+      "bytes": 1461,
+      "gitBlobSha": "0b05131e934f3e1f07334be186e624645223448e",
+      "sha256": "22a6bcb6bc919433f346705c10f7fde28cb232f6dc438c5a39ace4d1124df726"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/openapi.mjs",
+      "mode": "100644",
+      "bytes": 1716,
+      "gitBlobSha": "c0baec5537ec6e74945eac90c7c59131e25d4cca",
+      "sha256": "97c03a46d4e24572264b5555a41b55299605509ab19c4effd061bec87cd3c956"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/opencage.mjs",
+      "mode": "100644",
+      "bytes": 1335,
+      "gitBlobSha": "d8d0bdff39485b66330dfab0249b91e4d539a2e9",
+      "sha256": "34fc0f2328f7f2f08a596e97acc2fe38eb1af49c1d0073acf50dec43189b71e0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/portfolio.mjs",
+      "mode": "100644",
+      "bytes": 1108,
+      "gitBlobSha": "97c5407787a8574703419668485db0c948c75921",
+      "sha256": "8fd9046edec77ded044cbd71a6a229de340d91ac3715164783ffa91dc9c4dbfe"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/postgres-publisher.mjs",
+      "mode": "100644",
+      "bytes": 3235,
+      "gitBlobSha": "a497c1c2b65d0a7748da6e3dd125c4029771613b",
+      "sha256": "b71cecc69454bc4d6632d51c98836f33432c692cea8e4523b53fd713b6307315"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/postgres-workspace.mjs",
+      "mode": "100644",
+      "bytes": 1763,
+      "gitBlobSha": "828aa65ba3f207696652ae54d384708d8afb902a",
+      "sha256": "d2f41e0a5e05d7a43e27184e6733bd99ced89db6e619eb2698dd476bdec9d252"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/pricing.mjs",
+      "mode": "100644",
+      "bytes": 1407,
+      "gitBlobSha": "aa98c3bfec4d7a5b5e465c4c9691202052b921bb",
+      "sha256": "4a381a3de03825bae559d9e88baba793c3a3572299877a3fc686d27cfd7f5169"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/python.mjs",
+      "mode": "100644",
+      "bytes": 1189,
+      "gitBlobSha": "6dec7b8712d48a19c3601658d262d541c7c8505c",
+      "sha256": "31cfea09f1c93fe80f7ffa62bd6ede899ff074a708d8b1b9911b47473337eccd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/redis.mjs",
+      "mode": "100644",
+      "bytes": 1565,
+      "gitBlobSha": "42ce722ec93a22aa5d01be1499190a7771e639db",
+      "sha256": "daeaa51b43d8d4917975f60ef76f1057c6d96c59410b2cafa2df662ee1b34ec7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/research-dossiers.mjs",
+      "mode": "100644",
+      "bytes": 15994,
+      "gitBlobSha": "db7dc3b38b48e55316b0ae2bdf528b7bc83623af",
+      "sha256": "ddfdaaad459f538e50fee24cb7462b2853b3b84e6bfd23a3bb92f58ab1b43ec6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/s3.mjs",
+      "mode": "100644",
+      "bytes": 1443,
+      "gitBlobSha": "f9ecec053c5029d1cff68edb85a499bb89f97e4f",
+      "sha256": "15918396cf7f28e40d3cc80c2f1a5d28a6dba191598cd9bf1c9a02cb107d448e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/sec-edgar.mjs",
+      "mode": "100644",
+      "bytes": 1441,
+      "gitBlobSha": "cee111c7080917b2bf12051b57b7938d29579dcc",
+      "sha256": "75dc441ad4a2299024dd1fae9b5f0fa6ec22e9ed1bd6cb05e4b291164e44d641"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/sensorthings.mjs",
+      "mode": "100644",
+      "bytes": 913,
+      "gitBlobSha": "2863c36709ea8226fa0010d1fb3133fad8fb8449",
+      "sha256": "f0e5d23582e4703c5719b0a6322f714d06dedf65d6ea9a19fa0e71533749a8e3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/sheets-publisher.mjs",
+      "mode": "100644",
+      "bytes": 3256,
+      "gitBlobSha": "2fc811dc1bdbac9aceb181d3d2be00dd45f7989b",
+      "sha256": "57890cf18f868e2506e9f547df54a1c4f7c8b862f5fc1d749a929e1728ff076f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/sheets.mjs",
+      "mode": "100644",
+      "bytes": 1364,
+      "gitBlobSha": "e6da894e50daa7c4a4f8504fd1f2a05bc786f2f1",
+      "sha256": "c9155276d347188525b3fd398aa80d56c46100558be2c2f98ae1d43791d5d2f0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/stac-qwc.mjs",
+      "mode": "100644",
+      "bytes": 976,
+      "gitBlobSha": "1627e0b1edde1642fb3fbb2c8846f3fa849d484b",
+      "sha256": "2b7c427580ddd78662a159743353363274c531ccc208fbacdcbdc97f113f3f77"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/stac.mjs",
+      "mode": "100644",
+      "bytes": 1861,
+      "gitBlobSha": "b1c18f04257e36745a56c9c55c68dab9a1d90460",
+      "sha256": "5476a3e62c64ff6747ad9defae4bdeedeba00bc44982928f1135955c4f446d68"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/stellar-application.mjs",
+      "mode": "100644",
+      "bytes": 1644,
+      "gitBlobSha": "2449894303eb97657ffa1678a193cf466b27ff05",
+      "sha256": "8a1ea0c8962032861a6cfa99f4dbde88a3d79c5dd0314aa1a384bfe702c8ca52"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/stellar-expert.mjs",
+      "mode": "100644",
+      "bytes": 1499,
+      "gitBlobSha": "d7796adce431b5c154308ddccfc52463b97176e8",
+      "sha256": "30050728b69567840f2d103f3b5792dc825f666782708bab67d1d75a6ba029e9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/tenderly.mjs",
+      "mode": "100644",
+      "bytes": 1330,
+      "gitBlobSha": "92435c4f8bae12321050030b9053149856520727",
+      "sha256": "371e066061fadf78ed70eb424b84f8019d1948c9bfaba2750549810f37188568"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/timescale-agent.mjs",
+      "mode": "100644",
+      "bytes": 1169,
+      "gitBlobSha": "9c6bf2c6305509422790ce1cc3733f39de278ce6",
+      "sha256": "45ff7631fb66f63cedcd09ba8e23bd63784a43538890b57dcacec66a2c2e749e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/usgs-facility-events.mjs",
+      "mode": "100644",
+      "bytes": 1018,
+      "gitBlobSha": "cacb17091eee0bff4980bf2300b4d54b3f23bf92",
+      "sha256": "ccf1a81ffa4ce710756b7a35808f0bd80721dd120d5ac8396584372e7ce8cf0d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/webdav.mjs",
+      "mode": "100644",
+      "bytes": 1291,
+      "gitBlobSha": "f1c31fecd4710481522ec28a170b84128c2a1478",
+      "sha256": "b56aba22168c9e597d423c0b1ea80c5a8d71c47fe698696868459cad6494b6e6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/worldbank-agent.mjs",
+      "mode": "100644",
+      "bytes": 1258,
+      "gitBlobSha": "4d364f31bae08a340051c4ddf6105eaa9fe5e986",
+      "sha256": "1870e7529276a6e7267e45af59c00f8f7dcc3c8669d57e95bd5a75655dcab5bc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/wqx-water-quality.mjs",
+      "mode": "100644",
+      "bytes": 1124,
+      "gitBlobSha": "5509f082b83a0555c997b202559c3c0f1b4af0ab",
+      "sha256": "7b5e243d9ca2dc98f148fedabdd13e106494f2a63e6425d7a856f0bf3e9f23b2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/xml.mjs",
+      "mode": "100644",
+      "bytes": 1529,
+      "gitBlobSha": "4ae5e6b75a1e6704eb00fa3b8d4da48f214c1833",
+      "sha256": "e5baa312e879a2146f55244dd100b55a06b5ecf47c83b7394686bcfb8975f6f6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/accounting-application.mjs",
+      "mode": "100644",
+      "bytes": 3519,
+      "gitBlobSha": "79c55c0b96c2e25b2ae9acbf036e9591a9812511",
+      "sha256": "59a919f74a64b65244498c04457aba52f9e838324fa34293a67fd96c02087564"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/app.mjs",
+      "mode": "100644",
+      "bytes": 33226,
+      "gitBlobSha": "3b21966948a8056fecabc5e5b24cbba768185e32",
+      "sha256": "a71c59ca02e40a99154b69d72957bf2f638096506dc2d7dd0b8d899d70f052d0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-review.mjs",
+      "mode": "100644",
+      "bytes": 2464,
+      "gitBlobSha": "f3b5a6d10eb241308a3b7bb09ea9311c757f081a",
+      "sha256": "9d26d4c09e0a7a1cb857e5084894f516c980a99f5eddcdb24d54522d13ce47f3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/applications.mjs",
+      "mode": "100644",
+      "bytes": 38920,
+      "gitBlobSha": "86e37ee0fd367641384bf1961745888e22824e82",
+      "sha256": "a3847092738b8ce39648f0e459a988b6a938183d4190cc72bc58d2ea0e62f2e8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/image.mjs",
+      "mode": "100644",
+      "bytes": 34130,
+      "gitBlobSha": "9af09fdf81915ccea3833d456380a3d926b2f8c3",
+      "sha256": "26c6be0eda6b899ff589688c3340857f11a02f61032f3ed36eb37cad19f23a9a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/index.html",
+      "mode": "100644",
+      "bytes": 10887,
+      "gitBlobSha": "b4750a79fc75be524388524549ea1bd3a9ee0b7b",
+      "sha256": "71c040ed71eb53b60ec17a8ad9990c8c73bf8c0a2fac6c466cb13f6866ee0fd6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/managed.mjs",
+      "mode": "100644",
+      "bytes": 23842,
+      "gitBlobSha": "513b44f27965664d28ae58111ddfaa8f8351bda5",
+      "sha256": "19fa1d2c9a6af735b4fe66316c0977c25d66e67e174591fc54a70e61a60011b1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/openapi-application.mjs",
+      "mode": "100644",
+      "bytes": 3106,
+      "gitBlobSha": "416d750261699daa9c82305beb4b936de788793c",
+      "sha256": "f1a390906a9df7639253bfafec545162cdd009638f341e4867f87ad4b882a918"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/openapi-connection-setup.mjs",
+      "mode": "100644",
+      "bytes": 54496,
+      "gitBlobSha": "484eae517bfb86bb446deb18eabdb8a79da5647c",
+      "sha256": "3b18a1105155b2d15cdbc22db3aab5621aa4927893b97381fa5bf134d6b51d1a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/python.mjs",
+      "mode": "100644",
+      "bytes": 19822,
+      "gitBlobSha": "dbe9a0178ff92c76eed76b56856fff87b555667d",
+      "sha256": "8cea013ba908cedda11c159c2dc44fb46d590f56d00d80e8c5885a98d57d66da"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/source-build.mjs",
+      "mode": "100644",
+      "bytes": 17847,
+      "gitBlobSha": "acc13ba4fc6c265db77312f12725d09cb70f2c2e",
+      "sha256": "4eb0ed6959b24d88844a4108a3fa7f127aab37dd25ce125b7ec80647fdf2b5e0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/style.css",
+      "mode": "100644",
+      "bytes": 6896,
+      "gitBlobSha": "e2d8db0940f820438cbf4ce806e717bd9f049154",
+      "sha256": "2621ab5332d9598a6886d57fbe83706bb01cf828752513bb1a3f1ce82d062452"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/transfer.mjs",
+      "mode": "100644",
+      "bytes": 29128,
+      "gitBlobSha": "6fdc6d7768927b79b96a981b3edebeb010be86f8",
+      "sha256": "711bde896f907594d3cc5dc10f4ecc5ca813a680214438563924716a6a62dbc5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
+      "mode": "100644",
+      "bytes": 16307,
+      "gitBlobSha": "22628242dc9cb41519da4f883e206637d9fbcc02",
+      "sha256": "3106e4b23a62d36bc1e5788e223f029d38404ad4ece794e745dcbf39ba34fa4b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/REDIS_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 12217,
+      "gitBlobSha": "15418c4d1a65a1f9e37f1817b19f71b2da639113",
+      "sha256": "9ef43c625241a376063b75f066d92509570ebe1196467ee0c6d296ad2d01283c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/S3_MERCHANT_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 10890,
+      "gitBlobSha": "d5e0c34e178e599f6b4dc859301b4be9b2ed30b2",
+      "sha256": "46310455527fc3c28873e8d2cc0cc653832174d967480ea91061b97eb48f0c33"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/SEC_EDGAR_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 7229,
+      "gitBlobSha": "4b442010a56da06486a1fd310879d63dac46ed6f",
+      "sha256": "3bafd648d75b8ac45e38780889d4ce9b3763d60b1b3abd4748085987ce8310f1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
+      "mode": "100644",
+      "bytes": 24008,
+      "gitBlobSha": "2680e7bc1d54be90c941669a6296028e15d9bb01",
+      "sha256": "b1c5f22e30b1bd817f5edae678939e7bc84865cfcba5376eac9114cb3dd565e9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md",
+      "mode": "100644",
+      "bytes": 11042,
+      "gitBlobSha": "3fc004442869c4b49888b0061752025551e78c35",
+      "sha256": "1b1a7e537bbb6da5091a9ed93bc112716f8a585c3f25bd196c74ce20773f59ef"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/source-build-workspace.mjs",
+      "mode": "100644",
+      "bytes": 22081,
+      "gitBlobSha": "98ebf3dd01d30a9f671184ef6d1c3bf803ee3c8f",
+      "sha256": "db168aeb712f8b6e360505bb7d9973725a580ed64b029f7b06abb1b32c6aebdd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/STAC_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 12883,
+      "gitBlobSha": "fb63a6874cd4efbfcaf58f5b5667acd9885d5104",
+      "sha256": "9d56e2a12728ef9fb8cd5d8fba58a0ab3303f719cbc555deb8ee4f816c65f6ea"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+      "mode": "100644",
+      "bytes": 7357,
+      "gitBlobSha": "ad324ba35f477871856a8fab8f18a7c873004201",
+      "sha256": "bee7d94573457532cbda3125a717ace8f9efc640c3ede656d7aac7aa8286a825"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/transfer-workspace.mjs",
+      "mode": "100644",
+      "bytes": 12716,
+      "gitBlobSha": "e90790e1894f5c5b8833291ed8c5f3ded0edcfd3",
+      "sha256": "8bad58e9aba0916e18b10a359b5df2852b89ad5b84971ee77bbf3cd71fb0194e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/worker.mjs",
+      "mode": "100644",
+      "bytes": 781,
+      "gitBlobSha": "f5cbef83727e4fb96ea706d4e0ababc51c9c3880",
+      "sha256": "639d0157a9a190a41a22fae20a3b35968532cdb32ccd4a4229ca790d67ad261c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/WORLDBANK_APPLICATIONS.md",
+      "mode": "100644",
+      "bytes": 11514,
+      "gitBlobSha": "57563be651203d308455fc1cd33e1df56518e6a2",
+      "sha256": "041c2e9387f4b5c482852c2c6435947b4d00999aa5b443bd05492849b1b3ea9c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/RUNTIME.md",
+      "mode": "100644",
+      "bytes": 12371,
+      "gitBlobSha": "d5bc1254c6d095cb51e0b3d40a04c555d494e575",
+      "sha256": "ca8904dd11cec00a5ea1292e3b5b329b11b04f14e766885b312c368c6b5c0990"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/SEC_EDGAR.md",
+      "mode": "100644",
+      "bytes": 8852,
+      "gitBlobSha": "41347164f6c905eb57e61a276acec32b3a6d5b11",
+      "sha256": "44fde28d383dd0d6490f8d698b378270bcf7ab228ce1af94ae6ec447af3e1cdd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/ciim-receiving.json",
+      "mode": "100644",
+      "bytes": 2298,
+      "gitBlobSha": "9e6772b10fa8f845dc5a1726a522c4fe0e434c67",
+      "sha256": "5473f416a5da2309cd3a2b5a14992ed08580b39d969155920564917a2206f2fa"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/SOURCE_CARRIERS.md",
+      "mode": "100644",
+      "bytes": 20291,
+      "gitBlobSha": "918672b421d7e55b8d0c819036a1e9dbff1518c6",
+      "sha256": "5b3f7eb5a9cce030f28cb0a57b74f9f175b5d1616a0c41229e20deca650ba7ad"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
+      "mode": "100644",
+      "bytes": 18635,
+      "gitBlobSha": "5735c2089f094012ee7e1b5eb715ac1056b553fa",
+      "sha256": "5a656b19aa118ada4a25e5d295f182711dea5d96cb86c75c6a76cc447b7b05f8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-carrier-cli.mjs",
+      "mode": "100644",
+      "bytes": 20837,
+      "gitBlobSha": "99b7af971a9e646c13563cf2f1522c91f1ce84dd",
+      "sha256": "510c5a7cb663b0a14b87f4cb115193b27ee62d1fbf6eb8d157dac6b0630044a6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-carrier-input.schema.json",
+      "mode": "100644",
+      "bytes": 3097,
+      "gitBlobSha": "d376dcf3e9aee23e83f13689aa58596aefe14b80",
+      "sha256": "ddcc3b1039468c7b7690590361ea507f2b68a5dc2d9b399118f07533b98a25bb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-carrier-producer.mjs",
+      "mode": "100644",
+      "bytes": 39742,
+      "gitBlobSha": "74e49a4798d8418ff13bdf7cbb961a6eb8c45ca6",
+      "sha256": "9e4ad13b8d47a92eecf0f07f7a2b7ee95605e23947e6b3d957118e1c2086d98f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-providers.mjs",
+      "mode": "100644",
+      "bytes": 3722,
+      "gitBlobSha": "311a79b078e38998a0623752a44f2ee49f04a434",
+      "sha256": "6387386827f4e50778d3bb2e153f1bb40660dad382d1399811f88a2db1dd1921"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+      "mode": "100644",
+      "bytes": 9264,
+      "gitBlobSha": "8b046fc9e3aee8c316bdb4b72c90215265d0dc2e",
+      "sha256": "d022ec89b9a62365b8a7c950738f3f2d0707796fd7e00e1ad21e9659959010f0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
+      "mode": "100644",
+      "bytes": 20399,
+      "gitBlobSha": "805c5463adf678123c860c1837d09446f0b3990d",
+      "sha256": "3b23946a123428f236384dd6777b32f87f92e57a482b84411b7f25f05b468359"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/workspace.mjs",
+      "mode": "100644",
+      "bytes": 5009,
+      "gitBlobSha": "befb1c91c547cfd37840a4c188ee538a47052195",
+      "sha256": "bb76079233bb883e4cabb056cf161f58a005ed2f90741d488b82d463370feb68"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/capture.mjs",
+      "mode": "100644",
+      "bytes": 36403,
+      "gitBlobSha": "2040a9d772edd17afe992a3016a57058311d5e31",
+      "sha256": "8689050b8087886d285c205f6c56a3a12d648c741982248314d8f194def3c6c5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/cli.mjs",
+      "mode": "100644",
+      "bytes": 5548,
+      "gitBlobSha": "e5c5f73f0c1e07d16b7ac7ec7cd68edaaa513c2a",
+      "sha256": "85e434bc87a8700708d08ae1fbf234bb2ed819771792f2776a8aa8458d17526c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/dc-profile.mjs",
+      "mode": "100644",
+      "bytes": 3404,
+      "gitBlobSha": "5d141a066f00552ded6cd5df606ad8e96f98cdfd",
+      "sha256": "9a5c69ddb41262b33927f03a2b943f547b5196807678d962d59a69b9b71e7a5e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/application-provider.mjs",
+      "mode": "100644",
+      "bytes": 1018,
+      "gitBlobSha": "058458642905fef28e273f0479d389c5a832e13f",
+      "sha256": "20ae585e80336dd56c98deed19fbc72b6e66f6f2e627e8fa9dabdfb799037e57"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/application.mjs",
+      "mode": "100644",
+      "bytes": 5922,
+      "gitBlobSha": "70a17569b159ad500ac6784d05def00c4ad60509",
+      "sha256": "5823bc53f8de40576cd65e0ecdb6b996fddf0ff546348d684ebc82f75391d180"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/archive.py",
+      "mode": "100644",
+      "bytes": 10641,
+      "gitBlobSha": "ac6cfdc81a7b78852fb7e3952b283a46512dae97",
+      "sha256": "bf1062dff8fd361de0aa500b050b74a90f054d71e56872abab620b8299368838"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/browser-assets.json",
+      "mode": "100644",
+      "bytes": 637,
+      "gitBlobSha": "c654fc9ffde60e06213d23880282006b1be14383",
+      "sha256": "d27137df9e29d5b86e37425a9ea2d92ab0494c887a49ff2aedda30bd89700935"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/browser.mjs",
+      "mode": "100644",
+      "bytes": 40746,
+      "gitBlobSha": "b35716f5c319d94ca016336cccd023e0dc677d3f",
+      "sha256": "8e9c7d1250622b8574b1db8e8def521cd7df3a05cc1f30ba87225cbbd68ea93e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/cli.mjs",
+      "mode": "100644",
+      "bytes": 17340,
+      "gitBlobSha": "8a4080ac9ebf1020985d7268d3bbb370e02771b9",
+      "sha256": "c71c134c9023a6a2a5f16118a70f3906ff6304393e747ecbfbceeab709de9600"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/client.mjs",
+      "mode": "100644",
+      "bytes": 7636,
+      "gitBlobSha": "9f3e5582457d75fb6c6410ae76016cb5304d73f3",
+      "sha256": "222b89fd5ab4fe3df702f77ac20ca5575a165bd60c3c946509ed6009c7dc3430"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/CONNECTED_OPERATOR_GUIDE.md",
+      "mode": "100644",
+      "bytes": 14375,
+      "gitBlobSha": "1f27d4761686742ce4efa5b833e3ff3853c14461",
+      "sha256": "4af7dc92b83acd433ae83e7ef1e521ab991161dff01bd6d52d0732cb72a40429"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/connected-cli.mjs",
+      "mode": "100644",
+      "bytes": 10873,
+      "gitBlobSha": "5b672d654ef7f7a678656506579331d74049ad9c",
+      "sha256": "62e097ff1a6741fe55c98c1cde81142d9fba12053e5a0d5cd0e5ff93ac155d3d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/connected-client.mjs",
+      "mode": "100644",
+      "bytes": 33296,
+      "gitBlobSha": "9952b49a529423923259a5b0eb659c1854ebdbfa",
+      "sha256": "8e298b1ea16aadcf224885124d96509655bd172b88aa207953d2da37e641bcc6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/DESK_OPERATOR_GUIDE.md",
+      "mode": "100644",
+      "bytes": 31437,
+      "gitBlobSha": "585845fcc8b3a19c290f01077180be306af73d8d",
+      "sha256": "aa19d6697a6a66444f8371a577c9d11653983a8cdd60b8fa78942e4bd5f96702"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/examples/applications_20261012.mjs",
+      "mode": "100644",
+      "bytes": 19046,
+      "gitBlobSha": "41b70d41df4738c12bf696897e9bde560ebc906a",
+      "sha256": "13972d3c4e9cea70610fb0c29227f0faef53983b623d86cb21ef56d6f6b4bbcb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/examples/connected_20261012.mjs",
+      "mode": "100644",
+      "bytes": 26717,
+      "gitBlobSha": "dd453ff8ec0f99fc00270678a19250f361f98ba1",
+      "sha256": "a18a748cf6ab447fac551204b5fb093108717807521193d52b1fa95f7039f534"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/examples/receiving_20261012.mjs",
+      "mode": "100644",
+      "bytes": 32496,
+      "gitBlobSha": "e65b254ca36627a4c5b5ee65dcc8758842343660",
+      "sha256": "930eb8d31fa3a70e73c90ce64f259b13aff6f7b00b779d95394f4e1ca720202e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/examples/receiving_browser_20261012.cjs",
+      "mode": "100644",
+      "bytes": 32776,
+      "gitBlobSha": "cb73558ec1a7e63fadae7ebe46bcfcbea112c766",
+      "sha256": "0cceab3bac82af92d3c289f2b056762fdc52a0f4dcd91675d2eee9e46c4aef1f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/index.html",
+      "mode": "100644",
+      "bytes": 2582,
+      "gitBlobSha": "521789b00e927a9c94a92050264b5d4d8bac27ec",
+      "sha256": "bbbf9a521fd98fafcb3bbfd4b92bdf836d4d62918f15470d76b86aeecbc9db31"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/model.mjs",
+      "mode": "100644",
+      "bytes": 79964,
+      "gitBlobSha": "9aa9226d5c61856685de49aed034e283ddc6ff54",
+      "sha256": "d519410ab3d6e1788eecf50d602163d80b2196787040559016ae0e9e7ff639f6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/portable.mjs",
+      "mode": "100644",
+      "bytes": 26580,
+      "gitBlobSha": "d3011c00daf8463f657626e179b82bfab386486b",
+      "sha256": "cce836e0a0030d7ce9a106e7933ceda8caa860f7dce098608d02f62f41b47d80"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/server.mjs",
+      "mode": "100644",
+      "bytes": 15614,
+      "gitBlobSha": "b0a1afe10d6b977aaf61c9de70498205f2d66d40",
+      "sha256": "fc9c47eab4be3ff7c30be4e95122e6ea2b5232c17e6a9b2e2690e9b9503f2312"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/style.css",
+      "mode": "100644",
+      "bytes": 8918,
+      "gitBlobSha": "c8ab3796bbc607f2a6369016a1a167d442f888ec",
+      "sha256": "d2a733a5c1187c857410ef74c7d665b3a967de2e79919333a745f42fc2d01c76"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/examples/ciim_20261012.mjs",
+      "mode": "100644",
+      "bytes": 9802,
+      "gitBlobSha": "de5238bd0d20bfd670521757579aee08989eef25",
+      "sha256": "5cb97a4c6bceb9caee0c747b9498a031e17e10e06f6ba1c62fffdbe2991d6483"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/page-source.py",
+      "mode": "100644",
+      "bytes": 5019,
+      "gitBlobSha": "e098dc789e8ac511693f465ad6d09bd1841e14f3",
+      "sha256": "c733def53d55fc007cfd39ed7a515875250ed3af903736413e805e8722b7ae4e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/profile.mjs",
+      "mode": "100644",
+      "bytes": 14215,
+      "gitBlobSha": "8b69a7a22ccb8314ef10da9688e79ad49c75c98a",
+      "sha256": "4c18d879b766de01d016834d2b4a95eb818d1d0b169e7ccc611480c45fffa6f3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/ProteusBatch.java",
+      "mode": "100644",
+      "bytes": 9651,
+      "gitBlobSha": "6850ae10f11f1beeee064e30ebd216e46040cea6",
+      "sha256": "e48d74618dcf287125e1e8a5110feb9ff883406d746ae0e1baa41f9fe7e6f051"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/README.md",
+      "mode": "100644",
+      "bytes": 17871,
+      "gitBlobSha": "116c8d2f0958593a83f1335a23ef97a1fd88cebc",
+      "sha256": "40105d5f9fa0bcd6ba89b19ce064aa6534c979e9e9760228fda02bad18c138ef"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/report.mjs",
+      "mode": "100644",
+      "bytes": 11123,
+      "gitBlobSha": "e6f0edfac5d30ce4af7a3a9f03e84d0cb831cebb",
+      "sha256": "4ab1c33a34084cf287187e97617824374e6dcda0badc2e92acc304f6b889aaf0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/runtime.mjs",
+      "mode": "100644",
+      "bytes": 13518,
+      "gitBlobSha": "58344931bbbb139e7d1377ea5d20c4685af5dc16",
+      "sha256": "606b4d604e8e83cdeeef51d582a7bed34a33776bb5c2940b3538d435d0c7c40d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/command-catalog.mjs",
+      "mode": "100644",
+      "bytes": 5067,
+      "gitBlobSha": "76a6cbd25938ab3da693095320a086a8af3d17e8",
+      "sha256": "86fa6a69e7b6e9efe7669052bdf195ea818d617b86faa3a6161a4db47e86e9f5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/DISTRIBUTION.md",
+      "mode": "100644",
+      "bytes": 46772,
+      "gitBlobSha": "36629cd20051afd69dd83f6cb665a4f8a5ceccb8",
+      "sha256": "6e756b9765e94466eb29cbb2ec323e06096d7e7e8efcf564f8ec53a6929b5d1f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/distribution.mjs",
+      "mode": "100644",
+      "bytes": 10825,
+      "gitBlobSha": "249b880390357b092507d847b053ad69b0422d34",
+      "sha256": "235610f4439ef516a90f3b0a0c4058ba6e2c58ab88cdd71ab080fb2fe66a1437"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/index.mjs",
+      "mode": "100644",
+      "bytes": 1191,
+      "gitBlobSha": "411ca62d8f72af9cf48ee72c87ce7e7de5eb5834",
+      "sha256": "b91dc8717a3746b06c4b40218328bd6700df21f9d73e41ccafa720b89c4810c9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/MANAGED_PACKAGE.md",
+      "mode": "100644",
+      "bytes": 18942,
+      "gitBlobSha": "47d4eac4214c66578efbdbb2c669f6ceb5286b7a",
+      "sha256": "b4c6ca0ba642c8b8421e8424dc0b56b3addd1b086f4f554401373cae10b3af6d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/merchant-package.mjs",
+      "mode": "100644",
+      "bytes": 16430,
+      "gitBlobSha": "23aae8a722b5df21bf9ec680d22c7933fc174b5a",
+      "sha256": "05cfe3543c8e0a89dbb44d80b013e68b92d09699e1f41348dd3edff78067558c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/package-cli.mjs",
+      "mode": "100644",
+      "bytes": 9430,
+      "gitBlobSha": "76817c46c563019998ca92c8e80ceb64eb55ab64",
+      "sha256": "8e29f6407be1aa45a286252ff67a1d82596efb8e8ac1d2727cc59f671d5b55b1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/pins.json",
+      "mode": "100644",
+      "bytes": 3224,
+      "gitBlobSha": "d54b0d936d04e143c1dba76b8233fd3ba36769b8",
+      "sha256": "4dff415507dbd867ffbd35e0f2350704754e9a4ee352fdc3c31d3d997303cb04"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/POSTMERGE_SOURCE_SNAPSHOT.md",
+      "mode": "100644",
+      "bytes": 3478,
+      "gitBlobSha": "01d6f226b4caf8ee5d762d3dc5cef35411c1af7b",
+      "sha256": "76aa5909c2a9ae04aeb95e9ce8c87cef190a0379745a55cd3f29c10fb3f364a6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/preflight.mjs",
+      "mode": "100644",
+      "bytes": 5492,
+      "gitBlobSha": "16b852a7805536baacd7b90741f38b01b4f08e66",
+      "sha256": "634bdfbc4605db125172f1dbb31466ee8ef75a4d4c586448d61d8c92ec0a7b3a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/product.mjs",
+      "mode": "100644",
+      "bytes": 20295,
+      "gitBlobSha": "6e69e377a9610670bbb0c18e568646d01adb8276",
+      "sha256": "ab7cb01cc1adcb3f2204ab6485ce7ad7322ed648d3439f3fc24715b2f4debf9b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/README.md",
+      "mode": "100644",
+      "bytes": 4592,
+      "gitBlobSha": "e6b5819a2c2388f2ec9fb291b081fd0c0630e285",
+      "sha256": "9de01095f7a8c2480c2518dce93eef1d5db0ba6604ce11a4c894a4007949bea7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/release-core.mjs",
+      "mode": "100644",
+      "bytes": 14147,
+      "gitBlobSha": "559bd4a6bf2f84a8be80d7011ab517e968e788d8",
+      "sha256": "3a83a5fd443719cd7cc02e257a177383e9be79c68e51f0de483ccfaea39effb5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/runtime-package.mjs",
+      "mode": "100644",
+      "bytes": 14751,
+      "gitBlobSha": "b0b20e85a909c337d25205d58690abacd7db850f",
+      "sha256": "cb03859fba13806fdf0da33d4ed40e07dbf94bcbbce4bd22d457831d4fa374ce"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf46-release/snapshot-preflight.mjs",
+      "mode": "100644",
+      "bytes": 3516,
+      "gitBlobSha": "68b0c2a36a172d42a81a383837e4d648f6f61544",
+      "sha256": "6017c9a594fec6ec69a5198e1a9389aa68584dd884162bfe1aed96cb114904b8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf61-openapi-seller-import/package.json",
+      "mode": "100644",
+      "bytes": 169,
+      "gitBlobSha": "cc546d91df2cc4d1ec5d6f0452d7e9c0cbdbe90c",
+      "sha256": "2cb30e25af034b76223ed7e85812fd8f8ebe2ca71b3ed965e987f951a7cc08ee"
+    }
+  ]
+}
