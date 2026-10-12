@@ -190,6 +190,11 @@ export async function createBrowserApprovalBroker({ directory = tmpdir() } = {})
   }
   return Object.freeze({ environment,
     snapshot(intentId) { return view(forIntent(intentId)); },
+    // Enumerate only the broker's own bounded, public native review records.
+    // Page intent IDs and budget decisions remain authored by the original bridge.
+    pending() {
+      return [...records.values()].filter(entry => ['AWAITING_OPERATOR', 'APPROVING'].includes(entry.public.state)).map(view);
+    },
     decide({ intent, approvalId, requestSha256, decision } = {}) {
       const entry = records.get(approvalId);
       if (closed || !entry || entry.public.intentId !== intent ||
