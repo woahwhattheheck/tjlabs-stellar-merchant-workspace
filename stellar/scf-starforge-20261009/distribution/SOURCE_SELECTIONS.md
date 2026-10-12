@@ -71,7 +71,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |
 | `openlineage-operations` | Native Python and Java producer intake, original compressed/source bytes, job/run/dataset lineage, saved reviews and complete editable customer receiving | OpenLineage operations; Runtime management | [Complete installed operation and producer guide](../../../products/openlineage/OPERATING.md) |
 | `study-research` | Study source editions, Property field surveys and comparables, Census ACS, BLS labor and HUD releases with original publishing and complete customer receiving | Study Source Refresh; Buyer runbook; Merchant console; PostgreSQL publisher; PostgreSQL workspace | [Complete study operator and receiving guide](selections/STUDY_RESEARCH.md) |
-| `merchant-support` | Merchant cases, original tariff quotations, accepted implementation, Service adjustments, buyer/accountant handover and complete customer receiving | Merchant support; Merchant pricing and scenario planning; Runtime management; original merchant agent | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
+| `merchant-support` | Merchant cases, tariff and usage-informed quotations, accepted work, invoicing, recurring service calendars, payments, Service adjustments and complete customer receiving | Merchant support; Merchant pricing and scenario planning; Merchant receivables; Service agreements and billing; Customer payment plans; customer statement closing | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
 | `healthcare-interoperability` | Original FHIR exports and eLTSS CarePlans, full source/field review, native merchant/customer editions and complete editable receiving | FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete installed operation and receiving](../../../products/healthcare-interoperability/OPERATING.md) |
 | `gravity-referrals` | Original Gravity source, topology, complete requirement/field review, Task editions, conditional exchange, native merchant/customer delivery and editable receiving | Gravity Referrals; FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete programme and receiving](../../../products/gravity-referrals/OPERATING.md) |
 | `matomo` | Complete Matomo report/subtable source, typed editions, original merchant/customer operation and independent editable workspace receiving | Matomo reports and delivery; Runtime management | [Complete operating guide](../../../products/matomo/OPERATING.md) |
@@ -99,7 +99,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `ckan-merchant` | Complete CKAN capture and source meanings, reviewed successor publication, browser/MCP and whole customer workspace receiving | CKAN data merchant; Dataset publisher; Dataset buyer; Python; Runtime management | [Complete operating and receiving guide](../../../products/ckan/OPERATING.md) |
 | `mssql` | SQL Server catalog and typed queries, retained sellers, merchant tools and complete customer/merchant receiving | SQL Server data products; merchant console | [Installed product and operating guide](../../../products/mssql/README.md) |
 | `accountant-portfolio` | Client procedures, exact close files, preparation/review, named backup handovers, staff capacity, native accounting and complete portfolio receiving | Client runbooks; Client portfolio; Merchant accounting; Cryptoworth accounting | [Complete installation and receiving](../../../products/accountant-portfolio/README.md) |
-| `merchant-economics` | Supplier sources, exact tariffs and pricing, customer quotations, accepted implementation, Service and buyer/accountant continuation, full receiving and seller releases | Merchant pricing and scenario planning; Merchant support; API merchant; Runtime management | [Complete installed workflow](../../../products/merchant-economics/OPERATING.md) |
+| `merchant-economics` | Supplier sources, tariffs and recorded usage through accepted quotations, invoices, recurring service billing, customer payments, full receiving and seller releases | Merchant pricing and scenario planning; Merchant support; Merchant receivables; Service agreements and billing; Customer payment plans; customer statement closing | [Complete installed workflow](../../../products/merchant-economics/OPERATING.md) |
 | `merchant-receivables` | Original service quotations, issued invoices, payments, credits, retained installment schedules, dated collections and complete customer accounts | Merchant receivables; Customer payment plans; Merchant accounting; Merchant support | [Complete installed operation](../../../products/merchant-receivables/README.md) |
 | `merchant-payment-plans` | Reviewed customer installments, dated collection desk, retained schedule editions and original invoice, payment and credit operation | Customer payment plans; Merchant receivables; Merchant accounting; Merchant support | [Complete installation and collection workflow](../../../products/merchant-payment-plans/README.md) |
 | `all` or no flag on a new build | Complete maintained toolkit | All registered applications | [Runtime installation](RUNTIME_INSTALL.md) |
@@ -286,3 +286,40 @@ that Applications and merchant provider catalogs contain its selected entries,
 that installed command help matches its registrations, and that the original
 product can complete its saved native journey. Reopen the same output with
 `--resume`, and confirm an explicit different selection cannot reuse it.
+
+## Flowable process operations and customer receiving
+
+Use [flowable-merchant.json](selections/flowable-merchant.json) to compose the
+complete installed Flowable workspace, native process source, typed client,
+Applications integration and merchant MCP provider. The original process
+engine handles deployment, human tasks, native migration validation and
+execution; the saved workspace retains complete request and source/history
+receiving.
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/tjlabs-stellar-merchant-workspace \
+  --ref FULL_ORIGINAL_COMMIT --selection flowable-merchant \
+  --out /absolute/flowable-release --offline
+~~~
+
+Follow [FLOWABLE_MERCHANT.md](selections/FLOWABLE_MERCHANT.md) for the complete
+build/install/Open workflow, actual engine receiving and customer handover.
+The recipe includes the source-owned `flowable-workspaces`,
+`merchant-provider-flowable-workspaces` and `flowable-product`
+contributions, the original browser assets and complete installed guides.
+
+## Accepted quotations, invoices and recurring service billing
+
+The `merchant-economics` and `merchant-support` recipes include the original `merchant-receivables`, `merchant-service-agreements`, `merchant-payment-plans`, `receivables-agent` and `customer-closing` contributions. Their existing commands, typed exports, managed Applications and browser manifests travel with the selected Pricing/Performance/Commercial source.
+
+Both recipes retain the original `accounting` merchant provider. The accounting and receivables-agent declarations select the same maintained provider path, so the original composer keeps one provider and records both source owners. The existing service-agreement provider continues to operate its original accounting workspace.
+
+The quote importer preserves the selected tariff and complete recorded-usage binding against the accepted revised quote. Invoice and service-calendar views show the historical measurement, proposed monthly quantity and accepted billable amount separately. All original payment, refund, paid-credit, installment and statement-closing source remains selected.
+
+The original builder includes each financial server's declared browser manifest, all mapped source files, their static imports, declaration files and full operator guides. The same source selection retains the financial initialization/recovery commands and existing accounting source dependencies.
+
+- [Merchant economics through accepted customer billing](../../../products/merchant-economics/OPERATING.md)
+- [Invoices, payments and refunds](../../../products/merchant-receivables/README.md)
+- [Service agreements and recurring billing](../../../products/merchant-service-agreements/README.md)
+

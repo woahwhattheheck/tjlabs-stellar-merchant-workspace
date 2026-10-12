@@ -106,10 +106,9 @@ export function createMcpToolHandler(provider,{bearerToken,authorization,allowed
         ? 'discovery_stale_terms' : e.code==='TOOL_NOT_FOUND'
           ? 'mcp_tool_missing' : 'unknown_upstream_error';
       const recovery=explainFailure({stage:name==='bazaar_search'?'discovery':'mcp',reason:recoveryCode});
-      // A provider's deliberate JSON details carry its original operation and
-      // recovery receipt. Do not enumerate Error, cause or authentication context.
+      // Preserve the provider's deliberate JSON details for original operation recovery.
       let details;
-      try { if(plain(e.details)) details=JSON.parse(JSON.stringify(e.details)); } catch {}
+      try {if(plain(e.details))details=JSON.parse(JSON.stringify(e.details));}catch{}
       const applicationError=toolErrorView===undefined?{}:toolErrorView(e);
       if(!plain(applicationError))throw new TypeError('toolErrorView must return an object');
       const err={code:e.code??'TOOL_ERROR',reason:e.message??'Error',recovery,

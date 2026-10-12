@@ -242,6 +242,61 @@ export interface GrantDeliveryQueue {
   /** Native digest of the queue object before this field is added. */
   sha256: string;
 }
+export interface GrantPerformanceSelection {
+  caseId: string;
+  startDate?: GrantCivilDate | null;
+  endDate?: GrantCivilDate;
+  expectedVersion?: number;
+}
+export interface GrantPerformancePeriod {
+  startDate: GrantCivilDate | null;
+  endDate: GrantCivilDate;
+  workRecognition: 'COMPLETION_DATE';
+  recordStateBasis: 'SELECTED_CASE_VERSION';
+}
+export interface GrantPerformanceAmounts {
+  inUsd: string;
+  outUsd: string;
+  netUsd: string;
+  grantReceiptsUsd: string;
+  customerReceiptsUsd: string;
+  invoicedUsd: string;
+  paidUsd: string;
+  openUsd: string;
+  creditUsd: string;
+}
+export interface GrantPerformanceReceived extends GrantPerformancePeriod {
+  reportSha256: string;
+  sourceCaseId: string;
+  sourceCaseVersion: number;
+}
+export interface GrantPerformanceReport extends GrantObject {
+  schema: 'stellar-forge.sf47-performance.v1';
+  selection: GrantPerformancePeriod;
+  case: { id: string; name: string; version: number; state: string; mode: 'OPERATIONS' | 'WALKTHROUGH' };
+  plan: { id: string; revision: number; name: string; contentSha256: string; sourceSha256: string; budgetUsd: string; plannedHours: string };
+  finances: Record<'opening' | 'period' | 'closing', GrantPerformanceAmounts>;
+  work: Record<'opening' | 'period' | 'closing', { recordedHours: string; acceptedHours: string; preawardHours: string }>;
+  packages: GrantObject[];
+  categories: GrantObject[];
+  contributors: GrantObject[];
+  invoices: GrantObject[];
+  cash: GrantObject[];
+  workRecords: GrantObject[];
+  aging: { bucket: string; count: number; amountUsd: string }[];
+  assets: GrantObject[];
+  days: GrantObject[];
+  sources: GrantObject[];
+  recordsSha256: string;
+  reportSha256: string;
+  basis: string[];
+}
+export interface GrantPerformanceDownloadSelection extends GrantPerformanceSelection {
+  endDate: GrantCivilDate;
+  expectedVersion: number;
+  expectedReportSha256: string;
+}
+
 export interface GrantDeliveryQueueSelection { caseId: string; asOfDate?: GrantCivilDate; }
 export interface GrantInstallationSelection {
   expectedVersion: number;
@@ -305,6 +360,7 @@ export interface GrantCaseImportReceipt extends GrantObject {
   mode: 'OPERATIONS' | 'WALKTHROUGH';
   /** Present when the imported file is a complete dated delivery queue handover. */
   deliveryQueue?: { asOfDate: GrantCivilDate; sha256: string };
+  performance?: GrantPerformanceReceived;
   selectedInstallation?: GrantInstallationRef;
 }
 export interface GrantWorkshareSourceSelection {
@@ -346,6 +402,7 @@ export interface GrantDownloadSelections {
   forecast: { caseId: string; forecastId: string };
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
+  performance: GrantPerformanceDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
   source: { caseId: string; sourceId: string };
   completion: { caseId: string; reviewId: string };
@@ -363,6 +420,7 @@ export class GrantWorkspaceClient {
   inspect(): Promise<GrantInspection>;
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
+  read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;

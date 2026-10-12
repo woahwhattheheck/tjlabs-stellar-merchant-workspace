@@ -303,3 +303,10 @@ operation records and disposable fixture keys alongside the application
 outputs. Keep it on the established private worker/result route. The small
 phase summaries carry the public engineering outcome and the exact fixture
 scope for the merchant, Applications, distribution and grant owners.
+
+
+## Select the current repository for named result files
+
+The complete named-output mode is published in `woahwhattheheck/tjlabs-stellar-merchant-workspace`. Use its exact reviewed commit. `--output-files` selects that repository by default; `--source-repository https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.git` makes the selection explicit. The URL is retained in `run-result.json`, checked against the checkout's original origin and required to match when reopening. Existing modes keep the legacy `public-commons-sprint-2026` default, and an explicit legacy selection remains available for its original commits.
+
+The named-output continuation composes the same `--retained-directory` receiving path documented above. It keeps the earlier completed core identity separate from the selected physical merchant directory, invokes the original `native-placement.mjs` review/adoption and reads the resulting merchant source binding before checkout. It does not rewrite the original configuration or paid ledger. The full three-file application, command interfaces, optional browser receiving and capacity selection are in [the result-files guide](outputs/README.md).

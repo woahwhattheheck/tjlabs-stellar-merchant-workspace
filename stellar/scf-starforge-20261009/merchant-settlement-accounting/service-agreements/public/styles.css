@@ -161,3 +161,7 @@ details + details { margin-top: .6rem; }
   .panel, .metric { break-inside: avoid; }
   .table-wrap { overflow: visible; }
 }
+
+.renewal-summary { margin-block: 1rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.renewal-summary h4 { margin: 0 0 .75rem; font-size: 1rem; }
+.renewal-summary details { margin-top: .75rem; }

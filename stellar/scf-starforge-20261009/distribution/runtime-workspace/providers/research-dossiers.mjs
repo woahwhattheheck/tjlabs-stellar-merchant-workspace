@@ -19,7 +19,27 @@ const ZOTERO_FILES = [
 ];
 function selectedConnection(settings) {
   return Boolean(settings.objectStateDirectory || settings.connectionFile ||
-    settings.zoteroStateDirectory || settings.extractionPython);
+    settings.zoteroStateDirectory || settings.extractionPython || settings.customerCommerceHost);
+}
+const COMMERCE_FILES = [
+  'customer-commerce/configuration.mjs', 'customer-commerce/contracts.mjs',
+  'customer-commerce/controller.mjs', 'customer-commerce/routes.mjs',
+  'customer-commerce/client.mjs', 'customer-commerce/operator.mjs',
+  'customer-commerce/publication.mjs', 'customer-commerce/buyer.mjs',
+  'customer-commerce/archive.mjs', 'customer-commerce/files.mjs',
+  'customer-commerce/cli.mjs', 'customer-commerce/public/index.html',
+  'customer-commerce/public/browser.mjs', 'customer-commerce/public/style.css',
+  '../../sf101-merchant-receiver/checkout-config.mjs',
+  '../../sf101-merchant-receiver/checkout.mjs',
+  '../../buyer-runbook/agent-client.mjs', '../../buyer-runbook/agent-contract.mjs',
+  '../../buyer-runbook/agent-connection.mjs', '../../buyer-runbook/agent-storage.mjs',
+  '../../buyer-runbook/launch.mjs', '../../buyer-runbook/runbook.mjs',
+];
+async function commerceSourceSelection(filename, modulePath) {
+  const {readCommerceConfiguration} = await import(pathToFileURL(modulePath).href);
+  need(typeof readCommerceConfiguration === 'function', 'APPLICATION_RESEARCH_COMMERCE_READER_REQUIRED',
+    'Use the original paid Research host configuration reader from the selected runtime.');
+  return readCommerceConfiguration(absolute(filename));
 }
 const DOCUMENT_FILES = [
   'unstructured-workspace.mjs',
@@ -63,11 +83,13 @@ export default {
       field('objectStateDirectory','Original private Object Buyer state','path',false,
         'Optional existing Object application. Its completed files become available for reviewed Research processing.'),
       field('connectionFile','Private Research connection file','path',false,
-        'Defaults to research-connection.json in this Research directory when Object, Zotero or an extraction interpreter is selected. Existing clients use this private connection for the same listener.'),
+        'Defaults to research-connection.json in this Research directory when Object, Zotero, an extraction interpreter or paid delivery is selected. Existing clients use this private connection for the same listener.'),
       field('zoteroStateDirectory', 'Original private Zotero library directory', 'path', false,
         'Optional existing library or new directory in an existing private parent. Open Zotero explicitly from Research; preserve its original captures and reviews.'),
       field('extractionPython', 'Original extraction Python executable', 'path', false,
         'Optional absolute executable for retained source values and workbook processing. Review pins the selected executable and its original interpreter environment.'),
+      field('customerCommerceHost', 'Original paid Research host configuration', 'path', false,
+        'Optional private JSON selecting existing SF101 merchant and Buyer aliases. Review pins this file and its original checkout/agent configuration files; the original Buyer keeps its approval and payment operation.'),
       field('openalexWorkspaceDirectory', 'Existing OpenAlex research workspace', 'path', false,
         'Optional saved collection with its original queries, editions, pages and review decisions.'),
       field('openalexModule', 'Original OpenAlex workspace module', 'path', false,
@@ -119,6 +141,12 @@ export default {
       await regular(join(runtime.sourceRoot, PIPELINE_ROOT, 'workspace-client.mjs'), 4 * 1024 * 1024).catch(() =>
         need(false, 'APPLICATION_NOT_IN_RUNTIME',
           'Choose the runtime containing the original authenticated Research workspace client.'));
+    if (settings.customerCommerceHost) {
+      for (const path of COMMERCE_FILES)
+        await regular(join(runtime.sourceRoot, PIPELINE_ROOT, path), 4 * 1024 * 1024).catch(() =>
+          need(false, 'APPLICATION_NOT_IN_RUNTIME',
+            'Choose the complete Research installation with its original paid-delivery, SF101 receiver and Buyer application source.'));
+    }
     if (settings.documentSourceConfig) {
       for (const path of DOCUMENT_FILES)
         await regular(join(runtime.sourceRoot, PIPELINE_ROOT, path), 4 * 1024 * 1024).catch(() =>
@@ -158,7 +186,7 @@ export default {
       const library = await path('zoteroStateDirectory', 'directory', true, true);
       if (!library.exists && !createDirectories.includes(library.path)) createDirectories.push(library.path);
     }
-    let extractionExecutable;
+    let extractionExecutable, commerceConfigurationFile;
     if (settings.extractionPython) {
       const selected = await selectedExecutable(settings.extractionPython);
       extractionExecutable = selected.executable;
@@ -208,6 +236,20 @@ export default {
       need(typeof normalizeConfiguration === 'function', 'APPLICATION_PIPELINE_CONTRACT_REQUIRED');
       normalizeConfiguration(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)));
     }
+    if (settings.customerCommerceHost) {
+      const selectedInput = await path('customerCommerceHost', 'file');
+      const modulePath = join(selectedRuntime.sourceRoot, PIPELINE_ROOT, 'customer-commerce/configuration.mjs');
+      inputs.push(await inputPath(modulePath, 'file'));
+      const selected = await commerceSourceSelection(selectedInput.path, modulePath);
+      need(selectedInput.sha256 === selected.sha256, 'APPLICATION_INPUTS_CHANGED',
+        'Review the current original paid Research host selection again.');
+      commerceConfigurationFile = selected.path;
+      const configurationFiles = new Set([
+        ...Object.values(selected.merchants).map(value => value.checkoutFile),
+        ...Object.values(selected.buyers).map(value => value.agentFile),
+      ]);
+      for (const filename of configurationFiles) inputs.push(await inputPath(filename, 'file'));
+    }
     if(settings.objectStateDirectory)await path('objectStateDirectory','directory',false,true);
     if(selectedConnection(settings)) {
       const connectionFile=settings.connectionFile??defaultResearchConnectionFile(settings.workspaceDirectory);
@@ -220,6 +262,7 @@ export default {
     option('--object-state',settings.objectStateDirectory);
     option('--zotero-state', settings.zoteroStateDirectory);
     option('--extraction-python', extractionExecutable);
+    option('--customer-commerce-host', commerceConfigurationFile);
     option('--dir', settings.workspaceDirectory);
     option('--edition-adapter', settings.editionAdapter);
     option('--openalex-workspace', settings.openalexWorkspaceDirectory);
@@ -242,10 +285,11 @@ export default {
         const connectionIndex=request.args.indexOf('--connection-file');
         const zoteroIndex=request.args.indexOf('--zotero-state');
         const extractionIndex=request.args.indexOf('--extraction-python');
+        const commerceIndex=request.args.indexOf('--customer-commerce-host');
         if (ready.mode !== 'RESEARCH_DOSSIER_WORKSPACE' || directoryIndex < 0 ||
             ready.directory !== request.args[directoryIndex + 1] ||
             crossrefSelected && ready.crossrefConfigured !== true || typeof ready.url !== 'string') return null;
-        if (pipelineIndex < 0 && documentIndex < 0 && objectIndex < 0 && connectionIndex < 0 && zoteroIndex < 0 && extractionIndex < 0) return ready.url;
+        if (pipelineIndex < 0 && documentIndex < 0 && objectIndex < 0 && connectionIndex < 0 && zoteroIndex < 0 && extractionIndex < 0 && commerceIndex < 0) return ready.url;
         if (pipelineIndex >= 0 && ready.pipelineSourceConfigured !== true ||
             documentIndex >= 0 && ready.documentSourceConfigured !== true ||
             objectIndex >= 0 && ready.objectSourceConfigured !== true) return null;
@@ -278,7 +322,7 @@ export default {
               'APPLICATION_DOCUMENT_STARTUP_CHANGED',
               'The original research listener opened a different document buyer source.');
           }
-          if (zoteroIndex >= 0 || extractionIndex >= 0) {
+          if (zoteroIndex >= 0 || extractionIndex >= 0 || commerceIndex >= 0) {
             const {ResearchWorkspaceClient} = await import(pathToFileURL(join(sourceRoot, PIPELINE_ROOT, 'workspace-client.mjs')).href);
             need(typeof ResearchWorkspaceClient === 'function', 'APPLICATION_RESEARCH_CLIENT_REQUIRED',
               'Use the original authenticated Research client from this selected runtime.');
@@ -295,6 +339,18 @@ export default {
               if (extractionIndex >= 0) need(status.api?.studyExtraction === true && status.api?.extractionPublications === true,
                 'APPLICATION_EXTRACTION_STARTUP_UNAVAILABLE',
                 'The selected Research listener must expose its original extraction and publication workflow.');
+              if (commerceIndex >= 0) {
+                need(status.api?.customerCommerce === true && status.api?.customerCommerceConfigured === true,
+                  'APPLICATION_RESEARCH_COMMERCE_STARTUP_UNAVAILABLE',
+                  'The selected Research listener must expose its configured original paid-delivery workflow.');
+                need(typeof client.customerCommerce === 'function', 'APPLICATION_RESEARCH_COMMERCE_CLIENT_REQUIRED',
+                  'Use the original paid Research client from this selected runtime.');
+                const configured = await client.customerCommerce().configuration();
+                need(configured.schema === 'sf88-research-customer-commerce-host/v1' &&
+                  configured.configurationFile === request.args[commerceIndex + 1],
+                  'APPLICATION_RESEARCH_COMMERCE_STARTUP_CHANGED',
+                  'The authenticated Research listener must retain the selected original merchant and Buyer host file.');
+              }
               if (zoteroIndex >= 0) need(status.api?.zoteroBridge === true && status.zotero?.configured === true,
                 'APPLICATION_ZOTERO_STARTUP_UNAVAILABLE',
                 'The selected Research listener must retain its configured original Zotero library.');
