@@ -30,6 +30,7 @@ They retain its original dependency manifests and lock.
 | Kafka event datasets and complete customer clients | Python 3.11 or later; `confluent-kafka==2.16.0` in that Python environment for broker work; Node 22.16 or later for browser/client and the merchant's selected runtime features |
 | RSS/Atom/OPML collections and complete feed customer delivery | Python 3.11 or later for the existing feed console; Node 22.16 or later with `mcp` for the client/merchant host, plus the publisher or Buyer's selected runtime features |
 | Huwise source review, tenant ingestion and complete merchant/customer receiving | Node 24 or later and local file locks for the native workbench and bearer HTTP host; `schema`, `openapi`, `mcp` and native Stellar packages for the selected installed merchant/payment facilities |
+| IATI publisher review and complete customer receiving | Python 3.11 or later and Node 22.16 or later; the original `iati-operator` runtime profile uses zero npm dependencies; the complete browser receiving workflow uses the host's existing Chromium/Playwright |
 
 Use `starforge registrations` to inspect the selected package's actual command
 registrations. `starforge source` opens its source identity. Runtime upgrades
@@ -1078,3 +1079,109 @@ The maintained `starforge merchant-huwise-receive` command performs that
 complete native journey from a public source or an existing completed project.
 Keep the original private workbench and receiving directories when upgrading
 the selected runtime.
+
+## 14. Review aid-finance publishers and receive the complete portfolio
+
+Choose **Applications → New application → IATI aid finance** to operate the
+original private IATI workspace. The same source is available through
+`starforge dataset-iati`, the typed HTTP client and the existing source-workspace
+MCP host. Its [full operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
+covers every native input, query, review, comparison and receiving action.
+
+### Install and retain an original publisher
+
+Build the selected source from this product checkout:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo . --ref HEAD --selection iati-operator \
+  --out /srv/starforge/packages/iati
+~~~
+
+The original [IATI runtime guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/RUNTIME.md)
+selects that archive and its full hash, prepares the zero-dependency operator
+profile, installs it and retains the original runtime progress. Use the actual
+Python executable on the receiving host.
+
+~~~sh
+starforge dataset-iati --python /usr/bin/python3 \
+  --workspace /srv/starforge/state/iati init
+
+starforge dataset-iati --python /usr/bin/python3 \
+  --workspace /srv/starforge/state/iati source \
+  --file /srv/starforge/incoming/publisher.xml \
+  --label 'Publisher name and original edition'
+~~~
+
+Keep the publisher's original URL, acquisition time and complete licence notice
+with the full XML. The returned source ID identifies its exact retained bytes.
+Use that source in the profile and portfolio selection. The included
+`examples/aiddata-nigeria-2016/` and
+`examples/transparency-international-2026/` directories contain complete
+original public inputs and their attribution.
+
+### Review, compare and operate the saved data
+
+Select the existing private workspace, Python executable and installed runtime
+in Applications. Review and Save the application, then Review start, Start and
+Open. The original console provides source profiles, portfolio review, native
+row queries, comparisons and complete export/receiving. Its private connection
+file lets the typed client and source MCP host use that same running workspace.
+
+Create a portfolio from actual retained source IDs. Select the intended
+currencies, financial types, dates and activity coverage, or retain the complete
+cohort. A reviewed or needs-correction decision records the named reviewer and
+their source observations. Later edits name the existing portfolio, its current
+expected revision and a new request ID. Historical revisions, original requests
+and the full comparison history remain available after subsequent edits.
+
+The native report keeps reporting organisation, hierarchy, currency,
+transaction type and value date as separate financial dimensions. Budget
+groups also retain their type, status and period. Amounts remain exact decimal
+strings; the browser displays the native values. The
+[domain guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DOMAIN.md) explains source identity,
+associations, financial eligibility and comparison coverage.
+
+Use the original native cursor to read all selected activity, transaction and
+budget rows. Download a complete report for readable HTML/JSON, all selected
+CSV rows, review records and retained changes. Export a full portfolio when
+the receiving operator will continue the original source and review history.
+
+### Deliver and reopen the whole customer result
+
+Stop the owning console before using a standalone CLI against its workspace.
+For a selected saved revision:
+
+~~~sh
+starforge dataset-iati --python /usr/bin/python3 \
+  --workspace /srv/starforge/state/iati portfolio-export \
+  --id ACTUAL_PORTFOLIO_ID --revision ACTUAL_REVISION \
+  --out /srv/starforge/deliveries/iati-portfolio.zip
+
+starforge dataset-iati --python /usr/bin/python3 \
+  --workspace /srv/starforge/state/iati-received init
+
+starforge dataset-iati --python /usr/bin/python3 \
+  --workspace /srv/starforge/state/iati-received receive \
+  --file /srv/starforge/deliveries/iati-portfolio.zip
+~~~
+
+Receiving reconstructs every referenced original native dataset, report,
+comparison, portfolio revision and request identity. Open that receiving
+workspace in Applications to continue review. Its source MCP import and typed
+HTTP client use the same native receiver.
+
+For the complete installed customer delivery, run the original
+[complete receiving entrypoint](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md).
+It builds and installs the selected committed product, runs the complete
+publisher and finance workflow, opens the saved Applications in the browser,
+retains the named review, receives full MCP/CLI exports with interrupted-file
+continuation and reopens a separate recipient workspace. The same operation
+then writes the complete `IATI_Customer_Handover.zip`.
+
+The [customer handover guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/HANDOVER.md)
+describes its runtime archive, original publisher, complete metadata and notice,
+final portfolio/report, all three merchant datasets and operating guides.
+For the two included publishers, run two explicit inputs sequentially with
+separate operation IDs, workspaces and outputs. Retain each original input and
+result when continuing an interrupted operation.

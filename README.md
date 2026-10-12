@@ -4,7 +4,8 @@ Build and operate a data service with Stellar payment access, native customer
 clients, retained source results, deployment releases, and an operator workspace.
 
 The product brings together captured HTTP API and GraphQL service authoring,
-Kafka event datasets, satellite imagery and processing history, searchable
+Kafka event datasets, reviewed aid-finance portfolios, satellite imagery and
+processing history, searchable
 material catalogs, merchant incident work, supplier cost allocation and pricing
 decisions, and QuickBooks or Xero accounting operations. Each workflow keeps its
 original saved records from source selection through delivery and reopening.
@@ -17,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Review and publish an economic data edition | **Applications → Eurostat economic editions** or `starforge eurostat` | Exact official source captures, reviewed dimensions, complete economic briefings, native merchant publication and original customer receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` or **Applications → Captured API merchant** | Original source review, exact route prices and policies, persistent workflows, native merchant packages, releases and complete customer receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Operate and hand over buyer request collections | **Applications → Request collections** or `starforge buyer-collections-workspace` | Reviewed original requests, exact spending caps and outcomes, complete encrypted backup, receiving and reopening |
@@ -25,7 +27,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
-| Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
+| Operate material catalogs and supplier delivery | `starforge-materials` | Complete source and edition review, customer matching, supplier corrections, BMEcat, ETIM xChange, 2BA upload packages, MCP/client operations and portable receiving |
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
@@ -33,6 +35,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
+| Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -69,6 +72,20 @@ connects complete source review, the tenant Automation API, native publication,
 merchant operation and delivery of every original customer file. Build its
 selected source with `--selection huwise`; its package retains the original
 publisher, buyer, host and runtime installation workflow.
+
+The [IATI aid-finance operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
+connects complete publisher XML to activity, transaction and budget editions,
+named portfolio review, exact financial reports and independent customer
+receiving. Build its installed product with `--selection iati-operator`.
+The [complete publisher workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
+uses the same runtime and Applications to operate both included original
+AidData Nigeria and Transparency International editions and deliver each
+complete customer archive.
+
+The [Eurostat operating guide](products/eurostat/OPERATING.md) connects official
+source acquisition, exact economic reports, native publication and complete
+customer receiving. Build the complete selected product with
+`--selection eurostat` and open its original Applications entry.
 
 ## Open the source product
 
@@ -224,6 +241,9 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
+- [IATI publisher review, finance and operator interfaces](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
+- [IATI complete installed publisher workflow and customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
 - [Complete OData collections, Analysis and customer receiving](stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md)
 
 - [Timescale native operations, assigned work and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/timescale/OPERATING.md)

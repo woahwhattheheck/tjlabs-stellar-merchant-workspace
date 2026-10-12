@@ -7,7 +7,7 @@ import { parseArgs } from 'node:util';
 import { OpenApiWorkflowClient, writeOpenApiWorkflowFile } from './openapi-workflow-client.mjs';
 import { fail } from './records.mjs';
 
-const HELP = `merchant-openapi-workflows COMMAND --url http://127.0.0.1:PORT/operator/ [options]
+const HELP = `starforge merchant-openapi-workflows COMMAND --url http://127.0.0.1:PORT/operator/ [options]
 
 Original profiles: host, profiles, profile, profile-save, bind, profile-export, profile-import
 Recipe authoring: recipe, prepare, install, installation, export-recipe, workflow-save
@@ -20,7 +20,7 @@ Complete receiving: customer, customer-status, archive, download
 --profile ID             Original profile for customer-status/archive
 --token-env NAME         Existing Console bearer token variable (default MCP_ACCESS_TOKEN)
 --wait                   Wait for the current native step/customer transfer to settle
---timeout-ms N           Receiving wait, default120000
+--timeout-ms N           Receiving wait, default 120000
 --mcp-url URL            Original MCP endpoint for the complete resumable download
 --mcp-token-env NAME      MCP token variable, defaults to --token-env
 --directory DIRECTORY    Original empty/private resumable package destination

@@ -3,6 +3,7 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { readCapturedApi } from './workspace.mjs';
+import { reviewCapturedDraftMerge, createCapturedWorkingEdit, readCapturedWorkingEdit } from './draft-reconciliation.mjs';
 import {
   CAPTURED_HANDOVER_REQUEST_SCHEMA, inventoryCapturedHandover, prepareCapturedHandover,
   publishCapturedHandover, inspectCapturedHandover, reviewCapturedHandoverReceive,
@@ -20,6 +21,9 @@ const DRAFT = 'stellar-forge.captured-handover-draft.v1';
 const EDITION = 'stellar-forge.captured-handover-draft-edition.v1';
 const JOB = 'stellar-forge.captured-handover-browser-job.v1';
 const RESULT = 'stellar-forge.captured-handover-browser-result.v1';
+const MERGE_REVIEW = 'stellar-forge.captured-draft-review.v1';
+const MERGE_SAVE = 'stellar-forge.captured-draft-save.v1';
+const WORKING_LIMIT = 4*1024*1024;
 const failure = (code,message,status=400) => Object.assign(new Error(message),{code,status});
 const need = (condition,code,message,status=400) => {if(!condition)throw failure(code,message,status);};
 const copy = value => JSON.parse(JSON.stringify(value));
@@ -76,6 +80,19 @@ function form(kind,value) {
     Object.entries(names).every(([key,value])=>key.length<=64 && typeof value==='string' && value.length<=64),
     'CAPTURED_DESK_NAMES','Map the original merchant names to their receiving names.');
   return {label,bundle,manifestSha256,names:copy(names)};
+}
+function mergeInput(value,{save=false}={}) {
+  const required=['id','baseRevision','working'];
+  const allowed=[...required,'resolutions',...(save?['requestId','expectedRevision','reviewSha256']:['expectedCurrentRevision'])];
+  exact(value,allowed,save?[...required,'requestId','expectedRevision','reviewSha256']:required);
+  id(value.id);hash(value.baseRevision);
+  if(save){id(value.requestId);hash(value.expectedRevision);hash(value.reviewSha256);}
+  else if(value.expectedCurrentRevision!==undefined)hash(value.expectedCurrentRevision);
+  const resolutions=value.resolutions??{};
+  need(plain(resolutions)&&Object.keys(resolutions).length<=3002&&
+    Object.values(resolutions).every(choice=>choice==='CURRENT'||choice==='WORKING'),
+    'CAPTURED_DESK_MERGE_CHOICES','Choose current or working for each displayed draft conflict.');
+  return copy({...value,resolutions});
 }
 function paging(value={}) {
   const limit=Number(value.limit ?? 25),offset=Number(value.offset ?? 0);
@@ -199,23 +216,124 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   async function saveDraft(value) {
     exact(value,['id','requestId','expectedRevision','form'],['id','requestId','expectedRevision','form']);
     id(value.id);id(value.requestId);hash(value.expectedRevision);
+    let resultMayExist=false;
     return inDraft(value.id,async root=>{
       await finishInitialDraft(root,await draftMetadata(root,value.id));
       const current=await readDraftRaw({id:value.id}),selectedForm=form(current.kind,value.form);
       const old=await readJSON(root,'records/'+value.requestId+'.json',true);
       if(old) {
-        need(old.schema===EDITION&&old.draftId===value.id&&old.previousRevision===value.expectedRevision&&
+        need(old.schema===EDITION&&old.reconciliation===undefined&&old.draftId===value.id&&old.previousRevision===value.expectedRevision&&
           canonical(old.form)===canonical(selectedForm),'CAPTURED_DESK_REQUEST_CHANGED',
           'This save identifier already belongs to another complete draft edit.',409);
+        resultMayExist=true;
         return readDraftRaw({id:value.id,revision:digest(encode(old))});
       }
       need(current.currentRevision===value.expectedRevision,'CAPTURED_DESK_DRAFT_CHANGED',
         'Another draft edit is saved. Compare that edition while keeping this form.',409);
-      const edition={schema:EDITION,draftId:value.id,requestId:value.requestId,kind:current.kind,
-        sequence:current.edition.sequence+1,previousRevision:value.expectedRevision,
-        createdAt:new Date().toISOString(),form:selectedForm};
-      await publishJSON(root,'records/'+value.requestId+'.json',edition);
-      return readDraftRaw({id:value.id,revision:digest(encode(edition))});
+      resultMayExist=true;
+      return writeDraftEdition(root,current,value,selectedForm);
+    }).catch(error=>{if(resultMayExist)error.outcomeUnknown=true;throw error;});
+  }
+  // Publication and writer release can fail after the immutable edition exists.
+  // Keep that request recoverable until its original result is read successfully.
+  async function writeDraftEdition(root,current,value,selectedForm,reconciliation) {
+    const edition={schema:EDITION,draftId:value.id,requestId:value.requestId,kind:current.kind,
+      sequence:current.edition.sequence+1,previousRevision:value.expectedRevision,
+      createdAt:new Date().toISOString(),form:selectedForm,...(reconciliation?{reconciliation}:{})};
+    await publishJSON(root,'records/'+value.requestId+'.json',edition);
+    return readDraftRaw({id:value.id,revision:digest(encode(edition))});
+  }
+  async function buildDraftReview(value) {
+    // Call only while this draft's original writer is held. Both editions are
+    // resolved from the same complete immutable chain, never a caller's base.
+    const current=await readDraftRaw({id:value.id});
+    if(value.expectedCurrentRevision!==undefined)
+      need(current.currentRevision===value.expectedCurrentRevision,'CAPTURED_DESK_DRAFT_CHANGED',
+        'The current draft advanced during reconciliation. Review the new edition with this retained working edit.',409);
+    const base=await readDraftRaw({id:value.id,revision:value.baseRevision});
+    const working=form(current.kind,value.working),resolutions=copy(value.resolutions??{});
+    const merge=reviewCapturedDraftMerge({kind:current.kind,base:base.edition.form,
+      current:current.edition.form,working,resolutions});
+    const binding={schema:MERGE_REVIEW,productId:inputHash(product),id:value.id,kind:current.kind,
+      baseRevision:base.revision,currentRevision:current.revision,
+      baseSequence:base.edition.sequence,currentSequence:current.edition.sequence,
+      base:base.edition.form,current:current.edition.form,working,resolutions,merge};
+    return {...binding,reviewSha256:inputHash(binding)};
+  }
+  async function reviewDraftMerge(value) {
+    value=mergeInput(value);
+    return inDraft(value.id,async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,value.id));
+      return buildDraftReview(value);
+    });
+  }
+  async function saveDraftMerge(value) {
+    value=mergeInput(value,{save:true});
+    let resultMayExist=false;
+    return inDraft(value.id,async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,value.id));
+      const meta=await draftMetadata(root,value.id);
+      value={...value,working:form(meta.kind,value.working)};
+      const requestSha256=inputHash(value),old=await readJSON(root,'records/'+value.requestId+'.json',true);
+      // Resolve the original save before inspecting a later current edition or
+      // recomputing a review. Lost replies retain their first immutable result.
+      if(old) {
+        need(old.schema===EDITION&&old.draftId===value.id&&old.requestId===value.requestId&&
+          old.previousRevision===value.expectedRevision&&old.reconciliation?.schema===MERGE_SAVE&&
+          old.reconciliation.requestSha256===requestSha256,
+          'CAPTURED_DESK_REQUEST_CHANGED','This original save identifier belongs to another complete edit or review.',409);
+        resultMayExist=true;
+        return readDraftRaw({id:value.id,revision:digest(encode(old))});
+      }
+      const review=await buildDraftReview({id:value.id,baseRevision:value.baseRevision,
+        expectedCurrentRevision:value.expectedRevision,working:value.working,resolutions:value.resolutions});
+      need(review.reviewSha256===value.reviewSha256,'CAPTURED_DESK_REVIEW_CHANGED',
+        'Save the exact complete reconciliation that was reviewed.',409);
+      need(review.merge.status==='READY','CAPTURED_DESK_MERGE_CONFLICTS',
+        'Choose current or working for every displayed conflict before saving this edition.',409);
+      const current=await readDraftRaw({id:value.id});
+      resultMayExist=true;
+      return writeDraftEdition(root,current,value,form(current.kind,review.merge.form),{
+        schema:MERGE_SAVE,baseRevision:value.baseRevision,reviewSha256:review.reviewSha256,requestSha256,
+      });
+    }).catch(error=>{if(resultMayExist)error.outcomeUnknown=true;throw error;});
+  }
+  async function exportWorkingEdit(value) {
+    exact(value,['id','baseRevision','working'],['id','baseRevision','working']);
+    id(value.id);hash(value.baseRevision);value=copy(value);
+    return inDraft(value.id,async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,value.id));
+      const base=await readDraftRaw({id:value.id,revision:value.baseRevision});
+      const packet=createCapturedWorkingEdit({productId:inputHash(product),draftId:value.id,kind:base.kind,
+        baseRevision:base.revision,base:base.edition.form,working:form(base.kind,value.working)});
+      const encoded=encode(packet);
+      need(encoded.length<=WORKING_LIMIT,'CAPTURED_DESK_WORKING_LIMIT',
+        'The complete working edit file exceeds the 4 MiB portable edit limit.',413);
+      return {schema:'stellar-forge.captured-working-export.v1',productId:inputHash(product),
+        id:value.id,baseRevision:base.revision,name:'captured-working-'+value.id+'.json',
+        bytes:encoded.length,sha256:digest(encoded),content:encoded.toString('utf8')};
+    });
+  }
+  async function importWorkingEdit(value) {
+    exact(value,['content','expectedSha256'],['content']);
+    need(typeof value.content==='string','CAPTURED_DESK_WORKING_FILE','Read the complete original working edit JSON file.');
+    const encoded=Buffer.from(value.content,'utf8');
+    need(encoded.length>0&&encoded.length<=WORKING_LIMIT,'CAPTURED_DESK_WORKING_LIMIT',
+      'Choose a complete working edit file of at most 4 MiB.',413);
+    const sha256=digest(encoded);
+    if(value.expectedSha256!==undefined)
+      need(hash(value.expectedSha256)===sha256,'CAPTURED_DESK_WORKING_CHANGED','The selected original working edit bytes changed.',409);
+    const packet=readCapturedWorkingEdit(decode(encoded));
+    need(packet.productId===inputHash(product),'CAPTURED_DESK_PRODUCT_CHANGED',
+      'Open this working edit in its original captured product.',409);
+    return inDraft(packet.draftId,async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,packet.draftId));
+      const base=await readDraftRaw({id:packet.draftId,revision:packet.baseRevision});
+      need(packet.kind===base.kind&&canonical(packet.base)===canonical(base.edition.form),
+        'CAPTURED_DESK_WORKING_BASE','The working edit must retain the exact original saved draft base.',409);
+      return {schema:'stellar-forge.captured-working-import.v1',productId:inputHash(product),
+        id:packet.draftId,kind:packet.kind,baseRevision:packet.baseRevision,bytes:encoded.length,sha256,
+        working:form(base.kind,packet.working),draft:base};
     });
   }
   async function listDrafts(value={}) {
@@ -492,6 +610,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
       productId:inputHash(product),directory:profile.directory,projectsDirectory:profile.projectsDirectory,
       state:stopping?'DRAINING':'OPEN',activeJobs:[...activeJobs.keys()]}),
     inventory:()=>inventoryCapturedHandover({directory:profile.directory}),
-    createDraft,readDraft,saveDraft,listDrafts,startJob,resumeJob,readJob,listJobs,jobDocument,receivedOperations,listUploads,
+    createDraft,readDraft,saveDraft,reviewDraftMerge,saveDraftMerge,exportWorkingEdit,importWorkingEdit,
+    listDrafts,startJob,resumeJob,readJob,listJobs,jobDocument,receivedOperations,listUploads,
   };
 }

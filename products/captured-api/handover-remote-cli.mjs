@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // MIT. The same retained captured handover operations from an ordinary terminal.
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readHarWorkspaceConfiguration } from '../../stellar-forge/mcp-merchant-operator/har-workspace.mjs';
 import { readSf61HostFile, sf61Hash } from '../../stellar-forge/mcp-merchant-operator/sf61-connection.mjs';
 import { MerchantCapturedHandovers } from './handover-agent.mjs';
 import { openCapturedHandoverClient } from './handover-client.mjs';
 import { openCapturedHandoverArchive } from './handover-archive.mjs';
+import { readCapturedWorkingEdit } from './draft-reconciliation.mjs';
 import { capturedHandoverTools, HANDOVER_SHA, HANDOVER_UUID } from './handover-catalog.mjs';
-import { canonical, decode, exact, operation, requireEmptyOperation, publishJSON, readJSON } from './handover-files.mjs';
+import { canonical, decode, exact, operation, requireEmptyOperation, publishJSON, publishBytes, readJSON, bytes } from './handover-files.mjs';
 
 const REQUEST='stellar-forge.captured-handover-command.v1';
 const OPERATION='stellar-forge.captured-handover-terminal-operation.v1';
@@ -37,6 +38,15 @@ const HELP=String.raw`Captured handover agent and terminal
       --job ORIGINAL_PUBLISH_UUID --file-sha256 ORIGINAL_SHA --file-bytes ORIGINAL_BYTES
       --directory PRIVATE_FILE_DIRECTORY [--download-id RETAINED_DOWNLOAD_UUID]
       [--result PRIVATE_RESULT_DIRECTORY]
+  starforge captured-api handover remote working-export
+      --connection ORIGINAL_HAR_CONNECTION.json
+      --workspace ORIGINAL_ALIAS --product ORIGINAL_PRODUCT_SHA
+      --draft ORIGINAL_DRAFT_UUID --base ORIGINAL_BASE_SHA
+      --form COMPLETE_WORKING_FORM.json --directory PRIVATE_EXPORT_DIRECTORY
+  starforge captured-api handover remote working-import
+      --connection ORIGINAL_HAR_CONNECTION.json
+      --workspace ORIGINAL_ALIAS --product ORIGINAL_PRODUCT_SHA
+      --file ORIGINAL_WORKING_EDIT.json --directory PRIVATE_IMPORT_DIRECTORY
   starforge captured-api handover remote wait
       --connection ORIGINAL_HAR_CONNECTION.json
       --workspace ORIGINAL_ALIAS --product ORIGINAL_PRODUCT_SHA
@@ -61,6 +71,12 @@ Transfer and upload finish the original whole archive before IMPORT. Download
 uses the same native resumable upload writer in the selected local directory.
 wait reads the same native job until COMPLETE, INTERRUPTED or its time limit;
 it never changes or restarts that job.
+
+working-export publishes the exact full working-edit file and its native export.
+working-import retains that original file, native base verification, complete working
+form and a ready merge-review command. Both reuse their original private directory
+and completed native reply when reopened. Continue merge_review and merge_save
+through call with the same complete reviewed fields and original request UUID.
 
 See products/captured-api/AGENT.md for the whole reviewed collection, transfer,
 receiving and reopen workflow, including typed client examples.
@@ -110,27 +126,34 @@ async function withClient(config,workspace,expectedProductId,work) {
     catch(error){if(issue)issue.closeError=error;else throw error;}
   }
 }
-async function retained(directory,request,work,{reopen}={}) {
+async function retained(directory,request,work,{reopen,prepare}={}) {
   if(!directory)return work();
-  const record={schema:OPERATION,requestSha256:sf61Hash(Buffer.from(canonical(request))),request};
   return operation(resolve(directory),async root=>{
     await requireEmptyOperation(root,'operation.json');
+    if(prepare) {
+      const original=await readJSON(root,'operation.json',true);
+      if(original&&(original.schema!==OPERATION||
+        original.requestSha256!==sf61Hash(Buffer.from(canonical(original.request)))))
+        throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the original complete terminal operation.');
+      request=await prepare(root,original?.request);
+    }
+    const record={schema:OPERATION,requestSha256:sf61Hash(Buffer.from(canonical(request))),request};
     await publishJSON(root,'operation.json',record);
     const saved=await readJSON(root,'received.json',true);
     if(saved) {
       if(saved.schema!==RESULT||saved.requestSha256!==record.requestSha256)
         throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the original command result directory.');
-      if(reopen)await reopen(saved.result);
+      if(reopen)await reopen(saved.result,root);
       return saved.result;
     }
-    const result=await work();
+    const result=await work(root);
     await publishJSON(root,'received.json',{schema:RESULT,requestSha256:record.requestSha256,result});
     return result;
   },{create:true});
 }
 async function runCall(values) {
   const path=resolve(values.get('--request'));
-  const original=await readSf61HostFile(path,1024*1024,{privateFile:true}),request=decode(original);
+  const original=await readSf61HostFile(path,8*1024*1024,{privateFile:true}),request=decode(original);
   exact(request,['schema','tool','arguments'],['schema','tool','arguments']);
   if(request.schema!==REQUEST||typeof request.tool!=='string'||!request.tool.startsWith('merchant_handover_'))
     throw failure('CAPTURED_HANDOVER_ARGUMENTS','Use an original captured handover command document.');
@@ -197,6 +220,91 @@ async function runFile(command,values) {
     try{await original.assertHeld();}finally{await original.close();}
   }:undefined});
 }
+async function runWorking(command,values) {
+  const connection=resolve(values.get('--connection')),workspace=values.get('--workspace');
+  const productId=checked(values.get('--product'),HANDOVER_SHA,'product identity');
+  const directory=resolve(values.get('--directory')),sourcePath=resolve(values.get(command==='working-export'?'--form':'--file'));
+  const selection={command,connection,workspace,productId,sourcePath,...(command==='working-export'?{
+    id:checked(values.get('--draft'),HANDOVER_UUID,'draft UUID'),
+    baseRevision:checked(values.get('--base'),HANDOVER_SHA,'original draft base SHA-256'),
+  }:{})};
+  let source,input;
+  async function prepare(root,original) {
+    if(original) {
+      const selected=Object.fromEntries(Object.keys(selection).map(key=>[key,original[key]]));
+      if(canonical(selected)!==canonical(selection)||typeof original.sourceContent!=='string')
+        throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Use this directory’s original working-edit command and selected file.');
+    }
+    try {source=await readSf61HostFile(sourcePath,4*1024*1024,{privateFile:command==='working-export'});}
+    catch(error) {
+      if(error.code!=='ENOENT'||!original)throw error;
+      source=Buffer.from(original.sourceContent,'utf8');
+    }
+    const sourceContent=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(source);
+    input={...selection,sourceSha256:sf61Hash(source),sourceBytes:source.length,sourceContent};
+    if(command==='working-export')input.working=decode(source);
+    else {
+      const packet=readCapturedWorkingEdit(decode(source));
+      if(packet.productId!==productId)
+        throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Read the working edit in its original captured product.');
+    }
+    if(original&&canonical(input)!==canonical(original))
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The selected file changed. Use the original file or a new working-edit directory.');
+    return input;
+  }
+  function validate(native) {
+    if(native.productId!==productId)
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the original captured product working-edit operation.');
+    if(command==='working-export') {
+      const encoded=Buffer.from(native.content??'','utf8');
+      if(native.schema!=='stellar-forge.captured-working-export.v1'||native.id!==input.id||
+        native.baseRevision!==input.baseRevision||native.bytes!==encoded.length||native.sha256!==sf61Hash(encoded))
+        throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the complete original working-edit export.');
+      return encoded;
+    }
+    if(native.schema!=='stellar-forge.captured-working-import.v1'||native.sha256!==input.sourceSha256||
+      native.bytes!==input.sourceBytes||!native.working||!HANDOVER_UUID.test(native.id??'')||
+      !HANDOVER_SHA.test(native.baseRevision??''))
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen the complete original working-edit import.');
+    return source;
+  }
+  async function publish(root,native) {
+    await publishBytes(root,'working-edit.json',validate(native));
+    if(command==='working-import') {
+      await publishJSON(root,'working-form.json',native.working);
+      await publishJSON(root,'merge-review-command.json',{schema:REQUEST,tool:'merchant_handover_merge_review',
+        arguments:{workspace,expectedProductId:productId,id:native.id,baseRevision:native.baseRevision,
+          working:native.working,view:'conflicts',offset:0,limit:100}});
+    }
+  }
+  return retained(directory,selection,async root=>{
+    let native=await readJSON(root,'native-working.json',true);
+    if(!native) {
+      native=await withClient(await configuration(connection),workspace,productId,client=>command==='working-export'
+        ?client.exportWorkingEdit({id:input.id,baseRevision:input.baseRevision,working:input.working})
+        :client.importWorkingEdit({content:source.toString('utf8'),expectedSha256:input.sourceSha256}));
+      validate(native);await publishJSON(root,'native-working.json',native);
+    }
+    await publish(root,native);
+    return {workspace,productId,command,directory,id:native.id,baseRevision:native.baseRevision,
+      bytes:native.bytes,sha256:native.sha256,workingFile:join(root,'working-edit.json'),
+      nativeFile:join(root,'native-working.json'),
+      ...(command==='working-import'?{formFile:join(root,'working-form.json'),
+        reviewCommandFile:join(root,'merge-review-command.json')}:{})};
+  },{prepare,reopen:async(saved,root)=>{
+    const native=await readJSON(root,'native-working.json');
+    validate(native);
+    if(saved.command!==command||saved.productId!==productId||saved.workingFile!==join(root,'working-edit.json')||
+      saved.id!==native.id||saved.baseRevision!==native.baseRevision||saved.sha256!==native.sha256||saved.bytes!==native.bytes)
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','Reopen this original complete working-edit directory.');
+    // The first verified native reply retains complete file bytes. Publication
+    // recovery finishes only those same files, even after the original host stops.
+    await publish(root,native);
+    const complete=await bytes(root,'working-edit.json',4*1024*1024);
+    if(complete.length!==native.bytes||sf61Hash(complete)!==native.sha256)
+      throw failure('CAPTURED_HANDOVER_RESULT_CHANGED','The retained original working-edit file changed.');
+  }});
+}
 async function waitJob(values) {
   const id=checked(values.get('--job'),HANDOVER_UUID,'job UUID');
   const requestSha256=checked(values.get('--request-sha256'),HANDOVER_SHA,'job request SHA-256');
@@ -236,6 +344,10 @@ export async function runCapturedHandoverRemoteCLI(args=process.argv.slice(2)) {
       :command==='upload'?['--file','--upload-id']:['--job','--directory'];
     result=await runFile(command,options(rest,[...common,...extra,'--result',
       ...(command==='download'?['--download-id']:[])],[...common,...extra]));
+  } else if(['working-export','working-import'].includes(command)) {
+    const common=['--connection','--workspace','--product','--directory'];
+    const extra=command==='working-export'?['--draft','--base','--form']:['--file'];
+    result=await runWorking(command,options(rest,[...common,...extra],[...common,...extra]));
   } else if(command==='wait') {
     const required=['--connection','--workspace','--product','--job','--request-sha256'];
     result=await waitJob(options(rest,[...required,'--wait-ms','--interval-ms'],required));

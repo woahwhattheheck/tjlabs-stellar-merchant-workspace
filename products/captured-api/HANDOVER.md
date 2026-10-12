@@ -569,3 +569,22 @@ whole source-to-receiver transfer, local file download/upload and exact job
 waiting. The [complete agent walkthrough](AGENT.md) follows original package
 and source selections through native review/publication, the complete archive,
 receiving name review, original receive and merchant reopen.
+
+## Combine independent draft edits before delivery
+
+The original immutable draft history now supports a complete collaboration
+review. **Compare and combine current draft** combines independent package,
+source-review and name-map edits with the current saved edition. Explicit
+current/working choices resolve conflicting changes and complete receiving
+source changes. The exact reviewed form saves as another original edition.
+
+Use **Export working edit** and **Review selected working file** to share a
+complete edit with another operator of the original product and draft. Working
+files keep their full base and intended form; their native reader verifies
+the selected history before comparison. The original package and source
+handover remains the complete file-delivery path between products.
+
+The [collaboration guide](COLLABORATION.md) follows this through retained
+browser reviews, four native merchant tools, typed APIs, terminal file
+publication and exact saved-request recovery. Continue PREPARE or the receiving
+review with the returned saved draft revision.

@@ -6,7 +6,7 @@ original native jobs, exact archive bytes and receiving operations. A completed
 transfer contains the selected merchant packages, source captures, both members
 of each refresh, and all retained immutable reviews.
 
-The nineteen `merchant_handover_*` tools are a source-owned companion of the
+The twenty-three `merchant_handover_*` tools are a source-owned companion of the
 existing HAR workspace connection. Existing product setup and connection files
 remain the starting point. The browser, agent, terminal and native handover CLI
 all reach the original compilers and state writers.
@@ -368,7 +368,7 @@ try {
 
 The typed agent class accepts the existing
 `{harWorkspaces: parsedOriginalConnection}` configuration and exposes the same
-nineteen typed `call(name, arguments)` operations. Its declaration keeps the
+twenty-three typed `call(name, arguments)` operations. Its declaration keeps the
 discriminated native job requests and complete selection fields.
 
 ## Retained state and recovery
@@ -390,3 +390,21 @@ projections of those same records. The authenticated archive endpoint shares
 the browser's original held-file Range sender and checks the selected product
 and exact COMPLETE PUBLISH file. Native package and source receivers remain the
 final writers throughout this workflow.
+
+## Reconcile collaborative draft editions
+
+The same companion provides **merchant_handover_merge_review**,
+**merchant_handover_merge_save**, **merchant_handover_working_export** and
+**merchant_handover_working_import**. A complete working form is compared with
+its original base and the current saved edition. Review paged conflicts and
+changes, choose CURRENT or WORKING explicitly where needed, and save the exact
+READY review with its original request UUID.
+
+The existing typed client exposes matching reviewDraftMerge, saveDraftMerge,
+exportWorkingEdit and importWorkingEdit methods. The terminal adds
+**working-export** and **working-import**, retaining exact whole edit files,
+native replies, complete working forms and a prepared original review command.
+
+[COLLABORATION.md](COLLABORATION.md) contains the full source-bound browser,
+agent, typed and terminal walkthrough, including later-edition/restart
+recovery and the continuation into the original package/receiving jobs.

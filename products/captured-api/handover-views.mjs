@@ -88,3 +88,23 @@ export function capturedHandoverJobPage(native,value={}) {
     fail('Use the original document tool for published collection rows, or a receiving job for result rows.');
   return {...base,...page(rows,input,identity)};
 }
+
+/** Every page stays bound to the same full original base/current/form/choice review. */
+export function capturedDraftReviewPage(native,value={}) {
+  const input=selected(value,['summary','conflicts','changes','form'],'summary');
+  if(native.schema!=='stellar-forge.captured-draft-review.v1'||!HASH.test(native.reviewSha256??'')||
+    !Array.isArray(native.merge?.conflicts)||!Array.isArray(native.merge?.changes))
+    fail('Read the complete original draft reconciliation.');
+  const identity=native.reviewSha256;checked(identity,input);
+  const base={schema:native.schema,productId:native.productId,id:native.id,kind:native.kind,
+    baseRevision:native.baseRevision,currentRevision:native.currentRevision,
+    baseSequence:native.baseSequence,currentSequence:native.currentSequence,
+    reviewSha256:identity,snapshot:identity,view:input.view,status:native.merge.status,
+    conflicts:native.merge.conflicts.length,
+    unresolved:native.merge.conflicts.filter(row=>!row.choice).length,
+    changes:native.merge.changes.length,resolutions:copy(native.resolutions),
+    working:formSummary(native.working),form:formSummary(native.merge.form)};
+  if(input.view==='summary')return base;
+  if(input.view==='form')return {...base,form:copy(native.merge.form)};
+  return {...base,...page(native.merge[input.view],input,identity)};
+}

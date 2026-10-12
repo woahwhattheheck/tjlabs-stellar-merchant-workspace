@@ -1,5 +1,5 @@
 // MIT. Typed consumer of the original Console recipe, workflow and customer APIs.
-import { open, link, unlink, realpath } from 'node:fs/promises';
+import { open, link, unlink, realpath, lstat, readdir } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { resolve, dirname, basename, join } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
@@ -23,11 +23,46 @@ const need = (value, message, code = 'OPENAPI_WORKFLOW_INPUT') => {
   if (!value) throw fail(code, message, 400);
 };
 const privateError = () => fail('OPENAPI_WORKFLOW_FILE', 'Select a private regular output file in an existing private directory.', 400);
-async function fileHash(path) {
+async function recoverCompletedLink(path, handle, info) {
+  const parent = dirname(path), prefix = '.' + basename(path) + '.pending-';
+  const matches = [];
+  for (const name of await readdir(parent)) {
+    if (!name.startsWith(prefix) || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(name.slice(prefix.length))) continue;
+    const candidate = join(parent, name);
+    let current; try { current = await lstat(candidate); }
+    catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+    if (current.dev === info.dev && current.ino === info.ino) matches.push(candidate);
+  }
+  const final = await lstat(path), current = await handle.stat();
+  if (!final.isFile() || final.isSymbolicLink() || final.dev !== info.dev || final.ino !== info.ino) throw privateError();
+  if (current.nlink === 1) return;
+  if (current.nlink !== 2 || matches.length !== 1) throw privateError();
+  const pending = matches[0], owned = await lstat(pending).catch(error => {
+    if (error.code === 'ENOENT') return null; throw error;
+  });
+  if (!owned) { if ((await handle.stat()).nlink === 1) return; throw privateError(); }
+  if (!owned.isFile() || owned.isSymbolicLink() || owned.dev !== info.dev || owned.ino !== info.ino ||
+      process.platform !== 'win32' && (owned.mode & 0o077)) throw privateError();
+  const directory = await open(parent, constants.O_RDONLY);
+  try {
+    await directory.sync();
+    const selected = await lstat(pending).catch(error => {
+      if (error.code === 'ENOENT') return null; throw error;
+    });
+    if (selected) {
+      if (selected.dev !== info.dev || selected.ino !== info.ino) throw privateError();
+      await unlink(pending).catch(error => { if (error.code !== 'ENOENT') throw error; });
+    }
+    await directory.sync();
+  } finally { await directory.close(); }
+  if ((await handle.stat()).nlink !== 1) throw privateError();
+}
+async function fileHash(path, expected) {
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const info = await handle.stat();
-    if (!info.isFile() || info.nlink !== 1 || process.platform !== 'win32' && (info.mode & 0o077)) throw privateError();
+    if (!info.isFile() || ![1, 2].includes(info.nlink) || process.platform !== 'win32' && (info.mode & 0o077) ||
+        process.getuid && info.uid !== process.getuid()) throw privateError();
     const hash = createHash('sha256'), buffer = Buffer.alloc(65536);
     let bytes = 0;
     while (bytes < info.size) {
@@ -37,7 +72,10 @@ async function fileHash(path) {
     }
     const after = await handle.stat();
     if (after.size !== info.size || after.mtimeMs !== info.mtimeMs) throw privateError();
-    return { bytes, sha256: hash.digest('hex') };
+    const result = { bytes, sha256: hash.digest('hex') };
+    if (expected.bytes === result.bytes && expected.sha256 === result.sha256 && after.nlink === 2)
+      await recoverCompletedLink(path, handle, info);
+    return result;
   } finally { await handle.close(); }
 }
 /** Publish one complete output only after its original bytes have been synced. */
@@ -61,7 +99,7 @@ async function retainOutput(path, write) {
     try { await link(temporary, path); }
     catch (error) {
       if (error.code !== 'EEXIST') throw error;
-      const original = await fileHash(path);
+      const original = await fileHash(path, summary);
       if (original.bytes !== summary.bytes || original.sha256 !== summary.sha256)
         throw fail('OPENAPI_WORKFLOW_OUTPUT_CONFLICT', 'This output name retains different complete bytes. Choose another name.', 409);
       state = 'REOPENED';
@@ -102,7 +140,7 @@ export class OpenApiWorkflowClient {
       environment[tokenEnv].length >= 24 && !/[^\x21-\x7e]/.test(environment[tokenEnv]),
       'Use the existing Console bearer-token environment variable.', 'OPENAPI_CONSOLE_CONNECTION');
     need(Number.isSafeInteger(maximumResponseBytes) && maximumResponseBytes >= 1024 && maximumResponseBytes <= 128 * 1024 * 1024,
-      'Choose a complete response capacity from1024bytes to128MiB.');
+      'Choose a complete response capacity from 1024 bytes to 128 MiB.');
     this.#base = new URL('/operator/api/', parsed); this.#token = environment[tokenEnv];
     this.#signal = signal; this.#maximum = maximumResponseBytes;
   }
@@ -270,7 +308,7 @@ export class OpenApiWorkflowClient {
       await delay(pollMs, undefined, { signal: signal ?? this.#signal });
     }
   }
-  async downloadPackage(runId, options) {
+  async downloadPackage(runId, options = {}) {
     const selected = await this.exportedPackage(runId);
     if (options.expectedManifestSha256 !== undefined)
       need(options.expectedManifestSha256 === selected.expectedManifestSha256, 'The receiving command selected another export manifest.');
@@ -301,7 +339,7 @@ export class OpenApiWorkflowClient {
         const hash = createHash('sha256'); let bytes = 0;
         for await (const chunk of response.body) {
           bytes += chunk.length;
-          if (bytes > 130 * 1024 * 1024) throw fail('OPENAPI_WORKFLOW_ARCHIVE_SIZE', 'The complete archive exceeds the original128MiB package capacity.');
+          if (bytes > 130 * 1024 * 1024) throw fail('OPENAPI_WORKFLOW_ARCHIVE_SIZE', 'The complete archive exceeds the original 128 MiB package capacity.');
           hash.update(chunk); await handle.writeFile(chunk);
         }
         return { bytes, sha256: hash.digest('hex'), exportId: record.identity.exportId,
