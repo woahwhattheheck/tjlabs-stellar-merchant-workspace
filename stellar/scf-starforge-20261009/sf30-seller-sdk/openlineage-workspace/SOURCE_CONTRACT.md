@@ -200,3 +200,13 @@ owned directory; repeat that same directory to continue an interrupted stage.
 The OpenLineage originals are Apache-2.0 licensed. OPENLINEAGE_LICENSE contains
 the unchanged upstream license. The application and its own operating programme
 are MIT licensed under LICENSE.
+
+## Saved schema operations
+
+The schema-domain.mjs module compares original projected facets.schema records between two immutable named editions. Every field retains its producer path, original position and metadata; repeated identities and malformed records remain inspectable. A comparison records the original schema event and source location selected within each edition, plus existing explicit and column lineage edges. Original type strings and facet schema URLs remain source facts.
+
+The schema-workflow.mjs module records selected changes, reviewer, decision, reason, assignment, resolution and original evidence through LineageWorkspace.change. Existing operation IDs replay before revision admission. Review updates preserve the original selection and ordered previous versions. Event evidence can retain its original source-location subset when later imports supply another identical event.
+
+The schema-ui.js module participates in the original IndexedDB request journal. A review form binds to its opening revision. A background refresh cannot silently change that write base. The complete pending request remains available through original recovery and explicit reviewed-revision application.
+
+Portable application edition3 adds schema source and complete schema comparisons/reviews. Receiving reconstructs all original events first and then recomputes each retained comparison and validates each staff version and evidence selection. Original application editions1 and2 retain their exact earlier inventories.

@@ -14,7 +14,13 @@ const HELP = [
   "",
   "  scf-lineage init --workspace DIR [--title TITLE]",
   "  scf-lineage serve --workspace DIR [--host 127.0.0.1] [--port 8767] [--token-file FILE] [--producer-token-file FILE]",
+  "  scf-lineage producer status|profiles|connection --connection HOST_JSON --workspace ALIAS",
+  "  scf-lineage producer configure --connection HOST_JSON --workspace ALIAS --profile PROFILE",
+  "  scf-lineage producer emit --connection HOST_JSON --workspace ALIAS --input INPUT_ALIAS --sha SHA256 --operation-id ID [--content-encoding identity|gzip] [--revision N]",
+  "  scf-lineage producer reconnect --connection HOST_JSON --workspace ALIAS --instance INSTANCE_UUID",
   "  scf-lineage producer-config --connection FILE --out NEW_FILE [--token-file FILE] [--client python|java] [--compression gzip|identity] [--timeout SECONDS]",
+  "  scf-lineage native-python emit|resume|status --directory DIR [--python EXECUTABLE] ...",
+  "  scf-lineage native-java prepare|emit --runtime DIR ...",
   "  scf-lineage import --workspace DIR --input EVENTS [--name NAME] [--source URL] --operation-id ID [--revision N] [--content-encoding identity|gzip]",
   "  scf-lineage status --workspace DIR [--edition ID]",
   "  scf-lineage action ACTION --workspace DIR --input ARGUMENTS.json",
@@ -23,6 +29,10 @@ const HELP = [
   "  scf-lineage attach --workspace DIR --input RESULT --binding BINDING.json",
   "  scf-lineage export --workspace DIR --out FILE",
   "  scf-lineage report --workspace DIR --format json|csv|html --out FILE [--edition ID]",
+  "  scf-lineage schema-compare --workspace DIR --from EDITION --to EDITION",
+  "  scf-lineage schema-impact --workspace DIR --input SELECTION.json",
+  "  scf-lineage schema-review --workspace DIR --input REVIEW.json",
+  "  scf-lineage schema-report --workspace DIR --from EDITION --to EDITION --format json|csv|html --out FILE",
   "  scf-lineage source --workspace DIR --id SHA256 --out FILE",
   "  scf-lineage verify --input PACKAGE",
   "  scf-lineage receive --input PACKAGE --out NEW_DIRECTORY",
@@ -56,7 +66,39 @@ const print = value => console.log(JSON.stringify(value, null, 2));
 export async function main(argv = process.argv.slice(2)) {
   const args = [...argv], command = args.shift();
   if (!command || ["help", "--help", "-h"].includes(command)) { console.log(HELP); return 0; }
+  if (command === "native-python") return (await import("./native-producer.mjs")).pythonProducerCommand(args);
+  if (command === "native-java") {
+    print(await (await import("./JAVA_PRODUCER.mjs")).javaProducerCommand(args)); return 0;
+  }
   const { result: options, positional } = parse(args);
+  if (command === "producer") {
+    if (positional.length !== 1) throw new Error("Choose one producer action: status, profiles, configure, emit, connection or reconnect");
+    const selected = positional[0], allowed = {
+      status: [], profiles: [], configure: ["profile"], emit: ["input", "sha", "operation-id", "content-encoding", "revision", "source"],
+      connection: [], reconnect: ["instance"]
+    };
+    if (!Object.hasOwn(allowed, selected)) throw new Error("Unknown producer action");
+    check(options, ["connection", "workspace", ...allowed[selected]]);
+    const { readLineageWorkspaceConfiguration } = await import("./mcp-client.mjs");
+    const { MerchantOpenLineageWorkspaces } = await import("./mcp.mjs");
+    const configuration = await readLineageWorkspaceConfiguration(need(options.connection, "--connection"));
+    const owner = new MerchantOpenLineageWorkspaces({ openlineageWorkspaces: configuration });
+    const input = { workspace: need(options.workspace, "--workspace") };
+    if (selected === "configure") input.profile = need(options.profile, "--profile");
+    if (selected === "reconnect") input.expectedInstanceId = need(options.instance, "--instance");
+    if (selected === "emit") Object.assign(input, {
+      input: need(options.input, "--input"), expectedSha256: need(options.sha, "--sha"),
+      operationId: need(options["operation-id"], "--operation-id"),
+      ...(options["content-encoding"] === undefined ? {} : { contentEncoding: options["content-encoding"] }),
+      ...(options.revision === undefined ? {} : { expectedRevision: Number(options.revision) }),
+      ...(options.source === undefined ? {} : { sourceUrl: options.source })
+    });
+    const tool = { status: "merchant_lineage_producer_status", profiles: "merchant_lineage_producer_profiles",
+      configure: "merchant_lineage_producer_configure", emit: "merchant_lineage_emit_file",
+      connection: "merchant_lineage_connection", reconnect: "merchant_lineage_reconnect" }[selected];
+    try { print(await owner.call(tool, input)); } finally { await owner.close(); }
+    return 0;
+  }
   if (command === "producer-config") {
     check(options, ["connection", "out", "token-file", "client", "compression", "timeout"]);
     const identity = await readJson(need(options.connection, "--connection"));
@@ -126,6 +168,20 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "action") {
     check(options, ["workspace", "input"]);
     print(await workspace.dispatch(need(positional[0], "ACTION"), options.input ? await readJson(options.input) : {})); return 0;
+  }
+  if (command === "schema-compare") {
+    check(options, ["workspace", "from", "to"]);
+    print(await workspace.dispatch("schema.compare", { from: need(options.from, "--from"), to: need(options.to, "--to") })); return 0;
+  }
+  if (["schema-impact", "schema-review"].includes(command)) {
+    check(options, ["workspace", "input"]);
+    print(await workspace.dispatch(command === "schema-impact" ? "schema.impact" : "schema.review.save", await readJson(options.input))); return 0;
+  }
+  if (command === "schema-report") {
+    check(options, ["workspace", "from", "to", "format", "out"]);
+    const output = await workspace.dispatch("schema.report", { from: need(options.from, "--from"),
+      to: need(options.to, "--to"), format: options.format ?? "html" });
+    await writeNew(options.out, output.text); print({ out: resolve(options.out), mediaType: output.mediaType }); return 0;
   }
   if (command === "source") {
     check(options, ["workspace", "id", "out"]); const bytes = await workspace.readObject(need(options.id, "--id"));
