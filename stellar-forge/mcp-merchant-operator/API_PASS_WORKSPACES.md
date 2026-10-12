@@ -142,6 +142,8 @@ All tool names begin `merchant_api_pass_`. Every scoped reply contains `workspac
 | --- | --- |
 | `workspaces`, `open`, `status` | Configured aliases; original authenticated session; current revision and retained-work inventory. |
 | `passes`, `pass` | Pass summaries or original pass detail, purchased routes, allowance and saved-call page. |
+| `portfolio`, `portfolio_requests` | Original per-order allowance portfolio and complete attention-request paging. |
+| `portfolio_configure`, `portfolio_refresh`, `purchase_replenish` | Saved default, exact selected refresh batch and separately reviewed replacement purchase. |
 | `call`, `call_preview`, `body_preview` | Original request identity and explicit bounded text/binary previews. |
 | `remote_calls` | Original merchant cursor page; pass the returned `nextAfter` as `after`. |
 | `history`, `task` | Complete retained per-profile calls or tasks, and a selected original task. |
@@ -311,3 +313,149 @@ The native workspace's original lease protects the customer model and queue. The
 After a native restart, reopen the original launch/session and continue the existing pass, request, task or command identity. After an MCP restart, inspect `operation`, `exports` or the complete retained manifest. After a client interruption, reopen or run its saved private operation directory. Disk or transport failures leave exact original requests available for continuation; complete native receipts and file descriptors are recovered before another dispatch.
 
 The native customer remains the authority for purchase review and approval, Buyer/Inbox execution, paid allowance consumption, same-request replay, lost-output recovery and authenticated history. Merchant MCP makes those original capabilities available through the installed application, typed tools and complete-file receiving.
+
+## Work an API allowance portfolio from the agent or SDK
+
+The customer workspace now projects each original purchased order into the same portfolio used by its browser and CLI. Each pass carries its own allowance, consumed units, active reservations, available units, purchased routes, observed time and original call history. A route's `remainingCalls` is the original available allowance divided by that route's unit cost and rounded down. The projection helps choose a pass and recover work; original admission remains in the merchant's atomic allowance transaction.
+
+The same provider now advertises 33 tools. These five operations extend its existing family and private connection:
+
+| Tool suffix | Typed client method | Original customer source |
+| --- | --- | --- |
+| `portfolio` | `portfolio()`, `allPortfolio()` | The actual portfolio in `GET /api/state`, with pass paging. |
+| `portfolio_requests` | `portfolioRequests()`, `allPortfolioRequests()` | `GET /api/portfolio/requests`; every original attention/recovery-ready call. |
+| `portfolio_configure` | `configurePortfolio()` | `POST /api/portfolio/configure`; strict original revision. |
+| `portfolio_refresh` | `refreshPortfolio()` | `POST /api/portfolio/refresh`; one retained selected batch. |
+| `purchase_replenish` | `prepareReplacement()` | `POST /api/profiles/:id/replenish`; the original separate purchase. |
+
+Prefix each suffix with `merchant_api_pass_` in MCP. The installed `merchant-api-pass read` and `prepare/run/reconcile/reopen` commands expose the same names. Its existing package exports and typed declarations carry the whole addition; setup, launch capabilities, native Buyer/Inbox and file receiving use the existing connection.
+
+### Inspect complete allowances and work that needs recovery
+
+`portfolio` returns `revision`, the original portfolio `schema`, `settings`, `summary`, a `passes` page, `passPagination`, and the original first attention window. The default pass page is 20; select `offset`, `limit` and the first reply's `expectedRevision` for later pages. All settings and counts belong to that same original snapshot.
+
+Each pass reports `AVAILABLE`, `LOW`, `EXHAUSTED`, `REFRESH_REQUIRED`, `CLAIM_UNAVAILABLE` or `ARCHIVED`, along with the actual `checkedAt`. A low threshold of five compares against available units. `usage:null` and `remainingCalls:null` preserve an unobserved allowance. `replaces` and `replacement` identify the actual separate predecessor/successor orders. The usual `passes` and `pass` replies also expose `replacesProfileId` and `replacementProfileId`.
+
+The first attention window contains up to 20 original calls. Use `portfolio_requests` to read all of them. Its native reply follows the ordinary `Page` shape: `revision`, `items`, `offset`, `limit`, `total`, `nextOffset`. Every item includes its original `profileId`, `orderReference`, `requestId`, route, status, recovery-only flag and retained result identity.
+
+~~~js
+const portfolio = await client.allPortfolio();
+const attention = await client.allPortfolioRequests();
+console.log({
+  revision: portfolio.revision,
+  selectedProfileId: portfolio.settings.selectedProfileId,
+  passes: portfolio.passes,
+  attention: attention.items
+});
+~~~
+
+Both complete helpers pin one original revision across their own traversal. If native work advances during paging, read the current first page again. A later attention read can correctly observe a later revision than an earlier portfolio read. The adapter uses the customer's actual projection and reports `API_PASS_PORTFOLIO_UNAVAILABLE` when that original service needs its portfolio update.
+
+### Refresh exactly the selected passes
+
+Select 1–200 unique original profile IDs. Retain the list, expected revision and operation ID once. The original model creates refresh tasks in the same customer journal, reuses already active refresh tasks and records explicit `ARCHIVED` or `CLAIM_UNAVAILABLE` skips.
+
+For example, create a private argument file with the current original IDs and revision:
+
+~~~json
+{
+  "expectedRevision": 42,
+  "profileIds": [
+    "83e67129-fdbe-4693-8952-2830aef3b026",
+    "1f948c0e-ad59-4e2c-9b57-2cbd8819f732"
+  ]
+}
+~~~
+
+The UUIDs and revision above illustrate the shape; select the actual values returned by your workspace. Then use the existing retained operation command:
+
+~~~sh
+merchant-api-pass prepare --directory /private/operations/portfolio-refresh   --url http://127.0.0.1:3211/mcp --workspace customer   --workspace-id ORIGINAL_WORKSPACE_UUID   --kind portfolio_refresh --request /private/inputs/portfolio-refresh.json
+merchant-api-pass run --directory /private/operations/portfolio-refresh
+~~~
+
+The result contains the original `tasks:[{profileId,taskId,reused}]` and `skipped:[{profileId,reason}]`. Observe each returned task through `task` or `history` until its original outcome is available, then read the portfolio again. Repeating the same batch reopens the saved command response and original task IDs; a later intentional refresh gets its own reviewed operation directory and identity.
+
+### Save a default and prepare a new request on its selected pass
+
+`portfolio_configure` requires `operationId`, `expectedRevision`, `selectedProfileId` and `lowUnitsThreshold`. Set `selectedProfileId:null` to clear the default. The threshold is an integer from zero through 1,000,000,000. Configuration uses the current native revision, so concurrent settings edits require a current review.
+
+The saved default is a choice for new explicit requests. Read the selected profile, choose one of its purchased routes, and put that exact profile ID into the ordinary `prepare_request` operation. The original saved request then retains that profile, order, manifest, request ID, route, query pairs and body bytes throughout execution and recovery.
+
+~~~js
+const view = await client.allPortfolio();
+const selectedId = view.settings.selectedProfileId;
+if (selectedId === null) throw new Error('Select an original pass before preparing this request.');
+const selected = view.passes.find(pass => pass.id === selectedId);
+if (!selected || selected.archived) throw new Error('Review the current selected pass.');
+const detail = await client.pass({profileId: selected.id});
+const route = detail.profile.detail?.plan.routes.find(item => item.id === requestedRouteId);
+if (!route) throw new Error('Choose a route from this purchased plan.');
+
+await prepareApiPassOperation({
+  directory: '/private/operations/selected-call',
+  url: client.endpoint, workspace: client.workspace, workspaceId: client.workspaceId,
+  kind: 'prepare_request',
+  arguments: {
+    expectedRevision: detail.revision,
+    profileId: selected.id,
+    requestId: originalRequestId,
+    routeId: route.id,
+    contentType: 'application/json',
+    bodyFile: 'request-body',
+    expectedBodySha256: originalBodySha256
+  }
+});
+const prepared = await runApiPassOperation({
+  directory: '/private/operations/selected-call', client, execute: true
+});
+~~~
+
+Use the actual retained `prepared.native.result.callId` in a separately retained `enqueue` operation with `kind:'call'`. The merchant's existing reservation and execution journal decide admission. Another request can use allowance after the displayed observation; keep the original call for its actual accepted or attention outcome.
+
+### Prepare and review a replacement purchase
+
+First obtain the original merchant's new checkout handoff and add it as a host-declared `handoff` file with its complete SHA. Keep the intended predecessor's exact profile ID and the new purchase intent. The replacement must use the same original gateway and a new order; the original model checks both and permits one retained successor for each predecessor.
+
+The replacement arguments extend `purchase_prepare` with `profileId`:
+
+~~~json
+{
+  "expectedRevision": 57,
+  "profileId": "83e67129-fdbe-4693-8952-2830aef3b026",
+  "label": "API access continuation",
+  "gatewayBaseUrl": "http://127.0.0.1:4317",
+  "intentId": "original-reviewed-replacement-intent",
+  "claimEnv": "SF101_CUSTOMER_CLAIM",
+  "handoff": "replacement-handoff",
+  "expectedHandoffSha256": "EXACT_64_HEX_SHA256"
+}
+~~~
+
+These are illustrative values to replace with the original handoff and workspace selections. Use `kind purchase_replenish` with `merchant-api-pass prepare`, or `client.prepareReplacement()` with an already retained `operationId`. The adapter verifies and saves the complete declared handoff bytes before dispatch. Its original command journal pins the predecessor, handoff hash, new order, manifest and purchase intent. The returned new profile and its replacement lineage are checked against those same source identities.
+
+The result exposes both `profileId` for the new purchase and `replacesProfileId` for the predecessor. Continue on the new profile through the ordinary task sequence:
+
+1. Retain and enqueue `prepare-purchase`; observe its original task outcome.
+2. Enqueue `review-purchase`; inspect the exact saved review and capture its complete review file.
+3. Enqueue `execute-purchase` with that exact original `reviewId`. Use the existing broker's selected approval envelope, or the original terminal flow, when it requests a decision.
+4. Complete the original purchase recovery or finalization when its actual state calls for it, then refresh this same new profile.
+5. Review its available allowance and purchased routes. Save a new `portfolio_configure` operation to select it for subsequent explicit requests.
+
+Each queued stage uses its own retained operation identity and the current original revision. A repeated `purchase_replenish` with the original operation reopens the existing result. The model also recognizes an already prepared successor with the same full handoff/intent/claim/label binding. A changed intended successor must be reviewed against the original model's current lineage.
+
+### Finish work retained on earlier passes
+
+Read the full attention inventory and keep each returned `profileId` and `id` together. `id` is the original customer call UUID; `requestId` is the original merchant request string. For a recovery-only call, enqueue `recover` with those original profile and call UUIDs. The existing worker will reopen the original merchant execution/result.
+
+A newer default or replacement purchase leaves those identities intact. The adapter and model reject a call assigned to another pass. Original reservations, consumed allowance and retained responses continue in their original order's journal.
+
+After a result exists, use the existing `capture` operation with `selection:{kind:'response',callId}`, then download it through the same manifest/SHA-pinned receiving helper. Capture complete `history` files for both predecessor and replacement when preparing a full handoff. Their original profile lineage, requests, tasks and review history remain in those exact native files, and completed captures reopen after the customer process closes.
+
+### Recover a settings, batch or replacement command
+
+The three new write kinds use the same complete host and client journals as earlier customer operations. `prepare` saves the exact endpoint, workspace, arguments and chosen operation ID. The host saves the resolved native route/body and selected source before dispatch. `operation`, `reconcile` and `run` first check the original saved response.
+
+Keep an interrupted batch's exact selected list, an interrupted configuration's original selection/threshold, and a replacement's original file handle/hash/intent. An accepted response survives a later bookkeeping interruption. If a definite stale-revision rejection requires a different decision, review current state and prepare a new operation; the original request and outcome remain available.
+
+The customer owns its native model lifetime and private launch. Closing this MCP client drains its accepted requests and keeps the running customer, original file exports and purchased-call journals available for the next receiving client.

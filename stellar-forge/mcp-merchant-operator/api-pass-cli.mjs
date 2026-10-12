@@ -12,7 +12,7 @@ import {apiPassOperationId} from './api-pass-operations.mjs';
 import {connectApiPassWorkspaceClient,downloadApiPassExport,reopenApiPassExportDownload,inspectApiPassExportDownload} from './api-pass-client.mjs';
 import {API_PASS_ALIAS,API_PASS_UUID,API_PASS_SHA,API_PASS_PREFIX,apiPassChecked,apiPassArguments,apiPassNeed,apiPassPlain,apiPassExact,apiPassFingerprint,apiPassFailure} from './api-pass-protocol.mjs';
 const REQUEST='stellar-forge.sf101.api-pass-client-operation.v1',STATE='stellar-forge.sf101.api-pass-client-operation-state.v1',RESULT='stellar-forge.sf101.api-pass-client-result.v1';
-const WRITES=new Set(['connect','purchase_prepare','purchase_attach','update','prepare_request','adopt_request','enqueue','cancel','decide','capture']);
+const WRITES=new Set(['portfolio_configure','portfolio_refresh','purchase_replenish','connect','purchase_prepare','purchase_attach','update','prepare_request','adopt_request','enqueue','cancel','decide','capture']);
 const now=()=>new Date().toISOString();
 const issue=error=>({code:/^[A-Z][A-Z0-9_]{1,140}$/.test(error?.code??'')?error.code:'API_PASS_CLIENT_FAILED',outcomeUnknown:error?.outcomeUnknown!==false});
 async function exists(path){try{return await lstat(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
@@ -146,14 +146,20 @@ const HELP=`API-pass customer workspace over the original merchant MCP
   reopen-download --directory PRIVATE_RECEIVING [--manifest-sha256 SHA]
       [--workspace ALIAS] [--workspace-id UUID]
 
-Read operations: open, status, passes, pass, call, call_preview, body_preview,
+Read operations: open, status, portfolio, portfolio_requests, passes, pass, call, call_preview, body_preview,
 remote_calls, history, task, approval, input, operation, exports, manifest.
 Use exact documented tool argument names in the private JSON, without workspace.
-Writes: connect, purchase_prepare, purchase_attach, update, prepare_request,
+Writes: portfolio_configure, portfolio_refresh, purchase_replenish, connect,
+purchase_prepare, purchase_attach, update, prepare_request,
 adopt_request, enqueue, cancel, decide, capture. Preparation saves the exact
 arguments and generates a missing native operation ID once. run reconciles
 its original host journal first and sends at most one exact selected action.
 reconcile is read-only. Repeating run/reopen keeps the saved original result.
+Portfolio pages retain one native revision. A selected refresh batch preserves
+its exact list and returns reused tasks or explicit skips. Replacement preparation
+uses a declared original handoff and creates a separate reviewed purchase. Existing
+calls keep their original profile/order/request ID; the saved default guides only
+new explicit selections. See API_PASS_WORKSPACES.md for the complete workflow.
 A queued native task is observed through task/history; its HTTP receipt is
 separate from task completion. Keep exact original review and request IDs.
 Download uses the original manifest/chunk transport and a private receiving
