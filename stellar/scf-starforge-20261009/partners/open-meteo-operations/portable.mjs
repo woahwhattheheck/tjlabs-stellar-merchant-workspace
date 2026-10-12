@@ -1,12 +1,13 @@
 // MIT. Complete weather report receiving and immutable source lineage.
 import {
- SCHEMA,MAX_RESPONSE_BYTES,need,keys,text,normalizeSite,normalizeRequest,
- parsePayload,canonical,sha,clone,encoded,ATTRIBUTION
+ MAX_RESPONSE_BYTES,need,keys,text,normalizeSite,normalizeRequest,
+ parsePayload,canonical,sha,clone,encoded
 } from './contract.mjs';
 import {decisionInput,evaluate,reportDigest} from './analysis.mjs';
 
 export const WEATHER_HANDOVER_SCHEMA='stellar-forge.weather-report-handover.v1';
 export const MAX_HANDOVER_BYTES=48*1024*1024;
+export const MAX_LEGACY_ARCHIVE_BYTES=32*1024*1024;
 const HASH=/^[a-f0-9]{64}$/;
 const id=(value,prefix)=>need(typeof value==='string'&&new RegExp('^'+prefix+'-[a-f0-9-]{36}$').test(value),'HANDOVER_IDENTITY_INVALID');
 const stamp=value=>need(typeof value==='string'&&value.length<=64&&Number.isFinite(Date.parse(value)),'HANDOVER_TIMESTAMP_INVALID');
@@ -21,6 +22,16 @@ function sourceDescriptor(capture){
  keys(descriptor,['id','requestId','specSha256','sha256','bytes','provenance','metadata','capturedAt','request']);
  return clone(descriptor);
 }
+function validateArchive(archive,report){
+ keys(archive,['format','bytes','sha256','reportId','reportSha256','encoding','content']);
+ need(archive.format==='stellar-forge.weather-report-zip.v1'&&archive.encoding==='base64','HANDOVER_ARCHIVE_FORMAT_INVALID');
+ integer(archive.bytes,1,MAX_LEGACY_ARCHIVE_BYTES);
+ need(HASH.test(archive.sha256??'')&&typeof archive.content==='string'&&
+  archive.content.length<=Math.ceil(MAX_LEGACY_ARCHIVE_BYTES/3)*4,'HANDOVER_ARCHIVE_INVALID');
+ const raw=Buffer.from(archive.content,'base64');
+ need(raw.length===archive.bytes&&raw.toString('base64')===archive.content&&sha(raw)===archive.sha256,'HANDOVER_ARCHIVE_CHANGED');
+ need(archive.reportId===report.id&&archive.reportSha256===report.sha256,'HANDOVER_ARCHIVE_REPORT_CHANGED');
+}
 function reportValue(report){const {sha256,...value}=report;need(HASH.test(sha256??'')&&reportDigest(value)===sha256,'HANDOVER_REPORT_CHANGED');return value;}
 function validateReport(report){
  keys(report,['schema','id','createdAt','title','owner','notes','decisions','captures','attribution','sha256','receivedFrom']);
@@ -31,7 +42,7 @@ function validateReport(report){
  list(report.captures,16,'HANDOVER_REPORT_SOURCE_LIMIT');need(report.captures.length>0,'HANDOVER_REPORT_EMPTY');
  reportValue(report);
 }
-function decodeSource(entry){
+function decodeSource(entry,views=new Map()){
  keys(entry,['capture','encoding','content']);need(entry.encoding==='base64','HANDOVER_ENCODING_INVALID');
  const capture=entry.capture;sourceDescriptor(capture);
  id(capture.id,'capture');id(capture.requestId,'request');
@@ -51,7 +62,8 @@ function decodeSource(entry){
   spec.site.elevation===spec.request.elevation,'HANDOVER_SITE_REQUEST_MISMATCH');
  need(digest(spec)===capture.specSha256,'HANDOVER_REQUEST_HASH_CHANGED');
  need(capture.provenance&&typeof capture.provenance==='object'&&!Array.isArray(capture.provenance),'HANDOVER_PROVENANCE_REQUIRED');
- const view=parsePayload(raw,spec.request);
+ const viewKey=capture.sha256+':'+canonical(spec.request);
+ let view=views.get(viewKey);if(!view){view=parsePayload(raw,spec.request);views.set(viewKey,view);}
  need(same(view.metadata,capture.metadata),'HANDOVER_SOURCE_MEANING_CHANGED');
  return {...clone(capture),raw,view};
 }
@@ -66,11 +78,11 @@ function validateDecision(decision,captures){
  need(same(result,expected),'HANDOVER_DECISION_RESULT_CHANGED');
  return clone(decision);
 }
-export function createWeatherHandover({originId,report,captures,decisionHistory=report.decisions,receivingHistory=[]}){
+export function createWeatherHandover({originId,report,captures,decisionHistory=report.decisions,receivingHistory=[],legacyArchive}){
  text(originId,'HANDOVER_ORIGIN',200);
  const value={schema:WEATHER_HANDOVER_SCHEMA,originId,report:clone(report),
   sources:captures.map(capture=>({capture:sourceDescriptor(capture),encoding:'base64',content:Buffer.from(capture.raw).toString('base64')})),
-  decisionHistory:clone(decisionHistory),receivingHistory:clone(receivingHistory)};
+  decisionHistory:clone(decisionHistory),receivingHistory:clone(receivingHistory),...(legacyArchive?{legacyArchive:clone(legacyArchive)}:{})};
  const result={...value,contentSha256:digest(value)};
  need(encoded(result).length<=MAX_HANDOVER_BYTES,'HANDOVER_TOO_LARGE');
  return result;
@@ -78,19 +90,27 @@ export function createWeatherHandover({originId,report,captures,decisionHistory=
 export function inspectWeatherHandover(content){
  need(typeof content==='string'&&Buffer.byteLength(content)<=MAX_HANDOVER_BYTES,'HANDOVER_TOO_LARGE');
  let value;try{value=JSON.parse(content);}catch{need(false,'HANDOVER_JSON_INVALID');}
- keys(value,['schema','originId','report','sources','decisionHistory','receivingHistory','contentSha256']);
+ keys(value,['schema','originId','report','sources','decisionHistory','receivingHistory','contentSha256','legacyArchive']);
  need(value.schema===WEATHER_HANDOVER_SCHEMA,'HANDOVER_SCHEMA_INVALID');text(value.originId,'HANDOVER_ORIGIN',200);
  const {contentSha256,...unsigned}=value;
  need(HASH.test(contentSha256??'')&&digest(unsigned)===contentSha256,'HANDOVER_CONTENT_CHANGED');
  validateReport(value.report);
- const sources=list(value.sources,128,'HANDOVER_SOURCE_LIMIT').map(decodeSource);
+ if(value.legacyArchive)validateArchive(value.legacyArchive,value.report);
+ const views=new Map();
+ const sources=list(value.sources,128,'HANDOVER_SOURCE_LIMIT').map(entry=>decodeSource(entry,views));
  const captures=unique(sources,c=>c.id,'HANDOVER_DUPLICATE_SOURCE');
  need(captures.size>0,'HANDOVER_SOURCE_REQUIRED');
+ const siteIdentities=new Map();
+ for(const capture of sources){
+  const site=capture.request.site,key=site.id+':'+site.revision;
+  need(!siteIdentities.has(key)||same(siteIdentities.get(key),site),'HANDOVER_SITE_REVISION_COLLISION');
+  siteIdentities.set(key,site);
+ }
  const history=list(value.decisionHistory,4096,'HANDOVER_HISTORY_LIMIT').map(d=>validateDecision(d,captures));
  const decisions=unique(history,decisionKey,'HANDOVER_DUPLICATE_DECISION');
  const selected=unique(value.report.decisions,d=>d.id,'HANDOVER_DUPLICATE_REPORT_DECISION');
  const reportCaptures=unique(value.report.captures,c=>c.id,'HANDOVER_DUPLICATE_REPORT_SOURCE');
- const sourceIds=new Set(),selectedIds=new Set();
+ const sourceIds=new Set();
  const allowedRevisions=new Map(value.report.decisions.map(d=>[d.id,d.revision]));
  for(const receipt of list(value.receivingHistory,1024,'HANDOVER_RECEIVING_HISTORY_LIMIT')){
   if(receipt?.receivingOriginId===value.originId&&receipt.mapping&&
@@ -101,7 +121,7 @@ export function inspectWeatherHandover(content){
  for(const decision of selected.values()){
   const retained=decisions.get(decisionKey(decision));
   need(retained&&same(retained,decision),'HANDOVER_FROZEN_DECISION_CHANGED');
-  selectedIds.add(decision.id);sourceIds.add(decision.captureId);
+  sourceIds.add(decision.captureId);
  }
  need(reportCaptures.size===sourceIds.size,'HANDOVER_REPORT_SOURCE_SELECTION_CHANGED');
  for(const capture of reportCaptures.values()){
@@ -114,11 +134,38 @@ export function inspectWeatherHandover(content){
  }
  need(captures.size===sourceIds.size&&sources.every(c=>sourceIds.has(c.id)),'HANDOVER_UNSELECTED_SOURCE');
  const receipts=list(value.receivingHistory,1024,'HANDOVER_RECEIVING_HISTORY_LIMIT');
+ const retainedRaw=new Map(sources.map(source=>[source.sha256,source.raw]));
  for(const receipt of receipts){
-  need(receipt&&typeof receipt==='object'&&!Array.isArray(receipt)&&
-   receipt.schema==='stellar-forge.weather-receiving-record.v1'&&HASH.test(receipt.packageSha256??'')&&
+  keys(receipt,['schema','id','receivingOriginId','packageSha256','contentSha256','sourceOriginId','receivedAt',
+   'originalReport','originalDecisions','originalSources','originalArchive','mapping','historyIds']);
+  need(receipt.schema==='stellar-forge.weather-receiving-record.v1'&&HASH.test(receipt.packageSha256??'')&&
    HASH.test(receipt.contentSha256??''),'HANDOVER_RECEIVING_HISTORY_INVALID');
+  text(receipt.receivingOriginId,'HANDOVER_RECEIVING_ORIGIN',200);text(receipt.sourceOriginId,'HANDOVER_ORIGIN',200);stamp(receipt.receivedAt);
+  need(receipt.id===weatherReceivingIdentity(receipt.receivingOriginId,receipt.packageSha256),'HANDOVER_RECEIVING_IDENTITY_CHANGED');
   validateReport(receipt.originalReport);
+  if(receipt.originalArchive)validateArchive(receipt.originalArchive,receipt.originalReport);
+  const originalCaptures=list(receipt.originalSources,128,'HANDOVER_SOURCE_LIMIT').map(capture=>{
+   const raw=retainedRaw.get(capture.sha256);need(raw,'HANDOVER_ANCESTRAL_SOURCE_MISSING');
+   return decodeSource({capture,encoding:'base64',content:raw.toString('base64')},views);
+  });
+  const originalById=unique(originalCaptures,capture=>capture.id,'HANDOVER_DUPLICATE_SOURCE');
+  const originalDecisions=list(receipt.originalDecisions,4096,'HANDOVER_HISTORY_LIMIT').map(decision=>validateDecision(decision,originalById));
+  const originalByRevision=unique(originalDecisions,decisionKey,'HANDOVER_DUPLICATE_DECISION');
+  const reportDecisions=unique(receipt.originalReport.decisions,decision=>decision.id,'HANDOVER_DUPLICATE_REPORT_DECISION');
+  const reportSources=unique(receipt.originalReport.captures,capture=>capture.id,'HANDOVER_DUPLICATE_REPORT_SOURCE');
+  const selectedSources=new Set();
+  for(const decision of reportDecisions.values()){
+   need(originalByRevision.has(decisionKey(decision))&&same(originalByRevision.get(decisionKey(decision)),decision),'HANDOVER_ANCESTRAL_DECISION_CHANGED');
+   selectedSources.add(decision.captureId);
+  }
+  need(selectedSources.size===reportSources.size,'HANDOVER_REPORT_SOURCE_SELECTION_CHANGED');
+  for(const capture of reportSources.values()){
+   need(originalById.has(capture.id)&&selectedSources.has(capture.id)&&same(sourceDescriptor(originalById.get(capture.id)),capture),
+    'HANDOVER_ANCESTRAL_SOURCE_CHANGED');
+  }
+  const originalPlan=prepareWeatherReceiving({value:{originId:receipt.sourceOriginId,report:receipt.originalReport},
+   captures:originalCaptures,decisions:originalDecisions});
+  need(same(originalPlan.mapping,receipt.mapping),'HANDOVER_RECEIVING_MAPPING_CHANGED');
  }
  const receiptIds=unique(receipts,r=>r.id,'HANDOVER_DUPLICATE_RECEIVING_RECORD');
  for(const receipt of receipts){
@@ -139,7 +186,7 @@ export function inspectWeatherHandover(content){
    reportId:value.report.id,reportSha256:value.report.sha256,title:value.report.title,owner:value.report.owner,
    createdAt:value.report.createdAt,sourceCount:sources.length,sourceBytes:sources.reduce((sum,c)=>sum+c.bytes,0),
    selectedDecisions:value.report.decisions.length,decisionRevisions:history.length,
-   receivingHistory:receipts.length,
+   receivingHistory:receipts.length,...(value.legacyArchive?{originalArchive:{sha256:value.legacyArchive.sha256,bytes:value.legacyArchive.bytes},historyScope:'selected revisions retained in the original ZIP'}:{}),
    sources:sources.map(c=>({id:c.id,sha256:c.sha256,bytes:c.bytes,title:c.request.title,site:c.request.site.name,
     family:c.metadata.family,model:c.metadata.model,timezone:c.metadata.timezone,
     timestamps:c.view.times.length,columns:c.view.columns.length,provenance:clone(c.provenance)}))}};

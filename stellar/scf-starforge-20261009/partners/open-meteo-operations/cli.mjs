@@ -7,7 +7,7 @@ import {initializeWeather,initializeWeatherReview,readWeatherSettings,WeatherWor
 import {exportFrozenReport} from './exports.mjs';
 import {publishJson,absolute,readPrivate} from './files.mjs';
 import {need,keys} from './contract.mjs';
-import {MAX_HANDOVER_BYTES} from './portable.mjs';
+import {MAX_HANDOVER_BYTES,MAX_LEGACY_ARCHIVE_BYTES} from './portable.mjs';
 
 const HELP=[
  'Weather operations — original SF30 merchant and SF88 customer',
@@ -20,6 +20,7 @@ const HELP=[
  'init --state-root NEW_PRIVATE_ROOT --review OFFLINE_REVIEW.json --operator-preset PRIVATE_PRESET.json',
  '  --total-atomic N --daily-atomic N [--client SELLER_CLIENT.mjs] [--provider PROFILE.json]',
  'review-init --state-root NEW_PRIVATE_ROOT',
+ 'from-report-zip --input ORIGINAL_REPORT.zip --output NEW_REPORT.weather.json [--archive-sha ORIGINAL_ZIP_SHA256]',
  'handover-review --settings SETTINGS --input REPORT.weather.json',
  'handover-receive --settings SETTINGS --input REPORT.weather.json --expected-sha ORIGINAL_REVIEW_SHA256',
  'serve --settings PRIVATE_ROOT/settings.json [--port 0] [--descriptor PRIVATE_NEW_JSON]',
@@ -66,6 +67,18 @@ export async function main(args=process.argv.slice(2)){
   const session=await launchWeatherMerchant(input,{port:Number(opt['--port']??8423),facilitator:opt['--facilitator'],allowLocalFacilitator:opt['--allow-local-facilitator']??false});
   return serveLifetime(session,opt['--descriptor'],{schema:'stellar-forge.weather-merchant-runtime.v1',mode:session.mode,
    docs:session.url+'/_seller/docs',openapi:session.url+'/_seller/openapi.json',providerMode:input.provider.mode});
+ }
+ if(command==='from-report-zip'){
+  const opt=options(args,['--input','--output','--archive-sha']),controller=new AbortController(),stop=()=>controller.abort();
+  process.once('SIGINT',stop);process.once('SIGTERM',stop);
+  try{
+   const {weatherHandoverFromZip}=await import('./legacy.mjs');
+   const handover=await weatherHandoverFromZip(await readPrivate(absolute(opt['--input']),MAX_LEGACY_ARCHIVE_BYTES),
+    {expectedArchiveSha256:opt['--archive-sha'],signal:controller.signal});
+   const result={...await publishJson(absolute(opt['--output']),handover),reportId:handover.report.id,reportSha256:handover.report.sha256,
+    originalArchiveSha256:handover.legacyArchive.sha256,selectedDecisionRevisions:handover.decisionHistory.length};
+   print(result);return result;
+  }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
  }
  if(command==='review-init'){
   const opt=options(args,['--state-root']);const result=await initializeWeatherReview({stateRoot:absolute(opt['--state-root'])});

@@ -12,6 +12,11 @@ async function refresh(){
  const recovery=document.querySelector('[data-tab="recovery"]');if(recovery&&meta.reviewMode)recovery.textContent='Receiving history';
  render();
 }
+async function ensureSource(id){
+ if(!state.captures.some(value=>value.id===id)){
+  const response=await api('/api/captures/'+encodeURIComponent(id));state.captures.push(response.capture);
+ }
+}
 function selected(){return state.requests.find(q=>q.id===requestId)??null;}
 const selectedCapture=()=>state.captures.find(c=>c.id===captureId)??null;
 const option=(value,label,selected=false)=>'<option value="'+esc(value)+'"'+(selected?' selected':'')+'>'+esc(label)+'</option>';
@@ -38,9 +43,19 @@ function requestDetail(){
  else controls='<dl><dt>Original intent</dt><dd class="mono">'+esc(n.request.intentId)+'</dd><dt>Maximum payment</dt><dd>'+esc(n.maxAtomic)+' atomic units</dd><dt>Reviewed request</dt><dd class="mono">'+esc(n.request.url)+'</dd><dt>Configuration hash</dt><dd class="mono">'+esc(n.review?.configSha256??'Preparation in progress')+'</dd></dl>'+actions((n.review?button('execute','Execute reviewed buyer request',q.id,'primary'):'')+button('recover','Read original buyer outcome',q.id));
  return '<section class="panel"><h2>'+esc(q.spec.title)+'</h2><p>'+badge(q.state)+' · revision '+q.revision+'</p><dl><dt>Coordinates</dt><dd>'+esc(r.latitude+', '+r.longitude)+'</dd><dt>Time zone</dt><dd>'+esc(r.timezone)+'</dd><dt>Variables</dt><dd>'+esc(r.variables.join(', '))+'</dd><dt>Request digest</dt><dd class="mono">'+esc(q.specSha256)+'</dd></dl>'+controls+actions((meta.reviewMode?'':button('copy-request','Copy to new draft',q.id))+(q.captureId?button('view-source','Open retained source',q.captureId):''))+(q.error?'<pre>'+esc(JSON.stringify(q.error,null,2))+'</pre>':'')+'</section>';
 }
+function decisionRevisionLabel(decision){
+ for(const record of state.receiving??[]){
+  const mapping=record.mapping.decisions.find(value=>value.local===decision.id);
+  if(mapping){
+   const original=record.originalDecisions.find(value=>value.id+':'+value.revision===mapping.original);
+   if(original)return 'Original revision '+original.revision+' · local revision '+decision.revision;
+  }
+ }
+ return 'Revision '+decision.revision;
+}
 function analysisTab(){
  const captures=state.captures.map(c=>'<tr'+(c.id===captureId?' class="selected"':'')+'><td>'+button('view-source',c.request.title,c.id)+'<br><small>'+esc(c.provenance.retrievedAt)+'</small></td><td>'+esc(c.metadata.family)+' / '+esc(c.metadata.model)+'</td><td>'+esc(c.provenance.kind)+'</td><td>'+num(c.bytes)+'</td></tr>').join('');
- const decisions=state.decisions.map(d=>'<tr><td>'+esc(d.title)+'<br><small>'+esc(d.owner)+' · r'+d.revision+'</small></td><td>'+badge(d.result.outcome)+'<br>'+d.result.thresholdMembers+' / '+d.result.eligibleMembers+' eligible</td><td>'+esc(d.disposition)+'</td><td>'+button('revise-decision','Revise',d.id)+'</td></tr>').join('');
+ const decisions=state.decisions.map(d=>'<tr><td>'+esc(d.title)+'<br><small>'+esc(d.owner)+' · '+esc(decisionRevisionLabel(d))+'</small></td><td>'+badge(d.result.outcome)+'<br>'+d.result.thresholdMembers+' / '+d.result.eligibleMembers+' eligible</td><td>'+esc(d.disposition)+'</td><td>'+button('revise-decision','Revise',d.id)+'</td></tr>').join('');
  return '<section class="panel"><h2>Retained original sources</h2>'+(captures?'<div class="table"><table><thead><tr><th>Request / retrieval</th><th>Product</th><th>Acquisition</th><th>Bytes</th></tr></thead><tbody>'+captures+'</tbody></table></div>':'<p class="empty">Read a provider source or execute a prepared buyer request.</p>')+'</section><div id="source-details"></div><section class="panel"><h2>Operator decisions</h2>'+(decisions?'<div class="table"><table><thead><tr><th>Decision</th><th>Result</th><th>Disposition</th><th></th></tr></thead><tbody>'+decisions+'</tbody></table></div>':'<p class="empty">Select a retained source to evaluate a window.</p>')+'</section>';
 }
 async function loadSource(){
@@ -61,9 +76,9 @@ async function loadSource(){
 function receivingPanel(){
  const review=receivingReview;
  const sources=review?review.sources.map(s=>'<tr><td>'+esc(s.title)+'<br><small>'+esc(s.site)+'</small></td><td>'+esc(s.family)+' / '+esc(s.model)+'</td><td>'+s.timestamps+' hours / '+s.columns+' columns</td><td>'+num(s.bytes)+'</td></tr>').join(''):'';
- const result=review?'<h3>'+esc(review.title)+'</h3><p>'+esc(review.owner)+' · '+esc(review.createdAt)+'</p><p>'+review.sourceCount+' complete sources · '+review.decisionRevisions+' decision revisions · '+review.receivingHistory+' earlier receiving records</p><div class="table"><table><thead><tr><th>Source</th><th>Product</th><th>Coverage</th><th>Bytes</th></tr></thead><tbody>'+sources+'</tbody></table></div>'+
+ const result=review?'<h3>'+esc(review.title)+'</h3><p>'+esc(review.owner)+' · '+esc(review.createdAt)+'</p><p>'+review.sourceCount+' complete sources · '+review.decisionRevisions+' decision revisions · '+review.receivingHistory+' earlier receiving records</p>'+(review.originalArchive?'<p>Original ZIP: '+num(review.originalArchive.bytes)+' bytes. This original retains the selected decision revisions; later local revisions continue in this workspace.</p>':'')+'<div class="table"><table><thead><tr><th>Source</th><th>Product</th><th>Coverage</th><th>Bytes</th></tr></thead><tbody>'+sources+'</tbody></table></div>'+
   (review.conflicts.length?'<p role="alert">Existing original records differ. The complete local work is retained.</p><pre>'+esc(JSON.stringify(review.conflicts,null,2))+'</pre>':'')+
-  actions('<button type="button" data-action="receive-handover"'+(!review.canReceive||receivingBusy?' disabled':'')+'>'+esc(review.alreadyReceived?'Reopen received report':'Receive complete editable work')+'</button>'):'';
+  (review.receipt?actions(button('continue-received','Edit received decisions',review.receipt.mapping.report.local)):'')+actions('<button type="button" data-action="receive-handover"'+(!review.canReceive||receivingBusy?' disabled':'')+'>'+esc(review.alreadyReceived?'Reopen received report':'Receive complete editable work')+'</button>'):'';
  return '<section class="panel"><h2>Receive an editable weather package</h2><p>Choose the complete .weather.json package. Review its sources and decision revisions, then receive it into this workspace.</p><label>Weather package<input id="handover-file" type="file" accept=".json,application/json"'+(receivingBusy?' disabled':'')+'></label>'+
   (receivingInput?'<p>'+esc(receivingInput.name)+' · '+num(receivingInput.bytes)+' bytes</p>'+actions('<button type="button" data-action="review-handover"'+(receivingBusy?' disabled':'')+'>Review complete package</button>'):'')+result+'</section>';
 }
@@ -71,11 +86,11 @@ function receivingHistoryPanel(){
  const records=state.receiving??[];
  return '<section class="panel"><h2>Original receiving history</h2><p>Each receiving retains its original package, complete source relationships and the corresponding local report. Local decision revisions continue in Sources & decisions.</p>'+
   (records.length?records.map(record=>'<details><summary>'+esc(record.originalReport.title)+' · '+esc(record.receivedAt)+'</summary><p>'+record.originalSources.length+' original sources · '+record.originalDecisions.length+' original decision revisions</p>'+
-   actions('<a class="button" href="/api/receiving/'+record.packageSha256+'/original">Original received package</a><a class="button" href="/api/reports/'+record.mapping.report.local+'/download?format=handover">Editable local package</a>')+
-   '<pre>'+esc(JSON.stringify(record.mapping,null,2))+'</pre></details>').join(''):'<p class="empty">Received packages appear here with their original report and source relationships.</p>')+'</section>';
+   actions(button('continue-received','Edit received decisions',record.mapping.report.local)+'<a class="button" href="/api/receiving/'+record.packageSha256+'/original">Original received package</a><a class="button" href="/api/reports/'+record.mapping.report.local+'/download?format=handover">Editable local package</a>')+
+   actions(record.mapping.captures.map(mapping=>button('view-source',record.originalSources.find(source=>source.id===mapping.original)?.request.title??'Original source',mapping.local)).join(''))+'<pre>'+esc(JSON.stringify(record.mapping,null,2))+'</pre></details>').join(''):'<p class="empty">Received packages appear here with their original report and source relationships.</p>')+'</section>';
 }
 function reportsTab(){
- const selections=state.decisions.map(d=>'<label class="check"><input type="checkbox" name="decision" value="'+d.id+'"> <span>'+esc(d.title)+' · revision '+d.revision+'<br><small>'+esc(d.disposition)+' · '+esc(d.result.outcome)+'</small></span></label>').join('');
+ const selections=state.decisions.map(d=>'<label class="check"><input type="checkbox" name="decision" value="'+d.id+'"> <span>'+esc(d.title)+' · '+esc(decisionRevisionLabel(d))+'<br><small>'+esc(d.disposition)+' · '+esc(d.result.outcome)+'</small></span></label>').join('');
  const rows=state.reports.map(r=>'<tr><td>'+esc(r.title)+'<br><small>'+esc(r.owner)+' · '+esc(r.createdAt)+'</small></td><td>'+r.decisions.length+' decisions / '+r.captures.length+' sources</td><td>'+actions('<a class="button" href="/api/reports/'+r.id+'/download?format=handover">Editable package</a><a class="button" href="/api/reports/'+r.id+'/download?format=zip">Complete ZIP</a><a class="button" href="/api/reports/'+r.id+'/download?format=html">HTML report</a><a class="button" href="/api/reports/'+r.id+'/download?format=json">JSON</a>')+'<small class="mono">'+esc(r.sha256)+'</small></td></tr>').join('');
  return receivingPanel()+'<div class="grid"><section class="panel"><h2>Freeze selected decisions</h2><form id="report-form"><label>Report title<input name="title" required></label><label>Responsible operator<input name="owner" required></label><h3>Exact decision revisions</h3>'+selections+'<label>Handover notes<textarea name="notes"></textarea></label>'+actions('<button class="primary"'+(!selections?' disabled':'')+'>Freeze report</button>')+'</form><p class="muted">The frozen report keeps these decision revisions and exact original source hashes. Subsequent operating changes remain separate.</p></section><section class="panel"><h2>Frozen reports</h2>'+(rows?'<div class="table"><table><thead><tr><th>Report</th><th>Selected content</th><th>Download</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="empty">Freeze one or more decisions to prepare a handover.</p>')+'</section></div>';
 }
@@ -122,8 +137,14 @@ document.addEventListener('click',async e=>{
     }
    }finally{receivingBusy=false;render();}
   }
+  else if(action==='continue-received'){
+   const report=state.reports.find(value=>value.id===id)??await api('/api/reports/'+encodeURIComponent(id)+'/download?format=json');
+   decisionEdit=state.decisions.find(value=>value.id===report.decisions[0].id);
+   if(!decisionEdit)throw new Error('Received decision is unavailable.');
+   captureId=decisionEdit.captureId;await ensureSource(captureId);variable=decisionEdit.rule.variable;tab='analysis';render();
+  }
   else if(action==='select-request'){requestId=id;render();}
-  else if(action==='view-source'){captureId=id;decisionEdit=null;tab='analysis';render();}
+  else if(action==='view-source'){captureId=id;await ensureSource(id);decisionEdit=null;tab='analysis';render();}
   else if(action==='capture-source'){const q=state.requests.find(q=>q.id===id);await start('source',{requestId:id,args:{expectedRevision:q.revision}});}
   else if(action==='source-reprocess'){const q=state.requests.find(q=>q.id===id);await start('source-reprocess',{requestId:id,args:{expectedRevision:q.revision}});}
   else if(action==='execute')await start('execute',{requestId:id});
@@ -131,7 +152,7 @@ document.addEventListener('click',async e=>{
   else if(action==='copy-request'){const q=state.requests.find(q=>q.id===id),r=await api('/api/requests',{siteId:q.spec.site.id,siteRevision:q.spec.site.revision,title:q.spec.title+' copy',request:q.spec.request});requestId=r.id;await refresh();}
   else if(action==='edit-site'){const site=state.sites.find(s=>s.id===id),form=$('#site-form');for(const [k,v]of Object.entries({...site,expectedRevision:site.revision})){const field=form.elements.namedItem(k);if(field)field.value=v??'';}form.scrollIntoView({block:'start'});}
   else if(action==='new-site'){$('#site-form').reset();$('#site-form').elements.id.value='';$('#site-form').elements.expectedRevision.value='0';}
-  else if(action==='revise-decision'){decisionEdit=state.decisions.find(d=>d.id===id);captureId=decisionEdit.captureId;variable=decisionEdit.rule.variable;await loadSource();}
+  else if(action==='revise-decision'){decisionEdit=state.decisions.find(d=>d.id===id);captureId=decisionEdit.captureId;await ensureSource(captureId);variable=decisionEdit.rule.variable;await loadSource();}
   else if(action==='new-decision'){decisionEdit=null;await loadSource();}
   else if(action==='recovery-review')await start('recovery-review',{});
   else if(action==='cancel-job'){renderJob(await api('/api/cancel',{id}));}
