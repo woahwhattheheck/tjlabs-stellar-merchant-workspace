@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from types import SimpleNamespace
 from datetime import datetime,timezone
-import os,sys,json,hashlib,urllib.request,tempfile,subprocess,threading,secrets,stat,signal,traceback,shutil
+import os,sys,json,hashlib,urllib.request,tempfile,subprocess,threading,secrets,stat,signal,traceback,shutil,time
 os.umask(0o077)
 meta=json.loads((Path(__file__).resolve().parent/'source-inputs.json').read_text())
 root_parent=Path(os.environ.get('API_PORTFOLIO_WORK_ROOT','/dev'))
@@ -83,22 +83,37 @@ thread=threading.Thread(target=upstream.serve_forever,daemon=True);thread.start(
 config_file=root/'gateway.json';config_file.write_text(json.dumps({'schema':gateway.CONFIG_SCHEMA,'state':str(state),'actor':'portfolio-native-921ba0',
  'routes':[{'id':'work','method':'GET','path':'/work','upstream':'http://127.0.0.1:'+str(upstream.server_port),'query':['q']}] }))
 session=None;result=None;child=None
-previous_handlers={}
+previous_handlers={};received_signals=[]
 def interrupted(signum,frame):
- raise KeyboardInterrupt('Receiving interrupted by signal '+str(signum))
-def retire_child():
- if child is None or child.poll() is not None:return
- try:
-  if os.name=='posix':os.killpg(child.pid,signal.SIGTERM)
-  else:child.terminate()
- except ProcessLookupError:pass
- try:child.communicate(timeout=20)
- except subprocess.TimeoutExpired:
+ received_signals.append(signum)
+def active_child_group():
+ if child is None:return False
+ if os.name!='posix':return child.poll() is None
+ for entry in Path('/proc').iterdir():
+  if not entry.name.isdigit():continue
   try:
-   if os.name=='posix':os.killpg(child.pid,signal.SIGKILL)
+   raw_stat=(entry/'stat').read_text()
+   fields=raw_stat[raw_stat.rfind(')')+2:].split()
+  except (FileNotFoundError,ProcessLookupError,PermissionError):continue
+  if len(fields)>=4 and int(fields[2])==child.pid and int(fields[3])==child.pid and fields[0]!='Z':
+   return True
+ return False
+def signal_child_group(signum):
+ if child is None:return
+ try:
+  if os.name=='posix':os.killpg(child.pid,signum)
+  elif child.poll() is None:
+   if signum==signal.SIGTERM:child.terminate()
    else:child.kill()
-  except ProcessLookupError:pass
-  child.communicate()
+ except ProcessLookupError:pass
+def retire_child():
+ if child is None:return
+ signal_child_group(signal.SIGTERM)
+ deadline=time.monotonic()+20
+ while active_child_group():
+  if time.monotonic()>=deadline:signal_child_group(signal.SIGKILL)
+  time.sleep(0.05)
+ child.communicate()
 for signum in (signal.SIGTERM,signal.SIGINT):
  previous_handlers[signum]=signal.signal(signum,interrupted)
 try:
@@ -112,16 +127,19 @@ try:
  context={**meta,'source':str(source),'root':str(root),'gateway':session['apiUrl'],'orders':orders,'handoff':handoff}
  context_file=root/'journey-input.json';context_file.write_text(json.dumps(context))
  child=subprocess.Popen([node,str(journey),str(context_file)],cwd=source,env=environment,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=(os.name=='posix'))
- try:out,err=child.communicate(timeout=180)
- except subprocess.TimeoutExpired:
-  if os.name=='posix':os.killpg(child.pid,signal.SIGTERM)
-  else:child.terminate()
-  try:out,err=child.communicate(timeout=20)
-  except subprocess.TimeoutExpired:
-   if os.name=='posix':os.killpg(child.pid,signal.SIGKILL)
-   else:child.kill()
-   out,err=child.communicate()
-  raise RuntimeError('Original native journey timed out: '+err[-2000:])
+ deadline=time.monotonic()+180
+ while True:
+  if received_signals:
+   retire_child()
+   raise RuntimeError('Original native receiving stopped by signal '+str(received_signals[0]))
+  remaining=deadline-time.monotonic()
+  if remaining<=0:
+   retire_child()
+   raise RuntimeError('Original native journey timed out')
+  try:
+   out,err=child.communicate(timeout=min(1,remaining))
+   break
+  except subprocess.TimeoutExpired:pass
  print(out,flush=True)
  if err:print(json.dumps({'nativeStderr':err[-5000:]}),flush=True)
  result=json.loads((root/'portfolio-journey-result.json').read_text()) if (root/'portfolio-journey-result.json').exists() else {'status':'NO_NATIVE_RESULT'}
