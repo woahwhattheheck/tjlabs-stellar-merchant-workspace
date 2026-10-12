@@ -279,9 +279,53 @@ The original handoff and retained rendered report each fit 8 MiB. The case retai
 
 The maintained grant launcher passes its running Node executable to the original Python support reader. Borrowed Applications and MCP-started instances use that same lifecycle. Download sourceIds through merchant_grant_export with kind source; the original handoff reopens in Merchant Support, and the saved HTML opens as the receiving-time report. Complete case export/import preserves both files, their deployment association and original event history.
 
+## Receive buyer results, review a cohort and complete its tranche
+
+The [Grant Operations guide](../../products/grant-operations/OPERATING.md) follows the installed application from planning through the complete customer handover. These operations continue the same case, service, immutable reviews and request journal used above.
+
+### Original buyer observations
+
+`merchant_grant_buyer_preview` reviews a complete original SF88 handoff against the current case version. Inspect its source identity, original jobs, outcome and output observations, existing purchase matches, deployment choices and preview SHA. Supply the handoff through an existing host input or completed transfer, retaining the whole-file SHA and original filename.
+
+`merchant_grant_buyer_receive` takes that same file selection, case version and preview SHA, the original request fields and an explicit `selections` array. Each selected item identifies the original `jobId` and an existing `purchaseId`, or null for a new purchase record. Select an existing deployment or supply the original new-deployment fields. The [Buyer Operations contract](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_OPERATIONS.md) gives the complete data shape.
+
+The native transaction retains the handoff, reader result, purchase/deployment associations and request receipt together. Replaying an older observation preserves its recorded time and any newer original observation. An order state independently entered in the case remains separate from what the Inbox export observes. Download retained source files with `kind:source`; the complete case export carries their original history and associations.
+
+### Freeze the measured cohort
+
+| Tool | Saved case workflow |
+| --- | --- |
+| `merchant_grant_cohort_seed` | Original tranche-2/3 proposal, purchase/deployment/source inventory and complete editable inputs. |
+| `merchant_grant_cohort_preview` | Cutoff measurement, original numerator and denominator scopes, source coverage, target findings and preview digest. |
+| `merchant_grant_cohort_prepare` | Immutable reviewed measurement, complete original inputs and observation/source history in the case journal. |
+| `merchant_grant_review` | The saved review and its original source snapshot. |
+| `merchant_grant_export` with `kind:cohort` | Full evidence ZIP, readable result, CSV tables, original files and manifest. |
+
+Pass the complete seed inputs to preview. A retained seed snapshot can supply `/inputs` through the same verified input-reference interface as forecasts and portfolios. Read the complete observations, intended-purchase population, targets and source findings through the original row and file interfaces before freezing the review.
+
+Preparation requires the unchanged inputs, current case version, original request ID, actor and reviewed `expectedPreviewSha256`. A frozen review can retain unmet targets with its complete findings. The original [cohort engine](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md) determines window membership, distinct accountable operators, settlement/output proof, repeat use, facilitator independence and recovery observations from the entered source.
+
+Cohort input references use the original 32 MiB request allowance. The provider verifies the complete retained file before applying `inputPointer`, and the complete HTTP request must still fit that allowance. Source attachments and ordinary model inputs keep their existing 8 MiB limits.
+
+### Carry reviewed evidence through Completion
+
+| Tool | Original operation |
+| --- | --- |
+| `merchant_grant_completion` | Payment-derived calendar, assignments, original/confirmed deadlines and recorded issuer outcomes. |
+| `merchant_grant_completion_seed`, `merchant_grant_completion_save` | Seed and save the complete tranche assignments against the original work packages. |
+| `merchant_grant_completion_preview`, `merchant_grant_completion_prepare` | Review the form against its original received payment, then freeze the exact prepared business source. |
+| `merchant_grant_completion_extension` | Retain an issuer-confirmed later deadline with its original confirmation source. |
+| `merchant_grant_completion_submit` | Record the actual form receipt against its frozen preparation. |
+| `merchant_grant_completion_decision` | Record the issuer outcome while preserving the original form and earlier events. |
+| `merchant_grant_export` with `kind:completion` | Complete prepared form, readable HTML, deliverables and included evidence files. |
+
+Preview and preparation can select up to twenty distinct original `cohortReviewIds`. Preserve the same selection and order in both calls. Omission retains the earlier request shape; an explicit empty array is a deliberate selection with its own preview. The original service checks the tranche, cutoff, source currency and complete target findings.
+
+Preparation retains the exact `receiptId`, calendar date, summary, preview SHA and selected frozen evidence. Submission uses the preparation's business SHA and the actual issuer form reference, submission date and source records. Read the new case version after every committed action, and recover a lost result with the unchanged request. The [Completion contract](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) and [typed-client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) provide the exact field names and calendar behavior.
+
 ## Export, transfer and receive the complete work
 
-merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes all original source attachments, reviews, forecasts and portfolios.
+merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios and cohort/completion history.
 
 For exact bytes, call merchant_grant_file_read with the snapshot ID and expectedSha256. Repeat the returned readId, same SHA and nextOffset; keep each base64 chunk's decoded bytes in order. Each chunk is at most 65,536 bytes. The shared original reader keeps a verified snapshot, returns an exact total size and hash, and releases its temporary descriptor at EOF. merchant_grant_file_release closes a reader early; the retained original file stays available.
 

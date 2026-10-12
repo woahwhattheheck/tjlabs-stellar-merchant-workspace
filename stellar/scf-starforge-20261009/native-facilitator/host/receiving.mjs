@@ -6,7 +6,7 @@ import { mkdir } from 'node:fs/promises';
 import { stage,readBundle,compareBundles } from './plan.mjs';
 import { begin,resume,drain,exportHandover,status } from './host.mjs';
 import { run as originalHostCLI } from './cli.mjs';
-import { need,absolute,readJSON,maybeJSON,regular,hash,json,atomicFile,realDirectory,processIdentity,inside } from './shared.mjs';
+import { need,absolute,readJSON,maybeJSON,regular,hash,json,atomicFile,realDirectory,processIdentity,inside,hostLease } from './shared.mjs';
 
 const sameProc=(a,b)=>a?.pid===b?.pid&&a?.startTicks===b?.startTicks&&a?.bootId===b?.bootId;
 export async function receiveCase({input,output}){
@@ -32,6 +32,8 @@ export async function receiveCase({input,output}){
     'HOST_SAME_HOST_SHARED_SIGNER_IDENTITY_REQUIRED');
   await realDirectory(dirname(output),{uid:0});
   try{await realDirectory(output,{newOnly:true,uid:0,gid:0,mode:0o700});}catch(e){if(e.code!=='EEXIST')throw e;await realDirectory(output,{uid:0,mode:0o700});}
+  const receivingLease=await hostLease(output,absolute(beforeSelection.binaries?.flock??'/usr/bin/flock'));
+  try {
   const progressFile=join(output,'progress.json'),saved=await maybeJSON(progressFile);
   need(!saved||saved.value.inputSha256===original.sha256,'HOST_RECEIVING_INPUT_CHANGED');
   const p=saved?.value??{schema:'stellar-forge.native-facilitator-host-receiving-result.v1',
@@ -143,6 +145,7 @@ export async function receiveCase({input,output}){
   const old=await maybeJSON(progressFile);await atomicFile(progressFile,json(p),{allowed:[old?.sha256??null]});
   await atomicFile(join(output,'result.json'),json(p),{allowed:[null,hash(json(p))]});
   return {status:p.status,result:join(output,'result.json'),handover:publicDir,scope:p.scope};
+  } finally { await receivingLease.close(); }
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{const a=process.argv.slice(2);need(a.length===4&&a[0]==='--input'&&a[2]==='--output','HOST_RECEIVING_ARGUMENTS_INVALID');

@@ -278,9 +278,12 @@ async function advance(op,{waitSeconds=10,lease}){
   need(false,'HOST_OPERATION_PHASE_UNKNOWN');
 }
 export async function resume({hostDirectory,operationId,waitSeconds=10,rollback=false}){
-  requireAdmin();absolute(hostDirectory);const op=await operation(hostDirectory,operationId),bundle=await readBundle(op.request.candidate);
+  requireAdmin();absolute(hostDirectory);const bootstrap=await operation(hostDirectory,operationId),bundle=await readBundle(bootstrap.request.candidate);
   const lease=await hostLease(hostDirectory,bundle.plan.binaries.flock);
   try{
+    const op=await operation(hostDirectory,operationId);
+    need(op.requestSha256===bootstrap.requestSha256&&op.request.candidate===bundle.plan.directory&&
+      op.request.reviewedBundleId===bundle.bundleId,'HOST_OPERATION_REQUEST_CHANGED');
     if(rollback&&op.direction!=='rollback'){
       need(op.phase!=='ROLLED_BACK','HOST_ALREADY_ROLLED_BACK');
       if(finished.has(op.phase)){const pointer=await current(hostDirectory);need(pointer?.operationId===operationId,'HOST_ROLLBACK_NOT_CURRENT');}

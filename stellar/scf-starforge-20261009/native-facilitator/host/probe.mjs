@@ -14,7 +14,7 @@ export async function probe({runtime,config,state}) {
   const installed=(await readJSON(join(runtime,'runtime-install.json'))).value;
   const module=await import(pathToFileURL(join(observed.sourceRoot,BASE+'config.mjs')).href);
   const raw=await regular(config,65536);
-  const original=await module.readConfig(config);
+  const original=module.validateConfig(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw.bytes)));
   const normalized=module.validateConfig({...original,operations:{...original.operations,ownershipDirectory:state,requireReady:true}});
   return {schema:'stellar-forge.native-facilitator-host-probe.v1',ready:true,signingMaterialLoaded:false,
     uid:process.getuid(),gid:process.getgid(),node:{version:process.versions.node,modules:process.versions.modules,

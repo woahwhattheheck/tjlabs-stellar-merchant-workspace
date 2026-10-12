@@ -102,7 +102,7 @@ export async function command(executable,args,{timeout=30000,allowFailure=false,
     child.stdout?.on('data',x=>capture('stdout',x));child.stderr?.on('data',x=>capture('stderr',x));
     const timer=setTimeout(()=>child.kill('SIGTERM'),timeout);
     child.once('error',e=>{clearTimeout(timer);reject(Object.assign(new Error('HOST_COMMAND_START_FAILED'),{code:'HOST_COMMAND_START_FAILED',cause:e}));});
-    child.once('exit',(code,signal)=>{clearTimeout(timer);
+    child.once('close',(code,signal)=>{clearTimeout(timer);
       if(overflow||(!allowFailure&&code!==0)){
         let originalCode=null;for(const line of stderr.trim().split('\n').reverse()){
           try{const e=JSON.parse(line);if(/^[A-Z0-9_]+$/.test(e.error??'')){originalCode=e.error;break;}}catch{}

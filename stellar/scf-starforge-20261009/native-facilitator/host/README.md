@@ -312,7 +312,7 @@ The programme commissions edition 1, replays its completed request without repla
 
 Its final result explicitly states that this is actual same-host receiving and that paymentCalls is 0. It does not claim remote-host deployment or an accepted-payment drain experiment. Source-policy review separately establishes the handling of accepted native work. Private progress/capture files let the same authored receiving case continue after interruption; the public handover captures one original observation and is never regenerated from later state during a lost-reply retry.
 
-The programme returns PENDING when its finite wait expires and retains the original operation. A later invocation with the identical input continues from its retained steps. A completed invocation returns the exact original result. The document itself is not an execution receipt: report the actual result file, process/service identities and completed status from the receiving host.
+One retained receiving lease serializes the full case and its progress file; a concurrent invocation leaves the existing owner in place. The programme returns PENDING when its finite wait expires and retains the original operation. A later invocation with the identical input continues from its retained steps. A completed invocation returns the exact original result. The document itself is not an execution receipt: report the actual result file, process/service identities and completed status from the receiving host.
 
 ## Source references and integration
 

@@ -11,6 +11,9 @@ import {
 } from './handover.mjs';
 import { exportCapturedHandoverArchive, receiveCapturedHandoverArchive } from './handover-archive.mjs';
 import { inspectCapturedHandoverUpload } from './handover-upload.mjs';
+import { RetainedFileReads } from '../../stellar-forge/mcp-merchant-operator/retained-file-reads.mjs';
+import { capturedEditionBaselines, prepareCapturedHandoverEditions, readCapturedHandoverEdition,
+  assertCapturedHandoverEditions, capturedEditionPage } from './handover-editions.mjs';
 import {
   HASH, METADATA_LIMIT, canonical, digest, encode, decode, exact, plain, title, absolute,
   directory, present, bytes, readJSON, publishJSON, operation, requireEmptyOperation,
@@ -23,6 +26,7 @@ const JOB = 'stellar-forge.captured-handover-browser-job.v1';
 const RESULT = 'stellar-forge.captured-handover-browser-result.v1';
 const MERGE_REVIEW = 'stellar-forge.captured-draft-review.v1';
 const MERGE_SAVE = 'stellar-forge.captured-draft-save.v1';
+const EDITION_DECISION = 'stellar-forge.captured-receiving-edition-decision.v1';
 const WORKING_LIMIT = 4*1024*1024;
 const failure = (code,message,status=400) => Object.assign(new Error(message),{code,status});
 const need = (condition,code,message,status=400) => {if(!condition)throw failure(code,message,status);};
@@ -40,6 +44,7 @@ const documentSummary = ({manifest,review,...value}) => ({...value,
     files:review.files.length,totalBytes:review.totalBytes} : {})});
 const fields = {
   PREPARE:['id','command','draftId','revision'],
+  COMPARE:['id','command','draftId','revision','baselines'],
   INSPECT:['id','command','draftId','revision'],
   REVIEW:['id','command','draftId','revision'],
   PUBLISH:['id','command','sourceJob','reviewSha256'],
@@ -55,7 +60,7 @@ function jobInput(value) {
     'Choose a different completed original review as the source of this operation.');
   for(const name of ['draftId','sourceJob','uploadId'])if(value[name] !== undefined)id(value[name]);
   for(const name of ['revision','reviewSha256','operationId'])if(value[name] !== undefined)hash(value[name]);
-  return copy(value);
+  return copy({...value,...(value.command==='COMPARE'?{baselines:capturedEditionBaselines(value.baselines)}:{})});
 }
 function form(kind,value) {
   exact(value,kind === 'OUTGOING' ? ['label','packages','sources'] : ['label','bundle','manifestSha256','names']);
@@ -94,6 +99,14 @@ function mergeInput(value,{save=false}={}) {
     'CAPTURED_DESK_MERGE_CHOICES','Choose current or working for each displayed draft conflict.');
   return copy({...value,resolutions});
 }
+function receivingDecisionInput(value,{save=false}={}) {
+  const required=['id','expectedRevision','comparisonId','comparisonSha256','form'];
+  exact(value,[...required,...(save?['requestId','reviewSha256']:[])],
+    [...required,...(save?['requestId','reviewSha256']:[])]);
+  id(value.id);id(value.comparisonId);hash(value.expectedRevision);hash(value.comparisonSha256);
+  if(save){id(value.requestId);hash(value.reviewSha256);}
+  return {...copy(value),form:form('RECEIVING',value.form)};
+}
 function paging(value={}) {
   const limit=Number(value.limit ?? 25),offset=Number(value.offset ?? 0);
   need(Number.isSafeInteger(limit)&&limit>=1&&limit<=100 && Number.isSafeInteger(offset)&&offset>=0,
@@ -118,6 +131,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   const requests=new Set(),activeJobs=new Map(),draftWriters=new Map(),jobWriters=new Map();
   let stopping=false,closing,launching=Promise.resolve();
   const backgroundErrors=new Map();
+  const editionReads=new RetainedFileReads({errorPrefix:'CAPTURED_EDITION_FILE'});
   function launch(work) {
     const result=launching.then(work,work);
     launching=result.catch(()=>{});
@@ -222,7 +236,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
       const current=await readDraftRaw({id:value.id}),selectedForm=form(current.kind,value.form);
       const old=await readJSON(root,'records/'+value.requestId+'.json',true);
       if(old) {
-        need(old.schema===EDITION&&old.reconciliation===undefined&&old.draftId===value.id&&old.previousRevision===value.expectedRevision&&
+        need(old.schema===EDITION&&old.reconciliation===undefined&&old.receivingDecision===undefined&&old.draftId===value.id&&old.previousRevision===value.expectedRevision&&
           canonical(old.form)===canonical(selectedForm),'CAPTURED_DESK_REQUEST_CHANGED',
           'This save identifier already belongs to another complete draft edit.',409);
         resultMayExist=true;
@@ -236,10 +250,11 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   }
   // Publication and writer release can fail after the immutable edition exists.
   // Keep that request recoverable until its original result is read successfully.
-  async function writeDraftEdition(root,current,value,selectedForm,reconciliation) {
+  async function writeDraftEdition(root,current,value,selectedForm,reconciliation,receivingDecision) {
     const edition={schema:EDITION,draftId:value.id,requestId:value.requestId,kind:current.kind,
       sequence:current.edition.sequence+1,previousRevision:value.expectedRevision,
-      createdAt:new Date().toISOString(),form:selectedForm,...(reconciliation?{reconciliation}:{})};
+      createdAt:new Date().toISOString(),form:selectedForm,...(reconciliation?{reconciliation}:{}),
+      ...(receivingDecision?{receivingDecision}:{})};
     await publishJSON(root,'records/'+value.requestId+'.json',edition);
     return readDraftRaw({id:value.id,revision:digest(encode(edition))});
   }
@@ -297,6 +312,126 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
         schema:MERGE_SAVE,baseRevision:value.baseRevision,reviewSha256:review.reviewSha256,requestSha256,
       });
     }).catch(error=>{if(resultMayExist)error.outcomeUnknown=true;throw error;});
+  }
+  async function completedComparison(value) {
+    const job=await readJob(id(value.comparisonId));
+    need(job.command==='COMPARE'&&job.state==='COMPLETE'&&
+      job.result?.comparisonSha256===hash(value.comparisonSha256),
+      'CAPTURED_EDITION_PENDING','Open the exact completed incoming-edition comparison.',409);
+    return {job,root:await jobRoot(job.id)};
+  }
+  async function buildReceivingDecision(value,comparison) {
+    const current=await readDraftRaw({id:value.id}),{job,root}=comparison;
+    need(current.kind==='RECEIVING'&&job.selected.draftId===current.id,
+      'CAPTURED_EDITION_SELECTION','Use this comparison with its original receiving draft.',409);
+    need(current.currentRevision===value.expectedRevision,'CAPTURED_DESK_DRAFT_CHANGED',
+      'The receiving draft advanced. Keep your names and compare the current draft before saving.',409);
+    const source=job.result.binding;
+    for(const selected of [current.edition.form,value.form])
+      need(absolute(selected.bundle)===source.bundle&&selected.manifestSha256===source.manifestSha256,
+        'CAPTURED_EDITION_SELECTION','Review the same incoming collection that was compared. Start another comparison for another source.',409);
+    await assertCapturedHandoverEditions({directory:profile.directory,root,result:job.result});
+    const receiving=await reviewCapturedHandoverReceive({directory:profile.directory,
+      bundle:source.bundle,expectedManifestSha256:source.manifestSha256,names:value.form.names});
+    const binding={schema:EDITION_DECISION,productId:inputHash(product),id:current.id,
+      currentRevision:current.revision,comparisonId:job.id,comparisonSha256:job.result.comparisonSha256,
+      current:current.edition.form,form:value.form,nativeReviewSha256:receiving.reviewSha256};
+    return {...binding,reviewSha256:inputHash(binding),state:receiving.state,receiving};
+  }
+  async function reviewReceivingDecision(value) {
+    value=receivingDecisionInput(value);
+    // Resolve the original completed job before taking the draft writer. A job
+    // may itself be opening this draft; opposite lock ordering would deadlock.
+    const comparison=await completedComparison(value);
+    return inDraft(value.id,async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,value.id));
+      return buildReceivingDecision(value,comparison);
+    });
+  }
+  async function saveReceivingDecision(value) {
+    value=receivingDecisionInput(value,{save:true});
+    const requestSha256=inputHash(value);let resultMayExist=false;
+    const original=async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,value.id));
+      const old=await readJSON(root,'records/'+value.requestId+'.json',true);
+      if(!old)return null;
+      need(old.schema===EDITION&&old.draftId===value.id&&old.requestId===value.requestId&&
+        old.previousRevision===value.expectedRevision&&old.receivingDecision?.schema===EDITION_DECISION&&
+        old.receivingDecision.requestSha256===requestSha256,'CAPTURED_DESK_REQUEST_CHANGED',
+        'This save identifier already belongs to another complete receiving decision.',409);
+      resultMayExist=true;
+      return readDraftRaw({id:value.id,revision:digest(encode(old))});
+    };
+    try {
+      // Replay the completed original save before today's comparison/source.
+      // Recheck the same immutable receipt after reacquiring the writer below.
+      const saved=await inDraft(value.id,original);if(saved)return saved;
+      const comparison=await completedComparison(value);
+      return await inDraft(value.id,async root=>{
+        const saved=await original(root);if(saved)return saved;
+        const review=await buildReceivingDecision(value,comparison);
+        need(review.reviewSha256===value.reviewSha256,'CAPTURED_DESK_REVIEW_CHANGED',
+          'Save the exact complete receiving decision that was reviewed.',409);
+        need(review.state==='READY','CAPTURED_EDITION_RECEIVING_CONFLICT',
+          'Choose an available new name or the same exact original package before saving this receiving decision.',409);
+        const current=await readDraftRaw({id:value.id});
+        resultMayExist=true;
+        return writeDraftEdition(root,current,value,value.form,undefined,{
+          schema:EDITION_DECISION,comparisonId:value.comparisonId,comparisonSha256:value.comparisonSha256,
+          reviewSha256:value.reviewSha256,nativeReviewSha256:review.nativeReviewSha256,requestSha256,
+        });
+      });
+    } catch(error){if(resultMayExist)error.outcomeUnknown=true;throw error;}
+  }
+  async function editionComparison(value) {
+    exact(value,['id','name','view','offset','limit','expectedComparisonSha256'],['id']);
+    const job=await readJob(id(value.id));
+    need(job.command==='COMPARE'&&job.state==='COMPLETE','CAPTURED_EDITION_PENDING',
+      'Finish the original incoming-edition comparison.',409);
+    const {id:ignored,...options}=value,input=capturedEditionPage(job.result,options);
+    const result=job.result,metadata={schema:result.schema,id:job.id,comparisonSha256:result.comparisonSha256,
+      handoverId:result.binding.handoverId,manifestSha256:result.binding.manifestSha256,
+      draftId:result.binding.draftId,revision:result.binding.revision,
+      packages:result.packages.length,sources:result.sources,view:input.view};
+    if(input.view==='summary'&&!input.name)return {...metadata,binding:result.binding};
+    if(input.view==='packages')return {...metadata,...page(result.packages,input)};
+    need(input.name,'CAPTURED_EDITION_VIEW','Choose an incoming merchant for this comparison section.',400);
+    const row=result.packages.find(row=>row.name===input.name);
+    need(row,'CAPTURED_EDITION_VIEW','Choose an original compared merchant.',404);
+    if(input.view==='summary')return {...metadata,package:row};
+    const selected=await readCapturedHandoverEdition({root:await jobRoot(job.id),
+      result,name:input.name,side:'comparison'});
+    return {...metadata,name:row.name,baselineName:row.baselineName,summary:row.summary,
+      file:selected.file,...page(selected.data[input.view],input)};
+  }
+  async function editionFile(value) {
+    exact(value,['id','name','side','expectedComparisonSha256','expectedSha256','offset','limit','readId'],
+      ['id','name','side','expectedComparisonSha256','expectedSha256']);
+    id(value.id);hash(value.expectedComparisonSha256);hash(value.expectedSha256);
+    if(value.readId!==undefined)id(value.readId);
+    const job=await readJob(value.id);
+    need(job.command==='COMPARE'&&job.state==='COMPLETE'&&
+      job.result.comparisonSha256===value.expectedComparisonSha256,'CAPTURED_EDITION_CHANGED',
+      'Open the exact completed original comparison.',409);
+    const row=job.result.packages.find(row=>row.name===value.name);
+    need(row&&['current','incoming','comparison'].includes(value.side),'CAPTURED_EDITION_VIEW',
+      'Choose the original current, incoming or comparison file.',400);
+    const file=row.files[value.side];
+    need(file.sha256===value.expectedSha256,'CAPTURED_EDITION_RECORD_CHANGED',
+      'Continue the complete original comparison file SHA-256.',409);
+    const scope=job.id+':'+job.result.comparisonSha256,root=await jobRoot(job.id);
+    const result=await editionReads.read({scope,key:file.name+':'+file.sha256,kind:'CAPTURED_INCOMING_EDITION',
+      directory:root,expectedSha256:file.sha256,offset:Number(value.offset??0),limit:Number(value.limit??65536),
+      ...(value.readId?{readId:value.readId}:{}),loadFile:async()=>({
+        path:join(root,file.name),name:row.name+'-'+value.side+'.json',bytes:file.bytes,
+      })});
+    return {id:job.id,name:row.name,side:value.side,comparisonSha256:job.result.comparisonSha256,...result};
+  }
+  async function releaseEditionFile(value) {
+    exact(value,['id','comparisonSha256','readId'],['id','comparisonSha256','readId']);
+    id(value.id);hash(value.comparisonSha256);id(value.readId);
+    await editionReads.release(value.id+':'+value.comparisonSha256,value.readId);
+    return {id:value.id,comparisonSha256:value.comparisonSha256,readId:value.readId,released:true};
   }
   async function exportWorkingEdit(value) {
     exact(value,['id','baseRevision','working'],['id','baseRevision','working']);
@@ -383,6 +518,8 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   }
   async function execute(record) {
     const request=record.request,selected=record.selected;
+    if(request.command==='COMPARE')return prepareCapturedHandoverEditions({directory:profile.directory,
+      root:await jobRoot(request.id),request,selection:selected});
     if(request.command==='PREPARE') {
       const out=join(roots.collections,request.id);
       const result=await prepareCapturedHandover({directory:profile.directory,out,
@@ -404,7 +541,14 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
       const args={directory:profile.directory,bundle:form.bundle,
         ...(form.manifestSha256?{expectedManifestSha256:form.manifestSha256}:{}),names:form.names};
       if(request.command==='INSPECT')return documentSummary(await inspectCapturedHandover(args));
-      return reviewCapturedHandoverReceive(args);
+      if(selected.receivingDecision) {
+        const decision=selected.receivingDecision,comparison=await completedComparison({
+          comparisonId:decision.comparisonId,comparisonSha256:decision.comparisonSha256,
+        });
+        await assertCapturedHandoverEditions({directory:profile.directory,root:comparison.root,result:comparison.job.result});
+      }
+      const reviewed=await reviewCapturedHandoverReceive(args);
+      return {...reviewed,...(selected.receivingDecision?{receivingDecision:selected.receivingDecision}:{})};
     }
     if(request.command==='RECEIVE') {
       const reviewed=await sourceJob(record,'REVIEW');
@@ -482,7 +626,8 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
         const draft=await readDraft({id:request.draftId,revision:request.revision});
         const expected=request.command==='PREPARE'?'OUTGOING':'RECEIVING';
         need(draft.kind===expected,'CAPTURED_DESK_KIND','Choose the original outgoing or receiving draft.');
-        selection={draftId:draft.id,revision:draft.revision,kind:draft.kind,form:draft.edition.form};
+        selection={draftId:draft.id,revision:draft.revision,kind:draft.kind,form:draft.edition.form,
+          ...(draft.edition.receivingDecision?{receivingDecision:draft.edition.receivingDecision}:{})};
       } else if(request.command==='IMPORT') {
         const upload=await inspectCapturedHandoverUpload({root:roots.uploads,id:request.uploadId});
         need(upload.path&&HASH.test(upload.sha256??'')&&upload.receivedBytes===upload.totalBytes,
@@ -601,7 +746,10 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   async function close() {
     if(closing)return closing;
     stopping=true;
-    closing=(async()=>{while(requests.size)await Promise.allSettled([...requests]);})();
+    closing=(async()=>{
+      while(requests.size)await Promise.allSettled([...requests]);
+      await editionReads.close();
+    })().catch(error=>{closing=null;throw error;});
     return closing;
   }
   return {
@@ -611,6 +759,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
       state:stopping?'DRAINING':'OPEN',activeJobs:[...activeJobs.keys()]}),
     inventory:()=>inventoryCapturedHandover({directory:profile.directory}),
     createDraft,readDraft,saveDraft,reviewDraftMerge,saveDraftMerge,exportWorkingEdit,importWorkingEdit,
+    reviewReceivingDecision,saveReceivingDecision,editionComparison,editionFile,releaseEditionFile,
     listDrafts,startJob,resumeJob,readJob,listJobs,jobDocument,receivedOperations,listUploads,
   };
 }

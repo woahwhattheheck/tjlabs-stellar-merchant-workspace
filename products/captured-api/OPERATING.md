@@ -568,6 +568,41 @@ inputs. A receiving recipe selects the destination's original declared delivery
 handle and complete export manifest; it reopens the package and can stage an
 explicit native release.
 
+### Review a changed operator host
+
+Open **Host → Review host** for the selected profile before adopting a changed
+merchant configuration or installed provider selection. The comparison shows
+added, removed and changed tools, provider declarations, source aliases and
+request capacity. Expand a change for its saved and current values, or open a
+changed tool in the original editor to inspect its current inputs.
+
+Choose **Save this host binding** to retain the displayed host under a new
+profile revision. The saved configuration and capability fingerprints must still
+match the displayed review. Earlier bindings, saved drafts, workflow editions,
+native calls, returned values and customer files remain in the same profile.
+
+Use **Retained host bindings** to compare an earlier revision against the current
+host. **Export comparison** downloads that full review. **Export profile**
+includes every immutable host binding with the original request, workflow and
+customer history. Receiving a newer profile archive extends that history while
+preserving the receiving workspace's selected host, profile name and favorites;
+reopening the same archive reuses its original receiving record.
+
+A profile created before complete capability snapshots retains its original
+saved host when first rebound. The review uses that host's available
+configuration, counts, provider membership and source aliases; subsequent
+bindings retain the full tool and declaration snapshots. Runtime load and
+shutdown state remain available in the original Host view.
+
+The Applications launch review binds the original operator and host-comparison
+source with the complete Console assets. Reopen the same private product after
+upgrading its runtime, then review and save the intended host binding in its
+retained `operator-console/` workspace.
+
+[Operator host review](../../stellar-forge/mcp-merchant-operator/console/README.md#review-host-changes-and-retain-bindings)
+provides the browser workflow, authenticated API and complete native
+customer-to-host receiving and return sequence.
+
 ## 6. Run, release and deliver the merchant
 
 Reopen the saved package. Its compiler output includes the merchant service,
@@ -735,6 +770,37 @@ Keep the complete base and proposed worksheet JSON when moving unfinished
 pricing work. Native file hashes and source/asset binding govern its import and
 reconciliation.
 
+### Compare an incoming merchant edition
+
+After importing the complete collection, save its receiving draft and open
+**Incoming editions**. Load the installed merchant choices and select the
+baseline for each incoming package. The default follows the saved receiving
+name; an explicit installed name or no baseline can be selected independently.
+
+Choose **Compare this saved receiving edition**. The original retained COMPARE
+job saves full current/incoming plans, exact route prices, OpenAPI source,
+facades, compiled configuration and file identities. Page the complete changes
+or download the original JSON snapshots.
+
+Choose the desired receiving names in the same form, then select **Review
+selected receiving names**. Review actual target conflicts and the complete
+source/baseline binding. **Save reviewed receiving decision** retains that exact
+choice through the existing immutable draft writer. **Review this saved
+decision for receiving** continues into the original REVIEW, RECEIVE and REOPEN
+operations. A new native package name keeps the prior installed edition
+available for the original merchant and release workflow.
+
+The existing merchant agent exposes the same comparison, decision and full-file
+reads. The original terminal's edition-export command retains the complete
+comparison index and all three files for every merchant. Repeating its retained
+output directory completes an interrupted export or reopens all original files
+after the product host stops.
+
+[EDITIONS.md](EDITIONS.md) covers the complete browser, agent, typed-client and
+terminal journey, source-only collections, peer draft changes and native
+receiving recovery. Saved operator procedures and source refresh continue
+through the original host and merchant controls described above.
+
 ## 9. Recover and upgrade
 
 ~~~sh
@@ -762,10 +828,15 @@ alongside the saved process session.
 | Workflow stops at native review | Same paused run revision and the displayed original policy review SHA-256 |
 | Customer transfer stops | Same profile, export ID and export manifest SHA-256; reopen the original download |
 | Operator host restarts | Returned operator URL and the retained profile/run/customer state under `operator-console/` |
+| Operator capabilities or configuration change | Review the selected profile against the current host, then retain the exact displayed binding; earlier bindings and native work remain available |
 | Complete handover is interrupted | Same selection/output or receiving review/operation ID; completed native members reopen |
 | Browser handover draft or reply is interrupted | Original saved draft edition and retained request under Merchant handover |
 | Whole handover file transfer stops | Same original download or saved file upload; resume the retained byte range/chunk |
 | Handover browser uses a new port after restart | Open the original server-side Drafts, Operations, Files or Received entry |
+| Incoming-edition comparison stops | Same COMPARE job/request SHA and its retained original current/incoming snapshots |
+| Installed baseline changes during receiving review | New comparison against the changed original merchant; prior comparison history remains available |
+| Incoming-edition decision reply is lost | Same exact draft base, complete form, comparison/review hashes and original save UUID |
+| Complete edition export stops | Same original terminal command/output directory; resume missing files or reopen completed files offline |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
