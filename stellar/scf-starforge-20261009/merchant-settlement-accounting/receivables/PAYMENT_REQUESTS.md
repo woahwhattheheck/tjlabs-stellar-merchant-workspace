@@ -144,6 +144,7 @@ The merchant's selected `invoiceAmount` determines the invoice-currency receipt 
 In the operator workspace, open the invoice's payment request and its transaction receiving history.
 
 - **Transaction reported against the wrong invoice:** keep that report in its original history. Open the correct invoice's issued request and record the same transaction hash there. An unverified or unsuccessful report does not reserve the payment. Receiving checks the selected request's exact wallet terms.
+- **Transaction reported as a refund by mistake:** open the correct invoice's issued request, record the original hash and receive it there. An unverified or unsuccessful refund report remains in its history and does not reserve the payment. A refund whose outgoing transfer was verified keeps ownership while its funding or accounting record is reconciled; use [the original refund return](./REFUNDS_AND_CREDITS.md#reconcile-an-outgoing-transfer-that-already-happened) for that recovery.
 - **Incorrect transaction hash:** record the correct hash as another transaction reference. Each reference keeps its original hash, operator note and observations.
 - **Incorrect optional sending account:** choose **Correct sending account** on the saved reference, enter the correct G account or leave it blank to use the payment's actual sender, and provide the reason. Then choose **Inspect and receive** again.
 
