@@ -1,0 +1,225 @@
+{
+  "schema": "stellar-forge.gdelt-source-adoption.v1",
+  "source_repository": "woahwhattheheck/public-commons-sprint-2026",
+  "source_commit": "ab63cdf7d557c2a3f4326bc810d0636783aad334",
+  "source_pull_request": 2084,
+  "target_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "selection": "gdelt-events",
+  "source_files": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/application-provider.mjs",
+      "bytes": 6999,
+      "git_blob": "d4147e24d6bea5c34699ca9535c4aa922bf9da08",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/application.mjs",
+      "bytes": 17685,
+      "git_blob": "3012c7b91db749caaf8404579cf4d868686f734c",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/browser-assets.json",
+      "bytes": 393,
+      "git_blob": "dc351d57d35bbdc0acbcaa59bb97acd466376308",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/cli.mjs",
+      "bytes": 15449,
+      "git_blob": "64c3cce347e580aafaec31e840e95b150ff7793f",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/customer.mjs",
+      "bytes": 12019,
+      "git_blob": "672be53e6dfbf20103eb1034762eb302e142c991",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/event-policy.json",
+      "bytes": 726,
+      "git_blob": "e177ac4e7df88ab09866bd24e2ab72941d8714e8",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/gkg-article-policy.json",
+      "bytes": 762,
+      "git_blob": "b14593b10e1d3c2c4b33b1037def956323658465",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/gkg-detail-policy.json",
+      "bytes": 910,
+      "git_blob": "e3d3ca4259e9a43422d4e89622d20cbb4accb8c8",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/gkg-entity-policy.json",
+      "bytes": 748,
+      "git_blob": "7a49ad30fe805f0fbebe799ed0295de2c8b082a4",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/gkg-measure-policy.json",
+      "bytes": 671,
+      "git_blob": "d8e08a04e374100a0a0e13377521a7004b564882",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/mention-policy.json",
+      "bytes": 652,
+      "git_blob": "3c4875613cfa6e7dbe6271cf739d9b387c0f9935",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/examples/native-customer-journey.mjs",
+      "bytes": 28328,
+      "git_blob": "7a466c7fae80833cc23184e49f08f778b40d74a4",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/gkg.mjs",
+      "bytes": 19277,
+      "git_blob": "5710beecf11f45c15829d0db6e071a917827dc5d",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/launch.mjs",
+      "bytes": 3213,
+      "git_blob": "6007d8ec5decb6df349baf3c515c6ebc3e38ffe5",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/loopback.mjs",
+      "bytes": 5003,
+      "git_blob": "fb10a12e9b10d9179202bd7b8e4b841435d3c19f",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/mcp-client.mjs",
+      "bytes": 7988,
+      "git_blob": "7a63b360e63b68ae79cf6d1df7eba8278c4c06c2",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/mcp-setup.mjs",
+      "bytes": 4025,
+      "git_blob": "2a7d6043b23694f821c4855ba0b93f37ed3e1cdd",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/mcp-tools.mjs",
+      "bytes": 7393,
+      "git_blob": "f2d2bf0b7faadc6a20e77fa3ee9ba5adc5df58ce",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/mcp.mjs",
+      "bytes": 10574,
+      "git_blob": "f566af17f02337b45937d14e27d690d0729a9b70",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/merchant-provider.mjs",
+      "bytes": 2290,
+      "git_blob": "0b20ff33177ab89137358c80896c3093f76ba22c",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/merchant.mjs",
+      "bytes": 26154,
+      "git_blob": "23e802d5dd4dd579914dd8adb174583e3bb08e37",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/model.mjs",
+      "bytes": 22598,
+      "git_blob": "feb7362081b590d8c4aff5a0d989dbabe4f3aedc",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/project.mjs",
+      "bytes": 25793,
+      "git_blob": "9b5b2d1ffb8af1a9d1232da287b52251d82f1874",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/python.mjs",
+      "bytes": 2377,
+      "git_blob": "2732fab06c3156d24f1e1115c2a120cd3722a623",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/README.md",
+      "bytes": 33679,
+      "git_blob": "6943a877c1c5ab85bd965d5a496ff17d6614cc15",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/source_receive.py",
+      "bytes": 14677,
+      "git_blob": "c124c2dc2a3d66de01cbf0b3d88747f618dfe556",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/source.mjs",
+      "bytes": 16670,
+      "git_blob": "dd11f8880129b61eac6d7fd139f7a581535c5dd6",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/ui/app.js",
+      "bytes": 20490,
+      "git_blob": "1f151584e3feeda182fc5e5c35073547fc42c3e7",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/ui/index.html",
+      "bytes": 12129,
+      "git_blob": "0b3d39b16fcf176be2f7f2d1ea9735d6fb395c7b",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/ui/style.css",
+      "bytes": 4309,
+      "git_blob": "a5a10e895e595ba6073d0c50588484a45398376e",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/workspace.mjs",
+      "bytes": 7253,
+      "git_blob": "9d2ffd8999bb893c1d1668e8a1e7f2e82c80081c",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/gdelt/zip_decode.py",
+      "bytes": 2986,
+      "git_blob": "31f167bced48cf1b61cb3244c24c1a8d6e4d399e",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/examples/gdelt-native-fixture-exports.mjs",
+      "bytes": 20693,
+      "git_blob": "7344c87cffceaf572a077fc6577c48e089bc6325",
+      "mode": "100644"
+    }
+  ],
+  "contribution": {
+    "path": "stellar/scf-starforge-20261009/distribution/contributions/gdelt-events.json",
+    "git_blob": "37976c37b2ba9a439012feb4dca45ac62424b849"
+  },
+  "shared_receiving": {
+    "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/source_file_delivery.py",
+    "target_observed_commit": "e6a15209e5d8877ac4261f77e66eb859e035b842",
+    "git_blob": "58055f355dbd096c9c3ffdecc70a51f4de4e008c",
+    "selection_role": "explicit-support-file"
+  },
+  "customer_example": {
+    "source_family": "events-mentions",
+    "operation": "SCF-GDELT-EVENT-DESK-7DE2-20261012",
+    "payment_mode": "ORIGINAL_LOCAL_PROTOCOL_FIXTURE",
+    "execution_state": "Existing operation; source adoption does not claim a new execution"
+  },
+  "native_gkg_acquisition_claimed": false
+}
