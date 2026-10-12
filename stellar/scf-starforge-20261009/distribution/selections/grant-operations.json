@@ -212,7 +212,9 @@
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/planning/workspace.mjs",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/model.mjs",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/workspace.mjs",
-    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs"
+    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-return-complete.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_RETURN_COMPLETE.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
