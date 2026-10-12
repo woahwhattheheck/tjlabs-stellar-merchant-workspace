@@ -24,6 +24,11 @@ const phaseLabel = phase => ({
   UNAVAILABLE: 'Open to inspect',
 }[phase] ?? phase);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const localDate = value => {
+  const date = new Date(value);
+  return value && Number.isFinite(date.getTime()) ?
+    date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+};
 
 export function createGrantApplicationHandoffView({
   root, api, getState, getApplications, onApplicationSaved, message, error,
@@ -153,17 +158,19 @@ export function createGrantApplicationHandoffView({
     const title = value.package?.name ?? value.selection?.application?.label ?? 'Grant handoff';
     resultPanel.replaceChildren(el('h3', title + ' · ' + phaseLabel(value.phase)), rows([
       ['Operation', isExport ? 'Export complete case and Application' : 'Receive complete case and Application'],
-      ['Source case', value.originalCase?.id],
+      ['Source handoff', value.package?.name ?? value.selection?.application?.label],
       ['Original case version', value.originalCase?.version],
       ['Receiving grant workspace', bindings?.settings?.workspaceDirectory],
-      ['Received case', value.imported?.result?.id],
-      ['Saved Application', value.application?.result?.applicationId],
+      ['Case name', bindings?.caseName],
+      ['Application name', bindings?.label ?? value.selection?.application?.label],
     ]));
     if (value.lastError) resultPanel.append(el('p', value.lastError.message, 'note'));
     const review = value.application?.review ?? value.preflight;
     if (review?.command) {
       resultPanel.append(el('h4', value.application ? 'Receiving Application review' : 'Receiving host review'),
-        rows([['Application name', bindings?.label], ['Runtime', bindings?.runtimeId],
+        rows([['Application name', bindings?.label], ['Runtime',
+          (getState()?.runtimes ?? []).find(item => item.id === bindings?.runtimeId)?.label ??
+            value.selection?.native?.runtime?.directory ?? 'Original selected runtime'],
           ['Recording operator', bindings?.actor], ['Received case name', bindings?.caseName]]),
         renderApplicationReview(review.command));
       if (review.command.createDirectories?.length) resultPanel.append(el('p',
@@ -185,7 +192,8 @@ export function createGrantApplicationHandoffView({
     })));
     resultPanel.append(actions);
     if (value.imported?.result?.id) resultPanel.append(el('p',
-      'Open the receiving Application and select case ' + value.imported.result.id + ' in Delivery operations.', 'note'));
+      'Open ' + (bindings?.label ?? 'the receiving Application') + ' and select ' +
+        (bindings?.caseName ?? 'the received case') + ' in Delivery operations.', 'note'));
     const details = el('details'); details.append(el('summary', 'Complete operation details'), el('pre', JSON.stringify(value, null, 2)));
     resultPanel.append(details); syncDisabled();
   }
@@ -195,13 +203,13 @@ export function createGrantApplicationHandoffView({
     if (page.workspaceId !== context.workspaceId) throw new Error('Reopen the handoffs for the current workspace.');
     loaded = true; nextCursor = page.nextCursor;
     const table = el('table'), head = el('thead'), headings = el('tr');
-    for (const name of ['Handoff', 'Purpose', 'State', 'Updated', '']) headings.append(el('th', name));
+    for (const name of ['Handoff', 'Purpose', 'State', 'Updated (local)', '']) headings.append(el('th', name));
     head.append(headings); const body = el('tbody');
     for (const item of page.entries) {
       const row = el('tr'), action = el('td');
       action.append(button('Open', () => act(context => openOperation(context, item.id))));
-      row.append(el('td', item.name ?? item.id), el('td', item.direction === 'EXPORT' ? 'Export' : 'Receiving'),
-        el('td', phaseLabel(item.phase)), el('td', item.updatedAt ?? '—'), action);
+      row.append(el('td', item.name ?? 'Retained handoff'), el('td', item.direction === 'EXPORT' ? 'Export' : 'Receiving'),
+        el('td', phaseLabel(item.phase)), el('td', localDate(item.updatedAt)), action);
       body.append(row);
     }
     table.append(head, body);
