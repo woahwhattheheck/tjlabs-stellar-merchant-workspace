@@ -4,6 +4,10 @@ Run the actual SF47 funding calculator through a retained local planning workspa
 
 The application uses the original [budget.py](../budget.py) for every accepted scenario. Its current source is [sf10_current_candidate.json](../sf10_current_candidate.json); the accompanying [calculator guide](../README.md) explains the native funding model and source assumptions.
 
+## Compare saved revisions
+
+Open **Compare saved plans** to compare saved revisions within one plan or across named alternatives. Inspect complete source changes, exact funding and capacity deltas, and retained daily cash outcomes. The [comparison guide](COMPARISON.md) covers the browser, CLI, typed client, Merchant MCP and complete original-plan receiving package.
+
 ## Start and reopen
 
 Use Linux with Python 3.10 or newer and a current browser. The application uses Python's standard library, SQLite and a retained operating-system file lock. Its browser files are plain HTML, CSS and JavaScript.

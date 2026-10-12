@@ -1225,6 +1225,86 @@ export interface GrantPortfolioSelection extends GrantObject {
   };
 }
 
+/** Two explicit retained revisions; omit toPlanId to compare within the same plan. */
+export interface GrantPlanComparisonSelection {
+  planId: string;
+  fromRevision: number;
+  toRevision: number;
+  toPlanId?: string;
+  expectedComparisonSha256?: string;
+}
+export interface GrantPlanComparisonExportSelection extends GrantPlanComparisonSelection {
+  expectedComparisonSha256: string;
+}
+export interface GrantPlanComparisonIdentity {
+  id: string;
+  name: string;
+  revision: number;
+  savedAt: string;
+  note: string;
+  contentSha256: string;
+  reportSha256: string;
+  calculatorSha256: string | null;
+  source: GrantObject & { sha256: string; filename: string; url: string };
+}
+export interface GrantPlanComparisonChange {
+  path: string;
+  kind: 'added' | 'removed' | 'changed';
+  beforePresent: boolean;
+  afterPresent: boolean;
+  before: unknown;
+  after: unknown;
+}
+export interface GrantPlanComparisonRow {
+  id: string;
+  state: 'added' | 'removed' | 'changed' | 'unchanged';
+  before: GrantObject | null;
+  after: GrantObject | null;
+  changes: GrantPlanComparisonChange[];
+}
+export interface GrantPlanComparisonMetric {
+  id: string;
+  label: string;
+  unit: string;
+  before: string | number | null;
+  after: string | number | null;
+  /** Exact decimal after minus before. Null means at least one side is unset or absent. */
+  delta: string | null;
+  path: string;
+}
+export interface GrantPlanComparisonDay {
+  day: number;
+  before: GrantObject | null;
+  after: GrantObject | null;
+  delta: Record<'accruedUsd' | 'plannedOutflowUsd' | 'conditionalInflowUsd' | 'cashGapUsd' | 'gapAfterCapitalInputUsd' | 'accruedUnpaidUsd', string | null>;
+}
+export interface GrantPlanComparison {
+  schema: 'stellar-forge.sf47.plan-comparison.v1';
+  comparisonSha256: string;
+  before: GrantPlanComparisonIdentity;
+  after: GrantPlanComparisonIdentity;
+  basis: {
+    delta: 'after - before';
+    reportBasis: string;
+    dailyBasis: string;
+    sameOriginalSource: boolean;
+    sameCalculator: boolean;
+    sameInputs: boolean;
+  };
+  summary: {
+    inputChanges: number;
+    reportChanges: number;
+    groups: Record<'workPackages' | 'milestones' | 'contributors' | 'delivery', Record<'added' | 'removed' | 'changed' | 'unchanged', number>>;
+    modeledDaysBefore: number;
+    modeledDaysAfter: number;
+  };
+  metrics: GrantPlanComparisonMetric[];
+  groups: Record<'workPackages' | 'milestones' | 'contributors' | 'delivery', GrantPlanComparisonRow[]>;
+  changes: Array<GrantPlanComparisonChange & { area: 'scenario' | 'planning' | 'report' }>;
+  days: GrantPlanComparisonDay[];
+  snapshots: Record<'before' | 'after', GrantObject & { scenario: GrantObject; planning: GrantObject; report: GrantObject }>;
+}
+
 export interface GrantReadSelection {
   planId?: string;
   caseId?: string;
@@ -1241,6 +1321,11 @@ export type GrantOtherReadView =
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
 export interface GrantDownloadSelections {
   plan: { planId: string };
+  'plan-comparison': GrantPlanComparisonExportSelection;
+  'plan-comparison-report': GrantPlanComparisonExportSelection;
+  'plan-comparison-changes': GrantPlanComparisonExportSelection;
+  'plan-comparison-impact': GrantPlanComparisonExportSelection;
+  'plan-comparison-daily': GrantPlanComparisonExportSelection;
   scenario: { planId: string };
   'daily-csv': { planId: string };
   'costs-csv': { planId: string };
@@ -1268,6 +1353,7 @@ export class GrantWorkspaceClient {
   inspect(): Promise<GrantInspection>;
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
+  read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;

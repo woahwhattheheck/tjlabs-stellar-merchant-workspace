@@ -24,7 +24,7 @@ export function asyncProducerCommand(argv, { signal } = {}) {
     try {
       const inherited = process.env.OPENLINEAGE_RECEIVING_LOCK_FD;
       const lease = inherited === undefined ? null : Number(inherited);
-      if (lease !== null && (!/^\\d+$/.test(inherited) || !Number.isSafeInteger(lease) || lease < 3))
+      if (lease !== null && (!/^\d+$/.test(inherited) || !Number.isSafeInteger(lease) || lease < 3))
         throw new Error("Use the original inherited receiving lease descriptor");
       child = spawn(python, [SOURCE, ...args], {
         stdio: lease === null ? "inherit" : ["inherit", "inherit", "inherit", lease],

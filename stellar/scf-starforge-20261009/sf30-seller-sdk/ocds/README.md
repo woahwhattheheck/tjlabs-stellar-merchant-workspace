@@ -14,6 +14,10 @@ Open the `origin` in the startup JSON. The service selects a free loopback port.
 
 The browser presents processes, original editions, linked parties, tender/award/contract information, documents, amendments, exact changes, reviews and handoffs. Search and filters operate on the retained workspace; process tables paginate at 40 rows. The interface uses neutral colors, compact typography and ordinary industrial software controls.
 
+## Recurring source windows and agency handover
+
+Open **Source windows** in the Procurement desk to save publisher selections, refresh original record families, retain linked documents, review assigned material changes and receive complete editable handoffs. The same lifecycle is available through the CLI, typed client and merchant MCP. The [source-window operator guide](./SOURCE-WINDOWS.md) includes the complete workflow and the reusable five-client agency caller under `agency/`.
+
 ## Source and edition model
 
 Import a complete release package, record package, individual release/record, or array of those envelopes. Original UTF-8 source bytes, publisher metadata, original URLs, source pointers and SHA256 identities remain available. BOM and line-ending differences remain part of the original source identity. Empty recognized release/record packages and linked-only records are retained. Releases without a usable process identity remain visible in the retained source and diagnostics rather than becoming a fabricated process.

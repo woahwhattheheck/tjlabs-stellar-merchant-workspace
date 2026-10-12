@@ -241,6 +241,7 @@ class ReadingWorkspace:
         db.execute("INSERT INTO metadata VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, canonical(value)))
 
     def status(self) -> dict[str, Any]:
+        from .reading_selections import handover_summary
         with self._db() as db:
             meta = {r["key"]: json.loads(r["value"]) for r in db.execute("SELECT * FROM metadata")}
             snapshots = [dict(r) for r in db.execute("SELECT * FROM snapshots ORDER BY created DESC,id")]
@@ -252,7 +253,8 @@ class ReadingWorkspace:
                         "bytes": db.execute("SELECT coalesce(sum(bytes),0) FROM assets").fetchone()[0],
                         "passages": db.execute("SELECT coalesce(sum(passages),0) FROM assets").fetchone()[0]},
                     "syncs": [dict(r) for r in db.execute("SELECT id,state,completed,total,error FROM syncs ORDER BY rowid DESC LIMIT 20")],
-                    "saved_searches": self._heads(db, "search"), "reading_lists": self._heads(db, "list")}
+                    "saved_searches": self._heads(db, "search"), "reading_lists": self._heads(db, "list"),
+                    "handovers": [handover_summary(r) for r in self._heads(db, "handover")]}
 
     @staticmethod
     def _heads(db, kind):
@@ -264,7 +266,12 @@ class ReadingWorkspace:
         # retain public source and immutable identities, never replay local paths.
         keys = ("id", "intentId", "inboxId", "configSha256", "createdAt", "queueState", "url", "name",
                 "bytes", "sha256", "contentType", "deliveryStatus", "buyerStatus", "httpStatus", "status", "annotation")
-        return {k: record[k] for k in keys if k in record}
+        from .reading_selections import compact_lineage
+        result = {k: record[k] for k in keys if k in record}
+        lineage = compact_lineage(record)
+        if lineage:
+            result["source_lineage"] = lineage
+        return result
 
     def _index(self, sha: str, size: int, *, cancel_event=None):
         if not HASH.fullmatch(sha):
@@ -428,6 +435,11 @@ class ReadingWorkspace:
             raise ReadingError("PASSAGE_HASH_MISMATCH")
         return {**result, "name": metadata.get("name") or "Source file", "body": raw.decode("utf-8", "strict")}
 
+    def selected_passage(self, item, *, context=None):
+        """Resolve an original native passage or a captured exact source range."""
+        from .reading_selections import selected_passage
+        return selected_passage(self, item, context=context)
+
     def source_file(self, resource_id):
         with self._db() as db:
             row = db.execute("SELECT r.metadata,r.sha,a.bytes FROM resources r JOIN assets a ON a.sha=r.sha WHERE r.id=?", (resource_id,)).fetchone()
@@ -439,7 +451,7 @@ class ReadingWorkspace:
         return path, json.loads(row["metadata"])
 
     def head(self, kind: str, record_id: str, *, revision=None):
-        if kind not in ("search", "list"):
+        if kind not in ("search", "list", "handover"):
             raise ReadingError("INVALID_RECORD_KIND")
         with self._db() as db:
             sql, args = "SELECT payload FROM revisions WHERE kind=? AND id=?", [kind, record_id]
@@ -492,14 +504,15 @@ class ReadingWorkspace:
     def save_list(self, *, record_id, name, items, expected_revision, operation_id, note=""):
         if not isinstance(items, list) or len(items) > 10000:
             raise ReadingError("INVALID_READING_LIST")
-        selected, seen = [], set()
+        from .reading_selections import selection_key, list_item
+        selected, seen, context = [], set(), {}
         for item in items:
-            p = self.passage(item["resource_id"], item["ordinal"], expected_sha=item.get("sha"))
-            key = (p["resource_id"], p["ordinal"])
+            p = self.selected_passage(item, context=context)
+            key = selection_key(p)
             if key in seen:
                 raise ReadingError("DUPLICATE_PASSAGE")
             seen.add(key)
-            selected.append({k: p[k] for k in ("resource_id", "sha", "ordinal", "digest", "start_byte", "end_byte", "start_line", "end_line", "name")} | {"note": text(item.get("note", ""), "passage note", 10000, empty=True)})
+            selected.append(list_item(p, text(item.get("note", ""), "passage note", 10000, empty=True)))
         payload = {"name": text(name, "name", 160), "note": text(note, "list note", 50000, empty=True), "items": selected}
         return self._save("list", record_id, payload, expected_revision, operation_id)
 

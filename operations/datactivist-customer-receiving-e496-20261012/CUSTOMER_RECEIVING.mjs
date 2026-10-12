@@ -195,7 +195,9 @@ try{
  need(exported.state==='COMPLETE'&&exported.workspaceId===workspaceId,'The installed native handover did not finish.');
  await stage('complete_installed_handover',{directory:firstHandover,source:exported.source,workspace:exported.workspace,workspaceId});
  const secondDirectory=join(root,'customer-two');
- const second=sameCase(await install(secondDirectory,join(firstHandover,'source.json'),exported.source.sha256,join(firstHandover,'workspace.datawork'),exported.workspace.sha256,'fresh-independent-install'));
+ const second=sameCase(await installed(['install','--directory',secondDirectory,
+  '--archive',join(firstHandover,'workspace.datawork'),'--archive-sha256',exported.workspace.sha256,
+  '--node',node],'fresh-archive-only-install'));
  service=await start(secondDirectory,'second-server');
  const secondCustomer=await customer(second,'independent-reopen');
  need(secondCustomer.http.sha256===firstCustomer.http.sha256,'Independent receiving changed the original complete customer query.');
