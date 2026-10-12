@@ -49,6 +49,48 @@ def open_output(path):
         os.fsync(out.fileno())
 
 
+
+@contextmanager
+def output_lease(path):
+    """The original private-file OS lease, scoped to one complete output destination."""
+    path = Path(path).expanduser().absolute()
+    parent = path.parent.resolve(strict=True)
+    if parent != path.parent or not parent.is_dir() or parent.is_symlink():
+        raise InputError("Choose an original real output directory without aliases")
+    lease_directory = parent / (".hila-output-" + sha(os.path.normcase(path.name).encode()))
+    lease_directory.mkdir(mode=0o700, exist_ok=True)
+    lease_info = lease_directory.lstat()
+    if (not stat.S_ISDIR(lease_info.st_mode) or lease_info.st_mode & 0o077 or
+        os.name == "posix" and lease_info.st_uid != os.getuid()):
+        raise InputError("Complete output lease directory must remain private and operator-owned")
+    lock_path = lease_directory / "lease.lock"
+    flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
+    handle = os.fdopen(os.open(lock_path, flags, 0o600), "r+b", buffering=0)
+    try:
+        regular(lock_path, 1)
+        before = lock_path.lstat()
+        opened = os.fstat(handle.fileno())
+        if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
+            raise InputError("Original output lease changed while opening")
+        try:
+            if os.name == "posix":
+                import fcntl
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            else:
+                import msvcrt
+                if not handle.read(1):
+                    handle.write(b"0")
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError as error:
+            raise InputError("This complete output is already being published; continue its existing writer or retry after it closes") from error
+        after = lock_path.lstat()
+        if (after.st_dev, after.st_ino) != (opened.st_dev, opened.st_ino):
+            raise InputError("Original output lease was replaced")
+        yield path
+    finally:
+        handle.close()
+
 def _member_limit(name):
     if name.startswith("native/") and name.endswith(".zip"):
         return 512 * 1024 * 1024
@@ -154,6 +196,11 @@ def _same_manifest(path, expected):
 
 
 def write_archive(output, files, schema, selection):
+    with output_lease(output) as selected:
+        return _write_archive_locked(selected, files, schema, selection)
+
+
+def _write_archive_locked(output, files, schema, selection):
     files = dict(sorted(files.items()))
     if not 1 <= len(files) < MAX_MEMBERS:
         raise InputError("Complete archive file count is outside its bound")
@@ -169,6 +216,8 @@ def write_archive(output, files, schema, selection):
     encoded = canonical(manifest)
     if len(encoded) > META_LIMIT:
         raise InputError("Complete manifest exceeds 64 MiB")
+    if sum(item["bytes"] for item in entries.values()) + len(encoded) > MAX_ARCHIVE:
+        raise InputError("Full manifest and uncompressed archive exceed 4 GiB")
     if output.exists():
         verified = _same_manifest(output, manifest)
         return {"file": str(output), "bytes": verified["bytes"], "sha256": verified["sha256"],
@@ -204,6 +253,11 @@ def write_archive(output, files, schema, selection):
 
 
 def copy_complete(source_path, destination, expected=None):
+    with output_lease(destination) as selected:
+        return _copy_complete_locked(source_path, selected, expected)
+
+
+def _copy_complete_locked(source_path, destination, expected=None):
     source_path, destination = Path(source_path), Path(destination)
     expected = expected or checked_size(source_path)
     _output_path(destination, {"original": source_path})
@@ -225,8 +279,12 @@ def copy_complete(source_path, destination, expected=None):
         os.fsync(out.fileno())
     if {"bytes": count, "sha256": h.hexdigest()} != expected or checked_size(source_path) != expected:
         raise InputError("Retained original failed complete copy verification")
+    if checked_size(stage) != expected:
+        raise InputError("Complete private copy readback differs from its original")
     os.replace(stage, destination)
     sync_dir(destination.parent)
+    if checked_size(destination) != expected:
+        raise InputError("Published complete output differs from its original")
     return destination
 
 
@@ -579,6 +637,7 @@ def receive_review(ws, path):
                     raise InputError("Edition replay input, full source, mapping and original native result do not agree")
             receiving.append({"edition": edition["id"], "build": local["build"]})
         # Native source/build intake completes before the single domain-history transaction.
+        validated_reports = []
         with ws.db:
             for edition in doc["editions"]:
                 old = ws.db.execute("SELECT body FROM hila_editions WHERE id=?", (edition["id"],)).fetchone()
@@ -617,7 +676,18 @@ def receive_review(ws, path):
                     relative = "reports/" + str(saved["revision"]) + "/" + name
                     if checked_size(member) != inspection["manifest"]["files"][relative]:
                         raise InputError("Full offline/CSV/report output differs on independent receiving: " + name)
-                publish(ws._report_path(saved["id"], saved["revision"]), encoded)
+                validated_reports.append((ws._report_path(saved["id"], saved["revision"]), selected_report,
+                                          {"bytes": len(encoded), "sha256": sha(encoded)}))
+            # No final report file is reserved by an invalid later history member.
+            # Every native request, report, HTML and CSV has now been reconstructed.
+            for report_path, staged_report, expected_report in validated_reports:
+                if checked_size(staged_report, META_LIMIT) != expected_report:
+                    raise InputError("Verified historical report changed before final publication")
+                report_body = staged_report.read_bytes()
+                if {"bytes": len(report_body), "sha256": sha(report_body)} != expected_report:
+                    raise InputError("Complete historical report readback changed")
+                publish(report_path, report_body)
+                del report_body
             # Every complete report and original request is proven before publishing any review revision.
             for saved in history:
                 ws.db.execute("INSERT OR IGNORE INTO hila_reviews VALUES(?,?,?)",

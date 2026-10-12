@@ -95,6 +95,12 @@ render();
 
 
 def write_html(view, report, form, path):
+    from hila_portable import output_lease
+    with output_lease(path) as selected:
+        return _write_html_locked(view, report, form, selected)
+
+
+def _write_html_locked(view, report, form, path):
     from hila_portable import open_output, checked_size
     from workspace import regular, sync_dir
     path = Path(path)
@@ -120,4 +126,6 @@ def write_html(view, report, form, path):
         return path
     os.replace(stage, path)
     sync_dir(path.parent)
+    if checked_size(path) != actual:
+        raise InputError("Published complete HTML differs from its selected source")
     return path
