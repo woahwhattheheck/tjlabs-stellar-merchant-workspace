@@ -191,7 +191,7 @@ async function verifiedRuntime(directory, intent, { allowUnobservedPreparation =
 }
 
 /** Resolve only the native SDK runtime, preserving interrupted preparation in the same directory. */
-export async function prepareJavaProducer({ directory, maven = "mvn", offline = false, signal } = {}) {
+export async function prepareJavaProducer({ directory, maven = "mvn", flock = "flock", offline = false, signal } = {}) {
   if (!directory) throw new Error("Provide an owned native Java runtime directory");
   directory = resolve(directory); await privateDirectory(directory);
   const { intent: selected } = await selectedRuntimeSource();
@@ -215,14 +215,22 @@ export async function prepareJavaProducer({ directory, maven = "mvn", offline = 
     if (preparation?.state !== "COMPLETE") {
       if (preparation) await newOrSame(join(directory, "maven-preparation-" + preparation.id + ".json"), encoded(preparation));
       const id = randomUUID(), candidate = "classpath-" + id + ".txt";
+      const processLock = { schema: "commons.openlineage.java-maven-process-lock.v1",
+        path: join(directory, ".maven-process.lock"), executable: flock, conflictExitCode: 75 };
+      // Keep this inode permanently. The actual Maven command inherits the
+      // kernel lock, so a dead Node writer cannot permit a second live resolver.
+      await newOrSame(processLock.path, Buffer.alloc(0));
       preparation = { schema: "commons.openlineage.java-preparation.v1", id, intent,
-        startedAt: new Date().toISOString(), state: "STARTED", candidate };
+        startedAt: new Date().toISOString(), state: "STARTED", candidate, processLock };
       await save(preparationPath, preparation);
       try {
-        const command = await run(maven, ["-B", "-q", ...(offline ? ["-o"] : []), "-f", join(directory, "pom.xml"),
+        const mavenArgs = ["-B", "-q", ...(offline ? ["-o"] : []), "-f", join(directory, "pom.xml"),
           "org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath",
-          "-DincludeScope=runtime", "-Dmdep.outputFile=" + join(directory, candidate)],
+          "-DincludeScope=runtime", "-Dmdep.outputFile=" + join(directory, candidate)];
+        const executed = await run(flock, ["--exclusive", "--nonblock", "--conflict-exit-code", "75",
+          processLock.path, maven, ...mavenArgs],
           { cwd: directory, signal, logPrefix: join(directory, "maven-" + id) });
+        const command = { ...executed, mavenCommand: { command: maven, args: mavenArgs }, processLock };
         const bytes = await ordinary(join(directory, candidate));
         const entries = await classpathEntries(directory, candidate);
         preparation = { ...preparation, state: "COMPLETE", completedAt: new Date().toISOString(),
@@ -322,7 +330,7 @@ export async function emitJavaProducer({ runtime, directory, connection, tokenFi
 export async function javaProducerCommand(args) {
   const [action, ...words] = args, values = {}, inputs = [];
   const flags = new Set(["--offline"]), options = new Set(["--runtime", "--directory", "--connection",
-    "--token-file", "--input", "--operation-id", "--compression", "--java", "--maven"]);
+    "--token-file", "--input", "--operation-id", "--compression", "--java", "--maven", "--flock"]);
   for (let i = 0; i < words.length; i++) {
     const key = words[i];
     if (flags.has(key)) { values[key] = true; continue; }
@@ -335,7 +343,7 @@ export async function javaProducerCommand(args) {
     }
   }
   if (action === "prepare") return prepareJavaProducer({ directory: values["--runtime"],
-    maven: values["--maven"], offline: values["--offline"] === true });
+    maven: values["--maven"], flock: values["--flock"], offline: values["--offline"] === true });
   if (action === "emit") return emitJavaProducer({ runtime: values["--runtime"], directory: values["--directory"],
     connection: values["--connection"], tokenFile: values["--token-file"], inputs,
     operationId: values["--operation-id"], compression: values["--compression"],
