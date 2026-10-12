@@ -9,14 +9,15 @@ import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-f
 import {writePrivate, privateSupportDirectory} from './config.mjs';
 import {ACCOUNTING_RECEIVABLES_METHODS, ACCOUNTING_RECEIVABLES_MUTATIONS,
   accountingReceivablesArguments, accountingInvoicePreview, accountingInvoiceIssueArguments,
-  accountingPaymentRequestPreview, accountingPaymentRequestArguments, connectAccountingReceivablesClient}
+  accountingPaymentRequestPreview, accountingPaymentRequestArguments, accountingRefundPreview, accountingRefundArguments,
+  accountingCreditDispositionPreview, accountingCreditDispositionArguments, connectAccountingReceivablesClient}
   from './accounting-receivables-client.mjs';
 
 const REQUEST = 'stellar-forge.accounting-receivables-client-request.v1';
 const STATE = 'stellar-forge.accounting-receivables-client-state.v1';
 const OPERATIONS = new Set(Object.values(ACCOUNTING_RECEIVABLES_METHODS));
 const MUTATIONS = new Set(ACCOUNTING_RECEIVABLES_MUTATIONS);
-const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail']);
+const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail', 'refund_list']);
 const sha = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const now = () => new Date().toISOString();
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -74,7 +75,9 @@ async function syncDirectory(directory) {
 function fromPreview(kind, preview, identity) {
   if (kind === 'invoice_issue') return accountingInvoiceIssueArguments(preview, identity);
   if (kind === 'payment_create') return accountingPaymentRequestArguments(preview, identity);
-  throw fail('ARGUMENTS', 'A reviewed preview prepares invoice-issue or payment-create.');
+  if (kind === 'refund_commit') return accountingRefundArguments(preview, identity);
+  if (kind === 'credit_disposition_apply') return accountingCreditDispositionArguments(preview, identity);
+  throw fail('ARGUMENTS', 'A reviewed preview prepares invoice-issue, payment-create, refund-commit or credit-disposition-apply.');
 }
 function validateRequest(request) {
   exact(request, ['schema', 'preparedAt', 'url', 'workspace', 'tokenEnv', 'kind', 'arguments', 'preview', 'sha256']);
@@ -95,7 +98,7 @@ export async function prepareAccountingReceivablesOperation({
 } = {}) {
   need(MUTATIONS.has(kind), 'Choose an original receivables mutation.');
   need(preview === undefined ? value !== undefined && actor === undefined && requestId === undefined : value === undefined,
-    'Use original arguments, or a complete invoice/payment preview and operator identity.');
+    'Use original arguments, or a complete invoice, payment, refund or disposition preview and operator identity.');
   const args = preview === undefined ? accountingReceivablesArguments(kind, value) :
     fromPreview(kind, preview, {actor, requestId: requestId ?? randomUUID()});
   const content = {schema: REQUEST, preparedAt: now(), url: endpoint(url), workspace, tokenEnv,
@@ -229,12 +232,12 @@ const HELP = `Starforge merchant receivables and invoice collection
   starforge merchant-accounting-receivables open|close|sources
       --url MCP_URL --workspace ALIAS [--token-env NAME]
   starforge merchant-accounting-receivables COMMAND ... --request PRIVATE_ARGUMENTS_JSON
-  starforge merchant-accounting-receivables invoice-preview|payment-preview ...
+  starforge merchant-accounting-receivables invoice-preview|payment-preview|refund-preview|credit-disposition-preview ...
       --request PRIVATE_SELECTION_JSON [--out NEW_PRIVATE_PREVIEW_JSON]
   starforge merchant-accounting-receivables prepare --dir NEW_PRIVATE_OPERATION
       --url MCP_URL --workspace ALIAS --action MUTATION --request PRIVATE_ARGUMENTS_JSON
   starforge merchant-accounting-receivables prepare --dir NEW_PRIVATE_OPERATION ...
-      --action invoice-issue|payment-create --preview PRIVATE_PREVIEW_JSON
+      --action invoice-issue|payment-create|refund-commit|credit-disposition-apply --preview PRIVATE_PREVIEW_JSON
       --actor NAME [--request-id STABLE_ID]
   starforge merchant-accounting-receivables execute|reconcile --dir PRIVATE_OPERATION
   starforge merchant-accounting-receivables download ... --selection PRIVATE_SELECTION_JSON
@@ -247,7 +250,10 @@ Commands:
   invoice-detail, invoice-void, credit, receipt-record, receipt-void,
   settlement-ledger, settlement-import, allocate, release, customer-export,
   payment-preview, payment-create, payment-list, payment-detail, payment-cancel,
-  payment-return, payment-receive, request-lookup.
+  payment-return, payment-receive, request-lookup, customer-funds,
+  refund-preview, refund-commit, refund-list, refund-detail, refund-cancel,
+  refund-reverse, refund-return, refund-receive, credit-disposition-preview,
+  credit-disposition-apply.
 
 All connection commands accept --url, --workspace and --token-env. The access
 token remains in that process environment variable. Inputs are private JSON
@@ -260,6 +266,21 @@ version and workspace revision. payment-preview returns the complete original
 wallet proposal and review SHA. --out saves the full preview for review and
 preparation. The selected invoice, destination, network, asset, exact amount,
 memo, expiry and valuation remain in the original reviewed proposal.
+
+refund-preview and credit-disposition-preview retain the full native proposal,
+balance effects, review SHA and current revision. --out saves that review for
+prepare. Refund funding selects original credit-bearing allocations; remaining
+receipt value stays unapplied. The native preview reports every affected
+receipt and invoice before a commit.
+
+customer-funds lists actual customers, available receipt value, eligible
+credited allocations, target invoices and retained transfer correction sources.
+refund-list --all true preserves the native refunds array and accounting date.
+refund-return takes the wallet transaction hash. refund-receive checks that
+exact return against the reviewed outgoing source account, destination, asset
+and amount. A verified original unposted return can be selected in a new
+review through originalRefundId/originalReturnId to record the cash correction.
+Dated cancel/reverse operations and their linked replacements retain history.
 
 prepare stores the exact arguments and original connection in a private
 operation directory. execute reads the original request journal, then submits
@@ -285,6 +306,8 @@ readId and SHA-pinned chunks. --sha256 binds a previously reviewed file; without
 it the original reader pins its first retained snapshot. Customer account.tar,
 issued invoices, credits, archived quotation sources, wallet instructions,
 receiving.json and per-return proof.json are available through these selectors.
+Refunds use {kind:"receivables-refund",refundId,file}: request/refund/reversal
+JSON, HTML and CSV, status.json, receiving.json and proof-OBSERVATION_UUID.json.
 customer-export --out saves the original native account.tar and returns its
 observed file identity. Other customer-export calls return the account inventory.
 
@@ -319,7 +342,7 @@ export async function main(args = process.argv.slice(2)) {
     need(native || ['open', 'close', 'sources', 'download'].includes(command), 'Choose a documented receivables command.');
     const extra = command === 'download' ? ['--selection', '--sha256', '--out'] : native ?
       ['--request', ...(PAGED.has(kind) ? ['--all'] : []),
-        ...(['invoice_preview', 'payment_preview', 'customer_export'].includes(kind) ? ['--out'] : [])] : [];
+        ...(['invoice_preview', 'payment_preview', 'refund_preview', 'credit_disposition_preview', 'customer_export'].includes(kind) ? ['--out'] : [])] : [];
     const values = options(rest, [...connectionFields, ...extra]);
     const all = values.has('--all');
     if (all) need(values.get('--all') === 'true' && !values.has('--out'),
@@ -333,7 +356,7 @@ export async function main(args = process.argv.slice(2)) {
       else {
         result = await client.open();
         if (native) {
-          if (!['status', 'payment_list'].includes(kind)) required(values, '--request');
+          if (!['status', 'payment_list', 'customer_funds', 'refund_list'].includes(kind)) required(values, '--request');
           const input = values.has('--request') ? await readJson(resolve(values.get('--request')), 4_000_000) : {};
           if (all) result = await client.listAll(kind, kind === 'invoice_preview' ? {...input, view: 'lines'} : input);
           else if (kind === 'invoice_preview') {
@@ -345,6 +368,14 @@ export async function main(args = process.argv.slice(2)) {
             const preview = accountingPaymentRequestPreview(await client.previewPaymentRequest(input));
             result = values.has('--out') ? {output: await savePreview(values.get('--out'), preview),
               invoiceId: preview.proposal.invoice.id, paymentRequestId: preview.proposal.id,
+              reviewSha256: preview.reviewSha256, revision: preview.revision} : preview;
+          } else if (kind === 'refund_preview' || kind === 'credit_disposition_preview') {
+            const review = kind === 'refund_preview' ? accountingRefundPreview : accountingCreditDispositionPreview;
+            const method = kind === 'refund_preview' ? 'previewRefund' : 'previewCreditDisposition';
+            const preview = review(await client[method](input));
+            result = values.has('--out') ? {output: await savePreview(values.get('--out'), preview),
+              receiptId: preview.proposal.receiptId, customerId: preview.proposal.customerId,
+              ...(kind === 'refund_preview' ? {refundId: preview.proposal.id} : {creditDispositionId: preview.proposal.id}),
               reviewSha256: preview.reviewSha256, revision: preview.revision} : preview;
           } else if (kind === 'customer_export' && values.has('--out')) {
             const account = await client.customerExport(input);

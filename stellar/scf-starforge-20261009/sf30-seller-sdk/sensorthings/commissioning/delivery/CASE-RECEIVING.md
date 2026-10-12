@@ -8,7 +8,7 @@ This is the complete commercial continuation of the merged source-to-FROST commi
 - Case: `datacove-sensorthings-commissioning-20261012`.
 - Case receiving operation: `datacove-complete-workshare-intake-0c7a-20261012`.
 - Company delivery operation: `DATACOVE-SENSORTHINGS-COMMISSIONING-0C7A-20261012`.
-- Prepared packet: `delivery/datacove-case-receiving.json`, 38,688 UTF-8 bytes, SHA-256 `bbe2b4884edbcbcdbdb7800fba13193c6db8c43974dbe4dab572bb206abf3f10`.
+- Prepared packet: `delivery/datacove-case-receiving.json`, 38,687 UTF-8 bytes, SHA-256 `334945e1046a435f10a42d7ffcdc7732164cdd75a67b100f1336ce18e8d1ddeb`.
 - Original case: https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791815080790189?thread_ts=1791803620.539009
 
 0C7A retains the existing company, case and sole sender. A favorable human reply moves subsequent relationship messages to Bryce. This receiving command preserves current mail and relationship state; it does not send an email or infer customer acceptance.

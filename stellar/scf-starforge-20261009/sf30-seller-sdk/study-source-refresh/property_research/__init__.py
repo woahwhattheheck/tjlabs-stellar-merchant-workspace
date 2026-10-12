@@ -5,7 +5,9 @@ from .service import PropertyResearch, install, overview
 
 def handlers(workspace):
     service = PropertyResearch(workspace)
+    from .onboarding import handlers as onboarding_handlers
     return {
+        **onboarding_handlers(workspace),
         "property.status": service.status,
         "property.document.import": service.import_document,
         "property.document.read": service.document,

@@ -19,6 +19,7 @@ import {PERFORMANCE_MCP_OPERATIONS} from '../../../../stellar-forge/mcp-merchant
 import {callMerchantPricing,downloadMerchantPerformance} from '../../../../stellar-forge/mcp-merchant-operator/pricing-client.mjs';
 import {main as pricingCli} from '../../../../stellar-forge/mcp-merchant-operator/pricing-cli.mjs';
 import {createMcpToolHandler} from '../../../../stellar-forge/mcp-paid-agent/http-tools.mjs';
+import {retainCaseArtifact} from '../../sf74-merchant-support-console/case-store.mjs';
 
 const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const SCHEMA='stellar-forge.merchant-performance-interface-operation.v1';
@@ -29,8 +30,7 @@ const json=async path=>JSON.parse(await readFile(path,'utf8'));
 async function optional(path){try{return await json(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function retain(path,value){
   const bytes=Buffer.isBuffer(value)?value:encode(value);
-  try{await writeFile(path,bytes,{flag:'wx',mode:0o600});}
-  catch(error){if(error.code!=='EEXIST')throw error;assert.deepEqual(await readFile(path),bytes,'Preserve original interface operation bytes: '+path);}
+  await retainCaseArtifact(path,bytes);
   return value;
 }
 async function keep(path,create){return await optional(path)??retain(path,await create());}
@@ -197,11 +197,21 @@ export async function runPerformanceInterfaces({
     assert.equal((await receivedPerformance.captureServicePeriod(service)).recovered,true);
     assert.deepEqual(await receivedModel.download(httpCommit.result.pricing.version,'manifest.json'),
       await originalModel.download(httpCommit.result.pricing.version,'manifest.json'));
-    await retain(join(output,'receiving-result.json'),{schema:'stellar-forge.merchant-performance-native-receiving.v1',
+    const receivingResult={schema:'stellar-forge.merchant-performance-native-receiving.v1',
       backup,archive,restore,sourceId:envelope.id,performanceId,tariffPortfolioSha256:portfolio.sha256,
       requiredPricingVersion:httpCommit.result.pricing.version,
       proposalRequestId:proposalSave.requestId,pricingRequestId:proposalCommit.pricingRequestId,
-      completeProposalHistory:true,originalRequestsRecovered:true});
+      completeProposalHistory:true,originalRequestsRecovered:true};
+    const receivingPath=join(output,'receiving-result.json'),previousReceiving=await optional(receivingPath);
+    if(previousReceiving){
+      // Keep the first complete native receipt. A later restore reports its
+      // same-archive replay; every other source/result field must remain equal.
+      const stable=value=>{
+        const {replayed,...restored}=value.restore;assert.equal(typeof replayed,'boolean');
+        return {...value,restore:restored};
+      };
+      assert.deepEqual(stable(previousReceiving),stable(receivingResult));
+    }else await retain(receivingPath,receivingResult);
 
     // Existing MerchantPricing, declaration and original authenticated HTTP handler.
     const connectionPath=join(output,'pricing-connection.json');
@@ -214,12 +224,36 @@ export async function runPerformanceInterfaces({
     for(const name of Object.values(PERFORMANCE_MCP_OPERATIONS))assert.ok(names.has(name));
     const provider={tools,async call(name,args){seen.add(name);return owner.call(name,args);}};
     const token=randomBytes(32).toString('hex');
+    const endpointPath=join(output,'mcp-endpoint.json');
+    const previousEndpoint=await optional(endpointPath);
+    const previousCheckpoint=await optional(join(downloads,'mcp-complete','download-state','checkpoint.json'));
+    if(previousEndpoint){
+      assert.equal(previousEndpoint.schema,'stellar-forge.merchant-performance-interface-endpoint.v1');
+      assert.equal(previousEndpoint.performanceId,performanceId);
+    }
+    // The original downloader binds its checkpoint to the exact endpoint.
+    // Preserve its loopback port across process restarts before the first call.
+    const resumedEndpoint=previousEndpoint?.endpoint??previousCheckpoint?.endpoint??null;
+    let selectedPort=0;
+    if(resumedEndpoint!==null){
+      assert.equal(typeof resumedEndpoint,'string');
+      const endpoint=new URL(resumedEndpoint);
+      assert.equal(endpoint.href,resumedEndpoint);assert.equal(endpoint.protocol,'http:');
+      assert.equal(endpoint.hostname,'127.0.0.1');assert.ok(endpoint.port);
+      assert.ok(endpoint.pathname==='/'||endpoint.pathname==='/mcp');
+      assert.equal(endpoint.username,'');assert.equal(endpoint.password,'');
+      assert.equal(endpoint.search,'');assert.equal(endpoint.hash,'');
+      selectedPort=Number(endpoint.port);assert.ok(Number.isInteger(selectedPort)&&selectedPort>0&&selectedPort<=65535);
+      if(previousCheckpoint)assert.equal(previousCheckpoint.endpoint,resumedEndpoint);
+    }
     server=createServer(createMcpToolHandler(provider,{bearerToken:token,maxRequestBytes:declaration.maxRequestBytes,
       serverName:'starforge-recorded-performance-operation',instructions:declaration.instructions.map(row=>row.text).join('\n\n')}));
     await new Promise((done,reject)=>{
-      server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);done();});
+      server.once('error',reject);server.listen(selectedPort,'127.0.0.1',()=>{server.off('error',reject);done();});
     });
-    const connection={url:'http://127.0.0.1:'+server.address().port,environment:{MCP_ACCESS_TOKEN:token}};
+    const endpoint=resumedEndpoint??new URL('http://127.0.0.1:'+server.address().port).href;
+    await retain(endpointPath,{schema:'stellar-forge.merchant-performance-interface-endpoint.v1',performanceId,endpoint});
+    const connection={url:endpoint,environment:{MCP_ACCESS_TOKEN:token}};
     const call=(operation,args={})=>callMerchantPricing({...connection,operation,args:{workspace:'recorded',...args}});
     const stateMcp=await call('performance-state');
     assert.ok(stateMcp.reviews.items.some(row=>row.performanceId===performanceId));

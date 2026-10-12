@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "receivables-agent",
-  "description": "Original invoice and Stellar collection operations through the existing accounting MCP session, typed client, complete CLI and retained file downloads.",
+  "description": "Complete invoicing, Stellar collection, customer refunds and credit disposition through the existing accounting MCP owner, typed client, durable CLI and original file downloads.",
   "commands": {
     "merchant-accounting-receivables": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs"
   },
   "commandDescriptions": {
-    "merchant-accounting-receivables": "Operate reviewed invoices, receipts, allocations, Stellar collection and original customer files through the accounting MCP session"
+    "merchant-accounting-receivables": "Operate reviewed invoices, collection, refunds, customer credit and original account files through the accounting MCP session"
   },
   "exports": {
     "./merchant/accounting-receivables": {
@@ -19,7 +19,9 @@
     }
   },
   "supportFiles": [
-    "stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md"
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refund-client-types.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REFUNDS_AND_CREDITS.md"
   ],
   "merchantProviders": {
     "accounting": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs"

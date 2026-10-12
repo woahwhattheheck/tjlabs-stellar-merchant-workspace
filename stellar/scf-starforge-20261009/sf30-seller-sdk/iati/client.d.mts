@@ -1,3 +1,5 @@
+import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
+export type * from './organisation_client.mjs';
 /** MIT. Typed access to the original IATI console. Financial and identifier values remain strings. */
 export type Sha256 = string;
 export type ExactDecimalString = string;
@@ -507,6 +509,23 @@ export declare class IatiWorkspaceClient {
   refreshResume(requestId:string,options?:RequestOptions):Promise<RefreshCompleted|RefreshAbandoned>;
   refreshExport(plan:Sha256,options?:RequestOptions&{snapshot?:Sha256}):Promise<Response>;
   refreshReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<RefreshReceiving>;
+
+
+  organisationStatus(options?: RequestOptions): Promise<OrganisationStatus>;
+  organisationProfile(sourceId: Sha256, options?: RequestOptions): Promise<OrganisationProfile>;
+  organisationPlan(id: Sha256, options?: RevisionOptions): Promise<OrganisationPlan>;
+  organisationHistory(id: Sha256, options?: RequestOptions): Promise<{ history: OrganisationPlan[] }>;
+  organisationRequest(requestId: string, options?: RequestOptions): Promise<OrganisationRequest>;
+  organisationRows<S extends keyof OrganisationSections>(input: OrganisationRowsInput<S>, options?: RequestOptions): Promise<OrganisationPage<OrganisationSections[S]>>;
+  organisationDetail(input: OrganisationSnapshot & { rowId: Sha256; targetId?: Sha256 }, options?: RequestOptions): Promise<OrganisationDetail>;
+  organisationSave(input: OrganisationSave, options?: RequestOptions): Promise<OrganisationPlan>;
+  organisationReview(input: OrganisationReviewInput, options?: RequestOptions): Promise<OrganisationPlan>;
+  organisationRelease(input: OrganisationReleaseInput, options?: RequestOptions): Promise<OrganisationReleaseResult>;
+  organisationCompare(input: OrganisationCompare, options?: RequestOptions): Promise<OrganisationComparison>;
+  /** Returns the complete native stream with Content-Length and X-Content-SHA256. */
+  organisationExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
+  organisationFile(id: Sha256, kind: OrganisationFileKind, options?: RevisionOptions): Promise<Response>;
+  organisationReceive(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<OrganisationReceiving>;
 
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;

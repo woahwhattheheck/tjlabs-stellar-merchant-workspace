@@ -1,5 +1,6 @@
 import {createReceivablesClient} from './client.mjs';
 import {createPaymentRequestUi} from './payment-requests.mjs';
+import {createRefundUi} from './refunds.mjs';
 
 const $ = selector => document.querySelector(selector);
 const e = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -15,6 +16,9 @@ function readSession(key, fallback = null) { try { const text = sessionStorage.g
 function saveSession(key, value) { try { value === null ? sessionStorage.removeItem(storageKey + key) : sessionStorage.setItem(storageKey + key, JSON.stringify(value)); } catch { /* The open form remains in memory when browser storage is unavailable. */ } }
 const ui = {state:null, view:'invoices', selected:'', detail:null, editor:readSession('draft'), pending:readSession('pending'), busy:false, customer:'', search:'', status:'', asOf:today(), selectionVersion:0, preview:null, native:null, customerReport:null};
 const paymentUi = createPaymentRequestUi({api, openDialog, mutate, getState:()=>ui.state, getInvoice:detailInvoice,
+  saveBlob, showError, setBusy, readSession, saveSession, setMessage, isLocked:()=>ui.busy || Boolean(ui.pending)});
+const refundUi = createRefundUi({api, openDialog, mutate, getState:()=>ui.state, getInvoice:detailInvoice,
+  getAsOf:()=>ui.asOf, getCustomer:()=>ui.customer, units, amount, render,
   saveBlob, showError, setBusy, readSession, saveSession, setMessage, isLocked:()=>ui.busy || Boolean(ui.pending)});
 $('#operator').value = readSession('actor','merchant-operator');
 $('#as-of').value = ui.asOf;
@@ -82,10 +86,14 @@ function context() {
   saveSession('actor',actor);
   return {revision:ui.state.revision,actor,requestId:id()};
 }
-async function mutate(method,args,label) {
+async function mutate(method,args,label,{revision}={}) {
   if (ui.busy) return;
   if (ui.pending) { setMessage('Finish the retained operation with Retry, or return to its form after a rejected request.',true); return; }
   const current=context(), values=structuredClone(args);
+  if(revision!==undefined){
+    if(!Number.isSafeInteger(revision)||revision<1)throw new Error('Review the original current account revision before saving.');
+    current.revision=revision;
+  }
   values[values.length-1]={...values[values.length-1],...current};
   if(new Blob([JSON.stringify(values[values.length-1])]).size>Number(config.requestBytes||2000000))throw new Error('The operation exceeds the workspace request limit. Reduce the source file size before saving.');
   ui.pending={method,args:values,label,requestId:current.requestId,revision:current.revision,createdAt:new Date().toISOString()};
@@ -102,7 +110,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -115,6 +123,7 @@ async function runPending() {
     setMessage(current.label + ' completed.');
     await refresh({quiet:true});
     await paymentUi.afterMutation(result,current);
+    await refundUi.afterMutation(result,current);
   } catch(error) {
     if (ui.pending?.requestId === current.requestId) {
       ui.pending.error=errorMessage(error);
@@ -135,6 +144,8 @@ async function refresh({quiet=false}={}) {
     $('#revision').textContent='Revision ' + state.revision + ' · As of ' + ui.asOf;
     $('#customer-filter').innerHTML=customerOptions(ui.customer,'All customers');
     $('#customer-filter').value=ui.customer;
+    await refundUi.loadList({customerId:ui.customer,date:asOf});
+    if(ui.refreshVersion!==version||ui.asOf!==asOf)return;
     render();
     if (ui.selected && !ui.editor) await selectInvoice(ui.selected);
     if (ui.view==='aging' && ui.customer) await loadCustomerReport();
@@ -202,7 +213,7 @@ function renderInvoiceDetail() {
     '</tbody></table></div>' + (doc.note?'<p class="preline small-text section">' + e(doc.note) + '</p>':'') + '</section>' +
     (row.status!=='DRAFT'?'<section class="section"><h3>Documents</h3><div class="row">' + ['invoice.html','invoice.json','invoice.csv','manifest.json','status.json'].map(name=>
       btn(name.endsWith('.html')?'Printable invoice':name.replace('invoice.','').replace('manifest.json','Manifest').replace('status.json','Current status'),'download',' data-id="' + e(row.id) + '" data-name="' + e(name) + '"')).join('') + '</div></section>':'') +
-    paymentUi.render(row) + '<section class="section"><div class="row between"><h3>Allocations</h3><span class="small-text muted">' + active.length + ' active</span></div>' +
+    paymentUi.render(row) + refundUi.invoiceActions(row) + '<section class="section"><div class="row between"><h3>Allocations</h3><span class="small-text muted">' + active.length + ' active</span></div>' +
     (allocations.length?'<div class="table-wrap"><table><thead><tr><th>Receipt / date</th><th class="num">Amount</th><th></th></tr></thead><tbody>' + allocations.map(item=>{
       const receipt=ui.state.receipts.find(receipt=>receipt.id===item.receiptId);
       return '<tr><td>' + e(receipt?.reference||item.receiptId) + '<span class="subline">' + e(item.allocatedDate) + (item.releasedDate?' · Released ' + e(item.releasedDate):'') +
@@ -281,17 +292,18 @@ function renderReceipts() {
   const receipts=(ui.state.receipts||[]).filter(row=>(!ui.customer||row.customerId===ui.customer)&&(!ui.search||[row.reference,row.id,customerName(row.customerId),row.method].join(' ').toLowerCase().includes(ui.search.toLowerCase())));
   return '<section class="panel"><div class="panel-head"><h2>Receipts <span class="muted small-text">(' + receipts.length + ')</span></h2><div class="row">' +
     btn('Import native payment','native-receipt',' data-write') + btn('Record receipt','manual-receipt',' data-write',true) + '</div></div>' +
-    (receipts.length?'<div class="table-wrap"><table><thead><tr><th>Reference / customer</th><th>Date / method</th><th class="num">Received</th><th class="num">Allocated</th><th class="num">Available</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
+    (receipts.length?'<div class="table-wrap"><table><thead><tr><th>Reference / customer</th><th>Date / method</th><th class="num">Received</th><th class="num">Allocated</th><th class="num">Reserved</th><th class="num">Refunded</th><th class="num">Available</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
       receipts.map(row=>{
         const isVoid=row.voidDate&&row.voidDate<=ui.asOf;
         return '<tr><td>' + e(row.reference||row.id) + '<span class="subline">' + e(customerName(row.customerId)) +
           '</span>' + (row.source?.kind==='ORIGINAL_STELLAR_SETTLEMENT'?'<span class="subline">Native payment · ' + e(row.source.eventId||'') + '</span>':'') + '</td><td>' + e(row.receivedDate) +
           '<span class="subline">' + e(row.method) + '</span></td><td class="num">' + money(row.amount,row.currency) + '</td><td class="num">' + e(row.allocated??'—') +
+          '</td><td class="num">' + e(row.reserved??zero(row.currency)) + '</td><td class="num">' + e(row.refunded??zero(row.currency)) +
           '</td><td class="num">' + e(row.available) + '</td><td><span class="status">' + e(isVoid?'Void':row.receivedDate>ui.asOf?'Future':'Recorded') + '</span></td><td><div class="row">' +
           (!isVoid&&positive(row.available,row.currency)?btn('Allocate','allocate-receipt',' class="small" data-id="' + e(row.id) + '" data-write'):'') +
-          (!isVoid?btn('Void','void-receipt',' class="small" data-id="' + e(row.id) + '" data-write'):'') + '</div></td></tr>';
+          refundUi.receiptActions(row) + (!isVoid?btn('Void','void-receipt',' class="small" data-id="' + e(row.id) + '" data-write'):'') + '</div></td></tr>';
       }).join('') + '</tbody></table></div>':'<div class="panel-body"><p class="muted">Record a customer payment or import a verified native payment from a completed accounting report.</p></div>') +
-    '<div class="panel-foot small-text muted">Available receipt amounts remain unapplied until you allocate them to an invoice in the same customer account and currency.</div></section>';
+    '<div class="panel-foot small-text muted">Available balances include dated allocations, refund reservations and completed refunds. Apply remaining funds to an invoice in the same customer account and currency.</div></section>' + refundUi.renderLedger();
 }
 async function loadCustomerReport() {
   const customerId=ui.customer,asOf=ui.asOf;if(!customerId){ui.customerReport=null;return;}
@@ -340,7 +352,7 @@ function openDialog(title,content) {
   if(!$('#dialog').open)$('#dialog').showModal();
   setBusy(ui.busy);
 }
-function closeDialog() { paymentUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
+function closeDialog() { paymentUi.close(); refundUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
 function currencyFields(currency={code:'USD',scale:2}) {
   return '<label>Currency<input name="currencyCode" maxlength="3" pattern="[A-Za-z]{3}" value="' + e(currency.code) + '" required></label><label>Decimal places<select name="currencyScale">' +
     [0,1,2,3,4,5,6].map(scale=>'<option value="' + scale + '"' + (Number(currency.scale)===scale?' selected':'') + '>' + scale + '</option>').join('') + '</select></label>';
@@ -567,6 +579,7 @@ function draftPayload() {
 }
 document.addEventListener('input',event=>{
   paymentUi.input(event.target);
+  refundUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
   else if(event.target.id==='search'){ui.search=event.target.value;render();}
@@ -574,8 +587,9 @@ document.addEventListener('input',event=>{
 document.addEventListener('change',event=>{
   const target=event.target;
   paymentUi.change(target);
+  refundUi.change(target);
   if(target.closest('#draft-form'))updateDraft(target);
-  else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
+  else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
   else if(target.id==='status-filter'){ui.status=target.value;render();}
   else if(target.id==='as-of'){ui.asOf=target.value||today();refresh({quiet:true});}
   else if(target.id==='quote-scope'){const recurring=target.value==='RECURRING';$('#quote-period-count').disabled=!recurring;$('#quote-period-label').disabled=!recurring;$('#quote-period-label').required=recurring;}
@@ -594,6 +608,7 @@ document.addEventListener('submit',async event=>{
   try {
     const values=Object.fromEntries(new FormData(form));
     if(await paymentUi.submit(form,values))return;
+    if(await refundUi.submit(form,values))return;
     if(form.id==='draft-form'){
       if(!ui.editor.lines.length)throw new Error('Add an invoice line.');
       await mutate('saveDraft',[draftPayload()],'Save invoice draft');
@@ -628,6 +643,7 @@ document.addEventListener('click',async event=>{
   if(ui.pending&&['new-invoice','settings','import-quote','edit-invoice','add-line','remove-line','preview-invoice','issue-invoice','manual-receipt','native-receipt','credit-invoice','allocate-invoice','allocate-receipt','release-allocation','void-receipt','void-invoice','adopt-draft-version'].includes(action)){setMessage('Finish the retained operation before starting another change.',true);return;}
   try{
     if(await paymentUi.click(button))return;
+    if(await refundUi.click(button))return;
     if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');

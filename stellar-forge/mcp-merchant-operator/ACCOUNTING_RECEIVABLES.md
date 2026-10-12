@@ -7,7 +7,7 @@ The interfaces are:
 - Installed command: `starforge merchant-accounting-receivables`.
 - Typed JavaScript client: `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables`.
 - Durable operation and download helpers: `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables/operations`.
-- MCP tools: the 24 names beginning with `merchant_accounting_receivables_`, plus the existing accounting owner, customer and file tools.
+- MCP tools: the 35 names beginning with `merchant_accounting_receivables_`, plus the existing accounting owner, customer and file tools.
 
 The selected distribution's package name is `@tokenjunkielabs/starforge-merchant`. Check the installed package manifest if consuming a differently named distribution; the export suffixes above remain the integration points. From a source checkout, the equivalent command is:
 
@@ -239,6 +239,24 @@ Read the customer's dated account and deliver the complete native packet:
 
 The selection contains `customerId` and optional `asOf`. With `--out`, the command downloads the complete native `account.tar` and returns its observed file identity. Without `--out`, it returns the customer account inventory, currencies, counts, original file identities and packet selector.
 
+## Refund customer funds and move paid credit
+
+Use `customer_funds` for the selected customer and accounting date. Its original response includes receipt availability, paid-credit allocations that can fund a refund, outstanding target invoices, and verified original adjustments or unresolved refund returns. Use those retained identities in the preview.
+
+`refund_preview` accepts the original receipt, commercial amount, effective date, reason, selected funding allocations and actual payout route. The native owner returns a complete `proposal`, `reviewSha256`, `revision` and receipt/invoice `balanceEffects`. `refund_commit` preserves that proposal verbatim with the stable mutation context. It records a completed operator refund or adopted original payout, or reserves the amount for a public Stellar wallet request.
+
+For a wallet request, retain the returned transaction with `refund_return` and use `refund_receive`. The original verifier checks the reviewed merchant source account, customer destination, network, asset, exact amount, memo and successful ledger result. A cancelled request can still receive an actual late transfer. A distinct extra or unposted verified transfer appears in `availableRefundReturns`; its original refund and return identifiers select a newly reviewed accounting entry for that actual payout.
+
+A correction to an already recorded bank refund first reverses that original refund, then links the reviewed replacement with `replacesRefundId`. Keep the actual bank `refundDate`; use the original reversal date as the replacement’s `effectiveDate`. The native `accountingDate` records the cash correction without creating an interval in which the paid amount becomes spendable again. Customer advice and accounting schedules retain both dates and the original correction link.
+
+To move paid credit, call `credit_disposition_preview` with the original receipt, effective date, reason, exact credited allocations to release and target invoice amounts. Apply its complete proposal and review SHA with `credit_disposition_apply`. The native operation retains the released allocation and exact residual replacement, applies the chosen amounts and preserves the unused customer balance. It checks every affected later accounting date.
+
+The typed client's refund and disposition preview helpers retain the complete native response. The existing durable preparation, execution and journal reconciliation use those same complete proposals, request IDs and revisions. Retain the original review after an interrupted response and reconcile its request before changing any source input.
+
+`refund_detail` returns the original reviewed proposal, current or dated summary, returns, observations, history, balance effects and exact file inventory. `refund_list` preserves its native `refunds` rows and paging fields. Read retained files with `kind:"receivables-refund"`, `refundId` and the original filename.
+
+The [complete refund and credit guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REFUNDS_AND_CREDITS.md) provides the three payout routes, verified-return adoption, dated cancellation and operator correction, customer exports, and full CLI and typed-client examples.
+
 ## Preserve the original operation across an uncertain response
 
 Every receivables mutation carries:
@@ -383,9 +401,20 @@ All tool names in this table have the prefix `merchant_accounting_receivables_`.
 | `payment_cancel` | `cancelPaymentRequest` | Payment request ID and withdrawal reason. |
 | `payment_return` | `reportPaymentReturn` | Payment request ID, transaction hash and optional payer. |
 | `payment_receive` | `receivePaymentRequest` | Original return ID, native verification and receipt/allocation. |
+| `customer_funds` | `customerFunds` | Dated customer cash, refundable paid credits, target invoices and original verified payouts. |
+| `refund_preview` | `previewRefund` | Complete original refund proposal, review SHA and before/after account balances. |
+| `refund_commit` | `commitRefund` | Exact reviewed proposal and stable original mutation context. |
+| `refund_list` | `refunds` | Paged original refunds by customer/receipt, status and accounting date. |
+| `refund_detail` | `refund` | Original proposal, dated summary, returns, history and file inventory. |
+| `refund_cancel` | `cancelRefund` | Pending wallet refund, cancellation date and retained reason. |
+| `refund_reverse` | `reverseRefund` | Dated correction of an operator-recorded refund. |
+| `refund_return` | `reportRefundReturn` | Original refund and wallet transaction hash. |
+| `refund_receive` | `receiveRefund` | Retained return, native transaction proof and actual customer cash entry. |
+| `credit_disposition_preview` | `previewCreditDisposition` | Original credited payment releases, residual replacements and target invoice amounts. |
+| `credit_disposition_apply` | `applyCreditDisposition` | Complete reviewed allocation plan and original journal recovery. |
 | `request_lookup` | `lookupOperation` | Stable request ID and original mutation record/result. |
 
-Direct mutation commands use `--request` with exact native arguments. `invoice-preview` and `payment-preview` can save complete previews with `--out`. `status` and `payment-list` can use their default selections without a request file.
+Direct mutation commands use `--request` with exact native arguments. `invoice-preview`, `payment-preview`, `refund-preview` and `credit-disposition-preview` can save complete previews with `--out`. `status` and `payment-list` can use their default selections without a request file.
 
 ## Complete inventory and dated views
 
@@ -416,6 +445,7 @@ All files use the existing `merchant_accounting_file` reader. Select one kind an
 | `receivables-quote` | `invoiceId` | `quote.json`, optional `response.json`, `source.json`, `review.json`. |
 | `receivables-preview` | `invoiceId` | `preview.json`, `preview.csv`, `preview.html`. |
 | `receivables-payment` | `paymentRequestId`; `returnId` for `proof.json` | `payment-request.json`, `payment-request.html`, `payment-request.uri`, `status.json`, `receiving.json`, `proof.json`. |
+| `receivables-refund` | `refundId` | Original `request.json/html/csv`, `refund.json/html/csv`, `reversal.json/html/csv`, `status.json`, `receiving.json`, and each retained `proof-<observationId>.json` from its file inventory. For a credit disposition, select its disposition ID as `refundId` and read `disposition.json/html/csv`. |
 | `receivables-customer` | `customerId`, optional `asOf` | `account.json`, `invoices.csv`, `account.html`, `manifest.json`, `documents/<original filename>`, `account.tar`. |
 
 Use the original member names from the document or customer inventory. The generic `proof.json` selection maps the selected return to its native `proof-<returnId>.json` export.

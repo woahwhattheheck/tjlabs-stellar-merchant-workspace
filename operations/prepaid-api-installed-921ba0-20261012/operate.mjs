@@ -25,7 +25,9 @@ function options(args) {
   const out = {};
   while (args.length) {
     const flag = args.shift();
-    if (flag === '--resume') {need(out.resume === undefined, 'REPEATED_OPTION'); out.resume = true; continue;}
+    if (flag === '--resume' || flag === '--source-online') {
+      const key = flag.slice(2); need(out[key] === undefined, 'REPEATED_OPTION'); out[key] = true; continue;
+    }
     need(['--repo','--directory','--request','--dependencies','--python','--npm-cache'].includes(flag) &&
       out[flag.slice(2)] === undefined && args.length, 'INSTALLED_OPERATION_OPTIONS_REQUIRED');
     out[flag.slice(2)] = args.shift();
@@ -243,7 +245,7 @@ export async function operateInstalledPrepaidProduct(input) {
     check();
     const output = join(directory,'selected-release');
     const packaged = await buildDistribution({repository,ref:SOURCE,output,selection:'prepaid-api',
-      offline:true,resume:await exists(output),python:opts.python ?? 'python3',
+      offline:opts['source-online'] !== true,resume:await exists(output),python:opts.python ?? 'python3',
       onProgress:event => {if (['selected','packaged','reused'].includes(event.phase))
         process.stdout.write(JSON.stringify({build:event.phase,files:event.files ?? null}) + '\n');}});
     need(packaged.sourceCommit === SOURCE && packaged.sourceSelection?.id === 'prepaid-api',

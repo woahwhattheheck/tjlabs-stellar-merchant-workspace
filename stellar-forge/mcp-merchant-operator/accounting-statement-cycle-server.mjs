@@ -3,7 +3,7 @@ import {createServer} from 'node:http';
 import {createReadStream} from 'node:fs';
 import {mkdir, readdir, readFile, realpath, stat} from 'node:fs/promises';
 import {resolve, join, relative, isAbsolute, sep, extname} from 'node:path';
-import {fileURLToPath, pathToFileURL} from 'node:url';
+import {pathToFileURL} from 'node:url';
 import {randomBytes, createHash} from 'node:crypto';
 import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
@@ -11,11 +11,13 @@ import {createGzip} from 'node:zlib';
 import {connectAccountingStatementClient, accountingStatementPreview, accountingStatementSelection} from './accounting-statement-client.mjs';
 import {prepareAccountingStatementCycle, runAccountingStatementCycle, observeAccountingStatementCycle} from './accounting-statement-cycle.mjs';
 
+import {createCustomerSetupRoutes} from './accounting-statement-setup.mjs';
+import {readBrowserAssets} from '../../stellar/scf-starforge-20261009/distribution/browser-assets.mjs';
 import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
 
 const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const KEY=/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/;
-const STATIC=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
+const STATIC=await readBrowserAssets(new URL('./accounting-statement-cycle-browser-assets.json',import.meta.url));
 const TYPE={'.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.csv':'text/csv; charset=utf-8','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8'};
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const fail=(status,code,message)=>Object.assign(new Error(message),{status,code});
@@ -90,7 +92,7 @@ async function* tarStream(files,lease){
   lease.assertHeld();yield Buffer.alloc(1024);
 }
 
-/** Every write goes through the existing cycle engine. The listener only binds to loopback. */
+/** Every write uses the original statement operation or cycle engine. The listener binds to loopback. */
 export async function startAccountingStatementCycleWorkbench({
   directory,url,workspace,actor,tokenEnv='MCP_ACCESS_TOKEN',environment=process.env,host='127.0.0.1',port=4419,client:providedClient
 }={}){
@@ -103,7 +105,6 @@ export async function startAccountingStatementCycleWorkbench({
   await mkdir(directory,{recursive:true,mode:0o700});const root=await realpath(directory);
   const rootInfo=await stat(root);
   need(rootInfo.isDirectory()&&!(rootInfo.mode&0o077)&&(!process.getuid||rootInfo.uid===process.getuid()),'Use a private cycle directory owned by this operator (mode 0700).',400,'WORKBENCH_DIRECTORY');
-  const publicRoot=fileURLToPath(new URL('./cycle-public/',import.meta.url));
   const csrfToken=randomBytes(32).toString('hex'),jobs=new Map(),controller=new AbortController();let clientPromise,inventoryPromise,closing=false,origin,workQueue=Promise.resolve();
   const connection=async()=>{
     if(!clientPromise)clientPromise=(async()=>{
@@ -183,6 +184,9 @@ export async function startAccountingStatementCycleWorkbench({
     }
     return files;
   }
+  const customerSetup=await createCustomerSetupRoutes({directory:root,url,workspace,actor,tokenEnv,connection,signal:controller.signal,bodyJson,sendJson,
+    enqueue:work=>{const promise=workQueue.then(()=>{controller.signal.throwIfAborted();return work();});workQueue=promise.catch(()=>{});return promise;}
+  });
   const server=createServer(async(request,response)=>{
     response.setHeader('Cache-Control','no-store');
     response.setHeader('X-Content-Type-Options','nosniff');
@@ -194,11 +198,12 @@ export async function startAccountingStatementCycleWorkbench({
       need(request.headers['sec-fetch-site']!=='cross-site','Open the workbench on this computer.',403,'WORKBENCH_ORIGIN');
       const address=new URL(request.url,origin),path=decodeURIComponent(address.pathname);
       if(request.method==='GET'&&STATIC.has(path)){
-        const [name,type]=STATIC.get(path),bytes=await readFile(join(publicRoot,name));
+        const {url:assetUrl,type}=STATIC.get(path),bytes=await readFile(assetUrl);
         response.writeHead(200,{'Content-Type':type,'Content-Length':bytes.length});response.end(bytes);return;
       }
       if(request.method==='POST')need(request.headers['x-workbench-token']===csrfToken,'Refresh this page before continuing.',403,'WORKBENCH_SESSION');
-      if(request.method==='GET'&&path==='/api/context'){sendJson(response,200,{workspace,actor,directory:root,csrfToken,origin});return;}
+      if(request.method==='GET'&&path==='/api/context'){sendJson(response,200,{workspace,actor,directory:root,draftScope:digest(JSON.stringify({url,workspace,directory:root})),csrfToken,origin});return;}
+      if(await customerSetup.handle(request,response,address))return;
       if(request.method==='GET'&&path==='/api/inventory'){
         if(!inventoryPromise)inventoryPromise=connection().then(inventory).finally(()=>{inventoryPromise=undefined;});
         sendJson(response,200,await inventoryPromise);return;
@@ -302,6 +307,7 @@ export async function startAccountingStatementCycleWorkbench({
     if(!closePromise){closing=true;controller.abort();closePromise=(async()=>{
       await new Promise((done,reject)=>server.close(error=>error?reject(error):done()));
       await Promise.allSettled([...jobs.values()].map(job=>job.promise));
+      await customerSetup.close();
       if(clientPromise&&!providedClient)await (await clientPromise).disconnect();
     })();}return closePromise;
   }});
@@ -314,6 +320,10 @@ export async function runAccountingStatementCycleWorkbenchCli(argv=process.argv.
   const options={},names={'--directory':'directory','--url':'url','--workspace':'workspace','--actor':'actor','--token-env':'tokenEnv','--port':'port','--host':'host'};
   for(let i=0;i<argv.length;i++){const name=names[argv[i]];need(name&&argv[i+1]!==undefined,'Use --help for the closing workbench options.');options[name]=name==='port'?Number(argv[++i]):argv[++i];}
   const workbench=await startAccountingStatementCycleWorkbench(options);
+  process.stdout.write(JSON.stringify({schema:'stellar-forge.customer-closing-startup.v1',status:'CUSTOMER_CLOSING_READY',
+    url:workbench.url,directory:workbench.directory,workspace:options.workspace,actor:options.actor.trim(),
+    merchantUrl:new URL(options.url).href,tokenEnv:options.tokenEnv??'MCP_ACCESS_TOKEN',
+    requestedPort:options.port??4419,pid:process.pid,startedAt:new Date().toISOString()})+'\n');
   process.stdout.write('Customer closing workbench: '+workbench.url+'\nSaved cycles: '+workbench.directory+'\n');
   const stop=()=>{workbench.close().catch(error=>{process.stderr.write(error.message+'\n');process.exitCode=1;});};
   process.once('SIGINT',stop);process.once('SIGTERM',stop);return workbench;

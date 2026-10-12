@@ -8,8 +8,8 @@ import {createHash,randomUUID} from 'node:crypto';
 
 const CASE_ID = 'datacove-sensorthings-commissioning-20261012';
 const OPERATION_ID = 'datacove-complete-workshare-intake-0c7a-20261012';
-const SOURCE_SHA256 = 'bbe2b4884edbcbcdbdb7800fba13193c6db8c43974dbe4dab572bb206abf3f10';
-const SOURCE_BYTES = 38688;
+const SOURCE_SHA256 = '334945e1046a435f10a42d7ffcdc7732164cdd75a67b100f1336ce18e8d1ddeb';
+const SOURCE_BYTES = 38687;
 const basename = dirname(fileURLToPath(import.meta.url));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const encoded = value => JSON.stringify(value,null,2)+'\n';

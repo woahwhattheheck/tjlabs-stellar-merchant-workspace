@@ -7,11 +7,11 @@
   "selection": "prepaid-api",
   "driver": {
     "path": "operations/prepaid-api-installed-921ba0-20261012/operate.mjs",
-    "gitBlob": "e0d0310a227d13c1b0c556b9367384a97a8666fb"
+    "gitBlob": "8baa57941e6bba1d6d0d033bd160bfa6a5675786"
   },
   "guide": {
     "path": "operations/prepaid-api-installed-921ba0-20261012/OPERATING.md",
-    "gitBlob": "9bc9e5103d64d6354591f479c5095c870c5af9a8"
+    "gitBlob": "7673211f491622e64dd2d784b37530670505830f"
   },
   "originalModules": [
     {
@@ -29,6 +29,10 @@
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
       "gitBlob": "6d9374932166d7c597fb55148912be193116fa7b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/git-source.mjs",
+      "gitBlob": "3d2a0c9f34d27cce9b6ef64e39cf130dc620f8d7"
     }
   ],
   "productFiles": [
@@ -96,5 +100,9 @@
     "orderReference": "api-pass-native-chain-921ba0",
     "requestId": "api-application-analyze-921ba0-20261011",
     "ownership": "SEPARATE_ORIGINAL_MERCHANT_CONTINUATION_UNCHANGED"
+  },
+  "receiver": {
+    "path": "operations/prepaid-api-installed-921ba0-20261012/receive-from-git.py",
+    "gitBlob": "793ed74840ead341333b9c18eb117a15374139f5"
   }
 }

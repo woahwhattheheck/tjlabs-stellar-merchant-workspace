@@ -13,6 +13,10 @@
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/client.d.ts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/client.mjs"
     },
+    "./seller/openlineage/service-levels": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-client.mjs"
+    },
     "./seller/openlineage/model": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/model.mjs",
     "./seller/openlineage/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/store.mjs",
     "./seller/openlineage/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/server.mjs",

@@ -6,7 +6,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { acquireStateLease } from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
-import { writePrivate, privateSupportDirectory } from './config.mjs';
+import { writePrivate, privateSupportDirectory } from './host-files.mjs';
 import { accountingStatementArguments, accountingStatementRetentionArguments, accountingStatementPreview, connectAccountingStatementClient } from './accounting-statement-client.mjs';
 import { downloadAccountingMaintenanceFile } from './accounting-maintenance-cli.mjs';
 
@@ -64,19 +64,54 @@ function validateRequest(request) {
 }
 export async function prepareAccountingStatementOperation({directory,url,workspace,tokenEnv='MCP_ACCESS_TOKEN',
   kind,preview,arguments:value,actor,requestId}={}){
-  const args=kind==='retain'?accountingStatementRetentionArguments(preview,{actor,requestId:requestId??randomUUID()}):
-    accountingStatementArguments(kind,value);
-  const content={schema:REQUEST,preparedAt:now(),url:endpoint(url),workspace,tokenEnv,kind,arguments:args,
-    ...(kind==='retain'?{preview:structuredClone(preview)}:{})};
-  const request=validateRequest({...content,sha256:sha(content)});
-  const requestText=JSON.stringify(request)+'\n';
-  need(Buffer.byteLength(requestText)<=130_000_000,'The complete retained request exceeds 130 MB.','SIZE');
-  directory=resolve(directory);await privateDirectory(dirname(directory));await mkdir(directory,{mode:0o700});await privateDirectory(directory);
-  await writePrivate(join(directory,'request.json'),requestText);
-  await writePrivate(join(directory,'state.json'),{schema:STATE,requestSha256:request.sha256,phase:'PREPARED',preparedAt:request.preparedAt,
-    updatedAt:now(),submissionAttempted:false,observation:null});
-  await syncDirectory(directory);await syncDirectory(dirname(directory));
-  return {directory,kind,requestSha256:request.sha256,arguments:args,phase:'PREPARED'};
+  directory=resolve(directory);await privateDirectory(dirname(directory));
+  try{await mkdir(directory,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;}
+  await privateDirectory(directory);const lease=await acquireStateLease(directory);
+  try{
+    let request,state,reused=false;
+    try{request=validateRequest(await readJson(join(directory,'request.json'),130_000_000));reused=true;}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+    try{state=await readJson(join(directory,'state.json'),4_000_000);}catch(error){if(error.code!=='ENOENT')throw error;}
+    need(request||!state,'The saved operation request is missing from its existing state. Restore the original request before continuing.','REQUEST');
+    const retainedRequestId=requestId??(request?.kind==='retain'?request.arguments.requestId:undefined)??randomUUID();
+    const args=kind==='retain'?accountingStatementRetentionArguments(preview,{actor,requestId:retainedRequestId}):
+      accountingStatementArguments(kind,value);
+    const content={schema:REQUEST,preparedAt:now(),url:endpoint(url),workspace,tokenEnv,kind,arguments:args,
+      ...(kind==='retain'?{preview:structuredClone(preview)}:{})};
+    const proposed=validateRequest({...content,sha256:sha(content)});
+    const requestText=JSON.stringify(proposed)+'\n';
+    need(Buffer.byteLength(requestText)<=130_000_000,'The complete retained request exceeds 130 MB.','SIZE');
+    if(request){
+      need(['url','workspace','tokenEnv','kind'].every(key=>request[key]===proposed[key])&&
+        JSON.stringify(request.arguments)===JSON.stringify(proposed.arguments)&&
+        JSON.stringify(request.preview)===JSON.stringify(proposed.preview),
+        'This saved operation already contains different original choices. Review changes in a new operation.','REQUEST_BINDING');
+    }else{
+      request=proposed;lease.assertHeld();await writePrivate(join(directory,'request.json'),requestText);await syncDirectory(directory);
+    }
+    if(state)need(state.schema===STATE&&state.requestSha256===request.sha256&&typeof state.submissionAttempted==='boolean',
+      'The saved operation state belongs to a different request.','STATE');
+    else{
+      lease.assertHeld();await writePrivate(join(directory,'state.json'),{schema:STATE,requestSha256:request.sha256,phase:'PREPARED',
+        preparedAt:request.preparedAt,updatedAt:now(),submissionAttempted:false,observation:null});
+      await syncDirectory(directory);
+    }
+    await syncDirectory(dirname(directory));
+    return {directory,kind,requestSha256:request.sha256,arguments:request.arguments,phase:'PREPARED',reused};
+  }finally{await lease.close();}
+}
+/** Read atomic saved progress without a writer lease, connection or bookkeeping write. */
+export async function observeAccountingStatementOperation({directory}={}){
+  directory=resolve(directory);const info=await lstat(directory);
+  need(info.isDirectory()&&!(info.mode&0o077)&&await realpath(directory)===directory&&
+    (!process.getuid||info.uid===process.getuid()),'Use the original owner-controlled private operation directory.','PRIVATE_DIRECTORY');
+  const request=validateRequest(await readJson(join(directory,'request.json'),130_000_000));let state=null;
+  try{state=await readJson(join(directory,'state.json'),4_000_000);}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(state)need(state.schema===STATE&&state.requestSha256===request.sha256&&typeof state.submissionAttempted==='boolean',
+    'The saved operation state belongs to a different request.','STATE');
+  return {directory,kind:request.kind,requestSha256:request.sha256,preparedAt:request.preparedAt,
+    url:request.url,workspace:request.workspace,tokenEnv:request.tokenEnv,arguments:request.arguments,
+    ...(request.preview?{preview:request.preview}:{}),phase:state?.phase??'PREPARING',state};
 }
 async function operation(directory,work){
   directory=await privateDirectory(directory);const lease=await acquireStateLease(directory);
@@ -229,7 +264,7 @@ function cycleSummary(report){
     attention:rows.filter(row=>row.error).map(row=>({index:row.index,customer:row.customer.reference,phase:row.phase,error:row.error}))};
 }
 
-const HELP="Starforge customer statement client\n\n  open|close|status --url MCP_URL --workspace ALIAS [--token-env NAME]\n  status|bindings|order|statements|detail|lookup|usage-source ...\n      [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --request PRIVATE_SELECTION_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  usage-period-summary ... --request PRIVATE_PERIOD_QUERY_JSON\n  usage-period ... --request PRIVATE_PERIOD_SELECTION_JSON --out NEW_PRIVATE_PERIOD_JSON\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action retain --preview PRIVATE_PREVIEW_JSON --actor NAME [--request-id ID]\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action save|assign|usage_import|withdraw --request PRIVATE_NATIVE_ARGUMENTS_JSON\n  execute|reconcile --dir PRIVATE_OPERATION\n  cycle-prepare --dir PRIVATE_CYCLE --url MCP_URL --workspace ALIAS\n      --actor NAME --label LABEL --request PRIVATE_SELECTIONS_ARRAY_JSON [--token-env NAME]\n  cycle-execute|cycle-reconcile|cycle-status|cycle-observe --dir PRIVATE_CYCLE\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE\n  export ... --statement-id UUID --dir PRIVATE_DELIVERY_DIRECTORY\n  status-snapshot ... --statement-id UUID --out NEW_PRIVATE_STATUS_JSON\n\nConnection commands accept --token-env NAME. Tokens remain in that process variable.\nstatus request: {\"view\":\"customers|runs|usage|history\",\"offset\":0,\"limit\":200}.\nbindings: {\"customerId\":\"UUID\",\"offset\":0,\"limit\":200}. order: {\"orderRef\":\"original\"}.\ndetail: {\"statementId\":\"UUID\",\"view\":\"summary|items|excluded|assets|calls|adjustments|period-routes|period-calls|history\"}.\nCalls and adjustments select orderRef; page all native items with offset and limit.\nlookup: {\"requestId\":\"original-retention-id\"}. usage-source: {\"source\":\"host-alias\"}.\nPreview selects customerId/runId, optional usageId/replacesId, and optional from/until.\nAdd usageOpeningId for the service period ending at usageId; from/until select purchases.\nusage-period selects {\"usageOpeningId\":\"UUID\",\"usageId\":\"UUID\"}; its summary\naccepts view:summary|routes|calls, offset and limit. It reads actual native captures.\nThe complete native preview is read through the original SHA-pinned file consumer.\nUsage import requires the source SHA returned by usage-source. Retention uses its\ncomplete reviewed preview and one durable requestId; corrections set replacesId.\nprepare retains exact normalized arguments in request.json. execute reconciles\ncurrent original records before sending; reconcile reads them. Lost replies\nrecover through the native request ID, source SHA, profile, bindings or withdrawal\nhistory. Exact retries keep the original revision guard and operation identity.\nexport delivers statement.json, statement.csv, usage.csv, statement.html and\nmanifest.json. Period statements also deliver period.csv, period-summary.csv,\nusage-opening.json and usage-closing.json. Restart verifies and reuses every file,\ncompletes an earlier five-file delivery of that same period, and retains native hashes.\nstatus-snapshot reads the current status.json once through the original pinned\nreader and saves its exact bytes and SHA. All original files remain available\nthrough correction and withdrawal. Ordinary commands release this caller's reads.\nClosing cycles freeze complete customer previews before any retention. The same\nrequest and directory resume partial preparation. cycle-execute reconciles each\noriginal request, retains unchanged reviewed content, and exports every customer\npacket. cycle-reconcile recovers existing retained packets. cycle-status refreshes\nthe portable HTML/JSON register from saved progress without an MCP request.\ncycle-observe reads atomic customer progress during an active close without taking\nits writer lease or rewriting the register.\nclose explicitly closes the original accounting workspace.\nExit 0: complete, prepared or read. Exit 3: prepared effect not observed. Exit 2: error.\n";
+const HELP="Starforge customer statement client\n\n  open|close|status --url MCP_URL --workspace ALIAS [--token-env NAME]\n  status|bindings|order|statements|detail|lookup|usage-source ...\n      [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --request PRIVATE_SELECTION_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  usage-period-summary ... --request PRIVATE_PERIOD_QUERY_JSON\n  usage-period ... --request PRIVATE_PERIOD_SELECTION_JSON --out NEW_PRIVATE_PERIOD_JSON\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action retain --preview PRIVATE_PREVIEW_JSON --actor NAME [--request-id ID]\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action save|assign|usage_import|withdraw --request PRIVATE_NATIVE_ARGUMENTS_JSON\n  execute|reconcile|observe --dir PRIVATE_OPERATION\n  cycle-prepare --dir PRIVATE_CYCLE --url MCP_URL --workspace ALIAS\n      --actor NAME --label LABEL --request PRIVATE_SELECTIONS_ARRAY_JSON [--token-env NAME]\n  cycle-execute|cycle-reconcile|cycle-status|cycle-observe --dir PRIVATE_CYCLE\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE\n  export ... --statement-id UUID --dir PRIVATE_DELIVERY_DIRECTORY\n  status-snapshot ... --statement-id UUID --out NEW_PRIVATE_STATUS_JSON\n\nConnection commands accept --token-env NAME. Tokens remain in that process variable.\nstatus request: {\"view\":\"customers|runs|usage|history\",\"offset\":0,\"limit\":200}.\nbindings: {\"customerId\":\"UUID\",\"offset\":0,\"limit\":200}. order: {\"orderRef\":\"original\"}.\ndetail: {\"statementId\":\"UUID\",\"view\":\"summary|items|excluded|assets|calls|adjustments|period-routes|period-calls|history\"}.\nCalls and adjustments select orderRef; page all native items with offset and limit.\nlookup: {\"requestId\":\"original-retention-id\"}. usage-source: {\"source\":\"host-alias\"}.\nPreview selects customerId/runId, optional usageId/replacesId, and optional from/until.\nAdd usageOpeningId for the service period ending at usageId; from/until select purchases.\nusage-period selects {\"usageOpeningId\":\"UUID\",\"usageId\":\"UUID\"}; its summary\naccepts view:summary|routes|calls, offset and limit. It reads actual native captures.\nThe complete native preview is read through the original SHA-pinned file consumer.\nUsage import requires the source SHA returned by usage-source. Retention uses its\ncomplete reviewed preview and one durable requestId; corrections set replacesId.\nprepare retains exact normalized arguments in request.json and resumes matching\npreparation after interruption. observe reads its atomic saved state without a\nwriter lease or network request. execute reconciles\ncurrent original records before sending; reconcile reads them. Lost replies\nrecover through the native request ID, source SHA, profile, bindings or withdrawal\nhistory. Exact retries keep the original revision guard and operation identity.\nexport delivers statement.json, statement.csv, usage.csv, statement.html and\nmanifest.json. Period statements also deliver period.csv, period-summary.csv,\nusage-opening.json and usage-closing.json. Restart verifies and reuses every file,\ncompletes an earlier five-file delivery of that same period, and retains native hashes.\nstatus-snapshot reads the current status.json once through the original pinned\nreader and saves its exact bytes and SHA. All original files remain available\nthrough correction and withdrawal. Ordinary commands release this caller's reads.\nClosing cycles freeze complete customer previews before any retention. The same\nrequest and directory resume partial preparation. cycle-execute reconciles each\noriginal request, retains unchanged reviewed content, and exports every customer\npacket. cycle-reconcile recovers existing retained packets. cycle-status refreshes\nthe portable HTML/JSON register from saved progress without an MCP request.\ncycle-observe reads atomic customer progress during an active close without taking\nits writer lease or rewriting the register.\nclose explicitly closes the original accounting workspace.\nExit 0: complete, prepared or read. Exit 3: prepared effect not observed. Exit 2: error.\n";
 
 function options(args,allowed){
   const values=new Map();
@@ -263,6 +298,8 @@ export async function main(args=process.argv.slice(2)){
       tokenEnv:values.get('--token-env')??'MCP_ACCESS_TOKEN',kind,
       ...(kind==='retain'?{preview:await readJson(resolve(required(values,'--preview')),128_000_000),actor:required(values,'--actor'),requestId:values.get('--request-id')}:
         {arguments:await readJson(resolve(required(values,'--request')),2_000_000)})});
+  }else if(command==='observe'){
+    const values=options(rest,['--dir']);result=await observeAccountingStatementOperation({directory:required(values,'--dir')});
   }else if(command==='execute'||command==='reconcile'){
     const values=options(rest,['--dir']);result=await runAccountingStatementOperation({directory:required(values,'--dir'),execute:command==='execute'});
   }else{

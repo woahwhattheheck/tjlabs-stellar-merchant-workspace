@@ -273,3 +273,175 @@ See [the full DQA operator guide](../../stellar/scf-starforge-20261009/sf30-sell
 and [installed receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/DQA.md)
 for executable CLI examples, the browser workflow, native source operation and
 complete customer delivery.
+
+
+## Organisation budgets and documents
+
+The organisation workflow uses the same IATI alias, original publisher source
+intake and browser workspace. It works with IATI organisation XML rather than
+the activity datasets used by the finance and participant workflows. Configure
+a complete publisher file as a source handle and use the existing
+`merchant_source_ingest`. Its returned source ID refers to those exact
+retained bytes.
+
+The complete workflow is exposed by the existing source-workspaces provider:
+
+| Tool suffix after `merchant_source_iati_organisation_` | Original operation |
+| --- | --- |
+| `status` | Read workspace identity, organisation sources and latest plans |
+| `profile` | Inspect a retained source and its original organisation keys |
+| `plan` / `history` | Reopen an exact saved plan or page its revisions |
+| `request` | Resolve an unchanged request ID after an interrupted reply |
+| `rows` / `detail` | Page budgets, documents and findings; read organisation, budget and document XML-bound targets |
+| `save` | Save the complete source selection, dated assessment and cumulative corrections |
+| `review` / `release` | Record a named review and prepare its original complete handover |
+| `compare` | Compare explicit saved revisions and original compatible budget contexts |
+| `export` / `file` | Retain a complete organisation ZIP or an original XML, HTML or CSV file |
+| `receive` | Reopen the complete ZIP through the original receiving console |
+
+Every operation takes the configured `workspace` alias. Read and mutation
+results preserve the original object under `native`; export/file operations
+return the existing retained-file descriptor, including `exportId`,
+`bytes` and `sha256`. The current selected organisation plan,
+revision and file kind remain explicit even when two selections share identical
+file bytes.
+
+### Select and correct the original source
+
+Read `profile` with the exact `sourceId`, then retain the returned
+opaque organisation keys. Read `rows` using either that `sourceId` or
+a saved `id` with an explicit `revision`. Select
+`section: "budgets" | "documents" | "issues"` and
+`view: "source" | "candidate"`. Candidate view requires a saved plan.
+An optional `organisationKey` narrows the view to one actual organisation.
+A saved plan defaults to its candidate view; a source ID selects its original
+source view. Set `view` explicitly when reading the saved plan's source.
+
+Rows return the complete native page, including `total`,
+`snapshotSha256` and `nextOffset`. Continue with the same
+source/revision/section/view, returned `nextOffset`, and
+`expectedSnapshot: snapshotSha256` until `nextOffset` is null.
+History paging uses its separate returned `snapshot` and the existing
+`expectedSnapshot` contract.
+
+`detail` takes the immutable source or saved plan/revision, an original `rowId`,
+and optional view, organisation key, expected snapshot and `targetId`. A selected
+target is returned as `selectedTarget` with its exact element XML and original
+binding; it must belong to the chosen row. The read omits the rows-only
+`section` field and returns the row, exact XML and correction targets. An organisation's own key
+can select its root detail for supported append operations. Each target retains
+its original `id`, `beforeSha256`, node identity, current value
+and allowed operations. Use these returned targets for the full cumulative
+`edits` array; the original engine validates the selected source, XML
+structure and IATI child order.
+
+A `save` call carries this original object in `definition`:
+
+~~~json
+{
+  "requestId": "organisation-plan-001",
+  "name": "Reviewed organisation budget and document edition",
+  "sourceId": "<exact retained source SHA256>",
+  "organisationKeys": ["<original organisation key>"],
+  "assessment": {
+    "asOf": "2026-10-12",
+    "fiscalYearStart": "2026-04-01",
+    "forwardYears": 3,
+    "methodology": "iati203"
+  },
+  "edits": [],
+  "notes": "Original source selection and dated review context",
+  "actor": "<actual operator>"
+}
+~~~
+
+Use the actual assessment dates and fiscal-year start for the selected publisher.
+The other explicit methodologies are `fcdo2023` and
+`pwyf2026`; the original assessment preserves its dated methodology and
+source. Optional `operatingCountries` are the reviewed country codes.
+Optional `acquisition` retains the actual `sourceUrl`,
+`retrievedAt`, `licenceUrl`, `licence` and
+`notes`. The adapter leaves exact amount strings and all native source
+associations intact.
+
+Each edit is
+`{targetId,beforeSha256,operation,value?,attribute?,xml?}`,
+where `operation` is one of the target's supported
+`text`, `attribute`, `replace`, `remove`
+or `append` operations. Editing an existing plan adds its `id`
+and `expectedRevision` and uses a new request ID. Edits always describe
+the full cumulative change from the original immutable source. Plan/history
+readback preserves the source, edited XML, assessment and review for each saved
+revision.
+
+### Review, release and compare
+
+A `review` definition has
+`{requestId,id,expectedRevision,decision,actor,note,acknowledgedIssueIds}`.
+Choose `approve` or `request_changes` from the actual review.
+A `release` definition selects
+`{requestId,id,expectedRevision,reviewId,actor?}`. It returns the original
+new plan, release and complete file descriptors.
+
+A `compare` definition has:
+
+~~~json
+{
+  "requestId": "organisation-comparison-001",
+  "before": { "id": "<saved plan SHA256>", "revision": 1 },
+  "after": { "id": "<saved plan SHA256>", "revision": 2 },
+  "actor": "<actual operator>",
+  "notes": "Reviewed original editions"
+}
+~~~
+
+When `rowPairs` is omitted, the original engine pairs preserved identities
+from the same source. It suppresses automatic pairing when divergent edits
+remove an element or replace a whole organisation, because those changes can
+move source row identities. The response explains that selection. Explicit
+`rowPairs: []` requests a contextual comparison without any row pairs.
+Comparing distinct source editions requires explicit unique
+`rowPairs: [{beforeRowId,afterRowId}]` where that pairing was reviewed.
+The native response retains all changes. Amount differences are calculated only
+for compatible original budget families, recipients, statuses, currencies,
+periods and value dates; other changes retain their context.
+
+Save, review, release and comparison retain their original request IDs. After a
+lost reply, call `request` with that same ID. `RECORDED` returns
+the original saved input and result; `NOT_RECORDED` allows the caller to
+continue its unchanged original request. A later plan edit does not turn a replay
+into a fresh mutation.
+
+### Deliver and independently reopen
+
+Call `export` with the exact saved `id` and `revision`.
+The console produces the complete original organisation ZIP, preserving original
+source and candidate XML, revision history, requests, named reviews and reports.
+A `file` call selects the same explicit plan/revision and
+`kind: "source" | "candidate" | "report" | "budgets" | "documents"`.
+These are complete XML, HTML and CSV files.
+
+The adapter verifies the original HTTP descriptor's byte count and SHA256 while
+streaming the response, then publishes it through the existing private export
+store. It accepts the original 4 GiB archive capacity and 64 MiB file capacity;
+organisation XML correction remains within the core's 32 MiB limit. Agent JSON
+requests retain the provider's existing 128 KiB bound; use the original declared
+source-file intake for complete publisher XML.
+
+Read a retained result with `merchant_source_file_read` and preserve its
+`exportId`, `readId` and `nextOffset` across pages.
+The complete bytes remain available after the temporary read is released or the
+MCP restarts. `merchant_source_exports` reopens results whose initial
+export reply was lost.
+
+Start a separate original receiving IATI workspace, configure its existing alias,
+and call `merchant_source_iati_organisation_receive` with that alias,
+the complete `exportId` and original `fromWorkspace`. A receiver
+can instead select a host-declared `packet` file handle. The native
+importer checks the complete archive and restores its original history in the
+receiving workspace. Read its returned plan identity there and reopen the exact
+revision before continuing edits.
+
+The original source console owns its workspace and application lifecycle.
+Closing the merchant MCP drains its own calls and file reads while preserving
+the complete retained exports and the operator's console.

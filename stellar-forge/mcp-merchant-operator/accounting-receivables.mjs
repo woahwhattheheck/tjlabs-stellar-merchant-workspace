@@ -83,9 +83,14 @@ export class MerchantReceivables {
       const payments = requestRows(data).filter(row => !args.customerId || row.customerId === args.customerId);
       const invoiceIds = new Set(invoices.map(row => row.id)), receiptIds = new Set(receipts.map(row => row.id));
       const paymentIds = new Set(payments.map(row => row.id));
+      const refunds = (data.refunds || []).filter(row => !args.customerId || row.proposal.customer.id === args.customerId);
+      const creditDispositions = (data.creditDispositions || []).filter(row => !args.customerId || row.proposal.customer.id === args.customerId);
+      const refundIds = new Set(refunds.map(row => row.id));
+      const dispositionIds = new Set(creditDispositions.map(row => row.id));
       const history = data.requests.filter(row => !args.customerId ||
         invoiceIds.has(row.result.invoiceId) || receiptIds.has(row.result.receiptId) ||
-        paymentIds.has(row.result.paymentRequestId));
+        paymentIds.has(row.result.paymentRequestId) || refundIds.has(row.result.refundId) ||
+        dispositionIds.has(row.result.creditDispositionId));
       const metadata = {workspace: args.workspace, schema: data.schema, view, asOf,
         customerId: args.customerId ?? null, revision: this.workspace.state.revision};
       if (view === 'summary') return clone({...metadata, issuer: data.issuer,
@@ -94,7 +99,8 @@ export class MerchantReceivables {
           issued: invoices.filter(row => row.status === 'ISSUED').length,
           void: invoices.filter(row => row.status === 'VOID').length,
           receipts: receipts.length, credits: credits.length, allocations: allocations.length,
-          paymentRequests: payments.length, operations: history.length}});
+          paymentRequests: payments.length, refunds: refunds.length,
+          creditDispositions: creditDispositions.length, operations: history.length}});
       if (view === 'aging') {
         const original = agingReport(data, asOf, args.customerId ?? null);
         return paged(original.invoices.filter(row => matches(row, args)), args,
@@ -216,7 +222,8 @@ export class MerchantReceivables {
       schema: result.value.schema, asOf: result.value.asOf, customer: result.value.customer,
       currencies: result.value.currencies,
       counts: {invoices: result.value.invoices.length, credits: result.value.credits.length,
-        receipts: result.value.receipts.length, allocations: result.value.allocations.length},
+        receipts: result.value.receipts.length, allocations: result.value.allocations.length,
+        refunds: result.value.refunds?.length ?? 0, creditDispositions: result.value.creditDispositions?.length ?? 0},
       files: result.files.map(file => ({...fileIdentity(file),
         selection: fileSelection('receivables-customer',
           {customerId: args.customerId, asOf: result.value.asOf}, file.name)})),
@@ -258,6 +265,17 @@ export class MerchantReceivables {
       case 'payment_cancel': return this.controller.cancelPaymentRequest(args.paymentRequestId, payload(args, 'paymentRequestId'));
       case 'payment_return': return this.controller.reportPaymentReturn(args.paymentRequestId, payload(args, 'paymentRequestId'));
       case 'payment_receive': return this.controller.receivePaymentRequest(args.paymentRequestId, payload(args, 'paymentRequestId'));
+      case 'customer_funds': return this.controller.customerFunds(input);
+      case 'refund_preview': return this.controller.previewRefund(input);
+      case 'refund_commit': return this.controller.commitRefund(input);
+      case 'refund_list': return this.controller.refunds(input);
+      case 'refund_detail': return this.controller.refund(args.refundId, payload(args, 'refundId'));
+      case 'refund_cancel': return this.controller.cancelRefund(args.refundId, payload(args, 'refundId'));
+      case 'refund_reverse': return this.controller.reverseRefund(args.refundId, payload(args, 'refundId'));
+      case 'refund_return': return this.controller.reportRefundReturn(args.refundId, payload(args, 'refundId'));
+      case 'refund_receive': return this.controller.receiveRefund(args.refundId, payload(args, 'refundId'));
+      case 'credit_disposition_preview': return this.controller.previewCreditDisposition(input);
+      case 'credit_disposition_apply': return this.controller.applyCreditDisposition(input);
       case 'request_lookup': return this.requestLookup(args);
       default: need(false, 'ACCOUNTING_RECEIVABLES_OPERATION', 'Choose an original receivables operation.');
     }
@@ -283,6 +301,8 @@ export class MerchantReceivables {
         'Select a returned transaction only when reading its native proof.');
       return this.controller.paymentRequestFile(args.paymentRequestId, name);
     }
+    if (args.kind === 'receivables-refund')
+      return this.controller.refundFile(args.refundId, args.file);
     if (args.kind === 'receivables-customer') {
       const result = await this.controller.exportCustomer(args.customerId, {asOf: args.asOf});
       if (args.file === 'account.tar') return {name: args.customerId + '-' + result.value.asOf + '-account.tar',

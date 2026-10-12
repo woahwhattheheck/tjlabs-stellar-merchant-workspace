@@ -25,6 +25,7 @@ import {inspectRuntimeFiles, reviewRuntime, exportRuntimeHandoff, importRuntimeH
 import {openCaseCommercial,commercialWorkspaceId} from './case-commercial.mjs';
 import {openCaseServiceAdjustments} from './case-service-adjustments.mjs';
 import {openServiceConnections} from './service-connections.mjs';
+import {openCaseServiceRenewals} from './case-service-renewals.mjs';
 import {openCommercialReceivingController} from './commercial/operator.mjs';
 import {openCommercialTariffController} from './commercial/tariff-controller.mjs';
 
@@ -66,6 +67,11 @@ const ASSETS = Object.freeze({
   '/handoff-desk.mjs': ['handoff-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.mjs': ['incident-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.css': ['incident-desk.css', 'text/css; charset=utf-8'],
+  '/renewals': ['renewals.html', 'text/html; charset=utf-8'],
+  '/renewals.mjs': ['renewals.mjs', 'text/javascript; charset=utf-8'],
+  '/renewals.css': ['renewals.css', 'text/css; charset=utf-8'],
+  '/SERVICE_RENEWALS.md': ['SERVICE_RENEWALS.md', 'text/markdown; charset=utf-8'],
+  '/service-renewals.mjs': ['service-renewals.mjs', 'text/javascript; charset=utf-8'],
   '/service-commitments.mjs': ['service-commitments.mjs', 'text/javascript; charset=utf-8'],
   '/service-desk.mjs': ['service-desk.mjs', 'text/javascript; charset=utf-8'],
   '/service-desk.css': ['service-desk.css', 'text/css; charset=utf-8'],
@@ -144,7 +150,7 @@ function compareUploadedSources(input) {
 export {workorderFromSources} from './workorder-source.mjs';
 
 // Injection is only for the focused loopback HTTP-contract check, not for deployed usage.
-export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, launchRecord = () => null} = {}) {
+export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, launchRecord = () => null} = {}) {
   let active = false;
   const sourceRoutes=sourceDelivery?createSourceEditionDeliveryRoutes({service:sourceDelivery.service}):null;
   const packageRoutes=createCasePackageHttp(casePackages);
@@ -160,7 +166,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
     }
     const route = (req.url || '').split('?')[0];
     if (req.method === 'GET' && route === '/health') {
-      json(res, 200, {status: 'LOCAL_READY', originalIntake: 'SF70', providerCallsOnPageLoad: 0, paidCalls: 0, casesEnabled:Boolean(caseStore),commercialEnabled:Boolean(commercialDesk),commercialReceivingEnabled:Boolean(commercialReceivingDesk),commercialTariffEnabled:Boolean(commercialTariffDesk),adjustmentsEnabled:Boolean(adjustmentDesk),handoffsEnabled:Boolean(handoffDesk),incidentsEnabled:Boolean(incidentDesk),sourceBundlesEnabled:Boolean(sourceDelivery),casePackagesEnabled:Boolean(casePackages)}); return;
+      json(res, 200, {status: 'LOCAL_READY', originalIntake: 'SF70', providerCallsOnPageLoad: 0, paidCalls: 0, casesEnabled:Boolean(caseStore),commercialEnabled:Boolean(commercialDesk),renewalsEnabled:Boolean(renewalDesk),commercialReceivingEnabled:Boolean(commercialReceivingDesk),commercialTariffEnabled:Boolean(commercialTariffDesk),adjustmentsEnabled:Boolean(adjustmentDesk),handoffsEnabled:Boolean(handoffDesk),incidentsEnabled:Boolean(incidentDesk),sourceBundlesEnabled:Boolean(sourceDelivery),casePackagesEnabled:Boolean(casePackages)}); return;
     }
     if (route === '/api/support-launch') {
       if (req.method !== 'GET') {json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
@@ -181,6 +187,30 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
       return;
     }
     if (await packageRoutes(req,res,{origin:ownOrigin}))return;
+    if (route === '/api/services/renewals') {
+      if(req.method!=='GET'){json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
+      if((req.headers.origin&&req.headers.origin!==ownOrigin)||
+        (req.headers['sec-fetch-site']&&!['same-origin','none'].includes(req.headers['sec-fetch-site']))){
+        json(res,403,{error:'ORIGIN_MISMATCH'});return;
+      }
+      if(!renewalDesk){json(res,503,{error:'SERVICE_RENEWALS_DISABLED',detail:'Open the merchant workspace with its saved-case directory.'});return;}
+      try{
+        const query=new URL(req.url,ownOrigin).searchParams,allowed=['asOf','through','noticeDays','includeClosed','q','offset','limit'];
+        if([...query.keys()].some(key=>!allowed.includes(key)||query.getAll(key).length!==1))
+          throw new TypeError('Choose one value for each renewal portfolio filter.');
+        const args=Object.fromEntries(query);
+        for(const key of ['noticeDays','offset','limit'])if(Object.hasOwn(args,key)){
+          if(!/^\d+$/.test(args[key]))throw new TypeError('Use whole numbers for renewal portfolio pages and notice days.');
+          args[key]=Number(args[key]);
+        }
+        if(Object.hasOwn(args,'includeClosed')){
+          if(!['true','false'].includes(args.includeClosed))throw new TypeError('Choose true or false for closed renewals.');
+          args.includeClosed=args.includeClosed==='true';
+        }
+        json(res,200,await renewalDesk.queue(args));
+      }catch(error){json(res,Number(error.status)||422,{error:error.code??'SERVICE_RENEWAL_QUERY_INVALID',detail:String(error.message).slice(0,240)});}
+      return;
+    }
     if (route === '/api/services/incident-snapshot') {
       if (req.method!=='GET') {json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
       if ((req.headers.origin&&req.headers.origin!==ownOrigin)||
@@ -440,6 +470,24 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
           }
           json(res,200,result);return;
         }
+        const renewal=/^\/api\/cases\/([a-f0-9-]+)\/renewals(?:\/(preview|propose|decide|handover))?$/.exec(route);
+        if(renewal){
+          if(!renewalDesk){json(res,503,{error:'SERVICE_RENEWALS_DISABLED',detail:'Open the merchant workspace with its saved-case directory.'});return;}
+          const action=renewal[2];
+          if(req.method==='GET'&&(!action||action==='handover')){
+            const allowed=action?['revision','renewalId']:['revision'];
+            if([...url.searchParams.keys()].some(key=>!allowed.includes(key)||url.searchParams.getAll(key).length!==1))
+              throw new TypeError('Choose one saved case revision and renewal.');
+            const args={id:renewal[1],...Object.fromEntries(url.searchParams)};
+            json(res,200,await renewalDesk[action??'read'](args));return;
+          }
+          if(req.method!=='POST'||!['preview','propose','decide'].includes(action)){json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
+          if(url.search)throw new TypeError('Unexpected renewal request query.');
+          const input=await boundedBody(req,131072);
+          if(!input||typeof input!=='object'||Array.isArray(input)||Object.hasOwn(input,'id'))
+            throw new TypeError('Supply the renewal request for the selected saved case.');
+          json(res,200,await renewalDesk[action]({id:renewal[1],...input}));return;
+        }
         const implementation=/^\/api\/cases\/([a-f0-9-]+)\/implementation(?:\/(prepare))?$/.exec(route);
         if(implementation) {
           if(req.method==='GET'&&!implementation[2]) {
@@ -597,6 +645,7 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
   if((accountingConfig!==null||buyerExpenseConnection!==null)&&casesDir===null)throw new TypeError('Service connections require the original saved-case directory.');
   const caseStore = casesDir === null ? null : await openCaseStore(casesDir);
   const commercialDesk=caseStore?openCaseCommercial({store:caseStore,workspaceId:commercialWorkspaceId(resolve(casesDir))}):null;
+  const renewalDesk=caseStore?openCaseServiceRenewals({caseStore,commercialDesk,workspaceId:commercialWorkspaceId(resolve(casesDir))}):null;
   const commercialReceivingDesk=caseStore?openCommercialReceivingController({store:caseStore,casesDirectory:resolve(casesDir),environment}):null;
   const commercialTariffDesk=caseStore?openCommercialTariffController({store:caseStore,casesDirectory:resolve(casesDir)}):null;
   const handoffDesk = handoffSources === null ? null : await (await import('./handoff-store.mjs')).openHandoffDesk({configPath:handoffSources,casesDir,environment});
@@ -629,7 +678,7 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
     }
   } catch(error) {await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   let server;
-  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,launchRecord:()=>launch});}
+  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,launchRecord:()=>launch});}
   catch(error){await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   try {await new Promise((resolveListen, reject) => {
     server.once('error', reject);server.listen(port, '127.0.0.1', resolveListen);

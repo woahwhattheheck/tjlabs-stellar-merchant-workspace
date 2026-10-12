@@ -144,3 +144,26 @@ Reviewed October 12, 2026:
 - [Budget and deliverable guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines).
 - [Official rules for submissions](https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions).
 - [SCF #46 round](https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg), listing the November 8, 2026 full Build deadline and the interest-to-invitation route.
+
+## Continue the original browser receiving with its existing Page
+
+The installed receiving operator can import `receiveGrantPlanning` from `GRANT_PLANNING_RECEIVING.mjs` alongside the existing grant receiving callback. Pass the original Playwright Page while it is on the installed `/grant.html` reader, the exact original planning file and its SHA-256, the selected source commit, and a private output directory:
+
+```js
+import {receiveGrantPlanning} from './GRANT_PLANNING_RECEIVING.mjs';
+
+const result = await receiveGrantPlanning(page, {
+  expectedOrigin: existingGrantOrigin,
+  planningFile: originalPlanningZip,
+  planningSha256: originalPlanningSha256,
+  outputDirectory: privatePlanningDeliveryDirectory,
+  sourceCommit: installedSourceCommit,
+  title: 'SCF native plan — $38,000 / 400 hours',
+});
+```
+
+Use the original `SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012` receiving context. The callback checks that the existing listener serves the complete selected local editor source, receives the actual native plan through the editor, selects its saved revisions, prepares and applies the full Delivery preview, saves it in the original browser store, and exports the useful complete draft and roadmap before continuing.
+
+`SCF_Native_Plan_Submission.json` opens directly with **Open draft file**. `SCF_Native_Plan_Delivery.md` contains the complete native budget and roadmap text. The callback then reopens that exact draft, restores its preceding manuscript version while retaining the original plan bytes, and reopens the saved planning selection through the original IndexedDB store. It retains each actual browser export and restores the original reader view. An interrupted continuation retains all files it already produced and returns their paths with the actual editor state.
+
+The original saved five-revision case used for this delivery is `plan-93b727c8a44346bab4f923e60481e020`. Its complete planning ZIP is 96,869 bytes with SHA-256 `2fcc813903a1fbd66532c0a3a17ed07d250f04d3e856f8a4c5dc84309a10e086`. It is the `planning.zip` member of the retained original `SCF_Operating_Case_with_Freeform_Event_Timing_20261012.zip` (647,130 bytes; SHA-256 `c71303844660d5a859d3936a569b5461c7b1679b739dfead95d907759693df2b`). Other actual saved native plans use their own selected file identities.
