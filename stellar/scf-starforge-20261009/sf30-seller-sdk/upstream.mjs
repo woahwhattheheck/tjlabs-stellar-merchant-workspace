@@ -279,7 +279,45 @@ export function createUpstreamHandlers(config,{allowLoopback=false,env=process.e
     if (!tlsProfiles.has(key)) tlsProfiles.set(key,(deferCredentials ? deferUpstreamTls : loadUpstreamTls)(binding.tls,{env,origin:binding.origin}));
   }
   const transports = createUpstreamTransports(compiled,{env});
-  let supplierQuotas;
+  let supplierQuotas, closing, startupCleanup, transportsDestroyed = false;
+  let closeOptions, closeSelected = false;
+  const retired = new Map();
+  function closeHandlers(options) {
+    if (closing) return closing;
+    if (!closeSelected) { closeOptions = options; closeSelected = true; }
+    closing = (async () => {
+      // Original buffered requests and streams finish before their credential,
+      // cache and durable operation owners. Keep all failed owners for retry.
+      await transports.drain();
+      const failures = [];
+      const drain = async (controls, options) => Promise.all(controls.map(async control => {
+        if (retired.has(control)) return retired.get(control);
+        try {
+          const result = await control.close(options);
+          retired.set(control, result);
+          return result;
+        } catch (error) { failures.push(error); return undefined; }
+      }));
+      const caches = [...new Set(Object.values(handlers).map(handler => handler.cache).filter(Boolean))];
+      const cacheResults = await drain(caches, closeOptions);
+      // Cached source continuations still use credentials and quota state.
+      // A failed cache drain preserves that entire dependency chain for retry.
+      if (failures.length === 1) throw failures[0];
+      if (failures.length > 1) throw new AggregateError(failures, 'Original upstream caches did not all close',
+        { cause: failures[0] });
+      await drain([...new Set(providers.values())]);
+      await drain([...new Set(Object.values(handlers).map(handler => handler.idempotency).filter(Boolean))]);
+      if (supplierQuotas) await drain([supplierQuotas]);
+      if (startupCleanup) await drain([startupCleanup]);
+      if (failures.length === 1) throw failures[0];
+      if (failures.length > 1) throw new AggregateError(failures, 'Original upstream resources did not all close',
+        { cause: failures[0] });
+      // A failed durable close must not discard its original transport owner.
+      if (!transportsDestroyed) { transports.destroy(); transportsDestroyed = true; }
+      return cacheResults;
+    })().catch(error => { closing = null; throw error; });
+    return closing;
+  }
   try {
   supplierQuotas = createSupplierQuotaRegistry(config);
   for (const [name,binding] of Object.entries(compiled)) {
@@ -327,36 +365,14 @@ export function createUpstreamHandlers(config,{allowLoopback=false,env=process.e
     if (binding.idempotency) handlers[binding.idempotency.admission] = handlers[name].admit;
   }
   } catch(error) {
-    transports.destroy();
-    const cleanup = new Set([...providers.values(),...Object.values(handlers).flatMap(handler => [handler.cache,handler.idempotency])].filter(Boolean));
-    for (const control of cleanup) Promise.resolve().then(() => control.close()).catch(() => {});
-    Promise.resolve().then(() => supplierQuotas?.close()).catch(() => {});
+    if (typeof error.close === 'function' && error.close !== closeHandlers)
+      startupCleanup = {close:error.close.bind(error)};
+    error.close = closeHandlers;
+    closeHandlers().catch(cleanupError => { error.cleanupError = cleanupError; });
     throw error;
   }
-  let closing;
   handlerSupplierQuotas.set(handlers,supplierQuotas);
-  handlerRuntimes.set(handlers,options => closing ??= (async () => {
-    // Retain original buffered requests and streams through their completion;
-    // the original OAuth provider then persists any in-flight rotating grant.
-    await transports.drain();
-    try {
-    const failures = [];
-    const drain = async operations => {
-      const results = await Promise.allSettled(operations.map(operation => Promise.resolve().then(operation)));
-      for (const result of results) if (result.status === 'rejected') failures.push(result.reason);
-      return results.map(result => result.status === 'fulfilled' ? result.value : undefined);
-    };
-    const cacheControls = new Set(Object.values(handlers).map(handler => handler.cache).filter(Boolean));
-    const cacheResults = await drain([...cacheControls].map(control => () => control.close(options)));
-    await drain([...providers.values()].map(provider => () => provider.close()));
-    const idempotencyControls = new Set(Object.values(handlers).map(handler => handler.idempotency).filter(Boolean));
-    await drain([...idempotencyControls].map(control => () => control.close()));
-    await drain([() => supplierQuotas.close()]);
-    if (failures.length === 1) throw failures[0];
-    if (failures.length > 1) throw new AggregateError(failures, 'Original upstream resources did not all close');
-    return cacheResults;
-    } finally { transports.destroy(); }
-  })());
+  handlerRuntimes.set(handlers,closeHandlers);
   return Object.freeze(handlers);
 }
 
@@ -374,6 +390,7 @@ export function createUpstreamApplication(config,bindings,options={}) {
   const compiled = compileUpstreamBindings(bindings,options);
   validateUpstreamService(config,compiled);
   const originals = createUpstreamHandlers(bindings,options), handlers = {...originals};
+  try {
   const supplierQuotas = handlerSupplierQuotas.get(originals);
   const operationControl = createUpstreamOperationControl(compiled,originals,{
     closeHandlers:closeOptions => closeUpstreamHandlers(originals,closeOptions)});
@@ -407,4 +424,10 @@ export function createUpstreamApplication(config,bindings,options={}) {
       retention:supplierQuotas.names.length ? 'Availability uses process memory; supplier quotas retain the original account ledger across restarts' : 'Process memory; restart resets availability and counters',
       requests:'No automatic probes or retries; each backend call uses the original handler'},
   })};
+  } catch (error) {
+    const close = () => closeUpstreamHandlers(originals);
+    error.close = close;
+    close().catch(cleanupError => { error.cleanupError = cleanupError; });
+    throw error;
+  }
 }
