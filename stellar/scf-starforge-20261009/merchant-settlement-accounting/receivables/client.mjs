@@ -65,6 +65,16 @@ export class ReceivablesClient {
     return payload;
   }
   state(query) { return this.request('/state' + queryString(query)); }
+  collectionCases(query, {signal} = {}) { return this.request('/collections' + queryString(query), {signal}); }
+  collectionCase(id, query, {signal} = {}) { return this.request('/collections/' + segment(id) + queryString(query), {signal}); }
+  saveCollectionCase(value, {signal} = {}) { return this.request('/collections', {method:'POST', body:value, signal}); }
+  recordCollectionActivity(id, value, {signal} = {}) { return this.request('/collections/' + segment(id) + '/activities', {method:'POST', body:value, signal}); }
+  closeCollectionCase(id, value, {signal} = {}) { return this.request('/collections/' + segment(id) + '/close', {method:'POST', body:value, signal}); }
+  reopenCollectionCase(id, value, {signal} = {}) { return this.request('/collections/' + segment(id) + '/reopen', {method:'POST', body:value, signal}); }
+  collectionReminder(id, query, {signal} = {}) { return this.request('/collections/' + segment(id) + '/reminder' + queryString(query), {signal}); }
+  collectionFile(id, name, query, {signal} = {}) { return this.request('/collections/' + segment(id) + '/files/' + segment(name) + queryString(query), {binary:true, signal}); }
+  collectionsFile(name, query, {signal} = {}) { return this.request('/collections/export' + queryString({...query,name}), {binary:true, signal}); }
+  collectionOperation(requestId, {signal} = {}) { return this.request('/collections/operations/' + segment(requestId), {signal}); }
   settings(value) { return this.request('/settings', {method: 'POST', body: value}); }
   saveDraft(value) { return this.request('/invoices', {method: 'POST', body: value}); }
   importQuote(value) { return this.request('/import-quote', {method: 'POST', body: value}); }

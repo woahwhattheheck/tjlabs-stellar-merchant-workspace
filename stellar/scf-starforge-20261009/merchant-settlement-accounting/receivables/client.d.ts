@@ -22,6 +22,12 @@ export type {
   CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
 } from './refund-client-types.d.ts';
 
+import type {CollectionsQuery, CollectionsReport, CollectionDetail, SaveCollectionCase, CollectionActivityInput,
+  CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
+export type {CollectionPriority, CollectionStatus, CollectionActivityKind, CollectionTerms, CollectionEvent, CollectionRecord,
+  CollectionSummary, CollectionsQuery, CollectionsReport, CollectionDetail, CollectionContext, SaveCollectionCase, CollectionActivityInput,
+  CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
+
 export type Money = string;
 export type DateOnly = string;
 export type Revision = number;
@@ -274,6 +280,16 @@ export class ReceivablesApiError extends Error {
 export class ReceivablesClient {
   constructor(options?: ClientOptions);
   state(query?: {asOf?: DateOnly}): Promise<ReceivablesState>;
+  collectionCases(query?: CollectionsQuery, options?: RequestOptions): Promise<CollectionsReport>;
+  collectionCase(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionDetail>;
+  saveCollectionCase(value:SaveCollectionCase, options?:RequestOptions):Promise<CollectionMutationResult>;
+  recordCollectionActivity(id:string, value:CollectionActivityInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  closeCollectionCase(id:string, value:CollectionTransitionInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  reopenCollectionCase(id:string, value:CollectionTransitionInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  collectionReminder(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionReminder>;
+  collectionFile(id:string, name:CollectionFileName, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<Response>;
+  collectionsFile(name:'collections.json'|'collections.csv', query?:CollectionsQuery, options?:RequestOptions):Promise<Response>;
+  collectionOperation(requestId:string, options?:RequestOptions):Promise<CollectionOperationResult>;
   settings(value: Issuer & MutationContext): Promise<MutationResult & {issuer: Issuer}>;
   saveDraft(value: SaveDraft): Promise<MutationResult & {invoice: InvoiceSummary}>;
   importQuote(value: QuoteImportInput): Promise<MutationResult & {invoice: InvoiceSummary}>;
