@@ -1,17 +1,33 @@
 {
   "schema": "stellar-forge.open311-source-adoption.v1",
   "source_repository": "woahwhattheheck/public-commons-sprint-2026",
-  "source_commit": "e77d54da79135a2fe6870ba657ca3a2a9cb429fb",
-  "source_pull_request": 2330,
+  "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+  "source_pull_request": 2356,
   "target_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "target_base_commit": "be13c29b47d29be369574cd14ccaca11955aa7ab",
-  "selection": "open311-operations",
+  "target_base_commit": "7af3ac3a857ae9acfdd18ce36696dd19e5b7c04a",
+  "selection": "open311-reporting",
   "source_files": [
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/open311-operations.json",
       "bytes": 1473,
       "git_blob": "c691e5e5d2ce2e2fb2cbe90ea7b787f7639cec91",
       "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/open311-reporting.json",
+      "bytes": 1287,
+      "git_blob": "91b40cc48aa908017a6fe630f67fe0b39ce3c963",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/open311-reporting.json",
+      "bytes": 5255,
+      "git_blob": "b199cac2fe843a551a2bfb2d4a16ba311464ccb0",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/application-provider.mjs",
@@ -175,11 +191,11 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/MCP.md",
-      "bytes": 17445,
-      "git_blob": "27f33b7faaa9952091f25de97fb95e14e0d30f0f",
+      "bytes": 25863,
+      "git_blob": "c37df53d5c22be3ad335466083ccef7512d1a638",
       "mode": "100644",
-      "source_commit": "b41f9255ab8d47fd874556995845a75bf3ee934a",
-      "source_pull_request": 2332
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp.mjs",
@@ -204,6 +220,134 @@
       "mode": "100644",
       "source_commit": "e77d54da79135a2fe6870ba657ca3a2a9cb429fb",
       "source_pull_request": 2330
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/app.mjs",
+      "bytes": 81167,
+      "git_blob": "be4ef6b1ee996be9d994b8b40b10f16a759413a1",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/application-provider.mjs",
+      "bytes": 7192,
+      "git_blob": "115cee519b32c9ab3d495a5fc12cb40f273f83f8",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/browser-assets.json",
+      "bytes": 501,
+      "git_blob": "39f7cb974e0a9d005bb935f25aa821403fc5a04c",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/calendar.mjs",
+      "bytes": 10153,
+      "git_blob": "86e6c21134261bd749a6ee25d229ec81b9751d9c",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/cli.mjs",
+      "bytes": 5130,
+      "git_blob": "e23d2e3a817f6ccf7cf8b1c7fd0fa352e169ae48",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/domain.mjs",
+      "bytes": 35156,
+      "git_blob": "89ca38686fc3baf72b84955a1de4bb8966f107d3",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/examples/weekday-review-profile.json",
+      "bytes": 2127,
+      "git_blob": "189b2e7aacaf7bba6963cfe53813e6dac60edc89",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/index.html",
+      "bytes": 26774,
+      "git_blob": "9aa7e239a505783ee38cfca69015cd828c9da321",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/index.mjs",
+      "bytes": 615,
+      "git_blob": "dd8a5b79d046391e5ad9649885d5d1896631b2f9",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/INSTALL.md",
+      "bytes": 13886,
+      "git_blob": "a488d1086f62bb86fc76ef48ef120a6b917e6a20",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/README.md",
+      "bytes": 5740,
+      "git_blob": "b28b18107c73317db534b9683cf0f913ddb3a07e",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/render.mjs",
+      "bytes": 13377,
+      "git_blob": "1b6d8e0349ce95866b247c967e1b46296a8af9ec",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/server.mjs",
+      "bytes": 8207,
+      "git_blob": "aa8794d2751381c88b4f9e2ef851dfe24ce9736d",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/SOURCE_CONTRACT.md",
+      "bytes": 10386,
+      "git_blob": "c007d9b405d9ec311b82e11caefc39e21ac112ef",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/styles.css",
+      "bytes": 11018,
+      "git_blob": "52b8c8bb6709688fed715422d158c323e986b81e",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/workspace.mjs",
+      "bytes": 21440,
+      "git_blob": "f9d89f300fac1a641d7c689d63b2ca23e5e638b2",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/server.d.mts",
@@ -300,7 +444,13 @@
     "command": "open311",
     "application": "open311-operations",
     "merchant_provider": "open311-workspaces",
-    "merchant_configuration": "open311Workspaces"
+    "merchant_configuration": "open311Workspaces",
+    "reporting": {
+      "command": "open311-reporting",
+      "application": "open311-reporting",
+      "selection": "open311-reporting",
+      "workspace_database": "open311-reporting.sqlite"
+    }
   },
   "initial_source": {
     "commit": "c768223233102a0bff4daa278ddbbfbb5b226f1f",
@@ -308,10 +458,10 @@
   },
   "shared_contracts_observed_at": "faa3cf93020be2514b376f6a4d9c5c8a93bfda10",
   "previous_adoption": {
-    "source_commit": "3b3d24a2bcb0cc809a8f6cba3426c31363f4d5cf",
-    "source_pull_request": 2285,
-    "target_pull_request": 231,
-    "target_merge_commit": "7ca1a2715986c95c8282c20ec737d44faf72c998"
+    "source_commit": "e77d54da79135a2fe6870ba657ca3a2a9cb429fb",
+    "source_pull_request": 2330,
+    "target_pull_request": 230,
+    "target_merge_commit": "4407f0d590e39445f403f55dfe6d48b087d610d6"
   },
   "source_updates": [
     {
@@ -368,6 +518,34 @@
         "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/style.css",
         "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/WORKSPACE.md"
       ]
+    },
+    {
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356,
+      "paths": [
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/INSTALL.md",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/README.md",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/SOURCE_CONTRACT.md",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/app.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/application-provider.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/browser-assets.json",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/calendar.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/cli.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/domain.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/index.html",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/index.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/render.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/server.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/styles.css",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/workspace.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/reporting/examples/weekday-review-profile.json",
+        "operations/open311-service-reporting-8e5f-20261012/browser-journey.mjs",
+        "operations/open311-service-reporting-8e5f-20261012/reporting-operation.json",
+        "operations/open311-service-reporting-8e5f-20261012/run-reporting.mjs",
+        "stellar/scf-starforge-20261009/distribution/contributions/open311-reporting.json",
+        "stellar/scf-starforge-20261009/distribution/selections/open311-reporting.json",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/MCP.md"
+      ]
     }
   ],
   "previous_adoptions": [
@@ -388,6 +566,43 @@
       "source_pull_request": 2285,
       "target_pull_request": 231,
       "target_merge_commit": "7ca1a2715986c95c8282c20ec737d44faf72c998"
+    },
+    {
+      "source_commit": "e77d54da79135a2fe6870ba657ca3a2a9cb429fb",
+      "source_pull_request": 2330,
+      "target_pull_request": 230,
+      "target_merge_commit": "4407f0d590e39445f403f55dfe6d48b087d610d6"
     }
-  ]
+  ],
+  "selections": [
+    "open311-operations",
+    "open311-reporting"
+  ],
+  "source_operations": [
+    {
+      "path": "operations/open311-service-reporting-8e5f-20261012/browser-journey.mjs",
+      "bytes": 16423,
+      "git_blob": "026298afdebf630136b8b31256ff80daa4cc221e",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "operations/open311-service-reporting-8e5f-20261012/reporting-operation.json",
+      "bytes": 307544,
+      "git_blob": "ad144b85dea6ea17625ad297114cace1124e8cf3",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    },
+    {
+      "path": "operations/open311-service-reporting-8e5f-20261012/run-reporting.mjs",
+      "bytes": 21641,
+      "git_blob": "809c43f1427bb81fbe440423b9a5747f138e60fb",
+      "mode": "100644",
+      "source_commit": "ea45155773f60cdccb7e0efcfc12f70de2fb4528",
+      "source_pull_request": 2356
+    }
+  ],
+  "source_merge_commit": "7b775d5dd5fbeaae7844198df3fe212dc1f1d87b"
 }
