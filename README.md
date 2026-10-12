@@ -42,6 +42,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, customer work, original buyer and support observations, cohort review, tranche completion and complete workspace receiving |
+| Operate a QuestDB time-series data product | **Applications → QuestDB source and dataset publishers** or `starforge questdb-workspace` | Native fixed-window, SAMPLE BY and keyed-ASOF reports, complete retained editions, versioned publication and full customer receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 | Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
@@ -139,6 +140,12 @@ attachments, exact mapping and transactional Rails editions. Its [installation
 and receiving guide](products/baserow-rails/RECEIVING.md) carries the complete original
 client and configured operator through independent application receiving.
 Build that product with `--selection baserow-rails`.
+
+The [QuestDB operating guide](products/questdb/OPERATING.md) connects native
+time-series discovery and report authoring to complete capture receiving,
+versioned publication and installed Applications. Build its committed source
+selection with `--selection questdb`; the package keeps the original native
+merchant, buyer, installer and release workflow.
 
 ## Open the source product
 
@@ -298,6 +305,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [QuestDB reports, retained editions, publication and customer receiving](products/questdb/OPERATING.md)
 
 - [Coastal source review, complete workbooks and customer receiving](products/coops/OPERATING.md)
 - [WebDAV source, merchant operator and complete receiving](products/webdav/OPERATING.md)
