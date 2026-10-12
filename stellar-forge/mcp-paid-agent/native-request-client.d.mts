@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type {
   BazaarDiscoveryClient, CallOptions, DiscoveryClientOptions, DiscoveryPage,
-  HttpQuery, NativeRecord, PaymentOption,
+  HttpPath, HttpQuery, NativeRecord, PaymentOption,
 } from './discovery-client.mjs';
 import type { Buffer } from 'node:buffer';
 
@@ -27,6 +27,8 @@ export interface NativeWorkspaceDescription {
   route: {
     origin: string;
     pathname: string;
+    /** Trusted host template; every prepared request still has one concrete original URL. */
+    routeTemplate?: string;
     method: string;
     contentType: string | null;
   };
@@ -91,6 +93,14 @@ export interface NativeIntent extends NativeRecord {
   /** Original child status, when execution returned one. */
   execution?: 'OPERATOR_BUSY' | NativeRecord;
 }
+export interface NativeRequestInput {
+  /** Explicit raw strings for the selected advertisement's path parameters. */
+  path?: HttpPath;
+  /** Explicit strings or string arrays under the advertised HTTP query schema. */
+  query?: HttpQuery;
+  /** Exact UTF-8 request text for the configured body-bearing route. */
+  body?: string;
+}
 export interface PrepareNativeRequest {
   /** Stable 1–128 character ID: letters, digits, period, underscore, colon or hyphen. */
   intentId: string;
@@ -100,12 +110,7 @@ export interface PrepareNativeRequest {
   acceptIndex?: number;
   /** Positive integer in the selected asset's atomic units, within operator limits. */
   maxAtomic: string;
-  input: {
-    /** Explicit strings or string arrays under the advertised HTTP query schema. */
-    query?: HttpQuery;
-    /** Exact UTF-8 request text for the configured body-bearing route. */
-    body?: string;
-  };
+  input: NativeRequestInput;
 }
 export interface NativePreparation {
   /** The current complete discovery source, or the original legacy source URL. */
