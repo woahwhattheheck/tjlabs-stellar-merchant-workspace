@@ -6,8 +6,8 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 
-const [sourceArgument, directoryArgument] = process.argv.slice(2);
-if (!sourceArgument || !directoryArgument) throw new Error("Use SOURCE_DIRECTORY ORIGINAL_OPERATION_DIRECTORY");
+const [sourceArgument, directoryArgument, expectedWorkspaceId] = process.argv.slice(2);
+if (!sourceArgument || !directoryArgument) throw new Error("Use SOURCE_DIRECTORY ORIGINAL_OPERATION_DIRECTORY [ORIGINAL_WORKSPACE_ID]");
 const source = resolve(sourceArgument), directory = resolve(directoryArgument);
 await fs.mkdir(directory, { recursive: true, mode: 0o700 });
 const moduleAt = name => import(pathToFileURL(join(source, name)).href);
@@ -27,7 +27,7 @@ async function retained(path, bytes) {
   return { path, bytes: data.length, sha256: digest(data) };
 }
 async function output(name, value) {
-  return retained(join(directory, name), JSON.stringify(value, null, 2) + "\n");
+  return retained(join(deliveryDirectory, name), JSON.stringify(value, null, 2) + "\n");
 }
 const pin = { schema: "commons.openlineage.service-level-operation.v1", operation,
   applicationVersion: APPLICATION_VERSION, files: [] };
@@ -36,15 +36,43 @@ for (const path of APPLICATION_FILES) {
   pin.files.push({ path, bytes: bytes.length, sha256: digest(bytes) });
 }
 assert.equal(APPLICATION_VERSION, 4); assert.equal(APPLICATION_FILES.length, 66);
-await output("source-pin.json", pin);
+const pinBytes = Buffer.from(JSON.stringify(pin, null, 2) + "\n");
+const pinHash = digest(pinBytes);
+const originalPinPath = join(directory, "source-pin.json");
+let originalPinBytes;
 try {
-  const prior = await fs.readFile(join(directory, "SERVICE_LEVELS_RESULT.json"), "utf8");
-  assert.equal(JSON.parse(prior).operation, operation); console.log(prior); process.exit(0);
+  originalPinBytes = await fs.readFile(originalPinPath);
+  const originalPin = JSON.parse(originalPinBytes);
+  assert.equal(originalPin.operation, operation, "Original operation source pin belongs to a different operation");
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+  await retained(originalPinPath, pinBytes); originalPinBytes = pinBytes;
+}
+const deliveryDirectory = join(directory, "deliveries", pinHash);
+await fs.mkdir(deliveryDirectory, { recursive: true, mode: 0o700 });
+await output("source-pin.json", pin);
+await output("source-transition.json", {
+  schema: "commons.openlineage.service-level-source-transition.v1", operation,
+  original: { path: originalPinPath, sha256: digest(originalPinBytes) },
+  current: { path: join(deliveryDirectory, "source-pin.json"), sha256: pinHash },
+  originalWorkspace: join(directory, "workspace")
+});
+try {
+  const prior = await fs.readFile(join(deliveryDirectory, "SERVICE_LEVELS_RESULT.json"), "utf8");
+  const result = JSON.parse(prior);
+  assert.equal(result.operation, operation); assert.deepEqual(result.sourcePin, pin);
+  if (expectedWorkspaceId) assert.equal(result.workspaceId, expectedWorkspaceId);
+  console.log(prior); process.exit(0);
 } catch (error) { if (error.code !== "ENOENT") throw error; }
 const workspacePath = join(directory, "workspace");
 const workspace = new LineageWorkspace(workspacePath);
+if (expectedWorkspaceId) {
+  const originalState = JSON.parse(await fs.readFile(join(workspacePath, "workspace.json"), "utf8"));
+  assert.equal(originalState.workspaceId, expectedWorkspaceId, "Continue the retained original workspace");
+}
 await workspace.initialize("Original OpenLineage service-level operating programme");
 const initial = await workspace.metadata();
+if (expectedWorkspaceId) assert.equal(initial.workspaceId, expectedWorkspaceId);
 const childBytes = await fs.readFile(join(source, "fixture-event-full.json"));
 const parentBytes = await fs.readFile(join(source, "fixture-event-simple.json"));
 const parent = JSON.parse(parentBytes), child = JSON.parse(childBytes);
@@ -110,7 +138,7 @@ try {
   assert.equal(historical.assessment.assessment.findings[0].kind, "completion-unobserved");
 
   // Run the new mutation through the actual borrowed Merchant host and original journal.
-  const configPath = join(directory, "merchant-connection.json");
+  const configPath = join(deliveryDirectory, "merchant-connection.json");
   await output("merchant-connection.json", { schema: "stellar-forge.openlineage-workspace-host.v1",
     workspaces: { service: { workspaceId: initial.workspaceId, connectionFile: join(workspacePath, "connection.json"), inputs: {} } } });
   const config = await readLineageWorkspaceConfiguration(configPath);
@@ -156,7 +184,7 @@ try {
   for (const format of ["json", "csv", "html"]) {
     const report = await client.serviceLevelReport({ format, assessmentId: latest.assessment.id });
     assert(report.text.includes(policyResult.policy.id));
-    reportFiles.push(await retained(join(directory, "service-levels-report." + format), report.text));
+    reportFiles.push(await retained(join(deliveryDirectory, "service-levels-report." + format), report.text));
   }
   const browserAssets = [];
   for (const [route, expected] of [
@@ -167,7 +195,7 @@ try {
     browserAssets.push({ route, bytes: bytes.length, sha256: digest(bytes) });
   }
   const exported = await client.exportWorkspace();
-  const packagePath = join(directory, "service-levels-workspace.json");
+  const packagePath = join(deliveryDirectory, "service-levels-workspace.json");
   await client.downloadExport(exported.id, packagePath);
   const packageBytes = await fs.readFile(packagePath), packageValue = JSON.parse(packageBytes);
   const checked = verifyBundle(packageBytes);
@@ -177,7 +205,7 @@ try {
   assert.equal(canonical(checked.state.serviceLevels), canonical((await workspace.read()).serviceLevels));
   await merchant.close(); merchant = null; await server.close(); server = null;
 
-  const receivingPath = join(directory, "received");
+  const receivingPath = join(deliveryDirectory, "received");
   let receipt;
   try { receipt = await receiveBundle(packageBytes, receivingPath); }
   catch (error) {
