@@ -174,6 +174,20 @@ separately, use the existing `exportAccountingStatement` helper to receive the
 original statement into a fresh private directory, then restore the exact original
 file bytes in the cycle's customer packet before repeating the cycle command.
 
+`cycle-observe` reads the current complete per-customer progress while an active
+close holds its writer lease. It uses the saved original request and manifest,
+reads each atomic customer state, and returns the current report without rewriting
+the register. Rows can advance while the report is being read. During initial
+preparation, the complete manifest appears after every selected review is saved.
+
+~~~sh
+starforge merchant-accounting-statements cycle-observe \
+  --dir /private/customer-closes/service-close
+~~~
+
+The operations entry also exports `observeAccountingStatementCycle({directory})`
+for browser progress and other consumers sharing that active cycle.
+
 `cycle-status` refreshes the local HTML/JSON register from saved customer progress
 without an MCP request:
 
@@ -194,7 +208,7 @@ starforge merchant-accounting-statements cycle-status \
 | REVIEW_REQUIRED | The current original draft differs from the saved complete review |
 
 Cycle execute/reconcile exits 0 for a complete cycle and 3 for an incomplete
-cycle. Preparation and local status exit 0 when their requested operation
+cycle. Preparation, observation and local status exit 0 when their requested operation
 completes. An operation error exits 2 and reports the original cycle directory.
 The complete register carries every row; command output keeps the outcome and
 rows with errors concise.

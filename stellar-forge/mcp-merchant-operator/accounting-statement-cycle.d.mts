@@ -51,3 +51,5 @@ export function prepareAccountingStatementCycle(options: StatementCyclePrepareOp
 export function runAccountingStatementCycle(options: StatementCycleRunOptions): Promise<StatementCycleReport>;
 /** Refresh the local HTML/JSON register from saved progress without contacting merchant MCP. */
 export function inspectAccountingStatementCycle(options: { directory: string }): Promise<StatementCycleReport>;
+/** Read complete per-customer states without a writer lease; rows may advance during observation. */
+export function observeAccountingStatementCycle(options: { directory: string }): Promise<StatementCycleReport>;

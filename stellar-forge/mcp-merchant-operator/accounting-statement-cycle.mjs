@@ -328,3 +328,11 @@ export async function inspectAccountingStatementCycle({directory}={}){
     return await publishRegister(directory,request,manifest,lease);
   }finally{await lease.close();}
 }
+
+/** Observe atomic customer progress during an active close without taking its writer lease. */
+export async function observeAccountingStatementCycle({directory}={}){
+  directory=await privateDirectory(directory);
+  const request=validateRequest((await saved(join(directory,'request.json'),REQUEST_LIMIT)).value);
+  const manifest=validateManifest((await saved(join(directory,'manifest.json'),REQUEST_LIMIT)).value,request);
+  return {directory,...await reportFor(directory,request,manifest)};
+}

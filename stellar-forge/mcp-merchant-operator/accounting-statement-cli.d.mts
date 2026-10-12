@@ -68,5 +68,5 @@ export type {
   StatementCycleDelivery, StatementCycleRow, StatementCycleReport, StatementCycleClient, StatementCyclePrepareOptions, StatementCycleRunOptions,
 } from './accounting-statement-cycle.mjs';
 export {
-  prepareAccountingStatementCycle, runAccountingStatementCycle, inspectAccountingStatementCycle,
+  prepareAccountingStatementCycle, runAccountingStatementCycle, inspectAccountingStatementCycle, observeAccountingStatementCycle,
 } from './accounting-statement-cycle.mjs';
