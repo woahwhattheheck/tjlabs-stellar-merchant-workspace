@@ -6,11 +6,7 @@ export default defineMerchantProvider({
   schema: MERCHANT_PROVIDER_SCHEMA, id: "fleet", family: "fleet",
   title: "fleet merchant", order: 110, catalogOrder: 50,
   configKey: "fleet", summary: true, dependencies: [],
-  requestClose: provider => {
-    provider.cancelStaging();
-    provider.cancelClientTransfers();
-    provider.cancelDeliveryOperations();
-  },
+  requestClose: provider => provider.cancelStaging(),
   maxRequestBytes: 131072,
   configuration: { input: "fleet", privateExports: false,
     read: async (value, { base, config, hostPath }) => await (await import("../config.mjs")).readFleetConfiguration(value, base, config.releaseStore) },

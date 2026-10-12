@@ -19,7 +19,6 @@ const STATIC=new Map([
   [PUBLIC,{file:'index.html',type:'text/html; charset=utf-8'}],
   [PUBLIC+'browser.mjs',{file:'browser.mjs',type:'text/javascript; charset=utf-8'}],
   [PUBLIC+'style.css',{file:'style.css',type:'text/css; charset=utf-8'}],
-  [PUBLIC+'editions.mjs',{file:'editions.mjs',type:'text/javascript; charset=utf-8'}],
   [PUBLIC+'collaboration.mjs',{file:'collaboration.mjs',type:'text/javascript; charset=utf-8'}],
   [PUBLIC+'draft-reconciliation.mjs',{file:'../draft-reconciliation.mjs',type:'text/javascript; charset=utf-8'}],
 ]);
@@ -173,8 +172,6 @@ export async function createCapturedHandoverWeb({directory}) {
             throw fail('CAPTURED_DESK_DOWNLOAD','Select this original product and complete archive byte count.',409);
           return streamArchive(req,res,await selectedArchive(params.id,params.sha256,Number(params.bytes)));
         }
-        if(path==='/edition')return send(res,200,await desk.editionComparison(params));
-        if(path==='/edition-file')return send(res,200,await desk.editionFile(params));
         if(path==='/inventory-page')return send(res,200,capturedHandoverInventoryPage(await desk.inventory(),params));
         if(path==='/draft-page') {
           const {id,revision,...view}=params;
@@ -209,11 +206,8 @@ export async function createCapturedHandoverWeb({directory}) {
           offset:Number(params.offset),bytes:value,sha256:params.sha256}));
       }
       const limit=path==='/draft/working-import'?8*MAX_BODY:
-        ['/draft/merge-review','/draft/merge-save','/draft/working-export','/draft/receiving-review','/draft/receiving-save'].includes(path)?4*MAX_BODY:MAX_BODY;
+        ['/draft/merge-review','/draft/merge-save','/draft/working-export'].includes(path)?4*MAX_BODY:MAX_BODY;
       const value=await body(req,{limit});
-      if(path==='/draft/receiving-review')return send(res,200,await desk.reviewReceivingDecision(value));
-      if(path==='/draft/receiving-save')return send(res,200,await desk.saveReceivingDecision(value));
-      if(path==='/edition-file/release')return send(res,200,await desk.releaseEditionFile(value));
       if(path==='/draft/create')return send(res,200,await desk.createDraft(value));
       if(path==='/draft/save')return send(res,200,await desk.saveDraft(value));
       if(path==='/draft/merge-review')return send(res,200,await desk.reviewDraftMerge(value));
@@ -253,7 +247,7 @@ export async function createCapturedHandoverWeb({directory}) {
   }
   async function close() {
     if(closing)return closing;
-    closing=(async()=>{await desk.close();downloads.clear();})().catch(error=>{closing=null;throw error;});
+    closing=(async()=>{await desk.close();downloads.clear();})();
     return closing;
   }
   return {navigation,servePublic,api,close};

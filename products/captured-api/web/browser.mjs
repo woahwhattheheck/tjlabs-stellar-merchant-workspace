@@ -1,6 +1,5 @@
 // MIT. Saved original handover drafts, complete transfer and receiving browser.
 import { createCapturedDraftCollaboration } from './collaboration.mjs';
-import { createCapturedHandoverEditions } from './editions.mjs';
 const $=id=>document.getElementById(id);
 const token=location.hash.slice(1),API='/api/captured-handover/';
 const UUID=()=>crypto.randomUUID(),HASH=/^[a-f0-9]{64}$/;
@@ -13,7 +12,7 @@ const make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==und
 const notice=(message,error=false)=>{$('notice').textContent=message;$('notice').classList.toggle('error',error);};
 let info,storagePrefix,tab,editor,form,job,inventory,upload,pollTimer,busy=false;
 let libraryKind='drafts',libraryOffset=0,inventoryOffset=0,documentView='summary',documentOffset=0;
-let libraryGeneration=0,documentGeneration=0,editorMode='WORKING',collaboration,editions;
+let libraryGeneration=0,documentGeneration=0,editorMode='WORKING',collaboration;
 const local=(key,value)=>{
   if(value===undefined) {const text=localStorage.getItem(storagePrefix+key);return text?JSON.parse(text):null;}
   try{localStorage.setItem(storagePrefix+key,JSON.stringify(value));}
@@ -137,8 +136,6 @@ async function replayPending(row) {
       }
     } else if(row.path==='draft/merge-save') {
       await collaboration.acceptSaved(result,request);
-    } else if(row.path==='draft/receiving-save') {
-      await editions.acceptSaved(result,request);
     } else if(row.path==='jobs/start'||row.path==='jobs/resume')await adoptJob(result);
     else if(row.path.startsWith('uploads/')){upload=result;renderUpload();}
     await refreshLibrary();notice('The original saved request has been continued.');
@@ -194,9 +191,9 @@ async function newDraft(kind,initial) {
 async function saveDraft() {
   if(!editor)throw new Error('Open a draft first.');
   if(editorMode==='HISTORY')throw new Error('Open the retained working form before saving an edit.');
-  if(pendingRows().some(row=>['draft/merge-save','draft/receiving-save'].includes(row.path)&&JSON.parse(row.bodyText).id===editor.id&&
+  if(pendingRows().some(row=>row.path==='draft/merge-save'&&JSON.parse(row.bodyText).id===editor.id&&
     (!row.error?.status||row.error.outcomeUnknown||!['CAPTURED_DESK_DRAFT_CHANGED','CAPTURED_DESK_REVIEW_CHANGED','CAPTURED_DESK_MERGE_CONFLICTS'].includes(row.error.code))))
-    throw new Error('Continue the retained original reviewed save before sending another draft edition.');
+    throw new Error('Continue the retained original reconciled save before sending another draft edition.');
   const originalForm=clone(form);
   const prior=pendingRows().filter(row=>row.path==='draft/save')
     .map(row=>JSON.parse(row.bodyText)).find(row=>row.id===editor.id&&row.expectedRevision===editor.revision);
@@ -228,7 +225,7 @@ async function showCurrentDraft() {
   $('draft-collaboration').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function updateForm(key,value) {
-  if(!form||editorMode==='HISTORY')return;form[key]=value;persistEditor();renderDraftMeta();editions?.formChanged();controls();
+  if(!form||editorMode==='HISTORY')return;form[key]=value;persistEditor();renderDraftMeta();controls();
 }
 function renderDraftMeta() {
   if(!editor)return;
@@ -264,7 +261,7 @@ function renderEditor() {
   }
   if(editor.kind==='OUTGOING')renderInventory();
   else {$('bundle-directory').value=form.bundle;$('bundle-sha').value=form.manifestSha256;renderMapping();}
-  renderDraftMeta();collaboration?.refresh();editions?.refresh();controls();
+  renderDraftMeta();collaboration?.refresh();controls();
 }
 async function loadInventory() {
   const original=await api('inventory');inventory=original;renderInventory();
@@ -339,7 +336,7 @@ function renderMapping() {
   for(const [name,targetName] of entries) {
     const tr=make('tr'),cell=make('td'),input=make('input');input.dataset.editField='true';input.value=targetName;input.maxLength=64;
     input.setAttribute('aria-label','Receiving name for '+name);
-    input.addEventListener('input',()=>{form.names[name]=input.value;persistEditor();renderDraftMeta();editions?.formChanged();controls();});
+    input.addEventListener('input',()=>{form.names[name]=input.value;persistEditor();renderDraftMeta();controls();});
     tr.append(make('td',name));cell.append(input);tr.append(cell);grid.body.append(tr);
   }
   target.append(grid.element);
@@ -357,7 +354,7 @@ async function runDraft(command) {
 }
 async function adoptJob(value) {
   clearTimeout(pollTimer);job=value;documentView='summary';documentOffset=0;setLocation();persistEditor();
-  renderJob();await editions?.observeJob(job);if(job.state==='COMPLETE')await loadDocument();else schedulePoll();
+  renderJob();if(job.state==='COMPLETE')await loadDocument();else schedulePoll();
 }
 async function openJob(id) {await adoptJob(await api('job?'+new URLSearchParams({id})));$('job-section').scrollIntoView({block:'start',behavior:'smooth'});}
 function schedulePoll() {
@@ -368,7 +365,7 @@ function schedulePoll() {
     try {
       const value=await api('job?'+new URLSearchParams({id:original}));
       if(job?.id!==original)return;
-      job=value;renderJob();await editions?.observeJob(job);
+      job=value;renderJob();
       if(job.state==='COMPLETE'){await loadDocument();await refreshLibrary();notice('The original '+job.command.toLowerCase()+' operation completed.');}
       else schedulePoll();
     } catch(error) {
@@ -388,7 +385,7 @@ function nativeLinks(value) {
 }
 function renderJob() {
   $('job-section').hidden=!job;if(!job)return;
-  $('job-heading').textContent=({PREPARE:'Prepare outgoing collection',COMPARE:'Compare installed and incoming editions',PUBLISH:'Published collection',
+  $('job-heading').textContent=({PREPARE:'Prepare outgoing collection',PUBLISH:'Published collection',
     IMPORT:'Inspect uploaded handover',INSPECT:'Inspect retained collection',REVIEW:'Receiving review',
     RECEIVE:'Receive complete collection',REOPEN:'Reopen received collection'})[job.command]??job.command;
   $('job-state').textContent=job.state;
@@ -404,14 +401,6 @@ function renderJob() {
   if(job.selected?.draftId)actions.append(button('Open selected saved draft',()=>openDraft(job.selected.draftId,job.selected.revision)));
   if(job.state==='COMPLETE') {
     const original=job;
-    if(job.command==='COMPARE') {
-      $('job-result').append(make('p',job.result.packages.length+' complete merchant comparisons are retained.'),
-        make('p','Comparison SHA-256 '+job.result.comparisonSha256,'small wrap'));
-      actions.append(button('Open incoming-edition comparison',async()=>{
-        await openDraft(original.selected.draftId,undefined,{historical:false});
-        await editions.observeJob(original);$('incoming-editions').scrollIntoView({block:'start',behavior:'smooth'});
-      }));
-    }
     if(job.command==='PREPARE')actions.append(button('Publish and create complete file',()=>startCommand('PUBLISH',{
       sourceJob:original.id,reviewSha256:original.result.reviewSha256})));
     if(job.command==='PUBLISH')actions.append(button('Download complete handover',()=>download(original.id)));
@@ -635,24 +624,15 @@ await act(async()=>{
   info=await api('info');storagePrefix='captured-handover:'+info.productId+':';
   tab=sessionStorage.getItem('captured-handover-tab');
   if(!tab){tab=UUID();sessionStorage.setItem('captured-handover-tab',tab);}
-  const onSaved=async(saved,{keepWorking=false,foreground=false}={})=>{
-    if(foreground||!editor||editor.id===saved.id&&editorMode==='WORKING') {
-      const preserved=keepWorking&&editor?.id===saved.id&&editorMode==='WORKING'?clone(form):undefined;
-      adoptEditor(saved,preserved);
-    }
-    await refreshLibrary();
-  };
   collaboration=createCapturedDraftCollaboration({
     root:$('draft-collaboration'),api,act,retain,local,forget,pendingRows,notice,controls,
-    context:()=>({info,tab,editor,form,editorMode,busy}),onSaved,
-  });
-  editions=createCapturedHandoverEditions({
-    root:$('incoming-editions'),api,act,retain,local,forget,pendingRows,notice,controls,onSaved,
-    context:()=>({info,tab,editor,form,editorMode,busy}),openJob,startCommand,refreshLibrary,
-    inventory:()=>inventory,loadInventory:async()=>{await loadInventory();editions.refresh();},
-    setName:(name,value)=>{
-      if(!form||editorMode==='HISTORY'||editor.kind!=='RECEIVING')return;
-      form.names={...form.names,[name]:value};persistEditor();renderDraftMeta();renderMapping();controls();
+    context:()=>({info,tab,editor,form,editorMode,busy}),
+    onSaved:async(saved,{keepWorking=false,foreground=false}={})=>{
+      if(foreground||!editor||editor.id===saved.id&&editorMode==='WORKING') {
+        const preserved=keepWorking&&editor?.id===saved.id&&editorMode==='WORKING'?clone(form):undefined;
+        adoptEditor(saved,preserved);
+      }
+      await refreshLibrary();
     },
   });
   $('product-label').textContent=info.product;$('product-directory').textContent=info.directory;

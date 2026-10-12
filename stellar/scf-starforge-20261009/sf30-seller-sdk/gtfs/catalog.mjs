@@ -10,8 +10,7 @@ const selected={workspace:alias};
 const paged={limit:{type:'integer',minimum:1,maximum:100},offset:revision};
 const read={readOnly:true,idempotent:true};
 const request={...selected,requestId:uuid,expectedRevision:revision};
-const kind={enum:['feed','feedSource','acquisition','edition','comparison','decision','release','archive']};
-const nullable=value=>({anyOf:[value,{type:'null'}]});
+const kind={enum:['feed','edition','comparison','decision','release','archive']};
 const list={type:'array',items:{type:'string'},uniqueItems:true,maxItems:10000};
 const authority=schema(Object.fromEntries(['sourceUrl','licenseUrl','licenseName','attribution','retrievedAt'].map(name=>
   [name,{type:'string',maxLength:4096}])));
@@ -33,25 +32,12 @@ export function gtfsWorkspaceTools(tool) {
     tool('merchant_gtfs_close','Drain this exact owned GTFS browser/model, original publisher/scheduler and file reads; release its original lease. Saved feeds, editions, decisions, archives and publication histories remain.',
       {...selected,instanceId:uuid},['workspace','instanceId'],{destructive:true}),
     tool('merchant_gtfs_status','Read current native revision, pending request and complete paginated source/edition/comparison/decision/release/export histories. The original publisher and scheduler retain their native IDs.',
-      {...selected,limit:paged.limit,...Object.fromEntries(['feedsOffset','feedSourcesOffset','acquisitionsOffset','editionsOffset','comparisonsOffset','decisionsOffset','releasesOffset','exportsOffset'].map(k=>[k,revision]))},['workspace'],read),
+      {...selected,limit:paged.limit,...Object.fromEntries(['feedsOffset','editionsOffset','comparisonsOffset','decisionsOffset','releasesOffset','exportsOffset'].map(k=>[k,revision]))},['workspace'],read),
     tool('merchant_gtfs_inputs','List declared original ZIP inputs, or inspect one exact complete file for byte count and SHA-256 before import.',
       {...selected,input:alias},['workspace'],read),
     tool('merchant_gtfs_import','Retain the exact host-declared complete ZIP and every original member. Bind expectedSha256 and expectedBytes to the same actual read. An identical saved request recovers before requiring the host file again.',
       {...request,input:alias,title:text,expectedSha256:hash,expectedBytes:{type:'integer',minimum:1,maximum:16777216}},
       ['workspace','requestId','expectedRevision','input','title','expectedSha256','expectedBytes'],{idempotent:true}),
-    action('source_save','Save or edit a public HTTPS agency feed source as a new immutable source version. A new source uses sourceId:null and expectedSourceSha256:null; an edit binds the exact currently displayed source hash. Acquisition remains an explicit saved operation.',
-      schema({sourceId:nullable(uuid),expectedSourceSha256:nullable(hash),source:schema({
-        title:text,url:{type:'string',minLength:1,maxLength:4096},note:{type:'string',maxLength:4000},
-        timeoutMs:{type:'integer',minimum:1000,maximum:180000}},['title','url'])},
-      ['sourceId','expectedSourceSha256','source'])),
-    tool('merchant_gtfs_source','Read one exact saved source configuration and its complete paginated immutable version history; choose versionId to inspect an earlier version.',
-      {...selected,id:uuid,versionId:uuid,...paged},['workspace','id'],read),
-    action('acquire','Acquire the complete public HTTPS response for this exact saved source. Bind the original previous acquisition/hash when refreshing; conditional:true uses its retained ETag or Last-Modified at the same final URL. A 304 or identical complete body retains the same inspected feed; changed bytes enter the original native GTFS inspector. Explicit same-request recovery retains every HTTP attempt and obeys provider Retry-After.',
-      schema({sourceId:uuid,sourceSha256:hash,previousAcquisitionId:nullable(uuid),
-        expectedPreviousSha256:nullable(hash),conditional:{type:'boolean'}},
-      ['sourceId','sourceSha256','previousAcquisitionId','expectedPreviousSha256','conditional'])),
-    tool('merchant_gtfs_acquisition','Read a retained acquisition, exact HTTP response and feed identity, or the original pending/failed request’s paginated HTTP attempts. Full headers, bounded provider error bytes and retained ZIPs remain available through its acquisition artifact manifest.',
-      {...selected,id:uuid,...paged},['workspace','id'],read),
     tool('merchant_gtfs_feed','Reopen the complete original feed inspection, table/member hashes, calendar bounds, agencies, routes and publication limits.',
       {...selected,id:uuid},['workspace','id'],read),
     tool('merchant_gtfs_source_rows','Search/page any original source table without truncating the retained feed. Original row numbers and physical values stay unchanged; agency/route catalog limits are explicit.',
@@ -86,7 +72,7 @@ export function gtfsWorkspaceTools(tool) {
       schema({releaseId:uuid,releaseSha256:hash,id:{type:'string',minLength:1,maxLength:128},label:{type:'string',maxLength:240},
         runtime:schema({port:{type:'integer',minimum:0,maximum:65535},facilitator:{type:'string'},allowLocalFacilitator:{type:'boolean'}})},
       ['releaseId','releaseSha256','id'])),
-    tool('merchant_gtfs_export','Export the complete quiescent original workspace, including saved feed-source versions, complete HTTP attempts and ZIPs/captures, plans/runs/schedules, decisions, releases and all dataset versions. The external export journal retains its request/revision before compression and recovers the same archive after a lost reply.',
+    tool('merchant_gtfs_export','Export the complete quiescent original workspace, including ZIPs/captures, plans/runs/schedules, decisions, releases and all dataset versions. The external export journal retains its request/revision before compression and recovers the same archive after a lost reply.',
       request,['workspace','requestId','expectedRevision'],{idempotent:true}),
     tool('merchant_gtfs_manifest','Page one complete retained artifact manifest. Retain its full manifest SHA-256 and original file byte counts/SHA-256 before downloading each file.',
       {...selected,kind,id:uuid,...paged,expectedManifestSha256:hash},['workspace','kind','id'],read),

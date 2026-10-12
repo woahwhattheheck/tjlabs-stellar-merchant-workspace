@@ -50,10 +50,7 @@
     "examples",
     "agents",
     "FRAMEWORKS.md",
-    "unstructured",
-    "PROTECTED_STORAGE.md",
-    "preapproval-native-record.py",
-    "PREAPPROVAL_RECOVERY.md"
+    "unstructured"
   ],
   "sideEffects": false,
   "peerDependencies": {

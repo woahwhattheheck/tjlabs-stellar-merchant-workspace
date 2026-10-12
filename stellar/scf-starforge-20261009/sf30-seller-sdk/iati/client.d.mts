@@ -222,108 +222,6 @@ export interface PacketInput {
   bytes: number;
   kind?: 'portfolio' | 'project';
 }
-
-/** Native Zimmerman DQA service request; scalar choices are preserved exactly. */
-export interface DqaParameters {
-  organisation: string | string[];
-  segmentation?: { countries?: string[] | null; regions?: string[] | null; sectors?: string[] | null } | null;
-  require_funding_and_accountable?: boolean; include_exemptions?: boolean;
-  optional_rules?: { check_acronyms?: boolean } | null;
-  skip_cache?: boolean | null; failed_activities?: boolean; use_budget_date_filter?: boolean;
-}
-export interface DqaProviderSave {
-  requestId: string; name: string; endpoint: string;
-  /** Existing host environment variable containing the native raw Authorization value. */
-  authorizationEnv: string; timeoutSeconds?: number; notes?: string; previous?: Sha256;
-}
-export interface DqaProvider extends Omit<DqaProviderSave, 'requestId'> {
-  schema: 'stellar-forge.iati-dqa-provider.v1'; id: Sha256; timeoutSeconds: number; notes: string;
-  createdAt: string; protocol: { repository: string; commit: string; license: 'MIT' };
-}
-export interface DqaCapture {
-  requestId: string; provider: Sha256; parameters: DqaParameters;
-  label: string; operator: string; notes?: string;
-}
-export interface DqaNativeFile extends FileIdentity { contentType: string }
-export interface DqaExchange {
-  method: 'GET' | 'POST'; url: string; startedAt: string; receivedAt: string; status: number;
-  headers: Record<string, string[]>; body: DqaNativeFile;
-}
-export interface DqaConfiguration {
-  file: DqaNativeFile; state: 'COMPLETE' | 'UNAVAILABLE'; calls: DqaExchange[];
-  configurations: Record<string, JsonValue[]>; error?: string; observedAt?: string;
-}
-export interface DqaCounts { pass_count: number; fail_count: number; not_applicable_count: number }
-export interface DqaSummary {
-  organisation: string; total_programmes: number; total_projects: number;
-  /** Exact literal retained from the native DQA response, in its provider-defined unit. */
-  total_budget: string; financial_year: string;
-}
-export interface DqaAssessment extends DqaCapture {
-  schema: 'stellar-forge.iati-dqa-assessment.v1'; id: Sha256; notes: string;
-  request: DqaNativeFile; response: DqaExchange; configurationBefore: DqaConfiguration;
-  configurationAfter: DqaConfiguration; configurationStable: boolean; attempt: number;
-  generatedAt: string; receivedAt: string; summary: DqaSummary; counts: DqaCounts;
-  listedActivities: number; listedRuleResults: number; detailsSelected: boolean;
-  percentages: Record<'total_percentages' | 'h1_percentages' | 'h2_percentages' | 'percentages', JsonValue | undefined>;
-  availableSegmentations: { countries: string[]; regions: string[]; sectors: string[] };
-  reviewFindings: string[];
-}
-export type DqaAssessmentSummary = Pick<DqaAssessment, 'id' | 'provider' | 'label' | 'operator' | 'generatedAt' |
-  'receivedAt' | 'summary' | 'counts' | 'listedActivities' | 'listedRuleResults' | 'configurationStable'>;
-export type DqaNativeStatus = 'pass' | 'fail' | 'not_applicable';
-export interface DqaFinding {
-  key: Sha256; activityKey: Sha256; activityPosition: number; activityOccurrence: number; rulePosition: number;
-  iatiIdentifier: string; hierarchy: number; title: string | null; activityStatus: string | null;
-  kind: 'attribute' | 'document'; rule: string; status: DqaNativeStatus; native: Record<string, JsonValue>;
-}
-export interface DqaPage<T> { total: number; offset: number; limit: number; items: T[]; nextOffset: number | null }
-export type DqaActionStatus = 'open' | 'investigate' | 'addressed' | 'accepted';
-export interface DqaAction {
-  assessment: Sha256; finding: Sha256; status: DqaActionStatus; owner: string; note: string; dueDate: CalendarDate | '';
-}
-export type DqaActionEdit =
-  (Pick<DqaAction, 'assessment' | 'finding' | 'status'> & Partial<Pick<DqaAction, 'owner' | 'note' | 'dueDate'>>) |
-  { assessment: Sha256; finding: Sha256; remove: true };
-export interface DqaCaseDefinition {
-  requestId: string; name: string; client: string; notes?: string; assessmentIds: Sha256[];
-  portfolios?: Array<{ id: Sha256; revision: number }>; review: Review; reviewEdits?: DqaActionEdit[];
-}
-export type DqaCaseSave = DqaCaseDefinition &
-  ({ id?: never; expectedRevision?: never } | { id: Sha256; expectedRevision: number });
-export interface DqaCase extends Omit<DqaCaseDefinition, 'requestId' | 'reviewEdits'> {
-  schema: 'stellar-forge.iati-dqa-case.v1'; id: Sha256; revision: number; notes: string;
-  portfolios: Array<{ id: Sha256; revision: number }>; actions: DqaAction[];
-  previousRevision: number | null; createdAt: string; updatedAt: string; definitionSha256: Sha256;
-}
-export interface DqaNativeActivity {
-  iati_identifier: string; hierarchy: number; title: string | null; activity_status: string | null;
-  attributes: Record<string, JsonValue>[]; documents: Record<string, JsonValue>[];
-  overall_status: DqaNativeStatus; failure_count: number; [key: string]: JsonValue;
-}
-export interface DqaActivityChange {
-  activityKey: Sha256; kind: 'newly-listed' | 'no-longer-listed' | 'changed';
-  before: DqaNativeActivity | null; after: DqaNativeActivity | null;
-}
-export interface DqaComparison {
-  schema: 'stellar-forge.iati-dqa-comparison.v1'; id: Sha256; before: Sha256; after: Sha256;
-  scopeChanges: Record<string, { before: JsonValue; after: JsonValue }>;
-  providerChanged: boolean; configurationChanged: boolean; beforeGeneratedAt: string; afterGeneratedAt: string;
-  beforeSummary: DqaSummary; afterSummary: DqaSummary; beforeCounts: DqaCounts; afterCounts: DqaCounts;
-  counts: Record<'newly-listed' | 'no-longer-listed' | 'changed' | 'unchanged', number>;
-  changes: DqaNativeFile; meaning: string;
-}
-export interface DqaOperation {
-  requestId: string; kind: 'provider' | 'assessment' | 'case'; input: Record<string, JsonValue>;
-  inputSha256: Sha256; state: string; createdAt: string; attempts: Record<string, JsonValue>[];
-  result?: Sha256 | { id: Sha256; revision: number };
-}
-export interface ReceivedDqaCase {
-  case: DqaCase; receiving: { schema: 'stellar-forge.iati-dqa-receiving.v1'; packetSha256: Sha256;
-    case: Sha256; revision: number; assessments: number; historyRevisions: number; providers: number;
-    files: number; reports: string[]; portfolioPackets: number };
-}
-
 /** Borrows an existing authenticated loopback console. It creates no source store or process. */
 export declare class IatiWorkspaceClient {
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
@@ -349,22 +247,6 @@ export declare class IatiWorkspaceClient {
   export(kind: 'project' | 'dataset' | 'changes' | 'portfolio' | 'report', id: Sha256, options?: RevisionOptions): Promise<Response>;
   ingest(input: SourceInput, options?: RequestOptions): Promise<Source>;
   receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject>;
-  dqaProviders(options?: RequestOptions): Promise<{ providers: DqaProvider[] }>;
-  dqaSaveProvider(input: DqaProviderSave, options?: RequestOptions): Promise<DqaProvider>;
-  dqaCapture(input: DqaCapture, options?: RequestOptions): Promise<DqaAssessment>;
-  dqaAssessments(options?: RequestOptions): Promise<{ assessments: DqaAssessmentSummary[] }>;
-  dqaAssessment(id: Sha256, options?: RequestOptions): Promise<DqaAssessment>;
-  dqaFindings(id: Sha256, options?: RequestOptions & { offset?: number; limit?: number; status?: DqaNativeStatus | ''; search?: string }): Promise<DqaPage<DqaFinding> & { assessment: Sha256 }>;
-  dqaCases(options?: RequestOptions): Promise<{ cases: Array<Pick<DqaCase, 'id' | 'revision' | 'name' | 'client' | 'review' | 'updatedAt' | 'assessmentIds'>> }>;
-  dqaCase(id: Sha256, options?: RevisionOptions): Promise<DqaCase>;
-  dqaHistory(id: Sha256, options?: RequestOptions): Promise<{ history: DqaCase[] }>;
-  dqaSaveCase(input: DqaCaseSave, options?: RequestOptions): Promise<DqaCase>;
-  dqaCompare(before: Sha256, after: Sha256, options?: RequestOptions): Promise<DqaComparison>;
-  dqaComparison(id: Sha256, options?: RequestOptions & { offset?: number; limit?: number }): Promise<DqaComparison & { page: DqaPage<DqaActivityChange> }>;
-  dqaOperations(options?: RequestOptions & { offset?: number; limit?: number }): Promise<DqaPage<DqaOperation>>;
-  dqaExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
-  dqaFile(id: Sha256, kind: 'response' | 'request' | 'configuration-before' | 'configuration-after', options?: RequestOptions): Promise<Response>;
-  dqaReceive(input: Pick<PacketInput, 'body' | 'bytes'>, options?: RequestOptions): Promise<ReceivedDqaCase>;
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;
 }

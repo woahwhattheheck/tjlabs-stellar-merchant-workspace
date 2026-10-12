@@ -13,7 +13,6 @@ const SOURCE_FILES = [
   'iati/iati_source.py', 'iati/iati_workspace.py', 'iati/server.py',
   'iati/cli.py', 'iati/cli.mjs', 'iati/managed.py',
   'iati/public/index.html', 'iati/public/app.js', 'iati/public/style.css',
-  'iati/dqa.py', 'iati/dqa_http.py', 'iati/dqa_cli.py', 'iati/public/dqa.js', 'iati/public/dqa.css',
   'xml/xml_source.py', 'xml/workspace.py', 'xml/server.py', 'xml/native.mjs',
   'dataset-handler.mjs',
 ];
@@ -23,9 +22,9 @@ const field = (name, label, type = 'path', required = false, description = '') =
 
 export function iatiApplication(common = []) {
   return {
-    id: 'iati', command: 'dataset-iati', title: 'IATI aid finance and DQA', terminal: false,
+    id: 'iati', command: 'dataset-iati', title: 'IATI aid finance', terminal: false,
     requiredSource: ROOT + '/iati/managed.py',
-    description: 'Review original IATI publisher XML, saved aid portfolios, exact currency/type/date groups, native edition comparisons, saved DQA assessments and complete customer handoffs.',
+    description: 'Review original IATI publisher XML, saved aid portfolios, exact currency/type/date groups, native edition comparisons and complete source/report handoffs.',
     fields: [
       field('workspaceDirectory', 'Original IATI workspace', 'path', true,
         'Choose the private directory initialized or received by the original IATI command.'),

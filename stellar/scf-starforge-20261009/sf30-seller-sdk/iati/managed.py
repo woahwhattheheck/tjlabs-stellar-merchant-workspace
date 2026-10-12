@@ -15,7 +15,6 @@ SOURCE_FILES = (
     "iati/iati_source.py", "iati/iati_workspace.py", "iati/server.py",
     "iati/cli.py", "iati/cli.mjs", "iati/managed.py",
     "iati/public/index.html", "iati/public/app.js", "iati/public/style.css",
-    "iati/dqa.py", "iati/dqa_http.py", "iati/dqa_cli.py", "iati/public/dqa.js", "iati/public/dqa.css",
     "xml/xml_source.py", "xml/workspace.py", "xml/server.py", "xml/native.mjs",
     "dataset-handler.mjs",
 )

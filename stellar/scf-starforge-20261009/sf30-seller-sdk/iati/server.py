@@ -8,7 +8,6 @@ import sys
 from urllib.parse import urlsplit, parse_qs
 
 from iati_workspace import IatiWorkspace, InputError, MAX_SOURCE, MAX_PACKET, load_json
-import dqa_http
 
 HERE = Path(__file__).resolve().parent
 SHARED = HERE.parent / "xml"
@@ -35,14 +34,6 @@ class Handler(_original.Handler):
 
     def _get(self):
         target = urlsplit(self.path)
-        if target.path in {"/dqa.js", "/dqa.css"}:
-            self._gate(api=False)
-            name = target.path[1:]
-            media = "text/javascript; charset=utf-8" if name.endswith(".js") else "text/css; charset=utf-8"
-            body = (self.server.assets_directory / name).read_bytes()
-            self._headers(200, media, len(body))
-            self.wfile.write(body)
-            return
         if not target.path.startswith("/api/iati/") and target.path != "/api/launch":
             return super()._get()
         self._gate()
@@ -51,8 +42,6 @@ class Handler(_original.Handler):
             raise InputError("Repeated IATI query parameters are not accepted")
         q = {key: items[0] for key, items in values.items()}
         ws = self.server.workspace
-        if dqa_http.get(self, target.path, q):
-            return
         if target.path == "/api/launch":
             if q:
                 raise InputError("The original launch endpoint takes no query parameters")
@@ -104,8 +93,6 @@ class Handler(_original.Handler):
         if target.query:
             raise InputError("IATI actions take a body, not query parameters")
         ws = self.server.workspace
-        if dqa_http.post(self, target.path):
-            return
         if target.path in {"/api/iati/receive", "/api/import"}:
             with ws.mutex, ws.scratch() as temp:
                 packet = temp / "portfolio.zip"

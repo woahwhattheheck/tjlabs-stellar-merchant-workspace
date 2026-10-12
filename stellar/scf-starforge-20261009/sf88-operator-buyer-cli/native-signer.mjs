@@ -4,7 +4,7 @@ import { readFile, lstat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, isAbsolute, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createNativeBuyerSigner, readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/adapter.mjs';
+import { createNativeBuyerSigner } from '../sf103-native-buyer-signer/adapter.mjs';
 import { NETWORKS } from '../sf86-rpc-transfer-reconcile/terms.mjs';
 
 const NETWORK = 'stellar:testnet';
@@ -16,10 +16,8 @@ const same = (left, right) => isDeepStrictEqual(left, right);
 let sdkPromise;
 
 export class NativeSignerError extends Error {
-  constructor(code, nativeSigning) {
+  constructor(code) {
     super(code); this.name = 'NativeSignerError'; this.code = code;
-    const diagnostic=readNativeSigningDiagnostic(nativeSigning);
-    if(diagnostic)this.nativeSigning=diagnostic;
     // The adapter returns before SF31 constructs or sends its paid HTTP retry.
     this.paymentSent = false;
   }
@@ -198,10 +196,8 @@ export async function createOfficialStellarSigner(options) {
       } catch (error) {
         // SF103 finishes before SF31 sends the paid request. Preserve that phase.
         if (error instanceof NativeSignerError) throw error;
-        let nativeSigning;
-        try { nativeSigning=readNativeSigningDiagnostic(error?.nativeSigning); } catch {}
-        throw new NativeSignerError(error?.name === 'NativeSignerError' && /^[A-Z0-9_]{1,120}$/.test(error.code)
-          ? error.code : 'OFFICIAL_STELLAR_PAYMENT_CREATION_FAILED',nativeSigning);
+        fail(error?.name === 'NativeSignerError' && /^[A-Z0-9_]{1,120}$/.test(error.code)
+          ? error.code : 'OFFICIAL_STELLAR_PAYMENT_CREATION_FAILED');
       }
       if (typeof result.payload?.transaction !== 'string' || !result.payload.transaction.length)
         fail('OFFICIAL_STELLAR_ENVELOPE_MISMATCH');

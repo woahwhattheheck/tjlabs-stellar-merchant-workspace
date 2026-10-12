@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "iati-operator",
-  "title": "IATI aid-finance and data-quality operator",
-  "description": "Original IATI publisher sources, native XML and DQA assessments, reviewed aid-finance portfolios and customer cases, complete handovers and managed Applications.",
+  "title": "IATI aid-finance operator",
+  "description": "Original IATI publisher sources, native XML editions, reviewed aid-finance portfolios, complete customer handovers and managed Applications.",
   "base": {
     "commands": [
       "installation",
@@ -75,7 +75,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "IATI publisher finance and native DQA customer engagements in the original Starforge operator.",
+    "description": "IATI publisher sources and reviewed aid-finance portfolios in the original Starforge operator.",
     "readme": "stellar/scf-starforge-20261009/distribution/selections/IATI_OPERATOR.md"
   },
   "excludeFiles": [

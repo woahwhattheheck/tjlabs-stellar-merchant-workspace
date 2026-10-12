@@ -90,30 +90,6 @@ export class IatiWorkspaceClient{
   return this.#request(kind==='portfolio'?'/api/iati/receive':'/api/import',{...options,body,
    headers:{'content-type':'application/zip','content-length':String(bytes)}});
  }
-
- /** Native DQA: selected provider credentials stay in that console's host environment. */
- #dqaPost(route,value,options={}){if(!object(value))throw problem('INPUT','Use a complete DQA object payload.');
-  const data=JSON.stringify(value);if(Buffer.byteLength(data)>64*1024*1024)throw problem('INPUT_LIMIT','The complete DQA selection exceeds 64 MiB.');
-  return this.#request('/api/iati/dqa/'+route,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body:data});}
- dqaProviders(options){return this.#request('/api/iati/dqa/providers',options);}
- dqaSaveProvider(input,options){return this.#dqaPost('provider',input,options);}
- dqaCapture(input,options){return this.#dqaPost('capture',input,options);}
- dqaAssessments(options){return this.#request('/api/iati/dqa/assessments',{...options,maximum:64*1024*1024});}
- dqaAssessment(id,options){return this.#request('/api/iati/dqa/assessment?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
- dqaFindings(id,{offset=0,limit=50,status='',search='',...options}={}){return this.#request('/api/iati/dqa/findings?'+query({id:hash(id),offset,limit,status,search}),{...options,maximum:64*1024*1024});}
- dqaCases(options){return this.#request('/api/iati/dqa/cases',{...options,maximum:64*1024*1024});}
- dqaCase(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/dqa/case?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
- dqaHistory(id,options){return this.#request('/api/iati/dqa/history?'+query({case:hash(id)}),{...options,maximum:64*1024*1024});}
- dqaSaveCase(input,options){return this.#dqaPost('case',input,options);}
- dqaCompare(before,after,options){return this.#dqaPost('compare',{before:hash(before),after:hash(after)},options);}
- dqaComparison(id,{offset=0,limit=50,...options}={}){return this.#request('/api/iati/dqa/comparison?'+query({id:hash(id),offset,limit}),{...options,maximum:64*1024*1024});}
- dqaOperations({offset=0,limit=50,...options}={}){return this.#request('/api/iati/dqa/operations?'+query({offset,limit}),{...options,maximum:64*1024*1024});}
- dqaExport(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/dqa/export?'+query({case:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});}
- dqaFile(id,kind,options){if(!['response','request','configuration-before','configuration-after'].includes(kind))throw problem('DQA_FILE','Select the complete original response, request or configuration observation.');
-  return this.#request('/api/iati/dqa/file?'+query({assessment:hash(id),kind}),{...options,raw:true});}
- dqaReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose a complete original DQA customer ZIP up to 4 GiB.');
-  return this.#request('/api/iati/dqa/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
-
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));
   await Promise.allSettled([...this.#pending]);}
 }

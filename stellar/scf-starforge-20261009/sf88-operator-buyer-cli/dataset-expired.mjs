@@ -1,17 +1,13 @@
 // MIT. Explicit continuation of a source-bound expired, untransferred Dataset page.
 import {spawn,spawnSync} from 'node:child_process';
 import {constants} from 'node:fs';
-import {lstat,readdir,unlink,realpath,open,rename} from './dataset-location.mjs';
-import {datasetStoragePath} from './dataset-location.mjs';
+import {lstat,readdir,unlink,realpath,open,rename} from 'node:fs/promises';
 import {join,dirname,resolve,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {need,InputError} from './config.mjs';
 import {canonical,digest} from './dataset-page.mjs';
 import {readAttemptWireCheckpoint} from './attempt-wire.mjs';
-import {jsonBytes} from './node/store.mjs';
-import {datasetPrivateStateDirectory as privateDirectory,datasetReadStateBytes as readBytes,
-  datasetReadStateJson as readJson,datasetWriteStateBytes as writeBytes,
-  datasetSyncStateDirectory as syncDirectory,datasetStateExists as exists} from './dataset-location.mjs';
+import {privateDirectory,readBytes,readJson,writeBytes,jsonBytes,syncDirectory,exists} from './node/store.mjs';
 
 const SCHEMA='stellar-forge.sf88.expired-page-continuation.v1';
 const SOURCE='stellar-forge.sf36.expired-authorization-source.v1';
@@ -29,7 +25,7 @@ function absolute(path) {
 }
 async function directory(path,{create=false}={}) {
   absolute(path);await privateDirectory(path,{create});
-  need(await realpath(path) === datasetStoragePath(path),'DATASET_EXPIRY_SYMLINK_DIRECTORY_REFUSED');
+  need(await realpath(path)===path,'DATASET_EXPIRY_SYMLINK_DIRECTORY_REFUSED');
 }
 async function file(path,{optional=false,limit=MAX}={}) {
   try {

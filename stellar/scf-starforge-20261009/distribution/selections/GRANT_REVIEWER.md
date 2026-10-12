@@ -238,50 +238,6 @@ merchant/client path. It takes the same controller lock as the managed
 Applications continuation and preserves the accepted direct result. Its actual
 completion is recorded separately from those completed direct phases.
 
-## Deliver through the saved Merchant operator
-
-This selected product also includes **Merchant operator** in Applications. Save
-the original reviewer merchant configuration and a private operator directory,
-then use **Review Start → Start → Open**. The original merchant process serves
-the Console, native calls, saved workflow history and complete customer files
-on one listener.
-
-For a direct operator, add the retained Console directory to the same command:
-
-~~~sh
-starforge merchant-mcp serve \
-  --config /private/reviewer-merchant/merchant-mcp.json \
-  --operator-console-dir /private/reviewer-merchant/operator-console \
-  --port 3211 --token-env MCP_ACCESS_TOKEN
-~~~
-
-Select a named profile and open **Customers → Reviewer customer delivery**.
-Its five sections connect the actual workbench, review a complete packet,
-receive and inspect the original Buyer, export the closed packet and prepare
-a reusable delivery or receiving recipe. The fourteen-step delivery recipe
-retains the original result and export before receiving them in a second
-configured workbench. The six-step receiving recipe begins with the selected
-export ID and complete manifest SHA-256.
-
-Customers retains every original file and its manifest. The receiving packet
-downloads as the exact `grant-reviewer-packet.json`. An interrupted transfer
-continues its saved directory and verified prefix. Profile export includes the
-original requests, saved workflow and run, complete customer identities and
-immutable host bindings. Receiving that history preserves the destination's
-selected host and its existing native work.
-
-The installed guides are:
-
-- `source/products/grant-reviewer/OPERATING.md`
-- `source/stellar-forge/mcp-merchant-operator/console/CUSTOMER_REVIEWER.md`
-- `source/stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md`
-
-The original `console/REVIEWER_RECEIVING.mjs` continues the completed reviewer
-and merchant journals through this full Console workflow, actual recipe
-installation, complete file and profile receiving, and cold reopen of both
-operator workspaces. Use its original operation directory and existing browser
-runtime.
-
 ## Preserve the installed source and receiving identity
 
 The selection retains six original component roots in their relative layout.
@@ -299,10 +255,9 @@ runtime declarations.
 
 The selected command catalog contains `installation`, `runtime-profile`,
 `runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-demo`,
-`merchant-mcp`, `merchant-grant-reviewer` and
-`merchant-console-application-receive`.
-Its Applications providers are `grant-reviewer` and `merchant-console`; its
-merchant provider is `grant-reviewer-workbenches`. Its public workbench import is
+`merchant-mcp` and `merchant-grant-reviewer`.
+Its Applications provider is `grant-reviewer` and its merchant provider is
+`grant-reviewer-workbenches`; its public workbench import is
 `@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. Use
 `starforge --help` and `starforge registrations` for the actual installed
 declarations.

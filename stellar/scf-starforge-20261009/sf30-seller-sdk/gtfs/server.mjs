@@ -49,20 +49,12 @@ export async function createGtfsExtension({workspace}) {
         let input;
         if(route==='/api/gtfs/identity') {parameters(url,[]);send(200,workspace.identity());return true;}
         if(route==='/api/gtfs/status') {
-          input=numbers(parameters(url,['limit','feedsOffset','feedSourcesOffset','acquisitionsOffset','editionsOffset','comparisonsOffset','decisionsOffset','releasesOffset','exportsOffset']),
-            ['limit','feedsOffset','feedSourcesOffset','acquisitionsOffset','editionsOffset','comparisonsOffset','decisionsOffset','releasesOffset','exportsOffset']);
+          input=numbers(parameters(url,['limit','feedsOffset','editionsOffset','comparisonsOffset','decisionsOffset','releasesOffset','exportsOffset']),
+            ['limit','feedsOffset','editionsOffset','comparisonsOffset','decisionsOffset','releasesOffset','exportsOffset']);
           send(200,await workspace.status(input));return true;
         }
         if(route==='/api/gtfs/feed'||route==='/api/gtfs/edition'||route==='/api/gtfs/comparison') {
           input=parameters(url,['id']);send(200,await workspace[route.split('/').at(-1)](input.id));return true;
-        }
-        if(route==='/api/gtfs/feed-source') {
-          input=numbers(parameters(url,['id','versionId','offset','limit']),['offset','limit']);
-          const {id,...page}=input;send(200,await workspace.feedSource(id,page));return true;
-        }
-        if(route==='/api/gtfs/acquisition') {
-          input=numbers(parameters(url,['id','offset','limit']),['offset','limit']);
-          const {id,...page}=input;send(200,await workspace.acquisition(id,page));return true;
         }
         if(route==='/api/gtfs/operation') {
           input=parameters(url,['requestId']);send(200,workspace.operation(input.requestId));return true;
@@ -107,7 +99,6 @@ export async function createGtfsExtension({workspace}) {
       parameters(url,[]);
       const input=await inputBody(req,1024*1024);
       const actions={
-        '/api/gtfs/feed-source':'saveFeedSource','/api/gtfs/acquire':'acquireFeed',
         '/api/gtfs/edition':'createEdition','/api/gtfs/compare':'compareEditions','/api/gtfs/decision':'saveDecision',
         '/api/gtfs/select':'selectEdition','/api/gtfs/export':'exportWorkspace','/api/gtfs/release-prepare':'prepareRelease',
         '/api/gtfs/release-stage':'stageRelease','/api/gtfs/read':'readFile'};

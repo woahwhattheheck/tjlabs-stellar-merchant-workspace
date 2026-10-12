@@ -3,7 +3,6 @@ import {
   Sf61WorkspaceClient, readSf61Response, sf61Hash, sf61Failure,
   sf61Plain, sf61Exact,
 } from '../../stellar-forge/mcp-merchant-operator/sf61-connection.mjs';
-import { MAX_RETAINED_CHUNK_BYTES } from '../../stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs';
 import { HASH, absolute } from './handover-files.mjs';
 import { openCapturedHandoverArchive, readHandoverRange } from './handover-archive.mjs';
 import {
@@ -18,7 +17,6 @@ const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]
 const MAX_JSON_REQUEST=1024*1024,MAX_JSON_RESPONSE=16*1024*1024;
 const CHUNK=CAPTURED_HANDOVER_UPLOAD_CHUNK_BYTES;
 const PINNED_URL='CAPTURED_HANDOVER_PINNED_CONSOLE_URL';
-const HANDOVER_FILE_ID=value=>UUID.test(value??'');
 const decode=bytes=>new TextDecoder('utf-8',{fatal:true}).decode(bytes);
 const fail=(code,message)=>{throw sf61Failure(code,message);};
 const need=(value,code,message)=>{if(!value)fail(code,message);};
@@ -54,7 +52,7 @@ function route(path) {
     'INVALID_PARAMS','Choose a relative native handover API route.');
   return PREFIX+suffix;
 }
-const query=(path,fields)=>path+'?'+new URLSearchParams(Object.entries(fields).filter(([,value])=>value!==undefined).map(([key,value])=>[key,String(value)]));
+const query=(path,fields)=>path+'?'+new URLSearchParams(Object.entries(fields).map(([key,value])=>[key,String(value)]));
 function selection(value) {
   sf61Exact(value,['id','expectedSha256','expectedBytes'],['id','expectedSha256','expectedBytes']);
   return {id:uuid(value.id),expectedSha256:hash(value.expectedSha256),expectedBytes:count(value.expectedBytes,1)};
@@ -141,7 +139,7 @@ async function pumpUpload(adapter,metadata,read,options) {
   return copy(complete);
 }
 class CapturedHandoverClient {
-  #transport; #info; #pending=new Set(); #handles=new Set(); #editionCloses=new Map(); #stopping=false; #closing;
+  #transport; #info; #pending=new Set(); #handles=new Set(); #stopping=false; #closing;
   constructor(transport,info) {this.#transport=transport;this.#info=info;}
   get info() {return this.#info;}
   #begin() {
@@ -159,14 +157,14 @@ class CapturedHandoverClient {
     options=requestOptions(options);interrupted(options);
     const text=body===undefined?undefined:JSON.stringify(body),method=body===undefined?'GET':'POST';
     const selectedRoute=route(path).split('?')[0];
-    const collaboration=['draft/merge-review','draft/merge-save','draft/working-export','draft/receiving-review','draft/receiving-save'].map(name=>PREFIX+name).includes(selectedRoute);
+    const collaboration=['draft/merge-review','draft/merge-save','draft/working-export'].map(name=>PREFIX+name).includes(selectedRoute);
     const maximum=selectedRoute===PREFIX+'draft/working-import'?8*MAX_JSON_REQUEST:collaboration?4*MAX_JSON_REQUEST:MAX_JSON_REQUEST;
     if(body!==undefined)need(typeof text==='string'&&Buffer.byteLength(text)<=maximum,
       'INVALID_PARAMS','Send a complete native request within this operation’s '+String(maximum/1048576)+' MiB limit.');
     return this.#transport.request(route(path),{...options,method,body:text,
       headers:{'x-captured-product-id':this.#info.productId,...(text===undefined?{}:{'Content-Type':'application/json'})}},
       response=>jsonResponse(response,this.#info.productId,method,
-        ['draft/merge-review','edition'].map(name=>PREFIX+name).includes(selectedRoute)?64*1024*1024:MAX_JSON_RESPONSE));
+        selectedRoute===PREFIX+'draft/merge-review'?64*1024*1024:MAX_JSON_RESPONSE));
   }
   json(path,body,options={}) {
     route(path);const input=body===undefined?undefined:JSON.parse(JSON.stringify(body)),settings=requestOptions(options);
@@ -176,75 +174,6 @@ class CapturedHandoverClient {
   saveDraftMerge(value,options={}) {return this.json('/draft/merge-save',value,options);}
   exportWorkingEdit(value,options={}) {return this.json('/draft/working-export',value,options);}
   importWorkingEdit(value,options={}) {return this.json('/draft/working-import',value,options);}
-  editionComparison(value,options={}) {return this.json(query('edition',value),undefined,options);}
-  reviewReceivingDecision(value,options={}) {return this.json('/draft/receiving-review',value,options);}
-  saveReceivingDecision(value,options={}) {return this.json('/draft/receiving-save',value,options);}
-  readEditionFile(value,options={}) {return this.json(query('edition-file',value),undefined,options);}
-  releaseEditionFile(value,options={}) {return this.json('/edition-file/release',value,options);}
-  async #releaseEdition(value,options={}) {
-    await this.#json('/edition-file/release',value,options);
-    this.#editionCloses.delete(value.readId);
-  }
-  /** Read one complete retained comparison/snapshot file. Native reads hash the
-   * original source once and retain the same private snapshot across chunks. */
-  downloadEditionFile(value,options={}) {
-    sf61Exact(value,['id','name','side','expectedComparisonSha256','expectedSha256'],
-      ['id','name','side','expectedComparisonSha256','expectedSha256']);
-    const input=JSON.parse(JSON.stringify(value)),settings=requestOptions(options);
-    uuid(input.id);hash(input.expectedComparisonSha256);hash(input.expectedSha256);
-    need(/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(input.name??'')&&
-      ['current','incoming','comparison'].includes(input.side),'INVALID_PARAMS',
-      'Choose a merchant and one original current, incoming or comparison file.');
-    return this.#work(async()=>{
-      let offset=0,readId,file,issue;const chunks=[];
-      try {
-        for(;;) {
-          let row;
-          try {row=await this.#json(query('edition-file',{...input,offset,limit:MAX_RETAINED_CHUNK_BYTES,
-            ...(readId?{readId}:{})}),undefined,settings);}
-          catch(error) {
-            if(!readId||error.code!=='CAPTURED_EDITION_FILE_READ_NOT_FOUND')throw error;
-            this.#editionCloses.delete(readId);readId=undefined;
-            row=await this.#json(query('edition-file',{...input,offset,limit:MAX_RETAINED_CHUNK_BYTES}),undefined,settings);
-          }
-          if(HANDOVER_FILE_ID(row.readId)) {
-            readId=row.readId;this.#editionCloses.set(readId,{id:input.id,comparisonSha256:input.expectedComparisonSha256,readId});
-          }
-          need(row.id===input.id&&row.name===input.name&&row.side===input.side&&
-            row.comparisonSha256===input.expectedComparisonSha256&&row.encoding==='base64'&&
-            row.offset===offset&&HANDOVER_FILE_ID(row.readId)&&
-            sf61Plain(row.file)&&row.file.sha256===input.expectedSha256&&
-            Number.isSafeInteger(row.file.bytes)&&row.file.bytes>0&&row.file.bytes<=64*1024*1024&&
-            row.file.name===input.name+'-'+input.side+'.json'&&typeof row.data==='string',
-            'SF61_CAPTURED_EDITION_CHANGED','The retained comparison file reply has another original identity.');
-          if(file)need(file.bytes===row.file.bytes&&file.sha256===row.file.sha256,
-            'SF61_CAPTURED_EDITION_CHANGED','The original comparison file changed during reading.');
-          file=row.file;readId=row.readId;
-          this.#editionCloses.set(readId,{id:input.id,comparisonSha256:input.expectedComparisonSha256,readId});
-          const chunk=Buffer.from(row.data,'base64');
-          need(chunk.toString('base64')===row.data&&chunk.length===row.bytesRead&&chunk.length>0&&
-            chunk.length<=MAX_RETAINED_CHUNK_BYTES&&offset+chunk.length<=file.bytes&&
-            row.nextOffset===(offset+chunk.length<file.bytes?offset+chunk.length:null),
-            'SF61_CAPTURED_EDITION_CHANGED','The original comparison file range is incomplete or changed.');
-          chunks.push(chunk);offset+=chunk.length;
-          if(row.nextOffset===null) {
-            this.#editionCloses.delete(readId);readId=undefined;
-            break;
-          }
-        }
-        const content=Buffer.concat(chunks,offset);
-        need(sf61Hash(content)===input.expectedSha256,'SF61_CAPTURED_EDITION_CHANGED',
-          'The complete original comparison file SHA-256 changed.');
-        return {...input,file,content};
-      } catch(error){issue=error;throw error;}
-      finally {
-        if(readId) {
-          try{await this.#releaseEdition(this.#editionCloses.get(readId),{timeoutMs:settings.timeoutMs});}
-          catch(error){if(issue)issue.closeError=error;else throw error;}
-        }
-      }
-    });
-  }
   async #archive(value,options) {
     const selected=selection(value);
     const job=await this.#json(query('job',{id:selected.id}),undefined,options),saved=job?.result?.archive;
@@ -376,9 +305,6 @@ class CapturedHandoverClient {
     const closing=(async()=>{
       while(this.#pending.size)await Promise.allSettled([...this.#pending]);
       const errors=[];
-      for(const selected of [...this.#editionCloses.values()]) {
-        try{await this.#releaseEdition(selected);}catch(error){errors.push(error);}
-      }
       for(const held of [...this.#handles]){
         try{await held.close();this.#handles.delete(held);}catch(error){errors.push(error);}
       }

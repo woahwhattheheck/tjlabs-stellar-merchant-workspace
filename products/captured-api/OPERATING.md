@@ -770,37 +770,6 @@ Keep the complete base and proposed worksheet JSON when moving unfinished
 pricing work. Native file hashes and source/asset binding govern its import and
 reconciliation.
 
-### Compare an incoming merchant edition
-
-After importing the complete collection, save its receiving draft and open
-**Incoming editions**. Load the installed merchant choices and select the
-baseline for each incoming package. The default follows the saved receiving
-name; an explicit installed name or no baseline can be selected independently.
-
-Choose **Compare this saved receiving edition**. The original retained COMPARE
-job saves full current/incoming plans, exact route prices, OpenAPI source,
-facades, compiled configuration and file identities. Page the complete changes
-or download the original JSON snapshots.
-
-Choose the desired receiving names in the same form, then select **Review
-selected receiving names**. Review actual target conflicts and the complete
-source/baseline binding. **Save reviewed receiving decision** retains that exact
-choice through the existing immutable draft writer. **Review this saved
-decision for receiving** continues into the original REVIEW, RECEIVE and REOPEN
-operations. A new native package name keeps the prior installed edition
-available for the original merchant and release workflow.
-
-The existing merchant agent exposes the same comparison, decision and full-file
-reads. The original terminal's edition-export command retains the complete
-comparison index and all three files for every merchant. Repeating its retained
-output directory completes an interrupted export or reopens all original files
-after the product host stops.
-
-[EDITIONS.md](EDITIONS.md) covers the complete browser, agent, typed-client and
-terminal journey, source-only collections, peer draft changes and native
-receiving recovery. Saved operator procedures and source refresh continue
-through the original host and merchant controls described above.
-
 ## 9. Recover and upgrade
 
 ~~~sh
@@ -833,10 +802,6 @@ alongside the saved process session.
 | Browser handover draft or reply is interrupted | Original saved draft edition and retained request under Merchant handover |
 | Whole handover file transfer stops | Same original download or saved file upload; resume the retained byte range/chunk |
 | Handover browser uses a new port after restart | Open the original server-side Drafts, Operations, Files or Received entry |
-| Incoming-edition comparison stops | Same COMPARE job/request SHA and its retained original current/incoming snapshots |
-| Installed baseline changes during receiving review | New comparison against the changed original merchant; prior comparison history remains available |
-| Incoming-edition decision reply is lost | Same exact draft base, complete form, comparison/review hashes and original save UUID |
-| Complete edition export stops | Same original terminal command/output directory; resume missing files or reopen completed files offline |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |

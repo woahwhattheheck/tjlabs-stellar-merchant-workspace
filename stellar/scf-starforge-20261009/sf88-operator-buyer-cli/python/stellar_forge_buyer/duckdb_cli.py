@@ -8,7 +8,6 @@ import sys
 import webbrowser
 
 from .duckdb_dataset import DuckDBWorkspace
-from . import spatial_cli
 from .errors import BuyerError
 from .storage import parse, read
 
@@ -44,9 +43,7 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--workspace", "--database", dest="workspace", required=True,
                         help="Private DuckDB workspace directory")
-    result.add_argument("--spatial-extension", help="Installed signed DuckDB spatial extension; may also use STARFORGE_DUCKDB_SPATIAL_EXTENSION")
     commands = result.add_subparsers(dest="command", required=True)
-    spatial_cli.add_parser(commands)
     commands.add_parser("status", help="Read editions, active views, import reviews, saved queries and exports")
 
     inspect = commands.add_parser("inspect-delivery", help="Review an existing native delivery report")
@@ -135,8 +132,6 @@ def main(argv=None):
                 "queries": workspace.queries(),
                 "exports": workspace.exports(),
             }
-        elif args.command == "spatial":
-            output = spatial_cli.dispatch(workspace, args)
         elif args.command == "inspect-delivery":
             output = workspace.inspect_delivery(args.report)
         elif args.command == "review":
@@ -182,7 +177,7 @@ def main(argv=None):
         elif args.command == "serve":
             from .duckdb_http import serve
             server, control, url = serve(workspace, port=args.port,
-                export_root=args.export_root, handoff_root=args.handoff_root, spatial_extension=args.spatial_extension)
+                export_root=args.export_root, handoff_root=args.handoff_root)
             print(json.dumps({"status": "LISTENING", "address": url.split("#", 1)[0],
                               "private_launch": str(control)}, ensure_ascii=False), flush=True)
             if args.open:

@@ -1,8 +1,7 @@
 // MIT. Explicit continuation of an original unsigned dataset page.
 import {spawn} from 'node:child_process';
 import {constants} from 'node:fs';
-import {open,mkdir,lstat,realpath,readdir,unlink,rename} from './dataset-location.mjs';
-import {datasetStoragePath} from './dataset-location.mjs';
+import {open,mkdir,lstat,realpath,readdir,unlink,rename} from 'node:fs/promises';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
@@ -19,7 +18,7 @@ const NAMES=['config.json','attempt.json','result.json','evidence.json','failure
 
 async function privateDirectory(path) {
   const info=await lstat(path);
-  need(info.isDirectory()&&!info.isSymbolicLink()&&await realpath(path) === datasetStoragePath(path)&&
+  need(info.isDirectory()&&!info.isSymbolicLink()&&await realpath(path)===path&&
     (process.platform==='win32'||(info.mode&0o077)===0),'DATASET_PRIVATE_DIRECTORY_REQUIRED');
 }
 async function bytes(path,limit=262144,optional=false) {
@@ -160,7 +159,7 @@ function ledgerAbsent(cfg,configurationPath,configurationSha256,environment,sign
   }
   return new Promise((resolve,reject)=>{
     const child=spawn(cfg.operator.python,['-I','-B','-u',WORKER,
-      '--config',datasetStoragePath(configurationPath),'--sha256',configurationSha256],
+      '--config',configurationPath,'--sha256',configurationSha256],
       {env,shell:false,stdio:['ignore','pipe','ignore']});
     const chunks=[];let size=0,done=false;
     const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);

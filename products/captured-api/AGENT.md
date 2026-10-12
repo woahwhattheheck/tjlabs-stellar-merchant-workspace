@@ -6,7 +6,7 @@ original native jobs, exact archive bytes and receiving operations. A completed
 transfer contains the selected merchant packages, source captures, both members
 of each refresh, and all retained immutable reviews.
 
-The twenty-eight `merchant_handover_*` tools are a source-owned companion of the
+The twenty-three `merchant_handover_*` tools are a source-owned companion of the
 existing HAR workspace connection. Existing product setup and connection files
 remain the starting point. The browser, agent, terminal and native handover CLI
 all reach the original compilers and state writers.
@@ -97,31 +97,6 @@ A receiving name map addresses original package names. Omitted mappings retain
 the original name. Explicit mappings choose each complete receiving name.
 The native review reports existing equal packages, new packages, preserved or
 merged reviews, and actual name/source conflicts.
-
-## Compare the incoming edition before receiving
-
-The existing receiving draft can retain a complete installed/incoming
-comparison before its native receiving review:
-
-| Stage | Original operation |
-| --- | --- |
-| Select the installed baselines | COMPARE through job_start with the saved receiving draft/revision and complete baselines map |
-| Inspect exact changes | editions pages for routes, prices, settings, original source, facade, compiled configuration and native files |
-| Review the chosen receiving version | edition_review with the full receiving form, actual draft base and original comparison hash |
-| Save the complete decision | edition_save with the exact READY review and original request UUID |
-| Receive the selected edition | Original REVIEW against the saved revision, then RECEIVE and REOPEN |
-| Retain the full operator review | edition_file/edition_file_release or terminal edition-export for every complete original snapshot |
-
-The table uses the common merchant_handover_ prefix. Comparison selects the
-installed baseline independently from the receiving name, so an existing
-merchant can remain available while the incoming version receives its own
-native package name. The ordinary receiving writer retains source histories,
-complete prices, plans and compiled bytes.
-
-The [complete incoming-edition guide](EDITIONS.md) supplies full browser,
-merchant-tool, typed-client and terminal examples, exact file acquisition and
-saved-request recovery. The five edition tools join the original 23 handover
-and draft-collaboration tools in the same provider.
 
 ## Ordinary terminal commands
 
@@ -389,15 +364,11 @@ try {
 | `transferTo` | Receiving pinned client, exact source archive and retained upload ID → both product identities and the original COMPLETE upload |
 | `uploadFile` | Original file path/bytes/SHA and retained upload ID → held original source and complete remote upload |
 | `downloadFile` | Exact published archive, private local directory and optional retained download ID → original local completed upload/file |
-| `editionComparison` | Original COMPARE job/hash and selected section → retained installed/incoming change pages |
-| `reviewReceivingDecision` / `saveReceivingDecision` | Exact current draft, comparison and complete receiving form → original READY review and saved draft edition |
-| `readEditionFile` / `releaseEditionFile` | Exact comparison/file hashes and retained reader ID → bounded original file chunks and explicit partial-read release |
-| `downloadEditionFile` | Original current/incoming/comparison file selection → full verified original `Buffer` |
 | `close` | Stop admission, drain accepted transfers and finish owned file handles |
 
 The typed agent class accepts the existing
 `{harWorkspaces: parsedOriginalConnection}` configuration and exposes the same
-twenty-eight typed `call(name, arguments)` operations. Its declaration keeps the
+twenty-three typed `call(name, arguments)` operations. Its declaration keeps the
 discriminated native job requests and complete selection fields.
 
 ## Retained state and recovery

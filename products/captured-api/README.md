@@ -82,7 +82,6 @@ browser and seller. Retained operating files stay in place.
 | Use an existing managed browser | Initialize with its exact projects directory and private Applications URL record |
 | Update from a later capture | Select the previous saved source review and continue the native refresh workflow |
 | Hand over a complete merchant collection | Merchant handover browser: saved selection and full native review → complete file download/upload → receiving-name review → native receive and merchant reopen |
-| Compare and receive an incoming merchant edition | Saved installed/incoming comparison → complete receiving-name decision → native receive and reopen |
 | Recover an interrupted setup or session | Reopen the same private product, source identity, saved package and release |
 
 Choose **Merchant handover** in the original browser to prepare a complete
@@ -123,16 +122,3 @@ The same reconciliation is available through four merchant tools, the typed
 client and the original terminal’s working-export/import commands. The
 [collaboration walkthrough](COLLABORATION.md) covers two operators, full file
 exchange, conflict choices, saved-request recovery and native receiving.
-
-## Compare and receive an incoming merchant edition
-
-Open **Incoming editions** on a saved receiving draft. Choose the installed
-merchant baseline, compare complete routes, exact prices, API declarations and
-native files, then review and save the receiving name for the incoming version.
-The ordinary native REVIEW, RECEIVE and REOPEN operations use that saved edition.
-
-The browser, five edition tools and typed client share the same retained
-comparison. The original terminal's edition-export command keeps the complete
-index and both native snapshots for every merchant, with interrupted
-publication recovery and offline reopening. The [incoming editions
-walkthrough](EDITIONS.md) follows the full comparison-to-received-merchant path.

@@ -5,7 +5,6 @@ import { pathToFileURL } from 'node:url';
 import { attachReleaseCacheControls } from './release-cache.mjs';
 import { releaseProcessOwner, inheritedReleaseLease } from './release-process.mjs';
 import { withNativePaymentReview } from '../sf30-seller-sdk/native-factory.mjs';
-import { withNativeSettlementDelivery } from '../sf30-seller-sdk/native-delivery.mjs';
 
 const [pilot, directory, instanceId, controlFile, lifetimeDescriptor = '-'] = process.argv.slice(2);
 function nativeFailureCode(error) {
@@ -28,9 +27,8 @@ process.once('message', async message => {
   let session, control;
   try {
     const { launch } = await import(pathToFileURL(pilot).href);
-    session = await withNativeSettlementDelivery(message.settlementDelivery,
-      () => withNativePaymentReview(message.facilitatorReview,
-        () => launch(['--resume', directory])));
+    session = await withNativePaymentReview(message.facilitatorReview,
+      () => launch(['--resume', directory]));
     if (!session.server?.listening) throw new Error('Original seller stopped before cache attachment.');
     control = await attachReleaseCacheControls(session, { controlFile, routes: message.cacheRoutes });
     const originalClose = session.close.bind(session);
@@ -44,7 +42,6 @@ process.once('message', async message => {
       originalOffersSha256: report.originalOffersSha256,
       originalServiceConfigSha256: report.originalServiceConfigSha256,
       listener: session.url, mode: session.mode, cacheControlAvailable: control !== null,
-      settlementDelivery: session.settlementDelivery,
       ...((session.jsonrpc || session.postgres || session.clickhouse || session.opensearch || session.grpc) && session.operations ? { operations: {
         url: session.operations.url, availability: session.operations.availabilityUrl,
         availabilityControl: session.operations.availabilityControlUrl,

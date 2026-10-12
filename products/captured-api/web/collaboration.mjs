@@ -9,10 +9,9 @@ const signature=async value=>[...new Uint8Array(await crypto.subtle.digest('SHA-
   typeof value==='string'?new TextEncoder().encode(value):value))].map(byte=>byte.toString(16).padStart(2,'0')).join('');
 const conflictBinding=row=>canonical({id:row.id,field:row.field,key:row.key,reason:row.reason,
   base:row.base,current:row.current,working:row.working});
-const definitive=row=>!row.error?.outcomeUnknown&&(
-  row.path==='draft/receiving-save'&&row.error?.status>=400&&row.error.status<500||
-  row.error?.status===409&&['CAPTURED_DESK_DRAFT_CHANGED','CAPTURED_DESK_REVIEW_CHANGED','CAPTURED_DESK_MERGE_CONFLICTS'].includes(row.error?.code));
-const SAVE_PATHS=['draft/save','draft/merge-save','draft/receiving-save'];
+const definitive=row=>row.error?.status===409&&!row.error?.outcomeUnknown&&
+  ['CAPTURED_DESK_DRAFT_CHANGED','CAPTURED_DESK_REVIEW_CHANGED','CAPTURED_DESK_MERGE_CONFLICTS'].includes(row.error?.code);
+const SAVE_PATHS=['draft/save','draft/merge-save'];
 
 /** The host keeps its existing editor, pending requests, busy state and saved history. */
 export function createCapturedDraftCollaboration(hooks) {

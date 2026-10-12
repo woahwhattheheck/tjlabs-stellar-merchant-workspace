@@ -157,109 +157,6 @@ publication resource can contain at most 1,000,000 rows and 64 columns; select
 up to 64 resources including derived schedules. The source compiler checks
 derived resource counts before expensive expansion.
 
-### Save and refresh an agency URL
-
-The same source controls can acquire the original agency ZIP directly. Select
-**Agency feed sources and refresh**, enter the public HTTPS URL, name and
-download timeout, then save the source. The complete response is retained and
-inspected when you choose **Acquire or refresh feed**. Use its saved feed for
-the edition workflow below.
-
-The terminal and MCP use the same saved operations. For a first source, write
-a private source request file with the displayed current revision:
-
-~~~json
-{
-  "requestId": "NEW_SOURCE_REQUEST_UUID",
-  "expectedRevision": 0,
-  "payload": {
-    "sourceId": null,
-    "expectedSourceSha256": null,
-    "source": {
-      "title": "Agency schedule",
-      "url": "https://agency.org/transit/feed.zip",
-      "note": "Original public feed selected for the customer’s service-period task",
-      "timeoutMs": 120000
-    }
-  }
-}
-~~~
-
-Replace the example URL and revision with the actual source selection. Save
-and inspect that exact configuration:
-
-~~~sh
-starforge gtfs source-save --workspace /absolute/private/transit \
-  --input /absolute/private/source-request.json
-starforge gtfs source-read --workspace /absolute/private/transit --id SOURCE_UUID
-~~~
-
-The result’s source.id and source.sourceSha256 identify the immutable current
-source version. Create an acquisition request using those returned values:
-
-~~~json
-{
-  "requestId": "NEW_ACQUISITION_REQUEST_UUID",
-  "expectedRevision": 1,
-  "payload": {
-    "sourceId": "SAVED_SOURCE_UUID",
-    "sourceSha256": "SAVED_SOURCE_SHA256",
-    "previousAcquisitionId": null,
-    "expectedPreviousSha256": null,
-    "conditional": false
-  }
-}
-~~~
-
-~~~sh
-starforge gtfs acquire --workspace /absolute/private/transit \
-  --input /absolute/private/acquisition-request.json
-starforge gtfs acquisition-read --workspace /absolute/private/transit \
-  --id SAVED_ACQUISITION_UUID
-~~~
-
-Save the returned acquisition.id, acquisition.acquisitionSha256 and original
-feed identity. A later refresh uses a new request ID/current revision plus
-that previous acquisition ID/hash. conditional:true sends its saved ETag, or
-Last-Modified when ETag is unavailable, at the original final response URL.
-conditional:false downloads a full response and compares its complete bytes
-against that same chosen previous feed.
-
-A valid 304 keeps the original feed. A complete identical 200 response is also
-retained while reusing the existing feed. Changed complete bytes pass through
-the original inspector and become a new immutable feed. The exact acquired URL
-and completed response time travel into that feed and the edition form.
-
-Inspect the actual response status and attempt history. Every retained HTTP
-attempt has its original request/response files, bounded error bytes and source
-identity. Use an acquisition artifact manifest and file-read to receive the
-complete files; use source-read/acquisition-read --input PAGE.json for version
-and attempt pagination. Example original artifact selector:
-
-~~~json
-{
-  "kind": "acquisition",
-  "id": "ORIGINAL_ACQUISITION_UUID",
-  "offset": 0,
-  "limit": 50
-}
-~~~
-
-~~~sh
-starforge gtfs manifest --workspace /absolute/private/transit \
-  --input /absolute/private/acquisition-manifest.json
-~~~
-
-Recover an interrupted acquisition with its original request ID. Known provider
-Retry-After deadlines are retained and honored before another HTTP attempt.
-A browser reply loss keeps the exact original source action available to
-continue. Completed request recovery precedes the current revision check.
-
-Editing the source keeps its source ID, adds a new immutable version and binds
-expectedSourceSha256 to the current configuration. A changed URL starts without
-a previous response from another URL. All source versions and original HTTP
-attempts remain in the complete workspace archive and survive receiving.
-
 ## 4. Save, compare and select editions
 
 A saved action uses the original request envelope:
@@ -390,7 +287,7 @@ candidate. The browser uses those same original operations.
 
 Schedule/save/enable/pause remain the original publisher scheduler. A scheduled
 run uses its selected native plan and original retained capture. To refresh a
-feed, acquire its actual source response or retain the actual new ZIP, save/select its new edition and explicitly save
+feed, retain the actual new ZIP, save/select its new edition and explicitly save
 the corresponding new plan before updating the schedule. One-shot reads leave
 the timer closed; serve and MCP resume enabled schedules while owning the
 workspace. schedule-run and schedule-continue wait for their actual original
@@ -481,10 +378,8 @@ integration with that same configuration.
 merchant_gtfs_workspaces lists configured aliases without opening their
 workspaces. merchant_gtfs_open takes ownership of the original model, publisher,
 scheduler and browser. Its returned instanceId identifies the exact open owner.
-The status, inputs, import, source_save, source, acquire, acquisition, edition,
-comparison, decision, selection and recovery tools operate the same saved records
-described above. Saved HTTPS sources use the same original workspace revision;
-host-declared ZIP inputs retain their original file alias and hash contract.
+The status, inputs, import, edition, comparison, decision, selection and recovery
+tools operate the same saved records described above.
 
 merchant_gtfs_publisher_* borrows that open publisher and scheduler. Its plan,
 run, candidate, review and target identities remain the native publisher's.
@@ -578,8 +473,7 @@ idle native scheduler and takes the original dataset writer.lease exclusion
 before reading its complete state. A live writer or unquiescent SQLite journal
 remains with that original owner for drain and continuation.
 
-The archive contains all saved feed-source versions and original HTTP attempts,
-ordinary retained source ZIPs, source/capture files,
+The archive contains all ordinary retained source ZIPs, source/capture files,
 editions, plans, runs, review/decision records, release packages, SQLite histories,
 schedules and dataset versions. Its manifest binds complete bytes and empty
 directories. Runtime listener/lock exclusions are recorded explicitly. The

@@ -211,12 +211,7 @@ def sql_descriptor(receiving, fields, mapped):
             "columns": [{"source": field, "column": column} for field, column in zip(fields, mapped)]}
 
 
-def sql_context(raw, descriptor, version_id, *, case_sensitive_targets=False):
-    """Reopen original meanings under the receiving engine's identifier rules.
-
-    SQLite and DuckDB use case-insensitive target names. PostgreSQL receives
-    explicitly quoted names and therefore requests case-sensitive equality.
-    """
+def sql_context(raw, descriptor, version_id):
     _require(isinstance(descriptor, dict) and descriptor.get("schema") == SQL_SCHEMA
              and isinstance(descriptor.get("file"), dict)
              and len(raw) <= MAX_BYTES
@@ -230,9 +225,8 @@ def sql_context(raw, descriptor, version_id, *, case_sensitive_targets=False):
                      and isinstance(column.get("column"), str) for column in mappings),
              "DATASET_SQL_SEMANTIC_MAPPING_INVALID")
     fields = [column["source"] for column in mappings]
-    targets = [column["column"] if case_sensitive_targets else column["column"].casefold()
-               for column in mappings]
-    _require(len(fields) == len(set(fields)) and len(set(targets)) == len(mappings),
+    _require(len(fields) == len(set(fields)) and
+             len({column["column"].casefold() for column in mappings}) == len(mappings),
              "DATASET_SQL_SEMANTIC_MAPPING_INVALID")
     document = parse(raw)
     binding = validate_document(document, fields)

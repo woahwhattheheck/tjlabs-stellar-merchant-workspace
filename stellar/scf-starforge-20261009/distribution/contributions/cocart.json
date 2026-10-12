@@ -1,25 +1,21 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "cocart",
-  "description": "Original CoCart customer setup, guest cart, native Woo checkout and complete managed receiving",
+  "description": "Original CoCart guest cart, native Woo checkout and complete managed customer receiving",
   "commands": {
     "cocart": "stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/server.mjs",
-    "cocart-managed": "stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/managed.mjs",
-    "cocart-setup": "stellar-forge/developer-site/serve.mjs"
+    "cocart-managed": "stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/managed.mjs"
   },
   "commandDescriptions": {
     "cocart": "Create, inspect, operate, export and receive the original CoCart customer workspace",
-    "cocart-managed": "Prepare the original CoCart connection and run its retained console through managed Applications",
-    "cocart-setup": "Open the local customer setup page, import original files and prepare a complete portable CoCart handover"
+    "cocart-managed": "Prepare the original CoCart connection and run its retained console through managed Applications"
   },
   "exports": {
     "./buyer/cocart": "./source/stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/workspace.mjs",
     "./buyer/cocart/server": "./source/stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/server.mjs",
     "./buyer/cocart/managed": "./source/stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/managed.mjs",
     "./merchant/mcp/cocart-workspace": "./source/stellar-forge/mcp-merchant-operator/cocart-workspace.mjs",
-    "./merchant/mcp/cocart-download": "./source/stellar-forge/mcp-merchant-operator/cocart-download.mjs",
-    "./buyer/cocart/setup": "./source/stellar-forge/developer-site/dist/cocart-onboarding.mjs",
-    "./buyer/cocart/setup-server": "./source/stellar-forge/developer-site/serve.mjs"
+    "./merchant/mcp/cocart-download": "./source/stellar-forge/mcp-merchant-operator/cocart-download.mjs"
   },
   "runtimePackageManifests": {
     "cocart": "stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/package.json"
@@ -28,20 +24,9 @@
     {
       "server": "stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/server.mjs",
       "manifest": "stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/cocart/browser-assets.json"
-    },
-    {
-      "server": "stellar-forge/developer-site/serve.mjs",
-      "manifest": "stellar-forge/developer-site/browser-assets.json"
     }
   ],
   "applicationProviders": {
     "cocart": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/cocart.mjs"
-  },
-  "components": [
-    "stellar-forge/developer-site",
-    "products/cocart"
-  ],
-  "supportFiles": [
-    "stellar-forge/developer-site/dist/examples/fred-briefing-20261012/stellar-forge-economic-briefing-20261012.zip"
-  ]
+  }
 }

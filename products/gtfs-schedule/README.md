@@ -1,8 +1,7 @@
 # GTFS Schedule merchant
 
 Operate a complete transit feed as a reviewed data product. The GTFS Schedule
-merchant saves the agency’s public HTTPS source and retains each acquired original ZIP,
-creates exact service-date
+merchant retains the publisher's original ZIP, creates exact service-date
 editions, compares changes, publishes a complete dataset and keeps the source,
 merchant and receiving history together.
 
@@ -10,12 +9,6 @@ The browser, terminal and merchant MCP provider operate the same private
 workspace. **Applications → GTFS Schedule merchant** starts its original command,
 checks the saved workspace identity against the live listener and retains the
 normal managed Stop and reopen controls.
-
-Saved sources retain immutable configuration versions and complete HTTP response
-history. A conditional refresh uses the exact prior feed and its original
-validators; an unchanged response reuses that feed, while changed bytes enter
-the native inspector. Source response files and every saved edition remain in
-the complete workspace archive.
 
 ## Complete a customer task
 

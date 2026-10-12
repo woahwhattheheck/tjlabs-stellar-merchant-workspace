@@ -1,10 +1,5 @@
 # Python applications for the Stellar Forge buyer
 
-The [read-only Inbox workflow](INBOX.md) exposes `Inbox` and `buyer.inbox(...)` for
-original job selection, private Operations source export and same-file inspection
-after interruption. It reuses the existing native queue/readers and Runtime without
-creating another journal or performing a purchase or accounting action.
-
 The complete [acquisition workflow](ACQUISITIONS.md) joins private request intake,
 receiver-owned preparation, immutable runbooks, original execution/accounting,
 verified downloads and multi-operator recovery through `AcquisitionWorkspace`
@@ -21,14 +16,6 @@ Installable Python 3.11+ package for Linux and macOS. A Python application can d
 This package adds durable application operations and result recovery around those existing components. It has no Python dependencies and does not embed a second Stellar/payment implementation. Supply a complete current repository checkout and its existing Node runtime/dependencies. SF46 distribution should include this directory with the original runtime closure; the Python wheel alone does not contain the Node source.
 
 ## Choose the customer's product workflow
-
-The complete [citation analyst workflow](RESEARCH_CITATIONS.md) adds revision-pinned
-notice review, full editable atomic requests, same-request recovery and a complete
-before/reviewed/current handover through `ResearchWorkspace.citations(...)`.
-It cold receives both original portable formats and joins the existing Analysis
-table, full exports, workbook and editable workspace archive. The included
-`examples/research_citation_analyst.mjs` continues an already completed original
-Research customer operation without creating another review.
 
 The complete [Research document and workbook workflow](RESEARCH_DOCUMENTS.md) joins
 original Documents/Pipelines operation control, verified source editions, native

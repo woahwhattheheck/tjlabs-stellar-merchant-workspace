@@ -1,5 +1,4 @@
 import type { Buffer } from 'node:buffer';
-import type { CapturedEditionFile, CapturedEditionPackage, CapturedEditionSummary } from './edition-comparison.mjs';
 import type { CapturedDraftForm, CapturedDraftKind, CapturedDraftResolutions, CapturedDraftMergeReview } from './draft-reconciliation.mjs';
 
 /** The existing parsed HAR connection definition; all other native fields remain owned by its parser. */
@@ -161,8 +160,6 @@ export interface CapturedDraftEdition {
   schema:'stellar-forge.captured-handover-draft-edition.v1';draftId:string;requestId:string;
   kind:CapturedDraftKind;sequence:number;previousRevision:string|null;createdAt:string;
   form:CapturedDraftForm;revision:string;
-  receivingDecision?:{schema:'stellar-forge.captured-receiving-edition-decision.v1';comparisonId:string;comparisonSha256:string;
-    reviewSha256:string;nativeReviewSha256:string;requestSha256:string};
   reconciliation?:{schema:'stellar-forge.captured-draft-save.v1';baseRevision:string;reviewSha256:string;requestSha256:string};
 }
 export interface CapturedDraftNative {
@@ -176,44 +173,6 @@ export interface CapturedWorkingExport {
 export interface CapturedWorkingImport {
   schema:'stellar-forge.captured-working-import.v1';productId:string;id:string;kind:CapturedDraftKind;
   baseRevision:string;bytes:number;sha256:string;working:CapturedDraftForm;draft:CapturedDraftNative;
-}
-
-export type CapturedEditionView='summary'|'packages'|'routes'|'settings'|'source'|'contract'|'configuration'|'files';
-export interface CapturedEditionSelection {
-  id:string;name?:string;view?:CapturedEditionView;offset?:number;limit?:number;expectedComparisonSha256?:string;
-}
-export interface CapturedComparedPackage {
-  name:string;baselineName:string|null;current:CapturedEditionPackage|null;incoming:CapturedEditionPackage;
-  summary:CapturedEditionSummary;files:Record<'current'|'incoming'|'comparison',CapturedEditionFile>;
-}
-export interface CapturedEditionPage {
-  schema:'stellar-forge.captured-incoming-editions.v1';id:string;comparisonSha256:string;
-  handoverId:string;manifestSha256:string;draftId:string;revision:string;packages:number;sources:number;
-  view:CapturedEditionView;package?:CapturedComparedPackage;rows?:unknown[];offset?:number;limit?:number;
-  total?:number;nextOffset?:number|null;[field:string]:unknown;
-}
-export interface CapturedReceivingDecisionInput {
-  id:string;expectedRevision:string;comparisonId:string;comparisonSha256:string;
-  form:{label:string;bundle:string;manifestSha256:string;names:Record<string,string>};
-}
-export interface CapturedReceivingDecisionSaveInput extends CapturedReceivingDecisionInput {requestId:string;reviewSha256:string}
-export interface CapturedReceivingDecisionReview extends Omit<CapturedReceivingDecisionInput,'expectedRevision'> {
-  schema:'stellar-forge.captured-receiving-edition-decision.v1';productId:string;currentRevision:string;
-  current:CapturedReceivingDecisionInput['form'];nativeReviewSha256:string;reviewSha256:string;
-  state:'READY'|'CONFLICT';receiving:Record<string,unknown>;
-}
-export interface CapturedEditionFileSelection {
-  id:string;name:string;side:'current'|'incoming'|'comparison';expectedComparisonSha256:string;expectedSha256:string;
-}
-export interface CapturedEditionFileReadInput extends CapturedEditionFileSelection {offset?:number;limit?:number;readId?:string}
-export interface CapturedEditionFileRead {
-  id:string;name:string;side:CapturedEditionFileSelection['side'];comparisonSha256:string;
-  readId:string;file:CapturedEditionFile&{contentType:string};offset:number;bytesRead:number;
-  nextOffset:number|null;encoding:'base64';data:string;
-}
-export interface CapturedEditionFileRelease {id:string;comparisonSha256:string;readId:string}
-export interface CapturedEditionDownload extends CapturedEditionFileSelection {
-  file:CapturedEditionFile&{contentType:string};content:Buffer;
 }
 
 /**
@@ -243,15 +202,6 @@ export interface CapturedHandoverClient {
   exportWorkingEdit(input:CapturedWorkingEditInput,options?:CapturedHandoverRequestOptions):Promise<CapturedWorkingExport>;
   /** Verify exact file bytes and their native product/draft/base without replacing the working editor. */
   importWorkingEdit(input:CapturedWorkingImportInput,options?:CapturedHandoverRequestOptions):Promise<CapturedWorkingImport>;
-
-  editionComparison(input:CapturedEditionSelection,options?:CapturedHandoverRequestOptions):Promise<CapturedEditionPage>;
-  reviewReceivingDecision(input:CapturedReceivingDecisionInput,options?:CapturedHandoverRequestOptions):Promise<CapturedReceivingDecisionReview>;
-  saveReceivingDecision(input:CapturedReceivingDecisionSaveInput,options?:CapturedHandoverRequestOptions):Promise<CapturedDraftNative>;
-  /** Read a retained native snapshot once, then repeat readId and nextOffset. */
-  readEditionFile(input:CapturedEditionFileReadInput,options?:CapturedHandoverRequestOptions):Promise<CapturedEditionFileRead>;
-  releaseEditionFile(input:CapturedEditionFileRelease,options?:CapturedHandoverRequestOptions):Promise<CapturedEditionFileRelease&{released:true}>;
-  /** Complete byte/SHA checked JSON file; close drains this entire accepted read. */
-  downloadEditionFile(input:CapturedEditionFileSelection,options?:CapturedHandoverRequestOptions):Promise<CapturedEditionDownload>;
 
   /** Reopen the exact COMPLETE PUBLISH result and verify its native archive identity. */
   archive(
