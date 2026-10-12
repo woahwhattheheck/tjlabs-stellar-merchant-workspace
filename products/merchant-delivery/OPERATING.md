@@ -186,6 +186,14 @@ Receiving delegates to original SF98 and writes `received.json`. The same matchi
 
 For remote handover, the same downloader accepts an existing authenticated merchant MCP URL and `--token-env`. Use the exact original ID and exchange fingerprint in the [delivery guide](../../stellar/scf-starforge-20261009/sf82-seller-pilot/DELIVERY.md#download-and-receive).
 
+## Open the customer's received application
+
+The same installed `merchant-delivery` selection includes the customer application. It opens the original received SF98 workspace through **Applications → Delivery receiving**, retaining the receipt and the customer's later destination edits.
+
+Follow [Customer receiving](receiving/CUSTOMER_RECEIVING.md) to receive or reopen a completed download, prepare the saved application configuration, review and start it, supply the original signing environment references, and operate the native Sync, Drain, Start and Stop controls. The customer can reopen this application after the seller connection and original download have moved.
+
+The receiving configuration binds the actual receipt, source, workspace and installed code. It excludes changing destination revisions and worker progress, so ongoing customer operations remain in that same workspace.
+
 ## MCP and source-owned installation
 
 `merchant-mcp.json` selects the same original `releaseStore`, an independent private exports directory and the original MCP schema. Open it with the installed merchant MCP host using that host's normal launch command.
@@ -195,6 +203,7 @@ The `delivery` provider supplies ten tools: status, control, stop, event paginat
 The selected contribution leaves are:
 
 - `merchant-delivery-product.json`: seller managed launcher, configuration helper and Applications provider.
+- `merchant-delivery-receiving.json`: customer receive/reopen, saved receiving application and original destination controls.
 - `release-delivery-console.json`: original CLI/adapter and shared browser asset registration.
 - `merchant-provider-delivery.json`: original ten-tool provider and resumable downloader.
 - `sf98-managed-delivery.json`: original delivery producer and retained settlement bindings.

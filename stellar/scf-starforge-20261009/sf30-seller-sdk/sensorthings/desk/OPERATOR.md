@@ -30,11 +30,15 @@ node stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/desk/cli.mjs \
   --port 8768
 ```
 
-The workspace and inbox are separate private directories. Keep the same workspace path when reopening. The optional `--expected-workspace-id` binds an existing UUID; the managed provider supplies it for an existing workspace. An optional `--release-runtime /absolute/private/runtime.json` reads the host-selected original release runtime object. The original release manager consumes it.
+The workspace and inbox are separate private directories. Keep the same workspace path when reopening. Each running Desk owns its selected source inbox until its pending uploads and listener have drained. Concurrent Desks use different private inboxes; stop the existing inbox owner before reusing that inbox in another Desk. The original lifetime lease also protects saved upload offsets and the final published bytes across processes. The optional `--expected-workspace-id` binds an existing UUID; the managed provider supplies it for an existing workspace. An optional `--release-runtime /absolute/private/runtime.json` reads the host-selected original release runtime object. The original release manager consumes it.
 
 The listener binds `127.0.0.1`. Its startup record contains the private Open URL. Treat that complete record as private application state. The session token remains in the existing workspace and, after Open, in browser memory; the browser removes the token fragment from its visible address. Open from the maintained application again after a browser restart.
 
 **Stop** drains the original listener and workspace. Preserve its saved application, source inbox, workspace, original buyer directory and any native runtime dependencies. A new server must reopen the original state after the prior writer closes.
+
+## Open observation analysis
+
+**Observation analysis** opens the coupled analyst interface on this same private listener and workspace. It retains the exact edition and original source quality, native Helgoland view, annotations, edition comparison, approved publication and complete Python Analysis source/receiving files. Continue to use the running Desk's original store owner. The analysis interface uses the same stable action journal and private session, and its full guide is `../ANALYSIS.md`.
 
 ## The operating sequence
 

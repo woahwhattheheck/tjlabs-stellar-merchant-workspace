@@ -82,6 +82,7 @@ async function acquireLease(path) {
   return {assert(){if(closed)throw fault('STELLAR_WORKSPACE_LEASE_LOST','The private workspace writer has stopped.',503);},
     async close(){if(!closed)helper.stdin.end();await ended;}};
 }
+export {acquireLease as acquireWorkspaceLease};
 export async function openWorkspaceStore(directory,{schema='stellar-forge.stellar-expert-workspace.v1',initialState={}}={}) {
   if(typeof schema!=='string'||!/^stellar-forge\.[a-z0-9.-]{1,120}$/.test(schema)||
      !initialState||typeof initialState!=='object'||Array.isArray(initialState)||

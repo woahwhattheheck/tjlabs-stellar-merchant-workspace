@@ -594,6 +594,118 @@ normalized edition and 128 MiB per full portable. Record count alone does not
 determine source size. Preserve all required original parts and inspect their
 complete continuation coverage.
 
+## 12. Receive the complete eligibility programme
+
+The selected product includes the original eligibility engine, browser, API,
+CLI, typed client, Python actions, Merchant tools and complete customer receiver.
+Confirm the installed command and selected source:
+
+~~~sh
+starforge registrations --command research-eligibility-customer
+starforge research-client eligibility-help
+starforge research-eligibility-customer --help
+~~~
+
+Use the same running Research Applications entry and its actual private
+connection file. Obtain the dossier ID, review ID and retained revision from
+that original workspace. A work-set ID can narrow the delivery. The original
+programme remains owned by its existing operator; the customer command receives
+that saved selection.
+
+~~~sh
+starforge research-eligibility-customer \
+  --checkout /absolute/installed-research/source \
+  --connection /absolute/private/research-connection.json \
+  --directory /absolute/private/eligibility-handover \
+  --dossier-id ORIGINAL_DOSSIER --review-id ORIGINAL_REVIEW \
+  --revision SELECTED_REVISION \
+  --operation-id ORIGINAL_CUSTOMER_CONTINUATION \
+  --python /absolute/existing/python3
+~~~
+
+`--checkout` is the installed source root containing
+`stellar/` and `stellar-forge/`, not the
+Python package directory. Use the existing Python and Node runtime. The command
+uses Python's standard library and the original installed Node source.
+
+The command creates one source-bound operation directory and produces:
+
+| Output | Complete retained content |
+| --- | --- |
+| `delivery/selection.json` | Original workspace, dossier, review, work set, revision, full history and every selected section |
+| `delivery/files/dossier.json` and `dossier.json.gz` | Full editable dossier, retained source bytes and all original revisions |
+| `delivery/files/dossier.html` and `dossier.md` | Readable complete dossier reports |
+| `delivery/files/eligibility.json` | Complete selected review, operations and method metadata |
+| Seven `delivery/files/eligibility-*.csv` files | Queue, decisions, resolutions, studies, impact, operations and occurrences |
+| `customer-workspaces/` | Original JSON and streamed/gzip portable receiving into separate editable stores |
+| `Eligibility_Delivery.zip` | Exact member manifest, original selection and all twelve full files |
+| `received-delivery/` and `received-customer-workspaces/` | Independent exact-ZIP reopening and the same original receiving paths |
+| `complete.json` and `RECEIVING.md` | Actual source/file identities, results and operating instructions |
+
+Each original receiver checks the selected review, complete original history,
+source bindings, operations, full section rows and regenerated report hashes.
+An existing compatible receiver keeps its later local revisions when the same
+earlier source is received again.
+
+### Continue a transferred customer archive
+
+Retain the exact ZIP SHA-256 returned by the sender. On the receiving computer,
+use the installed source and a private new caller directory:
+
+~~~sh
+PYTHONPATH=/absolute/installed-research/source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python \
+python3 -m stellar_forge_buyer.research_cli \
+  --directory /absolute/private/receiving-client \
+  eligibility-delivery-open /absolute/received/Eligibility_Delivery.zip \
+  --expected-sha256 ORIGINAL_ZIP_SHA256 \
+  --into /absolute/private/received-delivery
+
+PYTHONPATH=/absolute/installed-research/source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python \
+python3 -m stellar_forge_buyer.research_cli \
+  --checkout /absolute/installed-research/source \
+  --directory /absolute/private/receiving-client \
+  eligibility-delivery-receive \
+  --delivery /absolute/private/received-delivery \
+  --into /absolute/private/received-customer-workspaces
+~~~
+
+Use either returned `json-reader/workspace` or
+`stream-reader/workspace` as the dossier directory of the
+receiving Research application. Create its own private connection record and
+Python caller directory through the existing application/startup workflow.
+Select the saved dossier and review, inspect its current revision, and continue
+with the original eligibility actions. The saved sender's connection file is
+not needed for this receiving step.
+
+### Recover the same customer operation
+
+Reinvoke the customer command with the same directory, operation ID, selection
+and installed source after an interrupted export or receiving step. It retains
+the first selected revision and the original exported portable bytes. Existing
+delivery files and native receiving receipts are inspected and reused; a
+different source selection uses a new operation directory.
+
+An optional `--replay-request ORIGINAL_REQUEST.json` can be
+repeated for original requests already committed in that selected review. Before
+sending, the receiver resolves each complete request through the installed
+native parser and matches it to the selected immutable operation. It then
+recovers that same operation through the original Python call journal. This
+option supports a joined programme handover without creating another review or
+source task.
+
+The JavaScript export
+`./buyer/research-dossiers/eligibility-customer` exposes
+`receiveEligibilityCustomer({checkout,connection,directory,dossierId,reviewId,operationId,revision,python,node,signal})`.
+An already owned native programme can await this continuation against its
+actual returned selection and connection. Its caller keeps the original
+listener lifecycle. The continuation retains its complete output before
+returning and closes only its own Python/Node child calls.
+
+The CLI translates SIGINT and SIGTERM into its dedicated cancellation exception.
+Original runtime and workspace cleanup then join active children before the
+outer command returns interrupted. A later invocation uses the same operation
+directory and retained selected revision.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
@@ -617,7 +729,7 @@ The completed operating handover retains the source commit/recipe, actual archiv
 
 ## Source relationship
 
-This standalone adoption carries the original Documents/Pipelines client cohort from [public source PR2015](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2015), merged at `4358385d48f54c1391109074beb59b7ba2a8dce8`, onto the maintained original Research backends and browser already present in this repository. The source-owned Research contribution retains the standalone `products/research` operating component while adding the original client and command exports. The same product carries the complete Python Research/Analysis customer receiver from [public source PR2066](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2066), merged at `b59f7f560668d729e3bf718852d0264feb1656bb`. Its additive Python entrypoint, exports and Runtime target are composed onto this repository's current original files. The citation-review cohort comes from [public source PR2061](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2061), merged at `d9c2e3e6f6b86883d76befb74cd252caacb0e698`. It includes the original source-document intake, complete browser/client/Merchant workflow and portable review history. This adoption composes the citation report sections with the standalone product's existing report renderer and preserves its complete Documents, Pipelines and Python receiving work. The selected release manifest identifies the exact final standalone commit and all included original source objects.
+This standalone adoption carries the original Documents/Pipelines client cohort from [public source PR2015](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2015), merged at `4358385d48f54c1391109074beb59b7ba2a8dce8`, onto the maintained original Research backends and browser already present in this repository. The source-owned Research contribution retains the standalone `products/research` operating component while adding the original client and command exports. The same product carries the complete Python Research/Analysis customer receiver from [public source PR2066](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2066), merged at `b59f7f560668d729e3bf718852d0264feb1656bb`. Its additive Python entrypoint, exports and Runtime target are composed onto this repository's current original files. The citation-review cohort comes from [public source PR2061](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2061), merged at `d9c2e3e6f6b86883d76befb74cd252caacb0e698`. It includes the original source-document intake, complete browser/client/Merchant workflow and portable review history. This adoption composes the citation report sections with the standalone product's existing report renderer and preserves its complete Documents, Pipelines and Python receiving work. The selected release manifest identifies the exact final standalone commit and all included original source objects. The eligibility programme adopts the complete original engine/browser from [public source PR2154](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2154), merged at `654162f43b11ffcf2ce53d92de049c088c0861d1`, and the complete Python/typed/Merchant customer source from [public source PR2200](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2200), merged at `af0189886fa13fa63d590d0a639e565fbc2eae75`. These are joined to the current standalone Europe PMC and Analysis sources; its selected customer command uses those same installed engines.
 
 - [Analyst operating guide](OPERATING.md)
 - [Citation browser drafts, review decisions and report selection](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)

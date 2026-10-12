@@ -31,7 +31,15 @@ starforge sensorthings-desk \
   --port 8467 > /absolute/private/sensorthings-startup.json
 ```
 
+Each running Desk owns its selected source inbox through upload completion and shutdown. Choose a different private inbox for a concurrent Desk, or stop the existing owner before reusing its inbox.
+
 Retain the original startup record privately. It reports schema `stellar-forge.sensorthings-workspace-startup.v1`, the persistent `workspaceId`, origin, private URL and process identity. The running application owns its writer. Open the private URL from that original startup record in the browser, or use the connected client while it runs. The Desk removes the private session fragment from the displayed address and holds it in browser memory. Managed Applications retains the same launch privately and returns its original application URL file. One-shot direct commands acquire the original writer themselves. The separate `sensorthings serve` command remains available when the operator needs the original API-only listener.
+
+## Open retained observation analysis
+
+Use **Observation analysis** in the running Desk to open `/analysis/` on the same native listener and workspace. The button passes the existing private session fragment directly to the source-owned analysis interface. Keep the Desk running while the analysis interface uses its original store and action journal.
+
+The coupled interface retains edition and stream selection, source/quality review, the original Helgoland view, annotations, later-edition comparison, publication, Python Analysis source preparation and complete receiving/export. Its operating contract is `source/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/ANALYSIS.md`; the actual viewer installation and licence contract is `analysis/deployment/OPERATIONS.md` in that component. `sensorthings-analysis serve` can own a stopped workspace directly with its original private session-file option. The running Desk already serves the same analysis routes.
 
 ## Bind the original merchant and agent client
 

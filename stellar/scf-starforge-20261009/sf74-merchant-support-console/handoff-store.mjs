@@ -61,11 +61,17 @@ export function handoffProblem(error) {
   return {error:code, detail, status:Number.isInteger(status)&&status>=400&&status<=599?status:(code.startsWith('HANDOFF_') ? 422 : 503)};
 }
 
+/** Bind the original private profile bytes for managed application review. */
+export async function readHandoffSourcesIdentity(configPath) {
+  const path=resolve(configPath),bytes=await privateBytes(path);
+  return {path,sha256:digest(bytes)};
+}
+
 /** Host configuration names sources and paths; browser input can select only aliases. */
 export async function openHandoffDesk({configPath, casesDir, environment=process.env}) {
   if (!casesDir) throw fail('HANDOFF_CONFIGURATION', 'Handoff sources require the existing --cases-dir.');
   const cases = await canonicalDirectory(casesDir), filename=resolve(configPath);
-  const raw = JSON.parse(decode(await privateBytes(filename)));
+  const configurationBytes=await privateBytes(filename),raw=JSON.parse(decode(configurationBytes));
   exact(raw, ['schema','sources']);
   if (raw.schema !== 'stellar-forge.support-handoff-sources.v1' || !plain(raw.sources) || Object.keys(raw.sources).length > 32)
     throw fail('HANDOFF_CONFIGURATION', 'Use the support handoff sources schema with at most 32 configured sources.');
@@ -86,13 +92,14 @@ export async function openHandoffDesk({configPath, casesDir, environment=process
     directories.push(directory);
     sources.set(key, Object.freeze({key,label:entry.label.trim(),url:endpoint.href,tokenEnv:entry.tokenEnv,directory}));
   }
-  return new HandoffDesk({sources,cases,environment});
+  return new HandoffDesk({sources,cases,environment,configuration:{path:filename,sha256:digest(configurationBytes)}});
 }
 
 class HandoffDesk {
-  #sources; #cases; #environment; #jobs=new Map(); #recent=new Map(); #pending=new Set();
+  #sources; #cases; #environment; #configuration; #jobs=new Map(); #recent=new Map(); #pending=new Set();
   #shutdown=new AbortController(); #closing=false; #closed;
-  constructor({sources,cases,environment}) {this.#sources=sources;this.#cases=cases;this.#environment=environment;}
+  constructor({sources,cases,environment,configuration}) {this.#sources=sources;this.#cases=cases;this.#environment=environment;this.#configuration=Object.freeze({...configuration});}
+  configuration() {return {...this.#configuration};}
   profiles() {
     return {enabled:true,sources:[...this.#sources.values()].map(({key,label,tokenEnv})=>({key,label,
       credentialConfigured:typeof this.#environment[tokenEnv] === 'string' && this.#environment[tokenEnv].length >= 24})),
@@ -102,6 +109,11 @@ class HandoffDesk {
     alias(key); const source=this.#sources.get(key);
     if (!source) throw fail('HANDOFF_SOURCE_UNAVAILABLE', 'Choose a configured handoff source.', 404);
     return source;
+  }
+  // Trusted sibling transport only. Browser routes expose profiles(), never this host reference.
+  connection(key) {
+    this.#ready();const {url,tokenEnv,label}=this.#source(key);
+    return Object.freeze({key,label,url,tokenEnv});
   }
   #key(source,id) {return source+'\0'+id;}
   #ready() {if(this.#closing)throw fail('HANDOFF_CLOSING','The desk is closing. Reopen it to continue the same files.',503);}
