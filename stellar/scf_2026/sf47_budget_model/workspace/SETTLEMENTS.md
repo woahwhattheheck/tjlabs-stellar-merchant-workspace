@@ -200,7 +200,7 @@ All routes use the existing authenticated Grant Operations service.
 
 The browser retains the complete original command and its archive before dispatch. When an HTTP response is lost, reopen the same case and choose **Recover original request**. The original native command journal returns the saved result when that request already committed. Access and route failures keep that same request available. A definite native validation rejection keeps the receiving draft available for correction and a fresh preview.
 
-Each open window has a separate editing desk. Its source bytes, selected rows, cash fields, correction editor and original request are retained together. An older window can continue or close while another window saves its own draft.
+Each open window has a separate editing desk. Its source bytes, selected rows, cash fields, correction editor and original request are retained together. An older window can continue or close while another window saves its own draft. Reloading a window reopens its own saved selection. Restored source and any pending request appear before saved native reviews load.
 
 Open **Saved editing desks** to see the retained copies and their saved dates. **Open saved copy** opens a separate editable copy. Changing the selected source or replacing an unfinished correction also retains the previous desk. The saved case review remains the source for a fresh native preview.
 
