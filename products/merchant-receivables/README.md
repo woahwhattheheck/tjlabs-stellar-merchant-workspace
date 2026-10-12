@@ -260,9 +260,22 @@ A verified public-network transfer produces an original customer receipt and dat
 
 The [complete payment request guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md) covers browser operation, CLI requests, the typed HTTP client, exact file names and recovery of interrupted work.
 
+
+## Import and reconcile original bank statements
+
+Open **Bank statements** in the receivables desk to retain CSV, OFX/QFX or MT940 source files and complete customer cash matching. Add the actual bank account and currency, inspect the original account/statement sections and dates, then retain the complete source and parser report.
+
+The row view filters and matches the complete original statement before paging. It shows actual bank references, transaction identities, possible existing receipts, invoice candidates and their matching reasons. One bank credit can split across several customers: create new receipts, link all or part of recorded receipts, or correct a recorded receipt with its original allocation history and explicit accounting date.
+
+Prepare the customer splits and target invoices, then review the complete original posting. The review includes each released and new allocation, the original bank/receipt dates and every affected later customer cash and invoice balance. Posting retains the original source relationships, customer receipts and invoice allocations in the same accounting journal used by the other collection and refund tools.
+
+Original statement bytes, normalized rows, the complete parser report, posting documents and individual customer receipt advice remain downloadable. Customer account exports carry receipt advice and correction relationships. Open and closed statements retain their original dispositions and can be reopened for explicit corrections.
+
+CSV intake uses the original Node reader and an exact column mapping. OFX and MT940 use the retained maintained source parsers; MT940 requires explicit envelope, encoding, debit/reversal convention, year window and complete value-date basis. The [complete bank-statement guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/BANK_STATEMENTS.md) covers source formats, customer splitting, duplicate source resolution, retained documents, all interfaces and interrupted-operation recovery.
+
 ## Operate receivables through the merchant agent interface
 
-The original merchant MCP host now exposes the same invoice and collection workflow through 35 `merchant_accounting_receivables_*` operations. A configured accounting workspace supplies the original customers, journal, private exports and source aliases. The agent can import a service quotation, prepare and issue an invoice, create reviewed Stellar wallet instructions, receive a returned transaction, refund customer funds, move paid credit, apply receipts and deliver the dated customer account in that one owner.
+The original merchant MCP host now exposes the same invoice and collection workflow through 46 `merchant_accounting_receivables_*` operations. A configured accounting workspace supplies the original customers, journal, private exports and source aliases. The agent can import a service quotation, prepare and issue an invoice, create reviewed Stellar wallet instructions, receive a returned transaction, import original bank statements, split and match customer receipts, refund customer funds, move paid credit, apply receipts and deliver the dated customer account in that one owner.
 
 The installed client command uses the host's configured endpoint, workspace alias and access-token environment variable:
 
@@ -278,9 +291,9 @@ starforge merchant-accounting-receivables status \
 
 Use complete native previews for invoice issue and payment-request creation. The client retains the full original document or wallet proposal and its review SHA. Durable `prepare`, `execute` and `reconcile` commands keep the original arguments, request ID, source revision and connection in a private operation directory. An interrupted reply is reconciled against the existing accounting journal; configured quotation aliases reconcile to the exact source bytes archived by the original import.
 
-Native invoice and credit files, quotation sources, preview files, wallet instructions, refund records, transaction proofs and the complete customer account are available through the existing retained file reader. Downloads retain their original selectors, read ID and SHA through every chunk. Ordinary client commands drain their own retained reads; `close` explicitly finishes the accounting owner.
+Native invoice and credit files, quotation sources, preview files, wallet instructions, refund records, original bank statements and parser reports, receipt advice, transaction proofs and the complete customer account are available through the existing retained file reader. Downloads retain their original selectors, read ID and SHA through every chunk. Ordinary client commands drain their own retained reads; `close` explicitly finishes the accounting owner.
 
-The [complete agent interface guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md) includes configured source aliases, customer and issuer intake, an invoice-to-payment workflow, all 35 tools, typed client examples, file selectors and durable operation recovery. Use the original [merchant accounting host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING.md) to configure and start that owner.
+The [complete agent interface guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md) includes configured source aliases, customer and issuer intake, an invoice-to-payment workflow, all 46 tools, typed client examples, file selectors and durable operation recovery. Use the original [merchant accounting host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING.md) to configure and start that owner.
 
 ## Original native exercise
 

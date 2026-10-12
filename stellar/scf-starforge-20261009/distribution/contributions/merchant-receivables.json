@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing, original service quotations, reviewed Stellar collection and refunds, native transfer receiving, paid-credit disposition, installment schedules and dated account delivery",
+  "description": "Customer invoicing, original bank statement intake and split receipts, service quotations, reviewed Stellar collection and refunds, native transfer receiving, paid-credit disposition, installment schedules and dated account delivery",
   "commands": {
     "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs"
   },
   "commandDescriptions": {
-    "receivables": "Operate invoices, Stellar collection, customer refunds and credits in the original accounting workspace"
+    "receivables": "Operate invoices, original bank receipts, Stellar collection, customer refunds and credits in the original accounting workspace"
   },
   "exports": {
     "./merchant/receivables": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs",
@@ -30,7 +30,10 @@
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.mjs"
     },
     "./merchant/receivables/refunds": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refunds.mjs",
-    "./merchant/receivables/refunds-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refunds-workspace.mjs"
+    "./merchant/receivables/refunds-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refunds-workspace.mjs",
+    "./merchant/receivables/bank-receipts": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-receipts.mjs",
+    "./merchant/receivables/bank-receipts-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-receipts-workspace.mjs",
+    "./merchant/receivables/bank-statement-source": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statement-source.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
@@ -39,7 +42,13 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refund-client-types.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REFUNDS_AND_CREDITS.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REFUNDS_AND_CREDITS.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/BANK_STATEMENTS.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-parsers/bridge.py",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-parsers/ofx_intake.py",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-parsers/mt940_engine.py",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-parsers/README.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-client-types.d.ts"
   ],
   "browserAssets": [
     {

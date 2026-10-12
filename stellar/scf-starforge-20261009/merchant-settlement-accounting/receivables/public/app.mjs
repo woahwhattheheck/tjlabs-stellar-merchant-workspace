@@ -1,6 +1,7 @@
 import {createReceivablesClient} from './client.mjs';
 import {createPaymentRequestUi} from './payment-requests.mjs';
 import {createRefundUi} from './refunds.mjs';
+import {createBankUi} from './bank-statements.mjs';
 
 const $ = selector => document.querySelector(selector);
 const e = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -20,6 +21,10 @@ const paymentUi = createPaymentRequestUi({api, openDialog, mutate, getState:()=>
 const refundUi = createRefundUi({api, openDialog, mutate, getState:()=>ui.state, getInvoice:detailInvoice,
   getAsOf:()=>ui.asOf, getCustomer:()=>ui.customer, units, amount, render,
   saveBlob, showError, setBusy, readSession, saveSession, setMessage, isLocked:()=>ui.busy || Boolean(ui.pending)});
+const bankUi = createBankUi({api, openDialog, mutate, getState:()=>ui.state, getAsOf:()=>ui.asOf,
+  units, amount, render, saveBlob, showError, setBusy, readSession, saveSession, setMessage,
+  isLocked:()=>ui.busy || Boolean(ui.pending)});
+$('#dialog').addEventListener('close',()=>bankUi.close());
 $('#operator').value = readSession('actor','merchant-operator');
 $('#as-of').value = ui.asOf;
 function customerName(customerId) {
@@ -110,7 +115,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...bankUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -124,6 +129,7 @@ async function runPending() {
     await refresh({quiet:true});
     await paymentUi.afterMutation(result,current);
     await refundUi.afterMutation(result,current);
+    await bankUi.afterMutation(result,current);
   } catch(error) {
     if (ui.pending?.requestId === current.requestId) {
       ui.pending.error=errorMessage(error);
@@ -145,6 +151,7 @@ async function refresh({quiet=false}={}) {
     $('#customer-filter').innerHTML=customerOptions(ui.customer,'All customers');
     $('#customer-filter').value=ui.customer;
     await refundUi.loadList({customerId:ui.customer,date:asOf});
+    if(ui.view==='bank')await bankUi.load({quiet:true});
     if(ui.refreshVersion!==version||ui.asOf!==asOf)return;
     render();
     if (ui.selected && !ui.editor) await selectInvoice(ui.selected);
@@ -166,8 +173,10 @@ function render() {
     if(button.dataset.view===ui.view)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
   });
   $('#status-filter').disabled=ui.view!=='invoices';
+  $('#customer-filter').disabled=ui.view==='bank';
+  $('#search').disabled=ui.view==='bank';
   if(!ui.state)return;
-  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():renderActivity();
+  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='bank'?bankUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
 function renderInvoices() {
@@ -352,7 +361,7 @@ function openDialog(title,content) {
   if(!$('#dialog').open)$('#dialog').showModal();
   setBusy(ui.busy);
 }
-function closeDialog() { paymentUi.close(); refundUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
+function closeDialog() { paymentUi.close(); refundUi.close(); bankUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
 function currencyFields(currency={code:'USD',scale:2}) {
   return '<label>Currency<input name="currencyCode" maxlength="3" pattern="[A-Za-z]{3}" value="' + e(currency.code) + '" required></label><label>Decimal places<select name="currencyScale">' +
     [0,1,2,3,4,5,6].map(scale=>'<option value="' + scale + '"' + (Number(currency.scale)===scale?' selected':'') + '>' + scale + '</option>').join('') + '</select></label>';
@@ -580,6 +589,7 @@ function draftPayload() {
 document.addEventListener('input',event=>{
   paymentUi.input(event.target);
   refundUi.input(event.target);
+  bankUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
   else if(event.target.id==='search'){ui.search=event.target.value;render();}
@@ -588,6 +598,7 @@ document.addEventListener('change',event=>{
   const target=event.target;
   paymentUi.change(target);
   refundUi.change(target);
+  bankUi.change(target);
   if(target.closest('#draft-form'))updateDraft(target);
   else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
   else if(target.id==='status-filter'){ui.status=target.value;render();}
@@ -609,6 +620,7 @@ document.addEventListener('submit',async event=>{
     const values=Object.fromEntries(new FormData(form));
     if(await paymentUi.submit(form,values))return;
     if(await refundUi.submit(form,values))return;
+    if(await bankUi.submit(form,values))return;
     if(form.id==='draft-form'){
       if(!ui.editor.lines.length)throw new Error('Add an invoice line.');
       await mutate('saveDraft',[draftPayload()],'Save invoice draft');
@@ -644,7 +656,8 @@ document.addEventListener('click',async event=>{
   try{
     if(await paymentUi.click(button))return;
     if(await refundUi.click(button))return;
-    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
+    if(await bankUi.click(button))return;
+    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();else if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');
     else if(action==='new-invoice'){

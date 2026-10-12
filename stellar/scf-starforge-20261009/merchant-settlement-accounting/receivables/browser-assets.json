@@ -64,6 +64,13 @@
         "refunds.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/bank-statements.mjs",
+      [
+        "bank-statements.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
