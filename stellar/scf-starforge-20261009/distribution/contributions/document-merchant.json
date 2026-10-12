@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "document-merchant",
+  "description": "Install a complete document merchant with source-native MintPDF, snaplab or PDFMint rendering, full-file customer input, provider usage and original paid Jobs delivery.",
+  "components": [
+    "products/document-merchant"
+  ],
+  "supportFiles": [
+    "products/document-merchant/README.md",
+    "products/document-merchant/OPERATING.md",
+    "products/document-merchant/index.d.mts",
+    "products/document-merchant/examples/report.html",
+    "products/document-merchant/examples/report.md"
+  ],
+  "commands": {
+    "document-merchant": "products/document-merchant/cli.mjs"
+  },
+  "commandDescriptions": {
+    "document-merchant": "Prepare a retained document service, review its real supplier units and run the original paid Jobs operator with complete PDF and editable-source delivery."
+  },
+  "exports": {
+    "./document-merchant": {
+      "types": "./source/products/document-merchant/index.d.mts",
+      "import": "./source/products/document-merchant/index.mjs"
+    },
+    "./document-merchant/cli": "./source/products/document-merchant/cli.mjs"
+  }
+}

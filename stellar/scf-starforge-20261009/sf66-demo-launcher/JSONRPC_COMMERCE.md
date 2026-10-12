@@ -257,3 +257,11 @@ that starts the installed Node binary with `--use-system-ca`. Both original
 start commands accept `--finality-node /absolute/trusted-node`; trusted embeddings
 pass `finalityNode` when calling `openCommerce`. This executable is selected by
 the local operator at startup. The default is the current Node executable.
+
+## Read a completed recovery without starting the merchant
+
+Trusted embeddings can call `readCommerceRpcResponse(directory, options)` from `commerce.mjs`. Supply `intentId` and, when composing with another Inbox, `expectedQueueRoot`. The result is the original job with a separate `rpcRecovery` field. Its `reads` list contains the existing recovery editions.
+
+Select one complete edition by supplying its `readId` and `expectedResponseSha256`. The reader uses the retained session and original seller compiler, original buyer terms, authenticated SF36 recovery record and exact read/completed documents. It verifies the full response before returning `rpcRecovery.responseFile`, and retains the original request/settlement and timing information. The `providerReads` field is zero for this saved-result operation.
+
+The Node buyer exposes the same behavior as `Inbox.rpcResponses` and `Inbox.rpcResponse`. The returned `InboxRpcResponse` supports the existing `verify`, `bytes`, `json`, `chunks`, and create-only `saveAs` methods. Its `native` getter remains the original attempt outcome; `recovery` contains the separately timed delivered result. The [caller task guide](../sf88-operator-buyer-cli/node/INBOX_TASKS.md#receive-an-original-recovered-rpc-result) describes complete portable receiving and offline reopening.

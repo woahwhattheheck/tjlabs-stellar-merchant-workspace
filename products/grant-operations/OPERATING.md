@@ -608,6 +608,16 @@ The command line exposes the same workflow under `operations`: `commercial-conne
 
 The planning workspace includes **Compare saved plans** for two explicit saved revisions, including named alternatives. It connects work-package and payment changes, milestone and delivery scope, staffing allocation, exact funding and capacity deltas, and complete daily cash outputs. A complete receiving package carries the selected snapshots and each original native plan ZIP. Browser, CLI and Merchant MCP use the same comparison engine. See the [saved plan comparison guide](../../stellar/scf_2026/sf47_budget_model/workspace/COMPARISON.md) for the full workflow.
 
+## Complete cash accounts and original corrections
+
+Open **Delivery operations → Cash / issuer** for the complete cash account. Choose original dates and exact network/currency/asset, inspect full payments and refund allocations, and retain the original source documents. The Accounts section keeps unspecified native values distinct from an all-account selection.
+
+A reviewed correction shows complete original and replacement observations, invoice/package/asset effects and the existing tranche/forecast work. Saving uses the original source, void and record commands inside one transaction. The retained correction chain lets an overlapping original statement recognize its current observation. Saved forecast editions retain their original snapshots; the account opens complete current inputs in the existing forecast editor.
+
+The full account ZIP contains offline HTML, complete JSON/CSVs, original correction history and the entire Operations case. Receiving validates the source and rebuilds the account before opening the same dates and dimensions. Browser drafts retain exact pending requests across navigation and use stored-revision comparisons between tabs. CLI, typed client and Merchant tools expose the same account, preview, apply, export and original request recovery.
+
+Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/CASH_ACCOUNTS.md) for the complete workflow and original native receiving continuation.
+
 ## Original source references
 
 | Area | Maintained source |

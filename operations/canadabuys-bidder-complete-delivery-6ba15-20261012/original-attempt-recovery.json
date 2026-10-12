@@ -1,0 +1,173 @@
+{
+  "schema": "commons.canadabuys.original-attempt-recovery.v1",
+  "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+  "deliveryOperationId": "CANADABUYS-BIDDER-DESK-6BA15-20261012",
+  "originalSourceCommit": "74b9132008286569588d05f5acc1f567f74beb8a",
+  "originalInput": {
+    "blob": "3ffab053a45369f3fde95e9338ac3c86e22e09f0",
+    "sha256": "970d337d8961b5e32eee658a0b85f2690db54b59f81278a577735d00f95a0f03",
+    "bytes": 1182862
+  },
+  "execution": {
+    "cellId": "1751",
+    "sessionId": 73284,
+    "producerHostPid": 3357892,
+    "producerNamespacePid": 2,
+    "producerStartTicks": "11621191",
+    "nodeNamespacePid": 6,
+    "root": "/dev/canadabuys-bidder-6ba15-1lqjz9h5"
+  },
+  "receivedPhases": [
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "01-original-v1-intake",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "02-native-v2-migration",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "03-original-award-http-intake",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "04-original-command-response-loss",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "05-evidence-bodies-and-unresolved-link",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "06-explicit-requirement-revisions",
+      "status": "PASS"
+    }
+  ],
+  "events": [
+    {
+      "event": "CANADABUYS_INPUT_READY",
+      "namespacePid": 2,
+      "procSelfStat": "3357892 (python3) R 3357891 3357891 3357891 0 -1 4194560 3319 704 0 0 2 0 0 0 20 0 1 0 11621191 40353792 2368 18446744073709551615 4329472 32290168 140730999538336 0 0 0 0 16781312 2 0 0 0 17 1 0 0 0 0 0 23068672 32290168 512208896 140730999543713 140730999545001 140730999545001 140730999549870 0"
+    },
+    {
+      "event": "CANADABUYS_FULL_SOURCE_SYNTAX_PASS",
+      "bytes": 15755,
+      "sha256": "8f2cb53f3859317a90f7ba80fb21f1a3476ed4dc2e5d5f1c579e2b54bc6dd453"
+    },
+    {
+      "event": "CANADABUYS_DIRECTORY_READY",
+      "at": "2026-10-12T20:39:02Z",
+      "directory": "/dev/canadabuys-bidder-6ba15-1lqjz9h5",
+      "directoryAttempts": [
+        {
+          "parent": "/dev/shm",
+          "reason": "insufficient free space for the complete source and workspaces",
+          "freeBytes": 18927616,
+          "freeInodes": 1034276
+        }
+      ]
+    },
+    {
+      "event": "CANADABUYS_NATIVE_STARTED",
+      "at": "2026-10-12T20:39:02Z",
+      "namespacePid": 6,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--no-warnings",
+        "/dev/canadabuys-bidder-6ba15-1lqjz9h5/programme/receiving/run-canadabuys-bidder-receiving.mjs",
+        "--application",
+        "/dev/canadabuys-bidder-6ba15-1lqjz9h5/application-source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys",
+        "--legacy-application",
+        "/dev/canadabuys-bidder-6ba15-1lqjz9h5/original-v1",
+        "--fixture",
+        "/dev/canadabuys-bidder-6ba15-1lqjz9h5/programme/receiving/canadabuys-bidder-receiving-input.json",
+        "--output",
+        "/dev/canadabuys-bidder-6ba15-1lqjz9h5/working-delivery",
+        "--playwright",
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs",
+        "--chromium",
+        "/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell"
+      ]
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "01-original-v1-intake",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "02-native-v2-migration",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "03-original-award-http-intake",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "04-original-command-response-loss",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "05-evidence-bodies-and-unresolved-link",
+      "status": "PASS"
+    },
+    {
+      "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+      "phase": "06-explicit-requirement-revisions",
+      "status": "PASS"
+    },
+    {
+      "event": "CANADABUYS_NATIVE_RUNNING",
+      "at": "2026-10-12T20:39:33Z",
+      "namespacePid": 6
+    },
+    {
+      "event": "CANADABUYS_NATIVE_RUNNING",
+      "at": "2026-10-12T20:40:03Z",
+      "namespacePid": 6
+    },
+    {
+      "event": "CANADABUYS_NATIVE_RUNNING",
+      "at": "2026-10-12T20:40:33Z",
+      "namespacePid": 6
+    }
+  ],
+  "transportFailure": {
+    "stage": "runtime-transport",
+    "message": "write_stdin failed: Unified exec process failed: exec-server transport disconnected; failed to resume exec-server session: recovery timed out after 25s",
+    "session": 73284,
+    "inputSent": true
+  },
+  "sessionReconciliation": {
+    "error": "write_stdin failed: Unknown process id 73284",
+    "session_id": 73284
+  },
+  "ownedRootReconciliation": {
+    "state": "pending",
+    "readOnlyAdmission": {
+      "cellId": "1755",
+      "result": "CreateProcess rejected before a PID/session; exec-server transport disconnected and recovery timed out after 25s"
+    }
+  },
+  "concreteApplicationCorrection": {
+    "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/operator/bidder-desk.html",
+    "original": {
+      "bytes": 51465,
+      "sha256": "a52720fe56caf27da3eeb09cf7a2c157f4d9b575348d592811817af7291fa18f"
+    },
+    "successor": {
+      "sha256": "25e608ab4095944b10bc81ca0174b2d055bda4055d03a788ce7026f307b39835",
+      "bytes": 51500
+    },
+    "reason": "The original profile retained a blank UNSPSC code. The editor rejected the displayed row before dispatching its save. The corrected parser retains blank and literal-star codes with their explicit family."
+  }
+}

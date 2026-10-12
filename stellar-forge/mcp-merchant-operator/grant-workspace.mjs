@@ -403,18 +403,29 @@ export class MerchantGrantWorkspaces {
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
-      case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
+      case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
-      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
+      cash_account:'cash-account',supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {
       const {planId, ...body} = rest; original = await client.plan(verb.slice(5), planId, body);
     } else if (verb === 'case_create') original = await client.createCase(rest);
     else if (verb === 'case_command') { const {caseId, ...body} = rest; original = await client.command(caseId, body); }
+    else if (verb === 'cash_correction_preview' || verb === 'cash_correction_apply') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...selected}=rest;
+      const document=await this.#modelInputs(alias,args,'Cash correction',GRANT_MAX_BUNDLE_BYTES);
+      for (const [key,value] of Object.entries(selected))
+        need(!Object.hasOwn(document,key) || document[key] === value,'GRANT_INPUT_CONFLICT',
+          'The supplied ' + key + ' differs from the complete retained cash correction.');
+      const body={...document,...selected};
+      original=verb === 'cash_correction_preview'
+        ? await client.cashCorrectionPreview(caseId,body)
+        : await client.cashCorrectionApply(caseId,body);
+    }
     else if (verb === 'ledger_intake_inspect') {
       original=await client.ledgerIntakeInspect(args.caseId,
         await this.#modelInputs(alias,args,'Ledger source file',GRANT_MAX_BUNDLE_BYTES));
@@ -431,6 +442,17 @@ export class MerchantGrantWorkspaces {
     else if (verb === 'statement_receive') {
       const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
       original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
+    }
+    else if (verb === 'installation_return_seed') {
+      const {caseId,...body}=rest; original=await client.installationReturnSeed(caseId,body);
+    }
+    else if (['installation_return_preview','installation_return_review_preview','installation_return','installation_return_stage'].includes(verb)) {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const selected=await this.#modelInputs(alias,args,'Installation receiving');
+      const methods={installation_return_preview:'installationReturnPreview',
+        installation_return_review_preview:'installationReturnReviewPreview',
+        installation_return:'installationReturn',installation_return_stage:'installationReturnStage'};
+      original=await client[methods[verb]](caseId,{...body,inputs:selected});
     }
     else if (verb === 'work_intake_upload') {
       const {caseId,...body}=rest;original=await client.workIntakeUpload(caseId,body);
@@ -532,6 +554,8 @@ export class MerchantGrantWorkspaces {
         completion_submit:'completionSubmit',completion_decision:'completionDecision'}[verb];
       original=await client[method](caseId,body);
     }
+    else if (verb === 'amendment_preview') original = await client.amendmentPreview(args.caseId, args.expectedVersion,
+      await this.#modelInputs(alias, args, 'Plan amendment'));
     else if (verb === 'forecast_preview') original = await client.forecastPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Forecast'));
     else if (verb === 'forecast_save') {
