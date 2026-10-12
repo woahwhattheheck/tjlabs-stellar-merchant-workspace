@@ -305,6 +305,7 @@ async function main() {
     originalBackup:{sha256:archive.sha256,bytes:archive.bytes,archive:archive.path},
     receivedDirectory:restoredDirectory,sourceFiles
   };
+  await jsonFile(join(output,'pricing-flow-result.json'),result);
   const {runTariffMcpContinuation} = await import('./native-mcp-continuation.mjs');
   result.mcp = await runTariffMcpContinuation({sourceRoot,output,flowResult:result});
   await jsonFile(join(output,'flow-result.json'),result);
