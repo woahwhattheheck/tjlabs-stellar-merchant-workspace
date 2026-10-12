@@ -380,3 +380,7 @@ Import the selected handover through the original case receiver. Its response in
 ## Original implementation evidence
 
 The current complete catalogue adds `merchant_grant_implementation_source`, `merchant_grant_implementation_preview` and `merchant_grant_implementation_prepare`. These methods use the original case version and command journal. Preview/prepare accept the existing whole-file hash-verified input and optional JSON-pointer transport. `merchant_grant_export` supports `implementation` (case/review) and `implementation-original` (case/source/SHA-256). Completion preview/prepare accept optional ordered `implementationReviewIds` (up to 20 distinct original reviews). See [the complete operator, typed-client and source-provenance contract](IMPLEMENTATION_EVIDENCE.md). The selected complete catalogue has 67 tools; previous receipt records retain their original catalogue identities.
+
+## Saved customer-use calendar
+
+The optional `document.useCalendar` records complete useful tasks, dated uses, separate DIRECT/PREPAID funding groups and original buyer receipt associations in the same immutable Installation history. The **Customer use** tab reads exact saved reports alongside current receipt/source changes, expands explicit working dates into an editable draft, exports JSON/CSV/ICS, and stages the original Cohort inputs while preserving an existing edited draft. See [Customer-use calendar](CUSTOMER_USE_CALENDAR.md) for the full document, CLI, typed client, MCP and independent receiving workflow.
