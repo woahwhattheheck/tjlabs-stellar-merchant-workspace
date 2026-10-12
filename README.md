@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Receive scientific data and review a provider handoff | [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md) | Original grid/station-table capture, native dataset editions, reviewed provider profile, merchant delivery and complete customer receiving |
 | Review and publish an economic data edition | **Applications → Eurostat economic editions** or `starforge eurostat` | Exact official source captures, reviewed dimensions, complete economic briefings, native merchant publication and original customer receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` or **Applications → Captured API merchant** | Original source review, exact route prices and policies, persistent workflows, native merchant packages, releases and complete customer receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
@@ -247,6 +248,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md): complete source, native editions, provider intake, merchant and customer receiving; [selected package recipe](stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md).
 
 - [Research Documents, managed Pipelines and full receiving](products/research/RECEIVING.md)
 - [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
