@@ -289,11 +289,12 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
     const replayed=await replayResponse.json();
     assert.equal(replayed.reused,true);
     assert.equal(replayed.renewal.sha256,accepted.renewal.sha256);
-    const handoverResponse=await fetch(caseUrl+'/handover?renewalId='+accepted.renewal.id,
-      {headers:{Origin:origin}});
+    const handoverResponse=await fetch(caseUrl+'/handover?renewalId='+accepted.renewal.id+
+      '&revision='+handover.case.revision,{headers:{Origin:origin}});
     assert.equal(handoverResponse.status,200);
     const httpHandover=await validateServiceRenewalHandover(await handoverResponse.json());
-    assert.deepEqual(httpHandover.acceptedHead,handover.acceptedHead);
+    assert.equal(JSON.stringify(httpHandover,null,2),JSON.stringify(handover,null,2),
+      'Reopening the selected historical handover must preserve its exact content after later case saves');
     const crossOrigin=await fetch(caseUrl+'/decide',{method:'POST',
       headers:{Origin:'https://cross-origin.invalid','Content-Type':'application/json'},body});
     assert.equal(crossOrigin.status,403);
@@ -313,7 +314,7 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
       'quote-bound proposed edition','latest original customer response','accepted activation',
       'saved-case replay and conflicts','exact financial handover materials','portable workspace',
       'intervening terms and closure','replacement after a reviewed amendment with a fresh quote','accepted head after closure','rehashed wrong active edition rejection','original older-workspace merge',
-      'native HTTP portfolio/read/handover','HTTP request recovery and origin guard','served renewal page and modules']};
+      'native HTTP portfolio/read/handover','stable historical handover after later saves','HTTP request recovery and origin guard','served renewal page and modules']};
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){

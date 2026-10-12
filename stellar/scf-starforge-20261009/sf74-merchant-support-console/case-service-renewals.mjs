@@ -270,9 +270,12 @@ export function openCaseServiceRenewals({caseStore, commercialDesk, workspaceId}
     }
     const accepted = loaded.service.renewals.filter(row => row.id === renewal.id && row.state === 'accepted')
       .sort((a, b) => b.revision - a.revision)[0] ?? null;
+    // A sealed historical handover depends only on its selected saved case.
+    const retainedCase = summary(loaded.value);
+    delete retainedCase.currentRevision;
     const body = {
       schema: SERVICE_RENEWAL_HANDOVER_SCHEMA,
-      case: summary(loaded.value), renewal: copy(renewal),
+      case: retainedCase, renewal: copy(renewal),
       renewalHistory: copy(loaded.service.renewals), termsHistory: copy(loaded.service.terms), acceptedHead: ref(accepted),
       sourceTerms: copy(sourceTerms), proposedContinuation: copy(proposedContinuation),
       activeTerms: activeTerms ? copy(activeTerms) : null,
