@@ -37,6 +37,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
+| Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
 | Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
@@ -249,6 +250,9 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [GTFS Schedule merchant: selected installation, exact editions and complete receiving](products/gtfs-schedule/README.md)
+- [GTFS complete operating and handover guide](products/gtfs-schedule/OPERATING.md)
 
 - [Research Documents, managed Pipelines and full receiving](products/research/RECEIVING.md)
 - [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
