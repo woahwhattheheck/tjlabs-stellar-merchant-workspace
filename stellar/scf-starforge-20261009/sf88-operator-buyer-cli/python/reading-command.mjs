@@ -5,8 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const executable = process.env.STARFORGE_READING_PYTHON || 'python3';
-// Keep the verified installed source tree unchanged when Python imports modules.
-const child = spawn(executable, ['-B', '-m', 'stellar_forge_buyer.reading_cli', ...process.argv.slice(2)], {
+const child = spawn(executable, ['-m', 'stellar_forge_buyer.reading_cli', ...process.argv.slice(2)], {
   stdio: 'inherit',
   env: { ...process.env, PYTHONPATH: [directory, process.env.PYTHONPATH].filter(Boolean).join(delimiter) },
 });

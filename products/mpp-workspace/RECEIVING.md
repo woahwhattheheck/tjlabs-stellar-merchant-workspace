@@ -1,6 +1,6 @@
 # Native MPP customer and response receiving
 
-The native customer receiver materializes the original twelve-file Charge contract/client package. The retained MCP downloader transfers an original SHA-pinned bundle or paid response from its existing export record. The channel receiver in section 6 carries the complete recurring task operation, native SDK state, merchant deliveries, source and required inputs into the receiving workspace.
+The product uses two existing receivers. The native customer receiver materializes a complete twelve-file contract/client package. The retained MCP downloader transfers an original SHA-pinned bundle or paid response from its existing export record.
 
 ## 1. Receive a customer package from the live product
 
@@ -128,42 +128,3 @@ Resource delivery and finality have their own retained states. If the response i
 Close and reopen the managed product using its same private product/native workspace and original environment selections. Original purchase IDs survive a console restart; transient job IDs may be replaced by `JOB_NOT_RETAINED` plus the saved purchase.
 
 For continued operation on another host, retain the complete native workspace, product configuration, customer file versions, original governor records and source resource files together with the corresponding installed source/runtime. A customer-facing generated bundle contains the original client contract and examples; the merchant’s private workspace remains with its operator.
-
-## 6. Receive a complete operating channel
-
-In **Channel work**, choose the actual original channel and **Create operating handover**. Use one stable handover ID. The application saves the immutable complete file before recording the transfer of channel operation.
-
-The handover contains every task edition and authority, budget reservation, original request, signed cumulative commitment, merchant profile edition, accepted delivery, exact response and close record for that channel. It also includes the native SDK namespace, executable application source, package manifest/lockfile, required handlers and selected input files.
-
-### Transfer the retained file
-
-The installed command uses the same native product:
-
-```sh
-starforge mpp-workspace channel export --dir "$MPP_PRODUCT" \
-  --input "$ORIGINAL_CHANNEL_HANDOVER_INPUT"
-starforge mpp-workspace channel handover --dir "$MPP_PRODUCT" \
-  --id "$RETURNED_BUNDLE_SHA256" --out "$COMPLETE_CHANNEL_HANDOVER"
-```
-
-The export input contains `channel`, copied from the selected original channel identity, and `handoverId`. An interrupted export repeats that same selection and returns the original file. Its `sha256` identifies the channel bundle. The downloaded file also has its own full-byte SHA-256; retain that returned file digest for transport.
-
-For MCP, call `merchant_mpp_channel_file` with console `native`, kind `handover` and the original bundle SHA as `id`. Its first read returns the full-file digest, read ID and next offset. Continue with that same `readId`, `expectedSha256` and `offset`. After a reader restart, reopen the same bundle with its retained full-file digest and offset. Use `release` when the transfer is complete.
-
-### Receive and continue in the original selected workspace
-
-Choose the actual receiving product and its exact installed native dependency directory. The receive input contains `file`, the complete retained handover path on that native host, and `dependencyRoot`, its selected runtime path:
-
-```sh
-starforge mpp-workspace channel receive --dir "$RECEIVING_MPP_PRODUCT" \
-  --input "$CHANNEL_RECEIVING_INPUT"
-starforge mpp-workspace channel state --dir "$RECEIVING_MPP_PRODUCT"
-```
-
-The browser can receive the complete bundle directly. The same original receiver checks all records and source/input files before joining them. Matching retained records allow interrupted receiving to continue; a conflicting operated record remains available for resolution. It restores source and inputs to actual receiving paths while preserving every historical profile and source identity.
-
-The READY receiving record and the full original bundle remain in that workspace. Tasks reopen as **RECEIVED**. The receiving operator selects authority for future purchases; existing reservations and signed commitments keep their original recovery path. Continue an unfinished purchase or close using its original ID. Open the same product again to retain this complete history.
-
-The outgoing workspace retains the original file and readable history after transfer. Channel operation continues in the receiving workspace. A subsequent handover includes the restored files and all retained profile editions.
-
-See the [channel work guide](../../stellar/scf-starforge-20261009/mpp-channel/README.md) for the native source closure, profile fields, task corrections and close recovery.

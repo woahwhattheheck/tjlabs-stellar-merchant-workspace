@@ -2,47 +2,6 @@
 
 This workflow turns a complete customer HTML or Markdown source file into a delivered PDF. It uses the original paid Jobs service for customer requests, file staging, payment, execution and receiving.
 
-## Build and install the complete document package
-
-The committed `document-merchant` source selection packages this document service with the original paid merchant, Request, Checkout, Jobs, result receiving, Collections, operator and runtime commands. It retains the original source declarations and browser route maps.
-
-From the maintained merchant checkout, produce the complete archive with Node 22.16 or later and the existing Python runtime:
-
-~~~sh
-node stellar/scf-starforge-20261009/distribution/build.mjs \
-  --repo /absolute/merchant-checkout \
-  --ref SOURCE_COMMIT \
-  --selection document-merchant \
-  --out /absolute/new-document-package \
-  --offline
-~~~
-
-Choose the actual committed source revision containing `distribution/selections/document-merchant.json`. The original builder writes its npm-compatible archive and manifest into the selected output directory. Keep that manifest and the original archive together. An interrupted build continues through the same command and output with `--resume`.
-
-On a customer machine, install the resulting archive into an ordinary application directory:
-
-~~~sh
-npm install --ignore-scripts --offline --omit=optional /absolute/original-document-package.tgz
-npx --no-install starforge document-merchant providers
-npx --no-install document-merchant --help
-~~~
-
-Both executables use the same complete selected source. The source installation uses the provider's native HTTPS API for rendering; the merchant's existing native payment runtime supplies the settlement dependencies and signer. For a complete private merchant runtime, use the maintained installer with the original archive:
-
-~~~sh
-starforge runtime-install prepare \
-  --dir /srv/starforge/document-runtime \
-  --archive /absolute/original-document-package.tgz \
-  --sha256 ORIGINAL_ARCHIVE_SHA256 \
-  --native --feature schema --operator
-starforge runtime-install install --dir /srv/starforge/document-runtime
-starforge runtime-install run --dir /srv/starforge/document-runtime -- document-merchant providers
-~~~
-
-The archive's own manifest supplies its dependency declarations. Add the existing `mcp` feature when this merchant will also be controlled by the merchant MCP operator. Keep provider keys and native signer credentials in the selected private runtime environment.
-
-Continue with the provider selection and retained merchant setup below. The same archive contains `jobs`, `job-workspace`, the original resolution commands and the four Applications providers for the paid merchant, checkout, result receiver and Collections. The customer flow uses their existing saved records throughout.
-
 ## 1. Select the renderer and its real account
 
 Run:
