@@ -261,6 +261,16 @@ export function receiveGrantCustomerSources(index, companion) {
   receive('risingwave-subscription-commissioning', 'Complete subscription delivery commercial and receiving package',
     /https:\/\/github\.com\/woahwhattheheck\/commons\/tree\/([a-f0-9]{40})\/(tools\/revenue_owner_console_\d{8}\/case_assets\/risingwave-subscription-delivery-pilot-\d{8})/, subscriptions);
   const billing = section(companion, BILLING)?.text || '';
+  receive('merchant-bank-statements-operation', 'Original bank statements and shared customer payment coverage',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/README\.md)/, billing);
+  receive('merchant-bank-statements-installation', 'Complete bank product installation and original runtime transfer',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/INSTALLATION\.md)/, billing);
+  receive('merchant-bank-statements-handover', 'Original bank source, remittances and complete accountant handover',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/HANDOVER\.md)/, billing);
+  receive('merchant-bank-statements-example', 'Complete bank account and original browser receiving example',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/EXAMPLE\.md)/, billing);
+  receive('merchant-bank-statements-selection', 'Committed bank application source selection',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/merchant-bank-statements\.json)/, billing);
   receive('merchant-receivables-operation', 'Customer invoices, receipts and retained accounting work',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-receivables\/README\.md)/, billing);
   receive('merchant-payment-plan-operation', 'Dated collection schedules and complete customer editions',

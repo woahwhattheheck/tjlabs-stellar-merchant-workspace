@@ -205,6 +205,16 @@ Keep the installation and planning capabilities together: selecting and comparin
 
 The product is part of the existing starting foundation. The unchanged six priced packages fund the remaining customer-specific source integration, deployment, independent buyer operation and maintainer handover.
 
+## Receive the original bank customer workflow
+
+The existing **Merchant settlement, customer billing and accountant receiving** chapter in canonical §9A now carries original bank-statement receiving, shared payment coverage, customer remittance allocation, reviewed source/payment correction and complete account close handover. The original whole-chapter receiver updates that same chapter through --manuscript.
+
+Its source links register merchant-bank-statements-operation, merchant-bank-statements-installation, merchant-bank-statements-handover, merchant-bank-statements-example and merchant-bank-statements-selection. Each record retains the chapter's actual immutable repository, commit and path. The existing source receiver preserves every other record and clears a prior blob pin when an identity changes. The complete bank product includes the original Receivables, Bank receipts, remittance, customer and managed Applications sources.
+
+Receive the newest canonical chapter and all existing source registrations into the same original four reader outputs. Preserve the complete billing, service-renewal, paid-resource and funded-package paragraphs around the bank addition. The published guide identifies source and runtime installation; a returned original account/browser result supplies its actual operated customer files and execution state. Installation and daily accounting use the same original customer directory and writer.
+
+This operating foundation supports the existing customer deployment and maintainer handover. The canonical application continues to own its original six packages, prospective delivery effort, funding and independent useful-purchase acceptance.
+
 ## Receive complete county report publication
 
 The recurring economic-report installation includes the original analyst
