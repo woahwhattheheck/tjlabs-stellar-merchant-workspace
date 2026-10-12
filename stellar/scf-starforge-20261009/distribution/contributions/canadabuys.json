@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "canadabuys",
+  "description": "Federal CanadaBuys source, qualification and partner workshare workspace",
+  "commands": {
+    "canadabuys": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/cli.mjs"
+  },
+  "commandDescriptions": {
+    "canadabuys": "Capture official CanadaBuys CSVs, review original notices, plan partner delivery and receive complete workspaces"
+  },
+  "exports": {
+    "./seller/canadabuys": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/workspace.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/workspace.mjs"
+    },
+    "./seller/canadabuys/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/client.mjs"
+    },
+    "./seller/canadabuys/domain": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/domain.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/domain.mjs"
+    },
+    "./seller/canadabuys/capture": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/capture.mjs",
+    "./seller/canadabuys/merchant": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/merchant.mjs"
+  },
+  "applicationProviders": {
+    "canadabuys": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/application-provider.mjs"
+  }
+}
