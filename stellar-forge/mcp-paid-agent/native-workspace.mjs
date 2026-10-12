@@ -6,6 +6,7 @@ import { constants } from 'node:fs';
 import { open, lstat, realpath, mkdir, rename, link, unlink, rm } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalizeHttpPathInput, matchesHttpRoute, bindHttpPath } from '../route-identity/http-path.mjs';
 import { requiredQueryKeys, prepareHttpQuery } from './query-requirements.mjs';
 import { normalizeDiscoveryArguments, discoveryRequestUrl } from './discovery.mjs';
 import { nativeRequestActions, NATIVE_REQUEST_LIMITS } from './native-request-schema.mjs';
@@ -102,7 +103,7 @@ function responseLimits(value = {}) {
 }
 
 /** New MCP state only; this never creates or replaces a wallet or spending ledger. */
-export async function initializeNativeWorkspace({directory, workspace, catalog, response = {}} = {}) {
+export async function initializeNativeWorkspace({directory, workspace, catalog, routeTemplate, response = {}} = {}) {
   need(process.platform !== 'win32', 'MCP_NATIVE_POSIX_REQUIRED');
   const root = nativeRoot(directory), operatorPath = nativeRoot(workspace);
   await privateDirectory(dirname(root));
@@ -117,10 +118,14 @@ export async function initializeNativeWorkspace({directory, workspace, catalog, 
     'MCP_NATIVE_USE_ORIGINAL_CATALOG_SESSION_SEPARATELY');
   need(discovered.timeoutMs <= 30000, 'MCP_NATIVE_DISCOVERY_TIMEOUT_EXCEEDS_30_SECONDS');
   const route = https(op.url);
+  need(routeTemplate === undefined || typeof routeTemplate === 'string' && routeTemplate.length > 0,
+    'MCP_NATIVE_ROUTE_TEMPLATE_INVALID');
+  const selectedRoute = {origin:route.origin, pathname:route.pathname, method:op.method,
+    headers:op.headers ?? {}, ...(routeTemplate === undefined ? {} : {routeTemplate})};
+  need(matchesHttpRoute(route.href, op.method, selectedRoute), 'MCP_NATIVE_ROUTE_TEMPLATE_MISMATCH');
   const manifest = {schema:SCHEMA, createdAt:new Date().toISOString(), directory:root,
     workspace:operatorPath, workspaceBinding:binding(original), catalog:selectedCatalog,
-    route:{origin:route.origin, pathname:route.pathname, method:op.method,
-      headers:op.headers ?? {}}, response:responseLimits(response)};
+    route:selectedRoute, response:responseLimits(response)};
   let created = false;
   try {
     await mkdir(root, {mode:0o700}); created = true;
@@ -157,8 +162,7 @@ function normalizedPurchase(args, manifest, current, {enforceCaps = true} = {}) 
   need(typeof args.search === 'string' && args.search.trim().length > 0 && args.search.length <= 256,
     'MCP_NATIVE_SEARCH_REQUIRED');
   const url = https(args.targetResourceURL), method = args.targetMethod ?? 'GET';
-  need(url.origin === manifest.route.origin && url.pathname === manifest.route.pathname &&
-    method === manifest.route.method, 'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
+  need(matchesHttpRoute(args.targetResourceURL, method, manifest.route), 'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
   need(typeof args.maxAtomic === 'string' && /^[1-9][0-9]{0,18}$/.test(args.maxAtomic),
     'MCP_NATIVE_SPEND_CAP_EXCEEDED');
   need(!enforceCaps || BigInt(args.maxAtomic) <= BigInt(current.config.operation.expect.maxAtomic) &&
@@ -186,8 +190,9 @@ function normalizedSelection(args) {
   need(Number.isSafeInteger(acceptIndex) && acceptIndex >= 0, 'MCP_NATIVE_ACCEPT_INDEX_INVALID');
   need(typeof args.maxAtomic === 'string' && /^[1-9][0-9]{0,18}$/.test(args.maxAtomic),
     'MCP_NATIVE_SPEND_CAP_EXCEEDED');
-  need(object(args.input) && Object.keys(args.input).every(key => ['query','body'].includes(key)),
+  need(object(args.input) && Object.keys(args.input).every(key => ['path','query','body'].includes(key)),
     'MCP_NATIVE_ARGUMENTS_INVALID');
+  const path = normalizeHttpPathInput(args.input.path);
   const query = args.input.query === undefined ? {} : args.input.query;
   need(object(query) && Object.keys(query).length <= 30, 'MCP_NATIVE_QUERY_INVALID');
   const entries = Object.keys(query).sort().map(name => {
@@ -204,6 +209,7 @@ function normalizedSelection(args) {
   need(body === null || body.toString('utf8') === args.input.body, 'MCP_NATIVE_BODY_INVALID_UTF8');
   return {request:{intentId:args.intentId, handle:args.handle, acceptIndex,
     maxAtomic:args.maxAtomic, query:Object.fromEntries(entries),
+    ...(Object.keys(path).length ? {path} : {}),
     bodySha256:body === null ? null : sha(body), bodyBytes:body?.length ?? 0}, body};
 }
 function contentType(headers) {
@@ -262,7 +268,11 @@ function runOriginalQueue({root, workspace, intentId, signal}) {
   });
 }
 
-export async function openNativeWorkspace(directory) {
+export async function openNativeWorkspace(directory, {operationCoordinator} = {}) {
+  need(operationCoordinator === undefined || typeof operationCoordinator === 'function',
+    'MCP_NATIVE_COORDINATOR_INVALID');
+  const coordinate = (key, kind, signal, task) => operationCoordinator
+    ? operationCoordinator({key, kind, signal}, task) : task(signal);
   const root = nativeRoot(directory);
   await privateDirectory(root);
   const manifest = await privateJson(join(root, 'native-workspace.json'), 65536);
@@ -271,6 +281,8 @@ export async function openNativeWorkspace(directory) {
   need(discoveryOptions(manifest.catalog).timeoutMs <= 30000,
     'MCP_NATIVE_DISCOVERY_TIMEOUT_EXCEEDS_30_SECONDS');
   responseLimits(manifest.response);
+  need(matchesHttpRoute(manifest.route.origin + manifest.route.pathname, manifest.route.method, manifest.route),
+    'MCP_NATIVE_MANIFEST_INVALID');
   await privateDirectory(join(root, 'requests'));
   await privateDirectory(join(root, 'downloads'));
   const queue = await openQueue(join(root, 'inbox'));
@@ -293,7 +305,7 @@ export async function openNativeWorkspace(directory) {
     const signal=AbortSignal.any([shutdown.signal,controller.signal,...(context.signal?[context.signal]:[])]);
     need(!closed&&!signal.aborted,'OPERATOR_ABORTED');
     const entry={controller,kind};
-    entry.promise=Promise.resolve().then(()=>task(signal));
+    entry.promise=Promise.resolve().then(()=>coordinate(key,kind,signal,task));
     active.set(key,entry);
     try{return await entry.promise;}finally{active.delete(key);}
   }
@@ -390,7 +402,8 @@ export async function openNativeWorkspace(directory) {
       ? expected.maxAtomic : current.manifest.signer.maxAtomic;
     return {schema:'stellar-forge.mcp-native-request-workspace.v1', available:true,
       route:{origin:manifest.route.origin, pathname:manifest.route.pathname,
-        method:manifest.route.method, contentType:contentType(manifest.route.headers)},
+        method:manifest.route.method, contentType:contentType(manifest.route.headers),
+        ...(manifest.route.routeTemplate === undefined ? {} : {routeTemplate:manifest.route.routeTemplate})},
       payment:{scheme:expected.scheme, network:expected.network, asset:expected.asset,
         payTo:expected.payTo, maxAtomic:ceiling},
       limits:{...NATIVE_REQUEST_LIMITS, responseBytes:responseLimits(manifest.response).maxBytes},
@@ -444,7 +457,10 @@ export async function openNativeWorkspace(directory) {
     if (record.outcome?.responseFile?.status === 'SAVED') availableActions.push('read');
     return {...nativeView(record), preparation:{source:structuredClone(metadata.source),
       pageSha256:metadata.discoverySha256, rowIndex:metadata.rowIndex, acceptIndex:metadata.acceptIndex,
-      originalListing:structuredClone(listing), accepted:structuredClone(accepted), body},
+      originalListing:structuredClone(listing), accepted:structuredClone(accepted), body,
+      pathBinding:bindHttpPath({resource:listing.resource,
+        input:{...listing.extensions?.bazaar?.info?.input, method:cfg.operation.method},
+        bazaar:listing.extensions?.bazaar}, cfg.operation.url)},
       availableActions};
   }
   async function prepareSelection(args, context) {
@@ -490,12 +506,12 @@ export async function openNativeWorkspace(directory) {
       const input = row?.extensions?.bazaar?.info?.input;
       need(Array.isArray(catalog?.resources) && object(row) && object(accepted) &&
         input?.type === 'http', 'MCP_NATIVE_HTTP_REQUIRED');
-      const advertised = https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
-      need(advertised.origin === manifest.route.origin && advertised.pathname === manifest.route.pathname &&
-        input.method === manifest.route.method, 'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
+      https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
       need(body === null || !['GET','HEAD'].includes(input.method), 'MCP_NATIVE_BODY_INVALID');
-      const selectedUrl = prepareHttpQuery({resource:{url:advertised.href}, input,
-        bazaar:row.extensions.bazaar}, {query:request.query});
+      const selectedUrl = prepareHttpQuery({resource:row.resource, input,
+        bazaar:row.extensions.bazaar}, {path:request.path, query:request.query});
+      need(matchesHttpRoute(selectedUrl.href, input.method, manifest.route),
+        'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
       need(['scheme','network','asset','payTo'].every(name => accepted[name] === expected[name]) &&
         typeof accepted.amount === 'string' && accepted.amount.length <= request.maxAtomic.length &&
         /^[1-9][0-9]*$/.test(accepted.amount) &&
@@ -537,8 +553,11 @@ export async function openNativeWorkspace(directory) {
         const row = catalog.originalListings[rowIndex];
         let url; try { url = https(typeof row.resource === 'string' ? row.resource : row.resource?.url); } catch { continue; }
         const input = row.extensions?.bazaar?.info?.input;
-        if (url.origin !== manifest.route.origin || url.pathname !== manifest.route.pathname ||
-            input?.type !== 'http' || input.method !== specification.targetMethod) continue;
+        if (input?.type !== 'http' || input.method !== specification.targetMethod) continue;
+        try {
+          bindHttpPath({resource:row.resource, input, bazaar:row.extensions.bazaar},
+            specification.targetResourceURL);
+        } catch { continue; }
         // Fixed advertised query values cannot be removed or changed by a selected request.
         const requested = new URL(specification.targetResourceURL);
         if ([...new Set(url.searchParams.keys())].some(name =>
@@ -581,8 +600,15 @@ export async function openNativeWorkspace(directory) {
       const before = await queue.show(args.intentId);
       if (before.attempt) return nativeView(before);
       need(!closed && !signal.aborted, 'OPERATOR_ABORTED');
-      const worker = await runOriginalQueue({root:queue.root, workspace:manifest.workspace, intentId:args.intentId, signal});
-      return {...nativeView(await queue.show(args.intentId)), execution:worker};
+      try {
+        const worker = await coordinate('request:'+args.intentId, 'execute', signal,
+          () => runOriginalQueue({root:queue.root, workspace:manifest.workspace, intentId:args.intentId, signal}));
+        return {...nativeView(await queue.show(args.intentId)), execution:worker};
+      } catch (error) {
+        if (error?.code === 'MCP_NATIVE_OPERATOR_BUSY')
+          return {...nativeView(await queue.show(args.intentId)), execution:'OPERATOR_BUSY'};
+        throw error;
+      }
     })();
     active.set('request:'+args.intentId, entry);
     try { return await entry.promise; } finally { active.delete('request:'+args.intentId); }
@@ -651,24 +677,24 @@ export async function openNativeWorkspace(directory) {
     status:['intentId'], recover:['intentId'], cancel:['intentId'],
     read:['intentId','byteOffset','maxBytes'], history:['limit','cursor'],
   };
-  return {
-    manifest:structuredClone(manifest),
-    registerObjects:objects.register,
-    registerDatasets:datasets.register,
-    registerReceivedDataset:datasets.registerReceived,
-    completedDataset:datasets.completedDataset,
-    completedObject:objects.completedObject,completedResponse,
-    registerAnalysis:analysis.register,
-    registerDuckDB:duckdb.register,
-    registerCollections:collections.register,
-    registerCollectionRecovery:collectionRecovery.register,
-    collectionRecoveryOpenedConnection:collectionRecovery.openedConnection,
-    async registerSourceInbox(options){need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');await currentWorkspace();return registerNativeSourceInbox(manifest,options);},
-    async call(args = {}, context = {}) {
+  async function dispatch(args = {}, context = {}) {
       need(!closed, 'MCP_NATIVE_WORKSPACE_CLOSING');
       need(object(args) && object(context) &&
         (context.signal === undefined || context.signal instanceof AbortSignal), 'MCP_NATIVE_ARGUMENTS_INVALID');
       const action = args.action ?? 'execute';
+      if (action === 'request-workspaces') {
+        need(Object.keys(args).every(key => key === 'action'), 'MCP_NATIVE_ARGUMENTS_INVALID');
+        const selected = {...await requestWorkspace(), workspaceId:'default', workspaceLabel:'Configured service'};
+        return {schema:'stellar-forge.mcp-native-request-workspaces.v1',
+          defaultWorkspaceId:'default', total:1, workspaces:[selected]};
+      }
+      if (action === 'request-history') {
+        need(Object.keys(args).every(key => ['action','limit','cursor'].includes(key)),
+          'MCP_NATIVE_ARGUMENTS_INVALID');
+        const page = await dispatch({...args, action:'history'}, context);
+        return {...page, schema:'stellar-forge.mcp-native-request-history.v1', workspaceCount:1,
+          records:page.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}))};
+      }
       if(nativeObjectActions.includes(action))return objects.call(args,context);
       if(nativeDatasetActions.includes(action))return datasets.call(args,context);
       if(nativeAnalysisActions.includes(action))return analysis.call(args,context);
@@ -710,6 +736,34 @@ export async function openNativeWorkspace(directory) {
         return nativeView(record.attempt ? record : await queue.cancel(args.intentId));
       }
       return readResult(args);
+  }
+  return {
+    manifest:structuredClone(manifest),
+    registerObjects:objects.register,
+    registerDatasets:datasets.register,
+    registerReceivedDataset:datasets.registerReceived,
+    completedDataset:datasets.completedDataset,
+    completedObject:objects.completedObject,completedResponse,
+    registerAnalysis:analysis.register,
+    registerDuckDB:duckdb.register,
+    registerCollections:collections.register,
+    registerCollectionRecovery:collectionRecovery.register,
+    collectionRecoveryOpenedConnection:collectionRecovery.openedConnection,
+    async registerSourceInbox(options){need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');await currentWorkspace();return registerNativeSourceInbox(manifest,options);},
+    async call(args = {}, context = {}) {
+      need(object(args), 'MCP_NATIVE_ARGUMENTS_INVALID');
+      const forwarded = {...args};
+      if (forwarded.workspaceId !== undefined) {
+        need(forwarded.workspaceId === 'default', 'MCP_NATIVE_WORKSPACE_UNKNOWN');
+        delete forwarded.workspaceId;
+      }
+      const value = await dispatch(forwarded, context);
+      const action = forwarded.action ?? 'execute';
+      if (!Object.hasOwn(allowedFields, action)) return value;
+      const result = {...value, workspaceId:'default', workspaceLabel:'Configured service'};
+      if (action === 'history')
+        result.records = value.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}));
+      return result;
     },
     async close() {
       if (closed) return;

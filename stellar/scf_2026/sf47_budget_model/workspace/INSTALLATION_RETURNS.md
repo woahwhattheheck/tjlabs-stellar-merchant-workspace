@@ -4,6 +4,10 @@ An Installation return carries a named receiving report back to the original own
 
 This is part of **Delivery operations → Receiving returns** in the existing Grant Operations application. Its HTTP, native CLI, typed client and MCP routes use the same workspace, case, source records, review table, transaction and request journal.
 
+## Operate the complete managed receiving
+
+[INSTALLATION_RETURN_COMPLETE.md](INSTALLATION_RETURN_COMPLETE.md) provides the complete current-source entry point. It runs the original native model, CLI and cold receive, then opens the same saved case through the managed application, typed client, MCP and desktop/mobile Page. It closes its owned service and browser before publishing one full customer archive. The optional `--core-only` stage preserves the original core result while the host completes an existing browser programme; the same saved input then finishes the Page journey.
+
 ## The complete customer journey
 
 1. In **Customer installations**, select the saved Installation edition and download its complete case ZIP. The package includes the original plan, all earlier Installation editions, recorded operating history and every attached source.

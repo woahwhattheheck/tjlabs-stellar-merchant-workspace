@@ -15,20 +15,22 @@ const HELP = [
   'export  --workspace DIR --operation DIR --application ID --case ID --expected-version N',
   '        [--name TEXT] [--allow-start] [--request-id UUID]',
   'inspect --package FILE',
-  'prepare --workspace DIR --operation DIR --package FILE --bindings FILE [--request-id UUID]',
+  'prepare --workspace DIR --operation DIR (--package FILE | --case-archive ZIP) --bindings FILE',
+  '        [--request-id UUID] [--name TEXT; native archive only]',
   'receive --workspace DIR --operation DIR',
   'save    --workspace DIR --operation DIR',
   'status  --operation DIR',
   '',
   'Export creates one complete grant-handoff.json inside the retained operation directory.',
-  'Prepare retains the complete package, explicit host bindings and original native requests.',
+  'Prepare retains the complete package or native case ZIP, explicit host bindings and original native requests.',
+  'A native ZIP starts a new Application from those host settings through the same review and save.',
   'Receive imports the original case and returns its Applications review; save commits that setup.',
   'Resume export or prepare with the same workspace and operation; the original inputs stay retained.',
   'The complete receiving guide is products/grant-operations/HANDOFF.md in the installed source.',
 ].join('\n');
 const ALLOWED = {
   export: ['workspace', 'operation', 'application', 'case', 'expected-version', 'name', 'allow-start', 'request-id'],
-  inspect: ['package'], prepare: ['workspace', 'operation', 'package', 'bindings', 'request-id'],
+  inspect: ['package'], prepare: ['workspace', 'operation', 'package', 'case-archive', 'bindings', 'request-id', 'name'],
   receive: ['workspace', 'operation'], save: ['workspace', 'operation'], status: ['operation'],
 };
 function required(value, flag) {
@@ -39,7 +41,7 @@ export async function main(args = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args, strict: true, allowPositionals: true, options: {
     workspace: { type: 'string' }, operation: { type: 'string' }, application: { type: 'string' },
     case: { type: 'string' }, 'expected-version': { type: 'string' }, name: { type: 'string' },
-    package: { type: 'string' }, bindings: { type: 'string' }, 'request-id': { type: 'string' },
+    package: { type: 'string' }, 'case-archive': { type: 'string' }, bindings: { type: 'string' }, 'request-id': { type: 'string' },
     'allow-start': { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
   } });
   if (values.help || !positionals.length) { process.stdout.write(HELP + '\n'); return; }
@@ -62,7 +64,8 @@ export async function main(args = process.argv.slice(2)) {
       expectedVersion, name: values.name, allowStart: values['allow-start'] === true, requestId: values['request-id'] });
   }
   if (action === 'prepare') return prepareGrantHandoff(model,
-    { operation, package: values.package, bindings: values.bindings, requestId: values['request-id'] });
+    { operation, package: values.package, caseArchive: values['case-archive'], name: values.name,
+      bindings: values.bindings, requestId: values['request-id'] });
   if (action === 'receive') return receiveGrantHandoff(model, { operation });
   return saveGrantHandoffApplication(model, { operation });
 }

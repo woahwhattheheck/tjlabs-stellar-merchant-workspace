@@ -11,24 +11,37 @@ This application takes an original API or JMS business request through the insta
 | `workflow_cli.py` | Direct operation, commissioning configuration, gateway and broker integration commands |
 | `workflow_server.py`, `workflow_app.*` | Local operator, authenticated gateway API, complete file downloads and receiver inbox |
 | `kestra/` | Six complete native flows, deployment renderer, original JMS transport bridge and native header producer |
-| `WORKFLOW_ANALYSIS.md`, `WORKFLOW_EXAMPLE.json` | Native source/Analysis configuration and the retained WRI commissioning profile |
+| `WORKFLOW_ANALYSIS.md`, `WORKFLOW_EXAMPLE.json`, `WORKFLOW_SUPPLIER_EXAMPLE.json` | Native source/Analysis configuration, retained WRI profile and original paired supplier CSV profile |
+| `products/conapi/supplier-report/` | Original supplier CSV parser, comparison/rules engine, editable browser, CLI export and complete catalogue coverage |
 
 Run on Linux with Python 3.11 or later and the existing installed Analysis dependencies. The original Datasette capture route uses the installed Node runtime. The selected Kestra version, plugins and JMS provider dependencies are recorded in [the native flow guide](kestra/README.md) and [its source selection](kestra/NATIVE_SOURCES.json).
 
-The existing `starforge datasette-analysis` wrapper accepts `-- workflow` followed by the arguments below. It selects the original installed Python, checks the selected complete source manifest, and preserves all the existing Analysis commands. A direct Python invocation is also supported from that same installed source.
+The existing `starforge datasette-analysis` wrapper requires the original runtime and installed Python selection before `-- workflow`. Read these values from the retained runtime binding and Python installation; `runtimeId` is 24 lowercase hexadecimal characters and `installationId` is 64. The wrapper selects that installation's Python and complete product source:
+
+```sh
+starforge datasette-analysis \
+  --runtime-workspace /var/lib/conapi/runtime-workspace \
+  --runtime-directory /var/lib/conapi/runtime \
+  --runtime-id ACTUAL_24_HEX_RUNTIME_ID \
+  --installation-id ACTUAL_64_HEX_PYTHON_INSTALLATION_ID \
+  -- workflow status --workspace /var/lib/conapi/workflows --history
+```
+
+Use the actual absolute directories and IDs from the installation. A direct Python invocation is also supported from that same installed source. In the commands below, `python3` is the selected installation's Python; use its absolute `installation.python` path when it is not the current shell's interpreter.
 
 ## Bind the actual installation
 
-The native Analysis operator stays open in its own terminal or service. Reuse its actual workspace and original 32-character operation ID:
+The native Analysis operator stays open in its own terminal or service. Set `CONAPI_SOURCE` to the selected binding's actual `sourceRoot`; the example shows a built package's `source` directory. Reuse the native Analysis operator's actual workspace and original 32-character operation ID:
 
 ```sh
-ANALYSIS_ROOT=/opt/tjlabs/merchant/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis
+CONAPI_SOURCE=/opt/tjlabs/merchant/source
+ANALYSIS_ROOT="$CONAPI_SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis"
 python3 -I "$ANALYSIS_ROOT/cli.py" serve --workspace /var/lib/conapi/analysis --operation-id ACTUAL_32_HEX_OPERATION_ID --port 0
 ```
 
 For a new native Analysis workspace, generate its operation ID once and retain that ID in the installation. For an existing workspace, read its actual operation ID. The workflow adapter checks that it is talking to that same original operation. [WORKFLOW_ANALYSIS.md](WORKFLOW_ANALYSIS.md) gives the full native receiving and original source sequence.
 
-Prepare the actual source/report template. Its `profile` is the business profile emitted by the original gateway. Its source can be a complete native handover, retained customer edition, or fresh Datasette capture. Its SQL references reviewed original collection and column names and binds the business parameters through the native query parameter interface.
+Prepare the actual source/report template. Its `profile` is the business profile emitted by the original gateway. Its source can be a complete native handover, retained customer edition, fresh Datasette capture, or an original CSV file with its publisher metadata and reviewed key. Its SQL references reviewed original collection and column names and binds the business parameters through the native query parameter interface.
 
 Render the native deployment first when using JMS. The renderer needs the final intended worker configuration path; it can render before that configuration file is created:
 
@@ -44,6 +57,83 @@ Use the complete original built Datasette product archive as `sourceArchive`. Th
 For two related feeds, set a stable `sourceAlias` and name the other source in `relatedSources`. The native adapter keeps each complete edition and its reviewed mappings and supports useful queries joining those actual sources. The detailed native contract and supported SQL tokens are in WORKFLOW_ANALYSIS.md.
 
 Keep broker and callback credential values in the installation's secret service or process environment. Configuration carries ordinary references to their names. The native deployment's result destination, correlation mode and optional reply destination must match `delivery.jms` in the worker profile.
+
+## Supplier review and catalogue coverage
+
+The installed Datasette selection includes the complete original supplier product at
+`products/conapi/supplier-report/`. The same distribution exposes
+`starforge supplier-report`; arguments go unchanged to the maintained supplier CLI.
+The original module, CLI, editable browser, rules, source examples and operating guides
+are included in the application source archive.
+
+Start with `WORKFLOW_SUPPLIER_EXAMPLE.json` and the original supplier comparison
+workspace. A source of kind `csv` retains the complete CSV bytes, original publisher
+metadata, reviewed key columns and parser identity. The main price feed uses its
+original `name` key; the companion catalogue uses its original `url` key. Both are
+imported through the native Analysis source-document interface. Each cell keeps its
+original string spelling, including blank amounts, explicit zeroes and the publisher's
+period wording. Review and projection remain part of the native source edition.
+
+Bind actual installed paths once:
+
+```sh
+SUPPLIER_ROOT="$CONAPI_SOURCE/products/conapi/supplier-report"
+python3 -I "$ANALYSIS_ROOT/workflow_cli.py" configure \
+  --template "$ANALYSIS_ROOT/WORKFLOW_SUPPLIER_EXAMPLE.json" \
+  --source-csv /var/lib/conapi/source/published-pricing.csv \
+  --source-metadata /var/lib/conapi/source/datapackage.json \
+  --related-csv catalog=/var/lib/conapi/source/services-catalogue.csv \
+  --related-metadata catalog=/var/lib/conapi/source/datapackage.json \
+  --supplier-component "$SUPPLIER_ROOT" \
+  --supplier-workspace /var/lib/conapi/supplier/reviewed.json \
+  --supplier-table-name supplier_feed_accepted \
+  --supplier-pricing /var/lib/conapi/source/published-pricing.csv \
+  --supplier-catalogue /var/lib/conapi/source/services-catalogue.csv \
+  --supplier-metadata /var/lib/conapi/source/datapackage.json \
+  --analysis-workspace /var/lib/conapi/analysis \
+  --operation-id ACTUAL_32_HEX_OPERATION_ID \
+  --source-archive /var/lib/conapi/source/Complete_Datasette_Product.zip \
+  --flow-delivery /etc/conapi/rendered-flows/flow-delivery.json \
+  --output /etc/conapi/supplier-workflow.json
+```
+
+Use the actual original filenames and workspace selected for the request.
+`--related-csv ALIAS=PATH` and `--related-metadata ALIAS=PATH`
+can be repeated for other named sources. Existing descriptor paths in the template
+are also resolved and hashed when no override is supplied. The profile retains the
+original source and publisher fields, exact CSV/parser hashes and complete supplier
+workspace hash. The native supplier request and comparison identities stay attached
+to their original reviewed workspace and are explicitly linked to this business request.
+
+`delivery.supplier.sourceBindings` names which original comparison side belongs to each
+native CSV source. For example, `{"prices":"candidate"}` binds the actual candidate CSV
+in the supplier manifest to the `prices` edition's complete source hash. Choose `baseline`
+when that is the original selected side. The catalogue coverage's `pricingAlias` and
+`catalogueAlias` bind its original CSVs to the same named native editions. These explicit
+bindings keep a reviewed comparison attached to its actual source files.
+
+The native adapter runs the original supplier exporter beneath the request's private
+workspace, generates the complete original-source catalogue coverage, and joins all
+files to the native Analysis delivery. The public result includes the supplier's actual
+request, comparison, revision and status with the complete attachment name map.
+
+A complete workflow handover places these files together under
+`delivery/supplier/` using their original basenames. The CLI manifest remains
+beside `workspace.json`, `review.html`, original sources, rules and report files.
+The Source and report tab shows the original supplier comparison, revision and review
+status and can download the complete project directly. After `workflow receive`, run
+`node RECEIVED_WORKSPACE/received/delivery/supplier/supplier-report-cli.mjs serve --port 8765`,
+open the printed localhost address, and load the adjacent `workspace.json` to continue
+review. The supplier manifest retains every original data file and all editor, CLI,
+coverage and attachment source files so this received directory can export the next
+complete reviewed edition. Export that complete reviewed workspace through
+the installed supplier CLI, then select its new original workspace for a successor
+business request. Re-exporting the received workflow preserves this directory layout,
+its original manifest and every complete attachment.
+
+See the supplier component's `NATIVE_ATTACHMENTS.md` and
+`CATALOGUE_COVERAGE.md` for the complete file and source contracts, and
+`WORKFLOW_ANALYSIS.md` for paired native source queries and report continuation.
 
 ## Open the operator
 

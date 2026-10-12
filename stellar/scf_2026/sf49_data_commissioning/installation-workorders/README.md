@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality and Lutra QGIS migration. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality, Lutra QGIS migration, supplier-catalogue, supplier-order, Stellarcarbon and CFCE/GiveCredit. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -13,30 +13,46 @@ The maintained commercial importer remains the entry for an original customer Wo
 | prepare.mjs | Node CLI; complete local JSON input, private create-only output and exact-byte receiving metadata |
 | receive.mjs | Complete native source intake, original Installation refresh/save and full-case receiving driver |
 | prepare-core.mjs | Pure preparation functions, selected-source checks and complete workorder rendering |
-| profiles.mjs | Shared installed-profile discovery, schema/identity validation and exact complete-source metadata |
+| profiles.mjs | Shared installed-profile catalogue and complete-source loader used by preparation and receiving |
+| lutra-qgis.json | Complete approved-source mapping → native vector migration → two QGIS projects → corrected edition and independent handover |
+| LUTRA_QGIS.md | Original Lutra scope, full seven-stage implementation, mapping workbook, native cartography, receiving and operator sessions |
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
+| stellarcarbon.json | Whole source edition → customer/project assignments → complete statements → original accounting and editable receiving |
+| cfce-givecredit.json | Registry/receipt/ledger intake → provider funding → carbon associations → donor/initiative statements and editable receiving |
+| CARBON_REPORTING.md | Complete source bindings, commercial setup, statement operations and independent native receiving for both reporting desks |
 | queryfarm.json | Complete result acquisition → retained VGI/SQL use → deliberate next edition → original receiving task |
 | ars-air-quality.json | Complete source intake → named air-quality review → client report/delivery → correction and original receiving task |
-| lutra-qgis.json | Complete baseline/corrected vector migration → two native QGIS projects/publications → original independent receiving and operator handover |
-| LUTRA_QGIS.md | Full Lutra source, commercial phases, native operation, correction, complete receiving and handover |
+| supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
+| supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
+| source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
+| SUPPLIER_WORKSHARES.md | Full source preparation, phase-ID correction, commissioning, original native receiving and commercial/funding treatment |
 | CUSTOMER_PROGRAMMES.md | Customer task selection, source semantics, recurring-use cadence and original-case commissioning for Query.Farm and ARS |
 
-The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. Every complete profile and its operating guide in this maintained directory is included in the selected source.
+The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. All complete profiles and their operating guides are included in its selected source.
 
-Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library and makes no service calls. The selected customer applications retain their own native runtime/dependency requirements.
+Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library; the sources command also uses Python's standard library and the original SF47 Workshare importer. These local preparation commands make no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
-## Discover the installed customer programmes
+## Installed customer profiles
+
+Run the installed catalogue before selecting a workorder:
 
 ~~~sh
 starforge grant-installation-workorder profiles
-
-node stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mjs profiles
+# From this source directory:
+node prepare.mjs profiles
 ~~~
 
-The catalogue returns each installed profile's ID, title and complete-file source identity. Both commands use the same profile loader. A complete new customer profile JSON and guide join this directory; matching packaged profiles are discovered by the preparer and receiver. Each profile's schema and ID must match its regular source file. The loader retains the existing 2 MiB source-file limit and reads the selected complete JSON before preparation or native customer receiving.
+The result lists each complete installed profile's ID, title and exact source
+file descriptor. Preparation and receiving both use this same maintained
+catalogue. A new complete profile can therefore join the original programme
+without a second edit to fixed command selectors.
 
-Choose the actual customer programme from that installed catalogue. [LUTRA_QGIS.md](LUTRA_QGIS.md) gives the full original migration scope and native operating route.
+Select the exact ID returned by this installed source, and use the matching
+original customer seed and complete bindings. The catalogue retains the
+existing CoCart, Blockscout, Query.Farm, ARS, supplier and carbon programmes
+alongside Lutra; all other case and receiving behavior remains in the original
+applications.
 
 ## 1. Receive the original commercial case
 
@@ -65,7 +81,7 @@ The [original Installation guide](../../sf47_budget_model/workspace/INSTALLATION
 
 ## 2. Prepare customer bindings
 
-Choose the original customer's installed profile, such as cocart, blockscout, queryfarm, ars-air-quality or lutra-qgis for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys.
+Choose cocart, blockscout, queryfarm, ars-air-quality, supplier-catalogues, supplier-orders, stellarcarbon or cfce-givecredit for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
 
 ~~~sh
 node prepare.mjs template --profile cocart \
@@ -168,6 +184,39 @@ Query.Farm covers the complete acquired data result, original VGI catalog/worker
 
 Use [Customer programmes](CUSTOMER_PROGRAMMES.md) for the full operating journeys, first-installation commands, existing-installation updates and a recurring-use calendar grounded in the actual source cadence.
 
+## Lutra QGIS migration and handover
+
+Use [Lutra QGIS migration](LUTRA_QGIS.md) for the complete seven-stage
+implementation and original five-phase workshare. The customer scope covers
+ten approved layers, two complete QGIS projects, explicit field/key/null/CRS
+mapping, native outputs, one corrected source edition, independent receiving
+and two operator sessions. The original programme is 60 hours across twelve
+business days for USD 8,000, with its original payment and acceptance steps.
+
+Prepare its full original seed with --profile lutra-qgis. Retain the mapping
+register and editable XLSX, source permissions, original native QGZ/QPT/PDF/PNG
+outputs and whole-workspace receiving alongside the commissioned case. Extra
+source editions and managed operations use their own customer selection.
+
+## Supplier catalogue and order workshares
+
+Use [Supplier workshares](SUPPLIER_WORKSHARES.md) for complete original proposal
+intake and actual customer commissioning. The catalogue profile covers full
+source editions, selected PIM import and complete recipient catalogue delivery.
+The order profile covers selected customer profile/mapping, original document
+workflow, configured HTTPS, complete customer receiving and return.
+
+`starforge grant-installation-workorder sources` retains every original packet
+and document, verifies explicit phase-effort pointers and the quoted total, and
+calls the original Workshare reader before publishing the accepted commissioning,
+complete packet group and `SUPPLIER_RECEIVING.json`. The existing
+`grant-installation-receive` then continues the original Operations case.
+
+The professional fee, phase plan and commissioning state remain in the original
+Workshare. Paid service amounts and deployment/receiving authority remain actual
+customer selections. An accepted phase-ID-only amendment retains the exact
+original source and its reversible mapping.
+
 ## Funding and meaningful cohort work
 
 Installation assignments reference the pinned original funded packages. They do not add hours or alter the application request. Retain separately priced commercial work in its original Workshare. Record each actual engineering hour once, with its real funding basis; commercial implementation and grant-funded future development use their original respective work records.
@@ -186,9 +235,9 @@ The tool uses the existing native schema. Its complete output continues through 
 
 ## Complete native receiving in one operation
 
-The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and the complete installed profiles.
+The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and all complete profiles.
 
-Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm, ARS and Lutra use their own complete original commissioning sources and receiving packets with their matching installed profile IDs.
+Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. Optional bytes verifies the exact original length; optional mediaType retains an additional source document's actual type (application/json remains the default). Commissioning and packet roles use application/json. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm and ARS use their own complete original commissioning sources and receiving packets with their matching profile IDs.
 
 ~~~sh
 starforge grant-installation-receive \

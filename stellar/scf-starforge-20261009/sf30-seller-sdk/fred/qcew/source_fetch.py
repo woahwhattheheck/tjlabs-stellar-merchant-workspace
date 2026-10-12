@@ -81,30 +81,33 @@ class RemoteZip(io.RawIOBase):
                 length = int(response.headers.get("Content-Length", "0"))
                 if length and (length > MAX_ARCHIVE or shutil.disk_usage(self.directory).free < length + 32 * 1024 * 1024):
                     raise ValueError("The server requires a full original ZIP and this operation has insufficient archive capacity")
-                archive_path = self.directory / ("archive-" + digest(self.url.encode())[:16] + ".zip")
+                # The complete fallback is private and unlinked immediately on POSIX.
+                # Process death cannot leave a name that rejects the same intake's retry.
+                archive = tempfile.TemporaryFile(mode="w+b", prefix=".qcew-archive-", dir=self.directory)
                 received, hash_value = 0, hashlib.sha256()
-                fd = os.open(archive_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
                 try:
-                    with os.fdopen(fd, "wb") as output:
-                        while True:
-                            block = response.read(1024 * 1024)
-                            if not block: break
-                            received += len(block)
-                            if received > MAX_ARCHIVE: raise ValueError("Original annual ZIP exceeds one GiB")
-                            output.write(block); hash_value.update(block)
-                        output.flush(); os.fsync(output.fileno())
+                    os.fchmod(archive.fileno(), 0o600)
+                    while True:
+                        block = response.read(1024 * 1024)
+                        if not block: break
+                        received += len(block)
+                        if received > MAX_ARCHIVE: raise ValueError("Original annual ZIP exceeds one GiB")
+                        archive.write(block); hash_value.update(block)
+                    archive.flush(); os.fsync(archive.fileno())
                     if length and received != length: raise ValueError("Full original ZIP Content-Length differs")
-                    self.local = open(archive_path, "rb")
-                    self.local_path = archive_path
+                    if self.total is not None and received != self.total:
+                        raise ValueError("Original archive size changed before full-file fallback")
                     self.total = received
                     receipt.update({"completedAt":now(),"bytes":received,"sha256":hash_value.hexdigest(),"mode":"complete_archive"})
                     self.receipts.append(receipt)
                     self.full_sha256 = hash_value.hexdigest()
                     self.validator = {key:response.headers.get(key) for key in ("etag","last-modified") if response.headers.get(key)}
-                    self.local.seek(start); return self.local.read(end - start + 1)
-                except Exception:
-                    if self.local is None and archive_path.exists(): archive_path.unlink()
-                    raise
+                    archive.seek(start)
+                    result = archive.read(end - start + 1)
+                    self.local, archive = archive, None
+                    return result
+                finally:
+                    if archive is not None: archive.close()
             if response.status != 206: raise ValueError("Original range response is neither 206 nor a full 200")
             match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", response.headers.get("Content-Range", ""))
             if not match: raise ValueError("Original byte range lacks a complete Content-Range")
@@ -148,7 +151,6 @@ class RemoteZip(io.RawIOBase):
     def close(self):
         if self.local is not None:
             self.local.close()
-            if self.local_path.exists(): self.local_path.unlink()
             self.local = None
         super().close()
 def acquire(directory, years, areas):

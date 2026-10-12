@@ -54,3 +54,43 @@ The authoritative current case and source-owner integration are kept in the orig
 https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791836903596469
 
 The separate customer Analysis workbook programme retains its original receiver and saved analytical workspace.
+
+## Browser runtime continuation on a receiving host
+
+The first recovered host completed the canonical installed Git fetch and checkout, then revealed that the preceding host's Chromium path was absent. The whole genuine checkout and completed publisher were saved as the exact 224,425,002-byte archive in 22 ordered parts; the canonical parts manifest is libfile_f62e9b0bfa1481918321ab975cf4d87e. The complete receiver now downloads and verifies each original part, concatenates them in order, verifies the full archive and restores that same workspace.
+
+The controller resolves the actual existing Playwright module and its own Chromium executable path, with supported host browser commands as additional candidates. When an existing browser runtime is absent, it selects the actual published Playwright version, installs that exact version with its npm package lock in native-browser/node, and invokes its original Chromium installer under native-browser/browsers. The real executable version and paths are retained before the maintained installed browser programme begins. DATASETTE_PLAYWRIGHT and DATASETTE_CHROMIUM can select already equipped paths.
+
+A completed publisher save is reused when the current complete publisher result and original source identities exactly match the retained completed-phase report and both returned saved file identities are present. This keeps the original publisher artifact while the actual installed runtime continues. The final archive retains the current complete application, repository objects, browser runtime, original workspaces, downloads, logs and screenshots.
+
+## Empty directory restoration
+
+The actual full-archive receiving operation restored all Git files and object bytes, but the predecessor's file-only inventory omitted empty .git/refs. Git therefore could not recognize the otherwise complete repository. This edition records every retained directory's original mode and modification time in the complete manifest and restores those directories alongside all original files and runtime links. For the already saved predecessor, the controller checks its detached HEAD, config and object store, then uses Git's own initialization to recreate the missing Git directories. It verifies that the original HEAD bytes remain unchanged and resolves the exact selected commit before continuing. That original repair completed successfully in the native receiving run on 12 October.
+
+Independent canonical archive-part downloads use four workers, while assembly remains ordered and each part plus the entire archive must match its original byte count and SHA256. The actual22-part restoration completed without repeating the source fetch or the completed publisher operation.
+
+
+## Existing browser selected on the receiving host
+
+The 21:43 UTC continuation restores the complete 226,343,282-byte archive with SHA-256 `dce93f305f636c9266f8a768382ce840daf1a1308d66885ff86050baa67c6c45`, using all 22 saved parts and the exact manifest `libfile_6384df28cb18819191dc60e2e80080a6`. The previous receiver exited after that save. The current host has Playwright 1.62.1 and a working Chrome for Testing 151.0.7922.34 at `/workspace/scratch/64b7f381b23e/browser-runtime/chrome-151.0.7922.34/chrome-linux64/chrome`. The complete receiver considers that actual existing executable before invoking a browser installer. `DATASETTE_CHROMIUM` remains the explicit host override. The selected executable and its actual version are recorded in the original programme result.
+
+
+## First installed build and retained receiving process
+
+The actual installed invocation reached the original browser runtime at 21:45:55 UTC, then returned `ENOENT` for `installed/build`. Its maintained caller had requested `resume: true` on the first build, while the original build API requires an existing private output for resume. The complete corrected runner selects `resume` from the actual existence of the original build directory. It creates the first output through `buildDistribution` itself, and retains native resume for partial or complete outputs. The original source commit, application inputs and installed journal identity remain unchanged. The runner repair records both complete source hashes and retains the original runner alongside the changed executable.
+
+The complete 227,281,857-byte saved workspace (`260c3b71361aeda2561f1d486933703ae921dc7dd8fdad359f9c2d87015a9962`; manifest `libfile_e726231170f48191841c57f404e8ed17`) is the receiving input. This invocation retains its private producing process after the complete save, allowing reviewed original-source corrections and the already joined Conapi continuation to use the same workspace. It accepts a complete source body with operation, original root and SHA-256 over its existing private stdin, saves that exact source before execution, and reports the actual result. Closing checks the saved installed result for `COMPLETE`; a saved incomplete programme exits 1.
+
+## Continue on a host with changing disk capacity
+
+The complete entrypoint now streams each original ZIP member in 256 KiB blocks, including the retained Git packs. It retains the archive's directory metadata as well as every regular file and symbolic link. The original source, request, publisher input and installed journal keep their existing identities.
+
+Transfer placement is explicit in the embedded original operation. This continuation selects its private /dev directory after the shared disk returned ENOSPC. A host with adequate disk can select transfer_parent or DATASETTE_TRANSFER_DIRECTORY for the same complete transfer. Temporary helper state, npm cache and delivery archives use that selected directory. /dev is memory-backed; its filesystem free space shares the host's cgroup memory budget.
+
+The receiver reuses a complete local checkpoint only after checking all bytes and its full SHA-256. It can also recover exact original parts from the prior owned transfer directory or its partially assembled prefix. Every reused part is checked against its original manifest. After the new whole archive is verified, the previous partial transfer is removed only if it is a regular single-link file, all its bytes match that complete archive's prefix, and its device, inode, size and modification time are unchanged.
+
+Canonical read-only preparation and byte downloads retry the same pinned file selection on HTTP 429, 502, 503 or 504, up to four attempts. Version, part and whole-archive checks still apply. The unchanged canonical helpers own the service calls, transfer bytes and metadata.
+
+The producer retains its private input stream after the native programme and complete save. If saving itself fails, the same receiver remains available for source correction and the original archive continuation. An actual saved result is reported only after its canonical file rows contain both persistent IDs. Send complete reviewed Python source using the existing operation/root/source/SHA-256 protocol described above; the input source is retained before execution.
+
+The 22:11 continuation restored the full 227,281,857-byte original checkpoint (SHA-256 260c3b71361aeda2561f1d486933703ae921dc7dd8fdad359f9c2d87015a9962), reused the complete publisher state, and entered the original installed build. It released 46,137,344 bytes from its own failed disk transfer after full-prefix comparison. The independent completed publisher package remains the same 12,919,416-byte, 783-member delivery.

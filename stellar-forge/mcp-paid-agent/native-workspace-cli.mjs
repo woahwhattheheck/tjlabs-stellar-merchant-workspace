@@ -10,7 +10,7 @@ import { renderQueueReport } from '../../stellar/scf-starforge-20261009/sf88-ope
 
 const print = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
 const fail = code => { throw Object.assign(new Error(code), {code}); };
-const commands = {init:['--workspace','--catalog','--max-response-bytes','--response-timeout-ms'],
+const commands = {init:['--workspace','--catalog','--route-template','--max-response-bytes','--response-timeout-ms'],
   call:['--input'], serve:['--port','--duckdb-description','--duckdb-description-sha256','--duckdb-workspace-id'], report:['--out'], inspect:[],
   'objects-register':['--description'], 'datasets-register':['--description'],
   'datasets-receive':['--id','--room','--session'],
@@ -48,7 +48,7 @@ async function main(args) {
   if (args.length === 1 && args[0] === '--help') {
     process.stdout.write(
       'Native MCP buyer using the original SF88 workspace and inbox.\n' +
-      'init --dir ABS --workspace EXISTING_SF88 [--catalog JSON] [--max-response-bytes N] [--response-timeout-ms N]\n' +
+      'init --dir ABS --workspace EXISTING_SF88 [--catalog JSON] [--route-template /route/:name] [--max-response-bytes N] [--response-timeout-ms N]\n' +
       'serve --dir ABS [--port N] [--duckdb-description PRIVATE_JSON] (requires existing MCP_ACCESS_TOKEN)\n' +
       '  [--duckdb-description-sha256 SHA256 --duckdb-workspace-id ORIGINAL_32_HEX_ID]\n' +
       'duckdb-register --dir ABS --description PRIVATE_ORIGINAL_DUCKDB_REGISTRATION_JSON\n' +
@@ -67,6 +67,7 @@ async function main(args) {
   const {command, values:v} = parse(args), directory = v['--dir'];
   if (command === 'init') return print(await initializeNativeWorkspace({
     directory, workspace:v['--workspace'],
+    ...(v['--route-template'] ? {routeTemplate:v['--route-template']} : {}),
     ...(v['--catalog'] ? {catalog:await input(v['--catalog'], 65536)} : {}),
     response:{maxBytes:number(v['--max-response-bytes']), timeoutMs:number(v['--response-timeout-ms'])},
   }));

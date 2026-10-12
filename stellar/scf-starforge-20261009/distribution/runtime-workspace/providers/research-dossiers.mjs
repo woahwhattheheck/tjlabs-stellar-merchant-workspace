@@ -19,7 +19,7 @@ const ZOTERO_FILES = [
 ];
 function selectedConnection(settings) {
   return Boolean(settings.objectStateDirectory || settings.connectionFile ||
-    settings.zoteroStateDirectory || settings.extractionPython || settings.customerCommerceHost);
+    settings.zoteroStateDirectory || settings.extractionPython || settings.customerCommerceHost || settings.customerQuotesHost);
 }
 const COMMERCE_FILES = [
   'customer-commerce/configuration.mjs', 'customer-commerce/contracts.mjs',
@@ -40,6 +40,26 @@ async function commerceSourceSelection(filename, modulePath) {
   need(typeof readCommerceConfiguration === 'function', 'APPLICATION_RESEARCH_COMMERCE_READER_REQUIRED',
     'Use the original paid Research host configuration reader from the selected runtime.');
   return readCommerceConfiguration(absolute(filename));
+}
+const QUOTE_FILES = [
+  'customer-quotes/launch-inspection.mjs', 'customer-quotes/configuration.mjs',
+  'customer-quotes/contracts.mjs', 'customer-quotes/workspace.mjs', 'customer-quotes/model.mjs',
+  'customer-quotes/files.mjs', 'customer-quotes/routes.mjs', 'customer-quotes/client.mjs',
+  'customer-quotes/operator.mjs', 'customer-quotes/cli.mjs', 'customer-quotes/browser-assets.json',
+  'customer-quotes/public/index.html', 'customer-quotes/public/browser.mjs', 'customer-quotes/public/style.css',
+  'workspace-client.mjs', 'workspace-files.mjs', 'customer-updates/files.mjs',
+  '../../sf74-merchant-support-console/case-store.mjs',
+  '../../sf74-merchant-support-console/case-commercial.mjs',
+  '../../sf74-merchant-support-console/commercial/operator.mjs',
+  '../../sf97-merchant-revenue-ops/workspace/model.mjs',
+  '../../sf97-merchant-revenue-ops/planning/workspace.mjs',
+  '../../sf97-merchant-revenue-ops/tariffs/workspace.mjs',
+];
+async function quotationSourceSelection(directory, configurationFile, modulePath) {
+  const {inspectResearchQuoteLaunch} = await import(pathToFileURL(modulePath).href);
+  need(typeof inspectResearchQuoteLaunch === 'function', 'APPLICATION_RESEARCH_QUOTE_READER_REQUIRED',
+    'Use the original quotation launch inspector from this selected Research installation.');
+  return inspectResearchQuoteLaunch({directory, configurationFile});
 }
 const DOCUMENT_FILES = [
   'unstructured-workspace.mjs',
@@ -77,19 +97,21 @@ export default {
   schema: APPLICATION_PROVIDER_SCHEMA, id: "research-dossiers", order: 480,
   catalog({ common, field }) { return [{ id: 'research-dossiers', command: 'research-workspace', requiredSource: 'stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/server.mjs',
     title: 'Research dossiers', terminal: false,
-    description: 'Operate original Research sources, independent extraction, appraisal, reviewed publications, customer updates and Zotero, with retained history and complete portable receiving.',
+    description: 'Operate original Research sources, independent extraction, appraisal, reviewed publications, customer quotations, paid deliveries, customer updates and Zotero, with retained history and complete portable receiving.',
     fields: [field('workspaceDirectory', 'Private research dossiers directory', 'path', true,
       'An existing directory or one new directory in an existing private parent.'),
       field('objectStateDirectory','Original private Object Buyer state','path',false,
         'Optional existing Object application. Its completed files become available for reviewed Research processing.'),
       field('connectionFile','Private Research connection file','path',false,
-        'Defaults to research-connection.json in this Research directory when Object, Zotero, an extraction interpreter or paid delivery is selected. Existing clients use this private connection for the same listener.'),
+        'Defaults to research-connection.json in this Research directory when Object, Zotero, an extraction interpreter, paid delivery or quotations is selected. Existing clients use this private connection for the same listener.'),
       field('zoteroStateDirectory', 'Original private Zotero library directory', 'path', false,
         'Optional existing library or new directory in an existing private parent. Open Zotero explicitly from Research; preserve its original captures and reviews.'),
       field('extractionPython', 'Original extraction Python executable', 'path', false,
         'Optional absolute executable for retained source values and workbook processing. Review pins the selected executable and its original interpreter environment.'),
       field('customerCommerceHost', 'Original paid Research host configuration', 'path', false,
         'Optional private JSON selecting existing SF101 merchant and Buyer aliases. Review pins this file and its original checkout/agent configuration files; the original Buyer keeps its approval and payment operation.'),
+      field('customerQuotesHost', 'Original customer quotation host configuration', 'path', false,
+        'Private JSON selecting the original customer case store and complete observed pricing profiles. Review shows the exact source files; the same native case and pricing engines continue after launch.'),
       field('openalexWorkspaceDirectory', 'Existing OpenAlex research workspace', 'path', false,
         'Optional saved collection with its original queries, editions, pages and review decisions.'),
       field('openalexModule', 'Original OpenAlex workspace module', 'path', false,
@@ -147,6 +169,12 @@ export default {
           need(false, 'APPLICATION_NOT_IN_RUNTIME',
             'Choose the complete Research installation with its original paid-delivery, SF101 receiver and Buyer application source.'));
     }
+    if (settings.customerQuotesHost) {
+      for (const path of QUOTE_FILES)
+        await regular(join(runtime.sourceRoot, PIPELINE_ROOT, path), 4 * 1024 * 1024).catch(() =>
+          need(false, 'APPLICATION_NOT_IN_RUNTIME',
+            'Choose the complete Research installation with the original case, pricing, quotation and source-bound launch workflow.'));
+    }
     if (settings.documentSourceConfig) {
       for (const path of DOCUMENT_FILES)
         await regular(join(runtime.sourceRoot, PIPELINE_ROOT, path), 4 * 1024 * 1024).catch(() =>
@@ -186,7 +214,7 @@ export default {
       const library = await path('zoteroStateDirectory', 'directory', true, true);
       if (!library.exists && !createDirectories.includes(library.path)) createDirectories.push(library.path);
     }
-    let extractionExecutable, commerceConfigurationFile;
+    let extractionExecutable, commerceConfigurationFile, quoteConfigurationFile, quoteSelection;
     if (settings.extractionPython) {
       const selected = await selectedExecutable(settings.extractionPython);
       extractionExecutable = selected.executable;
@@ -250,6 +278,33 @@ export default {
       ]);
       for (const filename of configurationFiles) inputs.push(await inputPath(filename, 'file'));
     }
+    if (settings.customerQuotesHost) {
+      const selectedInput = await path('customerQuotesHost', 'file', false, true);
+      const modulePath = join(selectedRuntime.sourceRoot, PIPELINE_ROOT, 'customer-quotes/launch-inspection.mjs');
+      for (const filename of QUOTE_FILES)
+        inputs.push(await inputPath(join(selectedRuntime.sourceRoot, PIPELINE_ROOT, filename), 'file'));
+      const selected = await quotationSourceSelection(join(workspace.path, 'customer-quotes'), selectedInput.path, modulePath);
+      need(selected.schema === 'sf88-research-customer-quote-launch/v1' &&
+        selected.binding.configurationFile === selectedInput.path &&
+        selected.binding.configurationSha256 === selectedInput.sha256 &&
+        /^[a-f0-9]{64}$/.test(selected.bindingSha256),
+        'APPLICATION_INPUTS_CHANGED', 'Review the current complete quotation source selection again.');
+      for (const location of selected.locations) {
+        const native = await inputPath(location.anchor.path, 'directory');
+        need(String(native.dev) === location.anchor.device && String(native.ino) === location.anchor.inode,
+          'APPLICATION_INPUTS_CHANGED', 'The original selected directory changed during review.');
+        inputs.push({...native, researchQuotationLocation:{role:location.role,path:location.path,missing:location.missing}});
+      }
+      for (const profile of selected.binding.pricing) for (const file of profile.files) {
+        const native = await inputPath(file.path, 'file', false, true);
+        need(native.bytes === file.bytes && (native.sha256 === undefined || native.sha256 === file.sha256),
+          'APPLICATION_INPUTS_CHANGED', 'The original observed pricing source changed during review.');
+        // The native inspector hashes complete large observations as well as configurations.
+        inputs.push({...native, sha256:file.sha256});
+      }
+      quoteConfigurationFile = selectedInput.path;
+      quoteSelection = selected;
+    }
     if(settings.objectStateDirectory)await path('objectStateDirectory','directory',false,true);
     if(selectedConnection(settings)) {
       const connectionFile=settings.connectionFile??defaultResearchConnectionFile(settings.workspaceDirectory);
@@ -263,6 +318,8 @@ export default {
     option('--zotero-state', settings.zoteroStateDirectory);
     option('--extraction-python', extractionExecutable);
     option('--customer-commerce-host', commerceConfigurationFile);
+    option('--customer-quotes-host', quoteConfigurationFile);
+    option('--customer-quotes-binding-sha256', quoteSelection?.bindingSha256);
     option('--dir', settings.workspaceDirectory);
     option('--edition-adapter', settings.editionAdapter);
     option('--openalex-workspace', settings.openalexWorkspaceDirectory);
@@ -271,7 +328,7 @@ export default {
     option('--crossref-config', settings.crossrefConfig);
     option('--document-source', settings.documentSourceConfig);
     option('--pipeline-source', settings.pipelineSourceConfig);
-    return { args, inputs, createDirectories };
+    return { args, inputs, createDirectories, ...(quoteSelection ? {applicationReview:quoteSelection.review} : {}) };
   },
   matchRequest(request) { return !request.pythonCommand && request.command === "research-workspace"; },
   createObserver(request, directory, context) {
@@ -286,10 +343,14 @@ export default {
         const zoteroIndex=request.args.indexOf('--zotero-state');
         const extractionIndex=request.args.indexOf('--extraction-python');
         const commerceIndex=request.args.indexOf('--customer-commerce-host');
+        const quotesIndex=request.args.indexOf('--customer-quotes-host');
+        const quoteBindingIndex=request.args.indexOf('--customer-quotes-binding-sha256');
         if (ready.mode !== 'RESEARCH_DOSSIER_WORKSPACE' || directoryIndex < 0 ||
             ready.directory !== request.args[directoryIndex + 1] ||
             crossrefSelected && ready.crossrefConfigured !== true || typeof ready.url !== 'string') return null;
-        if (pipelineIndex < 0 && documentIndex < 0 && objectIndex < 0 && connectionIndex < 0 && zoteroIndex < 0 && extractionIndex < 0 && commerceIndex < 0) return ready.url;
+        if (quotesIndex >= 0 && (quoteBindingIndex < 0 || ready.customerQuotesConfigured !== true ||
+          ready.customerQuotesBindingSha256 !== request.args[quoteBindingIndex + 1])) return null;
+        if (pipelineIndex < 0 && documentIndex < 0 && objectIndex < 0 && connectionIndex < 0 && zoteroIndex < 0 && extractionIndex < 0 && commerceIndex < 0 && quotesIndex < 0) return ready.url;
         if (pipelineIndex >= 0 && ready.pipelineSourceConfigured !== true ||
             documentIndex >= 0 && ready.documentSourceConfigured !== true ||
             objectIndex >= 0 && ready.objectSourceConfigured !== true) return null;
@@ -322,7 +383,7 @@ export default {
               'APPLICATION_DOCUMENT_STARTUP_CHANGED',
               'The original research listener opened a different document buyer source.');
           }
-          if (zoteroIndex >= 0 || extractionIndex >= 0 || commerceIndex >= 0) {
+          if (zoteroIndex >= 0 || extractionIndex >= 0 || commerceIndex >= 0 || quotesIndex >= 0) {
             const {ResearchWorkspaceClient} = await import(pathToFileURL(join(sourceRoot, PIPELINE_ROOT, 'workspace-client.mjs')).href);
             need(typeof ResearchWorkspaceClient === 'function', 'APPLICATION_RESEARCH_CLIENT_REQUIRED',
               'Use the original authenticated Research client from this selected runtime.');
@@ -350,6 +411,21 @@ export default {
                   configured.configurationFile === request.args[commerceIndex + 1],
                   'APPLICATION_RESEARCH_COMMERCE_STARTUP_CHANGED',
                   'The authenticated Research listener must retain the selected original merchant and Buyer host file.');
+              }
+              if (quotesIndex >= 0) {
+                need(status.api?.customerQuotes === true && status.api?.customerQuotesConfigured === true &&
+                  status.api?.customerQuotesBindingSha256 === request.args[quoteBindingIndex + 1] &&
+                  typeof client.customerQuotes === 'function',
+                  'APPLICATION_RESEARCH_QUOTE_STARTUP_UNAVAILABLE',
+                  'The original listener must expose the same reviewed customer quotation workflow.');
+                const configured = await client.customerQuotes().configuration();
+                need(configured.schema === 'sf88-research-customer-quotes-host/v1' &&
+                  configured.configurationFile === request.args[quotesIndex + 1] &&
+                  configured.launch?.schema === 'sf88-research-customer-quote-launch/v1' &&
+                  configured.launch.bindingSha256 === request.args[quoteBindingIndex + 1] &&
+                  configured.launch.directory === join(request.args[directoryIndex + 1], 'customer-quotes'),
+                  'APPLICATION_RESEARCH_QUOTE_STARTUP_CHANGED',
+                  'The authenticated listener must retain the reviewed original case and pricing selection.');
               }
               if (zoteroIndex >= 0) need(status.api?.zoteroBridge === true && status.zotero?.configured === true,
                 'APPLICATION_ZOTERO_STARTUP_UNAVAILABLE',

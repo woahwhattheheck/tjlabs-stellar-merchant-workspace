@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import hashlib
+import fcntl
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import re
 import secrets
+import signal
+import stat
 import sys
 import threading
 from urllib.parse import parse_qs, quote, unquote, urlsplit
@@ -23,13 +27,37 @@ MAX_BODY = 32 * 1024 * 1024
 class Server(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, workspace, configuration, port):
+    def __init__(self, workspace, configuration, port, *, configuration_file=None):
         self.workspace = Path(workspace).expanduser().absolute()
         self.configuration = configuration
+        self.configuration_file = configuration_file
+        with Workflow(self.workspace) as workflow:
+            self.workspace_id = workflow.db.execute(
+                "SELECT value FROM workflow_meta WHERE key='workspaceId'").fetchone()[0]
         self.capability = secrets.token_urlsafe(32)
         self.jobs, self.job_lock = {}, threading.Lock()
         super().__init__(("127.0.0.1", port), Handler)
         self.origin = "http://127.0.0.1:" + str(self.server_port)
+
+
+    def health(self):
+        analysis = (self.configuration or {}).get("analysis")
+        native = {"configured": isinstance(analysis, dict), "ready": False}
+        if isinstance(analysis, dict):
+            native.update(workspace=analysis.get("workspace"), operationId=analysis.get("operationId"))
+            try:
+                from operator_client import DatasetteOperatorClient
+                original = DatasetteOperatorClient.from_workspace(analysis["workspace"], timeout=3).status()
+                if original["operation_id"] != analysis["operationId"]:
+                    raise WorkflowError("WORKFLOW_ANALYSIS_OPERATION_CHANGED",
+                                        "Open the selected original Analysis operation.")
+                native.update(ready=True, workspaceId=original["workspace_id"])
+            except Exception as error:
+                native["error"] = getattr(error, "code", type(error).__name__)
+        return {"schema": SCHEMA, "status": "READY", "ready": True,
+                "pid": os.getpid(), "workspace": str(self.workspace),
+                "workspaceId": self.workspace_id, "profile": (self.configuration or {}).get("profile"),
+                "configuration": self.configuration_file, "analysis": native}
 
     def start_job(self, request_id, action, function):
         key = (request_id, action)
@@ -129,13 +157,35 @@ class Handler(BaseHTTPRequestHandler):
             self._authorize()
             parts = self._parts()
             with Workflow(self.server.workspace) as workflow:
+                if parts == ["api", "health"]:
+                    return self._json(self.server.health())
                 if parts == ["api", "configuration"]:
                     cfg = self.server.configuration or {}
-                    query = cfg.get("analysis", {}).get("query", {})
+                    analysis = cfg.get("analysis", {})
+                    query = analysis.get("query", {})
+                    queries = analysis.get("queries") or ([query] if query else [])
+                    report = analysis.get("report", {})
+                    supplier = cfg.get("delivery", {}).get("supplier")
+                    source_alias = cfg.get("sourceAlias", "source")
+                    related_sources = cfg.get("relatedSources", {})
+                    sources = []
+                    for alias, selected in [(source_alias, cfg.get("source", {})), *related_sources.items()]:
+                        metadata = selected.get("source", {})
+                        metadata = metadata if isinstance(metadata, dict) else {}
+                        sources.append({"alias": alias, "kind": selected.get("kind"),
+                                        "title": selected.get("name") or metadata.get("title") or alias})
+                    describe = lambda item: {key: item[key] for key in (
+                        "name", "title", "sql", "parameterNames", "maxRows", "note") if key in item}
                     return self._json({"schema": SCHEMA, "configured": bool(cfg),
                                        "profile": cfg.get("profile"), "title": cfg.get("title", cfg.get("profile")),
                                        "sourceKind": cfg.get("source", {}).get("kind"),
-                                       "query": {k: query[k] for k in ("name", "title", "sql", "parameterNames", "maxRows") if k in query},
+                                       "query": describe(query), "queries": [describe(item) for item in queries],
+                                       "report": {key: report[key] for key in ("title", "introduction", "note") if key in report},
+                                       "sourceAlias": source_alias, "sources": sources,
+                                       "relatedSources": sorted(related_sources),
+                                       "relatedSourceAliases": sorted(related_sources),
+                                       "supplier": ({"enabled": True, "sourceBindings": supplier.get("sourceBindings", {}),
+                                                     "coverage": bool(supplier.get("coverage"))} if isinstance(supplier, dict) else None),
                                        "sourceArchive": bool(cfg.get("sourceArchive")),
                                        "jms": bool(cfg.get("delivery", {}).get("jms")),
                                        "callback": bool(cfg.get("delivery", {}).get("callback"))})
@@ -222,19 +272,56 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve(workspace, *, configuration_path=None, port=0, open_browser=False):
-    configuration = read_json(configuration_path) if configuration_path else None
-    with Workflow(workspace):
-        pass
-    server = Server(workspace, configuration, port)
-    launch = {"schema": SCHEMA, "url": server.origin + "/#" + server.capability,
-              "workspace": str(server.workspace), "profile": (configuration or {}).get("profile")}
-    atomic_json(server.workspace / "source-workflow-launch.json", launch)
-    print(canonical(launch), flush=True)
-    if open_browser:
-        webbrowser.open(launch["url"])
+    configuration_file = file_descriptor(configuration_path) if configuration_path else None
+    configuration = read_json(configuration_file["path"]) if configuration_file else None
+    if configuration_file:
+        file_descriptor(configuration_file["path"], expected_sha256=configuration_file["sha256"],
+                        expected_bytes=configuration_file["bytes"])
+    with Workflow(workspace) as workflow:
+        directory = workflow.path
+    descriptor = os.open(directory / "source-workflow-server.lock",
+                         os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    server = None
+    launch_file = directory / "source-workflow-launch.json"
+    previous_term = None
     try:
-        server.serve_forever(poll_interval=0.5)
-    except KeyboardInterrupt:
-        pass
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise WorkflowError("WORKFLOW_LISTENER_LOCK", "Use the original private listener lock.")
+        os.fchmod(descriptor, 0o600)
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise WorkflowError("WORKFLOW_LISTENER_RUNNING",
+                                "Open the existing original workflow listener.") from None
+        server = Server(directory, configuration, port, configuration_file=configuration_file)
+        launch = {"schema": SCHEMA, "status": "LISTENING",
+                  "url": server.origin + "/#" + server.capability,
+                  "pid": os.getpid(), "workspace": str(server.workspace),
+                  "workspaceId": server.workspace_id, "privateLaunch": str(launch_file),
+                  "profile": (configuration or {}).get("profile"),
+                  "configuration": configuration_file}
+        atomic_json(launch_file, launch)
+        print(canonical(launch), flush=True)
+        if open_browser:
+            webbrowser.open(launch["url"])
+        if threading.current_thread() is threading.main_thread():
+            def stop(signum, frame):
+                raise KeyboardInterrupt
+            previous_term = signal.signal(signal.SIGTERM, stop)
+        try:
+            server.serve_forever(poll_interval=0.5)
+        except KeyboardInterrupt:
+            pass
     finally:
-        server.server_close()
+        if previous_term is not None:
+            signal.signal(signal.SIGTERM, previous_term)
+        try:
+            if server is not None:
+                server.server_close()
+                if launch_file.is_file():
+                    current = read_json(launch_file)
+                    if current.get("pid") == os.getpid() and current.get("workspaceId") == server.workspace_id:
+                        launch_file.unlink()
+        finally:
+            os.close(descriptor)

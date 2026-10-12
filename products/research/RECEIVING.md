@@ -4,6 +4,14 @@ This guide takes the maintained Research product from its original Git source to
 
 The [operating guide](OPERATING.md) is the analyst-facing workflow. The [Documents and Pipelines contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_DOCUMENTS.md) gives complete SDK, command, merchant and request fields. Original provider configuration belongs to the [Documents source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED.md) and [managed Pipelines source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED_PIPELINES.md).
 
+
+## Customer quotations and Applications commissioning
+
+Use the complete [Research commissioning workflow](COMMISSIONING.md) to select the original customer case store, observed pricing profiles, paid-delivery host and existing source connections. Preparation retains the full native configuration and source review; save produces the original Applications settings/request and same-source direct launch arguments. The existing Applications desk reviews, starts, stops and reopens that Research listener.
+
+The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
+
+
 ## 1. Build the complete selected source
 
 Use the existing repository containing the full source commit. The normal builder reads the committed recipe and selected source-owned registrations, follows their static imports and browser maps, and retains the complete declared component directories.
@@ -973,6 +981,45 @@ Set `RIS_ROOT` to the actual selected `research-dossiers` source directory. The 
 To reopen an exported dossier, start the delivered original Research listener in a new private receiving directory and run `starforge research-client reopen` with that listener's connection file and directory, the selected complete JSON/gzip portable and its SHA256. Inspect **RIS sources**, original records, review decisions and edition comparison in the reopened browser. The [operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/OPERATING_GUIDE.md) includes the full listener and CLI commands. A new receiving edit can be exported through the original revision-selected dossier export route.
 
 The current installed Research source and its full engine manifest are selected explicitly for this workflow. Earlier frozen protocol, Citation and Europe PMC programmes retain their own source and request identities. The preceding chapters remain the operating paths for those original products.
+
+## 20. Receive the complete customer-selected programme
+
+The maintained research-workspace and zotero-research selections include every customer-programme module, the original Python ZIP receiver, both full guides and the source-owned research-customer-programme command. The installed exports expose the programme, input selection, chronology, Europe PMC and editable opener through the existing package namespace.
+
+Use the complete original release selected in sections1–2. The command's --engine-root points to its source/ directory; --engine-manifest points to the release's original manifest.json, pinned by its actual SHA256. The receiver accepts the maintained distribution manifest directly and verifies its complete source inventory, original source-file identities, total bytes and required Research/Python components. The retained sf88-research-ris-engine-source-v1 manifest remains supported for the original receiving kits. The selected complete engine must also supply the command's running native modules; a separate source directory is accepted when every selected original file matches the executing source tree. Its source cohort, engine identity and operation directory stay selected across continuation.
+
+Follow [the operating command and selected input](OPERATING.md#complete-a-selected-customer-research-programme) and the [complete programme guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md). Keep the actual original customer documents, source declarations, chronology and reviewer choices together. The original workbooks dependency is openpyxl==3.1.5; choose the equipped Node24+, Python3.11+, Playwright and Chromium paths used by this receiving host.
+
+The programme retains one complete current report/dossier/history; every original input body; every citation decision and before/reviewed/current report; selected Europe PMC editions, records, plans, full exports and complete-library restore; and each saved review's Python/Analysis workbook handover. The selected engine and current implementation travel as full original source with licensing. The actual archive is extracted and opened by its included engine before the final COMPLETE.json is written.
+
+Inspect and receive the delivered ZIP with the included Python helper:
+
+~~~sh
+python3 /absolute/included/customer-programme/receive-customer.py inspect \
+  --archive /absolute/delivery/Customer_Research.zip \
+  --sha256 ACTUAL_ARCHIVE_SHA256
+
+python3 /absolute/included/customer-programme/receive-customer.py receive \
+  --archive /absolute/delivery/Customer_Research.zip \
+  --sha256 ACTUAL_ARCHIVE_SHA256 \
+  --directory /absolute/private/received-research \
+  --result /absolute/private/received-research/complete.json \
+  --node /absolute/node \
+  --python /absolute/python3
+~~~
+
+The receiver validates the complete member inventory and every full SHA256 before publishing the extracted files. It uses a separate staging area to recover its own interrupted copies, retains the exact archive selection and invokes the original portable opener from the extracted engine.
+
+Open the editable received dossier with:
+
+~~~sh
+node /absolute/private/received-research/package/engine/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/receiving.mjs \
+  --open --serve \
+  --package-directory /absolute/private/received-research/package \
+  --workspace-directory /absolute/private/received-research/editable-research
+~~~
+
+Use the authenticated loopback URL printed to the local terminal. The original native portable reader checks the delivered revision and complete history. Normal reopening accepts a matching later local history, so the customer can keep editing the same received workspace. Preserve the original ZIP and COMPLETE.json as the delivered edition.
 
 ## Continue an interrupted handover
 

@@ -164,6 +164,20 @@ The export path is also available directly from `mpp-channel/client.mjs`. The cl
 
 The original merchant MCP also exposes `merchant_mpp_channel_status`, `merchant_mpp_channel_record`, `merchant_mpp_channel_operate` and `merchant_mpp_channel_file`. Select its host-declared console alias. Channel operations return the original native job; `merchant_mpp_job` reads it. Large channel handovers stream from their original immutable file through the maintained reader, with the returned read ID, exact byte digest and next offset. An interrupted transfer resumes the same original file after the reader or process restarts.
 
+## Python customer work and file receiving
+
+The [complete Python customer integration](python/README.md) attaches to this same running product through the maintained Node client. It includes typed standard-library methods, a persistent native bridge, a complete work-list runner and whole-channel receiving. Keep the six source files together; Python 3.10+ and the original Node 22+ runtime are the only local dependencies.
+
+```sh
+python3 -B "$MPP_CHANNEL_SOURCE/python/run_work.py" \
+  --product "$MPP_PRODUCT" --work "$ACTUAL_CHANNEL_WORK_LIST" \
+  --out "$PRIVATE_CUSTOMER_OUTPUT"
+```
+
+The runner retains each result edition and receives the exact paid response bytes beside it. Reusing the original work list continues its original purchase IDs. A waiting operation returns its native job identity; a transport timeout ends only the Python attachment. The product retains the actual operation and can be reattached.
+
+Python also receives the complete operating handover directly to an immutable private file, including source, original channel records and required inputs. The receiving helper selects both actual product identities before export and joins the same complete channel into its selected receiving workspace. Its source files travel in the original handover; generated Python caches are excluded.
+
 ## Native source and engineering boundaries
 
 The exact installed dependency set is `@stellar/mpp 0.7.1`, `mppx 0.6.29`, `@stellar/stellar-sdk 15.1.0`. The channel modules load through the existing native runtime resolver; dependency receiving stays with the original MPP product owner.

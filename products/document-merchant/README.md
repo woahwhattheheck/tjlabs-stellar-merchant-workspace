@@ -66,3 +66,11 @@ A paid request produces one document package. Several requests can belong to one
 - index.mjs and index.d.mts expose the installed JavaScript and type interfaces.
 
 The generated application contains the complete selected renderer code and provider configuration in one module. The original Jobs application hash therefore identifies the actual code used by the paid worker.
+
+## Customer batch fulfillment
+
+The installed `document-merchant batch` commands turn a customer's reports, invoices or cards into a complete delivered document set. They use the original Request, native Checkout, Jobs and Resource library; the saved plan binds all source files and prices before execution. See [the complete batch workflow](BATCHES.md) for configuration, price review, continuation and portable customer delivery.
+
+~~~sh
+starforge document-merchant batch --help
+~~~

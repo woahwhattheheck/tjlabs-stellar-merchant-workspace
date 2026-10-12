@@ -85,12 +85,14 @@ The checkpoint manifest binds the operation, fixed private root, exact host and 
 
 Resource observations from /proc, cgroup and the selected filesystems are retained at initial, complete and failure boundaries. The host does not assume that a disappeared execution handle proves a provider save succeeded.
 
-## Complete compact initial command for the selected existing host
+## Retained original compact admission
 
 `operations/odata-subscription-native-command.json` contains the complete
 `exec_command` argument object for the same
 `ODATA-SUBSCRIPTION-CUSTOMER-F971-20261012-R1` operation. Read the exact published
-JSON, verify its source identity, parse it, and invoke its `exec_command` once.
+JSON to inspect the exact predecessor invocation. It remains pinned to the
+original host and original input selectors. Use the current full host entry
+and the recovery section below for this completed original operation.
 It selects `python3 -B -i`, an attached terminal, and the complete initial
 program; it does not depend on a later stdin source feed. Its shell command is
 125,465 UTF-8 bytes.
@@ -128,5 +130,53 @@ The command extracts only the reviewed host's existing immutable source writer
 to place the verified decoded manifest, then invokes that exact complete host.
 It keeps the same private root, operation identity, full native producer,
 closed native checkpoint save, Analysis phase, final customer package, and
-provider result reconciliation. Parent/root remains the sole customer
-invoker; source preparation has not run the customer.
+provider result reconciliation. This frozen predecessor is retained as
+source evidence; the corrected original customer operation is recorded below.
+
+
+## Original collection-path failure and selected continuation
+
+The first restored subscription invocation completed `restore-source-workspace`, then stopped before `create-baseline` because its two input directory names did not match the supplied workspace. The complete original workspace contains:
+
+| Role | Relative collection directory | Rows |
+| --- | --- | ---: |
+| Before | `live/products/orders/collections/northwind-orders-complete` | 830 |
+| After | `live/products/orders/collections/orders-country-projection` | 830 |
+
+Both collections retain the same original five response pages. Their shared declared fields are `OrderID` and `ShipCountry`. The existing programme therefore retains its original expected comparison: 830 matched and unchanged rows, zero added, removed, changed or event rows.
+
+The original host saved `OData_Subscription_failure-1_Checkpoint.zip` before its terminal session disappeared. The file is 12,777,498 bytes with SHA-256 `57b116213d038875a7eff778c71d71e7561ae7f87d6e598f840a3a94a92516df`, and has 1,641 regular members. Its original saved identity is `libfile_ebbcf504ec4881919704c8dbf41941ad`, version 0, file `file_00000000d93c81fb8e6f93770ce663af`. The received bytes were independently compared with that complete checkpoint digest.
+
+The selected full host successor is 54,693 bytes, SHA-256 `13d73ad0ca154af69953ad6adb4dc1600b34228e9aed0fe3235bd85b2d07851a`. It changes the two generated input selectors and provides a narrowly bounded migration for the exact original saved failure. It accepts that predecessor host only when the entire checkpoint hash, label and all four original host/input/journal/Restore-file identities match. The current producer journal must contain only its completed original workspace Restore and the known ENOENT failure; the publisher, transfer and backup stages must be absent. Each actual collection manifest is also checked against its observed complete bytes. Because the original checkpoint retains regular files, its originally empty `backups` and `transfers` directories may be absent after receiving; the migration accepts only those absent or empty real directories and rejects symbolic links.
+
+Under the original host lease, the successor retains the complete previous host, input, native journal and Restore result under `INPUT/source-successors/collection-paths-20261012/previous/`. It records both selected collection manifests, the full selected host, and the new input digest before replacing the three selected files. Only the original or exact derived bytes are accepted at an interrupted write boundary. A completed marker permits later native journal progress without replacing it. The native programme reuses the completed Restore step, keeps its operation and mutation request IDs, and begins its previously unstarted producer phase.
+
+The original 394,772-byte product/programme source packet remains unchanged. The delivered customer archive includes the complete successor and its predecessor evidence through the existing recursive INPUT selection and OPERATING host entry.
+
+### Receive the original checkpoint
+
+Materialize the exact saved checkpoint into the shared receiving directory and verify its full digest before creating this descriptor:
+
+```json
+{
+  "path": "/workspace/scratch/f97104b7bf97/receipts/odata-subscription-customer-retained/OData_Subscription_failure-1_Checkpoint.zip",
+  "bytes": 12777498,
+  "sha256": "57b116213d038875a7eff778c71d71e7561ae7f87d6e598f840a3a94a92516df"
+}
+```
+
+Use the complete source packet and the selected full host through its maintained entry:
+
+```sh
+python3 -B -i odata-subscription-native-host.py \
+  --packet operations/odata-subscription-customer-source.json \
+  --checkpoint subscription-failure-1-selection.json
+```
+
+The same private root and original host lock must remain selected. Keep this attached Python lifetime through native checkpoint saving, Analysis and both final saves. After an ordinary operation error it exposes `run_original_subscription_customer()` for reconciliation in that same lifetime. A lost original save must be reconciled from its retained request and complete provider return before another invocation.
+
+The replacement host accepts later checkpoints only when their captured host equals this selected full source. Future source changes require their own explicit successor. The old full checkpoint remains available unchanged.
+
+### Completed receiving evidence
+
+The original recovery operation completed its native producer and independent Analysis receiving on 12 October 2026. Both original collections contain 830 rows. The subscription reached edition 3 while preserving 830 matched, unchanged rows and zero added, removed, changed or event rows over the shared definition. It reopened both publisher and customer backups, continued the restored publisher, received that continuation, and independently exported, restored and queried all 830 Analysis rows. The complete customer archive contains 2,096 members, including the full source, original and restored workspaces, journals, transfers, backups and operator connection. The closed native checkpoint was successfully saved before Analysis; the final archive and result also have successful per-file save receipts. The saved customer payload remains in its original receiving destination and is not included in this source change.
