@@ -470,7 +470,8 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
   const configuration = node('p', '', 'help');
   const form = node('form', undefined, 'form-grid');
   const field = (caption, control) => {
-    const label = node('label', caption); label.append(control); form.append(label); return control;
+    const label = node('label', caption); control.setAttribute('aria-label', caption);
+    label.append(control); form.append(label); return control;
   };
   const provider = field('Host provider', node('select'));
   const release = field('Retained source release', node('select'));
