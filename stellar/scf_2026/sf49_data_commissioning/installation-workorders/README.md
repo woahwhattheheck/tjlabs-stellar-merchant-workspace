@@ -15,6 +15,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
 
+The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. Both complete profiles are included in its selected source.
+
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library and makes no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
 ## 1. Receive the original commercial case
