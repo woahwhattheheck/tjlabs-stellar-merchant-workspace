@@ -125,6 +125,8 @@ export interface ResourceDescription extends NativeRecord {
     /** Exact retained provider response identity, when available on this server. */
     pageSha256?: string;
     pageBytes?: number;
+    /** Zero-based original provider row before buyer filtering, when retained by this server. */
+    rowIndex?: number;
   };
   /** Milliseconds since the Unix epoch. */
   expiresAt: number;

@@ -1,5 +1,7 @@
 # Native MPP operating guide
 
+The product contains the original Charge workflow and recurring **Channel work** in one native console. Sections 1–9 describe the existing product and Charge operation; section 10 carries a selected channel from useful recurring work through its merchant response and close. Both share the same installed runtime, private product and native workspace lease.
+
 ## 1. Select the original runtime and workspace
 
 The product retains two separate directories: the private commerce workspace and the original dependency package. Its `product.json` records the native workspace’s creation identity, the selected runtime path and the product’s own operator/customer/receiving directories.
@@ -238,3 +240,50 @@ On Stop or Ctrl-C, the product first drains the merchant MCP. It then drains the
 Retain the whole private product directory, its attached native workspace when external, the selected dependency runtime, original governor ledger/policy and referenced merchant resource/handler files. Signing and incoming-access values stay in their original host environment.
 
 Use the complete customer and response receiving operations in **[RECEIVING.md](RECEIVING.md)** for customer-facing handoffs. Historical profile file paths must remain available for an unfinished original delivery. A prepared purchase continues from its retained profile and signed credential even when the current customer selection changes.
+
+## 10. Operate recurring channel work
+
+Open **Channel work** in the original browser. Its task, merchant, purchase, close and receiving views use the same current product session. The complete [channel work guide](../../stellar/scf-starforge-20261009/mpp-channel/README.md) describes each profile field and the actual pinned protocol.
+
+### Select and run a task
+
+Start with the merchant's actual channel contract at `/_mpp/channel-contract`, or load its complete retained contract file. Choose the useful priced route and authorized source edition. The task binds the original channel address, network, token, funder, recipient, commitment key, deployed WASM digest, endpoint, selected merchant profile and offer.
+
+Set the accountable operator, total amount in token base units, maximum amount per purchase, number of purchases and expiry. Saving creates an editable planning edition. **Authorize task budget** presents that selected edition and cap in the product's controlling terminal. A task correction keeps its prior editions and committed spending; the revised scope receives its own operator authorization.
+
+Prepare each actual work item with one stable purchase ID and its real request input. **Execute** signs the original cumulative target under the selected task authority. **Resume** recovers that same purchase and response. A stopped task permits existing work to recover while preventing new reservations. Cancelling an unsigned reservation releases its retained amount and count once.
+
+Read the existing state or run a complete supplied work list from the installed product:
+
+```sh
+starforge mpp-workspace channel state --dir "$MPP_PRODUCT"
+starforge mpp-workspace channel run --dir "$MPP_PRODUCT" \
+  --input "$ACTUAL_CHANNEL_WORK_LIST" --out "$WORK_RESULT"
+starforge mpp-workspace channel response --dir "$MPP_PRODUCT" \
+  --id "$ORIGINAL_PURCHASE_ID" --out "$PAID_RESPONSE"
+```
+
+The work list contains the original `taskId`, `purchaseId` and complete `request` for every item. It uses schema `stellar-forge.mpp-channel-work.v1`. Rerun the same file to continue original operations after an interruption. If a command returns a running job, read that job through `channel job --id …`; completed purchases retain their result.
+
+### Operate the selected merchant and collect
+
+The channel merchant profile selects the actual authorized source and a useful JSON, JSON-file or handler route. Its configuration preserves the priced unit, exact incremental amount and original profile digest. Use a read-only or idempotent handler keyed by the original delivery operation ID.
+
+Start the merchant from Channel work, or use `merchant-start` with the stream key returned by `channel state`. An active merchant in the same native workspace serves the original request inside the existing channel operation. A separate merchant uses its selected public HTTPS origin.
+
+Prepare collection with `close-prepare` and a stable settlement ID. The recipient authorizes the cumulative accepted commitment, original delivery, fee account and maximum fee in its terminal. The application retains the signed transaction before submission. `close-resume` queries or submits that exact envelope; `close-reconcile` receives its original finality.
+
+A definitively expired or failed close can receive a new settlement ID and a fresh fee authorization. If the original RPC no longer retains the possible inclusion window, select an archival `rpcUrl` for `close-reconcile`. Every configured or archival RPC must confirm the original network before its result is used.
+
+### Agent and application access
+
+The typed `connectMppChannel` client attaches to this same product. It exposes state, original records, task operations, complete work lists, response bytes and operating handovers. The original merchant MCP exposes four matching tools under console alias `native`:
+
+| Tool | Operation |
+|---|---|
+| `merchant_mpp_channel_status` | Read current tasks, budgets, merchants, deliveries, closes and receiving |
+| `merchant_mpp_channel_record` | Reopen the selected original task, purchase or merchant contract |
+| `merchant_mpp_channel_operate` | Dispatch the selected native operation and retain its original job |
+| `merchant_mpp_channel_file` | Receive an exact paid response or complete operating handover |
+
+Read a returned operation job through the existing `merchant_mpp_job`. The whole-channel transfer and recovery flow is in [RECEIVING.md](RECEIVING.md#6-receive-a-complete-operating-channel).

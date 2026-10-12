@@ -230,6 +230,41 @@ def reference_key(account, currency, reference):
     return digest({"network": "statement/" + account, "asset": currency, "reference": original})
 
 
+def corrected_observation(context, retained, prepared, previous):
+    """Resolve only the original cash engine's source-validated successor chain."""
+    corrections = context.get("cashCorrections", {})
+    if not isinstance(corrections, dict):
+        fail("Use the original validated cash correction selection.", "STATEMENT_CASH_CONFLICT", 409)
+    cash = {row["id"]: row for row in context["records"]["cash"]}
+    matches = []
+    for original in retained:
+        if original["state"] != "VOID" or cash_facts(original) != cash_facts(prepared):
+            continue
+        selected = corrections.get(original["id"])
+        if selected is None:
+            continue
+        if (not isinstance(selected, dict) or not isinstance(selected.get("original"), dict)
+                or not isinstance(selected.get("replacement"), dict) or not isinstance(selected.get("chain"), list)
+                or cash_facts(selected["original"]) != cash_facts(original)):
+            fail("The original correction selection differs from its retained observation.", "STATEMENT_CASH_CONFLICT", 409)
+        current = cash.get(selected["replacement"].get("id"))
+        if current is None or cash_facts(current) != cash_facts(selected["replacement"]):
+            fail("The correction's current original observation is unavailable.", "STATEMENT_CASH_CONFLICT", 409)
+        if current["state"] == "VOID":
+            continue
+        if previous is not None and current["id"] != previous["id"]:
+            fail("The earlier observation was corrected to another original payment identity, while this reference also has a live record. Review both in Cash accounts.",
+                 "STATEMENT_CASH_CONFLICT", 409)
+        matches.append({"recordId": current["id"], "originalRecordId": original["id"], "corrected": True,
+                        "correctionSourceIds": [item["sourceId"] for item in selected["chain"]],
+                        "correctedRecord": deepcopy(current)})
+    if len({item["recordId"] for item in matches}) > 1:
+        fail("This source row matches more than one retained cash correction.", "STATEMENT_CASH_CONFLICT", 409)
+    # Several predecessors can carry the same original facts; they must resolve
+    # to one current observation. Prefer the complete longest retained chain.
+    return max(matches, key=lambda item: len(item["correctionSourceIds"])) if matches else None
+
+
 def preview(context, inputs):
     config = configuration(inputs)
     raw, decoded, source = source_input(inputs["source"])
@@ -338,23 +373,27 @@ def preview(context, inputs):
                 row["recordId"] = live[0]["id"]
                 fail("Multiple retained cash records use this original payment identity.", "STATEMENT_CASH_CONFLICT", 409)
             previous = live[0] if live else None
-            if not previous and retained:
-                row["recordId"] = retained[0]["id"]
-                fail("The original cash observation was voided. Review its correction instead of recreating it from a statement.",
-                     "STATEMENT_VOIDED_CASH", 409)
-            # The original validator normalizes the full record. Exclude only the
-            # one selected duplicate from its conflict scan, then compare facts.
+            # Normalize the complete original row before resolving a retained
+            # correction. Only the selected live duplicate leaves this scan.
             validation = staged
             if previous:
                 validation = {**staged, "records": {**staged["records"],
                     "cash": [cash for cash in staged["records"]["cash"] if cash["id"] != previous["id"]]}}
             prepared = domain.prepare("cash", native, validation)
-            if previous:
+            corrected = corrected_observation(context, retained, prepared, previous)
+            if corrected:
+                row.update(corrected)
+                row["status"] = "EXISTING"
+            elif previous:
                 row["recordId"] = previous["id"]
                 if cash_facts(previous) != cash_facts(prepared):
                     fail("The original payment reference has different retained cash facts. Reconcile record " + previous["id"] + ".",
                          "STATEMENT_CASH_CONFLICT", 409)
                 row["status"] = "EXISTING"
+            elif retained:
+                row["recordId"] = retained[0]["id"]
+                fail("The original cash observation was voided. Review its correction in Cash accounts instead of recreating it from a statement.",
+                     "STATEMENT_VOIDED_CASH", 409)
             else:
                 prepared["id"] = "cash-" + digest({"edition": edition, "rowNumber": line})[:32]
                 staged["records"]["cash"].append(prepared)
@@ -362,6 +401,11 @@ def preview(context, inputs):
                     import_in += abs(value)
                 else:
                     import_out += abs(value)
+            if row["status"] == "EXISTING" and any(
+                    previous_row["status"] == "EXISTING" and previous_row["recordId"] == row["recordId"]
+                    for previous_row in result_rows):
+                fail("Two source rows resolve to the same current cash observation. Retain an explicit exclusion for the duplicate source movement.",
+                     "STATEMENT_CASH_CONFLICT", 409)
             row["record"] = prepared
             row["allocations"] = prepared["allocations"]
         except Problem as problem:

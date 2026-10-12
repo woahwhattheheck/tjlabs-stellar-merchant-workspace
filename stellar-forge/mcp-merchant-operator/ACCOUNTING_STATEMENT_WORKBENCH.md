@@ -212,3 +212,7 @@ The workbench imports:
 - accountingStatementPreview
 
 The server exports startAccountingStatementCycleWorkbench for installed local applications. It accepts the existing client when the application already owns one and leaves that supplied connection under its caller's control.
+
+## Plan the next service close
+
+Open **Plan service close** to group original native captures by customer and purchased pass, inspect current periods, gaps and corrections, and select exact opening and closing captures across many customers. Review or download the complete plan, then prepare the original saved cycle and continue its existing review, issuing, recovery and handover workflow. See [Plan customer service close](ACCOUNTING_STATEMENT_SERVICE_PLANNER.md) for the complete operator guide and native, typed and command-line contracts.

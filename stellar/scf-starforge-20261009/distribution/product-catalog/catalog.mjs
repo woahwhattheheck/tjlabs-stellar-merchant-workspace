@@ -53,7 +53,8 @@ function runtimeRequirements(review) {
   requireValue(original === undefined || plain(original),
     'PRODUCT_RUNTIME_REQUIREMENTS_INVALID', 'Expected original runtime requirement maps.');
   const peers = original?.featurePeers ?? {}, manifests = original?.runtimePackageManifests ?? {};
-  requireValue(plain(peers) && plain(manifests), 'PRODUCT_RUNTIME_REQUIREMENTS_INVALID',
+  const resolvedManifests = original?.resolvedManifestPeers ?? {};
+  requireValue(plain(peers) && plain(manifests) && plain(resolvedManifests), 'PRODUCT_RUNTIME_REQUIREMENTS_INVALID',
     'Expected original feature declarations and package manifest paths.');
   const names = unique([...(review.features ?? []), ...(original?.featureNames ?? []),
     ...Object.keys(peers), ...Object.keys(manifests)]);
@@ -63,9 +64,9 @@ function runtimeRequirements(review) {
     features: names.map(name => ({
       name,
       manifestPath: manifests[name] ?? null,
-      // Runtime package manifests take precedence over featurePeers. The
-      // original runtime-profile reader resolves their actual dependency bodies.
-      dependencies: manifests[name] ? [] : dependencies(peers[name] ?? {}),
+      // Runtime package manifests take precedence over direct peers. Committed
+      // product inspection supplies their original dependency bodies explicitly.
+      dependencies: manifests[name] ? dependencies(resolvedManifests[name] ?? {}) : dependencies(peers[name] ?? {}),
       ...(manifests[name] && peers[name] ? { declaredPeers: copy(peers[name]) } : {}),
     })),
   };

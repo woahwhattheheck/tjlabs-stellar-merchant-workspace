@@ -1,3 +1,4 @@
+import type { OrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
 import type { AmpStatus, AmpCapture, AmpPlan, AmpSelection, AmpDecisionState, AmpRows, AmpRunSummary, AmpRun, AmpEvents, AmpRequest, AmpAction, AmpCaptureInput, AmpCaptureResult, AmpSave, AmpSaved, AmpScope, AmpScopePreview, AmpDecisions, AmpAdvance, AmpReview, AmpPrepare, AmpNativeCapture, AmpNativeStart, AmpNativeStarted, AmpCredentials, AmpNativeReconcile, AmpNativeReceived, AmpFileKind, AmpReceiving } from './amp_client.mjs';
 export type * from './amp_client.mjs';
 import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
@@ -441,7 +442,107 @@ export interface RefreshReceiving {
  historyCount:number;pendingRequest:RefreshPrepared|null;portfolio:RefreshNativeSelection;reportFiles:string[];
 }
 
+
+/** Original IATI 2.03 results. All reported and calculated decimal values are strings. */
+export interface ResultsSelection {
+ indicatorKeys?:Sha256[]; activityIds?:string[]; resultTypes?:string[]; measures?:string[];
+ periodFrom?:CalendarDate|''; periodTo?:CalendarDate|''; includeUndated?:boolean;
+}
+export interface ResultsInterpretation {
+ indicatorKey:Sha256; unitLabel:string; direction:'reported'|'higher'|'lower'|'none'; note:string;
+}
+export type ResultsPair = {periodKey:Sha256;actualKey:Sha256;note:string} & (
+ {targetKey:Sha256;baselineKey:Sha256|null;operation:'inspect'|'difference'|'target-ratio'} |
+ {targetKey:Sha256;baselineKey:Sha256;operation:'baseline-progress'} |
+ {targetKey:null;baselineKey:Sha256;operation:'baseline-change'}
+);
+export interface ResultsDefinition {
+ name:string; sources:Sha256[]; notes?:string; selection?:ResultsSelection; review?:Review;
+ interpretations?:ResultsInterpretation[]; bindings?:ResultsPair[];
+}
+export type ResultsSave = ResultsDefinition & {requestId:string} &
+ ({id?:never;expectedRevision?:never}|{id:Sha256;expectedRevision:number});
+export interface ResultsCompare {
+ requestId:string; id:Sha256; beforeRevision:number; afterRevision:number;
+ /** Only unmatched source-bound indicators need an explicit one-to-one correspondence. */
+ pairs:Array<{before:Sha256;after:Sha256;note:string}>;
+}
+export interface ResultsAdopt {
+ requestId:string; id:Sha256; expectedRevision:number; selectedRevision:number; actor:string; note:string;
+}
+export type ResultsCancel = {requestId:string;reason:string} & (
+ {targetKind:'save';targetInput:ResultsSave}|{targetKind:'compare';targetInput:ResultsCompare}|{targetKind:'adopt';targetInput:ResultsAdopt});
+export interface ResultsFinding {code:string;message:string;locator:string;severity:string;source?:Sha256}
+export interface ResultsProjectionRecord {
+ id:Sha256;source:Pick<SourceSummary,'id'|'label'|'name'|'bytes'>;analysisContractSha256:Sha256;file:FileIdentity;
+}
+export interface ResultsValue {
+ key:Sha256;source:Sha256;locator:string;indicatorKey:Sha256;periodKey:Sha256|null;
+ kind:'baseline'|'target'|'actual';attributes:Record<string,string>;rawValue:string|null;
+ decimal:ExactDecimalString|null;measure:string;year:string|null;isoDate:string|null;
+ dateDay:CalendarDate|null;original:JsonValue;originalSha256:Sha256;findings:ResultsFinding[];
+ [key:string]:unknown;
+}
+export interface ResultsPeriod {
+ key:Sha256;source:Sha256;locator:string;indicatorKey:Sha256;
+ targets:ResultsValue[];actuals:ResultsValue[];findings:ResultsFinding[];[key:string]:unknown;
+}
+export interface ResultsIndicator {
+ key:Sha256;source:Sha256;locator:string;activityId:string;activityKey:Sha256;resultKey:Sha256;
+ reportingOrgRef:string;title:string;resultTitle:string;resultType:string;
+ measure:string;measureLabel:string;ascending:boolean|null;aggregationStatus:boolean|null;
+ baselines:ResultsValue[];periods:ResultsPeriod[];contentSha256:Sha256;sourceValuesSha256:Sha256;
+ sourcePeriodCount:number;findings:ResultsFinding[];[key:string]:unknown;
+}
+export interface ResultsReport {
+ schema:'stellar-forge.iati-results-report.v1';reportSha256:Sha256;analysisContract:Record<string,unknown>;
+ selection:ResultsSelection;activities:Array<Record<string,unknown>>;results:Array<Record<string,unknown>>;
+ coverage:Array<{source:Pick<SourceSummary,'id'|'label'|'name'|'bytes'>;projectionSha256:Sha256;sourceCounts:Record<string,number>}>;
+ counts:Record<string,number>;indicators:ResultsIndicator[];interpretations:ResultsInterpretation[];
+ bindings:ResultsPair[];comparisons:Array<Record<string,unknown>>;findings:ResultsFinding[];aggregation:string;
+}
+export interface ResultsEdition {
+ schema:'stellar-forge.iati-results-edition.v1';id:Sha256;revision:number;parentRevision:number|null;
+ createdAt:string;savedAt:string;definition:Required<ResultsDefinition>;projections:ResultsProjectionRecord[];
+ report:ResultsReport;sha256:Sha256;
+}
+export interface ResultsSavedComparison {
+ schema:'stellar-forge.iati-results-saved-comparison.v1';id:Sha256;project:Sha256;
+ beforeRevision:number;afterRevision:number;beforeEditionSha256:Sha256;afterEditionSha256:Sha256;
+ comparison:{schema:'stellar-forge.iati-results-comparison.v1';sha256:Sha256;
+ selectionChanged:boolean;interpretationChanged:boolean;pairs:Array<Record<string,unknown>>;
+ removedIndicators:Sha256[];addedIndicators:Sha256[];[key:string]:unknown};recordedAt:string;
+}
+export interface ResultsReceiving {
+ schema:'stellar-forge.iati-results-receipt.v1';id:Sha256;project:Sha256;snapshotSha256:Sha256;
+ snapshotFile:FileIdentity;file:FileIdentity & {manifestSha256:Sha256};receivedAt:string;
+ selectedRevision:number;selectedEditionSha256:Sha256;localHeadBefore:number|null;localHeadAfter:number;
+ preservedExistingHead:boolean;sourceIds:Sha256[];editions:number[];reviewMeaning:string;requestMeaning:string;
+}
+export interface ResultsHeadSelection {
+ schema:'stellar-forge.iati-results-head-selection.v1';id:Sha256;previousRevision:number;
+ selectedRevision:number;selectedSha256:Sha256;actor:string;note:string;recordedAt:string;
+}
+export interface ResultsCancelled {
+ schema:'stellar-forge.iati-results-cancelled-request.v1';requestId:string;kind:'save'|'compare'|'adopt';
+ project:Sha256|'';inputSha256:Sha256;cancelledAt:string;cancellationRequestId:string;reason:string;
+}
+export interface ResultsInventory {
+ schema:'stellar-forge.iati-results-inventory.v1';workspaceId:Sha256;analysisContract:Record<string,unknown>;
+ projects:Array<{id:Sha256;revision:number;name:string;review:Review;savedAt:string;sha256:Sha256;counts:Record<string,number>}>;
+ projections:ResultsProjectionRecord[];receipts:ResultsReceiving[];
+}
+export interface ResultsSource {
+ projection:ResultsProjectionRecord;counts:Record<string,number>;findings:ResultsFinding[];sourceMetadata:Record<string,unknown>;
+}
+export interface ResultsPreview {definition:Required<ResultsDefinition>;projections:ResultsProjectionRecord[];report:ResultsReport}
+export type ResultsOperation =
+ {requestId:string;found:false}|
+ {requestId:string;found:true;kind:'save'|'compare'|'adopt'|'cancel';state:'COMPLETE'|'CANCELLED';inputSha256:Sha256;
+ input:ResultsSave|ResultsCompare|ResultsAdopt|ResultsCancel;response:ResultsEdition|ResultsSavedComparison|ResultsHeadSelection|ResultsCancelled};
+
 export declare class IatiWorkspaceClient {
+  readonly organisationReconciliation: OrganisationReconciliationClient;
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
   state(options?: RequestOptions): Promise<WorkspaceState>;
@@ -464,7 +565,7 @@ export declare class IatiWorkspaceClient {
   /** Consume or cancel the returned full native stream; this is never a reconstructed file. */
   export(kind: 'project' | 'dataset' | 'changes' | 'portfolio' | 'report', id: Sha256, options?: RevisionOptions): Promise<Response>;
   ingest(input: SourceInput, options?: RequestOptions): Promise<Source>;
-  receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject>;
+  receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject | ResultsReceiving>;
   dqaProviders(options?: RequestOptions): Promise<{ providers: DqaProvider[] }>;
   dqaSaveProvider(input: DqaProviderSave, options?: RequestOptions): Promise<DqaProvider>;
   dqaCapture(input: DqaCapture, options?: RequestOptions): Promise<DqaAssessment>;
@@ -528,6 +629,27 @@ export declare class IatiWorkspaceClient {
   organisationExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
   organisationFile(id: Sha256, kind: OrganisationFileKind, options?: RevisionOptions): Promise<Response>;
   organisationReceive(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<OrganisationReceiving>;
+
+
+  resultsInventory(options?:RequestOptions):Promise<ResultsInventory>;
+  resultsSource(source:Sha256,options?:RequestOptions):Promise<ResultsSource>;
+  resultsIndicators(projection:Sha256,options?:RequestOptions & {offset?:number;limit?:number;search?:string;measure?:string}):Promise<{
+    projection:ResultsProjectionRecord;sourceCounts:Record<string,number>;rows:Array<Record<string,unknown>>;total:number;offset:number;nextOffset:number|null}>;
+  resultsIndicator(projection:Sha256,key:Sha256,options?:RequestOptions):Promise<ResultsIndicator>;
+  resultsPreview(input:ResultsDefinition,options?:RequestOptions):Promise<ResultsPreview>;
+  resultsSave(input:ResultsSave,options?:RequestOptions):Promise<ResultsEdition>;
+  resultsCompare(input:ResultsCompare,options?:RequestOptions):Promise<ResultsSavedComparison>;
+  resultsAdopt(input:ResultsAdopt,options?:RequestOptions):Promise<ResultsHeadSelection>;
+  resultsCancel(input:ResultsCancel,options?:RequestOptions):Promise<ResultsCancelled>;
+  resultsRequest(requestId:string,options?:RequestOptions):Promise<ResultsOperation>;
+  resultsProject(id:Sha256,options?:RevisionOptions):Promise<ResultsEdition>;
+  resultsReport(id:Sha256,options?:RevisionOptions):Promise<{edition:ResultsEdition;report:ResultsReport}>;
+  resultsHistory(id:Sha256,options?:RequestOptions):Promise<{id:Sha256;headRevision:number;editions:ResultsEdition[]}>;
+  resultsComparisons(id:Sha256,options?:RequestOptions):Promise<{comparisons:ResultsSavedComparison[]}>;
+  /** The caller must consume/cancel the complete returned file stream. */
+  resultsExport(id:Sha256,options?:RevisionOptions & {reportOnly?:boolean}):Promise<Response>;
+  resultsOriginalSource(source:Sha256,options?:RequestOptions):Promise<Response>;
+  resultsReceive(input:Pick<PacketInput,'body'|'bytes'> & {sha256?:Sha256},options?:RequestOptions):Promise<ResultsReceiving>;
 
 
   ampStatus(options?:RequestOptions):Promise<AmpStatus>;
