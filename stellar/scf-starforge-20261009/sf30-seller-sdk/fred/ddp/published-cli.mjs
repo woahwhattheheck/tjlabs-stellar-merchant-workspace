@@ -91,7 +91,7 @@ export async function runFredDdpPublishedProgramme({workspace,packagePath,crossw
   workspace=resolve(workspace);const directory=resolve(workspace,project),destination=resolve(workspace,receive),out=resolve(workspace,output),started=performance.now();
   need(directory!==destination,'Receive the complete project into its own destination.');
   const packageCapture=await load(resolve(workspace,packagePath)),crosswalk=await load(resolve(workspace,crosswalkPath)),plan=await load(resolve(workspace,planPath));
-  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk});need(plan.summary.ready&&plan.acquisitions.length,'Use the complete ready original migration plan.');
+  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk,copy:false});need(plan.summary.ready&&plan.acquisitions.length,'Use the complete ready original migration plan.');
   if(collect)await collectFredDdpCurrentPublications({workspace,planPath,intake,stdout,stderr,signal});
   const manifest=await load(resolve(workspace,manifestPath??join(intake,'manifest.json')));await mkdir(out,{recursive:true});
   const report=await compareFredDdpCurrentPublication({packageCapture,crosswalk,plan,manifest,directory:workspace,outputDirectory:join(out,'comparison'),

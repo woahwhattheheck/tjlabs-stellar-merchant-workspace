@@ -35,6 +35,20 @@ The optional `--archive-sha` checks the original ZIP byte hash supplied with the
 
 The ZIP retains the decision revisions that were selected when it was frozen. Those selected revisions become editable local decisions. Later editable deliveries add all revisions retained in the receiving workspace. The original ZIP itself remains in the package and receiving lineage with its byte hash. Because the old ZIP has no workspace-origin field, its frozen report hash supplies an explicit archive origin.
 
+## Continue the original report in one operation
+
+The [complete native example](examples/receive-original-report.mjs) operates a retained original ZIP through the authenticated HTTP application, saves receiving review notes as a new local decision revision, freezes the next report, reopens the original delivery, and receives/re-exports the complete work in a second private workspace. The two receiving directories, original ZIP and all three complete editable packages remain available afterward.
+
+~~~sh
+node stellar/scf-starforge-20261009/partners/open-meteo-operations/examples/receive-original-report.mjs \
+  --archive /private/weather-delivery/original-report.zip \
+  --archive-sha ORIGINAL_ZIP_SHA256 \
+  --output /private/weather-delivery/new-receiving-operation \
+  --note "Independent receiving review completed from the retained source package."
+~~~
+
+Choose a new output directory beneath an existing private parent. This uses the original source values, windows, thresholds, responsible owner and disposition; the explicitly supplied receiving note creates the new decision revision. The saved `receiving-continuation.json` identifies both private settings files, the original and resulting report/source identities, the retained local revision and complete delivery files. Open either settings file through the normal `serve` command to continue the customer work.
+
 ## Open the receiving workspace
 
 The review workspace has its own private directory and stable origin identity:
