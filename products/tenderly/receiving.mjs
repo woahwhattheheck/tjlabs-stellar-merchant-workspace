@@ -41,17 +41,57 @@ function evaluateOriginal(expression,name,bindings={}){
 }
 const readOriginal=(name,bindings={})=>evaluateOriginal(originalInitializer(original,name),name,{process,...bindings});
 const readAssignment=(target,bindings={})=>evaluateOriginal(originalAssignment(original,target),target,bindings);
-const selected=readOriginal('selected'),env={...process.env},counts=readOriginal('counts');
-for(const name of ['TENDERLY_ACCESS_KEY','TENDERLY_OPERATION_KEY']){
- env[name]=readAssignment('process.env.'+name,{process:{env}});
- assert.equal(typeof env[name],'string','Original private environment entry: '+name);
+const originalKind=process.env.TENDERLY_ORIGINAL_DRIVER_KIND??'mcp';
+const env={...process.env},fetchOriginal=globalThis.fetch;
+let selected,counts,merchantOptions;
+if(originalKind==='installed'){
+ assert.equal(sha(Buffer.from(original)),'9f9aa86557c9cfff4cc5b0a6a517dd079dc419794335b83c057121cee44d9d61',
+  'Use the complete original installed receiving source');
+ const acceptance=JSON.parse(await readFile(join(root,'received','mcp-receiving','acceptance.json'),'utf8'));
+ assert.equal(acceptance.status,'PASS');
+ assert.equal(acceptance.sourceCommit,'f51af50a8427201f1c8abe224de9bd99b6b8dcce');
+ assert.equal(acceptance.workspaceId,'1c5eecfb-93f8-4ce1-bd39-7b6e680212a8');
+ selected=acceptance.selected;
+ Object.assign(env,readOriginal('fixtureEnvironment'));
+ counts={providerHttp:0,verified:0,settled:0,cancelled:0};
+ // Retain the complete original MCP source-acceptance adapter and merchant options.
+ // The saved operation reopens its completed provider result; these counters remain zero.
+ const nativeFactory=async compiled=>({
+  async processHTTPRequest(){counts.verified++;return {
+   type:'payment-verified',
+   paymentPayload:{fixture:'LOCAL_SOURCE_ACCEPTANCE'},
+   paymentRequirements:compiled.routes[0].offer.accepts[0],declaredExtensions:{},
+   cancellationDispatcher:{cancel:async()=>{counts.cancelled++;return {fixture:'LOCAL_SOURCE_ACCEPTANCE'};}}
+  };},
+  createFailurePathSettlementHeaders(){return {};},
+  async processSettlement(_payload,terms){counts.settled++;return {
+   success:true,headers:{'payment-response':Buffer.from(JSON.stringify({
+    success:true,network:terms.network,amount:terms.amount,
+    fixture:'LOCAL_SOURCE_ACCEPTANCE'})).toString('base64')}
+  };}
+ });
+ merchantOptions={nativeFactory,upstreamOrigin:'http://127.0.0.1:38219',allowLoopbackUpstream:true};
+ globalThis.fetch=function(input,options){
+  const url=new URL(typeof input==='string'||input instanceof URL?input:input.url);
+  if(url.origin==='https://api.tenderly.co')counts.providerHttp++;
+  return fetchOriginal(input,options);
+ };
+}else{
+ assert.equal(originalKind,'mcp','Select the original MCP or installed receiving source');
+ selected=readOriginal('selected');counts=readOriginal('counts');
+ for(const name of ['TENDERLY_ACCESS_KEY','TENDERLY_OPERATION_KEY']){
+  env[name]=readAssignment('process.env.'+name,{process:{env}});
+  assert.equal(typeof env[name],'string','Original private environment entry: '+name);
+ }
+ const originalAlias=readOriginal('alias'),nativeFactory=readOriginal('nativeFactory',{counts,Buffer});
+ const originalConfig={tenderlyWorkspaces:{workspaces:{[originalAlias]:{merchantOptions:{}}}}};
+ merchantOptions=readAssignment('config.tenderlyWorkspaces.workspaces[alias].merchantOptions',
+  {config:originalConfig,alias:originalAlias,nativeFactory});
+ globalThis.fetch=readAssignment('globalThis.fetch',{counts,fetchOriginal});
 }
-const originalAlias=readOriginal('alias'),nativeFactory=readOriginal('nativeFactory',{counts,Buffer});
-const originalConfig={tenderlyWorkspaces:{workspaces:{[originalAlias]:{merchantOptions:{}}}}};
-const merchantOptions=readAssignment('config.tenderlyWorkspaces.workspaces[alias].merchantOptions',
- {config:originalConfig,alias:originalAlias,nativeFactory});
-const fetchOriginal=globalThis.fetch;
-globalThis.fetch=readAssignment('globalThis.fetch',{counts,fetchOriginal});
+assert.equal(selected.responseBytes,80853);
+assert.equal(selected.responseSha256,'a7dd5210c97b9b3ab675e9e79e00e196057a0e6f61406ae1a35212ef808149f4');
+assert.equal(selected.currentGeneration,3);
 const customerInputs=JSON.parse(process.env.TENDERLY_CUSTOMER_DELIVERIES||JSON.stringify([
  ['node','/dev/shm/reidgardas-b710-tenderly/customer-journey/delivery'],
  ['python','/dev/shm/reidgardas-b710-tenderly/customer-journey/delivery-python'],

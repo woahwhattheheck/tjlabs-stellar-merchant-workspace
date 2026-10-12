@@ -22,28 +22,41 @@ def resources():
         try:result[name]=(Path("/sys/fs/cgroup")/name).read_text().strip()
         except OSError:pass
     return result
-def group_members(group):
+def group_members(outer_group,outer_session):
     members=[]
     for entry in Path("/proc").iterdir():
         if not entry.name.isdecimal():continue
         try:
             data=(entry/"stat").read_text().rsplit(")",1)[1].split()
-            if int(data[2])==group and int(data[3])==group and data[0]!="Z":members.append(int(entry.name))
+            if int(data[2])==outer_group and int(data[3])==outer_session and data[0]!="Z":members.append(int(entry.name))
         except (OSError,ValueError,IndexError):pass
     return members
-def retire_group(group):
-    active=group_members(group)
+def retire_group(inner_group,identity):
+    if identity is None:
+        return {"ownedProcessGroup":inner_group,"namespaceRecorded":False,
+                "activeBeforeDrain":None,"activeAfterDrain":None}
+    outer_group=identity["outerGroup"];outer_session=identity["outerSession"]
+    active=group_members(outer_group,outer_session)
     if active:
-        try:os.killpg(group,signal.SIGTERM)
+        try:os.killpg(inner_group,signal.SIGTERM)
         except ProcessLookupError:pass
         until=time.monotonic()+10
-        while group_members(group) and time.monotonic()<until:time.sleep(.1)
-        if group_members(group):
-            try:os.killpg(group,signal.SIGKILL)
+        while group_members(outer_group,outer_session) and time.monotonic()<until:time.sleep(.1)
+        if group_members(outer_group,outer_session):
+            try:os.killpg(inner_group,signal.SIGKILL)
             except ProcessLookupError:pass
             until=time.monotonic()+5
-            while group_members(group) and time.monotonic()<until:time.sleep(.1)
-    return {"ownedProcessGroup":group,"activeBeforeDrain":active,"activeAfterDrain":group_members(group)}
+            while group_members(outer_group,outer_session) and time.monotonic()<until:time.sleep(.1)
+    return {"ownedProcessGroup":inner_group,"namespaceRecorded":True,"namespace":identity,
+            "activeBeforeDrain":active,"activeAfterDrain":group_members(outer_group,outer_session)}
+def child_identity(path,pid):
+    try:value=json.loads(path.read_text())
+    except FileNotFoundError:return None
+    if value.get("innerPid")!=pid or not all(isinstance(value.get(key),int) and value[key]>0 for key in ("outerPid","outerGroup","outerSession")):
+        raise ValueError("The original child process identity changed")
+    if value["outerPid"]!=value["outerGroup"] or value["outerGroup"]!=value["outerSession"]:
+        raise ValueError("The original child did not start its own process session")
+    return value
 def copy_regular_tree(original,target):
     original=original.resolve()
     if not original.is_dir():raise ValueError("The original customer export directory is absent")
@@ -87,7 +100,8 @@ def main():
     parser.add_argument("--directory",required=True,type=Path,help="New directory beneath an existing owned private parent")
     parser.add_argument("--checkpoint",type=Path,help="Complete saved customer or checkpoint ZIP; restores its original archive and both customer exports")
     parser.add_argument("--package",type=Path)
-    parser.add_argument("--original-driver",required=True,type=Path,help="Existing original selected-case and private-environment definitions")
+    parser.add_argument("--original-driver",required=True,type=Path,help="Complete original MCP or installed receiving source")
+    parser.add_argument("--original-driver-kind",choices=("mcp","installed"),default="mcp")
     parser.add_argument("--customer-node",type=Path)
     parser.add_argument("--customer-python",type=Path)
     parser.add_argument("--node",default="node")
@@ -151,15 +165,29 @@ def main():
     environment=dict(os.environ)
     environment["TENDERLY_ARCHIVE_SHA"]=PACKAGE_SHA
     environment["TENDERLY_ORIGINAL_DRIVER"]=str(inputs/"original-driver.mjs")
+    environment["TENDERLY_ORIGINAL_DRIVER_KIND"]=args.original_driver_kind
     environment["TENDERLY_CUSTOMER_DELIVERIES"]=json.dumps([["node",str(customers/"node")],["python",str(customers/"python")]])
     environment["TMPDIR"]=str(directory)
+    entry="""import {readFileSync,readlinkSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const root=process.argv[2],raw=readFileSync('/proc/self/stat','utf8');
+const fields=raw.slice(raw.lastIndexOf(')')+2).trim().split(/\\s+/);
+const identity={innerPid:process.pid,outerPid:Number(readlinkSync('/proc/self')),
+ outerGroup:Number(fields[2]),outerSession:Number(fields[3])};
+writeFileSync(join(root,'native-process-identity.json'),JSON.stringify(identity)+'\\n',{flag:'wx',mode:0o600});
+console.log(JSON.stringify({stage:'TENDERLY_NATIVE_NAMESPACE',...identity}));
+await import(pathToFileURL(join(root,'journey.mjs')).href);
+"""
+    write(directory/"native-entry.mjs",entry.encode())
+    identity_path=directory/"native-process-identity.json"
     before=resources()
     print(json.dumps({"stage":"EXACT_ORIGINAL_TENDERLY_SOURCE_RECEIVED","sourceCommit":SOURCE_COMMIT,
         "sourceFiles":len(manifest["files"]),"sourceBytes":sum(item["bytes"] for item in manifest["files"].values()),
         "originalArchiveSha256":PACKAGE_SHA,"originalDriverSha256":sha(original_driver),"directory":str(directory)}),flush=True)
     started=time.monotonic();child=None;process={"before":before};error=None
     try:
-        child=subprocess.Popen([args.node,str(directory/"journey.mjs"),str(directory)],env=environment,start_new_session=True)
+        child=subprocess.Popen([args.node,str(directory/"native-entry.mjs"),str(directory)],env=environment,start_new_session=True)
         try:returncode=child.wait(timeout=240)
         except subprocess.TimeoutExpired:
             process["timedOut"]=True
@@ -174,7 +202,7 @@ def main():
         process["returncode"]=None
     finally:
         if child:
-            process.update(retire_group(child.pid))
+            process.update(retire_group(child.pid,child_identity(identity_path,child.pid)))
             if child.poll() is None:
                 try:child.wait(timeout=5)
                 except subprocess.TimeoutExpired:child.kill();child.wait()
@@ -182,13 +210,13 @@ def main():
         write(directory/"native-process.json",(json.dumps(process,indent=2)+"\n").encode())
         print(json.dumps({"stage":"ORIGINAL_TENDERLY_PROCESS_EXIT",**process}),flush=True)
     result_path=directory/"receiving-result.json"
-    completed=process.get("returncode")==0 and result_path.is_file() and not process.get("activeAfterDrain")
+    completed=process.get("returncode")==0 and result_path.is_file() and process.get("namespaceRecorded") is True and not process.get("activeAfterDrain")
     result=json.loads(result_path.read_text()) if completed else {
         "schema":"stellar-forge.tenderly-managed-receiving-checkpoint.v1","operation":"SCF-TENDERLY-SHARED-OPERATOR-E881-20261012",
         "sourceCommit":SOURCE_COMMIT,"originalArchiveSha256":PACKAGE_SHA,"originalWorkspaceSha256":WORKSPACE_SHA,"error":error,
     }
     result.update({"completed":completed,"nativeProcess":process,"sourceFiles":len(manifest["files"]),
-        "originalDriverSha256":sha(original_driver),"receivingDriverSha256":sha(driver),
+        "originalDriverSha256":sha(original_driver),"originalDriverKind":args.original_driver_kind,"receivingDriverSha256":sha(driver),
         "originalCheckpointSha256":checkpoint["sha256"] if checkpoint else None})
     title="Starforge_Tenderly_Managed_2026-10-12"
     report=directory/(title+("_Receiving.json" if completed else "_Checkpoint.json"))
@@ -215,6 +243,7 @@ def main():
             path=directory/folder
             if path.is_dir():selected.append(path);selected.extend(sorted(path.rglob("*")))
         if result_path.is_file():selected.append(result_path)
+        if identity_path.is_file():selected.append(identity_path)
         for path in selected:
             info=path.lstat()
             if stat.S_ISLNK(info.st_mode):raise ValueError("The complete customer operation contains a linked file")

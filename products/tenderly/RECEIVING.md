@@ -25,7 +25,7 @@ The original workspace archive is `tenderly-mcp-received-workspace-20261012.tar.
 
 The complete saved checkpoint is `Starforge_Tenderly_Managed_2026-10-12_Checkpoint.zip`, 200,424 bytes, SHA-256 `8f09a3d7f4bcf64e1075bd09c1ea88dd2519208e66eb0080a69ec56ef03f4c0a`. It retains the unchanged workspace archive, the original successful MCP acceptance, and both complete Node and Python customer exports. Select it with `--checkpoint` to continue on another machine. The receiver verifies every saved member against the included manifest and restores the complete customer files and their directory structure.
 
-The existing operator also retains its original `mcp-receiving-journey.mjs`, SHA-256 `e2cc01d971997218e9587c70dd8c81d4cf6a03c6f4a9c79b227572b79958db04`. Supply that complete file with `--original-driver`. The retained driver supplies the original `selected` initializer, its two explicit Tenderly environment assignments, the original merchant options and native factory, and its existing provider-call counters. The receiver reads those exact definitions, attaches the managed listener with that configuration and checks the original counters after the complete saved-response operation. Both original customer exports are received as complete regular-file trees and reopened through the original customer client.
+The existing operator also retains its original `mcp-receiving-journey.mjs`, SHA-256 `e2cc01d971997218e9587c70dd8c81d4cf6a03c6f4a9c79b227572b79958db04`. Supply that complete file with `--original-driver`. The complete saved installed receiving source is also supported: `receive-installed.mjs`, 19,410 bytes, SHA-256 `9f9aa86557c9cfff4cc5b0a6a517dd079dc419794335b83c057121cee44d9d61`, from `Tenderly_Installed_Receiving_Source_20261012.zip`. Select it with `--original-driver-kind installed`. This path reads the complete original PASS acceptance from the saved workspace archive and the original environment initializer from that exact installed source. It retains the original MCP native adapter, merchant options and provider/payment counters in the adjacent receiving program. The retained driver supplies the original `selected` initializer, its two explicit Tenderly environment assignments, the original merchant options and native factory, and its existing provider-call counters. The receiver reads those exact definitions, attaches the managed listener with that configuration and checks the original counters after the complete saved-response operation. Both original customer exports are received as complete regular-file trees and reopened through the original customer client.
 
 Original coordination: <https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791748442023179>.
 
@@ -46,14 +46,15 @@ python3 /ABSOLUTE/RECEIVING/receiving.py \
   --save-helper /ABSOLUTE/CURRENT/library_upload.py
 ```
 
-A restored customer ZIP supplies all three original data inputs directly:
+A restored customer ZIP and the complete saved installed source supply the original inputs directly:
 
 ```sh
 python3 /ABSOLUTE/RECEIVING/receiving.py \
   --source-root /ABSOLUTE/PRIVATE/tenderly-original-source \
   --directory /ABSOLUTE/PRIVATE/tenderly-customer-operation \
   --checkpoint /ABSOLUTE/RESTORED/Starforge_Tenderly_Managed_2026-10-12_Checkpoint.zip \
-  --original-driver /ABSOLUTE/ORIGINAL/mcp-receiving-journey.mjs \
+  --original-driver /ABSOLUTE/RESTORED/receive-installed.mjs \
+  --original-driver-kind installed \
   --node /ABSOLUTE/EXISTING/node \
   --node-modules /ABSOLUTE/EXISTING/node_modules \
   --save-helper /ABSOLUTE/CURRENT/library_upload.py
@@ -72,4 +73,4 @@ A successful whole operation creates:
 
 The source checkout and original private environment remain outside the customer ZIP. The delivered workspace and analysis use the maintained product and installed instructions in `OPERATING.md`.
 
-The Python owner starts one process session, records actual exit code, signal and memory events, and drains that exact owned process group before packaging. If the original native operation ends early, it instead saves a complete `_Checkpoint.json` and `_Checkpoint.zip` with the retained customer case and actual outcome, so the source owner can continue the same operation from its saved state. It retains the private operation directory through complete file saving.
+The Python owner starts one process session, records actual exit code, signal and memory events, and drains that exact owned process group before packaging. Its child records the outer process/session IDs visible through `/proc` before loading the customer program; the owner scans those outer IDs and signals the original inner process group, preserving correct ownership across Linux PID namespaces. If the original native operation ends early, it instead saves a complete `_Checkpoint.json` and `_Checkpoint.zip` with the retained customer case and actual outcome, so the source owner can continue the same operation from its saved state. It retains the private operation directory through complete file saving.
