@@ -338,3 +338,9 @@ Each journey retains its original operation files and continues from the same
 directory. The schema guide also accepts actual earlier workspace packages for
 version 1/version 2 receiving. Keep private credentials with the operator and
 transfer the complete project export to the recipient.
+
+## Google catalog commissioning
+
+The companion `starforge openlineage-google` carries a saved original source edition through Google project/quota-project review, explicit event approval, Data Lineage import, stable request recovery, exact table-edge receiving and a complete editable package. Its wrapper retains both the original source application and the current receiver; the original workspace format and application version remain intact.
+
+Use the [Google catalog operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/DATAPLEX.md) for preparation, customer credentials, genuine OpenLineage 1.x requirements, expected catalog identities and independent reopening. Source editions retain every original event and facet, including event kinds outside Google's importer contract. Receiving preserves all API attempts and distinguishes field edges from table edges.
