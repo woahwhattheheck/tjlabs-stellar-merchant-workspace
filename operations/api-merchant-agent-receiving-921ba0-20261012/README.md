@@ -59,15 +59,16 @@ The captured original SF98 event and delivery files survived the restore byte fo
 
 ## Run from this complete receiving directory
 
-`source-inputs.json` contains all 671 exact selected source files and their original manifest. The accepted driver and complete package builder are included as `continue.mjs` and `build-delivery.py`. The ordinary Python entry verifies all three original Git objects before it starts the existing operation.
+`source-inputs.json` contains the original 671 exact selected source files and their original manifest. `seller-assets.json` adds the three original seller developer-portal assets from that same PR24 commit. The receiver checks both complete source objects and all individual Git identities, then materializes the complete 674-file selection. The accepted driver and complete package builder are included as `continue.mjs` and `build-delivery.py`; their exact Git identities are also checked before the existing operation starts.
 
-On the same equipped host where the original private runtime paths exist, keep these four files together and run:
+On the same equipped host where the original private runtime paths exist, keep these five files together and run:
 
 ```sh
 python3 receive.py \
   --inputs source-inputs.json \
   --driver continue.mjs \
-  --package-builder build-delivery.py
+  --package-builder build-delivery.py \
+  --seller-assets seller-assets.json
 ```
 
 Before dispatch, the receiver verifies or restores the two exact original schema dependencies in the retained merchant source overlay: `stellar-forge/payment-auto-catalog/schema-validation.mjs` and `schema-pattern.mjs`. Their bytes come from the already-verified 671-file packet. Existing matching files are reused; a different existing named file is preserved and reported. This closes the missing-module failure observed before the original agent journal was created.
@@ -82,25 +83,26 @@ These source objects are stored in the same standalone Git repository:
 
 | Source object | Exact Git blob |
 | --- | --- |
-| Original eight-stage agent driver | `d541bb3490172b5654c6a20d7c9d631e123cd179` |
-| Complete ordinary receiver with original schema closure | `74e0470063b3e6e1b5d965d2509f9b44cdc80040` |
-| Complete selected 671-file manifest | `226d56bd3eb5def6ba55d685dd9800c93a62b28d` |
-| Direct source/driver/package process carrier | `e121667de06580dc50269248456a206e4a3462b2` |
-| Complete delivery builder | `02ebbcc02d348837c7449cbb0c29dbc2a16f2d71` |
+| Original eight-stage agent driver, with the exact native Accept header | `e2b37f98fcc6c28dca39889f0ee382c6da76b475` |
+| Complete ordinary receiver with original schema and seller-asset closure | `ed7ca6f4b57ed029909d21a867b5cb0dd967c869` |
+| Complete original 671-file source input | `0c1df5bf8c20b8b534060d67399d9b0a9b751bc7` |
+| Original 671-file base manifest | `226d56bd3eb5def6ba55d685dd9800c93a62b28d` |
+| Required original seller assets | `5ac9954d9f3cab0886df97a7290f266b80ed4302` |
+| Complete 674-file delivery builder | `1b42af525e37feeeeddd6b9e5ae1de01eca2e00b` |
 
-The selected source manifest identifies every exact leaf in the PR24 edition. Source is reconstructed only from those original Git blobs. The carrier verifies Git blob identity as each complete file arrives and again against the complete selected manifest.
+The base manifest and the required seller-assets companion identify every selected leaf in the same PR24 edition. Source is reconstructed only from those original Git blobs. The receiver verifies the complete input objects and every leaf, then writes one complete selection identifying the original base input and supplemental assets.
 
-The retained orchestration has all 671 exact source texts and 129 transport chunks already available. An accepted ordinary PTY can receive them through newline-delimited JSON, with no additional provider source download.
+The original 671-file payload remains byte-identical. Its 129 retained transport chunks remain a source checkpoint; the ordinary receiver above composes those original bytes with the three required seller assets. A receiving host can use the complete files directly without an authenticated provider download.
 
 ## Resume the original agent continuation
 
-Keep the existing original merchant runtime and its original workspace paths. The source carrier uses `/dev/921ba0-api-merchant-agent-source` for reproducible source within one live process namespace, while the original private operation journal remains at:
+Keep the existing original merchant runtime and its original workspace paths. The receiver creates one invocation-private source directory under `/dev` and keeps it alive until its native child exits. The original private operation journal remains at:
 
 ```text
 /dev/shm/921ba0-api-merchant-agent-native
 ```
 
-For the alternative retained-PTY input route, the carrier starts by reporting `SOURCE_INPUT_READY`. It accepts numbered `chunk` records, verifies and writes complete source leaves, and acknowledges each numbered chunk. It accepts a final `run` record containing the complete source selection and exact driver text with its Git blob identity. It then invokes that driver with `--resume` in the same live process namespace.
+The ordinary receiver reports the verified original schema dependencies and the full 674-file source selection, then invokes the retained driver with `--resume`. A lost process response is reconciled against this same journal and the original live owner before any later invocation.
 
 The driver:
 
@@ -117,7 +119,7 @@ The driver checks that the original ten-stage result remains byte-identical. A l
 
 Private runtime values are loaded locally from the original private files. The original merchant claim and backup passphrase are retained in their existing owner files. The agent token is retained only in the agent's new private operation root.
 
-After actual success, the carrier retires only its own reproducible source files and driver, retaining the complete source-selection file. It reports `ORIGINAL_AGENT_COMPLETE_AWAITING_DELIVERY` and accepts the exact package-builder source. No source transfer archive or second workspace owner is introduced.
+After actual success, the receiver retires only its own reproducible source files and driver, retaining the complete source-selection file. It invokes the included exact package builder in the same receiving process. The builder operates on the already received original exports and completed journals.
 
 ## Complete user package
 
@@ -200,6 +202,18 @@ The full application backup retains the original source/data closure, merchant s
 The retained merchant source has an existing `stellar-forge` alias into the original application source. The receiver preserves that exact owned alias. For the two schema modules already identified by the native import, it accepts the existing exact verified bytes or replaces only their specifically recorded dangling source links with the original 671-file packet bytes. Existing different source bytes or changed link targets fail before the original merchant driver. Borrowed external source directories, the funded application and every original journal remain untouched.
 
 
-## Original initializer path diagnosis
+## Complete original initializer and transport closure
 
-The same original driver now adds only a bounded ENOENT diagnostic containing its filesystem syscall and absolute path. It preserves every original operation, request, source-selection, paid response and phase result. This identifies a missing original initializer dependency without printing credential or response bytes. The current driver Git blob is `a0a29469049fbb05b092ff1a656d821a6d13c83d`; the matching original thin receiver is `e702725567d6302375021b224cbce9b9dd477906`. Its source download limit must admit the complete 12,276-byte receiver while still checking that exact Git blob. The original package builder and all 671 selected source files remain unchanged.
+The native initializer imports the existing merchant console, original checkout and original seller service. The maintained developer-portal module reads its assets during import, so its full original asset set must be present before setup can create its private registration. The initial 671-file packet included `developer/request.mjs`; this receiving edition supplies the other three exact leaves:
+
+| Original source under `stellar/scf-starforge-20261009/sf30-seller-sdk/developer/` | Bytes | Git blob |
+| --- | ---: | --- |
+| `index.html` | 6,727 | `684a401e4d23d6e49847ec4909d7cae9275b9b1c` |
+| `browser.mjs` | 14,729 | `fb09624f2ca813ece875cfd2546cc449a7321f1e` |
+| `style.css` | 9,319 | `1651243b074251cb0148571880cbd4abde4b9b5b` |
+
+All three come from the original selected commit `68faef31c6b0bd94ac99715f53144aa5512c0672`. They retain their original names and bytes. The receiver rejects a duplicate or different selected leaf and retains the complete source association in its selection file.
+
+The driver’s manual `tools/list` request now sends the original HTTP MCP media-type pair, `Accept: application/json, text/event-stream`, matching the typed client and maintained transport. The prior single-type request was rejected by that transport after the original setup and host had already initialized. This correction continues the same agent journal and named endpoint; the host, saved requests, payment, original response and completed merchant phases stay under their original owners.
+
+The bounded ENOENT diagnostic still reports only its filesystem syscall and absolute source path. It does not print credentials or response bodies. Runtime completion is recorded only in the original completed receiving journal.

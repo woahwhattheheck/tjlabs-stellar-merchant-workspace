@@ -5,8 +5,9 @@ from pathlib import Path
 
 COMMIT='68faef31c6b0bd94ac99715f53144aa5512c0672'
 INPUTS='0c1df5bf8c20b8b534060d67399d9b0a9b751bc7'
-DRIVER='a0a29469049fbb05b092ff1a656d821a6d13c83d'
-PACKAGE='02ebbcc02d348837c7449cbb0c29dbc2a16f2d71'
+DRIVER='e2b37f98fcc6c28dca39889f0ee382c6da76b475'
+PACKAGE='1b42af525e37feeeeddd6b9e5ae1de01eca2e00b'
+SELLER_ASSETS='5ac9954d9f3cab0886df97a7290f266b80ed4302'
 WORKSPACE='17284006-d724-4d0b-be69-d6fe586a8e8a'
 
 def need(value,code):
@@ -136,6 +137,7 @@ def main():
     parser.add_argument('--inputs',required=True,type=Path)
     parser.add_argument('--driver',required=True,type=Path)
     parser.add_argument('--package-builder',required=True,type=Path)
+    parser.add_argument('--seller-assets',required=True,type=Path)
     args=parser.parse_args()
     inputs=read_exact(args.inputs,INPUTS,8*1024*1024)
     driver=read_exact(args.driver,DRIVER,128*1024)
@@ -157,6 +159,33 @@ def main():
         need(item['gitBlob']==expected['gitBlob'] and item['mode']==expected['mode'] and
              item['mode'] in ('100644','100755') and blob(item['content'].encode('utf-8'))==expected['gitBlob'],
              'RECEIVING_SOURCE_BLOB_CHANGED')
+    # Original seller documentation is imported by the selected native checkout.
+    # Preserve the base 671-file packet and join its three exact original assets.
+    asset_bytes=read_exact(args.seller_assets,SELLER_ASSETS,1024*1024)
+    assets=json.loads(asset_bytes)
+    need(assets.get('schema')=='stellar-forge.sf101.original-seller-assets.v1' and
+         assets.get('sourceCommit')==COMMIT and
+         assets.get('repository')==selection['repository'],
+         'ORIGINAL_SELLER_ASSET_SELECTION_CHANGED')
+    expected_assets={"stellar/scf-starforge-20261009/sf30-seller-sdk/developer/index.html":"684a401e4d23d6e49847ec4909d7cae9275b9b1c","stellar/scf-starforge-20261009/sf30-seller-sdk/developer/browser.mjs":"fb09624f2ca813ece875cfd2546cc449a7321f1e","stellar/scf-starforge-20261009/sf30-seller-sdk/developer/style.css":"1651243b074251cb0148571880cbd4abde4b9b5b"}
+    need(isinstance(assets.get('files'),list) and len(assets['files'])==len(expected_assets),
+         'ORIGINAL_SELLER_ASSET_INVENTORY_CHANGED')
+    observed_assets=set()
+    for item in assets['files']:
+        name=item.get('path')
+        need(name in expected_assets and name not in files and name not in observed_assets and
+             item.get('mode')=='100644' and item.get('gitBlob')==expected_assets[name] and
+             isinstance(item.get('content'),str) and
+             blob(item['content'].encode('utf-8'))==expected_assets[name],
+             'ORIGINAL_SELLER_ASSET_BLOB_CHANGED')
+        observed_assets.add(name);files[name]=item
+        selected[name]={'path':name,'gitBlob':item['gitBlob'],'mode':item['mode']}
+    need(observed_assets==set(expected_assets),'ORIGINAL_SELLER_ASSET_INVENTORY_CHANGED')
+    selection={**selection,'files':[selected[name] for name in sorted(selected)],
+               'baseSourceInputsGitBlob':INPUTS,
+               'supplementalSources':[{'schema':assets['schema'],'gitBlob':SELLER_ASSETS,
+                                       'files':len(expected_assets)}]}
+    need(len(files)==len(selection['files'])==674,'RECEIVING_SOURCE_INVENTORY_CHANGED')
     for path in ('/dev/shm/921ba0-api-native-20261011',
                  '/dev/shm/921ba0-api-merchant-source',
                  '/dev/shm/921ba0-api-merchant-native'):
@@ -208,7 +237,7 @@ def main():
                     'NODE_OPTIONS':'--preserve-symlinks --preserve-symlinks-main',
                     'NODE_PATH':'/workspace/scratch/2d589b11f06d/scf-oauth-deps/node_modules',
                     'PYTHONDONTWRITEBYTECODE':'1'})
-        report({'state':'ORIGINAL_SOURCE_READY','sourceCommit':COMMIT,'files':671,
+        report({'state':'ORIGINAL_SOURCE_READY','sourceCommit':COMMIT,'files':len(files),
                 'workspaceId':WORKSPACE,'source':str(source)})
         exitcode=run(['node',str(driver_path),'--resume'],env)
         report({'state':'ORIGINAL_AGENT_PROCESS_EXITED','exitCode':exitcode})

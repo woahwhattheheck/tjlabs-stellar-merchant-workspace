@@ -64,7 +64,7 @@ need(agent['originalExecution']['attempts']==1 and agent['originalExecution']['b
 selection_bytes=read(SOURCE/'SOURCE-SELECTION.json')
 selection=parse(selection_bytes)
 need(sha(selection_bytes)==agent['sourceSelection']['sha256'] and selection['sourceCommit']==COMMIT and
-     len(selection['files'])==agent['sourceSelection']['files']==671,'ORIGINAL_SOURCE_SELECTION_CHANGED')
+     len(selection['files'])==agent['sourceSelection']['files']==674,'ORIGINAL_SOURCE_SELECTION_CHANGED')
 
 add('native-operation/merchant.json',merchant_bytes)
 add('native-operation/agent.json',agent_bytes)
@@ -158,7 +158,7 @@ The merchant restored the original application and its original SF98 outbox, inc
 | `downloads/execution/` | Complete original execution and immutable result export. |
 | `exports.json` | The actual export IDs, endpoint, manifest hashes, and member names. |
 | `native-operation/merchant.json` / `agent.json` | Full actual ten-stage and eight-stage operation results. |
-| `source/selected-source.json` | All 671 selected source leaves and their original Git identities. |
+| `source/selected-source.json` | All 674 selected source leaves and their original Git identities. |
 | `source/links.json` | Pinned source, installed entry, operator guide, and typed agent client. |
 | `package.manifest.json` / `SHA256SUMS` | Byte lengths and SHA-256 digests for the complete delivery. |
 

@@ -175,7 +175,7 @@ try{
   const providerBytes=await readFile(join(SOURCE,declared.path));
   need(git(providerBytes)==='1bbfb05647764037880c941377518c05bfeb57c3','ORIGINAL_PROVIDER_SOURCE_CHANGED');
   const response=await fetch(host.url,{method:'POST',headers:{Authorization:'Bearer '+privateData.token,
-   'Content-Type':'application/json','MCP-Protocol-Version':MCP_VERSION,Accept:'application/json'},
+   'Content-Type':'application/json','MCP-Protocol-Version':MCP_VERSION,Accept:'application/json, text/event-stream'},
    body:JSON.stringify({jsonrpc:'2.0',id:'original-merchant-tools',method:'tools/list',params:{}})});
   need(response.status===200,'ORIGINAL_AGENT_CATALOG_UNAVAILABLE');
   const body=await response.json(),actual=body.result?.tools?.filter(t=>t.name.startsWith('merchant_api_console_'))??[];
