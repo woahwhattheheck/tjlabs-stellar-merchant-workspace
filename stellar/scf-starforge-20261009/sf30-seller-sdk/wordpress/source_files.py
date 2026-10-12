@@ -9,7 +9,7 @@ from source_file_delivery import (
     COMMON_FIELDS, SourceFileContract, SourceFileDeliveryError,
     SourceFiles, restore_file_projection,
 )
-from .packet import SCHEMA, WORKSPACE_SCHEMA, MANIFEST, allowed
+from .packet import SCHEMA, WORKSPACE_SCHEMA, MANIFEST, allowed, validate_refresh_operations, PacketError
 
 class WordPressSourceError(SourceFileDeliveryError):
     pass
@@ -46,8 +46,12 @@ class WordPressSourceFiles(SourceFiles):
         if (value.get("schema") != WORKSPACE_SCHEMA
                 or value.get("id") != self.manifest.get("workspaceId")
                 or value.get("revision") != self.manifest.get("revision")
-                or value.get("operations") or value.get("packets")):
+                or value.get("packets")):
             self.contract.fail("WORKSPACE_BINDING_MISMATCH")
+        try:
+            validate_refresh_operations(value, self.read_file, {row["path"] for row in self.manifest["files"]})
+        except (PacketError, KeyError, ValueError, OSError):
+            self.contract.fail("REFRESH_OPERATION_BINDING_MISMATCH")
         return value
 
     @property

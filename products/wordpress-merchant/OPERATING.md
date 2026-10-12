@@ -2,7 +2,7 @@
 
 This product connects an existing WordPress source to a complete Stellar merchant workflow. The operator discovers the site's actual REST collections, retains the original responses, reviews a typed edition, publishes it through the existing dataset publisher and SF82 release store, and delivers it through the original SF88 buyer. A second product can carry the complete retained source workspace to another operator.
 
-The same source workspace is available in the browser, the installed WordPress CLI, managed Applications and 25 merchant tools. The typed client adds complete JSON reads, streaming downloads and local reopening. All surfaces use the original workspace, capture, edition, product, release and acquisition identities.
+The same source workspace is available in the browser, the installed WordPress CLI, managed Applications and 29 merchant tools. The typed client adds complete JSON reads, streaming downloads and local reopening. All surfaces use the original workspace, capture, edition, product, release and acquisition identities.
 
 The committed recipe is `stellar/scf-starforge-20261009/distribution/selections/wordpress-merchant.json`. It selects the WordPress application and merchant provider together with the existing dataset publisher, Dataset Buyer, Buyer Runbook, merchant console, native receiving and shared merchant infrastructure. Its package identity remains `@tokenjunkielabs/starforge-merchant`; the retained source selection distinguishes this product.
 
@@ -52,7 +52,7 @@ The normal installed command is `starforge-merchant`. This recipe adds:
 | Entry | Purpose |
 | --- | --- |
 | `wordpress` | Original source workspace, browser, actions, packet inspection and receiving. |
-| `merchant-wordpress` | Typed merchant client, host setup, all 25 tools and complete-file receiving. |
+| `merchant-wordpress` | Typed merchant client, host setup, all 29 tools and complete-file receiving. |
 | `merchant-providers` | Existing provider catalog, inspection and initializer. |
 | `merchant-mcp` / `merchant-mcp-stdio` | Existing authenticated merchant transports. |
 | `runtime-workspace` | Existing managed Applications owner and runtime selection. |
@@ -174,6 +174,16 @@ Discovery and capture keep their original IDs when resumed. A completed native r
 
 The original publisher and Buyer continue to apply their source, quote, approval, budget and transfer rules. The merchant provider resolves host paths from saved original records and aliases. Its client never fills an unreviewed price, invents a buyer workspace or generates a replacement action UUID after an uncertain reply.
 
+### Refresh a reviewed source product
+
+Save a refresh plan from an exact reviewed edition and its displayed snapshot. Each run retains fresh native discovery and capture, compares the complete candidate against the selected baseline and presents its source and projection changes. A named approval creates the successor through the original edition builder. Export carries the full comparison, decision and baseline source into this same product's publisher.
+
+The browser, direct CLI and typed merchant client share five actions: `refresh.plan.save`, `refresh.run.start`, `refresh.run.advance`, `refresh.run.review` and `refresh.run.export`. Four read tools expose the saved plan, run, complete comparison pages and original before/after records. The report's exact files are available through the existing complete artifact downloader.
+
+A run retains the original operation UUID and expected revision for interrupted review or export recovery. Complete source receiving also carries the refresh plans, comparison files and original refresh operation journal. An approved successor can be selected as the baseline for the next run.
+
+The full operating and source contract is [Saved WordPress refresh plans](../../stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/REFRESH.md).
+
 ### Select the correct export identity
 
 Two different saved objects have different IDs:
@@ -263,7 +273,7 @@ After an uncertain `act`, inspect `operation` with its saved UUID before choosin
 
 `release` drains this provider's requests and closes only the original server it started. Managed Applications and borrowed listeners keep their owner. Merchant host shutdown also drains pending work, releases retained readers and waits for its owned WordPress server to close.
 
-The full client reference, all 25 tool signatures, all 33 action field sets and complete download/receiving contract are in:
+The full client reference, all 29 tool signatures, all 38 action field sets and complete download/receiving contract are in:
 
 `stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/CLIENT.md`
 

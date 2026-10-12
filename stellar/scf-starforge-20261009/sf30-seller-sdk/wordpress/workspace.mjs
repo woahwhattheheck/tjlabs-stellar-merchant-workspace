@@ -6,6 +6,7 @@ import { WORKSPACE_SCHEMA, UUID, identity, sha256, jsonBytes, clone, now, id, ha
   object, only, text, integer, fail, validateSource, credentialReferences, errorRecord, newId } from './config.mjs';
 import { privateDirectory, acquireWorkspace, readJson, readPrivate, atomicJson, immutableJson, copied, exists, hashPrivate, inventory } from './files.mjs';
 import { openWordPressSource } from './capture.mjs';
+import { createWordPressRefresh, REFRESH_ACTIONS } from './refresh.mjs';
 import { suggestedProjection, validateProjection, projectionPreview, buildEdition, readEdition, compareEditions } from './edition.mjs';
 import { packet } from './packet.mjs';
 import { inspectWordPressWorkspaceBinding } from './managed.mjs';
@@ -15,7 +16,7 @@ import { openSocrataPublisher } from '../socrata/publisher.mjs';
 import { readDatasetSourceFiles } from '../../sf82-seller-pilot/release-dataset.mjs';
 const STATE_BYTES=33554432, RESULT_BYTES=33554432;
 const recoverable=new Set(['source.save','source.select','source.discover','capture.start','capture.resume','capture.pause',
-  'mapping.save','edition.build','merchant.save','edition.export','product.select','source.packet','source.files']);
+  'mapping.save','edition.build','merchant.save','edition.export','product.select','source.packet','source.files',...REFRESH_ACTIONS]);
 export async function openWordPressWorkspace({directory,environment=process.env,python='python3',fetchImpl=fetch,onEvent,expectedWorkspaceId,expectedWorkspaceIdentity}={}) {
   directory=absolute(directory);await privateDirectory(directory,true);
   const release=await acquireWorkspace(directory),sources=new Map(),publishers=new Map(),active=new Map();
@@ -26,6 +27,10 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     if(value.schema!==WORKSPACE_SCHEMA||!UUID.test(value.id??'')||!Number.isSafeInteger(value.revision)||
        ['sources','mappings','editions','merchants','exports','products','operations','packets'].some(key=>!Array.isArray(value[key])))
       fail('WORDPRESS_WORKSPACE_STATE','The original workspace record is invalid.',409);
+    for(const key of ['refreshPlans','refreshRuns','refreshEvents']){
+      if(value[key]===undefined)value[key]=[];
+      if(!Array.isArray(value[key]))fail('WORDPRESS_WORKSPACE_STATE','The retained refresh records are invalid.',409);
+    }
     return value;
   }
   async function commit(value) {value.revision++;value.updatedAt=now();await atomicJson(directory,'workspace.json',value);return value;}
@@ -90,7 +95,7 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     }
     return {id:operation.id,label:text(input.productLabel??'WordPress data product',160,'the product label'),createdAt:operation.createdAt};
   }
-  async function exportEdition(input,operation,current) {
+  async function exportEdition(input,operation,current,extension={}) {
     const edition=await editionRecord(input.editionId,current),merchant=current.merchants.find(row=>row.id===id(input.merchantId));
     if(!merchant)fail('WORDPRESS_MERCHANT_NOT_FOUND','Select saved original merchant terms.',404);
     text(input.reviewer,160,'the export reviewer');text(input.note??'',4000,'the export note',true);
@@ -104,6 +109,7 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     if(capture.sha256!==edition.captureSha256)fail('WORDPRESS_EXPORT_CAPTURE','The edition and retained source capture differ.',409);
     const retain=async(name)=>{
       const member='wordpress/'+name;
+      if(sourceFiles.some(file=>file.path===member))return;
       sourceFiles.push({path:member,...await copied(root(name),join(location,member))});
     };
     await retain('sources/'+selected.id+'.json');await retain('mappings/'+mapping.id+'.json');await retain('merchants/'+merchant.id+'.json');
@@ -115,16 +121,18 @@ export async function openWordPressWorkspace({directory,environment=process.env,
       for(const file of await inventory(root(prefix)))await retain(prefix+'/'+file.path);
     }
     for(const file of await inventory(edition.directory))await retain('editions/'+edition.id+'/'+file.path);
+    for(const name of extension.sourceFiles??[])await retain(name);
     sourceFiles.sort((a,b)=>a.path.localeCompare(b.path));
     await readDatasetSourceFiles(location,{sourceFiles});
-    const originalSource=await readJson(join(edition.directory,'source.json'),1048576),source={...originalSource,sourceFiles};
+    const originalSource=await readJson(join(edition.directory,'source.json'),1048576),source={...originalSource,sourceFiles,
+      ...(extension.refresh?{refresh:clone(extension.refresh)}:{})};
     await immutableJson(join(location,'source.json'),source);await immutableJson(join(location,'seller.json'),seller);
     for(const name of ['source.json','seller.json']){const row=await hashPrivate(join(location,name),name==='source.json'?2097152:1048576);files.push({path:name,bytes:row.bytes,sha256:row.hash});}
     files.push(...sourceFiles);
     const product=await productForExport(input,operation,current);
     const record={id:operation.id,delivery:'content',createdAt:operation.createdAt,editionId:edition.id,sourceId:edition.sourceId,
       captureId:edition.captureId,captureSha256:edition.captureSha256,merchantId:merchant.id,productId:product.id,
-      snapshot:edition.dataset.snapshot,reviewer:input.reviewer,note:input.note??'',files};
+      snapshot:edition.dataset.snapshot,reviewer:input.reviewer,note:input.note??'',files,...(extension.refresh?{refresh:clone(extension.refresh)}:{})};
     await immutableJson(join(location,'manifest.json'),record,RESULT_BYTES);
     return {result:record,apply:value=>{
       if(!value.products.some(row=>row.id===product.id))value.products.push(product);
@@ -132,7 +140,9 @@ export async function openWordPressWorkspace({directory,environment=process.env,
       value.activeProductId=product.id;
     }};
   }
+  const refresh=createWordPressRefresh({directory,stored,sourceRecord,sourceFor,mappingRecord,editionRecord,exportEdition});
   async function dispatch(action,input,operation,signal) {
+    if(REFRESH_ACTIONS.includes(action))return refresh.dispatch(action,input,operation,signal);
     const current=await stored(),sourceId=operation.sourceId;
     switch(action) {
       case 'source.save': {
@@ -277,7 +287,7 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     }
     return {operation:{...row,input:retained.input},result,active:active.has(row.id)};
   }
-  const mutationKeys=['sources','mappings','editions','merchants','exports','products','packets'];
+  const mutationKeys=['sources','mappings','editions','merchants','exports','products','packets','refreshPlans','refreshRuns','refreshEvents'];
   function mutation(before,after) {
     const result={upsert:{},select:{}};
     for(const key of mutationKeys) {
@@ -326,12 +336,13 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     } else {
       if(expectedRevision!==current.revision)fail('WORDPRESS_WORKSPACE_REVISION','Reload the current original workspace before saving.',409);
       record={id:operationId,action,intentSha256,createdAt:now(),sourceId:input.sourceId??current.activeSourceId,
-        status:'running',error:null};
+        ...(REFRESH_ACTIONS.includes(action)?{expectedRevision}:{}),status:'running',error:null};
       const path=join(root('operations'),operationId+'.intent.json');
       if(await exists(path)) {
         const saved=await readJson(path,1048576);
         if(identity({action:saved.action,input:saved.input})!==intentSha256)fail('WORDPRESS_OPERATION_ID_REUSED','The retained intent has different original input.',409);
-        record={...record,createdAt:saved.createdAt,sourceId:saved.sourceId};
+        record={...record,createdAt:saved.createdAt,sourceId:saved.sourceId,
+          ...(REFRESH_ACTIONS.includes(action)?{expectedRevision:saved.expectedRevision}:{})};
       } else await immutableJson(path,{...record,input});
       current.operations.push(record);await commit(current);
     }
@@ -364,6 +375,7 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     return {editionId,snapshot:edition.dataset.snapshot,...(admission===true?await native.handle(context):admission)};
   }
   async function download(kind,recordId,name,sourceId) {
+    if(kind==='refresh')return refresh.download(recordId,name);
     let path,expected,filename=name,contentType='application/json';
     if(kind==='source'){const row=await sourceRecord(recordId);path=join(root('sources'),row.id+'.json');expected=row.fileSha256;filename='wordpress-source-connection.json';}
     else if(kind==='response') {
@@ -425,17 +437,19 @@ export async function openWordPressWorkspace({directory,environment=process.env,
     return disposing;
   };
   try {
-    for(const name of ['sources','cache','mappings','editions','merchants','exports','publishers','packets','operations'])await privateDirectory(root(name),true);
+    for(const name of ['sources','cache','mappings','editions','merchants','exports','publishers','packets','operations',
+      'refresh/plans','refresh/runs','refresh/events','refresh/decisions','refresh/exports','refresh/reviews'])await privateDirectory(root(name),true);
     if(!await exists(root('workspace.json'))&&(expectedWorkspaceId!==undefined||expectedWorkspaceIdentity!==undefined))
       fail('WORDPRESS_WORKSPACE_BINDING_CHANGED','The selected original workspace is no longer present.',409);
     if(!await exists(root('workspace.json')))await atomicJson(directory,'workspace.json',{
       schema:WORKSPACE_SCHEMA,id:newId(),revision:0,createdAt:now(),updatedAt:now(),activeSourceId:null,activeProductId:null,
-      sources:[],mappings:[],editions:[],merchants:[],exports:[],products:[],operations:[],packets:[]});
+      sources:[],mappings:[],editions:[],merchants:[],exports:[],products:[],operations:[],packets:[],refreshPlans:[],refreshRuns:[],refreshEvents:[]});
     await stored();
     await inspectWordPressWorkspaceBinding(directory,{expectedWorkspaceId,expectedWorkspaceIdentity});
   } catch(error){await close();throw error;}
   return {directory,inspect,health:async()=>{const value=await stored();return {workspaceId:value.id,revision:value.revision,createdAt:value.createdAt,workspaceIdentity:identity({schema:WORKSPACE_SCHEMA,id:value.id,createdAt:value.createdAt})};},act,cancel,operation:operationRecord,preview,datasetPreview,download,publisherDownload,
     source:sourceRecord,job:captureRecord,wait:async(sourceId,captureId)=>(await sourceFor(sourceId)).wait(id(captureId)),mapping:mappingRecord,edition:editionRecord,
+    refreshPlan:refresh.plan,refreshRun:refresh.run,refreshChanges:refresh.changes,refreshRecord:refresh.record,
     records:async(sourceId,captureId,options)=>(await sourceFor(sourceId)).sample(id(captureId),options),
     suggestedProjection:async(sourceId,captureId)=>suggestedProjection(await(await sourceFor(sourceId)).completion(id(captureId))),
     response:async(sourceId,captureId,sequence)=>(await sourceFor(sourceId)).response(id(captureId),sequence),
