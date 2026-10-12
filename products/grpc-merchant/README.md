@@ -56,3 +56,12 @@ starforge grpc-product inspect-received --out /srv/private/received-grpc
 Save native operation UUIDs and the returned immutable export IDs before
 continuing. Stop drains the original merchant agent and native workspace.
 A later Open keeps the same authoring and receiving state.
+
+## Installed receiving from the original native operation
+
+`grpc-product-receive` joins a READY installation to the original service-health
+workspace, completed call, merchant preparation, release selection and frozen
+customer/health exports. It retains the complete receiving journal, all seven
+customer files and the original endpoint observations. Follow the
+[installed receiving guide](INSTALL_RECEIVING.md) through the same native
+operation and equipped worker.

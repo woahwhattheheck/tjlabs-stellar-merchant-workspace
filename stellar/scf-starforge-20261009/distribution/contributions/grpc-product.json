@@ -6,10 +6,12 @@
     "products/grpc-merchant"
   ],
   "commands": {
-    "grpc-product": "products/grpc-merchant/cli.mjs"
+    "grpc-product": "products/grpc-merchant/cli.mjs",
+    "grpc-product-receive": "products/grpc-merchant/receive.mjs"
   },
   "commandDescriptions": {
-    "grpc-product": "Open the original gRPC browser and agent together; retain native contracts, calls, upgrades, health and complete customer receiving."
+    "grpc-product": "Open the original gRPC browser and agent together; retain native contracts, calls, upgrades, health and complete customer receiving.",
+    "grpc-product-receive": "Complete installed receiving from the original native health operation, saved merchant preparation and frozen customer/health files."
   },
   "exports": {
     "./products/grpc-merchant": "./source/products/grpc-merchant/workspace.mjs",
@@ -17,7 +19,8 @@
     "./products/grpc-merchant/client": {
       "types": "./source/products/grpc-merchant/client.d.mts",
       "import": "./source/products/grpc-merchant/client.mjs"
-    }
+    },
+    "./products/grpc-merchant/receive": "./source/products/grpc-merchant/receive.mjs"
   },
   "applicationProviders": {
     "grpc-product": "products/grpc-merchant/application-provider.mjs"
