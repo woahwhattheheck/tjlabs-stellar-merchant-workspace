@@ -500,3 +500,7 @@ The same host's MCP and typed-client arm reads the original rows, makes an expli
 
 The browser arm closes only the browser context it owns. The original native caller owns server start, server shutdown, source selection and final project reopening. A source or browser parse check alone is not the native receiving result; the completed receiving record identifies the actual executed project and its full exported files.
 
+
+## Import a native Timescale commissioning report
+
+The [Timescale customer product](../timescale-customer/OPERATING.md) supplies the complete upstream commissioning and reviewed intake workflow. Open **Timescale intake** on this same DuckDB listener, retain the original complete report, review every field and import the two native sources. Import keys stay empty so duplicate observations remain available; the original paired definition supplies the comparison keys and windows. The report, frozen guide and reviewed source meanings travel in the full customer warehouse.
