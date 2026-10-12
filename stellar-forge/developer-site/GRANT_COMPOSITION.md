@@ -204,3 +204,68 @@ The chapter carries the selected Source Builds guide and Request Collections aut
 Keep the installation and planning capabilities together: selecting and comparing an immutable product edition, continuing its retained source build and installation, authoring a reusable plan from the original saved provider catalogue, preparing and reopening a named period, creating or resuming its original collection, and preserving prepared operator state in the existing receiving workflow. Measured native outcomes continue to come from the original operated case.
 
 The product is part of the existing starting foundation. The unchanged six priced packages fund the remaining customer-specific source integration, deployment, independent buyer operation and maintainer handover.
+
+## Receive the original bank customer workflow
+
+The existing **Merchant settlement, customer billing and accountant receiving** chapter in canonical §9A now carries original bank-statement receiving, shared payment coverage, customer remittance allocation, reviewed source/payment correction and complete account close handover. The original whole-chapter receiver updates that same chapter through --manuscript.
+
+Its source links register merchant-bank-statements-operation, merchant-bank-statements-installation, merchant-bank-statements-handover, merchant-bank-statements-example and merchant-bank-statements-selection. Each record retains the chapter's actual immutable repository, commit and path. The existing source receiver preserves every other record and clears a prior blob pin when an identity changes. The complete bank product includes the original Receivables, Bank receipts, remittance, customer and managed Applications sources.
+
+Receive the newest canonical chapter and all existing source registrations into the same original four reader outputs. Preserve the complete billing, service-renewal, paid-resource and funded-package paragraphs around the bank addition. The published guide identifies source and runtime installation; a returned original account/browser result supplies its actual operated customer files and execution state. Installation and daily accounting use the same original customer directory and writer.
+
+This operating foundation supports the existing customer deployment and maintainer handover. The canonical application continues to own its original six packages, prospective delivery effort, funding and independent useful-purchase acceptance.
+
+## Receive complete county report publication
+
+The recurring economic-report installation includes the original analyst
+briefing and county-report products in the same saved FRED project. Receive its
+complete canonical subsection through the existing `--manuscript` operation.
+Its dedicated economic section receiver replaces that subsection in place,
+while the customer source receiver retains the county operating guides.
+
+The canonical chapter selects two immutable source links from the actual
+published county product:
+
+- `economic-county-report` selects `fred/qcew/MERCHANT.md`: original SF30
+  publication, the SF88 purchase, saved intent and receiving destination,
+  independent package receiving, and complete merchant/project transfer.
+- `economic-county-source-methods` selects `fred/qcew/README.md`: original
+  BLS QCEW and CPI capture, calculation profiles, complete report production,
+  and retained edition and source history.
+
+The ordinary source receiver reads each guide's exact repository, commit and
+path from that chapter. A later accepted source refreshes the same record and
+clears an obsolete blob identity. An earlier manuscript without a county guide
+link preserves its existing source register. New county records require the
+chapter's selected original guide links.
+
+After the complete county product is merged, use that actual merged economic
+application commit for `--fred-commit` and retain the chapter's immutable guide
+links. The existing analyst source entry remains part of the same economic
+installation. Other product selections keep their original flags and source
+identities. The unchanged four-reader output contract carries the complete
+application, companion, HTML reader and source index to the existing
+Page, draft/review and Site receiving operation.
+
+Keep the county paid unit explicit in the chapter. The default
+`report-package.json.gz` contains the selected report and every original
+predecessor, each complete manifest and all original report files. A customer
+can also select an individually advertised current report file. Each selected
+resource retains its own original request and price through the maintained
+Buyer. Customer receiving keeps its saved destination and original intent
+through restart; complete-project receiving restores the merchant from its
+original compressed package and retained terms.
+
+The implementation workorder, merchant's report price, payment principal and
+network charges retain their separate commercial assignments. The county
+product contributes to the same six funded delivery packages within the
+existing allocation. Completed native results enter the chapter from the
+original operated project and its full receiving programme.
+
+## Receive original provider changes and complete customer work
+
+The canonical §9A chapter “Retained services, facilitator choice and complete receiving” travels through the existing whole-chapter `--manuscript` receiver. Receive the full current chapter together with the original customer demonstrations, financing and other accepted product sections.
+
+Its two immutable operating sources register as `facilitator-public-response-receiving` and `publisher-facilitator-operations`. The first carries complete public-response capture, the installed SDK interpretation and original review/stage workflow; the second carries the configured provider, retained service, seller release controls and complete receiving. The existing source receiver retains the actual repository, commit and path and clears a preceding blob pin when that source selection changes.
+
+Preserve the original case identities when incorporating its native result. Provider review and staged release outcomes describe those release operations; the purchase and customer-task records retain their own approved intent, settlement and complete useful output. The full original customer package and its independently received edition supply the actual receiving outcome. New runtime or display corrections compose into the same operation and selected source.

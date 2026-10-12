@@ -7,6 +7,7 @@ export const actions=Object.freeze([
   'purchase-prepare','purchase-execute','purchase-resume','purchase-refresh','purchase-cancel',
   'merchant-save','merchant-start','merchant-stop','delivery-recover',
   'close-prepare','close-execute','close-resume','close-reconcile','close-cancel',
+  'funder-template','funder-save','channel-observe','funding-prepare','funding-execute','funding-resume','funding-reconcile','funding-cancel','collection-prepare','collection-execute','collection-resume','collection-reconcile','collection-cancel',
   'contract-fetch','export','receive'
 ]);
 export class MppChannelClient {

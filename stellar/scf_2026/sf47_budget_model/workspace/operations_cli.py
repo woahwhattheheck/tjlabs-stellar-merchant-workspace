@@ -333,6 +333,8 @@ def register(subparsers, common):
         target.add_argument("--document", required=True, help="UTF-8 JSON installation document from seed or an edited saved edition")
         target.add_argument("--installation", help="Original installation ID; omit for the first edition")
         target.add_argument("--expected-revision", type=int, required=True, help="Zero for a new installation; current saved edition otherwise")
+        target.add_argument("--return-review", help="Original staged owner review ID, paired with --return-review-sha256")
+        target.add_argument("--return-review-sha256", help="Exact staged owner review digest")
         if verb == "installation-save":
             mutation(target, version=True)
             target.add_argument("--expected-preview-sha256", required=True)
@@ -368,10 +370,10 @@ def register(subparsers, common):
     target = command("completion-export", "Download the frozen form preparation and its exact selected sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
-    for verb in ("statement-preview", "statement-receive"):
-        target = command(verb, "Reconcile an original account CSV or receive its reviewed cash observations", case=True, output=True)
-        target.add_argument("--inputs", required=True, help="Complete statement input JSON, or mapping with original source metadata when --file is supplied")
-        target.add_argument("--file", help="Original UTF-8 statement CSV; exact bytes join the declared source metadata")
+    for verb in ("statement-inspect", "statement-preview", "statement-receive"):
+        target = command(verb, "Inspect original bank accounts, reconcile a statement or receive its reviewed cash observations", case=True, output=True)
+        target.add_argument("--inputs", required=True, help="Complete statement inputs JSON, with source metadata when --file supplies the original bytes")
+        target.add_argument("--file", help="Original CSV, OFX / QFX or MT940 file; exact bytes join the declared source metadata")
         if verb == "statement-receive":
             mutation(target, version=True)
             target.add_argument("--expected-preview-sha256", required=True)
@@ -784,7 +786,7 @@ def operate(workspace, args):
         result = ops.forecast(args.case, args.forecast)
     elif action == "forecast-export":
         return {"forecastId": args.forecast, "output": publish(args.output, ops.export_forecast(args.case, args.forecast))}
-    elif action in ("statement-preview", "statement-receive"):
+    elif action in ("statement-inspect", "statement-preview", "statement-receive"):
         try:
             inputs = json.loads(read_bytes(args.inputs, MAX_BUNDLE))
         except (UnicodeError, ValueError) as exc:
@@ -794,15 +796,17 @@ def operate(workspace, args):
         if args.file:
             source = inputs.get("source")
             if not isinstance(source, dict):
-                raise Problem("Retain source filename, observation time and optional URL in the mapping JSON.", 422, "INVALID_STATEMENT")
+                raise Problem("Retain source filename, observation time and optional URL in the inputs JSON.", 422, "INVALID_STATEMENT")
             filename = Path(args.file).name
             if source.get("filename", filename) != filename:
-                raise Problem("The selected CSV filename differs from the declared original source.", 409, "STATEMENT_SOURCE_CONFLICT")
+                raise Problem("The selected statement filename differs from the declared original source.", 409, "STATEMENT_SOURCE_CONFLICT")
             encoded = base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")
             if source.get("contentBase64", encoded) != encoded:
-                raise Problem("The selected CSV differs from the retained input bytes.", 409, "STATEMENT_SOURCE_CONFLICT")
+                raise Problem("The selected statement file differs from the retained input bytes.", 409, "STATEMENT_SOURCE_CONFLICT")
             inputs["source"] = {**source, "filename": filename, "contentBase64": encoded}
-        if action == "statement-preview":
+        if action == "statement-inspect":
+            result = ops.inspect_statement(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+        elif action == "statement-preview":
             result = ops.preview_statement(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
         else:
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
@@ -973,6 +977,10 @@ def operate(workspace, args):
         except (UnicodeError, ValueError) as exc:
             raise Problem("Installation input must be a complete UTF-8 JSON document.", 422, "INVALID_JSON") from exc
         selected = {"installationId": args.installation, "expectedRevision": args.expected_revision, "document": document}
+        if bool(args.return_review) != bool(args.return_review_sha256):
+            raise Problem("Select both the original return review ID and its exact SHA-256.", 422, "INVALID_INSTALLATION_RETURN")
+        if args.return_review:
+            selected["returnReview"] = {"id": args.return_review, "sha256": args.return_review_sha256}
         if action == "installation-preview":
             result = ops.preview_installation(args.case, {"expectedVersion": args.expected_version, **selected})
         else:

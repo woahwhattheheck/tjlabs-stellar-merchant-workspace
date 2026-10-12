@@ -6,6 +6,44 @@ existing Linux worker. It starts from F232's retained complete project and carri
 its saved source, issued periods, accountant returns and request identities
 through export, a second receiving, and merchant restart.
 
+## Completed installed financial receiving
+
+The complete original programme passed on October 12, 2026, from
+22:55:09 to 22:56:20 UTC in native session `62631`. It used Linux,
+Node 24.19.0 and the maintained selected runtime installer. Source publication
+is [PR720](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/720);
+[PR733](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/733)
+aligns all eleven bootstrap files with that exact selected source.
+
+The original object receiver reconstructed the complete selected Git tree
+without a network Git fetch. The original builder produced 1,632 source files,
+and runtime preparation, npm installation, source inspection and registration
+inspection all completed before the financial SDK/MCP operation.
+
+The unchanged receiving driver opened F232's complete saved project through the
+installed merchant. It read original request history, issued periods and the
+accountant return, exported and downloaded the complete project, received that
+export into a second directory, drained and restarted the merchant, and reopened
+the received state. The workspace remained
+`workspace-91e1abfa-2d35-4103-a2cd-1bb359cfaf32`, revision `34`, with
+`34` successful requests and `1` accountant return. The original merchant
+and every owned child were closed before final archive publication.
+
+| Reusable output | Exact bytes and SHA-256 |
+| --- | --- |
+| [Installable selected package](https://chatgpt.com/api/library/files/libfile_fafe856fc22c8191a8564acdf2a014e1/download) | 6,139,317 bytes; `da19c013a9de9427a50d66552ec9301e591f43ee7a581fccc3989f4d9b8ec447` |
+| [Complete native receiving, source cache and customer project](https://chatgpt.com/api/library/files/libfile_1b9e46dea81c81918eee12896b89ad80/download) | 12,703,179 bytes; `7b526a696a416d4b2c0eb11896bef8302bf298413f56ef4deddfa592c34b05ac` |
+| [Full native operation record](https://chatgpt.com/api/library/files/libfile_428b9d58253c8191b80e3df18aa4a3d7/download) | 99,099 bytes; `627488a1fc66758e99b01e7713df66610486088669d8d96645e1794019966a66` |
+
+The complete output contains the downloaded customer project
+`case/download/buyer-expense-project.zip`: 500,322 bytes, SHA-256
+`6be38001700c314dab046a0b4ad30eeaefa149e4207ca21600f70552e38da1d3`.
+Its original export manifest SHA-256 is
+`132f5bf62e40e81e5aae0f597802af2d29d98324a307f3f9c485e310b54f6b1b`.
+Use the installable archive and retained project directly for an authorized
+customer installation; the full programme below remains available for
+continuing this original source and receiving operation.
+
 ## Retained operation and input
 
 The operation is `BUYER-FINANCE-STANDALONE-6200-20261012`. Its selected product is
@@ -72,7 +110,7 @@ The source receiver consumes existing inputs through its maintained interface:
 | A concrete source path requested by the selected builder | `--additional-path stellar/original/path` |
 
 The complete retained packet supplies every original object for this fixed
-receiving selection. No Git donor is required for its 1,944 selected and
+receiving selection. No Git donor is required for its 2,037 selected and
 additional paths. These optional flags remain available through the unchanged
 receiver interface. Donor repositories, source trees and archives are read-only
 inputs; the new receiving owns its separate object database.
@@ -81,8 +119,8 @@ The acquired object set includes the original eleven builder/installer modules,
 the three original VGI receiving files, the source-job resolution limit and OAuth
 browser, the 97 runtime dependencies requested by the selected builder's actual
 receiving, and the complete 814-path original reference cache. The packet retains
-1,130 original required paths and 814 additional exact paths, backed by all
-1,942 unique original Git objects. Two paths share existing object bytes. Every
+1,130 original required paths and 907 additional exact paths, backed by all
+2,035 unique original Git objects. Two paths share existing object bytes. Every
 body matches its selected Git blob identity, and the original receiver verifies
 all objects before the selected builder starts.
 

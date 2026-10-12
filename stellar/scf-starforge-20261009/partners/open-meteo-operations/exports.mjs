@@ -114,8 +114,9 @@ async function* reportEntries(report,captures){
  yield {name:'manifest.json',bytes:encoded({schema:'stellar-forge.weather-report-files.v1',reportId:report.id,reportSha256:report.sha256,
   files:manifest,attribution:ATTRIBUTION})};
 }
-export async function frozenReportBytes(report,captures,{format='zip',python,signal}={}){
- need(['zip','html','json'].includes(format),'REPORT_FORMAT_INVALID');
+export async function frozenReportBytes(report,captures,{format='zip',python,signal,handover}={}){
+ need(['zip','html','json','handover'].includes(format),'REPORT_FORMAT_INVALID');
+ if(format==='handover'){need(handover?.report?.id===report.id&&handover.report.sha256===report.sha256,'HANDOVER_REPORT_SELECTION_CHANGED');return encoded(handover);}
  const expected=new Map(report.captures.map(c=>[c.id,c]));
  need(captures.length===expected.size,'REPORT_SOURCE_SELECTION_CHANGED');
  for(const c of captures){const original=expected.get(c.id);need(original&&original.sha256===sha(c.raw)&&original.sha256===c.sha256&&original.specSha256===c.specSha256,'REPORT_SOURCE_CHANGED');expected.delete(c.id);}

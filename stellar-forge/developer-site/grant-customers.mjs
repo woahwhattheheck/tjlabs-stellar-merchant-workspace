@@ -1,3 +1,4 @@
+import { currentGrantCompanionLinks } from './grant-companion.mjs';
 // MIT. Carry accepted customer sections into the maintained SCF reviewer edition.
 const FEDERAL = '## Federal awards: complete funding research, workshares and receiving';
 const WEBHOOK = '## Webhook customer adoption: complete event tasks and operator handover';
@@ -69,6 +70,7 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
     .replace(/ \. /g, '. ').replace(/\.\s*·\s*\[/g, '. [')
     .replaceAll('enterprise@openfn.org', 'OpenFn’s published enterprise mailbox');
   if (application) {
+    value = currentGrantCompanionLinks(value);
     // Canvas authoring uses an absolute public link; installed readers keep the sibling file.
     value = value.replace(/\]\(https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/main\/stellar-forge\/developer-site\/dist\/grant-data\/(product-and-finance\.md)(?=[#)])/g, '](./$1');
     value = value.replace(/\n\*\*(?:Application sources|Source basis):\*\*[\s\S]*$/, '\n\n**Sources and supporting detail:** The [product and finance companion](./product-and-finance.md) retains the complete installation workflows, customer implementation context, funded packages and resource study. The [source index](./source-index.json) identifies the selected product sources and application edition. Issuer references are the [SCF #46 round](https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg), [Build submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria), [budget and deliverable guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines) and [Official Rules](https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions).\n')
@@ -224,6 +226,11 @@ export function receiveGrantCustomerSources(index, companion) {
     }
     if (at < 0) index.sources.push(source); else index.sources[at] = source;
   };
+  const economic = section(companion, '## Recurring economic-report installation')?.text || '';
+  receive('economic-county-report', 'County report publication, original purchase and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/MERCHANT\.md)/, economic);
+  receive('economic-county-source-methods', 'Original county source, calculation profiles and complete report production',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/README\.md)/, economic);
   const federal = section(companion, FEDERAL)?.text || '';
   receive('federal-awards-readme', 'Federal awards complete product guide',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/README\.md)/, federal);
@@ -256,6 +263,16 @@ export function receiveGrantCustomerSources(index, companion) {
   receive('risingwave-subscription-commissioning', 'Complete subscription delivery commercial and receiving package',
     /https:\/\/github\.com\/woahwhattheheck\/commons\/tree\/([a-f0-9]{40})\/(tools\/revenue_owner_console_\d{8}\/case_assets\/risingwave-subscription-delivery-pilot-\d{8})/, subscriptions);
   const billing = section(companion, BILLING)?.text || '';
+  receive('merchant-bank-statements-operation', 'Original bank statements and shared customer payment coverage',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/README\.md)/, billing);
+  receive('merchant-bank-statements-installation', 'Complete bank product installation and original runtime transfer',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/INSTALLATION\.md)/, billing);
+  receive('merchant-bank-statements-handover', 'Original bank source, remittances and complete accountant handover',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/HANDOVER\.md)/, billing);
+  receive('merchant-bank-statements-example', 'Complete bank account and original browser receiving example',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-bank-statements\/EXAMPLE\.md)/, billing);
+  receive('merchant-bank-statements-selection', 'Committed bank application source selection',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/merchant-bank-statements\.json)/, billing);
   receive('merchant-receivables-operation', 'Customer invoices, receipts and retained accounting work',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-receivables\/README\.md)/, billing);
   receive('merchant-payment-plan-operation', 'Dated collection schedules and complete customer editions',
@@ -266,6 +283,10 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf74-merchant-support-console\/SERVICE_RENEWALS\.md)/, billing);
   receive('merchant-accepted-service-calendar', 'Accepted renewal periods and complete financial receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-service-agreements\/README\.md)#accepted-service-renewals/, billing);
+  receive('facilitator-public-response-receiving', 'Complete public facilitator responses and original SDK review',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf82-seller-pilot\/FACILITATOR_RESPONSES\.md)/, companion);
+  receive('publisher-facilitator-operations', 'Original Publisher provider review, release lifecycle and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/socrata\/FACILITATORS\.md)/, companion);
   receive('installation-source-builds', 'Product selection, source comparison and installation',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/runtime-workspace\/SOURCE_BUILDS\.md)/, companion);
   receive('request-collection-authoring', 'Reusable buyer request plans and complete prepared periods',
@@ -286,6 +307,8 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/AMENDMENT_CALENDAR\.md)/, companion);
   receive('grant-work-invoice-intake', 'Recorded work, supplier invoice intake and original-case receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/WORK_INTAKE\.md)/, companion);
+  receive('grant-customer-operating-procedures', 'Editable customer procedures from original grant work packages',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar-forge\/developer-site\/GRANT_OPERATING_PLANS\.md)/, companion);
   receive('grant-operating-forecast', 'Reviewed remaining effort, cash obligations and original operating forecast',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/FORECAST\.md)/, companion);
   receive('grant-application-handoff', 'Complete grant case and saved Application customer handoff',

@@ -1,5 +1,7 @@
 // MIT. Exact bank source identities and reviewed splits over original receivables.
 import {randomUUID} from 'node:crypto';
+import {sourceIds,bankCoverageKey,receiptCoverageGroups,coverageLinksMatch,currentReceiptRows,
+  sourceCoverageReview,plannedBankLink,sourceOccurrenceKey,statementSourceImports,statementPostingAdjustment} from './bank-coverage.mjs';
 import {cwDecode, cwUtf8, readCryptoworthCsv, writeCryptoworthCsv} from '../accountant/cryptoworth-csv.mjs';
 import {parseOriginalBankStatement} from './bank-statement-source.mjs';
 import {json, sha, need, plain, field, identifier, dateValue, currencyOf, currencyKey, minor, money,
@@ -168,6 +170,7 @@ function normalizedRow(source,section,row,index,account) {
   const transactionId=row.transactionId==null?null:contentText(row.transactionId,1000).trim()||null;
   const result={id:sha(json({sourceSha256:source.sha256,sectionId:section.id,index,sourceRowSha256})),
     rowNumber:row.rowNumber??index+1,lineNumber:row.lineNumber??null,sourceRowSha256,raw,
+    sourceOccurrenceKey:source.format==='CSV'?sourceOccurrenceKey(source.sha256,row.lineNumber):null,
     bookedDate:dateValue(row.bookedDate,'bank booked date'),valueDate:row.valueDate?dateValue(row.valueDate,'bank value date'):null,
     amount,currency:clone(account.currency),transactionId,bankReference:contentText(row.bankReference??'',1000),
     reference:contentText(row.reference),counterparty:contentText(row.counterparty),invoiceReference:contentText(row.invoiceReference),
@@ -239,94 +242,14 @@ export function normalizedBankSourceFiles(compiled) {
 }
 
 export function bankRowDecision(bankImport,rowId) { return (bankImport.decisions??[]).find(row=>row.rowId===rowId)??null; }
-function sourceIds(row) { return [...new Set([row.transactionKey,...(row.replacesTransactionKeys??[])].filter(Boolean))]; }
-function bankCoverageKey(link) {
-  return link.coverageKey??sha(json({bankAccountId:link.bankAccountId,
-    transactionKey:link.transactionKey??null,economicKey:link.transactionKey?null:link.economicKey,
-    distinctPaymentId:link.distinctPaymentId??null}));
-}
-function receiptCoverageGroups(receipt) {
-  const groups=new Map();
-  for(const link of receipt.bankSources??[]) {
-    const key=bankCoverageKey(link),amount=minor(link.splitAmount,receipt.currency,'original source coverage',{positive:true});
-    if(!groups.has(key))groups.set(key,{key,amount,links:[]});
-    const group=groups.get(key);
-    need(group.amount===amount,'BANK_SOURCE_COVERAGE_CONFLICT',
-      'The original receipt retains different covered amounts for one bank payment; correct its retained assignment.',409);
-    group.links.push(link);
-  }
-  const total=[...groups.values()].reduce((sum,row)=>sum+row.amount,0n);
-  need(total<=minor(receipt.amount,receipt.currency),'BANK_SOURCE_COVERAGE_EXCEEDED',
-    'Retained distinct bank payments exceed the original receipt amount.',409);
-  return {groups,total};
-}
-function coverageLinksMatch(link,bankImport,row,matches=[],distinctPaymentReason='') {
-  if(link.bankAccountId!==bankImport.accountId)return false;
-  if(link.bankImportId===bankImport.id&&link.rowId===row.id)return true;
-  const keys=new Set(sourceIds(row));
-  if(link.transactionKey&&keys.has(link.transactionKey))return true;
-  if((link.transactionAliases??[]).some(key=>keys.has(key)))return true;
-  return matches.some(match=>match.bankImportId===link.bankImportId&&match.rowId===link.rowId&&
-    (match.match==='TRANSACTION_ID'||!distinctPaymentReason));
-}
-function currentReceiptRows(data,id,bankImport=null,sourceRow=null) {
-  const found=[],seen=new Set(),queue=[id];
-  while(queue.length) {
-    const next=queue.shift();
-    need(!seen.has(next),'BANK_RECEIPT_HISTORY_INVALID','The original receipt replacement history contains a cycle.',409);
-    seen.add(next);
-    const row=data.receipts.find(item=>item.id===next);if(!row)continue;
-    const successors=[...new Set([...(row.replacementReceiptIds??[]),row.replacedByReceiptId].filter(Boolean))];
-    if(successors.length)queue.push(...successors);else found.push(row);
-  }
-  if(!bankImport||!sourceRow||found.length<=1)return found;
-  const keys=new Set(sourceIds(sourceRow));
-  return found.filter(receipt=>(receipt.bankSources??[]).some(link=>
-    link.bankAccountId===bankImport.accountId&&(
-      link.bankImportId===bankImport.id&&link.rowId===sourceRow.id||
-      link.transactionKey&&keys.has(link.transactionKey)||
-      (link.transactionAliases??[]).some(key=>keys.has(key))||
-      !sourceRow.transactionKey&&link.economicKey===sourceRow.economicKey)));
-}
-function sourceCoverageReview(receipt,bankImport,row,matches,amount,distinctPaymentReason,plannedLinks,requestedKey=null) {
-  const original={...receipt,bankSources:plannedLinks},covered=receiptCoverageGroups(original);
-  let related=[...covered.groups.values()].filter(group=>group.links.some(link=>
-    coverageLinksMatch(link,bankImport,row,matches,distinctPaymentReason)));
-  if(requestedKey) {
-    bankHash(requestedKey,'original coverage key');
-    related=related.filter(group=>group.key===requestedKey);
-    need(related.length===1,'BANK_SOURCE_COVERAGE_NOT_FOUND','Choose an original covered payment for this retained source.',409);
-  }
-  need(related.length<=1,'BANK_SOURCE_COVERAGE_AMBIGUOUS',
-    'Several original payments share these source fields; choose the exact retained coverage key for this source link.',409);
-  const units=minor(amount,receipt.currency),prior=related[0],key=prior?.key??bankCoverageKey({
-    bankAccountId:bankImport.accountId,transactionKey:row.transactionKey,economicKey:row.economicKey,
-    distinctPaymentId:distinctPaymentReason?row.id:null});
-  if(prior)need(prior.amount===units,'BANK_SOURCE_COVERAGE_CHANGED',
-    'A repeated source link must retain its original covered amount; use the reviewed correction for changed bank facts.',409);
-  const added=prior?0n:units,after=covered.total+added;
-  need(after<=minor(receipt.amount,receipt.currency),'BANK_RECEIPT_COVERAGE_EXCEEDED',
-    'Distinct original bank credits exceed the remaining unmatched amount of this receipt.',409);
-  return {key,repeatedSource:Boolean(prior),receiptAmount:receipt.amount,
-    beforeMatchedAmount:money(covered.total,receipt.currency),coveredByThisSource:amount,
-    newlyMatchedAmount:money(added,receipt.currency),afterMatchedAmount:money(after,receipt.currency),
-    remainingUnmatchedAmount:money(minor(receipt.amount,receipt.currency)-after,receipt.currency)};
-}
-function plannedBankLink(bankImport,row,split,postingId,distinctPaymentReason='') {
-  return {bankImportId:bankImport.id,bankAccountId:bankImport.accountId,rowId:row.id,postingId,
-    sourceSha256:bankImport.source.sha256,sourceRowSha256:row.sourceRowSha256,
-    transactionKey:row.transactionKey,transactionAliases:[...new Set([...sourceIds(row),...(split.sourceCoverage.transactionKeys??[])])],transactionIdentity:row.transactionIdentity,
-    economicKey:row.economicKey,bookedDate:row.bookedDate,sourceAmount:row.amount,
-    sourceName:bankImport.source.name,transactionId:row.transactionId,bankReference:row.bankReference,reference:row.reference,
-    coverageKey:split.sourceCoverage.key,distinctPaymentId:distinctPaymentReason?row.id:null,
-    splitAmount:split.amount,dateDifferenceReason:split.dateDifferenceReason||null};
-}
 export function bankCurrentReceipts(data,id,bankImport=null,row=null) {return currentReceiptRows(data,id,bankImport,row);}
 export function bankMatchIndex(data) {
-  const result={transactions:new Map(),economics:new Map()};
+  const result={transactions:new Map(),economics:new Map(),occurrences:new Map()};
   const add=(map,key,value)=>{if(!map.has(key))map.set(key,[]);map.get(key).push(value);};
-  for(const bankImport of bankImportRows(data))for(const row of bankImport.index) {
+  for(const bankImport of [...bankImportRows(data),...statementSourceImports(data)])for(const row of bankImport.index) {
     for(const key of sourceIds(row))add(result.transactions,bankImport.accountId+':'+key,{bankImport,row});
+    for(const key of new Set([row.sourceOccurrenceKey,...(row.sourceOccurrenceKeys??[])].filter(Boolean)))
+      add(result.occurrences,bankImport.accountId+':'+key,{bankImport,row});
     add(result.economics,bankImport.accountId+':'+row.economicKey,{bankImport,row});
   }
   return result;
@@ -334,19 +257,31 @@ export function bankMatchIndex(data) {
 export function bankSourceMatches(data,bankImport,row,index=null) {
   const lookup=index??bankMatchIndex(data),candidates=new Map(),keys=new Set(sourceIds(row));
   for(const key of keys)for(const item of lookup.transactions.get(bankImport.accountId+':'+key)??[])
-    candidates.set(item.bankImport.id+':'+item.row.id,{...item,exact:true});
-  for(const item of lookup.economics.get(bankImport.accountId+':'+row.economicKey)??[])
-    if(!candidates.has(item.bankImport.id+':'+item.row.id)&&!(row.transactionIdentity==='BANK_TRANSACTION_ID'&&item.row.transactionIdentity==='BANK_TRANSACTION_ID'))
-      candidates.set(item.bankImport.id+':'+item.row.id,{...item,exact:false});
+    candidates.set(item.bankImport.id+':'+item.row.id,{...item,match:'TRANSACTION_ID'});
+  const occurrences=new Set([row.sourceOccurrenceKey,...(row.sourceOccurrenceKeys??[])].filter(Boolean));
+  for(const key of occurrences)for(const item of lookup.occurrences?.get(bankImport.accountId+':'+key)??[])
+    if(!candidates.has(item.bankImport.id+':'+item.row.id))
+      candidates.set(item.bankImport.id+':'+item.row.id,{...item,match:'SOURCE_LINE'});
+  for(const item of lookup.economics.get(bankImport.accountId+':'+row.economicKey)??[]) {
+    if(candidates.has(item.bankImport.id+':'+item.row.id))continue;
+    if(row.transactionIdentity==='BANK_TRANSACTION_ID'&&item.row.transactionIdentity==='BANK_TRANSACTION_ID')continue;
+    const otherOccurrences=[item.row.sourceOccurrenceKey,...(item.row.sourceOccurrenceKeys??[])].filter(Boolean);
+    if(bankImport.source.sha256===item.bankImport.source.sha256&&occurrences.size&&otherOccurrences.length&&
+      !otherOccurrences.some(key=>occurrences.has(key)))continue;
+    candidates.set(item.bankImport.id+':'+item.row.id,{...item,match:'SAME_PAYMENT_FIELDS'});
+  }
   const matches=[];
-  for(const {bankImport:other,row:candidate,exact} of candidates.values()) {
+  for(const {bankImport:other,row:candidate,match} of candidates.values()) {
     if(other.id===bankImport.id&&candidate.id===row.id)continue;
-    const decision=bankRowDecision(other,candidate.id),receiptIds=[...new Set((decision?.receiptIds??[]).flatMap(id=>currentReceiptRows(data,id,other,candidate).map(row=>row.id)))];
-    matches.push({bankImportId:other.id,sourceName:other.source.name,rowId:candidate.id,match:exact?'TRANSACTION_ID':'SAME_PAYMENT_FIELDS',
+    const decision=bankRowDecision(other,candidate.id),receiptIds=[...new Set((decision?.receiptIds??[]).flatMap(id=>
+      currentReceiptRows(data,id,other,candidate).map(row=>row.id)))];
+    matches.push({bankImportId:other.id,sourceName:other.source.name,rowId:candidate.id,match,
       amount:candidate.amount,bookedDate:candidate.bookedDate,kind:candidate.kind,
       sameFacts:candidate.amount===row.amount&&candidate.bookedDate===row.bookedDate,
-      status:decision?.status??'UNASSIGNED',receiptIds,
-      replacesTransactionKeys:clone(candidate.replacesTransactionKeys??[]),sourceIdentity:clone(candidate.sourceIdentity??null)});
+      status:decision?.status??'UNASSIGNED',receiptIds,sourceOrigin:other.sourceOrigin??'BANK_RECEIPT_INTAKE',
+      replacesTransactionKeys:clone(candidate.replacesTransactionKeys??[]),sourceIdentity:clone(candidate.sourceIdentity??null),
+      statementAccountId:candidate.statementAccountId??null,statementTransactionId:candidate.statementTransactionId??null,
+      statementReconciliation:clone(candidate.statementReconciliation??null)});
   }
   return matches;
 }
@@ -356,7 +291,7 @@ export function bankRowStatus(data,bankImport,row,index=null) {
   if(row.kind!=='CREDIT'||row.cashSource===false||row.sourceEligible===false) return 'SOURCE_ONLY';
   const matches=bankSourceMatches(data,bankImport,row,index);
   if(row.requiresSourceResolution)return 'CONFLICT';
-  if(matches.some(item=>item.match==='TRANSACTION_ID'&&!item.sameFacts&&item.status!=='IGNORED')) return 'CONFLICT';
+  if(matches.some(item=>['TRANSACTION_ID','SOURCE_LINE'].includes(item.match)&&!item.sameFacts&&item.status!=='IGNORED')) return 'CONFLICT';
   if(matches.some(item=>item.receiptIds.length>0)) return 'DUPLICATE';
   return 'UNASSIGNED';
 }
@@ -409,7 +344,7 @@ export function bankRowView(data,bankImport,row,customers,asOf=today(),index=nul
   const supersededBy=matches.filter(item=>item.sourceIdentity?.correctionAction==='REPLACE'&&
     item.replacesTransactionKeys.includes(row.transactionKey)&&['POSTED','LINKED'].includes(item.status));
   return {...clone(row),status,supersededBy,canPost:!supersededBy.length&&row.kind==='CREDIT'&&row.cashSource!==false&&row.sourceEligible!==false&&bankImport.status==='OPEN'&&status!=='IGNORED',
-    decision:clone(decision),sourceMatches:matches,receiptCandidates:[...byReceipt.values()].slice(0,50),
+    decision:clone(decision),sourceMatches:matches,statementReconciliation:statementPostingAdjustment(matches,row,row.currency),receiptCandidates:[...byReceipt.values()].slice(0,50),
     invoiceCandidates:[...byInvoice.values()].slice(0,50),customerCandidates:[...byCustomer.values()].slice(0,50)};
 }
 function invoiceDates(data,invoice,from) {
@@ -455,7 +390,7 @@ function normalizeAllocations(data,customerId,currency,input,receiptId,accountin
   });
 }
 function releaseForCorrection(data,receipt,effectiveDate,reason) {
-  need(receipt.status==='RECORDED'&&['OPERATOR_RECORDED','ORIGINAL_BANK_RECEIPT'].includes(receipt.source?.kind),
+  need(receipt.status==='RECORDED'&&['OPERATOR_RECORDED','ORIGINAL_BANK_RECEIPT','ORIGINAL_BANK_STATEMENT'].includes(receipt.source?.kind),
     'BANK_RECEIPT_CORRECTION_SCOPE','Correct an original operator receipt or bank-source receipt.',409);
   need(effectiveDate>=(receipt.accountingDate??receipt.receivedDate),'BANK_CORRECTION_BEFORE_RECEIPT',
     'The correction date must be on or after the original receipt accounting date.');
@@ -477,11 +412,12 @@ function validateBankReplacement(data,bankImport,row,rows) {
   if(row.sourceIdentity?.correctionAction!=='REPLACE')return;
   const target=row.replacesTransactionKeys?.[0];
   need(target&&target!==row.transactionKey,'BANK_CORRECTION_TARGET_INVALID','Choose a non-cyclic original OFX replacement target.',409);
-  const originals=bankImportRows(data).filter(item=>item.accountId===bankImport.accountId)
+  const originals=[...bankImportRows(data),...statementSourceImports(data)].filter(item=>item.accountId===bankImport.accountId)
     .flatMap(item=>item.index.map(candidate=>({bankImport:item,row:candidate})));
   const targetRows=originals.filter(item=>item.row.transactionKey===target&&
-    item.row.sourceIdentity?.accountKey===row.sourceIdentity.accountKey&&
-    item.row.sourceIdentity?.currency===row.sourceIdentity.currency);
+    (item.bankImport.sourceOrigin==='BANK_STATEMENT_RECONCILIATION'||
+      item.row.sourceIdentity?.accountKey===row.sourceIdentity.accountKey&&
+      item.row.sourceIdentity?.currency===row.sourceIdentity.currency));
   need(row.sourceIdentity.targetPresentInSource||targetRows.length,'BANK_CORRECTION_TARGET_REQUIRED',
     'Retain the original OFX target source before assigning its replacement receipt.',409);
   const replacements=originals.filter(item=>item.row.transactionKey!==row.transactionKey&&
@@ -618,7 +554,7 @@ export function compileBankPosting(data,bankImport,rows,customers,input,{prior=n
       'Review between one and100 explicit customer receipts for this original credit.');
     const distinctPaymentReason=optional(value.distinctPaymentReason,'distinct payment reason',3000),
       sourceResolutionReason=optional(value.sourceResolutionReason,'source resolution reason',3000),
-      matches=bankSourceMatches(data,bankImport,row),exact=matches.filter(item=>item.match==='TRANSACTION_ID'),
+      matches=bankSourceMatches(data,bankImport,row),exact=matches.filter(item=>['TRANSACTION_ID','SOURCE_LINE'].includes(item.match)),
       similar=matches.filter(item=>item.match==='SAME_PAYMENT_FIELDS');
     const superseding=matches.filter(item=>item.sourceIdentity?.correctionAction==='REPLACE'&&
       item.replacesTransactionKeys.includes(row.transactionKey)&&['POSTED','LINKED'].includes(item.status));
@@ -626,6 +562,9 @@ export function compileBankPosting(data,bankImport,rows,customers,input,{prior=n
       'Use the retained replacement source to correct its current receipt; this original FITID has already been superseded.',409);
     need(!(row.requiresSourceResolution||exact.some(item=>!item.sameFacts&&item.status!=='IGNORED'))||sourceResolutionReason,
       'BANK_SOURCE_CONFLICT_REVIEW','Explain the original statement correction when a retained transaction ID has different source amounts or dates.',409);
+    need(!exact.some(item=>item.sameFacts&&item.statementReconciliation?.matchId&&!item.receiptIds.length),
+      'BANK_STATEMENT_ALREADY_CLASSIFIED',
+      'Review the original statement classification before recording customer cash for this bank credit.',409);
     const sameFile=rows.filter(item=>item.id!==row.id&&(sourceIds(item).some(key=>sourceIds(row).includes(key))||
       item.economicKey===row.economicKey&&!(item.transactionIdentity==='BANK_TRANSACTION_ID'&&row.transactionIdentity==='BANK_TRANSACTION_ID')));
     need(!sameFile.some(item=>item.transactionKey&&item.transactionKey===row.transactionKey&&item.sourceEligible!==false&&
@@ -634,7 +573,8 @@ export function compileBankPosting(data,bankImport,rows,customers,input,{prior=n
       currentReceiptRows(data,id,bankImport,row).map(receipt=>receipt.id)),...exact.flatMap(item=>item.receiptIds),
       ...(!distinctPaymentReason?similar.flatMap(item=>item.receiptIds):[])]);
     const sourceRow=clone(row);delete sourceRow.raw;
-    const selection={rowId:row.id,sourceRow,distinctPaymentReason,sourceResolutionReason,sourceMatches:matches,splits:[]},
+    const selection={rowId:row.id,sourceRow,distinctPaymentReason,sourceResolutionReason,sourceMatches:matches,
+      statementReconciliation:statementPostingAdjustment(matches,row,currency),splits:[]},
       rowReceipts=new Set();
     let total=0n;
     for(const [splitIndex,raw] of value.splits.entries()) {
@@ -717,7 +657,9 @@ export function compileBankPosting(data,bankImport,rows,customers,input,{prior=n
       if(raw.action==='LINK')plannedCoverage.get(original.id).push(plannedBankLink(bankImport,row,split,proposal.id,distinctPaymentReason));
       if(raw.action==='CORRECT')corrections.get(original.id).splits.push(split);
     }
-    need(total===minor(row.amount,currency),'BANK_SPLITS_NOT_CONSERVED','Customer receipt splits must equal the complete original bank credit exactly.');
+    const adjustment=minor(selection.statementReconciliation?.adjustmentAmount??'0',currency,'retained statement adjustment',{signed:true});
+    need(total+adjustment===minor(row.amount,currency),'BANK_SPLITS_NOT_CONSERVED',
+      'Customer receipt splits plus the retained statement adjustments must equal the original bank credit exactly.');
     const selectedOriginals=new Set(selection.splits.map(split=>split.originalReceipt?.id).filter(Boolean));
     need([...known].every(id=>selectedOriginals.has(id)),'BANK_PAYMENT_ALREADY_RECORDED',
       'Link or correct every existing original receipt for this bank payment; do not create the same incoming cash again.',409);
@@ -772,6 +714,8 @@ export function compileBankPosting(data,bankImport,rows,customers,input,{prior=n
   const sum=predicate=>money(proposal.selections.flatMap(row=>row.splits).filter(predicate).reduce((total,row)=>total+minor(row.amount,currency),0n),currency);
   const balanceEffects={asOf,receipts:receiptEffects,invoices:invoiceEffects,totals:{currency:clone(currency),
     sourceCredits:money(proposal.selections.reduce((total,row)=>total+minor(row.sourceRow.amount,currency),0n),currency),
+    statementAdjustmentAmount:money(proposal.selections.reduce((total,row)=>
+      total+minor(row.statementReconciliation?.adjustmentAmount??'0',currency,'retained statement adjustment',{signed:true}),0n),currency),
     createdReceiptAmount:sum(row=>row.action==='CREATE'),linkedReceiptAmount:sum(row=>row.action==='LINK'),
     correctedReceiptAmount:sum(row=>row.action==='CORRECT'),
     allocatedAmount:money(proposal.selections.flatMap(row=>row.splits.flatMap(split=>[...split.allocations,...(split.residualReceipt?.allocations??[])])).reduce((total,row)=>total+minor(row.amount,currency),0n),currency)}};

@@ -2,7 +2,8 @@
 import { basename } from 'node:path';
 import { RetainedFileReads } from './retained-file-reads.mjs';
 import { FredWorkspaceClient, FredWorkspaceError, readFredWorkspaceConfiguration, readFredHostFile,
-  canonicalFredJSON, fredDigest, inspectFredReleaseCapture, FRED_WORKSPACE_CONNECTION_SCHEMA, FRED_CLIENT_MAX_BYTES } from './fred-workspace-client.mjs';
+  canonicalFredJSON, fredDigest, inspectFredReleaseCapture, inspectFredDdpCrosswalk, inspectFredDdpPackage,
+  FRED_WORKSPACE_CONNECTION_SCHEMA, FRED_CLIENT_MAX_BYTES, FRED_DDP_MAX_SOURCE_BYTES, FRED_DDP_MAX_PROJECT_BYTES } from './fred-workspace-client.mjs';
 import { fredWorkspaceTools, fredFileSelection } from './catalog/fred-workspace.mjs';
 export { readFredWorkspaceConfiguration, FRED_WORKSPACE_CONNECTION_SCHEMA };
 export { fredWorkspaceTools } from './catalog/fred-workspace.mjs';
@@ -57,11 +58,13 @@ function purchaseView(result) {
 }
 function projectSummary(project) {
   const { captures, reviews, publications, operations, briefingTemplates = [], briefingSuccessors = [],
-    releaseCaptures = [], releaseWatches = [], releasePlans = [], releaseCatchUps = [], ...state } = project;
+    releaseCaptures = [], releaseWatches = [], releasePlans = [], releaseCatchUps = [],
+    ddpCrosswalks = [], ddpPackages = [], ddpMigrations = [], ddpReceivings = [], ...state } = project;
   return { ...state, counts: { captures: captures.length, reviews: reviews.length, publications: publications.length,
     operations: operations.length, briefingTemplates: briefingTemplates.length, briefingSuccessors: briefingSuccessors.length,
     releaseCaptures: releaseCaptures.length, releaseWatches: releaseWatches.length, releasePlans: releasePlans.length,
-    releaseCatchUps: releaseCatchUps.length } };
+    releaseCatchUps: releaseCatchUps.length, ddpCrosswalks: ddpCrosswalks.length, ddpPackages: ddpPackages.length,
+    ddpMigrations: ddpMigrations.length, ddpReceivings: ddpReceivings.length } };
 }
 const actionMethods = new Map([
   ['merchant_fred_configure', 'configure'], ['merchant_fred_capture', 'capture'], ['merchant_fred_combine', 'combine'],
@@ -70,12 +73,14 @@ const actionMethods = new Map([
   ['merchant_fred_preview', 'preview'], ['merchant_fred_prepare', 'prepare'],
   ['merchant_fred_briefing_template_save', 'saveBriefingTemplate'], ['merchant_fred_briefing_successor_save', 'saveBriefingSuccessor'],
   ['merchant_fred_release_acquire', 'acquireReleaseCapture'], ['merchant_fred_release_watch_save', 'saveReleaseWatch'],
-  ['merchant_fred_release_plan_save', 'saveReleasePlan'], ['merchant_fred_release_vintage_capture', 'acquirePlannedVintage']
+  ['merchant_fred_release_plan_save', 'saveReleasePlan'], ['merchant_fred_release_vintage_capture', 'acquirePlannedVintage'],
+  ['merchant_fred_ddp_crosswalk_acquire', 'acquireDdpCrosswalk'], ['merchant_fred_ddp_migration_save', 'saveDdpMigration'],
+  ['merchant_fred_ddp_migration_acquire', 'acquireDdpMigration']
 ]);
 
 export class MerchantFredWorkspaces {
   #config; #exports; #clients = new Map(); #closed = false;
-  #reads = new RetainedFileReads({ errorPrefix: 'FRED', maxSnapshotBytes: FRED_CLIENT_MAX_BYTES });
+  #reads = new RetainedFileReads({ errorPrefix: 'FRED', maxSnapshotBytes: FRED_DDP_MAX_PROJECT_BYTES });
   constructor(config, { environment = process.env, fetchImpl = globalThis.fetch } = {}) {
     this.#config = config.fredWorkspaces; this.#exports = config.exportsDirectory;
     this.environment = environment; this.fetchImpl = fetchImpl;
@@ -102,20 +107,34 @@ export class MerchantFredWorkspaces {
         ...(value.sha256 ? { configuredSha256: value.sha256 } : {}) })),
       merchantProfiles: Object.entries(entry.merchantProfiles ?? {}).map(([profile, value]) => ({ profile, ...value })) };
   }
-  async #input(alias, name, expectedSha256) {
+  async #input(alias, name, expectedSha256, inspect = false) {
     const input = this.#entry(alias).inputs?.[name];
     if (!input) fail('FRED_MCP_INPUT_NOT_FOUND', 'Choose an original host input alias.');
-    const bytes = await readFredHostFile(input.path, 64 * 1024 * 1024, { expectedSha256: expectedSha256 ?? input.sha256 });
-    const sha256 = fredDigest(bytes);
+    const capacity = ['ddp-crosswalk', 'ddp-package'].includes(input.kind) ? FRED_DDP_MAX_SOURCE_BYTES : 64 * 1024 * 1024;
+    let bytes = await readFredHostFile(input.path, capacity, { expectedSha256: expectedSha256 ?? input.sha256 });
+    const sourceBytes = bytes.length, sha256 = fredDigest(bytes);
     if (input.sha256 && input.sha256 !== sha256) fail('FRED_MCP_INPUT_CHANGED', 'The original source differs from its configured SHA256.');
     let value;
     try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_MCP_INPUT_INVALID', 'The original source input must contain complete JSON.'); }
+    bytes = null;
     if (input.kind === 'public-table' && !['commons.retained-public-table.v1', 'commons.retained-public-table-set.v1'].includes(value?.version) ||
         input.kind === 'capture' && !['stellar-forge.fred-capture.v1', 'stellar-forge.fred-public-table-capture.v1',
           'stellar-forge.fred-public-table-set-capture.v1'].includes(value?.schema))
       fail('FRED_MCP_INPUT_INVALID', 'The complete input does not have its declared original source format.');
-    const release = input.kind === 'release-capture' ? inspectFredReleaseCapture(value) : null;
-    return { input, bytes, sha256, value, release };
+    let release = null, ddp = null;
+    if (inspect && input.kind === 'release-capture') {
+      const model = inspectFredReleaseCapture(value);
+      release = { captureSha256: model.captureSha256, source: model.source,
+        counts: { series: model.series.length, releases: model.releases.length,
+          calendar: model.calendar.length, vintages: model.vintages.length, records: value.records.length } };
+    }
+    if (inspect && ['ddp-crosswalk', 'ddp-package'].includes(input.kind)) {
+      const model = input.kind === 'ddp-crosswalk' ? inspectFredDdpCrosswalk(value) : inspectFredDdpPackage(value);
+      ddp = { id: model.id, captureSha256: model.captureSha256, source: model.source, summary: model.summary,
+        ...(model.release !== undefined ? { release: model.release } : {}),
+        ...(model.format !== undefined ? { format: model.format } : {}) };
+    }
+    return { input, sourceBytes, sha256, value, release, ddp };
   }
   async #state(alias, expectedRevision) {
     const value = await this.#client(alias).state();
@@ -131,16 +150,15 @@ export class MerchantFredWorkspaces {
     this.#entry(alias);
     if (name === 'merchant_fred_inputs') return this.#inputs(alias);
     if (name === 'merchant_fred_input_inspect') {
-      const source = await this.#input(alias, args.input), original = source.value;
+      const source = await this.#input(alias, args.input, undefined, true), original = source.value;
       return { workspace: alias, input: args.input, kind: source.input.kind, name: basename(source.input.path),
-        bytes: source.bytes.length, sha256: source.sha256, schema: original.schema ?? original.version,
+        bytes: source.sourceBytes, sha256: source.sha256, schema: original.schema ?? original.version,
         sourceUrl: original.source_url ?? null, retrievedAt: original.retrieved_at ?? null,
         seriesId: original.series_id ?? null, observationCount: original.observation_count ?? null,
         originalTableBytes: original.bytes ?? null, originalTableSha256: original.sha256 ?? null,
         captureSha256: original.captureSha256 ?? null, selection: original.selection ?? null,
-        ...(source.release ? { release: { captureSha256: source.release.captureSha256, source: source.release.source,
-          counts: { series: source.release.series.length, releases: source.release.releases.length,
-            calendar: source.release.calendar.length, vintages: source.release.vintages.length, records: original.records.length } } } : {}),
+        ...(source.release ? { release: source.release } : {}),
+        ...(source.ddp ? { ddp: source.ddp } : {}),
         tables: Array.isArray(original.tables) ? original.tables.map(table => ({ seriesId: table.series_id,
           sourceUrl: table.source_url, retrievedAt: table.retrieved_at, bytes: table.bytes, sha256: table.sha256 })) : undefined };
     }
@@ -214,10 +232,43 @@ export class MerchantFredWorkspaces {
       return client.importReleaseCapture({ id: args.id, expectedRevision: args.expectedRevision, capture: source.value,
         ...(args.releaseCaptureId === undefined ? {} : { releaseCaptureId: args.releaseCaptureId }) });
     }
+    if (name === 'merchant_fred_ddp_sources') {
+      const result = await client.ddpSources(), kind = args.kind ?? 'packages';
+      if (args.expectedRevision !== undefined && result.revision !== args.expectedRevision)
+        fail('FRED_MCP_REVISION_CHANGED', 'The DDP inventory changed. Continue with the current original project revision.', { revision: result.revision });
+      return { projectId: result.projectId, revision: result.revision, kind,
+        counts: Object.fromEntries(['crosswalks', 'packages', 'migrations', 'receivings'].map(key => [key, result[key].length])),
+        ...page(result[kind], args) };
+    }
+    if (name === 'merchant_fred_ddp_crosswalk') return client.ddpCrosswalk(args);
+    if (name === 'merchant_fred_ddp_package') return client.ddpPackage(args);
+    if (name === 'merchant_fred_ddp_migration') return client.ddpMigration(args);
+    if (name === 'merchant_fred_ddp_receiving') return client.ddpReceiving(args);
+    if (name === 'merchant_fred_ddp_migration_preview') {
+      const { workspace: _, ...input } = args;
+      return client.previewDdpMigration(input);
+    }
+    if (name === 'merchant_fred_ddp_crosswalk_import' || name === 'merchant_fred_ddp_package_import') {
+      const crosswalk = name === 'merchant_fred_ddp_crosswalk_import';
+      const key = crosswalk ? 'crosswalkId' : 'packageId', kind = crosswalk ? 'ddp-crosswalk' : 'ddp-package';
+      const method = crosswalk ? 'importDdpCrosswalk' : 'importDdpPackage';
+      const input = { id: args.id, expectedRevision: args.expectedRevision };
+      if (args[key] !== undefined) input[key] = args[key];
+      if (args.input === undefined) {
+        if (args[key] === undefined || args.expectedSha256 !== undefined)
+          fail('FRED_MCP_INPUT_INVALID', 'Select the complete configured ' + kind + ' input, or continue its original staged operation with the same retained source ID.');
+      } else {
+        const source = await this.#input(alias, args.input, args.expectedSha256);
+        if (source.input.kind !== kind)
+          fail('FRED_MCP_INPUT_INVALID', 'This original source import requires a host input declared as ' + kind + '.');
+        input.capture = source.value;
+      }
+      return client[method](input);
+    }
     if (name === 'merchant_fred_import') {
       const source = await this.#input(alias, args.input, args.expectedSha256);
-      if (source.input.kind === 'release-capture')
-        fail('FRED_MCP_INPUT_INVALID', 'Use release_import for this original release source; observation import selects an observation capture or public table.');
+      if (['release-capture', 'ddp-crosswalk', 'ddp-package'].includes(source.input.kind))
+        fail('FRED_MCP_INPUT_INVALID', 'Use the corresponding original release or DDP source import; observation import selects an observation capture or public table.');
       return client.importCapture({ id: args.id, expectedRevision: args.expectedRevision, capture: source.value });
     }
     if (name === 'merchant_fred_publish') {
@@ -243,6 +294,14 @@ export class MerchantFredWorkspaces {
       return this.#reads.read({ scope: alias, key: canonicalFredJSON(selection), kind: 'fred-' + args.kind, directory: this.#exports,
         load: () => client.file(selection, { expectedSha256: args.expectedSha256 }), expectedSha256: args.expectedSha256,
         readId: args.readId, offset: args.offset, limit: args.limit });
+    }
+    const publicationMethods = {
+      merchant_fred_published_operations: 'publishedOperations', merchant_fred_published_operation: 'publishedOperation',
+      merchant_fred_published_start: 'startPublishedOperation', merchant_fred_published_report: 'publishedReport',
+      merchant_fred_published_rows: 'publishedRows', merchant_fred_published_file_read: 'publishedFileChunk'
+    };
+    if (Object.hasOwn(publicationMethods, name)) {
+      const { workspace: _, ...input } = args; return client[publicationMethods[name]](input);
     }
     if (actionMethods.has(name)) {
       const { workspace: _, ...input } = args;

@@ -1,6 +1,6 @@
 # Native MPP operating guide
 
-The product contains the original Charge workflow and recurring **Channel work** in one native console. Sections 1–9 describe the existing product and Charge operation; section 10 carries a selected channel from useful recurring work through its merchant response and close. Both share the same installed runtime, private product and native workspace lease.
+The product contains the original Charge workflow and recurring **Channel work** in one native console. Sections 1–9 describe the existing product and Charge operation; section 10 carries a selected channel from useful recurring work through its merchant response, funding, collection and close. Both share the same installed runtime, private product and native workspace lease.
 
 ## 1. Select the original runtime and workspace
 
@@ -243,7 +243,7 @@ Use the complete customer and response receiving operations in **[RECEIVING.md](
 
 ## 10. Operate recurring channel work
 
-Open **Channel work** in the original browser. Its task, merchant, purchase, close and receiving views use the same current product session. The complete [channel work guide](../../stellar/scf-starforge-20261009/mpp-channel/README.md) describes each profile field and the actual pinned protocol.
+Open **Channel work** in the original browser. Its task, merchant, purchase, funding, collection, refund and receiving views use the same current product session. The complete [channel work guide](../../stellar/scf-starforge-20261009/mpp-channel/README.md) describes each profile field and the actual pinned protocol.
 
 ### Select and run a task
 
@@ -271,9 +271,21 @@ The channel merchant profile selects the actual authorized source and a useful J
 
 Start the merchant from Channel work, or use `merchant-start` with the stream key returned by `channel state`. An active merchant in the same native workspace serves the original request inside the existing channel operation. A separate merchant uses its selected public HTTPS origin.
 
-Prepare collection with `close-prepare` and a stable settlement ID. The recipient authorizes the cumulative accepted commitment, original delivery, fee account and maximum fee in its terminal. The application retains the signed transaction before submission. `close-resume` queries or submits that exact envelope; `close-reconcile` receives its original finality.
+Prepare an ongoing collection with `collection-prepare` and a stable settlement ID. The recipient authorizes the original accepted cumulative commitment, observed amount still uncollected, delivery, fee account and maximum fee in its terminal. `collection-execute` calls the original contract's `settle` function; **COLLECTED** leaves the channel available for later work. `collection-resume` and `collection-reconcile` continue that same signed transaction. To collect and end the channel, use the separate `close-prepare` and `close-execute` route; its completed state is **SETTLED**.
 
-A definitively expired or failed close can receive a new settlement ID and a fresh fee authorization. If the original RPC no longer retains the possible inclusion window, select an archival `rpcUrl` for `close-reconcile`. Every configured or archival RPC must confirm the original network before its result is used.
+A definitively expired or failed financial transaction can receive a new operation ID and fresh fee authorization. If the original RPC no longer retains the possible inclusion window, select an archival `rpcUrl` for the matching `funding-reconcile`, `collection-reconcile` or `close-reconcile`. Every configured or archival RPC must confirm the original network. Each route retains the same original signed envelope and hash.
+
+### Fund continued work and recover the remaining balance
+
+In **Channel funds**, load the selected original channel and save its accountable funder profile. The form retains the channel's actual funder account, operator, host signer environment-variable name and maximum transaction fee. The complete profile is also available from `funder-template`; save it with `funder-save` and the current selection revision.
+
+Choose **Add funds** and a stable funding ID. `funding-prepare` takes `{stream, fundingId, action:"top_up", amountAtomic}`. The subsequent `funding-execute` takes that original `fundingId` and presents the selected amount and fee in the funder's terminal. The original contract's top-up operation moves exactly those tokens from the selected funder into its channel. The task's total cap, per-purchase cap, count and expiry remain separately selected.
+
+The channel display shows balance, already collected cumulative amount, observation ledger and refund state. It reads balance and withdrawal accounting from the same ledger. Fresh commitments consume only their unpaid difference above the amount already collected; task authorization uses the same remaining-liability calculation.
+
+To recover remaining funds, prepare `action:"close_start"` with a new funding ID, then authorize its original transaction. The resulting ledger deadline appears in the channel view and new commitments stop. When the chain reaches that ledger, prepare `action:"refund"` with a new funding ID and authorize the return to the original funder. These two actions take no amount field: the final refund transfers the remaining balance at execution.
+
+The prepared, authorized, signed, pending and final records appear in the same financial-operation tables. Use their original IDs for resume, reconciliation or unsigned cancellation. Full profiles, signed calls, finality and coherent observations move with the complete channel handover. The [full financial workflow](../../stellar/scf-starforge-20261009/mpp-channel/README.md#fund-collect-and-return-the-original-channel) includes exact input shapes, contract sources and all recovery states.
 
 ### Agent and application access
 
@@ -281,8 +293,8 @@ The typed `connectMppChannel` client attaches to this same product. It exposes s
 
 | Tool | Operation |
 |---|---|
-| `merchant_mpp_channel_status` | Read current tasks, budgets, merchants, deliveries, closes and receiving |
-| `merchant_mpp_channel_record` | Reopen the selected original task, purchase or merchant contract |
+| `merchant_mpp_channel_status` | Read current tasks, budgets, merchants, deliveries, funding, collections, refunds and receiving |
+| `merchant_mpp_channel_record` | Reopen the selected original task, purchase, merchant contract, funder profile, financial operation or chain observation |
 | `merchant_mpp_channel_operate` | Dispatch the selected native operation and retain its original job |
 | `merchant_mpp_channel_file` | Receive an exact paid response or complete operating handover |
 

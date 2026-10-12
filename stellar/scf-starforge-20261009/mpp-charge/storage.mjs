@@ -23,7 +23,8 @@ export function id(value) {
 }
 const groups = new Set(['sdk','purchases','deliveries','profiles','reports',
   'channel-tasks','channel-streams','channel-purchases','channel-deliveries',
-  'channel-settlements','channel-receiving','channel-settings']);
+  'channel-settlements','channel-receiving','channel-settings',
+  'channel-funding','channel-funders','channel-observations']);
 async function read(path, optional = false) {
   try { return JSON.parse(new TextDecoder('utf8', {fatal:true}).decode(await regular(path, 16 * 1024 * 1024))); }
   catch(error) { if(optional && error.code === 'ENOENT') return null; throw error; }

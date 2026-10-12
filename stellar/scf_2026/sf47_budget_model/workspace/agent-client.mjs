@@ -753,6 +753,13 @@ export class GrantWorkspaceClient {
     sha(body.expectedPreviewSha256); requestId(body.requestId);
     return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
   }
+  statementInspect(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    exact(inputs, ['sourceFormat', 'source', 'statementOptions'], ['sourceFormat', 'source']);
+    need(inputs.sourceFormat === 'OFX' || inputs.sourceFormat === 'MT940', 'GRANT_INVALID_INPUT',
+      'Choose an original OFX / QFX or MT940 source format.'); object(inputs.source, 'Original bank source');
+    return this.#request('/api/operations/' + caseId + '/statement-inspect', {body:{expectedVersion, inputs}, mutation:false});
+  }
   statementPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Statement inputs');
     return this.#request('/api/operations/' + caseId + '/statement-preview', {body:{expectedVersion, inputs}, mutation:false});
@@ -941,6 +948,13 @@ export class GrantWorkspaceClient {
     integer(body.expectedVersion,'Current receiving case version'); object(body.inputs,'Complete receiving observations');
     return this.#request('/api/operations/'+caseId+'/installation-return-preview',{body,mutation:false});
   }
+  installationReturnReviewSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','retainedReview'],['expectedVersion','retainedReview']);
+    integer(body.expectedVersion,'Current owner case version');
+    exact(body.retainedReview,['id','sha256'],['id','sha256']);
+    id(body.retainedReview.id,'review'); sha(body.retainedReview.sha256);
+    return this.#request('/api/operations/'+caseId+'/installation-return-review-seed',{body,mutation:false});
+  }
   installationReturnReviewPreview(caseId, body) {
     id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
     integer(body.expectedVersion,'Current owner case version'); object(body.inputs,'Complete explicit owner decisions');
@@ -1061,18 +1075,19 @@ export class GrantWorkspaceClient {
   }
   installationPreview(caseId, body) {
     id(caseId,'operation');
-    exact(body,['expectedVersion','installationId','expectedRevision','document'],
+    exact(body,['expectedVersion','installationId','expectedRevision','document','returnReview'],
       ['expectedVersion','installationId','expectedRevision','document']);
     integer(body.expectedVersion,'Current case version'); integer(body.expectedRevision,'Current installation edition',0,500);
     if(body.installationId!==null)id(body.installationId,'installation');
     need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
       'GRANT_INVALID_INPUT','Select edition zero for a new installation or the original current installation edition.');
     object(body.document,'Complete installation document');
+    if(body.returnReview!==undefined){exact(body.returnReview,['id','sha256'],['id','sha256']);id(body.returnReview.id,'review');sha(body.returnReview.sha256);}
     return this.#request('/api/operations/'+caseId+'/installation-preview',{body,mutation:false});
   }
   installationSave(caseId, body) {
     id(caseId,'operation');
-    exact(body,['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256'],
+    exact(body,['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256','returnReview'],
       ['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256']);
     integer(body.expectedVersion,'Current case version'); integer(body.expectedRevision,'Current installation edition',0,500);
     requestId(body.requestId); sha(body.expectedPreviewSha256);
@@ -1081,9 +1096,11 @@ export class GrantWorkspaceClient {
     need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
       'GRANT_INVALID_INPUT','Select edition zero for a new installation or the original current installation edition.');
     object(body.document,'Complete installation document');
-    const {installationId,expectedRevision,document,expectedPreviewSha256,...original}=body;
+    if(body.returnReview!==undefined){exact(body.returnReview,['id','sha256'],['id','sha256']);id(body.returnReview.id,'review');sha(body.returnReview.sha256);}
+    const {installationId,expectedRevision,document,expectedPreviewSha256,returnReview,...original}=body;
     return this.#request('/api/operations/'+caseId+'/command',{originalRequestId:body.requestId,
-      body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256}}});
+      body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
+        ...(returnReview===undefined?{}:{returnReview})}}});
   }
   commercialConnections() {
     return this.#request('/api/operations/commercial-connections', {});
