@@ -1,7 +1,7 @@
 // MIT. Original workspace HTTP and browser request custody.
 const database='sensorthings-operations-desk-v1',storeName='pending';
 export class ApiError extends Error {
-  constructor(message,{status=0,code='TRANSPORT',details=null}={}) {super(message);this.name='ApiError';this.status=status;this.code=code;this.details=details;}
+  constructor(message,{status=0,code='TRANSPORT',details=null,currentRevision=undefined}={}) {super(message);this.name='ApiError';this.status=status;this.code=code;this.details=details;if(currentRevision!==undefined)this.currentRevision=currentRevision;}
 }
 function databaseOpen(){return new Promise((resolve,reject)=>{const r=indexedDB.open(database,1);r.onupgradeneeded=()=>r.result.createObjectStore(storeName);r.onerror=()=>reject(r.error);r.onsuccess=()=>resolve(r.result);});}
 async function saved(key,value,write=false){const db=await databaseOpen();try{return await new Promise((resolve,reject)=>{const t=db.transaction(storeName,write?'readwrite':'readonly'),s=t.objectStore(storeName);const r=write?(value===null?s.delete(key):s.put(value,key)):s.get(key);let result;r.onsuccess=()=>{result=r.result;};t.oncomplete=()=>resolve(result??null);t.onerror=()=>reject(t.error??r.error);t.onabort=()=>reject(t.error??new Error('Browser request custody was not saved.'));});}finally{db.close();}}
@@ -30,7 +30,7 @@ export function createDeskClient(token) {
     catch(e){throw new ApiError('The original request has no readable response. Keep its saved identity and reconcile it after reopening. '+e.message);}
     if(raw&&response.ok)return response;
     let result;try{result=await response.json();}catch{throw new ApiError('The selected API returned an unreadable response.',{status:response.status,code:'RESPONSE'});}
-    if(!response.ok){const e=result.error??result;throw new ApiError(e.message??'The original operation could not complete.',{status:response.status,code:e.code??result.code??'API',details:e.details??result});}
+    if(!response.ok){const e=result?.error&&typeof result.error==='object'?result.error:null;throw new ApiError(e?.message??result?.message??'The original operation could not complete.',{status:response.status,code:e?.code??(typeof result?.error==='string'?result.error:result?.code??'API'),details:e?.details??result?.details??null,currentRevision:e?.currentRevision??result?.currentRevision});}
     return result;
   }
   async function refresh(){view=await request('/api/view');if(view.workspaceId!==workspaceId)throw new ApiError('The workspace UUID changed.',{code:'WORKSPACE'});notify();return view;}
@@ -46,7 +46,7 @@ export function createDeskClient(token) {
       if(result.state==='RUNNING'){await retain({...original,state:'RUNNING'});return result;}
       await retain(null);await refresh();return result;
     } catch(error) {
-      await retain({...original,state:'RECONCILE',lastError:{message:error.message,code:error.code,status:error.status}});
+      await retain({...original,state:'RECONCILE',lastError:{message:error.message,code:error.code,status:error.status,details:error.details??null,...(error.currentRevision!==undefined?{currentRevision:error.currentRevision}:{})}});
       throw error;
     }
   }

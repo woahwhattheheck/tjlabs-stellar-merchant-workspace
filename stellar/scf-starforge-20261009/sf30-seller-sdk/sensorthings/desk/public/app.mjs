@@ -37,6 +37,7 @@ async function connect(token){
     client.subscribe(({view})=>{if(view)identity.textContent='Workspace '+view.workspaceId+' · revision '+view.revision;renderPending();});
     nav.replaceChildren(...tabs.map(([id,label])=>{const b=button(label,()=>{ctx.tab=id;ctx.render();});b.dataset.tab=id;return b;}));
     if(opened.schema.analysis)nav.append(button('Observation analysis',()=>{const url=new URL('/analysis/',location.origin);url.hash=token;window.open(url.href,'_blank','noopener,noreferrer');}));
+    if(opened.schema.commissioning)nav.append(button('Commissioning',()=>{const url=new URL('/commissioning/',location.origin);url.hash=token;window.open(url.href,'_blank','noopener,noreferrer');}));
     refresh.disabled=false;refresh.onclick=busy(async()=>{await client.refresh();ctx.render();notice.replaceChildren(note('Original workspace refreshed.','success'));},ctx.error);
     notice.replaceChildren();renderPending();ctx.render();
   }catch(error){ctx.error(error);login();}
