@@ -154,6 +154,7 @@ function exportFileType(name) {
 export class MerchantSupport {
   #config; #store; #commercial; #casePackages; #serviceAdjustments; #serviceRenewals; #watch = null; #lastWatchExit = null; #closing = false; #close; #incidentSources; #environment;
   #reads = new RetainedFileReads({ errorPrefix: 'SUPPORT' });
+  #caseBorrowers = new Set();
   constructor(config, { environment = process.env, accounting = null, buyer = null } = {}) {
     this.#config = config; this.#environment = environment;
     this.#serviceAdjustments=merchantServiceAdjustments({cases:()=>this.#cases(),casesDirectory:()=>this.#configured().casesDirectory,
@@ -169,6 +170,16 @@ export class MerchantSupport {
       template: (alias, sourceDigest) => this.#input('workspace', alias, sourceDigest),
       cases: () => this.#cases()
     }, { environment });
+  }
+  /** Admit complete same-case work to the existing writer and drain it on close. */
+  withCaseStore(operation) {
+    if(this.#closing)throw failure('SUPPORT_CLOSED','The original Support owner is closing.');
+    if(typeof operation!=='function')throw failure('SUPPORT_INPUT','Supply the original case operation.');
+    this.#configured();
+    const task=Promise.resolve().then(()=>this.#cases()).then(store=>operation(store));
+    this.#caseBorrowers.add(task);
+    task.finally(()=>this.#caseBorrowers.delete(task)).catch(()=>{});
+    return task;
   }
   get summary() {
     const value = this.#config.support;
@@ -577,6 +588,7 @@ export class MerchantSupport {
     if (this.#close) return this.#close;
     this.#closing = true;
     this.#close = (async () => {
+      await Promise.allSettled([...this.#caseBorrowers]);
       const handle = this.#watch;
       const sourcesClosing = this.#incidentSources.close(), commercialClosing = this.#commercial.close();
       const packagesClosing=this.#casePackages?this.#casePackages.then(owner=>owner.close(),()=>{}):Promise.resolve();

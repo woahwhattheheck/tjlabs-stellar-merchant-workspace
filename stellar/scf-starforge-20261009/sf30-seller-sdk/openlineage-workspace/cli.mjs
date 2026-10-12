@@ -8,8 +8,10 @@ import { startServer } from "./server.mjs";
 import { serveStdio } from "./protocol.mjs";
 import { LineageClient } from "./client.mjs";
 import { producerConfiguration } from "./producer.mjs";
+import { qualityCommand, QUALITY_HELP } from "./quality-cli.mjs";
 
 const HELP = [
+  ...QUALITY_HELP,
   "OpenLineage operations workspace",
   "",
   "  scf-lineage init --workspace DIR [--title TITLE]",
@@ -20,6 +22,7 @@ const HELP = [
   "  scf-lineage producer reconnect --connection HOST_JSON --workspace ALIAS --instance INSTANCE_UUID",
   "  scf-lineage producer-config --connection FILE --out NEW_FILE [--token-file FILE] [--client python|java] [--compression gzip|identity] [--timeout SECONDS]",
   "  scf-lineage native-python emit|resume|status --directory DIR [--python EXECUTABLE] ...",
+  "  scf-lineage native-python-async configure|emit|resume|status|export|receive --directory DIR [--python EXECUTABLE] ...",
   "  scf-lineage native-java prepare|emit --runtime DIR ...",
   "  scf-lineage service-levels status|policy|evaluate|record|incident|report ...",
   "  scf-lineage import --workspace DIR --input EVENTS [--name NAME] [--source URL] --operation-id ID [--revision N] [--content-encoding identity|gzip]",
@@ -68,6 +71,7 @@ export async function main(argv = process.argv.slice(2)) {
   const args = [...argv], command = args.shift();
   if (!command || ["help", "--help", "-h"].includes(command)) { console.log(HELP); return 0; }
   if (command === "native-python") return (await import("./native-producer.mjs")).pythonProducerCommand(args);
+  if (command === "native-python-async") return (await import("./async-producer.mjs")).asyncProducerCommand(args);
   if (command === "native-java") {
     print(await (await import("./JAVA_PRODUCER.mjs")).javaProducerCommand(args)); return 0;
   }
@@ -149,6 +153,7 @@ export async function main(argv = process.argv.slice(2)) {
     check(options, ["workspace", "id"]); print(await workspace.recoverLock(need(options.id, "--id"))); return 0;
   }
   await workspace.read();
+  if (command === "quality") { print(await qualityCommand(workspace, positional, options)); return 0; }
   if (command === "status") {
     check(options, ["workspace", "edition"]); print(await workspace.view({ edition: options.edition ?? null })); return 0;
   }

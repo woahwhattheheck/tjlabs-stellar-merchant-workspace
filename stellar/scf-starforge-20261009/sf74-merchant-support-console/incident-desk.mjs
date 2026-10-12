@@ -1,5 +1,6 @@
 // MIT. Live SF93 operations inside the existing SF74 merchant case workspace.
 import {parseWorkspace} from './workspace-file.mjs';
+import {mountIncidentRecoveryDesk} from './incident-recovery-desk.mjs';
 
 const add=(parent,tag,text,className='')=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;parent.append(n);return n;};
 const button=(parent,text,action,className='secondary')=>{const n=add(parent,'button',text,className);n.type='button';n.addEventListener('click',action);return n;};
@@ -15,7 +16,7 @@ const terminal=new Set(['DELIVERED','CANCELLED']);
 export function mountIncidentDesk({root,exportCase,importCase}) {
   const abort=new AbortController();
   let destroyed=false,busy=false,sequence=0,selection=0,offset=0,timer=null,current=null,detail=null,selectedId=null;
-  let configDirty=false,loadedConfigRevision=null,prepared=null;
+  let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null;
   let objectReview=null,objectEpoch=0,objectChoicesKey='';
   const downloads=new Set();
   root.id='incidents';root.className='card incident-desk';root.hidden=true;
@@ -94,6 +95,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const technical=add(details,'details',undefined,'source-details');add(technical,'summary','Incident source and revision');
   const raw=add(technical,'pre');raw.tabIndex=0;
 
+  const recoveryRoot=add(root,'details');recoveryRoot.id='incident-store-recovery';
   const configPanel=add(root,'details',undefined,'source-details incident-config');
   add(configPanel,'summary','Watcher registration and notification settings');
   const configSummary=add(configPanel,'p','','hint');
@@ -154,6 +156,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     inspectObject.disabled=busy||!current||!objectSource.value||loadedConfigRevision!==current.configRevision;
     objectDraft.disabled=busy||!objectReview||!current||loadedConfigRevision!==current.configRevision;
     for(const node of queueRows.querySelectorAll('button'))node.disabled=busy||!operator.value.trim();
+    recovery?.refreshControls();
   }
   function drawConfig() {
     if(!current)return;
@@ -246,7 +249,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     }
   }
   function drawList() {
-    listRows.replaceChildren();if(!current)return;
+    listRows.replaceChildren();recovery?.update(current);if(!current)return;
     for(const item of current.incidents) {
       const row=add(listRows,'tr');row.setAttribute('aria-selected',String(item.id===selectedId));
       const cell=add(row,'td');button(cell,item.merchantLabel||current.merchants.find(m=>m.id===item.merchantId)?.label||item.merchantId,()=>selectIncident(item.id),'case-link');
@@ -294,11 +297,14 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
         add(receiptCell,'small','Message '+receipt.messageTs);add(receiptCell,'small','Thread '+receipt.threadTs);
       } else add(receiptCell,'span',event.acceptedAt?'Accepted '+when(event.acceptedAt):'—');
       const actions=add(row,'td');
-      if(['PAUSED','EXHAUSTED'].includes(event.status))button(actions,'Retry delivery',()=>queueAction(event,'retry'),'text-button');
+      if(['PAUSED','EXHAUSTED'].includes(event.status)&&!current?.recovery?.deliveryPaused)button(actions,'Retry delivery',()=>queueAction(event,'retry'),'text-button');
       if(!terminal.has(event.status)&&event.status!=='IN_FLIGHT')button(actions,'Cancel delivery',()=>queueAction(event,'cancel'),'text-button');
       if(!actions.childElementCount)add(actions,'span','—');
     }
     if(!detail.notifications.length)add(add(queueRows,'tr'),'td','No notification has been queued for this incident.').colSpan=5;
+    queueHint.textContent=current?.recovery?.deliveryPaused?
+      'This received store holds unfinished notification deliveries. Review its recovery section before retrying an event.':
+      'Delivery attempts and accepted Slack receipts are retained by the original queue.';
     raw.textContent=JSON.stringify({incident,notifications:detail.notifications},null,2);controls();
   }
   function schedule() {
@@ -382,11 +388,23 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
       if(opened)document.getElementById('cases')?.scrollIntoView({block:'start'});
     } catch(error){say(error.message,true);}finally{busy=false;controls();}
   }
+  recovery=mountIncidentRecoveryDesk({root:recoveryRoot,request:api,
+    getContext:()=>({source:source.value,current,busy}),onBusy(value){busy=value;controls();},
+    refreshParent:()=>refresh({force:true}),signal:abort.signal,
+    async selectSource(id,profiles) {
+      if(!Array.isArray(profiles?.sources)||!profiles.sources.some(row=>row.id===id))
+        throw new Error('The received store was saved, but its current source profile was not returned.');
+      source.replaceChildren();for(const row of profiles.sources)add(source,'option',row.label).value=row.id;
+      source.value=id;await changeSource();
+    }});
   selectionForm.addEventListener('submit',event=>{event.preventDefault();if(busy)return;offset=0;refresh();},{signal:abort.signal});
-  source.addEventListener('change',()=>{selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
+  async function changeSource() {
+    selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
     invalidateObject();objectChoicesKey='';objectStatus.replaceChildren();objectStatus.hidden=true;
     destinationStatus.textContent='';merchant.value='';routeId.value='';configText.value='';configSummary.textContent='Loading settings…';listRows.replaceChildren();
-    clearPrepared();drawDetail();refresh();},{signal:abort.signal});
+    clearPrepared();recovery?.update(null);drawDetail();await refresh({force:true});
+  }
+  source.addEventListener('change',()=>{void changeSource();},{signal:abort.signal});
   operator.addEventListener('input',controls,{signal:abort.signal});
   routeId.addEventListener('input',()=>{clearPrepared();controls();},{signal:abort.signal});
   acknowledgeForm.addEventListener('submit',event=>{event.preventDefault();if(!acknowledgeForm.reportValidity())return;
@@ -410,5 +428,5 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(navigation){navigation.hidden=false;navigation.closest('.workflow').classList.add('has-incidents');}
     say('Choose an incident to review, or operate the selected watcher.');refresh();
   }).catch(error=>{if(!destroyed){root.hidden=false;say(error.message,true);}});
-  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();abort.abort();root.replaceChildren();}};
+  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();recovery?.destroy();abort.abort();root.replaceChildren();}};
 }

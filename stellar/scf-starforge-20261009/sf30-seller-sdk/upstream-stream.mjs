@@ -45,7 +45,7 @@ function contentType(value,format) {
  * closed. The public result carries only permitted response headers and bytes.
  */
 export function openUpstreamStream({target,outgoing,body,method,lookup,expose,tls,
-  format,policy,headerSignal,signal,agent} = {}) {
+  format,policy,headerSignal,signal,agent,credentialGuard} = {}) {
   policy = compileUpstreamStreamPolicy(policy,format);
   if (tls !== undefined && target?.protocol !== 'https:') throw new TypeError('TLS profile requires an HTTPS upstream');
   const tlsOptions = upstreamTlsRequestOptions(tls);
@@ -54,6 +54,17 @@ export function openUpstreamStream({target,outgoing,body,method,lookup,expose,tl
   return new Promise(resolve => {
     let request,response,wireStream,decoded,iterator,headerReturned=false,done=false;
     let received=0,wireBytes=0,terminalError=null,iterating=false,naturalEnd=false;
+    const textDecoder = credentialGuard ? new TextDecoder('utf-8',{fatal:true}) : null;
+    const redactor = credentialGuard?.stream(format);
+    let releasedBytes = 0;
+    function* cleanChunks(value,final=false) {
+      for (const text of redactor.write(value,final)) {
+        const bytes = Buffer.from(text); releasedBytes += bytes.length;
+        if (releasedBytes > policy.maxBytes) throw error('UPSTREAM_RESPONSE_TOO_LARGE');
+        // Match the original seller's chunk cap even for a full-length record.
+        for (let offset=0;offset<bytes.length;offset+=65536) yield bytes.subarray(offset,offset+65536);
+      }
+    }
     let finishCompletion;
     const completion = new Promise(complete => {finishCompletion=complete;});
     const began = performance.now();
@@ -88,7 +99,7 @@ export function openUpstreamStream({target,outgoing,body,method,lookup,expose,tl
         if (['UPSTREAM_REQUEST_FAILED'].includes(code) && [429,503].includes(upstreamStatus)) {
           const value=response?.headers['retry-after'];
           const hop=new Set(String(response?.headers.connection ?? '').split(',').map(name=>name.trim().toLowerCase()));
-          if (!hop.has('retry-after') && typeof value === 'string' && value.length <= 128 &&
+          if (!hop.has('retry-after') && typeof value === 'string' && value.length <= 128 && !credentialGuard?.contains(value) &&
               (/^\d+$/.test(value) || Number.isFinite(Date.parse(value)))) result.headers['retry-after']=value;
         }
         resolve({response:result,outcome:request ? 'UNCERTAIN' : 'NOT_DISPATCHED',error:code});
@@ -130,16 +141,18 @@ export function openUpstreamStream({target,outgoing,body,method,lookup,expose,tl
               if (!response.complete) throw error('UPSTREAM_RESPONSE_INCOMPLETE');
               // EOF still needs the caller's record/parser finalization. Its
               // mandatory close() commits the final readiness outcome once.
+              if (redactor) yield* cleanChunks(textDecoder.decode(),true);
               naturalEnd=true;releaseSource();return;
             }
             const chunk=next.value;
             if (!(chunk instanceof Uint8Array)) throw error('UPSTREAM_RESPONSE_INCOMPLETE');
             received+=chunk.byteLength;
             if (received>policy.maxBytes) throw error('UPSTREAM_RESPONSE_TOO_LARGE');
-            yield chunk;
+            if (redactor) yield* cleanChunks(textDecoder.decode(chunk,{stream:true}));
+            else yield chunk;
           }
         } catch (cause) {
-          const code=terminalError?.code ?? (['UPSTREAM_RESPONSE_TOO_LARGE','UPSTREAM_TIMEOUT','UPSTREAM_ABORTED'].includes(cause?.code)
+          const code=terminalError?.code ?? (['UPSTREAM_RESPONSE_TOO_LARGE','UPSTREAM_TIMEOUT','UPSTREAM_ABORTED','UPSTREAM_CREDENTIAL_REFLECTED'].includes(cause?.code)
             ? cause.code : 'UPSTREAM_RESPONSE_INCOMPLETE');
           finalize(code);throw error(code);
         } finally {
@@ -180,7 +193,7 @@ export function openUpstreamStream({target,outgoing,body,method,lookup,expose,tl
         const resultHeaders=Object.create(null);
         for (const name of expose) {
           const value=res.headers[name];
-          if (!hop.has(name) && typeof value==='string' && value.length<=8192) resultHeaders[name]=value;
+          if (!hop.has(name) && typeof value==='string' && value.length<=8192 && !credentialGuard?.contains(value)) resultHeaders[name]=value;
         }
         resultHeaders['content-type']=FORMATS[format]+'; charset=utf-8';
         resultHeaders['cache-control']='no-store';

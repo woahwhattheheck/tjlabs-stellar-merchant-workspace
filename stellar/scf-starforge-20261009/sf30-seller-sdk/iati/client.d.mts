@@ -1,3 +1,5 @@
+import type { AmpStatus, AmpCapture, AmpPlan, AmpSelection, AmpDecisionState, AmpRows, AmpRunSummary, AmpRun, AmpEvents, AmpRequest, AmpAction, AmpCaptureInput, AmpCaptureResult, AmpSave, AmpSaved, AmpScope, AmpScopePreview, AmpDecisions, AmpAdvance, AmpReview, AmpPrepare, AmpNativeCapture, AmpNativeStart, AmpNativeStarted, AmpCredentials, AmpNativeReconcile, AmpNativeReceived, AmpFileKind, AmpReceiving } from './amp_client.mjs';
+export type * from './amp_client.mjs';
 import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
 export type * from './organisation_client.mjs';
 /** MIT. Typed access to the original IATI console. Financial and identifier values remain strings. */
@@ -625,6 +627,32 @@ export declare class IatiWorkspaceClient {
   organisationExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
   organisationFile(id: Sha256, kind: OrganisationFileKind, options?: RevisionOptions): Promise<Response>;
   organisationReceive(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<OrganisationReceiving>;
+
+
+  ampStatus(options?:RequestOptions):Promise<AmpStatus>;
+  ampCapture(id:Sha256,options?:RequestOptions):Promise<AmpCapture>;
+  ampPlan(id:Sha256,options?:RevisionOptions):Promise<AmpPlan>;
+  ampHistory(id:Sha256,options?:RequestOptions):Promise<{history:AmpPlan[]}>;
+  ampRows(input:AmpSelection&{offset?:number;limit?:number;state?:AmpDecisionState},options?:RequestOptions):Promise<AmpRows>;
+  ampRuns(id?:Sha256,options?:RequestOptions):Promise<{runs:AmpRunSummary[]}>;
+  ampRun(id:Sha256,options?:RequestOptions):Promise<AmpRun>;
+  ampEvents(id:Sha256,options?:RequestOptions&{after?:number;limit?:number}):Promise<AmpEvents>;
+  ampRequest(requestId:string,options?:RequestOptions):Promise<AmpRequest>;
+  ampCaptureImport(input:AmpAction&{capture:AmpCaptureInput},options?:RequestOptions):Promise<AmpCaptureResult>;
+  ampSave(input:AmpSave,options?:RequestOptions):Promise<AmpSaved>;
+  ampDecisionPreview(input:AmpSelection&{selection:AmpScope},options?:RequestOptions):Promise<AmpScopePreview>;
+  ampDecisions(input:AmpDecisions,options?:RequestOptions):Promise<AmpSaved>;
+  ampAdvance(input:AmpAdvance,options?:RequestOptions):Promise<AmpSaved>;
+  ampReview(input:AmpReview,options?:RequestOptions):Promise<AmpSaved>;
+  ampPrepare(input:AmpPrepare,options?:RequestOptions):Promise<AmpSaved>;
+  ampNativeCapture(input:AmpNativeCapture,options?:RequestOptions):Promise<AmpCaptureResult>;
+  ampNativeStart(input:AmpNativeStart,options?:RequestOptions):Promise<AmpNativeStarted>;
+  ampNativeContinue(input:{runId:Sha256;credentials:AmpCredentials},options?:RequestOptions):Promise<AmpNativeStarted>;
+  ampNativeReconcile(input:AmpNativeReconcile,options?:RequestOptions):Promise<AmpNativeReceived>;
+  ampExport(id:Sha256,options?:RevisionOptions):Promise<Response>;
+  ampFile(id:Sha256,kind:AmpFileKind,options?:RevisionOptions):Promise<Response>;
+  ampAsset(sha256:Sha256,options?:RequestOptions):Promise<Response>;
+  ampReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<AmpReceiving>;
 
 
   resultsInventory(options?:RequestOptions):Promise<ResultsInventory>;

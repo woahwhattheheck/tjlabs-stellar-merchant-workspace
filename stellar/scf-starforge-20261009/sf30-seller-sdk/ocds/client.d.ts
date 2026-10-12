@@ -1,3 +1,4 @@
+import type {SourceState,SourceWindow,SourceRunInput,SourceProgress,SourceSelectionInput,SourceSelection,SourceReview,SourceReviewPatch,SourceReceiving,OriginalObservation} from './source-window.js';
 import type { JsonValue, JsonObject, Source, Summary, DocumentKind, Diagnostic, Comparison } from './domain.js';
 
 export type RequestOptions = { signal?: AbortSignal };
@@ -10,7 +11,10 @@ export type ClientOptions = {
 export type WorkspaceIdentity = {
   id: string; title: string; revision: number; createdAt: string; updatedAt: string;
 };
-export type SourceMetadata = Omit<Source, 'id'> & { id: string; sha256?: string; bytes?: number; entryCount?: number };
+export type SourceMetadata = Omit<Source, 'id'> & {
+  id: string; sha256?: string; bytes?: number; entryCount?: number;
+  importedAt?: string; acquisition?: JsonObject | null;
+};
 export type RetainedSource = SourceMetadata & { sha256: string; bytes: number; body: string; document: JsonValue };
 export type EntryMetadata = {
   id: string; kind: DocumentKind; ocid: string; releaseId: string | null; date: string | null;
@@ -27,7 +31,7 @@ export type ReviewUpdate = Partial<Omit<Review, 'revision' | 'updatedAt'>> & {
   expectedRevision: number;
 };
 export type Publication = { id: string; createdAt: string; operator: string; [key: string]: unknown };
-export type Project = { ocid: string; summary: Summary; entries: EntryMetadata[]; review: Review };
+export type Project = { ocid: string; currentEntryId: string | null; summary: Summary; entries: EntryMetadata[]; review: Review };
 export type WorkspaceView = {
   workspace: WorkspaceIdentity; sources: SourceMetadata[]; projects: Project[];
   diagnostics: Diagnostic[]; publications: Publication[]; receivings: JsonObject[]; captures: JsonObject[];
@@ -63,8 +67,22 @@ export declare class OcdsClient {
   baseUrl: string; fetch: typeof globalThis.fetch; headers: Record<string, string>;
   timeoutMs: number; maxResponseBytes: number;
   constructor(baseUrl: string | URL, options?: ClientOptions);
-  request<T = unknown>(path: string, options?: RequestOptions & { method?: string; body?: unknown; raw?: false }): Promise<T>;
+  request<T = unknown>(path: string, options?: RequestOptions & { method?: string; body?: unknown; raw?: false; binary?: false }): Promise<T>;
   request(path: string, options: RequestOptions & { method?: string; body?: unknown; raw: true }): Promise<TextExport>;
+  request(path:string,options:RequestOptions&{method?:string;body?:unknown;binary:true}):Promise<{mime:string;filename:string|null;body:Uint8Array;bytes:number}>;
+  sourceState(options?:RequestOptions):Promise<SourceState>;
+  sourceWindow(id:string,options?:RequestOptions):Promise<SourceWindow>;
+  sourceReceiving(id:string,options?:RequestOptions):Promise<SourceReceiving>;
+  saveSourceSelection(selection:SourceSelectionInput,expectedRevision:number,options?:RequestOptions):Promise<SourceState&{selection:SourceSelection}>;
+  refreshSources(input:SourceRunInput,options?:RequestOptions):Promise<{workspace:WorkspaceIdentity;window:SourceWindow;started?:boolean}>;
+  pauseSourceWindow(id:string,options?:RequestOptions):Promise<{window:SourceWindow;pauseRequested:boolean}>;
+  sourceReview(id:string,options?:RequestOptions):Promise<{review:SourceReview;comparison:unknown;documents:import('./source-window.js').SourceDocument[]}>;
+  updateSourceReview(id:string,patch:SourceReviewPatch,options?:RequestOptions):Promise<SourceState&{review:SourceReview}>;
+  sourceDocument(id:string,options?:RequestOptions&{sha256?:string}):Promise<{mime:string;filename:string|null;body:Uint8Array;bytes:number}>;
+  adoptSourceObservation(input:import('./source-window.js').AdoptSourceObservationInput,options?:RequestOptions):Promise<SourceState&{window:SourceWindow;observation:import('./source-window.js').OriginalSourceObservation;repeated:boolean}>;
+  importSourceOriginal(input:{selectionId:string;referenceId?:string;ocid?:string;documentId?:unknown;bodyBase64:string;observation:OriginalObservation},options?:RequestOptions):Promise<SourceState&{window:SourceWindow}>;
+  exportSourceHandoff(directory:string,ocids:string[],options?:RequestOptions):Promise<Record<string,unknown>>;
+  receiveSourceHandoff(directory:string,expectedRevision:number,options?:RequestOptions&{expectedHandoffId?:string}):Promise<Record<string,unknown>>;
   workspace(options?: RequestOptions): Promise<WorkspaceView>;
   entry(id: string, options?: RequestOptions): Promise<RetainedEntry>;
   source(id: string, options?: RequestOptions): Promise<RetainedSource>;

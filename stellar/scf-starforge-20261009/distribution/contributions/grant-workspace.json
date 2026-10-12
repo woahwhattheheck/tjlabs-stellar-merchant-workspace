@@ -1,8 +1,22 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grant-workspace",
-  "description": "grant workspace original Applications",
+  "description": "Original Grant Operations application and complete customer installation workorders",
   "applicationProviders": {
     "grant-workspace": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/grant-workspace.mjs"
-  }
+  },
+  "commands": {
+    "grant-installation-workorder": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mjs",
+    "grant-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/receive.mjs"
+  },
+  "commandDescriptions": {
+    "grant-installation-workorder": "Prepare a complete CoCart or Blockscout workorder for the original customer Installation",
+    "grant-installation-receive": "Receive original customer Workshares into the current Installation case and reopen the complete case on the receiving host"
+  },
+  "exports": {
+    "./grant/installation-workorders": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs"
+  },
+  "components": [
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+  ]
 }

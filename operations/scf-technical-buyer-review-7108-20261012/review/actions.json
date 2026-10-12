@@ -1,0 +1,1387 @@
+{
+  "schema": "commons.original-review-action-inputs.v1",
+  "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "actions": [
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:add-author",
+      "expectedRevision": 0,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "participant",
+      "input": {
+        "person": {
+          "id": "7108-ai-authoring-assistant",
+          "label": "TJLabs AI authoring assistant 7108"
+        }
+      },
+      "at": "2026-10-12T19:00:06.343Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-application-application",
+      "expectedRevision": 1,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "application",
+          "id": "application"
+        },
+        "bindingSha256": "ef6219403e04e5d6f681747c88089a74caf101ce5483d82b0a705891b5fcc727",
+        "decision": "changes-requested",
+        "note": "The current full application preserves the original customer chapters, financial scope, operator independence declarations and unresolved commissioning/financing state. Integrate the five exact technical edits and the accepted companion units, then return the complete source-bound draft to its author. No issuer form or limits have been supplied; the nine canonical answers remain the reviewed submission surface.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Official submission criteria",
+            "url": "",
+            "note": "Checked October 12, 2026; review the full answer, meaningful integration, prospective delivery and T2 response. This AI review is not an issuer decision.\nComplete original source URL: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:50.249Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-project",
+      "expectedRevision": 2,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "project"
+        },
+        "bindingSha256": "e44b303d8a500b706f5f81397f76f522ee1527a49b44f479c692f1d58a17c840",
+        "decision": "changes-requested",
+        "note": "Clarify the actual phase split in the funded outcome: two independently operated testnet facilitators in T2 and both merchant installations on mainnet in T3. Preserve the two merchants/two buyers, prospective reusable product changes, $38,000, 400 hours and 150 days.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:51.427Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-need",
+      "expectedRevision": 3,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "need"
+        },
+        "bindingSha256": "459cb4f01011216d30c97962f4ff9f3599f421bc0b48fc8c67d70903a83eb683",
+        "decision": "accepted",
+        "note": "The answer identifies useful customer tasks and separates observed conversations, proposed workshares, selected commissioning and actual acceptance. Preserve the October 12 Nansen disposition and the fact that the funded cohort is still to be selected. This decision reviews the wording and its retained source; it is not a new customer commitment.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:52.701Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-stellar",
+      "expectedRevision": 4,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "stellar"
+        },
+        "bindingSha256": "3db71947cb889fc98d764eb19d89ca634323a5333d270cb9395cc280859736a2",
+        "decision": "changes-requested",
+        "note": "Separate the native token-transfer authorization from the application’s HTTP/MCP request, body and source/terms binding. The existing approval and signer implementation connects them. Retain the Open Track rationale and current market comparison; this review does not extend another provider’s advertised compatibility.",
+        "references": [
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:53.995Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-architecture",
+      "expectedRevision": 5,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "architecture"
+        },
+        "bindingSha256": "c95c48ee177142f953a613d6d0cc91db3772989fa18d4ad176ba32e78d3a89f0",
+        "decision": "changes-requested",
+        "note": "Make the installed source/SDK and facilitator compatibility profile explicit before dispatch. Preserve original operation owners, terms, complete-result receiving, typed/MCP interfaces and the newer pricing/accounting/customer integrations. Provider switching must review the actual supported network, asset, authorization and fee profile.",
+        "references": [
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          },
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:55.380Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-product",
+      "expectedRevision": 6,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "product"
+        },
+        "bindingSha256": "ef1cc1091b09b626b9ca4e86b764898e5d985941b51f6b343f5c6fdc8ed3b2c9",
+        "decision": "accepted",
+        "note": "The complete existing product answer distinguishes its 18 team-operated development purchases from the future independent cohort. Its full query result retains the truncation declaration; full selected-output receiving differs from the upstream population. Keep each existing customer/native-source claim at its original recorded status; this editorial run performs no additional purchase or customer acceptance.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:56.845Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-delivery",
+      "expectedRevision": 7,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "delivery"
+        },
+        "bindingSha256": "6945ae6b5cdba910c5ea09ad04d5a0c5bdcd211660fdaba7c7f623c1c325e746",
+        "decision": "accepted",
+        "note": "The six original packages total 400 hours at $95/hour and $38,000, with T1/T2/T3 costs $11,400/$11,400/$15,200. Their hours, dates, prospective work and receiving criteria are retained. T2’s provider scope and T3’s mainnet installations are clarified in the requested project edit without adding another funded obligation.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:58.420Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-outcomes",
+      "expectedRevision": 8,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "outcomes"
+        },
+        "bindingSha256": "ad1ba6e3bb3da796d847df866530ea287863e3471c737ea2b83d93f535848dfa",
+        "decision": "changes-requested",
+        "note": "Reconcile payment intents, complete parent tasks and prepaid usage with the current accountable-operator IDs, source-supported independence declarations, team exclusions, facilitator deduplication and UTC returning-buyer rule. Make the two original T2 response cases assessable through separate native transfer, full result, fulfillment, acknowledgment and recovery observations.",
+        "references": [
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Original incident and recovery contracts",
+            "url": "",
+            "note": "Full recovery f87f74a3 and incident-source guide55151854; use the original dispatch, delivery, incident revision, complete files and post-backup reconciliation.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md"
+          },
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:00:59.960Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-capacity",
+      "expectedRevision": 9,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "capacity"
+        },
+        "bindingSha256": "4fe752d23a2043bcf5771ee5c6113c51ffb1574dbc13967bd2a25c21dc8c5f2d",
+        "decision": "accepted",
+        "note": "The current answer separates tranche delivery cost from four grant payments and discloses the uncommitted cash requirement and unentered opening cash. Preserve actual acceptance-date scheduling, reviewed contribution capacity and the governing rules’ paid-day conversion and form timing. This technical decision does not establish financing, contributor availability or legal eligibility.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:01.521Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-applicant",
+      "expectedRevision": 10,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "applicant"
+        },
+        "bindingSha256": "4ab946357cfe61e3ced94d0ad0827cda773eb7dc875c43f06c70ec0889f40fab",
+        "decision": "accepted",
+        "note": "The answer names Bryce’s responsibility and AI assistance and reports interest acknowledged/awaiting invitation. Preserve those limits and actual round dates. Human applicant review, complete current issuer fields and any legal/eligibility determination remain with the applicant and issuer.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Official submission criteria",
+            "url": "",
+            "note": "Checked October 12, 2026; review the full answer, meaningful integration, prospective delivery and T2 response. This AI review is not an issuer decision.\nComplete original source URL: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:03.157Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-complete",
+      "expectedRevision": 11,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "complete"
+        },
+        "bindingSha256": "1d5830db4e9a12586ef2626fa8554802bafe4622a95b9ffc70db1070653a241a",
+        "decision": "changes-requested",
+        "note": "The complete nine-answer source is retained, but the selected technical edits need explicit author selection. Keep essential claims inside the answers rather than relying on the appendix. No invented issuer labels, prompt text, word limits or form observation are introduced.",
+        "references": [
+          {
+            "label": "Official submission criteria",
+            "url": "",
+            "note": "Checked October 12, 2026; review the full answer, meaningful integration, prospective delivery and T2 response. This AI review is not an issuer decision.\nComplete original source URL: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria"
+          },
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:04.867Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-need",
+      "expectedRevision": 12,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "need"
+        },
+        "bindingSha256": "5c5539a273850709914da1c293d44b9b1ed69edaa3f8a89cab6e55edcb310087",
+        "decision": "accepted",
+        "note": "Need is expressed through the customer’s whole useful task and observed commissioning conversations, with proposed and accepted states separated. The future independent cohort and named receiving workorders remain explicit selection work.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:06.829Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-integration",
+      "expectedRevision": 13,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "integration"
+        },
+        "bindingSha256": "c968b46d50d5f8b5142de2ce2af9febb77aea1c5f238aea601e10e712853fbfc",
+        "decision": "changes-requested",
+        "note": "Use the native transfer and application binding distinction and actual selected SDK/provider compatibility. The meaningful Stellar operation is the joined approved purchase, observed transfer and complete useful customer output.",
+        "references": [
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:08.966Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-readiness",
+      "expectedRevision": 14,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "readiness"
+        },
+        "bindingSha256": "5b81f7af4fc4232ce908aede08b81ba7d60c49562814a601b17ba3818d7db28e",
+        "decision": "accepted",
+        "note": "The retained working source and native development observations provide implementation background. The funded scope still requires the named customer hosts, contributors, contracts and working availability disclosed in the current source; this review does not invent them.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:11.245Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-budget",
+      "expectedRevision": 15,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "budget"
+        },
+        "bindingSha256": "cfd6ac50232f89659ea6bf0a8afb2f775adeb450ff484dc99b8d406a220232fb",
+        "decision": "accepted",
+        "note": "Preserve all six prospective packages and assign work once between the grant and separately commissioned scopes. Completed pre-award capabilities remain the baseline. Purchase principal, network fees and uncommitted financing are not silently moved into the development request.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Official submission criteria",
+            "url": "",
+            "note": "Checked October 12, 2026; review the full answer, meaningful integration, prospective delivery and T2 response. This AI review is not an issuer decision.\nComplete original source URL: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:13.635Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-tranches",
+      "expectedRevision": 16,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "tranches"
+        },
+        "bindingSha256": "e219fa254ed35bad8400adddbe2acc09ad6b09f7b86ce17dda0a536e452d4ad7",
+        "decision": "changes-requested",
+        "note": "Clarify the two-facilitator testnet versus two-installation mainnet outcome while preserving the existing three windows, counts, costs and complete receiving. The proposed source change affects wording, not the six priced deliverables.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:16.208Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-response",
+      "expectedRevision": 17,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "response"
+        },
+        "bindingSha256": "017fc263726313dba2f7da8ca209490c3ba87ec0b5c186b4c8e54c72712a0b2d",
+        "decision": "changes-requested",
+        "note": "The original T2 response package should specify full acceptance of both retained incidents. The proposed appendix and short answer edits use the existing notification/revision, original dispatch, complete-output verification and recovery procedures without creating a new controller.",
+        "references": [
+          {
+            "label": "Original incident and recovery contracts",
+            "url": "",
+            "note": "Full recovery f87f74a3 and incident-source guide55151854; use the original dispatch, delivery, incident revision, complete files and post-backup reconciliation.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md"
+          },
+          {
+            "label": "Official submission criteria",
+            "url": "",
+            "note": "Checked October 12, 2026; review the full answer, meaningful integration, prospective delivery and T2 response. This AI review is not an issuer decision.\nComplete original source URL: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:18.973Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-value",
+      "expectedRevision": 18,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "value"
+        },
+        "bindingSha256": "cc542441cb3e871180d054ba948bf5fd54213895569351fe466cd052a14d789a",
+        "decision": "accepted",
+        "note": "The current Open Track comparison identifies the source-to-result customer application and receiving operation as the proposed improvement, while retaining the original SDK/payment infrastructure. Keep the actual merchant/customer examples and publication status at their existing source-supported level.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:21.802Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-eligibility",
+      "expectedRevision": 19,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "requirement",
+          "id": "eligibility"
+        },
+        "bindingSha256": "326339fe48f7868d822e8dcbb1cf4db7540496d9e7f0b8b7e718b7c255273a97",
+        "decision": "accepted",
+        "note": "The source accurately records the selected Open Track classification, accountable applicant, AI assistance and invitation status. This is a review of that disclosure, not verification of every applicable rule or an issuer approval. The applicant must review the actual invited form and conditions before submission.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Official submission criteria",
+            "url": "",
+            "note": "Checked October 12, 2026; review the full answer, meaningful integration, prospective delivery and T2 response. This AI review is not an issuer decision.\nComplete original source URL: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:24.594Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-phase-specific-provider-scope",
+      "expectedRevision": 20,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "change",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "project"
+        },
+        "bindingSha256": "e44b303d8a500b706f5f81397f76f522ee1527a49b44f479c692f1d58a17c840",
+        "title": "phase specific provider scope",
+        "priority": "major",
+        "quote": "The funded outcome is **two independently operated merchants, two independent buyer operators, and the same useful service operating through two independently operated facilitators**.",
+        "note": "05C7 accepted commissioning contribution e46f86d6. The complete selected replacement is retained in editorial-changes.json; preserve the current source baseline and all unaffected answers.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:27.665Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-native-payment-and-application-identity",
+      "expectedRevision": 21,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "change",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "stellar"
+        },
+        "bindingSha256": "3db71947cb889fc98d764eb19d89ca634323a5333d270cb9395cc280859736a2",
+        "title": "native payment and application identity",
+        "priority": "major",
+        "quote": "Stellar settles the operation the buyer approved. The approval binds the request to its network, asset, recipient and integer atomic amount. The native Stellar SDK and selected payment service verify and settle the authorization; the application connects that outcome to the original source, useful result and merchant fulfillment. Buyers retain signing and aggregate spending authority. Merchants retain control of their resources, terms and order actions.",
+        "note": "05C7 accepted commissioning contribution e46f86d6. The complete selected replacement is retained in editorial-changes.json; preserve the current source baseline and all unaffected answers.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:30.486Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-purchase-task-allowance-and-current-operator-definitions",
+      "expectedRevision": 22,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "change",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "outcomes"
+        },
+        "bindingSha256": "ad1ba6e3bb3da796d847df866530ea287863e3471c737ea2b83d93f535848dfa",
+        "title": "purchase task allowance and current operator definitions",
+        "priority": "major",
+        "quote": "A completed purchase joins a distinct approved intent, an independently observed native transfer and complete useful output. Native transactions are counted once within each network. The cohort counts distinct accountable operator IDs whose reviewed deployment identifies an independent operator or customer, its buyer or merchant role, source basis, required network and operating or handed-over state. An operator’s agents and wallets share that identity; they do not create additional independent buyers. These are source-supported operator declarations, not automatic verification of corporate independence. Team-operated development purchases do not qualify. A returning buyer completes distinct intent groups on at least two UTC days. Reopening an acquired result or resuming its download continues the original purchase. Facilitators are also deduplicated by accountable operator for the same useful operation. [Original cohort operator guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/fcea2b04a19d9c14bbd337124ecdc83f5e36425c/stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md).\n\nCohort reporting includes completed/attempted purchases, complete/started parent datasets or files, returning buyers, accepted handovers and partial, unresolved, canceled and refunded outcomes. Required fulfillment remains separately visible. This makes the funded targets assessable against the whole observation window.",
+        "note": "Explicit merge of 05C7 purchase/task/prepaid definitions with PR383 accountable-operator, team exclusion and UTC-returning definitions. The complete selected replacement is retained in editorial-changes.json; preserve the current source baseline and all unaffected answers.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Original incident and recovery contracts",
+            "url": "",
+            "note": "Full recovery f87f74a3 and incident-source guide55151854; use the original dispatch, delivery, incident revision, complete files and post-backup reconciliation.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:33.347Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-selected-runtime-payment-compatibility",
+      "expectedRevision": 23,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "change",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "architecture"
+        },
+        "bindingSha256": "c95c48ee177142f953a613d6d0cc91db3772989fa18d4ad176ba32e78d3a89f0",
+        "title": "selected runtime payment compatibility",
+        "priority": "major",
+        "quote": "Recovery keeps server confirmation, independently observed transfer, complete output, receiver acknowledgment and fulfillment separately visible.",
+        "note": "Technical review of original buyer04de96e3 and native signer b2a9e316; selected installed compatibility before dispatch. The complete selected replacement is retained in editorial-changes.json; preserve the current source baseline and all unaffected answers.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:36.508Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-complete-deployed-response-acceptance",
+      "expectedRevision": 24,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "change",
+      "input": {
+        "editionId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "target": {
+          "kind": "answer",
+          "id": "outcomes"
+        },
+        "bindingSha256": "ad1ba6e3bb3da796d847df866530ea287863e3471c737ea2b83d93f535848dfa",
+        "title": "complete deployed response acceptance",
+        "priority": "major",
+        "quote": "Acceptance operates two cases against the deployed service: an interrupted settled purchase and a merchant-delivery failure. Their records retain the actual notification and acknowledgment, financial and delivery outcomes, response and recovery times, material remediation or residual findings, and the receiving engineer’s same-case reopening after drain/restart. An uncertain payment is reconciled through its original intent. A coverage gap remains visible until observation resumes.",
+        "note": "Original support-console incident/revision and recovery contracts, within the same T2 response package. The complete selected replacement is retained in editorial-changes.json; preserve the current source baseline and all unaffected answers.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Original incident and recovery contracts",
+            "url": "",
+            "note": "Full recovery f87f74a3 and incident-source guide55151854; use the original dispatch, delivery, incident revision, complete files and post-backup reconciliation.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:01:39.539Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:receive-proposed-draft",
+      "expectedRevision": 25,
+      "actorId": "7108-ai-authoring-assistant",
+      "kind": "receive",
+      "at": "2026-10-12T19:02:31.925Z",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "fromEdition": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "note": "Explicitly receive the five selected AI technical/commissioning edits against the full current PR383 draft. Preserve every source, answer identity, current operator definition and unaffected customer/cash section. This is a proposal for the original author, not a human approval.",
+        "decisions": [
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-application-application",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-project",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-need",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-stellar",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-architecture",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-product",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-delivery",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-outcomes",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-capacity",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-answer-applicant",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-complete",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-need",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-integration",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-readiness",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-budget",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-tranches",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-response",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-value",
+            "choice": "reopen",
+            "note": "The selected answer or linked requirement changed; reopen its prior decision for a fresh review of this exact proposal."
+          },
+          {
+            "decisionId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-requirement-eligibility",
+            "choice": "carry",
+            "note": "Explicitly retain the same complete content and source context with its original AI reviewer identity."
+          }
+        ]
+      }
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:author-response-phase-specific-provider-scope",
+      "expectedRevision": 26,
+      "actorId": "7108-ai-authoring-assistant",
+      "kind": "respond",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-phase-specific-provider-scope",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "response": "addressed",
+        "note": "AI authoring proposal, awaiting original manuscript owner selection. Applied 05C7’s exact accepted phase wording. T2 uses the same useful service through two independently operated testnet facilitators; T3 establishes both merchant installations on mainnet. The two merchants, two buyers, six packages, $38,000/400 hours/150 days and original delivery table remain unchanged.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Complete deployment-acceptance appendix",
+            "url": "",
+            "note": "Full proposed operator guide Git blob5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227;24,169 bytes; all original source and acceptance definitions are retained."
+          }
+        ]
+      },
+      "at": "2026-10-12T19:03:11.690Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:review-resolution-phase-specific-provider-scope",
+      "expectedRevision": 27,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "resolve",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-phase-specific-provider-scope",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "status": "resolved",
+        "note": "The exact full proposed answer was compared with the original source and selected replacement. Applied 05C7’s exact accepted phase wording. T2 uses the same useful service through two independently operated testnet facilitators; T3 establishes both merchant installations on mainnet. The two merchants, two buyers, six packages, $38,000/400 hours/150 days and original delivery table remain unchanged. This resolution concerns this AI technical edit; it does not record a human author’s acceptance or an issuer decision."
+      },
+      "at": "2026-10-12T19:03:13.835Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:author-response-native-payment-and-application-identity",
+      "expectedRevision": 28,
+      "actorId": "7108-ai-authoring-assistant",
+      "kind": "respond",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-native-payment-and-application-identity",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "response": "addressed",
+        "note": "AI authoring proposal, awaiting original manuscript owner selection. Applied the complete accepted native/application distinction. The native Soroban transfer authorization and selected fee policy are described separately from the retained HTTP/MCP operation, body/source identity and selected terms. The original approval and native signer join them; no expanded signer or provider behavior is claimed.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Complete deployment-acceptance appendix",
+            "url": "",
+            "note": "Full proposed operator guide Git blob5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227;24,169 bytes; all original source and acceptance definitions are retained."
+          }
+        ]
+      },
+      "at": "2026-10-12T19:03:17.658Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:review-resolution-native-payment-and-application-identity",
+      "expectedRevision": 29,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "resolve",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-native-payment-and-application-identity",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "status": "resolved",
+        "note": "The exact full proposed answer was compared with the original source and selected replacement. Applied the complete accepted native/application distinction. The native Soroban transfer authorization and selected fee policy are described separately from the retained HTTP/MCP operation, body/source identity and selected terms. The original approval and native signer join them; no expanded signer or provider behavior is claimed. This resolution concerns this AI technical edit; it does not record a human author’s acceptance or an issuer decision."
+      },
+      "at": "2026-10-12T19:03:19.714Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:author-response-purchase-task-allowance-and-current-operator-definitions",
+      "expectedRevision": 30,
+      "actorId": "7108-ai-authoring-assistant",
+      "kind": "respond",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-purchase-task-allowance-and-current-operator-definitions",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "response": "addressed",
+        "note": "AI authoring proposal, awaiting original manuscript owner selection. Explicitly reconciled the accepted 05C7 paid-purchase, parent-task and prepaid-use units with PR383’s newer accountable operator IDs, source-supported independence declarations, team-development exclusion, facilitator deduplication and at-least-two-UTC-days returning rule. Every newer definition and the original cohort guide are preserved.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Complete deployment-acceptance appendix",
+            "url": "",
+            "note": "Full proposed operator guide Git blob5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227;24,169 bytes; all original source and acceptance definitions are retained."
+          }
+        ]
+      },
+      "at": "2026-10-12T19:03:23.419Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:review-resolution-purchase-task-allowance-and-current-operator-definitions",
+      "expectedRevision": 31,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "resolve",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-purchase-task-allowance-and-current-operator-definitions",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "status": "resolved",
+        "note": "The exact full proposed answer was compared with the original source and selected replacement. Explicitly reconciled the accepted 05C7 paid-purchase, parent-task and prepaid-use units with PR383’s newer accountable operator IDs, source-supported independence declarations, team-development exclusion, facilitator deduplication and at-least-two-UTC-days returning rule. Every newer definition and the original cohort guide are preserved. This resolution concerns this AI technical edit; it does not record a human author’s acceptance or an issuer decision."
+      },
+      "at": "2026-10-12T19:03:25.411Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:author-response-selected-runtime-payment-compatibility",
+      "expectedRevision": 32,
+      "actorId": "7108-ai-authoring-assistant",
+      "kind": "respond",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-selected-runtime-payment-compatibility",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "response": "addressed",
+        "note": "AI authoring proposal, awaiting original manuscript owner selection. Added the selected source/runtime, buyer/signer SDK and facilitator/network/asset/authorization/fee profile before dispatch. This reflects the actual original signer’s compatibility checks. Previous purchases remain with their own selected terms, and T2/testnet is distinguished from T3/mainnet receiving.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Complete deployment-acceptance appendix",
+            "url": "",
+            "note": "Full proposed operator guide Git blob5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227;24,169 bytes; all original source and acceptance definitions are retained."
+          }
+        ]
+      },
+      "at": "2026-10-12T19:03:29.249Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:review-resolution-selected-runtime-payment-compatibility",
+      "expectedRevision": 33,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "resolve",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-selected-runtime-payment-compatibility",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "status": "resolved",
+        "note": "The exact full proposed answer was compared with the original source and selected replacement. Added the selected source/runtime, buyer/signer SDK and facilitator/network/asset/authorization/fee profile before dispatch. This reflects the actual original signer’s compatibility checks. Previous purchases remain with their own selected terms, and T2/testnet is distinguished from T3/mainnet receiving. This resolution concerns this AI technical edit; it does not record a human author’s acceptance or an issuer decision."
+      },
+      "at": "2026-10-12T19:03:31.365Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:author-response-complete-deployed-response-acceptance",
+      "expectedRevision": 34,
+      "actorId": "7108-ai-authoring-assistant",
+      "kind": "respond",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-complete-deployed-response-acceptance",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "response": "addressed",
+        "note": "AI authoring proposal, awaiting original manuscript owner selection. Expanded only the two already-funded T2 cases. Acceptance retains the original signed dispatch and independently reconciled transfer, complete selected files/coverage, unchanged purchase on delivery recovery, original incident revision/acknowledgment, actual fulfillment and same-case reopen. Measurements are observed case times, not an invented service-level promise.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          },
+          {
+            "label": "Complete deployment-acceptance appendix",
+            "url": "",
+            "note": "Full proposed operator guide Git blob5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227;24,169 bytes; all original source and acceptance definitions are retained."
+          }
+        ]
+      },
+      "at": "2026-10-12T19:03:35.106Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:review-resolution-complete-deployed-response-acceptance",
+      "expectedRevision": 35,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "resolve",
+      "input": {
+        "changeId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:change-complete-deployed-response-acceptance",
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "status": "resolved",
+        "note": "The exact full proposed answer was compared with the original source and selected replacement. Expanded only the two already-funded T2 cases. Acceptance retains the original signed dispatch and independently reconciled transfer, complete selected files/coverage, unchanged purchase on delivery recovery, original incident revision/acknowledgment, actual fulfillment and same-case reopen. Measurements are observed case times, not an invented service-level promise. This resolution concerns this AI technical edit; it does not record a human author’s acceptance or an issuer decision."
+      },
+      "at": "2026-10-12T19:03:37.392Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-application-application",
+      "expectedRevision": 36,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "application",
+          "id": "application"
+        },
+        "bindingSha256": "5ccacd28cd2e389ac8fa20d2adaa46b74785d43d7ff8ce783c5c0e46d14ce0cd",
+        "decision": "accepted",
+        "note": "The five exact edits are present in the complete proposed native draft. The original nine answer identities, full source, baseline text, saved prior version, all unaffected customer chapters, operator/cash/invitation disclosures and six funded packages remain retained. This is a complete AI technical proposal for the original author. Actual issuer-field mapping, length conventions and human applicant approval remain to be selected.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:28.835Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-answer-project",
+      "expectedRevision": 37,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "answer",
+          "id": "project"
+        },
+        "bindingSha256": "04f08c67c2783c7c85b65e00b5b6411498875e60d4220fd7c4f4066cecd5aa6f",
+        "decision": "accepted",
+        "note": "The selected wording now unambiguously places both independent facilitators in T2 testnet and both merchant installations in T3 mainnet. The funded scope and prospective reusable improvements are unchanged.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:32.962Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-answer-stellar",
+      "expectedRevision": 38,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "answer",
+          "id": "stellar"
+        },
+        "bindingSha256": "b7bcd593fc18e18b4c81a7f9f5a30e1ccf8c883a435ec89ae3f9ff0806328d02",
+        "decision": "accepted",
+        "note": "The full proposed answer now distinguishes native transfer authorization from application request/body/source binding and retains the original selected fee and signer responsibilities. It preserves the Open Track comparison and all existing customer/product text.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:37.273Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-answer-architecture",
+      "expectedRevision": 39,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "answer",
+          "id": "architecture"
+        },
+        "bindingSha256": "95ccb0c5625986df1a0eca2a2896e260db1ef7ebbb5906f6d25cf18ca5def973",
+        "decision": "accepted",
+        "note": "The exact installed source/SDK/provider/network/asset/authorization/fee profile is now part of receiving before dispatch. The original approval, payment, source, result and downstream owners remain separate and every existing customer integration paragraph is retained.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:41.822Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-answer-outcomes",
+      "expectedRevision": 40,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "answer",
+          "id": "outcomes"
+        },
+        "bindingSha256": "ca06aaff17491fad1ae4281df6c95e54bf1231b2e82ae673cac2f12c1ac0fa9d",
+        "decision": "accepted",
+        "note": "Paid intents, complete parent tasks and prepaid usage are separately defined alongside the newer accountable-operator, source-backed independence, team exclusion, facilitator deduplication and UTC-returning rules. Both T2 acceptance cases retain the same original purchase/incident, whole output, actual fulfillment and acknowledgment. No new paid/native acceptance is claimed.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Original incident and recovery contracts",
+            "url": "",
+            "note": "Full recovery f87f74a3 and incident-source guide55151854; use the original dispatch, delivery, incident revision, complete files and post-backup reconciliation.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:46.372Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-requirement-complete",
+      "expectedRevision": 41,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "requirement",
+          "id": "complete"
+        },
+        "bindingSha256": "90db00e6425b83968980354ea364641e2e4ee616df1edc7839270ffc8a4b1d82",
+        "decision": "accepted",
+        "note": "The complete revised nine answers carry the essential distinctions directly. The appendix supplies operational detail without replacing the submitted explanation. The original source and every edit are inspectable in the native draft/review; no issuer prompt, field limit or applicant approval has been invented.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:50.970Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-requirement-integration",
+      "expectedRevision": 42,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "requirement",
+          "id": "integration"
+        },
+        "bindingSha256": "0f3b2a0ed03222699ef83ca6a54de2ee910541840745554778b8286a4f1c7d41",
+        "decision": "accepted",
+        "note": "The proposed wording matches the completely read original buyer and native signer: an approved application request is bound by the integration to the native transfer. The selected SDK/profile and complete useful result are part of technical receiving.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Original buyer and native signer",
+            "url": "",
+            "note": "Buyer Git04de96e3 and native signer b2a9e316 were read completely; exact installed SDK, request/terms and sponsored-fee checks remain authoritative.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:04:55.857Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-requirement-response",
+      "expectedRevision": 43,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "requirement",
+          "id": "response"
+        },
+        "bindingSha256": "2db5a7b1a991ddc6f10154d29e94f925f451a604873bf03cb36b954a71f9763b",
+        "decision": "accepted",
+        "note": "The proposed source defines the two existing T2 cases through original financial state, incident/revision/notification ownership, full output/fulfillment, acknowledgment, measured clocks and same-case reopen. It preserves the 50-hour/$4,750 package and original recovery APIs.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Original incident and recovery contracts",
+            "url": "",
+            "note": "Full recovery f87f74a3 and incident-source guide55151854; use the original dispatch, delivery, incident revision, complete files and post-backup reconciliation.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:05:01.237Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-requirement-value",
+      "expectedRevision": 44,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "requirement",
+          "id": "value"
+        },
+        "bindingSha256": "57ad18786cde1fb75453c9db71d301e187629a2ad7755a1408afeda61c5a9319",
+        "decision": "accepted",
+        "note": "The reviewed full proposal retains the current Open Track comparison and useful source-to-result/customer receiving contribution. Payment primitives are attributed to their original SDKs and services. Proposed funded independent operation remains distinct from existing team development.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:05:06.508Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:final-requirement-tranches",
+      "expectedRevision": 45,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "review",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "target": {
+          "kind": "requirement",
+          "id": "tranches"
+        },
+        "bindingSha256": "e219fa254ed35bad8400adddbe2acc09ad6b09f7b86ce17dda0a536e452d4ad7",
+        "decision": "accepted",
+        "note": "The original delivery target is unchanged and the project answer now states the intended phase scope explicitly. T2 covers two independently operated testnet facilitators; T3 covers both mainnet installations. The exact six priced deliverables and 10/30 windows remain intact.",
+        "references": [
+          {
+            "label": "Complete current PR383 application",
+            "url": "",
+            "note": "All 39,167 source bytes are retained inside the original native draft; current operator, customer and cash definitions are preserved.\nComplete original source URL: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32fe7d732741ba10900c28800e4efb6b8944192d/stellar-forge/developer-site/dist/grant-data/application.md"
+          },
+          {
+            "label": "Accepted commissioning definitions",
+            "url": "",
+            "note": "Complete 05C7 source contribution; the counting paragraph requires explicit reconciliation with the later PR383 operator definitions.\nComplete original source URL: https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+          }
+        ]
+      },
+      "at": "2026-10-12T19:05:11.810Z"
+    },
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:technical-review-complete",
+      "expectedRevision": 46,
+      "actorId": "7108-ai-technical-reviewer",
+      "kind": "finish",
+      "input": {
+        "editionId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "outcome": "ready-for-author-check",
+        "note": "The exact complete technical/commissioning proposal is ready for the original manuscript owner’s selection and human applicant check. This named AI editorial review preserves every original source, comparison and author response. It is not a human reviewer authentication, customer/mainnet completion, invited form mapping, financing commitment, application submission or issuer decision. Keep current PR383 customer/cash/invitation limits and coordinate later 1B40/81CF edits through this same original review."
+      },
+      "at": "2026-10-12T19:05:17.155Z"
+    }
+  ],
+  "reopenRequest": {
+    "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:author-handover-reopen",
+    "expectedRevision": 47,
+    "actorId": "7108-ai-authoring-assistant",
+    "kind": "reopen",
+    "input": {
+      "note": "Explicitly reopen this independently received original review for the manuscript owner’s author selection, current issuer-field mapping and subsequent human check. Preserve all 47 original actions, both complete draft exports and every earlier source/decision. This is an AI-assisted handover state, not an approval or a separate customer operation."
+    },
+    "at": "2026-10-12T19:06:01.106Z"
+  },
+  "initialCaptureId": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+  "incomingCaptures": [
+    {
+      "requestId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:receive-proposed-draft",
+      "captureId": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee"
+    }
+  ],
+  "referenceEncoding": {
+    "mode": "native-observation-with-complete-source-url",
+    "reason": "The V8 host has no WHATWG URL global. The original supported evidence format allows an empty URL with a complete retained observation; source URLs remain unchanged in each note. No native validator was modified.",
+    "firstAttempt": {
+      "kind": "review",
+      "result": "REJECTED_BEFORE_REVIEW_APPEND",
+      "message": "Use a complete HTTPS reference URL, or leave it empty and retain the observation."
+    }
+  }
+}

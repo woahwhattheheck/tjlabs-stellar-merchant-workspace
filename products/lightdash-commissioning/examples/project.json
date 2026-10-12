@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.lightdash-project-request.v1",
+  "directory": "/home/operator/lightdash-project",
+  "runtimeDirectory": "/home/operator/lightdash-runtime",
+  "title": "Lightdash commissioning",
+  "inputs": {
+    "full_jaffle": {
+      "label": "Complete original full Jaffle source",
+      "directory": "/home/operator/full-jaffle-shop-demo",
+      "manifestFile": "/home/operator/full-jaffle-source-manifest.json",
+      "manifestSha256": "REPLACE_WITH_ACTUAL_COMPLETE_MANIFEST_SHA256"
+    }
+  },
+  "connections": {
+    "disposable": {
+      "label": "Original disposable Lightdash estate",
+      "file": "/home/operator/private/lightdash-configuration.json",
+      "sha256": "REPLACE_WITH_ACTUAL_PRIVATE_CONFIGURATION_SHA256"
+    }
+  },
+  "allowOperatorPrivate": false,
+  "python": "/usr/bin/python3"
+}

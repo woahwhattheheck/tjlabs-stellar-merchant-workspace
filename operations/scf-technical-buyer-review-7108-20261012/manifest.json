@@ -1,0 +1,280 @@
+{
+  "schema": "commons.complete-source-manifest.v1",
+  "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "firstCompleteReviewCommit": "730bb282b2e7b9af3695da72c63e3b178bb27b26",
+  "sourceEdition": "32fe7d732741ba10900c28800e4efb6b8944192d",
+  "files": [
+    {
+      "path": "products/merchant-workspace/DEPLOYMENT_ACCEPTANCE.md",
+      "bytes": 24169,
+      "sha256": "98414f5837341bfa27c2426ce022a6010c9915700d6366d9f4433ae60165dc73",
+      "gitBlob": "5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/README.md",
+      "bytes": 8530,
+      "sha256": "26840d2973c2497d3aacc5ecc7ed83a1324d34194ff669a62c576145a7a8d7ab",
+      "gitBlob": "f9261153d2b0162f1ca8a5b662fe0b564ed5969e"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/result.json",
+      "bytes": 8639,
+      "sha256": "e510210ee11728638f8a1d43005a2038ebb6b735e5a81f161043c5a3064ee75a",
+      "gitBlob": "2faa6273c5a278af9c0ecd18e95b8db16e902038"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/editorial-changes.json",
+      "bytes": 15047,
+      "sha256": "0f02f2b904e1ab272ad41756e7b8b9f5f9660252ac7092a34c3e92c055bd6094",
+      "gitBlob": "bd16c1e9283ebd0cfb247959c8e9ac3574cd137e"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/evidence-selection.json",
+      "bytes": 6315,
+      "sha256": "63f8dc3b01727e272ef381e67e8c2f0868eb2ccb91dc6858e6f6cad0a46f19dd",
+      "gitBlob": "95350b28eb7656257270217045ac2adb7621e046"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/companion-preservation.json",
+      "bytes": 2491,
+      "sha256": "6d2c1a9ea8e728bd1eff33ee60e06b137f09f1639aa595fb2037301c4cdd6c98",
+      "gitBlob": "64e465e766d403720f676938f68301cb43508088"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/originals/application.md",
+      "bytes": 39167,
+      "sha256": "0072100fe6edf1ea1b5e5cca74efc20423b24792eca5ab194327eb736a62616c",
+      "gitBlob": "cd05c693938a0adcbfa1358a12bcddf061d6eaed"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/originals/product-and-finance.md",
+      "bytes": 184552,
+      "sha256": "2f8f9fe20f7b98093c3dfc046d3400854ac298686b9ce46fecb3b3385ca86e1b",
+      "gitBlob": "d242a2f652d434daec1838421fddec80fdb68928"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/originals/source-index.json",
+      "bytes": 51585,
+      "sha256": "23ced942643dd62f5d40a7a211f2efc37c7cf0be79f042b36b0231db78055a09",
+      "gitBlob": "842aaf923124226fb4b697e82e7f5dcbea39cffb"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/originals/commissioning-contribution.json",
+      "bytes": 20447,
+      "sha256": "83790f384867ec082e4b1ed2d4f10dae2e975c6e743b149174494f54cecdaeea",
+      "gitBlob": "e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/originals/submission-draft.json",
+      "bytes": 119992,
+      "sha256": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+      "gitBlob": "afc3d597ad60643ad8db5d8d86133d7ddf267b36"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/proposed/application.md",
+      "bytes": 43226,
+      "sha256": "a5cfd17771f86e270834f0fc1b3d0794871941d0a2d94e1643edc4351f07a1c3",
+      "gitBlob": "3a0e3f6f0df78dee42be6b78197f442f15fc37e3"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/proposed/product-and-finance.md",
+      "bytes": 210340,
+      "sha256": "a0e141c349c04265babf5a1cf367cd6cafa1040f5d4d9fe4e543962ad7286994",
+      "gitBlob": "6feeb260e1a1fceacc9946aa4e0c3c286e502ae2"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/proposed/submission-draft.json",
+      "bytes": 204893,
+      "sha256": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+      "gitBlob": "6a8a5ac61825cf518f02ef33c8584d7b8fdf15fe"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/review/original-review.json",
+      "bytes": 166185,
+      "sha256": "c98740a9b26cbb0ff3f878733924a2b0037db0804cc002646fa47bd84fb7c88b",
+      "gitBlob": "1bec8cd2d33c4203f1d08109791135f754f08bcd"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/review/complete-review.json",
+      "bytes": 412862,
+      "sha256": "63e0a76a0f9fe9a812de45628de421cae2bc96628eb179b40f89eca1e488491e",
+      "gitBlob": "72b2e34d780cdb2423de19cd146928a03477ba8d"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/review/reopened-review.json",
+      "bytes": 413590,
+      "sha256": "7ea8ab1ce071307693362a269708cd475298e737a7466825f81f22a7b8845664",
+      "gitBlob": "b8a82fb1af55d1e30d9d5bb209906974a64748a1"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/review/report.md",
+      "bytes": 89432,
+      "sha256": "47813706b554def8306a92f565ba58b385cdd1089ceec8c4b8544034da758967",
+      "gitBlob": "0d406fdf89a35a7308e23d1b266d218cee7b6e99"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/review/independent-receiving.json",
+      "bytes": 2103,
+      "sha256": "cba0f0d0875c6521903ad8a0b2323b227b18d87b9a19d227b97d70bd693ae4e4",
+      "gitBlob": "66a1cc86f5e8bc52179648cac9101340137558e1"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/review/actions.json",
+      "bytes": 91915,
+      "sha256": "afdbc8fc9fd8bbd75e4205ad5ff5f039a2b62d4d194b4ba1cf14c86ec325b9e2",
+      "gitBlob": "a4f88377139c2373a923c9ffadd379eb7c1cebe7"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/grant-submission-core.mjs",
+      "bytes": 18198,
+      "sha256": "5904a1606ba17bd51d73955d35c5465cc16b5864e5f365277699097044d7aebb",
+      "gitBlob": "947ea682c202476b2b0af372dd32ee2b8366cefa"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/grant-review-round-core.mjs",
+      "bytes": 32142,
+      "sha256": "2c74fa4564842158b562663e28d8a1e630e9520ee4c5e01dc75eeb72f94d0618",
+      "gitBlob": "0787c166af3365166bec2d4475d662180e109811"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/grant-handover-core.mjs",
+      "bytes": 17379,
+      "sha256": "d4c2e8092323fa0c76cbd8c135f487a4d35add34f41ad4de3e5f9037e428b25f",
+      "gitBlob": "6abf2165d5accc8b17b9896de947a7e6dfe937dc"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/grant-plan-core.mjs",
+      "bytes": 15697,
+      "sha256": "e66c1f7e198b31a8ec285d65cba140960106db18387df31d92e600c8281fbf92",
+      "gitBlob": "1f56a696e9f811f516873b3e6f5e09f6659be921"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composed/grant.html",
+      "bytes": 73723,
+      "sha256": "0a719ace98b711d39d487099f2619d57fd33af5593f7042d720fe9b016e354a4",
+      "gitBlob": "86176a50066acf211f9c762fb291311e8149b10a"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composed/grant-data/application.md",
+      "bytes": 43226,
+      "sha256": "a5cfd17771f86e270834f0fc1b3d0794871941d0a2d94e1643edc4351f07a1c3",
+      "gitBlob": "3a0e3f6f0df78dee42be6b78197f442f15fc37e3"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composed/grant-data/product-and-finance.md",
+      "bytes": 210340,
+      "sha256": "a0e141c349c04265babf5a1cf367cd6cafa1040f5d4d9fe4e543962ad7286994",
+      "gitBlob": "6feeb260e1a1fceacc9946aa4e0c3c286e502ae2"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composed/grant-data/source-index.json",
+      "bytes": 53006,
+      "sha256": "8be92d857f9d342a63b3da00a5511c2214fa0b1e9ef4ad764f8e0b763e91951c",
+      "gitBlob": "1fc2f59d36d391af86f57d1baf8e84d506bf1cca"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composed/source-pins.json",
+      "bytes": 303,
+      "sha256": "a37d5c9749da2ade78ab8b586c5aca4a5555071f4b829222a913fb39698d9c55",
+      "gitBlob": "37309aaba44538deaa0adad44e34c1a27abc15e3"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-compose.mjs",
+      "bytes": 20929,
+      "sha256": "4475aafed2adc6e08b1bf43348e432158f787e56e5a39a6546a6f0aa6b0c9a5f",
+      "gitBlob": "cc434af648563d5379fb6bd6a7ec6424d0347b93"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-customers.mjs",
+      "bytes": 14325,
+      "sha256": "8ba1546ca931a63fd26a1df2d3759bbb6c98059745b1d822e6a3cfb67d4d7e64",
+      "gitBlob": "c6951c38354a0235c5599a04e2271f6c5f4b07e4"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-submission.mjs",
+      "bytes": 3377,
+      "sha256": "4f8d65ccdd9df02a41d8a1cbf5059f16c9cb204a378de437aa4e839802b4678e",
+      "gitBlob": "6eabc9572685127f933e991ed526c90c1dc2bd44"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-review-round.mjs",
+      "bytes": 3306,
+      "sha256": "2d4f66add9a9f522870c5e01d062a8acdb29d2e2ce1e540d7c0f514935dfbc6b",
+      "gitBlob": "d03efb131fa4a903bb71dc8ca52ae2ba693befc9"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-handover.mjs",
+      "bytes": 2422,
+      "sha256": "1f32efd9f39268b05663cc59cbc216979b2790156247d32d554a53e3808fc071",
+      "gitBlob": "373beb1bba880102055ff86baccd1ae492fd6312"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-entry.mjs",
+      "bytes": 15699,
+      "sha256": "9a783ec15ce444421a08e362524ba4860f48d8c733cbee8b82f56cda2008fa57",
+      "gitBlob": "d5411c165e201d7a8f1542ae9f1eb308f9cfa54c"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-financial-operations.mjs",
+      "bytes": 7930,
+      "sha256": "595dead5e4b579a7cfe4a35ace1b4ab6e6f5e73b6e8fd22f2431b2650bb6c792",
+      "gitBlob": "d3d777efd49cf19bb6bfcf0f7c2061c638845575"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/source-native/composer/grant-datasette.mjs",
+      "bytes": 10313,
+      "sha256": "55ef2c5b8817ca45d20f876d8046fc7edc4e33b3d2f97c0a369c27c711d9dbb8",
+      "gitBlob": "5f1711069b99f93a111e6a70d73055990665b17f"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/originals/grant.html",
+      "bytes": 69240,
+      "sha256": "27dbcb8fed069f9a3a8bc2a315ae4d9022c36ccff4801d83ae7df1267f064b86",
+      "gitBlob": "4582f7dcc8b8384dc5f4b6536c7268628d0b3e84"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composition/input-selection.json",
+      "bytes": 5585,
+      "sha256": "4e3720da0e299dbdae0fbbf7eac0401606d48e139b9827c529eca1cbac1c24e6",
+      "gitBlob": "392c0dedaaffc7bcf78739ee4ef1fb193c0bc86f"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/composition/result.json",
+      "bytes": 21052,
+      "sha256": "b3659de6d6e0afc31818be87fba66e1e22665041e53895dbc3a1479e5d0941b2",
+      "gitBlob": "613d20dc9d736f552ca8ac5e5935791c333c7cab"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/following-author/current-author-complete-source.json",
+      "bytes": 206417,
+      "sha256": "0401020280a286a31daa499d4e380493c4f418a3392ded88b39e215c150c5f17",
+      "gitBlob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/following-author/selection.json",
+      "bytes": 1621,
+      "sha256": "b4180e9cf0e82a31701532afa8f1ad566f8bcf96b54de797df62b22b310b11c0",
+      "gitBlob": "f08f6242e6ca8c74054bc7ab509ee4bf94d85b09"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/COMPLETE.md",
+      "bytes": 12574,
+      "sha256": "4211cae1f68093b53240ee3cd445bd3d59ea470cc5dc2b4092c7f44e8aa2b727",
+      "gitBlob": "fbcad4c65699b6c90afa46522ba69afdad72de03"
+    },
+    {
+      "path": "operations/scf-technical-buyer-review-7108-20261012/LICENSE",
+      "bytes": 1091,
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8",
+      "gitBlob": "2d2a35a69e3896b7c6b885c1faebae2f2f8bc9c1"
+    }
+  ],
+  "totalFiles": 44,
+  "totalFileBytes": 2975375,
+  "containerFilesExcluded": [
+    "operations/scf-technical-buyer-review-7108-20261012/manifest.json",
+    "operations/scf-technical-buyer-review-7108-20261012/complete-source.json"
+  ],
+  "scope": "Complete original-source technical review and proposed reader; author selection and existing Page publication remain separately observed."
+}

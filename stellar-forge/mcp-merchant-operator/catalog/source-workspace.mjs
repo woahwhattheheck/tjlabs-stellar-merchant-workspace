@@ -1,5 +1,6 @@
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
+import { iatiAmpTools } from './source-iati-amp.mjs';
 import { iatiOrganisationTools } from './source-iati-organisation.mjs';
 
 const SHA = /^[0-9a-f]{64}$/;
@@ -90,6 +91,7 @@ function sourceWorkspaceTools(tool) {
     tool('merchant_source_iati_refresh_resume', 'Continue the exact saved native portfolio request, or return its retained completed/abandoned outcome, without changing source, selection or operation identity.', { ...selection, requestId:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$'} }, ['workspace','requestId'], {idempotent:true}),
     tool('merchant_source_iati_refresh_export', 'Retain the entire refresh journal, every original publisher XML, complete original portfolio/native packets, readable reports and guide. expectedSnapshot selects the WHOLE journal from refresh_status. Read via merchant_source_file_read or receive via merchant_source_import.', { ...selection, plan:digest, expectedSnapshot:digest }, ['workspace','plan'], {}),
     ...iatiOrganisationTools(tool, { selection, digest, page, read }),
+    ...iatiAmpTools(tool, { selection, digest, page, read }),
 
     tool('merchant_source_iati_results_inventory', 'Page original results projects, source projections or receiving receipts. Preserve the returned snapshot when paging; no publisher request or native financial operation is started.', { ...selection, kind: { type:'string', enum:['projects','projections','receipts'] }, ...page }, ['workspace','kind'], read),
     tool('merchant_source_iati_results_source', 'Inspect one complete retained publisher XML with the original IATI reader and retain its exact result/indicator/period projection. A source with no result elements remains a genuine empty-coverage source.', { ...selection, source:digest }, ['workspace','source'], {idempotent:true}),

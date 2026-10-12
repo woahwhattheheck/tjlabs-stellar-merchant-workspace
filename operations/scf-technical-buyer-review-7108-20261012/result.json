@@ -1,0 +1,209 @@
+{
+  "schema": "commons.scf-technical-buyer-review-result.v1",
+  "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "state": "COMPLETE",
+  "startedAt": "2026-10-12T18:53:45.030Z",
+  "completedAt": "2026-10-12T19:05:20.203Z",
+  "receivingCompletedAt": "2026-10-12T19:06:04.149Z",
+  "execution": "Unmodified original draft/review source functions in an independently initialized V8 module set; UTF-8 SHA-256 and Git SHA-1 verified. No filesystem, browser, issuer or payment operation.",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "32fe7d732741ba10900c28800e4efb6b8944192d",
+    "application": {
+      "bytes": 39167,
+      "sha256": "0072100fe6edf1ea1b5e5cca74efc20423b24792eca5ab194327eb736a62616c",
+      "gitBlob": "cd05c693938a0adcbfa1358a12bcddf061d6eaed"
+    },
+    "companion": {
+      "bytes": 184552,
+      "sha256": "2f8f9fe20f7b98093c3dfc046d3400854ac298686b9ce46fecb3b3385ca86e1b",
+      "gitBlob": "d242a2f652d434daec1838421fddec80fdb68928"
+    },
+    "index": {
+      "bytes": 51585,
+      "sha256": "23ced942643dd62f5d40a7a211f2efc37c7cf0be79f042b36b0231db78055a09",
+      "gitBlob": "842aaf923124226fb4b697e82e7f5dcbea39cffb"
+    }
+  },
+  "originalDraftId": "scf-technical-buyer-draft-7108-20261012",
+  "reviewRoundId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "originalActions": 47,
+  "reopenedActions": 48,
+  "reviewTargets": 19,
+  "requestedChanges": 5,
+  "resolvedChanges": 5,
+  "currentCarriedDecisions": 9,
+  "carrySelection": {
+    "choices": 19,
+    "carriedOnReceiving": 10,
+    "reopenedOnReceiving": 9,
+    "laterTrancheDecision": "The carried changes-requested tranche decision was explicitly renewed after the project clarification; nine unchanged decisions remain visibly carried."
+  },
+  "draftEditions": [
+    {
+      "role": "original",
+      "id": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+      "draftSha256": "b0d2a2e4cc9db29f062cd0cdc96752138e8f3d55b06d210b158f50938bd699c5",
+      "bytes": 119992
+    },
+    {
+      "role": "proposed",
+      "id": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+      "draftSha256": "ed7fc11f6561c1eab3ea5db5adef0e9de0ce02803a591a8dbb877c78e703871a",
+      "bytes": 204893
+    }
+  ],
+  "proposedApplication": {
+    "bytes": 43226,
+    "sha256": "a5cfd17771f86e270834f0fc1b3d0794871941d0a2d94e1643edc4351f07a1c3",
+    "gitBlob": "3a0e3f6f0df78dee42be6b78197f442f15fc37e3"
+  },
+  "proposedCompanion": {
+    "bytes": 210340,
+    "sha256": "a0e141c349c04265babf5a1cf367cd6cafa1040f5d4d9fe4e543962ad7286994",
+    "gitBlob": "6feeb260e1a1fceacc9946aa4e0c3c286e502ae2"
+  },
+  "appendix": {
+    "bytes": 24169,
+    "sha256": "98414f5837341bfa27c2426ce022a6010c9915700d6366d9f4433ae60165dc73",
+    "gitBlob": "5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227"
+  },
+  "counts": {
+    "originalApplicationWords": 4923,
+    "proposedApplicationWords": 5492,
+    "appendixWords": 3142,
+    "wordMethod": "whitespace count from the original native measureText; no issuer word limit has been observed"
+  },
+  "originalSourceVersions": 1,
+  "retainedOriginalDraftVersions": 1,
+  "issuerFields": 0,
+  "editorialOutcome": "ready-for-author-check",
+  "receiving": {
+    "schema": "stellar-forge.grant-technical-review-receiving.v1",
+    "state": "COMPLETE",
+    "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+    "execution": "Unmodified original draft/review source functions in an independently initialized V8 module set; UTF-8 SHA-256 and Git SHA-1 verified. No filesystem, browser, issuer or payment operation.",
+    "receivedAt": "2026-10-12T19:06:04.149Z",
+    "originalReview": {
+      "bytes": 412862,
+      "sha256": "63e0a76a0f9fe9a812de45628de421cae2bc96628eb179b40f89eca1e488491e",
+      "gitBlob": "72b2e34d780cdb2423de19cd146928a03477ba8d"
+    },
+    "receivedReview": {
+      "bytes": 412862,
+      "sha256": "63e0a76a0f9fe9a812de45628de421cae2bc96628eb179b40f89eca1e488491e",
+      "gitBlob": "72b2e34d780cdb2423de19cd146928a03477ba8d"
+    },
+    "byteIdentical": true,
+    "originalReviewState": "COMPLETE",
+    "originalActions": 47,
+    "originalRequestReplayed": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012:initial-application-application",
+    "replayPreservedLaterActions": true,
+    "proposedDraft": {
+      "bytes": 204893,
+      "sha256": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+      "gitBlob": "6a8a5ac61825cf518f02ef33c8584d7b8fdf15fe"
+    },
+    "reopenedReview": {
+      "bytes": 413590,
+      "sha256": "7ea8ab1ce071307693362a269708cd475298e737a7466825f81f22a7b8845664",
+      "gitBlob": "b8a82fb1af55d1e30d9d5bb209906974a64748a1"
+    },
+    "reopenedState": "OPEN",
+    "reopenedActions": 48,
+    "retainedEditions": [
+      {
+        "id": "65627c94f689e854a76764f65f334c8dda4235dd2446ece751dfa77f87fdf10e",
+        "draftSha256": "b0d2a2e4cc9db29f062cd0cdc96752138e8f3d55b06d210b158f50938bd699c5",
+        "bytes": 119992
+      },
+      {
+        "id": "5f5e4948b8178f3d9d9b30d361607e025d52ed3a657e4a2dba057abe6c0b39ee",
+        "draftSha256": "ed7fc11f6561c1eab3ea5db5adef0e9de0ce02803a591a8dbb877c78e703871a",
+        "bytes": 204893
+      }
+    ],
+    "sourceGitBlob": "cd05c693938a0adcbfa1358a12bcddf061d6eaed",
+    "sourceSha256": "0072100fe6edf1ea1b5e5cca74efc20423b24792eca5ab194327eb736a62616c",
+    "originalSourceVersions": 1,
+    "originalDraftVersions": 1,
+    "issuerFields": 0
+  },
+  "preserved": {
+    "hours": 400,
+    "budgetUsd": 38000,
+    "durationDays": 150,
+    "sixPackages": true,
+    "sourceBackedOperatorDeclarations": true,
+    "agentWalletDeduplication": true,
+    "teamDevelopmentExclusion": true,
+    "returningBuyerUtcDays": 2,
+    "facilitatorOperatorDeduplication": true,
+    "developmentPurchases": 18,
+    "developmentStroops": 411000,
+    "openingCashUnentered": true,
+    "cashBridgeUncommitted": true,
+    "invitationAwaited": true
+  },
+  "independentSourceReview": {
+    "reviewer": "actions_zero",
+    "state": "ACCEPTED",
+    "appendixGitBlob": "5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227",
+    "editsGitBlob": "bd16c1e9283ebd0cfb247959c8e9ac3574cd137e",
+    "scope": "Full appendix, all five answer edits and companion replacement, full PR383 application/companion, original buyer/signer, accepted 05C7 source, current official authorization/monitoring/rules."
+  },
+  "pendingHumanAndOperatingWork": [
+    "Original manuscript owner selection and concurrent author rewrite",
+    "Current issuer form labels, prompts, limits and applicant review",
+    "Original equipped Page receiving/publication owned by 018A/8910",
+    "Customer commissioning, independent funded cohorts and mainnet acceptance under their original operations"
+  ],
+  "referenceEncoding": {
+    "mode": "native-observation-with-complete-source-url",
+    "reason": "The V8 host has no WHATWG URL global. The original supported evidence format allows an empty URL with a complete retained observation; source URLs remain unchanged in each note. No native validator was modified.",
+    "firstAttempt": {
+      "kind": "review",
+      "result": "REJECTED_BEFORE_REVIEW_APPEND",
+      "message": "Use a complete HTTPS reference URL, or leave it empty and retain the observation."
+    }
+  },
+  "composition": {
+    "state": "COMPLETE",
+    "result": "composition/result.json",
+    "input": "composition/input-selection.json",
+    "files": [
+      {
+        "path": "grant.html",
+        "bytes": 73723,
+        "sha256": "0a719ace98b711d39d487099f2619d57fd33af5593f7042d720fe9b016e354a4",
+        "gitBlob": "86176a50066acf211f9c762fb291311e8149b10a"
+      },
+      {
+        "path": "grant-data/application.md",
+        "bytes": 43226,
+        "sha256": "a5cfd17771f86e270834f0fc1b3d0794871941d0a2d94e1643edc4351f07a1c3",
+        "gitBlob": "3a0e3f6f0df78dee42be6b78197f442f15fc37e3"
+      },
+      {
+        "path": "grant-data/product-and-finance.md",
+        "bytes": 210340,
+        "sha256": "a0e141c349c04265babf5a1cf367cd6cafa1040f5d4d9fe4e543962ad7286994",
+        "gitBlob": "6feeb260e1a1fceacc9946aa4e0c3c286e502ae2"
+      },
+      {
+        "path": "grant-data/source-index.json",
+        "bytes": 53006,
+        "sha256": "8be92d857f9d342a63b3da00a5511c2214fa0b1e9ef4ad764f8e0b763e91951c",
+        "gitBlob": "1fc2f59d36d391af86f57d1baf8e84d506bf1cca"
+      }
+    ],
+    "preservedSourceRecords": 49,
+    "preservedOriginalCompanionSections": 30,
+    "completeCompanionSections": 31
+  },
+  "followingAuthor": {
+    "state": "AWAITING_RECONCILED_CURRENT_DRAFT",
+    "selection": "following-author/selection.json",
+    "completeCarrierGitBlob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2"
+  }
+}

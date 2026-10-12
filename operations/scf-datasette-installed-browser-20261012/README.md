@@ -6,12 +6,12 @@ The caller supplies the exact retained publisher programme directory and the ful
 
 ## Run
 
-Select Node 24 and the existing Playwright installation on the accepting host. Supply its module path when it is outside normal Node resolution. Retain an explicit source port and a distinct receiving port; browser recovery depends on reopening the same origin.
+Select Node 24 and the existing Playwright installation on the accepting host. Supply its module path when it is outside normal Node resolution. Retain an explicit source port and a distinct receiving port; browser recovery depends on reopening the same origin. The caller accepts both named chromium exports and the default.chromium export exposed by an existing CommonJS Playwright entry; it uses that same installed browser implementation.
 
 ```json
 {
   "repository": "/absolute/public-commons-sprint-2026",
-  "sourceRef": "04e77d53a1a56fe45d74022ab2cd9f54acb0349a",
+  "sourceRef": "e22cb42649f327ddf887fabc9abad227e3441da9",
   "publisherProgrammeDirectory": "/absolute/original-publisher-programme",
   "outputDirectory": "/absolute/installed-datasette-continuation",
   "playwrightModule": "/absolute/node_modules/playwright/index.mjs",
@@ -23,13 +23,17 @@ Select Node 24 and the existing Playwright installation on the accepting host. S
 }
 ```
 
-Use the final merged sourceRef selected by the original owner. An existing populated npm cache may be supplied as npmCache; offline selects the maintained installer's offline dependency path. browserExecutable can select the host's installed Chromium executable.
+The explicit sourceRef above is the immutable public source containing the complete Datasette selection, final browser recovery and customer Analysis SQL and query-job support. For a canonical repository that has its own commit history, omit sourceRef to resolve that checkout's HEAD to a complete commit SHA on the first invocation. The journey saves that resolved SHA with its original input before building. A rerun without sourceRef reuses the saved SHA even when repository HEAD has advanced; it never selects a new source implicitly. An explicitly supplied sourceRef must match the retained source on a rerun.
+
+An existing populated npm cache may be supplied as npmCache; offline selects the maintained installer's offline dependency path. browserExecutable can select the host's installed Chromium executable.
 
 ```sh
 node operations/scf-datasette-installed-browser-20261012/run-installed.mjs --input /absolute/installed-browser-input.json
 ```
 
 The builder uses the pinned Git source with offline object reads. It creates a resumable complete Datasette product archive, then the original installer prepares and verifies that selected runtime. The full checkout must retain the source objects for that commit.
+
+The journey records each runtime preparation target before invoking the maintained installer. If a preparation is interrupted before its complete plan and state are present, the next invocation preserves that directory and calls recoverRuntime into a retained recovery target. A partial dependency installation resumes in its same prepared directory. Managed application reconnection uses applicationsConnect on the saved binding; pending and interrupted launches use applicationsRecover on the original run identity.
 
 ## Whole workflow
 
@@ -43,6 +47,6 @@ A second actual response interruption exercises the original source-selection re
 
 The browser exports and downloads a complete source package and a complete source/publisher workspace ZIP, verifies the downloaded hashes, receives the ZIP into its own private directory and reopens that directory as a managed installed application. The installed Datasette command reads the same received workspace through its connection file. A mobile viewport opens the received edition, checks layout containment and retains a full screenshot.
 
-The journey retains application reviews, start identities, stop outcomes, original upload/selection responses and downloaded archives in installed-browser-journey.json. Its normal completed result lists the product archive, source archive, workspace ZIP and desktop/mobile images. Continuing the same output directory retains the same source, publisher and receiving identities.
+The journey retains application reviews, start identities, stop outcomes, original upload/selection responses and downloaded archives in installed-browser-journey.json. Browser execution attempts retain their start time and error-history offset; a completed recovery checks its own error segment while preserving all earlier page errors. Its normal completed result lists the product archive, source archive, workspace ZIP and desktop/mobile images. Continuing the same output directory retains the same source, publisher and receiving identities.
 
 The separate customer Analysis programme continues its own analytical directory, saved queries, reports and workbook through its original receiver.
