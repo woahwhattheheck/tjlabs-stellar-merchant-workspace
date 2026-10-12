@@ -151,17 +151,24 @@ the parsed original body and does not preserve its raw wire whitespace.
 
 Only explicitly listed ordinary `requestHeaders` are forwarded. Buyer
 Authorization, Cookie, API-key, payment, routing, forwarding and hop-by-hop
-headers cannot be selected. Backend credentials come only from `headerEnv`:
+headers cannot be selected. Header credentials come from `headerEnv`:
 its values are environment variable **names**, never embedded secret values.
 Each referenced variable must contain the full header value expected by the
 backend, such as a Bearer authorization value. Inject it through the deployment
 secret mechanism before launch; do not commit it or paste it into Slack.
 
+For APIs that require a private URL query key, use `queryEnv`, such as
+`{"api_token":"MARKETAUX_API_TOKEN"}`. Its names are excluded from public inputs,
+resolved within an admitted backend attempt, and protected in returned provider
+text, JSON and streams. The merchant workspace supports the corresponding
+OpenAPI query API-key scheme and exports these same references. See the
+[complete query credential workflow](UPSTREAM_QUERY_CREDENTIALS.md).
+
 This launcher snapshots environment credentials at startup. Restart it after
 rotation. The shared handler's separate programmatic API also supports a
-synchronous server-owned header factory for integrations needing live rotation.
-Compiled binding objects contain credential values and must not be serialized
-or logged. The launcher prints counts and its local service URLs only.
+server-owned header and query credential factories for integrations needing live rotation.
+Compiled header bindings can contain credential values and must not be serialized
+or logged. Query credential bindings retain references only. The launcher prints counts and its local service URLs only.
 
 ## Run the existing API with live operations
 
@@ -305,7 +312,7 @@ flow remain the merchant onboarding exercise, not a new test framework.
 
 ## Opening an unpaid offer before installing provider credentials
 
-The original `upstream-serve.mjs` launcher can start in `CHALLENGE_ONLY` mode with valid `headerEnv` and OAuth environment references whose values are not installed yet. The full origins, paths, methods, header names, variable names, OAuth declaration, request limits and merchant routes are still validated. No substitute credential is generated, and no environment value is added to the exported package.
+The original `upstream-serve.mjs` launcher can start in `CHALLENGE_ONLY` mode with valid `headerEnv`, `queryEnv` and OAuth environment references whose values are not installed yet. The full origins, paths, methods, header names, variable names, OAuth declaration, request limits and merchant routes are still validated. No substitute credential is generated, and no environment value is added to the exported package.
 
 The native launcher enables `deferCredentials` only when it has no facilitator and is not running `--check`. Paid launches and `--check` keep their existing eager credential validation. Install the real provider credentials and restart with the reviewed facilitator configuration before serving paid work. The launcher retains one private environment snapshot for that lifetime.
 

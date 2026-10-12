@@ -1305,6 +1305,87 @@ export interface GrantPlanComparison {
   snapshots: Record<'before' | 'after', GrantObject & { scenario: GrantObject; planning: GrantObject; report: GrantObject }>;
 }
 
+export type GrantDeliveryCalendarKind =
+  | 'GRANT_RECEIPT' | 'SUBMISSION_DEADLINE' | 'PLANNED_SUBMISSION'
+  | 'DELIVERABLE' | 'DELIVERABLE_COMPLETED' | 'FORM_SUBMISSION' | 'EXTENSION_CONFIRMATION';
+export interface GrantDeliveryCalendarEntry extends GrantObject {
+  id: string;
+  kind: GrantDeliveryCalendarKind;
+  tranche: number | null;
+  title: string;
+  /** Recorded civil bounds are inclusive; an unknown bound remains null. */
+  startDate: GrantCivilDate | null;
+  endDate: GrantCivilDate | null;
+  sortDate: GrantCivilDate | null;
+  datePrecision: 'RANGE' | 'DAY' | 'START_ONLY' | 'FINISH_ONLY' | 'UNDATED';
+  status: string;
+  active: boolean;
+  detail: string;
+  sourceId: string;
+  costId: string | null;
+  ownerIds: string[];
+  ownerNames: string[];
+  originalDeadlineOn?: GrantCivilDate | null;
+  deadlineSource?: string;
+  daysRemaining?: number | null;
+  sourceIds: string[];
+  dateBasis: string;
+  calendarStatus: 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED';
+  dateStatus?: string;
+  confirmedDeadlineOn?: GrantCivilDate;
+  submittedDeadlineOn?: GrantCivilDate;
+  planningAssignments?: GrantObject[];
+}
+export interface GrantDeliveryCalendarSummary extends GrantObject {
+  entries: number;
+  undated: number;
+  activeDeadlines: number;
+  overdueDeadlines: number;
+  dueToday: number;
+  submittedDeadlines: number;
+  openDeliverables: number;
+  completedDeliverables: number;
+  nextDeadlineOn: GrantCivilDate | null;
+  byKind: Partial<Record<GrantDeliveryCalendarKind, number>>;
+}
+export interface GrantDeliveryCalendar extends GrantObject {
+  schema: 'stellar-forge.sf47-delivery-calendar.v1';
+  case: {
+    id: string;
+    name: string;
+    mode: 'OPERATIONS' | 'WALKTHROUGH';
+    state: 'OPEN' | 'CLOSED';
+    version: number;
+  };
+  asOfDate: GrantCivilDate;
+  generatedAt: string;
+  source: {
+    planId: string;
+    planRevision: number;
+    planContentSha256: string;
+    planSourceSha256: string;
+    calendarStart: GrantCivilDate | null;
+    caseUpdatedAt: string;
+    caseCreatedAt: string;
+    completionPlans: GrantObject[];
+  };
+  rule: GrantObject;
+  entries: GrantDeliveryCalendarEntry[];
+  undated: GrantDeliveryCalendarEntry[];
+  summary: GrantDeliveryCalendarSummary;
+  basis: string[];
+  sha256: string;
+}
+export interface GrantDeliveryCalendarSelection {
+  caseId: string;
+  asOfDate?: GrantCivilDate;
+  expectedVersion?: number;
+}
+export interface GrantDeliveryCalendarDownloadSelection extends GrantDeliveryCalendarSelection {
+  /** A complete case snapshot. Screen filters do not affect exports. Defaults to ICS. */
+  format?: 'ics' | 'csv' | 'json';
+}
+
 export interface GrantReadSelection {
   planId?: string;
   caseId?: string;
@@ -1333,6 +1414,7 @@ export interface GrantDownloadSelections {
   forecast: { caseId: string; forecastId: string };
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
+  'delivery-calendar': GrantDeliveryCalendarDownloadSelection;
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
@@ -1358,6 +1440,7 @@ export class GrantWorkspaceClient {
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
   read(view: 'supplier-account', selection: GrantSupplierAccountSelection): Promise<GrantJsonResponse<GrantSupplierAccountReport>>;
+  read(view: 'delivery-calendar', selection: GrantDeliveryCalendarSelection): Promise<GrantJsonResponse<GrantDeliveryCalendar>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;

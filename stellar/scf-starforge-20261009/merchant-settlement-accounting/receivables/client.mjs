@@ -76,6 +76,25 @@ export class ReceivablesClient {
   }
   identity() { return this.request('/identity'); }
   state(query) { return this.request('/state' + queryString(query)); }
+  creditControl(query, {signal} = {}) { return this.request('/credit-control' + queryString(query), {signal}); }
+  creditPolicy(id, {signal} = {}) { return this.request('/credit-control/policies/' + segment(id), {signal}); }
+  saveCreditPolicy(value, {signal} = {}) { return this.request('/credit-control/policies', {method:'POST',body:value,signal}); }
+  previewCreditAssessment(invoiceId, value, {signal} = {}) {
+    return this.request('/credit-control/invoices/' + segment(invoiceId) + '/assessment', {method:'POST',body:value,signal});
+  }
+  saveCreditDecision(invoiceId, value, {signal} = {}) {
+    return this.request('/credit-control/invoices/' + segment(invoiceId) + '/decisions', {method:'POST',body:value,signal});
+  }
+  creditDecision(id, {signal} = {}) { return this.request('/credit-control/decisions/' + segment(id), {signal}); }
+  withdrawCreditDecision(id, value, {signal} = {}) {
+    return this.request('/credit-control/decisions/' + segment(id) + '/withdraw', {method:'POST',body:value,signal});
+  }
+  creditDecisionFile(id, name, {signal} = {}) {
+    return this.request('/credit-control/decisions/' + segment(id) + '/files/' + segment(name), {binary:true,signal});
+  }
+  creditControlOperation(requestId, {signal} = {}) {
+    return this.request('/credit-control/operations/' + segment(requestId), {signal});
+  }
   cashPlans(query, {signal} = {}) { return this.request('/cash-plans' + queryString(query), {signal}); }
   previewCashPlan(value, {signal} = {}) { return this.request('/cash-plans/preview', {method:'POST', body:value, signal}); }
   cashPlan(id, query, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + queryString(query), {signal}); }

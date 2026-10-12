@@ -18,7 +18,6 @@ export function preparePublicOperation(document, item, operation, row, method) {
     if (typeof description !== 'string') fail('Public description must be text');
     result.description = description.replace(/[\s\u0000-\u001f\u007f]+/g, ' ').trim();
   }
-  if (row.requestExample === undefined && row.querySerialization === undefined) return result;
   const sample = row.requestExample ?? {};
   const serialization = row.querySerialization ?? {};
   if (!plain(serialization) || Object.keys(serialization).length > 128) fail('Query serialization must name declared parameters');
@@ -40,6 +39,8 @@ export function preparePublicOperation(document, item, operation, row, method) {
       seen.add(key); merged.set(key, parameter);
     }
   }
+  const privateQuery = new Set(Object.keys(row.queryEnv ?? {}));
+  for (const [key,parameter] of merged) if (parameter.in === 'query' && privateQuery.has(parameter.name)) merged.delete(key);
   for (const parameter of merged.values()) {
     if (parameter.in === 'query' && own(serialization, parameter.name)) {
       const rule = serialization[parameter.name];
@@ -61,7 +62,7 @@ export function preparePublicOperation(document, item, operation, row, method) {
   for (const [location, values] of [['path', sample.pathParams], ['query', sample.query]])
     if (values && Object.keys(values).some(name => !used[location].has(name))) fail('Request example contains an undeclared ' + location + ' parameter');
   if (Object.keys(serialization).some(name => !usedSerialization.has(name))) fail('Query serialization contains an undeclared query parameter');
-  if (merged.size) result.parameters = [...merged.values()];
+  result.parameters = [...merged.values()];
   if (own(sample, 'body')) {
     const body = structuredClone(refs.reference(operation.requestBody));
     const declaration=openApiRequestBody(operation,refs);
