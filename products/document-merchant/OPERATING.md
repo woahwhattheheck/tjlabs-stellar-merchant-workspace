@@ -372,3 +372,7 @@ Use [BATCHES.md](BATCHES.md) for a customer's complete order or reporting period
 starforge document-merchant batch --help
 ~~~
 
+
+## Operate through Applications
+
+Use the [complete Applications guide](APPLICATIONS.md) to review a new document configuration or reopen a prepared one from the saved Document merchant application. Start retains the supplier plan, native price and original factory, starts the existing Jobs seller/customer/operator/worker, and returns the authenticated operator. Stop and later Start use the same merchant and job history. `document-merchant inspect-service` presents the complete read-only selection; `document-merchant launch` operates that setup and service in the foreground.
