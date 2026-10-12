@@ -32,7 +32,8 @@ function restoreDraft(){
   }}catch{}
 }
 function optionList(items,label,selected,empty){
-  return (empty===undefined?'':'<option value="">'+escape(empty)+'</option>')+items.map(row=>'<option value="'+escape(row.id)+'"'+(row.id===selected?' selected':'')+'>'+escape(label(row))+'</option>').join('');
+  const unavailable=selected&&!items.some(row=>row.id===selected)?'<option value="'+escape(selected)+'" selected>Saved source unavailable — choose a current source</option>':'';
+  return (empty===undefined?'':'<option value="">'+escape(empty)+'</option>')+unavailable+items.map(row=>'<option value="'+escape(row.id)+'"'+(row.id===selected?' selected':'')+'>'+escape(label(row))+'</option>').join('');
 }
 const runLabel=row=>(row.name||'Accounting run')+' — '+date(row.completedAt||row.createdAt);
 const usageLabel=row=>(row.name||'Service capture')+' — '+date(row.sourceCreatedAt);
@@ -131,11 +132,11 @@ function renderCycle(cycle){
   $('cycle-detail').innerHTML=content;
   $('cycle-files')?.addEventListener('toggle',async event=>{
     if(!event.target.open||event.target.dataset.loaded)return;
-    try{const result=await api(cycleLink('files'));$('file-list').innerHTML=result.items.map(file=>'<div><a href="'+escape(file.href)+'">'+escape(file.name)+'</a><small>'+escape(file.bytes.toLocaleString())+' bytes</small></div>').join('');event.target.dataset.loaded='true';}catch(error){showError(error);}
+    try{const result=await api('/api/cycles/'+encodeURIComponent(cycle.key)+'/files');if(state.key!==cycle.key||$('cycle-files')!==event.target)return;$('file-list').innerHTML=result.items.map(file=>'<div><a href="'+escape(file.href)+'">'+escape(file.name)+'</a><small>'+escape(file.bytes.toLocaleString())+' bytes</small></div>').join('');event.target.dataset.loaded='true';}catch(error){showError(error);}
   });
 }
 async function loadCycle(key,{poll=false}={}){
-  if(!poll){clearTimeout(state.poll);state.key=key;clearError();}
+  if(!poll){clearTimeout(state.poll);state.key=key;state.current=null;clearError();$('cycle-detail').innerHTML='<div class="empty">Loading closing cycle…</div>';renderCycleList();}
   try{
     const cycle=await api('/api/cycles/'+encodeURIComponent(key));if(state.key!==key)return;
     state.current=cycle;const found=state.cycles.findIndex(row=>row.key===key);

@@ -61,12 +61,12 @@ async function inventory(client){
   need(revisions.every(value=>value===revisions[0]),'The workspace changed while its inventories were being read. Refresh after the active operation finishes.',409,'WORKBENCH_INVENTORY_CHANGED');
   return {revision:revisions[0],observedAt:new Date().toISOString(),customers:customers.items,usage:usage.items,runs:runs.items,statements:statements.items,bindings:bindings.items};
 }
-function tarHeader(name,size){
+function tarHeader(name,size,{directory=false}={}){
   need(Buffer.byteLength(name)<=100&&Number.isSafeInteger(size)&&size>=0&&size<8**11,'This file cannot be included in the portable archive.',500,'WORKBENCH_ARCHIVE');
   const block=Buffer.alloc(512),put=(value,offset,length)=>block.write(value,offset,length,'utf8');
-  put(name,0,100);put('0000600\0',100,8);put('0000000\0',108,8);put('0000000\0',116,8);
+  put(name,0,100);put(directory?'0000700\0':'0000600\0',100,8);put('0000000\0',108,8);put('0000000\0',116,8);
   put(size.toString(8).padStart(11,'0')+'\0',124,12);put('00000000000\0',136,12);
-  block.fill(32,148,156);put('0',156,1);put('ustar\0',257,6);put('00',263,2);
+  block.fill(32,148,156);put(directory?'5':'0',156,1);put('ustar\0',257,6);put('00',263,2);
   const checksum=block.reduce((sum,value)=>sum+value,0);
   put(checksum.toString(8).padStart(6,'0')+'\0 ',148,8);return block;
 }
@@ -77,7 +77,13 @@ async function* verifiedFile(file){
     'A saved customer file differs from its recorded contents. Resume the original cycle to recover its files.',409,'WORKBENCH_FILE_CHANGED');
 }
 async function* tarStream(files,lease){
+  const directories=new Set();
   for(const file of files){
+    const parts=file.name.split('/');
+    for(let index=1;index<parts.length;index++){
+      const name=parts.slice(0,index).join('/')+'/';
+      if(!directories.has(name)){lease.assertHeld();yield tarHeader(name,0,{directory:true});directories.add(name);}
+    }
     lease.assertHeld();yield tarHeader(file.name,file.bytes);yield* verifiedFile(file);
     const padding=(512-file.bytes%512)%512;if(padding)yield Buffer.alloc(padding);
   }
@@ -95,6 +101,8 @@ export async function startAccountingStatementCycleWorkbench({
   need(typeof url==='string'&&typeof workspace==='string','Choose the existing merchant URL and workspace.');
   url=new URL(url).href;actor=actor.trim();
   await mkdir(directory,{recursive:true,mode:0o700});const root=await realpath(directory);
+  const rootInfo=await stat(root);
+  need(rootInfo.isDirectory()&&!(rootInfo.mode&0o077)&&(!process.getuid||rootInfo.uid===process.getuid()),'Use a private cycle directory owned by this operator (mode 0700).',400,'WORKBENCH_DIRECTORY');
   const publicRoot=fileURLToPath(new URL('./cycle-public/',import.meta.url));
   const csrfToken=randomBytes(32).toString('hex'),jobs=new Map(),controller=new AbortController();let clientPromise,inventoryPromise,closing=false,origin,workQueue=Promise.resolve();
   const connection=async()=>{
@@ -265,15 +273,15 @@ export async function startAccountingStatementCycleWorkbench({
           return;
         }
         if(request.method==='GET'&&action==='files'){
-          const files=await filesFor(key);sendJson(response,200,{items:files.map(({name,bytes})=>({name,bytes,href:'/api/cycles/'+encodeURIComponent(key)+'/file/'+name.split('/').map(encodeURIComponent).join('/')}))});return;
+          const files=await filesFor(key);sendJson(response,200,{items:files.map(({name,bytes})=>({name,bytes,href:'/api/cycles/'+encodeURIComponent(key)+'/file/'+name.split('/').map(encodeURIComponent).join('/')+'?download=1'}))});return;
         }
         if(request.method==='GET'&&action.startsWith('file/')){
           need(!['QUEUED','RUNNING'].includes(jobs.get(key)?.phase),'Wait for the active closing operation before downloading.',409,'WORKBENCH_ACTIVE');
           const lease=await acquireStateLease(cyclePath(key));
           try{
             const name=action.slice(5),files=await filesFor(key),file=files.find(row=>row.name===name);need(file,'Choose a file from this closing cycle.',404);
-            const type=TYPE[extname(name)]??'application/octet-stream',view=address.searchParams.get('view')==='1'&&extname(name)==='.html';
-            if(view)response.setHeader('Content-Security-Policy',"sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:");
+            const type=TYPE[extname(name)]??'application/octet-stream',view=address.searchParams.get('download')!=='1'&&extname(name)==='.html';
+            if(view)response.setHeader('Content-Security-Policy',"sandbox allow-same-origin allow-downloads; default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'");
             response.writeHead(200,{'Content-Type':type,'Content-Length':file.bytes,'Content-Disposition':(view?'inline':'attachment')+'; filename="'+name.split('/').at(-1).replace(/["\r\n]/g,'')+'"'});
             await pipeline(Readable.from(verifiedFile(file)),response);
           }finally{await lease.close();}
