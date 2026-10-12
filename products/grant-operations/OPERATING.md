@@ -1,5 +1,9 @@
 # Grant Operations — installed operating and receiving guide
 
+## Recorded work and supplier invoice intake
+
+The original Operations case now receives CSV/TSV timesheets and invoice lines through **Work / invoice intake**. Operators map positions and source formats, match existing contributors and packages, retain corrections and duplicate decisions, and apply the complete reviewed batch atomically. Saved drafts, original bytes, grouped invoice lines and applied native record links survive complete case export/import. The existing CLI, typed GrantWorkspaceClient and six `merchant_grant_work_intake*` tools expose the same workflow. See [the complete operator guide](../../stellar/scf_2026/sf47_budget_model/workspace/WORK_INTAKE.md).
+
 Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, complete customer installations, commercial milestone billing, original implementation reviews, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
 
 The maintained source selection is **grant-operations**. Open **Applications → Grant planning and delivery**, or use **starforge grant-workspace**. The selection includes the complete SF47 model and operator, the original Node and Python buyer receiving sources, merchant-support readers, the Grant Application, its Merchant MCP provider, and the existing installation and transfer controls. It uses the canonical [Stellar merchant workspace repository](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace).
@@ -476,6 +480,8 @@ Use merchant_grant_file_read with the exact snapshot/SHA and returned offsets fo
 Closing a borrowed Application connection leaves its owning Application running. Closing an MCP-started service drains that original service and releases its workspace lock. The next deliberate open reuses the same saved workspace and a new native launch.
 
 ## 9. Export, receive and reopen the complete work
+
+For a complete customer delivery, use the [Grant Application handoff](HANDOFF.md). **starforge grant-application-handoff** carries the native whole-case ZIP and saved Application setup in one file, receives the original case into the explicit destination workspace, then prepares and saves its receiving Application through the existing lifecycle. The same retained operation resumes an interrupted case import or Application save and returns both actual destination identities.
 
 Choose the native export matching the intended scope:
 

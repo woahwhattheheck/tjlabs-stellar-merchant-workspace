@@ -50,9 +50,10 @@ Replace the URL below with the actual trusted catalog and save the JSON as
 ~~~
 
 The original SF88 discovery options also accept its existing explicit HTTPS proxy
-and gateway configuration. The native adapter fetches one matching search page
-with up to 100 original rows; a missing selected resource is reported as missing
-from that page. Use the original catalog session for a complete acquisition.
+and gateway configuration. The legacy search-based prepare action reads one
+matching page. For complete cursor/offset discovery and a selected original
+handle, use the [native catalog request workflow](NATIVE_REQUESTS.md). It carries
+the complete selected provider page directly into the same original SF88 inbox.
 
 Initialize a new MCP directory around the **existing** operator workspace:
 
@@ -112,6 +113,12 @@ An in-progress unsigned discovery request may finish before shutdown returns;
 this adapter accepts discovery timeouts up to 30 seconds.
 
 ## Discover, prepare and review
+
+The operator console and installed typed client now connect complete catalog
+discovery to request preparation, retained-source review, original execution,
+recovery and complete file download. Start with [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md)
+for **request-workspace**, **request-prepare** and **request-review**. The following
+search-and-URL form remains the original compatible interface.
 
 The original bazaar_search and bazaar_describe remain available for inspecting
 catalog resources and declared inputs. For the selected native HTTP route, send

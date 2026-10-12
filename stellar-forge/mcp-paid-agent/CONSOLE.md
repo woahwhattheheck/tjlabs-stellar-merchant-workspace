@@ -29,14 +29,22 @@ transport, including initialization and the advertised tools list.
 
 ## Discover and review the exact invocation
 
-Search the configured live catalog. Optional network, asset and maximum amount
+Browse the configured live catalog or search it with the customer's words.
+Resource type, recipient, network, scheme, asset, extension and maximum amount
 filters use the original advertised values. Inspect a resource to read its
 complete declaration, source observation, input schema and payment alternatives.
-The catalog's continuation cursor loads another page without replacing existing
-rows.
+Load another page through the original operation's complete continuation;
+existing rows remain visible. The console shows source coverage, filtered or
+invalid row counts, partial results and any unusable continuation. Apply edited
+search or filter values to start a new discovery operation; page continuation
+keeps the last applied selection until then. See
+[the complete discovery workflow](DISCOVERY.md) for the native tools and typed client.
 
 Choose an original payment alternative and enter the actual tool arguments as
-a JSON object. HTTP resources use the declared query object with string values.
+a JSON object. HTTP resources use the declared query object with string values,
+or arrays of strings for declared array parameters. The parameter list includes
+schema-only optional fields, required names, descriptions and the seller's
+form/explode encoding. The original seller codec prepares the final query pairs.
 The form does not copy examples or defaults into a request. IDs and decimal
 values declared as strings remain strings. Integers outside JavaScript's safe
 range are rejected before preview instead of being silently rounded; use the
@@ -122,3 +130,20 @@ no persistent browser storage. Native text is rendered as text, never executed
 as markup. The console does not add CORS access, arbitrary filesystem routes,
 external resource fetching or a new authentication mode. Existing stdio clients
 continue to connect through their private subprocess and original transport.
+
+## Native HTTP requests
+
+On an original native SF43/SF88 workspace, inspect a discovered HTTP resource and
+use **Save a native HTTP request** to supply its actual query, exact UTF-8 body,
+selected offered terms and payment ceiling. The configured route and Content-Type
+come from the original operator. The complete selected catalog page is preserved
+through native preparation, including offers found on later pages.
+
+The **HTTP requests** view combines saved history, reopening by stable intent,
+original source/body review, host approval and execution, cancellation, recovery,
+and complete saved responses. Interrupted replies retain the original intent for
+reopening. Result reads follow every original byte range and check the completed
+SHA-256 before structured/text display and file download.
+
+See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for the full workflow, available actions,
+transport/body limits and installed typed client.

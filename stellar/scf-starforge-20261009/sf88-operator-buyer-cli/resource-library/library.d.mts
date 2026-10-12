@@ -1,6 +1,6 @@
 import type { FileHandle } from 'node:fs/promises';
 export interface LibraryConfig {
-  schema: 'stellar-forge.sf88.resource-library.v1'; kind: 'inbox' | 'snapshot' | 'collection' | 'paid-jobs';
+  schema: 'stellar-forge.sf88.resource-library.v1'; kind: 'inbox' | 'snapshot' | 'collection' | 'paid-jobs' | 'research-project';
   source: string; roots: string[]; maxFileBytes: number; indexBytes: number;
 }
 export interface Annotation {

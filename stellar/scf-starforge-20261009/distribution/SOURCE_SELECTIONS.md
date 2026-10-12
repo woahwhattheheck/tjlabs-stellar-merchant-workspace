@@ -25,6 +25,28 @@ These source dependencies leave the recipe's command, package-export, provider
 and runtime-feature choices intact. Explicitly selecting an excluded browser
 server remains an invalid package and reports the missing packaged entry.
 
+## Explicit original support files
+
+An explicit `supportFiles` entry selects that exact original file, including its
+original format. The terminal extension heuristic applies to automatic component
+expansion; it cannot silently remove a validated explicit declaration. Publisher
+TeX, R/Rd, lock files, original notices and other declared formats therefore
+remain in the selected package without making those formats automatic matches.
+
+The existing path checks, hidden and excluded directory rules, limited fixture
+data exception, exact `excludeFiles`, regular Git blob requirements, hashes and
+byte limits still apply. Required selected files continue to be checked against
+the resulting package manifest. An excluded or unavailable required file remains
+an error.
+
+The complete [Groundwater installation and independent receiving workflow](receiving/GROUNDWATER.md)
+uses the existing `groundwater-reports` recipe and Runtime Workspace. It builds
+the reviewed source, installs the original dependency profile, transfers the
+complete lock-bound package and dependency parts, and reopens the independently
+received runtime. Its source contract checks all 64 scientific files in both
+installations; the original scientific operation retains its own model inputs,
+runs, reports and portal receiving.
+
 ## Build through the runtime workspace
 
 The private runtime workspace's **Build a product** view discovers the recipes

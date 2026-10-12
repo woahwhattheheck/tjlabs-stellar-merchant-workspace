@@ -214,3 +214,16 @@ The completed output includes both application operation IDs, retained source
 and cursor-key hashes, native receiving records, original buyer handoffs, and
 the reopened response inventory. The actual private workspace and source
 package remain available for subsequent operator use.
+
+## Receive a completed subscription connection through Applications
+
+The maintained [managed subscription receiving programme](subscriptions/MANAGED_RECEIVING.md)
+consumes an actual completed connection and READY runtime. It prepares a
+reviewable input from native edition identities, saves the original OData card,
+opens every configured publisher/customer, downloads complete native backups,
+restores independent copies, stops the managed service and reopens the same entry.
+Both managed operations and their exact native exports remain resumable.
+
+Use the original **odata-subscriptions managed-review** and **managed-receive**
+commands. The programme preserves the existing response-page receiving workflow
+above and has its own private output and selected input.

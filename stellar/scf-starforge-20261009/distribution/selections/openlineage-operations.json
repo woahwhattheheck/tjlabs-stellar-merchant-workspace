@@ -91,7 +91,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_file_delivery.py"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_file_delivery.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/OPENLINEAGE_LICENSE"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
