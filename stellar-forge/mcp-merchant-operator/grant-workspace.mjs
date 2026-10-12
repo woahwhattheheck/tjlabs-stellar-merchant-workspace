@@ -497,6 +497,18 @@ export class MerchantGrantWorkspaces {
       original = await client.engagementReceiving(args.caseId, {
         expectedVersion:args.expectedVersion, requestId:args.requestId, actor:args.actor, note:args.note, ...data});
     }
+    else if (verb === 'customer_use_calendar') {
+      const {caseId,...body}=rest;original=await client.customerUseCalendar(caseId,body);
+    }
+    else if (verb === 'customer_use_calendar_expand') {
+      const {caseId,expectedVersion}=rest;
+      const input=await this.#modelInputs(alias,args,'Complete Installation and customer-use pattern');
+      exact(input,['document','pattern'],['document','pattern']);
+      original=await client.customerUseCalendarExpand(caseId,{expectedVersion,...input});
+    }
+    else if (verb === 'customer_use_calendar_cohort') {
+      const {caseId,...body}=rest;original=await client.customerUseCalendarCohort(caseId,body);
+    }
     else if (verb === 'installation_seed') original=await client.installationSeed(args.caseId,args.expectedVersion);
     else if (verb === 'installation_workshares') {
       const {caseId,...body}=rest; original=await client.installationWorkshares(caseId,body);
@@ -617,7 +629,7 @@ export class MerchantGrantWorkspaces {
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
       ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','reviewSha256','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
-        'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256',
+        'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256','installationRefs','groupId',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',
         'startDate','endDate','expectedReportSha256','expectedReviewSha256','confirmedOn','deadlineOn','submittedOn','formReference','outcomeId','state','date'].includes(key)))});
   }

@@ -145,6 +145,23 @@ function deliveryCalendarQuery(args) {
     query.set('expectedVersion', String(integer(args.expectedVersion, 'Selected calendar case version')));
   return query.size ? '?' + query : '';
 }
+function customerUseRefs(value) {
+  need(Array.isArray(value) && value.length <= 100, 'GRANT_INVALID_INPUT', 'Select at most 100 original Installation editions.');
+  const seen=new Set();
+  for(const row of value){
+    exact(row,['id','revision','sha256'],['id','revision']);
+    id(row.id,'installation');integer(row.revision,'Selected Installation edition',1,500);
+    need(!seen.has(row.id),'GRANT_INVALID_INPUT','Select one exact edition per Installation.');seen.add(row.id);
+    if(row.sha256!==undefined)sha(row.sha256);
+  }
+  return value;
+}
+function customerUseQuery(args) {
+  const query=new URLSearchParams({expectedVersion:String(integer(args.expectedVersion,'Selected customer-use case version'))});
+  if(args.asOfDate!==undefined)query.set('asOfDate',completionDate(args.asOfDate));
+  if(args.installationRefs!==undefined)query.set('installationRefs',JSON.stringify(customerUseRefs(args.installationRefs)));
+  return '?'+query;
+}
 function deliveryCalendarFormat(value = 'ics') {
   need(['ics','csv','json'].includes(value), 'GRANT_INVALID_INPUT', 'Choose the ICS, CSV or JSON calendar format.');
   return value;
@@ -912,6 +929,27 @@ export class GrantWorkspaceClient {
     const {inputs,expectedPreviewSha256,...original}=body;
     return this.command(caseId,{...original,action:'installation.return-stage',data:{inputs,expectedPreviewSha256}});
   }
+  customerUseCalendar(caseId, body) {
+    id(caseId,'operation');exact(body,['expectedVersion','installationRefs','asOfDate'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.installationRefs!==undefined)customerUseRefs(body.installationRefs);
+    if(body.asOfDate!==undefined)completionDate(body.asOfDate);
+    return this.#request('/api/operations/'+caseId+'/customer-use-calendar',{body,mutation:false});
+  }
+  customerUseCalendarExpand(caseId, body) {
+    id(caseId,'operation');exact(body,['expectedVersion','document','pattern'],['expectedVersion','document','pattern']);
+    integer(body.expectedVersion,'Current case version');object(body.document,'Complete Installation document');
+    exact(body.pattern,['id','taskIds','buyerDeploymentIds','weekdays','includeDates','excludeDates','mode','fundingByBuyer','replacePattern'],
+      ['id','taskIds','buyerDeploymentIds']);
+    return this.#request('/api/operations/'+caseId+'/customer-use-calendar-expand',{body,mutation:false});
+  }
+  customerUseCalendarCohort(caseId, body) {
+    id(caseId,'operation');exact(body,['expectedVersion','installationRefs','groupId','asOfAt'],['expectedVersion','groupId']);
+    integer(body.expectedVersion,'Current case version');text(body.groupId,'Selected customer-use window',100);
+    if(body.installationRefs!==undefined)customerUseRefs(body.installationRefs);
+    if(body.asOfAt!==undefined)text(body.asOfAt,'Original receipt observation cutoff',100);
+    return this.#request('/api/operations/'+caseId+'/customer-use-calendar-cohort',{body,mutation:false});
+  }
   installationSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
     return this.#request('/api/operations/'+caseId+'/installation-seed',
@@ -1215,6 +1253,8 @@ export class GrantWorkspaceClient {
       'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
+      'customer-use-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/customer-use-calendar/export.' +
+        deliveryCalendarFormat(args.format ?? 'json') + customerUseQuery(args),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +
         deliveryCalendarFormat(args.format) + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',
