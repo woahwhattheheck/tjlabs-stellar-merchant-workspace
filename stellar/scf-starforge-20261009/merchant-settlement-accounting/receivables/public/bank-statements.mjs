@@ -159,14 +159,18 @@ export function createBankUi(host) {
   }
   function sourceRow(id) { return state.page?.items?.find(row=>row.id===id)||(state.editor?.row?.id===id?state.editor.row:null)||currentAssignments()[id]?.source; }
   function renderRaw(row) {
-    const raw=row.raw||{}, fields=raw.fields||{};
+    const raw=row.raw||{}, fields=raw.fields||{}, columns=state.detail?.columns||state.inspection?.columns||[];
     return '<dl class="definition"><dt>Booked date</dt><dd>'+e(row.bookedDate)+'</dd><dt>Value date</dt><dd>'+e(row.valueDate)+'</dd>'+
       '<dt>Amount</dt><dd>'+money(row.amount,row.currency)+'</dd><dt>Bank reference</dt><dd>'+e(row.bankReference)+'</dd>'+
       '<dt>Transaction</dt><dd>'+e(row.transactionId)+'</dd><dt>Counterparty</dt><dd>'+e(row.counterparty)+'</dd>'+
       '<dt>Invoice reference</dt><dd>'+e(row.invoiceReference)+'</dd><dt>Source row</dt><dd>'+e(row.rowNumber)+' · line '+e(row.lineNumber)+'</dd></dl>'+
       (Object.keys(fields).length?'<div class="table-wrap bank-original"><table><thead><tr><th>Original field</th><th>Original value</th></tr></thead><tbody>'+
         Object.entries(fields).map(([key,value])=>'<tr><td>'+e(key)+'</td><td class="preline">'+e(typeof value==='object'?JSON.stringify(value):value)+'</td></tr>').join('')+'</tbody></table></div>':'')+
+      (raw.values?.length?'<div class="table-wrap bank-original"><table><thead><tr><th>Original CSV column</th><th>Original value</th></tr></thead><tbody>'+
+        raw.values.map((value,index)=>'<tr><td>'+e(columns[index]||'Column '+(index+1))+'</td><td class="preline">'+e(value)+'</td></tr>').join('')+'</tbody></table></div>':'')+
       (raw.text?'<pre class="bank-json">'+e(raw.text)+'</pre>':'')+
+      (row.sourceIssues?.length?'<h3 class="section">Source findings</h3>'+renderRecords(row.sourceIssues.map(item=>typeof item==='string'?{code:item}:item),'Source finding'):'')+
+      '<details class="bank-original"><summary>Complete original source row</summary><pre class="bank-json">'+e(JSON.stringify(row,null,2))+'</pre></details>'+
       '<details class="bank-original"><summary>Original source identity</summary><p class="mono">'+e(row.sourceRowSha256)+'</p></details>'+
       (row.sourceMatches?.length?'<h3 class="section">Other retained source matches</h3>'+renderRecords(row.sourceMatches,'Source match'):'');
   }
@@ -332,14 +336,16 @@ export function createBankUi(host) {
 
   function newSplit(row,{action='CREATE',receipt=null,customerId=''}={}) {
     return {key:crypto.randomUUID(),action,customerId:customerId||receipt?.customerId||'',receiptId:receipt?.id||'',
-      amount:receipt?.amount||row.amount,allocations:[],effectiveDate:action==='CORRECT'?getAsOf():row.bookedDate,
+      amount:receipt?.amount||row.amount,allocations:[],residualAllocations:[],effectiveDate:action==='LINK'?(receipt?.accountingDate||receipt?.receivedDate||row.bookedDate):action==='CORRECT'?getAsOf():row.bookedDate,
       reason:'',dateDifferenceReason:'',funds:null};
   }
   function allReceipts(row) {
-    const map=new Map();
-    for(const item of [...(getState()?.receipts||[]),...(row.receiptCandidates||[]).map(value=>value.receipt)])
+    const map=new Map(), candidates=row.receiptCandidates||[],
+      dated=state.editor?.row.id===row.id?state.editor.splits.flatMap(split=>[...(split.funds?.receipts||[]),...(split.residualFunds?.receipts||[])]):[];
+    for(const item of [...(getState()?.receipts||[]),...candidates.map(value=>value.receipt),...dated])
       if(item?.id && item.status!=='VOID' && currencyKey(item.currency)===currencyKey(row.currency))map.set(item.id,item);
-    return [...map.values()];
+    const rank=new Map(candidates.map((value,index)=>[value.receipt.id,index]));
+    return [...map.values()].sort((a,b)=>(rank.get(a.id)??Number.MAX_SAFE_INTEGER)-(rank.get(b.id)??Number.MAX_SAFE_INTEGER));
   }
   function allInvoices(split) {
     const row=state.editor?.row,map=new Map();
@@ -355,7 +361,8 @@ export function createBankUi(host) {
     const saved=currentAssignments()[rowId],cached=state.editor?.bankImportId===state.selectedId&&state.editor.row.id===rowId?state.editor:null;
     state.editor=cached||{bankImportId:state.selectedId,row:clone(row),lookupDate:getAsOf(),distinctPaymentReason:saved?.distinctPaymentReason||'',
       sourceResolutionReason:saved?.sourceResolutionReason||'',splits:saved?saved.splits.map(split=>({...clone(split),key:crypto.randomUUID(),funds:null,
-        allocations:split.allocations.map(item=>({...item,key:crypto.randomUUID()}))})):[]};
+        allocations:split.allocations.map(item=>({...item,key:crypto.randomUUID()})),
+        residualAllocations:(split.residualAllocations||[]).map(item=>({...item,key:crypto.randomUUID()})),residualFunds:null})):[]};
     if(!state.editor.splits.length)state.editor.splits.push(newSplit(row));
     state.dialog='assignment';persist();assignmentDialog();
     await refreshAssignmentFunds();
@@ -363,10 +370,14 @@ export function createBankUi(host) {
   async function refreshAssignmentFunds() {
     const editor=state.editor;if(!editor)return;
     const generation=(editor.generation||0)+1;editor.generation=generation;
-    const ids=[...new Set(editor.splits.map(split=>split.customerId).filter(Boolean))];
+    const receipts=allReceipts(editor.row),ids=[...new Set(editor.splits.flatMap(split=>[
+      split.customerId,...(split.action==='CORRECT'?[receipts.find(row=>row.id===split.receiptId)?.customerId]:[])]).filter(Boolean))];
     const results=await Promise.all(ids.map(async id=>[id,await api.customerFunds({customerId:id,asOf:editor.lookupDate})]));
     if(state.editor!==editor||editor.generation!==generation)return;
-    const funds=new Map(results);for(const split of editor.splits)split.funds=funds.get(split.customerId)||null;
+    const funds=new Map(results);for(const split of editor.splits){
+      split.funds=funds.get(split.customerId)||null;
+      split.residualFunds=split.action==='CORRECT'?funds.get(receipts.find(row=>row.id===split.receiptId)?.customerId)||null:null;
+    }
     if(state.dialog==='assignment')assignmentDialog();
   }
   function assignmentDialog() {
@@ -407,7 +418,8 @@ export function createBankUi(host) {
           e((item.reference||item.id)+' · '+customerName(item.customerId)+' · '+item.currency.code+' '+item.amount+' · '+item.receivedDate)+'</option>').join('')+
         '</select>',true):'')+
       label('Customer payment amount',input('amount',split.amount,' inputmode="decimal" required'))+
-      label(split.action==='CORRECT'?'Correction accounting date':'Effective accounting date',input('effectiveDate',split.effectiveDate,' type="date" required'))+
+      label(split.action==='LINK'?'Original accounting date':split.action==='CORRECT'?'Correction accounting date':'Effective accounting date',
+        input('effectiveDate',split.effectiveDate,' type="date" required'+(split.action==='LINK'?' readonly':'')))+
       (split.action==='CORRECT'?label('Correction reason','<textarea name="reason" maxlength="3000" required>'+e(split.reason)+'</textarea>',true):'')+
       (split.action==='LINK'&&!sameDate?label('Reason the bank and receipt dates differ','<textarea name="dateDifferenceReason" maxlength="3000" required>'+
         e(split.dateDifferenceReason)+'</textarea>',true,'The existing receipt keeps its actual received date '+original.receivedDate+
@@ -426,7 +438,21 @@ export function createBankUi(host) {
           '</td><td>'+button('Use invoice balance','fill-allocation',' class="small" data-key="'+e(split.key)+'" data-allocation="'+e(item.key)+'"',true)+
           button('Remove','remove-allocation',' class="small" data-key="'+e(split.key)+'" data-allocation="'+e(item.key)+'"',true)+'</td></tr>').join('')+
         '</tbody></table></div>':'<p class="hint">The receipt can remain available in the customer account. Add invoice allocations when the payment settles issued charges.</p>')+
-      '<p class="hint bank-original">The combined review checks original customer, currency, cash and every affected allocation date.</p></section>';
+      '<p class="hint bank-original">The combined review checks original customer, currency, cash and every affected allocation date.</p>'+
+      (split.action==='CORRECT'&&original?renderRemainingCashInputs(split,original):'')+'</section>';
+  }
+  function renderRemainingCashInputs(split,original) {
+    const rows=split.residualAllocations||[],invoices=allInvoices({...split,customerId:original.customerId,funds:split.residualFunds});
+    return '<section class="section bank-original"><div class="row between"><h4>Cash remaining with '+e(customerName(original.customerId))+'</h4>'+
+      button('Add invoice for remaining cash','add-residual-allocation',' data-key="'+e(split.key)+'"',true)+'</div>'+
+      '<p class="hint">A partial correction preserves the original customer’s remaining payment. Leave that cash available or enter its invoice allocations below. The complete posting review shows the exact remaining amount. Add these allocations once for each original receipt in the posting.</p>'+
+      (rows.length?'<div class="table-wrap"><table><thead><tr><th>Original customer invoice</th><th class="num">Apply amount</th><th>Allocation date</th><th></th></tr></thead><tbody>'+
+        rows.map(item=>'<tr data-bank-residual-allocation="'+e(item.key)+'"><td><select name="residualInvoiceId"><option value="">Choose the original customer invoice</option>'+
+          invoices.map(invoice=>'<option value="'+e(invoice.id)+'"'+(item.invoiceId===invoice.id?' selected':'')+'>'+
+            e((invoice.number||invoice.id)+' · due '+invoice.dueDate+' · '+invoice.currency.code+' '+invoice.amountDue+' remaining')+'</option>').join('')+'</select></td><td>'+
+          input('residualAmount',item.amount,' inputmode="decimal" required')+'</td><td>'+input('residualAllocatedDate',item.allocatedDate,' type="date" required')+'</td><td>'+
+          button('Remove','remove-residual-allocation',' class="small" data-key="'+e(split.key)+'" data-allocation="'+e(item.key)+'"',true)+'</td></tr>').join('')+'</tbody></table></div>':
+        '<p class="small-text muted">Any remaining cash will stay available in the original customer account.</p>')+'</section>';
   }
   function captureEditor(form=$('#bank-assignment-form')) {
     const editor=state.editor;if(!form||!editor)return;
@@ -446,15 +472,21 @@ export function createBankUi(host) {
         split.effectiveDate=split.action==='CORRECT'?getAsOf():editor.row.bookedDate;
         if(split.action==='CREATE')split.receiptId='';
       }
-      if(split.action==='LINK'&&original&&previous.receiptId!==split.receiptId)
-        split.effectiveDate=[editor.row.bookedDate,original.accountingDate||original.receivedDate].sort().at(-1);
+      if(split.action==='LINK'&&original)split.effectiveDate=original.accountingDate||original.receivedDate;
       if(previous.action!==split.action||previous.customerId!==split.customerId||previous.receiptId!==split.receiptId) {
         split.allocations=[];split.funds=null;
       }
+      split.residualAllocations ||= [];
+      if(previous.action!==split.action||previous.receiptId!==split.receiptId){split.residualAllocations=[];split.residualFunds=null;}
       for(const tr of section.querySelectorAll('[data-bank-allocation]')) {
         const item=split.allocations.find(value=>value.key===tr.dataset.bankAllocation);if(!item)continue;
         item.invoiceId=tr.querySelector('[name=invoiceId]').value;item.amount=tr.querySelector('[name=allocationAmount]').value;
         item.allocatedDate=tr.querySelector('[name=allocatedDate]').value;
+      }
+      for(const tr of section.querySelectorAll('[data-bank-residual-allocation]')) {
+        const item=split.residualAllocations.find(value=>value.key===tr.dataset.bankResidualAllocation);if(!item)continue;
+        item.invoiceId=tr.querySelector('[name=residualInvoiceId]').value;item.amount=tr.querySelector('[name=residualAmount]').value;
+        item.allocatedDate=tr.querySelector('[name=residualAllocatedDate]').value;
       }
     }
     persist();
@@ -472,9 +504,19 @@ export function createBankUi(host) {
         if(host.units(item.amount,currency)<=0n)throw new Error('Each invoice allocation needs a positive amount.');
         return {invoiceId:item.invoiceId,amount:item.amount,allocatedDate:item.allocatedDate};
       });
-      if(allocations.reduce((sum,item)=>sum+host.units(item.amount,currency),0n)>host.units(split.amount,currency))
-        throw new Error('Invoice allocations cannot exceed their customer payment split.');
+      const original=split.action!=='CREATE'?allReceipts(editor.row).find(row=>row.id===split.receiptId):null,
+        allocationLimit=host.units(split.action==='LINK'?(original?.amount||split.amount):split.amount,currency);
+      if(allocations.reduce((sum,item)=>sum+host.units(item.amount,currency),0n)>allocationLimit)
+        throw new Error(split.action==='LINK'?'Invoice allocations cannot exceed the original receipt amount.':'Invoice allocations cannot exceed their customer payment split.');
+      const residualAllocations=(split.residualAllocations||[]).map(item=>{
+        if(split.action!=='CORRECT'||!item.invoiceId)throw new Error('Choose the original customer invoice for each remaining-cash allocation.');
+        if(host.units(item.amount,currency)<=0n)throw new Error('Each remaining-cash allocation needs a positive amount.');
+        return {invoiceId:item.invoiceId,amount:item.amount,allocatedDate:item.allocatedDate};
+      });
+      if(residualAllocations.reduce((sum,item)=>sum+host.units(item.amount,currency),0n)>host.units(original?.amount||split.amount,currency))
+        throw new Error('Remaining-cash allocations cannot exceed the original receipt amount.');
       return {action:split.action,amount:split.amount,
+        ...(residualAllocations.length?{residualAllocations}:{}),
         ...(split.customerId?{customerId:split.customerId}:{}),
         ...(split.action!=='CREATE'?{receiptId:split.receiptId}:{}),allocations,
         ...(split.effectiveDate?{effectiveDate:split.effectiveDate}:{}),
@@ -594,6 +636,7 @@ export function createBankUi(host) {
       '<div class="stat"><span>Linked receipts</span><strong>'+money(totals.linkedReceiptAmount,currency)+'</strong></div>'+
       '<div class="stat"><span>Corrected receipts</span><strong>'+money(totals.correctedReceiptAmount,currency)+'</strong></div>'+
       '<div class="stat"><span>New invoice allocations</span><strong>'+money(totals.allocatedAmount,currency)+'</strong></div></div>'+
+      (proposal.selections.some(row=>row.splits.some(split=>split.residualReceipt))?'<p class="notice bank-original">Partial corrections retain the original customer’s remaining cash in the receipts shown below.</p>':'')+
       proposal.selections.map(selection=>reviewSelection(selection,currency)).join('')+
       renderBalanceEffects(balanceEffects)+
       '<details class="section"><summary>Retained statement and posting identity</summary><dl class="definition">'+
@@ -613,11 +656,24 @@ export function createBankUi(host) {
         '<dt>Accounting date</dt><dd>'+e(split.accountingDate||split.effectiveDate)+'</dd>'+
         (split.originalReceipt?'<dt>Recorded receipt date</dt><dd>'+e(split.originalReceipt.receivedDate)+'</dd>'+
           '<dt>Original receipt</dt><dd>'+e(split.originalReceipt.reference||split.originalReceipt.id)+'</dd>':'')+
+        (split.correctedOriginalAmount!==undefined?'<dt>Original payment covered by correction</dt><dd>'+money(split.correctedOriginalAmount,currency)+'</dd>':'')+
         (split.reason?'<dt>Correction reason</dt><dd class="preline">'+e(split.reason)+'</dd>':'')+
         (split.dateDifferenceReason?'<dt>Date difference reason</dt><dd class="preline">'+e(split.dateDifferenceReason)+'</dd>':'')+'</dl>'+
         (split.releasedAllocations?.length?'<h4 class="bank-original">Original allocations released</h4>'+allocationReviewTable(split.releasedAllocations,currency,true):'')+
         (split.allocations?.length?'<h4 class="bank-original">Invoice allocations</h4>'+allocationReviewTable(split.allocations,currency,false):
-          '<p class="hint bank-original">No new invoice allocation is included in this customer split.</p>')+'</div>').join('')+'</section>';
+          '<p class="hint bank-original">No new invoice allocation is included in this customer split.</p>')+
+        reviewRemainingReceipt(split,currency)+
+        (split.replacementReceiptIds?.length?'<details class="bank-original"><summary>Original receipt relationships</summary><dl class="definition"><dt>Original receipt</dt><dd>'+e(split.originalReceipt?.id)+'</dd><dt>Replacement receipts</dt><dd>'+split.replacementReceiptIds.map(e).join('<br>')+'</dd></dl></details>':'')+'</div>').join('')+'</section>';
+  }
+  function reviewRemainingReceipt(split,currency) {
+    const row=split.residualReceipt;if(!row)return '';
+    return '<section class="section bank-original"><h4>Remaining cash · '+e(row.customer.name||row.customer.id)+' · '+money(row.amount,currency)+'</h4>'+
+      '<dl class="definition"><dt>Original receipt date</dt><dd>'+e(row.receivedDate)+'</dd><dt>Accounting date</dt><dd>'+e(row.accountingDate)+'</dd>'+
+      '<dt>Payment reference</dt><dd>'+e(row.reference)+'</dd></dl>'+
+      (row.allocations?.length?'<h4>Remaining cash applied to invoices</h4>'+allocationReviewTable(row.allocations,currency,false):
+        '<p class="hint">This amount remains available in the original customer’s account.</p>')+
+      (row.bankSources?.length?'<details class="bank-original"><summary>Preserved original bank sources</summary><pre class="bank-json">'+e(JSON.stringify(row.bankSources,null,2))+'</pre></details>':'')+
+      '</section>';
   }
   function allocationReviewTable(rows,currency,released) {
     return '<div class="table-wrap"><table><thead><tr><th>Original invoice</th><th class="num">Amount</th><th>Allocation date</th>'+
@@ -711,14 +767,15 @@ export function createBankUi(host) {
     const item=split.allocations.find(row=>row.key===key);if(!item)throw new Error('Choose the original invoice allocation.');
     const invoice=allInvoices(split).find(row=>row.id===item.invoiceId);
     if(!invoice)throw new Error('Choose the original invoice before using its remaining balance.');
-    const currency=state.editor.row.currency;
-    const remainder=host.units(split.amount,currency)-split.allocations.filter(row=>row.key!==key).reduce((sum,row)=>{
+    const currency=state.editor.row.currency,
+      original=allReceipts(state.editor.row).find(row=>row.id===split.receiptId),
+      available=split.action==='LINK'?(original?.available??original?.amount??split.amount):split.amount;
+    const remainder=host.units(available,currency)-split.allocations.filter(row=>row.key!==key).reduce((sum,row)=>{
       if(!row.amount)return sum;return sum+host.units(row.amount,currency);
     },0n);
     const due=host.units(invoice.amountDue,currency),applied=due<remainder?due:remainder;
     if(applied<=0n)throw new Error('This invoice or customer split has no remaining amount available to allocate.');
     item.amount=host.amount(applied,currency);
-    const original=allReceipts(state.editor.row).find(row=>row.id===split.receiptId);
     item.allocatedDate=[item.allocatedDate,split.effectiveDate,invoice.issueDate,
       original?.accountingDate||original?.receivedDate].filter(Boolean).sort().at(-1);
   }
@@ -861,6 +918,17 @@ export function createBankUi(host) {
       captureEditor();if(state.editor.splits.length>=100)throw new Error('A source credit supports up to 100 customer splits.');
       const split=newSplit(state.editor.row);split.amount=host.amount(0n,state.editor.row.currency);
       state.editor.splits.push(split);persist();assignmentDialog();
+    } else if(['bank-add-residual-allocation','bank-remove-residual-allocation'].includes(action)) {
+      captureEditor();const editor=state.editor,split=editor?.splits.find(item=>item.key===control.dataset.key),
+        original=split&&allReceipts(editor.row).find(item=>item.id===split.receiptId);
+      if(!split||split.action!=='CORRECT'||!original)throw new Error('Choose the original receipt being corrected.');
+      split.residualAllocations ||= [];
+      if(action==='bank-add-residual-allocation') {
+        if(split.residualAllocations.length>=100)throw new Error('Use up to 100 original-customer invoices for remaining cash.');
+        split.residualAllocations.push({key:crypto.randomUUID(),invoiceId:'',amount:'',
+          allocatedDate:[split.effectiveDate,original.accountingDate||original.receivedDate].filter(Boolean).sort().at(-1)});
+      } else split.residualAllocations=split.residualAllocations.filter(item=>item.key!==control.dataset.allocation);
+      state.review=null;persist();assignmentDialog();
     } else if(['bank-remove-split','bank-add-allocation','bank-remove-allocation','bank-fill-allocation'].includes(action)) {
       captureEditor();const editor=state.editor,split=editor?.splits.find(item=>item.key===control.dataset.key);
       if(!split)throw new Error('Return to the customer payment editor.');

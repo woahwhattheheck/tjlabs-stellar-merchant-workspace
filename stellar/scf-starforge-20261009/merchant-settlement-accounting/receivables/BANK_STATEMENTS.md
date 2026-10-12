@@ -66,7 +66,11 @@ Use **Match payment** to assign the complete bank credit. A single credit can co
 
 The source row and existing receipt retain their actual dates. When a linked receipt's received date differs from the bank date, enter the reason. A correction retains the bank date separately from its accounting date; the review shows both.
 
-Choose existing issued invoices from the selected customer's original account. Each allocation carries its own amount and date. **Use invoice balance** fills the lesser of that invoice's displayed amount due and the remaining customer split. The complete native review recalculates the affected balances.
+Partial corrections preserve the rest of an original receipt. If one recorded receipt is covered by bank credits of 40 and 60, correcting the 40 creates its reviewed replacement and a separate receipt retaining the other 60 for the original customer. The review shows the amount of the original receipt being corrected, all replacement relationships, and the remaining cash with its actual received date and accounting date. Original source matches follow the receipt that now carries that source payment.
+
+In **Cash remaining with [customer]**, leave that amount available or choose the original customer's invoices and explicit allocation dates. Add remaining-cash allocations once per original receipt in the complete posting. The equivalent native input is residualAllocations on the CORRECT split. The original owner recalculates the complete source coverage and remaining amount, releases the old allocations once, and retains every resulting receipt and allocation together.
+
+Choose existing issued invoices from the selected customer's original account. Each allocation carries its own amount and date. **Use invoice balance** fills the lesser of that invoice's displayed amount due and the remaining customer split. For a linked receipt, it uses the original receipt's available funds at the selected balance date. Linking preserves the original accounting date; the complete native review recalculates every affected balance.
 
 ### Duplicate and changed bank source
 
@@ -93,7 +97,7 @@ Post the complete original proposal and its reviewSha256 at the returned revisio
 
 ## Original documents
 
-**Original files** lists the retained statement files with their byte counts. The same inventory appears in bankImport and bank_import_detail.
+**Original files** lists the retained statement files with their byte counts. The same retained inventory appears in bankImport and bank_import_detail. The dialog also provides direct downloads for the current status.json and reconciliation.json views through the original file reader.
 
 | File | Contents |
 | --- | --- |
@@ -106,7 +110,7 @@ Post the complete original proposal and its reviewSha256 at the returned revisio
 | posting-UUID.json/html/csv | Complete retained customer posting and its original source relationship. |
 | receipt-UUID.json/html/csv | Individual original customer receipt advice. |
 
-Use the exact file names from the returned inventory. Customer account exports include the individual receipt advice, actual received date, accounting date and original replacement relationships.
+Use the exact retained file names from the returned inventory, or status.json and reconciliation.json for the current accounting views. Customer account exports include the individual receipt advice, actual received date, accounting date and original replacement relationships.
 
 MCP file selection is:
 

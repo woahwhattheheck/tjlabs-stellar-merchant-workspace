@@ -86,7 +86,7 @@ const reviewedNativeProposal = object({}, [], true);
 
 const bankCsvColumns = object(Object.fromEntries(
   ['date', 'amount', 'credit', 'debit', 'transactionId', 'reference', 'counterparty', 'invoiceReference', 'valueDate', 'balance']
-    .map(name => [name, text(1000, 1)])));
+    .map(name => [name, text(32000, 1)])));
 const bankCsvLayout = object({
   delimiter: {type: 'string', enum: [',', ';', '\t']},
   dateFormat: {type: 'string', enum: ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'YYYYMMDD']},
@@ -114,6 +114,7 @@ const bankAllocation = object({invoiceId: uuid, amount: money, allocatedDate: da
 const bankSplit = object({
   action: {type: 'string', enum: ['CREATE', 'LINK', 'CORRECT']}, customerId: uuid, receiptId: uuid, amount: money,
   allocations: {type: 'array', maxItems: 100, items: bankAllocation},
+  residualAllocations: {type: 'array', maxItems: 100, items: bankAllocation},
   effectiveDate: date, reason: text(3000), dateDifferenceReason: text(3000),
 }, ['action', 'amount', 'allocations']);
 const bankSelections = {type: 'array', minItems: 1, maxItems: 100,
@@ -243,7 +244,7 @@ export const receivablesDefinitions = [
     {bankImportId: uuid, view: {type: 'string', enum: ['summary', 'rows', 'history', 'postings']},
       rowStatus: {type: 'string', enum: ['UNASSIGNED', 'POSTED', 'LINKED', 'IGNORED', 'DUPLICATE', 'CONFLICT', 'SOURCE_ONLY']},
       direction: {type: 'string', enum: ['CREDIT', 'DEBIT', 'ZERO']}, search: text(300), ...nativePage}, ['bankImportId']),
-  read('bank_posting_preview', 'Review complete original bank credits split across actual customers. CREATE records receipts; LINK retains existing receipt identities and supports explicit partial receipt coverage; CORRECT retains original cash dates while replacing an incorrectly recorded receipt and releasing its original allocations. The native owner checks source conflicts and all affected dated balances and returns the complete proposal, balanceEffects, reviewSha256 and revision.',
+  read('bank_posting_preview', 'Review complete original bank credits split across actual customers. CREATE records receipts; LINK retains existing receipt identities and supports explicit partial receipt coverage; CORRECT retains original cash dates while replacing an incorrectly recorded receipt, preserving remaining original-customer cash and releasing its original allocations. Optional residualAllocations assigns that remaining cash to original-customer invoices. The native owner checks source conflicts and all affected dated balances and returns the complete proposal, balanceEffects, reviewSha256 and revision.',
     {bankImportId: uuid, selections: bankSelections}, ['bankImportId', 'selections']),
   mutate('bank_receipts_post', 'Post exactly the complete original bank proposal and reviewSha256 returned by bank_posting_preview at its reviewed revision. The original journal retains the bank posting, receipts, correction relationships, allocation releases, new allocations and complete customer receipt documents together.',
     {bankImportId: uuid, proposal: reviewedNativeProposal, reviewSha256: hash}, ['bankImportId', 'proposal', 'reviewSha256']),

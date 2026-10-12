@@ -489,3 +489,9 @@ The first read retains a file snapshot and reports its `readId`, byte count and 
 Full native transaction proofs live in the original workspace's `exports/<observationId>/transfer-proof.json` files. The compact observation and receipt source retain the proof artifact's directory, name, size and SHA. The receiving and per-return downloads hydrate those original proof bytes and verify their identity.
 
 Preserve the complete original accounting workspace, including `exports`, through the existing backup workflow. That keeps invoice and credit documents, original quotation files, customer packets and transaction proofs with their native accounting history.
+
+### Partial source links and receipt corrections
+
+A bank LINK may cover part of an existing receipt, and several actual source credits may cover it within the original receipt amount. Repeated original statement evidence reuses its existing coverage. The link preserves the receipt’s actual received date and accounting date.
+
+For CORRECT, residualAllocations optionally applies remaining original-customer cash to original invoices. The complete reviewed split returns correctedOriginalAmount, replacementReceiptIds and, when needed, residualReceipt with its customer, amount, dates, bank sources and allocations. A receipt covered by 40 and 60 therefore retains the original customer’s 60 when only the 40 is corrected. The native result includes all original, replacement and remaining-cash receipt IDs, and the customer file reader retains their complete advice.

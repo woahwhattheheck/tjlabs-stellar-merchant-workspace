@@ -330,3 +330,5 @@ It uses the actual accounting workspace and original SF74 commissioning, quote r
 The same programme is retained under `SCF-MERCHANT-RECEIVABLES-DFF77-20261012`. Its complete 65-member source capsule, including the original license, is Git blob `87452bd68e4208e6d48ed18bcdea24dcf3da1152` in `woahwhattheheck/public-commons-sprint-2026`. The capsule contains the full UTF-8 body and original Git identity for every member. Its selected exercised path uses Node builtins.
 
 [Source lineage](SOURCE_LINEAGE.json) retains the exact adopted public product, original accounting dependency files and existing quotation/customer source identities. The original accounting, SF74, native transfer and distribution owners continue to maintain those components.
+
+Partial bank receipt corrections also preserve cash from the original customer’s other source credits. The desk reviews the corrected portion and remaining receipt, and can allocate that remaining cash to original-customer invoices in the same posting. Agent callers use the same complete proposal and residualAllocations input.
