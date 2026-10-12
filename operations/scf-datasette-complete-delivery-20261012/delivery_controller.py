@@ -26,7 +26,9 @@ os.umask(0o077);sys.dont_write_bytecode=True
 original_root=os.environ.get("DATASETTE_DELIVERY_ROOT")
 root=P(original_root).resolve(strict=True) if original_root else P(tempfile.mkdtemp(prefix="datasette-publisher-a49aa-",dir="/dev"))
 if original_root and not (root/"delivery-input.json").is_file():raise RuntimeError("Resume requires the complete retained original delivery directory.")
-tmp=root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
+transfer_root=P(os.environ.get("DATASETTE_TRANSFER_DIRECTORY",str(root)))
+transfer_root.mkdir(mode=0o700,parents=True,exist_ok=True)
+tmp=transfer_root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
 os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ.setdefault("AZCOPY_CONCURRENCY_VALUE","4")
 os.environ["GIT_TERMINAL_PROMPT"]="0"
@@ -140,11 +142,14 @@ def persist_complete_phase(original_outcome,phase):
         if retained_manifest.exists():
             if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
         else:shutil.copy2(prior_manifest,retained_manifest)
-    export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
+    export=transfer_root/"export";export.mkdir(mode=0o700,exist_ok=True)
     archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
     members=[];directories=[];excluded=[]
     with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
         for folder,dirs,files in os.walk(root,followlinks=False):
+            if P(folder)!=root:
+                info=P(folder).stat()
+                directories.append({"path":P(folder).relative_to(root).as_posix(),"mode":stat.S_IMODE(info.st_mode),"mtime_ns":info.st_mtime_ns})
             dirs.sort();files.sort()
             for name in list(dirs):
                 path=P(folder)/name
@@ -307,6 +312,21 @@ try:
         data=file["content"].encode()
         if len(data)!=file["bytes"] or hashlib.sha256(data).hexdigest()!=file["sha256"]:raise RuntimeError("The complete installed source postimage differs.")
         (continuation/P(file["path"]).name).write_bytes(data)
+    for repair in payload.get("installed_runner_repairs",[]):
+        relative=P(repair["path"])
+        if relative.name!=str(relative):raise RuntimeError("Installed continuation repair must name its original runner.")
+        target=continuation/relative
+        before=target.read_bytes()
+        after=repair["content"].encode("utf-8")
+        if hashlib.sha256(before).hexdigest()!=repair["before_sha256"] or hashlib.sha256(after).hexdigest()!=repair["sha256"]:
+            raise RuntimeError("The exact installed continuation repair source differs.")
+        original=continuation/("original-"+repair["before_sha256"]+"-"+relative.name)
+        if original.exists():
+            if original.read_bytes()!=before:raise RuntimeError("The retained original runner differs.")
+        else:original.write_bytes(before)
+        target.write_bytes(after)
+        outcome.setdefault("installed_runner_repairs",[]).append({key:repair[key] for key in ("path","before_sha256","sha256","reason","source_reply")})
+        emit("datasette_installed_runner_repaired",**outcome["installed_runner_repairs"][-1])
     browser_home=root/"native-browser";browser_home.mkdir(mode=0o700,exist_ok=True)
     modules=P(os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES","/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"))
     module_candidates=[]
@@ -357,6 +377,42 @@ except BaseException as error:
     emit("datasette_original_continuation_preserved",error_type=native_error["type"],message=native_error["message"])
 finally:
     done.set()
-persist_complete_phase(outcome,"installed")
+try:
+    persist_complete_phase(outcome,"installed")
+except Exception as error:
+    if not payload.get("retain_receiver"):raise
+    outcome["complete_save_continuation"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
+    emit("datasette_complete_save_continuation",root=str(root),**outcome["complete_save_continuation"])
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
-if native_error:raise SystemExit(1)
+if payload.get("retain_receiver"):
+    if sys.stdin.isatty():
+        import termios
+        terminal=termios.tcgetattr(sys.stdin.fileno())
+        terminal[3]&=~(termios.ICANON|termios.ECHO)
+        terminal[6][termios.VMIN]=1;terminal[6][termios.VTIME]=0
+        termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,terminal)
+    emit("datasette_saved_receiver_ready",operation=OP,root=str(root),procfs_pid=os.readlink("/proc/self"),state=outcome["state"])
+    for line in sys.stdin.buffer:
+        try:
+            request=json.loads(line)
+            if request.get("operation")!=OP or request.get("root")!=str(root):raise RuntimeError("Continuation belongs to another original operation.")
+            if request.get("action")=="close":
+                emit("datasette_saved_receiver_closed",state=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json").get("state"))
+                break
+            if request.get("action")!="source":raise RuntimeError("Supply the complete reviewed continuation source.")
+            source=request["source"]
+            if hashlib.sha256(source.encode("utf-8")).hexdigest()!=request["sha256"]:raise RuntimeError("Continuation source identity differs.")
+            folder=root/"continuation-source";folder.mkdir(mode=0o700,exist_ok=True)
+            path=folder/(request["sha256"]+".py")
+            if path.exists() and path.read_text()!=source:raise RuntimeError("Saved continuation source differs.")
+            path.write_text(source,encoding="utf-8")
+            emit("datasette_continuation_source_started",sha256=request["sha256"],path=str(path))
+            exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
+            emit("datasette_continuation_source_returned",sha256=request["sha256"])
+        except BaseException as error:
+            if isinstance(error,KeyboardInterrupt):raise
+            emit("datasette_continuation_source_error",error_type=type(error).__name__,message=str(error),traceback=traceback.format_exc())
+    last_result=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json")
+    if not last_result or last_result.get("state")!="COMPLETE":raise SystemExit(1)
+else:
+    if native_error:raise SystemExit(1)

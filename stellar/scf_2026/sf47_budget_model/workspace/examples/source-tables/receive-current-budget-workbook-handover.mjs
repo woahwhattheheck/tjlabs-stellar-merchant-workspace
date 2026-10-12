@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. One complete native saved-plan → editable workbook → receiving programme.
 import {mkdir,mkdtemp,readFile,writeFile} from 'node:fs/promises';
-import {resolve,dirname,join} from 'node:path';
+import {resolve,dirname,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import {execFile,spawn} from 'node:child_process';
@@ -286,7 +286,12 @@ export async function resumeCurrentBudgetWorkbookBrowser(directory,options={}){
   const plan=await native(['show','--workspace',workspace,'--plan',restored.plan.id,'--part','all']);
   need(plan.contentSha256===result.received.contentSha256,
     'The browser continuation must restore the exact previously received native plan.');
-  result.browser=await browserCase(root,workspace,plan,join(root,'returned-workbook.xlsx'),options);
+  // Keep completed and interrupted browser attempts beside the same portable
+  // case. A late failure may already have saved native files with exclusive
+  // creation; the next complete browser run needs its own output directory.
+  const browserDirectory=await mkdtemp(join(root,'browser-review-'));
+  result.browser=await browserCase(browserDirectory,workspace,plan,join(root,'returned-workbook.xlsx'),options);
+  result.browser.outputDirectory=relative(root,browserDirectory);
   result.browser.resumedFromNativeResult=true;
   await writeFile(summaryPath,json(result),{mode:0o600});
   return result;

@@ -105,10 +105,16 @@ individual native operation IDs and selected editions on this original owner.
 
 ## 3. Bind the complete paired supplier source
 
-Use the complete original supplier review workspace supplied by the maintained
-supplier application. Its candidate CSV must be the exact pricing source
-selected for this profile. The original review can retain its own requestId;
-the external workflow request is linked to it.
+The selected supplier component includes the complete original reviewed example
+at $CONAPI_SUPPLIER_COMPONENT/examples/published-pricing-intake.workspace.json.
+It imports all 23 original published price records into the explicitly empty
+initial target and retains all 23 review decisions. Its original request ID is
+conapi-elite-initial-import-20261012, revision 23, with status reviewed. The
+workflow links that original native review to its own external business request.
+
+Use that retained workspace for this source edition. Its candidate CSV is the
+exact pricing source selected below. For a customer's different candidate or
+rule selection, use the corresponding complete native review workspace.
 
 The retained published source family is:
 
@@ -133,16 +139,16 @@ files and built software archive:
 ~~~sh
 "$CONAPI_PYTHON" -I "$CONAPI_ANALYSIS_COMPONENT/workflow_cli.py" configure \
   --template "$CONAPI_ANALYSIS_COMPONENT/WORKFLOW_SUPPLIER_EXAMPLE.json" \
-  --source-csv /absolute/private/source/published-pricing.csv \
-  --related-csv catalog=/absolute/private/source/services-catalogue.csv \
-  --source-metadata /absolute/private/source/datapackage.json \
-  --related-metadata catalog=/absolute/private/source/datapackage.json \
+  --source-csv "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/published-pricing.csv" \
+  --related-csv "catalog=$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/services-catalogue.csv" \
+  --source-metadata "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/datapackage.json" \
+  --related-metadata "catalog=$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/datapackage.json" \
   --supplier-component "$CONAPI_SUPPLIER_COMPONENT" \
-  --supplier-workspace /absolute/private/supplier/original-reviewed-workspace.json \
+  --supplier-workspace "$CONAPI_SUPPLIER_COMPONENT/examples/published-pricing-intake.workspace.json" \
   --supplier-table-name supplier_feed_accepted \
-  --supplier-pricing /absolute/private/source/published-pricing.csv \
-  --supplier-catalogue /absolute/private/source/services-catalogue.csv \
-  --supplier-metadata /absolute/private/source/datapackage.json \
+  --supplier-pricing "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/published-pricing.csv" \
+  --supplier-catalogue "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/services-catalogue.csv" \
+  --supplier-metadata "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/datapackage.json" \
   --analysis-workspace "$CONAPI_ANALYSIS" \
   --operation-id "$CONAPI_OPERATION" \
   --source-archive /absolute/private/releases/complete-datasette-source.zip \

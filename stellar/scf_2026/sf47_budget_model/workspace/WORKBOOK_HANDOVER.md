@@ -133,6 +133,14 @@ The example contributor and 40-hour weekly capacity are operator-selected walkth
 
 For a headless-only environment, omit --browser. WORKBOOK_HANDOVER_RECEIVING.json records the native result and any actual browser result; it identifies the entered programme scope.
 
+Continue the browser from a completed portable native case:
+
+~~~sh
+node examples/source-tables/receive-current-budget-workbook-handover.mjs COMPLETE_NATIVE_CASE_DIRECTORY --resume-browser
+~~~
+
+This reopens the original final-workbook-handover/planning.zip in a private receiving workspace and checks its saved content identity against WORKBOOK_HANDOVER_RECEIVING.json. Each browser continuation keeps its complete views, downloads and saved native files in a fresh browser-review directory beside the original case. The completed result records the selected relative directory in browser.outputDirectory. Keep that directory with the complete case when transferring it. Earlier interrupted browser outputs remain available, and another continuation can finish after a late browser failure without replacing them. Repeating the command after a completed browser result reopens that result.
+
 ## Format references
 
 - [SpreadsheetML document structure](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/structure-of-a-spreadsheetml-document)

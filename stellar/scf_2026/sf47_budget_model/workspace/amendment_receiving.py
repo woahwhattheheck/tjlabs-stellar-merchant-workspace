@@ -243,7 +243,8 @@ def main(root):
         if not view["compatibility"]["compatible"]:
             raise RuntimeError("The selected compatible amendment has conflicts: "+canonical(view["compatibility"]))
         retained_key = key + "-preview.json"
-        retain_json(retained_key, view)
+        # Retain the immutable native preview independently of derived read views.
+        retain_json(retained_key, {key:value for key,value in view.items() if key != "calendarImpact"})
         receipt = execute(key,"amendment.save",{
             "amendmentId":ident,"expectedRevision":revision,"inputs":inputs(),
             "expectedPreviewSha256":view["previewSha256"]
