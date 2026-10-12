@@ -1,7 +1,9 @@
 // MIT. Shared CanadaBuys values and explicit revision handling.
 import { createHash } from 'node:crypto';
-export const WORKSPACE_SCHEMA = 'starforge.canadabuys.workspace.v1';
-export const PACKAGE_SCHEMA = 'starforge.canadabuys.package.v1';
+export const LEGACY_WORKSPACE_SCHEMA = 'starforge.canadabuys.workspace.v1';
+export const LEGACY_PACKAGE_SCHEMA = 'starforge.canadabuys.package.v1';
+export const WORKSPACE_SCHEMA = 'starforge.canadabuys.workspace.v2';
+export const PACKAGE_SCHEMA = 'starforge.canadabuys.package.v2';
 export const STREAMS = ['open-tenders', 'new-tenders', 'complete-tenders', 'awards', 'supply-arrangements'];
 export const sha256 = value => createHash('sha256').update(value).digest('hex');
 export const canonical = value => {

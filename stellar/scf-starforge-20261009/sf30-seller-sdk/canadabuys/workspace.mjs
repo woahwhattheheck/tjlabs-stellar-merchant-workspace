@@ -3,11 +3,12 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, chmodSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { WORKSPACE_SCHEMA, PACKAGE_SCHEMA, sha256, canonical, failure, plain, text, revision, timestamp,
+import { WORKSPACE_SCHEMA, PACKAGE_SCHEMA, LEGACY_WORKSPACE_SCHEMA, LEGACY_PACKAGE_SCHEMA, sha256, canonical, failure, plain, text, revision, timestamp,
   selection, compareRows, emptyReview } from './core.mjs';
 import { decodeCsv, parseCsv } from './csv.mjs';
 import { prepareEntries, entryOrder, closingTime, matchProfile, joinKey, SOSA_COLUMNS, sourceSupplierNames, sourceCommodityCodes } from './domain.mjs';
 import { renderReport } from './reports.mjs';
+import { CanadaBuysBidderDesk, validateDeskEnvelope } from './bidder-desk-workspace.mjs';
 export { WORKSPACE_SCHEMA, PACKAGE_SCHEMA, sha256, canonical, failure } from './core.mjs';
 
 function preparedCsv(input, meta = {}) {
@@ -118,7 +119,7 @@ export class CanadaBuysWorkspace {
       const exists = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='metadata'").get();
       if (exists) {
         const existing = this.db.prepare('SELECT value FROM metadata WHERE id=1').get();
-        if (existing && JSON.parse(existing.value).schema !== WORKSPACE_SCHEMA)
+        if (existing && ![WORKSPACE_SCHEMA, LEGACY_WORKSPACE_SCHEMA].includes(JSON.parse(existing.value).schema))
           throw failure('WORKSPACE_VERSION', 'Choose a CanadaBuys workspace directory');
       }
       this.db.exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;');
@@ -158,6 +159,21 @@ export class CanadaBuysWorkspace {
           this.db.exec('PRAGMA user_version=1; COMMIT');
         } catch (error) { this.db.exec('ROLLBACK'); throw error; }
       }
+      // Schema v2 retains bidder records. Older clients reject this schema instead of exporting an incomplete package.
+      this.db.exec('BEGIN IMMEDIATE');
+      try {
+        this.bidderDesk = new CanadaBuysBidderDesk(this);
+        const metadata = this.metadata();
+        if (metadata.schema === LEGACY_WORKSPACE_SCHEMA) {
+          const updated = { ...metadata, schema: WORKSPACE_SCHEMA, revision: metadata.revision + 1, updatedAt: new Date().toISOString() };
+          this.db.prepare('UPDATE metadata SET value=? WHERE id=1').run(JSON.stringify(updated));
+          this.db.prepare('INSERT INTO audit(data) VALUES(?)').run(JSON.stringify({
+            id: randomUUID(), type: 'workspace.schema.migrated', revision: updated.revision,
+            at: updated.updatedAt, operator: this.operator, from: LEGACY_WORKSPACE_SCHEMA, to: WORKSPACE_SCHEMA
+          }));
+        }
+        this.db.exec('PRAGMA user_version=2; COMMIT');
+      } catch (error) { this.db.exec('ROLLBACK'); throw error; }
       chmodSync(this.databasePath, 0o600);
     } catch (error) { this.db.close(); throw error; }
   }
@@ -451,6 +467,7 @@ export class CanadaBuysWorkspace {
           return { ...source, entryIds: source.entryIds.filter(entryId => entryIds.has(entryId)) }; }),
         sourceObservations, reviews: notices.map(notice => ({ noticeId: notice.id, review: notice.review })),
         workshares, captures: relevantCaptures, publications, receivingHistory,
+        bidderDesk: this.bidderDesk.exportData({ noticeIds: [...ids], all: allSelected }),
         provenance: { mode: allSelected ? 'full-workspace' : 'selected-workspace',
           sourceCount: sourceIds.size, noticeCount: ids.size, workshareCount: workshares.length,
           omittedCaptureCount: captures.length - relevantCaptures.length,
@@ -478,13 +495,15 @@ export class CanadaBuysWorkspace {
     return record;
   }
   receivePackage(packet, { expectedRevision } = {}) {
-    if (!plain(packet) || packet.schema !== PACKAGE_SCHEMA || !Array.isArray(packet.sources) ||
+    if (!plain(packet) || ![PACKAGE_SCHEMA, LEGACY_PACKAGE_SCHEMA].includes(packet.schema) || !Array.isArray(packet.sources) ||
         !Array.isArray(packet.reviews) || !Array.isArray(packet.workshares))
       throw failure('INVALID_PACKAGE', 'Select a complete CanadaBuys workspace package', 422);
     const { packageId, ...body } = packet;
     if (typeof packageId !== 'string' || sha256(canonical(body)) !== packageId) throw failure('PACKAGE_HASH_MISMATCH', 'Package identity does not match its complete contents', 409);
     const prior = this.db.prepare('SELECT data FROM receiving WHERE id=?').get(packageId);
     if (prior) return { receiving: JSON.parse(prior.data), workspace: this.metadata(), alreadyReceived: true };
+    if (packet.schema === PACKAGE_SCHEMA) validateDeskEnvelope(packet.bidderDesk);
+    else if (packet.bidderDesk !== undefined) throw failure('PACKAGE_VERSION_MISMATCH', 'Bidder records require a v2 CanadaBuys package', 422);
     const prepared = packet.sources.map(source => {
       if (!plain(source) || !Array.isArray(source.entryIds)) throw failure('INVALID_SOURCE_PACKAGE', 'Every source needs original bytes and selected entry identities', 422);
       const result = preparedCsv(source.rawText, { ...source, expectedSha256: source.sha256 });
@@ -582,7 +601,10 @@ export class CanadaBuysWorkspace {
           captureConflicts.push({ captureId: incoming.id, retained: JSON.parse(old.data), incoming });
         else if (!old) this.db.prepare('INSERT INTO captures(id,data) VALUES(?,?)').run(incoming.id, JSON.stringify(incoming));
       }
-      const receiving = { packageId, receivedAt: new Date().toISOString(), operator: this.operator,
+      const bidderDesk = packet.schema === PACKAGE_SCHEMA
+        ? this.bidderDesk.receiveData(packet.bidderDesk, { selectedNoticeIds })
+        : { status: 'LEGACY_SOURCE_PACKAGE', importedRecords: 0, conflicts: [] };
+      const receiving = { packageId, receivedAt: new Date().toISOString(), operator: this.operator, bidderDesk,
         sourceWorkspace: packet.workspace, ingestion, reviewConflicts, workshareConflicts, captureConflicts,
         sourceCaptures: packet.captures || [], sourcePublications: packet.publications || [], sourceReceivingHistory: packet.receivingHistory || [] };
       this.db.prepare('INSERT INTO receiving(id,data) VALUES(?,?)').run(packageId, JSON.stringify(receiving));

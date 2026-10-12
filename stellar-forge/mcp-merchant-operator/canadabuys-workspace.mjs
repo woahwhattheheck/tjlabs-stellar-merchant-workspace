@@ -287,9 +287,20 @@ export class MerchantCanadaBuysWorkspaces {
     const frozen = entry.model._snapshot(() => {
     this.#revision(entry, args.expectedRevision);
     const options = { scope: args.scope ?? 'all', noticeIds: args.noticeIds };
-    const selectedNoticeIds = entry.model._selected(options).notices.map(notice => notice.id);
+    let selectedNoticeIds = entry.model._selected(options).notices.map(notice => notice.id);
     let body, contentType = 'application/json; charset=utf-8', extension = 'json';
-    if (['json', 'csv', 'html'].includes(args.format)) {
+    if (args.format.startsWith('decision-')) {
+      if (!args.decisionId) throw failure('INVALID_PARAMS', 'Select the saved decision for this complete report.');
+      const record = entry.model.bidderDesk.get('decision', args.decisionId, { revision: args.recordRevision });
+      const report = entry.model.bidderDesk.report(args.decisionId, { revision: args.recordRevision, format: args.format.slice('decision-'.length) });
+      body = report.body; contentType = report.mime; extension = args.format.slice('decision-'.length);
+      selectedNoticeIds = [record.noticeId];
+    } else if (args.format === 'evidence') {
+      if (!args.evidenceId) throw failure('INVALID_PARAMS', 'Select the saved evidence document for its original bytes.');
+      const original = entry.model.bidderDesk.evidenceFile(args.evidenceId, { revision: args.recordRevision });
+      body = original.body; contentType = original.mime; extension = 'bin';
+      selectedNoticeIds = original.record.noticeId ? [original.record.noticeId] : [];
+    } else if (['json', 'csv', 'html'].includes(args.format)) {
       const report = entry.model.report({ format: args.format, ...options });
       body = report.body; contentType = report.mime; extension = args.format;
     } else if (args.format === 'package') body = encoded(entry.model.exportPackage(options));
@@ -322,6 +333,9 @@ export class MerchantCanadaBuysWorkspaces {
       selection: { scope: options.scope, ...(options.noticeIds ? { noticeIds: options.noticeIds } : {}),
         ...(args.sourceId ? { sourceId: args.sourceId } : {}),
         ...(args.entryId ? { entryId: args.entryId } : {}),
+        ...(args.decisionId ? { decisionId: args.decisionId } : {}),
+        ...(args.evidenceId ? { evidenceId: args.evidenceId } : {}),
+        ...(args.recordRevision ? { recordRevision: args.recordRevision } : {}),
         ...(args.beforeId ? { beforeId: args.beforeId, afterId: args.afterId } : {}) } }).publication;
     return { workspace: entry.alias, publication: publicationView(publication),
       files: [{ file, mime: contentType, bytes: bytes.length, sha256: publication.sha256 }] };
@@ -355,6 +369,36 @@ export class MerchantCanadaBuysWorkspaces {
     const { workspace, ...input } = args;
     const model = entry.model;
     switch (name) {
+      case 'merchant_canadabuys_bidder_status': {
+        const result=model.bidderDesk.status();return { workspace, native:result.workspace, schema:result.schema, counts:result.counts };
+      }
+      case 'merchant_canadabuys_bidder_list': return { workspace, ...model.bidderDesk.list(input.kind, input) };
+      case 'merchant_canadabuys_bidder_record': return { workspace, record: model.bidderDesk.get(input.kind, input.recordId, input) };
+      case 'merchant_canadabuys_bidder_create':
+      case 'merchant_canadabuys_bidder_update': {
+        const record = { ...input.record, expectedRevision: input.expectedRevision,
+          ...(input.commandId ? { commandId: input.commandId } : {}) };
+        if (input.input) {
+          if (input.kind !== 'evidence' || !input.expectedSha256) throw failure('INVALID_PARAMS', 'Evidence intake needs its inspected input SHA256.');
+          const selected = this.#input(entry, input.input), original = await originalFile(selected.file, { consume: true, maximum: 64 * 1024 * 1024 });
+          if (original.sha256 !== input.expectedSha256) throw failure('CANADABUYS_INPUT_CHANGED', 'The selected evidence differs from its inspected SHA256.');
+          record.bodyBase64 = original.content.toString('base64');
+          record.sha256 = original.sha256; record.bytes = original.bytes;
+          record.localOrigin = record.localOrigin || basename(selected.file);
+          record.title = record.title || selected.label || basename(selected.file);
+          if (!record.sourceUrl && selected.url) record.sourceUrl = selected.url;
+        } else if (input.expectedSha256) throw failure('INVALID_PARAMS', 'Select the configured input for the evidence SHA256.');
+        const result = name === 'merchant_canadabuys_bidder_create'
+          ? model.bidderDesk.create(input.kind, record)
+          : model.bidderDesk.update(input.kind, input.recordId, record);
+        return { workspace, native:result.workspace, record:result.record, alreadyApplied:result.alreadyApplied||false };
+      }
+      case 'merchant_canadabuys_bidder_fit': {
+        const result = model.bidderDesk.fit(input.profileId, input);
+        return { workspace, profile: result.profile, ...page(result.results, input) };
+      }
+      case 'merchant_canadabuys_bidder_assess': return { workspace, ...model.bidderDesk.assess(input) };
+      case 'merchant_canadabuys_bidder_compare': return { workspace, ...model.bidderDesk.compareCurrent(input.recordId) };
       case 'merchant_canadabuys_status': return this.#state(entry, input);
       case 'merchant_canadabuys_entries': {
         const project = model.view().notices.find(item => item.id === input.noticeId);

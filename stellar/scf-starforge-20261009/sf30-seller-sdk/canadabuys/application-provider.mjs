@@ -22,7 +22,7 @@ export function canadabuysApplication(common = []) {
     title: 'CanadaBuys procurement',
     terminal: false,
     requiredSource: ROOT + 'cli.mjs',
-    description: 'Capture official federal tenders, awards and supply arrangements; qualify exact source editions, plan partner workshares, and transfer complete procurement workspaces.',
+    description: 'Capture official federal sources; save company capabilities, evidence and reviewed bid decisions; plan partner workshares and transfer complete procurement workspaces.',
     fields: [
       applicationField('workspaceDirectory', 'Procurement workspace directory', 'path', true,
         'Choose the directory for retained sources, editions and review decisions. A new directory is created when the application is saved.'),

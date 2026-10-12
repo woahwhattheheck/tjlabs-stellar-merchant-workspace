@@ -22,7 +22,7 @@ export class CanadaBuysClient {
     this.maxResponseBytes = maxResponseBytes;
   }
 
-  async request(path, { method = 'GET', body, signal, raw = false, timeoutMs = this.timeoutMs } = {}) {
+  async request(path, { method = 'GET', body, signal, raw = false, binary = false, timeoutMs = this.timeoutMs } = {}) {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) throw new TypeError('Use a positive integer request timeout.');
     const url = new URL(path, this.baseUrl);
     if (url.origin !== this.baseUrl || url.username || url.password) throw new TypeError('Requests must target the configured operator origin.');
@@ -34,7 +34,7 @@ export class CanadaBuysClient {
     try {
       const response = await this.fetch(url, {
         method, signal: controller.signal, redirect: 'error', credentials: 'same-origin',
-        headers: { accept: raw ? '*/*' : 'application/json', ...this.headers, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+        headers: { accept: raw || binary ? '*/*' : 'application/json', ...this.headers, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
       const expectedLength = response.headers.get('content-length');
@@ -62,6 +62,11 @@ export class CanadaBuysClient {
       const joined = new Uint8Array(bytes);
       let position = 0;
       for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
+      if (binary && response.ok) return {
+        mime: response.headers.get('content-type') ?? 'application/octet-stream',
+        filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
+        body: joined, bytes
+      };
       const bodyText = new TextDecoder('utf-8', { fatal: true }).decode(joined);
       let value;
       const json = response.headers.get('content-type')?.includes('json');
@@ -86,6 +91,38 @@ export class CanadaBuysClient {
     }
   }
 
+  bidderStatus(options) { return this.request('/api/bidder/status', options); }
+  bidderList(kind, { noticeId, offset = 0, limit = 100, ...options } = {}) {
+    const query = new URLSearchParams({ offset, limit });
+    if (noticeId !== undefined) query.set('noticeId', noticeId);
+    return this.request('/api/bidder/records/' + encodeURIComponent(kind) + '?' + query, options);
+  }
+  bidderRecord(kind, id, { revision, history = false, ...options } = {}) {
+    const query = new URLSearchParams({ history });
+    if (revision !== undefined) query.set('revision', revision);
+    return this.request('/api/bidder/records/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id) + '?' + query, options);
+  }
+  bidderCreate(kind, record, expectedRevision, options = {}) {
+    return this.request('/api/bidder/records/' + encodeURIComponent(kind), { ...options, method: 'POST', body: { ...record, expectedRevision } });
+  }
+  bidderUpdate(kind, id, record, options = {}) {
+    return this.request('/api/bidder/records/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id), { ...options, method: 'PATCH', body: record });
+  }
+  bidderFit(profileId, { profileRevision, noticeIds = [], now, ...options } = {}) {
+    return this.request('/api/bidder/fit', { ...options, method: 'POST', body: { profileId, profileRevision, noticeIds, now } });
+  }
+  bidderAssess(selection, options = {}) { return this.request('/api/bidder/assess', { ...options, method: 'POST', body: selection }); }
+  bidderComparison(id, options) { return this.request('/api/bidder/decisions/' + encodeURIComponent(id) + '/compare', options); }
+  bidderReport(id, { revision, format = 'html', ...options } = {}) {
+    const query = new URLSearchParams({ format });
+    if (revision !== undefined) query.set('revision', revision);
+    return this.request('/api/bidder/decisions/' + encodeURIComponent(id) + '/report?' + query, { ...options, raw: true });
+  }
+  bidderEvidence(id, { revision, ...options } = {}) {
+    const query = new URLSearchParams();
+    if (revision !== undefined) query.set('revision', revision);
+    return this.request('/api/bidder/evidence/' + encodeURIComponent(id) + '/file?' + query, { ...options, binary: true });
+  }
   workspace(options) { return this.request('/api/workspace', options); }
   notice(id, options) { return this.request('/api/notices/' + encodeURIComponent(id), options); }
   workshare(id, options) { return this.request('/api/workshares/' + encodeURIComponent(id), options); }
