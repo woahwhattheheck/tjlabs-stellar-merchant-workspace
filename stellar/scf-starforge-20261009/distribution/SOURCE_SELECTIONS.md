@@ -77,6 +77,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `mssql` | SQL Server catalog and typed queries, retained sellers, merchant tools and complete customer/merchant receiving | SQL Server data products; merchant console | [Installed product and operating guide](../../../products/mssql/README.md) |
 | `accountant-portfolio` | Client procedures, exact close files, preparation/review, named backup handovers, staff capacity, native accounting and complete portfolio receiving | Client runbooks; Client portfolio; Merchant accounting; Cryptoworth accounting | [Complete installation and receiving](../../../products/accountant-portfolio/README.md) |
 | `merchant-economics` | Supplier sources, exact graduated and volume tariffs, original scenarios and pricing, complete workspace receiving and seller releases | Merchant pricing and scenario planning; API merchant; Runtime management | [Complete installed workflow](../../../products/merchant-economics/OPERATING.md) |
+| `ckan-merchant` | Complete CKAN capture and source meanings, reviewed successor publication, browser/MCP and whole customer workspace receiving | CKAN data merchant; Dataset publisher; Dataset buyer; Python; Runtime management | [Complete operating and receiving guide](../../../products/ckan/OPERATING.md) |
 | `all` or no flag on a new build | Complete maintained toolkit | All registered applications | [Runtime installation](RUNTIME_INSTALL.md) |
 
 Use the product's installed `starforge --help` and `starforge registrations`
