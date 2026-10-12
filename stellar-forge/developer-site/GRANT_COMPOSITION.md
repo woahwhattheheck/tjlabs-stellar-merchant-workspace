@@ -160,6 +160,23 @@ original request, baseline, six funded packages, capacity, cash and submission
 fields. The reader distinguishes the completed organisation receiving and the
 recorded financial stages through the chapter's actual operating results.
 
+## Receive current delivery finance
+
+The ordinary `--manuscript` path receives the complete canonical **8. Delivery
+capacity and cash timing** section into the existing **8. Capacity and cash plan**
+companion chapter. This keeps the original receipt-derived deadlines, Calendar
+exports, reviewed remaining cash and effort, work and supplier invoices, and
+retained capacity/payment sensitivities together on each manuscript refresh.
+Other complete customer chapters keep their original identities.
+
+The source register follows the selected `CALENDAR.md`, `WORK_INTAKE.md` and
+`FORECAST.md` links into `grant-delivery-calendar`,
+`grant-work-invoice-intake` and `grant-operating-forecast`. Changed original
+source selections use the existing metadata refresh behavior. The full package
+valuation sensitivity remains distinct from agreed cash obligations and observed
+receipts. The nine-answer front and six funded packages retain their existing
+source and submission bindings.
+
 ## Read the complete companion
 
 Choose **Product and financing** in the application navigation. The maintained

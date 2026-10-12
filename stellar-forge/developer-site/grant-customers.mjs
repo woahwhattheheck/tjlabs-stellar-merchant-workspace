@@ -168,6 +168,15 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
     }
     companion = installSection(companion, OPENFN, updated);
   }
+  // Receive the complete accepted finance chapter through the ordinary manuscript
+  // path, preserving its original reader heading and the other customer chapters.
+  const deliveryFinance = section(manuscript, '# 8. Delivery capacity and cash timing');
+  if (deliveryFinance) {
+    const financeHeading = '## 8. Capacity and cash plan';
+    need(section(companion, financeHeading), 'Retain the existing capacity and cash chapter.');
+    const received = deliveryFinance.text.replace('# 8. Delivery capacity and cash timing', financeHeading);
+    companion = installSection(companion, financeHeading, projectGrantMarkdown(received));
+  }
   return projectGrantMarkdown(companion);
 }
 
@@ -263,6 +272,12 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/STATEMENTS\.md)/, companion);
   receive('grant-installation-portfolio', 'Dated installation capacity and original operating forecast',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/PORTFOLIO\.md)/, companion);
+  receive('grant-delivery-calendar', 'Original grant delivery calendar and complete exports',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/CALENDAR\.md)/, companion);
+  receive('grant-work-invoice-intake', 'Recorded work, supplier invoice intake and original-case receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/WORK_INTAKE\.md)/, companion);
+  receive('grant-operating-forecast', 'Reviewed remaining effort, cash obligations and original operating forecast',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/FORECAST\.md)/, companion);
   receive('grant-application-handoff', 'Complete grant case and saved Application customer handoff',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/HANDOFF\.md)/, companion);
   const lineage = section(companion, OPENLINEAGE)?.text || '';
