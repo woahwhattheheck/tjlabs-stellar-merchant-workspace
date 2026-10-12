@@ -12,6 +12,12 @@ distribution builder. Its archive retains the selected original files, source
 commit, recipe, contribution registrations and complete file manifest. Runtime
 preparation resolves the dependencies from that archive's own declarations.
 
+The archive's source directory is `package/source/`; an installed runtime names
+its source directory as `sourceRoot`. Every source-file reference below is
+relative to that directory. The builder retains this guide unchanged as the
+archive's root README, so those references also identify the original files when
+reading that copy.
+
 ## Choose the customer's workflow
 
 | Work | Existing command or interface | Retained result |
@@ -25,11 +31,11 @@ preparation resolves the dependencies from that archive's own declarations.
 | Continue analysis and workbook delivery | Original Python `AnalysisWorkspace`; `starforge workbook-customer` | Saved mappings, full query results, editable workspace archive and customer workbook |
 | Operate the installed application | Runtime Workspace Applications; `odata-subscriptions managed-review` and `managed-receive` | Exact READY and connection selection, two closed managed launches, complete backup downloads and independent native receiving |
 
-The [subscription guide](../../sf30-seller-sdk/odata/live/subscriptions/SUBSCRIPTIONS.md)
+The subscription guide (`stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/SUBSCRIPTIONS.md`)
 contains the full native request, connection, edition, backup, source-proof and
-Analysis contracts. The [managed receiving guide](../../sf30-seller-sdk/odata/live/subscriptions/MANAGED_RECEIVING.md)
+Analysis contracts. The managed receiving guide (`stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/MANAGED_RECEIVING.md`)
 defines the complete Start/Stop/reopen programme and its continuation journal.
-The original [OData Applications guide](../../sf30-seller-sdk/odata/live/APPLICATIONS.md)
+The original OData Applications guide (`stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/APPLICATIONS.md`)
 describes the saved application's fields and startup identity.
 
 ## Build one original source edition
@@ -64,7 +70,7 @@ An available source cache can be used with `--offline`. If a build is interrupte
 keep the same release directory and run the original `--resume` command with the
 same selection. A completed build reopens its retained archive; a partial build
 uses its saved Git pin and verifies every existing prefix before continuing.
-[BUILDING.md](../BUILDING.md) defines the original acquisition, packaging and
+BUILDING.md (`stellar/scf-starforge-20261009/distribution/BUILDING.md`) defines the original acquisition, packaging and
 recovery behavior.
 
 This recipe keeps OData, collection/comparison receiving, subscriptions, dataset
@@ -120,12 +126,12 @@ This path invokes the same profile, import, native-operation and kernel-lease
 checks without running npm. An incompatible graph remains incomplete with its
 actual findings. The graph's sending installation stays separate from the
 receiving runtime. The public-package alternative is the original
-[runtime transfer](../RUNTIME_TRANSFER.md), which preserves a ready sender's
+runtime transfer (`stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md`), which preserves a ready sender's
 archive, profile, exact lock and public npm tarballs and installs offline on the
 receiving host. For a following source edition, prepare its own archive and
 selection before adopting a compatible retained graph or using its chosen cache.
 
-The [runtime installation guide](../RUNTIME_INSTALL.md) covers interrupted
+The runtime installation guide (`stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md`) covers interrupted
 preparation, same-directory install recovery, source/import inspection and
 fresh-directory upgrades. Keep the source archive and original dependency lock
 with the installation.
@@ -140,7 +146,7 @@ workspace backup.
 
 A subscription connection refers to the receiving host's real private
 directories. Construct it from the actual returned restore paths using the
-[original connection format](../../sf30-seller-sdk/odata/live/subscriptions/connection.example.json).
+original connection format (`stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/connection.example.json`).
 Keep the prior connection and operation with the original delivery. The
 configured export directory must remain separate from each publisher and
 customer directory.
@@ -217,7 +223,7 @@ its own original outputs without launching the application again.
 
 The selected source includes the original Python buyer/Analysis package and
 dataset/workbook receiving. From the delivered source, use the
-[Python application guide](../../sf88-operator-buyer-cli/python/README.md) and the
+Python application guide (`stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/README.md`) and the
 subscription guide's **Analysis** section.
 
 A published subscription Analysis proof contains the original definition,
