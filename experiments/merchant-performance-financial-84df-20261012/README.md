@@ -2,6 +2,63 @@
 
 This complete native operation consumes the original Merchant Performance customer programme and carries its saved recipient case through customer receiving, an original invoice, a dated calendar and full source delivery.
 
+## Continue the existing native04 operation
+
+The maintained `continue-native04.py` entry point carries the original native04 archive through the complete Performance and financial continuation in one process. Its input is the existing receiving operation's full JSON payload, including the original archive selection, exact source packets and native archive helpers. The current receiving owner supplies that retained payload and preserves its saved operation and output paths.
+
+```sh
+python3 experiments/merchant-performance-financial-84df-20261012/continue-native04.py \
+  < /ABS/retained-native04-input.json
+```
+
+Use the same original payload and native04 root on restart. The caller verifies the saved archive identity, recovers exact existing members, retains a separate journal for each attempt, and waits for child-process cleanup before saving the complete resulting archive. Its `githubReaderPath` input can select the already-retained original source reader on the receiving host; each reused source blob is checked against its declared complete bytes.
+
+After the original Performance result reaches `COMPLETE`, a new financial operation receives the complete 474-file financial source into the separate `work/financial-source` tree. If an existing financial journal already binds `work/source`, the caller keeps that exact root and operation identity: it protects all 411 original Performance paths and receives the 63 other financial source files there. It retains the complete source-adoption request and every previous body before the first change. An interrupted replay accepts only those exact declared preimages or postimages and completes the same source request.
+
+The original `performance-financial.mjs` helper then continues the saved case, quotation, invoice and calendar under its retained source root and request IDs. The following manual source-receive and helper commands remain useful for an operator who is already inside that same retained process; the complete continuation entry point composes those maintained operations with the archive receiving and save lifecycle.
+
+## Receive original source files on another equipped host
+
+The original caller can read the complete already-received source files directly. Add `sourceFiles` to the same private native04 input:
+
+```json
+{
+  "sourceFiles": {
+    "compact": "/ABS/native04-source/compact-source.json",
+    "complete": "/ABS/native04-source/complete-source.json",
+    "following": "/ABS/native04-source/financial-source-successor.json"
+  }
+}
+```
+
+These are additional fields in the complete original input; retain its archive selection, four native archive helper bodies, compact-source descriptor and existing operation options. Receive the three original files as full UTF-8 bytes through the existing connected Git or source-transfer tools:
+
+| Input | Original Git blob | Bytes |
+| --- | --- | ---: |
+| compact | `96d4980da9795e19f7cc1daecdb51634e04da018` | 2,485,576 |
+| complete | `0fff38e8e50d8c96be1b3f91cad7b4f8e8dc2c01` | 9,291,618 |
+| following | `a5548d76367906e07c4726bd6237080fbe3ef410` | 250,851 |
+
+All three blobs are in `woahwhattheheck/tjlabs-stellar-merchant-workspace`. The following file is also published at commit `c2199987c03b59ee41cc28c0f247840e3948ea87`, path `experiments/merchant-performance-financial-84df-20261012/financial-source-successor.json`. Preserve the final newline and original Unicode. The complete file has SHA256 `6a0bb5c96335fcc82cee328b4932952b84437c6e42eda53e69c3b539c8b816e5`; the following file has SHA256 `aa97fd5757afdf49f2e8b244621266e7384f187d8c5edafc5978b4a2f1772355`.
+
+A complete checkout of this maintained experiment directory is also sufficient. The original `native04-compact-source.json`, `source-transfer.json`, seven `source-parts/` files and `financial-source-successor.json` are retained at their original paths. Select `index` in place of `complete`:
+
+```json
+{
+  "sourceFiles": {
+    "compact": "/ABS/checkout/experiments/merchant-performance-financial-84df-20261012/native04-compact-source.json",
+    "index": "/ABS/checkout/experiments/merchant-performance-financial-84df-20261012/source-transfer.json",
+    "following": "/ABS/checkout/experiments/merchant-performance-financial-84df-20261012/financial-source-successor.json"
+  }
+}
+```
+
+The original index is Git `0c5ca60440d46895bcd2c03a6254850708f29620`, 4,949 bytes. The caller reads its seven original part files relative to that index, verifies the complete part bytes and content descriptors, and joins their UTF-8 content in the original order. The resulting complete source must match the exact 9,291,618-byte identity above. This mode consumes the existing indexed source directly. A provider preview or shortened response cannot supply these inputs.
+
+The caller verifies all three complete files before adopting source. It resolves any required original module, whole carrier, index or ordered part from those same immutable source bytes and checks the resulting Git identity. This intake performs zero Git requests and uses the selected original regular files. Its source journal records `sourceIntake: "retained-local-source"`, the selected paths and the actual returned blob reads. Omitting `sourceFiles` selects the existing secondary Git reader and its original account verification.
+
+Run the same maintained command shown above from the equipped Linux host. Use its existing Python and Node runtime, the same private archive receiver and the same saved native04 case. The original 411-file Performance installer, 474-file financial source continuation, request replay, attempt history, child cleanup and complete private save remain in the original caller. Reconcile a recovered newer native04 checkpoint with the current receiving owner before entering the original continuation.
+
 ## Source and existing input
 
 The complete current Pricing/Commercial source is retained in canonical Git blob598a222c3ca2fa480359e33dca02955e9f22f00e in woahwhattheheck/tjlabs-stellar-merchant-workspace: 8,072,936 UTF-8 bytes, SHA256 31e20a31de004333d72d8fc3161ed7a0b82681b22f5b5c9703a9d9c819cb5723. It carries the complete411-file current source and the frozen181-file original tariff source separately, including the twelve original workspace browser assets needed by the integrated listener. Preserve both original source roots and the saved operation paths.

@@ -16,6 +16,7 @@ import uuid
 from model import Problem, canonical, digest, now, text
 import operations_domain as domain
 import operations_workshare_installations as workshares
+import operations_commercial_installations as commercial
 import operations_installation_workflows as workflows
 import operations_dispatch as dispatch
 
@@ -136,7 +137,7 @@ def get(operations, program_id, installation_id, selected_revision=None):
 
 def normalized(context, raw):
     raw = object_value(deepcopy(raw), ("name", "stage", "merchantDeploymentId", "buyerDeploymentIds",
-        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination"), "installation")
+        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "commercial"), "installation")
     records, sources, plan = context["records"], context["sources"], context["plan"]
     maps = {kind: {row["id"]: row for row in records[kind]} for kind in COLLECTIONS}
     retained = lambda value, label: domain.reference_list(value if value is not None else [], sources, label)
@@ -254,6 +255,8 @@ def normalized(context, raw):
               "merchantDeploymentId": merchant, "buyerDeploymentIds": buyers, "workorder": workorder,
               "task": task, "source": source, "payment": payment, "receiving": receiving,
               "assignments": assignments, "checks": checks}
+    if "commercial" in raw:
+        result["commercial"] = commercial.normalize_binding(context, raw["commercial"])
     if "workshare" in raw:
         result["workshare"] = workshares.normalize_binding(context, raw["workshare"])
     if "workflowPeriods" in raw:
@@ -275,6 +278,9 @@ def capture(context, document):
                      + document["receiving"]["sourceIds"])
     if document["workorder"]["sourceId"]:
         source_ids.add(document["workorder"]["sourceId"])
+    if document.get("commercial"):
+        source_ids.add(document["commercial"]["sourceId"])
+        source_ids.update(row["sourceId"] for row in document["commercial"]["sourceFiles"])
     if document.get("workshare"):
         source_ids.add(document["workshare"]["sourceId"])
         if document["workshare"]["packetSourceId"]:
@@ -448,6 +454,8 @@ def preview(operations, context, body):
         old = previous["preview"]["document"]["workshare"]
         if document.get("workshare", {}).get("caseId") != old["caseId"]:
             fail("Keep this installation joined to its original Workshare case.", "WORKSHARE_CASE_CONFLICT", 409)
+    original_commercial = commercial.verify_document(operations, context, document)
+    commercial.verify_transition(operations, context, previous, document, original=original_commercial)
     original_workshare = workshares.verify_document(operations, context, document)
     workshares.verify_transition(operations, context, previous, document, original=original_workshare)
     original_workflow = workflows.verify_document(operations, context, document)
@@ -532,7 +540,7 @@ def _record_matches(events, final_records):
     return result
 
 
-def validate_import(context, rows, events, source_version, source_files=None):
+def validate_import(context, rows, events, source_version, source_files=None, *, plan_for_version=None):
     if not isinstance(rows, list) or len(rows) > MAX_EDITIONS:
         fail("The complete installation history is invalid.")
     by_id, seen = {}, set()
@@ -561,13 +569,18 @@ def validate_import(context, rows, events, source_version, source_files=None):
         snapshot = candidate.get("snapshot")
         if not isinstance(snapshot, dict) or set(snapshot) != {"program", "plan", "records", "sources"}:
             fail("The complete original installation snapshot is required.")
-        if (any(snapshot["plan"].get(key) != context["plan"].get(key) for key in
+        selected_plan = plan_for_version(row["version"] - 1) if plan_for_version else context["plan"]
+        if (any(snapshot["plan"].get(key) != selected_plan.get(key) for key in
                 ("scenario", "planning", "report", "source", "revision", "contentSha256"))
                 or snapshot["program"]["mode"] != context["program"]["mode"]
                 or snapshot["program"]["version"] != row["version"] - 1
                 or candidate["source"] != _source(snapshot)):
             fail("The installation must retain its original selected case and funding plan.")
         document = normalized(snapshot, candidate.get("document"))
+        if document.get("commercial"):
+            if source_files is None:
+                fail("Receive the complete original commercial source files with this Installation.")
+            commercial.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
         if document.get("workshare"):
             if source_files is None:
                 fail("Receive the complete original Workshare attachments with this installation.")
@@ -607,6 +620,8 @@ def validate_import(context, rows, events, source_version, source_files=None):
                     or candidate["changes"] != (differences(previous["preview"]["document"], candidate["document"]) if previous else [])
                     or previous is not None and previous["version"] >= row["version"]):
                 fail("The original installation edition sequence is incomplete.")
+            commercial.verify_transition(None, candidate["snapshot"], previous, candidate["document"],
+                lambda source_id: source_files.get("sources/" + source_id))
             workshares.verify_transition(None, candidate["snapshot"], previous, candidate["document"],
                 lambda source_id: source_files.get("sources/" + source_id))
             workflows.verify_transition(None, candidate["snapshot"], previous, candidate["document"],
@@ -617,7 +632,7 @@ def validate_import(context, rows, events, source_version, source_files=None):
         fail("The complete case is missing an original saved installation.")
 
 
-def html_document(row, original_workshare=None):
+def html_document(row, original_workshare=None, original_commercial=None):
     value, document = row["preview"], row["preview"]["document"]
     e = lambda item: escape(str(item if item is not None else "Unentered"), quote=True)
     def table(headings, values):
@@ -637,6 +652,7 @@ def html_document(row, original_workshare=None):
         body += "<h2>" + label + "</h2>" + table(["Field", "Selected value"],
             [[e(name), pretty(item)] for name, item in document[key].items()])
     body += dispatch.installation_section(document)
+    body += commercial.html_section(original_commercial)
     body += workshares.html_section(original_workshare)
     body += workflows.html_section(document)
     body += "<h2>Acceptance and corrections</h2>" + table(
@@ -689,7 +705,13 @@ def selected_files(context, rows, installation_id, selected_revision, source_fil
             fail("Export the complete recurring-work source with the selected Installation.")
         workflows.verify_document(None, row["preview"]["snapshot"], row["preview"]["document"],
                                   lambda source_id: source_files.get("sources/" + source_id))
-    document = html_document(row, original)
+    original_commercial = None
+    if row["preview"]["document"].get("commercial"):
+        if source_files is None:
+            fail("Export the complete original quotation and customer-response source files with this Installation.")
+        original_commercial = commercial.verify_document(None, row["preview"]["snapshot"], row["preview"]["document"],
+            lambda source_id: source_files.get("sources/" + source_id))
+    document = html_document(row, original, original_commercial)
     selection = {"schema": SELECTION_SCHEMA, "caseId": context["program"]["id"],
                  "caseVersion": context["program"]["version"], "installationId": ident,
                  "revision": number, "sha256": row["sha256"],

@@ -105,7 +105,7 @@ export function createMcpToolHandler(provider,{bearerToken,authorization,allowed
       const recoveryCode=e.code==='RESOURCE_STALE'||e.code==='CHALLENGE_MISMATCH'
         ? 'discovery_stale_terms' : e.code==='TOOL_NOT_FOUND'
           ? 'mcp_tool_missing' : 'unknown_upstream_error';
-      const recovery=explainFailure({stage:name==='bazaar_search'?'discovery':'mcp',reason:recoveryCode});
+      const recovery=explainFailure({stage:['bazaar_search','bazaar_resources'].includes(name)?'discovery':'mcp',reason:recoveryCode});
       // Preserve the provider's deliberate JSON details for original operation recovery.
       let details;
       try {if(plain(e.details))details=JSON.parse(JSON.stringify(e.details));}catch{}

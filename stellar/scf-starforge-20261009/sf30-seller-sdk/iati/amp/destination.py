@@ -748,6 +748,16 @@ class _Comparison:
                 self.generated_field("NATIVE_VERSION", path, expected, actual,
                                      "The actual native version is retained, not substituted for the selected request version.")
             return
+        # The original create operation initializes this version container on
+        # save. Descend into its actual fields even when the parent is exported
+        # as read-only; an entire object must not mask a bad or missing version.
+        if (field and field["path"] == "activity_group" and isinstance(actual, dict)
+                and (expected is MISSING or expected is None or isinstance(expected, dict))):
+            before = expected if isinstance(expected, dict) else {}
+            for key in sorted(set(before) | set(actual)):
+                self.node(before.get(key, MISSING), actual.get(key, MISSING),
+                          field["child_map"].get(key), _ptr(path, key))
+            return
         if _generated(field, actual, expected):
             if field and field["record"].get("id") is True and (
                     actual is MISSING or actual is None or
@@ -899,6 +909,18 @@ def compare_project(request_json, received_json, capture):
         result.difference("FULL_PROJECT_RESULT_REQUIRED", "/internal_id",
                           request.get("internal_id", MISSING), received.get("internal_id", MISSING),
                           "Receive the full original /activity/projects/{internal_id} record after the native write.")
+    actual_group = received.get("activity_group")
+    actual_version = actual_group.get("version", MISSING) if isinstance(actual_group, dict) else MISSING
+    expected_group = request.get("activity_group")
+    expected_version = expected_group.get("version", MISSING) if isinstance(expected_group, dict) else MISSING
+    if type(actual_version) is not int or actual_version < 0:
+        result.difference("FULL_PROJECT_VERSION_REQUIRED", "/activity_group/version",
+                          expected_version, actual_version,
+                          "The full persisted native project must retain its nonnegative version.")
+    elif type(expected_version) is int and actual_version < expected_version:
+        result.difference("FULL_PROJECT_VERSION_REGRESSED", "/activity_group/version",
+                          expected_version, actual_version,
+                          "The full persisted native project precedes the selected original version.")
     if request.get("internal_id") is not None and not _equal(request.get("amp_id"), received.get("amp_id")):
         result.difference("UPDATE_PROJECT_BINDING", "/amp_id",
                           request.get("amp_id", MISSING), received.get("amp_id", MISSING),

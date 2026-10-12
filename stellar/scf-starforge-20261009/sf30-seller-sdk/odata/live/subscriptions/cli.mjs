@@ -5,12 +5,15 @@ import {pathToFileURL} from 'node:url';
 import {writeFile} from 'node:fs/promises';
 import {openSubscriptionOperator,OPERATIONS} from './operator.mjs';
 import {startSubscriptionServer} from './server.mjs';
-import {need,parse,read,privateDirectory,atomic} from './files.mjs';
+import {need,parse,read,privateDirectory,atomic,immutable,bytes} from './files.mjs';
 export const HELP='OData collection subscriptions\n\n'+
  'starforge odata-subscriptions --connection private-connection.json status\n'+
  'starforge odata-subscriptions --connection private-connection.json OPERATION --request original-request.json [--out result.json]\n'+
- 'starforge odata-subscriptions --connection private-connection.json serve [--port 0]\n\n'+
+ 'starforge odata-subscriptions --connection private-connection.json serve [--port 0]\n'+
+ 'starforge odata-subscriptions managed-review --request receiving-selection.json --out reviewed-input.json\n'+
+ 'starforge odata-subscriptions managed-receive --request reviewed-input.json [--out receiving-result.json]\n\n'+
  'Operations: '+OPERATIONS.join(', ')+'.\n\n'+
+ 'Managed receiving uses the original READY runtime and Applications controller through Review, Save, Start, complete native backup/download/restore, Stop and same-entry reopen. Repeat the same reviewed input to continue. See MANAGED_RECEIVING.md.\n\n'+
  'Every operation receives the same JSON object used by the local UI and MCP provider. Publisher create/append retain requestId and the complete selected body. Retry the same file to resume. Deliveries select fromRevision/toRevision; customer exports select expectedRevision and expectedEditionSha256. Inputs and output aliases are declared in the private connection. The command reports complete native receipts as JSON. See SUBSCRIPTIONS.md and connection.example.json for the complete workflow.\n';
 function args(argv){
  const result={};for(let i=0;i<argv.length;i++){const item=argv[i];
@@ -21,6 +24,20 @@ function args(argv){
 }
 export async function main(argv=process.argv.slice(2)){
  const flags=args(argv);if(flags.help||!flags.operation){process.stdout.write(HELP);return;}
+ if(['managed-review','managed-receive'].includes(flags.operation)){
+  need(flags.request&&!flags.connection&&!flags.port&&(flags.operation!=='managed-review'||flags.out),
+   'CLI','Use a private --request and --out for managed-review; managed-receive takes the reviewed --request.',400);
+  const input=parse(await read(resolve(flags.request),1048576));
+  const native=await import('./managed-receiving.mjs');
+  const result=await native[flags.operation==='managed-review'?'prepareManagedSubscriptionReceiving':'runManagedSubscriptionReceiving'](input);
+  if(flags.out){
+   const output=resolve(flags.out),parent=dirname(output);await privateDirectory(parent);
+   need(output!==resolve(flags.request)&&(!input.subscriptionConnection||output!==resolve(input.subscriptionConnection)),
+    'OUTPUT','Keep the selected original input and connection separate from the result.',400);
+   await immutable(parent,output.slice(parent.length+1),bytes(result));
+  }
+  process.stdout.write(bytes(result));return result;
+ }
  need(flags.connection,'CLI','Choose the original private connection file.',400);
  if(flags.operation==='serve'){
   need(!flags.request&&!flags.out,'CLI','Serve uses only connection and optional port.',400);

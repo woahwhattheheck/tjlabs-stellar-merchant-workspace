@@ -380,3 +380,14 @@ Import the selected handover through the original case receiver. Its response in
 ## Original implementation evidence
 
 The current complete catalogue adds `merchant_grant_implementation_source`, `merchant_grant_implementation_preview` and `merchant_grant_implementation_prepare`. These methods use the original case version and command journal. Preview/prepare accept the existing whole-file hash-verified input and optional JSON-pointer transport. `merchant_grant_export` supports `implementation` (case/review) and `implementation-original` (case/source/SHA-256). Completion preview/prepare accept optional ordered `implementationReviewIds` (up to 20 distinct original reviews). See [the complete operator, typed-client and source-provenance contract](IMPLEMENTATION_EVIDENCE.md). The selected complete catalogue has 67 tools; previous receipt records retain their original catalogue identities.
+
+## Contributor Engagements
+
+The complete typed client, eight Merchant tools and original Forecast/Portfolio receiving course are documented in [Contributor Engagements](ENGAGEMENTS.md#typed-client-and-merchant-mcp). They retain the original source attachments, immutable agreement reviews, decimal amounts, command identities and complete case exports. Both `engagement.prepare` and `engagement.receiving` require a nonempty recorded note; current Work/Invoice and Installation operations remain on their original implementations.
+
+
+### Client and provider shutdown
+
+`detach(expectedInstanceId?)` stops new client requests before it waits for already accepted operations. It coalesces concurrent detach/close calls, reads the final retained connection after those operations drain, and stops only its own original launcher. Borrowed application processes remain owned by their original host. After successful detach, an explicit `open()` can reconnect the same client. A failed detach keeps admission stopped and preserves the same child/connection for another detach attempt. Permanent `close()` keeps admission stopped and can be called again after a failed close; it does not create a replacement launcher.
+
+The original launch process remains owned through its `close` event and complete stdout/stderr closure, including late output errors. Its result retains the first output/launcher error and a bounded diagnostic tail. Startup failures remain primary if stopping that same child also reports an error. The Merchant provider drains all accepted calls, then attempts every retained file reader and client close even when another independent owner fails. Retry `close()` on that same provider after resolving the reported owner failure; its original objects and immutable results remain retained.

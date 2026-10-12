@@ -137,7 +137,15 @@ starforge grant-workspace import-bundle --workspace /absolute/private/scf-receiv
 starforge grant-workspace serve --workspace /absolute/private/scf-receiving
 ```
 
-The receiving plan has a new ID. It retains the complete original revision sequence, saved timestamps, notes, historical reports, content digests and exact source bytes. The response contains its ID and saved contents, plus the exact received ZIP's SHA-256. The browser can open the same ZIP directly through its existing import control. The native import verifies bundle membership, file lengths and hashes, revision continuity, original source identity and the original model inputs. It validates each historical scenario through the current calculator while retaining that revision's original report and saved timestamp. Subsequent changes use the current original calculator.
+To finish a delivery for an earlier saved edition after later work has been saved, select that original revision explicitly:
+
+```sh
+starforge grant-workspace export --workspace /absolute/private/scf-planning --plan plan-EXACT_ID --revision 5 --output /absolute/delivery/scf-original-plan-r5.zip
+```
+
+Choose either `--expected-revision` or `--revision`. The first requires the current plan to match the reviewed revision. The second exports the named saved revision and every original revision through it, even when the source workspace has later saved work. Both use the same eleven-file bundle and original exporter. The active plan, later revisions and saved requests remain available in the source workspace. The export response reports the selected revision and the source workspace's current revision.
+
+The receiving plan has a new ID. It retains the complete exported revision sequence, saved timestamps, notes, historical reports, content digests and exact source bytes. The response contains its ID and saved contents, plus the exact received ZIP's SHA-256. The browser can open the same ZIP directly through its existing import control. The native import verifies bundle membership, file lengths and hashes, revision continuity, original source identity and the original model inputs. It validates each historical scenario through the current calculator while retaining that revision's original report and saved timestamp. Subsequent changes use the current original calculator.
 
 ## Transfer every saved plan and resume an interrupted receiving operation
 

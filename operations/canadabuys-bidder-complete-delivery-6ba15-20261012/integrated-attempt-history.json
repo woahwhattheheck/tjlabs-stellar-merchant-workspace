@@ -1,0 +1,156 @@
+{
+  "schema": "commons.canadabuys.integrated-receiving-history.v1",
+  "operationId": "CANADABUYS-BIDDER-DESK-6BA15-20261012",
+  "publishedReceivingSource": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "pullRequest": 585,
+    "mergeCommit": "c31ff5e7be076f71d21e9d5eea9b64c35cdca3b0",
+    "head": "f14b10fb5cbca6bf7cdd593b86278f68abc822f7",
+    "input": {
+      "sha256": "cc200bbd28811ce975d9eb801b1c06f1586e0b39295b384f9c329d1fd9cbddbe",
+      "bytes": 2647299
+    }
+  },
+  "originalSession": 12385,
+  "originalCell": "1800",
+  "actualToolResults": [
+    {
+      "name": "admission",
+      "chunk_id": "fc0517",
+      "wall_time_seconds": 1.000921511,
+      "session_id": 12385,
+      "original_token_count": 119,
+      "output": "{\"phase\": \"CANADABUYS_COMPLETE_INPUT_READY\", \"namespacePid\": 2, \"selfStat\": \"3397506 (python3) R 3397503 3397503 3397503 0 -1 4194560 3688 703 0 0 2 1 0 0 20 0 1 0 11838139 41750528 2720 18446744073709551615 4329472 32290168 140734564851136 0 0 0 0 16781312 2 0 0 0 17 1 0 0 0 0 0 23068672 32290168 717922304 140734564853121 140734564854946 140734564854946 140734564859822 0\\n\", \"bytes\": 2998393, \"sha256\": \"2efb08273f6d73783afd43eb2cd3c0d211506aa8cec5914c4b9bb1e5f002dd99\"}\n"
+    },
+    {
+      "name": "complete_input",
+      "chunk_id": "0e4289",
+      "wall_time_seconds": 1.00064847,
+      "session_id": 12385,
+      "original_token_count": 285,
+      "output": "{\"phase\": \"CANADABUYS_COMPLETE_SOURCE_MATERIALIZED\", \"directory\": \"/dev/canadabuys-complete-source-6ba15-ggwhxb3l\", \"entry\": \"/dev/canadabuys-complete-source-6ba15-ggwhxb3l/operations/canadabuys-bidder-complete-delivery-6ba15-20261012/continue.py\", \"files\": 7, \"pythonAst\": \"PASS\"}\n{\"phase\": \"COMPLETE_CANADABUYS_INPUT_VERIFIED\", \"sourceCommit\": \"67d6978cb4b5b8be5137e71c290ec8929fedfc4e\", \"publishedInput\": {\"sha256\": \"cc200bbd28811ce975d9eb801b1c06f1586e0b39295b384f9c329d1fd9cbddbe\", \"bytes\": 2647299}, \"runtime\": {\"node\": \"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node\", \"playwright\": \"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs\", \"chromium\": \"/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell\"}, \"keepAlive\": true}\n{\"event\": \"CANADABUYS_DIRECTORY_READY\", \"at\": \"2026-10-12T21:15:12Z\", \"directory\": \"/dev/canadabuys-bidder-6ba15-fivdbqw4\", \"directoryAttempts\": [{\"parent\": \"/dev/shm\", \"reason\": \"insufficient free space for the complete source and workspaces\", \"freeBytes\": 10244096, \"freeInodes\": 1033885}]}\n"
+    },
+    {
+      "name": "poll",
+      "chunk_id": "c263db",
+      "wall_time_seconds": 5.000745669,
+      "session_id": 12385,
+      "original_token_count": 1003,
+      "output": "{\"event\": \"CANADABUYS_NATIVE_STARTED\", \"at\": \"2026-10-12T21:15:14Z\", \"namespacePid\": 6, \"command\": [\"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node\", \"--no-warnings\", \"/dev/canadabuys-bidder-6ba15-fivdbqw4/programme/receiving/run-canadabuys-bidder-receiving.mjs\", \"--application\", \"/dev/canadabuys-bidder-6ba15-fivdbqw4/application-source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys\", \"--legacy-application\", \"/dev/canadabuys-bidder-6ba15-fivdbqw4/original-v1\", \"--fixture\", \"/dev/canadabuys-bidder-6ba15-fivdbqw4/programme/receiving/canadabuys-bidder-receiving-input.json\", \"--output\", \"/dev/canadabuys-bidder-6ba15-fivdbqw4/working-delivery\", \"--playwright\", \"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs\", \"--chromium\", \"/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell\"]}\n{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"01-original-v1-intake\",\"status\":\"PASS\"}\n{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"02-native-v2-migration\",\"status\":\"PASS\"}\n{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"03-original-award-http-intake\",\"status\":\"PASS\"}\n{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"04-original-command-response-loss\",\"status\":\"PASS\"}\n{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"05-evidence-bodies-and-unresolved-link\",\"status\":\"PASS\"}\n{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"06-explicit-requirement-revisions\",\"status\":\"PASS\"}\n{\"event\": \"CANADABUYS_NATIVE_EXITED\", \"at\": \"2026-10-12T21:15:16Z\", \"namespacePid\": 6, \"exitCode\": -9}\n{\"event\": \"CANADABUYS_DELIVERY_FAILURE\", \"at\": \"2026-10-12T21:15:16Z\", \"type\": \"RuntimeError\", \"message\": \"CanadaBuys native receiving exited with code -9\", \"traceback\": \"Traceback (most recent call last):\\n  File \\\"/dev/canadabuys-complete-source-6ba15-ggwhxb3l/operations/canadabuys-bidder-complete-delivery-6ba15-20261012/complete_canadabuys_delivery.py\\\", line 298, in main\\n    raise RuntimeError(\\\"CanadaBuys native receiving exited with code \\\" + str(code))\\nRuntimeError: CanadaBuys native receiving exited with code -9\\n\"}\n{\"event\": \"CANADABUYS_ARCHIVE_COMPLETE\", \"at\": \"2026-10-12T21:15:17Z\", \"path\": \"/dev/CanadaBuys_Bidder_Desk_Checkpoint_236681a809984739.zip\", \"bytes\": 2216019, \"sha256\": \"4f787ec32bffe4616f8b1ff2739868143f5b6c81ba2797411364501f90a3bbd2\", \"memberCount\": 238, \"outcome\": \"FAILED\"}\n{\"event\": \"CANADABUYS_PRESERVATION_FAILURE\", \"at\": \"2026-10-12T21:15:17Z\", \"type\": \"RuntimeError\", \"message\": \"Complete delivery save failed: library upload failed: uploads[0] create cannot include replacement metadata\\n\", \"traceback\": \"Traceback (most recent call last):\\n  File \\\"/dev/canadabuys-complete-source-6ba15-ggwhxb3l/operations/canadabuys-bidder-complete-delivery-6ba15-20261012/complete_canadabuys_delivery.py\\\", line 318, in main\\n    preserve(status)\\n  File \\\"/dev/canadabuys-complete-source-6ba15-ggwhxb3l/operations/canadabuys-bidder-complete-delivery-6ba15-20261012/complete_canadabuys_delivery.py\\\", line 222, in preserve\\n    uploads = save_delivery([destination, guide, ROOT / \\\"execution.json\\\"])\\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/dev/canadabuys-complete-source-6ba15-ggwhxb3l/operations/canadabuys-bidder-complete-delivery-6ba15-20261012/complete_canadabuys_delivery.py\\\", line 180, in save_delivery\\n    raise RuntimeError(\\\"Complete delivery save failed: \\\" + completed.stderr.decode(\\\"utf-8\\\", \\\"replace\\\")[-1600:])\\nRuntimeError: Complete delivery save failed: library upload failed: uploads[0] create cannot include replacement metadata\\n\\n\", \"directory\": \"/dev/canadabuys-bidder-6ba15-fivdbqw4\"}\n{\"event\": \"AWAITING_SAME_OPERATION_COMMAND\", \"at\": \"2026-10-12T21:15:17Z\", \"namespacePid\": 2, \"directory\": \"/dev/canadabuys-bidder-6ba15-fivdbqw4\", \"deliveryExitCode\": 1}\n"
+    },
+    {
+      "name": "poll",
+      "chunk_id": "bff5c2",
+      "wall_time_seconds": 5.000567948,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "53522b",
+      "wall_time_seconds": 5.001068372,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "4e6ad0",
+      "wall_time_seconds": 5.000885605,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "2819a1",
+      "wall_time_seconds": 5.000895255,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "75cf2c",
+      "wall_time_seconds": 5.000904007,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "9a3290",
+      "wall_time_seconds": 5.001860626,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "b62dcd",
+      "wall_time_seconds": 5.00337607,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "75e3af",
+      "wall_time_seconds": 5.001613898,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "3348d7",
+      "wall_time_seconds": 5.001896677,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "12e1ae",
+      "wall_time_seconds": 5.001110713,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "741db0",
+      "wall_time_seconds": 5.000630591,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "name": "poll",
+      "chunk_id": "0f18fc",
+      "wall_time_seconds": 5.001788707,
+      "session_id": 12385,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "result": {
+    "nativeExitCode": -9,
+    "completedPhases": 6,
+    "providerSaveCompleted": false,
+    "note": "The native Node process exited after six phases before a browser result. The producer verified its complete local checkpoint; the canonical helper rejected create metadata before provider preparation. The original command stream subsequently lost its transport. The later new boot has a fresh filesystem."
+  },
+  "selectedCorrection": {
+    "createRequest": "local_path, purpose, library_artifact_type",
+    "runtime": "Select the actual installed executables and original canonical helper location explicitly.",
+    "buffers": "Full application, input and historical source bodies remain on disk; duplicate Python source buffers are released before the native journey.",
+    "observability": "Record actual boot identity, owned process memory and cgroup memory events during the complete native delivery."
+  },
+  "actualControllerTermination": {
+    "state": "CONTROLLER_ERROR",
+    "session_id": 12385,
+    "sent": true,
+    "error": "write_stdin failed: Unified exec process failed: exec-server transport disconnected; failed to resume exec-server session: recovery timed out after 25s"
+  }
+}

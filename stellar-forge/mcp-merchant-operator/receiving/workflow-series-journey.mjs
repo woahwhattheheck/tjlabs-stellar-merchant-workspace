@@ -13,6 +13,7 @@ import { MerchantWorkflowSeriesClient, writeWorkflowSeriesFile } from '../consol
 import { reopenWorkflowSeriesHandover } from '../console/workflow-series-handover.mjs';
 import { cycleId } from '../console/workflow-series-records.mjs';
 import { receiveMerchantWorkflowRecipes } from './workflow-recipes-journey.mjs';
+import { readCompletedWorkflowCalls, verifyRetainedNativeCall } from './workflow-native-recovery.mjs';
 import { verifyNativeArtifacts, prepareNativeArtifactReport, retainNativeInspection, nativeReceivingAccessToken, writeNativeArtifactSelection } from './workflow-native-artifacts.mjs';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
@@ -33,7 +34,8 @@ async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, 
   const baselinePacket = JSON.parse(await readFile(join(directory, 'workflow-complete-profile.json'), 'utf8'));
   const { contentSha256, ...originalBaseline } = baselinePacket;
   assert.equal(sha(canonical(originalBaseline)), contentSha256);
-  assert.equal(baselinePacket.profile.id, baseline.profileId); assert.equal(baselinePacket.calls.length, 7);
+  assert.equal(baselinePacket.profile.id, baseline.profileId);
+  assert.equal(baselinePacket.calls.length, baseline.nativeCalls?.length ?? 7);
   const observed = { operationId: report.operationId, sourceCommit, directory,
     seriesId: report.seriesId, reopenedAt: new Date().toISOString(), workspaces: [], customers: [] };
   try {
@@ -51,20 +53,20 @@ async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, 
       assert.equal(series.cycles.filter(value => value.state === 'COMPLETE').length, 2);
       const customerProfile = await selected.profile(report.profileId);
       const baselineProfile = await selected.profile(report.baseline.profileId);
-      assert.equal(customerProfile.calls.length, 24); assert.equal(baselineProfile.calls.length, 7);
+      assert.equal(customerProfile.calls.length, 24);
+      assert.equal(baselineProfile.calls.length, baselinePacket.calls.length);
       const calls = [...baselinePacket.calls, ...report.originalRecipe.nativeCalls,
         ...report.periods.flatMap(period => period.nativeCalls)];
-      assert.equal(calls.length, 31);
+      assert.equal(calls.length, 24 + baselinePacket.calls.length);
       for (const call of calls) {
         const retained = await selected.console.json('call/' + call.id);
-        assert.equal(retained.state, 'COMPLETE'); assert.equal(retained.tool, call.tool);
-        assert.equal(retained.argumentsSha256, call.argumentsSha256);
-        assert.equal(retained.resultSha256, call.resultSha256);
-        assert.equal(sha(retained.resultJson), call.resultSha256);
+        verifyRetainedNativeCall(call, retained);
       }
       const baselineRun = (await selected.console.run(baseline.run.id)).run;
       assert.equal(baselineRun.state, 'COMPLETE'); assert.equal(baselineRun.stepsComplete, 7);
       assert.equal(baselineRun.id, baseline.run.id); assert.equal(baselineRun.revision, baseline.run.revision);
+      const completedBaseline = await readCompletedWorkflowCalls(baselineRun, path => selected.console.json(path));
+      assert.equal(completedBaseline.original.length, 7); assert.equal(completedBaseline.effective.length, 7);
       for (const period of report.periods) {
         const reopened = await selected.cycle(period.id);
         assert.equal(reopened.run.id, period.run.id); assert.equal(reopened.run.state, 'COMPLETE');
@@ -115,6 +117,8 @@ export async function receiveMerchantWorkflowSeries({
   directory = resolve(directory);
   const recipe = await receiveMerchantWorkflowRecipes({ directory, chromiumPath, playwrightModule, sourceCommit, openSession });
   assert.equal(recipe.result, 'PASS');
+  const baseline = await optional(join(directory, 'workflow-native-run.json'));
+  assert.equal(baseline?.result, 'PASS'); assert.equal(baseline.profileId, recipe.baseline.profileId);
   const checkpoint = join(directory, 'workflow-series-receiving-checkpoint.json');
   const completed = join(directory, 'workflow-series-native-run.json');
   const prior = await optional(completed);
@@ -451,7 +455,7 @@ export async function receiveMerchantWorkflowSeries({
       const pageOfPeriods = await selected.series(seriesId);
       assert.equal(pageOfPeriods.total, 2); assert.equal(pageOfPeriods.cycles.filter(value => value.state === 'COMPLETE').length, 2);
       assert.equal((await selected.profile(report.profileId)).calls.length, 24);
-      assert.equal((await selected.profile(report.baseline.profileId)).calls.length, 7);
+      assert.equal((await selected.profile(report.baseline.profileId)).calls.length, baseline.nativeCalls?.length ?? 7);
       for (const period of report.periods) {
         const reopened = await selected.cycle(period.id);
         assert.equal(reopened.run.id, period.run.id); assert.equal(reopened.run.state, 'COMPLETE');

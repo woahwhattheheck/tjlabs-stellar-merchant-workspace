@@ -188,7 +188,7 @@ async function configuredIncidentSources(configPath) {
     directories.add(directory);
     sources.set(id,{id,label,directory,store,...(recovery?{recoveryDirectory:recovery.directory,recoveryIdentity:recovery}:{}),
       configuration:{revision:state.configRevision,sha256:state.configHash},
-      routeCache:new Map(),objectSessions});
+      routeCache:new Map(),objectSessions,ckanWorkspaces});
   }
   return {path,sha256:createHash('sha256').update(bytes).digest('hex'),sources};
 }
@@ -482,6 +482,8 @@ export async function openIncidentSources({configPath,environment=process.env}={
           throw fail('INCIDENT_RECOVERY_PROFILE_LIMIT','Eight received stores are already open. Reopen this console to select another group.',409);
         const state=value.state,objectSessions=new Map(state.config.merchants.filter(row=>row.object).map(row=>
           [row.id,{id:row.id,label:row.label,directory:row.object.directory}]));
+        const ckanWorkspaces=new Map(state.config.merchants.filter(row=>row.ckan).map(row=>
+          [row.id,{id:row.id,label:row.label,directory:row.ckan.directory}]));
         restored={id,label:source.label.replace(/ · received .+$/,'')+' · received '+input.receiveName,
           directory:value.directory,store:await openIncidentStore(value.directory),
           configuration:{revision:state.configRevision,sha256:state.configHash},routeCache:new Map(),objectSessions,ckanWorkspaces,
