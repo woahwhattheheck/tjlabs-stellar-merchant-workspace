@@ -161,6 +161,7 @@ export function collectionsReport(data, query = {}) {
       followUpsDue: group.followUpsDue, amountDue: money(group.amount, group.currency)}))};
 }
 export function collectionReminder(summary, issuer) {
+  need(summary.status !== 'FUTURE', 'COLLECTION_CASE_FUTURE', 'Use a date on or after this case opened.');
   const invoice = summary.invoice, due = minor(invoice.amountDue, invoice.currency) > 0n;
   const subject = (due ? 'Invoice reminder ' : 'Invoice balance update ') + invoice.number;
   const text = ['Hello ' + invoice.customerName + ',', '',
@@ -192,7 +193,8 @@ export function collectionsCsv(report) {
       row.promise?.dueDate, row.promise?.amount, row.promise?.status, row.dispute?.amount, row.dispute?.status])]);
 }
 export function collectionCaseFiles(record, data, asOf, issuer) {
-  const summary = projectCollection(record, data, asOf), reminder = collectionReminder(summary, issuer);
+  const summary = projectCollection(record, data, asOf);
+  const reminder = summary.status === 'FUTURE' ? null : collectionReminder(summary, issuer);
   const events = record.events.filter(event => event.effectiveDate <= asOf);
   const metadata = {schema: COLLECTION_CASE_SCHEMA, asOf, summary, record: structuredClone(record)};
   const html = '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">' +
@@ -205,8 +207,9 @@ export function collectionCaseFiles(record, data, asOf, issuer) {
       '</td><td>' + escape(event.actor) + '</td><td><pre>' + escape(event.note ?? '') +
       '</pre>' + (event.amount ? escape(summary.currency.code + ' ' + event.amount) : '') +
       (event.dueDate ? ' · Due ' + escape(event.dueDate) : '') + '<p>' + escape(event.reference ?? '') + '</p></td></tr>').join('') +
-    '</tbody></table><h2>Prepared customer message</h2><p>' + escape(reminder.subject) + '</p><pre>' +
-    escape(reminder.text) + '</pre><p class="meta">Customer message preparation and recorded contact history are separate operations.</p></html>';
+    '</tbody></table>' + (reminder ? '<h2>Prepared customer message</h2><p>' + escape(reminder.subject) + '</p><pre>' +
+    escape(reminder.text) + '</pre><p class="meta">Customer message preparation and recorded contact history are separate operations.</p>' :
+    '<p class="meta">This case opens on ' + escape(record.openedDate) + '. Customer reminders are available from that date.</p>') + '</html>';
   const files = [
     {name: 'case.json', type: 'application/json; charset=utf-8', bytes: Buffer.from(json(metadata))},
     {name: 'case.csv', type: 'text/csv; charset=utf-8', bytes: Buffer.from(csv([
@@ -214,7 +217,8 @@ export function collectionCaseFiles(record, data, asOf, issuer) {
       ...events.map(event => [event.id, event.effectiveDate, event.occurredDate, event.kind, event.actor, event.amount,
         record.currency.code, event.dueDate, event.outcome, event.note, event.reference])]))},
     {name: 'case.html', type: 'text/html; charset=utf-8', bytes: Buffer.from(html)},
-    {name: 'reminder.txt', type: 'text/plain; charset=utf-8', bytes: Buffer.from('Subject: ' + reminder.subject + '\n\n' + reminder.text)},
+    ...(reminder ? [{name: 'reminder.txt', type: 'text/plain; charset=utf-8',
+      bytes: Buffer.from('Subject: ' + reminder.subject + '\n\n' + reminder.text)}] : []),
   ];
   files.push({name: 'manifest.json', type: 'application/json; charset=utf-8', bytes: Buffer.from(json({
     schema: 'stellar-forge.merchant-collection-files.v1', caseId: record.id, asOf,

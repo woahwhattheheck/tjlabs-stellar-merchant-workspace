@@ -104,7 +104,6 @@ export class CollectionsWorkspace {
   async reminder(id, query = {}) {
     return this.workspace.serial(async () => {
       const summary = this.summary(id, query.asOf ?? today());
-      need(summary.status !== 'FUTURE', 'COLLECTION_CASE_FUTURE', 'Use a date on or after this case opened.');
       return {...collectionReminder(summary, this.receivables.data().issuer),
         revision: this.workspace.state.revision, workspaceId: this.workspaceId()};
     });
@@ -112,6 +111,8 @@ export class CollectionsWorkspace {
   async file(id, name, query = {}) {
     return this.workspace.serial(async () => {
       const row = this.row(id), asOf = dateValue(query.asOf ?? today(), 'export date');
+      need(name !== 'reminder.txt' || asOf >= row.openedDate, 'COLLECTION_CASE_FUTURE',
+        'Use a date on or after this case opened.');
       const files = collectionCaseFiles(row, this.receivables.data(), asOf, this.receivables.data().issuer);
       const selected = files.find(file => file.name === name);
       need(selected, 'COLLECTION_FILE_NOT_FOUND', 'Choose an available case export or reminder file.', 404);

@@ -38,7 +38,7 @@ export function createCollectionsUi(host) {
     }
   }
   function filtered() {
-    const search = String(host.getSearch() || '').toLowerCase();
+    const search = String(host.getSearch() || '').trim().toLowerCase();
     return list.cases.filter(row => (status === 'ALL' || row.status === status) && (!owner || row.owner === owner) &&
       (!search || [row.title,row.owner,row.invoice.number,row.invoice.customerName].some(value => String(value || '').toLowerCase().includes(search))));
   }
@@ -51,8 +51,8 @@ export function createCollectionsUi(host) {
       const group = totals.get(key); group.cases++; group.followUpsDue += Number(row.followUpDue);
       group.units += host.units(row.invoice.amountDue,row.currency);
     }
-    const search = String(host.getSearch() || '').toLowerCase();
-    const unassigned = list.unassigned.filter(row => !search || [row.number,row.customerName].some(value => String(value || '').toLowerCase().includes(search)));
+    const search = String(host.getSearch() || '').trim().toLowerCase();
+    const unassigned = owner ? [] : list.unassigned.filter(row => !search || [row.number,row.customerName].some(value => String(value || '').toLowerCase().includes(search)));
     return '<section class="panel"><div class="panel-head"><div><h2>Collections workbench</h2><p class="small-text muted">Assign follow-ups, retain conversations, and resolve invoice questions against the original account balance.</p></div><div class="row">' +
       button('New case','new','','data-write') + button('Download CSV','export','','data-name="collections.csv"') +
       button('Download JSON','export','','data-name="collections.json"') + '</div></div>' +
@@ -77,7 +77,7 @@ export function createCollectionsUi(host) {
         unassigned.map(row => '<tr><td>' + e(row.number) + '<span class="subline">' + e(row.customerName) +
           '</span></td><td>' + row.overdueDays + '</td><td class="num">' + format(row) + '</td><td>' +
           (row.existingCaseId ? button('Open retained case','open',row.existingCaseId) : button('Assign follow-up','new',row.id,'data-write')) +
-          '</td></tr>').join('') + '</tbody></table></div>' : '<div class="panel-body"><p>' + (listError ? 'Refresh the collection data to see unassigned invoices.' : 'Every overdue invoice in this account view has an open case.') + '</p></div>') +
+          '</td></tr>').join('') + '</tbody></table></div>' : '<div class="panel-body"><p>' + (listError ? 'Refresh the collection data to see unassigned invoices.' : owner ? 'Choose All owners to see overdue invoices without an open case.' : 'No overdue invoices without an open case match this account view.') + '</p></div>') +
       '</section>';
   }
   function invoiceAction(invoice) {
@@ -119,20 +119,24 @@ export function createCollectionsUi(host) {
       (row.promise ? e(row.currency.code + ' ' + row.promise.amount + ' promised by ' + row.promise.dueDate + ' · ' + label(row.promise.dueStatus || row.promise.status)) : 'No promise recorded.') +
       '</p><p>' + (row.dispute ? e(row.currency.code + ' ' + row.dispute.amount + ' · ' + label(row.dispute.category) + ' · ' + label(row.dispute.status)) : 'No dispute recorded.') +
       '</p></section><section class="section"><h3>Customer preparation and case files</h3><div class="row wrap">' +
-      button('Prepare customer reminder','reminder',id) +
+      (row.status === 'FUTURE' ? '<p class="small-text muted">Customer reminders are available from ' + e(record.openedDate) + '.</p>' :
+        button('Prepare customer reminder','reminder',id)) +
       ['case.json','case.csv','case.html','manifest.json'].map(name => button(name,'download',id,'data-name="' + name + '"')).join('') +
       '</div></section><section class="section"><h3>Retained history</h3>' + history(record) + '</section>');
   }
   function baseForm(formId, kind, row, values) {
     const caseId = row?.id || '';
     const retained = draft?.formId === formId && draft.caseId === caseId && draft.kind === kind &&
-      draft.workspaceId === (selected?.workspaceId || list.workspaceId) ? draft : null;
+      draft.workspaceId === (selected?.workspaceId || list.workspaceId) &&
+      (row || !values.invoiceId || draft.values?.invoiceId === values.invoiceId) ? draft : null;
     const version = retained?.expectedVersion ?? row?.version ?? 0;
     const data = {...values,...retained?.values};
     const stale = row && version !== row.version;
     return {data, version, start:'<form id="' + formId + '" data-id="' + e(caseId) + '" data-kind="' + e(kind) +
       '" data-version="' + version + '" data-workspace="' + e(selected?.workspaceId || list.workspaceId) + '">' +
-      (retained ? '<p class="notice">Your retained form is open.</p>' : '') +
+      (retained ? '<p class="notice">Your retained form is open.</p>' +
+        button('Reset to current values','reset-form',caseId,'data-form="' + formId + '" data-kind="' + e(kind) +
+          '" data-invoice="' + e(data.invoiceId || '') + '"') : '') +
       (stale ? '<p class="notice">This form uses case version ' + version + '; the current history is version ' + row.version +
         '. Review that current history before applying these edits.</p>' + button('Use reviewed current version','adopt',caseId) : '')};
   }
@@ -144,6 +148,7 @@ export function createCollectionsUi(host) {
       selected = await api.collectionCase(id,{asOf:asOf()}); row = selected.collectionCase;
     } else selected = null;
     if (!list.workspaceId) await loadList();
+    if (!row && !list.workspaceId) throw new Error(listError || 'Refresh the accounting workspace before opening a case.');
     const defaults = row ? {title:row.title,owner:row.owner,priority:row.priority,nextActionDate:row.nextActionDate,
       effectiveDate:asOf(),invoiceId:row.invoiceId,note:''} : {title:'Invoice follow-up',owner:'Accounts receivable',
       priority:'NORMAL',nextActionDate:asOf(),effectiveDate:asOf(),invoiceId:id,note:''};
@@ -217,7 +222,7 @@ export function createCollectionsUi(host) {
   async function click(control) {
     const action = control.dataset.action;
     if (!action?.startsWith('collection-')) return false;
-    if (host.isLocked() && ['collection-new','collection-edit','collection-activity','collection-transition','collection-adopt'].includes(action))
+    if (host.isLocked() && ['collection-new','collection-edit','collection-activity','collection-transition','collection-adopt','collection-reset-form'].includes(action))
       throw new Error('Complete the retained account operation before starting another case change.');
     const id = control.dataset.id;
     if (action === 'collection-new') await edit(id);
@@ -225,7 +230,13 @@ export function createCollectionsUi(host) {
     else if (action === 'collection-edit') await edit(id);
     else if (action === 'collection-activity') await activity(id,control.dataset.kind);
     else if (action === 'collection-transition') await transition(id,control.dataset.kind);
-    else if (action === 'collection-adopt') {
+    else if (action === 'collection-reset-form') {
+      const invoiceId = control.closest('form')?.querySelector('[name="invoiceId"]')?.value || control.dataset.invoice;
+      draft = null; host.saveSession('collectionsDraft',null);
+      if (control.dataset.form === 'collection-case-form') await edit(id || invoiceId);
+      else if (control.dataset.form === 'collection-activity-form') await activity(id,control.dataset.kind);
+      else if (control.dataset.form === 'collection-transition-form') await transition(id,control.dataset.kind);
+    } else if (action === 'collection-adopt') {
       const form = document.querySelector('#dialog-content form');
       if (!form || selected?.collectionCase.id !== id) throw new Error('Open the current case history first.');
       form.dataset.version = String(selected.collectionCase.version); remember(form);

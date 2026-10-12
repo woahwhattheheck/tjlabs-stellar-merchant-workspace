@@ -34,7 +34,7 @@ Set the account **As of** date, then select a customer or search for an invoice,
 
 Each invoice has one retained case. Reopen that original case for later follow-up. The invoice's customer and currency stay attached to the same original ledger.
 
-The owner and priority filters help divide the work between operators. Amounts remain grouped by currency code and explicit decimal precision. The queue sorts due follow-ups first, then priority and next action date. A customer's new payment, allocation, release, credit or void changes the displayed original invoice balance on its effective date.
+The owner and case-status filters help divide the work between operators. Select All owners to include overdue invoices without an open case in the view and JSON export. Amounts remain grouped by currency code and explicit decimal precision. The queue sorts due follow-ups first, then priority and next action date. A customer's new payment, allocation, release, credit or void changes the displayed original invoice balance on its effective date.
 
 ## Retain the actual conversation
 
@@ -88,9 +88,11 @@ Each case offers:
 | --- | --- |
 | case.json | Complete retained case and event records, plus the dated case and original invoice projection. |
 | case.csv | All case activities effective by the selected date, including source references and recorded outcomes. |
-| case.html | Printable operator case history and prepared customer message for the selected date. |
-| reminder.txt | Prepared customer subject and message. |
-| manifest.json | Length and SHA-256 of the four generated case files. |
+| case.html | Printable operator case history and, from the case opening date, the prepared customer message. |
+| reminder.txt | Prepared customer subject and message, available from the case opening date. |
+| manifest.json | Length and SHA-256 of every available generated case file. |
+
+Before the case opening date, the operator JSON, CSV and HTML remain available with that date clearly identified. The HTML explains when customer reminders become available, and the manifest lists the three operator files. A customer reminder requires a date on or after case opening.
 
 The complete JSON retains the full record, including later events, to preserve the original history. Its summary and the CSV/HTML views identify the selected effective date. Export files are produced from the current saved account edition; a later backdated ledger correction can change a regenerated historical balance.
 
@@ -206,7 +208,9 @@ Read routes accept asOf. Queue/export also accept customerId, owner, status and 
 
 ## Continue an interrupted operation
 
-The browser parks edited collection forms in the current session. Before saving, the original pending-operation queue retains the complete request, workspace identity, case version and stable request ID.
+The browser parks edited collection forms in the current session. Opening a follow-up from a particular invoice restores a new-case draft only when it belongs to that invoice. The generic New case action can resume the parked new-case form and shows its selected invoice. Use **Reset to current values** to discard parked form values and load the current assignment or activity targets.
+
+Before saving, the original pending-operation queue retains the complete request, workspace identity, case version and stable request ID.
 
 **Retry same operation** sends those same arguments to the original journal. A completed operation returns its saved result. For a rejected case version, open the current case history, inspect it and use **Use reviewed current version** when continuing the retained form.
 
