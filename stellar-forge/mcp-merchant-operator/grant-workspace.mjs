@@ -534,6 +534,8 @@ export class MerchantGrantWorkspaces {
     }
     else if (verb === 'amendment_preview') original = await client.amendmentPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Plan amendment'));
+    else if (verb === 'amendment_calendar_export') original = await client.amendmentCalendarExport(args.caseId,
+      await this.#modelInputs(alias, args, 'Amendment calendar export'));
     else if (verb === 'forecast_preview') original = await client.forecastPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Forecast'));
     else if (verb === 'forecast_save') {

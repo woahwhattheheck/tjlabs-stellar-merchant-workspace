@@ -218,6 +218,8 @@ export const grantWorkspaceTools = [
     ['workspace','caseId','amendmentId'], true),
   tool('amendment_preview', 'Compare an exact saved native planning revision with this case, including full changed fields, original record bindings, invoice/work/cash exposure and payment-derived clocks. Inline inputs or the original verified input reference remain selected explicitly.',
     {...ws, ...caseSelection, ...modelInput}, ['workspace','caseId','expectedVersion'], true),
+  tool('amendment_calendar_export', 'Export the complete native before and selected delivery calendars in ICS, CSV and JSON, their readable comparison, original amendment preview and full operating case. Supply the exact draft or saved-edition export selection through inputs or an original verified input reference.',
+    {...ws, caseId:id('operation'), ...modelInput}, ['workspace','caseId'], true),
   tool('case_history', 'Read the original event page with its native after-version and nextAfter cursor. Continue each native page explicitly.',
     {...ws, caseId:id('operation'), after:{type:'integer', minimum:0, maximum:10000000},
       limit:{type:'integer', minimum:1, maximum:200}}, ['workspace','caseId'], true),
