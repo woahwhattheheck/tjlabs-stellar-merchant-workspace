@@ -109,11 +109,26 @@ function connections(profile) {
       ...shared, files: { source: { kind: 'source', path: input('openapi.json') },
         terms: { kind: 'plan', path: input('merchant-plan.json') },
         worksheet: { kind: 'packet', path: input('worksheet.json') },
-        baseWorksheet: { kind: 'packet', path: input('base-worksheet.json') },
+        'base-worksheet': { kind: 'packet', path: input('base-worksheet.json') },
         operations: { kind: 'plan', path: input('operation-plans.json') } },
       deliveries: { handover: { directory: join(profile.receivingDirectory, 'merchant-package') } }
     } } }
   };
+}
+/** Preserve and repair only the exact original, unfinished default connection definition. */
+async function writeOpenapiConnection(profile, definition) {
+  const retained = await file(profile.openapiConnection, true);
+  if (retained) {
+    const original = structuredClone(definition);
+    const files = original.workspaces.merchant.files;
+    files.baseWorksheet = files['base-worksheet']; delete files['base-worksheet'];
+    if (canonical(json(retained)) === canonical(original)) {
+      await write(join(profile.directory, 'openapi-connections.initialization-v0.json'), retained);
+      await write(profile.openapiConnection, definition, true);
+      return;
+    }
+  }
+  await write(profile.openapiConnection, definition);
 }
 /** A retry completes the retained setup. Native operator preparation is staged before publication. */
 export async function initializeCapturedApi(input) {
@@ -148,7 +163,7 @@ export async function initializeCapturedApi(input) {
     await privateDirectory(profile.projectsDirectory, createsProjects);
     const definitions = connections(profile);
     await write(profile.harConnection, definitions.har);
-    await write(profile.openapiConnection, definitions.openapi);
+    await writeOpenapiConnection(profile, definitions.openapi);
     const { initializeHarWorkspaceMerchant, readMerchantConfig } =
       await import('../../stellar-forge/mcp-merchant-operator/config.mjs');
     if (!await exists(profile.operatorDirectory)) {

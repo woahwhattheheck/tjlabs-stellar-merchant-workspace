@@ -89,6 +89,11 @@ is published as `operator/`. Repeating initialization with the same setup reopen
 the completed product or finishes its retained setup. Earlier incomplete staging
 directories remain available for inspection. A completed product preserves later
 operator-added connection handles.
+If an earlier initialization retained the original uppercase worksheet handle,
+the same initialization preserves that exact connection file as
+`openapi-connections.initialization-v0.json`, applies its lowercase alias and
+finishes the original product. Other authored connection definitions retain
+their existing identity.
 
 Open the full local browser URL from stdout. It contains the original console's
 temporary access token. The private URL file also supplies that same console
@@ -296,7 +301,7 @@ in these paths; the native reader loads each file when it is selected.
 | HAR/OpenAPI `terms` | `merchant-plan.json` | Full native merchant plan |
 | OpenAPI `source` | `openapi.json` | Complete source document |
 | OpenAPI `worksheet` | `worksheet.json` | Proposed source-bound worksheet |
-| OpenAPI `baseWorksheet` | `base-worksheet.json` | Retained base for reconciliation |
+| OpenAPI `base-worksheet` | `base-worksheet.json` | Retained base for reconciliation |
 | OpenAPI `operations` | `operation-plans.json` | Authored records for new route selection |
 
 Add other aliases or immutable expected hashes through the original connection
