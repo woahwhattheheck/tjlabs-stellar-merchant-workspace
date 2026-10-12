@@ -337,7 +337,10 @@ native result is preserved separately from the ZIP it describes.
 A save request without its returned result is an unknown original outcome.
 The receiver stops before another save and retains the original helper state.
 Reconcile that exact save through its supported metadata/result workflow before
-any new dispatch. It does not create a new remote file, guess a version, reuse
+any new dispatch. An explicit --resume also checks the preceding attempt’s save
+request and result before creating a later receiving attempt. It cannot skip an
+unknown save merely because that attempt already has a complete local ZIP.
+It does not create a new remote file, guess a version, reuse
 an unrelated upload or silently retry an uncertain replacement.
 
 If the execution environment's /dev filesystem is invocation-local, keep

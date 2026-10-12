@@ -9,8 +9,8 @@
     },
     {
       "path": "receive.py",
-      "bytes": 50263,
-      "sha256": "be0af2b9ad62d250e27f80b87342cac311b699da3cc75c6ea46b4e93243c8a9b"
+      "bytes": 50621,
+      "sha256": "6cb6b749ea74e236a38b90794559ef6d8ea627d62b55931795a0811a9c5aeecd"
     },
     {
       "path": "SOURCE_SELECTION.json",
@@ -19,8 +19,8 @@
     },
     {
       "path": "RECEIVING.md",
-      "bytes": 19036,
-      "sha256": "d9c20fb852b0b7f9a18d56eb883dd38ebc5f715ba04998365d06998889b33b39"
+      "bytes": 19255,
+      "sha256": "e2efb455b3a737d540309842c0a8ca4b2411753b4e4c02e14e849a6da1d1fa01"
     }
   ]
 }

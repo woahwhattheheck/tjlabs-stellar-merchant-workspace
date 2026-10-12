@@ -613,6 +613,10 @@ class Receiver:
             self.attempt = current
             return False
         if current:
+            original_upload = self.control / ("upload-" + str(current["number"]))
+            require(not (original_upload / "request.json").exists() or
+                    (original_upload / "result.json").exists(),
+                    "The original artifact save has an unknown outcome. Reconcile its exact helper journal before resuming this operation.")
             require(current.get("artifact"), "Finish preserving the original attempt before resuming it")
             require(current.get("outcome", {}).get("status") != "PASS",
                     "Completed original receiving is returned unchanged")
