@@ -410,7 +410,9 @@ function nameMappings(manifest, value = {}) {
   return rows;
 }
 const nativeManifest = member => {
-  const files = member.files.filter(row => row.name !== PACKAGE_EXPORT_MANIFEST);
+  // The original native package closure uses binary file-name order, including RUN.md.
+  const files = member.files.filter(row => row.name !== PACKAGE_EXPORT_MANIFEST)
+    .sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
   return {package:member.package,files,totalBytes:files.reduce((total,row) => total + row.bytes,0)};
 };
 function receivingBinding(profile, inspected, names) {
