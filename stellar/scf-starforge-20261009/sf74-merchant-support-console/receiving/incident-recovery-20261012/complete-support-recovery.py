@@ -6,7 +6,7 @@ from pathlib import Path
 
 ORIGINAL_RUNNER_GIT = "ee7a28366f38960e101b27c589cd6401c2f13068"
 SOURCE_COMMIT = "f7200d52fdc5722619d0cf708041ee46db447e7f"
-RECOVERY_PROGRAMME_GIT = "c0a3fecf26db367264a8fe9d8ac17e0c67906cab"
+RECOVERY_PROGRAMME_GIT = "64fce09ff9250bc8b509ed4f9fcd9d1525c5ab81"
 
 def require(value, message):
     if not value:
