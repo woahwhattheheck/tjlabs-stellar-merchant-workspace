@@ -52,6 +52,8 @@ For each invoice and each currency/precision group:
 Original due = Within horizon + After horizon + Separated
 ~~~
 
+The screen and printable report use readable dates; saved times include UTC. Form date values and machine JSON/CSV retain their original exact values. Currency labels state their decimal precision.
+
 Awaiting review is a subset of Separated. Currency codes with different decimal precision remain separate. The period table shows expected receipts and the cumulative amount through each period.
 
 Available customer receipts and invoice credits are shown in their own table. Their original saved allocation determines the invoice balance. Applying those funds through the original account and recalculating creates a plan with the resulting remaining balances.

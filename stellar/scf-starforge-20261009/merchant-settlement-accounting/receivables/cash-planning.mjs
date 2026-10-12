@@ -2,6 +2,7 @@
 import {need, plain, field, identifier, dateValue, currencyKey, minor, money, invoiceSummary, receiptSummary, json, sha, today} from './core.mjs';
 import {editionAt, planProjection, addDays} from './payment-plans/core.mjs';
 import {collectionRows, projectCollection} from './collections.mjs';
+import {cashDate,cashCurrency,cashLabel} from './public/cash-planning-display.mjs';
 
 export const CASH_PLAN_SCHEMA = 'stellar-forge.merchant-cash-plan.v1';
 export const CASH_FORECAST_SCHEMA = 'stellar-forge.merchant-cash-forecast.v1';
@@ -294,23 +295,23 @@ export function cashPlanHtml(edition) {
     'table{border-collapse:collapse;width:100%;margin:20px 0}td,th{padding:8px;border-bottom:1px solid #bbb;text-align:left;vertical-align:top}'+
     '.num{text-align:right;white-space:nowrap}pre{white-space:pre-wrap}.muted{color:#555}@media print{tr{break-inside:avoid}}</style>'+
     '<h1>'+e(edition.plan.title)+'</h1><p>Owner '+e(edition.plan.owner)+' · Edition '+edition.number+
-    ' · Account date '+e(edition.plan.asOf)+' · Through '+e(edition.plan.through)+'</p><p class="muted">Saved '+
-    e(edition.createdAt)+' by '+e(edition.actor)+' from original accounting revision '+edition.sourceRevision+
+    ' · Account date '+e(cashDate(edition.plan.asOf))+' · Through '+e(cashDate(edition.plan.through))+'</p><p class="muted">Saved '+
+    e(cashDate(edition.createdAt))+' by '+e(edition.actor)+' from original accounting revision '+edition.sourceRevision+
     '.</p><p>Past-due delay '+edition.plan.pastDueDelayDays+' days; future delay '+edition.plan.futureDelayDays+
     ' days; recorded promises '+(edition.plan.usePromises?'included':'omitted')+'; disputed amounts '+
     e(edition.plan.disputes.toLowerCase())+'.</p><pre>'+e(edition.plan.note)+'</pre>'+
     '<h2>Original balance allocation</h2><table><thead><tr><th>Currency</th><th>Original due</th><th>Within horizon</th><th>After horizon</th><th>Separated</th><th>Of separated: awaiting review</th></tr></thead><tbody>'+
-    p.currencies.map(row=>'<tr><td>'+e(row.currency.code+' / '+row.currency.scale)+'</td><td>'+row.amountDue+
+    p.currencies.map(row=>'<tr><td>'+e(cashCurrency(row.currency))+'</td><td>'+row.amountDue+
       '</td><td>'+row.withinHorizon+'</td><td>'+row.afterHorizon+'</td><td>'+row.separated+'</td><td>'+row.reviewRequired+'</td></tr>').join('')+
     '</tbody></table>'+p.currencies.map(row=>'<h2>'+e(row.currency.code)+' receipt periods</h2><table><thead><tr><th>From</th><th>Through</th><th>Expected receipts</th><th>Cumulative</th></tr></thead><tbody>'+
-      row.periods.map(period=>'<tr><td>'+period.from+'</td><td>'+period.through+'</td><td>'+period.amount+'</td><td>'+period.cumulative+'</td></tr>').join('')+'</tbody></table>').join('')+
+      row.periods.map(period=>'<tr><td>'+e(cashDate(period.from))+'</td><td>'+e(cashDate(period.through))+'</td><td>'+period.amount+'</td><td>'+period.cumulative+'</td></tr>').join('')+'</tbody></table>').join('')+
     (p.customerFunds.length?'<h2>Existing customer funds</h2><p>Review available receipts and invoice credits in the original account before planning new receipts. Their current saved allocation determines each invoice balance.</p>'+
       '<table><thead><tr><th>Customer</th><th>Currency</th><th>Available receipts</th><th>Invoice credits</th></tr></thead><tbody>'+
-      p.customerFunds.map(row=>'<tr><td>'+e(row.customerName)+'</td><td>'+e(row.currency.code+' / '+row.currency.scale)+
+      p.customerFunds.map(row=>'<tr><td>'+e(row.customerName)+'</td><td>'+e(cashCurrency(row.currency))+
         '</td><td>'+row.availableReceipts+'</td><td>'+row.invoiceCredits+'</td></tr>').join('')+'</tbody></table>':'')+
     '<h2>Invoice allocation</h2><table><thead><tr><th>Invoice / customer</th><th>Source</th><th>Original date</th><th>Expected date</th><th>Position</th><th>Amount</th><th>Reason</th></tr></thead><tbody>'+
-    p.lines.map(row=>'<tr><td>'+e(row.invoiceNumber)+'<br>'+e(row.customerName)+'</td><td>'+e(row.source)+
-      '</td><td>'+e(row.originalDate)+'</td><td>'+e(row.expectedDate)+'</td><td>'+e(row.position)+
+    p.lines.map(row=>'<tr><td>'+e(row.invoiceNumber)+'<br>'+e(row.customerName)+'</td><td>'+e(cashLabel(row.source))+
+      '</td><td>'+e(cashDate(row.originalDate))+'</td><td>'+e(row.expectedDate?cashDate(row.expectedDate):'Separated')+'</td><td>'+e(cashLabel(row.position))+
       '</td><td class="num">'+e(row.currency.code+' '+row.amount)+'</td><td>'+e(row.reason)+'</td></tr>').join('')+'</tbody></table>'+
     (p.sourceIssues.length?'<h2>Source changes and operator decisions</h2><ul>'+p.sourceIssues.map(row=>'<li>'+
       e(row.invoiceNumber+' · '+row.code+' · '+row.message)+(row.operatorOverride?' An explicit invoice assumption supplies its date or separation.':'')+'</li>').join('')+'</ul>':'')+

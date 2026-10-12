@@ -1,6 +1,7 @@
 // MIT. Operator cash planning inside the original receivables application.
+import {cashDate,cashCurrency,cashLabel} from './cash-planning-display.mjs';
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const label=value=>String(value??'').replaceAll('_',' ').toLowerCase().replace(/^\w/,c=>c.toUpperCase());
+const label=cashLabel;
 const button=(text,action,id='',extra='')=>'<button type="button" data-action="cash-plan-'+e(action)+'" data-id="'+e(id)+'" '+extra+'>'+e(text)+'</button>';
 const input=(title,name,value,extra='')=>'<label>'+e(title)+'<input name="'+e(name)+'" value="'+e(value)+'" '+extra+'></label>';
 const select=(title,name,values,chosen)=>'<label>'+e(title)+'<select name="'+e(name)+'">'+values.map(([value,text])=>
@@ -32,23 +33,23 @@ export function createCashPlanningUi(host){
   function totals(projection){
     return '<div class="table-wrap"><table><thead><tr><th>Currency</th><th class="num">Original due</th><th class="num">Within horizon</th>'+
       '<th class="num">After horizon</th><th class="num">Separated</th><th class="num">Of separated: awaiting review</th></tr></thead><tbody>'+
-      projection.currencies.map(row=>'<tr><td>'+e(row.currency.code+' / '+row.currency.scale)+'</td>'+
+      projection.currencies.map(row=>'<tr><td>'+e(cashCurrency(row.currency))+'</td>'+
         ['amountDue','withinHorizon','afterHorizon','separated','reviewRequired'].map(key=>'<td class="num">'+e(row[key])+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
   }
   function projectionBody(projection,editable=false){
     return totals(projection)+projection.currencies.map(row=>'<section class="section"><h3>'+e(row.currency.code)+
       ' receipt periods</h3><div class="table-wrap"><table><thead><tr><th>From</th><th>Through</th><th class="num">Expected receipts</th><th class="num">Cumulative</th></tr></thead><tbody>'+
-      row.periods.map(period=>'<tr><td>'+e(period.from)+'</td><td>'+e(period.through)+'</td><td class="num">'+e(period.amount)+
+      row.periods.map(period=>'<tr><td>'+e(cashDate(period.from))+'</td><td>'+e(cashDate(period.through))+'</td><td class="num">'+e(period.amount)+
         '</td><td class="num">'+e(period.cumulative)+'</td></tr>').join('')+'</tbody></table></div></section>').join('')+
       (projection.customerFunds.length?'<section class="section"><h3>Existing customer funds</h3>'+
         '<p class="small-text muted">Review available receipts and invoice credits in the original account before planning new receipts. Their current saved allocation determines each invoice balance.</p>'+
         '<div class="table-wrap"><table><thead><tr><th>Customer</th><th>Currency</th><th class="num">Available receipts</th><th class="num">Invoice credits</th></tr></thead><tbody>'+
-        projection.customerFunds.map(row=>'<tr><td>'+e(row.customerName)+'</td><td>'+e(row.currency.code+' / '+row.currency.scale)+
+        projection.customerFunds.map(row=>'<tr><td>'+e(row.customerName)+'</td><td>'+e(cashCurrency(row.currency))+
           '</td><td class="num">'+e(row.availableReceipts)+'</td><td class="num">'+e(row.invoiceCredits)+'</td></tr>').join('')+'</tbody></table></div></section>':'')+
       '<section class="section"><h3>Original invoice allocation</h3><div class="table-wrap"><table><thead><tr><th>Invoice / customer</th><th>Original date / source</th>'+
       '<th>Expected date / position</th><th class="num">Amount</th><th>Reason</th></tr></thead><tbody>'+
       projection.lines.map(row=>'<tr><td>'+e(row.invoiceNumber)+'<span class="subline">'+e(row.customerName)+'</span></td>'+
-        '<td>'+e(row.originalDate)+'<span class="subline">'+e(label(row.source))+'</span></td><td>'+e(row.expectedDate||'Separated')+
+        '<td>'+e(cashDate(row.originalDate))+'<span class="subline">'+e(label(row.source))+'</span></td><td>'+e(row.expectedDate?cashDate(row.expectedDate):'Separated')+
         '<span class="subline">'+e(label(row.position))+'</span></td><td class="num">'+e(row.currency.code+' '+row.amount)+
         '</td><td>'+e(row.reason)+'</td></tr>').join('')+'</tbody></table></div></section>'+
       (projection.sourceIssues.length?'<section class="section"><h3>Source changes and decisions</h3>'+
@@ -57,7 +58,7 @@ export function createCashPlanningUi(host){
       (editable?'<section class="section"><h3>Invoice assumptions</h3><p class="small-text muted">Give a whole invoice an explicit expected date or separate its balance, with the reason retained in this scenario.</p>'+
         '<div class="table-wrap"><table><thead><tr><th>Invoice / customer</th><th class="num">Original due</th><th>Current assumption</th><th></th></tr></thead><tbody>'+
         projection.invoices.map(row=>'<tr><td>'+e(row.number)+'<span class="subline">'+e(row.customerName)+'</span></td><td class="num">'+
-          e(row.currency.code+' '+row.amountDue)+'</td><td>'+e(row.override?row.override.mode==='DATE'?row.override.expectedDate:'Separated':'Original schedule and scenario rules')+
+          e(row.currency.code+' '+row.amountDue)+'</td><td>'+e(row.override?row.override.mode==='DATE'?cashDate(row.override.expectedDate):'Separated':'Original schedule and scenario rules')+
           '</td><td>'+button('Set assumption','assumption',row.id,'data-write')+'</td></tr>').join('')+'</tbody></table></div></section>':'')+
       (projection.inactiveOverrides.length?'<section class="section"><h3>Assumptions outside this view</h3>'+
         projection.inactiveOverrides.map(row=>'<p>'+e(row.invoiceId+' · '+row.reasonInView)+'</p>').join('')+'</section>':'');
@@ -82,11 +83,11 @@ export function createCashPlanningUi(host){
       '<p class="small-text muted">Expected dates are the assumptions for this saved scenario. The preview shows each original invoice balance, installment or promise and its allocation.</p>'+
       '<div class="dialog-actions"><button type="submit" class="primary" data-write>Recalculate and review</button></div></form>'+
       (p.overrides.length?'<section class="section"><h3>Retained invoice assumptions</h3>'+p.overrides.map(row=>
-        '<p>'+e(row.invoiceId+' · '+(row.mode==='DATE'?row.expectedDate:'Separated')+' · '+row.reason)+' '+
+        '<p>'+e(row.invoiceId+' · '+(row.mode==='DATE'?cashDate(row.expectedDate):'Separated')+' · '+row.reason)+' '+
         button('Edit','assumption',row.invoiceId,'data-write')+' '+button('Use source dates','remove-assumption',row.invoiceId,'data-write')+'</p>').join('')+'</section>':'')+
       (review?'<section class="section"><div class="row between"><h3>Reviewed receipt plan</h3>'+
         button('Save reviewed edition','save',draft.id,'data-write')+'</div><p id="cash-plan-review-state" class="small-text muted">'+
-        'Original accounting revision '+review.revision+' · '+e(review.plan.asOf)+' through '+e(review.plan.through)+
+        'Original accounting revision '+review.revision+' · '+e(cashDate(review.plan.asOf))+' through '+e(cashDate(review.plan.through))+
         '. Saving retains this complete edition.</p>'+projectionBody(review.projection,true)+'</section>':'');
   }
   function render(){
@@ -97,14 +98,14 @@ export function createCashPlanningUi(host){
       '<section class="panel"><div class="panel-head"><h2>Saved plans and editions</h2></div>'+
       (rows.length?'<div class="table-wrap"><table><thead><tr><th>Plan / owner</th><th>Account date / horizon</th><th>Status / editions</th><th></th></tr></thead><tbody>'+
         rows.map(row=>'<tr><td>'+button(row.title,'open',row.id,'class="link"')+'<span class="subline">'+e(row.owner)+
-          '</span></td><td>'+e(row.asOf)+'<span class="subline">Through '+e(row.through)+'</span></td><td>'+
+          '</span></td><td>'+e(cashDate(row.asOf))+'<span class="subline">Through '+e(cashDate(row.through))+'</span></td><td>'+
           e(label(row.status))+'<span class="subline">'+row.editionCount+' retained editions</span></td><td>'+
           button('Copy scenario','copy',row.id,'data-write')+'</td></tr>').join('')+'</tbody></table></div>':
         '<div class="panel-body"><p>No saved plans match this view.</p></div>')+'</section>'+
       (list.plans.length?'<section class="panel"><div class="panel-head"><h2>Compare saved scenarios</h2></div><div class="panel-body">'+
         '<form id="cash-plan-compare-form"><div class="form-grid">'+
-        select('Left plan — latest saved edition','leftId',list.plans.map(row=>[row.id,row.title+' · '+row.asOf]),list.plans[0]?.id)+
-        select('Right plan — latest saved edition','rightId',list.plans.map(row=>[row.id,row.title+' · '+row.asOf]),list.plans[1]?.id||list.plans[0]?.id)+
+        select('Left plan — latest saved edition','leftId',list.plans.map(row=>[row.id,row.title+' · '+cashDate(row.asOf)]),list.plans[0]?.id)+
+        select('Right plan — latest saved edition','rightId',list.plans.map(row=>[row.id,row.title+' · '+cashDate(row.asOf)]),list.plans[1]?.id||list.plans[0]?.id)+
         '</div><div class="dialog-actions"><button type="submit">Compare editions</button></div></form></div></section>':'');
   }
   function remember(form){
@@ -133,18 +134,18 @@ export function createCashPlanningUi(host){
   async function openSaved(id,editionId){
     const detail=await api.cashPlan(id,{editionId}),row=detail.cashPlan,edition=detail.edition;
     const previous=detail.editions.find(item=>item.number===edition.number-1);
-    openDialog(edition.plan.title,'<p>'+e(edition.plan.owner)+' · Edition '+edition.number+' · Saved '+e(edition.createdAt)+
-      ' by '+e(edition.actor)+'</p><p>Original account date '+e(edition.plan.asOf)+' through '+e(edition.plan.through)+
+    openDialog(edition.plan.title,'<p>'+e(edition.plan.owner)+' · Edition '+edition.number+' · Saved '+e(cashDate(edition.createdAt))+
+      ' by '+e(edition.actor)+'</p><p>Original account date '+e(cashDate(edition.plan.asOf))+' through '+e(cashDate(edition.plan.through))+
       ' · Source revision '+edition.sourceRevision+'</p><div class="row wrap">'+
       (row.status==='ACTIVE'?button('Revise latest edition','revise',id,'data-write'):button('Reopen plan','status',id,'data-status="ACTIVE" data-write'))+
       button('Copy this edition','copy',id,'data-edition="'+e(edition.id)+'" data-write')+
       (row.status==='ACTIVE'?button('Archive plan','status',id,'data-status="ARCHIVED" data-write'):'')+
       ['plan.json','plan.csv','plan.html','manifest.json'].map(name=>button(name,'download',id,'data-name="'+name+'" data-edition="'+e(edition.id)+'"')).join('')+
       '</div><label>Retained edition<select data-cash-edition="'+e(id)+'">'+detail.editions.map(item=>'<option value="'+e(item.id)+'"'+
-        (item.id===edition.id?' selected':'')+'>Edition '+item.number+' · '+e(item.asOf)+' · '+e(item.createdAt)+'</option>').join('')+'</select></label>'+
+        (item.id===edition.id?' selected':'')+'>Edition '+item.number+' · '+e(cashDate(item.asOf))+' · '+e(cashDate(item.createdAt))+'</option>').join('')+'</select></label>'+
       (previous?button('Compare to previous edition','compare-previous',id,'data-left="'+e(previous.id)+'" data-right="'+e(edition.id)+'"'):'')+
       '<p class="preline">'+e(edition.plan.note)+'</p>'+projectionBody(edition.projection)+
-      '<section class="section"><h3>Saved plan history</h3>'+[...detail.history].reverse().map(item=>'<p>'+e(item.at+' · '+label(item.kind)+' · '+item.actor)+
+      '<section class="section"><h3>Saved plan history</h3>'+[...detail.history].reverse().map(item=>'<p>'+e(cashDate(item.at)+' · '+label(item.kind)+' · '+item.actor)+
         (item.note?'<span class="subline preline">'+e(item.note)+'</span>':'')+'</p>').join('')+'</section>');
   }
   async function edit(id,copyEdition=false,editionId){
@@ -169,18 +170,18 @@ export function createCashPlanningUi(host){
   async function compare(query){
     const result=await api.compareCashPlans(query);comparisonQuery={...query,leftEditionId:result.left.id,rightEditionId:result.right.id};
     openDialog('Saved collection plan comparison','<p>Left: '+e(result.left.plan.title)+' · Edition '+result.left.number+' · Account date '+
-      e(result.left.plan.asOf)+' · Revision '+result.left.sourceRevision+'</p><p>Right: '+e(result.right.plan.title)+' · Edition '+result.right.number+
-      ' · Account date '+e(result.right.plan.asOf)+' · Revision '+result.right.sourceRevision+'</p><p class="small-text muted">'+
+      e(cashDate(result.left.plan.asOf))+' · Revision '+result.left.sourceRevision+'</p><p>Right: '+e(result.right.plan.title)+' · Edition '+result.right.number+
+      ' · Account date '+e(cashDate(result.right.plan.asOf))+' · Revision '+result.right.sourceRevision+'</p><p class="small-text muted">'+
       'Changes are right minus left; each edition retains its own account date, horizon and assumptions.</p><div class="row">'+
       button('Download JSON','comparison-file','','data-name="comparison.json"')+button('Download dated CSV','comparison-file','','data-name="comparison.csv"')+'</div>'+
-      result.currencies.map(row=>'<section class="section"><h3>'+e(row.currency.code+' / '+row.currency.scale)+'</h3>'+
+      result.currencies.map(row=>'<section class="section"><h3>'+e(cashCurrency(row.currency))+'</h3>'+
         '<div class="table-wrap"><table><thead><tr><th>Amount</th><th class="num">Left</th><th class="num">Right</th><th class="num">Change</th></tr></thead><tbody>'+
         ['amountDue','withinHorizon','afterHorizon','separated','reviewRequired'].map(key=>'<tr><td>'+
           e(({amountDue:'Original due',withinHorizon:'Within horizon',afterHorizon:'After horizon',separated:'Separated',reviewRequired:'Of separated: awaiting review'})[key])+
           '</td><td class="num">'+e(row[key].left)+'</td><td class="num">'+e(row[key].right)+'</td><td class="num">'+e(row[key].change)+'</td></tr>').join('')+
         '</tbody></table></div></section>').join('')+
       '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Currency</th><th class="num">Left receipts</th><th class="num">Right receipts</th><th class="num">Change</th></tr></thead><tbody>'+
-        result.dates.map(row=>'<tr><td>'+e(row.date)+'</td><td>'+e(row.currency.code+' / '+row.currency.scale)+'</td><td class="num">'+e(row.left)+
+        result.dates.map(row=>'<tr><td>'+e(cashDate(row.date))+'</td><td>'+e(cashCurrency(row.currency))+'</td><td class="num">'+e(row.left)+
           '</td><td class="num">'+e(row.right)+'</td><td class="num">'+e(row.change)+'</td></tr>').join('')+'</tbody></table></div>');
   }
   async function submit(form,values){
