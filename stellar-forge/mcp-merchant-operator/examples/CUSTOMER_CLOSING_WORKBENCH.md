@@ -1,8 +1,8 @@
 # Complete customer closing operation
 
-This programme continues the original repository service-period example through the merchant accounting host, authenticated MCP connection, customer closing workbench, browser, original file downloads and native cycle reopening. It keeps one private operation directory, including the original inputs, frozen customer reviews, issued statements, current lifecycle snapshots, full customer packets and desktop/phone screenshots.
+This programme continues the original repository service-period example through the merchant accounting host, authenticated MCP connection, complete customer setup and closing workbench, browser, original file downloads and native cycle reopening. It keeps one private operation directory, including the original inputs, frozen customer reviews, issued statements, current lifecycle snapshots, full customer packets and desktop/phone screenshots.
 
-Run this as the customer closing continuation in the existing SCF Merchant receiving workspace. Use the maintained full Merchant source checkout with the current accounting/MCP integration, service periods, closing cycles and workbench. The existing tariff/customer and payment/MCP receiving programmes keep their source and operation identities.
+Run this as the customer closing continuation in the existing SCF Merchant receiving workspace. Use the maintained full Merchant source checkout with the current accounting/MCP integration, service periods, closing cycles and the complete customer setup workbench. The setup routes and original CLI observer must be present alongside the cycle UI. The existing tariff/customer and payment/MCP receiving programmes keep their source and operation identities.
 
 ## Run in the existing native workspace
 
@@ -38,15 +38,15 @@ Keep the same directory when resuming. The original operation lease prevents con
 
 The programme imports `buildServicePeriodExample()` from the existing customer statement source. It retains the returned opening and closing JSON byte for byte and preserves every native call state, timestamp, plan, order and payment identity. The original SF98 journal writer stores the example order, and the original accounting workspace captures and reconciles it. The example's opaque payment identity stays distinct from the valid configured example terms; the actual reconciliation classification travels into the statement.
 
-The original typed statement client creates or reopens the example customer, assigns its original order, imports both complete captures through their declared host aliases, and reads the complete period report. The programme checks the original example outcomes: three new calls; 15 consumed units, 15 released units and 20 admitted units; one recovered result; and 60 available units at closing.
+The actual desktop interface creates the example customer, edits its profile, reviews the original order against the completed accounting run, assigns that order, and inspects and imports both complete captures through their declared host aliases. Each action is reviewed in the workbench and retained by the original CLI as its own request and saved result. The programme reopens those same operation identities after interruption. The original typed statement client reads the resulting customer, assignments, captures and complete period report. The programme checks the original example outcomes: three new calls; 15 consumed units, 15 released units and 20 admitted units; one recovered result; and 60 available units at closing.
 
 The actual desktop interface then selects the saved customer, completed accounting run and both captures. It reviews the complete statement and prepares a two-row close: the selected service period and the cumulative closing capture. Each row uses the original accounting engine and its own stable retention request.
 
 During issuance, the receiving programme pauses one original MCP file request for `usage-opening.json`. The native statement has already been retained. The other row completes through the original exporter. The workbench's partial cycle is downloaded, extracted with its original private directory modes, reopened and completed against the original statement identities. The original workbench then resumes its own saved cycle.
 
-The desktop interface next prepares and retains a correction for the period statement. Refreshing the earlier cycle preserves both original statement IDs and publishes the original statement's current `SUPERSEDED` status. The desktop and phone interfaces open the same saved reviews and customer records.
+The desktop interface next opens the issued period statement and uses its original correction action to prepare and retain the replacement. It reviews and applies withdrawal of the cumulative statement through the same saved customer operation workflow. Refreshing the earlier cycle preserves both original statement IDs and publishes their current `SUPERSEDED` and `WITHDRAWN` statuses. The desktop and phone interfaces open the same saved reviews, issued files, withdrawal history and customer records.
 
-The programme downloads the full cycle and both customer packets, opens the customer index in the actual browser, follows its relative link to the original statement, and downloads the original statement JSON through that index. It checks the original file hashes from the native delivery records. Finally it closes the accounting owner, reopens the original workspace, and reconciles the extracted complete cycle. The same two original statements and one correction remain in the native register.
+The programme saves the complete customer setup operations, downloads the full cycle and both customer packets, opens the customer index in the actual browser, follows its relative link to the original statement, and downloads the original statement JSON through that index. It checks the original file hashes from the native delivery records. Finally it closes the accounting owner, reopens the original workspace, and reconciles the extracted complete cycle. The same two original statements and one correction remain in the native register.
 
 ## Retained output
 
@@ -60,9 +60,11 @@ The programme downloads the full cycle and both customer packets, opens the cust
 | `original-period.json` | Full native period report from the authenticated merchant client |
 | `executed-source.json` | Actual source file byte counts, SHA-256 values and Git blob identities |
 | `cycles/` | Original frozen reviews, request identities, progress and complete customer deliveries |
+| `cycles/customer-operations/` | Original prepared customer, assignment, import and withdrawal requests and saved results |
+| `customer-setup-actions.json` | The actual setup operation IDs and observed native outcomes |
 | `delivery-interruption.json` | The single original file boundary paused by the receiving operator |
 | `partial-cycle.json` | Actual retained/delivered rows at that interruption |
-| `downloads/` | Partial and complete cycle archives, full customer archives and browser-downloaded statement |
+| `downloads/` | Complete customer setup archive, partial and complete cycle archives, full customer archives and browser-downloaded statement |
 | `reopened-partial-cycle/` | The downloaded partial operation, completed through the original cycle engine |
 | `reopened-complete-cycle/` | The downloaded complete cycle, reconciled after native owner reopening |
 | `customer-1/`, `customer-2/` | Complete extracted customer packets with their own `index.html` |

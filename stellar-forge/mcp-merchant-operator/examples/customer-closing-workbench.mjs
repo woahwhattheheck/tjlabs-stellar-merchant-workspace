@@ -11,7 +11,6 @@ import {spawnSync} from 'node:child_process';
 import {parseArgs} from 'node:util';
 import {MerchantAccounting,normalizeAccountingConfig} from '../accounting.mjs';
 import {accountingTools} from '../catalog/accounting.mjs';
-import {merchantOperationError} from '../operation-error.mjs';
 import {openMerchantFileClient} from '../retained-download.mjs';
 import {createAccountingStatementClient,accountingStatementPreview,accountingStatementSelection} from '../accounting-statement-client.mjs';
 import {inspectAccountingStatementCycle,runAccountingStatementCycle} from '../accounting-statement-cycle.mjs';
@@ -182,7 +181,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       }
       return host.call(name,args);
     }},{bearerToken:access.token,serverName:'customer-closing-receiving',
-      instructions:'Original repository example customer closing operation.',toolErrorView:merchantOperationError,
+      instructions:'Original repository example customer closing operation.',
       maxRequestBytes:4_000_000});
     const endpoint=await readOptional(join(directory,'mcp-endpoint.json'));
     mcpServer=createServer(handler);
@@ -199,24 +198,6 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     };
     await connect();
     const revision=async()=>(await statementClient.status()).revision;
-    const customers=await statementClient.allCustomers();
-    let customer=customers.items.find(row=>row.reference===operation.customerReference);
-    if(!customer)customer=(await statementClient.saveCustomer({revision:await revision(),actor:ACTOR,
-      reference:operation.customerReference,name:'Repository service-period customer',note:inputLabel})).customer;
-    const assigned=await statementClient.allBindings({customerId:customer.id});
-    if(!assigned.items.some(row=>row.orderRef===native.orderRef))
-      await statementClient.assign({revision:await revision(),actor:ACTOR,customerId:customer.id,
-        orders:[{orderRef:native.orderRef,label:'Repository purchased API allowance'}]});
-    async function importCapture(source,identity,name){
-      const current=await statementClient.allUsage();
-      const previous=current.items.find(row=>row.sha256===identity.sha256);
-      if(previous)return previous;
-      const selected=await statementClient.usageSource(source);assert.equal(selected.sha256,identity.sha256);
-      return (await statementClient.importUsage({source,name,expectedSha256:selected.sha256,
-        revision:await revision(),actor:ACTOR})).import;
-    }
-    const opening=await importCapture('opening',openingInput,'Opening service capture — 1 October 16:00 UTC');
-    const closing=await importCapture('closing',closingInput,'Closing service capture — 1 October 17:00 UTC');
     const captureName='Repository service close '+operation.operationId.slice(0,8);
     const runPage=await statementClient.status({view:'runs',offset:0,limit:200});
     let run=runPage.page.items.find(row=>row.name===captureName);
@@ -225,15 +206,6 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     run=(await waitUntil(()=>rawConnection.call('merchant_accounting_run',{workspace:ALIAS,runId:run.id}),
       value=>['complete','failed'].includes(value.run.status),'Original accounting reconciliation')).run;
     assert.equal(run.status,'complete',run.error??'Complete the original accounting run.');
-    const period=await statementClient.usagePeriod({usageOpeningId:opening.id,usageId:closing.id});
-    assert.equal(period.period.totals.newCalls,3);assert.equal(period.period.totals.consumedUnits,'15');
-    assert.equal(period.period.totals.releasedUnits,'15');assert.equal(period.period.totals.admittedUnits,'20');
-    assert.equal(period.period.totals.resultRecoveries,1);assert.equal(period.period.closing.unitsRemaining,'60');
-    await output('original-period.json',period);
-    const binding={schema:SCHEMA,operationId:operation.operationId,customerId:customer.id,runId:run.id,
-      usageOpeningId:opening.id,usageId:closing.id,opening:openingInput,closing:closingInput};
-    const priorBinding=await retained(join(directory,'native-selection.json'),async()=>binding);
-    assert.deepEqual(priorBinding,binding);
     const sourcePaths=[
       'stellar-forge/mcp-merchant-operator/examples/customer-closing-workbench.mjs',
       'stellar-forge/mcp-merchant-operator/accounting.mjs',
@@ -242,6 +214,8 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       'stellar-forge/mcp-merchant-operator/accounting-statement-cli.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-server.mjs',
+      'stellar-forge/mcp-merchant-operator/accounting-statement-setup.mjs',
+      'stellar-forge/mcp-merchant-operator/cycle-public/setup.mjs',
       'stellar-forge/mcp-merchant-operator/cycle-public/index.html',
       'stellar-forge/mcp-merchant-operator/cycle-public/app.mjs',
       'stellar-forge/mcp-merchant-operator/cycle-public/style.css',
@@ -281,13 +255,106 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       const path=join(screenshots,name);await selected.screenshot({path,fullPage:true});
       return fileIdentity(path);
     }
+    const setupActions=await readOptional(join(directory,'customer-setup-actions.json'))??{};
+    async function setupTab(name){
+      await page.locator('[data-view="setup"]').click();
+      await page.locator('[data-setup-tab="'+name+'"]').click();
+    }
+    async function refreshDesktop(){
+      const response=page.waitForResponse(value=>new URL(value.url()).pathname==='/api/inventory');
+      await page.locator('#refresh').click();assert.ok((await response).ok());
+    }
+    async function savedSetup(label,kind,match,submit){
+      let saved;
+      if(setupActions[label])saved=await api('/api/setup/operations/'+setupActions[label].id);
+      else saved=(await api('/api/setup/operations')).items.find(row=>row.kind===kind&&match(row.arguments??{}));
+      if(!saved){
+        const response=page.waitForResponse(value=>new URL(value.url()).pathname==='/api/setup/operations'&&value.request().method()==='POST');
+        await submit();const received=await response;assert.ok(received.ok(),await received.text());saved=await received.json();
+      }
+      assert.equal(saved.kind,kind);assert.ok(match(saved.arguments),'Reopen the original reviewed customer choices.');
+      setupActions[label]={id:saved.id,kind,requestSha256:saved.requestSha256,arguments:saved.arguments};
+      await output('customer-setup-actions.json',setupActions);
+      if(await page.locator('#setup-operation-dialog[open]').count())await page.locator('#setup-close-operation').click();
+      await setupTab('operations');await page.locator('#setup-refresh-operations').click();
+      await page.locator('[data-setup-open-operation="'+saved.id+'"]').click();
+      await page.locator('#setup-operation-dialog[open]').waitFor();
+      await screenshot('desktop-setup-'+label+'.png');
+      let current=await api('/api/setup/operations/'+saved.id);
+      if(!active(current)&&current.phase!=='OBSERVED'){
+        const response=page.waitForResponse(value=>new URL(value.url()).pathname==='/api/setup/operations/'+saved.id+'/execute');
+        await page.locator('#setup-apply-operation').click();assert.ok((await response).ok());
+      }
+      current=await waitUntil(()=>api('/api/setup/operations/'+saved.id),row=>!active(row),'Saved customer '+label);
+      assert.equal(current.phase,'OBSERVED',json(current));
+      setupActions[label]={...setupActions[label],phase:current.phase,result:current.state?.observation};
+      await output('customer-setup-actions.json',setupActions);
+      await page.locator('#setup-close-operation').click();await refreshDesktop();
+      return current;
+    }
+    let customer=(await statementClient.allCustomers()).items.find(row=>row.reference===operation.customerReference);
+    if(!customer){
+      await savedSetup('create-customer','save',args=>args.reference===operation.customerReference&&!args.id,async()=>{
+        await setupTab('customers');await page.locator('#setup-new-customer').click();
+        await page.locator('#setup-profile-reference').fill(operation.customerReference);
+        await page.locator('#setup-profile-name').fill('Repository service-period customer');
+        await page.locator('#setup-profile-note-input').fill(inputLabel);
+        await page.locator('#setup-profile-form button[type="submit"]').click();
+      });
+      customer=(await statementClient.allCustomers()).items.find(row=>row.reference===operation.customerReference);
+    }
+    assert.ok(customer,'The original customer was created through the workbench.');
+    const customerNote='Original October repository service allowance, prepared through the customer workbench.';
+    if(customer.note!==customerNote||setupActions['edit-customer']){
+      await savedSetup('edit-customer','save',args=>args.id===customer.id&&args.note===customerNote,async()=>{
+        await setupTab('customers');await page.locator('[data-setup-edit-customer="'+customer.id+'"]').click();
+        await page.locator('#setup-profile-note-input').fill(customerNote);
+        await page.locator('#setup-profile-form button[type="submit"]').click();
+      });
+      customer=(await statementClient.allCustomers()).items.find(row=>row.id===customer.id);
+    }
+    assert.equal(customer.note,customerNote);
+    await savedSetup('assign-original-order','assign',args=>args.customerId===customer.id&&args.orders?.length===1&&args.orders[0].orderRef===native.orderRef,async()=>{
+      await setupTab('customers');await page.locator('#setup-assign-customer').selectOption(customer.id);
+      await page.locator('#setup-assign-run').selectOption(run.id);
+      await page.locator('#setup-assign-orders').fill(native.orderRef+'\tRepository purchased API allowance');
+      await page.locator('#setup-assign-form button[type="submit"]').click();
+    });
+    const assigned=await statementClient.allBindings({customerId:customer.id});
+    assert.equal(assigned.items.find(row=>row.orderRef===native.orderRef)?.customerId,customer.id);
+    async function importCapture(source,identity,name){
+      await savedSetup('import-'+source,'usage_import',args=>args.source===source&&args.expectedSha256===identity.sha256,async()=>{
+        await setupTab('usage');await page.locator('#setup-refresh-sources').click();
+        await page.locator('#setup-usage-source option[value="'+source+'"]').waitFor({state:'attached'});
+        await page.locator('#setup-usage-source').selectOption(source);
+        const preview=page.waitForResponse(value=>new URL(value.url()).pathname==='/api/setup/usage-preview');
+        await page.locator('#setup-preview-source').click();const response=await preview,body=await response.json();
+        assert.ok(response.ok(),json(body));assert.equal(body.source.sha256,identity.sha256);
+        await page.locator('#setup-import-name').fill(name);
+        await page.locator('#setup-import-form button[type="submit"]').click();
+      });
+      const result=(await statementClient.allUsage()).items.find(row=>row.sha256===identity.sha256);
+      assert.ok(result,'The original inspected capture was imported.');return result;
+    }
+    const opening=await importCapture('opening',openingInput,'Opening service capture — 1 October 16:00 UTC');
+    const closing=await importCapture('closing',closingInput,'Closing service capture — 1 October 17:00 UTC');
+    emit('CUSTOMER_SETUP_COMPLETE',{customerId:customer.id,runId:run.id,operations:Object.keys(setupActions).length});
+    const period=await statementClient.usagePeriod({usageOpeningId:opening.id,usageId:closing.id});
+    assert.equal(period.period.totals.newCalls,3);assert.equal(period.period.totals.consumedUnits,'15');
+    assert.equal(period.period.totals.releasedUnits,'15');assert.equal(period.period.totals.admittedUnits,'20');
+    assert.equal(period.period.totals.resultRecoveries,1);assert.equal(period.period.closing.unitsRemaining,'60');
+    await output('original-period.json',period);
+    const binding={schema:SCHEMA,operationId:operation.operationId,customerId:customer.id,runId:run.id,
+      usageOpeningId:opening.id,usageId:closing.id,opening:openingInput,closing:closingInput};
+    const priorBinding=await retained(join(directory,'native-selection.json'),async()=>binding);
+    assert.deepEqual(priorBinding,binding);
     async function showCycle(key){
       await page.locator('[data-view="cycles"]').click();
       await page.locator('#reload-cycles').click();
       await page.locator('[data-cycle="'+key+'"]').click();
       await page.locator('#cycle-detail h2').waitFor();
     }
-    async function prepare(label,selections){
+    async function prepare(label,selections,{sourceStatement}={}){
       const existing=(await api('/api/cycles')).items.find(row=>row.label===label);
       if(existing){
         if(existing.phase==='UNPREPARED'&&!active(existing))await api(cyclePath(existing.key)+'/prepare',{});
@@ -296,19 +363,33 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
         await showCycle(existing.key);return existing.key;
       }
       await page.locator('[data-view="compose"]').click();
-      await page.locator('#refresh').click();
+      await refreshDesktop();
       await page.locator('#default-run option[value="'+run.id+'"]').waitFor({state:'attached'});
       while(await page.locator('[data-remove]').count())await page.locator('[data-remove]').first().click();
       await page.locator('#cycle-label').fill(label);
-      for(const [index,selection]of selections.entries()){
-        await page.locator('#default-run').selectOption(selection.runId);
-        await page.locator('#default-closing').selectOption(selection.usageId??'');
-        await page.locator('#default-opening').selectOption(selection.usageOpeningId??'');
-        await page.locator('[data-customer="'+selection.customerId+'"]').check();
-        await page.locator('#add-customers').click();
-        if(selection.replacesId){
-          await page.locator('.selection').nth(index).locator('summary').click();
-          await page.locator('[data-index="'+index+'"][data-field="replacesId"]').selectOption(selection.replacesId);
+      if(sourceStatement){
+        await setupTab('statements');
+        await page.locator('#setup-statement-customer').selectOption(customer.id);
+        await page.locator('[data-setup-open-statement="'+sourceStatement+'"]').click();
+        await page.locator('#setup-statement-dialog[open]').waitFor();
+        assert.equal(await page.locator('#setup-statement-content .file-list a').count(),9);
+        await screenshot('desktop-issued-period.png');
+        await page.locator('[data-setup-correct-statement="'+sourceStatement+'"]').click();
+        await page.locator('[data-index="0"][data-field="replacesId"]').waitFor({state:'attached'});
+        assert.equal(await page.locator('[data-index="0"][data-field="replacesId"]').inputValue(),sourceStatement);
+        assert.equal(await page.locator('[data-index="0"][data-field="usageOpeningId"]').inputValue(),opening.id);
+        await page.locator('#cycle-label').fill(label);
+      }else{
+        for(const [index,selection]of selections.entries()){
+          await page.locator('#default-run').selectOption(selection.runId);
+          await page.locator('#default-closing').selectOption(selection.usageId??'');
+          await page.locator('#default-opening').selectOption(selection.usageOpeningId??'');
+          await page.locator('[data-customer="'+selection.customerId+'"]').check();
+          await page.locator('#add-customers').click();
+          if(selection.replacesId){
+            await page.locator('.selection').nth(index).locator('summary').click();
+            await page.locator('[data-index="'+index+'"][data-field="replacesId"]').selectOption(selection.replacesId);
+          }
         }
       }
       await page.locator('[data-preview="0"]').click();
@@ -343,9 +424,15 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       if(pause&&cycle.rows.some(row=>row.phase==='EXPORT_PENDING')){
         assert.equal(cycle.counts.retained,2);assert.equal(cycle.counts.delivered,1);
         await output('partial-cycle.json',cycle);await screenshot('desktop-partial-close.png');
-        const response=await fetch(new URL(cyclePath(cycleKey)+'/download',baseUrl));
-        assert.ok(response.ok(),await response.clone().text());
-        const archive=join(downloadRoot,'partial-cycle.tar.gz');await retainBytes(archive,Buffer.from(await response.arrayBuffer()));
+        const archive=join(downloadRoot,'partial-cycle.tar.gz');
+        let originalPartial;
+        try{originalPartial=await fileIdentity(archive);}
+        catch(error){if(error.code!=='ENOENT')throw error;}
+        if(!originalPartial){
+          const response=await fetch(new URL(cyclePath(cycleKey)+'/download',baseUrl));
+          assert.ok(response.ok(),await response.clone().text());
+          await retainBytes(archive,Buffer.from(await response.arrayBuffer()));
+        }
         const reopenedRoot=join(directory,'reopened-partial-cycle');
         await extract(archive,reopenedRoot);
         const partial=await inspectAccountingStatementCycle({directory:reopenedRoot});
@@ -361,27 +448,46 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.equal(cycle.rows[0].delivery.files.length,9);assert.equal(cycle.rows[1].delivery.files.length,5);
     const originalIds=cycle.rows.map(row=>row.statement.id);
     emit('CUSTOMER_CLOSE_COMPLETE',{cycleKey,statementIds:originalIds,delivered:cycle.counts.delivered});
-    const correctionKey=await prepare(captureName+' — correction',[{...periodSelection,replacesId:originalIds[0]}]);
+    const correctionKey=await prepare(captureName+' — correction',[{...periodSelection,replacesId:originalIds[0]}],{sourceStatement:originalIds[0]});
     let correction=await readCycle(correctionKey);
     if(!correction.complete)correction=await runFromBrowser(correctionKey);
     assert.equal(correction.complete,true);
     const correctionId=correction.rows[0].statement.id;
     assert.equal((await statementClient.detail({statementId:originalIds[0]})).statement.status,'SUPERSEDED');
+    const withdrawalReason='Repository cumulative view replaced by the reviewed service-period close.';
+    await savedSetup('withdraw-cumulative','withdraw',args=>args.statementId===originalIds[1]&&args.reason===withdrawalReason,async()=>{
+      await setupTab('statements');await page.locator('#setup-statement-customer').selectOption(customer.id);
+      await page.locator('[data-setup-open-statement="'+originalIds[1]+'"]').click();
+      await page.locator('#setup-statement-dialog[open]').waitFor();
+      await page.locator('.setup-withdraw summary').click();
+      await page.locator('#setup-withdraw-reason').fill(withdrawalReason);
+      await page.locator('#setup-withdraw-form button[type="submit"]').click();
+    });
+    assert.equal((await statementClient.detail({statementId:originalIds[1]})).statement.status,'WITHDRAWN');
     // Refresh current original lifecycle snapshots without issuing another statement.
     await api(cyclePath(cycleKey)+'/run',{execute:true});cycle=await waitCycle(cycleKey);
     assert.deepEqual(cycle.rows.map(row=>row.statement.id),originalIds);
     assert.equal(cycle.rows[0].statement.status,'SUPERSEDED');
+    assert.equal(cycle.rows[1].statement.status,'WITHDRAWN');
     await showCycle(cycleKey);await screenshot('desktop-complete-close.png');
     const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
     contexts.push(phoneContext);
     const phone=await phoneContext.newPage();phone.on('pageerror',error=>pageErrors.push(error.message));
     await phone.goto(baseUrl,{waitUntil:'networkidle'});
+    await phone.locator('[data-view="setup"]').click();await phone.locator('[data-setup-tab="statements"]').click();
+    await phone.locator('[data-setup-open-statement="'+originalIds[1]+'"]').click();
+    await phone.locator('#setup-statement-dialog[open]').waitFor();
+    await screenshot('phone-withdrawn-statement.png',phone);await phone.locator('#setup-close-statement').click();
     await phone.locator('[data-view="cycles"]').click();
     await phone.locator('[data-cycle="'+cycleKey+'"]').click();
     await phone.locator('[data-review-saved="1"]').waitFor();await screenshot('phone-complete-close.png',phone);
     await phone.locator('[data-review-saved="1"]').click();await phone.locator('#review-dialog[open]').waitFor();
     await screenshot('phone-source-review.png',phone);await phone.locator('#close-review').click();
     const downloads=[];
+    const setupArchive=join(downloadRoot,'customer-setup.tar.gz');
+    const setupTar=spawnSync('tar',['-czf',setupArchive,'-C',cyclesRoot,'customer-operations'],{encoding:'utf8'});
+    assert.equal(setupTar.status,0,setupTar.stderr||setupTar.error?.message||'Save the complete original customer operations.');
+    downloads.push(await fileIdentity(setupArchive));
     async function download(route,name){
       const response=await fetch(new URL(route,baseUrl),{redirect:'error',signal:AbortSignal.timeout(120000)});
       assert.ok(response.ok(),'Original workbench file: '+response.status+' '+route);
@@ -420,6 +526,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.equal(reopened.complete,true);assert.deepEqual(reopened.rows.map(row=>row.statement.id),originalIds);
     assert.deepEqual(reopened.rows.map(row=>row.reviewFile.sha256),originalReviewFiles);
     assert.equal(reopened.rows[0].statement.status,'SUPERSEDED');
+    assert.equal(reopened.rows[1].statement.status,'WITHDRAWN');
     for(const row of reopened.rows)await verifyCustomer(join(reopenRoot,'items',ordinal(row.index),'delivery'),row);
     const nativeStatements=await statementClient.allStatements({customerId:customer.id});
     assert.equal(nativeStatements.items.length,3);
@@ -430,11 +537,12 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     for(const name of (await readdir(screenshots)).sort())images.push(await fileIdentity(join(screenshots,name)));
     const result={schema:SCHEMA,state:'COMPLETE',completedAt:new Date().toISOString(),
       operationId:operation.operationId,operationDirectory:directory,runtime:process.version,input:inputLabel,
-      source,selection:binding,period:period.period,
+      source,selection:binding,period:period.period,customerSetup:setupActions,
       originalAccounting:{runId:run.id,reportSha256:run.reportSha256,inputManifestSha256:run.inputManifestSha256},
       cycle:{key:cycleKey,id:cycle.cycleId,manifestSha256:cycle.manifestSha256,statementIds:originalIds,
         originalReviewSha256:originalReviewFiles,retained:cycle.counts.retained,delivered:cycle.counts.delivered},
       correction:{key:correctionKey,statementId:correctionId,originalStatus:reopened.rows[0].statement.status},
+      withdrawal:{statementId:originalIds[1],status:reopened.rows[1].statement.status,reason:withdrawalReason},
       deliveryInterruption:pause,reopened:{partial:!!(await readOptional(join(directory,'reopened-partial-result.json'))),
         complete:true,directory:reopenRoot,statementIds:reopened.rows.map(row=>row.statement.id)},
       customerPackets,downloads,screenshots:images,browserErrors:pageErrors,
