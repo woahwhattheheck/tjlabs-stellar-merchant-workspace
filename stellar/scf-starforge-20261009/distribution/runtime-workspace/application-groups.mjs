@@ -75,22 +75,33 @@ export function applicationGroupReviewIdentity(review) {
   const { id, reviewedAt, homeRevision, ...identity } = review;
   return identity;
 }
+function memberPhase(operation) {
+  if (operation.phase !== 'SUCCEEDED') return operation.phase;
+  const result = operation.result ?? operation.state?.result;
+  if (result?.state === 'COMPLETED' && result.exitCode === 0) return 'SUCCEEDED';
+  if (['EXITED', 'LAUNCH_FAILED'].includes(result?.state)) return 'FAILED';
+  if (['STOPPED', 'CANCELLED'].includes(result?.state)) return 'CANCELLED';
+  return result?.state === 'RECONCILED' ? 'RECONCILED' : 'OUTCOME_UNAVAILABLE';
+}
+const acceptedFinalPhases = ['FAILED', 'CANCELLED', 'RECONCILED', 'OUTCOME_UNAVAILABLE'];
 function outcomeIdentity(operation) {
-  return hash({ phase: operation.phase, result: operation.result ?? null, stop: operation.stop ?? null });
+  return hash({ phase: operation.phase, result: operation.result ?? operation.state?.result ?? null, stop: operation.stop ?? null });
 }
 function accepted(member, operation) {
   return member.acceptedOutcome?.identity === outcomeIdentity(operation);
 }
 function settledOrLaunched(member, operation) {
   if (!operation) return false;
-  if (operation.phase === 'SUCCEEDED') return true;
-  if (operation.phase === 'RUNNING' && operation.active && operation.state?.commandProcess) return true;
-  return !operation.active && ['FAILED', 'CANCELLED'].includes(operation.phase) && accepted(member, operation);
+  const phase = memberPhase(operation);
+  if (phase === 'SUCCEEDED') return true;
+  if (phase === 'RUNNING' && operation.active && !operation.stop && operation.state?.commandProcess) return true;
+  return !operation.active && acceptedFinalPhases.includes(phase) && accepted(member, operation);
 }
 async function observedMembers(root, run) {
-  return Promise.all(run.members.map(async member => ({
-    ...member, operation: await applicationRunState(root, originalInput(member)),
-  })));
+  return Promise.all(run.members.map(async member => {
+    const operation = await applicationRunState(root, originalInput(member));
+    return { ...member, operation, operationPhase: operation ? memberPhase(operation) : null };
+  }));
 }
 function progress(run, members) {
   const next = members.find(member => !member.operation);
@@ -314,9 +325,9 @@ export async function applicationGroupMemberAction(root, { groupId, runId, appli
     need(original, 'APPLICATION_GROUP_MEMBER_NOT_LAUNCHED');
     if (action === 'accept-result') {
       checkVersion(run, expectedVersion);
-      need(!run.stopRequestedAt && !original.active && ['FAILED', 'CANCELLED'].includes(original.phase),
+      need(!run.stopRequestedAt && !original.active && acceptedFinalPhases.includes(memberPhase(original)),
         'APPLICATION_GROUP_RESULT_NOT_FINAL', 'Recover an interrupted operation or wait for it to finish.');
-      member.acceptedOutcome = { identity: outcomeIdentity(original), phase: original.phase, acceptedAt: now() };
+      member.acceptedOutcome = { identity: outcomeIdentity(original), phase: memberPhase(original), acceptedAt: now() };
     } else {
       need(action === 'stop' || !run.stopRequestedAt, 'APPLICATION_GROUP_STOPPED');
       try {

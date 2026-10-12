@@ -20,7 +20,7 @@ If a remaining saved Application, provider source, input, resource selection, ru
 
 A managed home's revision is a concurrency token. Before every new member dispatch, the group obtains a fresh original start review and compares its complete approved identity, apart from that token and review timestamps. If only the home revision changed, the group retains the fresh token and submits it through the original start guard. Source, selected release, command and input changes still require a new review.
 
-A final failed or cancelled original operation may be accepted with **Accept result; allow next**. This records the exact outcome the operator accepted and permits the ordered sequence to continue. Its failure/cancellation result stays visible. An interrupted operation must be recovered or stopped before a final outcome can be accepted.
+A final failed, cancelled or reconciled original outcome may be accepted with **Accept result; allow next**. This records the exact outcome the operator accepted and permits the ordered sequence to continue. Its original result stays visible. A completed worker that retained an `EXITED` or `LAUNCH_FAILED` command is displayed as failed. Only an original `COMPLETED` result with exit code zero advances automatically; a recovered outcome without a command result requires explicit acceptance. An interrupted operation must be recovered or stopped before a final outcome can be accepted.
 
 **Stop group** first retains the stop intent, prevents further member launches, then calls the original stop path for every outstanding member. Use **Retry stopping group** after a transient stop failure. The history remains available.
 

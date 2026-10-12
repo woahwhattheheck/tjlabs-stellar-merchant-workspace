@@ -209,10 +209,12 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     const rows = make('ol', undefined, 'group-run-members');
     for (const member of run.members) {
       const row = make('li'), operation = member.operation;
-      const phase = operation?.phase ?? (run.stopRequestedAt ? 'NOT STARTED' : member.error ? 'NEEDS ATTENTION' : 'REVIEWED');
+      const phase = member.operationPhase ?? operation?.phase ?? (run.stopRequestedAt ? 'NOT STARTED' : member.error ? 'NEEDS ATTENTION' : 'REVIEWED');
       const head = make('div', undefined, 'section-title'); head.append(make('strong', member.label), make('span', phase, 'status')); row.append(head);
       row.append(facts([['Application', member.applicationId], ['Saved revision', member.applicationRevision], ['Original request', member.operationId]]));
       if (member.error) row.append(make('p', member.error.code + ': ' + member.error.message, 'message'));
+      if (operation?.result ?? operation?.state?.result ?? operation?.state?.error)
+        row.append(detail('Original operation result', operation.result ?? operation.state?.result ?? operation.state?.error));
       if (member.stopError) row.append(make('p', member.stopError.code + ': ' + member.stopError.message, 'message'));
       if (member.acceptedOutcome) row.append(make('p', 'The operator accepted this ' + member.acceptedOutcome.phase.toLowerCase() + ' outcome before continuing.', 'note'));
       if (member.launchHomeRevision && member.launchHomeRevision !== member.approvedHomeRevision)
@@ -227,7 +229,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
           button('Stop member', () => mutate('/api/application-groups/member', {
             groupId: selected.id, runId: run.id, applicationId: member.applicationId, action: 'stop',
           }, 'Member stop'), !operation.active && !['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(operation.phase)));
-        if (!operation.active && ['FAILED', 'CANCELLED'].includes(operation.phase) && !run.stopRequestedAt)
+        if (!operation.active && ['FAILED', 'CANCELLED', 'RECONCILED', 'OUTCOME_UNAVAILABLE'].includes(phase) && !run.stopRequestedAt)
           memberActions.append(button('Accept result; allow next', () => mutate('/api/application-groups/member', {
             groupId: selected.id, runId: run.id, applicationId: member.applicationId, action: 'accept-result', expectedVersion: run.version,
           }, 'Accepted member result')));
