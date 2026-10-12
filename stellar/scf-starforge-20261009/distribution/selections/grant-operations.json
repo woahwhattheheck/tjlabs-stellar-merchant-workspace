@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning, contributor delivery and cash, dated forecasts and resources, buyer and merchant support receiving, complete customer installation commissioning and handover, measured cohorts, tranche completion and portable operating cases.",
+  "description": "Original grant planning, contributor delivery and cash, dated forecasts and resources, buyer and merchant support receiving, complete customer installation commissioning and handover, source-bound implementation evidence, measured cohorts, tranche completion and portable operating cases.",
   "base": {
     "commands": [
       "installation",
@@ -187,7 +187,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grant Operations: retained plans, delivery and cash, resources, original buyer/support evidence, customer installation editions and complete receiving, cohort reviews and tranche completion.",
+    "description": "Grant Operations: retained plans, delivery and cash, resources, original buyer/support sources, customer installation editions, complete implementation evidence and receiving, cohort reviews and tranche completion.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
