@@ -1,9 +1,9 @@
 # Prepare and receive the complete IATI application
 
 This carrier preserves the complete source at commit
-`7f010cbc26344f840c8b864ea59edbabec5d02d5`: original XML/IATI workspace,
+`cf4f8d5eefa16ce547795bce156d4fef53973ef1`: original XML/IATI workspace,
 DQA, publishing, organisation budgets and documents, saved publisher refresh,
-Results monitoring, and the complete Programme desk and commissioning contribution.
+the original AMP destination workflow, Results monitoring, and the complete Programme desk and commissioning contribution.
 It includes the native CLI, industrial browser, client,
 Merchant/MCP provider, Applications binding, original schema and codelist
 dependencies, licences, and the existing receiving programmes.
@@ -14,16 +14,16 @@ retained original bytes; no publisher acquisition is required.
 
 | Item | Exact identity |
 | --- | --- |
-| Text source | 142 files; 2,703,727 UTF-8 bytes |
+| Text source | 189 files; 3,531,603 UTF-8 bytes |
 | Original SNV source ZIP | 1 file; 17,001 bytes |
-| Complete installed closure | 143 files; 2,720,728 bytes |
-| Compressed envelope | 607,463 bytes |
-| Envelope SHA256 | `9958ed8f0883c38a7c9f2e3f6e4a4576d7b3bbffecf8015d0eddae52c1663f41` |
-| Decoded envelope | 2,855,136 bytes |
-| Decoded SHA256 | `61daa005c5f6ef900e0dcbbb1bcc7affa5c2f896a6887b4fd77ea5d594ba6be3` |
-| Original application commit | `7f010cbc26344f840c8b864ea59edbabec5d02d5` |
-| Packet commit | `c4cbb88ac0e0bbca596bad7bec0430ff19cc5722` |
-| Native/Applications source binding | The same 107 runtime files |
+| Complete installed closure | 190 files; 3,548,604 bytes |
+| Compressed envelope | 793,517 bytes |
+| Envelope SHA256 | `a101fd4a4c184bb63723844e49b3da05385fa2d12e18f3da69d823edcdceb94d` |
+| Decoded envelope | 3,722,993 bytes |
+| Decoded SHA256 | `737b0244bc0372ebd33f97b44cb46fb111dda9521882739de55f08bc4a6f2924` |
+| Original application commit | `cf4f8d5eefa16ce547795bce156d4fef53973ef1` |
+| Packet commit | `dc2f317a5f252e6991a8251fea6130d3949c95bb` |
+| Native/Applications source binding | The same 152 runtime files |
 
 ## Prepare the exact source
 
@@ -35,8 +35,8 @@ and organisation validators use their declared lxml dependency when selected.
 
 ```sh
 python3 -B prepare_source.py \
-  --root /absolute/private/iati-source-7f010cbc \
-  --packet-file /absolute/complete-source-7f010cbc.json.gz \
+  --root /absolute/private/iati-source-cf4f8d5e \
+  --packet-file /absolute/complete-source-cf4f8d5e.json.gz \
   --node /absolute/installed/node
 ```
 
@@ -47,8 +47,13 @@ rejects a changed existing member. It does not create an IATI workspace.
 
 The application keeps its original repository paths under the returned
 `source` directory. The native console and Applications lifecycle use the
-same 107-file manifest, including all organisation, refresh, Programme and commissioning dependencies.
+same 152-file manifest, including all organisation, refresh, AMP, Programme and commissioning dependencies.
 Do not install a Results-only subset.
+
+The carrier matches the actual composed repository files, including the current
+original XML database backup allowance and dataset-handler schema additions.
+The unchanged AMP runtime and its retained Java contract sources remain included;
+source preparation does not start an AMP destination or native write.
 
 The source-preparation receipt records syntax and source custody separately
 from the original native receiving outcome. A completed source receipt does
@@ -83,15 +88,15 @@ The original operation is
 root on retry. Coordinate its one execution with the existing receiving owner.
 
 ```sh
-python3 -B /absolute/private/iati-source-7f010cbc/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/prepare_snv.py \
-  --source-zip /absolute/private/iati-source-7f010cbc/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/SNV_SP2194_DPortal_Source_20261012.zip \
+python3 -B /absolute/private/iati-source-cf4f8d5e/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/prepare_snv.py \
+  --source-zip /absolute/private/iati-source-cf4f8d5e/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/SNV_SP2194_DPortal_Source_20261012.zip \
   --root /absolute/private/iati-results-snv-sp2194-6966-20261012 \
   --operator "Actual receiving operator" \
   --run \
   --node /absolute/installed/node \
   --playwright /absolute/installed/playwright \
   --chromium /absolute/installed/chromium \
-  --merchant-root /absolute/private/iati-source-7f010cbc/source/stellar-forge/mcp-merchant-operator
+  --merchant-root /absolute/private/iati-source-cf4f8d5e/source/stellar-forge/mcp-merchant-operator
 ```
 
 The native programme retains the original source, draft, named source review,
@@ -123,8 +128,8 @@ case when all browser/reviewer options are supplied:
 
 ```sh
 python3 -B prepare_source.py \
-  --root /absolute/private/iati-source-7f010cbc \
-  --packet-file /absolute/complete-source-7f010cbc.json.gz \
+  --root /absolute/private/iati-source-cf4f8d5e \
+  --packet-file /absolute/complete-source-cf4f8d5e.json.gz \
   --node /absolute/installed/node \
   --receiving-config /absolute/private/receiving-selection.json \
   --playwright /absolute/installed/playwright \
