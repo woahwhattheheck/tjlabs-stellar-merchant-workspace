@@ -803,6 +803,26 @@ through the original host and merchant controls described above.
 
 ## 9. Recover and upgrade
 
+### Complete operating snapshots and disaster receiving
+
+Use `starforge captured-api recovery` to preserve the full retained product and
+its configured external source, release, export and browser OAuth stores.
+The complete path is source inspection → saved exact plan → original SF101
+encrypted capture → authenticated native restore → explicit original-path
+receiving → ordinary product open. The original product, release and OAuth
+leases compose the stopped-source capture and final receiving.
+
+The [complete recovery guide](RECOVERY.md) includes all commands, complete
+selection and target-file schemas, private environment references, the original
+runtime/archive path, partial-copy and saved-request continuation, and cold
+reopening. Completed capture requests reopen their original snapshot after later
+source edits. Complete receiving returns its original saved result while later
+ordinary product work continues. Saved handover archives and in-flight uploads
+retain their native identity through explicit restored-file bindings.
+
+### Reopen and upgrade the current product
+
+
 ~~~sh
 starforge captured-api inspect --dir /private/state/captured-api
 ~~~
@@ -838,6 +858,10 @@ alongside the saved process session.
 | Incoming-edition decision reply is lost | Same exact draft base, complete form, comparison/review hashes and original save UUID |
 | Complete edition export stops | Same original terminal command/output directory; resume missing files or reopen completed files offline |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
+| Complete operating capture stops | Same saved recovery plan, bundle, operation and actual plan SHA with the selected source stopped |
+| Encrypted restore stops | Same snapshot hash, bundle and restore operation; retain the native output and continue its original restore |
+| Original-path receiving stops | Same full target declaration, review SHA and receiving operation; retained file prefixes and native bindings resume |
+| Lost operating recovery reply | `recovery status --operation ORIGINAL_DIRECTORY` and its original saved result |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
 
