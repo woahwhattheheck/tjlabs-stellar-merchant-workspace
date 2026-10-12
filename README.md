@@ -18,7 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
-| Operate a native gRPC service as a merchant | **Applications → gRPC merchant product** or `starforge grpc-product` | Original protobuf/reflection source, unary and bidirectional message calls, seller releases, contract upgrades, retained service health and all customer files |
+| Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
 | Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
 | Operate site weather and deliver original observations | **Applications → Site weather operations** or `starforge nws-product` | [Complete selected installation](products/nws-site-weather/README.md), retained NWS source and wire bytes, 30 merchant tools, original Applications reopen and customer receiving |
@@ -31,6 +31,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Operate a saved merchant fleet | **Applications → Merchant fleet** or `starforge merchant-fleet-workspace` | Reviewed source releases, controlled activation and drain, client delivery, durable settlement delivery, and encrypted recovery with the original fleet state |
 | Operate native MPP merchant and customer | **Applications → Native MPP merchant and customer** or `starforge mpp-workspace` | One retained native workspace, original 402 purchase and consent/recovery flow, browser/agent operation, twelve-file customer delivery and exact paid-response receiving |
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
+| Operate a native gRPC service as a merchant | **Applications → gRPC merchant product** or `starforge grpc-product` | Original protobuf/reflection source, unary and bidirectional message calls, seller releases, contract upgrades, retained service health and all customer files |
 | Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
@@ -130,6 +131,13 @@ connects the local saved-file setup page, pinned native SDK, original Woo checko
 merchant agent connection, managed Applications and complete customer receiving.
 Build its complete installed product with `--selection cocart-merchant`; open
 `starforge cocart-setup --port 8787` to prepare the customer's original files.
+
+The [Baserow to Rails operating guide](products/baserow-rails/OPERATING.md) connects the
+original source workspace, retained publication, complete customer rows and
+attachments, exact mapping and transactional Rails editions. Its [installation
+and receiving guide](products/baserow-rails/RECEIVING.md) carries the complete original
+client and configured operator through independent application receiving.
+Build that product with `--selection baserow-rails`.
 
 ## Open the source product
 
