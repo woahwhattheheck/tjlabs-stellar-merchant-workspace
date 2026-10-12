@@ -263,7 +263,7 @@ def _statement_origins(row, sources, successors):
     for sid in sorted(source_ids):
         source = sources.get(sid)
         marker = source.get("statement") if source else None
-        if isinstance(marker, dict) and marker.get("role") == "CSV":
+        if isinstance(marker, dict) and marker.get("role") in ("CSV", "ORIGINAL"):
             result.append({"kind": "STATEMENT", "accountId": marker.get("accountId"),
                            "sourceId": sid, "reviewSourceId": marker.get("reviewSourceId"),
                            "editionSha256": marker.get("editionSha256"), "filename": source["filename"]})
