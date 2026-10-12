@@ -97,7 +97,8 @@ export async function prepareCapturedApiApplication(settings, context) {
     '--mcp-port', String(selectedOptions.mcpPort), '--token-env', selectedOptions.tokenEnv];
   if (selectedOptions.browserOnly) args.push('--browser-only');
   return { args, inputs, createDirectories: [], resourceKey: selected.resourceId,
-    applicationReview: launchReview(selected) };
+    applicationReview: launchReview(selected),
+    ...(selected.browserOAuth ? { openapi: selected.browserOAuth.review } : {}) };
 }
 
 function requestOptions(request) {

@@ -100,9 +100,17 @@ export async function main(args = process.argv.slice(2)) {
     let active, closing, stopping = false;
     const signals = ['SIGINT','SIGTERM'];
     const remove = () => { for (const signal of signals) process.removeListener(signal, stop); };
-    const close = () => closing ??= active.close().finally(remove);
+    const close = () => {
+      if (closing) return closing;
+      const attempt = Promise.resolve().then(() => active.close());
+      closing = attempt;
+      void attempt.then(remove, () => { if (closing === attempt) closing = undefined; });
+      return attempt;
+    };
     const stop = () => { stopping = true; if (active) close().catch(report); };
-    for (const signal of signals) process.once(signal, stop);
+    // Repeated signals join the same native drain; they never restore Node's
+    // default termination handler while these original owners remain open.
+    for (const signal of signals) process.on(signal, stop);
     try {
       const selected = { directory: input.get('--dir'), port: port(input.get('--port')),
         mcpPort: port(input.get('--mcp-port')), browserOnly: input.has('--browser-only'),
@@ -117,7 +125,11 @@ export async function main(args = process.argv.slice(2)) {
         workspace: active.workspace, directory: active.directory, projectsDirectory: active.projectsDirectory,
         configuration: active.configuration, consoleOwnership: active.console.ownership });
       return { ...active, close };
-    } catch (error) { remove(); throw error; }
+    } catch (error) {
+      if (!active && typeof error.close === 'function') active = { close: error.close };
+      if (!active) remove();
+      throw error;
+    }
   } else throw failure('Unknown captured API command. Use --help.');
   print(result); return result;
 }

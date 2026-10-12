@@ -181,6 +181,14 @@ Review the actual current selection again after such an edit. Normal capture,
 review, pricing, package and release work leaves that launch configuration intact.
 Session records and changing private listener tokens are deliberately outside it.
 
+For a product-owned browser with registered OAuth providers, the original
+OpenAPI launch inspector supplies the **Registered provider connections** review:
+selected private connection directories, immutable profiles, registered callbacks
+and source identities. The original managed OpenAPI launcher verifies those
+same opened profiles before the outer product announces its listeners. Changing
+a directory environment reference, public profile or callback requires a fresh
+launch review; normal grant renewal remains within the retained connection.
+
 An externally attached original console retains its own lifetime. For such a
 product, choose browser port `0`: its existing console already owns the browser
 port and provider registry. Stopping this managed product drains its owned agent;
@@ -584,6 +592,7 @@ alongside the saved process session.
 | --- | --- |
 | Setup stops | Repeat `init --dir` for the retained original setup |
 | Browser or agent closes | Reopen the same product and original source/package/release state |
+| Stop reports a close failure | Keep the same original process and retry Stop; its native owners and product lease remain retained until the drain finishes |
 | Capture reply is lost | Exact original bytes and prior saved selection |
 | Decision save reply is lost | The original source's immutable review list |
 | Merchant save reply is lost | Intended package name, original source and complete plan |
@@ -594,6 +603,14 @@ alongside the saved process session.
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
+
+The product records `DRAINING` while stopping. A failed native close records
+`CLOSE_FAILED`, retains the original owner instances and keeps the product lease.
+Repeat Stop or call that same returned `close()` handle to continue. Repeated
+signals join the current attempt. `CLOSED` is recorded after both owned native
+sessions finish; a rejected opening records `FAILED` after its cleanup finishes.
+An embedded opening failure that still needs cleanup exposes that same
+`error.close()` handle together with the original startup and cleanup errors.
 
 Keep state and connection files outside the checkout. Close through the normal
 drain before moving the full operating directories.

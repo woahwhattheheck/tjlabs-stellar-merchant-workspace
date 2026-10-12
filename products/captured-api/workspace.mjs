@@ -257,6 +257,8 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
   let profile = await readCapturedApi(directory);
   const ownership = await lease(profile.directory);
   let consoleSession, mcp, started, closing, initial, launchBinding;
+  let closeState = 'CLOSED', openingFailure, closed = false, keepAlive, closeStartedAt;
+  let mcpClosed = false, consoleClosed = false;
   const inspectBinding = async () => {
     const { inspectCapturedApiLaunch } = await import('./managed.mjs');
     const inspected = await inspectCapturedApiLaunch({ directory: profile.directory, port, mcpPort, browserOnly, tokenEnv },
@@ -266,16 +268,50 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
         'The retained captured API configuration changed. Review this original product again before starting it.');
     return inspected;
   };
-  const finish = async (state, cause) => {
+  const finish = async () => {
+    if (closed) return;
+    // Retain this original process and its kernel lease until native owners and
+    // the final retained session record have all completed. A failed attempt is
+    // retryable through the same close handle; it does not surrender ownership.
+    keepAlive ??= setInterval(() => {}, 1000);
+    closeStartedAt ??= new Date().toISOString();
     const errors = [];
     const attempt = async action => { try { await action(); } catch (error) { errors.push(error); } };
-    await attempt(async () => { if (mcp) await mcp.close(); });
-    await attempt(async () => { if (consoleSession) await consoleSession.close(); });
-    // A rejected managed binding has not opened a session; preserve the previous session record.
-    if (initial) await attempt(() => write(join(profile.directory, SESSION), { ...initial, ...started, state,
-      stoppedAt: new Date().toISOString(), ...(cause ? { error: { code: cause.code ?? 'OPEN_FAILED', message: cause.message } } : {}) }, true));
-    await attempt(() => ownership.close());
-    if (errors.length) throw new AggregateError(errors, 'Captured API sessions did not finish closing.');
+    const record = (state, extra = {}) => ({ ...initial, ...started, state, closeStartedAt,
+      owners: { merchantAgent: !mcp ? 'NOT_OPENED' : mcpClosed ? 'CLOSED' : 'DRAINING',
+        browser: profile.console.ownership === 'EXTERNAL' ? 'EXTERNAL' :
+          !consoleSession ? 'NOT_OPENED' : consoleClosed ? 'CLOSED' : 'DRAINING' },
+      ...(openingFailure ? { error: { code: openingFailure.code ?? 'OPEN_FAILED', message: openingFailure.message } } : {}),
+      ...extra });
+    ownership.assertHeld();
+    if (initial) await attempt(() => write(join(profile.directory, SESSION), record('DRAINING'), true));
+    if (mcp && !mcpClosed) await attempt(async () => { await mcp.close(); mcpClosed = true; });
+    // The original agent may still need its original browser while it drains.
+    if ((!mcp || mcpClosed) && consoleSession && !consoleClosed)
+      await attempt(async () => { await consoleSession.close(); consoleClosed = true; });
+    if (!errors.length) await attempt(async () => {
+      if (initial) await write(join(profile.directory, SESSION),
+        record(closeState, { stoppedAt: new Date().toISOString() }), true);
+      await ownership.close();
+      closed = true;
+      clearInterval(keepAlive); keepAlive = undefined;
+    });
+    if (errors.length) {
+      if (initial) await attempt(() => write(join(profile.directory, SESSION), record('CLOSE_FAILED', {
+        closeErrors: errors.map(error => ({ code: error.code ?? 'CLOSE_FAILED', message: error.message })),
+      }), true));
+      throw Object.assign(new AggregateError(errors,
+        'Captured API close is incomplete. Retry Stop or close() on this same original owner.'), {
+        code: 'CAPTURED_API_CLOSE_PENDING',
+      });
+    }
+  };
+  const close = () => {
+    if (closing) return closing;
+    const attempt = finish();
+    closing = attempt;
+    void attempt.catch(() => { if (closing === attempt) closing = undefined; });
+    return attempt;
   };
   try {
     if (managedBindingSha256 !== undefined) {
@@ -290,11 +326,25 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
     await write(join(profile.directory, SESSION), { ...initial, state: 'STARTING' }, true);
     if (profile.console.ownership === 'PRODUCT') {
       const { startWorkspace } = await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs');
-      const oauthConnections = profile.oauthConnectionsFile
-        ? await (await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/oauth-connections/host.mjs'))
-          .readOAuthHostConnections(profile.oauthConnectionsFile) : [];
-      consoleSession = await startWorkspace({ parent: profile.projectsDirectory, port,
-        noSignals: true, oauthConnections, env: environment });
+      if (launchBinding?.browserOAuth) {
+        const { startManagedOpenApiWorkspace } =
+          await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/managed-launch.mjs');
+        consoleSession = await startManagedOpenApiWorkspace([
+          '--out-parent', profile.projectsDirectory, '--port', String(port),
+          '--oauth-connections', profile.oauthConnectionsFile,
+          '--managed-launch-sha256', launchBinding.browserOAuth.bindingSha256,
+        ], { startWorkspace: async options => {
+          // Keep the original session if native post-start validation needs cleanup.
+          consoleSession = await startWorkspace({ ...options, noSignals: true });
+          return consoleSession;
+        }, env: environment, announce: () => {} });
+      } else {
+        const oauthConnections = profile.oauthConnectionsFile
+          ? await (await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/oauth-connections/host.mjs'))
+            .readOAuthHostConnections(profile.oauthConnectionsFile) : [];
+        consoleSession = await startWorkspace({ parent: profile.projectsDirectory, port,
+          noSignals: true, oauthConnections, env: environment });
+      }
       ownership.assertHeld();
       await write(profile.console.urlFile, consoleSession.url + '\n', true);
     } else if (port !== 0) throw fail('CAPTURED_API_INPUT', 'The existing console owns its listener port.');
@@ -309,9 +359,17 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
     ownership.assertHeld();
     await write(join(profile.directory, SESSION), { ...initial, ...started }, true);
     return { ...profile, ...started, ...(launchBinding ? { launchBinding } : {}),
-      close: () => closing ??= finish('CLOSED') };
+      close };
   } catch (error) {
-    try { await finish('FAILED', error); } catch (cleanup) { throw new AggregateError([error, cleanup], error.message); }
+    closeState = 'FAILED'; openingFailure = error;
+    try { await close(); }
+    catch (cleanup) {
+      // Embedded callers and the original CLI retain the same cleanup handle
+      // even when opening failed before an OPEN result could be returned.
+      throw Object.assign(new AggregateError([error, cleanup], error.message), {
+        code: 'CAPTURED_API_CLOSE_PENDING', close,
+      });
+    }
     throw error;
   }
 }

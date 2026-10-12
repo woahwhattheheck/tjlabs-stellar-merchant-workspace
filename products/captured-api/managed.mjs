@@ -79,6 +79,16 @@ async function observe(profile, options, environment) {
     entries.push(await sourceFile('mcpOAuth', mcpOAuth,
       { privateFile: false, maximum: 262144, follow: true }));
   }
+  let browserOAuth = null;
+  if (profile.console.ownership === 'PRODUCT' && profile.oauthConnectionsFile) {
+    const { inspectOpenApiLaunch } =
+      await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/managed-launch.mjs');
+    const selected = await inspectOpenApiLaunch({
+      outputParent: profile.projectsDirectory, port: options.port,
+      oauthConnectionsFile: profile.oauthConnectionsFile, allowLoopbackOAuth: false,
+    }, { env: environment, allowMissingOutput: false });
+    browserOAuth = { binding: selected.binding, bindingSha256: selected.bindingSha256, review: selected.review };
+  }
   const directories = [];
   for (const [role, path] of Object.entries({
     product: profile.directory, projects: profile.projectsDirectory, operator: profile.operatorDirectory,
@@ -86,12 +96,15 @@ async function observe(profile, options, environment) {
     releases: resolve(dirname(profile.configuration), raw.releaseStore),
     exports: resolve(dirname(profile.configuration), raw.exportsDirectory),
   })) directories.push(await directoryIdentity(role, path));
+  for (const selected of browserOAuth?.binding.profiles ?? [])
+    directories.push({ role: 'browserOAuth:' + selected.alias, path: selected.directory.directory,
+      dev: String(selected.directory.device), ino: String(selected.directory.inode) });
   const files = entries.map(entry => entry.metadata);
   const authorization = { mode: options.browserOnly ? 'browser-only' : mcpOAuth ? 'oauth' : 'fixed-bearer',
     tokenEnv: options.tokenEnv, mcpOAuthConfig: mcpOAuth,
     clientOrigins: options.browserOnly ? [] : String(environment.MCP_CLIENT_ORIGINS ?? '')
       .split(',').map(value => value.trim()).filter(Boolean) };
-  return { files, directories, authorization };
+  return { files, directories, authorization, browserOAuth };
 }
 /**
  * Read the original private profile and native configuration without opening a
@@ -127,6 +140,7 @@ export async function inspectCapturedApiLaunch(input = {}, { environment = proce
   return { schema: CAPTURED_API_LAUNCH_SCHEMA, binding, bindingSha256, resourceId, profile,
     directory: profile.directory, projectsDirectory: profile.projectsDirectory, configuration: profile.configuration,
     consoleOwnership: profile.console.ownership, files: observed.files, directories: observed.directories, review,
+    browserOAuth: observed.browserOAuth,
     listeners: { browser: { enabled: true, ownership: profile.console.ownership,
       requestedPort: options.port, urlFile: profile.console.urlFile },
     mcp: { enabled: !options.browserOnly, ownership: 'PRODUCT', requestedPort: options.mcpPort,
