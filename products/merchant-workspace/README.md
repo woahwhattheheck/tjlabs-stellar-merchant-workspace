@@ -34,6 +34,8 @@ roadmap, native acceptance and complete customer handover in one source.
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
+| Open an issued buyer period for accounting | `starforge merchant-accounting-workspace buyer init` and the accounting browser | Complete retained buyer source, the same saved handoff, explicit accounting decisions, original returns and encrypted recovery |
+| Review a changed QuickBooks or Xero chart | **Accounting → Chart source changes** or `starforge accounting-source-changes` | Both original company-chart editions, reviewed mappings and valuations, and a recoverable replacement of the selected unused plan |
 | Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
@@ -55,6 +57,16 @@ same workflow. The
 [pricing and supplier-cost guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 connects original supplier sources, allocation, saved pricing reviews, scenario
 planning and complete backup receiving through that same Applications lifecycle.
+
+The [accounting connections guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/CONNECTIONS.md)
+keeps each saved provider selection with its original accounting owner. The
+[buyer accounting guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/BUYER_ACCOUNTING.md)
+covers retaining an issued period, reopening its source and continuing the same
+accountant handoff. The [chart source-change guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/SOURCE_CHANGES.md)
+covers comparing retained chart editions, reviewing each mapping and valuation,
+and replacing an unused plan with one saved successor. Those screens run inside
+the same accounting server and operating-state recovery as the existing merchant,
+runbook and portfolio workflows.
 
 The [merchant fleet guide](../merchant-fleet/OPERATING.md) connects an existing
 fleet plan and its original seller stores to Applications review, start, open,
