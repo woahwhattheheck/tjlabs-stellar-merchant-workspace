@@ -521,7 +521,7 @@ class Host:
 
 
 class Receiving:
-    def __init__(self, config, *, host_url=None, receiving_url=None):
+    def __init__(self, config, *, host_url=None, receiving_url=None, agent_execution_continuation=None):
         need(isinstance(config, dict) and config.get("schema") == SCHEMA, "INPUT_SCHEMA",
              "Use the complete original contributor receiving input.")
         self.config = deepcopy(config)
@@ -587,13 +587,16 @@ class Receiving:
             original_caller = next(row for row in self.manifest["files"]
                                    if row["path"] == self.source_prefix + "workspace/operations_engagements_receiving.py")
             executed_caller = descriptor(Path(__file__).absolute(), maximum=MAX_SOURCE)
-            need(all(executed_caller[key] == original_caller[key] for key in ("bytes", "sha256")),
-                 "EXECUTED_SOURCE_CHANGED", "Execute the complete caller from the selected original source edition.")
+            if agent_execution_continuation is None:
+                need(all(executed_caller[key] == original_caller[key] for key in ("bytes", "sha256")),
+                     "EXECUTED_SOURCE_CHANGED", "Execute the complete caller from the selected original source edition.")
             self.selection = {"schema": SCHEMA + ".selection", "operationId": self.operation,
                 "inputSha256": digest(config), "mode": config["mode"], "actor": self.actor,
                 "sourceDirectory": str(self.source), "sourceManifest": deepcopy(config["sourceManifest"]),
                 **({"repositoryRoot": str(self.source_root)} if "repositoryRoot" in config else {}),
                 "host": self.host.selection, "receivingHost": self.receiving_host.selection}
+            self.agent_execution_continuation = (bind_agent_execution_continuation(self, agent_execution_continuation)
+                                                 if agent_execution_continuation is not None else None)
             self.agent = bind_agent(self) if "agent" in config else None
             atomic(self.output / "receiving-input.json", encoded(config))
             atomic(self.output / "SOURCE_SELECTION.json", manifest_raw)
@@ -1317,6 +1320,136 @@ def verify_case(client, archive, imported, book, forecast, portfolio, receiving)
 
 
 
+def bind_agent_execution_continuation(client, reference):
+    """Validate a declared execution correction without changing original source."""
+    code = "AGENT_EXECUTION_CONTINUATION"
+    need(isinstance(reference, dict) and set(reference) == {"path", "bytes", "sha256"},
+         code, "Select the complete explicit agent execution continuation file.")
+    path, raw = selected_file(reference, maximum=256 * 1024)
+    need(reference == {"path": str(path), "bytes": len(raw), "sha256": sha(raw)}
+         and descriptor(path, maximum=256 * 1024)["mode"] & 0o077 == 0,
+         code, "Retain the exact private execution continuation reference.")
+    document = parse(raw)
+    need(isinstance(document, dict) and set(document) == {
+             "schema", "operationId", "reason", "original", "corrections"}
+         and document.get("schema") == "stellar-forge.sf47-engagement-agent-execution-continuation.v1"
+         and document.get("operationId") == client.operation
+         and isinstance(document.get("reason"), str) and document["reason"].strip()
+         and len(document["reason"]) <= 4000,
+         code, "Bind the declared correction to this original operation and reason.")
+    original, corrections = document.get("original"), document.get("corrections")
+    need("agent" in client.config and isinstance(original, dict)
+         and set(original) == {"sourceManifest", "agentSourceManifest",
+             "nativeSelectionSha256", "agentSelectionSha256", "native", "agentJournal"}
+         and original.get("sourceManifest") == client.config["sourceManifest"]
+         and original.get("agentSourceManifest") == client.config["agent"]["sourceManifest"]
+         and original.get("nativeSelectionSha256") == digest(client.selection)
+         and isinstance(original.get("agentSelectionSha256"), str)
+         and SHA.fullmatch(original["agentSelectionSha256"])
+         and isinstance(corrections, dict) and set(corrections) == {"python", "node"},
+         code, "Preserve the complete original source and native selections.")
+    rows = {row["path"]: row for row in client.manifest["files"]}
+    members = {"python": client.source_prefix + "workspace/operations_engagements_receiving.py",
+               "node": client.source_prefix + "workspace/engagement-agent-receiving.mjs"}
+    for name, member in members.items():
+        correction = corrections[name]
+        need(isinstance(correction, dict) and set(correction) == {"prior", "current"}
+             and member in rows, code, "Select both complete execution preimages.")
+        expected = {"path": str(client.source_root / member),
+                    **{key: rows[member][key] for key in ("bytes", "sha256", "mode")}}
+        need(correction["prior"] == expected, code,
+             "The declared execution preimage differs from the original source.")
+        current = correction["current"]
+        need(isinstance(current, dict) and set(current) == {"path", "bytes", "sha256", "mode"}
+             and isinstance(current.get("mode"), int) and not isinstance(current["mode"], bool)
+             and 0 <= current["mode"] <= 0o777, code,
+             "Retain the complete current execution file and mode.")
+        current_path, _ = selected_file(current, maximum=MAX_SOURCE)
+        need(current["path"] == str(current_path)
+             and separate(client.source_root, current_path)
+             and descriptor(current_path, maximum=MAX_SOURCE)["mode"] == current["mode"],
+             code, "Stage the selected correction outside the unchanged source tree.")
+        if name == "python":
+            need(Path(__file__).absolute() == current_path, code,
+                 "Execute the exact Python caller selected by this continuation.")
+    need(corrections["python"]["current"]["path"] != corrections["node"]["current"]["path"],
+         code, "Select distinct complete Python and Node corrections.")
+    native = original.get("native")
+    need(isinstance(native, dict) and set(native) == {"outcome", "journal"}, code,
+         "Bind the original completed native outcome and frozen journal.")
+    native_values = {}
+    for name, filename in (("outcome", "ENGAGEMENT_NATIVE_RECEIVING.json"),
+                           ("journal", "ENGAGEMENT_AGENT_ORIGINAL_JOURNAL.json")):
+        selected_path, body = selected_file(native[name], maximum=16 * 1024 * 1024)
+        need(selected_path == client.output / filename, code,
+             "Use the original completed native file in this receiving directory.")
+        native_values[name] = parse(body)
+    need(native_values["journal"].get("schema") == STATE_SCHEMA
+         and native_values["journal"].get("state") == "NATIVE_COMPLETE"
+         and native_values["journal"].get("selection") == client.selection
+         and native_values["outcome"].get("schema") == SCHEMA + ".native"
+         and native_values["outcome"].get("operationId") == client.operation,
+         code, "Keep the original completed native phase.")
+    prior = original.get("agentJournal")
+    need(isinstance(prior, dict) and set(prior) == {"path", "bytes", "sha256"}
+         and prior.get("path") == str(client.output / "agent" / "JOURNAL.json"),
+         code, "Select the original interrupted agent journal.")
+    prefix = client.output / "agent" / "execution-continuations" / reference["sha256"]
+    retained_prior = prefix / "prior-agent-journal.json"
+    prior_reference = {**prior, "path": str(retained_prior)} if retained_prior.exists() else prior
+    _, prior_raw = selected_file(prior_reference, maximum=16 * 1024 * 1024)
+    predecessor = parse(prior_raw)
+    need(predecessor.get("schema") == AGENT_SCHEMA + ".journal"
+         and predecessor.get("state") == "INTERRUPTED"
+         and predecessor.get("executionContinuation") is None
+         and predecessor.get("steps") == {} and predecessor.get("downloads") == {}
+         and isinstance(predecessor.get("attempts"), list) and predecessor["attempts"]
+         and all(attempt.get("state") == "INTERRUPTED" for attempt in predecessor["attempts"])
+         and predecessor.get("selectionSha256") == original["agentSelectionSha256"]
+         and sha(encoded(predecessor.get("selection"))) == original["agentSelectionSha256"],
+         code, "Continue the exact interrupted connection admission and its saved selection.")
+    selection_path = client.output / "agent" / "SELECTION.json"
+    _, selection_raw = descriptor(selection_path, maximum=16 * 1024 * 1024, capture=True)
+    need(selection_raw == encoded(predecessor["selection"]), code,
+         "Keep the original complete Node selection bytes.")
+    record = {"reference": deepcopy(reference), "document": document}
+    _, current_raw = descriptor(Path(prior["path"]), maximum=16 * 1024 * 1024, capture=True)
+    current_journal = parse(current_raw)
+    need(current_journal.get("executionContinuation") == record
+         or (current_journal.get("executionContinuation") is None and current_raw == prior_raw),
+         code, "Resume the same declared execution correction and retained predecessor.")
+    retained_selection = prefix / "execution-continuation.json"
+    if retained_selection.exists():
+        _, retained_raw = descriptor(retained_selection, maximum=256 * 1024, capture=True)
+        need(retained_raw == raw, code, "The retained execution correction differs.")
+    return {"record": record, "raw": raw, "priorJournal": predecessor}
+
+
+def retain_agent_execution_continuation(client, outcome, directory):
+    """Join the declared correction to the original complete agent selection."""
+    selected = client.agent_execution_continuation
+    if selected is None:
+        need(client.state.get("agentExecutionContinuation") is None,
+             "AGENT_EXECUTION_CONTINUATION", "Resume with the retained execution correction.")
+        return
+    record = selected["record"]
+    expected = expected_agent_selection(client, outcome, directory)
+    need(selected["priorJournal"]["selection"] == expected
+         and record["document"]["original"]["agentSelectionSha256"] == sha(encoded(expected))
+         and record["document"]["original"]["native"] == expected["native"],
+         "AGENT_EXECUTION_CONTINUATION",
+         "Preserve every accepted native request and the original agent selection.")
+    previous = client.state.get("agentExecutionContinuation")
+    need(previous is None or previous == record, "AGENT_EXECUTION_CONTINUATION",
+         "Keep the same explicit execution correction in the original receiving.")
+    reference = record["reference"]
+    client.artifact("agent-execution-continuation-" + reference["sha256"],
+                    "agent-execution-continuations/" + reference["sha256"] + ".json",
+                    selected["raw"])
+    client.state["agentExecutionContinuation"] = deepcopy(record)
+    client.save()
+
+
 def bind_agent(client):
     """Bind the existing Node runtime and the same complete native source."""
     chosen = client.config["agent"]
@@ -1353,6 +1486,8 @@ def bind_agent(client):
     provider, _ = selected_file(chosen.get("providerConfiguration"), maximum=16 * 1024 * 1024)
     need(descriptor(provider, maximum=16 * 1024 * 1024)["mode"] & 0o077 == 0,
          "AGENT_PROVIDER", "Use the existing private provider configuration.")
+    if client.agent_execution_continuation is not None:
+        script = Path(client.agent_execution_continuation["record"]["document"]["corrections"]["node"]["current"]["path"])
     return {"config": deepcopy(chosen), "node": node, "script": script}
 
 
@@ -1420,6 +1555,8 @@ def run_agent_child(client, phase, node_input):
                "input": input_path.relative_to(client.output).as_posix(),
                "stdout": (directory / "stdout.log").relative_to(client.output).as_posix(),
                "stderr": (directory / "stderr.log").relative_to(client.output).as_posix()}
+    if client.agent_execution_continuation is not None:
+        attempt["agentExecutionContinuation"] = deepcopy(client.agent_execution_continuation["record"]["reference"])
     phase["attempts"].append(attempt)
     phase["state"] = "RUNNING"
     client.save()
@@ -1647,7 +1784,14 @@ def validate_agent_result(client, outcome, directory, selection_sha):
          and agent_journal.get("selectionSha256") == result["selectionSha256"],
          "AGENT_JOURNAL", "The completed agent journal must bind the same original selection.")
     closed = parse(retained[observed["path"]])
+    execution = (client.agent_execution_continuation["record"]
+                 if client.agent_execution_continuation is not None else None)
+    need(all(value.get("executionContinuation") == execution
+             for value in (result, agent_journal, closed, closed.get("observation", {}))),
+         "AGENT_EXECUTION_RESULT", "Retain the same complete execution correction in every closed agent result.")
     basis_keys = ("schema", "selection", "selectionSha256", "steps", "downloads", "interruptions")
+    if execution is not None:
+        basis_keys += ("executionContinuation",)
     need(all(key in agent_journal for key in basis_keys)
          and closed.get("schema") == AGENT_SCHEMA + ".closed" and closed.get("state") == "DRAINED"
          and closed.get("operationId") == client.operation
@@ -1713,7 +1857,8 @@ def validate_agent_result(client, outcome, directory, selection_sha):
                 "operationId": client.operation, "selectionSha256": selection_sha,
                 "agentSelectionSha256": result["selectionSha256"], "result": result_row,
                 "nativeCaseId": outcome["sourceCaseId"], "nativeCaseVersion": outcome["sourceCaseVersion"],
-                "exports": checked, "files": len(rows) + 1}
+                "exports": checked, "files": len(rows) + 1,
+                **({"executionContinuation": deepcopy(execution)} if execution is not None else {})}
     client.artifact("agent-receiving", "ENGAGEMENT_AGENT_RECEIVING.json", encoded(verified))
     return verified
 
@@ -1733,6 +1878,7 @@ def receive_agent(client, outcome):
                 "outputDirectory": str(directory), "parentGuard": {
                     "path": str(client.guard.path), "device": str(client.guard.identity[0]), "inode": str(client.guard.identity[1])}}
     selection_sha = digest(selected)
+    retain_agent_execution_continuation(client, outcome, directory)
     client.artifact("agent-selection", "ENGAGEMENT_AGENT_SELECTION.json", encoded(selected))
     phase = client.state.get("agentPhase")
     if phase is None:
@@ -1757,6 +1903,8 @@ def receive_agent(client, outcome):
                       "workspace": chosen["workspace"], "native": {"outcome": native, "journal": frozen},
                       "outputDirectory": str(directory),
                       "parentGuard": {**selected["parentGuard"], "fd": client.guard.fd}}
+        if client.agent_execution_continuation is not None:
+            node_input["agentExecutionContinuation"] = deepcopy(client.agent_execution_continuation["record"]["reference"])
         run_agent_child(client, phase, node_input)
         verified = validate_agent_result(client, outcome, directory, selection_sha)
     phase.update(state="COMPLETED", result=deepcopy(verified))
@@ -1940,8 +2088,9 @@ def publish_delivery(client, outcome):
     return {"path": str(target), "bytes": info["bytes"], "sha256": info["sha256"],
             "manifestSha256": sha(manifest_raw), "journalSha256": sha(frozen_raw), "members": len(members) + 1}
 
-def receive(config, *, host_url=None, receiving_url=None):
-    client = Receiving(config, host_url=host_url, receiving_url=receiving_url)
+def receive(config, *, host_url=None, receiving_url=None, agent_execution_continuation=None):
+    client = Receiving(config, host_url=host_url, receiving_url=receiving_url,
+                       agent_execution_continuation=agent_execution_continuation)
     original_error = None
     result = None
     try:
@@ -1951,6 +2100,10 @@ def receive(config, *, host_url=None, receiving_url=None):
             value = parse(raw)
             need(value.get("state") == "COMPLETED" and value.get("selectionSha256") == digest(client.selection),
                  "COMPLETION_SELECTION", "Keep the original complete receiving result.")
+            expected_execution = (client.agent_execution_continuation["record"]
+                                  if client.agent_execution_continuation is not None else None)
+            need(value.get("agent", {}).get("executionContinuation") == expected_execution,
+                 "COMPLETION_EXECUTION", "Reopen the same completed agent execution correction.")
             for row in client.state["artifacts"].values():
                 client.retained(row)
             saved = value["delivery"]
