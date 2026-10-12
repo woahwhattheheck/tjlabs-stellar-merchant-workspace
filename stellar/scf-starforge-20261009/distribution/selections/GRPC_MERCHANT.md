@@ -2,18 +2,20 @@
 
 This selected product delivers the maintained gRPC source engine, native
 authoring browser, merchant agent, persistent Merchant Console, original seller
-release lifecycle, contract upgrades, durable service health and complete
-customer receiving.
+release lifecycle, contract upgrades, durable service health, reviewed incidents
+and complete customer receiving.
 
 Its recipe is `grpc-merchant.json`, schema
 `stellar-forge.distribution-source-selection.v1`. It selects complete
 original contributions and keeps the existing distribution builder, installer,
 source manifest, runtime lock and Applications lifecycle. The selected original
-contributions include `merchant-console` together with the nine gRPC product
+contributions include `merchant-console` together with the gRPC source,
+request streams, reflection, upgrades, health, operations and installed product
 contributions. The complete `stellar-forge/mcp-merchant-operator/console`
 component carries the customer page, saved recipes, pure receiving records,
 archive implementation, styles and full guide. Its maintained launch source
-binds all 39 Console files, alongside the original gRPC managed source.
+binds the Console files and shared operations editor, alongside the original
+gRPC managed source.
 
 ## Build the selected source
 
@@ -140,3 +142,19 @@ installed browser/agent ownership, original call and release readback, all
 seven customer files, the frozen health prefix and offline receiving. The
 [complete continuation guide](../../../../products/grpc-merchant/INSTALL_RECEIVING.md)
 retains the original operation and its saved inputs through interruption.
+
+## Investigate original service operations
+
+The installed [operations guide](../../../../products/grpc-merchant/OPERATIONS.md)
+covers saved captures, original call and health timelines, source/method outcome
+comparisons, incident revisions and corrective actions. The same editor opens in
+the native gRPC workspace and **Customer workspace → Operations and incidents**
+in Merchant Console.
+
+The `grpc-operations` contribution supplies the complete native CLI, typed client,
+domain, report and receiving APIs. `grpc-product operations` selects this
+product's original console; `GrpcProductClient` exposes the same capture,
+review, export and import actions through the original merchant connection.
+A saved incident delivers full JSON, calls/health/actions CSV and a readable HTML
+report. The product receiver and its offline inspector validate all five files
+against their selected immutable manifest.
