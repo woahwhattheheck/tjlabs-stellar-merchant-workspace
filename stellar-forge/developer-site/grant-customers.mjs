@@ -292,6 +292,10 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/runtime-workspace\/SOURCE_BUILDS\.md)/, companion);
   receive('request-collection-authoring', 'Reusable buyer request plans and complete prepared periods',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf88-operator-buyer-cli\/collections\/AUTHORING\.md)/, companion);
+  receive('installation-product-requirements', 'Complete capability selection and committed dependency inspection',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/discovery\/PRODUCT_REQUIREMENTS\.md)/, companion);
+  receive('installation-product-plans', 'Saved product, original installed Runtime and complete customer handoff',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/runtime-workspace\/PRODUCT_PLANS\.md)/, companion);
   receive('grant-operating-case', 'Grant Operations complete delivery, cash and customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/OPERATING\.md)/, companion);
   receive('grant-customer-task-outcomes', 'Complete customer task comparison, reviewed editions and native receiving',
