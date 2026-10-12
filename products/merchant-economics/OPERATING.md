@@ -188,6 +188,10 @@ The launcher restores before opening the workspace. The same archive and destina
 
 Use the normal close action when handing ownership to a different process. Keep original request UUIDs, immutable source and edition IDs, saved revisions, archive hashes and completed receive directories with the operating state. These are the continuation points for source correction, pricing review, transfer recovery and the next product runtime.
 
+## Continue the original complete receiving operation
+
+The [merchant economics receiving operation](../../operations/merchant-economics-receiving-20261012/README.md) retains the portable driver, exact published source-file manifest, original request identities, input hashes and continuation procedure for the completed Linkup quotation workspace. It restores the original full backup, exercises the native MCP and CLI cost/pricing/file workflows, and reopens the received state. The operation uses the retained observations and original cost allocation; its own saved report records each receiving stage and the actual outcome.
+
 ## Original implementation and detailed contracts
 
 - [Pricing workspace and source selection](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/WORKSPACE.md)
