@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Form release review</title>
+  <link rel="stylesheet" href="/form-releases/ui.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to release review</a>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Field operations</p>
+      <h1>Form release review</h1>
+      <p>Compare original form versions, review reporting effects, and prepare an approved release.</p>
+    </div>
+    <nav aria-label="Workspace">
+      <a id="field-link" href="/">Field workspace</a>
+      <a id="commissioning-link" href="/commissioning/">Commissioning</a>
+      <a id="warehouse-link" href="/warehouse/">Warehouse</a>
+      <a href="/form-releases/" aria-current="page">Form releases</a>
+    </nav>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true">Opening the workspace…</p>
+
+    <section id="unlock" class="panel compact-panel" aria-labelledby="unlock-title" hidden>
+      <h2 id="unlock-title">Open the private workspace</h2>
+      <p>Use the operator link, or enter the token supplied with this workspace.</p>
+      <form id="unlock-form">
+        <label for="operator-token">Operator token</label>
+        <input id="operator-token" type="password" autocomplete="off" spellcheck="false" required>
+        <button type="submit" class="primary">Open workspace</button>
+      </form>
+    </section>
+
+    <div id="desk" hidden>
+      <section class="workspace-bar" aria-label="Current workspace">
+        <div>
+          <strong id="workspace-name">Release review workspace</strong>
+          <p id="workspace-detail" class="muted"></p>
+        </div>
+        <button id="refresh" type="button">Refresh saved work</button>
+      </section>
+      <dl id="overview" class="metrics" aria-label="Saved work"></dl>
+      <section id="pending-requests" class="notice" aria-labelledby="pending-title" hidden>
+        <h2 id="pending-title">Saved request in progress</h2>
+        <div id="pending-list"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="sources-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">1. Select source editions</p>
+            <h2 id="sources-title">Retain a form version</h2>
+          </div>
+          <p class="muted">Each review uses the selected original source editions.</p>
+        </div>
+        <div class="source-grid">
+          <form id="capture-form" class="subpanel">
+            <h3>Published version from a capture</h3>
+            <label for="capture-select">Retained capture</label>
+            <select id="capture-select" required></select>
+            <div class="field-grid">
+              <div>
+                <label for="form-select">Form</label>
+                <select id="form-select" required></select>
+              </div>
+              <div>
+                <label for="version-select">Original version</label>
+                <select id="version-select" required></select>
+              </div>
+            </div>
+            <p id="capture-detail" class="muted"></p>
+            <div class="form-actions">
+              <label class="inline-label" for="capture-role">Use as
+                <select id="capture-role">
+                  <option value="baseline">Baseline</option>
+                  <option value="candidate">Candidate</option>
+                </select>
+              </label>
+              <button id="retain-capture" type="submit">Retain selected version</button>
+            </div>
+          </form>
+
+          <form id="authoring-form" class="subpanel" hidden>
+            <h3>Compiled authoring candidate</h3>
+            <p>Choose the saved candidate prepared in the authoring workspace.</p>
+            <label for="authoring-select">Compiled candidate</label>
+            <select id="authoring-select" required></select>
+            <p id="authoring-detail" class="muted"></p>
+            <button id="retain-authoring" type="submit">Retain candidate</button>
+          </form>
+        </div>
+
+        <details class="source-shelf">
+          <summary id="snapshots-heading">Retained source editions</summary>
+          <ul id="snapshot-list" class="source-list"></ul>
+        </details>
+
+        <form id="compare-form" class="compare-form">
+          <h3>Create a comparison</h3>
+          <div class="field-grid">
+            <div>
+              <label for="baseline-select">Baseline edition</label>
+              <select id="baseline-select" required></select>
+            </div>
+            <div>
+              <label for="candidate-select">Candidate edition</label>
+              <select id="candidate-select" required></select>
+            </div>
+          </div>
+          <p id="comparison-selection" class="muted"></p>
+          <label for="review-name">Review name</label>
+          <input id="review-name" type="text" maxlength="200" autocomplete="off" required>
+          <button id="create-review" type="submit" class="primary">Compare selected editions</button>
+        </form>
+      </section>
+
+      <section class="review-layout" aria-label="Saved form reviews">
+        <aside class="panel review-sidebar">
+          <h2>Saved reviews</h2>
+          <label for="review-search" class="visually-hidden">Find a saved review</label>
+          <input id="review-search" type="search" placeholder="Find a review" autocomplete="off">
+          <nav id="review-list" class="review-list" aria-label="Saved reviews"></nav>
+        </aside>
+
+        <article id="review-panel" class="panel review-panel" aria-labelledby="review-title">
+          <div id="review-empty" class="empty">
+            <h2>Select a saved review</h2>
+            <p>Retain two source editions and compare them, or open existing work from the review list.</p>
+          </div>
+
+          <div id="review-content" hidden>
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">2. Review the comparison</p>
+                <h2 id="review-title" tabindex="-1"></h2>
+                <p id="review-meta" class="muted"></p>
+              </div>
+              <span id="review-status" class="badge"></span>
+            </div>
+
+            <div id="revision-conflict" class="notice" hidden>
+              <h3>Saved work has changed</h3>
+              <p id="revision-conflict-text"></p>
+              <div class="button-row">
+                <button id="download-draft" type="button">Download my unsaved notes</button>
+                <button id="reload-review" type="button">Reload saved review</button>
+              </div>
+              <p class="muted">Reloading replaces this tab’s draft with the current saved decisions.</p>
+            </div>
+
+            <div id="source-pair" class="source-pair"></div>
+            <details id="source-details" class="source-details">
+              <summary>Original source details</summary>
+              <div id="source-detail-body"></div>
+            </details>
+
+            <dl id="review-metrics" class="metrics small-metrics" aria-label="Comparison summary"></dl>
+            <details class="coverage">
+              <summary>Comparison coverage</summary>
+              <p class="muted">These facets show which original material is available on each side of the comparison.</p>
+              <div class="table-wrap">
+                <table>
+                  <caption class="visually-hidden">Original comparison coverage</caption>
+                  <thead><tr><th scope="col">Facet</th><th scope="col">Baseline</th><th scope="col">Candidate</th></tr></thead>
+                  <tbody id="coverage-body"></tbody>
+                </table>
+              </div>
+            </details>
+
+            <div class="reviewer-row">
+              <label for="reviewer">Reviewer name</label>
+              <input id="reviewer" type="text" autocomplete="name" maxlength="200" required>
+            </div>
+
+            <section class="review-section" aria-labelledby="mapping-title">
+              <div class="section-heading">
+                <h3 id="mapping-title">Reporting mappings</h3>
+                <span id="mapping-count" class="muted"></span>
+              </div>
+              <p class="muted">Connect each saved table and field selector to its original form field. A blank selection leaves that selector unmapped.</p>
+              <form id="mapping-form">
+                <div id="mapping-list" class="mapping-list"></div>
+                <div id="mapping-editor" hidden>
+                  <label for="mapping-note">Mapping review note</label>
+                  <textarea id="mapping-note" rows="2" maxlength="20000"></textarea>
+                  <p class="muted">Saving mappings updates affected outputs and opens the recomputed changes for a new review.</p>
+                  <button id="save-mappings" type="submit">Save reporting mappings</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="review-section" aria-labelledby="changes-title">
+              <div class="section-heading">
+                <h3 id="changes-title">Changes and affected outputs</h3>
+                <span id="change-count" class="muted" role="status" aria-live="polite"></span>
+              </div>
+              <div class="filter-bar">
+                <div>
+                  <label for="change-search">Find a change, field, or output</label>
+                  <input id="change-search" type="search" autocomplete="off">
+                </div>
+                <div>
+                  <label for="severity-select">Category</label>
+                  <select id="severity-select">
+                    <option value="">All changes</option>
+                    <option value="incompatible">Requires revision</option>
+                    <option value="review">Needs review</option>
+                    <option value="compatible">Compatible</option>
+                    <option value="information">Information</option>
+                  </select>
+                </div>
+                <label class="check-label"><input id="unresolved-only" type="checkbox"> Unresolved only</label>
+              </div>
+              <div id="change-list" class="change-list"></div>
+              <div id="change-pages" class="pagination" hidden>
+                <button id="previous-changes" type="button">Previous changes</button>
+                <span id="page-label" class="muted"></span>
+                <button id="next-changes" type="button">Next changes</button>
+              </div>
+            </section>
+
+            <section class="review-section" aria-labelledby="outputs-title">
+              <h3 id="outputs-title">Affected reporting outputs</h3>
+              <ul id="affected-outputs" class="output-list"></ul>
+            </section>
+
+            <section class="review-section" aria-labelledby="decision-title">
+              <p class="eyebrow">3. Save the staff review</p>
+              <h3 id="decision-title">Disposition and approval</h3>
+              <div id="readiness" class="readiness"></div>
+              <form id="decision-form">
+                <label for="review-note">Overall review note</label>
+                <textarea id="review-note" rows="3" maxlength="30000" required></textarea>
+                <p id="draft-status" class="muted" role="status" aria-live="polite"></p>
+                <div class="button-row">
+                  <button id="save-review" type="submit">Save review</button>
+                  <button id="request-revision" type="button">Request candidate revision</button>
+                  <button id="approve-review" type="button" class="primary">Approve and freeze review</button>
+                </div>
+              </form>
+              <div id="approval-detail" class="approval-detail" hidden></div>
+              <div class="plan-download">
+                <div>
+                  <h3>Approved publication plan</h3>
+                  <p class="muted">Download the full plan with its selected sources, mappings, and staff decisions.</p>
+                </div>
+                <button id="download-plan" type="button">Download publication plan</button>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <details class="panel publication-history">
+        <summary>Publication records</summary>
+        <ul id="publication-list" class="source-list"></ul>
+      </details>
+    </div>
+  </main>
+  <script type="module" src="/form-releases/ui.mjs"></script>
+</body>
+</html>
