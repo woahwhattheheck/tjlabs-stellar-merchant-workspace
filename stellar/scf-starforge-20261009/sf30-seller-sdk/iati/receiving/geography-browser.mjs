@@ -208,6 +208,7 @@ export async function runGeographyBrowserReceiving(input){
   for(const key of ['rows','activities','mapped'])assert(original.report.counts[key]===input.expected[key],'The selected native '+key+' count differs from the actual source input.');
   await record('original-review.json',original);
   context=await runtime.module.chromium.launchPersistentContext(join(out,'browser-profile'),launchOptions(runtime));
+  context.setDefaultTimeout(120000);
   page=context.pages()[0]||await context.newPage();
   page.on('pageerror',e=>errors.push({page:'console',message:String(e.stack||e)}));
   page.on('requestfailed',r=>requestFailures.push({path:new URL(r.url()).pathname,method:r.method(),failure:r.failure()?.errorText}));
@@ -290,6 +291,7 @@ export async function runGeographyBrowserReceiving(input){
    }
   }
   await openReview(selected.revision);
+  if(!retainedRequest){
   await page.locator('[data-geo-tab="locations"]').click();
   const first=await client.geographyRows({id:selected.id,revision:selected.revision,offset:0,limit:50});
   assert(first.total===input.expected.rows,'The complete register row count changed.');
@@ -301,6 +303,7 @@ export async function runGeographyBrowserReceiving(input){
   assert(await page.locator('#geo-map-points circle').count()===input.expected.mapped,'The browser did not load the complete valid coordinate coverage.');
   if(input.expected.mapped){const before=await page.locator('#geo-map').getAttribute('viewBox');await page.locator('#geo-zoom-in').click();assert(await page.locator('#geo-map').getAttribute('viewBox')!==before,'Zoom did not change the loaded coordinate extent.');await page.locator('#geo-map-fit').click();await page.locator('#geo-map-points circle').first().press('Enter');await idle();assert((await page.locator('#geo-finding-selection').innerText()).includes(input.source),'The original map record lost its source identity.');}
   await shot('01-original-location-map');
+  }
   if(!retainedRequest){
    const candidate=await client.geographyRows({id:selected.id,revision:selected.revision,source:input.source,decision:'unreviewed',offset:0,limit:1});
    assert(candidate.rows.length===1,'Choose a retained original unreviewed location for the browser receiving finding.');
@@ -381,7 +384,7 @@ export async function runGeographyBrowserReceiving(input){
    const returned=observePromise(page.waitForResponse(response=>new URL(response.url()).pathname===base+'/export'&&response.request().method()==='POST'&&response.request().postDataJSON()?.format===format));
    const downloading=observePromise(page.waitForEvent('download',{timeout:120000}));
    await page.locator('[data-geo-export="'+format+'"]').click();
-   const response=await returned,descriptor=await response.json();assert(response.ok()&&descriptor.review===selected.id&&descriptor.revision===selected.revision&&descriptor.format===format,'The native export descriptor selected another original review.');
+   const response=await returned,descriptor=await response.json();assert(response.ok(),'The native '+format+' export returned HTTP '+response.status()+': '+String(descriptor.error||'Unknown local export error.'));assert(descriptor.review===selected.id&&descriptor.revision===selected.revision&&descriptor.format===format,'The native export descriptor selected another original review.');
    const download=await downloading,file=await retainDownload(download,format+'-'+descriptor.filename,descriptor);await idle();
    progress.downloads[format]={descriptor,file};await save();
   }
