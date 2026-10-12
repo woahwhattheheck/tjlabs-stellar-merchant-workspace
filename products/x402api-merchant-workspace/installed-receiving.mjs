@@ -196,21 +196,35 @@ async function originalFile(path, expected) {
 }
 async function providerSentinel() {
   const path = join(ROOT, 'provider-selection.json'), previous = await readJSON(path);
-  const prior = await readJSON(join(ROOT, 'provider-observation.json')), requests = [...(prior?.requests ?? [])];
+  const observationPath = join(ROOT, 'provider-observation.json'), prior = await readJSON(observationPath);
+  assert(prior === null || Array.isArray(prior.requests), 'Keep the original provider observation.');
+  const requests = [...(prior?.requests ?? [])];
+  let retained = Promise.resolve();
   const server = createServer((request, response) => {
     const observed = { method: request.method, path: request.url };
     requests.push(observed); request.resume();
-    response.writeHead(500, { 'Content-Type': 'application/json' });
-    response.end(JSON.stringify({ error: 'COMPLETED_RECEIVING_HAS_NO_PROVIDER_OPERATION' }));
-    emit({ state: 'UNEXPECTED_PROVIDER_REQUEST', ...observed });
+    // Commit each exact observation before sending a response. A local write
+    // failure retains this same snapshot and its connection in this foreground.
+    // Serial publication preserves every prior observation during concurrent reads.
+    const snapshot = { requests: requests.map(value => ({ ...value })) };
+    retained = retained.then(async () => {
+      await retainCompleted('original-provider-request', () => save(observationPath, snapshot));
+      try {
+        if (!response.destroyed) {
+          response.writeHead(500, { 'Content-Type': 'application/json' });
+          response.end(JSON.stringify({ error: 'COMPLETED_RECEIVING_HAS_NO_PROVIDER_OPERATION' }));
+        }
+      } catch { response.destroy(); }
+      emit({ state: 'UNEXPECTED_PROVIDER_REQUEST', ...observed });
+    });
   });
   await new Promise((accept, reject) => {
     server.once('error', reject); server.listen(previous?.port ?? 0, '127.0.0.1', () => { server.off('error', reject); accept(); });
   });
   const selected = { host: '127.0.0.1', port: server.address().port, origin: 'http://127.0.0.1:' + server.address().port };
   try { await save(path, selected, { original: true }); }
-  catch (error) { await new Promise(accept => server.close(accept)); throw error; }
-  return { server, selected, requests };
+  catch (error) { await new Promise(accept => server.close(accept)); await retained; throw error; }
+  return { server, selected, requests, drain: () => retained };
 }
 async function applicationView(id) {
   const state = await model.applicationsState({ historyLimit: 100 });
@@ -314,7 +328,7 @@ async function finishOpening(opening, result) {
   assert.equal(stoppedRun.result?.state, 'STOPPED'); assert.equal(stoppedRun.result?.stopped, true);
   const attempt = opening.selection.attempts.find(value => value.operationId === opening.operationId);
   attempt.completed = { at: new Date().toISOString(), result, native: stoppedRun.result };
-  await save(opening.selectionPath, opening.selection);
+  await retainCompleted('original-completed-opening', () => save(opening.selectionPath, opening.selection));
   return stoppedRun;
 }
 async function get(url, token, route) {
@@ -434,7 +448,7 @@ async function selectedRuntime(built) {
   }
   for (const key of Object.keys(frozen)) assert.deepEqual(record[key], frozen[key], 'Keep the original runtime selection.');
   let selected = record.attempts.at(-1); RUNTIME = selected.directory;
-  if (await exists(join(RUNTIME, 'runtime-install.json'))) return;
+  if (await exists(join(RUNTIME, 'runtime-install.json')) && await exists(join(RUNTIME, 'install-state.json'))) return;
   if (await exists(RUNTIME)) {
     // Preparation is the maintained installer's operation. Its complete intent
     // recovers into one named successor; the previous directory stays retained.
@@ -487,9 +501,7 @@ async function receive() {
   const scenario = await readJSON(join(RECEIVED, 'scenario.json')), completed = await readJSON(join(RECEIVED, 'complete.json'));
   assert.equal(scenario.operation, ORIGINAL_OPERATION); assert.equal(completed.operation, ORIGINAL_OPERATION);
   assert.equal(completed.state, 'COMPLETE'); assert.equal(completed.orders.length, 5);
-  const beforePath = join(ROOT, 'snapshots/before.private.json');
-  const before = await readJSON(beforePath) ?? await originalSnapshot('before');
-  const observedBefore = databaseSnapshot(); assert.equal(observedBefore.businessSha256, before.businessSha256);
+  const before = await originalSnapshot('before');
   for (const original of completed.orders) await originalFile(original.resultPath, original);
   stopped();
   emit({ state: 'BUILDING_SELECTED_ORIGINAL_SOURCE', sourceCommit: selection.sourceCommit, selection: 'x402api-merchant' });
@@ -564,7 +576,7 @@ async function receive() {
       const ended = await finishOpening(opening, { reads, browser: visual });
       first = { reads, browser: visual, operationId: opening.operationId, originalProcess: ended.result };
     }
-    await save(firstPath, first, { original: true });
+    await retainCompleted('original-browser-completion', () => save(firstPath, first, { original: true }));
   }
   assert.equal(sentinel.requests.length, 0);
   const afterFirst = await originalSnapshot('after-first');
@@ -580,7 +592,7 @@ async function receive() {
       const ended = await finishOpening(opening, { reads });
       second = { reads, operationId: opening.operationId, originalProcess: ended.result };
     }
-    await save(secondPath, second, { original: true });
+    await retainCompleted('original-reopen-completion', () => save(secondPath, second, { original: true }));
   }
   const after = await originalSnapshot('after-reopen');
   assert.equal(after.businessSha256, before.businessSha256); assert.equal(sentinel.requests.length, 0);
@@ -600,7 +612,7 @@ async function receive() {
     businessTables: after.business.tables.map(table => ({ name: table.name, rows: table.rows.length })),
     runtimeHistory: after.runtimes, invoices: second.reads.invoices, browser: first.browser,
     providerCalls: sentinel.requests, createdInvoices: 0, submittedPayments: 0, completedAt: new Date().toISOString() };
-  await save(join(ROOT, 'complete.json'), result, { original: true });
+  await retainCompleted('original-installed-completion', () => save(join(ROOT, 'complete.json'), result, { original: true }));
   return result;
 }
 let result = null, failure = null;
@@ -621,6 +633,7 @@ try {
   if (model) await model.close();
   if (sentinel) {
     await new Promise(accept => sentinel.server.close(accept));
+    await sentinel.drain();
     await retainCompleted('original-provider-observation', () =>
       save(join(ROOT, 'provider-observation.json'), { requests: sentinel.requests }));
   }
