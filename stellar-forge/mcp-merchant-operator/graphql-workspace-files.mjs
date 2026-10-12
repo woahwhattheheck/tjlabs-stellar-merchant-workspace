@@ -14,13 +14,19 @@ const ORIGINAL = '../../stellar/scf-starforge-20261009/sf105-subquery-graphql-me
 
 
 
-const selectionKeys = ['workspace', 'exportId', 'project', 'revision', 'kind', 'merchantExportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId'];
+const selectionKeys = ['workspace', 'exportId', 'project', 'revision', 'kind', 'merchantExportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId', 'requestSetId', 'runId', 'generation'];
 const sha = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 
 
 export class MerchantGraphqlFiles {
-  #config; #reads = new RetainedFileReads({ errorPrefix: 'GRAPHQL' }); #root; #opening; #closing = false;
-  constructor(config) { this.#config = config; }
+  #config; #reads = new RetainedFileReads({ errorPrefix: 'GRAPHQL' }); #root; #opening; #closing = false; #nativeForWorkspace;
+  constructor(config, { nativeForWorkspace } = {}) { this.#config = config; this.#nativeForWorkspace = nativeForWorkspace; }
+  async #native(alias) {
+    const definition = this.#workspace(alias), owned = await this.#nativeForWorkspace?.(alias);
+    if (owned) return owned;
+    const { openWorkspaceFiles } = await import(ORIGINAL);
+    return openWorkspaceFiles(definition.directory);
+  }
   get summary() { return this.#reads.summary; }
   #workspace(alias) {
     identifier(alias, 'GraphQL workspace alias');
@@ -42,7 +48,7 @@ export class MerchantGraphqlFiles {
   }
   async #record(exportId) {
     identifier(exportId, 'Export ID');
-    const file = await open(join(await this.#directory(), exportId + '.json'), constants.O_RDONLY | constants.O_NOFOLLOW);
+    const file = await open(join(await this.#directory(), exportId + '.json'), constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     try {
       const stat = await file.stat();
       if (!stat.isFile() || stat.size > 131072 || process.platform !== 'win32' && (stat.mode & 0o077))
@@ -73,8 +79,9 @@ export class MerchantGraphqlFiles {
   async #prepare(args) {
     exact(args, selectionKeys, ['workspace', 'exportId', 'project', 'revision', 'kind']);
     identifier(args.exportId, 'Export ID');
-    const definition = this.#workspace(args.workspace), selection = { project: args.project, revision: args.revision, kind: args.kind };
-    for (const [key, target] of [['merchantExportId', 'exportId'], ['deploymentId', 'deploymentId'], ['hostId', 'hostId'], ['previewId', 'previewId'], ['comparisonId', 'comparisonId']])
+    this.#workspace(args.workspace);
+    const selection = { project: args.project, revision: args.revision, kind: args.kind };
+    for (const [key, target] of [['merchantExportId', 'exportId'], ['deploymentId', 'deploymentId'], ['hostId', 'hostId'], ['previewId', 'previewId'], ['comparisonId', 'comparisonId'], ['requestSetId', 'requestSetId'], ['runId', 'runId'], ['generation', 'generation']])
       if (args[key] !== undefined) selection[target] = args[key];
     const intentSha256 = graphqlExportSha(graphqlExportBytes({ workspace: args.workspace, selection }));
     try {
@@ -82,7 +89,7 @@ export class MerchantGraphqlFiles {
       if (old.intentSha256 !== intentSha256) throw failure('GRAPHQL_EXPORT_ID_CONFLICT', 'This exportId already belongs to another original selection.');
       return this.#view(old, true);
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
-    const { openWorkspaceFiles } = await import(ORIGINAL), native = await openWorkspaceFiles(definition.directory);
+    const native = await this.#native(args.workspace);
     const original = await native.manifest(selection);
     const manifest = { schema: GRAPHQL_EXPORT_SCHEMA, exportId: args.exportId, workspace: args.workspace,
       createdAt: new Date().toISOString(), selection: original.manifest.selection, source: original.manifest.source,
@@ -129,8 +136,7 @@ export class MerchantGraphqlFiles {
     const load = async () => {
       if (args.file === GRAPHQL_EXPORT_MANIFEST)
         return { name: GRAPHQL_EXPORT_MANIFEST, bytes: record.manifestBytes, type: 'application/json' };
-      const { openWorkspaceFiles } = await import(ORIGINAL);
-      const native = await openWorkspaceFiles(this.#workspace(record.manifest.workspace).directory);
+      const native = await this.#native(record.manifest.workspace);
       return native.read(record.manifest.selection, args.file, record.manifest.nativeManifestSha256);
     };
     const value = await this.#reads.read({ scope: args.exportId, key: args.file, kind: 'GRAPHQL_WORKSPACE_FILE',
