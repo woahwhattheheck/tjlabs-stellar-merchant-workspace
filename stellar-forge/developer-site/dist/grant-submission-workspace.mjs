@@ -27,7 +27,7 @@ function input(label,value,onChange,{type='text',placeholder='',area=false,class
   field.addEventListener('input',()=>onChange(field.value));wrap.append(caption,field);return {wrap,field};
 }
 function select(label,value,options,onChange){
-  const wrap=node('label',undefined,'field'),s=node('select');
+  const wrap=node('label',undefined,'field'),s=node('select');s.setAttribute('aria-label',label);
   for(const [key,text]of options){const option=node('option',text);option.value=key;s.append(option);}
   s.value=value;s.addEventListener('change',()=>onChange(s.value));wrap.append(node('span',label),s);return {wrap,field:s};
 }
