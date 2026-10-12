@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import ast
+import gc
 import hashlib
 import json
 from pathlib import Path
@@ -12,12 +13,12 @@ import sys
 HERE = Path(__file__).resolve().parent
 PINS = {
   "input.json": {
-    "sha256": "cc200bbd28811ce975d9eb801b1c06f1586e0b39295b384f9c329d1fd9cbddbe",
-    "bytes": 2647299
+    "sha256": "a484968b251e44f3f9cc4efb74c78b52f2eb5356e2250cb35c63ae3d8c738f2d",
+    "bytes": 2692594
   },
   "complete_canadabuys_delivery.py": {
-    "sha256": "d66be5c52aaa11cb9de196878e0fd73cdadeaeabe91d48a29a68d7472605c088",
-    "bytes": 18542
+    "sha256": "b8a7a7ee4cded774576b7e63aa34a1f870a8a9e0bc27159915d8aab9f6df9869",
+    "bytes": 21419
   },
   "run-canadabuys-bidder-receiving.mjs": {
     "bytes": 89006,
@@ -30,6 +31,10 @@ PINS = {
   "original-attempt-recovery.json": {
     "sha256": "70643d3613d6d63112c4ec8203152953faac3807ad6bf43015159a0b810a1126",
     "bytes": 6281
+  },
+  "integrated-attempt-history.json": {
+    "sha256": "cb7bc950f51f7fcc8413006d3337e7bf4c473f9c6277861d303c7e26e187d933",
+    "bytes": 10541
   }
 }
 
@@ -49,6 +54,7 @@ def main():
     parser.add_argument("--node", help="Actual installed Node executable")
     parser.add_argument("--playwright", help="Actual installed Playwright index.mjs")
     parser.add_argument("--chromium", help="Actual installed Chromium executable")
+    parser.add_argument("--library-helper", help="Actual location of the original canonical Library upload helper")
     parser.add_argument("--directory-parent", action="append",
                         help="Existing writable parent for this complete operation; may repeat")
     parser.add_argument("--batch", action="store_true",
@@ -80,6 +86,8 @@ def main():
         value = getattr(options, name)
         if value is not None:
             payload["runtime"][name] = str(Path(value).resolve(strict=True))
+    if options.library_helper:
+        payload["runtime"]["libraryHelper"] = str(Path(options.library_helper).resolve(strict=True))
     if options.directory_parent:
         payload["directoryParents"] = [str(Path(value).resolve(strict=True))
                                       for value in options.directory_parent]
@@ -100,6 +108,13 @@ def main():
         "path": "worker-runtime-selection.json", "content": raw.decode("utf-8"),
         "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()
     })
+    history = next(item for item in payload["historyFiles"]
+                   if item["path"] == "integrated-12385-receiving-history.json")
+    if history["content"].encode("utf-8") != selected["integrated-attempt-history.json"]:
+        raise RuntimeError("The retained integrated receiving history differs")
+    selected.clear()
+    del fixture, original, runner, transition, history, raw, selection
+    gc.collect()
     ast.parse(producer, filename=str(HERE / "complete_canadabuys_delivery.py"))
     print(json.dumps({"phase": "COMPLETE_CANADABUYS_INPUT_VERIFIED",
                       "sourceCommit": payload["sourceCommit"],
