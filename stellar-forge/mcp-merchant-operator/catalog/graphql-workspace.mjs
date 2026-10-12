@@ -26,6 +26,17 @@ const deployment = { ...current, deploymentId: uuidSchema };
 
 const textSchema = { type: 'string', minLength: 1, maxLength: 240 };
 
+const comparisonSelection = { ...common, revision: revisionSchema, comparisonId: uuidSchema,
+  generation: { type: 'integer', minimum: 1, maximum: 256 }, expectedRecordSha256: shaSchema };
+const comparisonCase = { type: 'object', additionalProperties: false,
+  properties: { id: { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$' },
+    title: { type: 'string', minLength: 1, maxLength: 160 }, objective: { type: 'string', maxLength: 2000 },
+    baselineId: uuidSchema, candidateId: uuidSchema }, required: ['id', 'title', 'baselineId', 'candidateId'] };
+const caseDecision = { type: 'object', additionalProperties: false,
+  properties: { pairId: comparisonCase.properties.id,
+    decision: { enum: ['UNREVIEWED', 'ACCEPTED', 'CHANGES_REQUESTED', 'NOT_APPLICABLE'] },
+    notes: { type: 'string', maxLength: 4000 } }, required: ['pairId', 'decision'] };
+
 function graphqlWorkspaceTools(tool) {
   const read = { readOnly: true, idempotent: true };
   return [
@@ -37,9 +48,9 @@ function graphqlWorkspaceTools(tool) {
       { workspace: aliasSchema, instanceId: uuidSchema }, ['workspace', 'instanceId'], { idempotent: true }),
     tool('merchant_graphql_projects', 'Page original saved projects. Repeat expectedSnapshotSha256 when paging a changing list.',
       { workspace: aliasSchema, ...rangeSchema }, ['workspace'], read),
-    tool('merchant_graphql_project', 'Inspect an exact saved project revision, optional full raw draft, or a page of its original merchant exports/deployments/previews. Raw unfinished drafts remain available.',
+    tool('merchant_graphql_project', 'Inspect an exact saved project revision, optional full raw draft, or a page of its original merchant exports/deployments/previews/response comparisons. Raw unfinished drafts remain available.',
       { ...common, revision: revisionSchema, includeInput: { type: 'boolean' },
-        collection: { enum: ['exports', 'deployments', 'previews'] }, ...rangeSchema }, ['workspace', 'project'], read),
+        collection: { enum: ['exports', 'deployments', 'previews', 'comparisons'] }, ...rangeSchema }, ['workspace', 'project'], read),
     tool('merchant_graphql_history', 'Read the original most-recent 100-revision history window with its native more flag. Open any older retained revision explicitly with merchant_graphql_project.',
       { ...common, ...rangeSchema }, ['workspace', 'project'], read),
     tool('merchant_graphql_schema', 'Page actual captured/supplied schema roots, types, or a selected type’s fields and enum values from an immutable saved revision. The original GraphQL reference compiler validates the source.',
@@ -74,6 +85,28 @@ function graphqlWorkspaceTools(tool) {
     tool('merchant_graphql_preview_result', 'Page a selected JSON pointer in the actual retained response, preserving the exact response hash. Download original response bytes with the retained-file tools; this structured view never reruns the query.',
       { ...common, previewId: uuidSchema, pointer: { type: 'string', maxLength: 2048 }, ...rangeSchema },
       ['workspace', 'project', 'previewId'], read),
+    tool('merchant_graphql_comparison_prepare', 'Retain 1–16 baseline/candidate cases from already completed previews in one saved project. Compares exact numeric/data/error values, original request/schema identity, HTTP status and observed timestamp intervals. Makes no source request. Repeat the same UUID and complete request after a lost reply.',
+      { ...current, id: uuidSchema, title: { type: 'string', minLength: 1, maxLength: 160 },
+        pairs: { type: 'array', minItems: 1, maxItems: 16, items: comparisonCase } },
+      ['workspace', 'project', 'expectedRevision', 'id', 'title', 'pairs'], { idempotent: true }),
+    tool('merchant_graphql_comparison', 'Open an exact retained response comparison generation, every case summary and its original review history. A historical generation is read-only until the current generation is selected for a new review.',
+      comparisonSelection, ['workspace', 'project', 'comparisonId'], read),
+    tool('merchant_graphql_comparison_changes', 'Page every data/error/extension/envelope value difference at original JSON pointers with raw numeric tokens and exact request context. Values in a page are labeled excerpts; complete values and original responses remain in the offline comparison packet. No provider call.',
+      { ...comparisonSelection, pairId: comparisonCase.properties.id, offset: { type: 'integer', minimum: 0 },
+        limit: { type: 'integer', minimum: 1, maximum: 100 } }, ['workspace', 'project', 'comparisonId', 'pairId'], read),
+    tool('merchant_graphql_comparison_review', 'Append one complete reviewer decision generation to the original comparison and current project. Preserve the caller UUID, full notes and all case decisions for replay. The reviewer label is supplied by the operator; it is not an authenticated approval identity.',
+      { ...current, id: uuidSchema, comparisonId: uuidSchema,
+        expectedGeneration: { type: 'integer', minimum: 1, maximum: 255 }, expectedRecordSha256: shaSchema,
+        reviewer: { type: 'string', minLength: 1, maxLength: 160 }, notes: { type: 'string', maxLength: 8000 },
+        decisions: { type: 'array', minItems: 1, maxItems: 16, items: caseDecision } },
+      ['workspace', 'project', 'expectedRevision', 'id', 'comparisonId', 'expectedGeneration', 'expectedRecordSha256', 'reviewer', 'decisions'],
+      { idempotent: true }),
+    tool('merchant_graphql_comparison_pending', 'Inspect the original immutable comparison generation after a prepare/review reply was lost, including a finished generation not yet attached to the project. Returns its exact hash and current attachment state; no mutation.',
+      { ...common, comparisonId: uuidSchema, generation: { type: 'integer', minimum: 1, maximum: 256 } },
+      ['workspace', 'project', 'comparisonId', 'generation'], read),
+    tool('merchant_graphql_comparison_recover', 'Attach that exact finished comparison generation to the current project without changing later draft edits, repeating previews or regenerating analysis. Requires the inspected hash, current project revision and original preceding generation.',
+      { ...current, comparisonId: uuidSchema, generation: { type: 'integer', minimum: 1, maximum: 256 }, expectedRecordSha256: shaSchema },
+      ['workspace', 'project', 'expectedRevision', 'comparisonId', 'generation', 'expectedRecordSha256'], { idempotent: true }),
     tool('merchant_graphql_prepare', 'Prepare the original complete merchant and generated buyer package from the current reviewed saved project. On a lost reply inspect project/history before another preparation.',
       { ...current, source: aliasSchema }, ['workspace', 'project', 'expectedRevision', 'source']),
     tool('merchant_graphql_evolution', 'Compare a saved candidate with its retained baseline merchant or read an already prepared original revision report. Comparison returns the exact digest required by prepare_revision.',
@@ -97,7 +130,7 @@ function graphqlWorkspaceTools(tool) {
       ['workspace', 'project', 'expectedRevision', 'deploymentId', 'action']),
     tool('merchant_graphql_handover_receivings', 'Page original retained receiving requests and completed receipts after browser or MCP restart. Continue the exact request UUID/hash/revision; listing never replays a write.',
       { workspace: aliasSchema, ...rangeSchema }, ['workspace'], read),
-    tool('merchant_graphql_handover_prepare', 'Prepare one complete selected-project folder through the original writer. Retains every committed revision through the selected revision plus referenced completed previews, merchants, schema evolution, deployment and host files. Repeat the same UUID/selection to recover preparation.',
+    tool('merchant_graphql_handover_prepare', 'Prepare one complete selected-project folder through the original writer. Retains every committed revision through the selected revision plus referenced response comparison/review generations, completed previews, merchants, schema evolution, deployment and host files. Repeat the same UUID/selection to recover preparation.',
       { ...common, revision: revisionSchema, id: uuidSchema }, ['workspace', 'project', 'revision', 'id'], { idempotent: true }),
     tool('merchant_graphql_handover_inspect', 'Inspect a downloaded original project handover and compare its full revision history with this target workspace. Returns the exact hash and expected target revision for receiving; no project is changed.',
       { workspace: aliasSchema, directory: { type: 'string', minLength: 1, maxLength: 4096 }, handoverSha256: shaSchema },

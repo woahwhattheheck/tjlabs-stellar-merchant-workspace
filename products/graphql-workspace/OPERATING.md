@@ -78,6 +78,7 @@ For mutations, retain the request JSON before calling. A lost reply does not aut
 | --- | --- |
 | Save/apply operation | Project ID and expected revision |
 | Preview | Project ID, preview UUID, selected operation and exact variables |
+| Response comparison/review | Comparison UUID, caller request UUID, exact preview cohort, expected project revision, preceding generation/hash and full decisions |
 | Prepare merchant/evolution | Saved project revision and original baseline/export IDs |
 | Deployment | Native deployment UUID, generation and original merchant export |
 | Release change | Current release ID, digest, generation and native lifecycle request |
@@ -108,7 +109,8 @@ Use the actual IDs returned by your original project in place of the example val
 | evolution | Project/revision and merchantExportId; original revision wrapper and report |
 | deployment | Project/revision and deploymentId; retained native generation |
 | host | Project/revision, deploymentId and hostId; selected original host packet |
-| handover | Project and revision; all original revisions through that selection and every referenced merchant, preview, evolution, deployment and host file |
+| comparison | Project/revision and comparisonId; complete offline case pages, exact responses/source drafts and versioned review decisions |
+| handover | Project and revision; all original revisions through that selection and every referenced comparison generation, merchant, preview, evolution, deployment and host file |
 
 Every transfer includes the unchanged workspace-files.json plus the original graphql-export.json transfer manifest. The native parser and transport retain the exact selection, source references, file SHA-256s, lengths and nested names. They resume verified byte prefixes in the same receiving directory after interruption. A new live read snapshot can continue the same expected file after server restart.
 
@@ -138,3 +140,17 @@ Source module ownership remains:
 - SF105 workspace/onboarding/deployment: original authoring and merchant source.
 - MerchantGraphqlWorkspaces and its retained file owner: native agent and file-set operations.
 - SF82: original deployment/release lifecycle.
+
+## Retained response comparison
+
+Use the original browser's **Retained response comparison and review** panel
+after selecting completed baseline/candidate previews. The complete
+[response review guide](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/RESPONSE_REVIEW.md)
+contains the installed prepare-comparison, comparison, comparison-changes,
+review-comparison, pending-comparison and recover-comparison commands.
+
+These commands make no provider request. They preserve exact numeric response
+tokens, original source context and review generations. The same selected-file
+receiver opens complete offline packets; original project handover reopens the
+editable review history on another host. Observed preview timestamp intervals
+include preparation/transport/retention and do not establish causal performance.

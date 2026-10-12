@@ -69,6 +69,12 @@ export class GraphqlProductClient {
     }
     return client.call(name, selected, options);
   }
+  async prepareComparison(request) { return this.call('merchant_graphql_comparison_prepare', request); }
+  async inspectComparison(selection) { return this.call('merchant_graphql_comparison', selection); }
+  async comparisonChanges(selection) { return this.call('merchant_graphql_comparison_changes', selection); }
+  async reviewComparison(request) { return this.call('merchant_graphql_comparison_review', request); }
+  async inspectPendingComparison(selection) { return this.call('merchant_graphql_comparison_pending', selection); }
+  async recoverComparison(request) { return this.call('merchant_graphql_comparison_recover', request); }
   async prepareHandover({ id, project, revision } = {}) {
     return this.call('merchant_graphql_handover_prepare', { id, project, revision });
   }

@@ -14,7 +14,7 @@ const ORIGINAL = '../../stellar/scf-starforge-20261009/sf105-subquery-graphql-me
 
 
 
-const selectionKeys = ['workspace', 'exportId', 'project', 'revision', 'kind', 'merchantExportId', 'deploymentId', 'hostId', 'previewId'];
+const selectionKeys = ['workspace', 'exportId', 'project', 'revision', 'kind', 'merchantExportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId'];
 const sha = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 
 
@@ -74,7 +74,7 @@ export class MerchantGraphqlFiles {
     exact(args, selectionKeys, ['workspace', 'exportId', 'project', 'revision', 'kind']);
     identifier(args.exportId, 'Export ID');
     const definition = this.#workspace(args.workspace), selection = { project: args.project, revision: args.revision, kind: args.kind };
-    for (const [key, target] of [['merchantExportId', 'exportId'], ['deploymentId', 'deploymentId'], ['hostId', 'hostId'], ['previewId', 'previewId']])
+    for (const [key, target] of [['merchantExportId', 'exportId'], ['deploymentId', 'deploymentId'], ['hostId', 'hostId'], ['previewId', 'previewId'], ['comparisonId', 'comparisonId']])
       if (args[key] !== undefined) selection[target] = args[key];
     const intentSha256 = graphqlExportSha(graphqlExportBytes({ workspace: args.workspace, selection }));
     try {
