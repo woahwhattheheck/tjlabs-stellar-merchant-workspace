@@ -95,3 +95,27 @@ python3 "$SCF_CALENDAR_SOURCE/operations/scf-grant-calendar-cedar-8047-20261012/
 ```
 
 An original receiving host can instead set `SCF_CALENDAR_OPERATION` to its retained completed operation directory. Use a fresh customer-output parent for the first assembly. If assembly is interrupted, repeat the same builder command and all four arguments. The retained assembly identity, file lease and staged copies continue those same inputs; a previously completed archive is verified and reopened with its existing digest. Its result record is `customer-handover-result.json`, and its complete delivered ZIP is `SCF_Grant_Calendar_Customer_Handover.zip` in the selected output parent.
+
+### Prepare the same source from Git on an accepting host
+
+The maintained `select_source.py` prepares the operated application and its complete runtime/data/type dependency closure from an exact Git revision. It also receives the separately published builder, restore helper, guide and selector into the same original Operations path. Their revision and member digests are retained in `FULFILLMENT_SOURCE.json`; the operated application stays identified by `SOURCE_SELECTION.json`.
+
+From the extracted handover, use the recorded fulfillment revision with an existing original Git checkout:
+
+```bash
+git clone --filter=blob:none \
+  https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.git \
+  original-merchant-checkout
+SCF_CALENDAR_FULFILLMENT=$(python3 -c 'import json; print(json.load(open("HANDOVER.json"))["fulfillmentSource"]["commit"])')
+git -C original-merchant-checkout fetch origin \
+  fae53095a8f31467f6916378320acd02f28bdcc4 "$SCF_CALENDAR_FULFILLMENT"
+python3 application/operations/scf-grant-calendar-cedar-8047-20261012/select_source.py \
+  --repo "$PWD/original-merchant-checkout" \
+  --ref fae53095a8f31467f6916378320acd02f28bdcc4 \
+  --fulfillment-ref "$SCF_CALENDAR_FULFILLMENT" \
+  --output "$PWD/prepared-original-source"
+```
+
+An accepting host with a checkout of the published fulfillment revision can run that checkout's `select_source.py` directly, supplying its complete published revision as `--fulfillment-ref`. Repeat the same selector command and all inputs after interruption to continue the same source snapshot. An existing differing source is preserved and identified for correction. The selector's Git receiving uses the selected public repository; the packaged source remains available for offline opening and rebuilding.
+
+For the builder command above, set `SCF_CALENDAR_SOURCE="$PWD/prepared-original-source"` and retain the same completed operation directory and fulfillment revision. The source-native preparation receives both required source editions together.

@@ -20,7 +20,7 @@ OPERATION = "SCF-GRANT-DELIVERY-CALENDAR-9125-20261012"
 ORIGINAL_SHA = "c9205af40840c324222b47fc53b4dc83c2f55891c54b50b3a4b77e8af3266275"
 LICENSE_BLOB = "2d2a35a69e3896b7c6b885c1faebae2f2f8bc9c1"
 DIRECTORY = "operations/scf-grant-calendar-cedar-8047-20261012"
-FULFILLMENT_FILES = ("build_customer_handover.py", "restore_workspace.py", "CUSTOMER_HANDOVER.md")
+FULFILLMENT_FILES = ("build_customer_handover.py", "restore_workspace.py", "CUSTOMER_HANDOVER.md", "select_source.py")
 NATIVE_FILES = ("calendar-workspace.sqlite3", "retained-original-case.zip", "received-original-case.zip",
                 "calendar-walkthrough-case.zip", "prepared-completion.zip")
 RESULT_FILES = ("original-calendar.json", "calendar.json", "completion-calendar.json", "saved-assignments.json",
@@ -80,6 +80,19 @@ def verified_source(source: Path) -> dict:
 
 def assemble(source: Path, operation: Path, output: Path, fulfillment_commit: str) -> dict:
     selected = verified_source(source)
+    provenance_path = source / "FULFILLMENT_SOURCE.json"
+    if provenance_path.exists():
+        provenance = json.loads(provenance_path.read_text())
+        if provenance.get("commit") != fulfillment_commit or provenance.get("repository") != selected["repository"]:
+            raise ValueError("The selected fulfillment revision differs from its published source provenance.")
+        expected_paths = {DIRECTORY + "/" + name for name in FULFILLMENT_FILES}
+        rows = provenance.get("files", [])
+        if len(rows) != len(expected_paths) or {row["path"] for row in rows} != expected_paths:
+            raise ValueError("Receive the complete published fulfillment program with the original source selector.")
+        for row in rows:
+            raw = (source / row["path"]).read_bytes()
+            if len(raw) != row["bytes"] or sha(raw) != row["sha256"] or git_blob(raw) != row["gitBlob"]:
+                raise ValueError("Published fulfillment source differs: " + row["path"])
     native = json.loads((operation / "native-result.json").read_text())
     browser = json.loads((operation / "browser-result.json").read_text())
     receiving = json.loads((operation / "package-result.json").read_text())
