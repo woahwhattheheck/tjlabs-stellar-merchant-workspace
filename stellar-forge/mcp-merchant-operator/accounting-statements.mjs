@@ -16,11 +16,12 @@ import {normalizeUsage,sha,json,need} from '../../stellar/scf-starforge-20261009
 
 
 
-export const statementFileSelectors=Object.freeze(['statementId','customerId','usageId','replacesId','from','until']);
+export const statementFileSelectors=Object.freeze(['statementId','customerId','usageId','replacesId','from','until','usageOpeningId']);
 
 const clone=value=>structuredClone(value);
 const own=(value,keys)=>Object.fromEntries(keys.filter(key=>value[key]!==undefined).map(key=>[key,value[key]]));
-const SELECTION=['customerId','runId','usageId','replacesId','from','until'];
+const SELECTION=['customerId','runId','usageId','replacesId','from','until','usageOpeningId'];
+const PERIOD_SELECTION=['usageOpeningId','usageId'];
 function paginate(items,args={},kind){
   const offset=Number(args.offset??0),limit=Number(args.limit??100);
   need(Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=200,
@@ -39,9 +40,14 @@ function stateBrief(state){
   return {schema:state.schema,revision:state.revision,customerCount:state.customers.length,
     usageImportCount:state.usageImportCount,statementCount:state.statementCount,bindingCount:state.bindingCount,completedRunCount:state.runs.length};
 }
+function periodBrief(period){
+  const {routes=[],calls=[],...summary}=period;
+  return {...summary,counts:{routes:routes.length,calls:calls.length}};
+}
 function documentBrief(document){
-  const {items=[],excluded=[],totals={},...header}=document,{byAsset=[],...total}=totals;
-  return {...header,totals:{...total,assetCount:byAsset.length},counts:{items:items.length,excluded:excluded.length,assets:byAsset.length}};
+  const {items=[],excluded=[],totals={},servicePeriod,...header}=document,{byAsset=[],...total}=totals;
+  return {...header,...(servicePeriod?{servicePeriod:periodBrief(servicePeriod)}:{}),
+    totals:{...total,assetCount:byAsset.length},counts:{items:items.length,excluded:excluded.length,assets:byAsset.length}};
 }
 function documentPage(document,args){
   const view=args.view??'summary';if(view==='summary')return {};
@@ -49,7 +55,10 @@ function documentPage(document,args){
   if(view==='items')rows=document.items.map(itemBrief);
   else if(view==='excluded')rows=document.excluded;
   else if(view==='assets')rows=document.totals.byAsset;
-  else{
+  else if(view==='period-routes'||view==='period-calls'){
+    need(document.servicePeriod,'CUSTOMER_STATEMENT_PERIOD','This statement has no selected native service period.',404);
+    rows=view==='period-routes'?document.servicePeriod.routes:document.servicePeriod.calls;
+  }else{
     need(['calls','adjustments'].includes(view)&&typeof args.orderRef==='string','CUSTOMER_STATEMENT_VIEW','Select an original order for its calls or adjustments.');
     const original=document.items.find(item=>item.orderRef===args.orderRef);
     need(original,'CUSTOMER_STATEMENT_ORDER','This statement contains no selected original order.',404);
@@ -93,6 +102,19 @@ export class MerchantCustomerStatements{
       draft:documentBrief(preview.draft),...documentPage(preview.draft,args),
       previewFile:{kind:'customer-statement-preview',file:'preview.json',...preview.intent,sha256:sha(bytes),bytes:bytes.length}};
   }
+  async preparedUsagePeriod(args){
+    const report=await this.native.previewUsagePeriod(own(args,PERIOD_SELECTION)),bytes=Buffer.from(json(report));
+    need(bytes.length<=128_000_000,'STATEMENT_EXPORT_LIMIT','The complete native service period exceeds the supported export size.');
+    return {report,bytes};
+  }
+  async usagePeriodResult(args){
+    const {report,bytes}=await this.preparedUsagePeriod(args),view=args.view??'summary';
+    need(['summary','routes','calls'].includes(view),'CUSTOMER_STATEMENT_VIEW','Choose the service-period summary, routes or calls.');
+    return {period:periodBrief(report.period),periodSha256:sha(json(report.period)),revision:report.revision,
+      ...(view==='summary'?{}:{page:paginate(report.period[view],args,view)}),
+      reportFile:{kind:'customer-usage-period-preview',file:'usage-period.json',...own(args,PERIOD_SELECTION),
+        sha256:sha(bytes),bytes:bytes.length}};
+  }
   async lookup(requestId){
     return this.workspace.serial(async()=>{
       const row=this.native.data().statements.find(item=>item.requestId===requestId);
@@ -111,7 +133,12 @@ export class MerchantCustomerStatements{
       const {preview,bytes}=await this.prepared(args);
       return {bytes,name:'customer-statement-preview-'+preview.previewSha256+'.json',type:'application/json; charset=utf-8'};
     }
-    need(args.kind==='customer-statement'&&statementFileNames.includes(args.file)&&args.file!=='preview.json',
+    if(args.kind==='customer-usage-period-preview'){
+      need(args.file==='usage-period.json','STATEMENT_FILE_NOT_FOUND','Choose the complete original usage-period.json.',404);
+      const {report,bytes}=await this.preparedUsagePeriod(args);
+      return {bytes,name:'customer-usage-period-'+sha(json(report.period))+'.json',type:'application/json; charset=utf-8'};
+    }
+    need(args.kind==='customer-statement'&&statementFileNames.includes(args.file)&&!['preview.json','usage-period.json'].includes(args.file),
       'STATEMENT_FILE_NOT_FOUND','Choose the original retained statement file.',404);
     return this.native.file(args.statementId,args.file);
   }
@@ -141,6 +168,7 @@ export class MerchantCustomerStatements{
         need(source.summary.sha256===value.expectedSha256,'CUSTOMER_USAGE_SOURCE_CHANGED','The declared usage capture changed after review. Review its current original bytes.',409);
         return mappedResult(await this.native.importUsage({revision:value.revision,actor:value.actor,name:value.name??value.source,content:source.content}));
       }
+      case 'usage_period':return this.usagePeriodResult(value);
       case 'statement_preview':return this.previewResult(value);
       case 'statement_retain':return mappedResult(await this.native.retain(value));
       case 'statements':return nativePage(await this.native.listStatements(value),'statements',statementBrief);

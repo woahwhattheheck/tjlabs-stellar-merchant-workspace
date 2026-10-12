@@ -422,6 +422,15 @@ export class MerchantGrantWorkspaces {
       if(hasDocument)body.document=await this.#modelInputs(alias,args,'Installation');
       original=await client.installationWorkshareSeed(caseId,body);
     }
+    else if (verb === 'installation_workflows') {
+      const {caseId,...body}=rest; original=await client.installationWorkflows(caseId,body);
+    }
+    else if (verb === 'installation_workflow_seed') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      if(inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined)
+        body.document=await this.#modelInputs(alias,args,'Installation');
+      original=await client.installationWorkflowSeed(caseId,body);
+    }
     else if (verb === 'installation_preview'||verb === 'installation_save') {
       const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
       const document=await this.#modelInputs(alias,args,'Installation');

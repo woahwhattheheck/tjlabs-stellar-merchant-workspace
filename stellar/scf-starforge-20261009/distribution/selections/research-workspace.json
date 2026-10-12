@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "research-workspace",
   "title": "Research workspace",
-  "description": "Original Research questions, citation and eligibility programmes, Europe PMC source editions, saved Documents/Pipelines, direct Analysis, typed exports and complete Python/Merchant customer receiving",
+  "description": "Original Research sources, Zotero libraries, independent extraction, appraisal, reviewed publications, customer update deliveries, Documents/Pipelines, Analysis and complete portable receiving",
   "base": {
     "commands": [
       "installation",
@@ -95,7 +95,8 @@
     "merchant-provider-facilitators",
     "merchant-provider-publishers",
     "merchant-provider-receiving",
-    "merchant-provider-tools"
+    "merchant-provider-tools",
+    "zotero"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -121,7 +122,9 @@
     "products/research",
     "stellar-forge/mcp-paid-agent",
     "stellar/scf-starforge-20261009/sf43-agent-commerce",
-    "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery"
+    "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero",
+    "products/zotero"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -165,14 +168,16 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ELIGIBILITY-OPERATOR.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_ELIGIBILITY.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.py"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/COPYING",
+    "products/zotero/OPERATING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Source-linked Research, complete citation and eligibility review, Python/Merchant customer delivery, direct Analysis, original Documents/Pipelines, workbooks and editable receiving",
+    "description": "Source-linked Research, Zotero, extraction and appraisal, reviewed publications, customer update workspaces, original source processing and complete independent receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

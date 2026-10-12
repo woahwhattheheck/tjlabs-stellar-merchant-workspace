@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),short=x=>String(x??'').slice(0,12);
 let token=location.hash.slice(1);
 try{token ||= sessionStorage.getItem('sf30.iati.token');if(token)sessionStorage.setItem('sf30.iati.token',token);
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch{}
-let dqaUi, publishingUi;
+let dqaUi, publishingUi, refreshUi;
 let state={sources:[],plans:[],builds:[],comparisons:[]},portfolios=[],presets=[];
 let source=null,portfolio=null,report=null,comparison=null,changesOffset=0,nextChanges=null;
 let currentQuery={},queryBase={},cursor=null,queryHistory=[],busy=false,savedPlan=null;
@@ -36,6 +36,7 @@ async function action(message,fn){
 function buttons(){
  dqaUi?.buttons();
  publishingUi?.buttons();
+ refreshUi?.buttons();
  $('query-next').disabled=busy||!cursor;$('query-prev').disabled=busy||!queryHistory.length;
  $('changes-next').disabled=busy||nextChanges===null;$('changes-download').disabled=busy||!comparison;
  for(const id of ['portfolio-download','report-download','report-json'])$(id).disabled=busy||!portfolio;
@@ -113,6 +114,7 @@ async function refresh(selected={}){
  cards($('overview-portfolios'),portfolios,async item=>{show('portfolios');await openPortfolio(item.id);},'No saved portfolios yet. Retain publisher XML to begin.');
  cards($('overview-sources'),state.sources,async item=>{show('sources');await openSource(item.id);},'The original source workspace is empty.');
  await publishingUi?.refresh();
+ await refreshUi?.refresh();
  $('connection').textContent='Private source workspace';buildSummary();buttons();
 }
 async function openSource(id){
@@ -261,6 +263,7 @@ $('transfer-download').onclick=()=>action('Preparing a complete saved portfolio 
 $('reload').onclick=()=>action('Refreshing the original saved workspace…',async()=>{await refresh();status('Retained source, portfolio and native edition inventory refreshed.');});
 dqaUi=window.IatiDqaUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state});
 publishingUi=window.IatiPublishingUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state,refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
+refreshUi=window.IatiRefreshUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state,portfolioList:()=>portfolios,refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
 action('Opening the original private IATI workspace…',async()=>{
  if(!token)throw new Error('Open the private console URL printed by this original process.');
  await refresh();const catalogue=await get('/api/iati/presets');presets=presetList(catalogue);select('preset-select',presets);
