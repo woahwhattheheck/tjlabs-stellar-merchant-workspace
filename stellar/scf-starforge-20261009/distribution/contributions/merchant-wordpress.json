@@ -1,0 +1,36 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-wordpress",
+  "description": "Complete WordPress source workspace merchant provider, typed original-operation client, immutable receiving and setup",
+  "merchantProviders": {
+    "wordpress-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/provider.mjs"
+  },
+  "commands": {
+    "merchant-wordpress": "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-wordpress": "Operate original WordPress sources, editions, publisher releases and complete customer receiving"
+  },
+  "exports": {
+    "./seller/wordpress/merchant": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/client.d.ts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/client.mjs"
+    },
+    "./seller/wordpress/merchant/setup": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/setup.mjs",
+    "./seller/wordpress/merchant/provider": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/provider.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/contracts.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/catalog.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/connection.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/exports.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/runtime.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/provider.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/client.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/client.d.ts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/setup.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/CLIENT.md",
+    "products/wordpress-merchant/OPERATING.md"
+  ]
+}
