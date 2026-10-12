@@ -334,6 +334,14 @@ export async function receive(options){
    return {jobId:job.id,reviewId:review.reviewId,state:job.state,closed:job.latest.closed,progress:job.progress,steps:job.steps,files:job.files,
     map:{entities:map.entities.length,unavailable:map.unavailable.length,coverage:map.coverage}};
   });
+  const originalHandoff=await phase('14-complete-handoff',async()=>{
+   const custody=await verifyCustody(workspace,project.projectId),handoff=await prepareHandoff(workspace,'original-complete-handoff',project.projectId);
+   const request=await document(join(paths.requests,'original-complete-handoff.request.json')),replayed=await workspace.action(request);
+   if(replayed.reused!==true||replayed.result?.file?.sha256!==handoff.file.sha256||replayed.result.file.bytes!==handoff.file.bytes)
+    throw fail('HANDOFF_REPLAY','The original completed handoff did not reopen with identical bytes.');
+   return {custody,handoff,replayed:true};
+  });
+  // The browser downloads the first complete package created above.
   let browser=null;
   if(options.browserModule){
    browser=await phase('13-original-operator-browser',async()=>{
@@ -352,13 +360,6 @@ export async function receive(options){
     }finally{await server.close();}
    });
   }else state.browser={state:'NOT_SELECTED',meaning:'Native/API receiving may complete independently; no browser or STAM build completion is asserted.'};
-  const originalHandoff=await phase('14-complete-handoff',async()=>{
-   const custody=await verifyCustody(workspace,project.projectId),handoff=await prepareHandoff(workspace,'original-complete-handoff',project.projectId);
-   const request=await document(join(paths.requests,'original-complete-handoff.request.json')),replayed=await workspace.action(request);
-   if(replayed.reused!==true||replayed.result?.file?.sha256!==handoff.file.sha256||replayed.result.file.bytes!==handoff.file.bytes)
-    throw fail('HANDOFF_REPLAY','The original completed handoff did not reopen with identical bytes.');
-   return {custody,handoff,replayed:true};
-  });
   const receivingResult=await phase('15-fresh-forward-older-receiving',async()=>{
    const originalPath=join(paths.delivery,originalHandoff.handoff.file.name),filename='original-commissioning-handoff.gz';
    await copyOriginal(originalPath,join(paths.receivedInbox,filename),originalHandoff.handoff.file);
@@ -411,6 +412,16 @@ export async function receive(options){
    const actual=await identityFile(join(paths.delivery,file.name));
    if(actual.bytes!==file.bytes||actual.sha256!==file.sha256)
     throw fail('DELIVERY_IDENTITY','A complete named receiving archive differs from its retained original identity.',{filename:file.name});
+  }
+  if(browser?.completed===true){
+   if(browser.browserClosed!==true||!Array.isArray(browser.artifacts)||browser.artifacts.length===0)
+    throw fail('BROWSER_ARTIFACTS','The completed browser phase has no closed original artifact inventory.');
+   for(const artifact of browser.artifacts){
+    if(!safeRelative(artifact.path))throw fail('BROWSER_ARTIFACT_PATH','The retained browser artifact has another output path.');
+    const actual=await identityFile(join(root,'browser',artifact.path));
+    if(actual.bytes!==artifact.bytes||actual.sha256!==artifact.sha256)
+     throw fail('BROWSER_ARTIFACT_IDENTITY','A complete browser download or viewport image differs from its original bytes.',{filename:artifact.path});
+   }
   }
   // Commit the exact final timestamp before the immutable customer artifact.
   // Recovery after keep() reuses this same candidate without a second timestamp.

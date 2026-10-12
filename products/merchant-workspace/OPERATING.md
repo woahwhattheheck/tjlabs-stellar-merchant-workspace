@@ -689,6 +689,31 @@ defines original fields, exact allocation and coverage. The
 [merchant MCP cost guide](../../stellar-forge/mcp-merchant-operator/COSTS.md)
 provides the complete host declaration, saved request and file-transfer commands.
 
+## 8B. Continue settlement through customer billing and accountant receiving
+
+The [complete financial operating chapter](FINANCIAL_OPERATIONS.md) joins the
+merchant's original settlement source, issued customer invoices, receipt
+allocations, credits, dated payment plans and Xero customer handover. It follows
+one retained accounting workspace through installation, original reconciliation,
+customer collection, accountant correction and encrypted operating recovery.
+
+Use the **merchant-receivables-xero** selection for the complete invoice and
+accountant desk. Its original service exposes receivables, payment plans and
+customer statements under the same accounting owner. Native asset amounts,
+commercial valuations, customer obligations and external document identities
+retain their original records and dates.
+
+~~~sh
+starforge receivables-xero serve \
+  --directory /private/merchant/accounting --port 8448
+~~~
+
+The chapter supplies the actual Runtime/Applications setup, source and customer
+selection, quotation import, issued documents, installment editions, Xero
+receiving and complete second-operator handover. Use the returned startup URL
+and stop an existing owner before opening the same directory with another
+accounting application.
+
 ## 9. Recover and upgrade from retained state
 
 | Situation | Continue from |

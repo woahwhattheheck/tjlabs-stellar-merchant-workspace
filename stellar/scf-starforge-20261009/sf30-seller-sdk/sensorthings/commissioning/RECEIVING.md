@@ -93,10 +93,12 @@ The single process keeps `receiving.lock` until both workspaces and their actual
 10. Review and execute that correction, then verify the changed field through the original client.
 11. Compensate the correction by restoring the original description. This reference restores one changed value and deletes no baseline entities.
 12. Verify the original 660-observation result again, retain its review, and save the actual source-bound map.
-13. Operate the complete authenticated original browser against the already-open workspace and server. The browser does not create a second workspace, server or commissioning job.
-14. Prepare and verify the complete original project handoff, including every historical source, mapping, plan, review and native object.
+13. Prepare and verify the complete original project handoff, including every historical source, mapping, plan, review and native object. This remains the retained `14-complete-handoff` phase.
+14. Operate the complete authenticated original browser against the already-open workspace and server, including downloading that complete original handoff. This remains the retained `13-original-operator-browser` phase. The browser does not create a second workspace, server or commissioning job.
 15. Receive it in a fresh workspace; repeat it idempotently; retain a receiving review; return the compatible later project to the original workspace; then confirm that older and repeated packages preserve the later accepted history.
 16. Close and reopen both workspaces, verify their complete retained object closure and original complete native outcomes, and confirm that receiving caused no native target replay.
+
+The browser phase is implemented by [receiving/browser.mjs](receiving/browser.mjs); [the complete browser guide](receiving/BROWSER.md) describes its selected source/plan/native/map/history pages, draft reopen, actual downloads and desktop/mobile operation. The execution order above preserves all existing phase IDs and gives the browser a real completed package to receive.
 
 These are full application operations. They do not replace original engine behavior with fixtures or fabricated provider results.
 
@@ -108,7 +110,7 @@ Every action request is persisted before dispatch. The original operation ID and
 
 An unfinished native write with a saved successful response is completed from that response. An uncertain effect remains awaiting explicit reconciliation; its original resolution and result transition are retained together. Cancelling, compensating and importing an earlier package remain separate explicit actions.
 
-The receiver reopens its original phase receipts. The same final timestamp is committed before publishing its immutable customer result, so a loss between publication and final state save reuses the exact original result. Both complete named delivery archives are read and hashed again before final completion, even on a fully replayed phase sequence.
+The receiver reopens its original phase receipts. The same final timestamp is committed before publishing its immutable customer result, so a loss between publication and final state save reuses the exact original result. Both complete named delivery archives are read and hashed again before final completion, even on a fully replayed phase sequence. The same final check also verifies the complete browser artifact inventory and closed-browser result. Browser replay keeps its first selected package and original completed result when later project exports are added.
 
 ## Complete outputs
 
@@ -120,6 +122,7 @@ The private operation contains:
 | `inputs/` | Original recording and exact selected runtime, target and source-manifest receipts. |
 | `requests/` | Original action requests, actual results and any retained revision preflight continuation. |
 | `phases/` | Immutable completed phase results. |
+| `browser/` | Original browser binding and selected project/source/job/package, completed result, per-attempt actual downloads and six viewport images. |
 | `primary-workspace/` | The actual commissioning workspace and its private native custody. |
 | `receiving-workspace/` | Independent receiving workspace with the same reviewed project history. |
 | `delivery/*.ndjson.gz` | Complete original and receiving-reviewed project packages, with their original names and byte/SHA identities. |
@@ -129,4 +132,4 @@ The private operation contains:
 
 The packages are NDJSON gzip, not tar archives. Receive them through the maintained commissioning handoff action. The portable implementation includes complete historical source and native custody, original source editions, editable application and build recipe, plus selected browser assets and license identities. It excludes host authorization values from the portable project.
 
-The final customer result is created only after all sixteen phases succeed and both complete delivery archives still match their retained identities. A queued, interrupted or pending run is not a successful result. Keep the private journal and browser session material in operator custody; share the complete intended handoff and its path-safe customer result through the original case.
+The final customer result is created only after all sixteen phases succeed and both complete delivery archives and every completed browser artifact still match their retained identities. A queued, interrupted or pending run is not a successful result. Keep the private journal and browser session material in operator custody; share the complete intended handoff and its path-safe customer result through the original case.

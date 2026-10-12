@@ -14,7 +14,8 @@ const mutation = {...workspace, revision, workspaceId: hash, actor: text(1000, 1
 const change = {...agreement, ...mutation, expectedVersion: revision};
 const terms = {billingMonths: {type: 'integer', minimum: 1, maximum: 12},
   invoiceTiming: {type: 'string', enum: ['START', 'END']}, dueDays: {type: 'integer', minimum: 0, maximum: 365}};
-const source = {quoteContent: text(SERVICE_AGREEMENT_REQUEST_BYTES, 1), responseContent: text(SERVICE_AGREEMENT_REQUEST_BYTES, 1)};
+const source = {quoteContent: text(SERVICE_AGREEMENT_REQUEST_BYTES, 1),
+  responseContent: text(SERVICE_AGREEMENT_REQUEST_BYTES, 1), renewalJson: text(SERVICE_AGREEMENT_REQUEST_BYTES, 1)};
 const file = {type: 'string', minLength: 1, maxLength: 255, pattern: '^[^/\\\\\\u0000-\\u001f]+$'};
 const range = {readId: uuid, expectedSha256: hash, offset: {type: 'integer', minimum: 0},
   limit: {type: 'integer', minimum: 1, maximum: MAX_RETAINED_CHUNK_BYTES}};
@@ -29,13 +30,13 @@ const descriptions = [
     {...agreement, asOf: date}, ['workspace', 'agreementId'], true],
   ['preview', 'Preview the exact original billing period and retain its agreement version, digest and any existing recovery request.',
     {...agreement, periodId: text(240, 1), asOf: date}, ['workspace', 'agreementId', 'periodId'], true],
-  ['create', 'Create an agreement from a complete original quotation and its accepted customer response.',
+  ['create', 'Create an agreement from a complete original quotation and its accepted customer response, optionally joined to the complete accepted SF74 renewal handover.',
     {...mutation, reference: text(120, 1), title: text(500, 1), customerId: uuid, startDate: date,
       termMonths: {type: 'integer', minimum: 1, maximum: 120}, ...terms,
       currencyScale: {type: 'integer', minimum: 0, maximum: 6}, ...source},
     ['workspace', 'revision', 'actor', 'requestId', 'reference', 'title', 'customerId', 'startDate',
       'termMonths', 'quoteContent', 'responseContent'], false],
-  ['amend', 'Retain an accepted quotation edition at an original monthly boundary, with its reason and reviewed agreement version.',
+  ['amend', 'Retain an accepted quotation edition at an original monthly boundary, with its reason, reviewed agreement version and optional complete accepted SF74 renewal handover.',
     {...change, ...terms, ...source, effectiveDate: date, reason: text(4000, 1)},
     ['workspace', 'agreementId', 'revision', 'actor', 'requestId', 'expectedVersion',
       'effectiveDate', 'reason', 'quoteContent', 'responseContent'], false],
@@ -48,7 +49,7 @@ const descriptions = [
   ['bill', 'Create the original receivables draft for the reviewed period. Reuse an existing PREPARING recovery request unchanged with the current workspace revision.',
     {...change, periodId: text(240, 1), previewSha256: hash},
     ['workspace', 'agreementId', 'revision', 'actor', 'requestId', 'expectedVersion', 'periodId', 'previewSha256'], false],
-  ['source_file', 'Read a selected original quotation, response or review through the existing complete file-range reader.',
+  ['source_file', 'Read a selected original quotation, response, renewal handover or review through the existing complete file-range reader.',
     {...agreement, sourceId: uuid, file, ...range}, ['workspace', 'agreementId', 'sourceId', 'file'], true],
   ['export', 'Describe every original agreement export file and the complete TAR archive, with exact byte counts and SHA256 values.',
     {...agreement, asOf: date}, ['workspace', 'agreementId'], true],

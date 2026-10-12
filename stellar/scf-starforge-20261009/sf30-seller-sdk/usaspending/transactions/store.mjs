@@ -14,6 +14,49 @@ const schema=[
 ].join('\n');
 const decoded=row=>row?Object.fromEntries(Object.entries(row).map(([key,value])=>[key,['award_row','request','owner','error','data'].includes(key)&&value!==null?JSON.parse(value):value])):null;
 const reviewFields=['status','fit','fundingChange','proposedWorkshare','deliverables','acceptance','owner','caseUrl','nextAction','notes'];
+export function validateTransactionSource(request,bytes,receipt) {
+    demand(plain(receipt)&&receipt.status===200&&receipt.bytes===bytes.length&&receipt.sha256===sha(bytes),'TRANSACTION_SOURCE_RECEIPT_MISMATCH');
+    demand(receipt.request?.method==='POST'&&receipt.request.url===ORIGIN+TRANSACTION_PATH,'TRANSACTION_SOURCE_URL_MISMATCH');
+    demand(!receipt.url||receipt.url===ORIGIN+TRANSACTION_PATH,'TRANSACTION_RESPONSE_URL_MISMATCH');
+    const rawRequest=Buffer.from(receipt.request.bodyBase64??'','base64');
+    demand(rawRequest.length>0&&sha(rawRequest)===receipt.request.bodySha256&&canonical(JSON.parse(rawRequest.toString('utf8')))===canonical(request)&&canonical(receipt.request.body)===canonical(request),'TRANSACTION_REQUEST_RECEIPT_MISMATCH');
+    demand(typeof receipt.finishedAt==='string'&&Number.isFinite(Date.parse(receipt.finishedAt)),'TRANSACTION_OBSERVATION_TIME_REQUIRED');
+    return parseTransactionPage(bytes,request,{sourceId:sha(bytes)});
+  }
+
+export function validateTransactionPages(pages,awardKey,{maxRows=250000,allowEmpty=false}={}) {
+    integer(maxRows,'Transaction row capacity',1,250000);
+    demand(Array.isArray(pages)&&(allowEmpty||pages.length>0)&&pages.length<=10000,'TRANSACTION_SOURCE_PAGES_REQUIRED');
+    const rows=[];let next=1,first=null;
+    for(const page of pages) {
+      demand(plain(page)&&typeof page.responseBase64==='string','TRANSACTION_SOURCE_BYTES_REQUIRED');
+      const request=page.request,parsed=validateTransactionSource(request,Buffer.from(page.responseBase64,'base64'),page.receipt);
+      demand(request.award_id===awardKey,'TRANSACTION_SOURCE_AWARD_MISMATCH');
+      first??={...request,page:1};
+      demand(request.page===next&&canonical({...request,page:1})===canonical(first),'TRANSACTION_PAGE_SEQUENCE_CONFLICT');
+      demand(rows.length+parsed.rows.length<=maxRows,'TRANSACTION_CAPACITY_REACHED');
+      rows.push(...parsed.rows);next=parsed.nextRequest?.page??null;
+    }
+    return {rows,request:first,complete:pages.length>0&&next===null,nextPage:next};
+  }
+
+export function inspectTransactionCapture(packet,{awardRow}={}) {
+    demand(plain(packet)&&packet.schema===TRANSACTION_VERSION+'.capture','TRANSACTION_EXPORT_SCHEMA_INVALID');
+    const {sha256:expected,...value}=packet;demand(sha(value)===expected,'TRANSACTION_EXPORT_DIGEST_MISMATCH');
+    const row=awardRow;
+    demand(plain(row),'TRANSACTION_RECEIVING_AWARD_REQUIRED');
+    demand(row.row_sha256===packet.awardRowSha256,'TRANSACTION_RECEIVING_AWARD_MISMATCH','Receive the original award source edition before its transactions.');
+    const checked=validateTransactionPages(packet.pages,packet.awardKey,{allowEmpty:true,maxRows:packet.maxRows});
+    const originalRequest=transactionRequest(packet.awardKey,packet.request);
+    demand(canonical(originalRequest)===canonical(packet.request)&&originalRequest.page===1&&(!checked.request||canonical(checked.request)===canonical(originalRequest)),'TRANSACTION_RECEIVING_REQUEST_MISMATCH');
+    demand(canonical(checked.rows)===canonical(packet.rows),'TRANSACTION_RECEIVING_ROWS_MISMATCH');
+    demand(plain(packet.coverage)&&typeof packet.coverage.complete==='boolean'&&checked.complete===packet.coverage.complete&&packet.coverage.pages===packet.pages.length&&packet.coverage.occurrences===checked.rows.length&&packet.coverage.award_key===packet.awardKey&&packet.coverage.award_edition_id===packet.awardEditionId&&packet.coverage.award_row_sha256===packet.awardRowSha256,'TRANSACTION_RECEIVING_COVERAGE_MISMATCH');
+    const bindings=packet.pages.map(p=>({page:p.request.page,sha256:sha(Buffer.from(p.responseBase64,'base64')),request:canonical(p.request),receipt:canonical(p.receipt)}));
+    const sourceFingerprint=checked.complete?sha({awardKey:packet.awardKey,awardEdition:packet.awardEditionId,awardRowSha256:packet.awardRowSha256,pages:bindings}):null;
+    demand(packet.coverage.fingerprint===sourceFingerprint,'TRANSACTION_RECEIVING_FINGERPRINT_MISMATCH');
+    return {expected,checked,originalRequest,sourceFingerprint};
+}
+
 export class AwardTransactions {
   constructor(workspace,{processIdentity}) { this.w=workspace;this.db=workspace.db;this.processIdentity=processIdentity;this.db.exec(schema); }
   state() { return {captures:this.db.prepare('SELECT * FROM award_tx_captures ORDER BY created_at DESC').all().map(decoded).map(({award_row,error,...c})=>({...c,recipient:award_row.recipient_name,error:error?{code:error.code,message:error.message,retryAt:error.retryAt??null}:null})),reviews:this.db.prepare('SELECT * FROM award_tx_reviews ORDER BY updated_at DESC').all().map(decoded)}; }
@@ -75,15 +118,7 @@ export class AwardTransactions {
       throw Object.assign(error,{captureId:c.id});
     } finally { this.w.active.delete(c.id);signal?.removeEventListener('abort',abort); }
   }
-  validateSource(request,bytes,receipt) {
-    demand(plain(receipt)&&receipt.status===200&&receipt.bytes===bytes.length&&receipt.sha256===sha(bytes),'TRANSACTION_SOURCE_RECEIPT_MISMATCH');
-    demand(receipt.request?.method==='POST'&&receipt.request.url===ORIGIN+TRANSACTION_PATH,'TRANSACTION_SOURCE_URL_MISMATCH');
-    demand(!receipt.url||receipt.url===ORIGIN+TRANSACTION_PATH,'TRANSACTION_RESPONSE_URL_MISMATCH');
-    const rawRequest=Buffer.from(receipt.request.bodyBase64??'','base64');
-    demand(rawRequest.length>0&&sha(rawRequest)===receipt.request.bodySha256&&canonical(JSON.parse(rawRequest.toString('utf8')))===canonical(request)&&canonical(receipt.request.body)===canonical(request),'TRANSACTION_REQUEST_RECEIPT_MISMATCH');
-    demand(typeof receipt.finishedAt==='string'&&Number.isFinite(Date.parse(receipt.finishedAt)),'TRANSACTION_OBSERVATION_TIME_REQUIRED');
-    return parseTransactionPage(bytes,request,{sourceId:sha(bytes)});
-  }
+  validateSource(request,bytes,receipt) { return validateTransactionSource(request,bytes,receipt); }
   acceptPage(captureId,{request,response,receipt}) {
     const bytes=Buffer.from(response),parsed=this.validateSource(request,bytes,receipt);
     return this.w.tx(()=>{
@@ -151,21 +186,7 @@ export class AwardTransactions {
     return {...value,sha256:sha(value)};
     });
   }
-  validatePages(pages,awardKey,{maxRows=250000,allowEmpty=false}={}) {
-    integer(maxRows,'Transaction row capacity',1,250000);
-    demand(Array.isArray(pages)&&(allowEmpty||pages.length>0)&&pages.length<=10000,'TRANSACTION_SOURCE_PAGES_REQUIRED');
-    const rows=[];let next=1,first=null;
-    for(const page of pages) {
-      demand(plain(page)&&typeof page.responseBase64==='string','TRANSACTION_SOURCE_BYTES_REQUIRED');
-      const request=page.request,parsed=this.validateSource(request,Buffer.from(page.responseBase64,'base64'),page.receipt);
-      demand(request.award_id===awardKey,'TRANSACTION_SOURCE_AWARD_MISMATCH');
-      first??={...request,page:1};
-      demand(request.page===next&&canonical({...request,page:1})===canonical(first),'TRANSACTION_PAGE_SEQUENCE_CONFLICT');
-      demand(rows.length+parsed.rows.length<=maxRows,'TRANSACTION_CAPACITY_REACHED');
-      rows.push(...parsed.rows);next=parsed.nextRequest?.page??null;
-    }
-    return {rows,request:first,complete:pages.length>0&&next===null,nextPage:next};
-  }
+  validatePages(pages,awardKey,options={}) { return validateTransactionPages(pages,awardKey,options); }
   import({editionId,awardKey,pages,maxRows=250000}) {
     const checked=this.validatePages(pages,awardKey,{maxRows});
     const captureId='TC-import-'+sha({editionId,awardKey,pages}).slice(0,40);
@@ -175,18 +196,9 @@ export class AwardTransactions {
     return result;
   }
   receive(packet,{editionId,includeReview=false}={}) {
-    demand(plain(packet)&&packet.schema===TRANSACTION_VERSION+'.capture','TRANSACTION_EXPORT_SCHEMA_INVALID');
-    const {sha256:expected,...value}=packet;demand(sha(value)===expected,'TRANSACTION_EXPORT_DIGEST_MISMATCH');
+    demand(plain(packet),'TRANSACTION_EXPORT_SCHEMA_INVALID');
     const chosen=editionId??packet.awardEditionId,row=this.w.row(chosen,packet.awardKey);
-    demand(row.row_sha256===packet.awardRowSha256,'TRANSACTION_RECEIVING_AWARD_MISMATCH','Receive the original award source edition before its transactions.');
-    const checked=this.validatePages(packet.pages,packet.awardKey,{allowEmpty:true,maxRows:packet.maxRows});
-    const originalRequest=transactionRequest(packet.awardKey,packet.request);
-    demand(canonical(originalRequest)===canonical(packet.request)&&originalRequest.page===1&&(!checked.request||canonical(checked.request)===canonical(originalRequest)),'TRANSACTION_RECEIVING_REQUEST_MISMATCH');
-    demand(canonical(checked.rows)===canonical(packet.rows),'TRANSACTION_RECEIVING_ROWS_MISMATCH');
-    demand(plain(packet.coverage)&&typeof packet.coverage.complete==='boolean'&&checked.complete===packet.coverage.complete&&packet.coverage.pages===packet.pages.length&&packet.coverage.occurrences===checked.rows.length&&packet.coverage.award_key===packet.awardKey&&packet.coverage.award_edition_id===packet.awardEditionId&&packet.coverage.award_row_sha256===packet.awardRowSha256,'TRANSACTION_RECEIVING_COVERAGE_MISMATCH');
-    const bindings=packet.pages.map(p=>({page:p.request.page,sha256:sha(Buffer.from(p.responseBase64,'base64')),request:canonical(p.request),receipt:canonical(p.receipt)}));
-    const sourceFingerprint=checked.complete?sha({awardKey:packet.awardKey,awardEdition:packet.awardEditionId,awardRowSha256:packet.awardRowSha256,pages:bindings}):null;
-    demand(packet.coverage.fingerprint===sourceFingerprint,'TRANSACTION_RECEIVING_FINGERPRINT_MISMATCH');
+    const {expected,checked,originalRequest,sourceFingerprint}=inspectTransactionCapture(packet,{awardRow:row});
     const targetId='TC-import-'+sha({editionId:chosen,awardKey:packet.awardKey,pages:packet.pages,...(packet.pages.length?{}:{request:originalRequest})}).slice(0,40);
     const incoming=includeReview?packet.review:null,previous=decoded(this.db.prepare('SELECT * FROM award_tx_reviews WHERE capture_id=?').get(targetId));
     if(incoming) {

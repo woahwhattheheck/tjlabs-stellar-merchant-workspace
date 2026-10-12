@@ -1,5 +1,7 @@
 // MIT. Customer closing interface; all statement operations use the original local server.
+import {createCustomerSetup} from './setup.mjs';
 const $=id=>document.getElementById(id);
+let customerSetup;
 const state={context:null,inventory:null,selected:new Set(),selections:[],requestId:crypto.randomUUID(),cycles:[],key:null,current:null,poll:null,inventoryBusy:false,review:null};
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const pretty=value=>JSON.stringify(value,null,2);
@@ -20,7 +22,7 @@ async function api(path,body){
   if(!response.ok){const error=new Error(result.error?.message??'The operation could not be completed.');error.code=result.error?.code;throw error;}
   return result;
 }
-function draftKey(){return 'customer-closing-draft:'+state.context.workspace;}
+function draftKey(){return 'customer-closing-draft:'+state.context.draftScope;}
 function saveDraft({changed=true}={}){
   if(changed)state.requestId=crypto.randomUUID();
   try{localStorage.setItem(draftKey(),JSON.stringify({label:$('cycle-label').value,selections:state.selections,requestId:state.requestId}));}catch{}
@@ -49,7 +51,7 @@ function renderInventory(){
   preserveOptions('default-opening',inventory.usage,usageLabel,'Cumulative statement');
   if(!inventory.customers.length)$('inventory-state').textContent='No customer records';
   else $('inventory-state').textContent=inventory.customers.length+' customers · '+inventory.runs.length+' completed runs · refreshed '+date(inventory.observedAt);
-  renderCustomers();renderSelections();
+  renderCustomers();renderSelections();customerSetup?.inventoryChanged();
 }
 function visibleCustomers(){
   const query=$('customer-search').value.trim().toLowerCase();
@@ -57,7 +59,7 @@ function visibleCustomers(){
 }
 function renderCustomers(){
   const rows=visibleCustomers(),bindings=state.inventory?.bindings??[];
-  $('customer-rows').innerHTML=rows.length?rows.map(row=>'<tr><td class="check"><input type="checkbox" data-customer="'+escape(row.id)+'" aria-label="Select '+escape(row.name)+'"'+(state.selected.has(row.id)?' checked':'')+'></td><td>'+escape(row.name)+'</td><td>'+escape(row.reference)+'</td><td>'+escape(row.orders??bindings.filter(binding=>binding.customerId===row.id).length)+'</td></tr>').join(''):'<tr><td colspan="4"><div class="empty">'+(state.inventory?.customers.length?'No customers match this search.':'Add customer profiles and assign their original orders in the accounting workspace, then refresh here.')+'</div></td></tr>';
+  $('customer-rows').innerHTML=rows.length?rows.map(row=>'<tr><td class="check"><input type="checkbox" data-customer="'+escape(row.id)+'" aria-label="Select '+escape(row.name)+'"'+(state.selected.has(row.id)?' checked':'')+'></td><td>'+escape(row.name)+'</td><td>'+escape(row.reference)+'</td><td>'+escape(row.orders??bindings.filter(binding=>binding.customerId===row.id).length)+'</td></tr>').join(''):'<tr><td colspan="4"><div class="empty">'+(state.inventory?.customers.length?'No customers match this search.':'Open Customers and service to add customer profiles and assign their original orders.')+'</div></td></tr>';
   const visibleSelected=rows.filter(row=>state.selected.has(row.id)).length;
   $('select-all').checked=rows.length>0&&visibleSelected===rows.length;
   $('select-all').indeterminate=visibleSelected>0&&visibleSelected<rows.length;
@@ -88,13 +90,13 @@ function renderSelections(){
   }).join('');
 }
 function view(name){
-  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';
+  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';
   document.querySelectorAll('[data-view]').forEach(button=>{if(button.dataset.view===name)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
 }
 async function refreshInventory(){
-  if(state.inventoryBusy)return;state.inventoryBusy=true;$('refresh').disabled=true;clearError();notice('Reading original customers, accounting runs, service captures, and retained statements…');
-  try{state.inventory=await api('/api/inventory');renderInventory();notice('Workspace records refreshed.');}
-  catch(error){showError(error);notice('Saved cycles are still available.');}
+  if(state.inventoryBusy)return false;state.inventoryBusy=true;$('refresh').disabled=true;clearError();notice('Reading original customers, accounting runs, service captures, and retained statements…');
+  try{state.inventory=await api('/api/inventory');renderInventory();notice('Workspace records refreshed.');return true;}
+  catch(error){showError(error);notice('Saved cycles are still available.');return false;}
   finally{state.inventoryBusy=false;$('refresh').disabled=false;}
 }
 function renderCycleList(){
@@ -239,7 +241,7 @@ $('selections').addEventListener('click',async event=>{
 $('prepare').addEventListener('click',prepareCycle);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',async()=>{
-  view(button.dataset.view);if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
+  view(button.dataset.view);if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
 }));
 $('reload-cycles').addEventListener('click',async()=>{try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}});
 $('cycle-list').addEventListener('click',event=>{const button=event.target.closest('[data-cycle]');if(button)loadCycle(button.dataset.cycle);});
@@ -257,6 +259,19 @@ $('cycle-detail').addEventListener('click',async event=>{
   }catch(error){showError(error);}finally{button.disabled=false;}
 });
 window.addEventListener('pagehide',()=>clearTimeout(state.poll));
+customerSetup=createCustomerSetup({getState:()=>state,api,notice,showError,clearError,refreshInventory,
+  async addCorrection(original){
+    if(await refreshInventory()===false)throw new Error('Refresh the workspace before preparing this correction.');
+    const current=state.inventory.statements.find(row=>row.id===original.id);
+    if(current?.status!=='RETAINED')throw new Error('This statement has already changed. Open its current record.');
+    const row={customerId:current.customerId,runId:current.runId,usageId:current.usageId??null,replacesId:current.id};
+    if(current.usageOpeningId)row.usageOpeningId=current.usageOpeningId;
+    if(current.from!==null&&current.until!==null){row.from=current.from;row.until=current.until;}
+    state.selections.push(row);$('cycle-label').value=$('cycle-label').value||('Correction of '+current.number).slice(0,200);
+    saveDraft();renderSelections();view('compose');$('selections').scrollIntoView({block:'start'});
+    notice('The original statement was added for correction. Choose its current sources and review the complete replacement.');
+  }
+});
 async function start(){
   try{
     state.context=await api('/api/context');$('workspace-name').textContent=state.context.workspace;$('operator-name').textContent=state.context.actor;

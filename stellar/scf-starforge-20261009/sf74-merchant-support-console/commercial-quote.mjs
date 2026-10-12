@@ -3,11 +3,13 @@ import {newCommissioning,commissioningWorkorder,commissioningFileBytes,validateC
 import {validateServiceRecord} from './service-commitments.mjs';
 import {canonical,sha256,jsonBytes,commercialError,inspectCommercialPricingSource,reviewCommercialUsage} from './commercial-pricing.mjs';
 import {readCommercialTariffSources,commercialTariffSummary,renderCommercialTariffBasis} from './commercial/tariff-source.mjs';
+import {readCommercialPerformanceSources,commercialPerformanceSummary,bindCommercialPerformance,
+  renderCommercialPerformanceBasis} from './commercial/tariff-performance.mjs';
 
 export const COMMERCIAL_DOCUMENT_SCHEMA='stellar-forge.merchant-commercial-document.v1';
 export const COMMERCIAL_QUOTE_SCHEMA='stellar-forge.merchant-commercial-quote.v1';
 export const COMMERCIAL_MATERIAL_KINDS={DRAFT:'commercial-quote-draft',PRICING:'commercial-pricing-source',
-  QUOTE:'commercial-quote-edition',RESPONSE:'commercial-customer-response'};
+  QUOTE:'commercial-quote-edition',RESPONSE:'commercial-customer-response',PERFORMANCE:'commercial-tariff-performance-source'};
 const copy=value=>JSON.parse(JSON.stringify(value));
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const HASH=/^[a-f0-9]{64}$/;
@@ -25,12 +27,12 @@ function decimal(value,label){if(typeof value!=='string'||!/^(0|[1-9]\d{0,20})(?
 function usd(value){const negative=value<0n,n=negative?-value:value,f=String(n%MICRO).padStart(6,'0').replace(/0+$/,'');return (negative?'-':'')+String(n/MICRO)+(f?'.'+f:'');}
 function date(value){if(value==='')return value;if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||new Date(value+'T00:00:00Z').toISOString().slice(0,10)!==value)fail('COMMERCIAL_DATE_INVALID','Use a calendar date for quote validity.');return value;}
 export function emptyCommercialDraft(){return {parentId:null,title:'',customer:{name:'',contact:''},currency:'USD',
-  implementationSourceId:'',serviceSourceId:'',pricingSourceId:'',tariffSourceId:'',validThrough:'',
+  implementationSourceId:'',serviceSourceId:'',pricingSourceId:'',tariffSourceId:'',performanceSourceId:'',validThrough:'',
   implementation:{lines:[]},service:{period:'MONTH',lines:[]},pricing:{routes:[]},
   terms:{scope:'',deliverables:'',exclusions:'',payment:'',acceptance:''},notes:''};}
 export function normalizeCommercialDraft(value) {
   object(value,['parentId','title','customer','currency','implementationSourceId','serviceSourceId','pricingSourceId',
-    'validThrough','implementation','service','pricing','terms','notes','tariffSourceId'],'quotation');
+    'validThrough','implementation','service','pricing','terms','notes','tariffSourceId','performanceSourceId'],'quotation');
   const next=copy(value);
   next.parentId=selected(value.parentId??null,'parent quote');
   text(value.title,'quote title',400);object(value.customer,['name','contact'],'customer');
@@ -40,6 +42,11 @@ export function normalizeCommercialDraft(value) {
   if(Object.hasOwn(value,'tariffSourceId')){
     text(value.tariffSourceId,'tariff source',64);
     if(value.tariffSourceId&&!HASH.test(value.tariffSourceId))fail('COMMERCIAL_TARIFF_SOURCE_REQUIRED','Choose the exact original tariff source.');
+  }
+  if(Object.hasOwn(value,'performanceSourceId')){
+    text(value.performanceSourceId,'recorded usage source',64);
+    if(value.performanceSourceId&&!HASH.test(value.performanceSourceId))
+      fail('COMMERCIAL_PERFORMANCE_SOURCE_REQUIRED','Choose the retained recorded usage review.');
   }
   date(value.validThrough);text(value.notes,'quote notes');
   object(value.implementation,['lines'],'implementation');object(value.service,['period','lines'],'service');
@@ -117,8 +124,9 @@ export async function commercialContext(workspace,{caseId,workspaceId,revision}=
     }).sort((a,b)=>b.recordedAt.localeCompare(a.recordedAt)||b.id.localeCompare(a.id));
     return {...quote,originCaseId:d.caseId,receiving,material:d.material};
   }).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
+  const performanceSources=await readCommercialPerformanceSources(documents,tariffSources,quotes);
   const drafts=documents.filter(d=>d.kind==='DRAFT').sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
-  return {state,documents,scope:{caseId,workspaceId},revision,implementationSources,serviceSources,pricingSources,tariffSources,
+  return {state,documents,scope:{caseId,workspaceId},revision,implementationSources,serviceSources,pricingSources,tariffSources,performanceSources,
     quotes,draft:drafts.length?normalizeCommercialDraft(drafts[0].payload):null};
 }
 function sourceBinding(source,kind) {
@@ -136,6 +144,7 @@ export function commercialView(context) {
     implementationRevision:context.state.revision,implementationSources:context.implementationSources.map(summary),
     serviceSources:context.serviceSources.map(summary),pricingSources:context.pricingSources.map(summary),
     tariffSources:(context.tariffSources??[]).map(commercialTariffSummary),
+    performanceSources:(context.performanceSources??[]).map(commercialPerformanceSummary),
     draft:context.draft,quotes:context.quotes,
     requests:context.documents.map(d=>({requestId:d.id,action:d.request.action,state:'COMPLETE',documentSha256:d.material.sha256}))};
 }
@@ -188,6 +197,8 @@ export function reviewCommercialQuote(context,input) {
       comparisonId:tariff.comparisonId,scenarioPlanId:tariff.scenarioPlanId,pricingVersion:tariff.pricingVersion,
       routeId:tariff.routeId,tiers:copy(tariff.tiers),basis:renderCommercialTariffBasis(tariff,{monthlyRequests:route.monthlyRequests})};
   }
+  const performance=bindCommercialPerformance(context,draft,{tariff,pricing,usage});
+  if(performance)sourceBindings.performance=performance;
   const totals={currency:'USD',implementationUsd:usd(implementationTotal),recurringServiceUsd:usd(serviceTotal),
     routeUsageUsd:usd(usageTotal),recurringUsd:usd(serviceTotal+usageTotal),recurringPeriod:'MONTH'};
   const issues=[];
@@ -257,6 +268,8 @@ export function renderCommercialQuote(value) {
       'Its newly derived uniform rate is USD '+tariff.basis.derivedUnitAtQuotedQuantityUsd+'.')+
       ' The price lines above retain the selected saved rate.');
   }
+  if(value.sourceBindings.performance)
+    out.push('','## Recorded usage and this revision','',renderCommercialPerformanceBasis(value.sourceBindings.performance));
   if(d.notes)out.push('','## Notes','',d.notes);
   out.push('','## Calculation terms','',
     'Work and service quantities and unit prices use up to six decimal places. Each extended work or service fee uses half-up rounding to one millionth of a USD.',
@@ -275,7 +288,7 @@ export function compareCommercialQuotes(before,after) {
   const amounts=['implementationUsd','recurringServiceUsd','routeUsageUsd','recurringUsd'];
   const differences=Object.fromEntries(amounts.map(k=>[k,usd(decimal(after.totals[k],k)-decimal(before.totals[k],k))]));
   const changes=[];
-  for(const key of ['implementation','service','pricing','tariff'])if(canonical(before.sourceBindings[key])!==canonical(after.sourceBindings[key]))changes.push(key+' original source changed');
+  for(const key of ['implementation','service','pricing','tariff','performance'])if(canonical(before.sourceBindings[key])!==canonical(after.sourceBindings[key]))changes.push(key+' original source changed');
   for(const key of ['scope','deliverables','payment','acceptance','exclusions'])if(before.draft.terms[key]!==after.draft.terms[key])changes.push(key+' changed');
   return {before:{id:before.id,sha256:before.sha256,title:before.title},after:{id:after.id,sha256:after.sha256,title:after.title},
     differences,changes,lines:{before:before.lines,after:after.lines},

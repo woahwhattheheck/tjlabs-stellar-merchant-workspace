@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-support",
   "title": "Merchant Support",
-  "description": "Complete merchant cases, implementation, Service adjustments, buyer and accountant handover, original tariff pricing, commercial quotations and independent customer receiving.",
+  "description": "Complete merchant cases, implementation, Service adjustments, buyer and accountant handover, original tariff pricing and recorded usage performance, commercial quotations and independent customer receiving.",
   "base": {
     "commands": [
       "installation",
@@ -84,6 +84,7 @@
     "merchant-pricing",
     "merchant-provider-pricing",
     "merchant-tariffs",
+    "merchant-performance",
     "merchant-economics-product"
   ],
   "components": [
@@ -116,7 +117,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant Support: original cases, tariffs and quotations, accepted implementation, Service adjustments, buyer and accountant handover, and complete customer receiving.",
+    "description": "Merchant Support: original cases, tariffs, usage performance and quotations, accepted implementation, Service adjustments, buyer and accountant handover, and complete customer receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

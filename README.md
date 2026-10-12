@@ -80,6 +80,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Onboard and hand over a complete data-package source | **Applications → Frictionless source workbench**, `starforge frictionless-agent` and `starforge frictionless-source` | [Complete selected installation](products/frictionless-source/OPERATING.md), original captures, immutable query editions, full native review, publisher source selection and complete resumable source receiving |
 | Receive a reviewed local dataset and hand over the customer workspace | **Applications → Local dataset customer workspace** or `starforge local-dataset-agent` | [Complete selected installation](products/local-dataset/OPERATING.md), original Frictionless capture, full native pages, DuckDB editions and SQL, complete reports and portable receiving |
 | Reconcile reviewed source and target editions and hand over the complete customer report | **DuckDB dataset workspace → Dataset reconciliation**, original `duckdb-agent` and Python `reconcile` CLI | [Complete selected installation](products/paired-reconciliation/OPERATING.md), exact mappings and full accounting, retained engineer decisions, immutable reports, original MCP clients and complete sparse customer receiving |
+| Receive native Timescale commissioning into customer reconciliation | **DuckDB dataset workspace → Timescale intake**, original Python CLI and MCP client | [Complete selected installation](products/timescale-customer/OPERATING.md), exact report/source bytes, reviewed type and meaning mappings, immutable editions, full paired reports and portable customer reopening |
 | Author regional map editions, review native maps and receive the complete customer workspace | **Applications → PMTiles map releases**, `starforge pmtiles`, `starforge pmtiles-mcp` and [the complete operating guide](products/pmtiles-operations/OPERATING.md) | Original regional archives and style/resources, verified PMTiles and Martin releases, source/layer inspection, managed Stop and Start, thirty-one merchant operations and full editable customer receiving |
 
 The [Frictionless source workbench guide](products/frictionless-source/OPERATING.md)
@@ -425,3 +426,7 @@ file identities.
 
 Copyright TokenJunkieLabs. The product retains its MIT license and the applicable
 third-party license files.
+
+### Allium data workspace
+
+The [Allium operating guide](products/allium/OPERATING.md) covers the `allium-data-workspace` source selection: managed Applications, a typed Node client and 29 merchant tools over the original Explorer/retained workspace, dataset merchant, publisher and complete customer receiving. The native `allium-explorer` and `allium-workspace` commands remain available; `allium-managed` opens that same workspace for Applications and tool attachments.

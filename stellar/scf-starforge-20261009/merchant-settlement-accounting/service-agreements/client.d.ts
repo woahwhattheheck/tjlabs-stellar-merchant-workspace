@@ -14,7 +14,20 @@ export interface Customer {
 export interface MutationContext { revision: Revision; actor: string; requestId: string; workspaceId?: string }
 export interface ExistingAgreementMutation extends MutationContext { expectedVersion: number }
 export interface BillingTerms { billingMonths?: number; invoiceTiming?: InvoiceTiming; dueDays?: number }
-export interface AcceptedQuotation { quoteContent: string; responseContent: string }
+/** The optional handover is the complete original accepted SF74 renewal JSON, retained byte-for-byte. */
+export interface AcceptedQuotation { quoteContent: string; responseContent: string; renewalJson?: string }
+export interface ServiceTermsReference { id: string; revision: number; sha256: string }
+export interface ServiceRenewalFinancialJoin {
+  caseId: string; caseRevision: string; agreementId: string;
+  sourceTerms: ServiceTermsReference; proposedContinuation: ServiceTermsReference;
+  activeTerms: ServiceTermsReference | null; quoteId: string | null; quoteSha256: string | null;
+  acceptanceId: string | null; acceptedAt: string | null;
+}
+/** Identities validated from the retained complete renewal handover and exact quotation/response bytes. */
+export interface AgreementRenewalSource {
+  sha256: string; acceptedHead: ServiceTermsReference; financialJoin: ServiceRenewalFinancialJoin;
+  servicePeriod: {effectiveFrom: string; effectiveUntil: string | null};
+}
 export interface CreateAgreement extends MutationContext, BillingTerms, AcceptedQuotation {
   reference: string; title: string; customerId: string; startDate: DateOnly;
   termMonths: number; currencyScale?: number;
@@ -47,6 +60,7 @@ export interface AgreementEdition {
   invoiceTiming: InvoiceTiming; dueDays: number; sourceId: string;
   quote: {id: string; sha256: string; title: string; [key: string]: unknown};
   response: {sha256?: string; status?: string; [key: string]: unknown};
+  renewal?: AgreementRenewalSource;
   createdAt: string; actor: string; reason: string; currency: Currency;
   amountsByPeriods: Record<string, Money>;
   [key: string]: unknown;

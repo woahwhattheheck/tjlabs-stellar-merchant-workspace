@@ -116,6 +116,9 @@ export class MerchantStudyWorkspaces {
       native={...target,scan_file:selected.path,node:binding.nodeExecutable,expected_input_sha256:selected.sha256};
     } else if(['portfolio_freeze','mapping_freeze','property_study_freeze'].includes(verb)) {
       native={value:await this.#value(alias,args),...(verb==='property_study_freeze'?{document_ids:args.document_ids}:{})};
+    } else if(['property_onboarding_plan_save','property_onboarding_preview'].includes(verb)) {
+      const {input,expectedSha256,value,...body}=rest;
+      native={...body,value:await this.#value(alias,args)};
     } else if(verb==='property_document_import') {
       const selected=await this.#files.input(alias,args.input,args.expectedSha256);
       native={path:selected.path,metadata:args.metadata,expected_input_sha256:selected.sha256};

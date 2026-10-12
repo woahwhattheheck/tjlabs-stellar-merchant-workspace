@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><link rel="stylesheet" href="/refresh.css"><script src="/refresh.js" defer></script><link rel="stylesheet" href="/results.css"><script src="/results.js" defer></script><script src="/app.js" defer></script></head>
+<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><link rel="stylesheet" href="/refresh.css"><script src="/refresh.js" defer></script><link rel="stylesheet" href="/organisation.css"><script src="/organisation.js" defer></script><link rel="stylesheet" href="/results.css"><script src="/results.js" defer></script><script src="/app.js" defer></script></head>
 <body>
 <header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">IA</span><div><strong>IATI</strong><span>Aid finance workspace</span></div></div>
 <div class="top-actions"><span class="connection" id="connection">Opening source workspace</span><button id="reload" type="button">Refresh saved work</button></div></header>
@@ -9,7 +9,7 @@
 <aside class="sidebar"><p class="eyebrow">Original publisher data</p><nav aria-label="Workspace">
 <button data-view="overview" class="active">Overview</button><button data-view="sources">Publisher sources</button>
 <button data-view="portfolios">Portfolio review</button><button id="rf-open-view" data-view="refresh">Publisher refresh</button><button data-view="query">Explore data</button>
-<button id="dqa-open" data-view="dqa">Data quality</button><button id="pub-open-view" data-view="publishing">Participant publishing</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
+<button id="dqa-open" data-view="dqa">Data quality</button><button id="pub-open-view" data-view="publishing">Participant publishing</button><button id="org-open-view" data-view="organisation">Organisation planning</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
 <div class="sidebar-note"><strong>Source first</strong><p>Keep reported values, currencies, dates and transaction types together. Each saved portfolio retains its original XML and dataset lineage.</p></div></aside>
 <main id="main" aria-busy="true">
 <div id="status" role="status" aria-live="polite">Opening the original workspace…</div>
@@ -25,7 +25,7 @@
 <label>Complete XML file<input id="source-file" type="file" accept=".xml,.iati,application/xml,text/xml" required></label><p class="fine">The original source bytes are retained before projection. The file limit is 256 MiB.</p>
 <button type="submit" class="primary">Retain and inspect source</button></form>
 <article class="card"><h2>Open retained edition</h2><label>Source<select id="source-select"></select></label><button id="source-open">Open source profile</button><div id="source-identity" class="identity"></div></article></div>
-<article class="card"><div class="card-title"><h2>Source profile</h2><button id="source-to-portfolio">Use this source in a portfolio</button></div>
+<article class="card"><div class="card-title"><h2>Source profile</h2><button id="source-to-portfolio">Use this source in a portfolio</button><button id="source-to-organisation" hidden>Use in organisation planning</button></div>
 <div id="source-profile" class="empty">Choose a retained publisher edition.</div></article></section>
 
 <section data-panel="portfolios" hidden><div class="heading"><div><p class="eyebrow">02 · Explicit selection</p><h1>Portfolio review</h1><p>Each saved revision retains the selected publisher sources and builds its activity, transaction and budget datasets.</p></div></div>
@@ -332,6 +332,117 @@
   <article class="card"><div class="card-title"><h2>Full plan and run history</h2><button id="rf-history-load" type="button">Read complete saved history</button></div><div id="rf-history"></div><div id="rf-history-runs"></div><div id="rf-history-detail"></div></article>
   <div class="rf-grid"><article class="card"><h2>Complete editable handover</h2><p>Export the saved plan, every run and action, original publisher files, complete native portfolio history and the reader's receiving instructions.</p><p id="rf-export-context" class="fine">Open a saved plan to export its current complete journal.</p><button id="rf-export" type="button" class="primary">Download the complete refresh workspace</button></article>
    <form id="rf-receive-form" class="card"><h2>Receive a complete refresh workspace</h2><p>Open the full exported ZIP in the receiving IATI workspace. Its retained sources, original portfolio editions and saved refresh history are received together.</p><label>Complete refresh ZIP<input id="rf-receive-file" type="file" accept=".zip,application/zip" required data-rf-edit></label><button id="rf-receive" type="submit" data-rf-edit>Receive and reopen saved work</button><div id="rf-receive-result"></div></form></div>
+ </div>
+</section>
+
+
+<section data-panel="organisation" hidden id="organisation-panel">
+ <div class="heading"><div><p class="eyebrow">Organisation planning</p><h1>Budgets and planning documents</h1><p class="lede">Review the complete organisation publisher file, prepare precise corrections, and release the reviewed XML with its planning report.</p></div></div>
+ <div class="card organisation-toolbar">
+  <label>Saved organisation plan<select id="org-plan-select"></select></label><button id="org-open" type="button">Open saved plan</button><button id="org-new" type="button">New plan</button>
+  <label>Named operator<input id="org-actor" maxlength="160" autocomplete="name"></label><button id="org-refresh" type="button">Refresh work</button>
+ </div>
+ <div id="org-pending" class="card" hidden><h2>Continue a saved action</h2><p id="org-pending-note" class="fine"></p><div class="row"><button id="org-retry" type="button">Continue the same action</button><button id="org-reconcile" type="button">Read the saved result</button><button id="org-revise" type="button" hidden>Revise the rejected action</button></div></div>
+ <div id="org-counts" class="metrics"></div>
+ <nav class="organisation-tabs" aria-label="Organisation planning workflow">
+  <button type="button" data-org-view="selection" aria-current="step">Publisher and planning period</button>
+  <button type="button" data-org-view="records">Budgets and documents</button>
+  <button type="button" data-org-view="review">Review and comparison</button>
+  <button type="button" data-org-view="delivery">Release and receiving</button>
+ </nav>
+ <p id="org-edition" class="fine" role="status">Open a saved plan or retain the publisher's complete organisation XML.</p>
+ <div data-org-panel="selection">
+  <div class="grid two">
+   <form id="org-intake-form" class="card"><h2>Retain the complete publisher file</h2>
+    <label>Publisher edition label<input id="org-intake-label" maxlength="160" required></label>
+    <label>Organisation XML<input id="org-intake-file" type="file" accept=".xml,.iati,application/xml,text/xml" required></label>
+    <p class="fine">The original file, all organisations, translations, and publisher extensions remain with the saved source.</p>
+    <button type="submit">Retain and inspect XML</button>
+   </form>
+   <article class="card"><h2>Original source edition</h2><label>Retained organisation file<select id="org-source"></select></label>
+    <button id="org-profile-open" type="button">Read organisation coverage</button><div id="org-source-identity" class="identity"></div>
+    <div id="org-profile" class="empty">Select the complete publisher edition.</div>
+   </article>
+  </div>
+  <form id="org-plan-form" class="card"><h2 id="org-plan-title">Create an organisation plan</h2>
+   <div class="grid two"><label>Plan name<input id="org-name" maxlength="160" required></label><label>Purpose and interpretation<textarea id="org-notes" rows="3" maxlength="16000"></textarea></label></div>
+   <fieldset><legend>Organisation coverage</legend><div id="org-organisations" class="source-choices"></div></fieldset>
+   <fieldset><legend>Planning calendar</legend><div class="grid three">
+    <label>Assessment date<input id="org-asof" type="date" required></label>
+    <label>Fiscal year start<input id="org-fiscal-start" type="date" required></label>
+    <label>Forward years<input id="org-forward-years" type="number" min="1" max="10" value="3" required></label>
+    <label>Methodology<select id="org-methodology"><option value="iati203">IATI 2.03 source coverage</option><option value="fcdo2023">FCDO publishing guidelines</option><option value="pwyf2026">PWYF 2026 technical paper</option></select></label>
+   </div><p class="fine">Budget periods and amounts keep their published values. The planning calendar makes missing and overlapping coverage visible.</p>
+   <label>Prior-year operating country codes, one per line<textarea id="org-operating-countries" rows="3" placeholder="Supply the publisher's complete reviewed operating-country denominator when assessing country document coverage."></textarea></label></fieldset>
+   <details><summary>Source acquisition and licence</summary><div class="grid two">
+    <label>Original publisher URL<input id="org-source-url" type="url" maxlength="8000"></label>
+    <label>Retrieved at, with timezone<input id="org-retrieved-at" placeholder="2026-10-12T16:00:00Z" maxlength="80"></label>
+    <label>Source licence<input id="org-licence" maxlength="1000"></label>
+    <label>Licence URL<input id="org-licence-url" type="url" maxlength="8000"></label>
+   </div><label>Acquisition and country coverage notes<textarea id="org-acquisition-notes" rows="3" maxlength="16000"></textarea></label></details>
+   <div class="form-actions"><button type="submit" class="primary" data-org-save>Save the complete planning revision</button><span id="org-edit-count" class="fine"></span></div>
+  </form>
+  <article class="card"><h2>Planning coverage</h2><div id="org-planning" class="empty">Save a plan to inspect its financial years and document coverage.</div></article>
+ </div>
+ <div data-org-panel="records" hidden>
+  <article class="card"><h2>Inspect complete source records</h2><form id="org-rows-form"><div class="grid three">
+   <label>Edition<select id="org-record-view"><option value="candidate">Current saved candidate</option><option value="source">Original publisher source</option></select></label>
+   <label>Record register<select id="org-record-section"><option value="budgets">Budgets and expenditure</option><option value="documents">Planning documents</option><option value="issues">Source and planning findings</option></select></label>
+   <label>Organisation<select id="org-record-organisation"></select></label>
+  </div><div class="row"><button type="submit">Read selected records</button><button id="org-organisation-detail" type="button">Open organisation and add missing records</button></div></form>
+  <p class="fine">Organisation budgets, recipient budgets, and expenditure are separate record families. Currency, valuation date, recipient and complete period remain attached to every amount. Line items may describe part of the parent budget.</p>
+  <div id="org-rows" class="empty">Choose a saved plan or an original organisation file.</div>
+  <div class="row"><button id="org-rows-prev" type="button">Previous records</button><span id="org-rows-page" class="fine"></span><button id="org-rows-next" type="button">Next records</button></div>
+  </article>
+  <div class="grid two">
+   <article class="card"><h2>Selected record and original XML</h2><div id="org-record-detail" class="empty">Open a row to read all its fields, narratives, recipients and line items.</div><pre id="org-record-xml" class="original-json"></pre></article>
+   <form id="org-edit-form" class="card"><h2>Prepare a precise correction</h2>
+    <label>Original field or element<select id="org-edit-target"></select></label><div id="org-edit-original" class="identity"></div>
+    <label>Correction<select id="org-edit-operation"><option value="text">Change text</option><option value="attribute">Change attribute</option><option value="replace">Replace complete element</option><option value="append">Append child element</option><option value="remove">Remove complete element</option></select></label>
+    <label id="org-edit-attribute-label">Attribute name<input id="org-edit-attribute" maxlength="1000" spellcheck="false"></label>
+    <label id="org-edit-value-label">Corrected value<textarea id="org-edit-value" rows="5" spellcheck="false"></textarea></label>
+    <label id="org-edit-xml-label">Complete replacement or child XML<textarea id="org-edit-xml" rows="10" spellcheck="false"></textarea></label>
+    <p class="fine">Each correction binds the selected original field and its content. The complete candidate is validated against the organisation schema when saved and released.</p>
+    <button type="submit" data-org-edit>Add correction to this revision</button>
+   </form>
+  </div>
+  <article class="card"><div class="card-title"><h2>Prepared corrections</h2><button id="org-clear-edits" type="button">Clear unsubmitted corrections</button></div><div id="org-edits" class="empty">Open an original record and prepare a correction.</div>
+   <button id="org-save-corrections" type="button" class="primary" data-org-save>Save the corrected planning revision</button></article>
+ </div>
+ <div data-org-panel="review" hidden>
+  <div class="grid two">
+   <article class="card"><h2>Complete candidate validation</h2><div id="org-validation" class="empty">Open a saved revision.</div></article>
+   <article class="card"><h2>Methodology and reviewed coverage</h2><div id="org-methodology-detail" class="empty">The saved assessment date, fiscal calendar and exact reference edition appear here.</div></article>
+  </div>
+  <form id="org-review-form" class="card"><h2>Record the named review</h2>
+   <p>Review the complete candidate, planning periods, source findings and document register. Record the decision using the named operator above.</p>
+   <div class="grid two"><label>Decision<select id="org-review-decision"><option value="approve">Approve this candidate</option><option value="request_changes">Request changes</option></select></label>
+   <label>Review note<textarea id="org-review-note" rows="4" maxlength="16000" required></textarea></label></div>
+   <fieldset><legend>Reviewed findings</legend><div id="org-review-issues" class="source-choices"></div></fieldset>
+   <button type="submit" class="primary" data-org-review>Save the named review</button><div id="org-review-result"></div>
+  </form>
+  <form id="org-compare-form" class="card"><h2>Compare saved planning revisions</h2><div class="grid two">
+   <label>Earlier revision<select id="org-compare-before"></select></label><label>Later revision<select id="org-compare-after"></select></label></div>
+   <details><summary>Reviewed record correspondence</summary><label>Optional beforeRowId / afterRowId record pairs as JSON<textarea id="org-compare-pairs" rows="4" spellcheck="false"></textarea></label><p class="fine">Use exact row IDs from the two saved revisions when a publisher has changed a record's identity. Review original record details before pairing.</p></details>
+   <button type="submit">Compare complete saved revisions</button><div id="org-comparison"></div>
+  </form>
+  <article class="card"><h2>Complete revision history</h2><div id="org-history" class="empty">Saved selections, corrections and reviews remain available here.</div></article>
+ </div>
+ <div data-org-panel="delivery" hidden>
+  <div class="grid two">
+   <article class="card"><h2>Release the reviewed organisation edition</h2><p>The saved review selects the complete candidate XML, source evidence, planning calendar and schema edition. Release retains the exact approved files and complete history.</p>
+    <div id="org-release-summary"></div><button id="org-release" type="button" class="primary" data-org-release>Create the immutable release</button>
+   </article>
+   <article class="card"><h2>Download complete work</h2><label>Saved revision<select id="org-delivery-revision"></select></label>
+    <div class="stack"><button id="org-export" type="button" class="primary">Complete organisation package</button>
+     <button id="org-file-candidate" type="button">Complete candidate XML</button><button id="org-file-source" type="button">Original publisher XML</button>
+     <button id="org-file-report" type="button">Readable planning report</button><button id="org-file-budgets" type="button">Every budget and expenditure row</button><button id="org-file-documents" type="button">Complete document register</button></div>
+    <p class="fine">The complete package includes source and candidate editions, planning and review history, schema and codelist references, original requests, and every report row.</p>
+   </article>
+  </div>
+  <form id="org-receive-form" class="card"><h2>Receive and reopen a complete organisation package</h2><label>Original package ZIP<input id="org-receive-file" type="file" accept=".zip,application/zip" required></label>
+   <p>Receive into this workspace to reconstruct the saved organisation plans, complete originals, exact corrections, reviews and releases.</p>
+   <button type="submit" class="primary">Receive and reopen complete work</button><div id="org-receive-result"></div></form>
  </div>
 </section>
 

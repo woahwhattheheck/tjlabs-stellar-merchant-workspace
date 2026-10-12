@@ -10,13 +10,16 @@
       "types": "./source/stellar/scf_2026/presentation/reviewer/workbench.d.mts",
       "import": "./source/stellar/scf_2026/presentation/reviewer/workbench.mjs"
     },
-    "./grant/application-server": "./source/stellar-forge/developer-site/grant.mjs"
+    "./grant/application-server": "./source/stellar-forge/developer-site/grant.mjs",
+    "./grant/application-composer": "./source/stellar-forge/developer-site/grant-compose.mjs"
   },
   "commands": {
-    "grant-application": "stellar-forge/developer-site/grant.mjs"
+    "grant-application": "stellar-forge/developer-site/grant.mjs",
+    "grant-compose": "stellar-forge/developer-site/grant-compose.mjs"
   },
   "commandDescriptions": {
-    "grant-application": "Read the complete SCF application, financing companion, budget and original source downloads in the local reviewer"
+    "grant-application": "Read the complete SCF application, financing companion, budget and original source downloads in the local reviewer",
+    "grant-compose": "Compose the complete selected SCF manuscript and maintained product sections into the existing reviewer and source downloads"
   },
   "browserAssets": [
     {

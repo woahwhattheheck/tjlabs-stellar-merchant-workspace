@@ -1,14 +1,15 @@
 import {createCommercialReceivingDesk} from './commercial/receiving-desk.mjs';
 import {createCommercialTariffDesk} from './commercial/tariff-desk.mjs';
+import {createCommercialPerformanceDesk} from './commercial/performance-desk.mjs';
 const SCHEMA='stellar-forge.merchant-commercial-desk.v1';
-const TAB_NAMES=[['overview','Overview'],['pricing','Pricing workspace'],['tariffs','Tariff sources'],['quote','Quote editor'],['review','Review'],['editions','Quote editions'],['customer','Customer response'],['implementation','Implementation'],['export','Export and reopen']];
+const TAB_NAMES=[['overview','Overview'],['pricing','Pricing workspace'],['tariffs','Tariff sources'],['performance','Usage and revisions'],['quote','Quote editor'],['review','Review'],['editions','Quote editions'],['customer','Customer response'],['implementation','Implementation'],['export','Export and reopen']];
 const money=value=>value===null||value===undefined||value===''?'—':'USD '+String(value);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const clone=value=>JSON.parse(JSON.stringify(value));
 const uuid=()=>crypto.randomUUID();
 const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
-const emptyDraft=()=>({parentId:null,title:'',customer:{name:'',contact:''},currency:'USD',implementationSourceId:'',serviceSourceId:'',pricingSourceId:'',tariffSourceId:'',validThrough:'',implementation:{lines:[]},service:{period:'MONTH',lines:[]},pricing:{routes:[]},terms:{scope:'',deliverables:'',exclusions:'',payment:'',acceptance:''},notes:''});
+const emptyDraft=()=>({parentId:null,title:'',customer:{name:'',contact:''},currency:'USD',implementationSourceId:'',serviceSourceId:'',pricingSourceId:'',tariffSourceId:'',performanceSourceId:'',validThrough:'',implementation:{lines:[]},service:{period:'MONTH',lines:[]},pricing:{routes:[]},terms:{scope:'',deliverables:'',exclusions:'',payment:'',acceptance:''},notes:''});
 function requireService(services,name){if(typeof services[name]!=='function')throw new Error('Commercial desk service is missing: '+name);return services[name];}
 export function mountCommercialDesk({root,services}){
   if(!root||!services)throw new TypeError('root and services are required.');
@@ -32,6 +33,9 @@ export function mountCommercialDesk({root,services}){
       });
       tab='quote';message='Original tariff and matching pricing selected. Review the saved uniform rate, monthly quantities and complete customer terms.';render();
     }});
+  const performance=createCommercialPerformanceDesk({root,services,changed:()=>render(),refreshCase:refresh,
+    useDraft:result=>{selectedQuoteId=result.parent.id;setDraft(result.draft);tab='quote';
+      message='The later quote edition retains its original usage review. Review the explicit monthly volume, new rate and customer terms before saving.';render();}});
   const key=identity=>SCHEMA+':'+identity.workspaceId+':'+identity.caseId;
   const identity=record=>{const value=record?.scope;if(!value||typeof value.caseId!=='string'||typeof value.workspaceId!=='string'||!value.caseId||!value.workspaceId)throw new Error('The original case identity is missing.');return {caseId:value.caseId,workspaceId:value.workspaceId};};
   function storageRead(which){try{return JSON.parse(sessionStorage.getItem(key(which))||'null');}catch{return null;}}
@@ -45,7 +49,7 @@ export function mountCommercialDesk({root,services}){
   function forget(which){if(which)try{sessionStorage.removeItem(key(which));}catch{}}
   function resetRuntime({forgetSaved=false}={}){
     epoch++;connected=false;view=null;review=null;comparison=null;busy=false;message='';error='';invalidateImplementationReview();
-    receiving.clear({identityChanged:forgetSaved});tariffs.clear({identityChanged:forgetSaved});
+    receiving.clear({identityChanged:forgetSaved});tariffs.clear({identityChanged:forgetSaved});performance.clear({identityChanged:forgetSaved});
     for(const url of ownsUrl)URL.revokeObjectURL(url);ownsUrl.clear();
     if(forgetSaved){forget(scope);scope=null;restoredScope=null;draft=emptyDraft();dirty=false;selectedQuoteId='';pending=null;responseDraft={status:'ACCEPTED',observedAt:'',source:'',note:''};implementationDraft={actor:'',note:'',resolutions:{},resolutionSelection:null};editSerial++;}
   }
@@ -87,6 +91,7 @@ export function mountCommercialDesk({root,services}){
     return '<div class="cq-section-heading"><div><h3>Quote editor</h3><p>Amounts and quantities remain exact decimal text until the original pricing engine reviews them.</p></div><div class="cq-actions"><button type="button" data-action="save-draft"'+(busy?' disabled':'')+'>Save draft</button><button type="button" data-action="preview"'+(busy?' disabled':'')+'>Review quote</button></div></div>'+
       '<div class="cq-grid">'+field('cq-title','Quote title',draft.title)+field('cq-customer','Customer',draft.customer.name)+field('cq-contact','Customer contact',draft.customer.contact)+field('cq-valid-through','Valid through',draft.validThrough,'date')+'</div>'+
       '<div class="cq-grid cq-three">'+sourceSelect('cq-implementation-source','Implementation edition','implementationSources',draft.implementationSourceId)+sourceSelect('cq-service-source','Service commitments','serviceSources',draft.serviceSourceId,true)+sourceSelect('cq-pricing-source','Saved pricing scenario','pricingSources',draft.pricingSourceId)+'</div><div class="cq-grid">'+tariffSelect()+'</div>'+
+      (draft.performanceSourceId?'<section class="cq-source"><h4>Recorded usage basis</h4><p>'+esc(sourceById('performanceSources',draft.performanceSourceId)?.label||draft.performanceSourceId)+'</p><p>This edition keeps the earlier quotation and its recorded usage comparison. The route quantities below are the explicit new monthly proposal.</p><button type="button" data-action="clear-performance">Remove usage basis from this draft</button></section>':'')+
       '<section class="cq-editor-section"><div class="cq-section-heading"><h4>Implementation work</h4><div class="cq-actions"><button type="button" data-action="add-tasks">Add original tasks</button><button type="button" data-action="add-implementation">Add quoted line</button></div></div>'+lineTable('implementation')+'</section>'+
       '<section class="cq-editor-section"><div class="cq-section-heading"><h4>Recurring service</h4><div class="cq-actions"><button type="button" data-action="add-commitments">Add service commitments</button><button type="button" data-action="add-service">Add service line</button></div></div>'+lineTable('service')+'</section>'+
       '<section class="cq-editor-section"><div class="cq-section-heading"><h4>Route usage</h4><button type="button" data-action="use-routes">Use saved scenario routes</button></div><p>Monthly request volumes refer to the selected original scenario. The review retains its service quote, units and valuation basis.</p><div class="cq-table-wrap"><table><thead><tr><th>Original route</th><th>Requests / month</th></tr></thead><tbody>'+routes.map((row,index)=>'<tr><td><code>'+esc(row.routeId)+'</code></td><td><input data-route="'+index+'" inputmode="numeric" aria-label="Monthly requests for '+esc(row.routeId)+'" value="'+esc(row.monthlyRequests)+'"></td></tr>').join('')+(routes.length?'':'<tr><td colspan="2">Select a saved scenario, then choose its routes.</td></tr>')+'</tbody></table></div></section>'+
@@ -252,7 +257,7 @@ export function mountCommercialDesk({root,services}){
   }
   function render(){
     if(destroyed)return;
-    const renderers={overview:renderOverview,pricing:()=>receiving.render(),tariffs:()=>tariffs.render(),quote:renderEditor,review:renderReview,editions:renderEditions,customer:renderCustomer,implementation:renderImplementation,export:renderExport};
+    const renderers={overview:renderOverview,pricing:()=>receiving.render(),tariffs:()=>tariffs.render(),performance:()=>performance.render(),quote:renderEditor,review:renderReview,editions:renderEditions,customer:renderCustomer,implementation:renderImplementation,export:renderExport};
     root.innerHTML='<section class="commercial-desk" aria-label="Implementation and service quotations"><header class="cq-header"><div><h2>Commercial quotation</h2><p>'+esc(connected&&scope?'Case '+scope.caseId:'Open an original merchant case to begin.')+'</p></div><span class="cq-state">'+esc(busy?'Working':connected?'Connected':'Reopen case')+'</span></header>'+
       '<div class="cq-status" role="status">'+(message?'<p>'+esc(message)+'</p>':'')+(error?'<p role="alert">'+esc(error)+'</p>':'')+
       (pending&&connected?'<div class="cq-pending"><strong>Retained '+esc(pending.action)+' request</strong><code>'+esc(pending.requestId)+'</code><p>Reopen the original case or retry this exact request to recover its retained result.</p><button type="button" data-action="retry"'+(busy?' disabled':'')+'>Retry exact request</button><button type="button" data-action="refresh"'+(busy?' disabled':'')+'>Reopen original case</button></div>':'')+'</div>'+
@@ -269,7 +274,7 @@ export function mountCommercialDesk({root,services}){
       if(!workspaceChanged){scope=null;restoredScope=null;draft=emptyDraft();dirty=false;selectedQuoteId='';pending=null;responseDraft={status:'ACCEPTED',observedAt:'',source:'',note:''};implementationDraft={actor:'',note:'',resolutions:{},resolutionSelection:null};editSerial++;}
     }
     if(view?.revision!==record.revision)invalidateImplementationReview();
-    scope=received;view=record;connected=true;receiving.connect(record);tariffs.connect(record);
+    scope=received;view=record;connected=true;receiving.connect(record);tariffs.connect(record);performance.connect(record);
     if(!same(restoredScope,scope)){
       restoredScope=clone(scope);const saved=storageRead(scope);
       if(saved?.schema===SCHEMA&&same(saved.scope,scope)){draft=saved.draft||emptyDraft();dirty=Boolean(saved.dirty);selectedQuoteId=saved.selectedQuoteId||'';pending=saved.pending||null;responseDraft=saved.responseDraft||responseDraft;implementationDraft={actor:'',note:'',resolutions:{},resolutionSelection:null,...saved.implementationDraft};tab=TAB_NAMES.some(([name])=>name===saved.tab)?saved.tab:'overview';}
@@ -335,6 +340,7 @@ export function mountCommercialDesk({root,services}){
     render();
   }
   async function action(name){
+    if(name==='clear-performance'){change(()=>{draft.performanceSourceId='';});render();return;}
     if(name==='receive-pricing'){
       const file=root.querySelector('#cq-pricing-source-file')?.files?.[0];
       if(!file)throw new Error('Choose the original selected pricing source JSON file.');
@@ -450,7 +456,7 @@ export function mountCommercialDesk({root,services}){
   return {
     refresh,connect:refresh,
     clear({identityChanged=false}={}){storageWrite();resetRuntime({forgetSaved:identityChanged});render();},
-    destroy(){storageWrite();resetRuntime();destroyed=true;receiving.destroy();tariffs.destroy();for(const [name,handler] of listeners)root.removeEventListener(name,handler);root.replaceChildren();},
-    snapshot(){return {schema:SCHEMA,scope:scope&&clone(scope),connected,dirty,tab,selectedQuoteId,pending:pending?clone(pending):receiving.snapshot().pending??tariffs.snapshot().pending,receiving:receiving.snapshot(),tariffs:tariffs.snapshot(),implementationReviewCurrent:implementationReviewCurrent(),implementationDraft:clone(implementationDraft)};}
+    destroy(){storageWrite();resetRuntime();destroyed=true;receiving.destroy();tariffs.destroy();performance.destroy();for(const [name,handler] of listeners)root.removeEventListener(name,handler);root.replaceChildren();},
+    snapshot(){return {schema:SCHEMA,scope:scope&&clone(scope),connected,dirty:dirty||performance.snapshot().dirty,tab,selectedQuoteId,pending:pending?clone(pending):receiving.snapshot().pending??tariffs.snapshot().pending??performance.snapshot().pending,performance:performance.snapshot(),receiving:receiving.snapshot(),tariffs:tariffs.snapshot(),implementationReviewCurrent:implementationReviewCurrent(),implementationDraft:clone(implementationDraft)};}
   };
 }

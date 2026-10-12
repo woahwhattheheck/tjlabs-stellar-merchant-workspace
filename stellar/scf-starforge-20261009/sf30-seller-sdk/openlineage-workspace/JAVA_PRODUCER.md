@@ -14,16 +14,18 @@ to the original workspace, operation ID, wire SHA-256 and decoded event SHA-256.
 
 ## Prepare an existing Java runtime
 
-Use Java 17 or later and an existing Maven installation. Dependency preparation
-uses the pinned Maven dependency plugin to resolve the native SDK and its
-runtime dependencies through Maven's existing settings and cache.
+Use Java 17 or later, an existing Maven installation and the host's util-linux
+flock command. The accepted Linux runtime supplies all three. Dependency
+preparation uses the pinned Maven dependency plugin to resolve the native SDK
+and its runtime dependencies through Maven's existing settings and cache.
 
 ```sh
 node JAVA_PRODUCER.mjs prepare --runtime /absolute/java-producer-runtime
 ```
 
 For an existing complete Maven cache, add `--offline`. Select a particular
-executable with `--maven /absolute/mvn`. Preparation creates the runtime
+executable with `--maven /absolute/mvn` and the existing lock executable with
+`--flock /absolute/flock`. Preparation creates the runtime
 source, POM, complete classpath and hashes for every resolved dependency.
 A completed matching runtime with its successful original Maven command is reused.
 The native Java class runs with the JDK's source launcher.
@@ -56,8 +58,21 @@ is retained under an .interrupted-<SHA256> name before the complete selected fil
 replaces its name. A complete different source is preserved and rejected. An
 unverified old Maven classpath is likewise retained before its verified replacement.
 
-If the owning Node process ended while holding writer.lock, inspect its
-actual saved lock ID and use the existing application's recovery command:
+When the owning Node process ends while holding writer.lock, reconcile the
+original supervising operation and its child before recovering an older command
+that did not use the process lock. The existing recover-lock command checks only
+the Node PID; it does not itself establish that an orphan Maven child ended.
+Preserve an active or unresolved older native command in its original operation.
+
+Current preparations wrap Maven in the host's nonblocking kernel file lock.
+The permanent .maven-process.lock inode is held through the actual command.
+Even after Node writer recovery, another Maven command cannot enter while that
+original lock remains held. A lock conflict returns exit 75 without dispatching
+a second Maven command; its original preparation and logs remain retained.
+Keep this lock file with the runtime; do not remove it to force a retry.
+
+After the original source boundary is resolved, inspect the actual saved
+writer lock ID and use the existing application's recovery command:
 
     node /absolute/application/cli.mjs recover-lock \
       --workspace /absolute/java-producer-runtime \
@@ -120,6 +135,49 @@ ordinary server restart. The original workspace pin remains unchanged.
 The operation's file lock keeps two native senders from writing the same
 continuation simultaneously.
 
+The Java sender also publishes each SDK-serialized event through its own
+SHA-256-named staging file under the same native operation lock. A stopped
+write resumes only its exact byte prefix. Once complete, the file is synced,
+read back and published without replacing a different final file. A partial
+final file from the older direct-write sender is retained as the same inode
+under .event-NNNNNN.json.interrupted-<SHA256> before its name is atomically
+replaced by the complete selected serialization. Keep those retained prefixes
+and hidden staging files with the original operation when moving or archiving it.
+A nonmatching prefix, changed inode, symbolic link or shared incomplete staging
+file remains preserved and stops publication; it is never truncated.
+
+This source repair changes the Java source hash used by runtime-intent.json.
+Select a distinct runtime directory for this source edition and resolve through
+the existing Maven cache. Preserve any already-prepared older runtime and its
+actual producer records.
+
+For an operation whose immutable java-input.json was already created by an older
+source, add --previous-java-source-sha256 with that manifest's exact original
+Java source SHA-256 to the otherwise unchanged emit command. The wrapper requires
+the complete original manifest to match the selected SDK, POM, input files,
+source order, workspace, operation ID and compression. It preserves those original
+manifest bytes, then retains the selected runtime receipt, Java source, POM and a
+deterministic java-source-continuation-<SHA256>.json descriptor beside them.
+The actual invocation records both source identities and the original manifest
+hash. Its completed return includes sourceContinuation after the native sender
+succeeds and the original manifest is read back unchanged.
+
+    node JAVA_PRODUCER.mjs emit \
+      --runtime /absolute/corrected-java-runtime \
+      --directory /absolute/original-java-operation \
+      --connection /absolute/original-workspace/connection.json \
+      --token-file /absolute/private/producer-token \
+      --input /absolute/original/events.json \
+      --operation-id ORIGINAL_OPERATION_ID \
+      --compression gzip \
+      --previous-java-source-sha256 ORIGINAL_MANIFEST_JAVA_SOURCE_SHA256
+
+Use that same predecessor selection on retries. A missing, partial or different
+original manifest cannot authorize source adoption. The original Java file lock
+still prevents two native senders from entering the same event operation.
+Acknowledged events retain their original IDs, wire bodies and replies; only an
+unacknowledged event with the same serialized content is resumed.
+
 Each event retains these files under `native/`:
 
 - The native SDK serialized JSON and its complete input attribution.
@@ -141,6 +199,7 @@ and received through the product's normal workflow.
 await prepareJavaProducer({
   directory: "/absolute/java-producer-runtime",
   maven: "mvn",
+  flock: "flock",
   offline: false
 });
 
@@ -152,12 +211,15 @@ await emitJavaProducer({
   inputs: ["/absolute/original/events.json"],
   operationId: "original-java-pipeline-import",
   compression: "gzip",
-  java: "java"
+  java: "java",
+  previousJavaSourceSha256: null // Exact old manifest source SHA only for explicit source adoption.
 });
 ```
 
 Both functions accept an optional `AbortSignal` as `signal`. They retain
 native command stdout, stderr and the operation identity after interruption.
+The retained preparation records the actual flock command, its child exit status,
+the selected Maven executable/arguments and the permanent process lock path.
 `javaProducerCommand(args)` provides the same command entry for the existing
 product CLI.
 
@@ -169,7 +231,12 @@ The released SDK is documented in the official
 The upstream `1.53.0` tag resolves to
 `8ad5c14c63fbab63fedd8ff42f9a208d86ad07fe`.
 
-The implementation follows these original release files:
+The native lock command uses the existing
+[util-linux flock interface](https://github.com/util-linux/util-linux/blob/master/sys-utils/flock.1.adoc):
+the command inherits the lock and returns its actual child exit status. It does
+not create another queue or producer operation.
+
+The SDK implementation follows these original release files:
 
 - [HttpTransport.java](https://github.com/OpenLineage/OpenLineage/blob/8ad5c14c63fbab63fedd8ff42f9a208d86ad07fe/client/java/src/main/java/io/openlineage/client/transports/HttpTransport.java),
   Git blob `e8fd4f766dcd256d015d5f7ce9e1d6e7039a0a3b`.

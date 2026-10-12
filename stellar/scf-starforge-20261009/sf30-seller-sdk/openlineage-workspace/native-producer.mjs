@@ -16,9 +16,18 @@ export async function pythonProducerCommand(argv, { signal } = {}) {
   return new Promise((resolve, reject) => {
     let child;
     try {
+      // A native receiving supervisor can supply a POSIX kernel lease. Retain it
+      // in the SDK process too, so killing its parent cannot admit a competing
+      // continuation while the original HTTP send remains alive.
+      const inherited = process.env.OPENLINEAGE_RECEIVING_LOCK_FD;
+      const lease = inherited === undefined ? null : Number(inherited);
+      if (lease !== null && (!/^\d+$/.test(inherited) || !Number.isSafeInteger(lease) || lease < 3))
+        throw new Error("Use the original inherited receiving lease descriptor");
       child = spawn(python, [PYTHON_SOURCE, ...args], {
-        stdio: "inherit", shell: false, signal,
-        env: { ...process.env, PYTHONUNBUFFERED: "1" }
+        stdio: lease === null ? "inherit" : ["inherit", "inherit", "inherit", lease],
+        shell: false, signal,
+        env: { ...process.env, PYTHONUNBUFFERED: "1",
+          ...(lease === null ? {} : { OPENLINEAGE_RECEIVING_LOCK_FD: "3" }) }
       });
     } catch (error) { reject(error); return; }
     const interrupt = () => { if (!child.killed) child.kill("SIGINT"); };
