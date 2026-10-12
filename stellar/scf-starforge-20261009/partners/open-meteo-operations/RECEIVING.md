@@ -170,3 +170,69 @@ Authenticated HTTP operations are `POST /api/handover/review` with `{content}`, 
 The package admits up to 48 MiB, 128 retained source responses, 4,096 selected/history decision revisions and 1,024 earlier receiving records. Each source retains the existing 1 MiB response limit. A frozen report keeps the existing 32 selected-decision and 16 selected-source limits. Limits fail explicitly before import; content is never truncated to fit. ZIP conversion additionally limits archive size to 32 MiB, entry count to 64, individual expanded entries to 64 MiB and total expanded data to 128 MiB.
 
 Hashes identify bytes and retained relationships. The original provider attribution and capture provenance remain visible throughout the operation. The receiving workspace recomputes the weather decisions using the exact retained data and the maintained product rules.
+
+
+## Continue with a selected real provider case
+
+The complete browser caller also accepts a selected report ZIP through
+`--archive-sha256` and `--archive-bytes`. Supply both values from that archive's
+retained identity. The caller verifies the whole file before receiving it and
+keeps that selection through both workspaces and every continuation. Its default
+selection remains the original 33,416-byte report documented above.
+
+The maintained provider-case programme can prepare a complete new operating
+report from actual Open-Meteo responses:
+
+```sh
+node examples/capture-receiving-case.mjs \
+  --runtime /private/original-stellar-runtime \
+  --output /private/weather-provider-case \
+  --forecast-start YYYY-MM-DD
+```
+
+It selects New York's two-day operational forecast, three-day ERA5 history across
+the November 2024 clock change, and the two-day ICON ensemble. Use
+`--history-start` and `--history-end` to select another historical window. The
+forecast date defaults to the current UTC day for a new case and remains bound to
+the saved selection when the same case resumes. When the selected runtime uses
+an explicit CONNECT proxy, pass its environment variable name through
+`--proxy-env`.
+
+Every request uses the existing canonical provider contract and native HTTPS
+transport. The programme retains the complete response before analysis, creates
+the original source-capture records, saves attributed operating decisions, and
+freezes one report over those exact revisions. The forecast rule uses 86 °F,
+the history rule uses a 40 km/h peak gust threshold, and the ensemble rule uses
+10 mm of accumulated precipitation over the retained window. The native engine
+retains coverage, returned members, source time and model when computing each
+outcome.
+
+The source case contains `source-selection.json`, the private source store,
+every original response and request record, complete ZIP/HTML/JSON/editable
+exports, and `result.json`. Reopening the same case reuses its retained reads,
+decisions and frozen report. The programme closes and reopens its source store
+before returning the selected archive identity.
+
+Feed that exact returned ZIP into the complete browser journey:
+
+```sh
+node examples/browser-receiving.mjs \
+  --runtime /private/original-stellar-runtime \
+  --archive /private/weather-provider-case/delivery/provider-weather-report.zip \
+  --archive-sha256 SELECTED_ARCHIVE_SHA256 \
+  --archive-bytes SELECTED_ARCHIVE_BYTES \
+  --output /private/weather-browser-receiving \
+  --chrome /private/chrome/chrome-headless-shell \
+  --playwright /path/to/node_modules/playwright
+```
+
+The browser operation preserves that case's acquisition times and source
+identity. When it receives a different selected archive, its operation selection
+records the earlier 33,416-byte archive as a historical engineering reference.
+The editable package's native receiving history follows the actual selected
+report and its subsequent deliveries.
+
+Open the full `.weather.json` delivery through any independent Weather review
+workspace to continue its decisions and reports. The ZIP includes the frozen
+report, original source JSON and complete series CSV for ordinary file-based
+review.
