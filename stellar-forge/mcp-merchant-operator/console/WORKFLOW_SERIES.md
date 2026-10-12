@@ -209,3 +209,15 @@ Keep the full merchant configuration, release store and customer-export store, b
 The local `native-access-token` is an execution credential and is supplied separately from the customer archive. If it is absent after restoration, the native entry generates a fresh private local token and passes it through the real `startMerchantMcp` launcher as `MCP_ACCESS_TOKEN`. Saved calls and completed reports keep their original identities and bytes.
 
 Running the same completed recurring entry opens both restored Consoles on fresh loopback ports. It reads the original 24 recipe/recurring calls and seven baseline calls, both completed periods, the original installation editions, all four complete customer archives and each of their six files, and the thirteen-file recurring handover. The reopened result is written separately to `workflow-series-reopened.json`; the completed programme reports are preserved. This receiving path does not need the earlier browser inspection images.
+
+The original `run-series-native.py` source receiver also accepts `--restore-archive`. Select the complete packet that matches the archive manifest and the original paths recorded there:
+
+```sh
+python3 run-series-native.py --source-packet series-source-map.json \
+  --restore-archive merchant-original-native-artifacts.tar.gz \
+  --work-dir ORIGINAL_WORK_DIRECTORY --directory ORIGINAL_RECEIVING_DIRECTORY \
+  --node ACTUAL_NODE --node-modules ACTUAL_INSTALLED_NODE_MODULES \
+  --chromium ACTUAL_CHROMIUM_EXECUTABLE --playwright-module ACTUAL_PLAYWRIGHT_MODULE
+```
+
+The receiver keeps an existing workspace as a private backup, streams the exact archived files into the original receiving path, restores any original configured source inputs, and runs the completed entry through its actual launch and customer APIs. A fresh native completion follows this same archive extraction and reopen path before producing the customer delivery summary.

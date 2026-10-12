@@ -28,6 +28,12 @@ function planningWindow() {
 }
 async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, openSession }) {
   const token = await nativeReceivingAccessToken(directory), hosts = [], clients = [];
+  const baseline = await optional(join(directory, 'workflow-native-run.json'));
+  assert.equal(baseline?.result, 'PASS'); assert.equal(baseline.profileId, report.baseline.profileId);
+  const baselinePacket = JSON.parse(await readFile(join(directory, 'workflow-complete-profile.json'), 'utf8'));
+  const { contentSha256, ...originalBaseline } = baselinePacket;
+  assert.equal(sha(canonical(originalBaseline)), contentSha256);
+  assert.equal(baselinePacket.profile.id, baseline.profileId); assert.equal(baselinePacket.calls.length, 7);
   const observed = { operationId: report.operationId, sourceCommit, directory,
     seriesId: report.seriesId, reopenedAt: new Date().toISOString(), workspaces: [], customers: [] };
   try {
@@ -46,8 +52,9 @@ async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, 
       const customerProfile = await selected.profile(report.profileId);
       const baselineProfile = await selected.profile(report.baseline.profileId);
       assert.equal(customerProfile.calls.length, 24); assert.equal(baselineProfile.calls.length, 7);
-      const calls = [...report.originalRecipe.nativeCalls, ...report.periods.flatMap(period => period.nativeCalls)];
-      assert.equal(calls.length, 24);
+      const calls = [...baselinePacket.calls, ...report.originalRecipe.nativeCalls,
+        ...report.periods.flatMap(period => period.nativeCalls)];
+      assert.equal(calls.length, 31);
       for (const call of calls) {
         const retained = await selected.console.json('call/' + call.id);
         assert.equal(retained.state, 'COMPLETE'); assert.equal(retained.tool, call.tool);
@@ -55,6 +62,9 @@ async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, 
         assert.equal(retained.resultSha256, call.resultSha256);
         assert.equal(sha(retained.resultJson), call.resultSha256);
       }
+      const baselineRun = (await selected.console.run(baseline.run.id)).run;
+      assert.equal(baselineRun.state, 'COMPLETE'); assert.equal(baselineRun.stepsComplete, 7);
+      assert.equal(baselineRun.id, baseline.run.id); assert.equal(baselineRun.revision, baseline.run.revision);
       for (const period of report.periods) {
         const reopened = await selected.cycle(period.id);
         assert.equal(reopened.run.id, period.run.id); assert.equal(reopened.run.state, 'COMPLETE');
@@ -67,7 +77,6 @@ async function reopenCompletedSeries({ directory, report, recipe, sourceCommit, 
         recurringProfileCalls: customerProfile.calls.length, baselineCalls: baselineProfile.calls.length });
     }
     const receiver = clients[1];
-    const baseline = await optional(join(directory, 'workflow-native-run.json'));
     const customers = [{ id: baseline.customerId, files: baseline.customerFiles, archive: baseline.customerArchive },
       { id: recipe.customerId, files: recipe.customerFiles, archive: recipe.customerArchive },
       ...report.periods.map(period => ({ id: period.customer.id, files: period.customer.files, archive: period.archive }))];
