@@ -268,11 +268,13 @@ export async function prepareJavaProducer({ directory, maven = "mvn", flock = "f
 
 /** Reuse the exact input copies and event identities after an interrupted native producer invocation. */
 export async function emitJavaProducer({ runtime, directory, connection, tokenFile = null, inputs,
-  operationId, compression = "gzip", java = "java", signal } = {}) {
+  operationId, compression = "gzip", java = "java", previousJavaSourceSha256 = null, signal } = {}) {
   if (!runtime || !directory || !connection || !Array.isArray(inputs) || !inputs.length)
     throw new Error("Provide the original runtime, operation directory, connection and complete input files");
   if (typeof operationId !== "string" || !operationId.trim() || operationId.length > 512)
     throw new Error("Provide a stable original producer operation ID");
+  if (previousJavaSourceSha256 !== null && !/^[0-9a-f]{64}$/.test(previousJavaSourceSha256))
+    throw new Error("Select the exact original Java source SHA-256 for an explicit source continuation");
   runtime = resolve(runtime); directory = resolve(directory);
   const { intent } = await selectedRuntimeSource();
   const prepared = await verifiedRuntime(runtime, intent), entries = prepared.entries;
@@ -292,7 +294,45 @@ export async function emitJavaProducer({ runtime, directory, connection, tokenFi
   const manifestPath = join(directory, "java-input.json");
   await initialDirectory(directory, "java-input.json", encoded(manifest));
   return new LineageWorkspace(directory).lock(async () => {
-  await newOrSame(manifestPath, encoded(manifest));
+  let manifestBytes = encoded(manifest), sourceContinuation = null;
+  if (previousJavaSourceSha256 !== null) {
+    if (previousJavaSourceSha256 === prepared.javaSourceSha256)
+      throw new Error("A source continuation selects a distinct Java source edition");
+    // The old manifest is immutable. Only its source hash may differ from this
+    // exact SDK, POM, original inputs, event order and workspace selection.
+    const originalManifest = await ordinary(manifestPath);
+    const expectedOriginal = encoded({ ...manifest, javaSourceSha256: previousJavaSourceSha256 });
+    if (!originalManifest.equals(expectedOriginal))
+      throw new Error("The retained Java manifest does not match this exact original source continuation");
+    manifestBytes = originalManifest;
+    const receiptBytes = await ordinary(join(runtime, "java-runtime.json"));
+    const sourceBytes = await ordinary(join(runtime, "OpenLineageNativeProducer.java"));
+    const pomBytes = await ordinary(join(runtime, "pom.xml"));
+    if (hash(sourceBytes) !== prepared.javaSourceSha256 || hash(pomBytes) !== prepared.pomSha256 ||
+        !sameIntent(JSON.parse(receiptBytes), prepared))
+      throw new Error("The selected native runtime changed before source continuation");
+    const runtimeReceipt = { file: "java-source-runtime-" + hash(receiptBytes) + ".json",
+      bytes: receiptBytes.length, sha256: hash(receiptBytes) };
+    const runtimeSource = { file: "java-source-" + hash(sourceBytes) + ".java",
+      bytes: sourceBytes.length, sha256: hash(sourceBytes) };
+    const runtimePom = { file: "java-source-pom-" + hash(pomBytes) + ".xml",
+      bytes: pomBytes.length, sha256: hash(pomBytes) };
+    await newOrSame(join(directory, runtimeReceipt.file), receiptBytes);
+    await newOrSame(join(directory, runtimeSource.file), sourceBytes);
+    await newOrSame(join(directory, runtimePom.file), pomBytes);
+    const selected = { schema: "commons.openlineage.java-source-continuation.v1",
+      operationId, workspaceId: identity.workspaceId, sdkVersion: JAVA_PRODUCER_VERSION,
+      compression, previousJavaSourceSha256, javaSourceSha256: prepared.javaSourceSha256,
+      pomSha256: prepared.pomSha256, originalManifest: { file: "java-input.json",
+        bytes: originalManifest.length, sha256: hash(originalManifest) },
+      runtime, runtimeReceipt, runtimeSource, runtimePom };
+    const bytes = encoded(selected);
+    sourceContinuation = { ...selected, file: "java-source-continuation-" + hash(bytes) + ".json",
+      bytes: bytes.length, sha256: hash(bytes) };
+    await newOrSame(join(directory, sourceContinuation.file), bytes);
+  } else {
+    await newOrSame(manifestPath, manifestBytes);
+  }
   for (let index = 0; index < inputs.length; index++) {
     const bytes = await fs.readFile(resolve(inputs[index]));
     if (hash(bytes) !== inputRows[index].sha256) throw new Error("Original input changed while preparing its operation");
@@ -304,13 +344,16 @@ export async function emitJavaProducer({ runtime, directory, connection, tokenFi
   const invocationId = randomUUID(), logPrefix = join(directory, "java-" + invocationId);
   const invocation = { schema: "commons.openlineage.java-invocation.v1", invocationId,
     operationId, workspaceId: identity.workspaceId, startedAt: new Date().toISOString(),
-    runtime, javaSourceSha256: prepared.javaSourceSha256, manifestSha256: hash(encoded(manifest)) };
+    runtime, javaSourceSha256: prepared.javaSourceSha256, manifestSha256: hash(manifestBytes),
+    ...(sourceContinuation ? { sourceContinuation } : {}) };
   const invocationPath = join(directory, "invocation-" + invocationId + ".json");
   await save(invocationPath, invocation);
   try {
     const command = await run(java, ["--class-path", entries.map(item => item.path).join(delimiter),
       join(runtime, "OpenLineageNativeProducer.java"), manifestPath, configurationPath],
       { cwd: directory, signal, logPrefix });
+    if (!(await ordinary(manifestPath)).equals(manifestBytes))
+      throw new Error("The original Java manifest changed during its native source continuation");
     const result = await json(join(directory, "java-producer-result.json"));
     if (result.workspaceId !== identity.workspaceId || result.operationId !== operationId ||
         result.sdkVersion !== JAVA_PRODUCER_VERSION || result.state !== "ACKNOWLEDGED")
@@ -318,7 +361,8 @@ export async function emitJavaProducer({ runtime, directory, connection, tokenFi
     await save(invocationPath, { ...invocation, completedAt: new Date().toISOString(), state: result.state,
       stdoutPath: command.stdoutPath, stderrPath: command.stderrPath, events: result.events.length });
     return { ...result, directory, resultPath: join(directory, "java-producer-result.json"),
-      stdoutPath: command.stdoutPath, stderrPath: command.stderrPath };
+      stdoutPath: command.stdoutPath, stderrPath: command.stderrPath,
+      ...(sourceContinuation ? { sourceContinuation } : {}) };
   } catch (error) {
     await save(invocationPath, { ...invocation, finishedAt: new Date().toISOString(), state: "INTERRUPTED",
       error: error.code ?? error.name, stdoutPath: logPrefix + ".stdout", stderrPath: logPrefix + ".stderr" });
@@ -330,7 +374,8 @@ export async function emitJavaProducer({ runtime, directory, connection, tokenFi
 export async function javaProducerCommand(args) {
   const [action, ...words] = args, values = {}, inputs = [];
   const flags = new Set(["--offline"]), options = new Set(["--runtime", "--directory", "--connection",
-    "--token-file", "--input", "--operation-id", "--compression", "--java", "--maven", "--flock"]);
+    "--token-file", "--input", "--operation-id", "--compression", "--java", "--maven", "--flock",
+    "--previous-java-source-sha256"]);
   for (let i = 0; i < words.length; i++) {
     const key = words[i];
     if (flags.has(key)) { values[key] = true; continue; }
@@ -347,7 +392,7 @@ export async function javaProducerCommand(args) {
   if (action === "emit") return emitJavaProducer({ runtime: values["--runtime"], directory: values["--directory"],
     connection: values["--connection"], tokenFile: values["--token-file"], inputs,
     operationId: values["--operation-id"], compression: values["--compression"],
-    java: values["--java"] });
+    java: values["--java"], previousJavaSourceSha256: values["--previous-java-source-sha256"] });
   throw new Error("Use native-java prepare --runtime DIR, or native-java emit with the original connection and input files");
 }
 if (process.argv[1] && await fs.realpath(resolve(process.argv[1])).then(path => path === fileURLToPath(import.meta.url), () => false)) {

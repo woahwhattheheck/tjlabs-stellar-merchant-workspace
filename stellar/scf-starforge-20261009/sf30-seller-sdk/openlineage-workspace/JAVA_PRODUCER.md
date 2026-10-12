@@ -135,6 +135,49 @@ ordinary server restart. The original workspace pin remains unchanged.
 The operation's file lock keeps two native senders from writing the same
 continuation simultaneously.
 
+The Java sender also publishes each SDK-serialized event through its own
+SHA-256-named staging file under the same native operation lock. A stopped
+write resumes only its exact byte prefix. Once complete, the file is synced,
+read back and published without replacing a different final file. A partial
+final file from the older direct-write sender is retained as the same inode
+under .event-NNNNNN.json.interrupted-<SHA256> before its name is atomically
+replaced by the complete selected serialization. Keep those retained prefixes
+and hidden staging files with the original operation when moving or archiving it.
+A nonmatching prefix, changed inode, symbolic link or shared incomplete staging
+file remains preserved and stops publication; it is never truncated.
+
+This source repair changes the Java source hash used by runtime-intent.json.
+Select a distinct runtime directory for this source edition and resolve through
+the existing Maven cache. Preserve any already-prepared older runtime and its
+actual producer records.
+
+For an operation whose immutable java-input.json was already created by an older
+source, add --previous-java-source-sha256 with that manifest's exact original
+Java source SHA-256 to the otherwise unchanged emit command. The wrapper requires
+the complete original manifest to match the selected SDK, POM, input files,
+source order, workspace, operation ID and compression. It preserves those original
+manifest bytes, then retains the selected runtime receipt, Java source, POM and a
+deterministic java-source-continuation-<SHA256>.json descriptor beside them.
+The actual invocation records both source identities and the original manifest
+hash. Its completed return includes sourceContinuation after the native sender
+succeeds and the original manifest is read back unchanged.
+
+    node JAVA_PRODUCER.mjs emit \
+      --runtime /absolute/corrected-java-runtime \
+      --directory /absolute/original-java-operation \
+      --connection /absolute/original-workspace/connection.json \
+      --token-file /absolute/private/producer-token \
+      --input /absolute/original/events.json \
+      --operation-id ORIGINAL_OPERATION_ID \
+      --compression gzip \
+      --previous-java-source-sha256 ORIGINAL_MANIFEST_JAVA_SOURCE_SHA256
+
+Use that same predecessor selection on retries. A missing, partial or different
+original manifest cannot authorize source adoption. The original Java file lock
+still prevents two native senders from entering the same event operation.
+Acknowledged events retain their original IDs, wire bodies and replies; only an
+unacknowledged event with the same serialized content is resumed.
+
 Each event retains these files under `native/`:
 
 - The native SDK serialized JSON and its complete input attribution.
@@ -168,7 +211,8 @@ await emitJavaProducer({
   inputs: ["/absolute/original/events.json"],
   operationId: "original-java-pipeline-import",
   compression: "gzip",
-  java: "java"
+  java: "java",
+  previousJavaSourceSha256: null // Exact old manifest source SHA only for explicit source adoption.
 });
 ```
 
