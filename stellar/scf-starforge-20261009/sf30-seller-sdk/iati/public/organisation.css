@@ -18,3 +18,5 @@
 #org-edit-xml,#org-record-xml,#org-compare-pairs{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 #org-history{display:grid;gap:.5rem}
 @media(max-width:600px){.organisation-toolbar>button,.organisation-tabs>button{flex:1 1 45%}.organisation-toolbar label{flex-basis:100%}.organisation-tabs{gap:.3rem}#organisation-panel .organisation-register td{max-width:220px}}
+
+#org-edition,#org-pending-note{overflow-wrap:anywhere}
