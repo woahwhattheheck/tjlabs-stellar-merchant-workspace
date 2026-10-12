@@ -9,6 +9,9 @@ import { downloadGrpcExport, inspectGrpcExport } from '../../stellar-forge/mcp-m
 import { downloadGrpcHealthExport } from '../../stellar-forge/mcp-merchant-operator/grpc-health-download.mjs';
 import { downloadGrpcUpgrade } from '../../stellar-forge/mcp-merchant-operator/grpc-upgrade-download.mjs';
 import { downloadGrpcOperationsExport } from '../../stellar-forge/mcp-merchant-operator/grpc-operations-download.mjs';
+import { downloadGrpcWorkspaceTransfer } from '../../stellar-forge/mcp-merchant-operator/grpc-transfer-download.mjs';
+import { validateGrpcTransferManifest, GRPC_TRANSFER_MANIFEST, GRPC_TRANSFER_ARCHIVE } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/transfer/manifest.mjs';
+import { inspectGrpcWorkspaceArchive } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/transfer/receiving.mjs';
 import { readGrpcOperations } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/receiving.mjs';
 import { GRPC_EXPORT_MANIFEST, parseGrpcExportManifest } from '../../stellar-forge/mcp-merchant-operator/grpc-workspace-export.mjs';
 import { readGrpcHealthSnapshotFile } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/health-receiving.mjs';
@@ -88,7 +91,8 @@ export class GrpcProductClient {
         'This product client is bound to its original workspace.', 'WORKSPACE_CHANGED');
       args.workspace = this.#identity.workspace;
     }
-    return client.call(name, args, options);
+    return client.call(name, args, name.startsWith('merchant_grpc_transfer_') && options.timeoutMs === undefined ?
+      { ...options, timeoutMs: 3600000 } : options);
   }
   async inspectExport(exportId) {
     await this.ready();
@@ -109,6 +113,30 @@ export class GrpcProductClient {
     if (inspected.manifest.kind === 'operations') return downloadGrpcOperationsExport(options);
     return downloadGrpcExport(options);
   }
+  /** Download a frozen original archive and explicitly receive its complete native workspace. */
+  async receiveWorkspace({ exportId, directory, destination, operationId, expectedManifestSha256,
+    expectedTransferManifestSha256, expectedArchiveSha256, expectedArchiveBytes,
+    chunkSize, onProgress, signal, receivingEnvironment } = {}) {
+    const inspected = await this.inspectExport(exportId);
+    need(inspected.manifest.kind === 'workspace-transfer' && expectedManifestSha256 === inspected.manifestSha256,
+      'Receive the reviewed original whole-workspace export.', 'EXPORT_CHANGED');
+    return downloadGrpcWorkspaceTransfer({ client: this, exportId, directory, destination, operationId,
+      expectedManifestSha256, expectedTransferManifestSha256, expectedArchiveSha256, expectedArchiveBytes,
+      chunkSize, onProgress, signal: signal ?? this.#signal, receivingEnvironment });
+  }
+  workspaceTransfers(page = {}) { return this.call('merchant_grpc_transfer_list', page); }
+  captureWorkspace(input) { return this.call('merchant_grpc_transfer_capture', input); }
+  workspaceCapture(operationId, section = 'summary') { return this.call('merchant_grpc_transfer_read', { operationId, section }); }
+  workspaceFiles(input) { return this.call('merchant_grpc_transfer_files', input); }
+  uploadWorkspaceArchive(input) { return this.call('merchant_grpc_transfer_upload', input); }
+  workspaceUpload(operationId) { return this.call('merchant_grpc_transfer_upload_status', { operationId }); }
+  inspectWorkspaceArchive(archive) { return this.call('merchant_grpc_transfer_inspect', { archive }); }
+  receiveWorkspaceInHost(input) { return this.call('merchant_grpc_transfer_receive', input); }
+  workspaceReceiving(operationId) { return this.call('merchant_grpc_transfer_receipt', { operationId }); }
+  openReceivedWorkspace(input) { return this.call('merchant_grpc_transfer_open', input); }
+  closeReceivedWorkspace(operationId) { return this.call('merchant_grpc_transfer_close', { operationId }); }
+  cancelWorkspaceTransfer(operationId) { return this.call('merchant_grpc_transfer_cancel', { operationId }); }
+  exportWorkspace(input) { return this.call('merchant_grpc_transfer_export', input); }
   captureOperations({ captureId, selection } = {}) {
     return this.call('merchant_grpc_operations_capture', { captureId, ...(selection === undefined ? {} : { selection }) });
   }
@@ -192,6 +220,17 @@ export async function inspectReceivedGrpcProduct(directory, { expectedExportId, 
         file.sha256 === saved.files[index].sha256),
       'The complete incident belongs to another original capture or revision.', 'EXPORT_CHANGED');
     native = { operations: { capture: saved.capture, incident: saved.incident, exportSha256: saved.exportSha256 } };
+  }
+  if (manifest.kind === 'workspace-transfer') {
+    const saved = validateGrpcTransferManifest(decode(await privateBytes(join(root, GRPC_TRANSFER_MANIFEST), false, 16 * 1024 * 1024)));
+    need(saved.id === manifest.original.operationId && saved.sha256 === manifest.original.snapshotSha256,
+      'The complete workspace manifest belongs to another original capture.', 'EXPORT_CHANGED');
+    const archive = manifest.files.find(file => file.path === GRPC_TRANSFER_ARCHIVE);
+    const inspected = await inspectGrpcWorkspaceArchive({ archivePath: join(root, GRPC_TRANSFER_ARCHIVE),
+      expectedSha256: archive.sha256, expectedBytes: archive.bytes, expectedManifestSha256: saved.sha256 });
+    native = { transfer: { id: inspected.manifest.id, manifestSha256: inspected.manifestSha256,
+      archiveSha256: inspected.sha256, archiveBytes: inspected.bytes, counts: inspected.manifest.counts,
+      origin: inspected.manifest.origin, environmentNames: inspected.manifest.environmentNames } };
   }
   return { schema: 'stellar-forge.grpc-product-received.v1', state: 'COMPLETE', directory: root,
     exportId: manifest.exportId, manifestSha256: sha256(bytes), workspace: manifest.workspace,
