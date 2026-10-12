@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "accountant-portfolio-product",
-  "description": "Client close product entry point into the original accounting, Runbooks and Portfolio workspace",
+  "description": "Client close product entry point for weekly/monthly procedure sets, original accounting, Runbooks and Portfolio workspaces",
   "components": [
     "products/accountant-portfolio"
   ],
@@ -9,6 +9,6 @@
     "client-close": "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/server.mjs"
   },
   "commandDescriptions": {
-    "client-close": "Client procedures, preparation and review, firm portfolio, exact handovers and original recovery"
+    "client-close": "Weekly/monthly procedures, preparation and review, firm portfolio, exact handovers and original recovery"
   }
 }

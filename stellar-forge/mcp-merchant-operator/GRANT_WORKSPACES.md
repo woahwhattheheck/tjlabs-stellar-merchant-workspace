@@ -309,6 +309,30 @@ A new installation uses installationId:null and expectedRevision:0. A revision u
 
 The export requires the selected installation ID and saved revision. The original receiver preserves every edition and source, and returns selectedInstallation for reopening the selected edition. See the complete [Installation operator and API guide](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md).
 
+### Review original implementation evidence
+
+These three tools use the same case and the maintained [implementation evidence workflow](../../stellar/scf_2026/sf47_budget_model/workspace/IMPLEMENTATION_EVIDENCE.md). Attach the complete original commissioning JSON, Merchant workspace or Support handoff through the existing Sources intake. Preserve its native source ID, filename, byte length and SHA-256.
+
+| Tool | Original operation |
+| --- | --- |
+| `merchant_grant_implementation_source` | Inspect the retained original source at the entered cutoff, including full tasks, receiving and measurements, comparisons, source-bundle originals and producer fingerprints. |
+| `merchant_grant_implementation_preview` | Preview the explicit observation selection, existing case associations and exact saved Installation editions. |
+| `merchant_grant_implementation_prepare` | Freeze the exact preview under the original case transaction, request ID and current version. |
+| `merchant_grant_export` with `kind:implementation` | Download the complete frozen evidence ZIP for the selected case and review. |
+| `merchant_grant_export` with `kind:implementation-original` | Download one exact original member selected by case, source ID and SHA-256. |
+
+Supply `caseId`, `expectedVersion` and the original `sourceId` to source inspection. An explicit `asOfAt` uses canonical UTC with milliseconds. Retain the cutoff and initial inputs returned by the original source response; it applies to both observation and recording time. The selected source still carries its complete current task definitions and later history.
+
+Inspect the full retained response with the existing snapshot/row/file tools. Select original tasks, technical or customer receiving records and measurements by their actual `kind` and `id`; choose `EVIDENCE` or `CONTEXT`, original deployment/work/purchase/outcome IDs, and a reason. Original source-bundle files retain their manifest paths. Each external original needs an exact retained attachment binding in `originalFileRefs:[{sha256,sourceId}]`. Selected Installation editions carry `id`, `revision` and `sha256`. The native bounds are 200 observations, 20 Installation editions and 5,000 original-file bindings.
+
+Pass the complete entered object as `inputs`, or use the existing verified `input` selection with `expectedInputSha256` and optional `inputPointer`. Verification covers the whole original input before projection. Source inspection consumes the existing attachment directly. Preparation adds the exact `expectedPreviewSha256`, `requestId`, `actor` and optional `note`; it records `implementation.prepare` through the original command. Preserve the same source, inputs, case version and request on a lost response.
+
+A frozen review can retain findings and negative observations. Technical acceptance, customer acceptance, work approval, settlement and an issuer decision remain distinct original facts. The review's explicit associations do not modify the underlying work, cash, purchase, deployment or outcome records. Completion applies its current evidence checks before using that review.
+
+A new whole-case import, current Completion use and evidence export re-run the original inspector over the retained bytes and cutoff and compare its full projection and ten-file reader identity. Keep the exact published reader/producer source with historical evidence; an incompatible reader requires that original edition. An identical previously committed import returns its original saved request. The exact member download remains source-bound, and the full ZIP requires every original file frozen into that review.
+
+Sources retain the native 8 MiB attachment limit, projections 16 MiB, and frozen reviews 8 MiB. Complete evidence ZIPs and expanded selected members retain the 32 MiB native bundle limit. Interrupted preparation and complete file receiving use the same existing request and chunk engines.
+
 ### Freeze the measured cohort
 
 | Tool | Saved case workflow |
@@ -339,11 +363,13 @@ Cohort input references use the original 32 MiB request allowance. The provider 
 
 Preview and preparation can select up to twenty distinct original `cohortReviewIds`. Preserve the same selection and order in both calls. Omission retains the earlier request shape; an explicit empty array is a deliberate selection with its own preview. The original service checks the tranche, cutoff, source currency and complete target findings.
 
+The optional `implementationReviewIds` field composes with the cohort selection and accepts up to twenty distinct original review IDs in their intended order. Preserve it unchanged between preview and preparation. The service rechecks original producer fingerprints and projection, complete source files, current case associations, saved Installation editions and retained findings. Omission preserves earlier requests; an explicit empty selection retains its own input identity.
+
 Preparation retains the exact `receiptId`, calendar date, summary, preview SHA and selected frozen evidence. Submission uses the preparation's business SHA and the actual issuer form reference, submission date and source records. Read the new case version after every committed action, and recover a lost result with the unchanged request. The [Completion contract](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) and [typed-client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) provide the exact field names and calendar behavior.
 
 ## Export, transfer and receive the complete work
 
-merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, customer installation ZIP, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios, all immutable customer installation editions and cohort/completion history.
+merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, customer installation ZIP, implementation-evidence ZIP or exact original member, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios, all immutable customer installation editions, implementation reviews and cohort/completion history.
 
 For exact bytes, call merchant_grant_file_read with the snapshot ID and expectedSha256. Repeat the returned readId, same SHA and nextOffset; keep each base64 chunk's decoded bytes in order. Each chunk is at most 65,536 bytes. The shared original reader keeps a verified snapshot, returns an exact total size and hash, and releases its temporary descriptor at EOF. merchant_grant_file_release closes a reader early; the retained original file stays available.
 
@@ -393,6 +419,9 @@ The original planning database stores the request fingerprint and result in the 
 | FORECAST_PREVIEW_CONFLICT | Preview the exact revised inputs against current original records before saving. |
 | SUPPORT_PREVIEW_CONFLICT | Re-preview the exact support file and filename against current case and installed reader before a deliberate receiving request. |
 | SUPPORT_REVIEW_BUSY | Keep the same source selection and retry after the original active review completes. |
+| IMPLEMENTATION_PREVIEW_CONFLICT | Reconcile the current case, original source and entered selection, then preview before a deliberate new freeze. |
+| IMPLEMENTATION_READER_PROVENANCE_MISMATCH | Use the exact published reader and producer edition recorded by the original frozen review. Preserve its original bytes and history. |
+| IMPLEMENTATION_ORIGINAL_FILE_UNAVAILABLE | Retain the incomplete review; a deliberate successor must include every required original-file binding before a complete evidence export. |
 | GRANT_RESULT_UNCERTAIN | The HTTP response was lost or failed after dispatch. Read the original case/plan, then repeat the identical original request ID and payload to recover its retained result. |
 | retention.state FAILED | The original response was received successfully, but its complete local snapshot was not retained. Restore storage and repeat the identical native operation or original read. |
 | GRANT_SELECTION_CHANGED | Reconcile the selected workspace, scenario, Python and installed source edition in the host connection. |

@@ -34,6 +34,11 @@ SOURCE_FILES = (
 MAXIMUM = 32 * 1024 * 1024
 
 
+class EligibilityCustomerCancelled(BaseException):
+    """Stop the whole receiver after original runtime/context cleanup."""
+
+
+
 def need(condition, code):
     if not condition:
         raise StateError(code)
@@ -232,7 +237,7 @@ def main():
             "selection": completed["selection"], "archive": completed["archive"],
             "receivers": {name: {"directory": value["directory"], "currentRevision": value["currentRevision"]}
                           for name, value in completed["transferredReceivers"].items()}}))
-    except KeyboardInterrupt:
+    except (EligibilityCustomerCancelled, KeyboardInterrupt):
         print(json.dumps({"state": "INCOMPLETE", "error": "ELIGIBILITY_CUSTOMER_INTERRUPTED"}), file=sys.stderr)
         return 130
     except Exception as error:
@@ -243,6 +248,7 @@ def main():
 
 if __name__ == "__main__":
     def stop(_signal, _frame):
-        raise KeyboardInterrupt
+        raise EligibilityCustomerCancelled()
+    signal.signal(signal.SIGINT, stop)
     signal.signal(signal.SIGTERM, stop)
     sys.exit(main())
