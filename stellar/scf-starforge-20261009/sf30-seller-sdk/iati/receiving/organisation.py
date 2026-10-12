@@ -124,7 +124,8 @@ def prepare(source, receipt, output):
     evidence = {"schema": "stellar-forge.iati-organisation-receiving-run.v1",
                 "operation": OPERATION, "source": {"bytes": len(raw), "sha256": SOURCE_SHA256},
                 "observedAt": datetime.now(timezone.utc).isoformat(), "stages": [],
-                "continuationAttempts": previous.get("continuationAttempts", [])}
+                "continuationAttempts": previous.get("continuationAttempts", []),
+                "installedSourceBindings": previous.get("installedSourceBindings", [])}
     checkpoint(output / "operation-state.json", evidence)
     with IatiWorkspace(sender, create=not sender.exists()) as ws:
         work = ws.organisation
@@ -292,7 +293,19 @@ def main(argv=None):
             stack.callback(server.shutdown)
             stack.enter_context(published_connection(private / (name + ".url"), server.url))
         binding = inspect_binding(sender_ws.root)
-        retained(output / "reports" / "installed-source-binding.json", binding)
+        binding_data = json_bytes(binding)
+        binding_sha = hashlib.sha256(binding_data).hexdigest()
+        binding_path = output / "reports" / ("installed-source-binding-" + binding_sha + ".json")
+        retained(binding_path, binding_data)
+        legacy_binding = output / "reports" / "installed-source-binding.json"
+        for source_binding in ([legacy_binding] if legacy_binding.is_file() else []) + [binding_path]:
+            original_binding = source_binding.read_bytes()
+            descriptor = {"file": str(source_binding.relative_to(output)),
+                          "bytes": len(original_binding),
+                          "sha256": hashlib.sha256(original_binding).hexdigest()}
+            if descriptor not in evidence["installedSourceBindings"]:
+                evidence["installedSourceBindings"].append(descriptor)
+        checkpoint(output / "operation-state.json", evidence)
         config = {"iatiDirectory": str(IATI), "mcpDirectory": str(Path(args.mcp_directory).absolute()),
             "senderConnectionFile": str(private / "sender.url"), "receiverConnectionFile": str(private / "receiver.url"),
             "exportsDirectory": str(exports), "outputDirectory": str(output / "merchant"),
