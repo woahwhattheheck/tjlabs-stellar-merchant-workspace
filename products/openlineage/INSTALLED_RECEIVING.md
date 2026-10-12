@@ -212,6 +212,12 @@ runtime installations and Application lifecycle operations live in its own priva
 receiving case. Original source event IDs, rule editions, evaluations, decisions and
 workspace operation history remain unchanged.
 
+The complete OpenLineage source selection includes the maintained merchant console
+and its workflow modules. Its authenticated MCP host can therefore start with the
+console enabled from the installed package, using the same source-verified operator
+runtime. This receiving programme opens that actual host and compares all three
+Quality report formats through its original seven-tool merchant interface.
+
 The selected package explicitly includes `OPENLINEAGE_LICENSE`. That upstream notice
 is part of every original editable application inventory. The maintained distribution
 builder retains the explicitly declared original project license name, so installation
