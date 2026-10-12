@@ -33,6 +33,7 @@ import operations_implementation as implementation
 import operations_engagements as engagements
 import engagement_handover
 import operations_amendments as amendments
+import operations_amendment_calendar as amendment_calendar
 import operations_work_intake as work_intake
 import operations_commercial_receivables as commercial_receivables
 
@@ -630,7 +631,7 @@ class Operations:
             context = self._context(program_id)
             row = amendments.selected(self, program_id, amendment_id, revision)
             latest = amendments.selected(self, program_id, amendment_id)
-            return {"amendment": row,
+            return {"amendment": row, "calendarImpact": amendment_calendar.review(row["preview"], row),
                     "current": amendments.summary(latest, context, digest(self._business(context))),
                     "history": [amendments.summary(value) for value in amendments.load(self, program_id)
                                 if value["id"] == row["id"]]}
@@ -644,7 +645,40 @@ class Operations:
             if context["program"]["version"] != expected:
                 domain.fail("The case changed. Compare the selected plan against its current records.",
                             "AMENDMENT_SOURCE_CONFLICT", 409)
-            return amendments.preview(self, context, body["inputs"])
+            preview = amendments.preview(self, context, body["inputs"])
+            return {**preview, "calendarImpact": amendment_calendar.review(preview)}
+
+    def export_amendment_calendar(self, program_id, body):
+        if not isinstance(body, dict):
+            amendments.fail("Select the exact amendment calendar to export.", "INVALID_AMENDMENT_CALENDAR")
+        with self._snapshot():
+            context = self._context(program_id)
+            edition = None
+            if "amendmentId" in body:
+                if set(body) != {"amendmentId", "revision", "expectedAmendmentSha256", "expectedImpactSha256"}:
+                    amendments.fail("Select the original saved amendment edition and calendar.", "INVALID_AMENDMENT_CALENDAR")
+                revision = domain.integer(body["revision"], "Selected amendment edition", 1, amendments.MAX_EDITIONS)
+                edition = amendments.selected(self, program_id, body["amendmentId"], revision)
+                expected = domain.sha(body["expectedAmendmentSha256"], "Selected amendment edition", False)
+                if edition["sha256"] != expected:
+                    amendments.fail("The selected saved amendment differs from this export.", "AMENDMENT_CONFLICT", 409)
+                preview = edition["preview"]
+            else:
+                if set(body) != {"expectedVersion", "inputs", "expectedPreviewSha256", "expectedImpactSha256"}:
+                    amendments.fail("Select the complete original draft comparison.", "INVALID_AMENDMENT_CALENDAR")
+                expected = domain.integer(body["expectedVersion"], "Reviewed case version", 1, 10000000)
+                if context["program"]["version"] != expected:
+                    amendments.fail("The case changed. Reopen its amendment calendar before exporting.",
+                                    "AMENDMENT_SOURCE_CONFLICT", 409)
+                preview = amendments.preview(self, context, body["inputs"])
+                if preview["previewSha256"] != domain.sha(body["expectedPreviewSha256"], "Original amendment preview", False):
+                    amendments.fail("The amendment preview changed. Reopen its calendar comparison.",
+                                    "AMENDMENT_PREVIEW_CONFLICT", 409)
+            report = amendment_calendar.review(preview, edition)
+            if report["impactSha256"] != domain.sha(body["expectedImpactSha256"], "Original calendar impact", False):
+                amendments.fail("The calendar differs from the reviewed selection. Refresh that comparison.",
+                                "AMENDMENT_CALENDAR_CONFLICT", 409)
+            return amendment_calendar.export_bytes(report, preview, self.export(program_id), edition)
 
     def completion_calendar(self, program_id, as_of=None):
         with self.workspace.mutex:

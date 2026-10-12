@@ -41,6 +41,8 @@ const BOOT_FILES = [
   'operations_engagements.py',
   'engagement_handover.py',
   'operations_amendments.py',
+    'operations_amendment_calendar.py',
+    'operations_amendment_calendar.mjs',
   'operations_amendments.mjs',
   'operations_amendments.css',
   'operations_statements.py',

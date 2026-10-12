@@ -111,6 +111,9 @@ def register(subparsers, common):
     target = command("amendment-preview", "Compare a selected native planning revision against the same recorded case", case=True, output=True)
     target.add_argument("--inputs", required=True)
     target.add_argument("--expected-version", type=int, required=True)
+    target = command("amendment-calendar-export", "Export both native amendment calendars, the full comparison and complete case", case=True)
+    target.add_argument("--selection", required=True, help="Original draft or saved-edition calendar export selection JSON")
+    target.add_argument("--output", required=True)
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -582,6 +585,12 @@ def operate(workspace, args):
         except (UnicodeError, ValueError) as exc:
             raise Problem("Use complete UTF-8 amendment inputs.", 422, "INVALID_AMENDMENT") from exc
         result = ops.preview_amendment(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+    elif action == "amendment-calendar-export":
+        try:
+            selection = json.loads(read_bytes(args.selection, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the original complete calendar export selection.", 422, "INVALID_AMENDMENT_CALENDAR") from exc
+        return {"caseId": args.case, "output": publish(args.output, ops.export_amendment_calendar(args.case, selection))}
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":

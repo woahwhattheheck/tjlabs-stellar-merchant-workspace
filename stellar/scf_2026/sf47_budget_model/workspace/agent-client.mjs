@@ -774,6 +774,21 @@ export class GrantWorkspaceClient {
     return this.command(caseId, {...original, action:'engagement.receiving',
       data:{reviewId, reviewSha256, forecastId, portfolioId, forecastSelection, portfolioSelection}});
   }
+  amendmentCalendarExport(caseId, selection) {
+    id(caseId, 'operation'); object(selection, 'Amendment calendar selection');
+    if (Object.hasOwn(selection, 'amendmentId')) {
+      exact(selection, ['amendmentId','revision','expectedAmendmentSha256','expectedImpactSha256']);
+      id(selection.amendmentId, 'amendment'); integer(selection.revision, 'Selected amendment edition', 1, 300);
+      sha(selection.expectedAmendmentSha256);
+    } else {
+      exact(selection, ['expectedVersion','inputs','expectedPreviewSha256','expectedImpactSha256']);
+      integer(selection.expectedVersion, 'Reviewed case version'); object(selection.inputs, 'Amendment inputs');
+      sha(selection.expectedPreviewSha256);
+    }
+    sha(selection.expectedImpactSha256);
+    return this.#request('/api/operations/' + caseId + '/amendment-calendar-export',
+      {body:selection, mutation:false});
+  }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
     return this.#request('/api/operations/' + caseId + '/forecast-preview', {body:{expectedVersion, inputs}, mutation:false});

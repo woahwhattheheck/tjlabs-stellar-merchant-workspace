@@ -392,6 +392,40 @@ export interface GrantAmendmentEdition extends GrantObject {
   review: GrantObject | null;
   application: GrantObject | null;
 }
+export interface GrantAmendmentCalendarEntry extends GrantObject {
+  id: string; kind: GrantDeliveryCalendarKind; tranche: number | null;
+  change: 'ADDED' | 'REMOVED' | 'CHANGED' | 'UNCHANGED';
+  changedFields: string[]; scheduleChanged: boolean; awardDatesChanged: boolean;
+  assignmentRetained: boolean;
+  before: GrantDeliveryCalendarEntry | null;
+  selected: GrantDeliveryCalendarEntry | null;
+}
+export interface GrantAmendmentCalendar extends GrantObject {
+  schema: 'stellar-forge.sf47-amendment-calendar.v1';
+  generatedAt: string; asOfDate: GrantCivilDate; impactSha256: string;
+  source: {
+    caseId: string; caseVersionAtPreview: number; businessSha256: string; previewSha256: string;
+    beforePlan: {revision: number; contentSha256: string; sourceSha256: string};
+    selectedPlan: {revision: number; contentSha256: string; sourceSha256: string};
+    amendment: {id: string; revision: number; sha256: string; state: string; version: number} | null;
+  };
+  before: GrantDeliveryCalendar; selected: GrantDeliveryCalendar;
+  entries: GrantAmendmentCalendarEntry[]; paymentClocks: GrantObject[]; basis: string[];
+  summary: {
+    beforeDated: number; selectedDated: number; beforeUndated: number; selectedUndated: number;
+    changedEntries: number; addedEntries: number; removedEntries: number; scheduleChanges: number;
+    awardDateChanges: number; retainedAssignments: number; originalPaymentEntries: number;
+    paymentEntriesUnchanged: true;
+  };
+}
+export interface GrantAmendmentPreview extends GrantObject {
+  inputs: GrantAmendmentInputs; observedVersion: number; previewSha256: string;
+  calendarImpact: GrantAmendmentCalendar;
+}
+export type GrantAmendmentCalendarExportSelection =
+  | {expectedVersion: number; inputs: GrantAmendmentInputs; expectedPreviewSha256: string; expectedImpactSha256: string}
+  | {amendmentId: string; revision: number; expectedAmendmentSha256: string; expectedImpactSha256: string};
+
 export interface GrantAmendmentSaveData extends GrantObject {
   amendmentId?: string | null; expectedRevision: number;
   inputs: GrantAmendmentInputs; expectedPreviewSha256: string;
@@ -1895,7 +1929,7 @@ export class GrantWorkspaceClient {
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
   read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
   read(view: 'amendments', selection: { caseId: string }): Promise<GrantJsonResponse<GrantObject>>;
-  read(view: 'amendment', selection: { caseId: string; amendmentId: string; revision?: number }): Promise<GrantJsonResponse<{ amendment: GrantAmendmentEdition; current: GrantObject; history: GrantObject[] }>>;
+  read(view: 'amendment', selection: { caseId: string; amendmentId: string; revision?: number }): Promise<GrantJsonResponse<{ amendment: GrantAmendmentEdition; current: GrantObject; history: GrantObject[]; calendarImpact: GrantAmendmentCalendar }>>;
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'work-intakes', selection: {caseId: string}): Promise<GrantJsonResponse<{intakes: GrantWorkIntakeSummary[]}>>;
@@ -1928,7 +1962,8 @@ export class GrantWorkspaceClient {
   ledgerIntakeInspect(caseId: string, file: GrantLedgerFile): Promise<GrantJsonResponse<GrantLedgerInspection>>;
   ledgerIntakePreview(caseId: string, body: GrantLedgerPreviewInput): Promise<GrantJsonResponse<GrantLedgerPreview>>;
   ledgerIntakeApply(caseId: string, body: GrantLedgerApplyInput): Promise<GrantJsonResponse<GrantLedgerReceipt>>;
-  amendmentPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantAmendmentInputs): Promise<GrantJsonResponse<T>>;
+  amendmentCalendarExport(caseId: string, selection: GrantAmendmentCalendarExportSelection): Promise<GrantNativeResponse>;
+  amendmentPreview<T = GrantAmendmentPreview>(caseId: string, expectedVersion: number, inputs: GrantAmendmentInputs): Promise<GrantJsonResponse<T>>;
   forecastPreview<T = GrantForecastPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   forecastSave<T = GrantForecastSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSeed<T = GrantPortfolioSeed>(caseId: string, expectedVersion: number, forecastId: string, options?: GrantPortfolioSeedOptions): Promise<GrantJsonResponse<T>>;

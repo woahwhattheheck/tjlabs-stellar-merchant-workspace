@@ -73,6 +73,19 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   let localBusy=false,hostBusy=false;
   view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;
   const available=()=>active&&root.isConnected;
+  function openCalendarSource(programId,tab,tranche,selection={}){
+    if(!available()||view.current?.program.id!==programId)return;
+    if(tab==='completion'){
+      const retained=retainedCompletionSessions.get(programId)||{};
+      retained.requestCalendar={
+        tranche:[1,2,3].includes(tranche)?tranche:null,
+        asOfDate:selection.asOfDate,receiptId:selection.receiptId,
+        costId:selection.costId,reviewId:selection.reviewId,
+      };
+      retainedCompletionSessions.set(programId,retained);
+    }
+    view.tab=tab;render();
+  }
   function requireActive() {if(!available()){const error=new Error('This operations view is closed. Reopen the retained case to continue.');error.code='OPERATIONS_VIEW_CLOSED';throw error;}}
   function dispose() {active=false;forecastView?.dispose();portfolioView?.dispose();supportView?.dispose();completionView?.dispose();calendarView?.dispose();buyerView?.dispose();cohortView?.dispose();installationView?.dispose();installationReturnView?.dispose();dispatchView?.dispose();implementationView?.dispose();statementView?.dispose();performanceView?.dispose();engagementView?.dispose();ledgerIntakeView?.dispose();payablesView?.dispose();cashAccountView?.dispose();commercialView?.dispose();workIntakeView?.dispose();amendmentView?.dispose();const dialog=root.querySelector('dialog.ops-dialog');if(dialog?.open)dialog.close();}
   const inform=(...args)=>{if(available())notify(...args);};
@@ -270,6 +283,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       if(!retainedAmendmentSessions.has(c.program.id))retainedAmendmentSessions.set(c.program.id,{});
       amendmentView=mountAmendments({container:$('[data-ops-amendments]'),current:c,api,saveApi:transport,
         session:retainedAmendmentSessions.get(c.program.id),mutationId,recordingActor,
+        onCalendarOpen:(tab,tranche,selection)=>openCalendarSource(c.program.id,tab,tranche,selection),
         onSources:()=>{if(!available())return;view.tab='sources';render();},
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
@@ -445,19 +459,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       if(!retainedCalendarSessions.has(c.program.id))retainedCalendarSessions.set(c.program.id,{});
       calendarView=mountDeliveryCalendar({container:$('[data-ops-calendar]'),current:c,api,
         session:retainedCalendarSessions.get(c.program.id),
-        onOpen:(tab,tranche,selection={})=>{
-          if(!available()||view.current?.program.id!==c.program.id)return;
-          if(tab==='completion'){
-            const retained=retainedCompletionSessions.get(c.program.id)||{};
-            retained.requestCalendar={
-              tranche:[1,2,3].includes(tranche)?tranche:null,
-              asOfDate:selection.asOfDate,receiptId:selection.receiptId,
-              costId:selection.costId,reviewId:selection.reviewId,
-            };
-            retainedCompletionSessions.set(c.program.id,retained);
-          }
-          view.tab=tab;render();
-        }});
+        onOpen:(tab,tranche,selection)=>openCalendarSource(c.program.id,tab,tranche,selection)});
       calendarView.setHostBusy(view.busy);calendarView.ready.catch(alertError);
     }
     if(c&&view.tab==='cohort'){
