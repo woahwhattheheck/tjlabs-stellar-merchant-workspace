@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "gtfs-schedule",
   "title": "GTFS Schedule merchant",
-  "description": "Complete retained GTFS feeds, exact service-date editions, native dataset publication, merchant operation and portable workspace receiving.",
+  "description": "Saved agency HTTPS sources and retained refresh, complete GTFS feeds, exact service-date editions, native dataset publication, merchant operation and portable workspace receiving.",
   "base": {
     "commands": [
       "installation",

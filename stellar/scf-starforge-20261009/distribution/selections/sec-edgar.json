@@ -180,6 +180,10 @@
     "readme": "products/sec-edgar/README.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
+    },
+    "repository": {
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "directory": ""
     }
   },
   "excludeFiles": [

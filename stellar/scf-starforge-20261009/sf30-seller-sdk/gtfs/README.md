@@ -5,7 +5,7 @@ The GTFS workspace carries one complete original transit feed through source rev
 ## Operator workflow
 
 1. Create or reopen a private workspace with `gtfs init --workspace /absolute/private/gtfs` and `gtfs serve --workspace /absolute/private/gtfs --port 0`, or choose **GTFS Schedule merchant** in Applications.
-2. Upload the complete original ZIP. The workspace retains every member, including tables and extensions you do not select for sale. Read the table counts, original member hashes, agency timezones and feed information. Source/license/attribution fields retain the values you supply.
+2. Save the agency’s public HTTPS feed URL and acquire its complete response, or upload the complete original ZIP. The workspace retains every member, including tables and extensions you do not select for sale. Read the table counts, original member hashes, agency timezones and feed information. Source/license/attribution fields retain the values you supply.
 3. Select complete original tables and, when the feed supports a fixed-stop schedule, actual inclusive service dates and optional agency/route IDs. Original table resources remain complete; filters affect the derived schedule resources. The route search pages the complete original routes table.
 4. Save an immutable edition. Preview any resource, with original physical strings and row numbers. Compare two editions by their exact saved hashes; the retained change stream contains every keyed addition/removal/change. Tables without usable declared unique keys are reported separately.
 5. Record an operator decision if useful, then select the exact edition for publication. Selection changes the source for subsequent plans. Previously saved plans retain their original complete capture and can still be inspected or recovered.
@@ -14,6 +14,29 @@ The GTFS workspace carries one complete original transit feed through source rev
 8. Export the whole workspace and receive it into a new private directory. Reopen the original publisher and continue the same feeds, editions, plans, reviews, decisions, schedules and dataset versions.
 
 The interface uses plain tables, black/gray controls and the original publisher's plan/candidate panels. Large lists and source rows expose page totals and continuation offsets. A pending original source operation has its own recovery action.
+
+## Agency source acquisition and refresh
+
+The **Agency feed sources and refresh** controls save a named public HTTPS ZIP URL, a source note and a 1–180 second download timeout. Editing a source creates an immutable version. Each acquisition retains the exact selected version and SHA-256, original URL, redirect chain, selected response headers, complete response ZIP and native GTFS inspection.
+
+For a first acquisition, choose no previous response. For a refresh, select an exact retained acquisition from that same source URL. **Use saved response validators when available** sends its ETag, or Last-Modified when no usable ETag exists, only at the exact URL that returned the original representation. Every redirect is resolved and checked again. A full refresh can retain the same previous response for byte comparison while leaving the conditional checkbox unchecked.
+
+| Provider outcome | Saved result |
+| --- | --- |
+| Complete HTTP 200 with new bytes | Retain the entire response, run the original GTFS inspector, and add a new immutable feed. |
+| Complete HTTP 200 with identical bytes | Retain this new HTTP response and its exact hash; reuse the same original inspected feed. |
+| HTTP 304 with the selected saved validator | Retain the agency’s response and reuse that exact original feed. |
+| HTTP error or interrupted response | Retain the original request and every attempt, including selected headers and up to 64 KiB of provider error bytes. Recover a transient failure with that same request ID. |
+
+The saved response view shows the actual status, attempt history, source identity and original ZIP hash. **Download original response files** exposes every retained request/response JSON and body through the same complete artifact manifest and file reader. Pending and failed acquisition requests can be inspected by their original request UUID. Full attempt JSON contains its retained headers and metadata; the paginated attempt list contains compact status summaries.
+
+The browser keeps an unconfirmed source action’s exact request while recovering its reply. The original model checks a completed request before the current revision. A recorded 429/503 Retry-After is preserved; an early continuation returns that same provider deadline instead of making another request. A terminal provider rejection remains in its original history, and a new explicit acquisition uses a new request UUID.
+
+Public HTTPS sources use verified TLS and a pinned, publicly routable DNS address for each hop. The downloader accepts complete identity-encoded ZIP responses up to the original 16 MiB compressed limit, with at most five HTTPS redirects and no login or proxy credential reuse. Acquisition itself does not change selected editions, publisher plans, schedules or a live seller. Use the inspected feed to create and compare the next exact edition, then select and publish through the original controls.
+
+An acquired feed carries the exact source URL and completed response time into the edition form. License, attribution and other source-rights fields remain operator inputs. A complete workspace archive retains every saved source version, original HTTP attempt and feed, so refresh can continue after receiving on another host.
+
+The conditional request behavior follows [RFC 9110, sections 13.1.2–13.1.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.2); a 304 uses the previously retained representation.
 
 ## Exact source and service-time behavior
 
@@ -75,10 +98,12 @@ An edition request contains `payload: {feedId, recipe}`. A complete recipe examp
 }
 ```
 
-Select table names actually present and publishable in the inspected ZIP; do not copy an absent example table. The hash, source URL, attribution, retrieved time and rights fields above are operator inputs, not prefilled claims. For a table-only edition set `includeSchedule:false`, with empty service dates, agency IDs and route IDs.
+Select table names actually present and publishable in the inspected ZIP; do not copy an absent example table. Replace the example hash and authority values with the selected original feed. For acquired feeds, the form supplies the retained source URL and completed response time; attribution and rights values are supplied by the operator. For a table-only edition set `includeSchedule:false`, with empty service dates, agency IDs and route IDs.
 
 | Saved action | `payload` |
 | --- | --- |
+| Save source | `{sourceId:null\|UUID, expectedSourceSha256:null\|SHA256, source:{title,url,note?,timeoutMs?}}` |
+| Acquire / refresh | `{sourceId, sourceSha256, previousAcquisitionId:null\|UUID, expectedPreviousSha256:null\|SHA256, conditional:boolean}` |
 | Edition | `{feedId, recipe}` |
 | Comparison | `{beforeId, afterId, beforeSha256, afterSha256}` using exact saved edition JSON hashes |
 | Decision | `{subject:{kind:'edition'|'comparison',id,sha256}, verdict:'accept'|'reject'|'defer', reviewer, note}` |
@@ -96,6 +121,10 @@ The installed distribution exports the `gtfs` command. A checkout can run `node 
 gtfs inspect-feed --archive /absolute/original.zip
 gtfs init --workspace /absolute/private/transit --title 'Transit data'
 gtfs import --workspace /absolute/private/transit --archive /absolute/original.zip --sha256 ORIGINAL_HASH --request REQUEST_UUID --revision 0 --title 'Original feed'
+gtfs source-save --workspace /absolute/private/transit --input /absolute/private/source-request.json
+gtfs source-read --workspace /absolute/private/transit --id SOURCE_UUID
+gtfs acquire --workspace /absolute/private/transit --input /absolute/private/acquire-request.json
+gtfs acquisition-read --workspace /absolute/private/transit --id ACQUISITION_UUID
 gtfs edition --workspace /absolute/private/transit --input /absolute/private/edition-request.json
 gtfs select --workspace /absolute/private/transit --input /absolute/private/select-request.json
 gtfs template --workspace /absolute/private/transit --query Derived_ScheduledCalls --out /absolute/private/plan.json
@@ -105,6 +134,25 @@ gtfs publisher --workspace /absolute/private/transit --operation inspect --input
 gtfs publisher --workspace /absolute/private/transit --operation review --input /absolute/private/review.json
 gtfs publisher --workspace /absolute/private/transit --operation publish --input /absolute/private/publish.json
 ```
+
+For a new source, source-request.json uses the current root revision and this payload:
+
+~~~json
+{
+  "sourceId": null,
+  "expectedSourceSha256": null,
+  "source": {
+    "title": "Agency schedule",
+    "url": "https://agency.org/transit/feed.zip",
+    "note": "Original agency feed selected for this customer task",
+    "timeoutMs": 120000
+  }
+}
+~~~
+
+Save the returned source UUID and sourceSha256. The first acquire-request.json uses that exact source with previousAcquisitionId:null, expectedPreviousSha256:null and conditional:false. A refresh supplies the previous acquisition UUID and acquisitionSha256; choose conditional:true only for the explicit saved previous representation. Each payload goes inside the original {requestId,expectedRevision,payload} envelope.
+
+source-read accepts --input PAGE.json with versionId, offset and limit. acquisition-read accepts offset and limit to read complete attempt history pages. To download a source’s versions or an acquisition’s original files, use manifest/file-read with kind feedSource or acquisition and that original record/request UUID. The complete guide in [products/gtfs-schedule/OPERATING.md](../../../../products/gtfs-schedule/OPERATING.md) includes editable request examples.
 
 `plan-save.json` is `{ "plan": <the reviewed template object> }`. Native inspect input is `{runId, query?}`. Native review input is `{runId, candidateDigest, reviewer, note, initialize:true}` for the original absent target, or the native expected snapshot/revision for refresh. Native publish input is `{runId, reviewId}`. Those schemas and semantics are the original merchant publisher's [tool catalog](../../../../stellar-forge/mcp-merchant-operator/catalog/publisher.mjs).
 
@@ -139,7 +187,7 @@ Create a private host connection file:
 
 Initialize through `gtfs init-merchant --directory /absolute/private/operator --connection /absolute/private/gtfs-connection.json`, or the existing `merchant-providers init gtfs-workspaces --options /absolute/private/setup.json` with `{directory,connection,releaseStore?,name?}`. The initializer creates the original merchant MCP configuration and SF82 release store when one was not supplied. The optional workspace-level `releaseStore` is the original destination for GTFS release-stage operations; declare that same store explicitly when staging is needed.
 
-`merchant_gtfs_open` owns one original GTFS model and serves its same browser. Use `merchant_gtfs_inputs` before import, with its exact file bytes/hash. Save and recover source requests with the same IDs/revision. `merchant_gtfs_publisher_*` borrows the workspace's original publisher and scheduler through `MerchantPublisher.callBorrowed`; it creates no second plan store, version database or timer. The source's ordinary browser and MCP calls can operate the same instance. A separately launched Application/CLI owns its own native lease and must stop before another process opens that directory.
+`merchant_gtfs_open` owns one original GTFS model and serves its same browser. Use `merchant_gtfs_source_save`, `merchant_gtfs_source`, `merchant_gtfs_acquire` and `merchant_gtfs_acquisition` for the saved HTTPS workflow, or use `merchant_gtfs_inputs` before import with its exact file bytes/hash. Save and recover source requests with the same IDs/revision. `merchant_gtfs_publisher_*` borrows the workspace's original publisher and scheduler through `MerchantPublisher.callBorrowed`; it creates no second plan store, version database or timer. The source's ordinary browser and MCP calls can operate the same instance. A separately launched Application/CLI owns its own native lease and must stop before another process opens that directory.
 
 `merchant_gtfs_manifest` returns paginated complete file identities. Preserve `manifestSha256`, `sourceSha256` and all file records. `merchant_gtfs_file_read` accepts the artifact kind/ID, exact relative filename and expected SHA-256; each response includes the original read ID, file bytes/hash, offset, base64 data and next offset. Continue that same identity, or after expiry resume the exact same file/hash at its retained offset. The existing native reader streams immutable files up to 8 GiB, with bounded chunks and owned descriptor closure.
 
@@ -176,4 +224,4 @@ The whole native receiving operation uses those original expected counts, saves 
 
 ## Source layout
 
-`engine.py` holds the original generic functions. `source.py` retains/compiles/compares original feed editions through the Frictionless package capture. `source.mjs` uses the maintained bounded Python-process bridge. `workspace.mjs` owns the saved source journal and borrows original publisher, scheduler, release and file-reader implementations. `server.mjs` and `public/` extend the original publisher browser. `archive.py` transfers the complete original workspace. CLI, merchant metadata/runtime and Applications provider all call those same modules.
+`feed-acquisition.mjs` retains complete public HTTPS responses under the original source request. `engine.py` holds the original generic functions. `source.py` retains/compiles/compares original feed editions through the Frictionless package capture. `source.mjs` uses the maintained bounded Python-process bridge. `workspace.mjs` owns the saved source journal and borrows original publisher, scheduler, release and file-reader implementations. `server.mjs` and `public/` extend the original publisher browser. `archive.py` transfers the complete original workspace. CLI, merchant metadata/runtime and Applications provider all call those same modules.
