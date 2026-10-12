@@ -232,7 +232,7 @@ export async function startAccountingStatementCycleWorkbench({
     controller.signal.throwIfAborted();
     const request=await compatible(key),directory=await inside(root,join(dossierRoot(key,id),snapshotSha256));
     const snapshot=await readAccountingStatementCustomerDossier({directory,signal:controller.signal});
-    need(snapshot.snapshotSha256===snapshotSha256&&snapshot.customer?.customerId===id&&snapshot.cycle?.cycleId===request.cycleId&&snapshot.cycle?.workspace===workspace,
+    need(snapshot.snapshotSha256===snapshotSha256&&snapshot.customer?.customerId===id&&snapshot.cycle?.cycleId===request.cycleId&&snapshot.cycle?.workspace===workspace&&snapshot.cycle?.requestSha256===request.sha256,
       'The saved customer packet belongs to a different closing cycle or customer.',409,'WORKBENCH_CUSTOMER_DOSSIER');
     const files=[];
     for(const file of snapshot.files){
