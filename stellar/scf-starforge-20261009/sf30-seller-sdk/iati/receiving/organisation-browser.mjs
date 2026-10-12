@@ -88,7 +88,7 @@ try {
     pages: [first, second], selectedTitleXml: identity(Buffer.from(titleXml)) });
 
   await page.locator('[data-org-view="review"]').click();
-  need((await page.locator('#org-validation').innerText()).includes('VALID'), 'The browser did not display the actual schema validation.');
+  need((await page.locator('#org-validation dd').first().innerText()).trim() === 'VALID', 'The browser did not display the actual schema validation.');
   observations.push({ view: 'review', validationVisible: true,
     historyEntries: await page.locator('#org-history button').count() });
   await page.locator('[data-org-view="delivery"]').click();
