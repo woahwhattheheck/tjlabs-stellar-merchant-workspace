@@ -113,6 +113,12 @@ SOURCE_FILES = (
     "iati/results/receiving.py",
     "iati/results/receiving_console.py",
     "iati/results/browser_receiving.mjs",
+    "iati/results/PROGRAMME.md",
+    "iati/results/programme_browser.mjs",
+    "iati/results/commissioning.py",
+    "iati/results/commissioning.schema.json",
+    "iati/results/COMMISSIONING.md",
+    "iati/results/examples/commissioning_integration.py",
 )
 
 
