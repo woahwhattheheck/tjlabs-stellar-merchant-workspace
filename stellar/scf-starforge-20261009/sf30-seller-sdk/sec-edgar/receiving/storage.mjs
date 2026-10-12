@@ -1,6 +1,6 @@
 // MIT. Preserve immutable original files using the existing SF88 private writer.
 import { constants } from 'node:fs';
-import { open, lstat, realpath } from 'node:fs/promises';
+import { open, lstat, realpath, link } from 'node:fs/promises';
 import { dirname, resolve, join } from 'node:path';
 import {
   absolute, privateDirectory, readBytes, writeBytes, exists, syncDirectory,
@@ -58,4 +58,20 @@ export function selectedPath(root, name) {
 export function decodeJson(bytes) {
   try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
   catch { need(false, 'EDGAR_PORTABLE_JSON_INVALID'); }
+}
+
+/** Share an immutable original inode with its archive stage when the filesystem allows it. */
+export async function linkExactOriginal(original, target, expected) {
+  await realDirectory(dirname(target), { create: true });
+  if (await exists(target)) { await pinnedFile(target, expected); return; }
+  await pinnedFile(original, expected);
+  try { await link(original, target); }
+  catch (error) {
+    if (error.code === 'EEXIST') { await pinnedFile(target, expected); return; }
+    if (error.code !== 'EXDEV') throw error;
+    await exactFile(target, (await pinnedFile(original, expected)).bytes);
+    return;
+  }
+  await pinnedFile(target, expected);
+  await syncDirectory(dirname(target));
 }

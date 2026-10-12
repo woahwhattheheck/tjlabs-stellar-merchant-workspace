@@ -352,6 +352,40 @@ starforge research-client export \
 
 The same selection supports Markdown, JSON and compressed JSON. The report includes the citation review and its source-linked decisions. The portable contains the selected revision's complete original editions and history, so the receiving workspace reopens the same evidence, findings and saved reviews.
 
+## Python citation analyst
+
+The same installed Research source now includes the complete Python citation
+analyst. `ResearchWorkspace.citations(dossier_id)` and the installed
+`stellar-forge-research` command list notices at a pinned revision, expose the
+full original detail, retain editable request revisions and recover the exact
+same atomic save after an interrupted reply.
+
+The [complete Python citation guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_CITATIONS.md)
+covers the original workspace handshake, full JSON editor, compare-and-set local
+drafts and immutable pending request. The submitted selection includes all
+evidence changes, full findings and reasoned dispositions. A stale draft remains
+on its original source revision until the analyst explicitly creates a revised
+selection; an uncertain save keeps its original request ID and body.
+
+Delivery freezes the original, reviewed and current revisions and retains every
+HTML, Markdown, JSON and gzip export. Both original portable readers validate
+the complete history before the final ZIP is created. A partial download or
+missing receipt recovers the first saved bytes, and a changed receiving file is
+preserved for operator review.
+
+For analytical handover, the original Analysis workspace imports the complete
+selected audit, saves SQL and produces full JSONL, CSV and SQLite exports plus a
+workbook. Text previews are explicitly labeled; full records and original source
+remain in the typed exports. The same receiver archives and cold reopens the
+editable workspace.
+
+The selected runtime exposes `starforge research-citation-python-receive --help`.
+It continues an already completed original citation customer run, verifies the
+saved review before exact request recovery, and returns the complete analyst
+handover and customer receiving receipt. Use its existing native operation or
+an explicit continuation after the original listener has closed. The command
+does not start another provider acquisition or create another review.
+
 ## Attach merchant and agent tools
 
 Create a private host selection pointing at the existing Research listener:

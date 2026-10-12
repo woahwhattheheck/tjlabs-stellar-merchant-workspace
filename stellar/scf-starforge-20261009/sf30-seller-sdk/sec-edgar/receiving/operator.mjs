@@ -10,7 +10,7 @@ import {
 } from './manifest.mjs';
 import {
   absolute, privateDirectory, exists, syncDirectory, realDirectory, pinnedFile,
-  exactFile, selectedPath, decodeJson,
+  exactFile, selectedPath, decodeJson, linkExactOriginal,
 } from './storage.mjs';
 import { nativeArchive } from './archive.mjs';
 
@@ -201,6 +201,27 @@ async function verifyExistingPrefix(destination, manifest) {
   return current;
 }
 
+
+async function verifySelectedPrefix(destination, manifest, current) {
+  const selectedState = decodeJson((await pinnedFile(join(destination, 'workspace', 'versions',
+    revisionName(manifest.workspace.revision)))).bytes);
+  const selectedFiles = new Set(manifest.files.map(file => file.path));
+  const selectedEditions = new Set(manifest.editions.map(edition => edition.id));
+  const actual = {
+    schema: OPERATOR_ARCHIVE_SCHEMA,
+    workspace: {
+      workspaceId: selectedState.workspaceId, createdAt: selectedState.createdAt,
+      revision: selectedState.revision, configSha256: selectedState.configSha256,
+      initialRevisionSha256: current.manifest.workspace.initialRevisionSha256,
+      revisionSha256: current.manifest.files.find(file =>
+        file.path === 'workspace/versions/' + revisionName(selectedState.revision)).sha256,
+    },
+    editions: current.manifest.editions.filter(edition => selectedEditions.has(edition.id)),
+    files: current.manifest.files.filter(file => selectedFiles.has(file.path)),
+  };
+  need(same(actual, manifest), 'EDGAR_PORTABLE_RECEIVED_SELECTION_CHANGED');
+}
+
 /**
  * The archive is fully inspected and source-validated before the receiver is published.
  * Existing exact native history prefixes remain writable; later local revisions survive replay.
@@ -222,9 +243,25 @@ export async function receiveEdgarOperator(input = {}) {
     for (const file of manifest.files) {
       if (!await exists(selectedPath(destination, file.path))) { complete = false; break; }
     }
-    if (complete) return receivedResult(destination, selected, previous, true);
+    if (complete) {
+      await verifySelectedPrefix(destination, manifest, previous);
+      return receivedResult(destination, selected, previous, true);
+    }
   }
-  await nativeArchive('extract', { archive: selected.archivePath, destination: stage }, input);
+  if (previous) {
+    // The native archive stage shares existing immutable source inodes. This
+    // retains its recovery metadata without another whole workspace copy or
+    // deleting a stage that a concurrent identical receiver may be reading.
+    await realDirectory(stage, { create: true });
+    for (const file of manifest.files) {
+      const original = selectedPath(destination, file.path);
+      if (await exists(original))
+        await linkExactOriginal(original, selectedPath(stage, file.path), file);
+    }
+  }
+  const extracted = await nativeArchive('extract', { archive: selected.archivePath, destination: stage }, input);
+  need(same(extracted.archive, selected.archive) && same(extracted.manifest, manifest),
+    'EDGAR_PORTABLE_ARCHIVE_CHANGED', 'The archive changed after its complete inspection.');
   await verifyIncoming(stage, manifest);
   if (!previous) {
     try {
@@ -242,9 +279,9 @@ export async function receiveEdgarOperator(input = {}) {
     for (const file of manifest.files) {
       const target = selectedPath(destination, file.path);
       if (await exists(target)) await pinnedFile(target, file);
-      else await exactFile(target, (await pinnedFile(selectedPath(stage, file.path), file)).bytes);
+      else await linkExactOriginal(selectedPath(stage, file.path), target, file);
     }
-    reused = previous.summary.revision >= manifest.workspace.revision;
+    reused = false;
   }
   const current = await reviewEdgarOperator({
     directory: join(destination, 'workspace'), storeDirectory: join(destination, 'source-store'),
