@@ -75,6 +75,19 @@ async function browserPending(page,workspaceSha256){
   return complete;
  },workspaceSha256);
 }
+async function browserCompletedPacket(page,selection){
+ return page.evaluate(async selected=>{
+  const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('sf30-iati-geography-requests',1);r.onupgradeneeded=()=>r.result.createObjectStore('requests',{keyPath:'key'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+  let values;try{values=await new Promise((resolve,reject)=>{const tx=db.transaction('requests','readonly'),r=tx.objectStore('requests').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}finally{db.close();}
+  const candidates=values.filter(value=>value.key===selected.workspaceSha256+':history:'+value.localId&&value.workspaceSha256===selected.workspaceSha256&&value.kind==='receive'&&value.bytes===selected.packet.bytes&&value.sha256===selected.packet.sha256&&value.result?.review?.id===selected.review.id&&value.result.review.revision===selected.review.revision);
+  if(!candidates.length)return null;
+  if(candidates.length!==1)throw new Error('More than one original browser receipt matches this selected packet.');
+  const value=candidates[0],body=value.body,complete={...value};delete complete.body;
+  if(!(body instanceof Blob))throw new Error('The original completed browser receipt has no complete packet body.');
+  const bytes=await body.arrayBuffer(),sha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(value=>value.toString(16).padStart(2,'0')).join('');
+  complete.bodyIdentity={bytes:bytes.byteLength,sha256,type:body.type,name:body instanceof File?body.name:null};return complete;
+ },selection);
+}
 function saveDefinition(input){const complete={...input};delete complete.requestId;return complete;}
 export async function runGeographyBrowserReceiving(input){
  assert(input&&typeof input==='object'&&!Array.isArray(input),'Use the complete original browser input.');
@@ -212,25 +225,40 @@ export async function runGeographyBrowserReceiving(input){
   page=context.pages()[0]||await context.newPage();
   page.on('pageerror',e=>errors.push({page:'console',message:String(e.stack||e)}));
   page.on('requestfailed',r=>requestFailures.push({path:new URL(r.url()).pathname,method:r.method(),failure:r.failure()?.errorText}));
-  page.on('response',response=>{
-   const url=new URL(response.url());if(url.origin!==connection.origin||!url.pathname.startsWith(base)||url.pathname.includes('/download/'))return;
+  // Keep large original JSON responses in this observer's own bounded CDP buffer.
+  // Playwright's inspector cache can evict a complete packet-receive response.
+  const network=await context.newCDPSession(page),networkRequests=new Map();
+  await network.send('Network.enable',{maxTotalBufferSize:64*1024*1024,maxResourceBufferSize:32*1024*1024,maxPostDataSize:2*1024*1024,enableDurableMessages:true});
+  network.on('Network.requestWillBeSent',event=>{
+   const url=new URL(event.request.url);
+   if(url.origin!==connection.origin||!url.pathname.startsWith(base)||url.pathname.includes('/download/')){networkRequests.delete(event.requestId);return;}
+   const requestType=Object.entries(event.request.headers||{}).find(([name])=>name.toLowerCase()==='content-type')?.[1]||'';
+   networkRequests.set(event.requestId,{path:url.pathname+url.search,method:event.request.method,requestType,hasPostData:event.request.hasPostData,postData:event.request.postData});
+  });
+  network.on('Network.responseReceived',event=>{
+   const selected=networkRequests.get(event.requestId);if(!selected)return;
+   selected.status=event.response.status;selected.json=(event.response.mimeType||'').includes('json');
+  });
+  network.on('Network.loadingFailed',event=>networkRequests.delete(event.requestId));
+  network.on('Network.loadingFinished',event=>{
+   const selected=networkRequests.get(event.requestId);networkRequests.delete(event.requestId);
+   if(!selected?.json)return;
    const no=++sequence;
-   runTask(async()=>{const buffer=await response.body(),contentType=response.headers()['content-type']||'';if(!contentType.includes('json'))return;
-    const body=JSON.parse(buffer.toString('utf8')),request=response.request(),post=request.postDataBuffer(),requestType=request.headers()['content-type']||'';
-    let retainedBody=null;
-    if(post!==null){
-     if(requestType.includes('json'))retainedBody=JSON.parse(post.toString('utf8'));
-     else{
-      const identity={bytes:post.length,sha256:digest(post)},packet=progress.downloads.packet?.file;
-      if(packet&&packet.bytes===identity.bytes&&packet.sha256===identity.sha256)retainedBody={contentType:requestType,...identity,file:packet};
-      else retainedBody={contentType:requestType,...identity,file:await record('observations/'+String(no).padStart(6,'0')+'-request.bin',post,true)};
+   runTask(async()=>{
+    try{
+     const returned=await network.send('Network.getResponseBody',{requestId:event.requestId});
+     const buffer=Buffer.from(returned.body,returned.base64Encoded?'base64':'utf8'),body=JSON.parse(buffer.toString('utf8'));
+     let retainedBody=null;
+     if(selected.requestType.includes('json')&&(selected.hasPostData||selected.postData!==undefined)){
+      const data=selected.postData??(await network.send('Network.getRequestPostData',{requestId:event.requestId})).postData;
+      retainedBody=JSON.parse(data);
+     }else if(selected.method==='POST'&&selected.requestType.includes('application/zip')){
+      const packet=progress.downloads.packet?.file;assert(packet,'The original packet request has no retained complete file.');
+      retainedBody={contentType:selected.requestType,selectedOriginalFile:packet};
      }
-    }else if(request.method()==='POST'&&requestType.includes('application/zip')){
-     assert(progress.downloads.packet?.file,'The original binary packet request has no retained complete source.');
-     retainedBody={contentType:requestType,bodyObservation:'Browser did not expose raw request bytes',selectedOriginalFile:progress.downloads.packet.file};
-    }
-    const item=await record('observations/'+String(no).padStart(6,'0')+'.json',{path:url.pathname+url.search,method:request.method(),status:response.status(),request:retainedBody,response:body});
-    progress.observations.push(item);
+     const item=await record('observations/'+String(no).padStart(6,'0')+'.json',{path:selected.path,method:selected.method,status:selected.status,request:retainedBody,response:body});
+     progress.observations.push(item);
+    }catch(error){throw new Error(selected.method+' '+selected.path+': '+String(error.stack||error));}
    });
   });
   const idle=async(allowError=false)=>{
@@ -393,6 +421,15 @@ export async function runGeographyBrowserReceiving(input){
   if(!packetIntent){packetIntent={workspaceSha256:state.workspaceSha256,review:{id:selected.id,revision:selected.revision},packet,history:beforeReceive};await record('browser-packet-intent.json',packetIntent,true);await save();}
   assert(packetIntent.workspaceSha256===state.workspaceSha256&&same(packetIntent.review,{id:selected.id,revision:selected.revision})&&same(packetIntent.packet,packet)&&same(packetIntent.history,beforeReceive),'The original receiving intent selected another complete packet or revision history.');
   const packetReceivedPath=join(out,'browser-packet-received.json');
+  if(!await exists(packetReceivedPath)){
+   const originalReceipt=await browserCompletedPacket(page,packetIntent);
+   if(originalReceipt){
+    assert(originalReceipt.bodyIdentity.bytes===packet.bytes&&originalReceipt.bodyIdentity.sha256===packet.sha256&&originalReceipt.result.packet.bytes===packet.bytes&&originalReceipt.result.packet.sha256===packet.sha256,'The completed original browser receipt does not retain this complete packet.');
+    const afterReceive=await client.geographyHistory(selected.id);assert(same(beforeReceive,afterReceive),'The completed original browser receive changed the selected history.');
+    const receiptFile=await record('browser-original-received-request.json',originalReceipt,true);
+    await record('browser-packet-received.json',{packet,history:afterReceive,originalBrowserReceipt:receiptFile},true);progress.packetReceiveComplete=true;await save();
+   }
+  }
   if(await exists(packetReceivedPath)){
    const received=await json(packetReceivedPath);assert(same(received.packet,packet)&&same(received.history,beforeReceive),'The completed original packet receipt differs from this selection.');remember(await fileIdentity(packetReceivedPath));progress.packetReceiveComplete=true;
   }else{
