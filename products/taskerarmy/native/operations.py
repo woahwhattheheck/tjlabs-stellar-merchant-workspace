@@ -359,6 +359,14 @@ def existing_request(db, req, value, checksum):
     return dict(row) if row is not None else None
 
 
+def completed_value(record):
+    value = json.loads(record["result_json"])
+    if isinstance(value, dict) and value.get("schema") == "taskerarmy.operation-rejection.v1":
+        error = value["error"]
+        fail(error["code"], error["message"])
+    return value
+
+
 def start_request(db, req, value, encoded, checksum, preparation=None):
     db.execute("""INSERT INTO taskerarmy_operation_requests(
         installation_id,request_id,operation,request_sha256,request_json,state,
@@ -388,7 +396,7 @@ def atomic_outbox_request(req, value, worker, outbox):
         previous = existing_request(db, req, value, checksum)
         if previous is not None:
             if previous["state"] == "completed":
-                return json.loads(previous["result_json"]), True
+                return completed_value(previous), True
             fail("incomplete_atomic_request", "The original atomic request has an unexpected incomplete state")
         # Receive a committed original result before consulting later routing.
         # New authored inputs still pass the unchanged original validators
@@ -457,7 +465,7 @@ def configuration_request(req, value, worker, outbox, operator):
         journal_schema(db)
         previous = existing_request(db, req, value, checksum)
         if previous is not None and previous["state"] == "completed":
-            return json.loads(previous["result_json"]), True
+            return completed_value(previous), True
         if previous is None:
             incoming, target = checked_configuration(args, path, operator, worker)
             current = package.digest_file(path)
@@ -467,9 +475,10 @@ def configuration_request(req, value, worker, outbox, operator):
                 "previous_revision": args["revision"], "target_revision": target,
             })
         else:
-            # This exact named request passed original validation before its
-            # prepared record committed. Reconciliation needs its retained
-            # bytes, not another temporary validation file.
+            # This exact named request passed document validation before its
+            # prepared record committed. The original writer still owns
+            # transition checks. Reconciliation needs these retained bytes,
+            # not another temporary document-validation file.
             incoming = configuration_document(args["configuration"])
             raw = (json.dumps(incoming, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
             target = hashlib.sha256(raw).hexdigest()
@@ -482,7 +491,29 @@ def configuration_request(req, value, worker, outbox, operator):
         # write. Receive the already-selected source, without another write.
         pass
     elif current == args["revision"]:
-        selected = operator.save_configuration(path, args["revision"], incoming)
+        try:
+            selected = operator.save_configuration(path, args["revision"], incoming)
+        except (operator.InputError, operator.OperatorError) as exc:
+            # These original validation/CAS refusals occur before replacement.
+            # Retain that actual terminal outcome; an I/O failure may happen
+            # after replacement and therefore keeps the prepared selection.
+            code = getattr(exc, "code", "configuration_rejected")
+            if not isinstance(code, str):
+                code = "configuration_rejected"
+            rejection = {
+                "schema": "taskerarmy.operation-rejection.v1",
+                "error": {"code": code, "message": str(exc)[:1000]},
+                "previous_revision": args["revision"], "target_revision": target,
+            }
+            with outbox.transaction() as db:
+                journal_schema(db)
+                saved = existing_request(db, req, value, checksum)
+                if saved is None:
+                    fail("request_missing", "The original configuration request disappeared")
+                if saved["state"] == "completed":
+                    return completed_value(saved), True
+                complete_request(db, req, value, rejection)
+            fail(code, rejection["error"]["message"])
         if selected != target:
             fail("configuration_identity", "The original configuration writer returned another revision")
     else:
@@ -503,7 +534,7 @@ def configuration_request(req, value, worker, outbox, operator):
         if saved is None:
             fail("request_missing", "The original configuration request disappeared")
         if saved["state"] == "completed":
-            return json.loads(saved["result_json"]), True
+            return completed_value(saved), True
         complete_request(db, req, value, result)
     return result, previous is not None
 
@@ -575,7 +606,7 @@ def completed_request(req, value):
             return None
         saved = existing_request(db, req, value, checksum)
     if saved is not None and saved["state"] == "completed":
-        return json.loads(saved["result_json"]), True
+        return completed_value(saved), True
     return None
 
 

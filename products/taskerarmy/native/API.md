@@ -199,6 +199,8 @@ request:
   created_at, completed_at, source_identity, adapter_sha256
 ~~~
 
+A completed result may contain a definitive original configuration validation/CAS refusal with schema taskerarmy.operation-rejection.v1, error:{code,message}, previous_revision and target_revision. Replaying that named operation returns the same original error. Filesystem or transport uncertainty remains prepared so the exact target can still be received after an interrupted replacement.
+
 The journal remains in the original database and survives full snapshot/receiving. A received installation has a new namespace; supply the originating installation_id to inspect that original request. Completed responses are received before later routing or configuration validation. The exact original request_json remains available for a byte-consistent replay through stdin.
 
 ## Managed command descriptions
