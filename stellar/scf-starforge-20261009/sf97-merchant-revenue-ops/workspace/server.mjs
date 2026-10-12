@@ -70,7 +70,7 @@ export async function startWorkspace({port = 8457, ...options} = {}) {
           ['cross-site','same-site'].includes(req.headers['sec-fetch-site']))
         throw fault('OPERATOR_ORIGIN_REQUIRED','Open the local operator workspace directly.',403);
       const url = new URL(req.url,`http://${req.headers.host}`);
-      if (url.hash || (url.search && !['/api/tariffs/source','/api/tariffs/repricing/source'].includes(url.pathname)))
+      if (url.hash || (url.search && !['/api/tariffs/source','/api/tariffs/repricing/source','/api/tariffs/bundle'].includes(url.pathname)))
         throw fault('INVALID_URL','Use the workspace URL without query parameters.',400);
       if ((url.pathname === '/api/tariffs' || url.pathname.startsWith('/api/tariffs/')) &&
           await handleTariffRequest({req,res,url,workspace:tariffs,prefix:'/api/tariffs',authorize,json,reply,body})) return;

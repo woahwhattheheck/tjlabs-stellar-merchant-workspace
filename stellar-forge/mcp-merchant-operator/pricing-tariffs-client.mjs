@@ -30,6 +30,29 @@ function verifyPortfolio(value,id) {
     throw fail('PORTFOLIO_CHANGED','The received bytes differ from the selected original tariff portfolio.');
   return value;
 }
+function portfolioSelection(options) {
+  const selected={};
+  if(options.portfolioSha256!==undefined)
+    selected.portfolioSha256=checkedId(options.portfolioSha256,'portfolioSha256',HASH);
+  if(options.selectionRequestId!==undefined)
+    selected.selectionRequestId=checkedId(options.selectionRequestId,'selectionRequestId');
+  return selected;
+}
+function checkedPortfolioSelection(info,selectionRequestId) {
+  if(selectionRequestId!==undefined&&(info.selectionRequestId!==selectionRequestId||
+      info.manifest?.planCount!==1||info.manifest?.selectionCount!==1))
+    throw fail('SELECTION_CHANGED','The original portfolio reply belongs to another selection.');
+  return info;
+}
+function verifySelectedPortfolio(value,selectionRequestId) {
+  if(selectionRequestId===undefined)return value;
+  const item=value.selections[0],plan=value.plans[0];
+  if(value.selections.length!==1||value.plans.length!==1||item?.id!==selectionRequestId||
+      item.intent?.selection?.planId!==plan?.planId||
+      item.intent?.request?.selection?.planId!==plan?.planId)
+    throw fail('SELECTION_CHANGED','The received portfolio does not contain exactly the selected original request and plan.');
+  return value;
+}
 async function connected(options,workspace) {
   const client=await openMerchantFileClient({...options,errorPrefix:'PRICING_TARIFF',
     clientName:'starforge-merchant-tariffs',maximumResponseBytes:128*1024*1024});
@@ -115,6 +138,7 @@ export class MerchantTariffClient {
   load(planId,options){return this.#invoke('load',{planId},options);}
   selection(input,options){return this.#invoke('selection',input,options);}
   commitSelection(input,options){return this.#invoke('commitSelection',input,options);}
+  inspectPortfolio(bundle,options){return this.#invoke('inspectPortfolio',{bundle},options);}
   receive(bundle,options){return this.#invoke('receive',{bundle},options);}
   repricingSource(version,options){return this.#invoke('repricingSource',{version},options);}
   previewRepricing(input,options){return this.#invoke('previewRepricing',input,options);}
@@ -168,12 +192,14 @@ export class MerchantTariffClient {
   downloadRepricing(decision,name,options){return this.#artifact('decision',checkedId(decision,'decision'),name,options);}
   downloadPricing(version,name,options){return this.#artifact('review',checkedId(version,'saved version'),name,options);}
   async bundle(options={}) {
-    const selected=options.portfolioSha256===undefined?{}:
-      {portfolioSha256:checkedId(options.portfolioSha256,'portfolioSha256',HASH)};
-    const info=await this.#invoke('bundle',{...selected,view:'manifest'},options);
+    const capturedOptions={...options},selected=portfolioSelection(capturedOptions);
+    const info=await this.#invoke('bundle',{...selected,view:'manifest'},capturedOptions);
     checkedManifest(info,'portfolio',info.portfolioSha256);
-    const file=await this.#readArtifact('portfolio',info.portfolioSha256,'tariff-portfolio.json',info,options);
-    return verifyPortfolio(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(file.bytes)),info.portfolioSha256);
+    checkedPortfolioSelection(info,selected.selectionRequestId);
+    const file=await this.#readArtifact('portfolio',info.portfolioSha256,'tariff-portfolio.json',info,capturedOptions);
+    return verifySelectedPortfolio(verifyPortfolio(
+      JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(file.bytes)),info.portfolioSha256),
+      selected.selectionRequestId);
   }
 }
 export function createMerchantTariffClient(options){return new MerchantTariffClient(options);}
@@ -267,16 +293,18 @@ export function downloadMerchantTariffPlan({workspace,planId,...options}={}) {
 export function inspectMerchantTariffPlan({workspace,planId,...options}={}) {
   checkedId(planId,'planId');return downloader(workspace,'plan').inspect({...options,exportId:planId});
 }
-export async function downloadMerchantTariffPortfolio({workspace,portfolioSha256,...options}={}) {
+export async function downloadMerchantTariffPortfolio({workspace,portfolioSha256,selectionRequestId,...options}={}) {
   checkedAlias(workspace);
-  if(portfolioSha256!==undefined)checkedId(portfolioSha256,'portfolioSha256',HASH);
+  const selected=portfolioSelection({portfolioSha256,selectionRequestId});
   const original=await connected(options,workspace);
   const info=ownedReply(await original.call(TARIFF_MCP_OPERATIONS.bundle,
-    {workspace,...(portfolioSha256?{portfolioSha256}:{}),view:'manifest'}),workspace);
+    {workspace,...selected,view:'manifest'}),workspace);
   checkedManifest(info,'portfolio',info.portfolioSha256);
+  checkedPortfolioSelection(info,selectionRequestId);
   const {url,tokenEnv,environment,maximumResponseBytes,...downloadOptions}=options;
-  return downloader(workspace,'portfolio').download({...downloadOptions,
+  const result=await downloader(workspace,'portfolio').download({...downloadOptions,
     client:retainedClient(original,workspace,'portfolio'),exportId:info.portfolioSha256});
+  return selectionRequestId===undefined?result:{...result,selectionRequestId};
 }
 export function inspectMerchantTariffPortfolio({workspace,portfolioSha256,...options}={}) {
   checkedId(portfolioSha256,'portfolioSha256',HASH);

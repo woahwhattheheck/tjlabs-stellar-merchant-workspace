@@ -150,8 +150,10 @@ selection carries that closure and this edition's full
 Download the original source through the same native reader using
 `kind:"buyer-source"`. Its complete bytes include every original source and
 allocation row; paged review does not change the delivered file. Accountant
-files retain their actual handoff and optional returned revision, and Xero
-files retain the original plan identity. Keep each file's own digest.
+files retain their actual handoff and optional returned revision; QuickBooks
+and Xero files retain the original plan/response identities. A chart-change
+handoff retains its original `changeId`, full source/plan/mappings and application
+history. Keep each file's own digest.
 
 A complete operational handover also retains:
 
@@ -159,6 +161,10 @@ A complete operational handover also retains:
 - The original initialization and handoff operation directories, including
   their complete private requests and saved recovery state.
 - The native encrypted accounting backup and its exact verified manifest.
+- The retained QuickBooks/Xero plan, company/context and response identities, plus
+  each complete prepared chart-change request and its original application state.
+  Use the supported original-application recovery after reopening and retain the
+  complete SHA-pinned chart-change handoff.
 - The selected original source/runtime package and dependency profile.
 - The actual source, handoff, context, journal-response and returned-edition
   identities needed by the receiving operator.

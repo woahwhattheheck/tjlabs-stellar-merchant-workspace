@@ -88,6 +88,7 @@
     "stellar-forge/mcp-merchant-operator/ACCOUNTING-ADJUSTMENTS-CLIENT.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md",
+    "stellar-forge/mcp-merchant-operator/accounting-source-changes.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENTS.md",
     "stellar-forge/mcp-paid-agent/oauth-resource.mjs",
     "stellar-forge/mcp-paid-agent/OAUTH_RESOURCE.md",

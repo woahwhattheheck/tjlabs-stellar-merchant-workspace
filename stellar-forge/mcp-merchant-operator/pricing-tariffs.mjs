@@ -8,6 +8,7 @@ import { TARIFF_MCP_OPERATIONS } from './catalog/pricing-tariffs.mjs';
 
 const MAX_PORTFOLIO_BYTES=64*1024*1024;
 const HASH=/^[a-f0-9]{64}$/;
+const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const encode=value=>Buffer.from(JSON.stringify(value,null,2)+'\n');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -23,6 +24,28 @@ function originalPortfolio(value) {
       sha(canonical({schema:value.schema,plans:value.plans,selections:value.selections}))!==value.sha256)
     throw fail('PORTFOLIO_CHANGED','Use the complete original tariff portfolio and its original content digest.');
   return value;
+}
+function selectedPortfolio(value,selectionRequestId) {
+  if(selectionRequestId===undefined)return value;
+  if(!UUID.test(selectionRequestId??''))
+    throw fail('SELECTION_REQUEST_REQUIRED','Choose the original pricingRequestId for the selected tariff journal.');
+  const item=value.selections[0],plan=value.plans[0];
+  if(value.selections.length!==1||value.plans.length!==1||item?.id!==selectionRequestId||
+      item.intent?.selection?.planId!==plan?.planId||
+      item.intent?.request?.selection?.planId!==plan?.planId)
+    throw fail('SELECTION_CHANGED','The retained portfolio does not contain exactly this original selection and its plan.');
+  return value;
+}
+function portfolioInspection(review) {
+  return {schema:'stellar-forge.merchant-tariff-portfolio-inspection.v1',
+    portfolioSha256:review.sha256,sourceReviewSchema:review.schema,
+    planCount:review.plans.length,selectionCount:review.selections.length,
+    plans:review.plans.map(record=>({planId:record.planId,version:record.version,
+      label:record.label,sourceLabel:record.sourceLabel,tariffReviewSha256:record.review.tariffReviewSha256})),
+    selections:review.selections.map(item=>({id:item.id,planId:item.intent.selection.planId,
+      comparisonId:item.intent.selection.comparisonId,planRequestId:item.intent.request.planRequestId,
+      pricingRequestId:item.intent.request.pricingRequestId,completed:item.result!==null,
+      scenarioPlanId:item.result?.scenarioPlan?.planId??null,pricingVersion:item.result?.pricing?.version??null}))};
 }
 function retainedPath(name) {
   if (typeof name!=='string'||!name||name.startsWith('/')||/[:\\\x00-\x1f\x7f]/.test(name)||
@@ -67,8 +90,9 @@ export class MerchantPricingTariffs {
       return {bytes,value,path:join(this.#exports,id+'.json')};
     }finally{await handle.close();}
   }
-  async #capturePortfolio() {
-    const value=originalPortfolio(await(await this.#native()).bundle()),bytes=encode(value);
+  async #capturePortfolio(selectionRequestId) {
+    const value=selectedPortfolio(originalPortfolio(await(await this.#native()).bundle(
+      selectionRequestId===undefined?{}:{selectionRequestId})),selectionRequestId),bytes=encode(value);
     if(bytes.length>MAX_PORTFOLIO_BYTES)throw fail('PORTFOLIO_TOO_LARGE','The complete native portfolio exceeds its original 64 MiB limit.');
     await this.#exportDirectory();
     const target=join(this.#exports,value.sha256+'.json');
@@ -175,6 +199,7 @@ export class MerchantPricingTariffs {
       case 'load':return workspace.load(input.planId);
       case 'selection':return workspace.selection(input);
       case 'commitSelection':return workspace.commitSelection(input);
+      case 'inspectPortfolio':return portfolioInspection(await workspace.inspectPortfolio(input.bundle));
       case 'receive':return workspace.receive(input.bundle);
       case 'repricingSource':return workspace.repricingSource(input.version);
       case 'previewRepricing':return workspace.previewRepricing(input);
@@ -189,10 +214,14 @@ export class MerchantPricingTariffs {
       case 'downloadPricing':return this.#download('review',input.version,args);
       case 'downloadRepricing':return this.#download('decision',input.decision,args);
       case 'bundle':{
-        if(args.view==='file'&&!input.portfolioSha256)
-          throw fail('PORTFOLIO_REQUIRED','Repeat the exact retained portfolioSha256 for every file chunk.');
-        const captured=input.portfolioSha256?null:await this.#capturePortfolio();
-        return this.#download('portfolio',input.portfolioSha256??captured.value.sha256,args,captured);
+        if(args.view==='file'&&(!input.portfolioSha256||input.selectionRequestId!==undefined))
+          throw fail('PORTFOLIO_REQUIRED','Select the original manifest first, then repeat only its portfolioSha256 for each file chunk.');
+        const captured=input.portfolioSha256
+          ?(input.selectionRequestId===undefined?null:await this.#exportBytes(input.portfolioSha256))
+          :await this.#capturePortfolio(input.selectionRequestId);
+        if(captured)selectedPortfolio(captured.value,input.selectionRequestId);
+        const result=await this.#download('portfolio',input.portfolioSha256??captured.value.sha256,args,captured);
+        return input.selectionRequestId===undefined?result:{...result,selectionRequestId:input.selectionRequestId};
       }
       default:throw failure('TOOL_NOT_FOUND','Unknown original tariff operation.');
     }

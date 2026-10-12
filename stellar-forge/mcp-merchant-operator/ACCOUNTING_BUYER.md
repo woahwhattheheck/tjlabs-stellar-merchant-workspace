@@ -3,7 +3,7 @@
 A host can now declare the original accountant as a buyer-only workspace. The
 same accounting provider retains an issued buyer period, its expense and credit
 allocations, the first accountant handoff, returned bookkeeping references and
-the original Xero and encrypted-recovery histories. The input is the native
+the original QuickBooks, Xero and encrypted-recovery histories. The input is the native
 `stellar-forge.buyer-accountant-source.v1` document produced by the buyer expense
 workspace; its validator remains the authority for the exact accepted schema.
 
@@ -27,6 +27,10 @@ accountant. Paths resolve relative to the host's configuration file.
         "reviewed-return": "../accountant/returned.csv"
       },
       "platformInputs": {
+        "qbo-company": "../accountant/original-qbo-company.json",
+        "qbo-plan": "../accountant/reviewed-qbo-buyer-plan.json",
+        "qbo-response": "../accountant/original-qbo-response.json",
+        "qbo-chart-change": "../accountant/reviewed-qbo-chart-change.json",
         "xero-context": "../accountant/original-xero-context-request.json",
         "xero-plan": "../accountant/reviewed-xero-plan.json",
         "xero-response": "../accountant/original-xero-response-request.json"
@@ -65,7 +69,7 @@ An existing merchant configuration can instead include the declaration under
 the existing merchant contract, including its required outbox, proof and terms
 paths. A buyer declaration omits those paths and merchant-only input maps. Its
 supported accounting operations are source startup, accountant handoff/returns,
-Xero, exact retained files and native operating recovery. The host reports these
+QuickBooks, Xero, chart changes, exact retained files and native operating recovery. The host reports these
 capabilities with each alias. Merchant sales, collection, statements, Bitwave,
 Cryptoworth and runbook operations continue under their original merchant alias.
 
@@ -170,15 +174,80 @@ chunks. The reader supplies the original filename, byte count and base64 data.
 Release an incomplete read with `merchant_accounting_file_release`.
 `kind:"accountant"` continues to select the exact handoff/return and its
 original allowed file, including `buyer-return.json`.
-`kind:"xero"` continues to select the original native plan's retained files and
-`xero-handoff.tar`. These reads do not query a merchant or repeat a purchase.
+`kind:"qbo"` and `kind:"xero"` select the original native plan and response files.
+Chart changes use `kind:"qbo-source-change"` or `kind:"xero-source-change"` with the
+saved `changeId` and native handoff filename. The same retained reader verifies
+all complete bytes; each file keeps its own digest.
+
+## Continue QuickBooks from the issued buyer handoff
+
+Use `--platform qbo` on this same buyer alias after the original handoff is
+retained. The session opens its original QuickBooks and Xero controllers over
+the same accountant owner. A host may use imported native company/response files
+or configure its existing QuickBooks company through `platforms.qbo`. The
+[platform connection guide](ACCOUNTING-PLATFORMS.md) covers both the original
+token-environment connection and a reviewed OAuth company selection. The saved
+realm, environment, company snapshot and token scope retain that connection's
+existing contract.
+
+Read the original handoff with `read --action handoff`, supplying its actual
+`handoffId` in the private request JSON. Select `view:"rows"` and page the
+complete allocation inventory. Every row retains its expense or returned-credit
+kind, original source/economic identities, native amount, recognition date,
+cost-center/project coding, source observation and current accountant assignment.
+
+Prepare a `platformInputs` file with the original QuickBooks request fields:
+its stable `id`, `createdAt`, `name`, `actor`, `handoffId`,
+`expectedParentId`, actual company/realm/base currency/environment, `txnDate`,
+optional `docNumber`, `valuationBasis` and `rows`. The native handoff supplies
+the current parent and source rows; preserve those observed identities.
+For **every** allocation, supply one explicit decision:
+
+- An included row has its original `rowId`, `decision:"include"`, an exact
+  positive two-decimal home-currency `amount`, `valuationNote`, and the
+  accountant's chosen `debitAccount` and `creditAccount`. These accounts use
+  the actual native Account.Id values in their `value` fields.
+- An excluded row has its original `rowId`, `decision:"exclude"` and a specific
+  `reason`. Its original accountant fields remain unchanged. Zero-native
+  allocations and previously booked/excluded allocations require this decision.
+
+Include between 1 and 500 allocations in a journal and retain a decision for
+every other issued allocation. State the valuation source and tax treatment in
+`valuationBasis`; each included row also retains its own valuation note.
+Expense and returned-credit amounts stay positive native-unit facts. The
+accountant chooses their debit/credit directions and reviewed home values;
+the compiler performs no exchange-rate selection or automatic tax calculation.
+Production requires each selected allocation's original operational public-network
+matched transfer and observation digest. The existing sandbox path retains
+development source as development.
+
+Use `preview --action create` with that source alias and optional imported
+`companySource`, save the full returned preview through `prepare`, then
+`execute` and `reconcile` the same operation directory. The original native
+request is retained before saving; a retry reconciles that exact plan and input.
+The saved plan's `rows`, `excluded`, `lines`, `accounts` and response/file
+views page the complete review. Same-company reservations preserve original
+allocation identity within an issued edition and economic identity across
+editions, including the existing accountant's other retained plans.
+
+Continue the normal journal review and explicit provider-posting or original
+response-import path in [the customer guide](ACCOUNTING-PLATFORMS-CLIENT.md).
+A matched response books only the included original allocations. The saved
+accountant return and `buyer-return.json` then go back to the original Buyer
+Expenses workspace through its normal reviewed return acceptance.
+
+For a changed company chart, use the same platform's source-change inspection,
+preview, saved review and explicit application.
+[The complete chart-change guide](accounting-source-changes.md) covers original
+request recovery, every native confirmation, excluded-row/mapping pages and
+complete retained handoff download. An accepted application resumes its original
+predecessor cancellation and successor; it does not post that new journal.
 
 ## Continue the existing Xero operation
 
-The buyer session opens the original Xero controller and the same accountant
-instance. It does not initialize the unrelated merchant collection, sales or
-QuickBooks controllers. The original source, context, plan, operation, response,
-comparison and return APIs retain their existing contract.
+The same buyer session retains its original Xero controller and accountant
+instance. Original source, context, plan, operation, response, comparison and
+return APIs keep their existing contract.
 
 Use [the maintained platform guide](./ACCOUNTING-PLATFORMS.md) and
 [its existing customer SDK and durable CLI](./ACCOUNTING-PLATFORMS-CLIENT.md) for:
@@ -198,8 +267,9 @@ or posted status is recorded separately from the original purchase, delivery,
 native amount, development/testnet scope and buyer-return acceptance.
 
 Nothing in source preparation, initialization, reopen, first handoff or file
-reading performs a provider request. Actual journal creation or refresh remains
-the existing explicit Xero operation with its original request ID and lifecycle.
+reading performs a provider request. Actual journal posting or refresh remains
+the explicitly selected QuickBooks or Xero operation with its original request ID
+and lifecycle.
 
 ## Pause, back up, receive and reopen the same operation
 
@@ -211,8 +281,9 @@ original destination, then resume. Keep each native request ID, review identity
 and archive digest. The passphrase stays in its host environment variable.
 
 The backup includes the original startup source and binding, native workspace
-history, first handoff, Xero context/plans/responses, returned editions and
-source files under the original recovery rules. An incomplete restore retains
+history, first handoff, QuickBooks plans/responses, Xero contexts/plans/responses,
+chart-change reviews/applications, returned editions and source files under the
+original recovery rules. An incomplete restore retains
 the same native marker; resume that authenticated original backup rather than
 initializing over it.
 
@@ -228,4 +299,4 @@ accounting source.
 
 ## Customer SDK and saved CLI operations
 
-Use the existing `starforge merchant-accounting-platforms` command with `--platform buyer` for source review, initialization, retained-source paging, exact first-handoff recovery and original source/accountant downloads. The complete private `request.json` / `state.json` workflow and SDK examples are in [ACCOUNTING-PLATFORMS-CLIENT.md](ACCOUNTING-PLATFORMS-CLIENT.md#buyer-issued-source-startup-and-receiving). Initialization and handoff stay explicit; `reconcile` only observes their original native identities. The original buyer mode, Store, Xero and encrypted receiving remain this guide's configuration.
+Use the existing `starforge merchant-accounting-platforms` command with `--platform buyer` for source review, initialization, retained-source paging, exact first-handoff recovery and original source/accountant downloads. The complete private `request.json` / `state.json` workflow and SDK examples are in [ACCOUNTING-PLATFORMS-CLIENT.md](ACCOUNTING-PLATFORMS-CLIENT.md#buyer-issued-source-startup-and-receiving). Initialization and handoff stay explicit; `reconcile` only observes their original native identities. Use `--platform qbo` or `--platform xero` for bookkeeping on that same alias. The original buyer mode, Store, both bookkeeping controllers and encrypted receiving remain this guide's configuration.
