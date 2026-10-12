@@ -84,3 +84,7 @@ Native dataset exports produce data.csv, dataset.json and iati-lineage.json for 
 The source engine requires Python with Expat 2.6 or later and the original Node SF30 dataset engine. It accepts self-contained XML and rejects DTD/entity/external-resolution input through the shared parser. Source and native CSV limits follow the existing engine: 256 MiB per source, one million projected rows at most, and at most 1 MiB per projected cell. The default edition is 250,000 rows and 64 MiB. A single activity has the existing 16 MiB working-text capacity.
 
 A portfolio can select up to 32 complete sources and one million distinct activity IDs. Complete handover capacity is 4 GiB expanded, with a 64 MiB capacity for each JSON metadata member, including the full revision history. Exceeding a declared capacity produces an explicit failure; exporters do not cut off records or silently shorten history.
+
+## Native data quality engagements
+
+The same IATI application includes [native DQA assessments, named customer cases, finding review and complete receiving](DQA.md). Capture the original Zimmerman service's complete result and configuration observations, compare refreshed assessments, and carry full case history and selected original finance portfolios through the browser, CLI, typed client and source-workspace MCP. The full original provider and installed receiving workflow are under `receiving/dqa-source/` and `receiving/DQA.md`.
