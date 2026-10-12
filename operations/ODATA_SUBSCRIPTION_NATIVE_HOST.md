@@ -84,3 +84,49 @@ python3 -B -i /ABSOLUTE_SOURCE/operations/odata-subscription-native-host.py \
 The checkpoint manifest binds the operation, fixed private root, exact host and decoded source. Existing later or different files are preserved as an error. Receiving a saved native checkpoint continues the original native journal and does not create another native checkpoint upload.
 
 Resource observations from /proc, cgroup and the selected filesystems are retained at initial, complete and failure boundaries. The host does not assume that a disappeared execution handle proves a provider save succeeded.
+
+## Complete compact initial command for the selected existing host
+
+`operations/odata-subscription-native-command.json` contains the complete
+`exec_command` argument object for the same
+`ODATA-SUBSCRIPTION-CUSTOMER-F971-20261012-R1` operation. Read the exact published
+JSON, verify its source identity, parse it, and invoke its `exec_command` once.
+It selects `python3 -B -i`, an attached terminal, and the complete initial
+program; it does not depend on a later stdin source feed. Its shell command is
+125,465 UTF-8 bytes.
+
+The command JSON is 127,499 bytes, SHA-256
+`44e291d73901c1fbc338d46eb1297c7dece1647561a0ebd5c8097aa256432c14`, Git blob
+`8a2b5db97d2b94027d74b0e8f2a386bd3b029839`. Its standard gzip payload uses the existing base85
+alphabet and is verified before decompression. Decompression is bounded and
+must produce exactly 380,122 bytes with SHA-256
+`5e718111f78a101ad5d382e89066dbc3ea1f2d046bc2247e71979085796f6eb8`. The compressed payload is
+97,491 bytes with SHA-256
+`225ddfdbacd8a630f794432cdba8c5397ce70f37351e8425442aa499a4c9e33b`. The prepared transport was
+decoded back to the exact input bytes before publication. The command also
+performs the native Python zlib validation before source staging or customer
+execution.
+
+This compact admission is specific to the existing equipped runtime. It reads
+only the three unchanged original files in
+`/workspace/scratch/f97104b7bf97/ncua-original-source-transfer/current-library-helper/`:
+`library_upload.py`, `library_hosted_apps.py`, and
+`library_file_transfer.py`. Their original names, sizes, and SHA-256 values
+are bound in the command. Every helper must be a regular non-symlink file and
+match the original full bytes. Those bytes reconstruct the **identical complete
+394,772-byte source manifest**, SHA-256
+`cdecf40ce3ed0c723f61989b479b8036a2b5544058cd0312a1bc25f0ed61b788`.
+All 28 product, program, guide, and dependency postimages are carried in full.
+
+The complete 178,670-byte portable source packet and the reviewed 45,709-byte
+host remain unchanged. Use the normal `--packet` entry above on a different
+receiver that needs the fully included helper bodies. The compact command
+fails before product execution when an expected local original is absent or
+different; retain its attached lifetime and reconcile that original input.
+
+The command extracts only the reviewed host's existing immutable source writer
+to place the verified decoded manifest, then invokes that exact complete host.
+It keeps the same private root, operation identity, full native producer,
+closed native checkpoint save, Analysis phase, final customer package, and
+provider result reconciliation. Parent/root remains the sole customer
+invoker; source preparation has not run the customer.
