@@ -406,13 +406,31 @@ export class MerchantGrantWorkspaces {
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       work_intakes:'work-intakes',work_intake:'work-intake',
-      performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
+      ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
+      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {
       const {planId, ...body} = rest; original = await client.plan(verb.slice(5), planId, body);
     } else if (verb === 'case_create') original = await client.createCase(rest);
     else if (verb === 'case_command') { const {caseId, ...body} = rest; original = await client.command(caseId, body); }
+    else if (verb === 'ledger_intake_inspect') {
+      original=await client.ledgerIntakeInspect(args.caseId,
+        await this.#modelInputs(alias,args,'Ledger source file',GRANT_MAX_BUNDLE_BYTES));
+    }
+    else if (verb === 'ledger_intake_preview' || verb === 'ledger_intake_apply') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const document=await this.#modelInputs(alias,args,'Ledger intake',GRANT_MAX_BUNDLE_BYTES);
+      original=verb === 'ledger_intake_preview'
+        ? await client.ledgerIntakePreview(caseId,{...body,document})
+        : await client.ledgerIntakeApply(caseId,{...body,document});
+    }
+    else if (verb === 'statement_preview') original=await client.statementPreview(args.caseId,args.expectedVersion,
+      await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES));
+    else if (verb === 'statement_receive') {
+      const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
+      original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
+    }
     else if (verb === 'work_intake_upload') {
       const {caseId,...body}=rest;original=await client.workIntakeUpload(caseId,body);
     }
@@ -480,8 +498,14 @@ export class MerchantGrantWorkspaces {
     else if (verb === 'forecast_save') {
       const {caseId, input, inputPointer, expectedInputSha256, ...body} = rest;
       original = await client.forecastSave(caseId, {...body, inputs:await this.#modelInputs(alias, args, 'Forecast')});
-    } else if (verb === 'portfolio_seed') original = await client.portfolioSeed(args.caseId, args.expectedVersion, args.forecastId);
-    else if (verb === 'portfolio_preview') original = await client.portfolioPreview(args.caseId, args.expectedVersion,
+    } else if (verb === 'portfolio_seed') {
+      const options = {};
+      if (args.installationSelections !== undefined) options.installationSelections = args.installationSelections;
+      if (['inputs','input','inputPointer','expectedInputSha256'].some(key => args[key] !== undefined)) {
+        options.inputs = await this.#modelInputs(alias, args, 'Portfolio');
+      }
+      original = await client.portfolioSeed(args.caseId, args.expectedVersion, args.forecastId, options);
+    } else if (verb === 'portfolio_preview') original = await client.portfolioPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Portfolio'));
     else if (verb === 'portfolio_save') {
       const {caseId, input, inputPointer, expectedInputSha256, ...body} = rest;

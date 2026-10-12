@@ -60,11 +60,29 @@ async function cacheRead(caseId) {
     request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);
   });
 }
-async function cacheWrite(caseId,value) {
+function cacheRevision(value) {
+  const revision=value?.storageVersion??0;
+  if(!Number.isSafeInteger(revision)||revision<0||revision>=Number.MAX_SAFE_INTEGER)
+    throw new Error('The saved browser draft has an invalid storage revision.');
+  return revision;
+}
+async function cacheWrite(caseId,value,expectedRevision) {
   const db=await database();
   return new Promise((resolve,reject)=>{
-    const tx=db.transaction('cases','readwrite');tx.objectStore('cases').put(value,caseId);
-    tx.oncomplete=()=>resolve();tx.onerror=tx.onabort=()=>reject(tx.error||new Error('Browser draft storage could not save this change.'));
+    const tx=db.transaction('cases','readwrite'),store=tx.objectStore('cases'),read=store.get(caseId);
+    let failure=null,savedRevision=null;
+    read.onsuccess=()=>{
+      try{
+        const revision=cacheRevision(read.result);
+        if(revision!==expectedRevision){
+          failure=new Error('Another tab saved a newer complete draft. Download this tab’s draft and open the saved draft to continue.');
+          failure.code='WORK_INTAKE_DRAFT_CONFLICT';tx.abort();return;
+        }
+        savedRevision=revision+1;store.put({...value,storageVersion:savedRevision},caseId);
+      }catch(error){failure=error;tx.abort();}
+    };
+    tx.oncomplete=()=>resolve(savedRevision);
+    tx.onerror=tx.onabort=()=>reject(failure||tx.error||new Error('Browser draft storage could not save this change.'));
   });
 }
 
@@ -76,11 +94,12 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     link.dataset.workIntakeStyle='true';document.head.append(link);
   }
   const caseId=current.program.id,base='/api/operations/'+caseId,s=session;
-  let active=true,busy=false,hostBusy=false,persistQueue=Promise.resolve(),dialogKind=null,retainTimer=null;
+  let active=true,busy=false,hostBusy=false,dialogKind=null,retainTimer=null;
   let selected=null,preview=null,revisionView=null,conflict=null,page=0,recordPage=0,filter='',tab='rows',message='',messageError=false;
   let caseView=current,cacheError=null;
   s.drafts??={};s.newSource??={kind:'WORK',name:'',sourceId:'',sourceUrl:'',format:copy(DEFAULT_FORMAT)};
   s.selectedId??=null;s.pending??=null;s.lastRequest??=null;s.lastReceipt??=null;s.uploadFile??=null;
+  s.persistQueue??=Promise.resolve();s.storageVersion??=0;s.storageConflict??=null;
   const alive=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const edit=()=>selected&&selected.intake.state==='DRAFT'&&revisionView===null&&!conflict&&caseView.program.state==='OPEN'&&!s.pending;
@@ -97,14 +116,17 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   function persist() {
     if(retainTimer!==null){clearTimeout(retainTimer);retainTimer=null;}
     const value=persistenceValue();
-    persistQueue=persistQueue.catch(()=>{}).then(()=>cacheWrite(caseId,value));
-    return persistQueue;
+    s.persistQueue=s.persistQueue.catch(()=>{}).then(async()=>{
+      s.storageVersion=await cacheWrite(caseId,value,s.storageVersion);s.storageConflict=null;
+    }).catch(error=>{if(error.code==='WORK_INTAKE_DRAFT_CONFLICT')s.storageConflict=error.message;throw error;});
+    return s.persistQueue;
   }
   function retain() {
     if(retainTimer!==null)clearTimeout(retainTimer);
+    if(s.storageConflict){retainTimer=null;return;}
     retainTimer=setTimeout(()=>{
       retainTimer=null;
-      persist().catch(error=>{cacheError=error;if(alive())setMessage('The browser could not retain these unsaved changes: '+error.message,true);});
+      persist().catch(error=>{cacheError=error;if(alive()){if(s.storageConflict)render();setMessage('The browser could not retain these unsaved changes: '+error.message,true);}});
     },200);
   }
   function setMessage(text,error=false) {
@@ -123,12 +145,13 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   function dispose(){active=false;if(retainTimer!==null)persist().catch(()=>{});const dialog=$('dialog');if(dialog?.open)dialog.close();}
   async function run(fn) {
     if(busy||hostBusy||!alive())return;busy=true;controls();
-    try{await fn();}catch(error){if(alive())setMessage(error.message,true);}
+    try{await fn();}catch(error){if(alive()){if(s.storageConflict)render();setMessage(error.message,true);}}
     finally{busy=false;if(alive())controls();}
   }
   function markChanged() {
     const item=currentDraft();if(item)item.dirty=true;
     preview=null;page=0;recordPage=0;retain();
+    const apply=$('[data-wi-action="apply"]');if(apply){apply.disabled=true;apply.dataset.wiFixed='true';}
   }
   function noteField(label,key,value,extra='') {
     return '<label>'+esc(label)+'<input data-wi-field="'+esc(key)+'" data-focus="'+esc(key)+'" value="'+esc(value)+'" '+extra+'></label>';
@@ -157,6 +180,90 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   function restoreFocus(state) {
     if(!state)return;const node=[...root.querySelectorAll('[data-focus]')].find(x=>x.dataset.focus===state.key);
     if(node&&!node.disabled){node.focus();if(state.start!==null&&state.start!==undefined&&node.setSelectionRange)try{node.setSelectionRange(state.start,state.end);}catch{}}
+  }
+  function browserTransfer() {
+    const desk=persistenceValue();
+    if(desk.uploadFile){
+      const file=desk.uploadFile;
+      desk.uploadFile={name:file.name,type:file.type,bytes:file.bytes.byteLength,contentBase64:base64(file.bytes)};
+    }
+    return {schema:'stellar-forge.sf47-work-intake-browser-transfer.v1',caseId,exportedAt:new Date().toISOString(),desk};
+  }
+  function downloadBrowserDraft() {
+    download(JSON.stringify(browserTransfer(),null,2)+'\n',caseId+'-complete-intake-draft.json');
+  }
+  function browserRecoveryPanel() {
+    return '<section class="wi-section"><h4>Complete browser draft</h4><p>Keep every draft mapping, original selected file and pending request together. Opening another complete draft first downloads this tab’s current draft.</p>'+
+      (s.storageConflict?'<p class="wi-notice">'+esc(s.storageConflict)+'</p>':'')+
+      '<div class="wi-actions">'+button('Download complete draft','browser-download')+
+      button('Open complete draft','browser-open','',Boolean(s.inFlight))+
+      (s.storageConflict?button('Download this draft and open saved draft','browser-reconcile','',Boolean(s.inFlight)):'')+'</div></section>';
+  }
+  function restoreDesk(value) {
+    for(const field of ['selectedId','drafts','newSource','uploadFile','pending','lastRequest','lastReceipt'])s[field]=copy(value[field]);
+    selected=null;preview=null;revisionView=null;conflict=null;page=0;recordPage=0;
+  }
+  function readBrowserTransfer(value) {
+    const object=item=>item!==null&&typeof item==='object'&&!Array.isArray(item);
+    const require=(condition,message)=>{if(!condition)throw new Error(message);};
+    require(object(value)&&value.schema==='stellar-forge.sf47-work-intake-browser-transfer.v1'&&value.caseId===caseId,
+      'Open a complete work/invoice browser draft for this exact operating case.');
+    const desk=copy(value.desk);
+    require(object(desk)&&desk.schema==='stellar-forge.sf47-work-intake-browser.v1'&&desk.caseId===caseId&&
+      object(desk.drafts)&&object(desk.newSource),'The complete draft is missing its original case or source controls.');
+    require(desk.selectedId===null||/^intake-[a-f0-9]{32}$/.test(desk.selectedId),'The selected intake identity is invalid.');
+    for(const [id,item] of Object.entries(desk.drafts)){
+      require(/^intake-[a-f0-9]{32}$/.test(id)&&object(item)&&Number.isSafeInteger(item.baseRevision)&&item.baseRevision>0&&
+        typeof item.dirty==='boolean'&&typeof item.note==='string'&&object(item.document),'A retained mapping edition is incomplete.');
+      const doc=item.document;
+      require(object(doc.format)&&object(doc.mapping)&&Array.isArray(doc.contributors)&&Array.isArray(doc.costs)&&
+        Array.isArray(doc.rowEdits)&&Array.isArray(doc.recordDecisions)&&typeof doc.sourceSystem==='string',
+        'Retain every mapping, identity choice, correction and record decision.');
+    }
+    const source=desk.newSource;
+    require(['WORK','INVOICES'].includes(source.kind)&&typeof source.name==='string'&&typeof source.sourceId==='string'&&
+      typeof source.sourceUrl==='string'&&object(source.format),'The original source controls are incomplete.');
+    for(const [field,choices] of Object.entries(FORMAT_CHOICES))
+      require(choices.some(([id])=>id===source.format[field]),'Choose an explicit supported source format.');
+    require(Number.isSafeInteger(source.format.headerRow)&&source.format.headerRow>=0&&source.format.headerRow<=5001,
+      'The source header position is invalid.');
+    if(desk.uploadFile!==null){
+      const file=desk.uploadFile;
+      require(object(file)&&typeof file.name==='string'&&file.name.length>0&&typeof file.type==='string'&&
+        Number.isSafeInteger(file.bytes)&&file.bytes>0&&file.bytes<=MAX_SOURCE&&typeof file.contentBase64==='string'&&
+        file.contentBase64.length<=Math.ceil(MAX_SOURCE/3)*4&&/^[A-Za-z0-9+/]*={0,2}$/.test(file.contentBase64),
+        'Retain the complete original selected file and its byte count.');
+      let bytes;try{bytes=Uint8Array.from(atob(file.contentBase64),c=>c.charCodeAt(0));}catch{throw new Error('The retained source file is not complete base64.');}
+      require(bytes.byteLength===file.bytes,'The original selected file differs from its complete byte count.');
+      desk.uploadFile={name:file.name,type:file.type,bytes:bytes.buffer};
+    }
+    for(const field of ['pending','lastRequest']){
+      const request=desk[field];if(request===null)continue;
+      require(object(request)&&object(request.body)&&['work-intake.upload','work-intake.save','work-intake.apply'].includes(request.body.action)&&
+        Number.isSafeInteger(request.body.expectedVersion)&&request.body.expectedVersion>0&&
+        typeof request.body.requestId==='string'&&request.body.requestId.length>0&&typeof request.body.actor==='string'&&
+        object(request.body.data),'The original retained intake request is incomplete.');
+    }
+    require(desk.lastReceipt===null||object(desk.lastReceipt),'The retained response must be a complete object.');
+    if(desk.pending){
+      // Reconcile an imported response through the same native request identity.
+      desk.pending.receipt=null;desk.pending.state='PREPARED';
+    }
+    return desk;
+  }
+  async function openBrowserTransfer(file) {
+    if(!file)return;if(file.size>64*1024*1024)throw new Error('Choose a complete browser draft within 64 MiB.');
+    const desk=readBrowserTransfer(JSON.parse(await file.text()));
+    await persist();downloadBrowserDraft();restoreDesk(desk);await persist();
+    await refreshCase();render();setMessage(s.pending?'Opened the complete draft. Resume its original request to read the native outcome.':'Opened the complete draft and retained every mapping and original selected file.');
+  }
+  async function reconcileBrowserDraft() {
+    await s.persistQueue.catch(()=>{});downloadBrowserDraft();
+    const saved=await cacheRead(caseId);
+    if(saved?.caseId!==caseId||saved.schema!=='stellar-forge.sf47-work-intake-browser.v1')
+      throw new Error('The saved complete draft could not be reopened. This tab’s downloaded draft is retained.');
+    const revision=cacheRevision(saved);restoreDesk(saved);s.storageVersion=revision;s.storageConflict=null;cacheError=null;
+    await refreshCase();render();setMessage('Downloaded this tab’s complete draft and opened the saved draft. Both original inputs remain available.');
   }
   function pendingPanel() {
     if(!s.pending)return '';
@@ -208,13 +315,16 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     function group(field,property,idField,choices,label){
       const original=[...new Set(sourceRows().map(row=>originValues(row)[field]).filter(Boolean))].sort();
       const existing=new Map(doc[property].map(row=>[row.sourceValue,row[idField]])),native=new Set(choices.map(row=>row[0]));
-      return '<h5>'+label+'</h5>'+(original.length?table(['Exact source value','Original case record'],original.map(value=>[
-        '<span class="wi-break">'+esc(value)+'</span>',
-        '<select data-wi-identity="'+property+'" data-original="'+esc(value)+'" aria-label="'+esc(label+' for '+value)+'"'+(disabled?' disabled data-wi-fixed="true"':'')+'>'+
-        options([['',native.has(value)?'Use source identity directly':'Select case record'],...choices],existing.get(value)||'')+'</select>'
-      ])):blank('Map the source column to show its distinct values.'));
+      const listId='wi-'+caseId+'-'+property;
+      return '<h5>'+label+'</h5>'+(original.length?
+        '<datalist id="'+esc(listId)+'">'+choices.map(([id,name])=>'<option value="'+esc(id)+'" label="'+esc(name)+'"></option>').join('')+'</datalist>'+
+        table(['Exact source value','Original case record'],original.map(value=>[
+          '<span class="wi-break">'+esc(value)+'</span>',
+          '<input list="'+esc(listId)+'" data-wi-identity="'+property+'" data-original="'+esc(value)+'" aria-label="'+esc(label+' for '+value)+'" value="'+esc(existing.get(value)||'')+'" placeholder="'+
+          (native.has(value)?'Use source identity directly':'Choose an existing case identity')+'"'+(disabled?' disabled data-wi-fixed="true"':'')+'>'
+        ])):blank('Map the source column to show its distinct values.'));
     }
-    return '<details class="wi-section" open><summary>Match contributors and work packages</summary><p>Match each exact source value to the existing case record. Native record IDs can be used directly.</p>'+
+    return '<details class="wi-section" open><summary>Match contributors and work packages</summary><p>Choose each existing case identity from its suggestions or enter its exact ID. A source value that is already a native record ID can remain unchanged.</p>'+
       group('contributor','contributors','contributorId',people(),'Contributors / suppliers')+
       group('costId','costs','costId',packages(),'Work packages')+
       '<div class="wi-actions">'+button('Open contributors','open','contributors')+'</div></details>';
@@ -297,7 +407,7 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     const row=selected.intake,doc=draft()||row.document,head=(caseView.workIntakes||[]).find(x=>x.id===row.id);
     return '<section class="wi-selected"><div class="wi-heading"><div><h3>'+esc(row.name)+'</h3><p>'+
       esc(row.kind==='WORK'?'Recorded work':'Supplier invoices')+' · edition '+row.revision+' '+badge(row.state)+
-      (currentDraft()?.dirty?' <strong>Unsaved draft</strong>':'')+'</p></div><div class="wi-actions">'+
+      (revisionView===null&&currentDraft()?.dirty?' <strong>Unsaved draft</strong>':'')+'</p></div><div class="wi-actions">'+
       button('Download source','source-download')+button('Export complete case','case-download')+'</div></div>'+
       '<p>'+esc(selected.source.filename)+' · '+selected.source.bytes+' original bytes</p>'+
       '<details class="wi-source-details"><summary>Source identity and saved editions</summary><p class="wi-break">'+esc(row.sourceId)+'<br>SHA-256 '+esc(row.sourceSha256)+'</p>'+
@@ -320,12 +430,12 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   }
   function render(){
     if(!alive())return;const focus=focusState();
-    root.innerHTML='<div class="wi-heading"><div><h3>Work and invoice intake</h3><p>Turn original timesheets and supplier invoice lines into the case’s recorded work and invoices.</p></div></div>'+
+    root.innerHTML='<div class="wi-heading"><div><h3>Work and invoice intake</h3><p>Turn original timesheets and supplier invoice lines into the case’s recorded work and invoices.</p></div><div class="wi-actions">'+button('Bulk ledger intake','open','ledger-intake')+'</div></div>'+
       '<p data-wi-message role="'+(messageError?'alert':'status')+'" aria-live="polite">'+esc(message)+'</p>'+
-      pendingPanel()+(cacheError?'<p class="wi-notice">Browser draft storage: '+esc(cacheError.message)+'</p>':'')+
+      pendingPanel()+browserRecoveryPanel()+(cacheError&&!s.storageConflict?'<p class="wi-notice">Browser draft storage: '+esc(cacheError.message)+'</p>':'')+
       (caseView.program.state==='CLOSED'?'<p class="wi-notice">This case is closed. Its saved sources and records remain available. Reopen the case to record changes.</p>':'')+
       newSourcePanel()+listPanel()+selectedPanel()+
-      '<input type="file" data-wi-document hidden accept=".json,application/json">'+
+      '<input type="file" data-wi-document hidden accept=".json,application/json"><input type="file" data-wi-browser-document hidden accept=".json,application/json">'+
       '<dialog class="wi-dialog" aria-labelledby="wi-dialog-title"><form data-wi-dialog-form><h3 id="wi-dialog-title"></h3>'+
       '<div data-wi-dialog-body></div><p data-wi-dialog-error role="alert"></p><div class="wi-actions">'+button('Close','dialog-close')+
       '<button type="submit" data-wi-dialog-save>Save decision</button></div></form></dialog>';
@@ -480,6 +590,7 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   });
   root.addEventListener('change',event=>{
     const node=event.target;
+    if(node.matches('[data-wi-browser-document]'))return run(()=>openBrowserTransfer(node.files?.[0]));
     if(node.matches('[data-wi-file]'))return run(async()=>{
       const file=node.files?.[0];if(!file)return;
       if(!file.size||file.size>MAX_SOURCE)throw new Error('Choose a nonempty original file up to 8 MiB.');
@@ -537,6 +648,9 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     const action=node.dataset.wiAction,value=node.dataset.value;
     if(action==='dialog-close'){$('dialog').close();return;}
     run(async()=>{
+      if(action==='browser-download'){downloadBrowserDraft();return;}
+      if(action==='browser-open'){$('[data-wi-browser-document]').click();return;}
+      if(action==='browser-reconcile')return reconcileBrowserDraft();
       if(action==='select')return openSelected(value);
       if(action==='upload')return upload();
       if(action==='clear-file'){s.uploadFile=null;await persist();render();return;}
@@ -581,7 +695,7 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   });
   const ready=(async()=>{
     if(!s.loaded){
-      try{const cached=await cacheRead(caseId);if(cached?.caseId===caseId&&cached.schema==='stellar-forge.sf47-work-intake-browser.v1')Object.assign(s,cached);}
+      try{const cached=await cacheRead(caseId);s.storageVersion=cacheRevision(cached);if(cached?.caseId===caseId&&cached.schema==='stellar-forge.sf47-work-intake-browser.v1')Object.assign(s,cached);}
       catch(error){cacheError=error;}
       s.loaded=true;
     }

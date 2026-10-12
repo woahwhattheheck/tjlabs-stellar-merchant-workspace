@@ -15,6 +15,7 @@ import {openMerchantFileClient} from '../retained-download.mjs';
 import {createAccountingStatementClient,accountingStatementPreview,accountingStatementSelection} from '../accounting-statement-client.mjs';
 import {inspectAccountingStatementCycle,runAccountingStatementCycle} from '../accounting-statement-cycle.mjs';
 import {startAccountingStatementCycleWorkbench} from '../accounting-statement-cycle-server.mjs';
+import {readAccountingStatementCustomerDossier} from '../accounting-statement-customer-dossier.mjs';
 import {createMcpToolHandler} from '../../mcp-paid-agent/http-tools.mjs';
 import {acquireStateLease} from '../../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
 import {openOutbox} from '../../../stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs';
@@ -130,7 +131,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
   const output=async(name,value)=>synced(join(directory,name),json(value),{replace:true});
   try{
     const complete=await readOptional(join(directory,'flow-result.json'));
-    if(complete?.state==='COMPLETE'){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
+    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
     const operation=await retained(join(directory,'operation.json'),async()=>({
       schema:SCHEMA,operationId:randomUUID(),createdAt:new Date().toISOString(),input:inputLabel,
       customerReference:'SCF-PERIOD-EXAMPLE',workspace:ALIAS,actor:ACTOR
@@ -214,6 +215,9 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       'stellar-forge/mcp-merchant-operator/accounting-statement-cli.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-server.mjs',
+      'stellar-forge/mcp-merchant-operator/accounting-statement-customer-dossier.mjs',
+      'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-browser-assets.json',
+      'stellar-forge/mcp-merchant-operator/cycle-public/customer-dossiers.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-setup.mjs',
       'stellar-forge/mcp-merchant-operator/cycle-public/setup.mjs',
       'stellar-forge/mcp-merchant-operator/cycle-public/index.html',
@@ -408,6 +412,68 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       const response=await responsePromise;assert.ok(response.ok(),await response.text());
       const report=await waitCycle(key);await showCycle(key);return report;
     }
+    async function customerHandover(key,report,label){
+      const customerRows=report.rows.filter(row=>row.customer.id===customer.id);
+      assert.ok(customerRows.length>=2,'Receive the same customer across its original statement rows.');
+      await showCycle(key);
+      const groups=await api(cyclePath(key)+'/customers'),group=groups.customers.find(item=>item.customerId===customer.id);
+      assert.equal(groups.cycle.cycleId,report.cycleId);assert.ok(group);
+      assert.deepEqual(group.rowIndexes,customerRows.map(row=>row.index));
+      assert.deepEqual(group.rows.map(row=>row.statement?.id??null),customerRows.map(row=>row.statement?.id??null));
+      assert.equal(group.counts.total,customerRows.length);
+      assert.equal(group.counts.delivered,customerRows.filter(row=>row.phase==='DELIVERED'&&row.delivery?.complete).length);
+      assert.ok(group.rows.every(row=>row.passes.some(pass=>pass.orderRef===native.orderRef)));
+      const section=page.locator('#customer-dossiers');
+      const customerCard=section.locator('.customer-dossier').filter({has:page.locator('details[data-dossier-customer="'+customer.id+'"]')});
+      await customerCard.waitFor();
+      const details=customerCard.locator('details[data-dossier-customer="'+customer.id+'"]');
+      if(await details.getAttribute('open')===null)await details.locator('summary').first().click();
+      assert.equal(await details.locator('.dossier-rows tbody tr').count(),customerRows.length);
+      await screenshot('desktop-customer-handover-'+label+'.png');
+      const browserDownload=page.waitForEvent('download',{timeout:120000});
+      await customerCard.locator('[data-dossier-focus="download-'+customer.id+'"]').click();
+      const receivedDownload=await browserDownload,archive=join(downloadRoot,'customer-handover-'+label+'.tar.gz');
+      await receivedDownload.saveAs(archive);assert.equal(await receivedDownload.failure(),null);
+      const snapshot=await api(cyclePath(key)+'/customers/'+customer.id+'/export',{});
+      assert.equal(snapshot.reused,true,'The browser download already saved this exact immutable customer snapshot.');
+      const repeated=await api(cyclePath(key)+'/customers/'+customer.id+'/export',{});
+      assert.equal(repeated.reused,true);assert.equal(repeated.snapshotSha256,snapshot.snapshotSha256);
+      assert.deepEqual(repeated.files,snapshot.files);
+      assert.equal(snapshot.counts.total,customerRows.length);assert.equal(snapshot.counts.delivered,group.counts.delivered);
+      assert.equal(snapshot.complete,group.complete);
+      const reopenedRoot=await privateDirectory(join(directory,'customer-handovers',label+'-'+snapshot.snapshotSha256,'renamed-customer-folder'));
+      const extracted=await extract(archive,reopenedRoot);
+      const reopened=await readAccountingStatementCustomerDossier({directory:reopenedRoot,verifyFiles:true});
+      assert.equal(reopened.snapshotSha256,snapshot.snapshotSha256);
+      assert.equal(reopened.customer.customerId,customer.id);assert.equal(reopened.cycle.cycleId,report.cycleId);
+      assert.deepEqual(reopened.statements.map(row=>row.index),group.rowIndexes);
+      assert.deepEqual(reopened.statements.map(row=>row.statement?.status??null),customerRows.map(row=>row.statement?.status??null));
+      const sorted=files=>files.map(({path,sha256,bytes})=>({path,sha256,bytes})).sort((a,b)=>a.path.localeCompare(b.path));
+      assert.deepEqual(sorted(extracted),sorted(reopened.files));
+      const originals=[];
+      for(const row of customerRows.filter(row=>row.phase==='DELIVERED'&&row.delivery?.complete)){
+        const saved=await verifyCustomer(join(reopenedRoot,'statements',row.statement.id),row);
+        const statement=JSON.parse(await readFile(join(reopenedRoot,'statements',row.statement.id,'statement.json'),'utf8'));
+        const recorded=reopened.statements.find(item=>item.index===row.index);
+        assert.deepEqual(recorded.passes,statement.items.map(item=>({orderRef:item.orderRef,label:item.label,
+          plan:item.service?{id:item.service.planId,revision:item.service.planRevision,label:item.service.planLabel}:null})));
+        originals.push(saved);
+      }
+      const packet=await desktopContext.newPage();packet.on('pageerror',error=>pageErrors.push(error.message));
+      await packet.goto(pathToFileURL(join(reopenedRoot,'index.html')).href);
+      assert.ok((await packet.locator('main').innerText()).includes(customer.name));
+      const first=reopened.statements.find(row=>row.included);
+      await packet.locator('a[href="'+first.path+'/index.html"]').first().click();
+      await packet.locator('a[href="statement.html"]').first().click();
+      assert.equal(packet.url(),pathToFileURL(join(reopenedRoot,first.path,'statement.html')).href);
+      await screenshot('reopened-customer-handover-'+label+'.png',packet);await packet.close();
+      const result={cycleKey:key,cycleId:report.cycleId,customerId:customer.id,snapshotSha256:snapshot.snapshotSha256,
+        complete:snapshot.complete,counts:snapshot.counts,reused:repeated.reused,files:reopened.files,
+        indexHref:snapshot.indexHref,downloadHref:snapshot.downloadHref,
+        manifestHref:snapshot.files.find(file=>file.path==='dossier.json').href,
+        originalStatements:originals,archive:await fileIdentity(archive),directory:reopenedRoot};
+      await output('customer-handover-'+label+'.json',result);return result;
+    }
     const periodSelection={customerId:customer.id,runId:run.id,usageOpeningId:opening.id,usageId:closing.id};
     const cumulativeSelection={customerId:customer.id,runId:run.id,usageId:closing.id};
     const cycleKey=await prepare(captureName,[periodSelection,cumulativeSelection]);
@@ -424,6 +490,8 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       if(pause&&cycle.rows.some(row=>row.phase==='EXPORT_PENDING')){
         assert.equal(cycle.counts.retained,2);assert.equal(cycle.counts.delivered,1);
         await output('partial-cycle.json',cycle);await screenshot('desktop-partial-close.png');
+        const partialHandover=await customerHandover(cycleKey,cycle,'partial');
+        assert.equal(partialHandover.complete,false);assert.equal(partialHandover.counts.delivered,1);assert.equal(partialHandover.counts.pending,1);
         const archive=join(downloadRoot,'partial-cycle.tar.gz');
         let originalPartial;
         try{originalPartial=await fileIdentity(archive);}
@@ -448,6 +516,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.equal(cycle.rows[0].delivery.files.length,9);assert.equal(cycle.rows[1].delivery.files.length,5);
     const originalIds=cycle.rows.map(row=>row.statement.id);
     emit('CUSTOMER_CLOSE_COMPLETE',{cycleKey,statementIds:originalIds,delivered:cycle.counts.delivered});
+    const issuedHandover=await customerHandover(cycleKey,cycle,'issued');assert.equal(issuedHandover.complete,true);
     const correctionKey=await prepare(captureName+' — correction',[{...periodSelection,replacesId:originalIds[0]}],{sourceStatement:originalIds[0]});
     let correction=await readCycle(correctionKey);
     if(!correction.complete)correction=await runFromBrowser(correctionKey);
@@ -470,6 +539,11 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.equal(cycle.rows[0].statement.status,'SUPERSEDED');
     assert.equal(cycle.rows[1].statement.status,'WITHDRAWN');
     await showCycle(cycleKey);await screenshot('desktop-complete-close.png');
+    const finalHandover=await customerHandover(cycleKey,cycle,'lifecycle');
+    assert.equal(finalHandover.counts.superseded,1);assert.equal(finalHandover.counts.withdrawn,1);
+    const earlierHandover=await api(issuedHandover.manifestHref);
+    assert.equal(earlierHandover.snapshotSha256,issuedHandover.snapshotSha256);
+    assert.deepEqual(earlierHandover.statements.map(row=>row.statement.status),issuedHandover.originalStatements.map(row=>row.status));
     const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
     contexts.push(phoneContext);
     const phone=await phoneContext.newPage();phone.on('pageerror',error=>pageErrors.push(error.message));
@@ -481,9 +555,14 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     await phone.locator('[data-view="cycles"]').click();
     await phone.locator('[data-cycle="'+cycleKey+'"]').click();
     await phone.locator('[data-review-saved="1"]').waitFor();await screenshot('phone-complete-close.png',phone);
+    const phoneHandover=phone.locator('#customer-dossiers details[data-dossier-customer="'+customer.id+'"]');
+    await phoneHandover.waitFor();await phoneHandover.locator('summary').first().click();
+    assert.equal(await phoneHandover.locator('.dossier-rows tbody tr').count(),2);
+    await screenshot('phone-customer-handover.png',phone);
     await phone.locator('[data-review-saved="1"]').click();await phone.locator('#review-dialog[open]').waitFor();
     await screenshot('phone-source-review.png',phone);await phone.locator('#close-review').click();
-    const downloads=[];
+    const partialHandover=await readOptional(join(directory,'customer-handover-partial.json'));
+    const downloads=[issuedHandover.archive,finalHandover.archive,...(partialHandover?[partialHandover.archive]:[])];
     const setupArchive=join(downloadRoot,'customer-setup.tar.gz');
     const setupTar=spawnSync('tar',['-czf',setupArchive,'-C',cyclesRoot,'customer-operations'],{encoding:'utf8'});
     assert.equal(setupTar.status,0,setupTar.stderr||setupTar.error?.message||'Save the complete original customer operations.');
@@ -532,6 +611,13 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     assert.equal(nativeStatements.items.length,3);
     assert.deepEqual(new Set(nativeStatements.items.map(row=>row.id)),new Set([...originalIds,correctionId]));
     await output('reopened-complete-result.json',reopened);
+    await startWorkbench();
+    const savedHandoverAfterRestart=await api(finalHandover.manifestHref);
+    assert.equal(savedHandoverAfterRestart.snapshotSha256,finalHandover.snapshotSha256);
+    assert.deepEqual(savedHandoverAfterRestart.statements.map(row=>row.statement.status),['SUPERSEDED','WITHDRAWN']);
+    const savedEarlierAfterRestart=await api(issuedHandover.manifestHref);
+    assert.equal(savedEarlierAfterRestart.snapshotSha256,issuedHandover.snapshotSha256);
+    await workbench.close();workbench=null;
     assert.deepEqual(pageErrors,[],'The actual desktop and phone application raised a browser error.');
     const images=[];
     for(const name of (await readdir(screenshots)).sort())images.push(await fileIdentity(join(screenshots,name)));
@@ -545,9 +631,10 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       withdrawal:{statementId:originalIds[1],status:reopened.rows[1].statement.status,reason:withdrawalReason},
       deliveryInterruption:pause,reopened:{partial:!!(await readOptional(join(directory,'reopened-partial-result.json'))),
         complete:true,directory:reopenRoot,statementIds:reopened.rows.map(row=>row.statement.id)},
-      customerPackets,downloads,screenshots:images,browserErrors:pageErrors,
+      customerPackets,customerDossier:{complete:finalHandover.complete,partial:partialHandover,issued:issuedHandover,lifecycle:finalHandover,reopenedAfterWorkbenchRestart:true},
+      downloads,screenshots:images,browserErrors:pageErrors,
       nativeRetainedStatements:nativeStatements.items.length,toolCalls:Object.fromEntries(calls)};
-    await synced(join(directory,'flow-result.json'),json(result));
+    await synced(join(directory,'flow-result.json'),json(result),{replace:Boolean(complete)});
     emit('COMPLETE',{result:join(directory,'flow-result.json'),customerPackets:customerPackets.length,screenshots:images.length});
     return result;
   }catch(error){

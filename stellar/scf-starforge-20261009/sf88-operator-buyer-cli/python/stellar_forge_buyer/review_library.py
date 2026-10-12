@@ -12,6 +12,7 @@ from typing import Any, Iterator, Literal
 
 from ._review_transport import ReviewError, ReviewTransport, absolute
 from ._review_transfer import ReviewFile, ReviewTransferError, TransferProgress, copy_native_file
+from .review_collections import CollectionDelivery
 from .errors import StateError
 from .storage import private_directory, read, write
 
@@ -47,17 +48,23 @@ def _iterate(fetch, *, page_size=100, **options) -> Iterator[dict[str, Any]]:
             raise StateError("REVIEW_PAGE_INCOMPLETE")
 
 
-class ResourceLibrary:
+class ResourceLibrary(CollectionDelivery):
     """Owns a native process, not a second resource store. Always close or use with."""
     def __init__(self, *, checkout, state, node="node", kind=None, source=None,
                  roots=None, max_file_bytes=None, index_bytes=None,
-                 timeout=360.0, environment=None):
+                 timeout=360.0, environment=None, received_directory=None,
+                 collection_archive=None, collection_resume=False,
+                 collection_expected_sha256=None, collection_max_bytes=None):
         self.state = Path(absolute(state))
         self.checkout = Path(absolute(checkout))
         configuration = _present(state=str(self.state), kind=kind,
             source=None if source is None else absolute(source),
             roots=None if roots is None else [absolute(path) for path in roots],
-            maxFileBytes=max_file_bytes, indexBytes=index_bytes)
+            maxFileBytes=max_file_bytes, indexBytes=index_bytes,
+            receivedDirectory=None if received_directory is None else absolute(received_directory),
+            collectionArchive=None if collection_archive is None else absolute(collection_archive),
+            collectionResume=True if collection_resume else None,
+            collectionExpectedSha256=collection_expected_sha256, collectionMaxBytes=collection_max_bytes)
         self._transport = ReviewTransport(checkout=str(self.checkout), node=node,
             configuration=configuration, timeout=timeout, environment=environment)
         self.runtime = self._transport.opened

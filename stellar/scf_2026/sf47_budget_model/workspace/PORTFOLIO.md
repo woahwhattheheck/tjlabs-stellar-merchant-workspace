@@ -6,7 +6,7 @@ The cash calculator remains the original `forecast.py` implementation. Resource 
 
 ## Open the original work
 
-Start the maintained SF47 workspace with its normal saved data directory and authenticated local URL. Open **Delivery and cash operations**, choose the original case, then **Portfolio allocation**. The original recording-operator field identifies each saved operation.
+Start the maintained SF47 workspace with its normal saved data directory and authenticated local URL. Open **Delivery and cash operations**, choose the original case, then **Portfolio**. The original recording-operator field identifies each saved operation.
 
 Choose a saved operating forecast and select **Create plan from this forecast**. The seed contains every remaining work package and selected customer implementation from that forecast. Each task keeps its source identity and original date window. Exact original grant contributor assignments are copied only when their total equals the source's remaining hours.
 
@@ -32,9 +32,47 @@ Optional predecessors express delivery dependencies between those tasks. Release
 
 The operator can change resource assignments, dependencies and date assumptions while keeping the complete source task set. Work-scope or quoted-cost changes belong in a new original operating forecast.
 
+## Allocate saved installation phases
+
+In **Portfolio**, select the original saved forecast, then **Use installation phases**. The source chooser reads current Installation editions prepared from an original Workshare. It shows the edition, customer and quote, original phase owners, dependencies, and delivery and support terms. Choose an edition for the matching commercial task. The task ID, Installation ID, edition number and edition digest stay together in the allocation.
+
+A candidate with an unavailable source retains its identity and the service's specific source result. Reopen the original installation and its retained attachments to recover that source, then choose the complete edition. The candidate list also identifies matching task IDs so similarly named customer projects remain distinguishable.
+
+Selecting phases preserves the complete existing draft when that draft is supplied. The seed attaches or refreshes base `installationPlans` and preserves every explicitly authored alternative override, including `[]`. The original grant and commercial task list remains present. A selected commercial task receives a base phase-plan entry containing every original phase; the parent task continues to supply its release, due date, priority and dependencies.
+
+### Enter the remaining phase work
+
+Enter each phase's remaining hours and assign those hours to the available resources. Use exact decimal strings in JSON. A blank value is unentered; an explicit zero means no remaining work for that phase or resource.
+
+When the commercial task's remaining hours equal the complete original quoted hours, the seed copies the original per-phase effort and any stated integer business-day durations. If that total has changed, phase remaining hours start blank and the minimum durations start at zero for an explicit new allocation. An omitted original duration remains omitted in the source terms. Review the seeded values against the work that remains.
+
+The original quoted phase hours, check observations and owners remain visible as source information. An accepted check does not supply a remaining-hour value. The phase remainders must total the commercial task's original remaining hours, and each phase's resource assignments must total that phase's remainder. Installation coordination dates are shown with the source; they do not automatically set phase due dates.
+
+Keep every original phase ID and dependency. Enter any reviewed phase dates, priorities and minimum working durations with their reason. A phase priority of `null` inherits the parent task's priority; an entered integer is explicit, including `100`. New phase plans seed priority to `null`. The bound parent task's minimum working duration must be zero; its original aggregate resource-effort map remains retained but phase assignments drive the allocation.
+
+The allocator applies phase work to the same resources and dates as all other grant and customer tasks. Support phases use that capacity too. The calendar, dated availability, predecessor constraints and original source-hour total remain part of the complete comparison.
+
+### Review the delivery boundary
+
+Select the phases that define commercial delivery and enter the reason in the delivery-boundary note. The selected phases and their ancestors establish the commercial work window used by the original Forecast. Every phase stays in the allocation, including support after delivery.
+
+For a plan whose source distinguishes handover from later support, review that distinction directly. A delivery boundary at handover can leave support continuing afterward; support still competes for the same available resources. Do not extend the commercial completion date merely by treating later support as an implicit delivery requirement.
+
+A ready phase allocation requires an explicit delivery boundary and note. Preview shows the resulting phase and delivery dates alongside the complete source terms. Original event prerequisites and promised business-day deadlines still govern commercial delivery. An entered planning release does not change an original deposit, acceptance or other prerequisite into a recorded event.
+
+A new saved Installation edition is an explicit source selection. Reopen the current edition before previewing or saving a successor allocation. Selecting a newer observation or coordination edition preserves the entered base phase draft when the original plan digest and effort are unchanged. A revised original plan or effort starts a complete base phase preparation for that source; review the remaining work and boundary again. An alternative with its own phase-plan override keeps that complete override and requires an explicit source refresh of its own.
+
+### Compare a different staffing or phase plan
+
+An alternative can override the complete `installationPlans` array, just as it can override the complete resource or task array. Each phase-bound plan included in that replacement retains all its original phases. An explicit empty array, `[]`, uses the original aggregate tasks for that alternative; enter their complete aggregate resource effort. A resource-list change may require a matching complete phase-plan override so every resource ID and phase-hour total stays valid.
+
+An omitted phase-plan override follows the base plan. An authored override remains its own complete input when the base later changes, including when a source edition is reselected. To prepare or refresh one named alternative, apply its complete inherited calendar, resources, tasks and phase plans to a temporary base with `alternatives: []`, run the seed with that alternative's reviewed edition selections, then retain the returned `installationPlans` as its explicit override. Keep all its other settings and the other alternatives. The [SDK example](AGENT.md#prepare-one-explicit-phase-alternative) shows that complete operation.
+
+Preview the whole alternative to see both the commercial delivery window and the capacity consumed by support.
+
 ## Compare complete alternatives
 
-Select **Add alternative**, enter its name and reasoning, then enable the fields that differ from the base plan. An overridden calendar replaces the whole calendar. An overridden resource list replaces the whole list. An overridden task list replaces the whole task list. Fields without overrides follow the base plan.
+Select **Add alternative**, enter its name and reasoning, then enable the fields that differ from the base plan. An overridden calendar replaces the whole calendar. An overridden resource list replaces the whole list. An overridden task list replaces the whole task list. An overridden installation-plan list replaces that whole list; each included phase plan retains every original phase, while an explicit empty list uses the aggregate tasks. Fields without overrides follow the base plan.
 
 The editor clones the current base field when its override is enabled. This makes the complete replacement visible and editable. Changes to the base after that point affect inherited fields, while the visible overridden copies remain explicit.
 
@@ -76,9 +114,32 @@ Draft inputs and unresolved save requests are retained per original case in the 
 
 **Download complete saved portfolio** produces the source-bound result archive, including the complete portfolio JSON, original forecast snapshot, input, report, dated cash and allocation CSVs. The original operations **Export complete case** includes saved portfolios and their original forecasts, plan, source attachments and event history.
 
-Import the complete original operations archive through its existing receiving interface to reopen the whole case. The standalone portfolio archive is the calculation and source handoff; the full operations archive is the native workspace receiving carrier. Saved portfolio validation checks its exact original forecast and its save event.
+Import the complete original operations archive through its existing receiving interface to reopen the whole case. The standalone portfolio archive is the calculation and source handoff; the full operations archive is the native workspace receiving carrier. Saved portfolio validation checks its exact original forecast and its save event. Phase-bound allocations also retain the selected Installation editions and exact original phase source with the saved calculation. The complete case carries those saved editions and attachments through the existing receiver.
 
 The current source adds no separate database. `operations.py` owns the original `ops_portfolios` table and case save/import transaction.
+
+### Receive the complete phase source and results
+
+A saved phase Portfolio adds these members to its original calculation ZIP:
+
+| Member | Retained content |
+| --- | --- |
+| `installations/source.json` | Selected Installation source identity, full retained phase-source snapshot and original candidate metadata. |
+| `alternatives/{alternativeId}/installation-plans.json` | Every selected plan's source edition, delivery boundary, phase allocation and calculated dates. |
+| `alternatives/{alternativeId}/installation-phases.csv` | Every phase's original and scheduled task IDs, quoted and remaining effort, source owner, check observation, delivery scope, dates and resource assignments. |
+
+The complete `portfolio.json` retains editable `inputs.installationPlans`. Result `report.alternatives[].installationPlans` rows are calculated projections; reopen the saved `inputs` when editing a successor.
+
+| Result field | Meaning |
+| --- | --- |
+| `deliveryPhaseClosure` | Selected delivery-boundary phases and all their predecessors. |
+| `deliveryStartDate` / `deliveryFinishDate` | The commercial window returned to the original Forecast when the alternative is ready. |
+| `allWorkFinishDate` | Completion of every phase, including support after the commercial boundary. |
+| `phases[].scheduleTaskId` | The phase's exact task ID in the complete original daily schedule. |
+| `phases[].deliveryScope` | Whether that phase belongs to the reviewed delivery closure. |
+| `phases[].minimumBusinessDays` | The retained result's minimum duration; the editable input field is `minBusinessDays`. |
+
+The full operations-case archive carries the matching historical Installation editions and their exact original attachments through native receiving. A historical saved calculation reopens with its original source and reviewed results. Selecting newer sources creates an editable successor in the same original case workflow.
 
 ## Runtime and source joins
 
@@ -87,8 +148,10 @@ The maintained workspace serves:
 | Entry | Purpose |
 | --- | --- |
 | `portfolio.py` | Source normalization, seed, alternatives, original cash join, saved validation and export |
+| `portfolio_installations.py` | Exact saved Installation selection, complete phase input, delivery boundary and shared-resource projection |
 | `portfolio_schedule.py` | Pure deterministic resource/day allocation |
 | `portfolio.mjs`, `portfolio.css` | Complete editor, retained save, result comparison and original forecast selection |
+| `portfolio_installation_plans.mjs` | Original Installation choices, complete phase editor, delivery-boundary review and phase results |
 | `operations.py` | Original authenticated case transaction, saved records and complete import/export |
 | `operations_http.py` | Original HTTP routes and static asset entries |
 | `operations_cli.py` | Original CLI seed, preview, save, show, export and selection |
@@ -100,7 +163,7 @@ The browser uses these original authenticated case endpoints:
 
 ```text
 POST /api/operations/{case}/portfolio-seed
-     {expectedVersion, forecastId}
+     {expectedVersion, forecastId, installationSelections?, inputs?}
 POST /api/operations/{case}/portfolio-preview
      {expectedVersion, inputs}
 POST /api/operations/{case}/command
@@ -115,6 +178,14 @@ POST /api/operations/{case}/portfolio-selection
 ```
 
 The base alternative's ID is `base`. Named alternatives have stable IDs. JSON uses decimal strings for effort and availability; the editor preserves up to eight decimal places. Source hashes and expected versions are passed to the original backend, which remains authoritative for validation and saved identities.
+
+The optional seed `installationSelections` array contains `{taskId, installationId, installationRevision, installationSha256}` for each explicitly selected edition. Optional `inputs` is the complete current Portfolio draft. The seed returns the complete editable input together with the selected source metadata and available edition choices. The adjacent [typed client declaration](agent-client.d.mts) describes these inputs and native results.
+
+A phase plan retains `taskId`, the three Installation edition fields, `deliveryPhaseIds`, `deliveryBoundaryNote`, `phases` and `note`. Each phase retains `phaseId`, explicit `remainingHours`, `effortHours`, original `dependsOn`, `releaseDate`, `dueDate`, `minBusinessDays`, `priority` and `note`. Dates are civil `YYYY-MM-DD` values or null; effort values are decimal strings or null. Phase priority is `null` to inherit the parent or an explicit integer. The seed updates base phase plans while retaining complete explicit alternative overrides. The original native service validates the complete source and allocation.
+
+The seed and preview are calculations. `portfolio.save` remains the sole Portfolio writer. Its receipt returns the case `id`, new case `version`, `action`, `kind` and saved `recordId`. Reopen that record for its native `sha256` and `previewSha256`. The outer SDK response `sha256` identifies the exact HTTP bytes.
+
+Use the [complete CLI workflow](CLI.md#portfolio-with-installation-phases) or [SDK and agent workflow](AGENT.md#portfolio-allocation-and-original-cash-handoff) to seed, preserve the reviewed request, save, select dates into the original Forecast and export the whole case. Both managed source selectors include `portfolio_installations.py`, so install the complete release before reopening a phase-bound saved allocation on another host.
 
 ### Native receiving example
 

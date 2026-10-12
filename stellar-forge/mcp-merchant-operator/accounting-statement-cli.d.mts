@@ -85,3 +85,13 @@ export type {
 export {
   prepareAccountingStatementCycle, runAccountingStatementCycle, inspectAccountingStatementCycle, observeAccountingStatementCycle,
 } from './accounting-statement-cycle.mjs';
+
+export type {
+  StatementDossierCycle, StatementDossierCustomer, StatementDossierPlan, StatementDossierSelectedPlan,
+  StatementDossierPass, StatementDossierStatementIdentity, StatementDossierCounts, StatementDossierRow,
+  StatementDossierCustomerGroup, StatementDossierGroups, StatementDossierFile, StatementDossierStatement,
+  StatementDossierManifest, StatementDossierSnapshot, StatementDossierExport,
+} from './accounting-statement-customer-dossier.mjs';
+export {
+  inspectAccountingStatementCustomerDossiers, exportAccountingStatementCustomerDossier, readAccountingStatementCustomerDossier,
+} from './accounting-statement-customer-dossier.mjs';

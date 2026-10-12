@@ -18,6 +18,14 @@ This workflow receives original CSV and TSV timesheets and supplier invoice line
 
 The complete reviewed apply runs inside the original SQLite transaction. A rejected source row or stale case version leaves the proposed record set unapplied. Reusing the exact original request returns its original result. Reopening the same source hash and intake kind returns the existing intake.
 
+## Complete browser drafts and related accounting desks
+
+**Download complete draft** includes every intake mapping, the selected original file bytes, source controls and the exact pending request. **Open complete draft** restores that complete input in its original case and first downloads the current tab’s draft. An imported pending request keeps its original request identity and reads the native result through the normal retry path.
+
+Browser writes compare the saved storage revision in one IndexedDB transaction. If another tab saves first, this tab retains its input and offers **Download this draft and open saved draft**. The downloaded draft can be reopened from the same desk. Saved case editions and the native request transaction continue to enforce their own current versions.
+
+Use **Bulk ledger intake** for complete contributor, work, invoice and observed-cash tables with native field mappings and cross-file references. It shares the same original case and records; [its operator guide](LEDGER_INTAKE.md) describes that complete workflow. This work/invoice desk supplies explicit source formats, corrections, exclusions and cross-export record reuse. Both continue into Work, Invoices, Supplier accounts and Budget performance.
+
 ## Source formats
 
 | Setting | Supported values |

@@ -144,7 +144,7 @@ starforge grant-compose \
 Keep the current application, complete detailed companion, source index and
 page shell together in that directory. Existing product selections are
 retained from the source index; the [composition guide](../../../../stellar-forge/developer-site/GRANT_COMPOSITION.md)
-describes explicitly selecting a new economic, coastal or Datasette source.
+describes explicitly selecting a new economic, coastal, merchant-financial or paired Datasette source. Its [financial application guide](../../../../stellar-forge/developer-site/GRANT_FINANCIAL_OPERATIONS.md) covers **--finance-commit**, dated customer balances, settlement and accountant receiving within the same current application.
 The four emitted reader pins go to the original `inspectGrantApplication`
 callback. The selected installed renderer/projector hashes and the original
 canonical-front identity remain recorded in the source index.
@@ -354,7 +354,7 @@ runtime.
 
 ## Preserve the installed source and receiving identity
 
-The selection retains six original component roots in their relative layout.
+The selection retains these original component roots in their relative layout.
 The maintained builder also follows their real static imports and required
 runtime declarations.
 
@@ -370,14 +370,17 @@ runtime declarations.
 
 The selected command catalog contains `installation`, `runtime-profile`,
 `runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
-`grant-demo`,
+`grant-compose`, `grant-demo`,
 `merchant-mcp`, `merchant-grant-reviewer` and
 `merchant-console-application-receive`.
 Its Applications providers are `grant-reviewer` and `merchant-console`; its
 merchant provider is `grant-reviewer-workbenches`. Its public workbench import is
 `@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. The application
 reader is also available through
-`@tokenjunkielabs/starforge-merchant/grant/application-server`. Use
+`@tokenjunkielabs/starforge-merchant/grant/application-server`, with the same
+native composer at `@tokenjunkielabs/starforge-merchant/grant/application-composer`.
+Its complete component keeps the financial, customer, Datasette, reviewer-entry
+and submission helpers together. Use
 `starforge --help` and `starforge registrations` for the actual installed
 declarations.
 

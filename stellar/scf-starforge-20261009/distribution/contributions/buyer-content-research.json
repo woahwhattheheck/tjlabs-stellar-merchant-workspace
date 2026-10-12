@@ -1,0 +1,42 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "buyer-content-research",
+  "description": "Complete-file research on the original saved-resource library",
+  "components": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search"
+  ],
+  "commands": {
+    "buyer-research": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/cli.mjs"
+  },
+  "commandDescriptions": {
+    "buyer-research": "Search complete saved files, review passages, retain queries and export findings"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/index.html",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/app.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/style.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/README.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.d.mts"
+  ],
+  "exports": {
+    "./buyer/research": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.mjs"
+    },
+    "./buyer/research/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.mjs"
+    },
+    "./buyer/research/reports": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.mjs"
+    },
+    "./buyer/research/server": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.mjs"
+    }
+  }
+}
