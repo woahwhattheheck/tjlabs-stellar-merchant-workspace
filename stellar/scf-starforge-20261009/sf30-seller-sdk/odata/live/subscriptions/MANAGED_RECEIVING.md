@@ -181,7 +181,9 @@ another application.
 
 A failed operation retains **NEEDS_ATTENTION** and the original error record. Normal
 error handling asks the original controller to stop only its selected managed
-operation. If the runtime disappears, keep its controller and receiving journal
+operation. Stop is attempted even if this receiving journal cannot be written;
+the first error remains the reported failure. A resumed retained run is bound for
+cleanup before its original recovery call. If the runtime disappears, keep its controller and receiving journal
 for the same continuation. Do not create a competing output or replace its
 publisher/customer inputs.
 

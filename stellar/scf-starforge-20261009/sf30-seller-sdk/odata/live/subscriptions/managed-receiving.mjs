@@ -211,7 +211,11 @@ export async function runManagedSubscriptionReceiving(input){
   }
   const operate=(run,operation,args,label)=>http(run,'/subscriptions/api/operate',{operation,args},label);
   async function startPhase(key){
-   const phase=state.phases[key];let run=phase.attempts.at(-1),view=await current();
+   const phase=state.phases[key];let run=phase.attempts.at(-1);
+   // This retained request already owns its original child. Keep cleanup bound
+   // before a current-state read or recovery can reopen that child and throw.
+   if(run&&!run.closed)active=run;
+   let view=await current();
    if(run&&!run.closed){
     if(view.current?.id===run.requestId){
      if(view.phase==='INTERRUPTED'||view.phase==='QUEUED'||view.current.phase==='PENDING'){
@@ -260,12 +264,19 @@ export async function runManagedSubscriptionReceiving(input){
   }
   async function stopRun(run){
    if(run.closed){active=null;return;}
-   run.stopSelectedAt??=new Date().toISOString();await save();
-   await model.applicationsStop({applicationId:state.applicationId,operationId:run.requestId});
-   const value=await wait(current,v=>v.current?.id===run.requestId&&!v.current.active&&['STOPPED','FAILED','CANCELLED','SUCCEEDED'].includes(v.phase),'Managed Stop');
-   const urls=[run.url,run.original?.live?.url,run.original?.live?.operationsUrl].filter(Boolean);
-   if(urls.length)await wait(async()=>({closed:(await Promise.all(urls.map(closed))).every(Boolean)}),v=>v.closed,'Original listener closure');
-   run.closed=true;run.stoppedAt=new Date().toISOString();run.terminal={phase:value.phase,current:value.current};active=null;await save();
+   run.stopSelectedAt??=new Date().toISOString();let firstError=null;
+   try{await save();}catch(error){firstError=error;state.errors.push({at:new Date().toISOString(),phase:'stop-selection-journal',...publicError(error)});}
+   // The original retained application/request already authorizes this Stop.
+   // A full receiving filesystem must not prevent the controller's own cleanup.
+   try{
+    await model.applicationsStop({applicationId:state.applicationId,operationId:run.requestId});
+    const value=await wait(current,v=>v.current?.id===run.requestId&&!v.current.active&&['STOPPED','FAILED','CANCELLED','SUCCEEDED'].includes(v.phase),'Managed Stop');
+    const urls=[run.url,run.original?.live?.url,run.original?.live?.operationsUrl].filter(Boolean);
+    if(urls.length)await wait(async()=>({closed:(await Promise.all(urls.map(closed))).every(Boolean)}),v=>v.closed,'Original listener closure');
+    run.closed=true;run.stoppedAt=new Date().toISOString();run.terminal={phase:value.phase,current:value.current};active=null;
+   }catch(error){firstError??=error;state.errors.push({at:new Date().toISOString(),phase:'original-controller-stop',...publicError(error)});}
+   try{await save();}catch(error){firstError??=error;state.errors.push({at:new Date().toISOString(),phase:'stop-result-journal',...publicError(error)});}
+   if(firstError)throw firstError;
   }
   async function pages(run,operation,args,label,expected){
    const hash=createHash('sha256');let offset=0,count=0,size=0;
@@ -405,8 +416,12 @@ export async function runManagedSubscriptionReceiving(input){
     files:Object.entries(state.files).sort(([a],[b])=>a.localeCompare(b)).map(([path,value])=>({path,...value})),completedAt:state.completedAt};
    state.resultFile=await immutable(root,'result.json',bytes(result));state.state='COMPLETE';await save();return result;
   }catch(error){
-   state.state='NEEDS_ATTENTION';state.errors.push({at:new Date().toISOString(),...publicError(error)});await save();
-   if(active&&!active.closed)try{await stopRun(active);}catch(stopError){state.errors.push({at:new Date().toISOString(),phase:'owned-stop',...publicError(stopError)});await save();}
+   state.state='NEEDS_ATTENTION';state.errors.push({at:new Date().toISOString(),...publicError(error)});
+   try{await save();}catch(journalError){state.errors.push({at:new Date().toISOString(),phase:'failure-journal',...publicError(journalError)});}
+   if(active&&!active.closed)try{await stopRun(active);}catch(stopError){
+    state.errors.push({at:new Date().toISOString(),phase:'owned-stop',...publicError(stopError)});
+    try{await save();}catch(journalError){state.errors.push({at:new Date().toISOString(),phase:'cleanup-journal',...publicError(journalError)});}
+   }
    throw error;
   }finally{await model?.close();}
  });
