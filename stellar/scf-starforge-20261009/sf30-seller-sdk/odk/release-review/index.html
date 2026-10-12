@@ -182,9 +182,19 @@
                 <h3 id="mapping-title">Reporting mappings</h3>
                 <span id="mapping-count" class="muted"></span>
               </div>
-              <p class="muted">Connect each saved table and field selector to its original form field. A blank selection leaves that selector unmapped.</p>
+              <p class="muted">Connect each saved table and field selector to its original form field. A blank selection omits that explicit mapping.</p>
               <form id="mapping-form">
                 <div id="mapping-list" class="mapping-list"></div>
+                <section class="table-mappings" aria-labelledby="table-mapping-title">
+                  <h4 id="table-mapping-title">Reporting tables and parent relations</h4>
+                  <p class="muted">Connect each repeat table to its exact original form path. Native root submission tables retain their original table identity.</p>
+                  <div id="table-mapping-list" class="mapping-list"></div>
+                </section>
+                <details id="omitted-mappings" class="omitted-mappings" hidden>
+                  <summary>Mappings affected by changed reporting definitions</summary>
+                  <p class="muted">These earlier mappings are absent from the current reporting inventory. Saving the current mappings recomputes the comparison.</p>
+                  <div id="omitted-mapping-list"></div>
+                </details>
                 <div id="mapping-editor" hidden>
                   <label for="mapping-note">Mapping review note</label>
                   <textarea id="mapping-note" rows="2" maxlength="20000"></textarea>

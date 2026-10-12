@@ -210,3 +210,6 @@ th { font-weight: 650; background: #f4f4f4; }
   .panel, .change-card { break-inside: avoid; }
   .metrics { border-color: #999; }
 }
+
+.table-mappings { border-top: 1px solid #d7d7d7; margin-top: 1rem; padding-top: 1rem; }
+.omitted-mappings { border: 1px solid #bdbdbd; padding: .55rem .75rem; margin-bottom: 1rem; }

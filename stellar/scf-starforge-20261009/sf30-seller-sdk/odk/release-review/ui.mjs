@@ -145,6 +145,14 @@ function serverMappings(value) {
   }
   return mappings;
 }
+function serverTableMappings(value) {
+  const mappings = Object.fromEntries(list(value.reporting?.tableBindings).filter(item => typeof item?.table === 'string' && item.path)
+    .map(item => [item.table,String(item.path)]));
+  for (const item of list(value.reporting?.tableChoices)) {
+    if (item.scope !== 'form' && item.path && !own(mappings,item.table)) mappings[item.table] = item.path;
+  }
+  return mappings;
+}
 function newDraft(value, seed) {
   const decisions = {};
   const staff = list(value.history).filter(item => item.kind === 'staff-decision').at(-1);
@@ -155,7 +163,7 @@ function newDraft(value, seed) {
   }
   return {
     reviewId: value.id, expectedRevision: value.revision, baselineId: value.baselineId, candidateId: value.candidateId,
-    decisions, mappings: serverMappings(value), reviewer: String(seed?.reviewer ?? staff?.reviewer ?? value.approval?.reviewer ?? value.reviewer ?? readStorage(storagePrefix + ':reviewer') ?? ''),
+    decisions, mappings: serverMappings(value), tableMappings: serverTableMappings(value), reviewer: String(seed?.reviewer ?? staff?.reviewer ?? value.approval?.reviewer ?? value.reviewer ?? readStorage(storagePrefix + ':reviewer') ?? ''),
     note: String(seed?.note ?? staff?.note ?? value.approval?.note ?? value.note ?? ''), mappingNote: '', dirty: false, mappingDirty: false,
   };
 }
@@ -163,8 +171,8 @@ function restoreDraft(value, discard = false, seed) {
   const saved = discard ? null : readJSON(draftKey(value.id), null);
   if (object(saved) && saved.reviewId === value.id && Number.isInteger(saved.expectedRevision) &&
       object(saved.decisions) && object(saved.mappings) && typeof saved.reviewer === 'string' && typeof saved.note === 'string' &&
-      (saved.expectedRevision === value.revision || saved.dirty === true || saved.mappingDirty === true)) {
-    draft = saved;
+      (saved.dirty === true || saved.mappingDirty === true)) {
+    draft = {...newDraft(value,seed),...saved,tableMappings:object(saved.tableMappings)?saved.tableMappings:serverTableMappings(value)};
   } else draft = newDraft(value, seed);
   saveDraft();
 }
@@ -532,12 +540,17 @@ function renderMappingCount() {
   const rows = reportSelectors();
   const fields = rows.filter(item => !item.system), keys = rows.length - fields.length;
   const unmapped = fields.filter(item => !draft.mappings[item.key]).length;
-  $('mapping-count').textContent = rows.length ? unmapped + ' of ' + fields.length + ' fields unmapped' + (keys ? ' · ' + keys + ' native keys' : '') : 'No saved reporting selectors';
+  const tables = list(review.reporting?.tableChoices).filter(item => item.scope !== 'form');
+  const unbound = tables.filter(item => !draft.tableMappings[item.table]).length;
+  $('mapping-count').textContent = rows.length || tables.length
+    ? unmapped + ' of ' + fields.length + ' fields unmapped' + (tables.length ? ' · ' + unbound + ' of ' + tables.length + ' repeat tables unmapped' : '') +
+      (keys ? ' · ' + keys + ' native keys' : '') : 'No saved reporting selectors';
 }
 function renderMappings() {
   const rows = reportSelectors();
   const choices = list(review.reporting?.fieldChoices).filter(item => typeof item?.path === 'string' && item.path);
-  $('mapping-editor').hidden = rows.every(item => item.system);
+  $('mapping-editor').hidden = rows.every(item => item.system) && !list(review.reporting?.tableChoices).some(item => item.scope !== 'form') &&
+    review.readiness?.dependenciesChanged !== true && !list(review.reporting?.omittedBindings).length;
   renderMappingCount();
   replace('mapping-list', ...(rows.length ? rows.map((item, index) => {
     const row = node('div', null, 'mapping-row'), detail = node('div'), field = node('div');
@@ -569,6 +582,47 @@ function renderMappings() {
     row.append(detail, field);
     return row;
   }) : [empty('No selected reporting outputs depend on a form selector in this review.')]));
+  renderTableMappings();
+}
+function renderTableMappings() {
+  const choices = list(review.reporting?.fieldChoices).filter(item => typeof item?.path === 'string' && item.path);
+  const tables = list(review.reporting?.tableChoices);
+  replace('table-mapping-list', ...(tables.length ? tables.map((item,index) => {
+    const row = node('div',null,'mapping-row'), detail = node('div'), field = node('div');
+    detail.append(node('strong',item.table));
+    const outputs = list(item.dependencies).map(value => typeof value === 'string' ? value : value.label || value.id).filter(Boolean);
+    if (outputs.length) detail.append(node('p','Used by: ' + outputs.join('; '),'muted'));
+    if (item.relation) {
+      const relation = node('details');
+      relation.append(node('summary','Retained parent relation'),renderValue(item.relation));
+      detail.append(relation);
+    }
+    if (item.scope === 'form') {
+      field.append(node('strong','Native root submission table'),
+        node('p','This table represents original form submissions.','muted'));
+    } else {
+      const id = 'table-path-' + index, label = node('label','Original repeat or group path'), select = node('select');
+      label.htmlFor = id; select.id = id;
+      const values = new Map(choices.map(choice => [choice.path,{value:choice.path,label:choice.path + (choice.type ? ' · ' + choice.type : '')}]));
+      const current = draft.tableMappings[item.table] || '';
+      if (current && !values.has(current)) values.set(current,{value:current,label:current + ' · Retained table mapping'});
+      fillOptions(select,[...values.values()],'Unmapped — choose an original repeat path',current);
+      select.dataset.noChoices = String(values.size === 0);
+      select.addEventListener('change',() => {
+        if (select.value) draft.tableMappings[item.table] = select.value;
+        else delete draft.tableMappings[item.table];
+        draft.mappingDirty = true;
+        saveDraft(); renderMappingCount(); renderReadiness(); updateControls();
+      });
+      field.append(label,select);
+      if (!values.size) field.append(node('p','This review has no retained original form paths to choose from.','muted'));
+    }
+    row.append(detail,field);
+    return row;
+  }) : [empty('No selected reporting tables were supplied for this review.')]));
+  const omitted = list(review.reporting?.omittedBindings);
+  $('omitted-mappings').hidden = omitted.length === 0;
+  replace('omitted-mapping-list',...(omitted.length ? [renderValue(omitted)] : []));
 }
 function unresolved(change) {
   const selected = draft?.decisions?.[change.id];
@@ -806,27 +860,31 @@ async function saveDecision(overall) {
     if (!error.status || error.status >= 500 || [408,429].includes(error.status)) mustRefreshReview = true;
     throw error;
   }
-  await acceptReviewWrite(result, {clearDraft:true, seed:{reviewer,note},
+  await acceptReviewWrite(result, {seed:{reviewer,note},
     message:overall === 'approve' ? 'Source review approved and frozen. The publication plan is ready to download.' :
       overall === 'revise' ? 'Candidate revision requested and staff review saved.' : 'Staff review saved.'});
 }
 async function saveMappings() {
   requireCurrentReview();
   const reviewer = requireReviewer(), note = requireNote($('mapping-note'), 'a mapping review note');
-  const selectors = reportSelectors(), bindings = [];
+  const selectors = reportSelectors(), bindings = [], tableBindings = [];
   for (const selector of selectors) {
     if (selector.system) continue;
     const path = draft.mappings[selector.key];
     if (path) bindings.push({path,table:selector.table,field:selector.field});
   }
+  for (const table of list(review.reporting?.tableChoices)) {
+    const path = draft.tableMappings[table.table];
+    if (table.scope !== 'form' && path) tableBindings.push({table:table.table,path});
+  }
   notice('Saving exact reporting mappings and updating the comparison…');
   let result;
-  try { result = await action('mapReports', {id:review.id,expectedRevision:draft.expectedRevision,reviewer,note,bindings}); }
+  try { result = await action('mapReports', {id:review.id,expectedRevision:draft.expectedRevision,reviewer,note,bindings,tableBindings}); }
   catch (error) {
     if (!error.status || error.status >= 500 || [408,429].includes(error.status)) mustRefreshReview = true;
     throw error;
   }
-  await acceptReviewWrite(result, {clearDraft:true, seed:{reviewer,note:''},
+  await acceptReviewWrite(result, {seed:{reviewer,note:''},
     message:'Reporting mappings saved. Review the recomputed changes and enter the new staff dispositions.'});
 }
 async function downloadPlan() {
@@ -895,7 +953,7 @@ $('review-note').addEventListener('input', () => {
 });
 $('mapping-note').addEventListener('input', () => {
   if (!draft) return;
-  draft.mappingNote = $('mapping-note').value; saveDraft();
+  draft.mappingNote = $('mapping-note').value; draft.mappingDirty = true; saveDraft(); renderReadiness(); updateControls();
 });
 $('download-draft').addEventListener('click', () => {
   if (draft) downloadJSON({workspaceId:state.workspaceId,...clone(draft)}, 'form-review-notes-' + draft.reviewId + '.json');
