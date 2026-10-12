@@ -41,13 +41,19 @@ export function normalizeFilter(value) {
   if (Buffer.byteLength(JSON.stringify(result))>8192) throw fault('GRIST_FILTER_TOO_LARGE');
   return Object.keys(result).length ? result : null;
 }
-export function binding(value,{allowUnordered=false}={}) {
-  if (value.apiVersion!=='unversioned') throw fault('GRIST_REST_API_REQUIRED');
-  let url;try{url=new URL(value.server);}catch{throw fault('GRIST_SERVER_INVALID');}
+export function normalizeGristServer(value) {
+  let url;try{url=new URL(value);}catch{throw fault('GRIST_SERVER_INVALID');}
   if (!['https:','http:'].includes(url.protocol)||url.username||url.password||url.search||url.hash||
       /%2f|%5c|%2e/i.test(url.pathname)||url.pathname.includes('//'))
     throw fault('GRIST_SERVER_INVALID','Use the exact existing Grist site origin and any fixed proxy prefix, without credentials, query or fragment.');
-  const server=url.origin+url.pathname.replace(/\/$/,'');
+  return url.origin+url.pathname.replace(/\/$/,'');
+}
+export function documentBinding(value) {
+  if (!object(value)||value.apiVersion!=='unversioned') throw fault('GRIST_REST_API_REQUIRED');
+  return {server:normalizeGristServer(value.server),apiVersion:'unversioned',docId:documentId(value.docId)};
+}
+export function binding(value,{allowUnordered=false}={}) {
+  const {server,docId}=documentBinding(value);
   const orders=value.sourceOrder??[];
   if (!Array.isArray(orders)||orders.length>8) throw fault('GRIST_SOURCE_ORDER_INVALID');
   const seen=new Set(),sourceOrder=orders.map(item=>{
@@ -61,7 +67,7 @@ export function binding(value,{allowUnordered=false}={}) {
     throw fault('GRIST_IDENTITY_ORDER_REQUIRED','End the exact native record order with id so every tie is resolved by native identity.');
   const tableId=identifier(value.tableId,'TABLE_ID');
   if(tableId.startsWith('_grist')) throw fault('GRIST_USER_TABLE_REQUIRED','Choose a user data table. Private Grist metadata is retained only by the native metadata endpoints.');
-  return{server,apiVersion:'unversioned',docId:documentId(value.docId),tableId,filter:normalizeFilter(value.filter),sourceOrder};
+  return{server,apiVersion:'unversioned',docId,tableId,filter:normalizeFilter(value.filter),sourceOrder};
 }
 export function compileQueries(value,allowEmpty=false) {
   if(!object(value)||!allowEmpty&&!Object.keys(value).length||Object.keys(value).length>32)throw fault('GRIST_QUERIES_REQUIRED');
@@ -108,14 +114,13 @@ export function selectedFields(queries) {
   if(!result.size)throw fault('GRIST_PUBLIC_SOURCE_FIELD_REQUIRED');
   return[...result].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([id,type])=>({id,type}));
 }
-export function restOptions(config,{allowUnordered=false}={}) {
-  const c=config.connection;
+export function connectionOptions(server,c) {
   only(c,['kind','tokenEnv','allowAnonymous','allowHttp','maxPageBytes','maxCaptureBytes','maxRows','timeoutMs','requestIntervalMs'],'GRIST_REST_CONNECTION_INVALID');
   if(c.kind!=='rest'||c.allowAnonymous!==undefined&&typeof c.allowAnonymous!=='boolean'||
       c.allowHttp!==undefined&&typeof c.allowHttp!=='boolean')throw fault('GRIST_REST_CONNECTION_INVALID');
   if(c.allowAnonymous===true?c.tokenEnv!==undefined:typeof c.tokenEnv!=='string'||!/^[A-Z][A-Z0-9_]{0,127}$/.test(c.tokenEnv))
     throw fault('GRIST_TOKEN_REFERENCE_REQUIRED','Declare an existing read credential by environment reference, or explicitly select anonymous access to a public document.');
-  const selected=binding(config,{allowUnordered}),url=new URL(selected.server);
+  const url=new URL(normalizeGristServer(server));
   if(url.protocol==='http:'&&!['localhost','127.0.0.1','[::1]'].includes(url.hostname)&&c.allowHttp!==true)throw fault('GRIST_HTTPS_REQUIRED');
   return{...(c.tokenEnv?{tokenEnv:c.tokenEnv}:{}),allowAnonymous:c.allowAnonymous===true,
     maxPageBytes:integer(c.maxPageBytes??16777216,1024,MAX_PAGE_BYTES,'GRIST_RESPONSE_BYTES_INVALID'),
@@ -123,6 +128,18 @@ export function restOptions(config,{allowUnordered=false}={}) {
     maxRows:integer(c.maxRows??1000000,1,1000000,'GRIST_ROW_LIMIT_INVALID'),
     timeoutMs:integer(c.timeoutMs??300000,100,3600000,'GRIST_TIMEOUT_INVALID'),
     requestIntervalMs:integer(c.requestIntervalMs??250,200,30000,'GRIST_REQUEST_INTERVAL_INVALID')};
+}
+export function restOptions(config,{allowUnordered=false,documentOnly=false}={}) {
+  const selected=documentOnly?documentBinding(config):binding(config,{allowUnordered});
+  return connectionOptions(selected.server,config.connection);
+}
+export async function readGristDocumentFile(filename) {
+  const original=await readPrivate(filename,1048576);let config;
+  try{config=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(original));}catch{throw fault('GRIST_DOCUMENT_JSON_INVALID');}
+  only(config,['schema','server','apiVersion','docId','connection'],'GRIST_DOCUMENT_CONFIG_INVALID');
+  if(config.schema!=='stellar-forge.grist-document.v1')throw fault('GRIST_DOCUMENT_CONFIG_INVALID');
+  const selected=documentBinding(config);restOptions(config,{documentOnly:true});
+  return{config,binding:selected,original,hash:digest(original)};
 }
 export function sourceSelection(config,queries=compileQueries(config.queries)){
   return{...binding(config),fields:selectedFields(queries)};

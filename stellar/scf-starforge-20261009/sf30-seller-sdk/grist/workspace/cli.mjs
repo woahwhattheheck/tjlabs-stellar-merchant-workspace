@@ -16,7 +16,10 @@ const HELP = [
   '  serve --directory PRIVATE_DIR [--create] [--port 8482] [--connections PRIVATE_CONNECTIONS.json]',
   '    [--seller PUBLIC_SELLER_ORIGIN --resource PUBLIC_RESOURCE_URL]',
   '  status --directory PRIVATE_DIR',
-  '  discover --directory PRIVATE_DIR --connections FILE --connection ALIAS --document ID --table ID [--filter-file PRIVATE_FILTER.json | --filter JSON]',
+  '  document --directory PRIVATE_DIR --connections FILE --connection ALIAS --document ID',
+  '  document-tables --directory PRIVATE_DIR --catalog UUID [--offset N --limit N --search TEXT]',
+  '  document-export --directory PRIVATE_DIR --catalog UUID --out PRIVATE_CATALOG.json',
+  '  discover --directory PRIVATE_DIR --connections FILE --connection ALIAS --document ID --table ID [--filter-file PRIVATE_FILTER.json | --filter JSON] [--catalog UUID --expected-catalog-sha256 SHA]',
   '  capture --directory PRIVATE_DIR --connections FILE --selection PRIVATE_SELECTION.json --title TITLE --expected-revision N',
   '  import-source --directory PRIVATE_DIR --source FROZEN_SOURCE.json --title TITLE --expected-revision N',
   '  import --directory PRIVATE_DIR --packet SOURCE_PACKET.json --title TITLE --expected-revision N',
@@ -46,6 +49,8 @@ const HELP = [
   '',
   'Writes accept --request UUID. Save the printed UUID and use operation/resume after an interrupted response.',
   'Capture Resume advances the original step journal under the same UUID/selection. Metadata recovery requires a retained response. A fresh observation uses a new explicit request.',
+  'Document lists retain exact metadata bytes under the same request UUID; document-tables/export perform no provider read.',
+  'Catalog IDs are actual visible native table IDs, not UI page names. Row authority and completeness are checked by later discovery/capture.',
   'Capture packets retain both complete typed responses, native document heads and visible metadata, without token values. Complete API-visible rows are observed; no atomic snapshot or independent count is claimed.',
   'The browser supplies version review, original publisher and complete original SF82 deployment controls.',
   '',
@@ -56,8 +61,8 @@ const FLAGS = new Set(['--create','--startup-json']);
 const VALUES = new Set(['--directory','--target','--connections','--port','--connection','--document','--table','--filter',
   '--selection','--title','--expected-revision','--source','--packet','--capture','--draft','--draft-revision','--preview',
   '--reviewer','--note','--expected-selected-version','--version','--left','--right','--out','--request','--input',
-  '--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource']);
-const COMMANDS = new Set(['init','serve','status','discover','capture','import-source','import','inspect-capture','attempt',
+  '--catalog','--expected-catalog-sha256','--offset','--limit','--search','--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource']);
+const COMMANDS = new Set(['init','serve','status','document','document-tables','document-export','discover','capture','import-source','import','inspect-capture','attempt',
   'draft','preview','save','select','compare','export','export-capture','packet','operation','resume','publisher',
   'deployment-status','deployment-review','deployment-prepare','deployment-stage','deployment-package',
   'deployment-console','deployment-compare','deployment-file','identity','source-identity']);
@@ -157,8 +162,19 @@ export async function main(argv = process.argv.slice(2)) {
       handed = true; await lifetime(service, ready, { compact: o['--startup-json'] === true }); return ready;
     }
     if (command === 'init' || command === 'status') result = await workspace.status();
+    else if (command === 'document') result = await workspace.listDocument({ connectionAlias: required(o, '--connection'),
+      docId: required(o, '--document'), requestId: requestId() });
+    else if (command === 'document-tables') result = workspace.documentCatalog(required(o, '--catalog'), {
+      offset: o['--offset'] === undefined ? 0 : number(o['--offset'], '--offset'),
+      limit: o['--limit'] === undefined ? 100 : number(o['--limit'], '--limit'), search: o['--search'] ?? '' });
+    else if (command === 'document-export') {
+      const artifact = await workspace.exportDocument(required(o, '--catalog'));
+      result = await saveFile(required(o, '--out'), artifact.bytes);
+    }
     else if (command === 'discover') result = await workspace.discover({ connectionAlias: required(o, '--connection'),
-      docId: required(o, '--document'), tableId: required(o, '--table'), filter: await filterOption(o), requestId: requestId() });
+      docId: required(o, '--document'), tableId: required(o, '--table'), filter: await filterOption(o),
+      ...(o['--catalog'] === undefined && o['--expected-catalog-sha256'] === undefined ? {} :
+        { catalogId: required(o, '--catalog'), expectedCatalogSha256: required(o, '--expected-catalog-sha256') }), requestId: requestId() });
     else if (command === 'capture') result = await workspace.readLive({ ...await readJson(required(o, '--selection')),
       title: required(o, '--title'), expectedDraftRevision: number(required(o, '--expected-revision'), '--expected-revision'), requestId: requestId() });
     else if (command === 'import-source') result = await workspace.importSource({ sourceFile: required(o, '--source'),

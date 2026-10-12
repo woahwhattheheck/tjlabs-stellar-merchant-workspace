@@ -5,16 +5,16 @@ import { join, dirname } from 'node:path';
 import { lstat, chmod, rename } from 'node:fs/promises';
 import { object, bytes, digest, identity, fault, stamp, absolute, privateDirectory, readPrivate,
   readJson, createFile, atomicJson, syncDirectory, acquireWorkspace } from '../../postgres/publisher/files.mjs';
-import { MAX_CAPTURE_BYTES, only, compileQueries, sourceSelection, SCALAR_TYPES, binding } from '../declaration.mjs';
+import { MAX_CAPTURE_BYTES, only, compileQueries, sourceSelection, SCALAR_TYPES, binding, documentBinding } from '../declaration.mjs';
 import { readGristCapture, bindGristCapture, captureGristSource, inspectGristCaptureAttempt } from '../capture.mjs';
-import { discoverGristTable } from '../http.mjs';
+import { discoverGristTable, discoverGristDocument, readGristDocumentCatalog, createGristDocumentReader, MAX_DOCUMENT_CATALOG_BYTES } from '../http.mjs';
 import { GristNumber, typedJSON } from '../values.mjs';
 import { openGristSourceFile, inspectGristSource } from '../source.mjs';
 import { openGristPublisher } from '../publisher/model.mjs';
 import { startPostgresPublisherServer } from '../../postgres/publisher/server.mjs';
 import { reviewGristDeployment, prepareGristDeployment, inspectGristDeployment, stageGristDeployment, readGristDeploymentFile } from '../deployment.mjs';
 import { inspectGristAuthoring } from './launch.mjs';
-import { normalizeConnections, selectConnection, connectionViews, discoveryConfig } from './provider.mjs';
+import { normalizeConnections, selectConnection, connectionViews, discoveryConfig, documentConfig } from './provider.mjs';
 import { MAX_PACKET_BYTES, makeGristSourcePacket, validatePacket, retainPacket, packetFromCapture, createOrVerify } from './packet.mjs';
 
 const SCHEMA = 'stellar-forge.grist-authoring.v1';
@@ -101,6 +101,7 @@ export async function openGristAuthoring({ directory, create = false, connection
       CREATE TABLE IF NOT EXISTS state(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS captures(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS discoveries(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS document_catalogs(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS previews(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS versions(id INTEGER PRIMARY KEY,request_id TEXT NOT NULL UNIQUE,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS operations(id TEXT PRIMARY KEY,kind TEXT NOT NULL,payload_hash TEXT NOT NULL,
@@ -227,6 +228,81 @@ export async function openGristAuthoring({ directory, create = false, connection
 
 
 
+    const documentRecord = request => {
+      assertOpen();
+      const row = db.prepare('SELECT data FROM document_catalogs WHERE id=?').get(id(request));
+      if (!row) throw fault('GRIST_DOCUMENT_CATALOG_NOT_FOUND', 'List the document tables through a declared connection first.', 404);
+      return JSON.parse(row.data);
+    };
+    function documentCatalog(request, { offset = 0, limit = 100, search = '' } = {}) {
+      integer(offset, 'Use a nonnegative table offset.');
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || typeof search !== 'string' ||
+          search.length > 128 || /[\u0000-\u001f]/.test(search)) throw fault('GRIST_CATALOG_PAGE_INVALID');
+      const { tables, ...record } = documentRecord(request), term = search.trim().toLowerCase();
+      const matched = term ? tables.filter(table => table.id.toLowerCase().includes(term)) : tables;
+      return { ...record, tables: matched.slice(offset, offset + limit),
+        page: { offset, limit, search, total: matched.length, hasMore: offset + limit < matched.length } };
+    }
+    async function retainedDocument(request) {
+      const record = documentRecord(request);
+      let raw;
+      try { raw = await readPrivate(join(directory, 'inputs', request + '.document.json'), MAX_DOCUMENT_CATALOG_BYTES); }
+      catch (issue) {
+        if (issue.code === 'ENOENT') throw fault('GRIST_DOCUMENT_CATALOG_RESOURCE_MISSING',
+          'The original retained document response is missing. Restore that exact private metadata file before selecting it; another observation uses a new explicit request.', 409);
+        throw issue;
+      }
+      const checked = readGristDocumentCatalog(raw);
+      if (checked.sha256 !== record.catalogSha256 || identity(checked.catalog.source) !== identity(record.source) ||
+          checked.catalog.metadataSha256 !== record.metadataSha256 || identity(checked.catalog.tables) !== identity(record.tables))
+        throw fault('GRIST_DOCUMENT_CATALOG_CHANGED');
+      return { record, checked };
+    }
+    async function exportDocument(request) {
+      const { checked } = await retainedDocument(id(request));
+      return { filename: 'grist-document-' + request + '.json', mime: 'application/json', bytes: checked.bytes };
+    }
+    async function performDocument(input, request, allowProvider) {
+      const file = join(directory, 'inputs', request + '.document.json');
+      let checked;
+      if (!await absent(file)) checked = readGristDocumentCatalog(await readPrivate(file, MAX_DOCUMENT_CATALOG_BYTES), input.config);
+      else {
+        if (!allowProvider) throw fault('GRIST_DOCUMENT_CATALOG_NOT_RETAINED',
+          'The complete document metadata response was not retained. This request can close with that failure; list the document again only as a new explicit observation. Recovery never repeats its provider read.', 409);
+        checked = await discoverGristDocument(input.config, { env: environment, signal: lifetime.signal });
+        await createOrVerify(file, checked.bytes, MAX_DOCUMENT_CATALOG_BYTES);
+      }
+      if (identity(checked.catalog.source) !== identity(documentBinding(input.config)))
+        throw fault('GRIST_DOCUMENT_CATALOG_BINDING_CHANGED');
+      const record = { ...checked.catalog, id: request, connectionAlias: input.connectionAlias,
+        connectionSha256: identity({ server: input.config.server, connection: input.config.connection }) };
+      transaction(() => {
+        const prior = db.prepare('SELECT data FROM document_catalogs WHERE id=?').get(request);
+        if (prior && identity(JSON.parse(prior.data)) !== identity(record)) throw fault('GRIST_DOCUMENT_CATALOG_CHANGED');
+        if (!prior) db.prepare('INSERT INTO document_catalogs VALUES(?,?)').run(request, JSON.stringify(record));
+      });
+      return documentCatalog(request);
+    }
+    async function listDocument({ connectionAlias, docId, requestId, ...extra }) {
+      if (Object.keys(extra).length) throw fault('GRIST_DOCUMENT_INPUT_INVALID');
+      const config = documentConfig(connections, { connectionAlias, docId });
+      return run('DOCUMENT', { connectionAlias, config }, requestId, () => performDocument({ connectionAlias, config }, requestId, true));
+    }
+    function selectedDocumentCatalog(input, config) {
+      if (input.catalogId === undefined && input.expectedCatalogSha256 === undefined) return null;
+      if (input.catalogId === undefined || typeof input.expectedCatalogSha256 !== 'string' ||
+          !/^[a-f0-9]{64}$/.test(input.expectedCatalogSha256)) throw fault('GRIST_DOCUMENT_SELECTION_REQUIRED');
+      const catalog = documentRecord(id(input.catalogId));
+      if (catalog.catalogSha256 !== input.expectedCatalogSha256 || catalog.connectionAlias !== input.connectionAlias ||
+          identity(catalog.source) !== identity(documentBinding(config)) ||
+          catalog.connectionSha256 !== identity({ server: config.server, connection: config.connection }))
+        throw fault('GRIST_DOCUMENT_SELECTION_CHANGED', 'Choose a table from the same retained document and host connection.', 409);
+      const selected = catalog.tables.find(table => table.id === config.tableId);
+      if (!selected) throw fault('GRIST_TABLE_NOT_IN_CATALOG', 'Select an actual native table ID from this retained document catalog.', 409);
+      return { id: catalog.id, catalogSha256: catalog.catalogSha256, tableId: selected.id, tableRef: selected.tableRef,
+        metadataSha256: catalog.metadataSha256, documentSha256: catalog.documentSha256 };
+    }
+
     const discoveryRecord = request => {
       const row = db.prepare('SELECT data FROM discoveries WHERE id=?').get(id(request));
       if (!row) throw fault('GRIST_DISCOVERY_NOT_FOUND', 'Inspect the actual table metadata first.', 404);
@@ -237,18 +313,28 @@ export async function openGristAuthoring({ directory, create = false, connection
       await createOrVerify(file, content); return file;
     }
     async function performDiscover(input, request, allowProvider) {
+      let catalog = null;
+      if (input.catalogSelection) {
+        catalog = await retainedDocument(input.catalogSelection.id);
+        const selected = catalog.record.tables.find(table => table.id === input.config.tableId);
+        if (catalog.record.catalogSha256 !== input.catalogSelection.catalogSha256 ||
+            selected?.tableRef !== input.catalogSelection.tableRef) throw fault('GRIST_DOCUMENT_SELECTION_CHANGED');
+      }
       const file = join(directory, 'inputs', request + '.discovery.json');
       let result;
       if (!await absent(file)) result = await readJson(file, 16777216);
       else {
         if (!allowProvider) throw fault('GRIST_DISCOVERY_NOT_RETAINED',
           'This metadata response was not retained. Request a new explicit metadata observation; recovery never repeats a provider read.', 409);
+        if (catalog && createGristDocumentReader(input.config, { env: environment, signal: lifetime.signal }).credentialBinding !== catalog.checked.observation.authoritySha256)
+          throw fault('GRIST_DOCUMENT_AUTHORITY_CHANGED', 'The declared read credential changed since this catalog. Make a new explicit document observation before choosing its table.', 409);
         result = await discoverGristTable(input.config, { env: environment, signal: lifetime.signal });
         await createOrVerify(file, bytes(result), 16777216);
       }
       const expectedBinding = binding(input.config);
       if (identity(result.source) !== identity(expectedBinding)) throw fault('GRIST_DISCOVERY_CHANGED');
-      const record = { ...result, id: request, connectionAlias: input.connectionAlias };
+      const record = { ...result, id: request, connectionAlias: input.connectionAlias,
+        ...(input.catalogSelection ? { catalogSelection: input.catalogSelection } : {}) };
       transaction(() => {
         const prior = db.prepare('SELECT data FROM discoveries WHERE id=?').get(request);
         if (prior && identity(JSON.parse(prior.data)) !== identity(record)) throw fault('GRIST_DISCOVERY_CHANGED');
@@ -256,10 +342,12 @@ export async function openGristAuthoring({ directory, create = false, connection
       });
       return record;
     }
-    async function discover({ connectionAlias, docId, tableId, filter = null, requestId, ...extra }) {
+    async function discover({ connectionAlias, docId, tableId, filter = null, catalogId, expectedCatalogSha256, requestId, ...extra }) {
       if (Object.keys(extra).length) throw fault('GRIST_DISCOVERY_INPUT_INVALID');
       const config = discoveryConfig(connections, { connectionAlias, docId, tableId, filter });
-      return run('DISCOVER', { connectionAlias, config }, requestId, () => performDiscover({ connectionAlias, config }, requestId, true));
+      const catalogSelection = selectedDocumentCatalog({ connectionAlias, catalogId, expectedCatalogSha256 }, config);
+      const input = { connectionAlias, config, ...(catalogSelection ? { catalogSelection } : {}) };
+      return run('DISCOVER', input, requestId, () => performDiscover(input, requestId, true));
     }
     function acquisitionConfig(input) {
       only(input, ['discoveryId','connectionAlias','sourceOrder','queries'], 'GRIST_ACQUISITION_INVALID');
@@ -820,6 +908,7 @@ export async function openGristAuthoring({ directory, create = false, connection
       if (pending) throw fault('GRIST_AUTHORING_BUSY', 'Wait for the active original operation.', 409);
       const input = JSON.parse(row.input);
       return run(row.kind, input, request, async () => {
+        if (row.kind === 'DOCUMENT') return performDocument(input, request, false);
         if (row.kind === 'DISCOVER') return performDiscover(input, request, false);
         if (row.kind === 'IMPORT') return performImport(input, request);
         if (row.kind === 'CAPTURE') return performCapture(input, request, false);
@@ -862,22 +951,25 @@ export async function openGristAuthoring({ directory, create = false, connection
     for (const row of db.prepare("SELECT id FROM operations WHERE status='interrupted' AND kind IN ('VERSION','SELECT')").all())
       await resume(row.id).catch(() => {});
     return {
-      directory, settings, discover, discovery: discoveryRecord, importSource, importPacket, readLive,
+      directory, settings, listDocument, documentCatalog, exportDocument, discover, discovery: discoveryRecord, importSource, importPacket, readLive,
       inspectCapture, saveDraft, preview, saveVersion, selectVersion, exportVersion, exportCapture, captureAttempt, compareVersions,
       openPublisher, withOpenPublisher, resume, operation, version, deploymentStatus, reviewDeployment, prepareDeployment,
       inspectDeploymentPackage, stageDeployment, openDeploymentConsole, closeDeploymentConsole,
       compareDeployment, commandDeployment, deploymentFile,
-      async status({ capturesOffset = 0, versionsOffset = 0, discoveriesOffset = 0, limit = 25 } = {}) {
-        for (const value of [capturesOffset, versionsOffset, discoveriesOffset]) integer(value, 'Use a nonnegative result offset.');
+      async status({ capturesOffset = 0, versionsOffset = 0, discoveriesOffset = 0, documentsOffset = 0, limit = 25 } = {}) {
+        for (const value of [capturesOffset, versionsOffset, discoveriesOffset, documentsOffset]) integer(value, 'Use a nonnegative result offset.');
         if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw fault('GRIST_PAGE_LIMIT_INVALID');
         assertOpen(); const state = current();
         const previewRow = db.prepare('SELECT data FROM previews ORDER BY rowid DESC LIMIT 1').get();
         const preview = previewRow ? JSON.parse(previewRow.data) : null;
         return { schema: SCHEMA, directory, ...state, connections: connectionViews(connections, environment),
+          documents: db.prepare('SELECT data FROM document_catalogs ORDER BY rowid DESC LIMIT ? OFFSET ?').all(limit, documentsOffset)
+            .map(row => { const { tables, ...summary } = JSON.parse(row.data); return summary; }),
           discoveries: db.prepare('SELECT data FROM discoveries ORDER BY rowid DESC LIMIT ? OFFSET ?').all(limit, discoveriesOffset).map(row => JSON.parse(row.data)),
           captures: db.prepare('SELECT data FROM captures ORDER BY rowid DESC LIMIT ? OFFSET ?').all(limit, capturesOffset).map(row => JSON.parse(row.data)),
           versions: db.prepare('SELECT * FROM versions ORDER BY id DESC LIMIT ? OFFSET ?').all(limit, versionsOffset).map(row => ({ id: row.id, requestId: row.request_id, ...JSON.parse(row.data) })),
-          pages: { limit, capturesOffset, versionsOffset, discoveriesOffset,
+          pages: { limit, capturesOffset, versionsOffset, discoveriesOffset, documentsOffset,
+            documentsTotal: db.prepare('SELECT count(*) AS count FROM document_catalogs').get().count,
             capturesTotal: db.prepare('SELECT count(*) AS count FROM captures').get().count,
             versionsTotal: db.prepare('SELECT count(*) AS count FROM versions').get().count,
             discoveriesTotal: db.prepare('SELECT count(*) AS count FROM discoveries').get().count },
