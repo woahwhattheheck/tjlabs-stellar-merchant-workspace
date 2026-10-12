@@ -1,0 +1,24 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "grant-portfolio-product",
+  "description": "Install, prepare and receive the complete grant portfolio product with original IATI and 360Giving sources.",
+  "commands": {
+    "grant-portfolio-workspace": "products/grant-portfolio/product.mjs",
+    "grant-portfolio-product-receiving": "products/grant-portfolio/receive.mjs"
+  },
+  "commandDescriptions": {
+    "grant-portfolio-workspace": "Prepare, inspect and reopen the original grant portfolio product on its retained runtime.",
+    "grant-portfolio-product-receiving": "Run the complete original Comic Relief customer journey from an installed runtime and reopen both received customer products."
+  },
+  "exports": {
+    "./products/grant-portfolio": "./source/products/grant-portfolio/product.mjs",
+    "./products/grant-portfolio/receiving": "./source/products/grant-portfolio/receive.mjs"
+  },
+  "supportFiles": [
+    "products/grant-portfolio/README.md",
+    "products/grant-portfolio/OPERATING.md",
+    "products/grant-portfolio/RECEIVING.md",
+    "products/grant-portfolio/SOURCE_LINEAGE.md",
+    "products/grant-portfolio/requirements.txt"
+  ]
+}
