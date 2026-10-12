@@ -18,8 +18,9 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Review exact economic series and source revisions | **Applications → DBnomics economic workspace** or `starforge dbnomics` | Original provider responses, precise native periods and values, saved analyst reports, reviewed publication and complete editable/customer receiving |
 | Publish retained SEC facts and filings, then reopen the entire operator workspace | [SEC EDGAR operating guide](products/sec-edgar/OPERATING.md) | Original public-source editions, every saved revision, customer delivery, and a complete portable receiving package |
-| Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, station and datum review, model-input conventions, coastal workbooks, native publication and complete customer files |
+| Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, reviewed multi-station studies, complete source/model-input delivery, returned-file receiving, analytical workbooks and native customer files |
 | Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
 | Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
@@ -244,9 +245,15 @@ covers interruption, native prerequisites, upgrades, and reopening. The
 provides the corresponding browser workflow.
 
 The [Coastal source operations guide](products/coops/OPERATING.md) follows the
-original station and archive workflow through source review, receiving mappings,
-complete offline residual workbooks, native merchant publication and customer
-receiving. Build this installed product with `--selection coastal-operations`.
+original station and archive workflow through reviewed multi-station studies,
+complete model-input and source deliveries, returned-file comparison, offline
+analytical workbooks, native merchant publication and customer receiving.
+Build this installed product with `--selection coastal-operations`.
+
+The [DBnomics economic workspace guide](products/dbnomics/OPERATING.md) connects
+original source review, precise economic series, saved reports, native
+publication, complete editable exports and customer receiving. Build the full
+installed application with `--selection dbnomics`.
 
 ## Operate one saved merchant
 
@@ -313,10 +320,11 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [DBnomics source revisions, saved economic reports and complete customer receiving](products/dbnomics/OPERATING.md)
 - [SEC EDGAR merchant](products/sec-edgar/README.md) and [complete operator guide](products/sec-edgar/OPERATING.md): retained company facts and filings, selected product installation, customer delivery, and whole-workspace export, receiving, and reopen.
 - [QuestDB reports, retained editions, publication and customer receiving](products/questdb/OPERATING.md)
 
-- [Coastal source review, complete workbooks and customer receiving](products/coops/OPERATING.md)
+- [Coastal studies, original source delivery, returned-file receiving and complete workbooks](products/coops/OPERATING.md)
 - [WebDAV source, merchant operator and complete receiving](products/webdav/OPERATING.md)
 - [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md): complete source, native editions, provider intake, merchant and customer receiving; [selected package recipe](stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md).
 
