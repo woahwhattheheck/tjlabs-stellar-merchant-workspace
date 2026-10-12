@@ -1,8 +1,9 @@
-# IATI aid-finance operator
+# IATI aid-finance and data-quality operator
 
 This product carries the original IATI publisher-source workflow, native XML
 dataset engine, reviewed aid-finance portfolios, private browser, complete
-customer handovers, typed client and source-workspace MCP tools. The maintained
+customer handovers, native DQA assessments and cases, typed client and
+source-workspace MCP tools. The maintained
 Runtime workspace starts, stops and reopens the same IATI application.
 
 The source selection is `iati-operator`. Its recipe, contribution records,
@@ -162,3 +163,36 @@ preparation records those directories and returns the final verified one.
 Keep the application workspace and complete customer source packets outside
 the installation. Source upgrades, profile changes and rollback use the
 existing Runtime workspace and SF46 managed-runtime lifecycle.
+
+## Native DQA engagements in this installation
+
+The same selected IATI component includes the complete DQA browser, HTTP routes,
+CLI, typed client, case store and source-workspace MCP methods. The source
+selection retains their complete Python and browser files, provider/rule
+documentation, source adapter, full installed receiving callback and guides.
+
+In Applications, open **IATI aid finance and DQA**, then choose **Data quality**.
+Save a provider profile for an existing original DQA service, capture its complete
+assessment and configuration observations, open a customer case and record named
+finding decisions. Capture the next complete assessment with a new request ID and
+compare the selected native editions. All findings, original response files and
+case revisions are available from the same saved workspace.
+
+A full DQA customer ZIP includes every case revision through the selected edition,
+its assessments and raw requests/responses/configuration observations, all related
+comparisons, complete review reports, provider definitions and selected original
+IATI finance portfolio packets. Receive that complete ZIP into another IATI
+workspace to reopen the native findings, decisions and history.
+
+The original DQA service is a separate service selected by the operator. Its
+production Python dependencies and Redis run in that service's own environment.
+The installed IATI operator keeps its original Node/Python profile. The complete
+included service launcher preserves the pinned upstream application's source,
+uses the public IATI.cloud activity endpoint through its native Solr transport,
+and retains the complete upstream exchanges for each receiving capture.
+
+Read [the DQA operator guide](../../sf30-seller-sdk/iati/DQA.md) for the exact
+provider, assessment, case, review, comparison and receiving contracts. The
+[complete installed DQA receiving procedure](../../sf30-seller-sdk/iati/receiving/DQA.md)
+operates this selected runtime, the same original Applications lifecycle and the
+full browser, CLI and MCP workflow against the original live source.
