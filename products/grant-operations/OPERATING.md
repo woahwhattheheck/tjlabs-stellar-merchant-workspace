@@ -463,6 +463,8 @@ Closing a borrowed Application connection leaves its owning Application running.
 
 ## 9. Export, receive and reopen the complete work
 
+For a complete customer delivery, use the [Grant Application handoff](HANDOFF.md). **starforge grant-application-handoff** carries the native whole-case ZIP and saved Application setup in one file, receives the original case into the explicit destination workspace, then prepares and saves its receiving Application through the existing lifecycle. The same retained operation resumes an interrupted case import or Application save and returns both actual destination identities.
+
 Choose the native export matching the intended scope:
 
 | Export | Scope |
