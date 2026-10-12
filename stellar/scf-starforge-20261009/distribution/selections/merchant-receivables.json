@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-receivables",
   "title": "Merchant receivables and Stellar invoice collection",
-  "description": "Original service quotations, reviewed invoices and Stellar wallet requests, exact native transfer receiving, installment schedules, customer allocations, credits and dated account delivery through the merchant desk and existing accounting MCP session.",
+  "description": "Original service quotations, reviewed invoices and Stellar wallet requests, exact native transfer receiving, installment schedules, customer allocations, credits and dated account delivery through the merchant desk and existing accounting MCP session, with complete customer setup and statement closing.",
   "base": {
     "commands": [
       "installation",
@@ -62,7 +62,8 @@
     "merchant-commercial",
     "merchant-implementation",
     "merchant-service-operations",
-    "receivables-agent"
+    "receivables-agent",
+    "customer-closing"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -91,7 +92,8 @@
     "products/merchant-receivables/README.md",
     "products/merchant-payment-plans/README.md",
     "products/merchant-service-agreements/README.md",
-    "stellar-forge/mcp-paid-agent/package.json"
+    "stellar-forge/mcp-paid-agent/package.json",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
