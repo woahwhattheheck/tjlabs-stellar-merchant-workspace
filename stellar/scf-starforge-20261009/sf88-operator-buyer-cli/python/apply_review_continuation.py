@@ -17,7 +17,7 @@ import stat
 import tempfile
 
 OPERATION = "SCF-JOURNAL-CONTINUATION-90ED-20261012"
-OVERLAY_SHA256 = "7f021c4ae0f1588b74982ae327d686be85bd5224c55b4454c7debb63deaedc92"
+OVERLAY_SHA256 = "94eb78d75b3f2e1a56c5c90b02cce639fe14f6cd3ee9937682862ed4f1106424"
 PREFIX = "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/"
 NAMES = {
     "comparison.js", "comparison.html", "comparison-returns.js",
