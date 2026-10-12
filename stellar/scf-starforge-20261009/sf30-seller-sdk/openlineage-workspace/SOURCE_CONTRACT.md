@@ -141,10 +141,12 @@ sources. Reviews and results must reference entities that exist in their selecte
 edition.
 
 The export includes the entire portable application. Current packages declare
-applicationVersion 2 and contain all 40 portable files, including the producer
-queue, encoding adapter, typed producer configuration and complete operating
-guides. Receiving still accepts the original 35-file application package without
-applicationVersion. A gzip source requires the current application.
+applicationVersion 7 and contain all 81 portable files, including original
+synchronous and asynchronous clients, schema and quality review, service levels,
+runtime receiving and their operating guides. Receiving retains the complete
+earlier application inventories, including the original 35-file application
+without applicationVersion and the 40-file version 2 application. A gzip source
+requires version 2 or a later complete application.
 
 Receiving checks a compressed source's unchanged object hash, decoded length
 and decoded hash before reconstructing its original event positions. It verifies
@@ -220,3 +222,7 @@ Pinned quality adapters follow OpenLineage commit 8ad5c14c63fbab63fedd8ff42f9a20
 Operator rules use the original revision and operation journal. Saved evaluations retain exact source/event selections and immutable rule versions. Their findings are recomputed during receiving against the complete original sources and named edition. Dispositions retain decision history against the exact saved finding. Browser authoring binds to the displayed workspace, revision, edition and dataset/run selection; preview hashes bind evaluation saves.
 
 Application version 5 carries all ten quality source leaves and preserves exact legacy version 1, 2, both version 3 and version 4 receiving inventories. The portable application contains 76 files; the managed contribution also carries the original application provider. The complete operator workflow is documented in QUALITY_OPERATOR.md.
+
+## Native client runtime receiving
+
+Version 7 adds the complete native client runtime receiving programme to the portable application (81 files), while retaining exact earlier version 6 application receiving. The original Java producer can export its complete successful native runtime, receive all unchanged dependencies into a new local classpath without Maven, and continue its original operations from the delivered application. Original source, POM, dependency order, hashes and preparation provenance remain retained. JAVA_RUNTIME_RECEIVING.mjs operates the released Python and Java SDKs through a complete workspace/runtime handover with exact pending-wire continuation. JAVA_PRODUCER.md describes these original interfaces and the independent runtime package.
