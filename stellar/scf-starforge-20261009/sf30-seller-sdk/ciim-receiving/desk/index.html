@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>CIIM receiving desk</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<a class="skip" href="#main">Skip to workspace</a>
+<header class="masthead"><div><p class="eyebrow">Metadata operations</p><h1>CIIM receiving desk</h1><p id="workspace-label">Open the original receiving workspace.</p></div><div class="session"><label for="operator">Operator name</label><input id="operator" autocomplete="name" placeholder="Name recorded with decisions"><button id="refresh" type="button">Refresh saved state</button><span id="revision" class="muted"></span></div></header>
+<section id="connection" class="panel" hidden><h2>Open local session</h2><p>Use the session token from the original desk link on this host.</p><form id="connection-form"><label for="session-token">Session token</label><input id="session-token" type="password" autocomplete="off" required><button type="submit">Open desk</button></form></section>
+<div id="message" role="status" aria-live="polite"></div>
+<section id="pending" class="panel pending" hidden><h2>Saved decision request</h2><p id="pending-summary"></p><pre id="pending-detail"></pre><div class="actions"><button id="recover" type="button">Recover original request</button><button id="discard-pending" type="button" hidden>Dismiss rejected request</button></div></section>
+<nav id="navigation" aria-label="Receiving workspace"><button data-view="overview">Overview</button><button data-view="intake">Intake</button><button data-view="records">Records</button><button data-view="profiles">Profiles</button><button data-view="comparison">Edition changes</button><button data-view="handbacks">Handbacks</button><button data-view="context">Receiving context</button><button data-view="history">History</button></nav>
+<main id="main" tabindex="-1"><div id="content"></div></main>
+<dialog id="detail"><div class="dialog-heading"><h2 id="detail-title">Original record</h2><button id="close-detail" type="button" aria-label="Close detail">Close</button></div><div id="detail-content"></div></dialog>
+<footer><p>Saved native editions, original source attachments and named receiving decisions.</p><button id="workspace-export" type="button">Download complete workspace</button></footer>
+<script type="module" src="/browser.mjs"></script>
+</body></html>
