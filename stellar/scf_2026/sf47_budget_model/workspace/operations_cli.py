@@ -229,6 +229,20 @@ def register(subparsers, common):
     command("installations", "List current saved customer installation editions", case=True, output=True)
     target = command("installation-seed", "Prepare a complete installation from the original funded work packages", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
+    for verb in ("installation-commercial", "installation-commercial-seed"):
+        target = command(verb, "Read accepted SF74 quotations or prepare their complete Customer Installation", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--source", required=True, help="Complete original Merchant Support workspace or handoff source ID")
+        target.add_argument("--expected-source-sha256", required=True)
+        if verb == "installation-commercial-seed":
+            target.add_argument("--quote", required=True)
+            target.add_argument("--quote-sha256", required=True)
+            target.add_argument("--acceptance", required=True, help="Original recorded current customer acceptance UUID")
+            target.add_argument("--acceptance-sha256", required=True)
+            target.add_argument("--installation", help="Current Installation; omit to prepare a new one")
+            target.add_argument("--expected-revision", type=int, required=True)
+            target.add_argument("--document", help="Complete original editable Installation JSON")
+            target.add_argument("--resolutions", help="JSON object mapping reviewed conflicting fields to accepted or current")
     for verb in ("installation-workshares", "installation-workshare-seed"):
         target = command(verb, "Read or receive complete original commercial Workshares from retained case sources", case=True, output=True)
         target.add_argument("--expected-version", type=int, required=True)
@@ -720,6 +734,23 @@ def operate(workspace, args):
         result = {"installations": ops.list_installations(args.case)}
     elif action == "installation-seed":
         result = ops.seed_installation(args.case, {"expectedVersion": args.expected_version})
+    elif action in ("installation-commercial", "installation-commercial-seed"):
+        selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
+                    "expectedSourceSha256": args.expected_source_sha256}
+        if action == "installation-commercial":
+            result = ops.installation_commercial(args.case, selected)
+        else:
+            selected.update({"quoteId": args.quote, "quoteSha256": args.quote_sha256,
+                             "acceptanceId": args.acceptance, "acceptanceSha256": args.acceptance_sha256,
+                             "installationId": args.installation, "expectedRevision": args.expected_revision})
+            for argument, field in ((args.document, "document"), (args.resolutions, "resolutions")):
+                if argument:
+                    from operations_installations import MAX_DOCUMENT_BYTES
+                    try:
+                        selected[field] = json.loads(read_bytes(argument, MAX_DOCUMENT_BYTES))
+                    except (UnicodeError, ValueError) as exc:
+                        raise Problem("Use complete UTF-8 Installation input or field choices.", 422, "INVALID_JSON") from exc
+            result = ops.seed_commercial_installation(args.case, selected)
     elif action in ("installation-workshares", "installation-workshare-seed"):
         selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
                     "expectedSourceSha256": args.expected_source_sha256,
