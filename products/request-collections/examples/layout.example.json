@@ -1,0 +1,33 @@
+{
+  "schema": "tjlabs.request-collections.example-layout.v1",
+  "label": "Monthly customer collection",
+  "stateRoot": "/srv/request-collections/customer-state",
+  "collectionsDirectory": "/srv/request-collections/customer-state/collections",
+  "inboxDirectory": "/srv/request-collections/customer-state/inbox",
+  "collectionAlias": "monthly",
+  "profileAlias": "monthly",
+  "passEnv": "SF88_BACKUP_PASSPHRASE",
+  "python": "/usr/bin/python3",
+  "sources": {
+    "reference": "/srv/request-collections/customer-state/requests/reference.json",
+    "report": "/srv/request-collections/customer-state/requests/report.json"
+  },
+  "buyers": {
+    "primary": "/srv/request-collections/customer-state/buyer-reference",
+    "reports": "/srv/request-collections/customer-state/buyer-reports"
+  },
+  "source": {
+    "connectionFile": "/srv/request-collections/control/source-launch.json",
+    "mcpDirectory": "/srv/request-collections/control/source-mcp",
+    "bundle": "/srv/request-collections/backups/monthly",
+    "recoveryAlias": "monthly_source"
+  },
+  "receiver": {
+    "connectionFile": "/srv/request-collections/control/receiving-launch.json",
+    "mcpDirectory": "/srv/request-collections/control/receiving-mcp",
+    "journalDirectory": "/srv/request-collections/receiving-journal",
+    "bundle": "/srv/request-collections/received/monthly",
+    "recoveryAlias": "monthly_receiver",
+    "collectionAlias": "monthly_restored"
+  }
+}
