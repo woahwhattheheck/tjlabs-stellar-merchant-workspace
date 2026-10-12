@@ -5,7 +5,7 @@ import { request } from 'node:http';
 import { Console } from 'node:console';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { MCP_VERSION } from './http-tools.mjs';
+import { MCP_VERSION, MAX_MCP_REQUEST_BYTES, MAX_MCP_REPLY_BYTES } from './http-tools.mjs';
 
 // A merchant-supplied workspace owns its runtime. Load the paid buyer only when
 // the default buyer transport is actually selected.
@@ -22,7 +22,7 @@ const rpcError = (id, code, message) => ({ jsonrpc: '2.0', id, error: { code, me
 const failure = code => Object.assign(new Error(code), { code });
 
 /** One request, one original handler invocation. The private HTTP hop never retries. */
-function forward(endpoint, token, rpc, signal) {
+function forward(endpoint, token, rpc, signal, maximumReplyBytes = MAX_REPLY_BYTES) {
   const body = Buffer.from(JSON.stringify(rpc));
   return new Promise((done, reject) => {
     const req = request(endpoint, {
@@ -37,7 +37,7 @@ function forward(endpoint, token, rpc, signal) {
       const chunks = [];
       res.on('data', chunk => {
         size += chunk.byteLength;
-        if (size > MAX_REPLY_BYTES) res.destroy(failure('MCP_LOCAL_REPLY_TOO_LARGE'));
+        if (size > maximumReplyBytes) res.destroy(failure('MCP_LOCAL_REPLY_TOO_LARGE'));
         else chunks.push(chunk);
       });
       res.once('error', reject);
@@ -62,7 +62,8 @@ function forward(endpoint, token, rpc, signal) {
  * A trusted embedding can supply its existing workspace factory. It receives the
  * same environment as startMcpWorkspace, with an ephemeral loopback port and a
  * transport-only bearer generated here. It must return {address, close} and may
- * declare maxRequestBytes (up to 32 MiB) for its original HTTP handler.
+ * declare maxRequestBytes (up to 65 MiB) and maxReplyBytes (up to 128 MiB)
+ * for its original HTTP handler. Defaults remain 128 KiB and 8 MiB.
  * The default factory owns the original broker, approval adapter and quote store.
  */
 export async function startMcpStdio({
@@ -79,11 +80,14 @@ export async function startMcpStdio({
   const workspace = await startWorkspace({ environment: {
     ...environment, MCP_ACCESS_TOKEN: token, MCP_PORT: '0', MCP_CLIENT_ORIGINS: '',
   } });
-  let endpoint, maxFrameBytes;
+  let endpoint, maxFrameBytes, maxReplyBytes;
   try {
     maxFrameBytes = workspace.maxRequestBytes ?? MAX_FRAME_BYTES;
-    if (!Number.isSafeInteger(maxFrameBytes) || maxFrameBytes < 1 || maxFrameBytes > 32 * 1024 * 1024)
+    if (!Number.isSafeInteger(maxFrameBytes) || maxFrameBytes < 1 || maxFrameBytes > MAX_MCP_REQUEST_BYTES)
       throw failure('MCP_WORKSPACE_REQUEST_LIMIT_INVALID');
+    maxReplyBytes = workspace.maxReplyBytes ?? MAX_REPLY_BYTES;
+    if (!Number.isSafeInteger(maxReplyBytes) || maxReplyBytes < 1 || maxReplyBytes > MAX_MCP_REPLY_BYTES)
+      throw failure('MCP_WORKSPACE_REPLY_LIMIT_INVALID');
     endpoint = new URL(workspace.address);
     if (endpoint.protocol !== 'http:' || endpoint.hostname !== '127.0.0.1' ||
         endpoint.username || endpoint.password || endpoint.hash || endpoint.search ||
@@ -138,7 +142,7 @@ export async function startMcpStdio({
   async function notification(rpc) {
     if (rpc.method === 'notifications/initialized') {
       if (phase === 'WAITING_FOR_CLIENT') {
-        await forward(endpoint, token, rpc);
+        await forward(endpoint, token, rpc, undefined, maxReplyBytes);
         if (phase === 'WAITING_FOR_CLIENT') phase = 'READY';
       }
       return;
@@ -190,7 +194,7 @@ export async function startMcpStdio({
     active.set(key, entry);
     entry.operation = (async () => {
       try {
-        const reply = await forward(endpoint, token, rpc, entry.controller.signal);
+        const reply = await forward(endpoint, token, rpc, entry.controller.signal, maxReplyBytes);
         if (rpc.method === 'initialize' && phase === 'INITIALIZING')
           phase = reply?.result?.protocolVersion === MCP_VERSION ? 'WAITING_FOR_CLIENT' : 'NEW';
         if (!entry.cancelled && reply) await emit(reply);
@@ -239,7 +243,7 @@ export async function startMcpStdio({
   })();
   reading.catch(() => { void close('INPUT_CLOSED'); });
   return {
-    close, closed, protocolVersion: MCP_VERSION, maxRequestBytes: maxFrameBytes,
+    close, closed, protocolVersion: MCP_VERSION, maxRequestBytes: maxFrameBytes, maxReplyBytes,
     durable: workspace.durable === true,
     paymentAdapterConnected: workspace.paymentAdapterConnected === true,
   };
