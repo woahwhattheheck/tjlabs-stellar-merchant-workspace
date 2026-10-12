@@ -7,15 +7,18 @@ import { normalizeFredDdpCsvLayout,readFredDdpCsvPackage } from './package-csv.m
 import { readFredDdpXmlPackage } from './package-xml.mjs';
 const SCHEMA='stellar-forge.fred-ddp-package.v1';
 const same=(a,b)=>canonical(a)===canonical(b);
-const packageModels=new WeakMap();
+// Keep one complete immutable model across JSON/disk receiving. The full
+// source core and digest are validated before every lookup. Clear the prior
+// model before parsing a different capture so retention stays bounded.
+let packageModel=null;
 function immutable(value){
   if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.freeze(value);for(const key of Object.keys(value))immutable(value[key]);}
   return value;
 }
-function retainedModel(capture,core,captureSha256){
-  const previous=packageModels.get(capture);
-  if(previous?.captureSha256===captureSha256)return previous.parsed;
-  const parsed=immutable(parsePackage(core,captureSha256));packageModels.set(capture,{captureSha256,parsed});return parsed;
+function retainedModel(core,captureSha256){
+  if(packageModel?.captureSha256===captureSha256)return packageModel.parsed;
+  packageModel=null;
+  const parsed=immutable(parsePackage(core,captureSha256));packageModel={captureSha256,parsed};return parsed;
 }
 export const FRED_DDP_PACKAGE_FORMATS=Object.freeze(['board-sdmx-zip','board-sdmx-xml','ddp-csv']);
 export { normalizeFredDdpCsvLayout,normalizeFredDdpRelease };
@@ -71,7 +74,7 @@ function parsePackage(core,captureSha256){
 export function sealFredDdpPackage(input){
   const core=sourceCore(input),captureSha256=ddpDigest(core),capture={...core,id:'fred-ddp-package-'+captureSha256,captureSha256};
   need(utf8Length(JSON.stringify(capture))<=MAX_DDP_CAPTURE_BYTES,'The complete original package capture exceeds its JSON capacity.');
-  retainedModel(capture,core,captureSha256);
+  retainedModel(core,captureSha256);
   return capture;
 }
 export function inspectFredDdpPackage(capture){
@@ -79,7 +82,7 @@ export function inspectFredDdpPackage(capture){
   need(utf8Length(JSON.stringify(capture))<=MAX_DDP_CAPTURE_BYTES,'The complete original package capture exceeds its JSON capacity.');
   const core=sourceCore(capture),captureSha256=ddpDigest(core),expected={...core,id:'fred-ddp-package-'+captureSha256,captureSha256};
   need(same(capture,expected),'The complete original DDP package identity changed.');
-  const parsed=retainedModel(capture,core,captureSha256);
+  const parsed=retainedModel(core,captureSha256);
   return {schema:'stellar-forge.fred-ddp-package-model.v1',id:capture.id,captureSha256,
     release:core.release,format:core.format,source:fredDdpFileDescriptor(core.file),...parsed};
 }
