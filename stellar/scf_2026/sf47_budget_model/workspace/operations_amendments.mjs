@@ -297,10 +297,10 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
       if(action==='reload-local'){
         const id=desk.id;serial=Promise.resolve();storageFault=false;await openDraft(id);return;
       }
-      await serial;
-      if(action==='refresh'){await refresh();if(desk?.selection)await openSaved(desk.selection.id,desk.selection.revision,false);render();return;}
       if(action==='sources'){onSources?.();return;}
       if(action==='export-case'){const response=await saveApi(base+'/export.zip',undefined,{download:true});download(await response.blob(),caseId+'-complete.zip','application/zip');return;}
+      await serial;
+      if(action==='refresh'){await refresh();if(desk?.selection)await openSaved(desk.selection.id,desk.selection.revision,false);render();return;}
       if(action==='new'){await createDraft();return;}
       if(action==='open'){if(!desk)await createDraft();await openSaved(target.dataset.id,Number(target.dataset.revision));return;}
       if(action==='revise'){await createDraft(detail.amendment);return;}

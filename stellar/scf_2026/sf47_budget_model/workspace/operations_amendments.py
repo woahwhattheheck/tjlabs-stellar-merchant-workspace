@@ -499,10 +499,27 @@ def native_plan_rows(raw):
         raise Problem("The selected original planning history is unreadable.", 422, "AMENDMENT_PLAN_SOURCE") from exc
 
 
-def _records_at(events, version):
+def _records_at(events, version, work_intakes=()):
     result = {kind: {} for kind in domain.KINDS}
+    intakes = {row["caseVersion"]: row for row in work_intakes if row.get("state") == "APPLIED"}
     for event in events[:version]:
         kind, after = event.get("kind"), event.get("after")
+        if event.get("action") == "work-intake.apply":
+            intake = intakes.get(event.get("version"))
+            if (not intake or intake.get("id") != event.get("recordId")
+                    or digest({key: value for key, value in intake.items() if key != "sha256"}) != intake.get("sha256")):
+                fail("Retain the original applied work/invoice intake and its native record snapshots.", "AMENDMENT_HISTORY")
+            for link in intake["applied"]["links"]:
+                linked_kind, ident, snapshot = link.get("kind"), link.get("recordId"), link.get("snapshot")
+                if linked_kind not in ("work", "invoices") or not isinstance(snapshot, dict) or snapshot.get("id") != ident:
+                    fail("The applied intake lost an original work/invoice record.", "AMENDMENT_HISTORY")
+                if link.get("operation") == "CREATED":
+                    if ident in result[linked_kind] or snapshot.get("version") != event["version"]:
+                        fail("An intake-created record conflicts with earlier native work.", "AMENDMENT_HISTORY")
+                    result[linked_kind][ident] = snapshot
+                elif link.get("operation") != "REUSED" or result[linked_kind].get(ident) != snapshot:
+                    fail("The intake reuse differs from the actual prior native record.", "AMENDMENT_HISTORY")
+            continue
         if kind not in result:
             continue
         if not isinstance(after, dict) or not isinstance(after.get("id"), str):
@@ -515,9 +532,11 @@ def _record_set(records):
     return {kind: sorted(values, key=lambda row: row["id"]) for kind, values in records.items()}
 
 
-def validate_import(ops, context, rows, events, planning_raw):
+def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=()):
     if not isinstance(rows, list) or len(rows) > MAX_EDITIONS or len(canonical(rows).encode()) > MAX_HISTORY_BYTES:
         fail("The complete amendment history exceeds its supported bound.", "AMENDMENT_LIMIT", 413)
+    if not isinstance(work_intakes, (list, tuple)) or any(not isinstance(row, dict) for row in work_intakes):
+        fail("Retain the complete native work/invoice intake history.", "AMENDMENT_HISTORY")
     expected_events = [event for event in events if event.get("action") in ACTIONS]
     if not rows:
         if expected_events:
@@ -569,7 +588,7 @@ def validate_import(ops, context, rows, events, planning_raw):
             initial = first_application["preview"]["snapshot"]["plan"] if first_application else context["plan"]
             if applied or not same_plan(snapshot["plan"], initial):
                 fail("The amendment proposal belongs to a different case baseline.", "AMENDMENT_HISTORY")
-        if _record_set(snapshot["records"]) != _records_at(events, candidate["observedVersion"]):
+        if _record_set(snapshot["records"]) != _records_at(events, candidate["observedVersion"], work_intakes):
             fail("The amendment omitted or changed an original case record.", "AMENDMENT_HISTORY")
         for source_id, metadata in snapshot["sources"].items():
             if original_sources.get(source_id) != metadata:
@@ -616,7 +635,7 @@ def validate_import(ops, context, rows, events, planning_raw):
                         or application.get("preservedSourcesSha256") != digest(snapshot["sources"])
                         or application.get("caseCalendarStart") != snapshot["program"].get("calendarStart")):
                     fail("The applied baseline differs from its original review.", "AMENDMENT_HISTORY")
-                if _records_at(events, version - 1) != _record_set(snapshot["records"]):
+                if _records_at(events, version - 1, work_intakes) != _record_set(snapshot["records"]):
                     fail("Recorded work changed between review and baseline application.", "AMENDMENT_HISTORY")
                 if applied and not same_plan(applied[-1]["preview"]["selectedPlan"], snapshot["plan"]):
                     fail("The applied baseline chain is incomplete.", "AMENDMENT_HISTORY")

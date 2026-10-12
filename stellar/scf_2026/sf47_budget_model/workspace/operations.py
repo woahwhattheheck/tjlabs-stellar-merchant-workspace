@@ -1136,7 +1136,8 @@ class Operations:
                     or files["node-accounting-observations.csv"] != csv_bytes(buyer.NODE_CSV_FIELDS, buyer.node_csv_rows(context))
                     or json.loads(files["summary.json"]).get("delivery", {}).get("nodeAccounting") != buyer.node_report(context)):
                 domain.fail("A Node operating report differs from its original source associations.", "BUYER_NODE_RECEIVING_SOURCE")
-        saved_amendments = amendments.validate_import(self, context, document.get("amendments", []), events, files["planning.zip"])
+        saved_amendments = amendments.validate_import(self, context, document.get("amendments", []), events, files["planning.zip"],
+                                                       work_intakes=document.get("workIntakes", []))
         amendments.validate_files(saved_amendments, files)
         def selected_plan_at(version):
             return amendments.plan_at(saved_amendments, plan, version)
@@ -1156,7 +1157,8 @@ class Operations:
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
             domain.fail("The selected installation heads differ from their complete retained editions.")
-        saved_work_intakes = work_intake.validate_import(context, document.get("workIntakes", []), events, files)
+        saved_work_intakes = work_intake.validate_import(context, document.get("workIntakes", []), events, files,
+                                                        plan_for_version=selected_plan_at)
         intake_refs = work_intake.refs(saved_work_intakes)
         if document.get("workIntakeRefs", []) != intake_refs:
             domain.fail("The current work/invoice intake selections differ from their complete saved editions.", "INTAKE_RECEIVING")
