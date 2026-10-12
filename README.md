@@ -63,6 +63,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review a Zotero library and hand over the original Research project | `starforge zotero` and [the complete operating guide](products/zotero/OPERATING.md) | Exact library pages, collection projects, original evidence and complete linked Research receiving across successive operators |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, complete customer installation commissioning and handover, original buyer and support observations, source-bound implementation evidence, cohort review, tranche completion and complete workspace receiving |
+| Operate a RisingWave subscription data product | **Applications → RisingWave source and dataset publishers** or `starforge risingwave-workspace` | Native relation and subscription authoring, complete retained snapshots and changes, full differences, versioned publication and complete customer receiving |
 | Operate a QuestDB time-series data product | **Applications → QuestDB source and dataset publishers** or `starforge questdb-workspace` | Native fixed-window, SAMPLE BY and keyed-ASOF reports, complete retained editions, versioned publication and full customer receiving |
 | Operate a SQL Server data product | **Applications → SQL Server data products** or `starforge mssql-agent` | Native catalog and typed-query review, retained sellers, 21 merchant tools, complete customer files and resumable merchant receiving; [selected installation and operating guide](products/mssql/README.md) |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
@@ -196,6 +197,13 @@ source review, managed browser/MCP operation, native dataset delivery and the
 original analytical/customer workflow. Build its complete installed edition with
 `--selection worldbank`; [receiving](products/worldbank/RECEIVING.md) continues the
 same installed source through reports, workbook and a reopened customer application.
+
+The [RisingWave operating guide](products/risingwave/OPERATING.md) connects
+native relation and subscription authoring to complete retained editions,
+full difference receiving, merchant publication and installed Applications.
+Build its committed source selection with `--selection risingwave`; the product
+includes the original native and managed receiving operators and their full
+operating instructions.
 
 ## Open the source product
 
@@ -361,6 +369,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [RisingWave subscriptions, complete editions, publication and customer receiving](products/risingwave/OPERATING.md)
 
 - [DBnomics source revisions, saved economic reports and complete customer receiving](products/dbnomics/OPERATING.md)
 - [SEC EDGAR merchant](products/sec-edgar/README.md) and [complete operator guide](products/sec-edgar/OPERATING.md): retained company facts and filings, selected product installation, customer delivery, and whole-workspace export, receiving, and reopen.
