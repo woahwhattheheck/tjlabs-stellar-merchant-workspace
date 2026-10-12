@@ -407,8 +407,590 @@ def main(root):
         for workspace,_ in handles.values():workspace.close()
 
 
+def continue_packages(root, route):
+    """Continue the completed native case with referenced package reassignment."""
+    import sqlite3
+    root = Path(root).resolve()
+    app = Path(__file__).resolve().parent
+    sys.path.insert(0, str(app))
+    from model import Workspace, Problem, canonical, digest
+    from operations import Operations
+    import operations_amendments as amendments
+    import operations_completion as completion
+
+    output = root / "output"
+    checkpoint = output / "amendment-receiving-checkpoint.json"
+    if not checkpoint.is_file():
+        raise RuntimeError("Open the retained receiving root containing its original checkpoint.")
+    journal = json.loads(checkpoint.read_bytes())
+    if journal.get("operationId") != OPERATION or journal.get("status") != "PASS":
+        raise RuntimeError("Continue the completed original receiving operation and checkpoint.")
+    cases = {"original": journal.get("caseId"), "receiver": journal.get("receiverId"),
+             "second-receiver": journal.get("phases", {}).get(
+                 "received_case_complete_handover", {}).get("receipt", {}).get("id")}
+    if route not in cases or not cases[route]:
+        raise RuntimeError("Select a retained original, receiver, or second-receiver case.")
+    case_id = cases[route]
+    database = root / ("data-" + route) / "planning.sqlite3"
+    if not database.is_file():
+        raise RuntimeError("The selected retained database is missing: " + str(database))
+    # Confirm the original row before Workspace can create or seed any database.
+    probe = sqlite3.connect(database.as_uri() + "?mode=ro", uri=True)
+    try:
+        source_row = probe.execute(
+            "SELECT p.source_bytes,p.source_sha,o.plan_id FROM ops_programs o "
+            "JOIN plans p ON p.id=o.plan_id WHERE o.id=?", (case_id,)).fetchone()
+    finally:
+        probe.close()
+    expected_source = journal.get("source", {}).get("sha256")
+    if (not source_row or not isinstance(source_row[0], bytes)
+            or source_row[1] != expected_source
+            or hashlib.sha256(source_row[0]).hexdigest() != expected_source):
+        raise RuntimeError("The original retained case and complete source bytes must match the checkpoint.")
+
+    def verify_artifacts(artifacts):
+        for name, identity in artifacts.items():
+            if Path(name).name != name:
+                raise RuntimeError("Retained artifact names must remain within the output directory.")
+            local = output / name
+            path = local if local.is_file() else Path(identity["path"])
+            raw = path.read_bytes()
+            if len(raw) != identity["bytes"] or hashlib.sha256(raw).hexdigest() != identity["sha256"]:
+                raise RuntimeError("The retained artifact changed: " + name)
+    verify_artifacts(journal.get("artifacts", {}))
+    state = journal.get("packageContinuation")
+    binding = {"route": route, "caseId": case_id, "planId": source_row[2],
+               "sourceSha256": expected_source}
+    if state is None:
+        state = {"schema": "stellar-forge.sf47-package-receiving.v1",
+                 "binding": binding, "status": "RUNNING", "issued": {},
+                 "phases": {}, "artifacts": {}}
+        journal["packageContinuation"] = state
+    elif state.get("binding") != binding:
+        raise RuntimeError("Resume the same selected case and receiving route.")
+    verify_artifacts(state["artifacts"])
+
+    def persist():
+        atomic(checkpoint, (canonical(journal) + "\n").encode())
+    def keep(name, producer):
+        path = output / name
+        known = state["artifacts"].get(name)
+        if path.is_file():
+            raw = path.read_bytes()
+        else:
+            if known:
+                raise RuntimeError("Restore this retained continuation artifact: " + name)
+            raw = producer()
+            atomic(path, raw)
+        identity = {"path": str(path), "bytes": len(raw),
+                    "sha256": hashlib.sha256(raw).hexdigest()}
+        if known and (identity["bytes"], identity["sha256"]) != (known["bytes"], known["sha256"]):
+            raise RuntimeError("The continuation source changed: " + name)
+        state["artifacts"][name] = identity
+        persist()
+        return raw
+    def kept_json(name, producer):
+        return json.loads(keep(name, lambda: (canonical(producer()) + "\n").encode()))
+    def step(name, callback):
+        if name in state["phases"]:
+            return state["phases"][name]
+        state["activePhase"] = name
+        persist()
+        result = callback()
+        state["phases"][name] = result
+        state.pop("error", None)
+        state.pop("activePhase", None)
+        persist()
+        print(json.dumps({"continuationPhase": name, "status": "COMPLETE"}), flush=True)
+        return result
+    persist()
+    source_path = output / "Package_Original_Source.json"
+    keep(source_path.name, lambda: source_row[0])
+    if source_path.read_bytes() != source_row[0]:
+        raise RuntimeError("The continuation must retain the original public source exactly.")
+
+    handles = {}
+    def opened(label):
+        if label not in handles:
+            workspace = Workspace(root / ("data-" + label), source_path)
+            handles[label] = (workspace, Operations(workspace))
+        return handles[label]
+    def close(label):
+        if label in handles:
+            handles.pop(label)[0].close()
+    def current(label=route, pid=case_id):
+        return opened(label)[1].read(pid)
+    def issue(key, action, build, note, label=route, pid=case_id):
+        entry = state["issued"].get(key)
+        if entry is None:
+            # Preview/data construction happens only before the first saved request.
+            version = current(label, pid)["program"]["version"]
+            data = build()
+            entry = {"route": label, "caseId": pid, "request": {
+                "expectedVersion": version, "requestId": PREFIX + "packages-" + route + "-" + key,
+                "actor": ACTOR, "note": note, "action": action, "data": deepcopy(data)}}
+            state["issued"][key] = entry
+            persist()
+        if (entry["route"], entry["caseId"], entry["request"]["action"]) != (label, pid, action):
+            raise RuntimeError("Keep the original native action, route and request identity.")
+        if "result" not in entry:
+            try:
+                entry["result"] = opened(label)[1].command(pid, entry["request"])
+                entry.pop("lastError", None)
+            except Problem as error:
+                entry["lastError"] = {"code": error.code, "status": error.status, "message": str(error)}
+                persist()
+                raise
+            persist()
+        return entry["result"]
+    def immutable(value):
+        return {key: deepcopy(item) for key, item in value.items() if key != "current"}
+    def archive(name, label=route, pid=case_id):
+        ops = opened(label)[1]
+        raw = keep(name + ".zip", lambda: ops.export(pid))
+        document, files = ops._unpack(raw)
+        kept_json(name + ".json", lambda: document)
+        return document, files
+    def assert_history(before, after):
+        # A receiving import changes case provenance, but frozen rows and events remain exact.
+        for kind in ("reviews", "forecasts", "portfolios", "installations", "workIntakes", "amendments"):
+            indexed = {(row["id"], row.get("revision")): row for row in after.get(kind, [])}
+            for row in before.get(kind, []):
+                if indexed.get((row["id"], row.get("revision"))) != row:
+                    raise RuntimeError("The full handover changed an original " + kind + " edition.")
+        if after.get("events", [])[:len(before.get("events", []))] != before.get("events", []):
+            raise RuntimeError("The complete original native event history changed.")
+    def assert_sources(ops, pid, document, files):
+        for metadata in document["sources"]:
+            retained_metadata, raw = ops.source(pid, metadata["id"])
+            if (retained_metadata != metadata or files["sources/" + metadata["id"]] != raw
+                    or hashlib.sha256(raw).hexdigest() != metadata["sha256"]):
+                raise RuntimeError("Receiving changed the original source: " + metadata["id"])
+
+    def bind_records():
+        case = current()
+        if case["program"]["mode"] != "WALKTHROUGH" or case["program"]["state"] != "OPEN":
+            raise RuntimeError("Continue the open, labelled original WALKTHROUGH case.")
+        if not case.get("workIntakeRefs"):
+            raise RuntimeError("Open the original case containing its completed native work intake.")
+        invoice = next(row for row in case["records"]["invoices"] if row["id"] == journal["invoiceId"])
+        source_id = journal["ledgerSourceId"]
+        if source_id not in {row["id"] for row in case["sources"]}:
+            raise RuntimeError("The original retained invoice source is unavailable.")
+        costs = {row["id"]: row for row in case["plan"]["scenario"]["future_costs"]}
+        chosen = next((line["costId"] for line in invoice["lines"]
+                       if line.get("costId") in costs and costs[line["costId"]]["tranche"] in (1, 2, 3)
+                       and any(row["costId"] == line["costId"] and row["id"] in line["workIds"]
+                               and row["state"] != "VOID" for row in case["records"]["work"])), None)
+        if chosen is None:
+            raise RuntimeError("Select the original retained invoice with its package-bound work.")
+        new_id = "receiving-" + digest({"operation": OPERATION, "caseId": case_id, "costId": chosen})[:16]
+        if new_id in costs:
+            raise RuntimeError("The continuation destination is already present before its retained save.")
+        retained = kept_json("Package_Original_Case.json", lambda: case)
+        return {"oldCostId": chosen, "newCostId": new_id, "tranche": costs[chosen]["tranche"],
+                "contributorId": journal["contributorId"], "sourceId": source_id,
+                "initialVersion": retained["program"]["version"],
+                "initialPlan": deepcopy(retained["plan"])}
+    def selections():
+        return state["phases"]["original_record_binding"]
+
+    def save_deployment():
+        selected = selections()
+        return issue("deployment", "deployment.save", lambda: {
+            "name": "Package receiving — original walkthrough installation",
+            "operator": ACTOR, "role": "MERCHANT", "environment": "LOCAL", "state": "PLANNED",
+            "costIds": [selected["oldCostId"]], "tranche": selected["tranche"],
+            "sourceIds": [selected["sourceId"]],
+            "sourceNote": "Original labelled package-reassignment exercise."},
+            "Retain the selected package attribution on a native planned installation deployment.")
+    def save_installation():
+        def build():
+            ops = opened(route)[1]
+            document = ops.seed_installation(case_id, {"expectedVersion": current()["program"]["version"]})["document"]
+            selected = selections()
+            document["name"] = "Complete original package receiving walkthrough"
+            document["merchantDeploymentId"] = state["phases"]["original_deployment"]["recordId"]
+            document["source"].update(sourceIds=[selected["sourceId"]], mode="SNAPSHOT",
+                                      reference=OPERATION)
+            document["workorder"].update(sourceId=selected["sourceId"], reference=OPERATION,
+                                        scope="Retained original WALKTHROUGH work, invoice and package attribution.")
+            for check in document["checks"]:
+                if check["title"] == selected["oldCostId"]:
+                    check["sourceIds"] = [selected["sourceId"]]
+                    check["workIds"] = [row["id"] for row in current()["records"]["work"]
+                                        if row["costId"] == selected["oldCostId"] and row["state"] != "VOID"]
+                    check["note"] = "Original retained observations; acceptance remains open."
+            preview = ops.preview_installation(case_id, {"expectedVersion": current()["program"]["version"],
+                "installationId": None, "expectedRevision": 0, "document": document})
+            kept_json("Package_Installation_Preview.json", lambda: preview)
+            return {"installationId": None, "expectedRevision": 0, "document": document,
+                    "expectedPreviewSha256": preview["previewSha256"]}
+        result = issue("installation", "installation.save", build,
+                       "Save the complete planned installation against the original package and source records.")
+        value = immutable(opened(route)[1].installation(case_id, result["recordId"], result["revision"]))
+        kept_json("Package_Original_Installation.json", lambda: value)
+        return result
+    def retain_payment():
+        selected = selections()
+        return issue("grant-receipt", "cash.record", lambda: {
+            "direction": "IN", "category": "GRANT", "date": DAY, "currency": "USD",
+            "amount": "1000.00", "externalRef": PREFIX + "packages-" + route + "-receipt",
+            "tranche": selected["tranche"] - 1, "allocations": [],
+            "sourceIds": [selected["sourceId"]],
+            "sourceNote": "Labelled internal WALKTHROUGH payment input for the native Completion clock."},
+            "Retain the explicit WALKTHROUGH grant receipt alongside the original invoice allocation.")
+
+    def completion_inputs(reassigned):
+        case = current()
+        selected = selections()
+        seed = opened(route)[1].seed_completion(case_id, {
+            "expectedVersion": case["program"]["version"], "tranche": selected["tranche"]})
+        if reassigned:
+            if not seed.get("reviewRequired") or not seed.get("previousInputs"):
+                raise RuntimeError("The amended Completion draft must retain the original assignments for review.")
+            old = json.loads((output / "Package_Original_Completion_Inputs.json").read_bytes())
+            if seed["previousInputs"] != old:
+                raise RuntimeError("The original Completion assignments changed before reconciliation.")
+        inputs = deepcopy(seed["inputs"])
+        for item in inputs["items"]:
+            matching = [row for row in case["records"]["work"]
+                        if row.get("costId") == item["costId"] and row["state"] != "VOID"]
+            owners = sorted({selected["contributorId"], *(row["contributorId"] for row in matching)})
+            item.update(ownerIds=owners, startDate=DAY, endDate=DAY, state="COMPLETE", completedOn=DAY,
+                workIds=[row["id"] for row in matching],
+                deploymentIds=[row["id"] for row in case["records"]["deployments"]
+                               if row["id"] == state["phases"]["original_deployment"]["recordId"]
+                               and item["costId"] in row["costIds"]],
+                sourceIds=[selected["sourceId"]],
+                note="Labelled native receiving exercise using the original saved source records.",
+                completionNote="WALKTHROUGH: complete this original native package receiving exercise.")
+        inputs["note"] = "Original retained receiving exercise" + ("; reviewed against the explicitly amended package set." if reassigned else ".")
+        kept_json("Package_" + ("Reconciled" if reassigned else "Original") + "_Completion_Inputs.json", lambda: inputs)
+        return {"inputs": inputs}
+    def prepare_completion(reassigned):
+        label = "Current" if reassigned else "Historical"
+        key = "current-preparation" if reassigned else "historical-preparation"
+        def build():
+            ops = opened(route)[1]
+            case = current()
+            if not case.get("workIntakeRefs") or not case.get("installationRefs"):
+                raise RuntimeError("Retain both native intake and installation references in this preparation.")
+            values = {"receiptId": state["phases"]["native_grant_clock"]["recordId"],
+                      "asOfDate": DAY,
+                      "summary": "Complete labelled native receiving: " + (
+                          "reviewed package reassignment and original delivery attribution." if reassigned
+                          else "original package assignments before their reviewed amendment.")}
+            preview = ops.preview_completion(case_id, {"expectedVersion": case["program"]["version"], **values})
+            kept_json("Package_" + label + "_Completion_Preview.json", lambda: preview)
+            if not preview["ready"]:
+                raise RuntimeError("Complete the original preparation fields: " + canonical(preview["issues"]))
+            return {**values, "expectedPreviewSha256": preview["previewSha256"]}
+        result = issue(key, "completion.prepare", build,
+                       "Retain the full " + label.lower() + " Completion snapshot and its original source references.")
+        review = opened(route)[1].review(case_id, result["recordId"])
+        completion.validate_preparation(review)
+        if not review["snapshot"].get("workIntakeRefs") or not review["snapshot"].get("installationRefs"):
+            raise RuntimeError("The frozen preparation omitted an original native reference collection.")
+        kept_json("Package_" + label + "_Completion_Preparation.json", lambda: review)
+        return result
+
+    def save_forecast():
+        def build():
+            inputs = {"name": "Package continuation — historical original forecast",
+                      "asOfDate": DAY, "calendarStart": DAY,
+                      "note": "Complete native source before explicit package reassignment."}
+            preview = opened(route)[1].preview_forecast(case_id, {
+                "expectedVersion": current()["program"]["version"], "inputs": inputs})
+            kept_json("Package_Historical_Forecast_Preview.json", lambda: preview)
+            return {"inputs": inputs, "expectedPreviewSha256": preview["previewSha256"]}
+        receipt = issue("forecast", "forecast.save", build,
+                        "Preserve a complete native forecast before changing the selected package.")
+        kept_json("Package_Historical_Forecast.json", lambda: immutable(
+            opened(route)[1].forecast(case_id, receipt["recordId"])))
+        return receipt
+    def save_portfolio():
+        def build():
+            ops = opened(route)[1]
+            inputs = ops.seed_portfolio(case_id, {
+                "expectedVersion": current()["program"]["version"],
+                "forecastId": state["phases"]["historical_forecast"]["recordId"]})["inputs"]
+            inputs["name"] = "Package continuation — retained original delivery allocation"
+            inputs["note"] = "Keep the complete original source, capacity and assignments through the later amendment."
+            preview = ops.preview_portfolio(case_id, {"expectedVersion": current()["program"]["version"], "inputs": inputs})
+            kept_json("Package_Historical_Portfolio_Preview.json", lambda: preview)
+            return {"inputs": inputs, "expectedPreviewSha256": preview["previewSha256"]}
+        receipt = issue("portfolio", "portfolio.save", build,
+                        "Retain the original complete native portfolio with its saved forecast.")
+        kept_json("Package_Historical_Portfolio.json", lambda: immutable(
+            opened(route)[1].portfolio(case_id, receipt["recordId"])))
+        return receipt
+
+    def save_selected_revision():
+        workspace, _ = opened(route)
+        entry = state.get("plannerRequest")
+        if entry is None:
+            selected = selections()
+            plan = selected["initialPlan"]
+            fields = ("id", "tranche", "start_day", "end_day", "estimated_hours",
+                      "assumed_hourly_rate_usd", "amount_usd", "category", "remaining_work", "measurable_proof")
+            costs = [{key: deepcopy(row[key]) for key in fields if key in row}
+                     for row in plan["scenario"]["future_costs"]]
+            for row in costs:
+                if row["id"] == selected["oldCostId"]:
+                    row["id"] = selected["newCostId"]
+            planning = deepcopy(plan["planning"])
+            for key in ("pricing", "payments"):
+                if selected["oldCostId"] in planning.get(key, {}):
+                    planning[key][selected["newCostId"]] = planning[key].pop(selected["oldCostId"])
+            for row in planning.get("assignments", []):
+                if row["costId"] == selected["oldCostId"]:
+                    row["costId"] = selected["newCostId"]
+            patch = {key: deepcopy(plan["scenario"][key]) for key in
+                     ("scenario_name", "award_request_usd", "project_end_day") if key in plan["scenario"]}
+            patch["milestones"] = [{key: deepcopy(row[key]) for key in
+                ("tranche", "submit_day", "review_and_payment_lag_days", "deliverable", "measurable_proof") if key in row}
+                for row in plan["scenario"]["milestones"]]
+            patch["future_costs"] = costs
+            latest = workspace.read(binding["planId"])
+            entry = {"planId": binding["planId"], "expectedRevision": latest["currentRevision"],
+                     "patch": patch, "planning": planning,
+                     "note": "Replace one retained walkthrough package identity with its explicit successor; preserve the selected budget, timing and scope.",
+                     "requestId": PREFIX + "packages-" + route + "-native-plan"}
+            state["plannerRequest"] = entry
+            persist()
+        if "plannerResult" not in state:
+            state["plannerResult"] = workspace.save(entry["planId"], entry["expectedRevision"],
+                entry["patch"], entry["planning"], entry["note"], entry["requestId"])
+            persist()
+        value = state["plannerResult"]
+        kept_json("Package_Selected_Native_Plan.json", lambda: value)
+        return {"revision": value["revision"], "contentSha256": value["contentSha256"]}
+
+    def amendment_proposal():
+        def build():
+            selected = selections()
+            target = state["phases"]["selected_native_revision"]
+            inputs = {"selectedRevision": target["revision"],
+                "expectedContentSha256": target["contentSha256"], "asOfDate": DAY,
+                "reason": "Replace the referenced package and retain original work, invoice and deployment attribution through one explicit mapping.",
+                "basis": {"kind": "WALKTHROUGH", "reference": OPERATION, "date": DAY,
+                          "sourceIds": [selected["sourceId"]], "note": "Continuation of the complete original native receiving case."},
+                "packageMappings": [{"fromCostId": selected["oldCostId"], "toCostId": selected["newCostId"],
+                                     "note": "Same retained observations, cash and quantities assigned to the selected successor package."}]}
+            preview = opened(route)[1].preview_amendment(case_id, {
+                "expectedVersion": current()["program"]["version"], "inputs": inputs})
+            kept_json("Package_Amendment_Preview.json",
+                      lambda: {key: value for key, value in preview.items() if key != "calendarImpact"})
+            if not preview["compatibility"]["compatible"]:
+                raise RuntimeError("Resolve the actual native package comparison: " + canonical(preview["compatibility"]))
+            if {row["kind"] for row in preview.get("recordChanges", [])} != {"work", "invoices", "deployments"}:
+                raise RuntimeError("The comparison must include the original work, invoice and deployment attribution.")
+            return {"amendmentId": None, "expectedRevision": 0, "inputs": inputs,
+                    "expectedPreviewSha256": preview["previewSha256"]}
+        result = issue("proposal", "amendment.save", build,
+                       "Save the complete selected native revision and explicit original-record mapping.")
+        return opened(route)[1].amendment(case_id, result["recordId"], result["amendmentRevision"])["amendment"]
+    def amendment_review():
+        row = state["phases"]["package_proposal"]
+        result = issue("review", "amendment.review", lambda: {
+            "amendmentId": row["id"], "expectedRevision": row["revision"],
+            "expectedAmendmentSha256": row["sha256"], "expectedPreviewSha256": row["preview"]["previewSha256"],
+            "decision": "APPROVE",
+            "statement": "Reviewed labelled receiving exercise: preserve original observations and payments, retain historical selections, and map their package attribution explicitly.",
+            "sourceIds": [selections()["sourceId"]]},
+            "Review the exact complete package mapping and historical Completion/Installation selections.")
+        return opened(route)[1].amendment(case_id, result["recordId"], result["amendmentRevision"])["amendment"]
+    def apply_and_reopen():
+        row = state["phases"]["package_review"]
+        before = kept_json("Package_Reviewed_Pre_Apply_Case.json", current)
+        receipt = issue("apply", "amendment.apply", lambda: {
+            "amendmentId": row["id"], "expectedRevision": row["revision"],
+            "expectedAmendmentSha256": row["sha256"], "acknowledgeBaselineChange": True},
+            "Apply the reviewed native revision and its explicit attribution to the retained original case.")
+        after = current()
+        applied = opened(route)[1].amendment(case_id, row["id"])["amendment"]
+        expected = deepcopy(before["records"])
+        for change in applied["application"]["recordChanges"]:
+            index = next(i for i, value in enumerate(expected[change["kind"]]) if value["id"] == change["recordId"])
+            if expected[change["kind"]][index] != change["before"]:
+                raise RuntimeError("The applied mapping lost an original record preimage.")
+            expected[change["kind"]][index] = change["after"]
+        if after["records"] != expected or after["sources"] != before["sources"]:
+            raise RuntimeError("The applied mapping changed fields outside its complete retained record changes.")
+        if after["records"]["cash"] != before["records"]["cash"]:
+            raise RuntimeError("The package amendment changed original cash observations.")
+        if after["plan"]["contentSha256"] != state["phases"]["selected_native_revision"]["contentSha256"]:
+            raise RuntimeError("Application differs from the exact reviewed native revision.")
+        if after["completionPlans"] != before["completionPlans"]:
+            raise RuntimeError("The original Completion assignments must remain retained until separately reconciled.")
+        kept_json("Package_Applied_Amendment.json", lambda: applied)
+        kept_json("Package_Applied_Case.json", lambda: after)
+        close(route)
+        replay = opened(route)[1].command(case_id, state["issued"]["apply"]["request"])
+        if replay != receipt or current()["program"]["version"] != after["program"]["version"]:
+            raise RuntimeError("Reopening and replaying the accepted application created another native event.")
+        return {"receipt": receipt, "replay": replay, "recordChanges": applied["application"]["recordChanges"],
+                "selectedPlanSha256": after["plan"]["contentSha256"]}
+
+    def historical_receiving():
+        ops = opened(route)[1]
+        historical, old_files = archive("Package_Before_Mapping")
+        latest, latest_files = archive("Package_After_Mapping")
+        assert_history(historical, latest)
+        for name, raw in old_files.items():
+            if name.startswith("sources/") and latest_files.get(name) != raw:
+                raise RuntimeError("The current complete case changed a historical source file.")
+        for review in historical["reviews"]:
+            if review.get("purpose") == "TRANCHE_COMPLETION":
+                current_review = ops.review(case_id, review["id"])
+                if current_review != review:
+                    raise RuntimeError("The amendment changed a frozen original Completion preparation.")
+                completion.validate_preparation(current_review)
+        historical_installation = json.loads((output / "Package_Original_Installation.json").read_bytes())
+        selected_installation = ops.installation(case_id, historical_installation["id"], historical_installation["revision"])
+        if immutable(selected_installation) != historical_installation or not selected_installation["current"]["selectedRecordsChanged"]:
+            raise RuntimeError("The original Installation must retain its edition and display its changed package selection.")
+        return {"historicalReviews": len(historical["reviews"]), "historicalForecasts": len(historical["forecasts"]),
+                "historicalPortfolios": len(historical["portfolios"]),
+                "historicalInstallation": {"id": historical_installation["id"], "revision": historical_installation["revision"]},
+                "originalSources": len(historical["sources"])}
+
+    def complete_export():
+        before = json.loads((output / "Package_Before_Mapping.json").read_bytes())
+        document, files = archive("Package_Complete_Case")
+        assert_history(before, document)
+        for review in document["reviews"]:
+            completion.validate_preparation(review)
+        if not document.get("workIntakeRefs") or not document.get("installationRefs"):
+            raise RuntimeError("The complete case must retain native intake and Installation references.")
+        assert_sources(opened(route)[1], case_id, document, files)
+        return {"caseVersion": document["program"]["version"], "members": sorted(files),
+                "amendmentEditions": len(document["amendments"]),
+                "preparations": [row["id"] for row in document["reviews"] if row.get("purpose") == "TRANCHE_COMPLETION"]}
+
+    receiver_route = "package-" + route + "-receiver"
+    def receive_full_case():
+        raw = (output / "Package_Complete_Case.zip").read_bytes()
+        entry = state.get("importRequest")
+        request = {"route": receiver_route, "name": "Complete retained package amendment receiving",
+                   "requestId": PREFIX + "packages-" + route + "-receive",
+                   "actor": ACTOR, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+        if entry is None:
+            entry = request
+            state["importRequest"] = entry
+            persist()
+        elif entry != request:
+            raise RuntimeError("Keep the exact complete original receiving archive and import identity.")
+        ops = opened(receiver_route)[1]
+        if "importResult" not in state:
+            state["importResult"] = ops.import_bundle(raw, entry["name"], entry["requestId"], entry["actor"])
+            persist()
+        result = state["importResult"]
+        document, files = ops._unpack(raw)
+        received, received_files = archive("Package_First_Received_Case", receiver_route, result["id"])
+        for key in ("records", "sources", "completionPlans", "installationRefs", "workIntakeRefs"):
+            if received.get(key) != document.get(key):
+                raise RuntimeError("Native receiving changed the complete original " + key + ".")
+        if (received["plan"]["contentSha256"] != document["plan"]["contentSha256"]
+                or received["program"]["origin"]["programId"] != case_id):
+            raise RuntimeError("Native receiving lost the selected plan or original case provenance.")
+        assert_history(document, received)
+        assert_sources(ops, result["id"], document, files)
+        for review in document["reviews"]:
+            if ops.review(result["id"], review["id"]) != review:
+                raise RuntimeError("Native receiving changed an original frozen review.")
+            completion.validate_preparation(review)
+        return {"receipt": result, "sourceCaseId": case_id, "members": sorted(received_files)}
+
+    def replay_and_complete_handover():
+        result = state["importResult"]
+        pid = result["id"]
+        ops = opened(receiver_route)[1]
+        def build():
+            contributor = next(row for row in current(receiver_route, pid)["records"]["contributors"]
+                               if row["id"] == selections()["contributorId"])
+            return {**{key: deepcopy(contributor[key]) for key in
+                       ("id", "name", "kind", "contact", "note", "sourceIds", "sourceNote")},
+                    "note": "Later receiving-office note retained after complete package reassignment and both original Completion preparations."}
+        later = issue("receiver-note", "contributor.save", build,
+                      "Continue native receiving work before replaying its exact original complete import.",
+                      receiver_route, pid)
+        entry = state["importRequest"]
+        replay = ops.import_bundle((output / "Package_Complete_Case.zip").read_bytes(),
+                                   entry["name"], entry["requestId"], entry["actor"])
+        if replay != result or current(receiver_route, pid)["program"]["version"] != later["version"]:
+            raise RuntimeError("Import replay replaced later receiving work or created another native event.")
+        close(receiver_route)
+        reopened = current(receiver_route, pid)
+        if reopened["program"]["version"] != later["version"]:
+            raise RuntimeError("Database reopen changed the later receiving case.")
+        final, files = archive("Package_Received_Complete_Handover", receiver_route, pid)
+        original_doc = json.loads((output / "Package_Complete_Case.json").read_bytes())
+        assert_history(original_doc, final)
+        for review in final["reviews"]:
+            completion.validate_preparation(review)
+        assert_sources(opened(receiver_route)[1], pid, final, files)
+        return {"receipt": result, "exactReplay": replay, "laterVersion": later["version"],
+                "sourceCaseId": case_id, "receiverId": pid, "members": sorted(files)}
+
+    try:
+        if state.get("status") == "PASS":
+            verify_artifacts(state["artifacts"])
+            print(json.dumps({"status": "PASS", "continuation": True, "reused": True,
+                              "result": str(output / "package-receiving-result.json")}), flush=True)
+            return state
+        step("original_record_binding", bind_records)
+        step("original_deployment", save_deployment)
+        step("original_installation", save_installation)
+        step("native_grant_clock", retain_payment)
+        step("original_completion_assignments", lambda: issue("original-assignments", "completion.save",
+            lambda: completion_inputs(False), "Save complete original tranche assignments in the retained walkthrough case."))
+        step("historical_completion_preparation", lambda: prepare_completion(False))
+        step("historical_forecast", save_forecast)
+        step("historical_portfolio", save_portfolio)
+        step("complete_historical_archive", lambda: {
+            "caseVersion": archive("Package_Before_Mapping")[0]["program"]["version"]})
+        step("selected_native_revision", save_selected_revision)
+        step("package_proposal", amendment_proposal)
+        step("package_review", amendment_review)
+        step("mapped_apply_and_reopen", apply_and_reopen)
+        step("historical_selections_retained", historical_receiving)
+        step("reconciled_completion_assignments", lambda: issue("current-assignments", "completion.save",
+            lambda: completion_inputs(True), "Save the complete current assignments after reviewing the retained original package mapping."))
+        step("current_completion_preparation", lambda: prepare_completion(True))
+        step("complete_case_export", complete_export)
+        step("full_original_case_receiving", receive_full_case)
+        step("receiving_replay_reopen_handover", replay_and_complete_handover)
+        state["status"] = "PASS"
+        state.pop("activePhase", None)
+        state.pop("error", None)
+        result = {"schema": state["schema"] + ".result", "status": "PASS", "operationId": OPERATION,
+                  "binding": binding, "receiverId": state["importResult"]["id"],
+                  "phases": state["phases"], "artifacts": state["artifacts"],
+                  "scope": "Complete original WALKTHROUGH continuation: explicit package attribution, source-bound Completion, historical selections and complete native receiving."}
+        atomic(output / "package-receiving-result.json", (canonical(result) + "\n").encode())
+        persist()
+        print(json.dumps({"status": "PASS", "continuation": True, "phases": len(state["phases"]),
+                          "result": str(output / "package-receiving-result.json")}), flush=True)
+        return result
+    except BaseException as error:
+        state["error"] = {"type": type(error).__name__, "message": str(error)}
+        persist()
+        raise
+    finally:
+        for workspace, _ in handles.values():
+            workspace.close()
+
+
+
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--root",required=True)
+    parser.add_argument("--continue-packages", choices=("original", "receiver", "second-receiver"),
+                        help="Continue the selected completed case without replaying the original ten phases.")
     args=parser.parse_args()
-    main(args.root)
+    if args.continue_packages:
+        continue_packages(args.root, args.continue_packages)
+    else:
+        main(args.root)
