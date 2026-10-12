@@ -14,7 +14,7 @@ const purchase = { ...publication, intentId: operation };
 const read = { readOnly: true, idempotent: true };
 const change = { idempotent: true };
 const records = ['captures', 'reviews', 'publications', 'operations', 'briefingTemplates', 'briefingSuccessors',
-  'releaseCaptures', 'releaseWatches', 'releasePlans'];
+  'releaseCaptures', 'releaseWatches', 'releasePlans', 'ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
 export const fredBriefingSelection = {
   type: 'object', additionalProperties: false,
   properties: {
@@ -65,10 +65,49 @@ export const fredReleaseSelection = {
   }
 };
 
+const ddpCrosswalkId = { type: 'string', pattern: '^fred-ddp-crosswalk-[a-f0-9]{64}$' };
+const ddpPackageId = { type: 'string', pattern: '^fred-ddp-package-[a-f0-9]{64}$' };
+const ddpMigrationId = { type: 'string', pattern: '^fred-ddp-migration-plan-[a-f0-9]{64}$' };
+const ddpReceivingId = { type: 'string', pattern: '^fred-ddp-receiving-[a-f0-9]{64}$' };
+const ddpSeriesId = { type: 'string', minLength: 1, maxLength: 1000 };
+const ddpPlanSection = { type: 'string', enum: ['series', 'acquisitions', 'mappings'] };
+const ddpWindow = { type: 'object', additionalProperties: false, required: ['kind'], properties: {
+  kind: { type: 'string', enum: ['source', 'fixed', 'last'] }, start: calendarDate, end: calendarDate,
+  count: { type: 'integer', minimum: 1, maximum: 1000000 }
+} };
+const ddpDecision = { type: 'object', additionalProperties: false,
+  required: ['release', 'boardSeriesId', 'action', 'note'], properties: {
+    release: { type: 'string', minLength: 1, maxLength: 100 }, boardSeriesId: ddpSeriesId,
+    action: { type: 'string', enum: ['map', 'exclude'] },
+    fredSeriesId: { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$' },
+    note: { type: 'string', minLength: 1, maxLength: 4000 }
+} };
+const ddpBinding = { type: 'object', additionalProperties: false, required: ['seriesId', 'note'], properties: {
+  seriesId: ddpSeriesId, periodRule: { type: ['string', 'null'], enum: ['exact', 'month', 'quarter', 'semiannual', 'year', null] },
+  sourceScale: { type: 'string', minLength: 1, maxLength: 128 },
+  targetScale: { type: 'string', minLength: 1, maxLength: 128 },
+  expectedFredUnits: { type: ['string', 'null'], maxLength: 2000 },
+  expectedFredFrequency: { type: ['string', 'null'], maxLength: 2000 },
+  expectedFredSeasonalAdjustment: { type: ['string', 'null'], maxLength: 2000 },
+  note: { type: 'string', minLength: 1, maxLength: 4000 }
+} };
+export const fredDdpMigrationSelection = {
+  packageId: ddpPackageId, crosswalkId: ddpCrosswalkId,
+  name: { type: 'string', minLength: 1, maxLength: 500 }, asOf: calendarDate, window: ddpWindow,
+  bookmark: { type: ['string', 'null'], maxLength: 8192 }, note: { type: 'string', maxLength: 8000 },
+  decisions: { type: 'array', maxItems: 100000, items: ddpDecision },
+  bindings: { type: 'array', maxItems: 100000, items: ddpBinding },
+  pageSize: { type: 'integer', minimum: 1, maximum: 100000 },
+  maxRows: { type: 'integer', minimum: 1, maximum: 1000000 }
+};
+
+const ddpPage = { ...releasePage, offset: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER } };
+
 export const fredFileSelection = {
-  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan'] },
+  kind: { type: 'string', enum: ['source', 'comparison', 'project', 'customer', 'briefing', 'briefing-successor', 'release-source', 'release-plan', 'ddp-crosswalk', 'ddp-package', 'ddp-migration', 'ddp-receiving'] },
   captureId: digest, before: digest, after: digest, publicationId: digest, intentId: operation, reviewId: digest, successorId,
   releaseCaptureId: digest, planId: releasePlanId,
+  crosswalkId: ddpCrosswalkId, packageId: ddpPackageId, migrationId: ddpMigrationId, receivingId: ddpReceivingId,
   format: { type: 'string', enum: ['html', 'csv', 'json', 'manifest'] }
 };
 export function fredWorkspaceTools(tool) {
@@ -148,6 +187,43 @@ export function fredWorkspaceTools(tool) {
     tool('merchant_fred_release_vintage_capture', 'Acquire one exact asOf selection already present in the saved release plan through original captureFred and the existing private key binding. All watched series retain that coherent information date. Keep the original operation ID for recovery; the resulting capture enters the original analyst and recurring-briefing workflow.', {
       ...recorded, planId: releasePlanId, asOf: calendarDate
     }, ['workspace', 'id', 'expectedRevision', 'planId', 'asOf'], { ...change, openWorld: true }),
+    tool('merchant_fred_ddp_sources', 'Page the complete original DDP crosswalk, package, migration or receiving inventory. Keep expectedRevision while following nextOffset; each receiving retains its acquired FRED captures and complete report files.', {
+      ...workspace, kind: { type: 'string', enum: ['crosswalks', 'packages', 'migrations', 'receivings'] },
+      offset, limit, expectedRevision: revision
+    }, ['workspace'], read),
+    tool('merchant_fred_ddp_crosswalk', 'Inspect the original Board-to-FRED crosswalk and page its exact rows. Filter by release or identifier query. Full source bytes and provenance are available with file_read kind ddp-crosswalk.', {
+      ...workspace, crosswalkId: ddpCrosswalkId, release: { type: 'string', minLength: 1, maxLength: 100 },
+      query: { type: 'string', maxLength: 500 }, ...ddpPage
+    }, ['workspace', 'crosswalkId'], read),
+    tool('merchant_fred_ddp_crosswalk_import', 'Import a complete host-configured ddp-crosswalk JSON envelope using input and optional expectedSha256. The original CSV bytes, provenance and content identity remain intact. Resume a staged import with the same operation id, revision and crosswalkId.', {
+      ...recorded, input: alias, expectedSha256: digest, crosswalkId: ddpCrosswalkId
+    }, ['workspace', 'id', 'expectedRevision'], change),
+    tool('merchant_fred_ddp_crosswalk_acquire', 'Acquire the full official Federal Reserve crosswalk through the existing source runtime and retain its original response. The optional url selects the current official Board source. Keep the same original operation for interrupted acquisition.', {
+      ...recorded, url: { type: 'string', maxLength: 8192 }
+    }, ['workspace', 'id', 'expectedRevision'], { ...change, openWorld: true }),
+    tool('merchant_fred_ddp_package', 'Inspect a complete original DDP package. Page series or observations, optionally selecting one original package seriesId. The source keeps original CSV layout, XML/ZIP members, labels, units, missing markers and date coverage.', {
+      ...workspace, packageId: ddpPackageId, section: { type: 'string', enum: ['series', 'observations'] },
+      seriesId: ddpSeriesId, frequency: { type: 'string', maxLength: 100 }, query: { type: 'string', maxLength: 500 }, ...ddpPage
+    }, ['workspace', 'packageId'], read),
+    tool('merchant_fred_ddp_package_import', 'Import a complete host-configured ddp-package source envelope; its original package file and supplemental structure files stay intact. Use input plus optional expectedSha256 or continue the same staged import with the original packageId, operation id and revision.', {
+      ...recorded, input: alias, expectedSha256: digest, packageId: ddpPackageId
+    }, ['workspace', 'id', 'expectedRevision'], change),
+    tool('merchant_fred_ddp_migration_preview', 'Preview every original package series against the selected complete crosswalk. Keep source, fixed-date or rolling last-observation coverage; explicitly review ambiguous mappings and period/unit meaning bindings. Page series, mappings or complete native FRED batch acquisitions. Retain previewId and the exact selection before saving.', {
+      ...workspace, ...fredDdpMigrationSelection, section: ddpPlanSection, ...ddpPage
+    }, ['workspace', 'packageId', 'crosswalkId', 'name', 'asOf'], read),
+    tool('merchant_fred_ddp_migration_save', 'Save the complete reviewed DDP migration as an immutable plan, retaining its exact original sources, mappings, meaning bindings and observation window. Supply the same previewId, plan selection and current project revision.', {
+      ...recorded, ...fredDdpMigrationSelection, previewId: digest
+    }, ['workspace', 'id', 'expectedRevision', 'packageId', 'crosswalkId', 'name', 'asOf', 'previewId'], change),
+    tool('merchant_fred_ddp_migration', 'Open a saved DDP migration and page original series, mappings or acquisition selections. Its receiving inventory joins completed native FRED batches. Use file_read kind ddp-migration for the full immutable plan.', {
+      ...workspace, migrationId: ddpMigrationId, section: ddpPlanSection, ...ddpPage
+    }, ['workspace', 'migrationId'], read),
+    tool('merchant_fred_ddp_migration_acquire', 'Acquire every exact native FRED batch in the saved DDP migration through the existing private key binding and save the complete reconciliation. One original operation owns all batches and its receivingId; resume with that same id and revision. The original captures remain usable in the analyst and recurring-briefing workflow.', {
+      ...recorded, migrationId: ddpMigrationId
+    }, ['workspace', 'id', 'expectedRevision', 'migrationId'], { ...change, openWorld: true }),
+    tool('merchant_fred_ddp_receiving', 'Read a completed original DDP-to-FRED reconciliation. Page all rows or changed rows, filter an original seriesId, and retain source/target metadata and reviewed meaning bindings. Download the complete JSON, CSV or offline HTML with file_read kind ddp-receiving; use a complete project export to reopen every original source, plan and result (v5 for DDP, v6 when QCEW is retained).', {
+      ...workspace, receivingId: ddpReceivingId, seriesId: ddpSeriesId,
+      changesOnly: { type: 'boolean' }, ...ddpPage
+    }, ['workspace', 'receivingId'], read),
     tool('merchant_fred_configure', 'Save the complete original FRED selection with its stable operation ID and reviewed project revision.', {
       ...recorded, selection: object
     }, ['workspace', 'id', 'expectedRevision', 'selection'], change),

@@ -15,6 +15,9 @@ import { pageFredBriefing } from './briefing/model.mjs';
 import { FRED_TEMPLATE_COMMANDS, FRED_TEMPLATE_USAGE, runFredTemplateCommand } from './briefing/template-cli.mjs';
 import { FRED_RELEASE_PROJECT_COMMANDS, FRED_RELEASE_PROJECT_USAGE, runFredReleaseProjectCommand } from './releases/project-cli.mjs';
 import { runFredReleaseAcquisitionCli } from './releases/acquisition-cli.mjs';
+import { FRED_DDP_PROJECT_COMMANDS, FRED_DDP_PROJECT_USAGE, runFredDdpProjectCommand } from './ddp/project-cli.mjs';
+import { runFredDdpAcquisitionCli } from './ddp/acquisition-cli.mjs';
+import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from './ddp/project-validation.mjs';
 import { startFredMerchant, prepareFredPurchase, executeFredPurchase, recoverFredPurchase, exportFredPurchase } from './merchant.mjs';
 import { startFredWorkspace } from './workspace.mjs';
 import { retainFredWorkspaceConnection } from './connection-record.mjs';
@@ -85,9 +88,11 @@ async function foreground(session, connectionFile) {
 }
 export async function main(args = process.argv.slice(2)) {
   if (args[0] === 'releases') return runFredReleaseAcquisitionCli(args.slice(1));
+  if (args[0] === 'ddp') return runFredDdpAcquisitionCli(args.slice(1));
+  if (args[0] === 'qcew') return (await import('./qcew/cli.mjs')).runQcewCli(args.slice(1));
   if (!args.length || args.includes('--help') || ['help','-h'].includes(args[0])) {
-    console.log(USAGE + '\n\n' + FRED_TEMPLATE_USAGE + '\n\n' + FRED_RELEASE_PROJECT_USAGE +
-      '\n\nStandalone release source acquisition, inspection and planning:\nstarforge fred releases --help'); return;
+    console.log(USAGE + '\n\n' + FRED_TEMPLATE_USAGE + '\n\n' + FRED_RELEASE_PROJECT_USAGE + '\n\n' + FRED_DDP_PROJECT_USAGE +
+      '\n\nStandalone original source acquisition, inspection and planning:\nstarforge fred releases --help\nstarforge fred ddp --help\n\nCounty wage-report production and complete original-source receiving:\nstarforge fred qcew --help'); return;
   }
   const [command, ...rest] = args;
   if (FRED_TEMPLATE_COMMANDS.includes(command)) {
@@ -96,6 +101,10 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (FRED_RELEASE_PROJECT_COMMANDS.includes(command)) {
     const result = await runFredReleaseProjectCommand(args);
+    console.log(JSON.stringify(result, null, 2)); return result;
+  }
+  if (FRED_DDP_PROJECT_COMMANDS.includes(command)) {
+    const result = await runFredDdpProjectCommand(args);
     console.log(JSON.stringify(result, null, 2)); return result;
   }
   const flags = options(command, rest), directory = resolve(flags.project);
@@ -178,7 +187,7 @@ export async function main(args = process.argv.slice(2)) {
       result = { ...(await exported(value.bytes, flags.out)), contentType: value.contentType }; break;
     }
     case 'export': need(flags.out, '--out is required.'); result = await exported(await exportFredProject({ directory }), flags.out); break;
-    case 'receive': result = await receiveFredProject({ directory, bundle: await fileJson(flags.source, 256 * 1024 * 1024) }); break;
+    case 'receive': result = await receiveFredProject({ directory, bundle: await fileJson(flags.source, FRED_DDP_PROJECT_BUNDLE_MAX_BYTES) }); break;
     case 'abandon': result = await abandonFredOperation({ ...common(), pendingId: flags.pending }); break;
   }
   console.log(JSON.stringify(result, null, 2)); return result;

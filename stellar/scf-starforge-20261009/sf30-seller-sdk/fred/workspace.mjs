@@ -10,6 +10,7 @@ import { need, inspectCapture, MAX_CAPTURE_BYTES, operationId } from './model.mj
 import { jsonBytes, hash } from './source.mjs';
 import { pageFredBriefing } from './briefing/model.mjs';
 import { inspectFredReleaseCapture } from './releases/model.mjs';
+import { FRED_DDP_ACTIONS, MAX_DDP_CAPTURE_BYTES, runFredDdpAction, handleFredDdpHttp } from './ddp/http.mjs';
 import { readFredWorkspaceLaunch, FRED_WORKSPACE_STARTUP } from './launch.mjs';
 import { readFredProject, fredProjectView, getFredCapture, configureFredProject, importFredCapture, acquireFredCapture,
   selectFredCapture, combineFredTables, reviewFredCapture, compareFredCaptures, publishFredReview, exportFredProject,
@@ -77,6 +78,8 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/style.css', ['style.css', 'text/css; charset=utf-8']], ['/briefing.js', ['briefing.js', 'text/javascript; charset=utf-8']],
     ['/recurring.js', ['recurring.js', 'text/javascript; charset=utf-8']],
     ['/releases.js', ['releases.js', 'text/javascript; charset=utf-8']],
+    ['/ddp.js', ['ddp.js', 'text/javascript; charset=utf-8']],
+    ['/ddp-guide', ['../ddp/PROJECT.md', 'text/plain; charset=utf-8']],
     ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
   const assets = new Map();
   for (const [route, [file, type]] of assetMap) assets.set(route, [await readFile(new URL('./ui/' + file, import.meta.url)), type]);
@@ -88,6 +91,8 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   const runtimeView = () => merchant ? { publicationId: runningPublication, url: merchant.url, mode: merchant.mode,
     editionId: merchant.editionId, snapshot: merchant.snapshot, resource: merchant.resource } : null;
   const run = async request => {
+    if (FRED_DDP_ACTIONS.has(request.action))
+      return runFredDdpAction({ request, directory, environment, signal: abort.signal });
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
     switch (request.action) {
       case 'configure': return configureFredProject({ ...common, selection: request.selection });
@@ -144,6 +149,13 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       }
       default: need(false, 'Unknown economic workspace action.');
     }
+  };
+  const execute = async request => {
+    need(request && typeof request === 'object' && !Array.isArray(request) && typeof request.action === 'string',
+      'Select a workspace action.');
+    need(!pending, 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
+    const task = run(request); pending = { action: request.action, task };
+    try { return await task; } finally { pending = null; }
   };
   const server = createServer((req, res) => {
     const handler = async () => {
@@ -282,12 +294,12 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const result = await exportFredPurchase({ directory: selected, buyer, intentId: url.searchParams.get('intent') });
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
+      if (await handleFredDdpHttp({ req, res, url, directory, body, send, execute, busy: () => Boolean(pending) })) return;
       if (req.method === 'POST' && url.pathname === '/api/action') {
-        const request = await body(req);
-        need(request && typeof request === 'object' && !Array.isArray(request) && typeof request.action === 'string', 'Select a workspace action.');
-        need(!pending, 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
-        const task = run(request); pending = { action: request.action, task };
-        try { return send(res, 200, await task); } finally { pending = null; }
+        const request = await body(req, MAX_DDP_CAPTURE_BYTES);
+        need(FRED_DDP_ACTIONS.has(request?.action) || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
+          'Request exceeds its original source capacity.', 'FRED_REQUEST_TOO_LARGE', 413);
+        return send(res, 200, await execute(request));
       }
       return send(res, 404, { code: 'FRED_ROUTE_NOT_FOUND', message: 'Workspace route not found.' });
     };

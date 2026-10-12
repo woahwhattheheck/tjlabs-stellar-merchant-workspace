@@ -295,3 +295,19 @@ Start with [the full briefing workflow](BRIEFINGS.md), [the actual finished thre
 ### Recurring analyst briefings
 
 Use [Recurring briefings](TEMPLATES.md) to save a reviewed series and calculation selection, apply its calendar window to a later retained source, inspect period and baseline revisions, and save a linked successor. The browser, native CLI and merchant client use the same original project transactions. Complete v3 project exports carry the template and successor history together with every original capture, review and briefing file.
+
+## Original DDP package migration
+
+The **DDP migration** workspace section imports a complete original Board SDMX archive, XML, labeled CSV, or previously retained source capture. It keeps the original crosswalk CSV, archive members, source dictionaries and observations together. Source tables are paged and searchable; original downloads remain complete.
+
+Save a migration with the original package interval, a fixed interval, or the last number of observations for each series. Review exact release/Board-to-FRED mappings, exclusions, unit scales and calendar choices. Acquire the full saved plan as one resumable project action, then inspect the complete original-value comparison and export offline HTML, CSV and JSON. Retained FRED captures open in the economic source/briefing editor and can supply a release watch.
+
+Source uploads retain their original file identities in the browser for interruption recovery. Saved actions continue with the same project revision and operation identifier. Complete DDP project handovers use bundle version 5, including the original reporting families, complete source captures and comparison files.
+
+The [DDP source guide](ddp/README.md) covers original acquisition and source formats. The [project migration guide](ddp/PROJECT.md) covers the full operator workflow, native commands, recovery and portable receiving. Run `starforge fred ddp --help` for standalone source commands; `starforge fred --help` includes the saved-project DDP commands.
+
+## County wage-report production
+
+The same economic project also supports the [QCEW county report product](qcew/README.md). It retains original BLS source files, a reviewed production profile, regional and CPI calculations, complete grayscale reports and original/calculated exports. The native command is `starforge fred qcew --help`.
+
+QCEW and DDP extensions compose into the same portable project and operation history. A handover carries the complete source and saved edition families present in that project; opening an existing recurring briefing retains its original report identity.

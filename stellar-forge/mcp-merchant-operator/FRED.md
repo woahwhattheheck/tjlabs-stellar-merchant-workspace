@@ -2,7 +2,7 @@
 
 Operate a retained FRED economic product from the installed command, a typed JavaScript client, or the existing authenticated merchant MCP host. All three paths attach to the original economic workspace: the same project, source captures, reviews, publication, merchant listener, configured SF88 buyer and saved customer intents.
 
-The client covers official source intake, complete public-table imports, combined macro editions, observations and revision comparisons, projection review, publication, merchant control, customer preparation/execution/recovery, complete downloads and project receiving. The MCP family contains 45 tools and loads its runtime only when that configured family is used.
+The client covers official source intake, complete public-table imports, combined macro editions, observations and revision comparisons, projection review, publication, merchant control, customer preparation/execution/recovery, complete downloads and project receiving. The MCP family contains 56 tools and loads its runtime only when that configured family is used.
 
 ## Start or reconnect the original workspace
 
@@ -498,3 +498,238 @@ A project containing release work exports stellar-forge.fred-project-bundle.v4 w
 The JavaScript inventory methods return their complete original envelopes; the installed CLI and authenticated tools provide revision-pinned inventory pages. The public declarations reference the maintained source, watch, planner and project model types. FredReleasePlanSummary is the domain's numeric summary; FredReleasePlanRecord is the saved project index descriptor. FredReleaseCapturePage selects typed source rows by its section, and the plan methods select the exact row type for the requested plan section. Configured source inputs declare kind release-capture; complete file selections add release-source with releaseCaptureId and release-plan with planId. The original private workspace connection and retained-file protocol serve every path.
 
 The [native release operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/README.md) describes exact source intake and pagination, and the [project guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/PROJECT.md) describes durable capture, watch, plan and receiving operations.
+
+
+## DDP package conversion and complete receiving
+
+The migration workflow retains an original Board package and the complete official Board-to-FRED crosswalk, reviews a whole-package plan, acquires the selected FRED batches and saves a complete reconciliation. The typed client, installed command and authenticated agent tools operate the same native project journal and immutable source identities.
+
+The Board's [transition notice](https://www.federalreserve.gov/data/data-download-fred-information.htm) says the custom Build Your Package feature is removed during the week of November 9, 2026. Its historical XML remains on individual release pages. The original [DDP help](https://www.federalreserve.gov/datadownload/help/default.htm) defines the package's currently published data, periods, frequency, units, multipliers, supporting structure files and output layouts. The receiving workflow preserves these source choices alongside the selected FRED information date.
+
+### Declare and inspect the original source files
+
+The source owner seals the complete original crosswalk CSV and original package CSV, SDMX XML, or SDMX archive. Supporting structure files and a declared CSV layout stay inside that original package envelope. The original source helpers and acquisition command are described in the [native DDP guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/README.md).
+
+Add these complete source envelopes to the existing private input-alias file:
+
+~~~json
+{
+  "board-crosswalk": {
+    "kind": "ddp-crosswalk",
+    "label": "Complete original Board-to-FRED crosswalk",
+    "path": "/PRIVATE/ORIGINAL_CROSSWALK_OPERATION/capture.json"
+  },
+  "h15-package": {
+    "kind": "ddp-package",
+    "label": "Original H.15 reporting package",
+    "path": "/PRIVATE/ORIGINAL_PACKAGE_OPERATION/capture.json"
+  }
+}
+~~~
+
+An optional sha256 pins each whole host file. Paths are resolved from the same configured input-alias or connection file as existing economic inputs. The file body is the complete native source envelope, including original bytes and provenance. A raw CSV or ZIP belongs in the original source-sealing workflow before this import.
+
+~~~sh
+starforge fred-workspace input-inspect --connection /PRIVATE/fred-client.json \
+  --workspace macro --input board-crosswalk
+starforge fred-workspace input-inspect --connection /PRIVATE/fred-client.json \
+  --workspace macro --input h15-package
+
+starforge fred-workspace ddp-crosswalk-import --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_CROSSWALK_IMPORT --revision CURRENT_REVISION \
+  --input board-crosswalk --sha256 COMPLETE_CROSSWALK_FILE_SHA
+
+starforge fred-workspace ddp-package-import --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_PACKAGE_IMPORT --revision CURRENT_REVISION \
+  --input h15-package --sha256 COMPLETE_PACKAGE_FILE_SHA
+~~~
+
+input-inspect reads the complete file, checks its optional whole-file digest and validates the original envelope with the native crosswalk or package model. Source import returns crosswalkId or packageId, its compact source summary and the new project revision. The source identity is independent of the host filename and of the operation ID.
+
+The workspace can acquire the complete official crosswalk directly:
+
+~~~sh
+starforge fred-workspace ddp-crosswalk-acquire --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_CROSSWALK_ACQUISITION --revision CURRENT_REVISION
+~~~
+
+The optional --url selects an original official Federal Reserve URL. The native source owner retains the final URL, original response metadata and complete bytes. The [official crosswalk](https://www.federalreserve.gov/data/documents/DDP-FRED%20Data%20Series%20Crosswalk.csv) maps the release and original Board series identifier to its FRED candidate.
+
+### Inspect the entire original package
+
+~~~sh
+starforge fred-workspace ddp-sources --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind packages --offset 0 --limit 50 --revision CURRENT_REVISION
+
+starforge fred-workspace ddp-crosswalk --connection /PRIVATE/fred-client.json \
+  --workspace macro --crosswalk ORIGINAL_CROSSWALK_ID --release H15 \
+  --offset 0 --limit 100
+
+starforge fred-workspace ddp-package --connection /PRIVATE/fred-client.json \
+  --workspace macro --package ORIGINAL_PACKAGE_ID --section series \
+  --frequency ORIGINAL_SOURCE_FREQUENCY --query ORIGINAL_SERIES_TEXT \
+  --offset 0 --limit 100
+
+starforge fred-workspace ddp-package --connection /PRIVATE/fred-client.json \
+  --workspace macro --package ORIGINAL_PACKAGE_ID --section observations \
+  --package-series ORIGINAL_PACKAGE_SERIES_ID --offset 0 --limit 100
+~~~
+
+The uppercase values select actual returned source identities and fields. Inventories select crosswalks, packages, migrations or receivings. They use the returned revision for later --revision pages. Source rows default to 100 and accept 1–500; inventories default to 50 and accept 1–100. Follow every nextOffset until null.
+
+Crosswalk filters use release and query. Package series filters use the original frequency and query; the returned frequencies list is the complete available frequency inventory. Observation selection uses the immutable fred-ddp-series- identity returned by that original package, preserving distinct datasets or package entries even when Board identifiers repeat. Package source identity uses fred-ddp-package-, and crosswalk identity uses fred-ddp-crosswalk-.
+
+### Review a whole-package migration
+
+A migration preserves its name, exact FRED asOf, source window, original bookmark and analyst note. The default window is { "kind": "source" }, using each package series' selected original periods. A fixed window has kind fixed with start and end dates. A last window has kind last and a positive count of original observations; it retains the package's actual frequency.
+
+Mapping decisions select an actual crosswalk candidate or explicitly exclude an original release/Board-series pair, with a review note. A per-series binding selects the original package series ID and may specify exact period alignment, positive decimal source and target scales, expected FRED units, expected frequency and expected seasonal adjustment. The native model normalizes exact decimal strings, including supported exponent notation. Preserve a note explaining each explicit binding.
+
+The period rules are exact, month, quarter, semiannual and year. An omitted or null rule retains the native frequency-based default. These choices align original observation periods; they do not change the recorded original source period or raw value. Missing values retain their original markers.
+
+Create one complete migration-selection JSON file using actual returned source identities:
+
+~~~json
+{
+  "packageId": "ORIGINAL_PACKAGE_ID",
+  "crosswalkId": "ORIGINAL_CROSSWALK_ID",
+  "name": "H.15 reporting workflow",
+  "asOf": "2026-10-12",
+  "window": { "kind": "source" },
+  "bookmark": null,
+  "note": "Original reporting definition and reviewed source meaning.",
+  "decisions": [],
+  "bindings": [],
+  "pageSize": 1000,
+  "maxRows": 1000000
+}
+~~~
+
+The uppercase IDs are placeholders to replace with the complete actual IDs. Set asOf to the selected information date for the real migration. An existing package bookmark may be supplied as a complete HTTP or HTTPS URL; its opaque URL parameters remain a bookmark, while actual source records supply the Board identifiers.
+
+~~~sh
+starforge fred-workspace ddp-migration-preview --connection /PRIVATE/fred-client.json \
+  --workspace macro --args-file /PRIVATE/h15-migration-selection.json \
+  --section series --offset 0 --limit 100
+
+starforge fred-workspace ddp-migration-preview --connection /PRIVATE/fred-client.json \
+  --workspace macro --args-file /PRIVATE/h15-migration-selection.json \
+  --section mappings --offset 0 --limit 100
+
+starforge fred-workspace ddp-migration-preview --connection /PRIVATE/fred-client.json \
+  --workspace macro --args-file /PRIVATE/h15-migration-selection.json \
+  --section acquisitions --offset 0 --limit 100
+
+starforge fred-workspace ddp-migration-save --connection /PRIVATE/fred-client.json \
+  --workspace macro --args-file /PRIVATE/h15-migration-selection.json \
+  --id ORIGINAL_MIGRATION_SAVE --revision PREVIEW_PROJECT_REVISION \
+  --preview-id REVIEWED_MIGRATION_PREVIEW_SHA
+~~~
+
+The preview returns migrationId, previewId, the project revision and the selected migration page. Review its ready state and complete counts of mapped, ambiguous, unmapped, excluded and unresolved-period series. The acquisitions page exposes every original normalized FRED selection. Save the same complete selection and preview identity. Later changes receive a new immutable plan.
+
+The CLI also accepts --package, --crosswalk, --name, --as-of, --window-file, --bookmark, --note-file, --decisions-file, --bindings-file, --page-size and --max-rows. Decisions and bindings files contain complete arrays. An --args-file and explicit flags must agree when they supply the same field. Large original source envelopes use configured input files instead of tool arguments.
+
+### Acquire every selected batch and inspect the receiving
+
+~~~sh
+starforge fred-workspace ddp-migration-acquire --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_MIGRATION_ACQUISITION --revision CURRENT_REVISION \
+  --migration ORIGINAL_SAVED_MIGRATION_ID
+
+starforge fred-workspace ddp-migration --connection /PRIVATE/fred-client.json \
+  --workspace macro --migration ORIGINAL_SAVED_MIGRATION_ID \
+  --section acquisitions --offset 0 --limit 100
+
+starforge fred-workspace ddp-receiving --connection /PRIVATE/fred-client.json \
+  --workspace macro --receiving ORIGINAL_RECEIVING_ID --changes-only true \
+  --offset 0 --limit 100
+
+starforge fred-workspace ddp-receiving --connection /PRIVATE/fred-client.json \
+  --workspace macro --receiving ORIGINAL_RECEIVING_ID --changes-only false \
+  --package-series ORIGINAL_PACKAGE_SERIES_ID --offset 0 --limit 100
+~~~
+
+One original migration-acquire operation owns all of the plan's original FRED batches. It uses the existing private key binding on the source workspace. Its result includes the immutable receivingId, migrationId, every captureId, the source acquisitionId and the new project revision. A repeated completed request returns the same result; an interrupted request resumes its original pending operation and completed batches.
+
+The receiving retains original source and target meanings, the reviewed period and scale bindings, source and target values, exact differences and the complete status counts. Statuses are EQUAL, DIFFERENT, BOTH_MISSING, MISSING_CHANGED, SOURCE_ONLY, TARGET_ONLY, MEANING_REVIEW, EXCLUDED, UNMAPPED and AMBIGUOUS. A meaning review remains visible alongside the original metadata. changesOnly false includes the complete row set; the series filter uses the original package series identity.
+
+The saved project inventory carries a versioned JSON/CSV/HTML file manifest for each receiving. Its native renderer keeps full source context and analyst choices in the offline report and complete machine-readable files.
+
+### Resume the same original operation
+
+Use operation with the original ID to inspect pending or completed work. Source imports stage validated original bytes before the project mutation. Once the original operation has staged its source ID, continue that same import with the same ID and original revision:
+
+~~~sh
+starforge fred-workspace ddp-crosswalk-import --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_CROSSWALK_IMPORT --revision ORIGINAL_IMPORT_REVISION \
+  --crosswalk STAGED_ORIGINAL_CROSSWALK_ID
+
+starforge fred-workspace ddp-package-import --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_PACKAGE_IMPORT --revision ORIGINAL_IMPORT_REVISION \
+  --package STAGED_ORIGINAL_PACKAGE_ID
+
+starforge fred-workspace ddp-migration-acquire --connection /PRIVATE/fred-client.json \
+  --workspace macro --id ORIGINAL_MIGRATION_ACQUISITION --revision ORIGINAL_ACQUISITION_REVISION \
+  --migration ORIGINAL_SAVED_MIGRATION_ID
+~~~
+
+Source-ID continuation belongs to the same original pending or completed import. The acquisition ID belongs to the same saved migration and selected source batches. Keep those original identities when receiving an interrupted return.
+
+### Complete files, retained chunks and versioned projects
+
+~~~sh
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind ddp-crosswalk --crosswalk ORIGINAL_CROSSWALK_ID \
+  --out /PRIVATE/original-board-crosswalk.json
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind ddp-package --package ORIGINAL_PACKAGE_ID \
+  --out /PRIVATE/original-h15-package.json
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind ddp-migration --migration ORIGINAL_MIGRATION_ID \
+  --out /PRIVATE/h15-migration-plan.json
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind ddp-receiving --receiving ORIGINAL_RECEIVING_ID --format html \
+  --out /PRIVATE/h15-receiving.html
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind ddp-receiving --receiving ORIGINAL_RECEIVING_ID --format csv \
+  --out /PRIVATE/h15-receiving.csv
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind ddp-receiving --receiving ORIGINAL_RECEIVING_ID --format json \
+  --out /PRIVATE/h15-receiving.json
+
+starforge fred-workspace download --connection /PRIVATE/fred-client.json \
+  --workspace macro --kind project --out /PRIVATE/h15-project.json
+starforge fred-workspace bundle-inspect --source /PRIVATE/h15-project.json \
+  --sha256 ORIGINAL_COMPLETE_PROJECT_FILE_SHA
+starforge fred-workspace receive --source /PRIVATE/h15-project.json \
+  --project /PRIVATE/RECEIVED_H15_PROJECT --sha256 ORIGINAL_COMPLETE_PROJECT_FILE_SHA
+~~~
+
+All file selections retain complete bytes and SHA256. Source files validate the original envelope identity; migration files validate the saved plan identity. Receiving downloads also match the native saved file manifest's format, byte count and SHA256 before saving. The maintained private save path preserves a different existing destination and reuses an identical complete file.
+
+merchant_fred_file_read serves each selection through the same retained-file protocol. Keep the readId, full source selector, expectedSha256 and returned nextOffset for every continuation. The complete original file is obtained once, then its immutable private snapshot serves subsequent ranges. merchant_fred_file_release closes an unfinished read. After a read expires or the owner restarts, reopen the same selected file with its original expectedSha256 and offset.
+
+A project containing DDP work without QCEW exports stellar-forge.fred-project-bundle.v5. A project containing QCEW county-report work exports stellar-forge.fred-project-bundle.v6, including a project that combines both families. Its full identity includes original state, observation captures, publication plans, analyst files and release captures/plans. The base economic/release arrays are present, including empty ones. DDP work retains all four complete ddpCrosswalks, ddpPackages, ddpMigrations and ddpReceivings arrays. QCEW work retains its original qcew extension with complete source captures and report file packages. Version 6 requires QCEW and all four DDP array slots; those slots are empty when its original state has no DDP activity. Earlier version 5 keeps its original optional-family shape: DDP arrays are present exactly when DDP work is present, and qcew is present exactly when QCEW work is present. Earlier QCEW-only and combined version 5 files still open with their exact original identity and original complete-source validation. The complete inspector calls the original QCEW source, CPI, saved profile, report-file and lineage validator when that family is present. The installed inspector and native receiver call the same pure DDP graph validator, recomputing the original sources, plans, receiving, file manifests and original operation chronology. Original economic and release validation remains part of this complete receiving.
+
+Each raw source file is limited to 256 MiB; a complete DDP source envelope is limited to 384 MiB. Complete project v5 and v6 files are limited to 480 MiB. Workspace configuration maxDdpResponseBytes controls the DDP/project download allowance up to 480 MiB; its default is 480 MiB. Original maxResponseBytes and version 1–4 complete project limits remain 256 MiB. Source import requests have their isolated 384 MiB allowance. The authenticated MCP source import takes a configured host alias or retained source ID, keeping full original bytes outside its argument envelope.
+
+Reopen the received directory through the original fred serve command and the same connection-record workflow. The imported project retains all original source identities and saved receiving files.
+
+### Installed DDP methods and agent tools
+
+| Typed client method | Installed command / merchant_fred_ suffix | Complete operation |
+| --- | --- | --- |
+| ddpSources | ddp-sources / ddp_sources | Inspect original source, migration and receiving inventories |
+| ddpCrosswalk | ddp-crosswalk / ddp_crosswalk | Page original crosswalk rows and release/query filters |
+| importDdpCrosswalk | ddp-crosswalk-import / ddp_crosswalk_import | Import a configured full source or continue its same staged ID |
+| acquireDdpCrosswalk | ddp-crosswalk-acquire / ddp_crosswalk_acquire | Acquire the complete official original crosswalk |
+| ddpPackage | ddp-package / ddp_package | Page original series or observations with retained source meaning |
+| importDdpPackage | ddp-package-import / ddp_package_import | Import the complete original package envelope |
+| previewDdpMigration | ddp-migration-preview / ddp_migration_preview | Review full package mapping, series and acquisition sections |
+| saveDdpMigration | ddp-migration-save / ddp_migration_save | Save the same reviewed input and preview |
+| ddpMigration | ddp-migration / ddp_migration | Read saved plan sections and retained receiving summaries |
+| acquireDdpMigration | ddp-migration-acquire / ddp_migration_acquire | Resume all original FRED batches under one migration operation |
+| ddpReceiving | ddp-receiving / ddp_receiving | Inspect original meaning, status counts and every comparison row |
+
+The typed client returns complete inventory envelopes; the CLI and MCP provide revision-pinned inventory pages. Public declarations reference the original DDP crosswalk, package, migration, receiving and project DTOs. The [native project guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PROJECT.md) covers the same durable source, plan, acquisition and receiving history.
