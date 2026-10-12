@@ -80,7 +80,7 @@ export interface LightdashClient {
  handoverStatus(args:{handoverId:UUID},options?:CallOptions):Promise<HandoverStatus>;
  inspectHandover(args:{handoverId:UUID},options?:CallOptions):Promise<Record<string,unknown>>;
  resumeHandover(args:{handoverId:UUID},options?:CallOptions):Promise<Record<string,unknown>>;
- readFile(args:FileSelection&{readId?:UUID;expectedSha256?:SHA256;offset?:number;limit?:number},options?:CallOptions):Promise<FileChunk>;
+ readFile(args:FileSelection&{readId?:UUID;expectedSha256?:SHA256;offset:number;limit:number},options?:CallOptions):Promise<FileChunk>;
  releaseFile(args:{readId:UUID},options?:CallOptions):Promise<{state:'RELEASED'}>;
  request(args:{requestId:UUID},options?:CallOptions):Promise<{workspace:string;request:unknown;current:WorkspaceState}>;
 }
