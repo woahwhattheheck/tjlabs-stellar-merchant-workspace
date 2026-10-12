@@ -136,6 +136,7 @@ native run state. Follow the original pagination.
 | `cycle_start_prepare` | Select the saved period ID. Returns its full first-start review or existing run. |
 | `cycle_start` | Pass the complete unchanged first-start preparation. The Console dispatches and checkpoints its original native workflow. |
 | `call_start` | Dispatch the stable original saved request through the Console, retaining its native call ID for recovery |
+| `call_recovery` | Read original native inspection and recovery controls for the selected saved call |
 | `cycle`, `run`, `call` | Read the complete saved period, run or original native call and return |
 | `cycle_wait` | Wait for completion, pause or recovery, or return the current state at the selected interval |
 | `run_pause`, `run_resume` | Control the original run using its displayed current revision |
@@ -285,3 +286,19 @@ controls.
 The selected commit identifies the source base. The native checkpoint also retains
 the complete nine-file agent and transport source selection with actual byte counts and hashes,
 so locally prepared source and a later published edition remain distinguishable.
+
+### Receive the original outbox and continue native recovery
+
+The complete native receiver carries the original settlement outbox into its
+private customer copy. It changes only the local source-directory fields in the
+copied producer and binding records, retaining their complete previous bytes and
+hashes in the receiving checkpoint. Every original outbox member remains present.
+The original archive, customer identifiers and accepted release remain intact.
+
+If an earlier start failed because that copied outbox still named its original
+machine directory, continuation reads the original recovery controls, creates a
+saved request with `recoveryOf` linked to the failed call, and dispatches the same
+native start arguments. It resolves the original workflow step with that complete
+returned call, then resumes the same run. The handover retains the failed attempt,
+its linked recovery, all eight successful native steps and the original customer
+history. Other native failures are returned with their original saved error.

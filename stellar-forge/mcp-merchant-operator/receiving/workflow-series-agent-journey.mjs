@@ -57,6 +57,37 @@ function relocate(value, original, destination) {
     .map(([key, item]) => [key, relocate(item, original, destination)]));
   return value;
 }
+async function receiveNativeDeliveryPaths({ original, owned, releaseStore, state, save }) {
+  assert.ok(inside(owned, releaseStore), 'Keep the received release store inside this complete customer.');
+  const directory = join(releaseStore, 'settlement-delivery');
+  for (const name of ['binding.json', 'producer.json']) {
+    const path = join(directory, name);
+    let bytes;
+    try { bytes = await readFile(path); } catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+    const record = JSON.parse(bytes);
+    assert.equal(record.schema, 'stellar-forge.native-settlement-delivery.v1');
+    assert.equal(typeof record.sourceDirectory, 'string');
+    const target = relocate(record.sourceDirectory, original.directory, owned);
+    if (target === record.sourceDirectory) continue;
+    assert.ok(inside(owned, target), 'Receive the complete original outbox within this customer.');
+    await workflowSeriesPrivateDirectory(target);
+    assert.ok((await lstat(path)).isFile() && !(await lstat(path)).isSymbolicLink());
+    const next = Buffer.from(JSON.stringify({ ...record, sourceDirectory: target }, null, 2) + '\n');
+    const relativePath = relative(owned, path).split(sep).join('/');
+    state.nativePathReceivings ??= [];
+    let receiving = state.nativePathReceivings.find(value => value.path === relativePath);
+    if (!receiving) {
+      receiving = { path: relativePath, sourceDirectory: record.sourceDirectory, receivedDirectory: target,
+        previousJson: bytes.toString('utf8'), previousSha256: hash(bytes), receivedSha256: hash(next) };
+      state.nativePathReceivings.push(receiving); await save();
+    }
+    assert.equal(receiving.previousSha256, hash(bytes));
+    assert.equal(receiving.receivedSha256, hash(next));
+    await writeFile(path + '.agent-receiving.tmp', next, { mode: 0o600 });
+    await rename(path + '.agent-receiving.tmp', path);
+    receiving.completedAt ??= new Date().toISOString(); await save();
+  }
+}
 function mcpClient(host, token) {
   let id = 0;
   const rpc = async (method, params) => {
@@ -261,6 +292,8 @@ export async function receiveMerchantWorkflowSeriesAgent({
     },
   });
   await writeConsoleWorkflowFile(configPath, { ...raw, workflowSeriesConnection: './workflow-series-connection.json' });
+  await receiveNativeDeliveryPaths({ original, owned,
+    releaseStore: resolve(dirname(configPath), raw.releaseStore), state, save });
   const token = await nativeReceivingAccessToken(directory);
   const environment = { ...process.env, MCP_ACCESS_TOKEN: token };
   const hosts = new Map(); let client, receiver;
@@ -385,15 +418,66 @@ export async function receiveMerchantWorkflowSeriesAgent({
     // interrupted command reopens this same run and current revision.
     for (;;) {
       selected = await call('cycle_wait', { id: state.cycleId, timeoutMs: 120000, pollMs: 150 });
-      if (selected.run.state === 'COMPLETE' || selected.run.state === 'WAITING') break;
+      state.cycle = selected.cycle; state.run = selected.run; await save();
+      if (selected.run.state === 'COMPLETE') break;
+      if (selected.run.state === 'WAITING') {
+        const step = selected.run.steps.find(value => !['COMPLETE', 'RECOVERED'].includes(value.state));
+        const failed = step?.callId ? await call('call', { id: step.callId }) : null;
+        const receiving = state.nativePathReceivings?.find(value =>
+          failed?.error?.message?.includes(value.sourceDirectory));
+        if (step?.id !== 'start' || failed?.state !== 'FAILED' || failed.tool !== 'merchant_start' ||
+            !receiving || !failed.error.message.includes('ENOENT'))
+          throw Object.assign(new Error(failed?.error?.message ?? selected.run.error?.message ??
+            'Continue the original saved native recovery.'), {
+            code: failed?.error?.code ?? selected.run.error?.code ?? 'WORKFLOW_SERIES_AGENT_RECOVERY',
+            details: { runId: selected.run.id, stepId: step?.id, callId: step?.callId },
+          });
+        state.nativeRecovery ??= { originalCall: failed,
+          options: await call('call_recovery', { id: failed.id }), sourceReceiving: receiving };
+        await save();
+        const draftId = 'agent-recovery-draft-' + suffix, callId = 'agent-recovery-call-' + suffix;
+        const draftInput = await freeze('recoveryDraft', { id: draftId, profileId: state.profileId,
+          name: 'Continue the original merchant after receiving its complete outbox',
+          tool: failed.tool, arguments: JSON.parse(failed.argumentsJson), recoveryOf: failed.id });
+        let recoveryDraft = await missing('draft', { id: draftId }, 'CONSOLE_DRAFT_NOT_FOUND');
+        if (!recoveryDraft) recoveryDraft = await call('draft_save', { input: draftInput });
+        recoveryDraft = recoveryDraft.draft ?? recoveryDraft;
+        assert.equal(recoveryDraft.recoveryOf, failed.id);
+        assert.equal(recoveryDraft.argumentsSha256, failed.argumentsSha256);
+        const recoveryInput = await freeze('recoveryCall', { id: callId, profileId: state.profileId,
+          draftId, draftRevision: recoveryDraft.revision,
+          expectedHostFingerprint: (await call('host')).configurationFingerprint });
+        let recovered = await missing('call', { id: callId }, 'CONSOLE_CALL_NOT_FOUND');
+        if (!recovered) {
+          const dispatched = await call('call_start', { input: recoveryInput });
+          recovered = dispatched.call ?? dispatched;
+        }
+        while (recovered.state === 'RUNNING') {
+          await new Promise(resolve => setTimeout(resolve, 150));
+          recovered = await call('call', { id: callId });
+        }
+        if (recovered.state !== 'COMPLETE')
+          throw Object.assign(new Error(recovered.error?.message ?? 'Continue the saved native recovery request.'),
+            { code: recovered.error?.code ?? 'WORKFLOW_SERIES_AGENT_RECOVERY' });
+        state.nativeRecovery.completedCall = await call('call', { id: callId }); await save();
+        const current = await call('cycle', { id: state.cycleId });
+        await call('run_resolve', { id: state.runId, expectedRevision: current.run.revision,
+          stepId: step.id, callId, note: 'Received the original complete settlement outbox at this customer location. ' +
+            'The unchanged native merchant start now completes; retain the earlier failed call and this linked recovery.' });
+        const resolved = await call('cycle', { id: state.cycleId });
+        await call('run_resume', { id: state.runId, expectedRevision: resolved.run.revision });
+        continue;
+      }
       if (selected.run.active) { await emit('original-native-period-running', { runId: selected.run.id }); continue; }
       if (selected.run.state === 'PAUSED') {
-        assert.equal(selected.run.stepsComplete, 1);
-        const firstCall = await call('call', { id: selected.run.steps[0].callId });
-        assert.equal(firstCall.state, 'COMPLETE'); assert.equal(firstCall.tool, draft.tool);
-        assert.equal(hash(firstCall.resultJson), firstCall.resultSha256);
-        assert.equal(JSON.parse(firstCall.resultJson).operator.managesRunningSeller, false);
-        state.reviewedFirstCall = firstCall; await save();
+        if (selected.run.stepsComplete === 1) {
+          const firstCall = await call('call', { id: selected.run.steps[0].callId });
+          assert.equal(firstCall.state, 'COMPLETE'); assert.equal(firstCall.tool, draft.tool);
+          assert.equal(hash(firstCall.resultJson), firstCall.resultSha256);
+          assert.equal(JSON.parse(firstCall.resultJson).operator.managesRunningSeller, false);
+          state.reviewedFirstCall = firstCall; await save();
+        } else assert.ok(state.reviewedFirstCall && selected.run.stepsComplete > 1,
+          'Continue after the original first native review and retained later checkpoints.');
         await call('run_resume', { id: selected.run.id, expectedRevision: selected.run.revision });
       } else if (selected.run.state === 'READY') {
         await call('run_resume', { id: selected.run.id, expectedRevision: selected.run.revision });
@@ -409,6 +493,9 @@ export async function receiveMerchantWorkflowSeriesAgent({
     assert.equal(results[3].runtime.state, 'RUNNING'); assert.equal(results[4].mode, 'CHALLENGE_ONLY');
     assert.equal(results[4].files.length, 5); assert.equal(results[7].operator.managesRunningSeller, false);
     state.cycle = selected.cycle; state.run = selected.run; state.nativeCalls = calls;
+    state.nativeAttempts = [];
+    for (const id of new Set(selected.run.steps.flatMap(step => [step.callId, step.resolvedCallId].filter(Boolean))))
+      state.nativeAttempts.push(await call('call', { id }));
     const currentHost = await call('host');
     const customerInput = state.requests.customer ?? { profileId: state.profileId, family: 'core',
       exportId: inputs.customerId, expectedManifestSha256: results[5].manifestFile.sha256,
@@ -420,7 +507,7 @@ export async function receiveMerchantWorkflowSeriesAgent({
     assert.equal(delivery.delivery.state, 'COMPLETE'); assert.equal(delivery.delivery.files.length, 6);
     state.customer = delivery.delivery; await emit('customer-period-complete', { nativeCalls: calls.length, customerFiles: 6 });
     const full = await verifyOldCalls(call);
-    assert.equal(full.calls.length, state.originalCalls.length + 8);
+    assert.equal(full.calls.length, state.originalCalls.length + state.nativeAttempts.length);
     const baseline = await call('profile', { id: original.baseline.profileId });
     assert.deepEqual(baseline.calls.map(({ id, requestSha256, argumentsSha256, resultSha256 }) =>
       ({ id, requestSha256, argumentsSha256, resultSha256 })), state.baselineCalls);
@@ -461,7 +548,8 @@ export async function receiveMerchantWorkflowSeriesAgent({
     await rename(completedPath + '.tmp', completedPath);
     process.stdout.write(JSON.stringify({ operationId: state.operationId, stage: state.stage, profileId: state.profileId,
       periods: original.periods.length + 1, retainedCustomerCalls: full.calls.length,
-      newNativeCalls: calls.length, completeHandoverFiles: state.customerFiles.length,
+      newNativeCalls: calls.length, retainedNativeAttempts: state.nativeAttempts.length,
+      completeHandoverFiles: state.customerFiles.length,
       handoverSha256: handover.contentSha256 }) + '\n');
     return state;
   } catch (error) {

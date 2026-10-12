@@ -177,6 +177,7 @@ export class MerchantWorkflowSeriesAgent {
         case 'run_handover': return client.handover(input);
         case 'call_start': return client.console.json('calls', input.input);
         case 'call': return client.console.json('call/' + encodeURIComponent(input.id));
+        case 'call_recovery': return client.console.json('recovery/' + encodeURIComponent(input.id));
         case 'customer_receive': return client.console.json('customers', input.input);
         case 'customer_receive_run': { const { runId, ...options } = input; return client.console.receiveCustomer(runId, options); }
         case 'customer_pause': return client.console.json('customer-pause', { id: input.id });
