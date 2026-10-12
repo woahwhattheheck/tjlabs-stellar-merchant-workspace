@@ -65,6 +65,18 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \
   --dir /srv/starforge/runtimes/eurostat -- registrations --source eurostat
 ~~~
 
+Use the selected runtime for the subsequent commands in this same terminal:
+
+~~~sh
+starforge() {
+  node /absolute/merchant-workspace/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs \
+    run --dir /srv/starforge/runtimes/eurostat -- "$@"
+}
+~~~
+
+Keep the original toolkit at the absolute path selected above. The function
+dispatches each command through the installed product and its retained runtime.
+
 Replace the commit with its full 40-character SHA and use the archive path and
 SHA-256 returned by the builder. The recipe retains the complete Eurostat
 component, original publisher UI, browser assets, native seller and buyer, release
@@ -91,8 +103,8 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
 
 The saved selection and original source commit remain attached to that output.
 A new source revision or different selection uses a separate release directory.
-After installation, `starforge runtime-install run --dir RUNTIME -- COMMAND`
-runs the command from the selected original runtime.
+The maintained `runtime-install-cli.mjs run --dir RUNTIME -- COMMAND` dispatcher
+runs each command from the selected original runtime.
 
 ## Open the saved project
 
@@ -282,10 +294,29 @@ Configure an MCP client to launch:
 starforge eurostat mcp --origin http://127.0.0.1:8468
 ~~~
 
-For a selected runtime, launch the same command through
-`starforge runtime-install run --dir /srv/starforge/runtimes/eurostat -- eurostat mcp --origin http://127.0.0.1:8468`.
-Keep the original browser/server process running. The MCP process uses standard
-newline-delimited stdio and exposes the same typed client.
+For an MCP client that launches a subprocess, select the executable and argument
+vector explicitly:
+
+~~~json
+{
+  "command": "node",
+  "args": [
+    "/absolute/merchant-workspace/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs",
+    "run",
+    "--dir",
+    "/srv/starforge/runtimes/eurostat",
+    "--",
+    "eurostat",
+    "mcp",
+    "--origin",
+    "http://127.0.0.1:8468"
+  ]
+}
+~~~
+
+Keep the original browser/server process running. This process opens the selected
+runtime directly and uses standard newline-delimited stdio with the same typed
+client.
 
 | Area | MCP tools |
 | --- | --- |
