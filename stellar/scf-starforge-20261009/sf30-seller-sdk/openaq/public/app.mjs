@@ -153,6 +153,9 @@ async function receiveCompletedExample(){
  try{existing=await read('operation',{id:requestId});}catch(error){if(error.status!==404)throw error;}
  if(existing){
   if(existing.action!=='receive')throw Error('This original request ID is already bound to another action.');
+  // The original start API checks the complete retained input and returns an existing
+  // operation without launching it. Bind the exact upload before observing or resuming.
+  existing=await api('/api/action',{body:{action:'receive',input:{workspaceId:S.identity.workspaceId,requestId,uploadId:requestId,sha256:e.archive.sha256}}});
   observe(existing);
   if(existing.state==='COMPLETE')return openCompletedExample(e);
   if(existing.state==='RUNNING'){await refresh(false);show('history');note('The original completed-study receiving is still running: '+requestId);return;}
