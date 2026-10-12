@@ -477,6 +477,138 @@ A reviewer can inspect that saved Preservation/minimum-20 query and its approved
 
 **Operate and hand over a MySQL merchant.** The [complete operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9aab82b3f49bb72e5c1239bdc62072a24efdc9bf/products/mysql-workspace/OPERATING.md) carries the operator from database/schema selection through saved draft versions, native review and preparation, original SQL seller/client delivery, immutable dataset extraction, publication review and the versioned seller. The buyer receives the original snapshot-bound offer and SF88 handoff. Staff can download the complete customer client or a streamed workspace archive, receive it into another private directory and reopen the retained drafts, source, candidates, decisions and customer files. The [selected installation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/9aab82b3f49bb72e5c1239bdc62072a24efdc9bf/stellar/scf-starforge-20261009/distribution/selections/mysql-workspace.json) includes the original MySQL driver, publisher, dataset service and receiving interfaces. This supplies the complete starting workflow for the selected merchant's source adaptation, independent buyer integration and maintainer handover in the existing funded packages.
 
+### Timed demonstration and receiving procedure
+
+**SCF #46 / Stellar Discovery Trust Layer — proposed presenter and operator brief, October 12, 2026**
+
+Use the existing Grant purchase reviewer and retained HPD purchase for this presenter and operator journey. Its source, result, installation and receiving workbench continue the original customer operation.
+
+### Reviewer takeaway
+
+A buyer agrees to one useful query, pays through the native Stellar flow, receives the complete returned result in its existing application, and hands that saved work to another operator. The grant takes the working foundation into two independently operated customer installations with recurring testnet/mainnet use.
+
+The distinction to make visible is completeness of the selected task. The HPD source contains historical project events. Its result is 100 rows and 14 columns, with its original truncation flag true. All 53,468 returned bytes are retained; the demonstration does not claim the query selected every record in the source database.
+
+### Sources and exact original result
+
+|Item|Retained identity|
+|  ---  |  ---  |
+|Original reviewer operating guide|[Grant purchase reviewer operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/products/grant-reviewer/OPERATING.md); Git blob 1015cf307b5fba8a4f84e9ef3b53fcb57be0d01c.|
+|Development and customer acceptance guide|[Development and customer acceptance guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/products/merchant-workspace/DEVELOPMENT.md); Git blob 487408d4156cd16223b120f41323b6b7d1bc13c4.|
+|Returned result|100 rows; 14 columns; 53,468 bytes; original truncation flag true.|
+|Result SHA-256|4c22f8a26d48156c3e07543328b62ca6f993ce60856166d6805dc0660d9acb8d|
+|Native transaction|50d61d1102bfcf960af44171e5248e0899ed6d99cec1951a62075f9a65a6cbed|
+|Network, amount, ledger|Stellar testnet; 50,000 stroops = 0.005 native XLM; ledger 5,145,195. Fees are separate.|
+|Original completion clock|October 11, 2026, 20:12:58 UTC, as retained by the development guide.|
+|Earlier observation|A separate indeterminate quote and its complete 4,733-byte error result. Keep its status and history separate.|
+|Existing film|3 minutes 32 seconds; original product/team film at https://github.com/woahwhattheheck/public-commons-sprint-2026/releases/download/scf-presentation-20261011/stellar-forge-scf46-presentation.mp4.|
+
+
+These are source-backed identities from the completed original operation. This new brief has not performed a fresh browser rehearsal, new purchase, independent customer acceptance or new restore.
+
+### Eight-minute presentation
+
+The times below are a presentation plan. They are not execution timestamps.
+
+|Time|Screen or artifact|Presenter narration and visible evidence|
+|  ---  |  ---  |  ---  |
+|0:00–0:40|Application’s first answer and the original Source and query view.|“The useful unit is this defined query result. The customer needs its full selected output, payment history and a result another analyst can reopen.” Show the retained source vintage/query and limit.|
+|0:40–1:20|Saved terms and original primary quote.|“The buyer approves the specific request and requirement. Here is the network, asset, recipient and exact amount attached to the original attempt.” Keep access codes and signing references out of the presentation.|
+|1:20–2:10|Original primary quote’s financial/history view.|“The completed testnet purchase is 50,000 stroops. Server confirmation and the independently observed transfer belong to this original quote.” Display the transaction and ledger. Read the earlier indeterminate quote separately.|
+|2:10–3:20|Buyer results → Read complete saved result.|Read the saved result through the original client, then show/download the complete 53,468 bytes. Show 100 rows, 14 columns and truncation=true together. This is complete returned output, not a claim of an unlimited database query.|
+|3:20–4:30|The original receiving application or saved full result.|“The customer can use the result, including its scalar strings, original query and source context.” Show the usable table or existing typed result, not just a payment-success badge.|
+|4:30–6:15|Handover → Close Buyer and export packet; receiving operator’s original workbench.|Close/drain before export, retain the displayed complete-file identity, receive it under the original receiving path and read the same result. If showing the earlier completed recording, label the clip with its original operation/date.|
+|6:15–7:10|Original grant planning view and six-package table.|“The existing product supplies this foundation. The request funds two real customer integrations, registration of the same service through two testnet facilitators, deployed threat response and mainnet maintenance.” Show the unchanged 400 hours/$38,000 and actual package allocation.|
+|7:10–8:00|Cohort/acceptance table and actual planning cash view.|“The 18 purchases so far are team-operated development. The funded targets require independent operators, useful repeat purchases and an engineer who can recover the installation.” Show the unselected cohort and unentered staffing/opening cash honestly, alongside the costed plan.|
+
+
+For the shorter film slot, present the existing captioned 3:32 film intact, then use its original result identity and the milestone table for questions. Do not relabel that recording as a new live transaction or as mainnet.
+
+### Use the original installed product
+
+The original operator selects **Applications → Grant purchase reviewer**, the actual retained runtime, and the existing workbench/receiving selection. Its existing **Review, Save, Connect, Start, Open** workflow owns that lifecycle.
+
+The documented direct entry point is:
+
+```sh
+starforge grant-demo workbench --dir /srv/starforge/state/grant-review --port 0
+```
+
+The paths above are the guide’s operator-selected examples. Use the actual original workbench path already saved for the current operation. Do not silently choose a new path merely because a previous context is unavailable.
+
+For an existing source checkout, the same documented dispatcher is:
+
+```sh
+node stellar/scf_2026/presentation/reviewer/cli.mjs
+```
+
+It accepts the original workbench command and arguments from the operating guide. The selected installed archive/READY manifest determines the code and runtime actually used; a repository head does not identify an already-running installation.
+
+### Read and receive
+
+1. In **Packet intake**, select **Review bundled purchase** or the exact existing full packet.
+2. In **Source and query**, inspect the original source, query, terms and source-document downloads.
+3. **Receive this packet** uses the original receiving engine; **Open original Buyer** opens that retained purchase.
+4. In **Buyer results**, read each complete saved result under its own quote. Record the primary quote ID actually returned by the application. Do not fabricate it from the transaction hash.
+5. **Handover → Close Buyer and export packet** waits for the Buyer to drain and release its writer before exporting the closed view.
+6. Retain the export filename, byte count and SHA-256 actually returned. The receiving operator selects those exact bytes/digest and the original receiving workbench.
+7. Reopen the original Buyer and read both full saved results. Compare complete bytes and original quote identities.
+
+The documented receiving command is:
+
+```sh
+starforge grant-demo workbench --dir /srv/starforge/state/received-review \
+  --packet /srv/starforge/received/original-review.json \
+  --sha256 ORIGINAL_EXPORTED_SHA256 --port 0
+```
+
+Substitute the actual retained locations and returned digest in the current operator’s original operation. The receiving access code belongs to its own host and stays outside the exported packet.
+
+If an operation reply is lost, inspect/repeat the original action with its saved ID and exact inputs. A completed export is recovered before reading newer mutable history. Do not repeat the purchase to demonstrate reopening.
+
+### Evidence to retain from the original rehearsal
+
+Use the existing receiving result/journal and actual named artifacts. Record:
+
+* Installed source/archive and runtime identity, original workbench and receiving selection.
+* Original quote IDs, network, transaction, atomic amount and fee records.
+* Saved query/source vintage, returned row/column count, truncation flag and full result identity.
+* Closed export’s full-file identity and actual receiving result.
+* Exact screenshot/clip paths and their original times, plus any unfinished phase.
+* Which parts were shown live and which used the already completed recording.
+* The original application source edition, saved author version and selected six-package plan shown.
+
+A complete artifact count is useful only alongside the task result. Use the original saved result/journal rather than inventing a second demonstration receipt format.
+
+### Connect the demonstration to the unchanged funded packages
+
+|Package|What the existing demonstration establishes|What remains prospective for the selected customers|
+|  ---  |  ---  |  ---  |
+|T1-resource|Native query/terms/payment/result paths and complete receiving exist.|Two customers’ actual sources, typed mappings, host/runtime, buyer setup and useful output acceptance.|
+|T1-handover|Original retained purchase can be closed, exported and received.|A second accountable operator performs the agreed change/withdrawal on each customer installation while prior acquired output remains usable.|
+|T2-provider|Native request and transfer identities are visible.|Register/integrate the same useful service through two independent testnet facilitators and complete the original ten-purchase/seven-day cohort target.|
+|T2-threat|Uncertain and successful quote observations remain distinct.|Operate the two actual deployed response cases, notifications, acknowledgment, recovery and material remediation.|
+|T3-mainnet|The development foundation and testnet operation are demonstrated.|Two mainnet merchants, two buyers and the original thirty-purchase/fourteen-day repeat-use target under actual mainnet-compatible configurations.|
+|T3-recovery|Closed-view export and complete receiving have an existing implementation.|Customer production restore, later-operation reconciliation, measured recovery and an independent maintainer’s support case.|
+
+
+The presentation does not add a seventh package, increase the budget, count a reread as another purchase or choose an unconfirmed customer.
+
+### Customer questions after the eight-minute demonstration
+
+The timed demonstration remains the original HPD operation. Use these source-backed answers in the discussion; neither adds a customer purchase or a new live run.
+
+|Reviewer question|Supported answer and evidence to show|
+|  ---  |  ---  |
+|What has an outside team actually asked for?|Veridex invited the existing SF88 CLI into its testnet cohort to find external operator UX and integration findings. Its own conformance suite already covers exact settlement. Show the original invitation and latest proposed one-route $1,500/five-day workshare, preserving the fact that no endpoint or agreement has returned.|
+|What does a useful result mean beyond a payment?|The paid HPD query demonstrates complete returned bytes, exact source/query context and editable receiving. The separately proposed MedStar workflow makes another task concrete: the agreed exports and protocol become adjudicated action findings, explicit paired denominators and a frozen report another operator can reopen. Its software is implemented; its original full native result and customer agreement are not claimed here.|
+|Who owns the customer decisions?|Bryce retains the relationships. A selected installation identifies the commissioning payer, merchant, independent buyer and receiving engineer. MedStar’s investigator identified HealthLab as its technical partner; our proposal leaves study design and technical direction with those parties.|
+|Why does the grant still fund development?|The displayed result is the starting product. The six packages fund the selected customers’ source/runtime, receiving, provider compatibility, production and maintenance adaptations. Existing software and a separately paid workshare keep separate assignments.|
+|What supports the repeat-use target?|A later source edition, reporting period or genuinely distinct request gives a buyer a new useful task. The ten/thirty-purchase cohorts are prospective independent-use targets; the present 18 purchases are team-operated development. Reopening the displayed result does not add a purchase.|
+
+
+The [complete external-buyer and study-operations customer chapter](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/300dc1c2dcca190f0eeb3ccc4437f572bf612e5a/stellar-forge/developer-site/dist/grant-data/product-and-finance.md#external-buyer-onboarding-and-study-operations-commissioning) retains the original need, proposed scope, relationship stages and full receiving journey.
+
 ## Source monitoring: useful editions and complete reviewer handover
 
 OpenSanctions's [monitoring guide](https://www.opensanctions.org/docs/monitoring/) identifies a concrete integration task: retain a counterparty portfolio and earlier decisions, receive later data editions, reconcile changing identifiers, and route the relevant changes to the customer’s reviewer. Its original model separates identity resolution from the relevance of a designation to that customer. The [licensing choices](https://www.opensanctions.org/licensing/) distinguish hosted API use, internal bulk screening and redistribution. The customer workorder selects the applicable source and service rights alongside the actual receiving interface.
@@ -925,7 +1057,7 @@ The maintained OpenAQ study application completed the original source-to-custome
 
 The public archive is an OpenAQ-provided source, and its location/license description is separately labeled as retained documentation context. The source URL alone is not an immutable edition: the application retains the response bytes, acquisition time, ETag, Last-Modified and content digest. Sensor/parameter/unit series remain separate. Original timestamps and their offsets remain attached to the local reporting day; OpenAQ's measurement timestamps describe interval ends, so an end at the next midnight is not silently moved into a different reporting period. Counts and ranges describe the retained observations. A regulatory validity, completeness or preliminary/final determination requires the responsible scientific policy and reviewer.
 
-The [merged complete product](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/220) includes the source workspace, report and review history, stable publisher actions, complete portable receiving, native CLI, typed/agent interfaces, managed Applications and the original `openaq-studies` installation selection. Its [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b2b36b5b01d98e1fff83fffb7357cf9dbf43e3e/products/openaq/README.md) follows the original entry points. The completed operation used the real archive and native customer workflow. The selected-package Applications/browser continuation retains its existing receiving assignment and will contribute its own actual outcome.
+The [merged complete product](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/220) includes the source workspace, report and review history, stable publisher actions, complete portable receiving, native CLI, typed/agent interfaces, managed Applications and the original `openaq-studies` installation selection. The [complete installed study opening, PR448](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/448) adds the original package and report to Overview and Delivery. A receiving engineer follows the [installation and reading guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a34fa81ac4092fd4e12551251373f994ee7d475b/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/READING_GUIDE.md), opens the historical study and continues its original project. The actual application HTTP journey completed at 20:06:59 UTC on October 12: all seven logical files, 140 observations, original review/report and exact 797-byte response were received unchanged; repeating the original request and reopening the same project under a fresh process returned the same saved result. It made zero provider requests and closed its owned resources. The [complete 44,983-byte receiving delivery](https://chatgpt.com/api/library/files/libfile_ed037a4c0fe48191b831492605763020/download) retains the original source identity, request, result, complete study and report. This completed HTTP path and shipped browser controls support the receiving operator's workflow; no additional provider or Stellar purchase is counted.
 
 ### Customer scope, roles and acceptance
 
@@ -1163,6 +1295,46 @@ The buyer approves the original merchant's selected Stellar network, asset, reci
 The existing **400-hour / USD 38,000 / 150-day** plan governs both selected installations. These rows describe how a municipal candidate can use those shared packages; they add no allocation. Each actual adaptation is assigned once to its grant package or separately commissioned commercial workorder. The existing target remains ten useful testnet purchases across the two independent buyers over seven consecutive days by day 90, followed by thirty useful mainnet purchases over fourteen consecutive days by day 150, with both buyers returning on another day. The installed cohort retains source coverage, failed or partial outcomes, complete task counts and technical/customer receiving alongside those counts.
 
 Customer value is measured against the same source population and task: active preparation time, manual source reconciliation, corrections before usable dispatch, time to complete output and the receiving engineer's ability to continue the next period. The complete operated workspaces and original merchant delivery give that engineer the source, report, analyst decisions, payment-linked result and recovery procedure needed to run the service.
+
+## Timescale commissioning and complete customer reconciliation
+
+An engineering team can commission a service that turns an existing Timescale commissioning exercise into a complete, reusable customer analysis. The buyer receives the original report, both selected native source populations, a reviewed interpretation of every field, the saved baseline-to-observed comparison, engineering decisions and a portable DuckDB workspace. The useful result is an analysis the customer's engineer can open, explain and continue when the next operating period or corrected source arrives.
+
+**The customer problem.** A historian export and a screenshot of differences leave substantial work for the receiving engineer. They must recover the exact source selection, distinguish a SQL NULL from an empty string, interpret native time and quality fields, decide which records identify the same observation, account for duplicates and preserve the original report behind the result. The maintained Timescale and DuckDB products carry those choices through one operating history. A later reviewer can inspect the complete original population and the decisions that produced the customer report.
+
+**Implemented product.** The complete Timescale customer join is merged in [public PR2422](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2422) at d8365c0ecbd5bb02bd9f031acd5970a52ae0e9aa and [Merchant Workspace PR359](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/359) at b6d4704d7020a1cf60dc04fb1762aea192928651. The latter contains the 33-file customer integration. Its selected product combines the original Timescale commissioning owner, the existing Python DuckDB customer, paired reconciliation, browser controls, CLI, typed client, merchant and buyer MCP, and managed Applications.
+
+The original Timescale workspace creates the immutable commissioning JSON report with its complete revision chain and native source files. The customer retains that exact file, its filename and source identities in its existing warehouse. Operators inspect all fields, review native types and meanings, import immutable baseline and observed editions, and save a comparison through the existing paired engine. That engine supplies complete row accounting, duplicate groups, engineer decisions, report snapshots and portable customer export. The original customer listener and request journals continue to own the operation. [Complete product and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b6d4704d7020a1cf60dc04fb1762aea192928651/products/timescale-customer/OPERATING.md).
+
+Native cells retain their PostgreSQL text, SQL NULL and column OID. Every original field initially maps to a textual representation; an operator can select an exact integer, decimal or time representation through the native review. Roles, meanings, units, null interpretation and time basis travel with the edition. Import retains every original row, including duplicate identifiers. Matching keys and optional time windows belong to the later comparison definition, where the engineer can see their effect on the complete accounting.
+
+**Commissioning and commercial roles.** The workorder names the commissioning payer, source administrator, merchant operator, buyer organization and receiving engineer. A platform or delivery partner can introduce the customer and operate the source while TokenJunkieLabs supplies the agreed source, application, payment and handover engineering. The customer's scope identifies the exact project/report, baseline and observed source IDs, time or operating period, every required output and the decision that the engineer will make with the result. The complete [Timescale commissioning playbook](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/timescale-customer/COMMISSIONING.md) applies the shared customer-launch process to these native fields and outputs.
+
+The initial commercial scope is one agreed customer environment and one complete commissioning workflow, with the actual source populations, report definitions and recurring task specified in the workorder. Implementation pricing follows its original accepted scope and staffing estimate. The merchant's price for using the resource is a separate term. This separation lets a delivery partner pay for an installation while an independent buyer pays for subsequent useful reports, and preserves the payer, recipient, invoice and actual collection for each arrangement.
+
+**The paid customer unit.** A suitable first deployment prices the whole selected commissioning result: one reviewed report edition, its complete native sources and the agreed receiving output. The installation records the exact source/report identity, request, route or tool arguments, network, asset, recipient, atomic amount and total approved task cost. Where the chosen resource instead charges per page or query, the original purchase records remain separate and the full result retains one parent customer task. Importing or reopening the retained report uses the existing customer operation and creates no new purchase.
+
+The prospective Stellar work connects this concrete resource to the maintained merchant and buyer interfaces. The buyer's approved request and payment operation lead to the original complete report and its native customer receiving. A changed report, period, source contract or independently requested analysis is selected deliberately as later work. The engineer can continue a previously acquired edition while reviewing the new one. The [shared launch playbook](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/CUSTOMER_LAUNCH.md) supplies the installation, financial and cohort interfaces for these choices.
+
+**The complete operating demonstration.** The retained Timescale producer supplies the actual commissioning report. In the original DuckDB customer, the operator retains it, downloads the same complete file, reviews every source field, imports the two immutable editions and saves their pair. The existing browser then carries that pair into reconciliation, where the engineer runs the full accounting, reviews differences, records a decision and saves the report. The native client receives the complete report and source files, and the portable warehouse reopens them with the same selected definitions.
+
+The source includes a complete receiving programme that joins the original browser, MCP owner, comparison and portable warehouse. It retains its full input, operation ID and results so that the same customer work can continue after an interruption. The commissioned demonstration uses the original producer report and the existing customer operation. Its final result supplies the actual report, source, edition, comparison and destination identifiers that the application owner can attach to the product narrative.
+
+**Fit within the existing funded work.** If selected as one of the two merchant installations, this customer's remaining deployment and receiving work occupies the existing six packages:
+
+|Funded package|Timescale customer work and completion|
+|  ---  |  ---  |
+|T1 merchant-resource integration|Connect the customer's actual source and host; review all source/field meanings; configure the complete paid resource, buyer request and original customer intake; deliver the entire analysis in the customer's warehouse.|
+|T1 authority and handover|Have a second accountable operator reopen the installation, perform the agreed source/terms change or withdrawal, and continue the earlier acquired report under its original record.|
+|T2 provider and ledger deployment|Operate the same useful commissioning resource through both independently operated facilitators and connect each original purchase, provider and received customer result to the existing cohort.|
+|T2 deployed threat response|Deploy the customer-specific monitoring and response; recover an interrupted settled delivery and a merchant delivery failure through the original report, requests and full useful output.|
+|T3 mainnet rollout|Configure the two production parties, selected mainnet terms, recurring report task, controlled release and rollback; operate the customer's actual later periods and distinct analyses.|
+|T3 production recovery and handover|Restore the original source/customer state on the receiving host, reopen the complete warehouse, reconcile work after the backup point and complete the independent maintainer's support case.|
+
+
+The programme remains **400 prospective hours / USD 38,000 over 150 days from actual award acceptance**, with the original 80/40/70/50/90/70-hour package allocation. T2 retains at least ten useful testnet purchases in total by two independent buyers over seven consecutive days ending by day 90. T3 retains at least thirty useful mainnet purchases in total by two independent buyers over fourteen consecutive days ending by day 150, with both returning for a distinct purchase on another day. Two merchant organizations and two independently operated facilitators retain their original meaning. Each adaptation is assigned once to its funded package or separately commissioned workorder.
+
+**Learning and repeatable delivery.** The commissioning case records time from the original source selection to a usable report, engineer time spent interpreting fields and resolving differences, time to receive a corrected period, actual installation effort and subsequent support demand. The cohort records distinct completed purchases and whole customer tasks separately, together with their accountable operators, original payment amounts, provider and completion dates. The receiving engineer confirms that the output supports the agreed business decision and continues the same workflow for the next required period. These observations show which source interpretations, customer mappings and operating procedures can be reused in the next paid installation.
 
 ## 10. Open the existing work
 
