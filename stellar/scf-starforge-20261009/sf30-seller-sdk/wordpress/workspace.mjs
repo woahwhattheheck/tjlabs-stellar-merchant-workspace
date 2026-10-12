@@ -335,15 +335,16 @@ export async function openWordPressWorkspace({directory,environment=process.env,
       if(!recoverable.has(action))fail('WORDPRESS_ORIGINAL_PUBLICATION_RECOVERY','Inspect the original publisher state and recover its saved request or session.',409,{operationId});
     } else {
       if(expectedRevision!==current.revision)fail('WORDPRESS_WORKSPACE_REVISION','Reload the current original workspace before saving.',409);
-      record={id:operationId,action,intentSha256,createdAt:now(),sourceId:input.sourceId??current.activeSourceId,
-        ...(REFRESH_ACTIONS.includes(action)?{expectedRevision}:{}),status:'running',error:null};
       const path=join(root('operations'),operationId+'.intent.json');
-      if(await exists(path)) {
-        const saved=await readJson(path,1048576);
-        if(identity({action:saved.action,input:saved.input})!==intentSha256)fail('WORDPRESS_OPERATION_ID_REUSED','The retained intent has different original input.',409);
-        record={...record,createdAt:saved.createdAt,sourceId:saved.sourceId,
-          ...(REFRESH_ACTIONS.includes(action)?{expectedRevision:saved.expectedRevision}:{})};
-      } else await immutableJson(path,{...record,input});
+      const saved=await exists(path)?await readJson(path,1048576):null;
+      if(saved&&identity({action:saved.action,input:saved.input})!==intentSha256)
+        fail('WORDPRESS_OPERATION_ID_REUSED','The retained intent has different original input.',409);
+      const sourceId=saved?saved.sourceId:REFRESH_ACTIONS.includes(action)?
+        await refresh.resolveSourceId(action,input,current):input.sourceId??current.activeSourceId;
+      record={id:operationId,action,intentSha256,createdAt:saved?.createdAt??now(),sourceId,
+        ...(REFRESH_ACTIONS.includes(action)?{expectedRevision:saved?saved.expectedRevision:expectedRevision}:{}),
+        status:'running',error:null};
+      if(!saved)await immutableJson(path,{...record,input});
       current.operations.push(record);await commit(current);
     }
     const controller=new AbortController();active.set(operationId,{controller,action,startedAt:now()});

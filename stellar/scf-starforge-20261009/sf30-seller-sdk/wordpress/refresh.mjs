@@ -299,6 +299,19 @@ export function createWordPressRefresh({directory,stored,sourceRecord,sourceFor,
     return {handle,size:member.bytes,sha256:member.sha256,filename:'wordpress-refresh-'+runId+'-'+name,
       contentType:name.endsWith('.csv')?'text/csv; charset=utf-8':name.endsWith('.jsonl')?'application/x-ndjson':'application/json'};
   }
+  async function resolveSourceId(action,input,current) {
+    const value=current??await stored();let sourceId;
+    if(action==='refresh.plan.save'){
+      const edition=value.editions.find(row=>row.id===id(input.editionId));
+      if(!edition)fail('WORDPRESS_EDITION_NOT_FOUND','Select a completed native edition.',404);
+      sourceId=edition.sourceId;
+    }else if(action==='refresh.run.start')sourceId=(await plan(id(input.planId),value)).sourceId;
+    else if(['refresh.run.advance','refresh.run.review','refresh.run.export'].includes(action))
+      sourceId=(await originalRun(id(input.runId),value)).value.sourceId;
+    else fail('WORDPRESS_REFRESH_ACTION','Select an original refresh operation.',404);
+    await sourceRecord(sourceId,value);
+    return sourceId;
+  }
   async function dispatch(action,input,operation,signal) {
     const current=await stored();
     if(action==='refresh.plan.save'){
@@ -450,5 +463,5 @@ export function createWordPressRefresh({directory,stored,sourceRecord,sourceFor,
     return {result:{...exported.result,runId:value.id,sourceId:value.sourceId,stage:'exported',refresh},
       apply:state=>{exported.apply(state);add(state,'refreshEvents',saved.row);}};
   }
-  return {plan,run,changes,record:changedRecord,download,dispatch};
+  return {plan,run,changes,record:changedRecord,download,dispatch,resolveSourceId};
 }

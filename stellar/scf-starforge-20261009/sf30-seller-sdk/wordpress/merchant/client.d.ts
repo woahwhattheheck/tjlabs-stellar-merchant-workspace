@@ -1,4 +1,4 @@
-/** MIT. Merchant protocol types from the original 25-tool / 33-action catalog. */
+/** MIT. Merchant protocol types from the original 29-tool / 38-action catalog. */
 export type UUID = string;
 export type SHA256 = string;
 export type Alias = string;
@@ -85,6 +85,57 @@ export interface RetainedJsonPage {
   type: string; offset: number; total: number; nextOffset: number | null;
   value?: JsonValue; valueAvailableInOriginalFile?: boolean; message?: string;
 }
+
+export type WordPressRefreshStage = 'discovering' | 'capturing' | 'review_ready' | 'approved' | 'rejected' | 'exported' | 'attention';
+export type WordPressRefreshChangeKind = 'added' | 'removed' | 'changed';
+export type WordPressRefreshSummary = JsonObject & {
+  beforeRows: number; afterRows: number; added: number; removed: number; changed: number;
+  sourceChanged: number; projectionChanged: number; unchanged: number; changeCount: number;
+};
+export type WordPressRefreshPlan = JsonObject & {
+  id: UUID; label: string; note: string; createdAt: string; previousPlanId: UUID | null;
+  sourceId: UUID; sourceSha256: SHA256; fileSha256: SHA256;
+  baseline: JsonObject & { editionId: UUID; mappingId: UUID; captureId: UUID; captureSha256: SHA256;
+    snapshot: SHA256; intentSha256: SHA256; projectionHash: SHA256 };
+  selection: JsonObject; projection: JsonObject; dataset: JsonObject;
+  merchantId: UUID | null; productId: UUID | null;
+};
+export type WordPressRefreshReview = JsonObject & {
+  reviewSha256: SHA256; baseline: JsonObject;
+  candidate: JsonObject & { captureSha256: SHA256; projectionHash: SHA256; recordCount: number;
+    csvBytes: number; completedAt: string; findings: JsonValue[]; collections: JsonValue[] };
+  summary: WordPressRefreshSummary; files: JsonValue[];
+};
+export type WordPressRefreshRecovery = JsonObject & {
+  operationId: UUID; action: 'refresh.run.review' | 'refresh.run.export'; expectedRevision: number; input: JsonObject;
+};
+export type WordPressRefreshRun = JsonObject & {
+  run: JsonObject; plan: WordPressRefreshPlan; stage: WordPressRefreshStage;
+  jobs: JsonObject & { discovery: JsonObject | null; capture: JsonObject | null };
+  review: WordPressRefreshReview | null; decision: JsonObject | null; edition: JsonObject | null;
+  exports: JsonObject[]; events: JsonObject[]; recovery: WordPressRefreshRecovery | null; comparisonPending: boolean;
+};
+export type WordPressRefreshIndexRecord = JsonObject & {
+  collection: string; nativeId: string | number; responseSequence: number; responseSha256: SHA256;
+  ordinal: number; nativeSha256: SHA256; projectedSha256: SHA256;
+};
+export type WordPressRefreshChange = JsonObject & {
+  index: number; key: string; kind: WordPressRefreshChangeKind; sourceChanged: boolean; projectionChanged: boolean;
+  before: WordPressRefreshIndexRecord | null; after: WordPressRefreshIndexRecord | null;
+};
+export type WordPressRefreshChanges = JsonObject & {
+  runId: UUID; reviewSha256: SHA256; summary: WordPressRefreshSummary; offset: number; limit: number;
+  rows: WordPressRefreshChange[]; nextOffset: number | null;
+};
+export type WordPressRefreshRecordSide = JsonObject & {
+  nativeJson?: JsonValue; projectedJson?: JsonValue; nativeOmitted?: boolean; metadata: JsonObject;
+  source: JsonObject & { sourceId: UUID; captureId: UUID; sequence: number; ordinal: number; sha256: SHA256 };
+};
+export type WordPressRefreshRecord = JsonObject & {
+  runId: UUID; reviewSha256: SHA256; key: string; before: WordPressRefreshRecordSide | null;
+  after: WordPressRefreshRecordSide | null; clipped: boolean;
+};
+
 /**
  * Allowed original native input keys. The original action schema validates
  * action-specific required fields and the nested source/payment/review values.
@@ -103,6 +154,14 @@ export interface WordPressActionInputs {
   'edition.export': NativeFields<'editionId' | 'merchantId' | 'productId' | 'productLabel' | 'reviewer' | 'note'>;
   'product.select': NativeFields<'productId'>;
   'source.packet': Record<string, never>;
+  'refresh.plan.save': { editionId: UUID; expectedSnapshot: SHA256; label: string; note?: string;
+    merchantId?: UUID; productId?: UUID; previousPlanId?: UUID;
+    limits?: { maxPages?: number; maxRecords?: number; maxBytes?: number } };
+  'refresh.run.start': { planId: UUID; label: string; baselineEditionId?: UUID };
+  'refresh.run.advance': { runId: UUID };
+  'refresh.run.review': { runId: UUID; expectedReviewSha256: SHA256; expectedCaptureSha256: SHA256;
+    decision: 'approve' | 'reject'; reviewer: string; note?: string };
+  'refresh.run.export': { runId: UUID; reviewer: string; note?: string; merchantId?: UUID; productId?: UUID };
   'source.files': NativeFields<'packetId' | 'merchantId' | 'productId' | 'productLabel' | 'name' | 'reviewer' | 'note'>;
   'publisher.status': NativeFields<'productId'>;
   /** Original workspace export UUID from state.exports[].id; not a merchant SHA-256 export. */
@@ -146,11 +205,15 @@ export interface WordPressToolArguments {
   'edition': WorkspaceSelection & { id: UUID };
   'projection': WorkspaceSelection & { sourceId: UUID; id: UUID };
   'compare': WorkspaceSelection & { before: UUID; after: UUID; offset?: number; limit?: number };
+  'refresh_plan': WorkspaceSelection & { id: UUID };
+  'refresh_run': WorkspaceSelection & { id: UUID };
+  'refresh_changes': WorkspaceSelection & { id: UUID; offset?: number; limit?: number; kind?: 'all' | WordPressRefreshChangeKind };
+  'refresh_record': WorkspaceSelection & { id: UUID; key: string };
   'preview': WorkspaceSelection & { sourceId: UUID; captureId: UUID; projection: JsonObject; offset?: number; limit?: number };
   'dataset_preview': WorkspaceSelection & { editionId: UUID; query?: string };
   'act': WordPressActionRequest;
   'cancel': WorkspaceSelection & { operationId: UUID };
-  'artifact': WorkspaceSelection & { kind: 'source' | 'response' | 'edition' | 'export' | 'packet'; id: UUID; name?: string; sourceId?: UUID };
+  'artifact': WorkspaceSelection & { kind: 'source' | 'response' | 'edition' | 'export' | 'packet' | 'refresh'; id: UUID; name?: string; sourceId?: UUID };
   'publisher_artifact': WorkspaceSelection & { productId: UUID; kind: 'draft-csv' | 'draft-review' | 'buyer-config' | 'session-manifest' | 'session-csv' | 'session-jsonl' | 'session-review'; id: UUID };
   'manifest': ExportReference;
   'file': ExportReference & { file: string; expectedManifestSha256: SHA256; expectedSha256: SHA256; offset?: number; limit?: number; readId?: UUID };
@@ -173,6 +236,10 @@ export interface WordPressToolResults {
   'edition': RetainedWordPressResult;
   'projection': RetainedWordPressResult;
   'compare': RetainedWordPressResult;
+  'refresh_plan': RetainedWordPressResult<WordPressRefreshPlan>;
+  'refresh_run': RetainedWordPressResult<WordPressRefreshRun>;
+  'refresh_changes': RetainedWordPressResult<WordPressRefreshChanges>;
+  'refresh_record': RetainedWordPressResult<WordPressRefreshRecord>;
   'preview': RetainedWordPressResult;
   'dataset_preview': RetainedWordPressResult;
   'act': RetainedWordPressResult;
@@ -234,6 +301,10 @@ export interface WordPressMerchantClient {
   edition(args: WordPressToolArguments['edition'], options?: RequestOptions): Promise<WordPressToolResults['edition']>;
   projection(args: WordPressToolArguments['projection'], options?: RequestOptions): Promise<WordPressToolResults['projection']>;
   compare(args: WordPressToolArguments['compare'], options?: RequestOptions): Promise<WordPressToolResults['compare']>;
+  refreshPlan(args: WordPressToolArguments['refresh_plan'], options?: RequestOptions): Promise<WordPressToolResults['refresh_plan']>;
+  refreshRun(args: WordPressToolArguments['refresh_run'], options?: RequestOptions): Promise<WordPressToolResults['refresh_run']>;
+  refreshChanges(args: WordPressToolArguments['refresh_changes'], options?: RequestOptions): Promise<WordPressToolResults['refresh_changes']>;
+  refreshRecord(args: WordPressToolArguments['refresh_record'], options?: RequestOptions): Promise<WordPressToolResults['refresh_record']>;
   preview(args: WordPressToolArguments['preview'], options?: RequestOptions): Promise<WordPressToolResults['preview']>;
   datasetPreview(args: WordPressToolArguments['dataset_preview'], options?: RequestOptions): Promise<WordPressToolResults['dataset_preview']>;
   act<A extends WordPressActionName>(args: WordPressActionRequest<A>, options?: RequestOptions): Promise<RetainedWordPressResult>;
