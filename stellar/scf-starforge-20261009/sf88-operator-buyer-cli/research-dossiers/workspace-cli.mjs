@@ -12,6 +12,7 @@ import {RISK_OF_BIAS_COMMANDS,main as riskOfBiasMain} from './risk-of-bias/cli.m
 import {CUSTOMER_UPDATE_COMMANDS,main as customerUpdateMain} from './customer-updates/cli.mjs';
 import {RESEARCH_COMMERCE_COMMANDS,main as researchCommerceMain} from './customer-commerce/cli.mjs';
 import {RESEARCH_QUOTES_COMMANDS,main as researchQuotesMain} from './customer-quotes/cli.mjs';
+import {RESEARCH_QUOTE_PROGRAMME_COMMANDS,main as quotationProgrammeMain} from './customer-quotes/programme-cli.mjs';
 import {RESEARCH_QUOTATION_SETUP_COMMANDS,main as quotationSetupMain} from './customer-quotes/setup-cli.mjs';
 import {STUDY_EXTRACTION_COMMANDS,main as extractionMain} from './study-extraction-cli.mjs';
 import {TEMPLATE_EXCHANGE_COMMANDS,main as templateMain} from './template-exchange/template-workspace-cli.mjs';
@@ -21,6 +22,9 @@ const usage=String.raw`Research workspace client
 
   research-client COMMAND --connection-file /private/application-url.json --directory /original/dossier-store [OPTIONS]
   research-dossiers remote COMMAND --connection-file /private/application-url.json --directory /original/dossier-store [OPTIONS]
+
+Retained quotation programme:
+  quotes-programme-help
 
 Read the existing workspace:
   status
@@ -209,6 +213,9 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
   if(RIS_COMMANDS.includes(argv[0]))return risMain(argv,{output});
   if(RESEARCH_QUOTATION_SETUP_COMMANDS.includes(argv[0])){
     const code=await quotationSetupMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
+  }
+  if(RESEARCH_QUOTE_PROGRAMME_COMMANDS.includes(argv[0])){
+    const code=await quotationProgrammeMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
   }
   if(RESEARCH_QUOTES_COMMANDS.includes(argv[0])){
     const code=await researchQuotesMain(argv,{stdout:output});if(code)process.exitCode=code;return code;
