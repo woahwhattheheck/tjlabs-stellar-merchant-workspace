@@ -15,7 +15,7 @@ from .reading_delivery import export_project, receive_project, export_report
 def parser():
     root = argparse.ArgumentParser(description="Search complete retained files and manage portable reading projects.")
     commands = root.add_subparsers(dest="command", required=True)
-    for name in ("status", "sources", "search", "read", "save-search", "run-search", "save-list", "history", "report", "export", "sync", "publish-collection", "serve"):
+    for name in ("status", "sources", "search", "read", "read-selection", "save-search", "run-search", "save-list", "history", "report", "export", "sync", "publish-collection", "serve"):
         p = commands.add_parser(name)
         p.add_argument("directory", type=Path)
         if name in ("sources", "search", "run-search"):
@@ -37,11 +37,15 @@ def parser():
         if name == "read":
             p.add_argument("resource_id")
             p.add_argument("ordinal", type=int)
+        if name == "read-selection":
+            p.add_argument("--list", required=True)
+            p.add_argument("--revision", type=int)
+            p.add_argument("--position", type=int, required=True, help="One-based saved list position.")
         if name == "run-search":
             p.add_argument("id")
             p.add_argument("--revision", type=int)
         if name == "history":
-            p.add_argument("kind", choices=("list", "search"))
+            p.add_argument("kind", choices=("list", "search", "handover"))
             p.add_argument("id")
         if name == "report":
             selector = p.add_mutually_exclusive_group(required=True)
@@ -97,6 +101,11 @@ def main(argv=None):
                     result = w.search(a.query, snapshot=a.snapshot, resource_id=a.resource_id, offset=a.offset, limit=a.limit)
                 elif a.command == "read":
                     result = w.passage(a.resource_id, a.ordinal)
+                elif a.command == "read-selection":
+                    record = w.head("list", a.list, revision=a.revision)
+                    if not 1 <= a.position <= len(record["items"]):
+                        raise ReadingError("READING_POSITION_INVALID")
+                    result = w.selected_passage(record["items"][a.position - 1])
                 elif a.command == "save-search":
                     result = w.save_search(record_id=a.id, name=a.name, query=a.query, snapshot=a.snapshot, resource_id=a.resource_id, expected_revision=a.expected_revision, operation_id=a.operation)
                 elif a.command == "run-search":
