@@ -20,6 +20,7 @@ import operations_support as support
 import operations_buyer as buyer
 import operations_completion as completion
 import operations_calendar as calendar_model
+import operations_use_calendar as use_calendar
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
@@ -560,6 +561,32 @@ class Operations:
         with self._snapshot():
             report = self.delivery_calendar(program_id, as_of, expected_version)
             return calendar_model.export_bytes(report, format)
+
+    def customer_use_calendar(self, program_id, body):
+        with self._snapshot():
+            context = self._completion_context(program_id, body, ("installationRefs", "asOfDate"))
+            selected = use_calendar.selected_rows(self, context, body.get("installationRefs"))
+            return use_calendar.calendar(context, selected, body.get("asOfDate"))
+
+    def expand_customer_use_calendar(self, program_id, body):
+        with self._snapshot():
+            context = self._completion_context(program_id, body, ("document", "pattern"))
+            document = installations.normalized(context, body.get("document"))
+            result = use_calendar.expand(context, document, body.get("pattern"))
+            result["document"] = installations.normalized(context, result["document"])
+            result["source"] = installations._source(context)
+            return result
+
+    def seed_customer_use_cohort(self, program_id, body):
+        with self._snapshot():
+            context = self._completion_context(program_id, body, ("installationRefs", "groupId", "asOfAt"))
+            selected = use_calendar.selected_rows(self, context, body.get("installationRefs"))
+            return use_calendar.seed_cohort(context, selected, body.get("groupId"), body.get("asOfAt"))
+
+    def export_customer_use_calendar(self, program_id, body, format="json"):
+        with self._snapshot():
+            value = self.customer_use_calendar(program_id, body)
+            return use_calendar.export_bytes(value, format)
 
     def _completion_context(self, program_id, body, keys):
         completion.object_value(body, ("expectedVersion", *keys), "completion operation")
