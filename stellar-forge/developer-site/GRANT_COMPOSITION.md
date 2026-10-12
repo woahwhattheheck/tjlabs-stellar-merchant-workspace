@@ -70,6 +70,8 @@ The workspace uses the existing `/drafts.mjs` and the same application/source-in
 
 The HTML reader and downloadable Markdown have different relative locations. The composer adjusts companion and source-index links only in the rendered HTML. Markdown sibling links remain relative to `grant-data/`.
 
+Canvas authoring uses the public `blob/main/stellar-forge/developer-site/dist/grant-data/product-and-finance.md` URL for companion links. The maintained customer projection receives that exact current-file URL as the Markdown sibling link, preserving its chapter fragment; pinned historical sources retain their original links. This keeps the canonical authoring copy, downloaded answer and installed page on the same complete companion.
+
 
 ## Preserve the complete authoring package
 
