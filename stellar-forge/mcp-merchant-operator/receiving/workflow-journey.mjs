@@ -10,6 +10,7 @@ import { gunzipSync } from 'node:zlib';
 import { initializeMerchant, readMerchantConfig } from '../config.mjs';
 import { startMerchantMcp } from '../serve.mjs';
 import { verifyNativeArtifacts, prepareNativeArtifactReport, retainNativeInspection, nativeReceivingAccessToken } from './workflow-native-artifacts.mjs';
+import { recoverCommittedActivation, readCompletedWorkflowCalls, nativeCallRecord, verifyRetainedNativeCall } from './workflow-native-recovery.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
@@ -311,15 +312,20 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
       await emit('outbound-received',{runId:received.id,owner:received.ownerWorkspaceId});
     }
     if(!report.phases['merchant-and-customer']){
+      const recovery=await recoverCommittedActivation({api:(path,options)=>api(receiver,path,options),report,save,
+        releaseStore:(await readMerchantConfig(configuration)).releaseStore});
+      if(recovery&&!report.phases['activation-recovered'])await emit('activation-recovered',
+        {runId:recovery.runId,originalCallId:recovery.originalCallId,recoveredCallId:recovery.call.id});
       const stopped=await continueRun(receiver,receiverPage,value=>value.state==='PAUSED'&&value.stepsComplete===6,'Original merchant/customer workflow');
-      const calls=await Promise.all(stopped.steps.slice(0,6).map(step=>api(receiver,'call/'+step.callId)));
-      assert.ok(calls.every(call=>call?.state==='COMPLETE'));
+      const selected=await readCompletedWorkflowCalls({...stopped,steps:stopped.steps.slice(0,6)},path=>api(receiver,path));
+      const calls=selected.effective;
       const results=calls.map(call=>{assert.equal(sha(call.resultJson),call.resultSha256);return JSON.parse(call.resultJson);});
       assert.match(results[0].release.digest,/^[a-f0-9]{64}$/);
       assert.equal(results[2].runtime.state,'RUNNING');assert.equal(results[3].files.length,5);
       assert.equal(results[3].mode,'CHALLENGE_ONLY');assert.match(results[4].manifestFile.sha256,/^[a-f0-9]{64}$/);
       report.customerSelection={family:'core',exportId,expectedManifestSha256:results[4].manifestFile.sha256};
-      report.originalCalls=calls.map(call=>({id:call.id,tool:call.tool,argumentsSha256:call.argumentsSha256,resultSha256:call.resultSha256}));
+      report.originalCalls=selected.original.map(nativeCallRecord);
+      report.recoveryCalls=selected.recoveries.map(nativeCallRecord);
       assert.equal((await api(receiver,'host')).operator.managesRunningSeller,false);
       await emit('merchant-and-customer',{runId:stopped.id,releaseDigest:results[0].release.digest,manifestSha256:report.customerSelection.expectedManifestSha256});
     }
@@ -360,16 +366,22 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
       assert.equal(complete.stepsComplete,7);assert.equal(complete.workspaceId,report.workspaces.source);
       assert.equal(complete.ownerWorkspaceId,report.workspaces.source);assert.equal(complete.events.filter(event=>event.kind==='HANDED_OVER').length,2);
       const details=await api(source,'profile/'+profileId);
-      assert.equal(details.calls.length,7);assert.equal(new Set(details.calls.map(call=>call.id)).size,7);
-      assert.ok(details.calls.every(call=>call.state==='COMPLETE'));
-      for(const call of await Promise.all(details.calls.map(value=>api(source,'call/'+value.id))))assert.equal(sha(call.resultJson),call.resultSha256);
+      const selected=await readCompletedWorkflowCalls(complete,path=>api(source,path));
+      assert.equal(selected.original.length,7);assert.equal(selected.effective.length,7);
+      assert.equal(new Set(selected.original.map(call=>call.id)).size,7);
+      const retained=await Promise.all(details.calls.map(value=>api(source,'call/'+value.id)));
+      for(const call of retained)verifyRetainedNativeCall(nativeCallRecord(call),call);
+      const expectedIds=[...selected.original,...selected.recoveries].map(call=>call.id).sort();
+      assert.deepEqual(retained.map(call=>call.id).sort(),expectedIds);
+      report.originalCalls=selected.original.map(nativeCallRecord);report.recoveryCalls=selected.recoveries.map(nativeCallRecord);
+      report.nativeCalls=retained.map(nativeCallRecord);
       report.run={id:complete.id,workflowId:complete.workflowId,workflowRevision:complete.workflowRevision,
         requestSha256:complete.requestSha256,revision:complete.revision,events:complete.events,steps:complete.steps};
       await openRun(page,source);await screenshot(page,'workflow-complete-desktop.png');
       await screenshot(page,'workflow-complete-mobile.png',{width:390,height:844});
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile workflow has no horizontal page overflow');
       await page.setViewportSize({width:1440,height:1080});
-      await emit('workflow-completed',{runId:complete.id,originalNativeCalls:details.calls.length});
+      await emit('workflow-completed',{runId:complete.id,originalNativeCalls:7,recoveryCalls:report.recoveryCalls.length,retainedNativeCalls:details.calls.length});
     }
     const packet=await exportProfile(source,'workflow-complete-profile.json');await receiveProfile(receiver,packet);
     const repeated=await receiveProfile(receiver,packet);assert.equal(repeated.reused,true);
@@ -387,7 +399,8 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
       assert.equal(saved.id,report.requests.start.id);assert.equal(saved.state,'COMPLETE');
       assert.equal(saved.requestSha256,report.run.requestSha256);
       assert.equal(saved.revision,report.run.revision);
-      assert.equal((await api(host,'profile/'+profileId)).calls.length,7);
+      assert.equal((await api(host,'profile/'+profileId)).calls.length,report.nativeCalls.length);
+      for(const expected of report.nativeCalls)verifyRetainedNativeCall(expected,await api(host,'call/'+expected.id));
       assert.equal(status.operator.managesRunningSeller,false);
     }
     const reopenedCustomer=await api(receiver,'customer-archive/'+report.customerId,{raw:true});
