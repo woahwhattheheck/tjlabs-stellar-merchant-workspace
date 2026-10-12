@@ -140,6 +140,7 @@ through those existing interfaces.
 | --- | --- | --- |
 | Select/install source and operate a managed application | Runtime workspace and Applications: Review, Save, Connect, Review Start, Start, Open, Stop and recovery | Source-owned provider catalog, native preparation, exact request selector and original startup reader. |
 | Author a supplier API or query product | [Captured API](../captured-api/OPERATING.md), [GraphQL](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md), provider workspace | Native capture/schema intake, immutable operation review, complete plan, actual preview, merchant compilation and release. |
+| Review aid-finance publishers and deliver the portfolio | [IATI console, CLI, Applications and typed client](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md), original source-workspace MCP | Complete original XML and native editions, exact grouped finance, named review revisions, retained comparisons and independent portfolio/customer receiving. |
 | Acquire and use complete data | Buyer dataset workspace, source-specific customer client, Analysis | Original purchase/request identities, complete parent result, typed receiving and saved analytical work. |
 | Change source or price | Native source review and [merchant economics](../merchant-economics/OPERATING.md) | New reviewed source/terms generation, exact route allocation and original prior-customer output. |
 | Resolve an incident or hand over service | Incident desk, retained case and native recovery/export commands | Last useful source capture, original financial/delivery event, acknowledgment and receiving-host continuation. |
@@ -184,6 +185,13 @@ the actual input contract, meaningful browser/CLI operation, complete exported
 result, native receiving path, and reopened saved work. Extend the current
 semantic or paid-result representation instead of flattening a new adapter's
 data into an incompatible generic shape.
+
+The IATI contribution is a complete instance of this contract. Its source-owned
+`distribution/contributions/iati.json` registers `dataset-iati`, the typed
+client export and original Applications provider. The `iati-operator` selection
+includes the complete IATI and XML sources, browser assets, original source MCP
+adapter, installer and release support. The installed application uses the same
+workspace and native dataset engine as the direct CLI.
 
 ### Work from one selected source
 
@@ -277,6 +285,40 @@ operation. Its guide includes the original inputs, module identities, native
 phases, saved-query/workbook semantics and complete output inventory. The
 first actual restore receipt and final package identity are retained so a
 completed receive can be reconciled after an interrupted parent process.
+
+### Aid-finance publisher review and full customer receiving
+
+The full IATI product is adopted from upstream commit
+**c5348b13834012b41c5b40573bc0c390c4226efc**, including both complete public
+publisher inputs, the original runtime selection and customer metadata
+retention. It belongs to the delivered foundation described in section 1.
+
+Its [complete operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
+connects the committed source builder and runtime installer to all three native
+dataset editions, exact financial reconciliation, named portfolio revisions,
+source comparison and full report/portfolio export. It then operates the
+original saved Applications through the real browser, source MCP and CLI,
+receives the complete history into another workspace, reopens both sides and
+packages the complete customer archive. The original result retains the installed
+source and every output identity.
+
+| Included original publisher | Source and retained attribution |
+| --- | --- |
+| AidData Nigeria AIMS, 2016 XML edition | Complete 309,331-byte IATI 2.03 file; original release citation, publication context and ODC-By notice. |
+| Transparency International, XML generated April 2, 2026 | Complete 131,359-byte IATI 2.03 file acquired October 12, 2026; unchanged 337-byte official metadata, CC-BY identifier, full source provenance and notice. |
+
+The first publisher carries reported transactions and the second carries
+reported budgets. Native parsing and the original report determine their full
+activity and financial results. The workflow retains the source dimensions and
+exact amounts throughout query, review, comparison and receiving. The
+[domain model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DOMAIN.md) documents the source-backed
+interpretation.
+
+A selected operation keeps its existing input, runtime and output directory
+through recovery. The two publisher operations use separate IDs/workspaces and
+run sequentially in the owning foreground. Their complete customer ZIPs contain
+the runtime, original publisher and metadata, final reviewed portfolio/report,
+native merchant files and full handover guides.
 
 ## 6. Prospective SCF46 roadmap
 

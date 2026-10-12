@@ -4,7 +4,8 @@ Build and operate a data service with Stellar payment access, native customer
 clients, retained source results, deployment releases, and an operator workspace.
 
 The product brings together captured HTTP API and GraphQL service authoring,
-Kafka event datasets, satellite imagery and processing history, searchable
+Kafka event datasets, reviewed aid-finance portfolios, satellite imagery and
+processing history, searchable
 material catalogs, merchant incident work, supplier cost allocation and pricing
 decisions, and QuickBooks or Xero accounting operations. Each workflow keeps its
 original saved records from source selection through delivery and reopening.
@@ -30,6 +31,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
+| Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -63,6 +65,15 @@ connects complete source review, the tenant Automation API, native publication,
 merchant operation and delivery of every original customer file. Build its
 selected source with `--selection huwise`; its package retains the original
 publisher, buyer, host and runtime installation workflow.
+
+The [IATI aid-finance operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
+connects complete publisher XML to activity, transaction and budget editions,
+named portfolio review, exact financial reports and independent customer
+receiving. Build its installed product with `--selection iati-operator`.
+The [complete publisher workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
+uses the same runtime and Applications to operate both included original
+AidData Nigeria and Transparency International editions and deliver each
+complete customer archive.
 
 ## Open the source product
 
@@ -218,6 +229,8 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [IATI publisher review, finance and operator interfaces](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
+- [IATI complete installed publisher workflow and customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
 - [Complete OData collections, Analysis and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md)
 
 - [Timescale native operations, assigned work and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/timescale/OPERATING.md)

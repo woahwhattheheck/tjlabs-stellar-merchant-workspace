@@ -61,6 +61,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   header.append(element('h2', 'Applications'), button('New application', () => edit(null)));
   const intro = element('p', 'Open the original merchant and buyer tools using an installed runtime. Application data, private URLs and process history stay with this workspace.', 'note');
   const list = element('div', undefined, 'runtime-list');
+  list.id = 'application-library';
   const empty = element('p', 'No applications have been saved. Select a ready runtime and review an application below.', 'empty');
   const configuration = element('details'); configuration.open = true;
   configuration.append(element('summary', 'Configure application'));
