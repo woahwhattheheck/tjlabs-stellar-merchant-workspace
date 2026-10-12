@@ -25,6 +25,7 @@ import zipfile
 
 from model import Problem, canonical, digest, now, text, csv_bytes
 import operations_domain as domain
+import operations_statements as statement_sources
 
 SCHEMA = "scf.operations.settlement-receiving.v1"
 SOURCE_SCHEMA = "scf.operations.merchant-settlement-source.v1"
@@ -932,6 +933,7 @@ def validate_import(context, events, frozen_reviews, files):
     sources = context["sources"]
     reviews_by_id = {}
     sources_with_reviews = {}
+    attribution_contexts = {}
 
     def invalid(message):
         fail(message, "SETTLEMENT_IMPORT_SOURCE", 422)
@@ -951,6 +953,96 @@ def validate_import(context, events, frozen_reviews, files):
         for key, field in normalized.items():
             if key != "state" and value.get(key) != field:
                 invalid(label + " differs from its original normalized cash fields.")
+
+
+    def attribution_context(version):
+        """Reopen the deployment role when this row's attribution was selected."""
+        if version in attribution_contexts:
+            return attribution_contexts[version]
+        deployments = {row["id"]: row for row in context["records"]["deployments"]}
+        for event in reversed(events):
+            if event["version"] <= version:
+                break
+            if event.get("kind") != "deployments":
+                continue
+            before, after = event.get("before"), event.get("after")
+            if not isinstance(after, dict) or deployments.get(after.get("id")) != after:
+                invalid("The original deployment transition lost its retained after body.")
+            ident = after["id"]
+            if before is None:
+                deployments.pop(ident)
+            elif (not isinstance(before, dict) or before.get("id") != ident
+                    or before.get("version", event["version"]) >= event["version"]):
+                invalid("The original deployment transition lost its retained preimage.")
+            else:
+                deployments[ident] = before
+        if any(row.get("version", version + 1) > version for row in deployments.values()):
+            invalid("The original deployment attribution cannot be restored at its selected version.")
+        restored = {**context, "restoring": True,
+                    "records": {**context["records"], "deployments": list(deployments.values())}}
+        attribution_contexts[version] = restored
+        return restored
+
+    def statement_cash(event, first_preimages):
+        """Recover statement-created observations from their original native bodies."""
+        after = event.get("after")
+        if event.get("kind") != "statement" or not isinstance(after, dict):
+            invalid("The original statement cash creation has no retained receiving event.")
+        event_actor = text(event.get("actor"), "Original statement recording operator", 300, True)
+        source_id, review_id = after.get("sourceId"), after.get("reviewSourceId")
+        source, review_source = sources.get(source_id), sources.get(review_id)
+        marker = source.get("statement", {}) if isinstance(source, dict) else {}
+        review_marker = review_source.get("statement", {}) if isinstance(review_source, dict) else {}
+        if (not source or not review_source or marker.get("schema") != statement_sources.SCHEMA
+                or marker.get("role") != "CSV" or marker.get("reviewSourceId") != review_id
+                or review_marker.get("schema") != statement_sources.SCHEMA
+                or review_marker.get("role") != "REVIEW" or review_marker.get("csvSourceId") != source_id
+                or event.get("recordId") != source_id or event.get("before") is not None):
+            invalid("The original statement cash creation differs from its source association.")
+        raw = files.get("sources/" + review_id)
+        if (not isinstance(raw, bytes) or len(raw) != review_source["bytes"]
+                or hashlib.sha256(raw).hexdigest() != review_source["sha256"]):
+            invalid("The original statement cash review is missing or changed.")
+        try:
+            review = json.loads(raw)
+        except (ValueError, UnicodeError) as exc:
+            raise Problem("The original statement cash review cannot be read.",
+                          422, "SETTLEMENT_IMPORT_SOURCE") from exc
+        preview = review.get("preview", {}) if isinstance(review, dict) else {}
+        if (not isinstance(review, dict) or review.get("schema") != statement_sources.SCHEMA + ".review"
+                or review.get("sourceId") != source_id or review.get("sourceSha256") != source["sha256"]
+                or review.get("caseVersion") != event["version"] or review.get("recordedBy") != event_actor
+                or review.get("cashRows") != after.get("cashRows")
+                or review.get("editionSha256") != after.get("editionSha256")
+                or not isinstance(preview, dict) or preview.get("previewSha256") != after.get("previewSha256")):
+            invalid("The statement cash rows differ from their original receiving decision.")
+        rows = {row["rowNumber"]: row for row in preview.get("rows", [])}
+        current_cash = _cash_map(context)
+        staged = {**context, "restoring": True, "records": {**context["records"], "cash": []}}
+        result = []
+        for selection in review["cashRows"]:
+            ident = selection["cashId"]
+            original = rows.get(selection["rowNumber"])
+            observation = first_preimages.get(ident, current_cash.get(ident))
+            if (not original or original.get("status") != "NEW" or not isinstance(observation, dict)
+                    or observation.get("id") != ident or observation.get("state") != "OBSERVED"
+                    or observation.get("version") != event["version"]
+                    or observation.get("recordedBy") != event_actor):
+                invalid("A statement creation needs its original observed cash body at the receiving version.")
+            native = {**original["record"], "sourceIds": [source_id, review_id],
+                      "valuationSourceIds": [source_id] if original["currency"] != "USD"
+                      and original["usdValue"] is not None else []}
+            native.pop("id", None)
+            prepared = domain.prepare("cash", native, staged)
+            domain.timestamp(observation.get("createdAt"), "Original statement cash creation")
+            domain.timestamp(observation.get("updatedAt"), "Original statement cash observation")
+            expected = {**prepared, "id": ident, "version": event["version"],
+                        "createdAt": observation["createdAt"], "updatedAt": observation["updatedAt"],
+                        "recordedBy": event_actor}
+            if observation != expected:
+                invalid("The original statement cash body differs from its native reviewed creation.")
+            result.append(deepcopy(observation))
+        return result
 
     def inspect_source(source):
         association = _association(source)
@@ -994,6 +1086,7 @@ def validate_import(context, events, frozen_reviews, files):
             if not isinstance(retained, list) or not 1 <= len(retained) <= MAX_REVIEWS:
                 invalid("Retain the complete merchant review history.")
             previous = None
+            attribution_versions = {}
             for review in retained:
                 if (not isinstance(review, dict) or review.get("schema") != SCHEMA + ".review"
                         or not isinstance(review.get("id"), str) or not re.fullmatch(r"settlement-[a-f0-9]{32}", review["id"])
@@ -1040,7 +1133,12 @@ def validate_import(context, events, frozen_reviews, files):
                     if row.get("decision") not in ("RECORD_CASH", "LINK_CASH", "OBSERVE", "OMIT", "CORRECT_CASH", "VOID_CASH", "RELINK"):
                         invalid("The original row decision is unavailable.")
                     text(row.get("reason"), "Original row decision", 4000, True)
-                    restoration = {**context, "restoring": True}
+                    if row["rowId"] in review.get("changedRowIds", []):
+                        attribution_versions[row["rowId"]] = version - 1
+                    attribution_version = attribution_versions.get(row["rowId"])
+                    if attribution_version is None:
+                        invalid("The original row is missing its selected attribution edition.")
+                    restoration = attribution_context(attribution_version)
                     dids, wids = _attribution(restoration, row)
                     if dids != row.get("deploymentIds") or wids != row.get("workIds"):
                         invalid("The original deployment/work selection changed.")
@@ -1109,7 +1207,8 @@ def validate_import(context, events, frozen_reviews, files):
                 event = events[version - 1]
                 command = "settlement.receive" if review["type"] == "RECEIVE" else "settlement.correct"
                 if (event.get("action") != command or event.get("recordId") != review["id"]
-                        or event.get("requestId") != review.get("requestId") or event.get("actor") != review["actor"]
+                        or event.get("requestId") != review.get("requestId")
+                        or text(event.get("actor"), "Original settlement recording operator", 300, True) != review["actor"]
                         or event.get("after", {}).get("review") != review
                         or event.get("after", {}).get("cash") != [change.get("after") for change in review["cashChanges"]]
                         or event.get("before", {}).get("cash") != [change.get("before") for change in review["cashChanges"]]):
@@ -1130,10 +1229,30 @@ def validate_import(context, events, frozen_reviews, files):
         if {event.get("recordId") for event in events if event.get("action") in ("settlement.receive", "settlement.correct")} != set(reviews_by_id):
             invalid("The original operations history is missing a retained settlement review.")
 
-        # Reconstruct only the original cash path, including ordinary cash.record
-        # and cash.void, to check every selected snapshot at its actual version.
+        # A statement creation records row identities in its compound event.
+        # Its unchanged observation or first native void preimage retains the
+        # complete creation body, including the original timestamps and actor.
+        first_preimages = {}
+        for event in events:
+            if event.get("kind") == "cash" and isinstance(event.get("before"), dict):
+                before = event["before"]
+                first_preimages.setdefault(before["id"], before)
+            if event.get("action") in ("settlement.receive", "settlement.correct"):
+                _, review = reviews_by_id[event["recordId"]]
+                for change in review["cashChanges"]:
+                    before = change.get("before")
+                    if isinstance(before, dict):
+                        first_preimages.setdefault(before["id"], before)
+
+        # Reconstruct ordinary, statement-created and settlement cash at their
+        # original event versions before validating each selected snapshot.
         cash_history = {}
         for event in events:
+            if event.get("action") == "statement.receive":
+                for observation in statement_cash(event, first_preimages):
+                    if observation["id"] in cash_history:
+                        invalid("The statement cash history repeats a created identity.")
+                    cash_history[observation["id"]] = observation
             if event.get("kind") == "cash" and isinstance(event.get("after"), dict):
                 before, after = event.get("before"), event["after"]
                 if before is not None and cash_history.get(before["id"]) != before:

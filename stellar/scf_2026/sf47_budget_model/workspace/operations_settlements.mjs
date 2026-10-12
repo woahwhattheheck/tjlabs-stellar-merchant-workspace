@@ -39,7 +39,118 @@ function exactQuantity(atomic, decimals) {
   const fraction=digits.slice(-decimals).replace(/0+$/,'');
   return digits.slice(0,-decimals)+(fraction?'.'+fraction:'');
 }
-const definite = error => [400,404,409,413,422].includes(error.status)&&typeof error.code==='string'&&/^[A-Z0-9_]{1,120}$/.test(error.code);
+
+const DESK_SCHEMA = 'sf47.settlement-desk.v2';
+const DESK_LIMIT = 64 * 1024 * 1024;
+let settlementDatabase;
+function deskDatabase() {
+  if(!settlementDatabase)settlementDatabase=new Promise((resolve,reject)=>{
+    const request=indexedDB.open('sf47-merchant-settlement-desks',1);
+    request.onupgradeneeded=()=>{
+      const db=request.result;
+      db.createObjectStore('desks',{keyPath:'id'});
+      const index=db.createObjectStore('desk-index',{keyPath:'id'});
+      index.createIndex('caseId','caseId',{unique:false});
+      db.createObjectStore('archives',{keyPath:'id'});
+    };
+    request.onsuccess=()=>{const db=request.result;db.onversionchange=()=>{db.close();settlementDatabase=null;};resolve(db);};
+    request.onerror=()=>reject(request.error||new Error('Browser draft storage is unavailable.'));
+    request.onblocked=()=>reject(new Error('Close the older settlement storage view, then reopen this desk.'));
+  }).catch(error=>{settlementDatabase=null;throw error;});
+  return settlementDatabase;
+}
+async function readDeskValue(store,key,indexName=null) {
+  const db=await deskDatabase();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(store,'readonly'),table=tx.objectStore(store);
+    const request=indexName?table.index(indexName).getAll(key):table.get(key);
+    let value;
+    request.onsuccess=()=>{value=request.result;};
+    tx.oncomplete=()=>resolve(value);
+    tx.onabort=()=>reject(tx.error||request.error||new Error('The saved settlement desk could not be opened.'));
+    tx.onerror=()=>{};
+  });
+}
+async function writeDeskValue(desk,archive) {
+  const db=await deskDatabase();
+  return new Promise((resolve,reject)=>{
+    const stores=archive?['desks','desk-index','archives']:['desks','desk-index'];
+    const tx=db.transaction(stores,'readwrite');
+    tx.objectStore('desks').put(desk);
+    tx.objectStore('desk-index').put({id:desk.id,caseId:desk.caseId,deskId:desk.deskId,savedAt:desk.savedAt,
+      name:desk.draft?.name||desk.fileMeta?.filename||'Settlement correction',
+      source:desk.fileMeta?.filename||'',requestId:desk.pending?.requestId||null});
+    if(archive)tx.objectStore('archives').put(archive);
+    tx.oncomplete=()=>resolve();
+    tx.onabort=()=>reject(tx.error||new Error('The complete settlement draft could not be retained.'));
+    tx.onerror=()=>{};
+  });
+}
+const readableTime = value => {
+  const date=new Date(value);
+  return Number.isNaN(date.getTime())?String(value??''):date.toLocaleString();
+};
+function validDeskShape(desk,caseId) {
+  if(!plain(desk)||desk.schema!==DESK_SCHEMA||desk.caseId!==caseId)throw new Error('Choose a complete settlement desk for this original case.');
+  if(desk.draft!==null&&desk.draft!==undefined) {
+    const draft=desk.draft;
+    if(!plain(draft)||typeof draft.name!=='string'||typeof draft.note!=='string'||!Array.isArray(draft.selections)||draft.selections.length>5000)
+      throw new Error('Retain the complete original receiving draft and its selected rows.');
+    for(const row of draft.selections) {
+      if(!plain(row)||typeof row.rowId!=='string'||typeof row.decision!=='string'||typeof row.reason!=='string'
+        ||!Array.isArray(row.deploymentIds)||!Array.isArray(row.workIds)||!plain(row.cash)
+        ||!Array.isArray(row.cash.unitSourceIds)||!Array.isArray(row.cash.valuationSourceIds)||!Array.isArray(row.cash.allocations))
+        throw new Error('Retain each complete receiving row, source selection and cash editor.');
+    }
+  }
+  if(desk.correction!==null&&desk.correction!==undefined) {
+    const correction=desk.correction;
+    if(!plain(correction)||typeof correction.reviewId!=='string'||typeof correction.rowId!=='string'
+      ||typeof correction.decision!=='string'||typeof correction.reason!=='string'
+      ||!Array.isArray(correction.deploymentIds)||!Array.isArray(correction.workIds)||!plain(correction.cash)
+      ||!Array.isArray(correction.cash.unitSourceIds)||!Array.isArray(correction.cash.valuationSourceIds)||!Array.isArray(correction.cash.allocations))
+      throw new Error('Retain the complete original correction editor.');
+  }
+  if(desk.fileMeta!==null&&desk.fileMeta!==undefined) {
+    if(!plain(desk.fileMeta)||typeof desk.fileMeta.filename!=='string'||!desk.fileMeta.filename
+      ||!Number.isInteger(desk.fileMeta.bytes)||desk.fileMeta.bytes<1||desk.fileMeta.bytes>MAX_SOURCE
+      ||typeof desk.fileMeta.sha256!=='string'||!/^[a-f0-9]{64}$/.test(desk.fileMeta.sha256))
+      throw new Error('Retain the original archive name, byte count and content identity.');
+  }
+  if(desk.pending!==null&&desk.pending!==undefined) {
+    const pending=desk.pending;
+    if(!plain(pending)||!['settlement.receive','settlement.correct'].includes(pending.action)
+      ||typeof pending.requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(pending.requestId)
+      ||typeof pending.actor!=='string'||!pending.actor.trim()||typeof pending.note!=='string'
+      ||!Number.isInteger(pending.expectedVersion)||pending.expectedVersion<1||!plain(pending.data))
+      throw new Error('Retain the exact original pending settlement request.');
+    if(pending.action==='settlement.receive'&&(!desk.fileMeta||typeof pending.data.filename!=='string'))
+      throw new Error('The original receiving request needs its matching archive identity.');
+  }
+  if(desk.selectedReviewId!==null&&desk.selectedReviewId!==undefined&&typeof desk.selectedReviewId!=='string')
+    throw new Error('Retain the original selected review identity.');
+  return desk;
+}
+async function validateDeskArchive(desk,archive) {
+  const pendingContent=desk.pending?.action==='settlement.receive'?desk.pending.data?.contentBase64:null;
+  if(!archive&&typeof pendingContent==='string')archive={contentBase64:pendingContent};
+  if(!archive)return null;
+  if(typeof pendingContent==='string'&&pendingContent!==archive.contentBase64)
+    throw new Error('Retain the exact original archive encoding used by the pending request.');
+  if(!desk.fileMeta||!plain(archive)||typeof archive.contentBase64!=='string'
+    ||archive.contentBase64.length>Math.ceil(MAX_SOURCE/3)*4||archive.contentBase64.length%4!==0
+    ||!/^[A-Za-z0-9+/]*={0,2}$/.test(archive.contentBase64))
+    throw new Error('The complete desk archive must retain its original base64 bytes.');
+  let raw;
+  try {raw=atob(archive.contentBase64);}catch{throw new Error('The retained archive encoding is invalid.');}
+  const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+  if(bytes.byteLength!==desk.fileMeta.bytes||await digest(bytes)!==desk.fileMeta.sha256)
+    throw new Error('The retained archive differs from the original desk source.');
+  return {id:desk.caseId+':'+desk.fileMeta.sha256,caseId:desk.caseId,sha256:desk.fileMeta.sha256,
+    bytes:desk.fileMeta.bytes,contentBase64:archive.contentBase64};
+}
+
+const definite = error => [400,409,413,415,422].includes(error.status)&&typeof error.code==='string'&&/^[A-Z0-9_]{1,120}$/.test(error.code);
 const blankCash = (kind='PAYMENT') => ({category:kind==='REFUND'?'REFUND':'CUSTOMER',date:'',currency:'',decimals:'',unitSourceIds:[],unitNote:'',usdValue:null,valuationSourceIds:[],valuationNote:'',tranche:null,allocations:[]});
 const nativeCashLabel = row => [row.date,row.currency,row.amount,row.externalRef||row.id].filter(v=>v!==undefined&&v!==null&&v!=='').join(' · ');
 const cashUnits = cash => Object.fromEntries(['currency','decimals','unitSourceIds','unitNote'].map(key=>[key,clone(cash[key])]));
@@ -53,26 +164,118 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
   let active=true,busy=false,hostBusy=false;
   function activeCheck(){if(!available())throw new Error('Reopen this original case to continue settlement receiving.');}
   const editable=()=>current.program.state==='OPEN'&&!session.pending&&!session.accepted&&!session.sending;
-  if(!session.loaded) {
-    session.loaded=true;
-    try {
-      const saved=JSON.parse(localStorage.getItem(storageKey)||'null');
-      if(saved?.schema==='sf47.settlement-draft.v1'&&saved.caseId===current.program.id) {
-        for(const key of ['draft','correction','fileMeta','pending','selectedReviewId'])session[key]=saved[key]??null;
-        session.message=saved.pending?'The original request is retained. Recover it to continue.':saved.fileMeta?'Reselect the original archive to reopen this draft.':'';
-      }
-    } catch {session.message='The browser draft could not be opened. Saved settlement reviews remain available below.';}
+  session.deskId??=crypto.randomUUID();
+  session.savedDrafts??=[];
+  const deskIdentity=()=>current.program.id+':'+session.deskId;
+  function snapshot() {
+    return {schema:DESK_SCHEMA,id:deskIdentity(),deskId:session.deskId,caseId:current.program.id,savedAt:new Date().toISOString(),
+      draft:clone(session.draft??null),correction:clone(session.correction??null),fileMeta:clone(session.fileMeta??null),
+      pending:compactRequest(session.pending),selectedReviewId:session.selectedReviewId??null,
+      archiveId:session.fileMeta?current.program.id+':'+session.fileMeta.sha256:null};
+  }
+  function archiveFor(desk) {
+    const content=session.pending?.action==='settlement.receive'?session.pending.data.contentBase64:session.selected?.contentBase64;
+    return desk.fileMeta&&typeof content==='string'?{id:desk.archiveId,caseId:desk.caseId,
+      sha256:desk.fileMeta.sha256,bytes:desk.fileMeta.bytes,contentBase64:content}:null;
   }
   function persist() {
-    localStorage.setItem(storageKey,JSON.stringify({schema:'sf47.settlement-draft.v1',caseId:current.program.id,
-      draft:session.draft??null,correction:session.correction??null,fileMeta:session.fileMeta??null,
-      pending:compactRequest(session.pending),selectedReviewId:session.selectedReviewId??null}));
+    const saved=snapshot(),archive=archiveFor(saved);
+    const pending=(session.persistence??Promise.resolve()).catch(()=>{}).then(async()=>{
+      await writeDeskValue(saved,archive&&session.storedArchiveId!==archive.id?archive:null);
+      if(archive)session.storedArchiveId=archive.id;
+      const summary={id:saved.id,caseId:saved.caseId,deskId:saved.deskId,savedAt:saved.savedAt,
+        name:saved.draft?.name||saved.fileMeta?.filename||'Settlement correction',
+        source:saved.fileMeta?.filename||'',requestId:saved.pending?.requestId||null};
+      session.savedDrafts=[summary,...session.savedDrafts.filter(item=>item.id!==saved.id)];
+      session.storageError=null;
+    });
+    session.persistence=pending;
+    return pending;
+  }
+  async function listDesks() {
+    session.savedDrafts=(await readDeskValue('desk-index',current.program.id,'caseId')||[])
+      .filter(item=>item.caseId===current.program.id).sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));
+    return session.savedDrafts;
+  }
+  async function loadDesk(saved) {
+    validDeskShape(saved,current.program.id);
+    const stored=saved.archiveId?await readDeskValue('archives',saved.archiveId):null;
+    return {saved,archive:await validateDeskArchive(saved,stored)};
+  }
+  function applyDesk(saved,archive) {
+    for(const key of ['draft','correction','fileMeta','pending','selectedReviewId'])session[key]=clone(saved[key]??null);
+    session.selected=archive?{filename:session.pending?.data?.filename||session.fileMeta.filename,contentBase64:archive.contentBase64}:null;
+    if(archive&&session.pending?.action==='settlement.receive')session.pending.data.contentBase64=archive.contentBase64;
+    session.storedArchiveId=archive?.id??null;
+    session.sourceReview=null;session.savedReview=null;session.preview=null;session.correctionPreview=null;
+    session.previewInput=null;session.correctionPreviewInput=null;session.accepted=null;session.rejected=null;
+    session.message=session.pending?'The original request and draft are retained. Recover the same request to continue.':
+      archive?'The complete original source and editing draft are reopened. Review the current case before saving.':
+      session.fileMeta?'Reselect the exact original archive to reopen this retained draft.':'The saved correction draft is reopened.';
+    session.error=false;
+  }
+  async function initializeDesk() {
+    const items=await listDesks();
+    if(session.loaded)return;
+    if(items.length) {
+      const saved=await readDeskValue('desks',items[0].id);
+      const complete=await loadDesk(saved);
+      applyDesk(complete.saved,complete.archive);
+    } else {
+      let legacy;
+      try{legacy=JSON.parse(localStorage.getItem(storageKey)||'null');}catch{}
+      if(legacy?.schema==='sf47.settlement-draft.v1'&&legacy.caseId===current.program.id) {
+        const saved={...legacy,schema:DESK_SCHEMA,archiveId:null};
+        validDeskShape(saved,current.program.id);applyDesk(saved,null);
+      }
+    }
+    session.loaded=true;
+  }
+  async function retainDeskCopy() {
+    readDraft();await persist();activeCheck();
+    session.deskId=crypto.randomUUID();
+  }
+  async function openDesk(id) {
+    if(session.pending||session.sending||session.accepted)throw new Error('Recover the original retained request before opening another draft.');
+    readDraft();await persist();
+    const saved=await readDeskValue('desks',id),complete=await loadDesk(saved);activeCheck();
+    session.deskId=crypto.randomUUID();applyDesk(complete.saved,complete.archive);await persist();
+    await loadReviews();
+    if(session.selected&&!session.pending)await openSource();else render();
+  }
+  async function downloadDesk() {
+    readDraft();
+    const saved=snapshot();
+    let archive=archiveFor(saved);
+    if(!archive&&saved.archiveId)archive=await readDeskValue('archives',saved.archiveId).catch(()=>null);
+    if(!archive&&saved.fileMeta) {
+      const original=current.sources.find(row=>row.sha256===saved.fileMeta.sha256&&row.bytes===saved.fileMeta.bytes);
+      if(original)archive={contentBase64:base64(await originalBytes(original))};
+    }
+    activeCheck();
+    download({...saved,originalArchive:archive?{contentBase64:archive.contentBase64}:null},
+      current.program.id+'-settlement-desk.json');
+  }
+  async function importDesk(file) {
+    if(session.pending||session.sending||session.accepted)throw new Error('Recover the original retained request before importing another draft.');
+    if(file.size>DESK_LIMIT)throw new Error('Choose a complete settlement desk JSON up to 64 MiB.');
+    const saved=validDeskShape(JSON.parse(await file.text()),current.program.id);
+    const archive=await validateDeskArchive(saved,saved.originalArchive);activeCheck();
+    readDraft();await persist();
+    session.deskId=crypto.randomUUID();applyDesk(saved,archive);
+    session.storedArchiveId=null;await persist();await loadReviews();
+    if(session.selected&&!session.pending)await openSource();else render();
   }
   function tell(message,error=false) {
     session.message=message;session.error=error;
     if(available()){const el=$('[data-settlement-message]');if(el){el.textContent=message;el.setAttribute('role',error?'alert':'status');}}
   }
-  function persistDraft() {try{persist();}catch{tell('This browser could not retain the draft. Keep the view open and make browser storage available before saving.',true);}}
+  function persistDraft() {
+    void persist().catch(error=>{
+      session.storageError=error.message||'Browser storage is unavailable.';
+      tell('This complete draft remains open. Download the complete desk to retain it, then reopen browser storage to continue saving.',true);
+    });
+  }
   const value=(form,name)=>String(form.elements.namedItem(name)?.value??'');
   const selected=(form,name)=>[...(form.elements.namedItem(name)?.selectedOptions??[])].map(option=>option.value);
   function readCash(form,prefix) {
@@ -147,7 +350,8 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
       if(el.closest('[data-settlement-link-fields]'))el.disabled=el.disabled||selectedDraft(el.closest('[data-settlement-link-fields]').dataset.settlementLinkFields)?.decision!=='LINK_CASH';
       if(el.matches('[data-settlement-save]'))el.disabled=el.disabled||!editable()||!session.preview?.proposed?.canApply;
       if(el.matches('[data-settlement-correction-save]'))el.disabled=el.disabled||!editable()||!session.correctionPreview?.proposed?.canApply;
-      if(['preview','open-source','open-review','correct-row','preview-correction','allocation-add','allocation-remove'].includes(action))el.disabled=el.disabled||pending;
+      if(['preview','open-source','open-review','correct-row','preview-correction','allocation-add','allocation-remove','open-desk'].includes(action))el.disabled=el.disabled||pending;
+      if(el.matches('[data-settlement-desk-file]'))el.disabled=el.disabled||pending;
       if(el.matches('[data-settlement-file]'))el.disabled=el.disabled||Boolean(session.pending&&session.pending.action!=='settlement.receive')||Boolean(session.accepted);
     }
     for(const panel of root.querySelectorAll('[data-settlement-cash-fields]')) {
@@ -299,7 +503,14 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     const review=session.sourceReview,source=review?.source,pending=session.pending;
     const rows=review?.rows??[],eligible=rows.filter(row=>row.canRecordCash).length;
     root.innerHTML='<header class="settlement-heading"><div><h3>Merchant settlements</h3><p>Receive an original merchant period or accounting archive. Review the transfer, its cash treatment and the work it supports, then save the complete attribution.</p></div>'+
-      button('Refresh case','reload')+'</header><p class="settlement-message" data-settlement-message role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.message??'')+'</p>'+
+      '<div class="settlement-actions">'+button('Download complete desk','download-desk')+button('Refresh case','reload')+'</div></header><p class="settlement-message" data-settlement-message role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.message??'')+'</p>'+
+      '<section class="settlement-section"><details><summary>Saved editing desks ('+session.savedDrafts.length+')</summary>'+
+      '<p>Each open window retains its own complete draft. Opening a saved copy creates a separate desk with its original source and request.</p>'+
+      '<div class="settlement-actions">'+button('Refresh saved desks','list-desks')+'</div>'+
+      (session.savedDrafts.length?'<ul>'+session.savedDrafts.map(item=>'<li>'+esc(item.name)+' · '+esc(readableTime(item.savedAt))+
+        (item.requestId?' · original request retained':'')+' '+button('Open saved copy','open-desk','data-desk="'+esc(item.id)+'"')+'</li>').join('')+'</ul>':'')+
+      field('Open complete desk JSON','<input type="file" accept=".json,application/json" data-settlement-desk-file>',
+        'Use a complete desk exported from this original case. The current draft is retained separately.')+'</details></section>'+
       (pending?'<section class="settlement-pending"><h4>Original request retained</h4><p>'+esc(human(pending.action.replace('.',' ')))+
         ' was prepared at case version '+pending.expectedVersion+'. Recover this same request to obtain its saved result or finish the original action.</p><div class="settlement-actions">'+
         button('Recover original request','recover')+button('Download retained request','download-request')+'</div></section>':'')+
@@ -350,11 +561,14 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
       if(!session.fileMeta||metadata.sha256!==session.fileMeta.sha256||metadata.bytes!==session.fileMeta.bytes)
         throw new Error('Reselect the same original bytes used by the retained receiving request.');
       session.pending.data.contentBase64=base64(buffer);session.selected={filename:session.pending.data.filename,contentBase64:session.pending.data.contentBase64};
-      persist();tell('The original archive has been restored. Recover the retained request.');render();return;
+      await persist();tell('The original archive has been restored. Recover the retained request.');render();return;
     }
-    if(session.fileMeta?.sha256!==metadata.sha256||session.fileMeta?.filename!==metadata.filename)session.draft=null;
+    if(session.fileMeta?.sha256!==metadata.sha256||session.fileMeta?.filename!==metadata.filename) {
+      if(session.draft||session.correction)await retainDeskCopy();
+      session.draft=null;session.correction=null;session.correctionPreview=null;
+    }
     session.fileMeta=metadata;session.selected={filename,contentBase64:base64(buffer)};
-    session.sourceReview=null;session.preview=null;persist();await openSource();
+    session.sourceReview=null;session.preview=null;await persist();await openSource();
   }
   async function previewSelection() {
     readDraft();if(!session.selected||!session.sourceReview)throw new Error('Open the original source archive first.');
@@ -373,11 +587,13 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
   async function openReview(id) {
     if(session.pending||session.sending)throw new Error('Recover the original request first.');
     readDraft();const saved=await api(base+'/settlements/'+encodeURIComponent(id));activeCheck();
+    if(session.correction)await retainDeskCopy();
     session.savedReview=saved;session.selectedReviewId=id;session.correction=null;session.correctionPreview=null;persistDraft();render();
   }
-  function seedCorrection(index) {
+  async function seedCorrection(index) {
     const saved=session.savedReview,row=saved?.rows?.[index];
     if(!row||row.decision==='UNSELECTED')throw new Error('Choose a received original row.');
+    if(session.correction)await retainDeskCopy();
     const actual=(saved.currentCash??[]).find(item=>item.id===row.cashId),original=row.cash??{};
     const cash={...blankCash(row.kind),...(actual?{category:actual.category,date:actual.date,currency:actual.currency,usdValue:actual.usdValue,
       valuationSourceIds:actual.valuationSourceIds??[],valuationNote:actual.valuationNote??'',tranche:actual.tranche,
@@ -395,7 +611,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
   async function retainAndSend(action,data,version,note) {
     const request={expectedVersion:version,actor:recordingActor(),note,action,data};
     request.requestId=await mutationId('operations:'+current.program.id,request);activeCheck();
-    session.pending=clone(request);persist();render();await sendPending();
+    session.pending=clone(request);render();await persist();await sendPending();
   }
   async function sendPending() {
     if(!session.pending)throw new Error('No original request is retained.');
@@ -404,7 +620,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
       if(!source)throw new Error('Reselect the exact original archive to recover the receiving request.');
       session.pending.data.contentBase64=base64(await originalBytes(source));
     }
-    persist();
+    await persist();
     if(!session.sending) {
       const request=clone(session.pending);
       session.sending=(async()=>{
@@ -414,7 +630,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
           catch(error) {
             if(definite(error)) {
               session.pending=null;session.preview=null;session.correctionPreview=null;session.rejected={code:error.code,message:error.message};
-              try{persist();}catch{}
+              try{await persist();}catch{}
               session.message=error.message+' The original draft is retained. Refresh the case and review it again.';
             } else session.message=error.message||'The response is unavailable. Recover this same request.';
             session.error=true;throw error;
@@ -424,7 +640,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
           if(request.action==='settlement.receive'){session.sourceReview=null;session.selected=null;session.fileMeta=null;session.draft=null;}
           session.message='Saved settlement '+(request.action==='settlement.correct'?'correction':'attribution')+' at case version '+result.version+'.';
           session.error=false;
-          try{persist();}catch{session.message+=' The original result is saved; the browser could not clear its local draft. Reopening that request returns the same result.';}
+          try{await persist();}catch{session.message+=' The original result is saved; the browser could not clear its local draft. Reopening that request returns the same result.';}
           return result;
         } finally {session.sending=null;session.notify?.();}
       })();
@@ -454,6 +670,7 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     if(event.target.closest('[data-settlement-form],[data-settlement-correction]')){readDraft(true);sync();}
   });
   root.addEventListener('change',event=>{
+    if(event.target.matches('[data-settlement-desk-file]')){const file=event.target.files?.[0];if(file)run(()=>importDesk(file));return;}
     if(event.target.matches('[data-settlement-file]')) {
       const file=event.target.files?.[0];if(file)run(async()=>{
         if(file.size>MAX_SOURCE)throw new Error('Select a complete original accounting archive up to 8 MiB.');
@@ -468,14 +685,17 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     const action=target.dataset.settlementAction;
     run(async()=>{
       if(action==='reload'){readDraft();await onReload();return;}
+      if(action==='download-desk')return downloadDesk();
+      if(action==='list-desks'){await listDesks();render();return;}
+      if(action==='open-desk')return openDesk(target.dataset.desk);
       if(action==='open-source')return openSource();
       if(action==='preview')return previewSelection();
       if(action==='recover')return sendPending();
       if(action==='download-request'){if(session.pending)download({schema:'sf47.settlement-original-request.v1',caseId:current.program.id,source:session.fileMeta,request:compactRequest(session.pending)},session.pending.requestId+'.json');return;}
       if(action==='open-review')return openReview(target.dataset.review);
-      if(action==='correct-row'){readDraft();seedCorrection(Number(target.dataset.row));return;}
+      if(action==='correct-row'){readDraft();await seedCorrection(Number(target.dataset.row));return;}
       if(action==='preview-correction')return previewCorrection();
-      if(action==='close-correction'){session.correction=null;session.correctionPreview=null;persistDraft();render();return;}
+      if(action==='close-correction'){await retainDeskCopy();session.correction=null;session.correctionPreview=null;persistDraft();render();return;}
       if(action==='allocation-add'||action==='allocation-remove'){allocationChange(target);return;}
       if(action==='download-preview'||action==='download-preview-html') {
         const preview=target.dataset.correction?session.correctionPreview:session.preview;
@@ -523,7 +743,13 @@ export function mountSettlementReceiving({container,current,api,saveApi=api,muta
     if(session.accepted){const value=session.accepted;session.accepted=null;await onSaved(value);return;}
     busy=true;sync();
     try {
-      await loadReviews();
+      try {await initializeDesk();}
+      catch(error) {
+        session.storageError=error.message||'Browser storage is unavailable.';
+        session.loaded=true;
+        tell('Saved browser drafts could not be opened. The current draft and complete desk download remain available; saved case reviews are loading.',true);
+      }
+      activeCheck();await loadReviews();
       if(session.selected&&!session.pending&&(!session.sourceReview||session.sourceReview.version!==current.program.version))await openSource();
       else render();
     } catch(error){if(available())tell(error.message,true);}

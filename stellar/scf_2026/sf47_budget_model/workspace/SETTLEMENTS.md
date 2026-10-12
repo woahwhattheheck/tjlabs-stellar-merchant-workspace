@@ -63,6 +63,8 @@ Correction preview selects the saved review ID, row ID and expected cash ID. The
 
 The saved original edition remains readable. Use **Open edition** to follow its history; use the latest edition to make another correction. Original cash snapshots and subsequent cash states remain available separately.
 
+Complete case receiving restores statement-created cash at its original receiving version before following later voids and corrections. Deployment attribution is checked against the role recorded when that row's attribution was selected. Later role changes and later reviews of other rows preserve that original attribution edition.
+
 When an accountant export and a later period-close export describe the same transfer, record the cash once and link the second source to it. If a later correction voids and replaces that cash, open the second source’s latest review and choose **Link existing cash** to adopt the replacement. Select the replacement’s current cash ID and supply the original unit fields. The expected cash ID remains the second edition’s previous link, including a voided record. The saved correction records both links and preserves the original cash observations.
 
 ## CLI
@@ -196,11 +198,17 @@ All routes use the existing authenticated Grant Operations service.
 
 ## Continue after interruption
 
-The browser retains the original command identity before dispatch. When an HTTP response is lost, reopen the same case and choose **Recover original request**. If needed, reselect the exact archive bytes; the retained source hash and byte count identify them. The original native command journal returns the saved result when that request already committed.
+The browser retains the complete original command and its archive before dispatch. When an HTTP response is lost, reopen the same case and choose **Recover original request**. The original native command journal returns the saved result when that request already committed. Access and route failures keep that same request available. A definite native validation rejection keeps the receiving draft available for correction and a fresh preview.
 
-The receiving draft remains available for a definite native validation failure. Resolve its findings, read the current case and obtain a fresh full preview. Keep an uncertain command's original request ID and complete payload together until its native result is recovered.
+Each open window has a separate editing desk. Its source bytes, selected rows, cash fields, correction editor and original request are retained together. An older window can continue or close while another window saves its own draft.
 
-CLI and agent clients use the same rule: recover an uncertain write by repeating its identical original command. A deliberate correction uses its own reviewed request.
+Open **Saved editing desks** to see the retained copies and their saved dates. **Open saved copy** opens a separate editable copy. Changing the selected source or replacing an unfinished correction also retains the previous desk. The saved case review remains the source for a fresh native preview.
+
+Use **Download complete desk** to keep the current editing work as JSON, including the original archive when it is available. **Open complete desk JSON** restores that file into the same original case, preserves the currently open draft separately, checks the archive against its retained byte count and content identity, and keeps any pending request intact. The file limit is 64 MiB. A desk restored from the earlier browser format can request the original archive once; its original hash and byte count identify the required bytes.
+
+If browser storage is unavailable, keep the current view open and download the complete desk. Its source and original request remain available in the open view while storage recovers. Saved native case reviews continue to open independently of browser draft storage.
+
+CLI and agent clients recover an uncertain write by repeating its identical original command. A deliberate correction uses its own reviewed request.
 
 ## Export and continue the complete case
 
