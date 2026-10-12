@@ -426,3 +426,7 @@ file identities.
 
 Copyright TokenJunkieLabs. The product retains its MIT license and the applicable
 third-party license files.
+
+### Allium data workspace
+
+The [Allium operating guide](products/allium/OPERATING.md) covers the `allium-data-workspace` source selection: managed Applications, a typed Node client and 29 merchant tools over the original Explorer/retained workspace, dataset merchant, publisher and complete customer receiving. The native `allium-explorer` and `allium-workspace` commands remain available; `allium-managed` opens that same workspace for Applications and tool attachments.
