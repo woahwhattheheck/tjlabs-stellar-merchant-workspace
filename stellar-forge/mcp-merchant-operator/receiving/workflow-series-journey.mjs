@@ -117,6 +117,8 @@ export async function receiveMerchantWorkflowSeries({
   directory = resolve(directory);
   const recipe = await receiveMerchantWorkflowRecipes({ directory, chromiumPath, playwrightModule, sourceCommit, openSession });
   assert.equal(recipe.result, 'PASS');
+  const baseline = await optional(join(directory, 'workflow-native-run.json'));
+  assert.equal(baseline?.result, 'PASS'); assert.equal(baseline.profileId, recipe.baseline.profileId);
   const checkpoint = join(directory, 'workflow-series-receiving-checkpoint.json');
   const completed = join(directory, 'workflow-series-native-run.json');
   const prior = await optional(completed);
@@ -453,7 +455,7 @@ export async function receiveMerchantWorkflowSeries({
       const pageOfPeriods = await selected.series(seriesId);
       assert.equal(pageOfPeriods.total, 2); assert.equal(pageOfPeriods.cycles.filter(value => value.state === 'COMPLETE').length, 2);
       assert.equal((await selected.profile(report.profileId)).calls.length, 24);
-      assert.equal((await selected.profile(report.baseline.profileId)).calls.length, 7);
+      assert.equal((await selected.profile(report.baseline.profileId)).calls.length, baseline.nativeCalls?.length ?? 7);
       for (const period of report.periods) {
         const reopened = await selected.cycle(period.id);
         assert.equal(reopened.run.id, period.run.id); assert.equal(reopened.run.state, 'COMPLETE');
