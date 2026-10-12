@@ -322,3 +322,9 @@ await workspace.close();
 The original model also exposes discovery/readLive/captureAttempt, full packet export/import, withOpenPublisher, deployment review/prepare/stage/status/commands and request recovery. serveGristAuthoring({workspace,port:0}) returns origin, token, url, workspace and close. The HTTP header is x-grist-workspace-token. service.close owns workspace.close; close is idempotent and waits for the same original closing promise.
 
 This guide documents implemented source. Report a particular provider capture, installed source selection, application start or buyer delivery only from the corresponding actual native receipt. Keep the same original operation through interruption and reopen.
+
+## Complete installed receiving
+
+The [receiving guide](RECEIVING.md) supplies the full **grist-receive --prepare/--input** workflow. It consumes one real capture-backed table declaration and the actual installed manifest; reviews and reopens the original browser source; publishes two exact row orders; operates the same SF82 seller and customer exporter; then reopens Applications and source-owned MCP before retaining the complete closed private archive. The selected **grist-merchant** recipe includes all four receiving programs through this source contribution.
+
+The native operation compares every projected value and preserves original request, plan, source-version and release identities. It makes zero provider reads and zero payments. Original provider acquisition remains a preceding, separately observed stage of that same assigned work. For two named customer tables, configure two independent workspaces/outputs and receive each sequentially; no joins or cross-table snapshot claim is added.
