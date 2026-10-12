@@ -132,14 +132,27 @@ export async function readCustomerSelection(file,sha256,{retainedDirectory}={}){
 export async function readEngineSelection({root,manifestFile,manifestSha256}){
   absolute(root);absolute(manifestFile);need(/^[a-f0-9]{64}$/.test(manifestSha256??''),'CUSTOMER_ENGINE_MANIFEST_SHA256_REQUIRED');
   const bytes=await read(manifestFile,8*1024*1024,manifestSha256),manifest=parseJson(bytes);
-  need(manifest.schema==='sf88-research-ris-engine-source-v1'&&Array.isArray(manifest.files)&&
-    manifest.sourceFiles===manifest.files.length&&manifest.sourceFiles>0&&
-    typeof manifest.repository==='string'&&typeof manifest.ref==='string','CUSTOMER_ORIGINAL_ENGINE_MANIFEST_REQUIRED');
+  const receivingManifest=manifest.schema==='sf88-research-ris-engine-source-v1';
+  const distributionManifest=manifest.schema==='stellar-forge.merchant-distribution-manifest.v1';
+  need((receivingManifest||distributionManifest)&&Array.isArray(manifest.files)&&manifest.files.length>0&&
+    Number.isSafeInteger(manifest.sourceBytes)&&manifest.sourceBytes>0,'CUSTOMER_ORIGINAL_ENGINE_MANIFEST_REQUIRED');
+  const repository=receivingManifest?manifest.repository:manifest.sourceRepository;
+  const ref=receivingManifest?manifest.ref:manifest.sourceCommit;
+  need(typeof repository==='string'&&repository&&typeof ref==='string'&&/^[a-f0-9]{40}$/.test(ref)&&
+    (!receivingManifest||manifest.sourceFiles===manifest.files.length),'CUSTOMER_ORIGINAL_ENGINE_MANIFEST_REQUIRED');
+  // Native imports resolve from this source tree. A separately selected checkout
+  // must carry the same complete original source as the executing programme.
+  const implementationRoot=dirname(fileURLToPath(import.meta.url));
+  const executingRoot=resolve(implementationRoot,'..','..','..','..','..');
+  const distinctSourceRoot=resolve(root)!==executingRoot;
   const files=[],seen=new Set();let total=0;
   for(const row of manifest.files){
     member(row.path);need(!seen.has(row.path)&&['100644','100755'].includes(row.mode),'CUSTOMER_ENGINE_MEMBERSHIP_CHANGED');
+    need(!distributionManifest||row.packagePath==='source/'+row.path,'CUSTOMER_ORIGINAL_PACKAGE_PATH_CHANGED');
     seen.add(row.path);const file=join(root,...row.path.split('/'));
     await checked({file,bytes:row.bytes,sha256:row.sha256});
+    if(distinctSourceRoot)await checked({file:join(executingRoot,...row.path.split('/')),
+      bytes:row.bytes,sha256:row.sha256});
     total+=row.bytes;files.push({...row,file});
   }
   need(total===manifest.sourceBytes,'CUSTOMER_ENGINE_TOTAL_CHANGED');
@@ -149,10 +162,15 @@ export async function readEngineSelection({root,manifestFile,manifestSha256}){
     'python/examples/research_citation_analyst.py','python/stellar_forge_buyer/research_citation_analysis.py'])
     need(seen.has(p+name),'CUSTOMER_ORIGINAL_ENGINE_INCOMPLETE');
   need([...seen].some(name=>/(^|\/)LICENSE(?:[.]|$)/i.test(name)),'CUSTOMER_ENGINE_LICENSE_MISSING');
-  const implementationRoot=dirname(fileURLToPath(import.meta.url)),implementation=[];
+  const implementation=[];
   for(const name of IMPLEMENTATION_FILES){
     const file=join(implementationRoot,name),body=await read(file);
-    implementation.push({path:p+'research-dossiers/customer-programme/'+name,file,bytes:body.length,sha256:digest(body),mode:'100644'});
+    const current={path:p+'research-dossiers/customer-programme/'+name,file,bytes:body.length,
+      sha256:digest(body),mode:name==='receive-customer.py'?'100755':'100644'};
+    const packaged=files.find(row=>row.path===current.path);
+    if(packaged)need(packaged.bytes===current.bytes&&packaged.sha256===current.sha256&&packaged.mode===current.mode,
+      'CUSTOMER_SELECTED_PROGRAMME_SOURCE_CHANGED');
+    implementation.push(current);
   }
-  return {manifest,manifestBytes:bytes,manifestSha256:digest(bytes),root,files,implementation};
+  return {manifest,repository,ref,manifestBytes:bytes,manifestSha256:digest(bytes),root,files,implementation};
 }

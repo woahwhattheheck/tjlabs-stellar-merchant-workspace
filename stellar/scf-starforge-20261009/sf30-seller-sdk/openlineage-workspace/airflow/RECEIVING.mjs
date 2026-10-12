@@ -202,6 +202,11 @@ export async function receiveOriginalAirflow(directory,{python="python3"}={}) {
     environment.AIRFLOW__CORE__PARALLELISM="1";
     await phase("native-database",()=>successfulNative(root,"database",
       [python,"-m","airflow","db","migrate"],environment));
+    // This standalone private database has no scheduler to register its original DAG.
+    // Airflow 2 list-runs requires that native DagModel before its first empty inventory.
+    if(Number(inspection.observation.airflow.version.split(".")[0])<3)
+      await phase("native-dag-registration",()=>successfulNative(root,"dag-registration",
+        [python,"-m","airflow","dags","reserialize","--subdir",dagPath],environment));
     host=await startServer({directory:join(root,"workspace"),port:operation.collectorPort??0,
       token:operatorToken,producerToken});
     if(operation.workspaceId)need(host.identity.workspaceId===operation.workspaceId,"Original collector workspace changed");

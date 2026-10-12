@@ -47,6 +47,8 @@ export class MerchantWorkflowSeriesClient {
   }
   saveSeries(input) { return this.console.json('workflow-series-save', seriesRequest(input)); }
   calendar(input) { return this.console.json('workflow-series-calendar', clone(input)); }
+  agenda(input) { return this.console.json('workflow-series-agenda', clone(input)); }
+  agendaCalendar(input) { return this.console.json('workflow-series-agenda-calendar', clone(input)); }
   cycle(id) { return this.console.json('workflow-cycle/' + encodeURIComponent(identifier(id))); }
   async prepareCycle(input) {
     const packet = await this.console.json('workflow-cycle-review', clone(input));

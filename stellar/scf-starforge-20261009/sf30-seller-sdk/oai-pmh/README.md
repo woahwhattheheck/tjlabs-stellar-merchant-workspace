@@ -2,7 +2,7 @@
 
 A complete OAI-PMH 2.0 metadata workflow for the original Starforge XML and dataset tools. An operator discovers a repository, harvests the selected population through every continuation, reviews its record edition, projects explicit XML fields, and opens the retained dataset in the existing merchant publisher.
 
-The console uses a neutral industrial layout and works on a narrow screen. Source records, original HTTP responses, saved reviews and complete exports remain reachable from the same workspace.
+The console uses a neutral industrial layout and works on a narrow screen. Source records, original HTTP responses and relayed source receipts, saved reviews and complete exports remain reachable from the same workspace.
 
 ## Open the operator console
 
@@ -28,7 +28,7 @@ Repository identity is the exact configured OAI base URL. Item identifiers are r
 
 `Identify` supplies the actual protocol version, earliest datestamp, date granularity and deletion policy. `ListMetadataFormats` supplies prefixes, XML namespaces and schema locations. `ListSets` uses its own complete continuation. A set selection covers that set; the repository can also contain records belonging to no set.
 
-The first ListRecords request carries the selected metadata prefix and optional set/from/until. Subsequent requests carry only the verb and opaque resumption token. Tokens are URL encoded without interpretation. The original selection, every response, token attributes, request time, actual HTTP status and headers remain in the workspace.
+The first ListRecords request carries the selected metadata prefix and optional set/from/until. Subsequent requests carry only the verb and opaque resumption token. Tokens are URL encoded without interpretation. The original selection, every response, token attributes and receiving history remain in the workspace. Direct captures retain the observed HTTP status and headers. Relayed captures retain the source service's original acquisition receipt, exact requested URL, body length and SHA-256.
 
 From and until are inclusive. Both boundaries use the same granularity. Day-granularity requests are supported by the protocol; second-granularity selections require the repository's declaration. Records use the repository's declared datestamp precision.
 
@@ -98,6 +98,8 @@ Each command opens and closes the same original workspace. JSON documents can be
 | `start --repository ID --verb VERB --arguments JSON --id OPERATION [--baseline EDITION]` | Save an original discovery or harvest operation |
 | `run --id OPERATION`, `resume --id OPERATION` | Follow the complete continuation |
 | `import-response --id OPERATION --body FILE --transport JSON` | Import an actual response from another host |
+| `import-relay --id OPERATION --body FILE --receipt JSON` | Receive original relay bytes and recover the same saved result on retry |
+| `import-relay-request --request JSON` | Receive the complete original body and receipt downloaded from the browser |
 | `preview --id OPERATION [--choices JSON]` | Reconcile the complete record edition |
 | `review --id PREVIEW --expected PREVIEW --reviewer NAME --note NOTE` | Approve the exact reconciliation |
 | `records --id EDITION --offset N --limit N` | Page through all retained identifiers |
@@ -113,6 +115,77 @@ Each command opens and closes the same original workspace. JSON documents can be
 Transport JSON contains the actual `url`, integer `status`, original header pairs in `headers`, `finalURL` and UTC `observedAt`. The importer checks the captured URL against the next request in the retained operation. Pages up to the original XML limit of 256 MiB are accepted by the native importer. The browser accepts response uploads up to 32 MiB.
 
 Conflict choices map an exact identifier to `{"observationId":"retained observation ID","note":"reason"}`. Choices only apply to the current conflicting observations. The operator can inspect each complete source record before selecting it.
+
+## Receive responses acquired through a relay service
+
+Some source services return the complete original XML, requested source URL and an attachment or acquisition receipt. Receive those original values with **import-relay**. Direct HTTP capture and **import-response** continue to use the status and header pairs observed by their acquisition host.
+
+A relay receipt describes one unchanged body:
+
+```json
+{
+  "schema": "stellar-forge.oai-relay-response.v1",
+  "provider": "notion.source_url_attachment",
+  "receiptId": "the-original-file-upload-id",
+  "sourceURL": "https://repository.example/oai?verb=ListRecords&metadataPrefix=qdc&set=journal",
+  "response": {
+    "bytes": 44502,
+    "sha256": "the-64-character-lowercase-sha256-of-the-original-body",
+    "filename": "original-records.xml"
+  },
+  "providerReceipt": {
+    "request": {
+      "source_url": "https://repository.example/oai?verb=ListRecords&metadataPrefix=qdc&set=journal",
+      "filename": "original-records.xml",
+      "content_type": "application/xml"
+    },
+    "upload": {
+      "file_upload_id": "the-original-file-upload-id",
+      "filename": "original-records.xml",
+      "content_type": "application/xml",
+      "content_length": 44502,
+      "status": "uploaded"
+    },
+    "download": {
+      "file_upload_id": "the-original-file-upload-id",
+      "filename": "original-records.xml",
+      "content_type": "application/xml",
+      "content_length": 44502
+    }
+  }
+}
+```
+
+Replace the example values with the actual returned provider objects and exact received file information. The provider receipt is preserved in full. An optional **observedAt** records an actually observed acquisition timestamp in UTC; the original XML's **responseDate** remains independently available. The receiving application records its own **receivedAt** when it imports the body. The receipt can also contain an original acquisition note in **notes**.
+
+1. Add the actual repository base URL. Start **Identify**, **ListMetadataFormats**, and the needed **ListSets** operation with stable IDs. In the browser, clear **Fetch discovery from this console** to prepare an operation for importing its original response. A native **start** command already creates the retained request without executing it.
+2. Import each discovery XML file with its original receipt. The importer matches the requested URL to that operation, parses the actual response, and updates the same repository catalog.
+3. Start the original **ListRecords** selection using the discovered metadata prefix and set. In the browser, clear **Fetch from this console** to prepare the selected operation for relay receiving.
+4. Open the operation in **Harvests**, expand **Receive an original response through a relay service**, select the unchanged XML and original receipt JSON, and choose **Receive original response**. The table exposes each original body and receipt for download.
+5. Continue using the exact **nextArguments.resumptionToken** returned by the repository. An imported terminal response completes the same operation. A token error follows the existing original-selection restart workflow. The complete operation then enters the ordinary edition review, XML projection and native dataset build.
+6. Keep the reviewed edition and resulting build together when opening the TIND or Islandora product. Original relay receipts travel with the complete source export and private workspace backup.
+
+Native commands:
+
+```bash
+python sf30-seller-sdk/oai-pmh/cli.py --workspace /private/repository \
+  import-relay --id ORIGINAL_OPERATION_ID \
+  --body /private/source/original-records.xml \
+  --receipt /private/source/original-records.receipt.json
+
+python sf30-seller-sdk/oai-pmh/cli.py --workspace /private/repository \
+  import-relay-request --request /private/source/oai-relay-import-request.json
+```
+
+The native body limit is 256 MiB. The receipt limit is 256 KiB. The browser accepts original bodies up to 32 MiB and checks the full encoded request against the server's 48 MiB limit. Its **Download prepared import** action saves one complete body-and-receipt document accepted by **import-relay-request**.
+
+### Resume the original receiving result
+
+Each provider and stable receipt ID is bound to its exact operation, body digest and complete receipt digest. Repeating the same import returns its saved receiving result and the operation's current state. It preserves the originally received request, attempt and page number. Reusing a receipt ID with different body bytes, receipt details or an operation returns a correction error.
+
+Before sending, browser receiving saves the complete request in IndexedDB for this exact workspace identity. If the connection ends before a result arrives, the saved-import panel resumes that same request. It also offers the full native import download. Reopen the same console origin and port to use its browser storage after restart; the downloaded document works with the original workspace from any native console address. When the receiver returns a correction error, **Edit returned request** restores the complete body and editable receipt.
+
+The request history identifies **Relay** or **HTTP** and retains each acquisition's original fields. A relay receipt does not supply an HTTP exchange. Publisher exports carry the exact receipt in **acquisition.receipt** and its digest in **acquisition.receiptSha256**; the private backup also retains the replay index and interrupted request history.
 
 ## Portable source and merchant integration
 

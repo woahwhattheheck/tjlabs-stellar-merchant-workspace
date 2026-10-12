@@ -10,6 +10,7 @@ import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
 import {CreditControlWorkspace} from './credit-control-workspace.mjs';
+import {RemittancesWorkspace} from './remittances-workspace.mjs';
 import {BankReceiptsWorkspace} from './bank-receipts-workspace.mjs';
 import {bankAccountRows, bankAccountSummary} from './bank-receipts.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
@@ -89,6 +90,7 @@ export class ReceivablesWorkspace {
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
     this.creditControlWorkspace = new CreditControlWorkspace(this);
+    this.remittancesWorkspace = new RemittancesWorkspace(this);
     this.bankReceiptsWorkspace = new BankReceiptsWorkspace(this);
   }
   async init() {
@@ -134,6 +136,7 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.remittanceBatchId) Object.assign(result, this.remittancesWorkspace.result(record));
     if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
       Object.assign(result, this.creditControlWorkspace.result(record));
     if (record.collectionCaseId) {
@@ -212,6 +215,12 @@ export class ReceivablesWorkspace {
   async reportPaymentReturn(id, value) { return this.paymentRequestWorkspace.reportReturn(id, value); }
   async receivePaymentRequest(id, value) { return this.paymentRequestWorkspace.receive(id, value); }
   async paymentRequestFile(id, name) { return this.paymentRequestWorkspace.file(id, name); }
+  async remittances() { return this.remittancesWorkspace.list(); }
+  async remittance(id) { return this.remittancesWorkspace.detail(id); }
+  async previewRemittance(value) { return this.remittancesWorkspace.preview(value); }
+  async applyRemittance(value) { return this.remittancesWorkspace.apply(value); }
+  async remittanceOperation(requestId) { return this.remittancesWorkspace.operation(requestId); }
+  async remittanceFile(id, name) { return this.remittancesWorkspace.file(id, name); }
   async creditControl(query = {}) { return this.creditControlWorkspace.control(query); }
   async creditPolicy(id) { return this.creditControlWorkspace.policy(id); }
   async saveCreditPolicy(value) { return this.creditControlWorkspace.savePolicy(value); }

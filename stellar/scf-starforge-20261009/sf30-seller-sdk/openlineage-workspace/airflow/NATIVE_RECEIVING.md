@@ -26,6 +26,11 @@ their inspected Airflow and Python versions in the reviewed plan.
 The driver creates its own private AIRFLOW_HOME and SQLite database. It uses
 SequentialExecutor with Airflow 2 and LocalExecutor with Airflow 3 for this
 receiving case. Its dags test commands run both actual original tasks locally.
+For Airflow 2, it registers the selected original DAG with the native
+`dags reserialize --subdir` command after migration and before the first run
+inventory. This preparation is confined to the driver's private database and
+retained as the native-dag-registration phase. Reopening the same operation
+reuses that completed phase and its original command logs.
 An installed Airflow 3 runtime must support that native command and its local
 database configuration; the environment and command records identify the actual
 runtime used.
