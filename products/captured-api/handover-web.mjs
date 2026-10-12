@@ -10,6 +10,7 @@ import {
   inspectCapturedHandoverUpload, finishCapturedHandoverUpload,
 } from './handover-upload.mjs';
 import { HASH, exact } from './handover-files.mjs';
+import { capturedHandoverInventoryPage, capturedHandoverDraftPage, capturedHandoverJobPage } from './handover-views.mjs';
 
 const PREFIX='/api/captured-handover',PUBLIC='/captured-handover/';
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -91,6 +92,19 @@ export async function createCapturedHandoverWeb({directory}) {
     if(job.command!=='PUBLISH'||job.state!=='COMPLETE'||!archive||
        archive.sha256!==permission.sha256||archive.bytes!==permission.bytes)
       throw fail('CAPTURED_DESK_DOWNLOAD','The selected original archive changed.',409);
+    return streamArchive(req,res,job);
+  }
+  async function selectedArchive(id,sha256,bytes) {
+    if(!UUID.test(id)||!HASH.test(sha256)||!Number.isSafeInteger(bytes)||bytes<1)
+      throw fail('CAPTURED_DESK_DOWNLOAD','Select the complete published archive identity.',400);
+    const job=await desk.readJob(id),archive=job.result?.archive;
+    if(job.command!=='PUBLISH'||job.state!=='COMPLETE'||!archive||
+      archive.sha256!==sha256||archive.bytes!==bytes)
+      throw fail('CAPTURED_DESK_DOWNLOAD','The selected original archive changed.',409);
+    return job;
+  }
+  async function streamArchive(req,res,job) {
+    const archive=job.result.archive;
     const original=await openCapturedHandoverArchive({
       path:archive.path,expectedBytes:archive.bytes,expectedSha256:archive.sha256,
     });
@@ -145,7 +159,26 @@ export async function createCapturedHandoverWeb({directory}) {
     if(!url.pathname.startsWith(PREFIX+'/'))return false;
     await caught(res,async()=>{
       const path=url.pathname.slice(PREFIX.length),params=query(url);
+      const productId=desk.info().productId,expectedProduct=req.headers['x-captured-product-id'];
+      if(expectedProduct!==undefined&&(typeof expectedProduct!=='string'||expectedProduct!==productId))
+        throw fail('CAPTURED_DESK_PRODUCT_CHANGED','Reconnect the originally selected captured merchant product.',409);
+      res.setHeader('X-Captured-Product-Id',productId);
       if(req.method==='GET') {
+        if(path==='/archive') {
+          exact(params,['id','sha256','bytes'],['id','sha256','bytes']);
+          if(expectedProduct!==productId||!/^[1-9][0-9]*$/.test(params.bytes))
+            throw fail('CAPTURED_DESK_DOWNLOAD','Select this original product and complete archive byte count.',409);
+          return streamArchive(req,res,await selectedArchive(params.id,params.sha256,Number(params.bytes)));
+        }
+        if(path==='/inventory-page')return send(res,200,capturedHandoverInventoryPage(await desk.inventory(),params));
+        if(path==='/draft-page') {
+          const {id,revision,...view}=params;
+          return send(res,200,capturedHandoverDraftPage(await desk.readDraft({id,...(revision===undefined?{}:{revision})}),view));
+        }
+        if(path==='/job-page') {
+          const {id,...view}=params;
+          return send(res,200,capturedHandoverJobPage(await desk.readJob(id),view));
+        }
         if(path==='/info')return send(res,200,desk.info());
         if(path==='/inventory')return send(res,200,await desk.inventory());
         if(path==='/drafts')return send(res,200,await desk.listDrafts(params));

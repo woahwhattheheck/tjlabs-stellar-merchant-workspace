@@ -96,3 +96,15 @@ original saved plans and exact prices.
 The [complete operating guide](OPERATING.md) follows these paths through
 installation, first source, exact prices, release, customer receiving and
 upgrades.
+
+## Move a complete collection through the agent
+
+The existing merchant agent now operates saved handover drafts, native review
+jobs and complete archives through `merchant_handover_*` tools. It can stream
+an entire published collection between declared original product workspaces,
+resume the saved receiving upload, review destination names and reopen the
+received merchants and source histories. The same operation is available with
+`starforge captured-api handover remote` and the typed streaming client.
+
+The [agent and terminal walkthrough](AGENT.md) carries the complete selection
+through publication, full-file transfer, native receiving and merchant reopen.

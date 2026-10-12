@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "captured-api-product",
-  "description": "Captured API setup, managed browser and merchant agent, exact route pricing, release, and complete browser/file source-package handover.",
+  "description": "Captured API setup, managed browser and merchant agent, exact route pricing, release, and complete browser, typed agent, terminal and file source-package handover.",
   "components": [
     "products/captured-api"
   ],
@@ -17,9 +17,14 @@
     "./products/captured-api/handover": "./source/products/captured-api/handover.mjs",
     "./products/captured-api/handover-browser": "./source/products/captured-api/handover-web.mjs",
     "./products/captured-api/handover-archive": "./source/products/captured-api/handover-archive.mjs",
-    "./products/captured-api/handover-upload": "./source/products/captured-api/handover-upload.mjs"
+    "./products/captured-api/handover-upload": "./source/products/captured-api/handover-upload.mjs",
+    "./products/captured-api/handover-client": "./source/products/captured-api/handover-client.mjs",
+    "./products/captured-api/handover-agent": "./source/products/captured-api/handover-agent.mjs"
   },
   "applicationProviders": {
     "captured-api": "products/captured-api/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "captured-handovers": "products/captured-api/handover-provider.mjs"
   }
 }
