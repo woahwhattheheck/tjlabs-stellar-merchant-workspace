@@ -319,6 +319,9 @@ try{
   allowance:8,consumed:2,reserved:0,available:6,originalAttempts:1,resultSha256:RESPONSE_SHA})+'\n');
 }catch(error){
  failure=error;journal.error={...errorView(error),operationId:error.operationId??null,at:now()};await save().catch(()=>{});
+ if(error.code==='ENOENT')process.stderr.write(JSON.stringify({diagnostic:'ORIGINAL_NATIVE_PATH',
+  syscall:typeof error.syscall==='string'?error.syscall:null,
+  path:typeof error.path==='string'&&error.path.startsWith('/')?error.path:null})+'\n');
  process.stderr.write(JSON.stringify({status:'ATTENTION',...journal.error,completedPhases:journal.phases.map(p=>p.name)})+'\n');
 }finally{
  const close=async()=>{await closeHost();if(app){await app.close();app=null;}if(!leaseRetired){

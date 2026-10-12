@@ -198,3 +198,8 @@ The full application backup retains the original source/data closure, merchant s
 ## Original thin source alias recovery
 
 The retained merchant source has an existing `stellar-forge` alias into the original application source. The receiver preserves that exact owned alias. For the two schema modules already identified by the native import, it accepts the existing exact verified bytes or replaces only their specifically recorded dangling source links with the original 671-file packet bytes. Existing different source bytes or changed link targets fail before the original merchant driver. Borrowed external source directories, the funded application and every original journal remain untouched.
+
+
+## Original initializer path diagnosis
+
+The same original driver now adds only a bounded ENOENT diagnostic containing its filesystem syscall and absolute path. It preserves every original operation, request, source-selection, paid response and phase result. This identifies a missing original initializer dependency without printing credential or response bytes. The current driver Git blob is `a0a29469049fbb05b092ff1a656d821a6d13c83d`; the matching original thin receiver is `e702725567d6302375021b224cbce9b9dd477906`. Its source download limit must admit the complete 12,276-byte receiver while still checking that exact Git blob. The original package builder and all 671 selected source files remain unchanged.
