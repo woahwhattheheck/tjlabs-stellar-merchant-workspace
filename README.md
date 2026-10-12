@@ -44,6 +44,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 | Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
 | Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
+| Operate and receive a 360Giving publisher | **Applications → 360Giving publisher workspace**, `starforge dataset-360giving-workspace` and [typed agents](products/360giving-publisher/README.md) | Original package/reviews, complete native grants and changes, SDK/MCP operation, full customer handoffs and independent receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
