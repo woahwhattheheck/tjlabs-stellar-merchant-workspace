@@ -39,7 +39,7 @@ function parse(args){const [command,...rest]=args,options={};for(let i=0;i<rest.
   options[rest[i].slice(2)]=rest[++i];}return {command,options};}
 const required=(value,name)=>{if(!value)throw new TypeError('--'+name+' is required');return value;};
 export async function main(args=process.argv.slice(2)){
-  if(!args.length||args.includes('--help')){console.log(HELP);return;}
+  if(!args.length){console.log(HELP);return;}
   const collectionCommands={collection:'receive','collection-inspect':'inspect','collection-restore':'restore',
     'collection-rows':'rows','collection-analysis-mapping':'analysis-mapping'};
   if(Object.hasOwn(collectionCommands,args[0])){
@@ -51,6 +51,7 @@ export async function main(args=process.argv.slice(2)){
     const {main:comparisonMain}=await import('./collection-comparison-cli.mjs');
     return comparisonMain([args[0].slice('comparison-'.length),...args.slice(1)]);
   }
+  if(args.includes('--help')){console.log(HELP);return;}
   const {command,options:o}=parse(args),options={allowLoopback:o['allow-loopback']==='true'};
   let result;
   if(command==='template'){
