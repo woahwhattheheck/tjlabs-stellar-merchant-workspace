@@ -701,6 +701,11 @@ actual returned selection and connection. Its caller keeps the original
 listener lifecycle. The continuation retains its complete output before
 returning and closes only its own Python/Node child calls.
 
+The CLI translates SIGINT and SIGTERM into its dedicated cancellation exception.
+Original runtime and workspace cleanup then join active children before the
+outer command returns interrupted. A later invocation uses the same operation
+directory and retained selected revision.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
