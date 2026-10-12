@@ -1,9 +1,9 @@
 # Operate a captured API merchant
 
 The captured API product connects the original HAR source workbench, SF61
-merchant browser, HAR/OpenAPI merchant agent, route pricing worksheet and SF82
-release lifecycle. Source decisions, merchant plans and saved packages use
-those native implementations.
+merchant browser, HAR/OpenAPI merchant agent, route pricing and policy editors,
+persistent operator workflows and SF82 release lifecycle. One retained product
+connects source decisions, merchant plans, complete customer packages and receiving.
 
 ## 1. Install the selected product source
 
@@ -14,10 +14,14 @@ The standalone product uses the maintained source builder:
 
 ~~~sh
 node stellar/scf-starforge-20261009/distribution/build.mjs \
-  --repo . --ref HEAD --out /private/packages/merchant
+  --repo . --ref HEAD --selection openapi-merchant --out /private/packages/merchant
 ~~~
 
-Keep the returned archive and its actual SHA-256 together. The source-only
+The `openapi-merchant` recipe includes this product's original Applications entry,
+source workbench, operation policy editor, merchant Console, reusable workflow
+client, complete receiving and seller release commands. Its installed product
+metadata retains this standalone repository. Keep the returned archive and its
+actual SHA-256 together. The source-only
 installation path is:
 
 ~~~sh
@@ -81,8 +85,9 @@ The product writes its retained setup and creates this private state:
 | `har-connections.json` | Original source aliases and project binding |
 | `openapi-connections.json` | Original merchant, worksheet and package receiving handles |
 | `operator/` | Original merchant MCP configuration, release store and customer exports |
+| `operator-console/` | Persistent operator profiles, requests, workflow recipes/runs and complete customer downloads; created when the agent opens |
 | `product.setup.json` / `product.json` | Retained setup and completed source connections |
-| `session.json` | Latest product session and original browser/MCP addresses |
+| `session.json` | Latest product session, browser/MCP addresses, operator URL and retained operator workspace path |
 
 The native operator is prepared in a separate initialization directory before it
 is published as `operator/`. Repeating initialization with the same setup reopens
@@ -162,8 +167,10 @@ Use the original application lifecycle:
    lease. Applications receives one source-bound startup record after the original
    listeners are open and the selected files have been checked again.
 5. **Open application** to enter the original captured-source library and merchant
-   form. With the agent enabled, use the actual returned MCP listener and native
-   workspace alias `merchant`. The HAR and OpenAPI providers share the same product.
+   form. With the agent enabled, **Operator workspace** opens its persistent
+   Requests, Workflows and Customers interface. **Merchant agent endpoint** gives
+   the same host's MCP address and native workspace alias `merchant`. The HAR
+   and OpenAPI providers share the same product.
 6. Complete capture, operation review, merchant terms, route pricing, package save,
    release and receiving using sections 3–8.
 7. **Stop application** to drain the original agent, then the owned browser and its
@@ -409,7 +416,16 @@ starforge captured-api open --dir /private/state/captured-api \
   --token-env MCP_ACCESS_TOKEN --mcp-port 3211
 ~~~
 
-Use the returned authenticated MCP URL and workspace alias `merchant`.
+Use the returned authenticated MCP URL and workspace alias `merchant`. The same
+startup also returns `operatorUrl`, ending in `/operator/`, and
+`operatorConsoleDirectory`. Open that URL and use the host's original bearer or
+OAuth authorization. The access token remains in its private host environment;
+the URL contains no token.
+
+The operator workspace belongs to the merchant MCP session. Closing the product
+drains accepted requests, workflows and customer downloads before releasing the
+original agent and browser. Reopening the same product directory restores its
+profiles, recipes, runs and complete customer files.
 
 | Agent sequence | Retained result |
 | --- | --- |
@@ -419,6 +435,9 @@ Use the returned authenticated MCP URL and workspace alias `merchant`.
 | Plan/preview → save → load | Complete merchant plan, compiler preview and saved package |
 | Later ingest → changes/review → source | Native source editions, carried decisions and reviewed new source |
 | OpenAPI routes → worksheet review/save | Source-bound inventory and complete priced merchant |
+| Policy edition → review → package | Reusable operating terms, exact native compiled review and immutable package |
+| Workflow recipe → installation → paused review → continuation | Reusable source maintenance with the same saved requests and native tool definitions |
+| Completed export → Customers | Complete original package files and a downloadable package archive |
 | Export/download → receiving adoption | Original source, review, merchant and portable worksheet files |
 | Package stage → release operations | Native release IDs, source digests, generations and runtime |
 
@@ -471,6 +490,118 @@ identities and resumable file export.
 
 The original HAR binding travels with the complete plan into native save.
 A new price edition becomes another immutable package.
+
+### Reuse operating policies
+
+Open a merchant in the source browser and use **Reusable operation policies** to author
+an immutable named edition. A policy can supply the shared route settings for
+request/response handling, credential references, cache, concurrency,
+availability, transport and stream behavior. Method, path, operation ID and
+atomic price remain attached to the selected native route.
+
+Choose the saved edition, select the source or base package and review the
+complete application. Explicit route overrides remain part of that review.
+Save the resulting merchant under a new package name. The package retains the
+selected policy record and its identity alongside the complete native source,
+plan and compiler output, so ordinary package export and handover carry it.
+
+The same maintained agent and terminal operations are available from this entry:
+
+~~~sh
+starforge captured-api policies list \
+  --url "$MERCHANT_MCP_URL" --request-file /private/policy-list.json
+
+starforge captured-api policies review \
+  --url "$MERCHANT_MCP_URL" --request-file /private/policy-review.json
+
+starforge captured-api policies package \
+  --url "$MERCHANT_MCP_URL" --request-file /private/policy-package.json
+~~~
+
+Use the original `workspace: "merchant"` and full request contracts in the
+[operation policy guide](../../stellar-forge/mcp-merchant-operator/OPENAPI_OPERATION_POLICIES.md).
+The package request retains the reviewed inputs and exact returned
+`expectedReviewSha256`. Named policy editions can also be exported and received
+as their complete original files.
+
+### Maintain and receive through the operator workspace
+
+Select **Workflows** in the returned operator workspace. A saved profile keeps
+its original host binding, tool definitions, complete draft requests, immutable
+workflow editions, recipe installations and run history. The OpenAPI maintenance
+recipe carries the authored policy-review request through native review, a pause
+for the operator, immutable package publication, package inspection and complete
+export.
+
+Create or select the intended profile, prepare the complete recipe for the
+current host, and save its installation. Start a run from that installation and
+inspect its paused native policy review. Continue using the exact run revision
+and review SHA-256. After export finishes, choose **Prepare customer** on the
+export step. **Customers** receives each declared package member and supplies the
+complete package archive. The export manifest file's SHA-256 identifies this
+transfer; the internal package manifest retains its own separate identity.
+
+The same saved objects are available through the original terminal client:
+
+~~~sh
+starforge captured-api workflows host --url "$OPERATOR_URL"
+
+starforge captured-api workflows prepare --url "$OPERATOR_URL" \
+  --input /private/maintenance.json --output /private/maintenance-prepared.json
+
+starforge captured-api workflows install --url "$OPERATOR_URL" \
+  --input /private/maintenance-prepared.json
+
+starforge captured-api workflows run-prepare --url "$OPERATOR_URL" \
+  --input /private/maintenance-run-selection.json --output /private/maintenance-run.json
+
+starforge captured-api workflows run --url "$OPERATOR_URL" \
+  --input /private/maintenance-run.json --wait
+~~~
+
+`OPERATOR_URL` is the actual returned `operatorUrl`. The
+[complete workflow guide](../../stellar-forge/mcp-merchant-operator/console/OPENAPI_WORKFLOWS.md)
+provides the full preparation/run inputs, review continuation, complete customer
+download, profile export/import and receiving recipe. A later maintenance edition
+can reuse the original procedure with a new explicit package name and authored
+inputs. A receiving recipe selects the destination's original declared delivery
+handle and complete export manifest; it reopens the package and can stage an
+explicit native release.
+
+### Review a changed operator host
+
+Open **Host → Review host** for the selected profile before adopting a changed
+merchant configuration or installed provider selection. The comparison shows
+added, removed and changed tools, provider declarations, source aliases and
+request capacity. Expand a change for its saved and current values, or open a
+changed tool in the original editor to inspect its current inputs.
+
+Choose **Save this host binding** to retain the displayed host under a new
+profile revision. The saved configuration and capability fingerprints must still
+match the displayed review. Earlier bindings, saved drafts, workflow editions,
+native calls, returned values and customer files remain in the same profile.
+
+Use **Retained host bindings** to compare an earlier revision against the current
+host. **Export comparison** downloads that full review. **Export profile**
+includes every immutable host binding with the original request, workflow and
+customer history. Receiving a newer profile archive extends that history while
+preserving the receiving workspace's selected host, profile name and favorites;
+reopening the same archive reuses its original receiving record.
+
+A profile created before complete capability snapshots retains its original
+saved host when first rebound. The review uses that host's available
+configuration, counts, provider membership and source aliases; subsequent
+bindings retain the full tool and declaration snapshots. Runtime load and
+shutdown state remain available in the original Host view.
+
+The Applications launch review binds the original operator and host-comparison
+source with the complete Console assets. Reopen the same private product after
+upgrading its runtime, then review and save the intended host binding in its
+retained `operator-console/` workspace.
+
+[Operator host review](../../stellar-forge/mcp-merchant-operator/console/README.md#review-host-changes-and-retain-bindings)
+provides the browser workflow, authenticated API and complete native
+customer-to-host receiving and return sequence.
 
 ## 6. Run, release and deliver the merchant
 
@@ -639,6 +770,37 @@ Keep the complete base and proposed worksheet JSON when moving unfinished
 pricing work. Native file hashes and source/asset binding govern its import and
 reconciliation.
 
+### Compare an incoming merchant edition
+
+After importing the complete collection, save its receiving draft and open
+**Incoming editions**. Load the installed merchant choices and select the
+baseline for each incoming package. The default follows the saved receiving
+name; an explicit installed name or no baseline can be selected independently.
+
+Choose **Compare this saved receiving edition**. The original retained COMPARE
+job saves full current/incoming plans, exact route prices, OpenAPI source,
+facades, compiled configuration and file identities. Page the complete changes
+or download the original JSON snapshots.
+
+Choose the desired receiving names in the same form, then select **Review
+selected receiving names**. Review actual target conflicts and the complete
+source/baseline binding. **Save reviewed receiving decision** retains that exact
+choice through the existing immutable draft writer. **Review this saved
+decision for receiving** continues into the original REVIEW, RECEIVE and REOPEN
+operations. A new native package name keeps the prior installed edition
+available for the original merchant and release workflow.
+
+The existing merchant agent exposes the same comparison, decision and full-file
+reads. The original terminal's edition-export command retains the complete
+comparison index and all three files for every merchant. Repeating its retained
+output directory completes an interrupted export or reopens all original files
+after the product host stops.
+
+[EDITIONS.md](EDITIONS.md) covers the complete browser, agent, typed-client and
+terminal journey, source-only collections, peer draft changes and native
+receiving recovery. Saved operator procedures and source refresh continue
+through the original host and merchant controls described above.
+
 ## 9. Recover and upgrade
 
 ~~~sh
@@ -661,10 +823,20 @@ alongside the saved process session.
 | Applications launch configuration changes | Fresh review of the same saved product before its next start |
 | Applications start reply is lost | The saved original application and managed operation, including its retained private startup record |
 | Worksheet transfer stops | Same source/plan, worksheet identity and native downloader |
+| Policy save or package reply is lost | Same immutable policy or package name and complete reviewed original request |
+| Recipe installation or workflow run reply is lost | Same saved preparation/run request and original installation or run ID |
+| Workflow stops at native review | Same paused run revision and the displayed original policy review SHA-256 |
+| Customer transfer stops | Same profile, export ID and export manifest SHA-256; reopen the original download |
+| Operator host restarts | Returned operator URL and the retained profile/run/customer state under `operator-console/` |
+| Operator capabilities or configuration change | Review the selected profile against the current host, then retain the exact displayed binding; earlier bindings and native work remain available |
 | Complete handover is interrupted | Same selection/output or receiving review/operation ID; completed native members reopen |
 | Browser handover draft or reply is interrupted | Original saved draft edition and retained request under Merchant handover |
 | Whole handover file transfer stops | Same original download or saved file upload; resume the retained byte range/chunk |
 | Handover browser uses a new port after restart | Open the original server-side Drafts, Operations, Files or Received entry |
+| Incoming-edition comparison stops | Same COMPARE job/request SHA and its retained original current/incoming snapshots |
+| Installed baseline changes during receiving review | New comparison against the changed original merchant; prior comparison history remains available |
+| Incoming-edition decision reply is lost | Same exact draft base, complete form, comparison/review hashes and original save UUID |
+| Complete edition export stops | Same original terminal command/output directory; resume missing files or reopen completed files offline |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
