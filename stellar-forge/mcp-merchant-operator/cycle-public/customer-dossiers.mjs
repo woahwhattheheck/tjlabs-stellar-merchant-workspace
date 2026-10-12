@@ -10,9 +10,16 @@ const date=value=>{
 const status=value=>({RETAINED:'Current',SUPERSEDED:'Superseded',WITHDRAWN:'Withdrawn',DELIVERED:'Packet complete',REVIEWED:'Ready to issue',NOT_RETAINED:'Ready to issue',EXPORT_PENDING:'Finish statement packet',REVIEW_REQUIRED:'Review changed sources',RECONCILE_PENDING:'Resume original statement',SENDING:'Issuing statement'}[value]??human(value));
 const active=cycle=>['RUNNING','QUEUED'].includes(cycle?.job?.phase);
 const period=row=>row.servicePeriod?date(row.servicePeriod.from)+' → '+date(row.servicePeriod.until):row.usageSource?'Cumulative at '+date(row.usageSource.createdAt):'Purchase statement';
-const pass=row=>{
-  const plan=row.plan??row.servicePeriod;
-  return [plan?.planLabel,plan?.orderRef].filter(Boolean).join(' · ')||'Original customer purchases';
+const passLabels=row=>{
+  if(row.plan)return [[row.plan.label,row.plan.orderLabel,row.plan.orderRef].filter((value,index,all)=>value&&all.indexOf(value)===index).join(' · ')];
+  if(row.passes?.length)return row.passes.map(item=>[item.plan?.label,item.label,item.orderRef].filter((value,index,all)=>value&&all.indexOf(value)===index).join(' · '));
+  const period=row.servicePeriod;
+  return [[period?.planLabel,period?.orderRef].filter(Boolean).join(' · ')||'Original customer purchases'];
+};
+const pass=row=>passLabels(row).join('; ');
+const passHtml=row=>{
+  const labels=passLabels(row);
+  return labels.length>1?'<details class="dossier-passes"><summary>'+labels.length+' purchased passes</summary><ul>'+labels.map(label=>'<li>'+escape(label)+'</li>').join('')+'</ul></details>':escape(labels[0]);
 };
 function signature(cycle){
   return JSON.stringify([cycle.cycleId,cycle.manifestSha256,cycle.phase,cycle.job?.phase,cycle.job?.finishedAt,
@@ -68,7 +75,7 @@ export function createCustomerDossierUi({api,notice,showError,clearError}){
   }
   function rowsHtml(customer){
     return '<div class="table-wrap"><table><caption class="visually-hidden">Saved statements for '+escape(customer.name)+'</caption><thead><tr><th>Pass or purchases</th><th>Service period</th><th>Statement</th><th>Packet</th></tr></thead><tbody>'+
-      customer.rows.map(row=>'<tr><td>'+escape(pass(row))+'</td><td>'+escape(period(row))+'</td><td>'+escape(row.statement?.number??'Awaiting issue')+
+      customer.rows.map(row=>'<tr><td>'+passHtml(row)+'</td><td>'+escape(period(row))+'</td><td>'+escape(row.statement?.number??'Awaiting issue')+
         (row.statement?'<small>'+escape(status(row.statement.status))+'</small>':'')+
         (row.statement?.replacesId?'<small>Correction of an earlier statement</small>':'')+
         '</td><td>'+escape(row.ready?'Complete':status(row.phase)||'Pending')+'</td></tr>').join('')+'</tbody></table></div>';

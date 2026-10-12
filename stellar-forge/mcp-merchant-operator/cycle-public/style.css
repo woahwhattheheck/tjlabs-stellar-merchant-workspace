@@ -52,3 +52,7 @@ textarea:focus-visible{outline:3px solid #555;outline-offset:3px}nav{flex-wrap:w
   .customer-dossier .row-actions>a,.customer-dossier .row-actions>button{width:100%;justify-content:center;text-align:center}
 }
 .customer-dossiers .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.customer-dossier .row-actions button,.customer-dossier .row-actions a{min-height:40px}
+.dossier-rows details.dossier-passes{border:0;margin:0;padding:0}
+.dossier-passes ul{padding-left:18px;margin:6px 0 0}
+.dossier-passes li+li{margin-top:6px}

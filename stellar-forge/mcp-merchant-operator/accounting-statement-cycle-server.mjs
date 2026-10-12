@@ -1,7 +1,7 @@
 // MIT. Local closing workbench over the original accounting statement client and cycle engine.
 import {createServer} from 'node:http';
 import {createReadStream} from 'node:fs';
-import {mkdir, readdir, readFile, realpath, stat} from 'node:fs/promises';
+import {mkdir, readdir, readFile, realpath, stat, lstat} from 'node:fs/promises';
 import {resolve, join, relative, isAbsolute, sep, extname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {randomBytes, createHash} from 'node:crypto';
@@ -189,6 +189,20 @@ export async function startAccountingStatementCycleWorkbench({
 
   function customerId(value){need(typeof value==='string'&&UUID.test(value),'Choose a customer from this closing cycle.');return value;}
   const dossierRoot=(key,id)=>join(root,'.customer-dossiers',safeKey(key),customerId(id));
+  async function prepareDossierParent(key){
+    let parent=root;
+    for(const name of ['.customer-dossiers',safeKey(key)]){
+      const path=join(parent,name);
+      try{await mkdir(path,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;}
+      const info=await lstat(path);
+      need(info.isDirectory()&&!info.isSymbolicLink()&&!(info.mode&0o077)&&(!process.getuid||info.uid===process.getuid()),
+        'Use private customer packet directories owned by this operator (mode 0700).',409,'WORKBENCH_DIRECTORY');
+      const target=await inside(root,path);
+      need(target===path,'The customer packet directory must remain inside the original saved-work directory.',403,'WORKBENCH_PATH');
+      parent=target;
+    }
+    return parent;
+  }
   function dossierView(key,snapshot){
     const base='/api/cycles/'+encodeURIComponent(key)+'/customers/'+snapshot.customer.customerId+'/snapshots/'+snapshot.snapshotSha256;
     const {schema,cycle,customer,snapshotSha256,observedAt,complete,counts,statements,totalBytes}=snapshot;
@@ -204,7 +218,7 @@ export async function startAccountingStatementCycleWorkbench({
     const promise=predecessor.catch(()=>{}).then(async()=>{
       controller.signal.throwIfAborted();
       need(!['QUEUED','RUNNING'].includes(jobs.get(key)?.phase),'Wait for the active closing operation before preparing the customer packet.',409,'WORKBENCH_ACTIVE');
-      await compatible(key);
+      await compatible(key);await prepareDossierParent(key);
       const snapshot=await exportAccountingStatementCustomerDossier({directory:cyclePath(key),customerId:id,outputDirectory:dossierRoot(key,id),signal:controller.signal});
       need(snapshot.customer?.customerId===id&&SHA256.test(snapshot.snapshotSha256??''),'The customer packet does not match the saved selection.',409,'WORKBENCH_CUSTOMER_DOSSIER');
       return dossierView(key,snapshot);
