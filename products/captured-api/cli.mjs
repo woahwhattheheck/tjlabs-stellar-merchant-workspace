@@ -9,7 +9,10 @@ const HELP = 'Captured API merchant workspace\n\n' +
   '       [--console-url-file ORIGINAL_PRIVATE_URL_FILE]\n' +
   '  starforge captured-api open --dir PRIVATE_DIRECTORY [--port 0] [--mcp-port 0]\n' +
   '       [--token-env MCP_ACCESS_TOKEN] [--browser-only]\n' +
+  '       [--managed-binding-sha256 INSPECTED_LAUNCH_SHA256]\n' +
   '  starforge captured-api inspect --dir PRIVATE_DIRECTORY\n' +
+  '  starforge captured-api inspect-launch --dir PRIVATE_DIRECTORY\n' +
+  '       [--port 0] [--mcp-port 0] [--token-env MCP_ACCESS_TOKEN] [--browser-only]\n' +
   '  starforge captured-api capture --dir PRIVATE_DIRECTORY --file ORIGINAL.har\n' +
   '       [--label NAME] [--sha256 ORIGINAL_SHA256] [--previous SAVED_SELECTION.json]\n' +
   '  starforge captured-api adopt --dir PRIVATE_DIRECTORY --kind capture|refresh\n' +
@@ -71,6 +74,11 @@ export async function main(args = process.argv.slice(2)) {
       oauthConnectionsFile: input.get('--oauth-connections') });
   } else if (command === 'inspect') {
     const input = options(rest, ['--dir']); result = await product.inspectCapturedApi(input.get('--dir'));
+  } else if (command === 'inspect-launch') {
+    const input = options(rest, ['--dir','--port','--mcp-port','--token-env'], ['--browser-only']);
+    result = await (await import('./managed.mjs')).inspectCapturedApiLaunch({
+      directory: input.get('--dir'), port: port(input.get('--port')), mcpPort: port(input.get('--mcp-port')),
+      browserOnly: input.has('--browser-only'), tokenEnv: input.get('--token-env') ?? 'MCP_ACCESS_TOKEN' });
   } else if (command === 'capture') {
     const input = options(rest, ['--dir','--file','--label','--sha256','--previous']);
     if (!input.has('--file')) throw failure('Supply the original --file.');
@@ -88,23 +96,40 @@ export async function main(args = process.argv.slice(2)) {
     result = await product.adoptCapturedApi({ directory: input.get('--dir'), kind: input.get('--kind'),
       sourceDirectory: input.get('--from'), label: input.get('--label') });
   } else if (command === 'open') {
-    const input = options(rest, ['--dir','--port','--mcp-port','--token-env'], ['--browser-only']);
+    const input = options(rest, ['--dir','--port','--mcp-port','--token-env','--managed-binding-sha256'], ['--browser-only']);
     let active, closing, stopping = false;
     const signals = ['SIGINT','SIGTERM'];
     const remove = () => { for (const signal of signals) process.removeListener(signal, stop); };
-    const close = () => closing ??= active.close().finally(remove);
+    const close = () => {
+      if (closing) return closing;
+      const attempt = Promise.resolve().then(() => active.close());
+      closing = attempt;
+      void attempt.then(remove, () => { if (closing === attempt) closing = undefined; });
+      return attempt;
+    };
     const stop = () => { stopping = true; if (active) close().catch(report); };
-    for (const signal of signals) process.once(signal, stop);
+    // Repeated signals join the same native drain; they never restore Node's
+    // default termination handler while these original owners remain open.
+    for (const signal of signals) process.on(signal, stop);
     try {
-      active = await product.openCapturedApi({ directory: input.get('--dir'), port: port(input.get('--port')),
+      const selected = { directory: input.get('--dir'), port: port(input.get('--port')),
         mcpPort: port(input.get('--mcp-port')), browserOnly: input.has('--browser-only'),
-        tokenEnv: input.get('--token-env') ?? 'MCP_ACCESS_TOKEN' });
+        tokenEnv: input.get('--token-env') ?? 'MCP_ACCESS_TOKEN' };
+      active = input.has('--managed-binding-sha256')
+        ? await (await import('./managed.mjs')).openCapturedApiManaged({ ...selected,
+          expectedBindingSha256: input.get('--managed-binding-sha256') })
+        : await product.openCapturedApi(selected);
       if (stopping) { await close(); return { state: 'CLOSED' }; }
-      print({ state: active.state, name: active.name, browserUrl: active.browserUrl, mcpUrl: active.mcpUrl,
+      if (input.has('--managed-binding-sha256')) process.stdout.write(JSON.stringify(active.startup) + '\n');
+      else print({ state: active.state, name: active.name, browserUrl: active.browserUrl, mcpUrl: active.mcpUrl,
         workspace: active.workspace, directory: active.directory, projectsDirectory: active.projectsDirectory,
         configuration: active.configuration, consoleOwnership: active.console.ownership });
       return { ...active, close };
-    } catch (error) { remove(); throw error; }
+    } catch (error) {
+      if (!active && typeof error.close === 'function') active = { close: error.close };
+      if (!active) remove();
+      throw error;
+    }
   } else throw failure('Unknown captured API command. Use --help.');
   print(result); return result;
 }

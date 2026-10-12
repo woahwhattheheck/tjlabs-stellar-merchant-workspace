@@ -89,8 +89,23 @@ export async function openCacheWorkspace({ directory, sources = [], request } = 
   await privateDirectory(directory);
   const configured = validateSources(sources, { direct: typeof request === 'function' }), controls = new Map(configured.map(row => [row.id, row]));
   const lease = await operationLease(join(directory, 'workspace.lock'));
-  let db, closed = false;
-  const active = new Set();
+  let db, closed = false, stopping = false, closing = null;
+  let databaseClosed = false, leaseClosed = false;
+  const active = new Set(), pending = new Set();
+  function close() {
+    if (closing) return closing;
+    stopping = true;
+    closing = (async () => {
+      // Public admission has stopped; accepted captures and changes can still
+      // persist their original result before the database and lease close.
+      await Promise.allSettled([...pending]);
+      need(active.size === 0, 'CACHE_WORKSPACE_CHANGE_ACTIVE', 409);
+      if (!databaseClosed) { db?.close(); databaseClosed = true; }
+      if (!leaseClosed) { await lease.close(); leaseClosed = true; }
+      closed = true;
+    })().catch(error => { closing = null; throw error; });
+    return closing;
+  }
   try {
     const dbPath = join(directory, 'workspace.sqlite');
     try {
@@ -116,7 +131,11 @@ export async function openCacheWorkspace({ directory, sources = [], request } = 
       'CACHE_WORKSPACE_DATABASE_INVALID');
     for (const row of configured) db.prepare('INSERT INTO sources(id,label) VALUES (?,?) ON CONFLICT(id) DO UPDATE SET label=excluded.label')
       .run(row.id, row.label);
-  } catch (error) { db?.close(); await lease.close(); throw error; }
+  } catch (error) {
+    try { await close(); }
+    catch (closeError) { closeError.cause ??= error; closeError.close = close; throw closeError; }
+    throw error;
+  }
   const identity = () => parse(db.prepare("SELECT value FROM meta WHERE key='workspace'").get().value);
   function transaction(expected, callback) {
     need(!closed, 'CACHE_WORKSPACE_CLOSED', 503);
@@ -350,11 +369,16 @@ export async function openCacheWorkspace({ directory, sources = [], request } = 
     } catch (error) { db.exec('ROLLBACK'); throw error; }
     return snapshot();
   }
-  return Object.freeze({ snapshot, inspect, capture, inspection, prepare, apply, recover, change, annotate,
-    compare, exportWorkspace, restore,
-    async close() {
-      need(active.size === 0, 'CACHE_WORKSPACE_CHANGE_ACTIVE', 409);
-      if (!closed) { closed = true; db.close(); await lease.close(); }
-    },
-  });
+  const methods = { snapshot, inspect, capture, inspection, prepare, apply, recover, change, annotate,
+    compare, exportWorkspace, restore };
+  const admitted = Object.fromEntries(Object.entries(methods).map(([name, method]) => [name, (...args) => {
+    need(!stopping && !closed, 'CACHE_WORKSPACE_CLOSED', 503);
+    const result = method(...args);
+    if (result && typeof result.then === 'function') {
+      pending.add(result);
+      result.then(() => pending.delete(result), () => pending.delete(result));
+    }
+    return result;
+  }]));
+  return Object.freeze({ ...admitted, close });
 }

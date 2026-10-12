@@ -22,6 +22,7 @@ They retain its original dependency manifests and lock.
 | STAC merchant/customer receiving | Native Stellar packages, `schema`, and `openapi`, as specified by the original GIS receiving guide |
 | Incident watcher and case desk | Original Node source and local file-lock support; configured Slack/webhook credentials when notifications are selected |
 | Accounting provider operations | The existing merchant MCP runtime and original selected QuickBooks/Xero workspace configuration |
+| Merchant pricing, supplier costs and scenario planning | The same installed merchant runtime, original seller configuration and selected operations source or retained exports |
 | Material catalog | The catalog guide's original runtime feature and provider configuration |
 
 Use `starforge registrations` to inspect the selected package's actual command
@@ -421,6 +422,126 @@ reopening. Keep the full prepared operation directory with the accounting
 workspace. A new process can reconcile that same request without recreating the
 financial operation.
 
+## 8A. Operate supplier costs, pricing and full workspace receiving
+
+Open **Applications → New application → Merchant pricing and scenario
+planning** in the same installed product. Select the merchant's original seller
+configuration, one private pricing directory and its operations listener or
+retained session/history exports. Optional supplier usage and accounting files
+provide the original context for explicit capture in Supplier costs.
+
+The direct command opens that same original workspace:
+
+~~~sh
+starforge revenue-workspace \
+  --config /srv/starforge/state/merchant/seller-service.json \
+  --history /srv/starforge/state/merchant/merchant-usage.json \
+  --state /srv/starforge/state/merchant/pricing --port 0
+~~~
+
+Use the merchant's actual paths. An operations URL can replace the retained
+traffic file. Keep the current original seller configuration with its complete
+ordered payment choices; saved reviews also retain the exact seller and
+observations that supplied their routes.
+
+### Retain sources and make a pricing decision
+
+Save a pricing review for the intended routes and observation period, then open
+**Supplier costs** from Applications or the pricing page. Retain the supplier's
+original bill, credit note or quotation before entering monetary lines.
+
+For a delimited original, select its delimiter and explicitly map the columns
+for the native reference, supplier, kind, currency, amount, quantity, unit and
+description. Keep original text references and a reason for an excluded row.
+A PDF or other source can support manually entered reviewed lines while its
+complete original remains attached.
+
+Allocate signed amounts to their actual merchant route IDs. The page retains
+unassigned money, original units, separate currencies and billed or quoted
+basis. Review the supplier period beside the saved merchant observation period,
+the available fulfilled-response counts and each route's coverage. Save the
+complete cost edition, then compare corrections against the earlier edition.
+
+Prepare a quoted or billed cost proposal for explicitly selected routes. Review
+its original conditions and exact values before applying it to a new pricing
+review. That saved review carries the cost input, source references and original
+proposal. Open **Scenario planning** to compare alternative demand, price and
+cost assumptions against the same saved source and retain the selected plan.
+
+To change a merchant's atomic payment amount, continue through the pricing
+page's existing **Prepare price change** review. Its original package, release
+store and runtime selection carry that explicit change through staging,
+activation and normal runtime operation.
+
+### Receive a complete workspace through Applications
+
+Use **WORKSPACE_BACKUP** in Supplier costs to export the complete retained
+pricing and cost workspace. The original TAR carries supplier sources, saved
+cost editions, cost-linked pricing reviews, price decisions and scenario plans.
+Keep that complete file and its manifest with the receiving work.
+
+On the destination product:
+
+1. Choose **Merchant pricing and scenario planning** and enter a new private
+   pricing directory beneath an existing private parent.
+2. Select the full TAR in **Complete pricing and supplier-cost backup**. Select
+   the merchant's original seller configuration and the source files or
+   operations listener to use for subsequent reviews.
+3. Choose **Review application**. Inspect the archive path, complete hash,
+   bytes, retained file count, included source/review/plan counts and receiving
+   destination. The review identifies a new target, an interrupted restoration
+   or this same completed restoration.
+4. Save the application and use **Review start → Start reviewed application**.
+   The original restore verifies the reviewed archive before receiving files.
+   An interrupted import continues from the same archive and destination.
+5. Open **Supplier costs**, **Scenario planning** and the pricing history.
+   Reopen the original supplier files and saved editions, then continue the
+   same retained work.
+6. Stop and reopen normally. After successful receiving, clear the optional
+   backup field while retaining that pricing directory if the TAR is moved
+   away from its original handover path.
+
+The same existing native receiving implementation serves the CLI:
+
+~~~sh
+starforge revenue-workspace \
+  --inspect-cost-workspace /srv/starforge/received/pricing-cost-backup.tar \
+  --state /srv/starforge/state/received-pricing
+
+starforge revenue-workspace \
+  --config /srv/starforge/config/received-merchant.json \
+  --history /srv/starforge/received/merchant-usage.json \
+  --restore-cost-workspace /srv/starforge/received/pricing-cost-backup.tar \
+  --expected-cost-backup-sha256 REVIEWED_FULL_BACKUP_SHA256 \
+  --state /srv/starforge/state/received-pricing --port 0
+~~~
+
+Replace the digest placeholder with the inspection's actual
+`sourceArchiveSha256`. Inspection reads the full archive and target without
+opening a listener or creating a workspace. The original 512 MiB complete
+archive limit and per-file limits apply to receiving.
+
+### Operate and receive through the merchant agent
+
+The existing merchant pricing connection can declare supplier-source and
+complete cost-book file aliases. Browser and agent use the same native cost
+sources, cost editions, original pricing revisions and exported files.
+The merchant MCP's `pricing cost-*` actions cover exact input selection, source
+capture, mapping, allocation review, save, correction, pricing apply, request
+recovery and complete resumable downloads.
+
+Use the current economics revision for a cost save and the current pricing
+revision for a pricing apply. Retain the complete original request and its ID
+when recovering an interrupted response. Receive the original workspace backup
+through `cost-download`, then use the same Applications receiving path.
+
+The [pricing Applications guide](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
+covers the installed receiving controls and normal process lifecycle.
+The [source-cost guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/README.md)
+defines original fields, exact allocation and coverage. The
+[merchant MCP cost guide](../../stellar-forge/mcp-merchant-operator/COSTS.md)
+provides the complete host declaration, saved request and file-transfer commands.
+
 ## 9. Recover and upgrade from retained state
 
 | Situation | Continue from |
@@ -429,7 +550,8 @@ financial operation.
 | Purchased API or agent response is interrupted | Original customer, profile/call/task IDs and retained client operation directory |
 | Captured API setup or session stops | The original private product setup, source library, reviews and merchant packages |
 | Captured source changes | Prior immutable review, exact later HAR and retained native refresh |
-| Pricing work moves between operators | Complete base/proposed worksheet and current original source/plan |
+| Pricing work moves between operators | Complete base/proposed worksheet and current original source/plan; a full pricing-and-cost backup carries retained supplier originals, editions and saved scenarios |
+| Pricing/cost import stops | The same complete backup, inspected digest and original receiving directory |
 | Source preview reply is lost | Original preview UUID, retained status and completed response |
 | Schema or merchant terms change | The existing export baseline and new saved candidate revision |
 | Deployment action reply is lost | Original deployment ID, release generation and saved action recovery |
