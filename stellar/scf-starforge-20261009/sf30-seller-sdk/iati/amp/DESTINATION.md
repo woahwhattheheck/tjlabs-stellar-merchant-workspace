@@ -74,6 +74,8 @@ Configured object collections are paired in this order:
 
 The comparison retains original request/received array positions and every pairing basis. Several fully identical records can be reconciled as a multiset, preserving their exact count. That does not prove a unique source-row-to-new-native-ID lineage. equivalentRecordLineageAmbiguous and the per-pair equivalentMultiplicity/uniqueNativeLineage fields preserve that distinction. A following-edition mapping should use the actual retained IDs and the original owner's explicit source-row decision; do not manufacture a unique mapping from equal money.
 
+The native create/save path initializes activity_group. Its generated version is compared inside that known container even when the parent metadata marks the object read-only. Every full received project must include a nonnegative integer version, and an update cannot regress the selected version. Other added nonempty children remain explicit differences; a read-only parent cannot hide an absent or malformed version.
+
 Funding versions can generate new funding_id and transaction_id values. The pinned clone code preserves group_versioned_funding and clears child database IDs. Returned generated identifiers and audit fields are listed with original and actual values. A changed existing group_versioned_funding or amp_id is substantive. A regressed version or a missing/duplicated received child identity is an error.
 
 An omitted optional request field returned as null or an empty collection is an explicit empty-export observation. A supplied null collection returned as [] reflects the original importer's clearing behavior. Nonempty additions, missing supplied fields, changed nested business values, altered exact numbers and unreconciled records remain substantive differences. Reordered configured collections retain their original ordinals and do not silently become source identities.
@@ -95,3 +97,7 @@ Inputs retain the original codec's 64 MiB JSON limit and 96 nesting levels. Meta
 DESTINATION_UPSTREAM.json gives exact Git blob IDs, UTF-8 sizes and SHA-256 values for the inspected source selection. The principal originals are APIField/APIType/FieldType, ObjectImporter/ObjectExporter, ActivityImporter, PossibleValuesEnumerator/PossibleValue, InputTypeValidator/ValueValidator/RequiredValidator/ConditionalRequiredValidator, DateTimeUtil/EPConstants, AmpFunding/AmpFundingDetail and ActivityVersionUtil.
 
 Upstream AMP is published under GPL-3.0. The adapter is original integration code; no copied upstream Java implementation is bundled in this component. Preserve the original licence and notices when the full AMP source or distribution is supplied separately. This source-defined analysis is distinct from the customer's actual installed native acceptance and any accepted commercial engagement.
+
+## Complete collection receiving
+
+The comparison traverses complete native objects and configured collections even when their values are unchanged. This preserves the original request-position/native-child pairings and checks missing or duplicated native child identities on every received collection. The same traversal retains the full activity-group version rules: an actual nonnegative version is required, a returned older version remains a difference, and unexpected nonempty children are compared individually.

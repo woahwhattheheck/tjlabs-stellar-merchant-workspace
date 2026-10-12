@@ -9,8 +9,8 @@
   },
   "component": {
     "path": "amp/destination.py",
-    "bytes": 52570,
-    "sha256": "0b63a86ba8096128cedda78777e30bf8dad875bd7eee4432173d21bf8e29c93d",
+    "bytes": 54236,
+    "sha256": "a17a93734b1ffccb2d6060f47b4973b8ce126ad39e27af314a5359930925ce89",
     "representation": "Original Python integration implementation; references inspected upstream source without bundling Java."
   },
   "sources": [
@@ -230,6 +230,13 @@
       "bytes": 698,
       "sha256": "2433788845c69109ac10b0adcb6aa40646088870392d3a53cce3860b72588989",
       "url": "https://github.com/devgateway/amp/blob/e067f9115fbe0ad0ef19bf5d9cc6fff061b8378e/amp/src/main/java/org/digijava/module/contentrepository/dbentity/template/PossibleValue.java"
+    },
+    {
+      "repository_path": "amp/src/main/java/org/digijava/module/aim/annotations/interchange/Interchangeable.java",
+      "git_blob": "b5c1222d0527893e8d41f86efebe40082b3e7e8c",
+      "bytes": 6508,
+      "sha256": "b4dc242641a965ccebd6260d8c04324fde16ef4840e6c80d1a5f0ab205340709",
+      "url": "https://github.com/devgateway/amp/blob/e067f9115fbe0ad0ef19bf5d9cc6fff061b8378e/amp/src/main/java/org/digijava/module/aim/annotations/interchange/Interchangeable.java"
     }
   ],
   "operative_contract": {
@@ -247,7 +254,9 @@
     "collections": "Supplied collection is a whole collection; original importer matches child IDs and removes omitted members.",
     "update": "Original internal_id, amp_id and activity_group.version must match the selected source; preserve original native responses.",
     "coverage": "Explicit selected full projects or retained native export. Published project enumeration excludes its final element at this pinned source.",
-    "receiving": "Compare full project read after the write, preserving write summary/errors/warnings separately."
+    "receiving": "Compare full project read after the write, preserving write summary/errors/warnings separately.",
+    "complete_version_container": "Every full received project retains a nonnegative integer activity_group.version. The known native version container is compared field by field even when its parent is read-only; omitted create containers may receive the generated version, while unknown nonempty children and regressed versions remain differences.",
+    "collection_receiving": "Always traverse configured collections, including unchanged complete values, to validate native child IDs and retain every original request-position pairing."
   },
   "native_status": "No native AMP deployment or customer write executed by this component source acquisition."
 }
