@@ -164,7 +164,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
  async function project(id){
   active();const s=store.read(),p=find(s,'projects',hash(id)),snap=snapshotProject(s,id);
   return {project:projectHead(p),...snap.tables,targets:snap.tables.targets.map(x=>({...x,profile:publicTarget(x.profile)})),
-   jobs:snap.tables.jobs.map(localJob),handoffs:statePart(s).handoffs.filter(x=>x.projectId===id),
+   jobs:snap.tables.jobs.map(job=>localJob(job,s)),handoffs:statePart(s).handoffs.filter(x=>x.projectId===id),
    exports:statePart(s).handoffs.filter(x=>x.projectId===id),
    history:{total:p.history.length,headHash:p.headHash,rows:p.history.slice(-100)}};
  }
@@ -192,7 +192,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
   active();let selected=jobRecord(id);
   if(!receivingProjects.has(selected.projectId)&&(!localJob(selected).received||localJob(selected).localBinding)){await native.inspect(localJob(selected));selected=jobRecord(id);}
   const journal=await fullJournal(selected),page=rowPage(journal.steps,options),files=selected.latest?.files?await objectValue(store,selected.latest.files):{members:[]};
-  return {...localJob(selected),progress:journal.counts??{total:selected.stepCount,complete:0},journal: selected.latest?.journal??null,
+  return {...localJob(selected),progress:selected.latest?.counts??journal.counts??{total:selected.stepCount,complete:0},journal: selected.latest?.journal??null,
    runtimeIdentity:journal.runtimeIdentity??null,error:journal.error??selected.launchError??null,notBefore:journal.notBefore??null,
    ...page,steps:page.rows.map(row=>({...row,attempts:(row.attempts??[]).map(a=>({...a,
     ...(a.request?.body?{request:{...a.request,body:{...a.request.body,fileId:a.request.body.sha256}}}:{}),

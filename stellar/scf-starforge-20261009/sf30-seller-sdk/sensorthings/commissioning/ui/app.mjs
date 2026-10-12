@@ -16,7 +16,7 @@ async function connect(token){
   session.replaceChildren();notice.replaceChildren(note('Opening the original commissioning workspace…'));
   try{
     const client=createDeskClient(token),opened=await client.open(),stateKey='sensorthings-commissioning|'+location.origin+'|'+opened.view.workspaceId;
-    let generation=0,detailEpoch=0,closed=false,saveWarning=false,refreshing=null,refreshAgain=false,pollTimer=null,pollBusy=false;
+    let generation=0,detailEpoch=0,stateEpoch=0,closed=false,saveWarning=false,refreshing=null,refreshAgain=false,pollTimer=null,pollBusy=false;
     const maps=new Set();
     const ctx={client,state:recoverState(stateKey),overview:null,project:null,schema:null,selectedMapping:null};
     current?.close();
@@ -24,7 +24,7 @@ async function connect(token){
     ctx.showNode=(title,node)=>{detailEpoch++;document.querySelector('#record-title').textContent=title;dialogBody.replaceChildren(node);if(!dialog.open)dialog.showModal();};
     ctx.show=(title,value)=>ctx.showNode(title,detail(title,value,true));
     ctx.run=async fn=>{try{return await fn();}catch(error){ctx.error(error);return null;}};
-    ctx.save=()=>{try{sessionStorage.setItem(stateKey,JSON.stringify(ctx.state));}catch(error){if(!saveWarning){saveWarning=true;notice.replaceChildren(note('This browser could not retain the editing draft. The original saved-operation custody is unchanged. '+error.message,'error'));}}};
+    ctx.save=()=>{stateEpoch++;try{sessionStorage.setItem(stateKey,JSON.stringify(ctx.state));}catch(error){if(!saveWarning){saveWarning=true;notice.replaceChildren(note('This browser could not retain the editing draft. The original saved-operation custody is unchanged. '+error.message,'error'));}}};
     ctx.api=async(path,query={})=>{const q=new URLSearchParams(Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>[k,String(v)]));return client.request('/api/commissioning/'+path+(q.size?'?'+q:''));};
     ctx.download=async id=>{const r=await downloadCommissioningFile(client,id);ctx.show('Downloaded complete file',r);return r;};
     ctx.preview=async id=>{const r=await downloadCommissioningFile(client,id,{preview:true});ctx.showNode(r.name,h('div',{},detail('Complete file identity',{id:r.id,bytes:r.bytes,sha256:r.sha256},true),h('pre',{class:'comm-wire'},r.text)));return r;};
@@ -68,12 +68,17 @@ async function connect(token){
     ctx.act=async(action,payload,{selectResult=null,tab=null}={})=>{
       const allowed=opened.schema.actions??{};
       if(!Object.prototype.hasOwnProperty.call(allowed,action))throw new Error('The original host does not advertise '+action+'. Open its current commissioning source.');
-      const result=await client.act(action,payload),output=result.result;
-      if(selectResult&&output&&typeof output==='object'){
-        const id=output[selectResult]??output.id;
-        if(typeof id==='string')setSelection(selectResult,id);
+      const submittedStateEpoch=stateEpoch,result=await client.act(action,payload),output=result.result;
+      if(closed)return result;
+      // A later project selection or editing draft keeps its current screen.
+      // The completed original receipt remains available below in either case.
+      if(stateEpoch===submittedStateEpoch){
+        if(selectResult&&output&&typeof output==='object'){
+          const id=output[selectResult]??output.id;
+          if(typeof id==='string')setSelection(selectResult,id);
+        }
+        if(tab)ctx.state.tab=tab;ctx.save();
       }
-      if(tab)ctx.state.tab=tab;ctx.save();
       notice.replaceChildren(note('Saved '+describeAction(action)+' · '+result.operationId,'success'),button('Open original result',()=>ctx.show(action,result)));
       await ctx.refresh();return result;
     };

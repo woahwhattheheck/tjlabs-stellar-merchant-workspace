@@ -69,7 +69,8 @@ export async function normalizeEdition(store,edition,configuration=DEFAULT_MAPPI
   }
   return out;
  }
- const nodes=items.map(x=>rawNode(x.kind,x.record,x.sourceRef,x.occurrenceId,relationsFor(x,x.kind))),selectedStreams=new Set(configuration.sourceSelection?.streamKeys??[]),
+ const authored=authoredEntities(configuration,{editionId:edition.id,mappingConfigurationSha256:identity(configuration)}),
+  nodes=[...authored,...items.map(x=>rawNode(x.kind,x.record,x.sourceRef,x.occurrenceId,relationsFor(x,x.kind)))],selectedStreams=new Set(configuration.sourceSelection?.streamKeys??[]),
   selectedOccurrences=new Set(configuration.sourceSelection?.occurrenceIds??[]),selectionIssues=[];
  let sourceRows=0,selectedRows=0,excludedRows=0;
  for await(const {row,original}of observationRows(store,edition,{graph})){
@@ -90,10 +91,11 @@ export async function normalizeEdition(store,edition,configuration=DEFAULT_MAPPI
  for(const key of selectedStreams)if(!edition.plan.streams.some(x=>x.key===key))selectionIssues.push(issue('UNKNOWN_SELECTED_STREAM',{streamKey:key},true));
  if(selectedOccurrences.size){const available=new Set(nodes.flatMap(x=>x.occurrenceIds));for(const key of selectedOccurrences)if(!available.has(key))selectionIssues.push(issue('UNKNOWN_SELECTED_OCCURRENCE',{occurrenceId:key},true));}
  const result=aggregate(nodes);
- // Include only the transitive metadata graph needed by selected observations.
- const needed=new Set(result.records.filter(x=>x.entityKind==='Observations').map(x=>x.sourceKey));
+ // Preserve explicit authored definitions and the transitive metadata graph
+ // needed by selected observations and those reviewed definitions.
+ const needed=new Set(result.records.filter(x=>x.entityKind==='Observations'||x.authored).map(x=>x.sourceKey));
  let changed=true;while(changed){changed=false;for(const node of result.records)if(needed.has(node.sourceKey))for(const rel of Object.values(node.relations))for(const value of rel.values)if(value.sourceKey&&!needed.has(value.sourceKey)){needed.add(value.sourceKey);changed=true;}}
- const records=selectedRows?result.records.filter(x=>needed.has(x.sourceKey)):result.records.filter(x=>x.entityKind!=='Observations');
+ const records=selectedRows?result.records.filter(x=>needed.has(x.sourceKey)):result.records.filter(x=>x.entityKind!=='Observations'||x.authored);
  return {schema:'stellar-forge.sensorthings-commissioning-source.v1',format:'edition',editionId:edition.id,
   scope:edition.scope,source:edition.source,records,sourceRows,selectedRows,excludedRows,
   duplicateOccurrences:result.duplicateOccurrences,conflictingSourceKeys:result.conflictingSourceKeys,

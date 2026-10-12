@@ -41,20 +41,25 @@ export function createDeskClient(token) {
   }
   async function refresh(){view=await request('/api/view');if(view.workspaceId!==workspaceId)throw new ApiError('The workspace UUID changed.',{code:'WORKSPACE'});notify();return view;}
   async function open(){const schema=await request('/api/schema');workspaceId=schema.workspaceId;key=location.origin+'|'+workspaceId;info=await request('/api/desk/info');if(info.workspaceId!==workspaceId)throw new ApiError('The Desk belongs to another workspace.',{code:'WORKSPACE'});pending=await saved(key);await refresh();return{schema,view,info,pending};}
-  async function retain(value){try{await savePending(key,value,pending?.body?.operationId??null);pending=value;notify();}catch(error){pending=await saved(key);notify();throw error;}}
+  async function retain(value,expectedId=pending?.body?.operationId??null){try{await savePending(key,value,expectedId);pending=value;notify();}catch(error){pending=await saved(key);notify();throw error;}}
+  function samePending(expectedId){if(pending?.body?.operationId!==expectedId)throw new ApiError('The original pending request changed while this response was being received. Reopen the current request.',{code:'BROWSER_REQUEST_CHANGED'});}
   async function sendPending() {
     if(!pending)throw new ApiError('No saved request is pending.',{code:'REQUEST'});
-    const original=pending;
+    const original=pending,expectedId=original.body.operationId;let result;
     try {
-      const result=await request('/api/action',{method:'POST',body:original.body});
-      if(result.operationId!==original.body.operationId)throw new ApiError('The response belongs to another operation.',{code:'OPERATION'});
-      if(result.view){view=result.view;notify();}
-      if(result.state==='RUNNING'){await retain({...original,state:'RUNNING'});return result;}
-      await retain(null);await refresh();return result;
+      result=await request('/api/action',{method:'POST',body:original.body});
+      if(result.operationId!==expectedId)throw new ApiError('The response belongs to another operation.',{code:'OPERATION'});
     } catch(error) {
-      await retain({...original,state:'RECONCILE',lastError:{message:error.message,code:error.code,status:error.status,details:error.details??null,...(error.currentRevision!==undefined?{currentRevision:error.currentRevision}:{})}});
+      // Bind every receipt to its original request, even when another tab or
+      // a concurrent reconciliation has already selected a newer request.
+      await retain({...original,state:'RECONCILE',lastError:{message:error.message,code:error.code,status:error.status,details:error.details??null,...(error.currentRevision!==undefined?{currentRevision:error.currentRevision}:{})}},expectedId);
       throw error;
     }
+    if(result.view){view=result.view;notify();}
+    if(result.state==='RUNNING'){await retain({...original,state:'RUNNING'},expectedId);return result;}
+    // A custody conflict or later refresh failure must not restore this
+    // completed request over a newer pending operation.
+    await retain(null,expectedId);await refresh();return result;
   }
   async function act(action,payload) {
     if(pending)throw new ApiError('Reconcile the saved '+pending.body.action+' operation before creating another request.',{code:'PENDING'});
@@ -65,22 +70,27 @@ export function createDeskClient(token) {
   }
   async function reconcile() {
     if(!pending)return null;
-    let record;
-    try{record=await request('/api/operations/'+encodeURIComponent(pending.body.operationId));}
-    catch(e){if(e.status===404){await refresh();await retain({...pending,state:'UNOBSERVED'});return{state:'UNOBSERVED',operationId:pending.body.operationId,currentRevision:view.revision};}throw e;}
-    if(record.state==='COMPLETE'){const result=record.result;await retain(null);await refresh();return{...record,result};}
-    await retain({...pending,state:record.state,record});await refresh();return record;
+    const original=pending,expectedId=original.body.operationId;let record;
+    try{record=await request('/api/operations/'+encodeURIComponent(expectedId));}
+    catch(e){if(e.status===404){await refresh();await retain({...original,state:'UNOBSERVED'},expectedId);return{state:'UNOBSERVED',operationId:expectedId,currentRevision:view.revision};}throw e;}
+    if(record.state==='COMPLETE'){const result=record.result;await retain(null,expectedId);await refresh();return{...record,result};}
+    await retain({...original,state:record.state,record},expectedId);await refresh();return record;
   }
   async function replay({reviewLatestRevision=false}={}) {
-    const record=await reconcile();if(!pending)return record;
+    const expectedId=pending?.body?.operationId??null;
+    const record=await reconcile();if(!pending)return record;samePending(expectedId);
     if(record.state==='FAILED')throw new ApiError(record.error?.message??'The original operation failed. Review its retained error.',{code:record.error?.code??'OPERATION_FAILED'});
     if(record.state==='UNOBSERVED'&&pending.body.expectedRevision!==view.revision){
       if(!reviewLatestRevision)throw new ApiError('Review the current revision and explicitly rebind this unobserved request.',{code:'REVISION_REVIEW'});
-      await retain({...pending,body:{...pending.body,expectedRevision:view.revision},reboundAt:new Date().toISOString(),state:'PREPARED'});
+      await retain({...pending,body:{...pending.body,expectedRevision:view.revision},reboundAt:new Date().toISOString(),state:'PREPARED'},expectedId);
     }
-    return sendPending();
+    samePending(expectedId);return sendPending();
   }
-  async function dismissFailed(){if(!pending)return;const record=await reconcile();if(!pending)return;if(record.state!=='FAILED'&&!(record.state==='UNOBSERVED'&&pending.lastError?.status>=400&&pending.lastError.status<500))throw new ApiError('Keep the original pending request until its outcome or ended pre-dispatch response is known.',{code:'PENDING'});await saved(key+'|history|'+pending.body.operationId,pending,true);await retain(null);}
+  async function dismissFailed(){
+    if(!pending)return;const expectedId=pending.body.operationId,record=await reconcile();if(!pending)return;samePending(expectedId);
+    if(record.state!=='FAILED'&&!(record.state==='UNOBSERVED'&&pending.lastError?.status>=400&&pending.lastError.status<500))throw new ApiError('Keep the original pending request until its outcome or ended pre-dispatch response is known.',{code:'PENDING'});
+    const original=pending;await saved(key+'|history|'+expectedId,original,true);await retain(null,expectedId);
+  }
   async function upload(file,onProgress=()=>{}) {
     if(!info?.sourceInboxConfigured)throw new ApiError('The host must bind a source inbox before receiving a source archive.',{code:'INBOX'});
     if(!(file instanceof File)||file.size>info.uploadMaxBytes)throw new ApiError('Choose a file within the displayed source archive limit.',{code:'UPLOAD_SIZE'});

@@ -22,16 +22,19 @@ export function pager(page,onPage) {
 }
 export function scopedForm(ctx,key,title,controls,submit,options={}) {
   const scope=ctx.state.projectId??'workspace',draftKey=scope+'|'+key;
+  const readDraft=element=>{const data={};for(const e of element.elements){if(!e.name||['file','password','submit','button'].includes(e.type))continue;data[e.name]=e.type==='checkbox'?e.checked:e.type==='select-multiple'?[...e.selectedOptions].map(x=>x.value):e.value;}return data;};
   const node=form(title,controls,async(values,element)=>{
-    const result=await submit(values,element);
-    if(options.clearOnSuccess){delete ctx.state.drafts[draftKey];ctx.save();ctx.render();}
+    const submitted=JSON.stringify(readDraft(element)),result=await submit(values,element),currentDraft=ctx.state.drafts[draftKey];
+    if(options.clearOnSuccess&&JSON.stringify(readDraft(element))===submitted&&(currentDraft===undefined||JSON.stringify(currentDraft)===submitted)){
+      delete ctx.state.drafts[draftKey];ctx.save();ctx.render();
+    }
     return result;
   },options);
   const element=node.matches('form')?node:node.querySelector('form');
   if(!element)return node;
   const saved=ctx.state.drafts[draftKey];
   if(saved)for(const e of element.elements){if(!e.name||['file','password','submit','button'].includes(e.type)||!(e.name in saved))continue;if(e.type==='checkbox')e.checked=Boolean(saved[e.name]);else if(e.type==='select-multiple'){for(const o of e.options)o.selected=list(saved[e.name]).includes(o.value);}else e.value=saved[e.name];}
-  const retain=()=>{const data={};for(const e of element.elements){if(!e.name||['file','password','submit','button'].includes(e.type))continue;data[e.name]=e.type==='checkbox'?e.checked:e.type==='select-multiple'?[...e.selectedOptions].map(x=>x.value):e.value;}ctx.state.drafts[draftKey]=data;ctx.save();};
+  const retain=()=>{ctx.state.drafts[draftKey]=readDraft(element);ctx.save();};
   element.addEventListener('input',retain);element.addEventListener('change',retain);
   return node;
 }
