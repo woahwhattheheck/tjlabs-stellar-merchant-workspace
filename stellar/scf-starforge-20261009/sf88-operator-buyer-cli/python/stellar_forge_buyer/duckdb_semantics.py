@@ -161,7 +161,7 @@ def query_context(db, sql, views):
         return {"schema": CONTEXT_SCHEMA, "scope": "REFERENCED_SOURCE_EDITIONS",
                 "resolved": False, "relations": [], "unmapped_relations": [], "editions": []}
     by_name = {view["name"].casefold(): view["edition_id"] for view in views}
-    selected, unmapped = {}, []
+    selected, unmapped, derived = {}, [], []
     for name in required:
         folded = name.casefold()
         edition_id = by_name.get(folded)
@@ -170,7 +170,14 @@ def query_context(db, sql, views):
             if _HEX.fullmatch(suffix):
                 edition_id = suffix
         if edition_id is None:
-            unmapped.append(name)
+            from .duckdb_analytics.lineage import references
+            lineage = references(db, name)
+            if lineage is None:
+                unmapped.append(name)
+            else:
+                derived.append(lineage["derived_result"])
+                for source_id in lineage["edition_ids"]:
+                    selected.setdefault(source_id, []).append(name)
         else:
             selected.setdefault(edition_id, []).append(name)
     editions = []
@@ -185,7 +192,8 @@ def query_context(db, sql, views):
                          "semantics": descriptor})
     return {"schema": CONTEXT_SCHEMA, "scope": "REFERENCED_SOURCE_EDITIONS",
             "resolved": True, "relations": required,
-            "unmapped_relations": unmapped, "editions": editions}
+            "unmapped_relations": unmapped, "editions": editions,
+            **({"derived_results": derived} if derived else {})}
 
 
 def export_dictionaries(db, context, directory):
