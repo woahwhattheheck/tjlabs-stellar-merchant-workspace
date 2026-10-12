@@ -54,6 +54,62 @@ const sha = value => {
   need(typeof value === 'string' && HASH.test(value), 'GRANT_INVALID_INPUT', 'Use the exact SHA256.'); return value;
 };
 
+const commercialIdentifier = (value, label = 'Saved commercial identifier') => {
+  need(typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value),
+    'GRANT_INVALID_INPUT', label + ' must be the original saved identifier.');
+  return value;
+};
+const commercialPath = (caseId, billingId, milestoneId) => {
+  let route = '/api/operations/' + encodeURIComponent(id(caseId, 'operation')) + '/commercial';
+  if (billingId !== undefined) route += '/' + encodeURIComponent(commercialIdentifier(billingId, 'Billing identifier'));
+  if (milestoneId !== undefined) route += '/milestones/' + encodeURIComponent(commercialIdentifier(milestoneId, 'Milestone identifier'));
+  return route;
+};
+
+const COMMERCIAL_SELECTION_FIELDS = [
+  'expectedVersion','installationId','installationRevision','expectedInstallationSha256','currencyScale',
+];
+const commercialSource = body => {
+  integer(body.expectedVersion, 'Current case version');
+  id(body.installationId, 'installation');
+  integer(body.installationRevision, 'Selected installation edition', 1, 500);
+  sha(body.expectedInstallationSha256);
+  integer(body.currencyScale, 'Original currency precision', 0, 6);
+};
+const commercialMilestones = rows => {
+  need(Array.isArray(rows) && rows.length >= 1 && rows.length <= 250,
+    'GRANT_INVALID_INPUT', 'Map every original commercial milestone exactly once.');
+  const seen = new Set();
+  for (const row of rows) {
+    exact(row, ['milestoneId','issueDate','dueDate','billingBasis','requiredCheckIds','authorizationSourceIds','authorizationNote'],
+      ['milestoneId','issueDate','dueDate','billingBasis']);
+    commercialIdentifier(row.milestoneId, 'Original milestone identifier');
+    need(!seen.has(row.milestoneId), 'GRANT_INVALID_INPUT', 'Map each original milestone once.');
+    seen.add(row.milestoneId);
+    completionDate(row.issueDate); completionDate(row.dueDate);
+    need(row.dueDate >= row.issueDate, 'GRANT_INVALID_INPUT', 'The due date must follow or equal the issue date.');
+    need(['PHASE_ACCEPTANCE','COMMERCIAL_AUTHORIZATION'].includes(row.billingBasis),
+      'GRANT_INVALID_INPUT', 'Choose the original phase acceptance or retained commercial authorization.');
+    const checks = row.requiredCheckIds ?? [], sources = row.authorizationSourceIds ?? [];
+    for (const [values, label] of [[checks, 'Required phase checks'], [sources, 'Authorization sources']]) {
+      need(Array.isArray(values) && new Set(values).size === values.length,
+        'GRANT_INVALID_INPUT', label + ' must be a list of distinct original identifiers.');
+      for (const value of values) text(value, label, 300);
+    }
+    for (const value of sources) id(value, 'source');
+    if (row.authorizationNote !== undefined) text(row.authorizationNote, 'Commercial authorization', 6000, true);
+    need(row.billingBasis !== 'PHASE_ACCEPTANCE' || checks.length > 0,
+      'GRANT_INVALID_INPUT', 'Select the original phase checks for this milestone.');
+    need(row.billingBasis !== 'COMMERCIAL_AUTHORIZATION' ||
+      (sources.length > 0 && typeof row.authorizationNote === 'string' && row.authorizationNote.trim()),
+      'GRANT_INVALID_INPUT', 'Retain the commercial authorization note and its original source.');
+  }
+};
+const commercialRecovery = (caseId, billingId, milestoneId, action) =>
+  'Read the original billing record ' + billingId + ' in case ' + caseId +
+  (milestoneId === undefined ? '' : ', milestone ' + milestoneId) +
+  ', then repeat the same ' + action + ' selection to recover its retained native result.';
+
 const WORKSHARE_SOURCE_FIELDS = ['sourceId','expectedSourceSha256','packetSourceId','expectedPacketSha256'];
 function workshareSources(body) {
   id(body.sourceId,'source'); sha(body.expectedSourceSha256);
@@ -613,6 +669,68 @@ export class GrantWorkspaceClient {
     return this.#request('/api/operations/'+caseId+'/command',{originalRequestId:body.requestId,
       body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256}}});
   }
+  commercialConnections() {
+    return this.#request('/api/operations/commercial-connections', {});
+  }
+  commercialConfigureConnection(body) {
+    exact(body, ['id','label','baseUrl','actor','requestId'], ['id','label','baseUrl','actor','requestId']);
+    commercialIdentifier(body.id, 'Receivables endpoint identifier');
+    text(body.label, 'Receivables endpoint label', 160);
+    text(body.baseUrl, 'Original receivables API URL', 2000);
+    text(body.actor, 'Configuring operator', 1000); requestId(body.requestId);
+    return this.#request('/api/operations/commercial-connections',
+      {body, originalRequestId:body.requestId});
+  }
+  commercialCustomers(endpointId) {
+    return this.#request('/api/operations/commercial-connections/' +
+      encodeURIComponent(commercialIdentifier(endpointId, 'Receivables endpoint identifier')) + '/customers', {});
+  }
+  commercialList(caseId) {
+    return this.#request(commercialPath(caseId), {});
+  }
+  commercialDetail(caseId, billingId) {
+    return this.#request(commercialPath(caseId, billingId), {});
+  }
+  commercialSchedule(caseId, body) {
+    exact(body, COMMERCIAL_SELECTION_FIELDS, COMMERCIAL_SELECTION_FIELDS);
+    commercialSource(body);
+    return this.#request(commercialPath(caseId) + '/schedule', {body, mutation:false});
+  }
+  commercialPrepare(caseId, body) {
+    const fields = [...COMMERCIAL_SELECTION_FIELDS,'requestId','actor','expectedScheduleSha256',
+      'endpointId','customerId','milestones','purchaseOrder','note'];
+    exact(body, fields, fields.filter(key => !['purchaseOrder','note'].includes(key)));
+    commercialSource(body); requestId(body.requestId);
+    text(body.actor, 'Recording operator', 300); sha(body.expectedScheduleSha256);
+    commercialIdentifier(body.endpointId, 'Receivables endpoint identifier');
+    need(typeof body.customerId === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(body.customerId),
+      'GRANT_INVALID_INPUT', 'Choose the original saved accounting customer.');
+    commercialMilestones(body.milestones);
+    if (body.purchaseOrder !== undefined) text(body.purchaseOrder, 'Purchase order', 300, true);
+    if (body.note !== undefined) text(body.note, 'Billing note', 6000, true);
+    return this.#request(commercialPath(caseId) + '/prepare',
+      {body, originalRequestId:body.requestId});
+  }
+  commercialDraft(caseId, billingId, milestoneId, body) {
+    exact(body, ['actor'], ['actor']); text(body.actor, 'Recording operator', 300);
+    return this.#request(commercialPath(caseId, billingId, milestoneId) + '/draft',
+      {body, recovery:commercialRecovery(caseId, billingId, milestoneId, 'draft')});
+  }
+  commercialPreview(caseId, billingId, milestoneId) {
+    return this.#request(commercialPath(caseId, billingId, milestoneId) + '/preview',
+      {body:{}, mutation:false});
+  }
+  commercialIssue(caseId, billingId, milestoneId, body) {
+    exact(body, ['actor','expectedIssuePreviewSha256'], ['actor','expectedIssuePreviewSha256']);
+    text(body.actor, 'Recording operator', 300); sha(body.expectedIssuePreviewSha256);
+    return this.#request(commercialPath(caseId, billingId, milestoneId) + '/issue',
+      {body, recovery:commercialRecovery(caseId, billingId, milestoneId, 'reviewed issue')});
+  }
+  commercialRefresh(caseId, billingId) {
+    return this.#request(commercialPath(caseId, billingId) + '/refresh',
+      {body:{}, recovery:commercialRecovery(caseId, billingId, undefined, 'refresh')});
+  }
   cohortSeed(caseId, expectedVersion, tranche) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version'); integer(tranche,'Cohort tranche',2,3);
     return this.#request('/api/operations/'+caseId+'/cohort-seed',
@@ -741,6 +859,7 @@ export class GrantWorkspaceClient {
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       installation:() => '/api/operations/' + id(args.caseId,'operation') + '/installations/' + id(args.installationId,'installation') +
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
+      commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',
       cohort:() => '/api/operations/' + id(args.caseId,'operation') + '/cohort-reviews/' + id(args.reviewId,'review') + '/export.zip',
