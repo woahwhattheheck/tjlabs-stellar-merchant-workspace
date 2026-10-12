@@ -19,6 +19,7 @@
     "products/grant-portfolio/OPERATING.md",
     "products/grant-portfolio/RECEIVING.md",
     "products/grant-portfolio/SOURCE_LINEAGE.md",
-    "products/grant-portfolio/requirements.txt"
+    "products/grant-portfolio/requirements.txt",
+    "products/grant-portfolio/console-recovery.py"
   ]
 }

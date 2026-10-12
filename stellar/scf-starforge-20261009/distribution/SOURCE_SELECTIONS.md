@@ -6,6 +6,15 @@ whole source-owned contributions, component directories and explicit support
 files. The existing Git reader, source manifest, runtime profile, installer,
 Applications launcher and recovery commands remain the distribution workflow.
 
+## Build through the runtime workspace
+
+The private runtime workspace's **Build a product** view discovers the recipes
+at the chosen commit, reviews the complete selected product, builds its original
+package, and opens the resulting archive in **Source & profile**. It retains the
+same request and output through interruption and provides the original package
+download. Follow [the complete browser and CLI workflow](runtime-workspace/SOURCE_BUILDS.md)
+for source selection, adapter installation and recovery.
+
 ## Build a product
 
 Run the maintained builder from a repository that contains the selected commit:
@@ -40,7 +49,9 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
-| `coastal-operations` | Original NOAA source study, reviewed receiving conventions, complete coastal workbooks, native merchant and customer files | Coastal source operations; Runtime management | [Operating guide](../../../products/coops/OPERATING.md) |
+| `dbnomics` | Exact economic series and source revisions, saved analyst reports, native publication, complete editable workspace and customer receiving | DBnomics economic workspace; Runtime management | [Operating guide](../../../products/dbnomics/OPERATING.md) |
+| `worldbank` | Official World Bank source editions, reviewed dataset service, reports, workbooks and complete customer receiving | World Bank agent; Runtime management | [Product and receiving guide](../../../products/worldbank/RECEIVING.md) |
+| `coastal-operations` | Original NOAA editions, reviewed multi-station studies, complete model-input/source delivery, returned-file comparison, coastal workbooks and native customer files | Coastal source operations; Runtime management | [Operating guide](../../../products/coops/OPERATING.md) |
 | `baserow-rails` | Original Baserow source editions, complete customer rows and attachments, Ruby receiving and transactional Rails applications | Baserow source authoring; Runtime management | [Complete installation and receiving](../../../products/baserow-rails/RECEIVING.md) |
 | `research-workspace` | Research questions, original Documents and managed Pipelines, source review, merchant operation and complete customer files | Research dossiers; Runtime management | [Operating and receiving guide](../../../products/research/RECEIVING.md) |
 | `webdav-operator` | WebDAV or Nextcloud file editions, native merchant and customer, complete remote operator and source receiving | WebDAV source and merchant workspace; Runtime management | [Operating guide](../../../products/webdav/OPERATING.md) |
@@ -54,6 +65,8 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `grpc-merchant` | Native gRPC contracts, reflection, message streams, merchant releases, contract upgrades and retained service health | gRPC merchant product; original gRPC authoring | [Operating and receiving guide](selections/GRPC_MERCHANT.md) |
 | `publisher-360giving` | Complete 360Giving publisher source/reviews, native grant datasets, typed SDK/merchant operation and complete customer receiving | 360Giving publisher workspace; Runtime management | [Operating guide](../../../products/360giving-publisher/OPERATING.md) |
 | `grant-portfolio` | Original IATI and 360Giving editions, portfolio reconciliation, source-linked decisions, native customer files and workspace recovery | Grant portfolio reconciliation; Runtime management | [Operating and receiving guide](../../../products/grant-portfolio/OPERATING.md) |
+| `laboratory-edd` | Complete EQuIS/DTS8D source review, native reissue and cross-profile correspondence | Laboratory EDD; paid-job merchant; Job checkout; Job result receiver | [Operating guide](selections/LABORATORY_EDD.md) |
+| `mssql` | SQL Server catalog and typed queries, retained sellers, merchant tools and complete customer/merchant receiving | SQL Server data products; merchant console | [Installed product and operating guide](../../../products/mssql/README.md) |
 | `all` or no flag on a new build | Complete maintained toolkit | All registered applications | [Runtime installation](RUNTIME_INSTALL.md) |
 
 Use the product's installed `starforge --help` and `starforge registrations`
@@ -72,7 +85,11 @@ For WebDAV, use `--selection webdav-operator` and the [complete operating guide]
 
 For Baserow and Rails, use `--selection baserow-rails` and the [complete operating guide](../../../products/baserow-rails/OPERATING.md). The selected source retains the original Baserow source/browser/publisher, native SF100 and Python receiving, complete Ruby client, all Rails importer/operator files and templates, and exact customer/application receiving. The installed `baserow-rails` command opens these original entrypoints with the selected host interpreter and private workspace.
 
-For Coastal source operations, use `--selection coastal-operations` and the [complete operating guide](../../../products/coops/OPERATING.md). The selected source includes original station and archive operations, receiving-mapping intake and history, full offline analysis/workbooks, native query and releases, all 39 coastal merchant tools and complete customer receiving.
+For Coastal source operations, use `--selection coastal-operations` and the [complete operating guide](../../../products/coops/OPERATING.md). The selected source includes original station and archive operations, saved receiving mappings, reviewed multi-station studies, complete model-input/source deliveries and returned-file comparisons, full offline analytical workbooks, native query and releases, all 48 coastal merchant tools and complete customer receiving.
+
+For World Bank, use `--selection worldbank` and the [complete product guide](../../../products/worldbank/README.md). Its source and managed merchant workflow continue into exact typed Analysis, published reports, Excel and a reopened customer workspace. The receiving command binds the installed manifest and reuses the original economic edition. Its complete native profile is `--native --feature schema --feature openapi --feature mcp --operator`, plus the original Python workbook extra.
+
+For DBnomics economic work, use `--selection dbnomics` and the [complete operating guide](../../../products/dbnomics/OPERATING.md). The original application retains official provider responses, native periods and values, saved analyst reports, reviewed publication, complete editable exports and customer files.
 
 ## Continue the same build
 
@@ -103,9 +120,10 @@ its dependency profile from the complete installed workflow linked above:
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
-| `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations` | `--native --feature schema --feature openapi --feature mcp --operator` |
+| `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations`, `dbnomics` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `redis-applications` | `--native --feature redis --feature schema --feature openapi --feature mcp --operator` |
 | `grpc-merchant` | `--native --feature grpc --feature schema --feature openapi --feature mcp --operator` |
+| `mssql` | `--native --feature mssql --feature mcp --operator` |
 | `grant-reviewer` | `--native --feature mcp --operator` |
 | `publisher-360giving` | `--feature mcp --operator` |
 | `grant-portfolio` | `--feature mcp --operator` |

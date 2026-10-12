@@ -418,6 +418,9 @@ def candidate_view(root, candidate_id):
 def resolve(root, python, source_path, extras, release_id, release_digest):
     python, interpreter = python_info(root, python)
     extras = sorted(set(filter(None, extras.split(","))))
+    if "vgi" in extras:
+        need((interpreter["major"], interpreter["minor"]) >= (3, 13),
+             "The selected original VGI SDK requires Python 3.13 or newer")
     source, source_directory = source_snapshot(root, source_path, extras, release_id, release_digest)
     request = {"source": source, "extras": extras, "interpreter": platform_key(interpreter)}
     candidate_id = sha(encoded(request))
@@ -462,6 +465,8 @@ def application_modules(source):
         modules["duckdb"] = "stellar_forge_buyer.duckdb_cli"
     if source.get("scripts", {}).get("stellar-forge-postgres") == "stellar_forge_buyer.postgres_cli:main":
         modules["postgres"] = "stellar_forge_buyer.postgres_cli"
+    if source.get("scripts", {}).get("stellar-forge-vgi-results") == "stellar_forge_buyer.vgi_service.cli:main":
+        modules["vgi"] = "stellar_forge_buyer.vgi_service.cli"
     return modules
 
 

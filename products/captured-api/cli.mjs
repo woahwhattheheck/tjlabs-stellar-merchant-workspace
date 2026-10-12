@@ -20,6 +20,9 @@ const HELP = 'Captured API merchant workspace\n\n' +
   'Complete selected source and merchant handover:\n' +
   '  starforge captured-api handover inventory|prepare|publish|inspect ...\n' +
   '  starforge captured-api handover receive-review|receive|status ...\n\n' +
+  'Complete operating backup, restore and original-path receiving:\n' +
+  '  starforge captured-api recovery inspect|plan|capture|verify|restore ...\n' +
+  '  starforge captured-api recovery receive-review|receive|status|open ...\n\n' +
   'Original commands, with their arguments passed unchanged:\n' +
   '  starforge captured-api har prepare|inspect|review|save|export|copy|package|refresh ...\n' +
   '  starforge captured-api worksheet inventory|reconcile|review|save|export ...\n' +
@@ -69,6 +72,7 @@ export async function main(args = process.argv.slice(2)) {
   }
   const [command, ...rest] = args;
   if (command === 'handover') return (await import('./handover-cli.mjs')).runCapturedHandoverCLI(rest);
+  if (command === 'recovery') return (await import('./recovery/cli.mjs')).runCapturedRecoveryCLI(rest);
   if (command === 'har') return (await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/har/cli.mjs')).runHarCLI(rest);
   const forwarded = { worksheet: 'merchant-route-worksheet', policies: 'merchant-operation-policies',
     workflows: 'merchant-openapi-workflows', releases: 'releases', merchant: 'merchant-mcp' };

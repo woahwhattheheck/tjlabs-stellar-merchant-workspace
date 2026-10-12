@@ -12,7 +12,7 @@ The standalone product adopts the complete grant portfolio implementation merged
 | Complete native source declaration | `sf30-seller-sdk/grant-portfolio/source-files.json`, 77 files with the current publisher runtime |
 | Current adopted 360Giving publisher | Git blob `df289ac59e7642124a07a03253b3b5d197b933d4` |
 | Current adopted 360Giving publisher workspace | Git blob `c56ab6345693be9dec9ff48aeea0ca5093513f4e` |
-| Complete dataset reader used by that source | Git blob `5f6e0c0e813b162f3514e8483c11313775e9b6e6` |
+| Dataset reader verified at standalone integration | Git blob `448a0f77909aac21c9a569af42916cfb3c02184e` |
 
 The original core folder and its contribution remain complete. The standalone adoption
 also corrects stopped-owner connection recovery in the original managed binding, CLI,
@@ -28,7 +28,12 @@ also retains the official 1.4.2 schema by its captured URL when that schema has 
 explicit unquoted-empty CSV null encoding.
 
 The product layer adds preparation, installed receiving and operating guides over those
-engines. Its distribution selection uses whole source-owned contributions:
+engines. Its installed receiving also retains the original console launch intent, Linux process
+identity and transition journal before starting or stopping the native console, so an
+interrupted parent can resume the same customer operation. The small standard-library
+bootstrap executes the original CLI in its retained process.
+
+Its distribution selection uses whole source-owned contributions:
 `grant-portfolio`, `grant-portfolio-product` and
 `merchant-provider-tools`. It includes the existing Runtime workspace,
 Applications launcher, source verifier, installer and merchant interfaces.

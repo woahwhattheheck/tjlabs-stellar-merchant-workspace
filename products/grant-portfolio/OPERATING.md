@@ -40,7 +40,9 @@ actual inspection reports **READY**.
 
 The selected runtime enables the original MCP feature and operator host requirements.
 The native portfolio application runs on Linux with Node 22.16 or later, Python 3.11 or
-later, SQLite and the existing `flock` process lease. Choose a Python environment
+later, SQLite and the existing `flock` process lease. Installed receiving also uses
+Linux `/proc`, `os.pidfd_open` and `signal.pidfd_send_signal` to resume the exact
+owned console process after interruption. Choose a Python environment
 containing the original publisher dependencies in [requirements.txt](requirements.txt):
 
 ~~~sh

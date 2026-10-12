@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "openapi-merchant",
   "title": "Captured API merchant authoring, workflows and receiving",
-  "description": "Complete captured API, OpenAPI and Postman source authoring, reusable operation policy editions, persistent merchant workflows, seller releases and full customer receiving in the original Captured API product.",
+  "description": "Complete captured API, OpenAPI and Postman source authoring, reusable operation policy editions, persistent merchant workflows, seller releases and full customer receiving in the original Captured API product with complete encrypted operating snapshots, original-path receiving and cold reopening.",
   "base": {
     "commands": [
       "installation",
@@ -165,14 +165,17 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/recover.mjs",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/local.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/publisher/files.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "TokenJunkieLabs captured API merchant with reusable route policies, operator workflows, native seller operations and complete customer receiving",
+    "description": "TokenJunkieLabs captured API merchant with reusable route policies, operator workflows, native seller operations and complete customer receiving and complete encrypted operating recovery",
     "readme": "products/captured-api/OPERATING.md"
   }
 }

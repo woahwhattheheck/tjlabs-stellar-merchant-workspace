@@ -1,7 +1,7 @@
 # Operate a gRPC merchant
 
 This product uses one original private gRPC workspace. The native browser,
-merchant agent, release console and clients keep the same contract revisions,
+merchant agent, persistent operator Console, release console and clients keep the same contract revisions,
 preparations, operation UUIDs, attempts, upgrade reviews and health observations.
 
 ## 1. Select the installed source and private state
@@ -85,13 +85,18 @@ reviewed OAuth resource, set the original `MCP_OAUTH_CONFIG` file instead.
 Use `--browser-only` when the operator needs the native browser alone.
 
 The returned private browser URL opens the original source and plan editor.
-The merchant MCP endpoint connects to that same native instance.
-`connection.json` records the product, native instance and current endpoints.
+The merchant MCP endpoint connects to that same native instance. The returned
+`operatorUrl` opens **Merchant operator** on that merchant listener. Its private
+state stays at `operator-console/` beneath the initialized product directory.
+`connection.json` records the product, native instance, operator workspace ID,
+reviewed Console source and current endpoints.
 Client calls reread it after reopen and remain bound to the same product/workspace.
 
 In **Applications → gRPC merchant product**, choose the initialized product and
 READY runtime. Review shows the actual workspace, selected revision and generation,
-host handle names, private configuration identities, and native managed source.
+host handle names, private configuration identities, native managed source,
+and the complete maintained Console source. Review reads an existing Console's
+workspace ID; first Open creates that store in the selected private product.
 Save and Start use that reviewed selection. The product's Open action verifies
 the retained session against the original authenticated live launch.
 
@@ -271,16 +276,74 @@ download. This preserves the selected prefix while a live Watch grows. The
 [health guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/HEALTH.md)
 covers full native events, paging, cancellation and first-result recovery.
 
+## 8. Complete customer work in the saved operator Console
+
+Open **Merchant operator** from the product's Applications links or its returned
+`operatorUrl`. Connect with the configured merchant access token. Create or
+select a named profile, inspect **Host**, and bind that profile to the current
+configured host. The product's original workspace alias remains the selection
+for every gRPC tool.
+
+In **Customer files → gRPC / Customer workspace**, load configured workspaces
+and select the original one. Inventory pages expose prepared merchants, revisions,
+retained calls, exports, contract reviews, health observations, descriptor
+captures and preparation intents. Previous and Next retain the page's exact
+snapshot. Refresh deliberately selects the current inventory.
+
+Choose a preparation to inspect its source revision; choose a retained call to
+read its original outcome; choose a contract review to open its saved comparison
+and adoption history. Source and contract sections retain the original summary,
+source, plan, methods and routes. Full native returns stay in **Saved original
+requests**, including a downloadable complete JSON result. Large native returns
+point to their retained complete files.
+
+The panel prepares four whole procedures in **Workflow Recipes**:
+
+| Procedure | Exact saved input | Complete procedure |
+| --- | --- | --- |
+| Customer and source delivery | Workspace and preparation UUID | Nine steps: inspect the original workspace, export all seven customer files, pause at their manifest, inspect the preparation's exact revision/source/plan, export its full source closure, pause at that manifest, and read current workspace state |
+| Contract-upgrade delivery | Workspace, review UUID and reviewed SHA-256 | Nine steps: inspect the workspace, open original summary/plan/source/full review/adoption, export the four original upgrade files, pause at the manifest, and read the workspace |
+| Frozen service-health delivery | Workspace, observation UUID, event throughSequence and event snapshot | Seven steps: inspect the workspace, read the observation, review the selected events, export their complete frozen prefix, pause at the manifest, and read the same observation and workspace |
+| Retained-call delivery | Workspace and original call UUID | Five steps: inspect the workspace, recover the original saved call, export its complete attempt and stream when present, pause at the manifest, and read the workspace |
+
+Review the generated recipe's native tool definitions, inputs and bindings,
+install its saved edition, then start that edition. At a manifest pause, inspect
+the exact export and select **Receive complete files**. Complete receiving and
+download the customer archive before continuing that saved procedure. The
+customer procedure takes its revision from the original customer export, so the
+delivered source belongs to the preparation actually selected.
+
+Health event history and List service filtering have different snapshot
+identities. Use the event page's `throughSequence` and `snapshot` to freeze
+health delivery, including sequence zero for an empty history. A filtered
+services page remains a view of that List result. The frozen health export
+contains the complete selected event prefix across all preview pages.
+
+Every dispatched request is saved in the original private Console profile.
+After a lost reply or restart, open that original request and inspect its native
+operation or export. An explicit continuation retains the same saved arguments
+and original operation identifiers. Transfer Pause keeps the downloader's byte
+checkpoint; Resume keeps the same export and reviewed manifest.
+
+Completed customers provide the full archive and original individual files.
+The archive retains `grpc/` and its nested `client/` package. Profile export
+carries its complete receiving records and saved workflows. On another Console,
+receive the profile and original files through the same customer flow. Use the
+[complete Console guide](../../stellar-forge/mcp-merchant-operator/console/CUSTOMER_GRPC.md)
+and [native receiving instructions](RECEIVING.md) for exact member paths and
+offline inspection.
+
 ## Close, reopen and upgrade the installed software
 
-Ctrl-C or Applications Stop drains the original agent and native workspace.
+Ctrl-C or Applications Stop drains the persistent Console, its archive/file
+responses and transfers, the original agent and native workspace.
 All owned close paths are attempted even if one reports an error; the retained
 session records the resulting state and same original instance. A live workspace
 lease prevents a second native writer.
 
 Open the same private product after a normal stop or process restart. Its
-original source revision, attempts, health journal and prepared customer files
-remain available. Reconcile the original operation before making another request.
+original source revision, attempts, health journal, prepared customer files,
+Console profiles, requests, procedures and receiving checkpoints remain available. Reconcile the original operation before making another request.
 
 For a new source release, prepare a new runtime with the original installer.
 Select that runtime and review the same private product in Applications.

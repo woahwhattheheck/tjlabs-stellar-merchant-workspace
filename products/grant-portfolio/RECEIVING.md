@@ -61,6 +61,13 @@ lease, and reopens the same customer. The reopened console must preserve the com
 state, replace the stopped launch and remove its connection on a clean close. Repeating
 receiving uses the saved recovery result and original customer state.
 
+The console transition also survives the receiving process ending. Before launch it saves
+the original command and attempt; the Linux bootstrap records the process identity before
+executing the original CLI in that same process. The receiver records kill, reopen and
+close intent before each transition. Reopening the same receiving directory resumes that
+saved transition and controls the exact original process through Linux `pidfd` interfaces.
+The completed native journey and customer preparation are reused.
+
 ## Receive the saved result
 
 The completed run writes:
@@ -75,6 +82,8 @@ The completed run writes:
 | `customer-product/` | Prepared first customer product bound to the original received workspace. |
 | `second-customer-product/` | Prepared second customer product bound to its distinct received workspace. |
 | `customer-console-recovery-input.json` | Original complete customer state, workspace and installed source selected for recovery. |
+| `customer-console-recovery-journal.json` | Saved recovery identity, original process attempts, readiness and kill/reopen/close progress. |
+| `console-recovery/` | Private original launch intents, exact process identities and signal/exit records for each console attempt. |
 | `customer-console-recovery.json` | Actual process death, stopped connection, reopened console and complete unchanged customer state. |
 | `installed-result.json` | Installed selection, all native phases, both customer product paths and original full-file descriptors. |
 

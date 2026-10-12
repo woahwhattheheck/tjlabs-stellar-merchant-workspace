@@ -2,10 +2,12 @@
 // MIT. Receive the whole original Comic Relief journey from a READY installed product.
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {spawn} from 'node:child_process';
+import {spawn,execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {randomUUID} from 'node:crypto';
 import {installedSource, inspectPython, prepareProduct, statusProduct, options,
   productDirectory, nativeJSON, SDK_PATH} from './product.mjs';
-import {absolute, canonical, digest, regular, readJSON, saveJSON, need, operationLease}
+import {absolute, canonical, digest, regular, readJSON, saveJSON, need, operationLease, operationRunning}
   from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 
 const SCHEMA = 'stellar-forge.grant-portfolio-installed-receiving.v1';
@@ -30,6 +32,7 @@ async function runJourney(args, pythonExecutable) {
   } finally {process.off('SIGINT',interrupt);process.off('SIGTERM',terminate);}
 }
 
+const executeFile = promisify(execFile);
 const RECOVERY = 'stellar-forge.grant-portfolio-console-recovery.v1';
 const stateHash = value => digest(JSON.stringify(canonical(value)) + '\n');
 async function deadline(promise, milliseconds, message) {
@@ -43,16 +46,26 @@ async function deadline(promise, milliseconds, message) {
 }
 async function receiveConsoleRecovery(product, directory) {
   const baselineFile = join(directory,'customer-console-recovery-input.json');
+  const journalFile = join(directory,'customer-console-recovery-journal.json');
   const resultFile = join(directory,'customer-console-recovery.json');
+  const processSchema = 'stellar-forge.grant-portfolio-console-process.v1';
+  const helper = join(product.installation.sourceRoot,'products/grant-portfolio/console-recovery.py');
+  const custodyRoot = join(directory,'console-recovery');
+  const environment = {...process.env,PYTHONDONTWRITEBYTECODE:'1',SF30_XML_NODE:process.execPath,
+    SF30_NDJSON_NODE:process.execPath,SF30_GRANT_PORTFOLIO_NODE:process.execPath};
   const initial = await statusProduct(product.directory);
-  need(initial.console === 'CLOSED' || initial.console === 'RECOVERABLE',
-    'GRANT_PRODUCT_CUSTOMER_CONSOLE_ACTIVE','Close this customer console before continuing its installed receiving.');
   need(initial.workspace.sources.length === 3 && initial.workspace.portfolios.length >= 1,
     'GRANT_PRODUCT_COMPLETE_CUSTOMER_REQUIRED');
   const selected = {schema:RECOVERY,operationId:OPERATION,workspaceId:product.workspaceId,
     workspaceDirectory:product.workspaceDirectory,bindingSha256:product.bindingSha256,
     sourceCommit:product.installation.sourceCommit,stateSha256:stateHash(initial.workspace)};
-  await original(baselineFile,selected);
+  const baseline = await readJSON(baselineFile,true);
+  if (baseline) need(same(baseline,selected),'GRANT_PRODUCT_CONSOLE_RECOVERY_CHANGED');
+  else {
+    need(initial.console === 'CLOSED' || initial.console === 'RECOVERABLE',
+      'GRANT_PRODUCT_CUSTOMER_CONSOLE_ACTIVE','Close this customer console before starting its installed receiving.');
+    await original(baselineFile,selected);
+  }
   const previous = await readJSON(resultFile,true);
   if (previous) {
     need(previous.schema === RECOVERY && previous.state === 'COMPLETED' &&
@@ -60,95 +73,314 @@ async function receiveConsoleRecovery(product, directory) {
       previous.resources?.closed === true,'GRANT_PRODUCT_CONSOLE_RECOVERY_CHANGED');
     return previous;
   }
-  const sessions = [];
+  let journal = await readJSON(journalFile,true);
+  if (journal) {
+    need(journal.schema === RECOVERY && same(journal.selected,selected) &&
+      typeof journal.recoveryId === 'string' && Array.isArray(journal.first?.attempts) &&
+      Array.isArray(journal.reopened?.attempts),'GRANT_PRODUCT_CONSOLE_RECOVERY_CHANGED');
+  } else {
+    need(initial.console !== 'RUNNING','GRANT_PRODUCT_CUSTOMER_CONSOLE_ACTIVE');
+    journal = {schema:RECOVERY,selected,recoveryId:randomUUID(),state:'RUNNING',
+      first:{attempts:[]},reopened:{attempts:[]}};
+    await saveJSON(journalFile,journal);
+  }
+  await productDirectory(custodyRoot);
+  for (const stage of ['first','reopened']) await productDirectory(join(custodyRoot,stage));
+  const persist = () => saveJSON(journalFile,journal,true);
+  const children = new Map();
   let interrupted = false;
-  const interrupt = () => {
-    interrupted = true;
-    for (const session of sessions) if (!session.closed) session.child.kill('SIGTERM');
-  };
+  const interrupt = () => {interrupted = true;};
   process.on('SIGINT',interrupt);process.on('SIGTERM',interrupt);
-  async function start() {
-    need(!interrupted,'GRANT_PRODUCT_CONSOLE_RECOVERY_INTERRUPTED');
-    const child = spawn(product.pythonExecutable,[
-      join(product.installation.authoringDirectory,'cli.py'),'--workspace',product.workspaceDirectory,
-      'serve','--port','0','--expected-binding',product.bindingSha256,
-      '--connection-file',product.connectionFile],{shell:false,stdio:['ignore','pipe','pipe'],
-      env:{...process.env,PYTHONDONTWRITEBYTECODE:'1',SF30_XML_NODE:process.execPath,
-        SF30_NDJSON_NODE:process.execPath,SF30_GRANT_PORTFOLIO_NODE:process.execPath}});
-    const session = {child,closed:false};sessions.push(session);
-    let accept,reject,output = '',outputBytes = 0;
-    const ready = new Promise((yes,no) => {accept=yes;reject=no;});
+  const alive = () => need(!interrupted,'GRANT_PRODUCT_CONSOLE_RECOVERY_INTERRUPTED',
+    'Continue this same receiving directory and its original console transition.');
+  const pause = milliseconds => new Promise(yes => setTimeout(yes,milliseconds));
+  const checkState = state => need(stateHash(state.workspace) === selected.stateSha256,
+    'GRANT_PRODUCT_RECOVERY_CUSTOMER_CHANGED');
+  async function control(attempt, command, signal) {
+    need(attempt.directory === join(custodyRoot,attempt.stage,attempt.id),
+      'GRANT_PRODUCT_CONSOLE_CUSTODY_CHANGED');
+    const args = [helper,command,'--directory',attempt.directory];
+    if (signal) args.push('--signal',signal);
+    let response;
+    try {
+      response = await executeFile(product.pythonExecutable,args,
+        {env:environment,encoding:'utf8',maxBuffer:65536,timeout:45000});
+    } catch (error) {
+      let details;
+      try {details = JSON.parse(error.stdout);} catch {}
+      throw Object.assign(new Error('The original console process-custody action did not complete.'),
+        {code:details?.code ?? error.code ?? 'GRANT_PRODUCT_CONSOLE_CUSTODY_INCOMPLETE'});
+    }
+    const value = JSON.parse(response.stdout);
+    need(value.schema === processSchema && ['PENDING','RUNNING','EXITED','FOREIGN'].includes(value.state),
+      'GRANT_PRODUCT_CONSOLE_CUSTODY_CHANGED');
+    if (attempt.intentSha256) need(value.intentSha256 === attempt.intentSha256,
+      'GRANT_PRODUCT_CONSOLE_CUSTODY_CHANGED');
+    else {attempt.intentSha256 = value.intentSha256;await persist();}
+    if (attempt.processSha256) need(value.processSha256 === attempt.processSha256,
+      'GRANT_PRODUCT_CONSOLE_CUSTODY_CHANGED');
+    else if (value.processSha256) {
+      attempt.processSha256 = value.processSha256;attempt.identity = value.identity;await persist();
+    }
+    return value;
+  }
+  async function waitChild(attempt, milliseconds = 30000) {
+    const child = children.get(attempt.id);
+    if (!child) return null;
+    const outcome = await deadline(child.exit,milliseconds,'The owned original console has not exited.');
+    if (attempt.identity && child.child.pid === attempt.identity.pid) {
+      if (!attempt.wait) {attempt.wait = outcome;await persist();}
+    } else {
+      // A resumed PENDING launch may have lost the exclusive bootstrap race
+      // to its earlier orphan. Its exit is not the retained native PID's exit.
+      const observation = {pid:child.child.pid ?? null,...outcome};
+      attempt.bootstrapExits ??= [];
+      if (!attempt.bootstrapExits.some(value => same(value,observation))) {
+        attempt.bootstrapExits.push(observation);await persist();
+      }
+    }
+    return outcome;
+  }
+  function spawnBootstrap(attempt) {
+    // The bootstrap persists its immutable identity before exec. An orphaned
+    // earlier bootstrap and a retried spawn cannot both open the native CLI.
+    const child = spawn(product.pythonExecutable,[helper,'run','--directory',attempt.directory],
+      {shell:false,stdio:'ignore',env:environment});
+    const session = {child,closed:false};
     session.exit = new Promise(yes => {
-      child.once('error',error => {session.closed=true;reject(error);yes({error:error.code ?? 'SPAWN_ERROR'});});
+      child.once('error',error => {session.closed=true;yes({error:error.code ?? 'SPAWN_ERROR'});});
       child.once('close',(code,signal) => {session.closed=true;yes({code,signal});});
     });
-    child.stdout.setEncoding('utf8');
-    child.stdout.on('data',chunk => {
-      outputBytes += Buffer.byteLength(chunk);output += chunk;
-      if (outputBytes > 32768) {reject(new Error('Original console startup exceeded its complete launch limit.'));return;}
-      const newline = output.indexOf('\n');
-      if (newline >= 0) {
-        try {accept(JSON.parse(output.slice(0,newline)));}
-        catch {reject(new Error('Original console did not return complete startup JSON.'));}
+    children.set(attempt.id,session);
+  }
+  async function newAttempt(stage) {
+    alive();
+    const status = await statusProduct(product.directory);checkState(status);
+    need(status.console === 'CLOSED' || status.console === 'RECOVERABLE',
+      'GRANT_PRODUCT_CUSTOMER_CONSOLE_ACTIVE','Preserve the original active customer console.');
+    const id = randomUUID(), attempt = {id,stage,directory:join(custodyRoot,stage,id)};
+    await productDirectory(attempt.directory);
+    const intent = {schema:processSchema,operationId:OPERATION,recoveryId:journal.recoveryId,
+      stage,attemptId:id,directory:attempt.directory,pythonExecutable:product.pythonExecutable,
+      cli:join(product.installation.authoringDirectory,'cli.py'),workspace:product.workspaceDirectory,
+      workspaceId:product.workspaceId,bindingSha256:product.bindingSha256,
+      connectionFile:product.connectionFile,sourceCommit:product.installation.sourceCommit,
+      stateSha256:selected.stateSha256};
+    await original(join(attempt.directory,'intent.json'),intent);
+    journal[stage].attempts.push(attempt);
+    await persist(); // The complete stage and launch intent precede every spawn.
+    return attempt;
+  }
+  async function freeWriter() {
+    need(!await operationRunning(join(product.workspaceDirectory,'.workspace.lock')),
+      'GRANT_PRODUCT_CUSTOMER_CONSOLE_ACTIVE','The original native workspace still has an active writer.');
+    const status = await statusProduct(product.directory);checkState(status);
+    need(status.console === 'CLOSED' || status.console === 'RECOVERABLE',
+      'GRANT_PRODUCT_CUSTOMER_CONSOLE_ACTIVE');
+    return status;
+  }
+  async function readiness(attempt) {
+    let observed = await control(attempt,'inspect');
+    if (observed.state === 'PENDING') {
+      const prior = children.get(attempt.id);
+      if (!prior || prior.closed) spawnBootstrap(attempt);
+    }
+    const expires = performance.now() + 90000;
+    while (performance.now() < expires) {
+      alive();
+      observed = await control(attempt,'inspect');
+      if (observed.state === 'EXITED' || observed.state === 'FOREIGN') return {attempt,observed};
+      const launch = await readJSON(product.connectionFile,true);
+      if (observed.state === 'RUNNING' && observed.command === 'native' &&
+          launch?.pid === observed.identity.pid) {
+        need(launch.schema === 'stellar-forge.grant-portfolio-workspace-launch.v1' &&
+          launch.status === 'GRANT_PORTFOLIO_WORKSPACE_READY' &&
+          launch.workspace === product.workspaceDirectory && launch.workspaceId === product.workspaceId &&
+          launch.bindingSha256 === product.bindingSha256 && launch.connectionFile === product.connectionFile,
+        'GRANT_PRODUCT_RECOVERY_LAUNCH_CHANGED');
+        const connection = await nativeJSON(product,['connection','--file',product.connectionFile]);
+        if (!connection.writerActive) {await pause(150);continue;}
+        const active = await statusProduct(product.directory);checkState(active);
+        need(active.console === 'RUNNING' && connection.exists === true,
+          'GRANT_PRODUCT_RECOVERY_WRITER_REQUIRED');
+        const unchanged = await nativeJSON(product,['connection','--file',product.connectionFile]);
+        const live = await control(attempt,'inspect');
+        need(live.state === 'RUNNING' && live.command === 'native' &&
+          live.processSha256 === observed.processSha256 && unchanged.writerActive &&
+          unchanged.sha256 === connection.sha256,'GRANT_PRODUCT_RECOVERY_LAUNCH_CHANGED');
+        const ready = {processSha256:observed.processSha256,identity:observed.identity,
+          connectionSha256:connection.sha256};
+        if (attempt.ready) need(same(attempt.ready,ready),'GRANT_PRODUCT_RECOVERY_LAUNCH_CHANGED');
+        else {attempt.ready=ready;await persist();}
+        return {attempt,observed:live,connection};
       }
-    });
-    // Drain the owned process without copying a private launch into public logs.
-    child.stderr.resume();
-    const launch = await deadline(Promise.race([ready,session.exit.then(() => {
-      throw new Error('The original customer console stopped before readiness.');
-    })]),90000,'The original customer console did not announce readiness.');
-    need(launch.schema === 'stellar-forge.grant-portfolio-workspace-launch.v1' &&
-      launch.status === 'GRANT_PORTFOLIO_WORKSPACE_READY' && launch.pid === child.pid &&
-      launch.workspaceId === product.workspaceId && launch.bindingSha256 === product.bindingSha256 &&
-      launch.connectionFile === product.connectionFile,'GRANT_PRODUCT_RECOVERY_LAUNCH_CHANGED');
-    const active = await statusProduct(product.directory);
-    need(active.console === 'RUNNING' && stateHash(active.workspace) === selected.stateSha256,
-      'GRANT_PRODUCT_RECOVERY_CUSTOMER_CHANGED');
-    session.connection = await nativeJSON(product,['connection','--file',product.connectionFile]);
-    need(session.connection.writerActive === true && session.connection.exists === true,
-      'GRANT_PRODUCT_RECOVERY_WRITER_REQUIRED');
-    return session;
+      const owned = children.get(attempt.id);
+      if (observed.state === 'PENDING' && owned?.closed) {
+        await waitChild(attempt);
+        need(false,'GRANT_PRODUCT_CONSOLE_START_INCOMPLETE','Continue the original retained console launch.');
+      }
+      await pause(200);
+    }
+    need(false,'GRANT_PRODUCT_CONSOLE_RECOVERY_INCOMPLETE',
+      'The original customer console has not announced readiness; continue this same receiving directory.');
   }
-  async function stop(session, signal) {
-    if (!session.closed) session.child.kill(signal);
-    return deadline(session.exit,30000,'The owned original console did not release its process.');
+  async function activeAttempt(stage) {
+    while (true) {
+      alive();
+      let attempt = journal[stage].attempts.at(-1);
+      if (!attempt || attempt.retired) attempt = await newAttempt(stage);
+      const value = await readiness(attempt);
+      if (value.observed.state === 'RUNNING') return value;
+      need(value.observed.state !== 'FOREIGN','GRANT_PRODUCT_ORIGINAL_PROCESS_HOST_REQUIRED',
+        'Continue the retained console transition in its original process namespace.');
+      await freeWriter();
+      attempt.retired = {reason:'ORIGINAL_PROCESS_ENDED_BEFORE_TRANSITION',
+        observation:value.observed};
+      await waitChild(attempt);
+      await persist();
+      // A completed stage is never retried. This new attempt finishes only the
+      // transition whose original process ended before it was reserved.
+      need(!attempt.killIntent && !attempt.closeIntent,
+        'GRANT_PRODUCT_ORIGINAL_TRANSITION_REQUIRED');
+      need(!children.has(attempt.id),'GRANT_PRODUCT_CONSOLE_START_INCOMPLETE',
+        'The original console start ended; retain this attempt and continue after its native cause is resolved.');
+    }
   }
-  let first,second,killed,closed;
-  try {
-    first = await start();
-    killed = await stop(first,'SIGKILL');
-    need(killed.signal === 'SIGKILL','GRANT_PRODUCT_PROCESS_DEATH_NOT_OBSERVED');
-    const retained = await statusProduct(product.directory);
+  async function stopOriginal(attempt, signal) {
+    const outcome = await control(attempt,'stop',signal);
+    attempt.stops ??= {};
+    attempt.stops[signal] = outcome;
+    await persist();
+    if (outcome.state === 'EXITED') await waitChild(attempt);
+    return outcome;
+  }
+  async function finishKill(attempt) {
+    need(attempt.ready && attempt.killIntent &&
+      attempt.killIntent.processSha256 === attempt.processSha256 &&
+      attempt.killIntent.connectionSha256 === attempt.ready.connectionSha256,
+    'GRANT_PRODUCT_ORIGINAL_TRANSITION_REQUIRED');
+    const outcome = await stopOriginal(attempt,'SIGKILL');
+    need(outcome.state === 'EXITED','GRANT_PRODUCT_CONSOLE_RECOVERY_INCOMPLETE');
+    const retained = await statusProduct(product.directory);checkState(retained);
     need(retained.console === 'RECOVERABLE' && retained.connection.exists === true &&
       retained.connection.writerActive === false &&
-      retained.connection.sha256 === first.connection.sha256 &&
-      stateHash(retained.workspace) === selected.stateSha256,
+      retained.connection.sha256 === attempt.ready.connectionSha256,
     'GRANT_PRODUCT_STOPPED_CONNECTION_CHANGED');
-    second = await start();
-    need(second.connection.sha256 !== first.connection.sha256,
-      'GRANT_PRODUCT_CONNECTION_NOT_REPLACED');
-    closed = await stop(second,'SIGTERM');
-    need(closed.code === 0 && !closed.signal,'GRANT_PRODUCT_CONSOLE_CLOSE_INCOMPLETE');
-    const final = await statusProduct(product.directory);
-    need(!interrupted && final.console === 'CLOSED' &&
-      stateHash(final.workspace) === selected.stateSha256,
-    'GRANT_PRODUCT_RECOVERED_CUSTOMER_CHANGED');
-    const result = {schema:RECOVERY,operationId:OPERATION,state:'COMPLETED',selected,
-      killed:{pid:first.child.pid,signal:killed.signal,connectionSha256:first.connection.sha256},
-      reopened:{pid:second.child.pid,exitCode:closed.code,connectionSha256:second.connection.sha256},
+    if (attempt.wait) need(!attempt.wait.error &&
+      (outcome.dispatch !== 'SENT' || attempt.wait.signal === 'SIGKILL'),
+    'GRANT_PRODUCT_PROCESS_DEATH_CHANGED');
+    journal.killed = {attemptId:attempt.id,processSha256:attempt.processSha256,
+      pid:attempt.identity.pid,identity:attempt.identity,requestedSignal:'SIGKILL',
+      signal:outcome.dispatch === 'SENT' || attempt.wait?.signal === 'SIGKILL' ? 'SIGKILL' : null,
+      dispatch:outcome.dispatch,
+      connectionSha256:attempt.ready.connectionSha256,
+      wait:attempt.wait ?? null,staleConnectionRetained:true,writerReleased:true};
+    await persist();
+  }
+  async function finishClose(attempt) {
+    need(attempt.ready && attempt.closeIntent &&
+      attempt.closeIntent.processSha256 === attempt.processSha256 &&
+      attempt.closeIntent.connectionSha256 === attempt.ready.connectionSha256,
+    'GRANT_PRODUCT_ORIGINAL_TRANSITION_REQUIRED');
+    const observed = await control(attempt,'inspect');
+    need(observed.state !== 'FOREIGN','GRANT_PRODUCT_ORIGINAL_PROCESS_HOST_REQUIRED',
+      'Continue the retained console transition in its original process namespace.');
+    const outcome = await stopOriginal(attempt,'SIGTERM');
+    need(outcome.state === 'EXITED','GRANT_PRODUCT_CONSOLE_RECOVERY_INCOMPLETE');
+    const final = await statusProduct(product.directory);checkState(final);
+    if (final.console === 'RECOVERABLE') {
+      need(final.connection.writerActive === false &&
+        final.connection.sha256 === attempt.ready.connectionSha256,
+      'GRANT_PRODUCT_STOPPED_CONNECTION_CHANGED');
+      attempt.retired = {reason:'ORIGINAL_PROCESS_ENDED_BEFORE_CLEAN_CLOSE',observation:outcome};
+      await persist();return false;
+    }
+    need(final.console === 'CLOSED','GRANT_PRODUCT_CONSOLE_CLOSE_INCOMPLETE');
+    if (attempt.wait) need(!attempt.wait.error && attempt.wait.code === 0 && !attempt.wait.signal,
+      'GRANT_PRODUCT_CONSOLE_CLOSE_INCOMPLETE');
+    journal.closed = {attemptId:attempt.id,processSha256:attempt.processSha256,
+      pid:attempt.identity.pid,identity:attempt.identity,signal:'SIGTERM',dispatch:outcome.dispatch,
+      connectionSha256:attempt.ready.connectionSha256,wait:attempt.wait ?? null,
+      connectionRemoved:true,writerReleased:true};
+    await persist();return true;
+  }
+  async function cleanup() {
+    const failures = [];
+    for (const attempt of [...journal.first.attempts,...journal.reopened.attempts].reverse()) {
+      try {
+        let observed = await control(attempt,'inspect');
+        if (observed.state === 'PENDING') {
+          const session = children.get(attempt.id);
+          if (session && !session.closed) {
+            // The current ChildProcess handle is still owned before bootstrap
+            // publication; no native CLI can have opened without process.json.
+            session.child.kill('SIGTERM');
+            await waitChild(attempt);
+          }
+          observed = await control(attempt,'inspect');
+        }
+        if (observed.state === 'RUNNING') {
+          attempt.cleanupIntent ??= {processSha256:observed.processSha256,
+            signal:attempt.killIntent && !journal.killed ? 'SIGKILL':'SIGTERM'};
+          await persist();
+          let stopped = await stopOriginal(attempt,attempt.cleanupIntent.signal);
+          if (stopped.state === 'RUNNING') {
+            attempt.cleanupEscalation = {processSha256:observed.processSha256,signal:'SIGKILL'};
+            await persist();stopped = await stopOriginal(attempt,'SIGKILL');
+          }
+          need(stopped.state === 'EXITED','GRANT_PRODUCT_CONSOLE_CLOSE_INCOMPLETE');
+        } else if (observed.state === 'EXITED') await waitChild(attempt);
+        else need(observed.state !== 'FOREIGN','GRANT_PRODUCT_ORIGINAL_PROCESS_HOST_REQUIRED',
+          'Retain the original process custody for its original host to close.');
+      } catch (error) {failures.push(error);}
+    }
+    if (failures.length) throw new AggregateError(failures,
+      'The original customer console still requires its saved receiving continuation.');
+  }
+  let result, failure;
+  try {
+    if (!journal.killed) {
+      let attempt = journal.first.attempts.at(-1);
+      if (!attempt?.killIntent) {
+        ({attempt} = await activeAttempt('first'));
+        attempt.killIntent = {processSha256:attempt.processSha256,
+          connectionSha256:attempt.ready.connectionSha256};
+        await persist();
+      }
+      alive();await finishKill(attempt);
+    }
+    while (!journal.closed) {
+      let attempt = journal.reopened.attempts.at(-1);
+      if (!attempt?.closeIntent || attempt.retired) {
+        ({attempt} = await activeAttempt('reopened'));
+        need(attempt.ready.connectionSha256 !== journal.killed.connectionSha256,
+          'GRANT_PRODUCT_CONNECTION_NOT_REPLACED');
+        attempt.closeIntent = {processSha256:attempt.processSha256,
+          connectionSha256:attempt.ready.connectionSha256};
+        await persist();
+      }
+      alive();await finishClose(attempt);
+    }
+    const final = await statusProduct(product.directory);checkState(final);alive();
+    need(final.console === 'CLOSED','GRANT_PRODUCT_RECOVERED_CUSTOMER_CHANGED');
+    result = {schema:RECOVERY,operationId:OPERATION,state:'COMPLETED',selected,
+      recoveryId:journal.recoveryId,journalFile,
+      killed:journal.killed,
+      reopened:{...journal.closed,exitCode:journal.closed.wait?.code ?? null},
       preserved:{sources:final.workspace.sources.length,portfolios:final.workspace.portfolios.length,
         requests:final.workspace.requests.length,revision:final.workspace.revision,
         stateSha256:stateHash(final.workspace)},
       resources:{closed:true,consoleProcessesClosed:true,connectionRemoved:true}};
-    await original(resultFile,result);return result;
-  } finally {
-    try {
-      for (const session of [...sessions].reverse()) if (!session.closed) {
-        try {await stop(session,'SIGTERM');}
-        catch {await stop(session,'SIGKILL');}
-      }
-    } finally {process.off('SIGINT',interrupt);process.off('SIGTERM',interrupt);}
+  } catch (error) {failure=error;}
+  finally {
+    try {await cleanup();}
+    catch (error) {failure=failure ? new AggregateError([failure,error],
+      'Continue the original customer console recovery and retained cleanup.') : error;}
+    process.off('SIGINT',interrupt);process.off('SIGTERM',interrupt);
   }
+  if (failure) throw failure;
+  journal.state='COMPLETED';await persist();
+  await original(resultFile,result);return result;
 }
 
 export async function receiveInstalledPortfolio({runtimeDirectory, directory, pythonExecutable,

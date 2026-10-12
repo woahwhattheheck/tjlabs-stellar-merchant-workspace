@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "research-workspace",
   "title": "Research workspace",
-  "description": "Original research questions, citation update review and complete Python analyst handovers, retained Documents/Pipelines, full Analysis/workbooks, merchant operation and customer receiving",
+  "description": "Original Research questions and citation review, saved Documents/Pipelines, direct Analysis browser and native MCP source intake, complete typed exports/workbooks and portable customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -26,7 +26,11 @@
       "research-dossiers",
       "research-workspace",
       "unstructured-merchant",
-      "unstructured-commerce"
+      "unstructured-commerce",
+      "mcp-native",
+      "mcp-stdio",
+      "mcp-client-config",
+      "mcp-analysis-archive"
     ],
     "exports": [
       "./runtime-profile",
@@ -62,7 +66,11 @@
       "./buyer/unstructured",
       "./buyer/research-dossiers/unstructured-workspace",
       "./partners/unstructured",
-      "./partners/unstructured/commerce"
+      "./partners/unstructured/commerce",
+      "./buyer/mcp-native",
+      "./buyer/mcp/stdio",
+      "./buyer/mcp/client-config",
+      "./buyer/mcp/analysis-archives"
     ],
     "features": [
       "schema",
@@ -110,7 +118,10 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openalex",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/clinicaltrials",
     "stellar/scf-starforge-20261009/partners/unstructured",
-    "products/research"
+    "products/research",
+    "stellar-forge/mcp-paid-agent",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce",
+    "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -154,7 +165,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Source-linked research, complete citation and Python review workflows, original Documents/Pipelines, analytical workbooks, retained exports and editable customer receiving",
+    "description": "Source-linked Research, complete citation and Python review, direct browser/native-agent Analysis intake, original Documents/Pipelines, full workbooks and editable customer receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
