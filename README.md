@@ -431,3 +431,7 @@ third-party license files.
 ### Allium data workspace
 
 The [Allium operating guide](products/allium/OPERATING.md) covers the `allium-data-workspace` source selection: managed Applications, a typed Node client and 29 merchant tools over the original Explorer/retained workspace, dataset merchant, publisher and complete customer receiving. The native `allium-explorer` and `allium-workspace` commands remain available; `allium-managed` opens that same workspace for Applications and tool attachments.
+
+### Tenderly simulation workspace
+
+The [Tenderly operating guide](products/tenderly/OPERATING.md) covers the `tenderly-simulation-workspace` selected product: one managed Applications listener shared by its browser, typed Node client and 26 merchant tools, with original saved-provider recovery, native Node/Python customer delivery and complete retained simulation analysis. Managed agent attachments use `mode: "managed"`; Applications controls their shared server's Stop and reopen.

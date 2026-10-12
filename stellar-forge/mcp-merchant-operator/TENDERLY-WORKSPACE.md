@@ -1,6 +1,8 @@
 # Tenderly merchants in the merchant MCP
 
-The merchant MCP opens the same Tenderly operator workspace as the browser.
+The merchant MCP operates the same Tenderly workspace as the browser. Managed
+mode attaches to its live Applications listener; owned mode starts that original
+server.
 Profiles, prepared products, original request tickets, merchant operations,
 saved provider observations and recovered responses stay in that workspace.
 The browser URL returned by an open call controls that same model.
@@ -28,13 +30,20 @@ Save a private `tenderly-connection.json`:
   "workspaces": {
     "evm": {
       "label": "EVM simulation merchant",
-      "directory": "./tenderly-workspace"
+      "directory": "./tenderly-workspace",
+      "mode": "managed"
     }
   }
 }
 ```
 
-The optional `plan` field names an existing private merchant-plan JSON file.
+Use mode: "managed" after starting this directory through Applications or
+tenderly-workspace. Plan, facilitator and provider environment belong to that
+running application. Managed close detaches the tool client and leaves that
+application running. The returned instance ID is the actual native listener ID.
+
+Omitting mode, or selecting mode: "owned", opens the original server from the
+MCP host. Its optional `plan` field names an existing private merchant-plan JSON file.
 The original workspace saves that plan as a content-addressed profile when
 opened. The optional `facilitator` field selects the original HTTPS payment
 facilitator for native merchant startup. Set it to the facilitator selected for
@@ -55,8 +64,9 @@ starforge merchant-mcp serve \
   --token-env MCP_ACCESS_TOKEN
 ```
 
-Keep the provider access key and stable operation signing key in the launch
-environment under the exact names in the original merchant plan. The MCP
+Keep the provider access key and stable operation signing key in the server's
+launch environment under the exact names in the original merchant plan:
+Applications for managed mode, or the MCP process for owned mode. The MCP
 authentication token also comes from its named environment variable. The
 connection file and tool arguments carry these references through the original
 product; they do not carry credential values.
@@ -68,7 +78,8 @@ other workspace bindings remain usable.
 
 ## Reopen a saved workspace at another directory
 
-Close the owned workspace before moving it, then copy its complete directory,
+Close the server owner before moving the workspace: Stop application for managed
+mode or merchant_tenderly_close for owned mode. Copy its complete directory,
 including profiles, prepared packages and their operation state. Point the
 connection file at the received directory and open its existing alias. Reopening
 verifies the prepared package's original file bindings and derives its current
@@ -84,7 +95,7 @@ saved file reads by their SHA256 and byte offset as described below.
 
 1. Call `merchant_tenderly_workspaces` and choose an alias.
 2. Call `merchant_tenderly_open` with `{"workspace":"evm"}`.
-   Its response includes the original workspace ID, owned instance ID, current
+   Its response includes the original workspace ID, actual listener instance ID, ownership, current
    browser URL, saved profiles, original plan template and example request.
 3. Use `merchant_tenderly_profile_preview` to validate a complete plan.
    Review the returned provider account/project, EVM network, public route,
@@ -220,6 +231,19 @@ If the browser selects another profile, read the current state and select the
 intended saved profile before continuing.
 
 Close with `merchant_tenderly_close` and the current `instanceId`.
-It finishes pending tool work, releases its temporary file reads, and drains its
-one original browser/model/merchant. Opening the same declared alias later
-reopens the saved workspace and returns a new process-owned browser instance.
+It finishes pending tool work and releases its temporary file reads. Managed
+mode returns DETACHED while Applications retains the original server and
+merchant; owned mode drains and closes its browser/model/merchant and returns
+CLOSED. Opening an alias attaches to or starts the selected current listener.
+
+Applications Stop/reopen changes the actual listener instance. A stale managed
+client reports TENDERLY_INSTANCE_CHANGED. Close the old attachment with its
+retained instanceId and open the alias again. merchant_tenderly_status refreshes
+the current model; the alias list keeps the last managed observation and its
+observedAt timestamp.
+
+The selected [Tenderly product guide](../../products/tenderly/OPERATING.md)
+includes the typed Node SDK, source recipe, native Node/Python customer and
+retained-result analysis. The connection export is
+@tokenjunkielabs/starforge-merchant/partners/tenderly/workspace/connection; the
+typed merchant operator is exported from the adjacent /workspace/mcp path.
