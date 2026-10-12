@@ -1,12 +1,12 @@
 # Supplier accounts: install, operate and receive
 
-Configure shared supplier accounts in the merchant's original upstream file, review the exact changes, continue interrupted saves and hand over the complete operator workspace. The browser, installed command and managed Applications entry use the same retained source, change IDs and quota accounts.
+Configure shared supplier accounts in the merchant's original upstream file, review the exact changes, continue interrupted saves and hand over the complete operator workspace. The browser, installed command, managed Applications entry and Merchant MCP provider use the same retained source, change IDs and quota accounts.
 
 The **supplier-accounts** source selection includes the complete original workspace, the shared account compiler and registry, the maintained quota owner, the Runtime/Applications lifecycle, this guide and the original completed receiving package. The full merchant distribution includes the same contribution.
 
 ## Install the selected product
 
-Use Linux with the maintained package's Node requirement, **22.16.0 or newer**, including its original `node:sqlite` module and the host's util-linux `flock` command. The supplier workspace operates through Node's built-in modules. The original merchant keeps its own provider and payment runtime.
+Use Linux with the maintained package's Node requirement, **22.16.0 or newer**, including its original `node:sqlite` module and the host's util-linux `flock` command. The supplier workspace operates through Node's built-in modules. The selected Merchant interface also includes its declared MCP runtime profile for the maintained runtime installer. The original merchant keeps its own provider and payment runtime.
 
 Build from one selected commit in the standalone checkout:
 
@@ -105,6 +105,14 @@ npx --no-install starforge supplier-accounts apply \
 Use the IDs, current revision and digest returned by the actual retained review. The exported proposal contains the complete account and binding inventory, so edits preserve the intended complete source.
 
 The same command exposes `recover`, `cancel`, `restore-change`, `rebase`, `inspect`, `show`, `report`, `backup` and `receive`. The [original command reference](../../stellar/scf-starforge-20261009/sf30-seller-sdk/supplier-quota/workspace/README.md#command-line-operation) supplies their exact arguments and source-conflict behavior.
+
+## Operate the workspace through Merchant MCP
+
+The selected package exposes the **supplier-accounts** Merchant provider, all 21 **merchant_supplier_account_** tools and the typed **supplier-account-client** command. Configure the host's existing account aliases, open the original handle, read a complete proposal, prepare and inspect the native review, then save or recover its exact ID, revision and review hash.
+
+The interface retains native recovery outcomes, token-pinned complete history pages, original quota inspection and immutable full report/backup exports. Its receiving client downloads every original byte with manifest and file hashes, resumes the same export after interruption and invokes the original receiver through a host-selected backup input.
+
+Use the [complete remote operating guide](../../stellar-forge/mcp-merchant-operator/SUPPLIER_ACCOUNTS.md) for private host configuration, installed setup, explicit save/recovery, complete download and receiving. The selection includes the Merchant server, stdio bridge, client configuration and original retained-file engine.
 
 ## Deliver and receive the whole workspace
 

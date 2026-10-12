@@ -269,6 +269,23 @@ export async function openSupplierAccountWorkspace({ directory, upstreamsFile, c
           activation: 'Saved account changes take effect when the original merchant next starts.' };
       });
     },
+    identity() { return run(() => ({ workspaceId: metadata().id })); },
+    /** A native event token pins newest-first pagination across every saved state change. */
+    history({ offset = 0, limit = 50, expectedToken } = {}) {
+      need(Number.isSafeInteger(offset) && offset >= 0 && Number.isSafeInteger(limit) && limit >= 1 && limit <= 200,
+        'SUPPLIER_HISTORY_PAGE_INVALID');
+      need(expectedToken === undefined || HASH.test(expectedToken), 'SUPPLIER_HISTORY_TOKEN_INVALID');
+      return run(() => {
+        const meta = metadata(), total = db.prepare('SELECT count(*) AS total FROM changes').get().total;
+        const events = db.prepare('SELECT coalesce(max(sequence),0) AS sequence FROM events').get().sequence;
+        const token = digest(json({ workspaceId: meta.id, backupSha256: meta.backupSha256 ?? null, events, changes: total }));
+        need(expectedToken === undefined || expectedToken === token, 'SUPPLIER_HISTORY_CHANGED', 409);
+        const items = db.prepare('SELECT row FROM changes ORDER BY sequence DESC LIMIT ? OFFSET ?').all(limit, offset)
+          .map(value => safeChange(JSON.parse(value.row)));
+        return { workspaceId: meta.id, token, offset, limit, total, items,
+          nextOffset: offset + items.length < total ? offset + items.length : null };
+      });
+    },
     read(id) { return run(() => safeChange(record(id))); },
     prepare({ sourceSha256, accounts, assignments, note = '' }) {
       return run(async () => {
