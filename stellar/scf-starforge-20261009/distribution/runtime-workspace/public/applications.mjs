@@ -5,6 +5,7 @@ import { renderAccountingApplicationReview } from './accounting-application.mjs'
 import { createOpenApiConnectionSetupView } from './openapi-connection-setup.mjs';
 import { createApplicationLibrary } from './application-library.mjs';
 import { createApplicationDrafts } from './application-drafts.mjs';
+import { createGrantApplicationHandoffView } from './grant-application-handoff.mjs';
 const element = (tag, text, className) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -78,6 +79,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   const intro = element('p', 'Open the original merchant and buyer tools using an installed runtime. Application data, private URLs and process history stay with this workspace.', 'note');
   const libraryRoot = element('div'); libraryRoot.id = 'application-library';
   const draftRoot = element('div'); draftRoot.id = 'application-setup-drafts';
+  const grantHandoffRoot = element('div'); grantHandoffRoot.id = 'grant-application-handoff';
   const configuration = element('details'); configuration.open = true;
   configuration.append(element('summary', 'Configure application'));
   const form = element('form'), grid = element('div', undefined, 'columns');
@@ -191,7 +193,15 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
   inputForm.append(element('p', 'This is the original application terminal. Review its current prompt, then enter the response yourself. Opening or refreshing this page sends no input.', 'note'),
     field('Terminal response', input), terminalActions, inputStatus);
   outputPanel.append(outputDescription, output, inputForm);
-  root.replaceChildren(header, intro, libraryRoot, configuration, selectedPanel, history, outputPanel);
+  root.replaceChildren(header, intro, libraryRoot, configuration, grantHandoffRoot, selectedPanel, history, outputPanel);
+  const grantHandoff = createGrantApplicationHandoffView({
+    root: grantHandoffRoot, api, getState, getApplications: () => data?.applications ?? [], message, error,
+    async onApplicationSaved(id) {
+      const own = scope;
+      await refresh(); if (own !== scope) return;
+      await selectApplication(id); if (own === scope) await refreshWorkspace();
+    },
+  });
   const drafts = createApplicationDrafts({
     root: draftRoot, controls: { label, runtime, kind, settings }, reviewButton,
     getWorkspaceId: () => getState()?.workspaceId,
@@ -662,7 +672,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       }
       drafts.refresh();
       if (!data.applications.some(item => item.id === selectedId)) { selectedId = data.applications[0]?.id ?? null; resetHistory(selectedId); }
-      library.update(data, selectedId);
+      library.update(data, selectedId); grantHandoff.update();
       recoverRequest.hidden = !readSaved('pending');
       if (data.applications.length && editingId === null && !configurationReview && !label.value && !drafts.hasDraft())
         configuration.open = false;
@@ -717,7 +727,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       scope++; navigationVersion++; data = null; selectedId = selectedRun = editingId = null; configurationReview = startReview = null;
       resetHistory(null); initial = true; drafts.reset(); library.reset(); label.value = ''; kind.replaceChildren(); runtime.replaceChildren();
       selectedPanel.hidden = history.hidden = outputPanel.hidden = reviewResult.hidden = true; configuration.open = true;
-      openapiSetup.reset();
+      openapiSetup.reset(); grantHandoff.reset();
     },
   };
 }

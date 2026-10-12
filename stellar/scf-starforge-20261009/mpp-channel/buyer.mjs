@@ -1,3 +1,5 @@
+import { dependencyRootFor } from './runtime.mjs';
+import { assertOperating } from './receiving.mjs';
 // MIT. One task reservation, one cumulative commitment and the original response across retries.
 import { createPublicHttpsFetch } from '../sf31-buyer-client/public-transport.mjs';
 import { requestBytes, bindingFacts } from '../mpp-charge/config.mjs';
@@ -34,6 +36,7 @@ async function challengeFor(native,config,request) {
 export async function preparePurchase({workspace,taskId,purchaseId,request}) {
   id(purchaseId); const task=await readTask(workspace,taskId);
   return serialChannel(workspace,task.config.channel,async()=>{
+    await assertOperating(workspace,task.config.channel);
     const current=await readTask(workspace,taskId), selected=taskRequest(current.config,request);
     const existing=await workspace.read(groups.purchases,purchaseId);
     if(existing) {
@@ -41,7 +44,7 @@ export async function preparePurchase({workspace,taskId,purchaseId,request}) {
         'MPP_CHANNEL_PURCHASE_ID_ALREADY_USED',409);
       return purchaseView(existing);
     }
-    const native=await loadChannelNative(current.config.dependencyRoot);
+    const native=await loadChannelNative(await dependencyRootFor(workspace,current.config));
     const captured=await challengeFor(native,current.config,selected);
     const facts=bindingFacts(selected);
     const row={schema:'stellar-forge.mpp-channel-purchase.v1',id:purchaseId,taskId,
@@ -60,9 +63,11 @@ export async function executePurchase({workspace,purchaseId,environment=process.
     const config=taskConfig(row.config);
     need(profileKey(config)===row.profileId &&
       hash(stable(bindingFacts(row.request)))===row.requestSha256, 'MPP_CHANNEL_FROZEN_PURCHASE_CHANGED');
-    const native=await loadChannelNative(config.dependencyRoot), store=nativeStore(workspace,config.channel);
+    const native=await loadChannelNative(await dependencyRootFor(workspace,config)), store=nativeStore(workspace,config.channel);
     const save=async change=>{row={...row,...change,updatedAt:now()};await workspace.put(groups.purchases,row.id,row);};
+    await assertOperating(workspace,config.channel);
     if(row.phase==='COMPLETE') { await completePurchase(workspace,config.channel,row); return purchaseView(row); }
+    need(!['CANCELLING','CANCELLED'].includes(row.phase), 'MPP_CHANNEL_PURCHASE_CANCELLED',409);
     need(!row.credentialHeader || resume, 'MPP_CHANNEL_USE_ORIGINAL_RESUME',409);
     try {
       if(!row.reservation) {
@@ -138,8 +143,9 @@ export async function refreshChallenge({workspace,purchaseId}) {
   need(original, 'MPP_CHANNEL_PURCHASE_NOT_FOUND',404);
   return serialChannel(workspace,original.config.channel,async()=>{
     const row=await workspace.read(groups.purchases,purchaseId);
-    need(row.phase==='CHALLENGE_REJECTED' || !row.credentialHeader, 'MPP_CHANNEL_RESUME_ORIGINAL_RESPONSE',409);
-    const native=await loadChannelNative(row.config.dependencyRoot);
+    await assertOperating(workspace,row.config.channel);
+    need(!['CANCELLING','CANCELLED','COMPLETE'].includes(row.phase) && (row.phase==='CHALLENGE_REJECTED' || !row.credentialHeader), 'MPP_CHANNEL_RESUME_ORIGINAL_RESPONSE',409);
+    const native=await loadChannelNative(await dependencyRootFor(workspace,row.config));
     const captured=await challengeFor(native,row.config,row.request);
     need(captured.challenge.request.amount===row.challenge.request.amount,
       'MPP_CHANNEL_ORIGINAL_RESERVED_UNIT_CHANGED',409);
@@ -158,4 +164,41 @@ export async function refreshChallenge({workspace,purchaseId}) {
 export async function responseFor({workspace,purchaseId}) {
   const row=await workspace.read(groups.purchases,id(purchaseId));
   need(row?.response, 'MPP_CHANNEL_RESPONSE_UNAVAILABLE',404); return storedResponse(row.response);
+}
+
+export async function cancelPurchase({workspace,purchaseId}) {
+  const original=await workspace.read(groups.purchases,id(purchaseId));
+  need(original, 'MPP_CHANNEL_PURCHASE_NOT_FOUND',404);
+  return serialChannel(workspace,original.config.channel,async()=>{
+    let row=await workspace.read(groups.purchases,purchaseId);
+    await assertOperating(workspace,row.config.channel);
+    if(row.phase==='CANCELLED') return purchaseView(row);
+    need(!row.credentialHeader && !row.challengeHistory.some(item=>item.credentialHeader),
+      'MPP_CHANNEL_SIGNED_PURCHASE_REQUIRES_ORIGINAL_RECOVERY',409);
+    if(row.reservation) {
+      const store=nativeStore(workspace,row.config.channel), signed=await store.get(clientCumulativeKey(row.config.channel));
+      const signedAmount=signed?.amount ?? '0';
+      const {streamKey}=await import('./config.mjs');
+      const originalStream=await workspace.read(groups.streams,streamKey(row.config.channel));
+      const alreadyCancelled=Object.hasOwn(originalStream?.cancelledPurchases ?? {},row.id);
+      need(alreadyCancelled || (signedAmount===row.reservation.previousAtomic &&
+        originalStream?.activePurchase?.purchaseId===row.id && originalStream.highestSignedAtomic===row.reservation.previousAtomic),
+        'MPP_CHANNEL_SIGNED_PURCHASE_REQUIRES_ORIGINAL_RECOVERY',409);
+      row={...row,phase:'CANCELLING',updatedAt:now()}; await workspace.put(groups.purchases,row.id,row);
+      await workspace.update(groups.streams,streamKey(row.config.channel),stream=>{
+        if(Object.hasOwn(stream?.cancelledPurchases ?? {},row.id)) return {op:'noop',result:undefined};
+        need(signedAmount===row.reservation.previousAtomic && stream?.activePurchase?.purchaseId===row.id &&
+          stream.highestSignedAtomic===row.reservation.previousAtomic, 'MPP_CHANNEL_SIGNED_PURCHASE_REQUIRES_ORIGINAL_RECOVERY',409);
+        const budget=stream.budgets[row.taskId];
+        const next={...stream,activePurchase:null,revision:stream.revision+1,updatedAt:now(),
+          cancelledPurchases:{...stream.cancelledPurchases,[row.id]:{taskId:row.taskId,amountAtomic:row.reservation.amountAtomic,cancelledAt:now()}},
+          budgets:{...stream.budgets,[row.taskId]:{...budget,
+            committedAtomic:(BigInt(budget.committedAtomic)-BigInt(row.reservation.amountAtomic)).toString(),
+            purchases:budget.purchases-1}}};
+        return {op:'set',value:next,result:undefined};
+      });
+    }
+    row={...row,phase:'CANCELLED',cancelledAt:now(),updatedAt:now()};
+    await workspace.put(groups.purchases,row.id,row);return purchaseView(row);
+  });
 }

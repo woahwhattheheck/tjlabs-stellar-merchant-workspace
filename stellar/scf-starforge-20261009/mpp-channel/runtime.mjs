@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadNative, versions } from '../mpp-charge/runtime.mjs';
 import { requireValue as need, hash, now } from '../mpp-charge/storage.mjs';
-import { absolute } from './config.mjs';
+import { absolute, streamKey } from './config.mjs';
 export { versions };
 export async function loadChannelNative(dependencyRoot) {
   const native=await loadNative(dependencyRoot);
@@ -73,4 +73,18 @@ export async function observeChannel(native, terms) {
     withdrawnAtomic, refundWaitingPeriod:state.refundWaitingPeriod,
     closeEffectiveAtLedger:state.closeEffectiveAtLedger, currentLedger:state.currentLedger,
     instanceLedger:entries.latestLedger, instanceSha256:hash(entry.val.toXDR())};
+}
+
+export async function dependencyRootFor(workspace,config) {
+  const binding=await workspace.read('channel-receiving','runtime:'+streamKey(config.channel));
+  return binding?absolute(binding.dependencyRoot):config.dependencyRoot;
+}
+export async function inputPathFor(workspace,config,path) {
+  const binding=await workspace.read('channel-receiving','runtime:'+streamKey(config.channel));
+  const selected=binding?.files?.[path];
+  if(!selected) return path;
+  const {regular}=await import('../distribution/runtime-workspace/storage.mjs');
+  const bytes=await regular(selected.path,16*1024*1024);
+  need(hash(bytes)===selected.sha256, 'MPP_CHANNEL_RECEIVED_INPUT_CHANGED');
+  return selected.path;
 }

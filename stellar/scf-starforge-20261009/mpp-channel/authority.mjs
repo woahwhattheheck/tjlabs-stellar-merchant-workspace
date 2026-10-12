@@ -1,3 +1,5 @@
+import { dependencyRootFor } from './runtime.mjs';
+import { assertOperating } from './receiving.mjs';
 // MIT. The operator selects a complete task budget once; each cumulative purchase consumes it.
 import { open } from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
@@ -31,6 +33,7 @@ export async function terminalConsent(label, review, confirmation) {
 export async function saveTask({workspace,config,expectedRevision=0}) {
   const selected=taskConfig(config), profileId=profileKey(selected);
   return serialChannel(workspace,selected.channel,async()=>{
+    await assertOperating(workspace,selected.channel);
     const current=await workspace.read(groups.tasks,selected.taskId);
     need((current?.revision ?? 0)===expectedRevision, 'MPP_CHANNEL_TASK_REVISION_CHANGED',409);
     const active=await ensureStream(workspace,selected.channel);
@@ -39,7 +42,7 @@ export async function saveTask({workspace,config,expectedRevision=0}) {
     if(current?.profileId===profileId) return current;
     if(current) {
       need(streamKey(current.config.channel)===streamKey(selected.channel), 'MPP_CHANNEL_NEW_CHANNEL_REQUIRES_NEW_TASK_ID');
-      const consumed=active.budgets[selected.taskId];
+      const consumed=Object.hasOwn(active.budgets,selected.taskId)?active.budgets[selected.taskId]:null;
       need(BigInt(selected.budget.maximumAtomic)>=BigInt(consumed?.committedAtomic ?? '0') &&
         selected.budget.maximumPurchases >= (consumed?.purchases ?? 0), 'MPP_CHANNEL_BUDGET_BELOW_COMMITTED_WORK');
     }
@@ -58,16 +61,17 @@ export async function authorizeTask({workspace,taskId,expectedRevision}) {
   const selected=await readTask(workspace,taskId);
   return serialChannel(workspace,selected.config.channel,async()=>{
     let task=await readTask(workspace,taskId);
+    await assertOperating(workspace,task.config.channel);
     need(task.revision===expectedRevision, 'MPP_CHANNEL_TASK_REVISION_CHANGED',409);
     const current=await ensureStream(workspace,task.config.channel);
     need(!current.activePurchase, 'MPP_CHANNEL_RESUME_ORIGINAL_PURCHASE',409);
     need(current.state==='OPEN' && Date.parse(task.config.budget.expiresAt)>Date.now(),
       'MPP_CHANNEL_TASK_AUTHORITY_INACTIVE',409);
-    if(task.status==='AUTHORIZED' && current.budgets[taskId]?.authoritySha256===task.authority?.reviewSha256) return task;
-    const native=await loadChannelNative(task.config.dependencyRoot);
+    if(task.status==='AUTHORIZED' && (Object.hasOwn(current.budgets,taskId)?current.budgets[taskId]:null)?.authoritySha256===task.authority?.reviewSha256) return task;
+    const native=await loadChannelNative(await dependencyRootFor(workspace,task.config));
     const observation=await observeChannel(native,task.config.channel);
     need(observation.closeEffectiveAtLedger===null, 'MPP_CHANNEL_CLOSING',409);
-    const consumed=current.budgets[taskId] ?? {committedAtomic:'0',purchases:0};
+    const consumed=(Object.hasOwn(current.budgets,taskId)?current.budgets[taskId]:null) ?? {committedAtomic:'0',purchases:0};
     const remaining=BigInt(task.config.budget.maximumAtomic)-BigInt(consumed.committedAtomic);
     need(remaining>=0n && BigInt(current.highestSignedAtomic)+remaining <= BigInt(observation.balanceAtomic),
       'MPP_CHANNEL_TASK_EXCEEDS_CURRENT_DEPOSIT',409);
@@ -92,7 +96,7 @@ async function completeAuthorization(workspace,task) {
     authority.review.profileId===task.profileId, 'MPP_CHANNEL_ORIGINAL_AUTHORITY_REQUIRED');
   await workspace.update(groups.streams,streamKey(task.config.channel),row=>{
     need(row && !row.activePurchase && row.state==='OPEN', 'MPP_CHANNEL_STREAM_CHANGED',409);
-    const old=row.budgets[taskId] ?? {committedAtomic:'0',purchases:0};
+    const old=(Object.hasOwn(row.budgets,taskId)?row.budgets[taskId]:null) ?? {committedAtomic:'0',purchases:0};
     need(BigInt(old.committedAtomic)===BigInt(authority.review.alreadyCommittedAtomic),
       'MPP_CHANNEL_TASK_COMMITMENTS_CHANGED',409);
     const budget={...old,profileId:task.profileId,authoritySha256:authority.reviewSha256};
@@ -106,6 +110,7 @@ export async function resumeTaskAuthority({workspace,taskId}) {
   const task=await readTask(workspace,taskId);
   return serialChannel(workspace,task.config.channel,async()=>{
     const current=await readTask(workspace,taskId);
+    await assertOperating(workspace,current.config.channel);
     if(current.status==='AUTHORIZED') return current;
     need(current.status==='AUTHORIZING', 'MPP_CHANNEL_AUTHORITY_RESUME_UNAVAILABLE',409);
     return completeAuthorization(workspace,current);

@@ -16,6 +16,7 @@ from harvest import jbytes, decode, sha, stamp
 from managed import require_binding, startup
 from migration import Migration, MAX_JSON
 from native import native_tables, search_export, send_exact
+from source_cases import list_collections, view_collection, plan_many, reviews, review_document, collection
 
 HERE = Path(__file__).resolve().parent
 ASSETS = {"index.html": "text/html; charset=utf-8", "browser.mjs": "text/javascript; charset=utf-8", "style.css": "text/css; charset=utf-8"}
@@ -179,6 +180,27 @@ class Handler(BaseHTTPRequestHandler):
                 with owner.mutex:
                     result = owner.file_receipt(query["project"], query["id"])
                 self.respond(200, result, download="tind-file-observation.json")
+            elif path == "/api/source-cases":
+                with owner.mutex:
+                    result = list_collections(owner, query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/api/source-case":
+                with owner.mutex:
+                    result = view_collection(owner, query["project"], query["id"])
+                self.respond(200, result)
+            elif path == "/api/source-case-reviews":
+                with owner.mutex:
+                    result = reviews(owner, query["project"], query["id"], int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/download/source-cases":
+                with owner.mutex:
+                    item, _ = collection(owner, query["project"], query["id"])
+                    result = owner.object_path(item["original"]).read_bytes()
+                self.respond(200, result, download="tind-source-cases.json")
+            elif path == "/download/source-case-review":
+                with owner.mutex:
+                    result = review_document(owner, query["project"], query["id"])
+                self.respond(200, result, download="tind-source-case-review.json")
             elif path == "/api/record":
                 with owner.mutex:
                     result = owner.preview(owner.project(query["project"]), query["identifier"])
@@ -242,6 +264,12 @@ class Handler(BaseHTTPRequestHandler):
             request = decode(data)
             if path == "/api/apply":
                 result = self.server.workspace.apply(request)
+                self.respond(200, result)
+            elif path == "/api/source-cases/plan":
+                if not isinstance(request, dict) or set(request) != {"projectId", "collectionId", "choices"}:
+                    raise InputError("Choose the source collection and actual record identities")
+                with self.server.workspace.mutex:
+                    result = plan_many(self.server.workspace, request["projectId"], request["collectionId"], request["choices"])
                 self.respond(200, result)
             elif path == "/api/native":
                 result = self.server.job(request)

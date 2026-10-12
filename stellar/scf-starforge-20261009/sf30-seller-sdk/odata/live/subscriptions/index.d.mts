@@ -111,3 +111,29 @@ export declare class SubscriptionOperator {
 export declare function openSubscriptionOperator(options:{connection:string|SubscriptionConnection}):Promise<SubscriptionOperator>;
 export declare function subscriptionHttpHandler(options:{operator:SubscriptionOperator;basePath?:string}):(req:IncomingMessage,res:ServerResponse,url:URL)=>Promise<boolean>;
 export declare function startSubscriptionServer(options:{connection?:string|SubscriptionConnection;operator?:SubscriptionOperator;port?:number}):Promise<{server:Server;url:string;operator:SubscriptionOperator;close():Promise<void>}>;
+
+export interface ManagedSubscriptionReceivingSelection {
+ operationId:string;runtimeDirectory:string;workspaceDirectory:string;subscriptionConnection:string;outputDirectory:string;
+ liveServiceId?:string;environmentFile?:string;
+}
+export interface ManagedPublisherIdentity {head:number;definitionSha256:string;editionSha256:string;rows:number}
+export interface ManagedCustomerIdentity {revision:number;definitionSha256:string;editionSha256:string;rows:number}
+export interface ManagedSubscriptionReceivingInput extends ManagedSubscriptionReceivingSelection {
+ schema:'stellar-forge.odata-managed-subscription-receiving-input.v1';
+ expectedRuntimeSourceManifestSha256:string;expectedConnectionSha256:string;
+ expected:{publishers:Record<string,ManagedPublisherIdentity>;customers:Record<string,ManagedCustomerIdentity>};
+}
+export interface ManagedSubscriptionReceivingResult {
+ schema:'stellar-forge.odata-managed-subscription-receiving.v1';operationId:string;state:'COMPLETE';
+ directory:string;controller:string;applicationId:string;applicationRevision:string;
+ selection:{runtime:Record<string,unknown>;workspace:Record<string,unknown>;live:Record<string,unknown>|null;
+ connection:FileIdentity&{schema:'stellar-forge.odata-subscription-connection.v1';path:string};
+ original:{publishers:Record<string,PublisherInspection>;customers:Record<string,CustomerInspection>};program:FileIdentity};
+ phases:Record<'first'|'reopened',{complete:true;snapshot:Record<string,unknown>;attempts:Array<Record<string,unknown>>}>;
+ exports:Record<string,{operation:'publisher-backup'|'customer-backup';args:Record<string,Json>;directory:string;restoreDirectory:string;
+  state:'COMPLETE';artifact:ArtifactRecord;restore:Record<string,unknown>;reopened:true}>;
+ files:FileEntry[];completedAt:string;
+}
+export declare const MANAGED_RECEIVING_SCHEMA:'stellar-forge.odata-managed-subscription-receiving-input.v1';
+export declare function prepareManagedSubscriptionReceiving(input:ManagedSubscriptionReceivingSelection):Promise<ManagedSubscriptionReceivingInput>;
+export declare function runManagedSubscriptionReceiving(input:ManagedSubscriptionReceivingInput):Promise<ManagedSubscriptionReceivingResult>;

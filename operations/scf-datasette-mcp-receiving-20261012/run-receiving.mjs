@@ -201,6 +201,8 @@ export async function runDatasetteMcpReceiving({
   };
   const openOwner=async()=>{
     const connection=await nativeProvider.readDatasetteWorkspaceConfiguration(join(outputDirectory,'connection.json'));
+    // The provider retains complete exports in an existing private directory.
+    await privateDirectory(join(outputDirectory,'merchant-exports'));
     const provider=descriptor.create(loaded,{datasetteWorkspaces:connection,exportsDirectory:join(outputDirectory,'merchant-exports')},{});
     need(provider instanceof leaf.MerchantDatasetteWorkspaces,'DATASETTE_RECEIVING_PROVIDER_JOIN');
     const record={id:randomUUID(),startedAt:new Date().toISOString(),closed:false};

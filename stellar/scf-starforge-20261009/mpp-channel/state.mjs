@@ -4,7 +4,7 @@ import { streamKey, channelIdentity, amount } from './config.mjs';
 import { nativeStore, clientCumulativeKey } from './runtime.mjs';
 export const groups=Object.freeze({
   tasks:'channel-tasks', streams:'channel-streams', purchases:'channel-purchases',
-  deliveries:'channel-deliveries', settlements:'channel-settlements', receiving:'channel-receiving'
+  deliveries:'channel-deliveries', settlements:'channel-settlements', receiving:'channel-receiving', settings:'channel-settings'
 });
 const operations=new WeakMap();
 export function serialChannel(workspace, terms, operation) {
@@ -55,7 +55,7 @@ export async function reservePurchase(workspace, task, purchase) {
     }
     need(row.state==='OPEN' && task.status==='AUTHORIZED' && Date.parse(task.config.budget.expiresAt)>Date.now(),
       'MPP_CHANNEL_TASK_AUTHORITY_INACTIVE',409);
-    const budget=row.budgets[task.config.taskId];
+    const budget=Object.hasOwn(row.budgets,task.config.taskId)?row.budgets[task.config.taskId]:null;
     need(budget?.profileId===task.profileId, 'MPP_CHANNEL_SELECTED_TASK_AUTHORITY_REQUIRED');
     const unit=BigInt(amount(purchase.challenge.request.amount));
     const spent=BigInt(budget.committedAtomic);
@@ -104,10 +104,15 @@ export async function snapshot(workspace) {
     deliveries:(await workspace.list(groups.deliveries)).map(deliveryView),
     settlements:await workspace.list(groups.settlements)};
 }
+function responseView(response) {
+  return response?{status:response.status,bytes:response.bytes,sha256:response.sha256,
+    contentType:response.headers?.['content-type']}:null;
+}
 export function purchaseView(row) {
-  const {credentialHeader,response,challengeResponse,requestBodyBase64,...rest}=row;
-  return {...rest,response:response?{status:response.status,bytes:response.bytes,sha256:response.sha256,
-    contentType:response.headers?.['content-type']}:null};
+  const {credentialHeader,response,challengeResponse,requestBodyBase64,lastResponse,challengeHistory,...rest}=row;
+  return {...rest,response:responseView(response),lastResponse:responseView(lastResponse),
+    challengeHistory:(challengeHistory ?? []).map(({credentialHeader,lastResponse,...item})=>
+      ({...item,lastResponse:responseView(lastResponse)}))};
 }
 export function deliveryView(row) {
   const {credentialHeader,response,requestBodyBase64,...rest}=row;

@@ -1,4 +1,4 @@
-// MIT. Original API merchant packages and retained SF82 releases for pricing.
+// MIT. Original merchant source packages and retained SF82 releases for pricing.
 import { constants } from 'node:fs';
 import { open, lstat, realpath } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
@@ -8,6 +8,7 @@ import { readReleaseWorkspace } from '../../sf82-seller-pilot/release-upstreams.
 import { inspectRelease, readReleaseState, stageRelease,
   normalizeReleaseRuntime } from '../../sf82-seller-pilot/releases.mjs';
 import { prepareMerchantPlanRepricing } from './repricing.mjs';
+import { PYTHON_SOURCE_SCHEMA } from '../../sf82-seller-pilot/release-source-contracts.mjs';
 
 const LIMIT = 4 * 1024 * 1024, MANIFEST_LIMIT = 1024 * 1024;
 const PACKAGE_NAME = 'source-package';
@@ -51,6 +52,18 @@ async function syncDirectory(path) {
   try { await handle.sync(); } finally { await handle.close(); }
 }
 
+/** Select the original source reader by its existing retained manifest. */
+async function sourceKind(path) {
+  await realDirectory(path, 'Merchant source package');
+  try {
+    await lstat(join(path, 'merchant-package.json'));
+    return 'API_MERCHANT_PACKAGE';
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const manifest = json(await bytesAt(join(path, 'manifest.json'), 2 * 1024 * 1024));
+  if (manifest.schema === PYTHON_SOURCE_SCHEMA) return 'PYTHON_MERCHANT_PACKAGE';
+  fail('MERCHANT_SOURCE_PACKAGE_REQUIRED', 'Choose an original API merchant package or retained Python seller release.');
+}
+
 /** Capture through the original reader, then bind the exact original bytes. */
 async function originalPackage(path) {
   const folder = await realDirectory(path, 'API merchant package');
@@ -70,6 +83,8 @@ async function originalPackage(path) {
 /** The pricing workspace includes this review in its original save identity. */
 export async function prepareRepricingSource(sourcePackage, coreReview) {
   if (sourcePackage === undefined || sourcePackage === null) return null;
+  if (await sourceKind(sourcePackage) === 'PYTHON_MERCHANT_PACKAGE')
+    return (await import('./repricing-python.mjs')).preparePythonRepricingSource(sourcePackage, coreReview);
   const source = await originalPackage(sourcePackage);
   const repriced = prepareMerchantPlanRepricing({specText:source.specText, plan:source.value.plan, review:coreReview});
   const planBytes = encode(repriced.plan);
@@ -108,6 +123,8 @@ async function finalizeRunGuide(folder, finalFolder) {
 /** Save through the original package writer inside one uncommitted decision. */
 export async function writeRepricingSource(prepared, parent, finalParent = parent) {
   if (prepared === null || prepared === undefined) return null;
+  if (prepared.review?.kind === 'PYTHON_MERCHANT_PACKAGE')
+    return (await import('./repricing-python.mjs')).writePythonRepricingSource(prepared, parent, finalParent);
   await realDirectory(parent, 'Pending pricing decision'); absolute(finalParent, 'Committed pricing decision');
   if (prepared.review?.kind !== 'API_MERCHANT_PACKAGE' ||
       !Buffer.isBuffer(prepared.originalManifestBytes) || !Buffer.isBuffer(prepared.originalPlanBytes) ||
@@ -199,6 +216,9 @@ export async function stageRepricingSource({directory, releaseStore, runtime, id
     fail('RELEASE_ID_REQUIRED', 'Use the original release ID format: 1–64 lowercase letters, digits, underscores or hyphens.');
   const root = await realDirectory(releaseStore, 'Original release store');
   await readReleaseState(root);
+  const retained = join(await realDirectory(directory, 'Saved pricing decision'), PACKAGE_NAME);
+  if (await sourceKind(retained) === 'PYTHON_MERCHANT_PACKAGE')
+    return (await import('./repricing-python.mjs')).stagePythonRepricingSource({directory, releaseStore:root, runtime, id, label});
   const {folder, suppliedRuntime, expected} = await stagedExpectation(directory, runtime, id, label);
   const old = await existingRelease(root, id);
   if (old) return {status:'RELEASE_STAGED', release:matchingRelease(old, expected), recovered:true};

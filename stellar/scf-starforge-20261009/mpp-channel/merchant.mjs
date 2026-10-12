@@ -1,3 +1,5 @@
+import { dependencyRootFor, inputPathFor } from './runtime.mjs';
+import { assertOperating } from './receiving.mjs';
 // MIT. Native commitment acceptance and useful response recovery in the original leased workspace.
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { pathToFileURL } from 'node:url';
@@ -18,7 +20,7 @@ export async function createMerchant({workspace,profile,environment=process.env}
   const config=merchantConfig(profile), profileId=profileKey(config);
   const secret=environment[config.secretEnv];
   need(typeof secret==='string' && Buffer.byteLength(secret)>=32, 'MPP_CHANNEL_MERCHANT_SECRET_REQUIRED');
-  const native=await loadChannelNative(config.dependencyRoot), store=nativeStore(workspace,config.channel);
+  const native=await loadChannelNative(await dependencyRootFor(workspace,config)), store=nativeStore(workspace,config.channel);
   const context=new AsyncLocalStorage(), running=new Set();
   const cumulativeKey=merchantCumulativeKey(config.channel);
   const owns=(key,value,current)=>{
@@ -37,7 +39,7 @@ export async function createMerchant({workspace,profile,environment=process.env}
       const change=fn(current); return change.op==='set'?{...change,value:owns(key,change.value,current)}:change;
     })
   };
-  const handlers=config.handlersModule?await import(pathToFileURL(config.handlersModule).href):{};
+  const handlers=config.handlersModule?await import(pathToFileURL(await inputPathFor(workspace,config,config.handlersModule)).href):{};
   const routes=new Map(config.routes.map(route=>{
     if(route.resource.kind==='handler') need(typeof handlers[route.resource.export]==='function', 'MPP_CHANNEL_HANDLER_UNAVAILABLE');
     const method=native.channelServer.stellar.channel({channel:config.channel.address,
@@ -90,7 +92,7 @@ export async function createMerchant({workspace,profile,environment=process.env}
     let response;
     if(route.resource.kind==='json') response=Response.json(route.resource.value);
     else if(route.resource.kind==='json-file') {
-      const bytes=await regular(route.resource.path,MAX_BODY);
+      const bytes=await regular(await inputPathFor(workspace,config,route.resource.path),MAX_BODY);
       JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(bytes));
       response=new Response(bytes,{headers:{'content-type':'application/json; charset=utf-8'}});
     } else response=await handlers[route.resource.export]({
@@ -204,6 +206,7 @@ export async function createMerchant({workspace,profile,environment=process.env}
           need(old.profileId===profileId, 'MPP_CHANNEL_REOPEN_ORIGINAL_MERCHANT_PROFILE',409);
         }
       }
+      await assertOperating(workspace,config.channel);
       const selected=routes.get(request.method+' '+url.pathname);
       if(!selected) return Response.json({error:'MPP_CHANNEL_ROUTE_NOT_FOUND'},{status:404});
       if(key) running.add(key);
@@ -213,6 +216,7 @@ export async function createMerchant({workspace,profile,environment=process.env}
   }
   async function recover(deliveryId) {
     return serialChannel(workspace,config.channel,async()=>{
+      await assertOperating(workspace,config.channel);
       const row=await workspace.read(groups.deliveries,deliveryId);
       need(row && row.profileId===profileId, 'MPP_CHANNEL_ORIGINAL_MERCHANT_PROFILE_REQUIRED',409);
       if(row.state==='COMPLETE') return deliveryView(row);
