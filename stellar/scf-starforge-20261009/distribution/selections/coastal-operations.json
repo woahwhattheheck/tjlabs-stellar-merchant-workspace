@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "coastal-operations",
   "title": "Coastal source operations",
-  "description": "Original NOAA source acquisition, station and archive review, receiving mappings, coastal residual workbooks, native publication and complete customer receiving",
+  "description": "Original NOAA source acquisition, reviewed multi-station studies and returned-file comparison, complete coastal workbooks, native publication and customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -118,7 +118,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Coastal source operations, exact retained source review, residual workbooks, native publication and complete customer receiving",
+    "description": "Coastal source operations, reviewed multi-station model-input deliveries and returned-file receiving, complete analytical workbooks and native merchant publication",
     "readme": "products/coops/OPERATING.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
