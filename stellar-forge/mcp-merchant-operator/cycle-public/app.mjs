@@ -1,7 +1,8 @@
 // MIT. Customer closing interface; all statement operations use the original local server.
 import {createCustomerSetup} from './setup.mjs';
+import {createCustomerDossierUi} from './customer-dossiers.mjs';
 const $=id=>document.getElementById(id);
-let customerSetup;
+let customerSetup,customerDossiers;
 const state={context:null,inventory:null,selected:new Set(),selections:[],requestId:crypto.randomUUID(),cycles:[],key:null,current:null,poll:null,inventoryBusy:false,review:null};
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const pretty=value=>JSON.stringify(value,null,2);
@@ -123,6 +124,7 @@ function renderCycle(cycle){
     if(cycle.rows.some(row=>row.phase==='REVIEW_REQUIRED'))content+='<div class="problem">Some source records changed after review. Existing statements keep their original identities. Prepare new reviews for the changed rows.</div><button type="button" data-revise>Prepare changed rows</button>';
   }
   if(cycle.rows?.length){
+    content+='<section class="detail-section customer-dossiers" id="customer-dossiers" aria-label="Customer handover"></section>';
     content+='<div class="detail-section table-wrap"><table><thead><tr><th>Customer</th><th>Service period</th><th>Progress</th><th>Files</th></tr></thead><tbody>';
     content+=cycle.rows.map((row,index)=>{
       const period=row.servicePeriod,capture=period?date(period.from)+' → '+date(period.until):row.usageSource?date(row.usageSource.createdAt):'Purchase statement';
@@ -131,7 +133,9 @@ function renderCycle(cycle){
   }
   content+='<details class="source-details"><summary>Original cycle and source references</summary><pre>'+escape(pretty({cycleId:cycle.cycleId,workspace:cycle.workspace,requestSha256:cycle.requestSha256,manifestSha256:cycle.manifestSha256,observedAt:cycle.observedAt}))+'</pre></details>';
   if(!active(cycle)&&cycle.phase!=='UNPREPARED'&&cycle.phase!=='UNREADABLE')content+='<details class="source-details" id="cycle-files"><summary>All saved files</summary><div class="file-list" id="file-list">Open to load the complete file list.</div></details>';
+  const dossierFocus=customerDossiers?.captureFocus();
   $('cycle-detail').innerHTML=content;
+  customerDossiers?.mount(cycle,{focus:dossierFocus});
   $('cycle-files')?.addEventListener('toggle',async event=>{
     if(!event.target.open||event.target.dataset.loaded)return;
     try{const result=await api('/api/cycles/'+encodeURIComponent(cycle.key)+'/files');if(state.key!==cycle.key||$('cycle-files')!==event.target)return;$('file-list').innerHTML=result.items.map(file=>'<div><a href="'+escape(file.href)+'">'+escape(file.name)+'</a><small>'+escape(file.bytes.toLocaleString())+' bytes</small></div>').join('');event.target.dataset.loaded='true';}catch(error){showError(error);}
@@ -246,7 +250,7 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
 $('reload-cycles').addEventListener('click',async()=>{try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}});
 $('cycle-list').addEventListener('click',event=>{const button=event.target.closest('[data-cycle]');if(button)loadCycle(button.dataset.cycle);});
 $('cycle-detail').addEventListener('click',async event=>{
-  const button=event.target.closest('button');if(!button)return;clearError();button.disabled=true;
+  const button=event.target.closest('button');if(!button||button.closest('#customer-dossiers'))return;clearError();button.disabled=true;
   try{
     if(button.hasAttribute('data-run')){await api(cycleLink('run'),{execute:true});await loadCycle(state.key);}
     else if(button.hasAttribute('data-resume-prepare')){await api(cycleLink('prepare'),{});await loadCycle(state.key);}
@@ -259,6 +263,7 @@ $('cycle-detail').addEventListener('click',async event=>{
   }catch(error){showError(error);}finally{button.disabled=false;}
 });
 window.addEventListener('pagehide',()=>clearTimeout(state.poll));
+customerDossiers=createCustomerDossierUi({api,notice,showError,clearError});
 customerSetup=createCustomerSetup({getState:()=>state,api,notice,showError,clearError,refreshInventory,
   async addCorrection(original){
     if(await refreshInventory()===false)throw new Error('Refresh the workspace before preparing this correction.');
