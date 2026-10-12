@@ -16,8 +16,10 @@ import { QCEW_MERCHANT, QCEW_REPORT_PACKAGE, normalizeQcewMerchantTerms, qcewPub
 
 const jsonBytes = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const HASH = /^[a-f0-9]{64}$/;
+// The native asset seller advertises MIME essence; the complete report manifest
+// continues to retain its original member content types and bytes.
 const descriptor = (path, bytes, contentType, role) =>
-  ({ path, bytes: bytes.length, sha256: sha256(bytes), contentType, role });
+  ({ path, bytes: bytes.length, sha256: sha256(bytes), contentType: contentType.split(';', 1)[0].trim().toLowerCase(), role });
 async function exactFile(directory, name, bytes) {
   try { await writeBytes(join(directory, name), bytes, { exclusive: true }); }
   catch (error) {
