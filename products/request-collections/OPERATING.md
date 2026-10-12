@@ -154,7 +154,7 @@ After a lost run reply, retain the same request UUID and selection. Use the save
 
 Copy [layout.example.json](examples/layout.example.json) into private storage and edit it to the actual original paths and aliases. `sources` maps aliases to existing complete request files. `buyers` maps aliases to the original buyer directories. Both maps are explicit; use `{}` when intentionally registering none.
 
-Choose a new private configuration directory outside the original state, bundles, journals and MCP host directories. Its parent must already exist with private permissions. Then run:
+Choose a new private configuration directory outside the original state, bundles, journals and MCP host directories. The receiving journal and receiving MCP directory must also be separate, non-overlapping roots. Its parent must already exist with private permissions. Then run:
 
 ~~~sh
 starforge buyer-collections-setup \
@@ -375,6 +375,16 @@ starforge mcp-collection-receiver call \
 ~~~
 
 Read this receiving profile's actual SHA-256. It differs from the capture profile because it selects the received bundle, allowed kinds and `afterRestore` registration.
+
+When using an MCP client or the result-download CLI, start this receiving MCP endpoint in its own terminal with the existing protected MCP access configuration:
+
+~~~sh
+starforge mcp-collection-receiver serve \
+  --dir /srv/request-collections/control/receiving-mcp \
+  --port 0
+~~~
+
+Keep its announced URL for the restored collection's agent calls and customer-file downloads. Host-local `call --input` can operate the same registrations without starting this HTTP listener.
 
 Start `VERIFY` with one new verification UUID, the receiving profile/hash and the selected original record hash:
 

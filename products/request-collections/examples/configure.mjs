@@ -93,6 +93,7 @@ export function configurationFiles(selection,directory){
     receiverJournal:receiver.journalDirectory
   }))separate(out,path,'output and '+name);
   separate(receiver.journalDirectory,receiver.bundle,'Receiving journal and encrypted bundle');
+  separate(receiver.mcpDirectory,receiver.journalDirectory,'Receiving MCP directory and recovery journal');
   separate(source.mcpDirectory,source.bundle,'Source MCP directory and encrypted bundle');
   separate(receiver.mcpDirectory,receiver.bundle,'Receiving MCP directory and encrypted bundle');
   separate(source.connectionFile,out,'Source launch file and configuration directory');
