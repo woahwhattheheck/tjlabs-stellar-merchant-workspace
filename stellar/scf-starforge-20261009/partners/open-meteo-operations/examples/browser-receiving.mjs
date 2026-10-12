@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {spawn} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
+import {publish,readPrivate} from '../files.mjs';
 
 const OPERATION='SCF-WEATHER-EDITABLE-RECEIVING-6ARMS-20261012';
 const ORIGINAL_ARCHIVE_SHA256='28d56f92cdf35756773a40eb5a0125d03b5b0f86d5ebf63485d2c79365643f53';
@@ -13,7 +14,7 @@ const ORIGINAL_ARCHIVE_BYTES=33416;
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fail=(code,details)=>{throw Object.assign(new Error(code),{code,details});};
 function options(args){
- const allowed=new Set(['--runtime','--archive','--output','--chrome','--playwright','--owner','--report-title']);
+ const allowed=new Set(['--runtime','--archive','--output','--chrome','--playwright','--owner','--report-title','--archive-sha256','--archive-bytes']);
  const result={};
  for(let i=0;i<args.length;i++){const key=args[i];if(!allowed.has(key)||result[key]!==undefined||!args[i+1])fail('OPTION_INVALID',key);result[key]=args[++i];}
  for(const name of ['--runtime','--archive','--output','--chrome'])if(!result[name])fail('OPTION_REQUIRED',name);
@@ -27,11 +28,15 @@ async function atomic(path,value){
  await writeFile(tmp,JSON.stringify(value,null,2)+'\n',{mode:0o600,flag:'wx'});
  await rename(tmp,path);
 }
-async function retained(path,bytes){
+async function retained(path,input){
  await mkdir(dirname(path),{recursive:true,mode:0o700});
- if(await exists(path)){if(!(await readFile(path)).equals(Buffer.from(bytes)))fail('RETAINED_FILE_CHANGED',{path});}
- else await writeFile(path,bytes,{mode:0o600,flag:'wx'});
- return {path,bytes:Buffer.byteLength(bytes),sha256:sha(bytes)};
+ const bytes=Buffer.isBuffer(input)?input:Buffer.from(input);
+ try{return await publish(path,bytes);}
+ catch(error){
+  if(error.code!=='EEXIST')throw error;
+  if(!(await readPrivate(path,bytes.length)).equals(bytes))fail('RETAINED_FILE_CHANGED',{path});
+  return {path,bytes:bytes.length,sha256:sha(bytes),status:'RETAINED'};
+ }
 }
 const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
 const equal=(left,right)=>JSON.stringify(canonical(left))===JSON.stringify(canonical(right));
@@ -60,11 +65,16 @@ async function main(){
  for(const p of [logs,deliveries,screenshots])await mkdir(p,{recursive:true,mode:0o700});
  const source=join(runtime,'partners','open-meteo-operations');
  process.env.OPEN_METEO_RUNTIME_ROOT=runtime;
+ const selectedHash=opt['--archive-sha256'],selectedBytes=opt['--archive-bytes'];
+ if((selectedHash===undefined)!==(selectedBytes===undefined))fail('SELECT_BOTH_ARCHIVE_HASH_AND_BYTES');
+ if(selectedHash!==undefined&&(!/^[a-f0-9]{64}$/.test(selectedHash)||!/^[1-9][0-9]*$/.test(selectedBytes)||!Number.isSafeInteger(Number(selectedBytes))))fail('ARCHIVE_SELECTION_INVALID');
+ const archiveSha256=selectedHash??ORIGINAL_ARCHIVE_SHA256,archiveBytes=selectedBytes===undefined?ORIGINAL_ARCHIVE_BYTES:Number(selectedBytes);
  const bytes=await readFile(archive);
- if(bytes.length!==ORIGINAL_ARCHIVE_BYTES||sha(bytes)!==ORIGINAL_ARCHIVE_SHA256)fail('ORIGINAL_WEATHER_ARCHIVE_CHANGED',{bytes:bytes.length,sha256:sha(bytes)});
+ if(bytes.length!==archiveBytes||sha(bytes)!==archiveSha256)fail('ORIGINAL_WEATHER_ARCHIVE_CHANGED',{expected:{bytes:archiveBytes,sha256:archiveSha256},actual:{bytes:bytes.length,sha256:sha(bytes)}});
  const owner=opt['--owner']??'TJL weather receiving operator';
  const reportTitle=opt['--report-title']??'Received weather operating review — retained forecast, history and ensemble';
- const selection={schema:'stellar-forge.weather-receiving-operation.v1',operation:OPERATION,runtime,archiveSha256:ORIGINAL_ARCHIVE_SHA256,archiveBytes:bytes.length,owner,reportTitle};
+ const selection={schema:'stellar-forge.weather-receiving-operation.v1',operation:OPERATION,runtime,archiveSha256,archiveBytes:bytes.length,owner,reportTitle};
+ if(archiveSha256!==ORIGINAL_ARCHIVE_SHA256)selection.historicalArchiveReference={bytes:ORIGINAL_ARCHIVE_BYTES,sha256:ORIGINAL_ARCHIVE_SHA256,relationship:'Earlier engineering run; this operation receives the explicitly selected archive.'};
  const inputPath=join(logs,'selection.json');
  if(await exists(inputPath)){if(!equal(await json(inputPath),selection))fail('ORIGINAL_OPERATION_SELECTION_CHANGED');}
  else await atomic(inputPath,selection);
@@ -80,8 +90,8 @@ async function main(){
  const {inspectWeatherHandover,prepareWeatherReceiving}=await import(pathToFileURL(join(source,'portable.mjs')));
  const converted=join(deliveries,'original-editable.weather.json');
  await phase('convert-original-zip',async()=>{
-  if(await exists(converted)){const retainedValue=inspectWeatherHandover(await readFile(converted,'utf8'));if(retainedValue.value.legacyArchive?.sha256!==ORIGINAL_ARCHIVE_SHA256)fail('ORIGINAL_CONVERSION_CHANGED');return retainedValue.review;}
-  return runCli('convert-original-zip',['from-report-zip','--input',originalZip,'--output',converted,'--archive-sha',ORIGINAL_ARCHIVE_SHA256]);
+  if(await exists(converted)){const retainedValue=inspectWeatherHandover(await readFile(converted,'utf8'));if(retainedValue.value.legacyArchive?.sha256!==archiveSha256)fail('ORIGINAL_CONVERSION_CHANGED');return retainedValue.review;}
+  return runCli('convert-original-zip',['from-report-zip','--input',originalZip,'--output',converted,'--archive-sha',archiveSha256]);
  });
  const originalContent=await readFile(converted,'utf8'),originalInspection=inspectWeatherHandover(originalContent);
  await atomic(join(logs,'original-handover-review.json'),originalInspection.review);
@@ -219,7 +229,7 @@ async function main(){
    return outputs;
   });
   const onwardContent=await readFile(newHandover,'utf8'),onward=inspectWeatherHandover(onwardContent);
-  if(onward.value.report.id!==newReport.id||onward.value.receivingHistory.length<1||!onward.value.receivingHistory.some(item=>item.originalArchive?.sha256===ORIGINAL_ARCHIVE_SHA256))fail('ONWARD_ORIGINAL_LINEAGE_CHANGED');
+  if(onward.value.report.id!==newReport.id||onward.value.receivingHistory.length<1||!onward.value.receivingHistory.some(item=>item.originalArchive?.sha256===archiveSha256))fail('ONWARD_ORIGINAL_LINEAGE_CHANGED');
   await phase('initialize-second-review',()=>initializeWeatherReview({stateRoot:secondRoot}));
   second=await launch(secondRoot);
   const other=await newPage(second);
@@ -258,12 +268,12 @@ async function main(){
   if(pageErrors.length||failedResponses.length)fail('BROWSER_OPERATION_ERRORS',{pageErrors,failedResponses});
   const result={schema:'stellar-forge.weather-editable-receiving-result.v1',operation:OPERATION,complete:true,
    startedAt:progress.startedAt,finishedAt:new Date().toISOString(),runtime:{node:process.version,executable:process.execPath,source:runtime},
-   originalArchive:{path:originalZip,bytes:bytes.length,sha256:ORIGINAL_ARCHIVE_SHA256},original:originalInspection.review,
+   originalArchive:{path:originalZip,bytes:bytes.length,sha256:archiveSha256},original:originalInspection.review,
    first:{directory:firstRoot,receipt,revisedDecision:revised},onward:{directory:secondRoot,review:onward.review,receipt:onwardReceipt.result.receipt},
    nextReport:newReport,deliveries:progress.phases['download-complete-onward-delivery'],
    phases:Object.keys(progress.phases),browser:{pageErrors,failedResponses,screenshots},sourceSelection:selection};
   await atomic(join(root,'result.json'),result);
-  process.stdout.write(JSON.stringify({complete:true,operation:OPERATION,result:join(root,'result.json'),originalArchiveSha256:ORIGINAL_ARCHIVE_SHA256,nextReport:newReport.id,onwardPackageSha256:onward.packageSha256})+'\n');
+  process.stdout.write(JSON.stringify({complete:true,operation:OPERATION,result:join(root,'result.json'),originalArchiveSha256:archiveSha256,nextReport:newReport.id,onwardPackageSha256:onward.packageSha256})+'\n');
  }finally{
   await context?.close().catch(()=>{});
   await second?.close().catch(()=>{});
