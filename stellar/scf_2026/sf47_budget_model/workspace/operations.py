@@ -21,6 +21,7 @@ import operations_completion as completion
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_implementation as implementation
+import operations_expenses as expenses
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -96,6 +97,7 @@ class Operations:
             """)
             completion.install(workspace.db)
             installations.install(workspace.db)
+            expenses.install(workspace.db)
             row = workspace.db.execute("SELECT value FROM ops_metadata WHERE key='schema'").fetchone()
             if row and row[0] != SCHEMA:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
@@ -122,6 +124,9 @@ class Operations:
             "SELECT metadata_json FROM ops_sources WHERE program_id=? ORDER BY id", (program_id,)))}
         result = {"program": program, "plan": plan, "records": records, "sources": sources,
                   "completionPlans": completion.load_plans(self, program_id)}
+        expense_records = expenses.load(self, program_id)
+        if expenses.has_records(expense_records):
+            result["expenseRecords"] = expense_records
         refs = installations.latest_refs(installations.load(self, program_id))
         if refs:
             result["installationRefs"] = refs
@@ -137,6 +142,8 @@ class Operations:
             result["completionPlans"] = context["completionPlans"]
         if context.get("installationRefs"):
             result["installationRefs"] = context["installationRefs"]
+        if expenses.has_records(expenses.retained(context)):
+            result["expenseRecords"] = context["expenseRecords"]
         return result
 
     def _read(self, program_id):
@@ -144,6 +151,7 @@ class Operations:
         result = {**context, "sources": list(context["sources"].values()),
                   "report": domain.report(**context)}
         result["completion"] = completion.dashboard(context)
+        result["expenseAttribution"] = expenses.dashboard(context)
         cohort_history = self._cohort_history(program_id)
         result["installations"] = installations.latest_summaries(installations.load(self, program_id))
         result["reviews"] = [{**{key: row[key] for key in ("id", "version", "createdAt", "actor", "note", "businessSha256")},
@@ -282,6 +290,17 @@ class Operations:
                 if result["unchanged"]:
                     return {"id": program_id, "version": expected, "action": command, "kind": kind,
                             "recordId": record_id, **extra_receipt}
+            elif command in expenses.ACTIONS:
+                result = (expenses.receive(self, context, data, actor, next_version)
+                          if command == "expense.receive"
+                          else expenses.attribution_command(self, context, command, data, actor, next_version, note))
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {key: value for key, value in result.items()
+                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
+                if result["unchanged"]:
+                    return {"id": program_id, "version": expected, "action": command, "kind": kind,
+                            "recordId": record_id, **extra_receipt}
             elif command == "implementation.prepare":
                 result = implementation.prepare(self, context, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -293,7 +312,7 @@ class Operations:
                 extra_receipt = {key: value for key, value in result.items()
                                  if key not in ("before", "after", "kind", "recordId")}
             elif command.startswith("completion."):
-                if command == "completion.submit" and self.db.execute("SELECT COUNT(*) FROM ops_records WHERE program_id=?", (program_id,)).fetchone()[0] >= MAX_RECORDS:
+                if command == "completion.submit" and expenses.record_count(self, program_id) >= MAX_RECORDS:
                     domain.fail("This operations case has reached its retained-record bound.", status=413)
                 result = completion.command(self, context, command, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -377,7 +396,7 @@ class Operations:
                              "awards": "save", "deployments": "save", "purchases": "record", "outcomes": "save"}
                     if verb != valid[kind] and not (kind == "purchases" and verb == "observe" and before):
                         domain.fail("This record uses another lifecycle action.")
-                    if not before and self.db.execute("SELECT COUNT(*) FROM ops_records WHERE program_id=?", (program_id,)).fetchone()[0] >= MAX_RECORDS:
+                    if not before and expenses.record_count(self, program_id) >= MAX_RECORDS:
                         domain.fail("This operations case has reached its retained-record bound.", status=413)
                     if kind == "purchases" and before and (verb != "observe" or not note):
                         domain.fail("Use purchase.observe with a reason to retain a later source observation.")
@@ -513,6 +532,24 @@ class Operations:
         with self.workspace.mutex:
             review = self.review(program_id, review_id)
             return completion.review_files(review, lambda source_id: self.source(program_id, source_id))
+
+    def preview_expense(self, program_id, body):
+        with self.workspace.mutex:
+            return expenses.preview(self._context(identifier(program_id, "operation")), body)
+
+    def expense_attribution(self, program_id):
+        with self.workspace.mutex:
+            return expenses.dashboard(self._context(identifier(program_id, "operation")))
+
+    def expense_file(self, program_id, filename):
+        if filename not in expenses.EXPORT_NAMES:
+            domain.fail("Choose an original expense attribution export.", "NOT_FOUND", 404)
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            files = expenses.export_files(context)
+            if filename not in files:
+                domain.fail("Receive the original issued expense source before exporting its attribution.", "EXPENSE_SOURCE_REQUIRED", 409)
+            return files[filename]
 
     def preview_buyer(self, program_id, body):
         with self.workspace.mutex:
@@ -727,6 +764,7 @@ class Operations:
                          "Open through the existing workspace's operations import. This bundle preserves the original planner history, selected immutable plan, recorded source attachments, operations events, close reviews complete saved operating forecasts and delivery allocation portfolios.\n"
                          "Conditional planning amounts are separate from recorded cash. Testnet purchases are product operations. A work review or case close does not create an award, payment, customer agreement or external tranche acceptance.\n"
                          "Private access keys are not included.\n").encode()}
+            files.update(expenses.export_files(context))
             if installation_id is not None or installation_revision is not None:
                 files.update(installations.selected_files(context, saved_installations, installation_id, installation_revision))
             for metadata in context["sources"].values():
@@ -787,6 +825,8 @@ class Operations:
         # Original completion plans and source records retain their native validation below.
         if "completion-calendar.json" in files:
             expected.add("completion-calendar.json")
+        if expenses.has_records(document.get("expenseRecords") or expenses.empty()):
+            expected.update(expenses.EXPORT_NAMES)
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
@@ -884,6 +924,9 @@ class Operations:
                 domain.fail("The complete original review snapshot and report are required.")
             if digest(review["snapshot"]) != review["businessSha256"]:
                 domain.fail("A frozen review differs from its retained business snapshot.")
+        expense_records = expenses.validate_import(context, document.get("expenseRecords"), events, reviews, files)
+        if expenses.has_records(expense_records):
+            context["expenseRecords"] = expense_records
         cohort.validate_import(reviews, events)
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
         saved_installations = document.get("installations", [])
@@ -979,6 +1022,7 @@ class Operations:
                 self.db.execute("INSERT INTO ops_events VALUES(?,?,?)", (pid, event["version"], canonical(event)))
             for review in document["reviews"]:
                 self.db.execute("INSERT INTO ops_reviews VALUES(?,?,?)", (pid, review["id"], canonical(review)))
+            expenses.save_import(self, pid, expense_records)
             for value in document.get("completionPlans", []):
                 completion.save_row(self, pid, value)
             for value in saved_installations:
