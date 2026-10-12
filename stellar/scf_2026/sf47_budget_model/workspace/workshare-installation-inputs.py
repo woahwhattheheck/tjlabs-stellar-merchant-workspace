@@ -145,6 +145,70 @@ def prepare(archive_path, directory):
     exact_file(directory / "Original_Workshare_Input_Receiving.json", json_bytes(result))
     return result
 
+
+def verify_cli_export(archive_path, reference_path, case_id, installation_id, revision, edition_sha):
+    """Recover an original CLI export using the native reader and full saved case."""
+    import io
+    from operations import Operations
+    import operations_completion as completion
+    import operations_installations as installations
+    from model import MAX_BUNDLE
+    archive_path, reference_path = Path(archive_path), Path(reference_path)
+    raw, reference = archive_path.read_bytes(), reference_path.read_bytes()
+    document, files = Operations._unpack(raw)
+    original, original_files = Operations._unpack(reference)
+    def business(value):
+        value = dict(value)
+        require(isinstance(value.pop("exportedAt", None), str), "Retain the original export timestamp.")
+        return value
+    require(business(document) == business(original), "The CLI archive belongs to another complete saved case.")
+    selected = installations.selection_from_files(document, files)
+    require(document["program"]["id"] == case_id and selected ==
+            {"id": installation_id, "revision": revision, "sha256": edition_sha},
+            "The CLI archive selects another original Installation edition.")
+    require(set(files) == set(original_files), "The complete CLI case file inventory differs.")
+    def planning_files(payload):
+        with zipfile.ZipFile(io.BytesIO(payload)) as bundle:
+            members = bundle.infolist()
+            require(len(members) <= 20 and len({item.filename for item in members}) == len(members)
+                    and sum(item.file_size for item in members) <= MAX_BUNDLE,
+                    "The complete original planning archive has invalid entries.")
+            manifest = json.loads(bundle.read("MANIFEST.json"))
+            require(manifest["schema"] == "stellar-forge.sf47-planning.v1.bundle",
+                    "Use the original complete planning bundle.")
+            entries = manifest["files"]
+            require(len(entries) == len(members) - 1 and
+                    {entry["path"] for entry in entries} == {item.filename for item in members} - {"MANIFEST.json"},
+                    "The original planning manifest is incomplete.")
+            result = {}
+            for entry in entries:
+                body = bundle.read(entry["path"])
+                require(len(body) == entry["bytes"] and sha(body) == entry["sha256"],
+                        "A complete original planning file differs.")
+                result[entry["path"]] = body
+            return result
+    current_plan, source_plan = planning_files(files["planning.zip"]), planning_files(original_files["planning.zip"])
+    require(set(current_plan) == set(source_plan), "The original planning file selection differs.")
+    for name in current_plan:
+        if name == "workspace.json":
+            require(business(json.loads(current_plan[name])) == business(json.loads(source_plan[name])),
+                    "The original full planning revision history differs.")
+        else:
+            require(current_plan[name] == source_plan[name], "The original planning source differs: " + name)
+    context = {**document, "sources": {item["id"]: item for item in document["sources"]}}
+    for name in files:
+        if name in ("operations.json", "planning.zip"):
+            continue
+        if name == "completion-calendar.json":
+            calendar = json.loads(files[name])
+            require(calendar == completion.dashboard(context, calendar["asOfDate"]),
+                    "The retained dated calendar differs from the original native calculation.")
+        else:
+            require(files[name] == original_files[name], "The complete original case member differs: " + name)
+    return {"path": str(archive_path.resolve()), "bytes": len(raw), "sha256": sha(raw),
+            "caseId": case_id, "installationId": installation_id, "revision": revision,
+            "editionSha256": edition_sha, "files": len(files), "planningFiles": len(current_plan)}
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", required=True)
