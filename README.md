@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Publish retained SEC facts and filings, then reopen the entire operator workspace | [SEC EDGAR operating guide](products/sec-edgar/OPERATING.md) | Original public-source editions, every saved revision, customer delivery, and a complete portable receiving package |
 | Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, station and datum review, model-input conventions, coastal workbooks, native publication and complete customer files |
 | Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
 | Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
@@ -312,6 +313,7 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [SEC EDGAR merchant](products/sec-edgar/README.md) and [complete operator guide](products/sec-edgar/OPERATING.md): retained company facts and filings, selected product installation, customer delivery, and whole-workspace export, receiving, and reopen.
 - [QuestDB reports, retained editions, publication and customer receiving](products/questdb/OPERATING.md)
 
 - [Coastal source review, complete workbooks and customer receiving](products/coops/OPERATING.md)
