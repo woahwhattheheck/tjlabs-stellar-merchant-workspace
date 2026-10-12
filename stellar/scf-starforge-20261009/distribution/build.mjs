@@ -29,7 +29,7 @@ function isRuntimeFile(path, explicitRuntime = false) {
   return !parts.some(part => part.startsWith('.') ||
     (excludedDirs.has(part) && !(part === 'fixtures' && declaredData))) &&
     (explicitRuntime || !excludedName.test(parts.at(-1))) &&
-    (supported.test(path) || (explicitRuntime && /\.(?:zip|parquet|gz|rst)$/i.test(path)) ||
+    (supported.test(path) || (explicitRuntime && /\.(?:zip|parquet|gz|rst|conf)$/i.test(path)) ||
       ['LICENSE', 'go.mod', 'Cargo.lock'].includes(parts.at(-1)) ||
       (explicitRuntime && (['COPYING', 'DESCRIPTION'].includes(parts.at(-1)) ||
         /^(?:LICENSE|NOTICE)[.-][A-Za-z0-9][A-Za-z0-9._-]*$/i.test(parts.at(-1)))));
@@ -129,7 +129,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     originalInputs.has(path);
   // A selected archive carries only its original declarations, even when its
   // complete distribution component contains other product contribution files.
-  // Explicit support files include maintained ZIP data and can override a
+  // Explicit support files include maintained ZIP data and text .conf files, and can override a
   // test-like filename. Undeclared archives remain outside source selection;
   // directory, explicit exclusion and regular-file checks still apply.
   const selected = tree.filter(item => selectionIncludes(item.path) &&
