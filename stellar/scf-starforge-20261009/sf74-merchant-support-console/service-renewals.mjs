@@ -254,17 +254,21 @@ async function proposal(record,input,context){
     need(!other,'This agreement already has a proposed renewal. Open that renewal to continue it.','SERVICE_RENEWAL_CONFLICT',409);
     source=head;
     if(head.status==='proposed'){
-      const terminal=latestRenewals(record.renewals).find(row=>['declined','closed'].includes(row.state)&&same(row.continuationTerms,ref(head))&&!row.activatedTerms);
-      need(terminal,'Choose an active or ended source agreement.');source=resolveTerms(record.terms,terminal.sourceTerms,'source agreement');
+      const priorAgreement=latestTerms(record.terms.filter(row=>['active','ended'].includes(row.status)&&row.revision<head.revision),head.id);
+      const terminal=latestRenewals(record.renewals).find(row=>['declined','closed'].includes(row.state)&&
+        !row.activatedTerms&&row.continuationTerms.id===head.id&&row.continuationTerms.revision<=head.revision&&
+        priorAgreement&&same(row.sourceTerms,ref(priorAgreement)));
+      need(terminal,'Choose an active or ended source agreement, or its closed renewal with a retained current proposal.');
+      source=resolveTerms(record.terms,terminal.sourceTerms,'source agreement');
     }
   }
   need(['active','ended'].includes(source.status)&&source.effectiveUntil,'The original agreement needs active or ended terms and an exact ending timestamp.');
   const actor=text(input.actor,'renewal reviewer',240),note=text(input.note??'','renewal note',8000,true);
   const changes=fields(input.continuation??{},CONTINUATION_FIELDS,'continuation terms');
   if(!previous)need(Object.hasOwn(changes,'effectiveUntil'),'Enter the continuation ending timestamp, or null for an open-ended continuation.');
-  const wanted=termInput(previous?head:source);
+  const wanted=termInput(previous||head.status==='proposed'?head:source);
   Object.assign(wanted,copy(changes),{expectedRevision:head.revision,status:'proposed',reference:'',reviewedBy:actor,note});
-  if(!previous&&!Object.hasOwn(changes,'effectiveFrom'))wanted.effectiveFrom=source.effectiveUntil;
+  if(!previous&&head.status!=='proposed'&&!Object.hasOwn(changes,'effectiveFrom'))wanted.effectiveFrom=source.effectiveUntil;
   const identical=previous&&TERM_FIELDS.filter(key=>!['reviewedBy','note'].includes(key)).every(key=>same(wanted[key],head[key]));
   let native=null,continuation=head;
   if(!identical){native=await saveServiceTerms(record,wanted);continuation=native.terms;}

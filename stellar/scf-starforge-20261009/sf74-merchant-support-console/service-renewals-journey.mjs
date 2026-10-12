@@ -34,7 +34,7 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
   };
   const changeTerms=async input=>changeServiceCase({store:caseStore,args:{
     id:caseId,expectedRevision:await revision(),requestId:randomUUID(),action:'terms',input}});
-  const propose=async(source,title)=>{
+  const propose=async(source,title,expectedContinuity='continuous')=>{
     const requestId=randomUUID(),input={
       id:randomUUID(),requestId,expectedRevision:null,termsId:source.id,
       expectedTermsRevision:source.revision,expectedTermsSha256:source.sha256,
@@ -43,7 +43,7 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
     };
     const expectedRevision=await revision();
     const preview=await renewals.preview({id:caseId,expectedRevision,input});
-    assert.equal(preview.continuity,'continuous');
+    assert.equal(preview.continuity,expectedContinuity);
     const args={id:caseId,expectedRevision,requestId,input:{...input,expectedPreviewSha256:preview.previewSha256}};
     return {args,preview};
   };
@@ -111,8 +111,18 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
   assert.deepEqual(await renewals.queue(queueArgs),unplanned,'The same saved portfolio must produce the same dated queue');
 
   const proposed=await propose(source,'Renewed operational service');
-  const [first,concurrent]=await Promise.all([renewals.propose(proposed.args),desk().propose(proposed.args)]);
-  assert.equal(first.renewal.sha256,concurrent.renewal.sha256,'Concurrent identical requests retain one immutable result');
+  const attempts=await Promise.allSettled([renewals.propose(proposed.args),desk().propose(proposed.args)]);
+  assert(attempts.some(result=>result.status==='fulfilled'),'An original case writer must complete this request');
+  const completed=[];
+  for(const attempt of attempts){
+    if(attempt.status==='fulfilled')completed.push(attempt.value);
+    else{
+      assert.equal(attempt.reason.code,'CASE_STORE_BUSY','Only the original in-flight writer may defer this identical request');
+      completed.push(await desk().propose(proposed.args));
+    }
+  }
+  const [first,concurrent]=completed;
+  assert.equal(first.renewal.sha256,concurrent.renewal.sha256,'Concurrent identical requests recover one immutable result');
   assert.equal(first.renewal.state,'proposed');
   assert.equal(first.renewal.continuationTerms.revision,source.revision+1);
   assert.equal(first.renewal.request.input.expectedCaseRevision,proposed.args.expectedRevision);
@@ -201,7 +211,9 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
   const secondResponse=await receive(secondLinked.quote,'ACCEPTED','2026-10-11T09:00:00.000Z');
   const currentView=await renewals.read({id:caseId});
   const proposedTerms=currentView.terms.find(row=>row.sha256===secondLinked.renewal.continuationTerms.sha256);
-  const amended=(await changeTerms({...termsForm(proposedTerms),owner:'Intervening operational owner'})).result;
+  const amended=(await changeTerms({...termsForm(proposedTerms),owner:'Intervening operational owner',
+    effectiveFrom:'2026-11-03T00:00:00.000Z',
+    targets:[{kind:'ENDPOINT_UNAVAILABLE',responseMinutes:45,recoveryMinutes:360}]})).result;
   const changedTermsDecision=await decideArgs(secondLinked.renewal,'accepted',secondResponse,'Attempt before reviewing intervening terms.');
   await unchangedAfter(()=>renewals.decide(changedTermsDecision),'SERVICE_RENEWAL_TERMS_CONFLICT');
   const closeArgs=await decideArgs(secondLinked.renewal,'closed',null,'The operational amendment superseded this pending proposal.');
@@ -209,6 +221,28 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
   assert.equal(closed.renewal.state,'closed');
   assert.equal(closed.renewal.activatedTerms,null);
   assert(closed.terms.some(row=>row.sha256===amended.sha256));
+
+  const replacementPrepared=await propose(amended,'Renewal of the reviewed operational amendment','gap');
+  const replacement=await renewals.propose(replacementPrepared.args);
+  assert.deepEqual(replacement.renewal.sourceTerms,{id:second.id,revision:second.revision,sha256:second.sha256});
+  const replacementTerms=replacement.terms.find(row=>row.sha256===replacement.renewal.continuationTerms.sha256);
+  assert.equal(replacementTerms.revision,amended.revision+1);
+  assert.equal(replacementTerms.owner,amended.owner);
+  assert.equal(replacementTerms.effectiveFrom,amended.effectiveFrom);
+  assert.deepEqual(replacementTerms.targets,amended.targets);
+  const oldQuoteAttempt={id:caseId,expectedRevision:await revision(),requestId:randomUUID(),input:{
+    id:replacement.renewal.id,expectedRevision:replacement.renewal.revision,termsId:second.id,
+    expectedTermsRevision:replacementTerms.revision,expectedTermsSha256:replacementTerms.sha256,
+    quoteId:secondLinked.quote.id,quoteSha256:secondLinked.quote.sha256,actor,note:'An older quote cannot bind this replacement.'
+  }};
+  await unchangedAfter(()=>renewals.propose(oldQuoteAttempt),'SERVICE_RENEWAL_QUOTE_CHANGED');
+  const replacementLinked=await quoteAndAttach(replacement.renewal);
+  const replacementResponse=await receive(replacementLinked.quote,'ACCEPTED','2026-10-11T13:00:00.000Z');
+  const replacementAccepted=await renewals.decide(await decideArgs(replacementLinked.renewal,'accepted',
+    replacementResponse,'Activate the separately quoted current operational amendment.'));
+  assert.equal(replacementAccepted.renewal.state,'accepted');
+  assert.equal(replacementAccepted.terms.find(row=>row.sha256===replacementAccepted.renewal.activatedTerms.sha256).owner,amended.owner);
+  await validateServiceRenewalHandover(await renewals.handover({id:caseId,renewalId:replacementAccepted.renewal.id}));
 
   const beforeMerge=await head(),beforeMergeView=await renewals.read({id:caseId});
   await caseStore.save({id:caseId,expectedRevision:beforeMerge.revision,workspaceText:oldWorkspace,
@@ -220,7 +254,9 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
   assert(afterMergeView.responses.some(row=>row.id===latestAcceptance.id));
   assert.equal(afterMergeView.renewalHistory.filter(row=>row.requestId===proposed.args.requestId).length,1);
   const closedQueue=await renewals.queue({...queueArgs,includeClosed:true});
-  assert(closedQueue.rows.some(row=>row.renewal?.id===closed.renewal.id&&row.state==='closed'));
+  assert(closedQueue.rows.some(row=>row.renewal?.id===closedAccepted.renewal.id&&row.state==='closed'));
+  assert(closedQueue.rows.some(row=>row.renewal?.id===replacementAccepted.renewal.id&&row.state==='accepted'));
+  assert(afterMergeView.renewalHistory.some(row=>row.sha256===closed.renewal.sha256));
 
   const server=createConsoleServer({caseStore,commercialDesk,renewalDesk:renewals});
   await new Promise((resolve,reject)=>{
@@ -276,7 +312,7 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
     checks:['native concurrent request recovery','finite unplanned portfolio and exact notice boundary',
       'quote-bound proposed edition','latest original customer response','accepted activation',
       'saved-case replay and conflicts','exact financial handover materials','portable workspace',
-      'intervening terms and closure','accepted head after closure','rehashed wrong active edition rejection','original older-workspace merge',
+      'intervening terms and closure','replacement after a reviewed amendment with a fresh quote','accepted head after closure','rehashed wrong active edition rejection','original older-workspace merge',
       'native HTTP portfolio/read/handover','HTTP request recovery and origin guard','served renewal page and modules']};
 }
 

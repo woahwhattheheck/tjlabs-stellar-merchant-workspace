@@ -170,10 +170,10 @@ export function openCaseServiceRenewals({caseStore, commercialDesk, workspaceId}
       });
       const savedValue = {...saved.case, currentRevision: saved.case.revision};
       const updated = {...loaded, service: changed.record, value: savedValue};
-      return {...view(updated), renewal: changed.renewal, termsChanged: changed.terms, reused: false};
+      return {...view(updated), renewal: changed.renewal, termsChanged: changed.terms, reused: saved.unchanged === true};
     } catch (error) {
-      if (error.code !== 'CASE_CONFLICT') throw error;
-      const latest = await load(args.id);
+      let latest;
+      try { latest = await load(args.id); } catch { throw error; }
       if (!latest.service.renewals.some(row => row.requestId === input.requestId)) throw error;
       const retained = await operation(latest.service, input, latest.context);
       need(retained.reused && retained.renewal.caseId === args.id,
