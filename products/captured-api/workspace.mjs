@@ -356,11 +356,14 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
     const selected = await consoleConnection(profile);
     if (!browserOnly) {
       const { startMerchantMcp } = await import('../../stellar-forge/mcp-merchant-operator/serve.mjs');
-      mcp = await startMerchantMcp({ configPath: profile.configuration, port: mcpPort, tokenEnv, environment });
+      mcp = await startMerchantMcp({ configPath: profile.configuration, port: mcpPort, tokenEnv, environment,
+        consoleDirectory: join(profile.directory, 'operator-console') });
     }
     if (launchBinding) await inspectBinding();
-    started = { browserUrl: selected.url, mcpUrl: mcp?.url ?? null, workspace: 'merchant',
-      sourceCount: selected.library.total, state: 'OPEN' };
+    started = { browserUrl: selected.url, mcpUrl: mcp?.url ?? null,
+      operatorUrl: mcp?.consoleUrl ?? null,
+      operatorConsoleDirectory: mcp ? join(profile.directory, 'operator-console') : null,
+      workspace: 'merchant', sourceCount: selected.library.total, state: 'OPEN' };
     ownership.assertHeld();
     await write(join(profile.directory, SESSION), { ...initial, ...started }, true);
     return { ...profile, ...started, ...(launchBinding ? { launchBinding } : {}),

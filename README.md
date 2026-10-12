@@ -18,9 +18,11 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
-| Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
+| Review and publish an economic data edition | **Applications → Eurostat economic editions** or `starforge eurostat` | Exact official source captures, reviewed dimensions, complete economic briefings, native merchant publication and original customer receiving |
+| Turn captured HTTP API traffic into a merchant | `starforge captured-api` or **Applications → Captured API merchant** | Original source review, exact route prices and policies, persistent workflows, native merchant packages, releases and complete customer receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Operate and hand over buyer request collections | **Applications → Request collections** or `starforge buyer-collections-workspace` | Reviewed original requests, exact spending caps and outcomes, complete encrypted backup, receiving and reopening |
+| Operate a saved merchant fleet | **Applications → Merchant fleet** or `starforge merchant-fleet-workspace` | Reviewed source releases, controlled activation and drain, client delivery, durable settlement delivery, and encrypted recovery with the original fleet state |
 | Operate native MPP merchant and customer | **Applications → Native MPP merchant and customer** or `starforge mpp-workspace` | One retained native workspace, original 402 purchase and consent/recovery flow, browser/agent operation, twelve-file customer delivery and exact paid-response receiving |
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
 | Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
@@ -30,7 +32,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
-| Review research sources and deliver cited analysis | `starforge research-workspace`, `starforge research-client` and the merchant Research tools | One saved question, original source editions, reviewed Crossref operations, analyst findings and complete report/portable receiving |
+| Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
@@ -59,6 +61,13 @@ pricing decisions and complete workspace receiving. The
 connects original supplier sources, allocation, saved pricing reviews, scenario
 planning and complete backup receiving through that same Applications lifecycle.
 
+The [merchant fleet guide](products/merchant-fleet/OPERATING.md) connects an existing
+fleet plan and its original seller stores to Applications review, start, open,
+stop and reopening. `starforge merchant-fleet-configure` prepares the native
+configuration and exact request files; the same guide carries release review,
+activation and rollback, customer files, accounting and fulfillment delivery,
+and the original encrypted fleet recovery and receiving workflow.
+
 The [Kafka workspace guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/README.md)
 connects original broker capture, exact event history, field mapping and merchant
 delivery. Its [complete client](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/CLIENT.md)
@@ -80,6 +89,18 @@ The [complete publisher workflow](https://github.com/woahwhattheheck/tjlabs-stel
 uses the same runtime and Applications to operate both included original
 AidData Nigeria and Transparency International editions and deliver each
 complete customer archive.
+
+The [Eurostat operating guide](products/eurostat/OPERATING.md) connects official
+source acquisition, exact economic reports, native publication and complete
+customer receiving. Build the complete selected product with
+`--selection eurostat` and open its original Applications entry.
+
+The [Research Documents and Pipelines guide](products/research/OPERATING.md) and
+[installation and receiving guide](products/research/RECEIVING.md) connect saved
+questions, completed documents and managed processing jobs, reviewed source
+editions and findings, and complete report, original-file and portable delivery
+through the same browser, CLI and merchant attachment. Build its complete
+selected product with `--selection research-workspace`.
 
 ## Open the source product
 
@@ -235,6 +256,8 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Research Documents, managed Pipelines and full receiving](products/research/RECEIVING.md)
+- [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
 - [IATI publisher review, finance and operator interfaces](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
 - [IATI complete installed publisher workflow and customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
 - [Complete OData collections, Analysis and customer receiving](stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md)
@@ -247,6 +270,7 @@ the replacement is operating as intended.
 - [Research questions, source review and complete delivery](products/research/OPERATING.md)
 - [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
 - [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
+- [Managed merchant fleet, settlement delivery and encrypted recovery](products/merchant-fleet/OPERATING.md)
 - [Request Collections, encrypted backup and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/request-collections/OPERATING.md)
 - [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
 - [GraphQL product setup and complete project handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/HANDOVER.md)
