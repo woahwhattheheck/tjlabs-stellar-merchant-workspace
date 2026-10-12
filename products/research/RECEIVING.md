@@ -431,6 +431,100 @@ standalone export/receive/workbook commands. A known completed receiving operati
 returns its original verified receipt; an interrupted original native job stays
 with its existing owner and output selection.
 
+## 11. Receive the interactive Analysis and native agent workflow
+
+The complete `research-workspace` selection includes the Analysis Research
+intake, its original browser, all eight native MCP actions and the complete
+browser/workbook receiving programme. Install the original Python workbook extra
+from this same release as in step 8. Use the actual selected Node, Playwright and
+Chromium installations on the receiving Linux host; the programme starts its
+original Analysis service and browser together and keeps their temporary files
+inside the explicitly selected private temporary root.
+
+The source must already be a saved Documents purchase/edition or a retained
+Pipelines output/edition in the existing Research workspace. Prepare the private
+connection registry described in
+[the operating workflow](OPERATING.md#use-the-original-analysis-browser-and-native-agent).
+Select the actual source through the original review endpoint or browser and
+retain a JSON selection with these exact fields:
+
+| Field | Original value |
+| --- | --- |
+| `connection` | A name from the launcher-selected Research registry |
+| `expected_workspace_id` | That connection's actual `research_<64 hex>` identity |
+| `dossier_id` | The existing `d_<UUID>` dossier, retaining its UUID hyphens |
+| `family` | `documents` or `pipelines` |
+| `selection` | Documents: `{purchaseId}` or `{editionId}`; Pipelines: `{operationId,outputId}` or `{editionId}`, with the actual returned IDs |
+| `expected_edition_sha256` | The complete edition digest returned by that exact source review |
+| `name` | `document_elements`, the original receiving programme's source/view name |
+| `title` | The reviewed source title, at most 160 characters with no control characters |
+
+These fields are a source selection, not a provider submission. Keep the complete
+selection and registry in the private receiving operation. The registry retains
+only the source connection path and identity; the existing connection file owns
+its capability.
+
+Run the complete original receiving programme against that exact saved source:
+
+~~~sh
+python3 /absolute/installed-source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_intake_workbook.py \
+  --directory /srv/starforge/customer/research-analysis-receiving \
+  --checkout /absolute/installed-source \
+  --research-connections /srv/starforge/private/analysis-research-connections.json \
+  --node /absolute/runtime/bin/node \
+  --playwright /absolute/runtime/node_modules/playwright/index.mjs \
+  --chromium /absolute/runtime/chrome-headless-shell \
+  --temporary-root /dev \
+  receive --selection /srv/starforge/private/reviewed-analysis-source.json
+~~~
+
+Use an existing writable process-private temporary root appropriate to that
+host. The operation directory and returned customer files remain persistent.
+
+The programme opens the original browser, chooses the exact retained source,
+records the capture request before POST, observes and discards one accepted
+capture reply, and reopens that same original job. It follows the actual mapping,
+complete preview and immutable import. A previously interrupted preview/import
+uses the original Activity continuation with its unchanged request and ID.
+The underlying maintained workbook receiver then activates the imported version,
+saves SQL, produces complete typed exports and workbook/handoff files, exports
+the whole original workspace, and cold-restores it.
+
+| Retained delivery | Original result |
+| --- | --- |
+| `operation.json`, `records/` | The actual source selection, capture/preview/import requests and subsequent query/export/workbook/archive identities |
+| `analysis/` | Captured original source revisions, imported data, saved queries, jobs and complete output history |
+| `browser/` | Actual capture and restored-view receipts plus their desktop/mobile images |
+| `deliveries/query/` | Complete JSONL, CSV and SQLite rows, including full text and provider metadata |
+| `deliveries/workbook/` | Every occurrence in the workbook and the complete typed-source handoff |
+| `deliveries/workspace/workspace.zip` | Original database, source-document files and selected query/workbook outputs |
+| `restored-analysis/` | Source-local receiving workspace with the original analytical identity |
+
+Repeat the same command and operation directory after interruption. It checks the
+retained selection and exact request identities before continuing. Completed
+browser phases verify and reuse their original images and receipts. The
+`inspect`, `finish --preview-sha256` and `reopen` actions operate that same
+saved programme. A source or selection change needs a separately reviewed
+operation.
+
+The restored browser opens its original capture, source inspection, mapping and
+imported rows without the earlier Research connection. The programme also
+verifies the original query digest, workbook and registered source files using
+the maintained archive receiver. It preserves complete/failed outcomes and
+existing customer edits when reopening an already-received archive.
+
+For agent receiving, register the same original Analysis listener under a native
+workspace alias and follow
+[the native Research capture programme](../../stellar-forge/mcp-paid-agent/ANALYSIS.md#saved-research-documents-and-managed-outputs).
+Read complete jobs through `job`; the reviewed response digest is
+`preview.result.preview_sha256`. The original native archive downloader and
+portable workspace receiver retain their existing complete-file and restore
+identities.
+
+The operating result records belong to the actual selected source and receiving
+host. The original managed-document and self-hosted source operations retain
+their provider, job and payment custody throughout this customer continuation.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |

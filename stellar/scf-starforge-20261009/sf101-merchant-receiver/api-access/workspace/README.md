@@ -224,3 +224,80 @@ try {
 The public model exposes pass connection, original purchase attachment, exact request preparation, queued execution and recovery, original merchant history, verified response reads and customer-history export. Its mutation methods take an operation ID and expected workspace revision, matching the browser's durable action contract.
 
 Customer-history JSON, original buyer HTML and exact response/proof downloads provide the handoff files. The private customer directory and its original native authority paths provide the complete operational reopening state.
+
+
+## Operate a pass portfolio
+
+The **Pass portfolio** is the starting view. It lists each connected or prepared pass by its original merchant order and gateway. Search by pass name, order, gateway or purchased plan hash. The availability filter includes active, low, exhausted, unrefreshed, unavailable-claim and archived passes.
+
+Each row shows the merchant's allowance fields together:
+
+| Field | Meaning |
+| --- | --- |
+| Purchased | The original order's total allowance units |
+| Consumed | Units charged to original request attempts |
+| Reserved | Units held by original in-progress requests |
+| Available | Units available for another request |
+
+Expand **Remaining calls by route** to see how many calls fit at that purchased route's unit cost. A three-unit route fits twice when six units remain. These values come from the last successful merchant refresh; the original gateway checks current allowance when admitting a request. Different purchased plans keep their own unit ledgers.
+
+A pass appears **EXHAUSTED** when none of its purchased routes fits the available allowance. One available unit cannot fund a two-unit route. **LOW** applies to a usable pass at or below the configured unit threshold. The default is five units; **Portfolio settings** accepts a whole number from zero to one billion.
+
+The last refresh timestamp and returned error stay visible beside retained values. **REFRESH_REQUIRED** means no valid original allowance has been received. **CLAIM_UNAVAILABLE** means the configured host lacks a usable claim for that pass. Supply the original credential through the host's existing private configuration, then refresh.
+
+### Refresh a set of passes
+
+Use **Refresh active passes**, or select rows and choose **Refresh selected**. The browser saves one action containing the exact profile-ID selection. The server retains that selection atomically, reuses each already active refresh and sends remaining work through the existing four-worker queue. Archived passes and unavailable claims are returned as skipped rows. Resulting tasks appear in each pass's original operation history.
+
+Search text, filters and the threshold form remain in place during refreshes. Per-pass allowance and request counts update as original tasks finish. A stale workspace revision returns the existing revision-conflict response; inspect and rebase that saved action through **Saved actions**.
+
+### Choose the default for new requests
+
+Select **Use for new requests** on a pass. The portfolio exposes **Prepare a new request** for it, and the choice survives workspace reopening. Clear or change the default at any time. Archiving the selected pass clears the default in that same mutation.
+
+Every saved request contains its original profile, purchased route, stable request ID, method, path, units, ordered query, content type and body hash. Changing the default preserves those saved bindings. Open earlier work from its pass history or the recovery queue to continue its original dispatch and download.
+
+### Continue the recovery queue
+
+**Request recovery** lists original ATTENTION and RECOVERY_READY requests across the portfolio. Each row identifies the pass and original order, route, state and last error. Pages contain up to 100 requests.
+
+**Open request** displays its original input, response and history. **Recover result** queues the existing original result-recovery operation. Response downloads retain their byte count and SHA-256 verification. The pass must be active and its original claim available to contact the merchant.
+
+The recovery queue continues an original API request or response. **Saved actions** continues an interrupted local HTTP mutation with its exact saved JSON, operation ID and workspace identity.
+
+## Purchase replacement allowance
+
+Choose **Prepare replacement** beside the pass needing more allowance. Obtain a new complete checkout handoff through the merchant's existing order workflow. Its order must differ from the previous order, and its API gateway must match that pass.
+
+The application shows the previous pass's remaining units and saved-request count during preparation. Load the JSON or file and choose **Compare loaded handoff**. The comparison displays the old and new order, purchased plan hash, amount in atomic units, asset, network, recipient, timeout and purchase URL. An access-only connection may have no retained payment handoff; its original plan and order bindings still appear.
+
+Use **Save purchase preparation** to retain the new handoff, stable intent and claim environment. Continue from the new pass's original purchase controls:
+
+1. **Prepare original purchase** retains the existing Buyer/Inbox request.
+2. **Review original purchase** produces the native reviewed request and saved review.
+3. **Run reviewed purchase** continues that native purchase through its selected approval channel.
+4. **Reconcile purchase** or **Reopen original purchase** continues its payment and delivery state.
+5. **Refresh allowance** reads the new order's purchased routes and units.
+6. **Use for new requests** selects the replenished pass for further work.
+
+Previous and replacement passes link to each other. Opening **Prepare replacement** again opens the retained replacement. Another preparation with the exact same handoff, intent, claim and label adopts that same profile; different inputs for that parent return REPLACEMENT_ALREADY_PREPARED. Future purchases can replace the latest pass, creating a navigable sequence of original orders.
+
+The replacement uses the existing Buyer, Inbox, native review, approval, accounting association, result recovery and allowance admission. The portfolio retains the relationship between the original orders. Earlier requests continue against the order that owns them.
+
+## Portfolio API and shutdown
+
+The existing authenticated local server adds:
+
+| Route | Operation |
+| --- | --- |
+| GET /api/state | Workspace snapshot with portfolio settings, per-pass projections, counts and first 20 recovery rows |
+| GET /api/portfolio/requests?offset=0&limit=100 | Recovery page; limit 1–200 |
+| POST /api/portfolio/configure | Persist selectedProfileId (UUID or null) and lowUnitsThreshold |
+| POST /api/portfolio/refresh | Retain and queue one exact profileIds selection |
+| POST /api/profiles/:id/replenish | Retain the original purchase handoff as that pass's replacement |
+
+POST bodies use the existing operationId and expectedRevision contract. Replacement input contains label, gatewayBaseUrl, intentId, claimEnv and full handoff text. The server takes the predecessor from the route. Claim values remain in the host environment.
+
+The model exposes portfolioRequests(), configurePortfolio(), refreshPortfolio() and prepareReplacement(). Existing workspace files reopen with no selected default and a five-unit threshold. Original request and purchase identities retain their existing state format.
+
+Configured shutdown retains one close owner through task draining, approval closure, STOPPED publication and lease release. The original CLI supplies a stable beforeRelease callback, publishing the launch state while holding the workspace lease. A cleanup failure retains closeOwner, closePhase and recovery.close on the error. Continue that same owner's close operation; completed stages and the original lease-release promise remain retained for its lifetime. The configured CLI exposes customerWorkspaceRecovery when its lifetime needs further cleanup, preserving the original launch path and close operation.
