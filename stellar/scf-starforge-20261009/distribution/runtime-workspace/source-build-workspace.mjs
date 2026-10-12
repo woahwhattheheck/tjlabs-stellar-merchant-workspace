@@ -117,7 +117,7 @@ function readInputs(source, paths) {
 }
 
 /** Uses the same Git reader, recipe validator and composer as buildDistribution. */
-export function describeProductSource(source, { repository, selection = 'all', offline = true, python = 'python3' }) {
+export function describeProductSource(source, { repository, selection = 'all', offline = true, python = 'python3', includeRequirements = false }) {
   sourceSelectionPath(selection);
   const path = sourceSelectionPath(selection);
   const recipeInput = path ? readInputs(source, [path]) : null;
@@ -146,6 +146,13 @@ export function describeProductSource(source, { repository, selection = 'all', o
     merchantProviders: Object.keys(spec.merchantProviders ?? {}).sort(),
     features: Object.keys(spec.featurePeers ?? {}).sort(),
     contributions: composed.contributions.map(({ id, path }) => ({ id, path })),
+    ...(includeRequirements ? { runtimeRequirements: {
+      nativePeers: spec.nativePeers ?? {},
+      featurePeers: spec.featurePeers ?? {},
+      runtimePackageManifests: spec.runtimePackageManifests ?? {},
+      featureNames: [...new Set([...Object.keys(spec.featurePeers ?? {}),
+        ...Object.keys(spec.runtimePackageManifests ?? {})])].sort(),
+    } } : {}),
   };
 }
 export async function sourceBuildCatalog(input) {
@@ -172,6 +179,18 @@ export async function sourceBuildCatalog(input) {
   }
   return { repository, sourceCommit: source.commit, offline, products };
 }
+/** Inspect a chosen immutable product without creating a saved review or operation. */
+export async function sourceBuildProduct(input) {
+  need(plain(input) && Object.keys(input).every(key =>
+    ['repository', 'ref', 'selection', 'offline', 'python'].includes(key)),
+    'SOURCE_BUILD_PRODUCT_FIELDS_INVALID');
+  need(OID.test(input.ref ?? ''), 'SOURCE_BUILD_COMMIT_REQUIRED',
+    'Load committed products before inspecting a product.');
+  const { repository, offline, source } = await selectedSource(input);
+  return describeProductSource(source, { repository, offline,
+    selection: input.selection, python: input.python, includeRequirements: true });
+}
+
 function validateReview(value, id) {
   need(plain(value) && value.schema === SCHEMA && value.reviewId === id &&
     OID.test(value.sourceCommit ?? '') && typeof value.selectionSha256 === 'string',
