@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // MIT. One complete native saved-plan → editable workbook → receiving programme.
-import {mkdir,mkdtemp,readFile,writeFile} from 'node:fs/promises';
+import {mkdir,mkdtemp,readFile,writeFile,rename,rm} from 'node:fs/promises';
 import {resolve,dirname,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
@@ -23,6 +23,16 @@ const json=value=>JSON.stringify(value,null,2)+'\n',hash=raw=>createHash('sha256
 const need=(value,message)=>{if(!value)throw new Error(message);};
 const readJson=async path=>JSON.parse(await readFile(path,'utf8'));
 async function save(path,value){await writeFile(path,typeof value==='string'||value instanceof Uint8Array?value:json(value),{flag:'wx',mode:0o600});return path;}
+async function saveReceivingSummary(path,value){
+  const directory=await mkdtemp(join(dirname(path),'workbook-result-'));
+  const pending=join(directory,'WORKBOOK_HANDOVER_RECEIVING.json');
+  try{
+    // Complete the private new file before replacing the original native result.
+    // Both paths share its filesystem, so an interrupted write keeps that result.
+    await save(pending,value);
+    await rename(pending,path);
+  }finally{await rm(directory,{recursive:true,force:true});}
+}
 async function native(args){
   try{return JSON.parse((await execute('python3',[nativeCli,...args],{encoding:'utf8',maxBuffer:128*1024*1024})).stdout);}
   catch(error){throw new Error(String(error.stderr||error.message));}
@@ -264,7 +274,7 @@ export async function receiveCurrentBudgetWorkbookHandover(directory,options={})
   await save(summaryPath,result);
   if(options.browser){
     result.browser=await browserCase(root,receiving,reopenedPlan,returned,options);
-    await writeFile(summaryPath,json(result),{mode:0o600});
+    await saveReceivingSummary(summaryPath,result);
   }
   return result;
 }
@@ -293,7 +303,7 @@ export async function resumeCurrentBudgetWorkbookBrowser(directory,options={}){
   result.browser=await browserCase(browserDirectory,workspace,plan,join(root,'returned-workbook.xlsx'),options);
   result.browser.outputDirectory=relative(root,browserDirectory);
   result.browser.resumedFromNativeResult=true;
-  await writeFile(summaryPath,json(result),{mode:0o600});
+  await saveReceivingSummary(summaryPath,result);
   return result;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
