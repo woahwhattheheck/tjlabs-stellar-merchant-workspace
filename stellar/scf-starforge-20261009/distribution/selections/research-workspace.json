@@ -178,7 +178,8 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/COPYING",
-    "products/zotero/OPERATING.md"
+    "products/zotero/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

@@ -360,3 +360,13 @@ Open **Quality** in the original OpenLineage workspace to inspect original metri
 The desk shares the existing workspace, selected edition, server connection, source browser and pending-request recovery. HTML, JSON and CSV quality reports retain the selected evaluation; the original complete workspace export carries the rules, immutable evaluations, decision history and editable quality application.
 
 The typed `@tokenjunkielabs/starforge-merchant/seller/openlineage/quality` export exposes `QualityClient` through the original HTTP action owner. The complete [quality operator and client guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/QUALITY_OPERATOR.md) covers source semantics, rule configuration, evaluation, decisions, reports, recovery and independent receiving.
+
+## Operate the upstream asynchronous Python producer
+
+The existing `starforge openlineage native-python-async` command uses the upstream OpenLineage Python 1.53.0 asynchronous HTTP transport with its original worker, queue, retry policy and START/terminal ordering. Prepare the selected Python environment, configure the retained producer directory, emit the original input selection, inspect status and resume that same directory after an interrupted return.
+
+The producer preserves the first serialized wire request, verifies the workspace's original source receipt, and retains a writer lease until its native worker has exited. A submitted queue entry is distinct from a confirmed workspace receipt. Complete producer archives include the original input, exact first wire bytes, native attempts and acknowledgements; independent receiving retains the same saved operation.
+
+Use the [async producer operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/ASYNC_PYTHON_PRODUCER.md) for the library API, CLI, credentials, queue/timeout selection, interrupted close, original request recovery and complete customer continuation. `ASYNC_PRODUCER_RECEIVING.mjs` composes the original workspace and selected SDK environment, then receives the full source and saved producer on a second local workspace.
+
+Application version 6 carries all 80 portable files. It preserves the exact earlier 35-, 40-, 48-, 55-, 66- and 76-file editions when receiving old packages. The running Quality v5 operation continues with its own selected 76-file edition; the cumulative async edition follows that original receiving.

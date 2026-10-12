@@ -22,6 +22,7 @@ const HELP = [
   "  scf-lineage producer reconnect --connection HOST_JSON --workspace ALIAS --instance INSTANCE_UUID",
   "  scf-lineage producer-config --connection FILE --out NEW_FILE [--token-file FILE] [--client python|java] [--compression gzip|identity] [--timeout SECONDS]",
   "  scf-lineage native-python emit|resume|status --directory DIR [--python EXECUTABLE] ...",
+  "  scf-lineage native-python-async configure|emit|resume|status|export|receive --directory DIR [--python EXECUTABLE] ...",
   "  scf-lineage native-java prepare|emit --runtime DIR ...",
   "  scf-lineage service-levels status|policy|evaluate|record|incident|report ...",
   "  scf-lineage import --workspace DIR --input EVENTS [--name NAME] [--source URL] --operation-id ID [--revision N] [--content-encoding identity|gzip]",
@@ -70,6 +71,7 @@ export async function main(argv = process.argv.slice(2)) {
   const args = [...argv], command = args.shift();
   if (!command || ["help", "--help", "-h"].includes(command)) { console.log(HELP); return 0; }
   if (command === "native-python") return (await import("./native-producer.mjs")).pythonProducerCommand(args);
+  if (command === "native-python-async") return (await import("./async-producer.mjs")).asyncProducerCommand(args);
   if (command === "native-java") {
     print(await (await import("./JAVA_PRODUCER.mjs")).javaProducerCommand(args)); return 0;
   }

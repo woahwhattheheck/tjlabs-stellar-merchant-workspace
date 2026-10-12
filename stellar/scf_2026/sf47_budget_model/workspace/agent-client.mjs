@@ -128,6 +128,27 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function planComparisonQuery(args, exported = false) {
+  const values = new URLSearchParams({
+    fromRevision:String(integer(args.fromRevision,'Before saved revision',1,1000000)),
+    toRevision:String(integer(args.toRevision,'After saved revision',1,1000000)),
+  });
+  if(args.toPlanId !== undefined)values.set('toPlanId',id(args.toPlanId,'plan'));
+  if(args.expectedComparisonSha256 !== undefined || exported)
+    values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
+  return '?' + values.toString();
+}
+function deliveryCalendarQuery(args) {
+  const query = new URLSearchParams();
+  if (args.asOfDate !== undefined) query.set('asOfDate', completionDate(args.asOfDate));
+  if (args.expectedVersion !== undefined)
+    query.set('expectedVersion', String(integer(args.expectedVersion, 'Selected calendar case version')));
+  return query.size ? '?' + query : '';
+}
+function deliveryCalendarFormat(value = 'ics') {
+  need(['ics','csv','json'].includes(value), 'GRANT_INVALID_INPUT', 'Choose the ICS, CSV or JSON calendar format.');
+  return value;
+}
 function performanceQuery(args, exported = false) {
   const values = new URLSearchParams();
   if (args.startDate !== undefined && args.startDate !== null && args.startDate !== '')
@@ -458,6 +479,7 @@ export class GrantWorkspaceClient {
       plans:() => '/api/plans',
       plan:() => '/api/plans/' + pid() + (args.revision === undefined ? '' : '/revision/' + integer(args.revision, 'Plan revision', 1, 1000000)),
       'plan-history':() => '/api/plans/' + pid() + '/history',
+      'plan-comparison':() => '/api/plans/' + pid() + '/comparison' + planComparisonQuery(args),
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
@@ -480,6 +502,7 @@ export class GrantWorkspaceClient {
       'installation-history':() => '/api/operations/' + cid() + '/installations/' + id(args.installationId,'installation') +
         '/history?limit=' + integer(args.limit ?? 25,'Installation history page',1,100) +
         (args.before === undefined ? '' : '&before=' + integer(args.before,'Earlier installation edition',1,500)),
+      'delivery-calendar':() => '/api/operations/' + cid() + '/delivery-calendar' + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + cid() + '/completion' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
     };
@@ -847,6 +870,11 @@ export class GrantWorkspaceClient {
     object(args);
     const routes = {
       plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip',
+      'plan-comparison':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/export.zip' + planComparisonQuery(args,true),
+      'plan-comparison-report':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/report.html' + planComparisonQuery(args,true),
+      'plan-comparison-changes':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/changes.csv' + planComparisonQuery(args,true),
+      'plan-comparison-impact':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/impact.csv' + planComparisonQuery(args,true),
+      'plan-comparison-daily':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/daily.csv' + planComparisonQuery(args,true),
       scenario:() => '/api/plans/' + id(args.planId, 'plan') + '/scenario.json',
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
@@ -861,6 +889,8 @@ export class GrantWorkspaceClient {
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
+      'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +
+        deliveryCalendarFormat(args.format) + deliveryCalendarQuery(args),
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',
       cohort:() => '/api/operations/' + id(args.caseId,'operation') + '/cohort-reviews/' + id(args.reviewId,'review') + '/export.zip',
       implementation:() => '/api/operations/' + id(args.caseId,'operation') + '/implementation-reviews/' + id(args.reviewId,'review') + '/export.zip',

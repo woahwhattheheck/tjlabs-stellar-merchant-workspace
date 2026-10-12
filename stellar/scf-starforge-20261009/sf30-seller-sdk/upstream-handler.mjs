@@ -8,6 +8,7 @@ import { canonicalOperationJSON, operationRequestHash } from './upstream-idempot
 import { supportsSellerMethod, requiresJsonBody } from './http-methods.mjs';
 import { compileUpstreamStreamPolicy, openUpstreamStream } from './upstream-stream.mjs';
 import { upstreamTlsRequestOptions, assertUpstreamTlsProfile } from './upstream-tls/profile.mjs';
+import { serverQueryCredentials, resolveUpstreamQueryCredentials, assertQueryCredentialSeparation, createQueryCredentialGuard } from './upstream-query-credentials.mjs';
 
 // Private per-invocation metadata. Never serialized into a response or retained in
 // operation state; lets availability distinguish a real backend call from replay.
@@ -159,11 +160,11 @@ export async function resolveUpstreamHeaders(headers, provider, lifetime) {
  */
 export function createUpstreamHandler(options = {}) {
   if (!object(options)) throw new TypeError('Upstream options must be a plain object');
-  const known = new Set(['baseUrl', 'path', 'method', 'query', 'headers', 'requestHeaders',
+  const known = new Set(['baseUrl', 'path', 'method', 'query', 'queryCredentials', 'headers', 'requestHeaders',
     'responseHeaders', 'responseType', 'timeoutMs', 'maxRequestBytes', 'maxResponseBytes',
     'maxInFlight', 'allowLocal', 'lookup', 'agent', 'onResult', 'responseContract', 'idempotency', 'cachePolicyMetadata', 'credentialProvider', 'bodyType', 'stream', 'supplierQuota', 'tls', 'retainErrorResponse']);
   for (const key of Object.keys(options)) if (!known.has(key)) throw new TypeError(`Unknown upstream option: ${key}`);
-  const { baseUrl, path, method = 'GET', query = [], headers: configuredHeaders = {},
+  const { baseUrl, path, method = 'GET', query = [], queryCredentials: configuredQueryCredentials = {}, headers: configuredHeaders = {},
     requestHeaders = [], responseHeaders = ['content-type', 'content-language'], responseType = 'json',
     timeoutMs = 10000, maxRequestBytes = 1048576, maxResponseBytes = 1048576,
     maxInFlight = 16, allowLocal = false, lookup, agent, onResult, responseContract, idempotency, cachePolicyMetadata = false, credentialProvider, stream, bodyType='json', supplierQuota, tls, retainErrorResponse = false } = options;
@@ -203,6 +204,8 @@ export function createUpstreamHandler(options = {}) {
   // Factories may be asynchronous. Resolution belongs inside the backend attempt,
   // after capacity admission, never before a durable-operation replay.
   const staticHeaders = typeof configuredHeaders === 'function' ? null : serverHeaders(configuredHeaders);
+  const staticQueryCredentials = typeof configuredQueryCredentials === 'function' ? null : serverQueryCredentials(configuredQueryCredentials);
+  if (staticQueryCredentials) assertQueryCredentialSeparation(queries,staticQueryCredentials);
   if (credentialProvider && staticHeaders && Object.hasOwn(staticHeaders,'authorization'))
     throw new TypeError('OAuth owns the authorization header');
   if (idempotency !== undefined) {
@@ -274,7 +277,7 @@ export function createUpstreamHandler(options = {}) {
     } : undefined;
     return { target, outgoing, body, operation };
   }
-  function exchange({ target, outgoing, body }, signal) {
+  function exchange({ target, outgoing, body, credentialGuard }, signal) {
     return new Promise(resolve => {
       let request, response, decoded, timer, done = false, dispatched = false, count = 0, wire = 0;
       const chunks = [];
@@ -311,7 +314,7 @@ export function createUpstreamHandler(options = {}) {
           if (status >= 400 && !retainErrorResponse) {
             const result = failure(status, 'UPSTREAM_REQUEST_FAILED', status);
             const retryAfter = res.headers['retry-after'];
-            if ((status === 429 || status === 503) && !responseHop.has('retry-after') && typeof retryAfter === 'string' && retryAfter.length <= 128 &&
+            if ((status === 429 || status === 503) && !credentialGuard?.contains(String(retryAfter ?? '')) && !responseHop.has('retry-after') && typeof retryAfter === 'string' && retryAfter.length <= 128 &&
                 (/^\d+$/.test(retryAfter) || Number.isFinite(Date.parse(retryAfter)))) result.headers['retry-after'] = retryAfter;
             return finish(result);
           }
@@ -319,7 +322,7 @@ export function createUpstreamHandler(options = {}) {
           for (const key of expose) {
             if (responseHop.has(key)) continue;
             const value = res.headers[key];
-            if (typeof value === 'string' && value.length <= 8192) resultHeaders[key] = value;
+            if (typeof value === 'string' && value.length <= 8192 && !credentialGuard?.contains(value)) resultHeaders[key] = value;
           }
           // The cache adapter needs cookie presence and policy completeness,
           // never session values. Ordinary upstream responses keep their shape.
@@ -327,7 +330,7 @@ export function createUpstreamHandler(options = {}) {
             hasSetCookie: res.headers['set-cookie'] !== undefined,
             policyFieldsComplete: CACHE_POLICY_FIELDS.every(key => res.headers[key] === undefined ||
               !responseHop.has(key) && typeof res.headers[key] === 'string' &&
-              res.headers[key].length <= 8192 && expose.includes(key)) &&
+              res.headers[key].length <= 8192 && resultHeaders[key] === res.headers[key]) &&
               ['age', 'date', 'expires'].every(key => res.rawHeaders.filter((name, index) =>
                 index % 2 === 0 && name.toLowerCase() === key).length <= 1),
           } } : {};
@@ -363,8 +366,24 @@ export function createUpstreamHandler(options = {}) {
           decoded.once('end', () => {
             if (done) return;
             if (!res.complete) return bad(502, 'UPSTREAM_RESPONSE_INCOMPLETE');
-            const content = Buffer.concat(chunks, count);
-            let value;
+            let content = Buffer.concat(chunks, count), value;
+            const mediaType = String(res.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+            const json = responseType === 'json' || /^application\/(?:[\w!#$&^.+-]+\+)?json$/.test(mediaType);
+            const text = json || /^text\//.test(mediaType) ||
+              ['application/xml','application/javascript','application/x-www-form-urlencoded'].includes(mediaType);
+            if (credentialGuard) {
+              try {
+                if (text) {
+                  const original = new TextDecoder('utf-8',{fatal:true}).decode(content);
+                  const clean = credentialGuard.text(original,{json});
+                  if (clean !== original) content = Buffer.from(clean);
+                } else if (credentialGuard.contains(content.toString('utf8'))) {
+                  return bad(502,'UPSTREAM_CREDENTIAL_REFLECTED');
+                }
+              } catch (cause) { return bad(502,cause?.code === 'UPSTREAM_CREDENTIAL_REFLECTED' ? cause.code :
+                responseType === 'json' ? 'UPSTREAM_JSON_INVALID' : 'UPSTREAM_RESPONSE_INCOMPLETE'); }
+              if (content.length > maxResponseBytes) return bad(502,'UPSTREAM_RESPONSE_TOO_LARGE');
+            }
             if (responseType === 'json') {
               try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(content)); }
               catch { return bad(502, 'UPSTREAM_JSON_INVALID'); }
@@ -407,6 +426,16 @@ export function createUpstreamHandler(options = {}) {
       try {
         lifetime = beginUpstreamRequest(context.signal, timeoutMs);
         const trustedHeaders = await resolveUpstreamHeaders(staticHeaders ?? configuredHeaders, credentialProvider, lifetime);
+        const trustedQuery = await resolveUpstreamQueryCredentials(staticQueryCredentials ?? configuredQueryCredentials,lifetime);
+        assertQueryCredentialSeparation(queries,trustedQuery);
+        // Inject after request hashing. Buyer URL, durable request identity and
+        // telemetry never receive these server-owned values.
+        for (const [name,value] of Object.entries(trustedQuery)) {
+          if (prepared.target.searchParams.has(name)) throw new TypeError('Private query parameter already supplied');
+          prepared.target.searchParams.set(name,value);
+        }
+        if (prepared.target.href.length > 8192) throw new TypeError('Private upstream target too long');
+        prepared.credentialGuard = createQueryCredentialGuard(trustedQuery);
         // A deferred certificate failure has not dispatched a supplier request.
         upstreamTlsRequestOptions(tls);
         if (idempotency && (Object.hasOwn(trustedHeaders,idempotency.requestHeader) || Object.hasOwn(trustedHeaders,idempotency.backendHeader)))

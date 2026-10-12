@@ -1,0 +1,14 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "tind-migration",
+  "description": "Complete source-native TIND scholarly migration, native transfer, staff receiving and editable handover",
+  "commands": {
+    "tind-migration": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/cli.mjs"
+  },
+  "commandDescriptions": {
+    "tind-migration": "Map original repository editions, continue native MARCXML export, prepare and receive native batches and reopen the complete migration."
+  },
+  "applicationProviders": {
+    "tind-migration": "stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/application-provider.mjs"
+  }
+}

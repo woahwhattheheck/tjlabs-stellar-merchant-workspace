@@ -14,8 +14,8 @@ Show the complete output of the selected task. The HPD query returns a limited s
 
 |Item|Retained identity|
 | --- | --- |
-|Original reviewer operating guide|Merchant repository commit 03a93f7c59a703ebc63416ae0e914f07099fef37, products/grant-reviewer/OPERATING.md; Git blob 1015cf307b5fba8a4f84e9ef3b53fcb57be0d01c.|
-|Development and customer acceptance guide|Same commit, products/merchant-workspace/DEVELOPMENT.md; blob 487408d4156cd16223b120f41323b6b7d1bc13c4.|
+|Original reviewer operating guide|[Grant purchase reviewer operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/products/grant-reviewer/OPERATING.md).|
+|Development and customer acceptance guide|[Development and customer acceptance guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/03a93f7c59a703ebc63416ae0e914f07099fef37/products/merchant-workspace/DEVELOPMENT.md).|
 |Returned result|100 rows; 14 columns; 53,468 bytes; original truncation flag true.|
 |Result SHA-256|4c22f8a26d48156c3e07543328b62ca6f993ce60856166d6805dc0660d9acb8d|
 |Native transaction|50d61d1102bfcf960af44171e5248e0899ed6d99cec1951a62075f9a65a6cbed|
@@ -124,4 +124,4 @@ The timed demonstration uses the original HPD operation. Use the following sourc
 |Why does the grant still fund development?|The displayed result is the starting product. The six packages fund the selected customers’ source/runtime, receiving, provider compatibility, production and maintenance adaptations. Existing software and a separately paid workshare keep separate assignments.|
 |What supports the repeat-use target?|A later source edition, reporting period or genuinely distinct request gives a buyer a new useful task. The ten/thirty-purchase cohorts are prospective independent-use targets; the present 18 purchases are team-operated development. Reopening the displayed result does not add a purchase.|
 
-Use CUSTOMER_WORKFLOWS.md for the full proposed operating units and the current relationship stages. The presentation closes with the selected customer outcome, its acceptance owner and the relevant funded package.
+Use the [customer and commercial plan](dist/grant-data/product-and-finance.md) for the full proposed operating units and current relationship stages. The presentation closes with the selected customer outcome, its acceptance owner and the relevant funded package.

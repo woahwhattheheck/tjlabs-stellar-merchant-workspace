@@ -22,7 +22,7 @@ export class OcdsClient {
     this.maxResponseBytes = maxResponseBytes;
   }
 
-  async request(path, { method = 'GET', body, signal, raw = false } = {}) {
+  async request(path, { method = 'GET', body, signal, raw = false, binary = false } = {}) {
     const url = new URL(path, this.baseUrl);
     if (url.origin !== this.baseUrl || url.username || url.password) throw new TypeError('Requests must target the configured operator origin.');
     const controller = new AbortController();
@@ -33,7 +33,7 @@ export class OcdsClient {
     try {
       const response = await this.fetch(url, {
         method, signal: controller.signal, redirect: 'error', credentials: 'same-origin',
-        headers: { accept: raw ? '*/*' : 'application/json', ...this.headers, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+        headers: { accept: raw || binary ? '*/*' : 'application/json', ...this.headers, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
       const expectedLength = response.headers.get('content-length');
@@ -61,6 +61,8 @@ export class OcdsClient {
       const joined = new Uint8Array(bytes);
       let position = 0;
       for (const chunk of chunks) { joined.set(chunk, position); position += chunk.byteLength; }
+      if (binary && response.ok) return {mime:response.headers.get('content-type') || 'application/octet-stream',
+        filename:response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] || null,body:joined,bytes};
       const bodyText = new TextDecoder('utf-8', { fatal: true }).decode(joined);
       let value;
       const json = response.headers.get('content-type')?.includes('json');
@@ -85,6 +87,29 @@ export class OcdsClient {
     }
   }
 
+  sourceState(options) { return this.request('/api/source-operations',options); }
+  sourceWindow(id,options) { return this.request('/api/source-windows/'+encodeURIComponent(id),options); }
+  sourceReceiving(id,options) { return this.request('/api/source-receiving/'+encodeURIComponent(id),options); }
+  saveSourceSelection(selection,expectedRevision,options={}) {
+    return this.request('/api/source-selections',{...options,method:'POST',body:{selection,expectedRevision}});
+  }
+  refreshSources(input,options={}) { return this.request('/api/source-windows',{...options,method:'POST',body:input}); }
+  pauseSourceWindow(id,options={}) { return this.request('/api/source-windows/'+encodeURIComponent(id)+'/cancel',{...options,method:'POST',body:{}}); }
+  sourceReview(id,options) { return this.request('/api/source-reviews/'+encodeURIComponent(id),options); }
+  updateSourceReview(id,patch,options={}) {
+    return this.request('/api/source-reviews/'+encodeURIComponent(id),{...options,method:'PATCH',body:patch});
+  }
+  sourceDocument(id,{sha256,...options}={}) {
+    return this.request('/api/source-documents/'+encodeURIComponent(id)+(sha256?'?'+new URLSearchParams({sha256}):''),{...options,binary:true});
+  }
+  adoptSourceObservation(input,options={}) { return this.request('/api/source-observation',{...options,method:'POST',body:input}); }
+  importSourceOriginal(input,options={}) { return this.request('/api/source-original',{...options,method:'POST',body:input}); }
+  exportSourceHandoff(directory,ocids,options={}) {
+    return this.request('/api/source-export',{...options,method:'POST',body:{directory,ocids}});
+  }
+  receiveSourceHandoff(directory,expectedRevision,{expectedHandoffId,...options}={}) {
+    return this.request('/api/source-receive',{...options,method:'POST',body:{directory,expectedRevision,expectedHandoffId}});
+  }
   workspace(options) { return this.request('/api/workspace', options); }
   entry(id, options) { return this.request('/api/entries/' + encodeURIComponent(id), options); }
   source(id, options) { return this.request('/api/sources/' + encodeURIComponent(id), options); }

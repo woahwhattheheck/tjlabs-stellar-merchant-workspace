@@ -9,6 +9,7 @@ import {PaymentRequestsWorkspace} from './payment-requests-workspace.mjs';
 import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
+import {CreditControlWorkspace} from './credit-control-workspace.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
 import {paymentRequestSummary, requestRows} from './payment-requests.mjs';
 import {createInvoiceTransferVerifier} from './payment-requests-verifier.mjs';
@@ -85,6 +86,7 @@ export class ReceivablesWorkspace {
     this.refundsWorkspace = new RefundsWorkspace(this);
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
+    this.creditControlWorkspace = new CreditControlWorkspace(this);
   }
   async init() {
     await this.statements.init();
@@ -129,6 +131,8 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
+      Object.assign(result, this.creditControlWorkspace.result(record));
     if (record.collectionCaseId) {
       result.collectionCase = this.collectionsWorkspace.summary(record.collectionCaseId, record.collectionAsOf ?? asOf);
       result.workspaceId = this.collectionsWorkspace.workspaceId();
@@ -199,6 +203,15 @@ export class ReceivablesWorkspace {
   async reportPaymentReturn(id, value) { return this.paymentRequestWorkspace.reportReturn(id, value); }
   async receivePaymentRequest(id, value) { return this.paymentRequestWorkspace.receive(id, value); }
   async paymentRequestFile(id, name) { return this.paymentRequestWorkspace.file(id, name); }
+  async creditControl(query = {}) { return this.creditControlWorkspace.control(query); }
+  async creditPolicy(id) { return this.creditControlWorkspace.policy(id); }
+  async saveCreditPolicy(value) { return this.creditControlWorkspace.savePolicy(value); }
+  async previewCreditAssessment(invoiceId, value) { return this.creditControlWorkspace.preview(invoiceId, value); }
+  async saveCreditDecision(invoiceId, value) { return this.creditControlWorkspace.saveDecision(invoiceId, value); }
+  async creditDecision(id) { return this.creditControlWorkspace.detail(id); }
+  async withdrawCreditDecision(id, value) { return this.creditControlWorkspace.withdraw(id, value); }
+  async creditDecisionFile(id, name) { return this.creditControlWorkspace.file(id, name); }
+  async creditControlOperation(requestId) { return this.creditControlWorkspace.operation(requestId); }
   async cashPlans(query = {}) { return this.cashPlanningWorkspace.list(query); }
   async previewCashPlan(value) { return this.cashPlanningWorkspace.preview(value); }
   async cashPlan(id, query = {}) { return this.cashPlanningWorkspace.detail(id, query); }
@@ -318,11 +331,12 @@ export class ReceivablesWorkspace {
       return {bytes, name: id + '-' + name, type: 'application/json; charset=utf-8'};
     });
   }
-  _preview(id) {
+  _preview(id, {includeCredit = true} = {}) {
     const invoice = this._invoice(id);
     need(invoice.status === 'DRAFT', 'INVOICE_ALREADY_ISSUED', 'Choose an editable invoice draft.', 409);
     const document = invoiceDocument(invoice, this._customer(invoice.draft.customerId), this.data().issuer);
-    return {document, previewSha256: sha(json(document)), expectedVersion: invoice.version, revision: this.workspace.state.revision};
+    return {document, previewSha256: sha(json(document)), expectedVersion: invoice.version, revision: this.workspace.state.revision,
+      ...(includeCredit ? this.creditControlWorkspace.previewMetadata(id) : {})};
   }
   async preview(id) { return this.workspace.serial(async () => this._preview(id)); }
   async _retain(document) {
@@ -347,13 +361,14 @@ export class ReceivablesWorkspace {
   async issue(id, value) {
     identifier(id, 'invoice');
     return this._mutate('invoice_issued', {...value, invoiceId: id}, async (data, actor) => {
-      const invoice = this._invoice(id), preview = this._preview(id);
+      const invoice = this._invoice(id), preview = this._preview(id, {includeCredit: false});
       need(value.expectedVersion === invoice.version, 'STALE_INVOICE', 'Reload the current draft before issuing.', 409);
       need(typeof value.previewSha256 === 'string' && HEX.test(value.previewSha256) &&
         value.previewSha256 === preview.previewSha256, 'INVOICE_PREVIEW_CHANGED',
         'Review the current invoice preview before issuing its retained document.', 409);
       need(data.issuer.name.length > 0, 'MERCHANT_NAME_REQUIRED', 'Save the merchant name in document settings.');
       need(minor(invoice.draft.totals.total, invoice.draft.currency) > 0n, 'EMPTY_INVOICE', 'The issued invoice total must be positive.');
+      const creditCheck = this.creditControlWorkspace.checkIssue(id, value);
       const number = data.issuer.invoicePrefix + '-' + invoice.draft.issueDate.slice(0, 4) + '-' + String(data.invoiceSequence + 1).padStart(6, '0');
       need(!data.invoices.some(row => row.number === number), 'INVOICE_NUMBER_EXISTS', 'The next document number is already used.', 409);
       const document = invoiceDocument(invoice, this._customer(invoice.draft.customerId), data.issuer, number, at(), actor);
@@ -362,7 +377,7 @@ export class ReceivablesWorkspace {
       Object.assign(invoice, {status: 'ISSUED', number, document, ...retained, issuedAt: document.issuedAt,
         version: invoice.version + 1, updatedAt: at()});
       invoice.history.push({at: at(), actor, action: 'issued', number, previewSha256: preview.previewSha256});
-      return {invoiceId: id};
+      return {invoiceId: id, ...this.creditControlWorkspace.consumeIssue(creditCheck, invoice, actor)};
     });
   }
   async voidInvoice(id, value) {

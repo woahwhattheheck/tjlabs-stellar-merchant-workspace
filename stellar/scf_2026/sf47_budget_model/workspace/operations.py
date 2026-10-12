@@ -19,6 +19,7 @@ import portfolio_installations as portfolio_installations
 import operations_support as support
 import operations_buyer as buyer
 import operations_completion as completion
+import operations_calendar as calendar_model
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
@@ -510,6 +511,20 @@ class Operations:
     def completion_calendar(self, program_id, as_of=None):
         with self.workspace.mutex:
             return completion.dashboard(self._context(identifier(program_id, "operation")), as_of)
+
+    def delivery_calendar(self, program_id, as_of=None, expected_version=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            if expected_version is not None:
+                expected = domain.integer(expected_version, "Selected calendar case version", 1, 10000000)
+                if context["program"]["version"] != expected:
+                    domain.fail("The grant case changed. Refresh the delivery calendar.", "OPERATIONS_CONFLICT", 409)
+            return calendar_model.calendar(context, as_of)
+
+    def export_delivery_calendar(self, program_id, as_of=None, format="ics", expected_version=None):
+        with self._snapshot():
+            report = self.delivery_calendar(program_id, as_of, expected_version)
+            return calendar_model.export_bytes(report, format)
 
     def _completion_context(self, program_id, body, keys):
         completion.object_value(body, ("expectedVersion", *keys), "completion operation")

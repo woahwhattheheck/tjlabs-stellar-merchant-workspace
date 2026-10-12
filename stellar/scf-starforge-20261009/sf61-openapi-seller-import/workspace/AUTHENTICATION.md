@@ -1,5 +1,11 @@
 # OAuth API merchant setup
 
+Header and query API-key schemes use the same merchant workspace. For a provider
+that requires `api_token`, `api_key` or another private query field, use the
+[query credential workflow](../../sf30-seller-sdk/UPSTREAM_QUERY_CREDENTIALS.md).
+The operator form retains environment references and the generated public
+facade omits those fields.
+
 The API workspace can configure an OpenAPI `oauth2` security scheme with a
 declared `clientCredentials` flow. Authorization-code grants use the companion
 [authorization connection workflow](AUTHORIZATION_CONNECTIONS.md) in the same workspace.
