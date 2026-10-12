@@ -28,7 +28,11 @@ export interface ResearchQuoteHandover {
  schema:'sf88-research-quotation-handover-inspected/v1';directory:string;manifestSha256:string;manifestBytes:number;
  manifest:ResearchQuoteHandoverManifest;selection:ResearchQuoteHandoverSelection;
  files:Array<ResearchQuoteProgrammeFile&{path:string}>;programme:ResearchQuoteProgrammeState;
- caseRecord:ResearchQuoteObject;caseInspection:ResearchQuoteObject;customer:ResearchQuoteObject;
+ /** Complete original CASE_RECORD; its original file is also included in files. */
+ caseRecord:ResearchQuoteObject;
+ caseInspection:{schema:'sf88-research-case-transfer/v1';
+  source:{workspaceId:string;casesWorkspaceId:string;caseId:string;revision:string};sha256:string};
+ customer:ResearchQuoteObject;
  operations:Array<{id:string;operation:ResearchQuoteOperation;directory:string;files:ResearchQuoteObject[]}>;
 }
 export declare const RESEARCH_QUOTE_HANDOVER_SCHEMA:'sf88-research-quotation-handover/v1';

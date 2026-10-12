@@ -7,9 +7,10 @@ import {customerIdentifier,customerRevision} from '../customer-updates/contracts
 import {findCustomerRecord} from '../customer-updates/operator.mjs';
 import {customerDirectory,withCustomerOperation,readCustomerJson,retainCustomerBytes}
  from '../customer-updates/files.mjs';
-import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,fields,id,hash,dossier,text,need,same,fingerprint,
+import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,fields,id,hash,dossier,text,need,same,fingerprint,
  caseSelection,briefSelection,responseSelection,normalizePublicationSelection,realizedSelection,applySelection}
  from './contracts.mjs';
+import {caseTransferInput,caseTransferSelection} from './case-transfer.mjs';
 import {captureResearchQuoteInput,validateResearchQuoteOperation,RESEARCH_QUOTES_CASE_ACTIONS,
  RESEARCH_QUOTES_PRICING_ACTIONS} from './client.mjs';
 import {RESEARCH_QUOTES_WRITES,submitResearchQuote,replayResearchQuote,readResearchQuoteRun} from './operator.mjs';
@@ -76,26 +77,46 @@ async function connect(source,expected,signal){
  need(expected===undefined||current.workspaceId===expected,'RESEARCH_QUOTE_PROGRAMME_WORKSPACE_CHANGED');
  return {client,quotes:client.customerQuotes(),workspaceId:current.workspaceId};
 }
-async function originalInput(root,name,{input,inputFile,required=true}={}){
- let body;
- if(inputFile)body=await readResearchHostFile(inputFile,QUOTE_REQUEST_LIMIT);
+const inputLimit=command=>command==='prepare-case-transfer'?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_REQUEST_LIMIT;
+function captureInput(value,command){
+ return command==='prepare-case-transfer'||command===undefined&&value?.source?.schema==='sf88-research-case-transfer/v1'?
+  caseTransferInput(value):captureResearchQuoteInput(value);
+}
+async function originalInput(root,name,{input,inputFile,required=true,command}={}){
+ let body;const maximum=inputLimit(command);
+ if(inputFile)body=await readResearchHostFile(inputFile,maximum);
  else if(input!==undefined)body=bytes(input);
- else if(await exists(join(root,name)))body=await readResearchHostFile(join(root,name),QUOTE_REQUEST_LIMIT);
+ else if(await exists(join(root,name)))body=await readResearchHostFile(join(root,name),maximum);
  need(!required||body?.length>0,'RESEARCH_QUOTE_PROGRAMME_INPUT_REQUIRED');
  if(!body)return null;
- need(body.length<=QUOTE_REQUEST_LIMIT,'RESEARCH_QUOTE_PROGRAMME_INPUT_LIMIT',413);
- return {body,value:captureResearchQuoteInput(JSON.parse(body))};
+ need(body.length<=maximum,'RESEARCH_QUOTE_PROGRAMME_INPUT_LIMIT',413);
+ return {body,value:captureInput(JSON.parse(body),command)};
 }
-function capturedArguments(input,inputFile){
+function capturedArguments(input,inputFile,command){
  need(!(input!==undefined&&inputFile),'RESEARCH_QUOTE_SELECT_ONE_INPUT');
- return {input:input===undefined?undefined:captureResearchQuoteInput(input),inputFile:inputFile?resolve(inputFile):null};
+ return {input:input===undefined?undefined:captureInput(input,command),inputFile:inputFile?resolve(inputFile):null};
+}
+function retainedSelection(value){
+ if(value?.command!=='prepare-case-transfer')return researchQuoteProgrammeCommand(value.command,value.input,value);
+ fields(value,['command','input']);const input=captureResearchQuoteInput(value.input);
+ fields(input,['requestId','caseId','expectedRevision','source','sourceSha256']);
+ id(input.requestId);id(input.caseId);if(input.expectedRevision!==null)hash(input.expectedRevision);hash(input.sourceSha256);
+ fields(input.source,['workspaceId','casesWorkspaceId','caseId','revision']);
+ need(/^research_[a-f0-9]{64}$/.test(input.source.workspaceId??''),'RESEARCH_QUOTE_PROGRAMME_WORKSPACE_REQUIRED');
+ hash(input.source.casesWorkspaceId);id(input.source.caseId);hash(input.source.revision);
+ need(input.source.caseId===input.caseId,'RESEARCH_QUOTE_PROGRAMME_CASE_CHANGED');
+ return {command:value.command,input};
 }
 /** Inspect the actual selected customer and optional existing case before retaining the programme. */
 export function createResearchQuoteProgramme({client,directory,input,inputFile,signal}={}){
  const selected=capturedArguments(input,inputFile);
  return withCustomerOperation(directory,async root=>{
-  need(!await exists(join(root,'request.json'))&&!await exists(join(root,'export.json'))&&
-   !await exists(join(root,'programme-package.json')),'RESEARCH_QUOTE_PROGRAMME_DIRECTORY_REQUIRED');
+  need(!await exists(join(root,'input.json'))&&!await exists(join(root,'request.json'))&&!await exists(join(root,'export.json'))&&
+   !await exists(join(root,'package-input.json'))&&!await exists(join(root,'package-request.json'))&&
+   !await exists(join(root,'quotation-programme.json'))&&!await exists(join(root,'handover-copy.json'))&&
+   !await exists(join(root,'receiving-input.json'))&&!await exists(join(root,'receiving-request.json'))&&
+   !await exists(join(root,'input','handover-copy.json'))&&!await exists(join(root,'input','quotation-programme.json')),
+   'RESEARCH_QUOTE_PROGRAMME_DIRECTORY_REQUIRED');
   let retained=await readResearchQuoteProgrammeJson(root,'programme.json');
   if(retained){
    header(retained);await checkInput(root,retained);
@@ -113,7 +134,10 @@ export function createResearchQuoteProgramme({client,directory,input,inputFile,s
    selectedProject=await findCustomerRecord(connected.client,input.dossierId,'projects',input.projectId,{revision:input.revision});
   need(configuration.workspaceId===connected.workspaceId&&selectedProject.revision===input.revision,
    'RESEARCH_QUOTE_PROGRAMME_SOURCE_CHANGED');
-  const originalCase=input.caseMode==='EXISTING'?(await connected.quotes.readCase(input.caseId,{}, {signal})).result:null;
+  const caseFile=input.caseMode==='EXISTING'?await connected.quotes.caseFileInfo(input.caseId,
+   {kind:'CASE_RECORD',scope:{workspaceId:configuration.cases.workspaceId,caseId:input.caseId}},{signal}):null;
+  if(caseFile)need(caseFile.case?.id===input.caseId,'RESEARCH_QUOTE_PROGRAMME_CASE_CHANGED');
+  const originalCase=caseFile?{...caseFile.case,file:caseFile.descriptor}:null;
   const source={workspaceId:connected.workspaceId,casesWorkspaceId:configuration.cases.workspaceId,
    dossierId:input.dossierId,revision:input.revision,project:selectedProject.record,case:originalCase,
    configuration:{cases:configuration.cases,pricing:configuration.pricing,
@@ -130,16 +154,13 @@ export function createResearchQuoteProgramme({client,directory,input,inputFile,s
 }
 export function researchQuoteProgrammeCommand(command,value,{caseId,action,profile}={}){
  need(RESEARCH_QUOTES_WRITES.includes(command),'RESEARCH_QUOTE_PROGRAMME_COMMAND_REQUIRED');
- let input=captureResearchQuoteInput(value),extra={};
+ let input=command==='prepare-case-transfer'?caseTransferSelection(value):captureResearchQuoteInput(value),extra={};
  const normalizers={'create-case':caseSelection,prepare:briefSelection,'prepare-response':responseSelection,
   'prepare-publication':normalizePublicationSelection,'prepare-report':realizedSelection,apply:applySelection,
   'enroll-publication':applySelection,'apply-case-transfer':applySelection};
  if(normalizers[command])input=normalizers[command](input);
  else if(command==='prepare-case-transfer'){
-  fields(input,['requestId','caseId','expectedRevision','source']);
-  id(input.requestId);id(input.caseId);if(input.expectedRevision!==null)hash(input.expectedRevision);
-  need(input.source&&typeof input.source==='object'&&!Array.isArray(input.source),
-   'RESEARCH_QUOTE_CASE_TRANSFER_SOURCE_REQUIRED');
+  input=retainedSelection({command,input}).input;
  }else if(command==='native-case'){
   id(caseId);need(RESEARCH_QUOTES_CASE_ACTIONS.includes(action),'RESEARCH_QUOTE_CASE_ACTION_REQUIRED');
   need(input.id===undefined||input.id===caseId,'RESEARCH_QUOTE_CASE_CHANGED');extra={caseId,action};
@@ -206,9 +227,9 @@ function stepRecord(value,programme,key){
  need(value?.schema===RESEARCH_QUOTE_PROGRAMME_STEP_SCHEMA&&value.stepId===key&&value.programmeId===programme.input.id&&
   value.programmeSha256===fingerprint(programme)&&value.workspaceId===programme.workspaceId&&
   value.selectionSha256===fingerprint(value.selection)&&
-  same(value.selection,researchQuoteProgrammeCommand(value.selection.command,value.selection.input,value.selection))&&
+  same(value.selection,retainedSelection(value.selection))&&
   value.sourceSha256===fingerprint(value.source)&&value.inputFile?.name==='step-input.json'&&
-  Number.isSafeInteger(value.inputFile.bytes)&&value.inputFile.bytes>0&&value.inputFile.bytes<=QUOTE_REQUEST_LIMIT,
+  Number.isSafeInteger(value.inputFile.bytes)&&value.inputFile.bytes>0&&value.inputFile.bytes<=inputLimit(value.selection.command),
   'RESEARCH_QUOTE_PROGRAMME_STEP_CHANGED');
  hash(value.inputFile.sha256);
  if(value.replayOf!==null)researchQuoteProgrammeStepId(value.replayOf);
@@ -230,7 +251,7 @@ export async function readResearchQuoteProgrammeStepIn(root,programme,key){
  researchQuoteProgrammeStepId(key);
  const directory=await customerDirectory(join(root,'steps',key),{create:false}),
   record=stepRecord(await readResearchQuoteProgrammeJson(directory,'step.json'),programme,key),
-  input=await readResearchHostFile(join(directory,'step-input.json'),QUOTE_REQUEST_LIMIT,{sha256:record.inputFile.sha256});
+  input=await readResearchHostFile(join(directory,'step-input.json'),inputLimit(record.selection.command),{sha256:record.inputFile.sha256});
  need(input.length===record.inputFile.bytes&&same(
   researchQuoteProgrammeCommand(record.selection.command,JSON.parse(input),record.selection),record.selection),
   'RESEARCH_QUOTE_PROGRAMME_STEP_CHANGED');
@@ -267,7 +288,7 @@ export async function readResearchQuoteProgrammeStep({directory,stepId}={}){
 /** The original operator owns input capture, native request, attempts and first response. */
 export function submitResearchQuoteProgramme({client,directory,stepId,command,input,inputFile,action,profile,signal}={}){
  researchQuoteProgrammeStepId(stepId);
- const supplied=capturedArguments(input,inputFile),controls={command,action,profile};
+ const supplied=capturedArguments(input,inputFile,command),controls={command,action,profile};
  return withCustomerOperation(directory,async root=>{
   const programme=await readResearchQuoteProgrammeHeader(root),target=await customerDirectory(join(root,'steps',stepId));
   let record=await readResearchQuoteProgrammeJson(target,'step.json');
@@ -278,14 +299,14 @@ export function submitResearchQuoteProgramme({client,directory,stepId,command,in
    if(supplied.input!==undefined)need(same(researchQuoteProgrammeCommand(record.selection.command,supplied.input,record.selection),record.selection),
     'RESEARCH_QUOTE_PROGRAMME_STEP_CHANGED');
    if(supplied.inputFile&&await exists(supplied.inputFile)){
-    const body=await readResearchHostFile(supplied.inputFile,QUOTE_REQUEST_LIMIT);
+    const body=await readResearchHostFile(supplied.inputFile,inputLimit(record.selection.command));
     need(body.length===record.inputFile.bytes&&digest(body)===record.inputFile.sha256,'RESEARCH_QUOTE_PROGRAMME_STEP_CHANGED');
    }
    await readResearchQuoteProgrammeStepIn(root,programme,stepId);
   }else{
    const keys=(await readdir(join(root,'steps'))).filter(key=>STEP_KEY.test(key));
    need(keys.length<=RESEARCH_QUOTE_PROGRAMME_LIMIT,'RESEARCH_QUOTE_PROGRAMME_STEP_LIMIT');
-   const original=await originalInput(target,'step-input.json',supplied),
+   const original=await originalInput(target,'step-input.json',{...supplied,command}),
     selection=researchQuoteProgrammeCommand(command,original.value,{caseId:programme.input.caseId,action,profile}),
     connected=await connect(client,programme.workspaceId,signal),source=await scope(connected,programme,selection,signal);
    record={schema:RESEARCH_QUOTE_PROGRAMME_STEP_SCHEMA,programmeId:programme.input.id,programmeSha256:fingerprint(programme),
@@ -327,7 +348,7 @@ export async function replayResearchQuoteProgramme({client,directory,sourceStepI
   }else{
    need((await readdir(join(root,'steps'))).filter(key=>STEP_KEY.test(key)).length<=RESEARCH_QUOTE_PROGRAMME_LIMIT,
     'RESEARCH_QUOTE_PROGRAMME_STEP_LIMIT');
-   const original=await readResearchHostFile(join(source.directory,'step-input.json'),QUOTE_REQUEST_LIMIT,
+   const original=await readResearchHostFile(join(source.directory,'step-input.json'),inputLimit(source.record.selection.command),
     {sha256:source.record.inputFile.sha256});
    record={...clone(source.record),stepId,replayOf:sourceStepId,createdAt:time()};
    await retainCustomerBytes(target,'step-input.json',original);await save(target,'step.json',record);

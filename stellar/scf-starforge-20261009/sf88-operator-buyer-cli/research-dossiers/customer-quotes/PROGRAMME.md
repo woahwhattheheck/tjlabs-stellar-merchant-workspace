@@ -46,7 +46,7 @@ The programme definition identifies one existing Research customer project and a
 }
 ~~~
 
-The IDs and revision above illustrate the fields. Use the actual dossier, project and revision returned by the selected application. Allocate a UUID once for the programme and once for a new case, then retain them in this file. With caseMode EXISTING, use the existing native case ID. Programme creation reads the project at the exact selected Research revision and captures the configured case-store identity. An existing case is read through the original commercial interface.
+The IDs and revision above illustrate the fields. Use the actual dossier, project and revision returned by the selected application. Allocate a UUID once for the programme and once for a new case, then retain them in this file. With caseMode EXISTING, use the existing native case ID. Programme creation reads the project at the exact selected Research revision and captures the configured case-store identity. An existing case is selected through the original CASE_RECORD file interface. The programme retains its native revision, compact case summary and complete-file descriptor; the full native case file is carried in the handover.
 
 ~~~sh
 starforge research-quotes-programme quotes-programme-create \
@@ -80,6 +80,8 @@ The command input is the original complete JSON request accepted by the quotatio
 | prepare-report | Original binding/publication, selected purchase IDs, customer revision and optional pricing version/cost edition | Frozen realized report and all original pricing, order, customer and Buyer receiving files. |
 | prepare-case-transfer | Original case ID, expected destination revision and complete CASE_RECORD source | Reviewed original CaseStore receiving. |
 | apply-case-transfer | Original transfer operation ID and review SHA | Saved native case with original commercial/service histories and receiving provenance. |
+
+Full case transfer inputs use the original native case/handoff size budget. Their complete input files retain the original CASE_RECORD, while the saved step and native review bind its workspace, case, revision and source digest. The package carries that full case file unchanged. Ordinary quotation requests keep their existing limits.
 
 For a new case, use its actual Research brief and full actor object:
 
@@ -147,7 +149,7 @@ starforge research-quotes-programme quotes-programme-apply \
 
 The apply helper reads the complete retained review and requires the supplied digest to match. The native quotation engine then invokes the original Research writer. It preserves the source commercial case and quote beside the new brief.
 
-Use the revised brief for actual subsequent customer work. The native Customer updates workspace accepts the retained request, original source intakes, reviewed evidence changes and frozen delivery. The [customer delivery workflow](../customer-updates/OPERATING.md) and installed customer programme retain that complete dossier history. Select the resulting actual frozen delivery ID and revision when preparing publication.
+Use the revised brief for actual subsequent customer work. The native Customer updates workspace accepts the retained request, original source intakes, reviewed evidence changes and frozen delivery. The [customer delivery workflow](../customer-updates/CUSTOMER_UPDATES.md) and installed customer programme retain that complete dossier history. Select the resulting actual frozen delivery ID and revision when preparing publication.
 
 ## Record the real customer response
 

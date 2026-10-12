@@ -6,6 +6,7 @@ import {customerDirectory,withCustomerOperation,readCustomerJson,retainCustomerB
 import {receiveCustomerHandover} from '../customer-updates/operator.mjs';
 import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,fields,id,hash,need,same,fingerprint} from './contracts.mjs';
 import {captureResearchQuoteInput,validateResearchQuoteOperation} from './client.mjs';
+import {caseTransferSelection} from './case-transfer.mjs';
 import {submitResearchQuote,readResearchQuoteRun} from './operator.mjs';
 import {readResearchQuoteProgrammeJson} from './programme.mjs';
 import {copyResearchQuoteHandover,inspectResearchQuoteHandover,researchQuoteDistinctDirectories} from './programme-files.mjs';
@@ -144,7 +145,9 @@ async function state(root){
  need(!savedResult||review,'RESEARCH_QUOTE_PROGRAMME_RECEIVING_REVIEW_CHANGED');
  const result=savedResult?resultRecord(savedResult,request,review):null;
  if(review){
-  need(same(review.caseTransfer.operation.request.source,source.caseRecord),'RESEARCH_QUOTE_PROGRAMME_CASE_RECEIVING_CHANGED');
+  need(same(review.caseTransfer.operation.request,caseTransferSelection({requestId:request.input.requestId,
+   caseId:request.source.caseId,expectedRevision:request.input.expectedRevision,source:source.caseRecord})),
+   'RESEARCH_QUOTE_PROGRAMME_CASE_RECEIVING_CHANGED');
   const native=await readResearchQuoteRun(join(root,'case-review'));
   need(native.result&&same(native.result.result,review.caseTransfer.operation),'RESEARCH_QUOTE_PROGRAMME_RECEIVING_REVIEW_CHANGED');
  }
@@ -166,8 +169,10 @@ export function prepareResearchQuoteProgrammeReceiving({client,directory,sourceD
  if(manifestSha256!==undefined)hash(manifestSha256);
  if(source)researchQuoteDistinctDirectories(source,target);
  return withCustomerOperation(target,async root=>{
-  need(!await exists(join(root,'programme.json'))&&!await exists(join(root,'request.json'))&&
-   !await exists(join(root,'export.json'))&&!await exists(join(root,'package-request.json')),
+  need(!await exists(join(root,'programme-input.json'))&&!await exists(join(root,'programme.json'))&&
+   !await exists(join(root,'input.json'))&&!await exists(join(root,'request.json'))&&!await exists(join(root,'export.json'))&&
+   !await exists(join(root,'package-input.json'))&&!await exists(join(root,'package-request.json'))&&
+   !await exists(join(root,'quotation-programme.json'))&&!await exists(join(root,'handover-copy.json')),
    'RESEARCH_QUOTE_DISTINCT_DIRECTORY_REQUIRED');
   const incoming=await sourcePackage(root,{sourceDirectory:source,manifestSha256}),
    request=await originalRequest(root,{input:selected,inputFile:file,source:incoming}),
@@ -179,7 +184,7 @@ export function prepareResearchQuoteProgrammeReceiving({client,directory,sourceD
    native=await submitResearchQuote({client:async()=>checkedClient(client,request.input,signal),
     directory:join(root,'case-review'),command:'prepare-case-transfer',input:nativeInput,signal}),
    operation=nativeTransfer(native.result,request);
-  need(same(operation.request,nativeInput),'RESEARCH_QUOTE_PROGRAMME_CASE_RECEIVING_CHANGED');
+  need(same(operation.request,caseTransferSelection(nativeInput)),'RESEARCH_QUOTE_PROGRAMME_CASE_RECEIVING_CHANGED');
   const proof={schema:REVIEW,requestSha256:request.requestSha256,manifestSha256:incoming.manifestSha256,
    source:incoming.selection,workspaceId:request.input.expectedWorkspaceId,casesWorkspaceId:request.input.expectedCasesWorkspaceId,
    caseTransfer:{id:operation.id,reviewSha256:operation.review.reviewSha256,operation:clone(operation)},

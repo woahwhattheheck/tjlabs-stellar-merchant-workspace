@@ -22,7 +22,8 @@ export type ResearchQuoteProgrammeSelection=
  {command:'create-case';input:ResearchQuoteCaseSelection}|
  {command:'prepare';input:ResearchQuoteBriefSelection}|
  {command:'apply'|'enroll-publication'|'apply-case-transfer';input:ResearchQuoteApplySelection}|
- {command:'prepare-case-transfer';input:{requestId:string;caseId:string;expectedRevision:string|null;source:ResearchQuoteObject}}|
+ {command:'prepare-case-transfer';input:{requestId:string;caseId:string;expectedRevision:string|null;
+  source:{workspaceId:string;casesWorkspaceId:string;caseId:string;revision:string};sourceSha256:string}}|
  {command:'prepare-response';input:ResearchQuoteResponseSelection}|
  {command:'prepare-publication';input:ResearchQuotePublicationSelection}|
  {command:'prepare-report';input:ResearchQuoteReportSelection}|

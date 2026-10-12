@@ -9,7 +9,7 @@ import {customerDirectory,withCustomerOperation,readCustomerJson,retainCustomerB
 import {createCustomerHandover} from '../customer-updates/operator.mjs';
 import {publicPublication,checkPublicationArchive} from '../customer-commerce/contracts.mjs';
 import {inspectResearchPaidArchive} from '../customer-commerce/archive.mjs';
-import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,fields,id,hash,need,same,fingerprint} from './contracts.mjs';
+import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,fields,id,hash,need,same,fingerprint} from './contracts.mjs';
 import {captureResearchQuoteInput} from './client.mjs';
 import {inspectResearchCaseTransfer} from './case-transfer.mjs';
 import {retainResearchQuoteOperation,retainResearchQuoteCaseFile,readResearchQuoteRun} from './operator.mjs';
@@ -20,6 +20,9 @@ import {RESEARCH_QUOTE_PROGRAMME_SCHEMA,RESEARCH_QUOTE_PROGRAMME_LIMIT,researchQ
 export const RESEARCH_QUOTE_HANDOVER_SCHEMA='sf88-research-quotation-handover/v1';
 export const RESEARCH_QUOTE_HANDOVER_REQUEST='sf88-research-quotation-handover-request/v1';
 const PLAN='sf88-research-quotation-handover-plan/v1',FILE_COUNT=40000;
+// The complete portable container includes the native case and its retained original input.
+// Each original inspector still enforces its own ordinary record and file limits.
+const HANDOVER_FILE_LIMIT=Math.max(QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT+65536);
 const clone=value=>JSON.parse(JSON.stringify(value));
 const bytes=value=>Buffer.from(JSON.stringify(value));
 const pin=file=>({name:file.name,bytes:file.bytes,sha256:file.sha256});
@@ -67,7 +70,7 @@ export function researchQuoteDistinctDirectories(a,b){
 async function retain(root,name,value){return retainCustomerBytes(root,name,bytes(value));}
 async function copyMember(root,name,file){
  const directory=await memberParent(root,name),copied=await copyCustomerFile(file.path,join(directory,basename(name)),
-  {sha256:file.sha256,bytes:file.bytes,maximum:QUOTE_FILE_LIMIT});
+  {sha256:file.sha256,bytes:file.bytes,maximum:HANDOVER_FILE_LIMIT});
  return {name,bytes:copied.bytes,sha256:copied.sha256};
 }
 async function jsonMember(root,name,value){
@@ -75,11 +78,11 @@ async function jsonMember(root,name,value){
  return {name,bytes:saved.bytes,sha256:saved.sha256};
 }
 async function describe(path,name){
- const file=await describeCustomerFile(path,{maximum:QUOTE_FILE_LIMIT});return {name,path:file.path,bytes:file.bytes,sha256:file.sha256};
+ const file=await describeCustomerFile(path,{maximum:HANDOVER_FILE_LIMIT});return {name,path:file.path,bytes:file.bytes,sha256:file.sha256};
 }
 function descriptor(file){
  fields(file,['name','bytes','sha256']);researchQuoteHandoverPath(file.name);hash(file.sha256);
- need(Number.isSafeInteger(file.bytes)&&file.bytes>=0&&file.bytes<=QUOTE_FILE_LIMIT,'RESEARCH_QUOTE_HANDOVER_FILE_SIZE_INVALID');
+ need(Number.isSafeInteger(file.bytes)&&file.bytes>=0&&file.bytes<=HANDOVER_FILE_LIMIT,'RESEARCH_QUOTE_HANDOVER_FILE_SIZE_INVALID');
  return file;
 }
 async function connect(source,expected,signal){
@@ -247,7 +250,11 @@ export function createResearchQuoteHandover({client,directory,input,inputFile,si
  need(!(input!==undefined&&inputFile),'RESEARCH_QUOTE_SELECT_ONE_INPUT');
  const selected=input===undefined?undefined:captureResearchQuoteInput(input),file=inputFile?resolve(inputFile):null;
  return withCustomerOperation(directory,async root=>{
-  need(!await exists(join(root,'programme.json'))&&!await exists(join(root,'request.json'))&&!await exists(join(root,'export.json')),
+  need(!await exists(join(root,'programme-input.json'))&&!await exists(join(root,'programme.json'))&&
+   !await exists(join(root,'input.json'))&&!await exists(join(root,'request.json'))&&!await exists(join(root,'export.json'))&&
+   !await exists(join(root,'quotation-programme.json'))&&!await exists(join(root,'handover-copy.json'))&&
+   !await exists(join(root,'receiving-input.json'))&&!await exists(join(root,'receiving-request.json'))&&
+   !await exists(join(root,'input','handover-copy.json'))&&!await exists(join(root,'input','quotation-programme.json')),
    'RESEARCH_QUOTE_DISTINCT_DIRECTORY_REQUIRED');
   const request=await supplied(root,selected,file),payload=await customerDirectory(join(root,'package'));
   if(await exists(join(payload,'quotation-programme.json'))){
@@ -322,7 +329,7 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
  for(const file of manifest.files){
   descriptor(file);need(file.name!=='quotation-programme.json','RESEARCH_QUOTE_HANDOVER_RESERVED_FILE');
   const path=await selectedMember(root,file.name),saved=await describeCustomerFile(path,{
-   sha256:file.sha256,bytes:file.bytes,maximum:QUOTE_FILE_LIMIT});
+   sha256:file.sha256,bytes:file.bytes,maximum:HANDOVER_FILE_LIMIT});
   roster.set(file.name,file);files.push({...file,path:saved.path});
  }
  const demand=(name,expected)=>{
@@ -366,7 +373,7 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
   same(pin(selected.caseRecord),roster.get(selected.caseRecord.name)),'RESEARCH_QUOTE_HANDOVER_CASE_CHANGED');
  for(const name of ['case/export.json','case/input.json','case/result.json'])demand(name);
  demand(selected.caseRecord.name,selected.caseRecord);
- const caseBody=await readResearchHostFile(await selectedMember(root,selected.caseRecord.name),QUOTE_FILE_LIMIT,
+ const caseBody=await readResearchHostFile(await selectedMember(root,selected.caseRecord.name),QUOTE_CASE_TRANSFER_LIMIT,
   {sha256:selected.caseRecord.sha256}),caseRecord=JSON.parse(caseBody),caseInspection=await inspectResearchCaseTransfer(caseRecord);
  need(caseInspection.source.workspaceId===selected.workspaceId&&caseInspection.source.casesWorkspaceId===selected.casesWorkspaceId&&
   caseInspection.source.caseId===selected.caseId&&caseInspection.source.revision===selected.caseRevision,
@@ -421,7 +428,8 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
  }
  need(required.size===roster.size,'RESEARCH_QUOTE_HANDOVER_UNRELATED_FILE');
  return {schema:'sf88-research-quotation-handover-inspected/v1',directory:root,manifestSha256:retained.sha256,
-  manifestBytes:retained.bytes,manifest,selection:selected,files,programme,caseRecord,caseInspection,customer,operations};
+  manifestBytes:retained.bytes,manifest,selection:selected,files,programme,caseRecord,
+  caseInspection:{schema:caseInspection.schema,source:caseInspection.source,sha256:caseInspection.sha256},customer,operations};
 }
 /** Copy the entire retained bundle before selecting any receiving writer. */
 export function copyResearchQuoteHandover({sourceDirectory,directory,manifestSha256}={}){
@@ -429,9 +437,13 @@ export function copyResearchQuoteHandover({sourceDirectory,directory,manifestSha
  const source=sourceDirectory?resolve(sourceDirectory):null,target=resolve(directory);
  if(source)researchQuoteDistinctDirectories(source,target);
  return withCustomerOperation(target,async root=>{
-  need(!await exists(join(root,'programme.json'))&&!await exists(join(root,'request.json'))&&
-   !await exists(join(root,'export.json'))&&!await exists(join(root,'package-request.json')),
-   'RESEARCH_QUOTE_DISTINCT_DIRECTORY_REQUIRED');
+  need(!await exists(join(root,'programme-input.json'))&&!await exists(join(root,'programme.json'))&&
+   !await exists(join(root,'input.json'))&&!await exists(join(root,'request.json'))&&!await exists(join(root,'export.json'))&&
+   !await exists(join(root,'package-request.json'))&&!await exists(join(root,'receiving-input.json'))&&
+   !await exists(join(root,'receiving-request.json'))&&!await exists(join(root,'input','handover-copy.json'))&&
+   !await exists(join(root,'input','quotation-programme.json'))&&
+   (!await exists(join(root,'package-input.json'))||await exists(join(root,'quotation-programme.json'))||
+    await exists(join(root,'handover-copy.json'))),'RESEARCH_QUOTE_DISTINCT_DIRECTORY_REQUIRED');
   if(await exists(join(root,'quotation-programme.json'))){
    const saved=await inspectResearchQuoteHandover(root,{manifestSha256});
    if(source&&await exists(join(source,'quotation-programme.json'))){

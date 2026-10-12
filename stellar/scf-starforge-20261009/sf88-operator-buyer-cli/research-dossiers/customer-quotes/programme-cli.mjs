@@ -5,7 +5,7 @@ import {resolve,dirname,basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {ResearchWorkspaceClient} from '../workspace-client.mjs';
 import {customerDirectory,retainCustomerBytes} from '../customer-updates/files.mjs';
-import {QUOTE_FILE_LIMIT,need} from './contracts.mjs';
+import {QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,need} from './contracts.mjs';
 import {createResearchQuoteProgramme,readResearchQuoteProgramme,readResearchQuoteProgrammeStep,
  submitResearchQuoteProgramme,applyResearchQuoteProgrammeReview,replayResearchQuoteProgramme} from './programme.mjs';
 import {createResearchQuoteHandover,inspectResearchQuoteHandover,copyResearchQuoteHandover} from './programme-files.mjs';
@@ -104,7 +104,7 @@ function errorView(error,values,result){
 }
 async function retainOutput(path,value){
  const file=resolve(path),body=Buffer.from(JSON.stringify(value));
- need(body.length<=QUOTE_FILE_LIMIT,'RESEARCH_QUOTE_PROGRAMME_OUTPUT_LIMIT');
+ need(body.length<=Math.max(QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT+65536),'RESEARCH_QUOTE_PROGRAMME_OUTPUT_LIMIT');
  return retainCustomerBytes(await customerDirectory(dirname(file)),basename(file),body);
 }
 export async function main(argv=process.argv.slice(2),{stdout=process.stdout,stderr=process.stderr}={}){
