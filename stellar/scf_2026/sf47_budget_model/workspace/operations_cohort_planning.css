@@ -92,3 +92,9 @@
 @media(max-width:1100px){.cp-calendar{grid-template-columns:repeat(4,minmax(0,1fr))}.cp-header{align-items:flex-start;flex-direction:column}.cp-header .cp-actions{width:100%}}
 @media(max-width:700px){.cp-fields{grid-template-columns:minmax(0,1fr)}.cp-wide{grid-column:auto}.cp-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-calendar{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-panel{padding:.8rem}.cp-heading{flex-direction:column;align-items:flex-start}.cp-dialog .cp-heading{flex-direction:row}.cp-filter label{min-width:180px}.cp-tabs button{padding:.6rem .65rem}.cp-actions button{flex:1 1 auto}.cp-table th,.cp-table td{padding:.45rem}.cp-dialog{width:calc(100vw - 16px);max-height:calc(100vh - 16px)}.cp-dialog>form{padding:.8rem}}
 @media print{.cohort-planning{font-size:11px}.cp-tabs,.cp-subtabs,.cp-actions,.cp-filter,.cp-dialog,button{display:none!important}.cp-panel{break-inside:avoid;padding:8px}.cp-table{overflow:visible}.cp-table tr{break-inside:avoid}.cp-header{display:block}.cp-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.cp-comparison-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:start}
+.cp-comparison-sides .cp-actions{margin:.75rem 0}
+.cp-comparison-sides p{overflow-wrap:anywhere}
+.cp-comparison-metric{max-width:340px;margin:.75rem 0}
+@media(max-width:700px){.cp-comparison-sides{grid-template-columns:minmax(0,1fr);gap:0}}
