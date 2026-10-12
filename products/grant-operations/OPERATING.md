@@ -410,6 +410,20 @@ grant operations --workspace "$GRANT_DATA" completion-export --case CASE_ID --re
 
 Read current case versions after each committed mutation. Completion's prepare data is its original action object; it is not interchangeable with the assignment seed or cohort input. Record actual submission, issuer decision and received funding through their original controls and source receipts. See [Completion](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md).
 
+### Use the complete delivery calendar
+
+Open **Delivery calendar** in the current grant case. The **Agenda** presents all dated work and events in order; **Month** shows the recorded periods on a Monday-first grid. Select an event to inspect its dates, owner and source, then use **Open tranche** or **Open payment** to continue in the original records.
+
+Filter by tranche, event type, accountable owner, date range or text. **Upcoming dates** starts at the selected status date. Inactive receipts and deadlines are available through **Include inactive records**. Work with no dates appears below the agenda; a partial assignment displays its known bound and identifies the missing one.
+
+Payment-derived deadlines come from the original Completion engine. Confirmed extensions keep the original deadline alongside the later date. Planned work and planned submissions retain the saved plan or assignment basis. Changing **Status as of** evaluates the currently retained records on that civil date.
+
+Use **Download calendar (.ics)** for dated all-day events, **Download all rows (.csv)** for every calendar row including undated work, or **Download source (.json)** for the complete calendar and source identities. Downloads use the selected case version; refresh when another operator changes the case. View filters apply to the screen, and every download contains the complete selected case calendar.
+
+Import ICS into a dedicated calendar. Stable event identifiers and cancellation records support reimport; calendar applications differ in how they replace existing events. Keep the original operating-case export for continued editing and full source attachments.
+
+The same operation is available through `operations delivery-calendar` and `operations delivery-calendar-export --format ics|csv|json` in the native CLI, and through `merchant_grant_delivery_calendar` / `merchant_grant_export` in Merchant MCP. The installed source includes the native calendar module, browser assets, typed agent client and both managed launch selections. See [Calendar operation](../../stellar/scf_2026/sf47_budget_model/workspace/CALENDAR.md) for complete commands and file semantics.
+
 ## 8. Continue through the same Merchant MCP service
 
 The mcp runtime profile exposes the existing typed client and Merchant provider. Configure only host-declared workspace aliases and private input files. Keep the connection JSON mode 0600 and private directories owned by the receiving operator.

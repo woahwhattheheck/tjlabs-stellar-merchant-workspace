@@ -404,7 +404,7 @@ export class MerchantGrantWorkspaces {
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
-      portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
+      portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion', delivery_calendar:'delivery-calendar',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
       supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
@@ -544,7 +544,7 @@ export class MerchantGrantWorkspaces {
       } else { const {caseId, ...fields} = body; original = await client.attach(caseId, selected.bytes, fields); }
     } else throw failure('GRANT_TOOL_UNKNOWN', 'Choose an original grant operation.');
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
-      ['planId','caseId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind',
+      ['planId','caseId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',

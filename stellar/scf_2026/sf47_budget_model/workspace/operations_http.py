@@ -6,6 +6,7 @@ import re
 
 from model import Problem
 from operations import Operations, decoded
+import operations_calendar as calendar_model
 from operations_commercial_http import handle as commercial_http
 
 
@@ -31,6 +32,8 @@ def register_static(static):
                    "/operations_installations.css": ("operations_installations.css", "text/css; charset=utf-8"),
                    "/operations_buyer.mjs": ("operations_buyer.mjs", "text/javascript; charset=utf-8"),
                    "/operations_buyer.css": ("operations_buyer.css", "text/css; charset=utf-8"),
+                   "/operations_calendar.mjs": ("operations_calendar.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_calendar.css": ("operations_calendar.css", "text/css; charset=utf-8"),
                    "/operations_completion.mjs": ("operations_completion.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.css": ("operations_completion.css", "text/css; charset=utf-8"),
                    "/operations_support.mjs": ("operations_support.mjs", "text/javascript; charset=utf-8"),
@@ -61,7 +64,7 @@ def read(handler, parsed):
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -128,6 +131,19 @@ def read(handler, parsed):
                          installation_id + "-edition-" + str(revision) + ".zip")
         else:
             handler.send(200, ops.installation(ident, installation_id, revision))
+    elif action == "delivery-calendar" or action.startswith("delivery-calendar/export."):
+        supplied = query.get("expectedVersion", [None])[0]
+        try:
+            expected = int(supplied) if supplied is not None else None
+        except ValueError as exc:
+            raise Problem("Use the selected calendar's case version.", 422, "INVALID_CALENDAR_VERSION") from exc
+        as_of = query.get("asOfDate", [None])[0]
+        if action == "delivery-calendar":
+            handler.send(200, ops.delivery_calendar(ident, as_of, expected))
+        else:
+            format = action.rsplit(".", 1)[1]
+            handler.send(200, ops.export_delivery_calendar(ident, as_of, format, expected),
+                         calendar_model.content_type(format), ident + "-delivery-calendar." + format)
     elif action == "completion":
         handler.send(200, ops.completion_calendar(ident, query.get("asOfDate", [None])[0]))
     elif action.startswith("implementation-reviews/"):
