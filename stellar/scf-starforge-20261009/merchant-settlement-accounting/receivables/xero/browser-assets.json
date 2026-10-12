@@ -64,6 +64,20 @@
         "../NATIVE_RETURN.md",
         "text/plain; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/xero/cash-commissioning.mjs",
+      [
+        "cash-commissioning.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/xero/CASH_COMMISSIONING.md",
+      [
+        "../CASH_COMMISSIONING.md",
+        "text/plain; charset=utf-8"
+      ]
     ]
   ]
 }

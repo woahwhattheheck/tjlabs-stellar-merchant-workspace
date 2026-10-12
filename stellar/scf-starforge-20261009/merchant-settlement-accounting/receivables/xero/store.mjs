@@ -1,5 +1,6 @@
 // MIT. Xero document handovers share the original accounting lease and request log.
 import {randomUUID} from 'node:crypto';
+import {XeroCashCommissioningWorkspace} from './cash-workspace.mjs';
 import {constants} from 'node:fs';
 import {open,mkdir,lstat} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -68,6 +69,7 @@ export class XeroReceivablesWorkspace {
       'XERO_RECEIVABLES_OWNER_REQUIRED','Use the original initialized receivables controller.');
     this.receivables=receivables;
     this.workspace=receivables.workspace;
+    this.cashCommissioning=new XeroCashCommissioningWorkspace(this);
   }
   data() {
     this.workspace.lease.assertHeld();
@@ -224,7 +226,7 @@ export class XeroReceivablesWorkspace {
       profileVersion:record.selection.profileVersion,organisation:record.organisation,asOf:record.selection.asOf,
       parentId:record.selection.parentId??null,documentCount:record.documents.length,state,resolvedCount,
       unresolvedCount:record.documents.length-resolvedCount,correctableCount:resolutions.filter(row=>row.canCorrect).length,
-      totals:clone(record.totals)};
+      totals:clone(record.totals),cashCycleCount:this.cashCommissioning.data().filter(row=>row.packageIds.includes(record.id)).length};
   }
   _relatedImports(record,index=this._receivingIndex()) {
     const keys=new Set(record.documents.map(row=>sourceKey({documentId:row.id,sourceSha256:row.sourceSha256})));
@@ -242,7 +244,8 @@ export class XeroReceivablesWorkspace {
     return {...this._summary(record,index),schema:XERO_PACKAGE_SCHEMA,selection:clone(record.selection),
       documents:clone(record.documents),files:clone(record.files),profile:clone(record.profile),
       sourceFingerprint:record.sourceFingerprint,previewSha256:record.previewSha256,
-      imports,resolutions:record.documents.map(doc=>this._resolution(record,doc,index)),history:clone(record.history),family};
+      imports,resolutions:record.documents.map(doc=>this._resolution(record,doc,index)),history:clone(record.history),family,
+      cashCycles:this.cashCommissioning.summaries(record.id)};
   }
   async state(query={}) {
     return this.workspace.serial(async()=>{
@@ -326,17 +329,38 @@ export class XeroReceivablesWorkspace {
         preparedElsewhere:latest&&latest.id!==selection.parentId?latest.id:null,
         requiresReturnedCorrection:resolution&&['MISMATCH','CONFLICT'].includes(resolution.status)});
     }
-    const accounts=[],additionalFiles=[];
+    const accounts=[],additionalFiles=[],cashFiles=[],cashNames=new Set();let cashBytes=0;
     for(const kind of ['invoice','credit'])additionalFiles.push(await this._retainedFile(profile,kind+'-template.csv'));
     for(const customerId of customerIds) {
       const account=customerExport(data,this.receivables._customer(customerId),selection.asOf);
       accounts.push(account.value);
       for(const item of account.files)additionalFiles.push({...item,name:'customer-'+customerId+'-'+item.name,role:'original-customer-account'});
+      // These original private readers already share this accounting lease. Keep the
+      // full customer advice bytes and original names inside the selected handover.
+      const originals=[...await this.receivables.refundsWorkspace.customerFiles(customerId,selection.asOf),
+        ...await this.receivables.bankReceiptsWorkspace.customerFiles(customerId,selection.asOf)];
+      for(const item of originals) {
+        const sourceSha256=sha(item.bytes),suffix=/\.(json|html|csv|txt|bin)$/i.exec(item.name)?.[1].toLowerCase()??'dat',
+          name='cash-'+sha(json({customerId,name:item.name,sha256:sourceSha256}))+'.'+suffix;
+        if(cashNames.has(name))continue;
+        cashNames.add(name);cashBytes+=item.bytes.length;
+        need(cashBytes<=XERO_PACKAGE_BYTES,'XERO_PACKAGE_LIMIT','The customer cash advice exceeds 128 MiB. Select fewer documents.');
+        additionalFiles.push({...item,name,role:'original-customer-payment'});
+        cashFiles.push({customerId,originalName:item.name,name,type:item.type,bytes:item.bytes.length,sha256:sourceSha256});
+      }
     }
-    const receiptIds=new Set(data.receipts.filter(row=>customerIds.has(row.customerId)&&row.receivedDate<=selection.asOf).map(row=>row.id));
+    if(cashFiles.length)additionalFiles.push(packetFile('customer-cash-files.json',json({
+      schema:'stellar-forge.merchant-receivables-xero-cash-files.v1',asOf:selection.asOf,files:cashFiles}),
+      'original-customer-payment-index'));
+    const receiptIds=new Set(data.receipts.filter(row=>customerIds.has(row.customerId)&&
+      (row.accountingDate??row.receivedDate)<=selection.asOf).map(row=>row.id));
     const snapshot={schema:'stellar-forge.merchant-receivables-xero-account-snapshot.v1',asOf:selection.asOf,accounts,
       receipts:clone(data.receipts.filter(row=>receiptIds.has(row.id))),
-      allocations:clone(data.allocations.filter(row=>receiptIds.has(row.receiptId)&&row.allocatedDate<=selection.asOf))};
+      allocations:clone(data.allocations.filter(row=>receiptIds.has(row.receiptId)&&row.allocatedDate<=selection.asOf)),
+      refunds:clone((data.refunds??[]).filter(row=>receiptIds.has(row.proposal.receiptId)&&
+        row.proposal.accountingScope==='COMMERCIAL'&&row.proposal.effectiveDate<=selection.asOf)),
+      creditDispositions:clone((data.creditDispositions??[]).filter(row=>receiptIds.has(row.proposal.receiptId)&&
+        row.proposal.effectiveDate<=selection.asOf))};
     return compileXeroPackage(profile.profile,originals,snapshot,selection,additionalFiles);
   }
   async preview(value) {return this.workspace.serial(async()=>({...((await this._build(value)).review),revision:this.workspace.state.revision}));}
@@ -406,6 +430,12 @@ export class XeroReceivablesWorkspace {
     need(item,'XERO_FILE_NOT_FOUND','Choose an original file listed in this package or one of its returned results.',404);
     return this._retainedFile(item,name);
   }
+  async cashPreview(id,value) {return this.cashCommissioning.preview(id,value);}
+  async cashCapture(id,value) {return this.cashCommissioning.capture(id,value);}
+  async cashCycles(id) {return this.cashCommissioning.cycles(id);}
+  async cashCycle(id,cycleId) {return this.cashCommissioning.detail(id,cycleId);}
+  async cashFile(id,cycleId,name) {return this.cashCommissioning.file(id,cycleId,name);}
+  async cashExport(id,cycleId) {return this.cashCommissioning.export(id,cycleId);}
   async file(id,name) {return this.workspace.serial(async()=>this._file(id,name));}
   async export(id) {
     return this.workspace.serial(async()=>{
