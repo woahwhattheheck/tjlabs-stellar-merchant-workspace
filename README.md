@@ -9,6 +9,10 @@ material catalogs, merchant incident work, supplier cost allocation and pricing
 decisions, and QuickBooks or Xero accounting operations. Each workflow keeps its
 original saved records from source selection through delivery and reopening.
 
+The [development architecture and delivery plan](products/merchant-workspace/DEVELOPMENT.md)
+connects the original code, user interfaces, prospective Stellar integration
+roadmap, native acceptance and complete customer handover in one source.
+
 ## Choose a workflow
 
 | Work to complete | Entry point | Result |
