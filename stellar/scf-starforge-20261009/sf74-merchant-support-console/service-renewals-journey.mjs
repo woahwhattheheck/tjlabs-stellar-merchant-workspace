@@ -14,6 +14,8 @@ import {changeServiceCase} from './service-cases.mjs';
 import {validateServiceRenewalHandover} from './service-renewals.mjs';
 import {serviceSha256} from './service-commitments.mjs';
 import {createConsoleServer} from './server.mjs';
+import {merchantServiceRenewals} from '../../../stellar-forge/mcp-merchant-operator/support-service-renewals.mjs';
+import {RetainedFileReads} from '../../../stellar-forge/mcp-merchant-operator/retained-file-reads.mjs';
 globalThis.crypto??=webcrypto;
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const termsFields=['title','customer','owner','reference','status','incidentSourceId','merchantId',
@@ -21,7 +23,7 @@ const termsFields=['title','customer','owner','reference','status','incidentSour
 const termsForm=terms=>({id:terms.id,expectedRevision:terms.revision,
   ...Object.fromEntries(termsFields.map(key=>[key,structuredClone(terms[key])]))});
 
-export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId}){
+export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId,casesDirectory}){
   const actor='Renewal native exercise',commercialDesk=openCaseCommercial({store:caseStore,workspaceId});
   const desk=()=>openCaseServiceRenewals({caseStore,commercialDesk,workspaceId});
   let renewals=desk();
@@ -306,6 +308,24 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
     server.closeIdleConnections?.();
     await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
   }
+  const reads=new RetainedFileReads({errorPrefix:'SUPPORT'});
+  const mcp=merchantServiceRenewals({cases:async()=>caseStore,casesDirectory:()=>casesDirectory,
+    exportsDirectory:()=>casesDirectory,reads});
+  try{
+    const choice={id:caseId,revision:handover.case.revision,renewalId:handover.renewal.id};
+    let part=await mcp.call('merchant_service_renewals_handover_file',{...choice,limit:196608});
+    const descriptor=part.file,chunks=[Buffer.from(part.data,'base64')];
+    while(part.nextOffset!==null){
+      part=await mcp.call('merchant_service_renewals_handover_file',{...choice,
+        readId:part.readId,expectedSha256:descriptor.sha256,offset:part.nextOffset,limit:196608});
+      chunks.push(Buffer.from(part.data,'base64'));
+    }
+    const bytes=Buffer.concat(chunks);
+    assert.equal(bytes.length,descriptor.bytes);
+    assert.equal(digest(bytes),descriptor.sha256);
+    assert.equal(bytes.toString('utf8'),JSON.stringify(handover,null,2)+'\n',
+      'The native MCP file reader must receive the complete original accepted historical handover');
+  }finally{await reads.close();}
   return {caseId,caseRevision:await revision(),agreementId:source.id,
     proposalTerms:accepted.renewal.continuationTerms,activatedTerms:accepted.renewal.activatedTerms,
     quoteId:linked.quote.id,acceptanceId:latestAcceptance.id,
@@ -314,7 +334,7 @@ export async function runServiceRenewalsExercise({caseStore,caseId,workspaceId})
       'quote-bound proposed edition','latest original customer response','accepted activation',
       'saved-case replay and conflicts','exact financial handover materials','portable workspace',
       'intervening terms and closure','replacement after a reviewed amendment with a fresh quote','accepted head after closure','rehashed wrong active edition rejection','original older-workspace merge',
-      'native HTTP portfolio/read/handover','stable historical handover after later saves','HTTP request recovery and origin guard','served renewal page and modules']};
+      'native HTTP portfolio/read/handover','native MCP historical handover file bytes','stable historical handover after later saves','HTTP request recovery and origin guard','served renewal page and modules']};
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
@@ -323,7 +343,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
     const caseStore=await openCaseStore(directory),caseId=randomUUID();
     await caseStore.save({id:caseId,expectedRevision:null,metadata:{},
       workspaceText:await serializeWorkspace({name:'Isolated renewal native journey'})});
-    const {acceptedHandover,...result}=await runServiceRenewalsExercise({caseStore,caseId,workspaceId:commercialWorkspaceId(directory)});
+    const {acceptedHandover,...result}=await runServiceRenewalsExercise({caseStore,caseId,casesDirectory:directory,workspaceId:commercialWorkspaceId(directory)});
     const sampleFile=resolve(process.argv[2]??'service-renewal-accepted-handover.json');
     const sampleText=JSON.stringify(acceptedHandover,null,2)+'\n';
     await mkdir(dirname(sampleFile),{recursive:true,mode:0o700});

@@ -135,7 +135,7 @@ The HTTP API accepts at most 2,000,000 UTF-8 bytes per complete request, includi
 
 ## Native merchant tools
 
-The product selects the original `accounting` provider and its dependent `service-agreements` provider. Use the existing merchant configuration's `accounting.workspaces` aliases and original accounting source paths. The service-agreement provider borrows the already owned accounting session; it does not define a second accounting directory or source configuration.
+The product selects the original accounting, service-agreement and support providers with their declared dependencies. Use the existing merchant configuration's `accounting.workspaces` aliases and original accounting source paths. The service-agreement provider borrows the already owned accounting session. Configure the existing `supportConnection` for the same original case directory used by the support console; the operational renewal tools appear when that support connection is configured.
 
 Start the existing merchant MCP transport through the packaged `merchant-mcp` or `merchant-mcp-stdio` command. The `merchant-mcp-client-config` command remains the client configuration entry point. Agreement tools all use the `merchant_service_agreements_` prefix:
 
@@ -161,10 +161,20 @@ For an export, retain the returned `asOf`, selected file name and SHA256. Pass t
 
 For an original source, begin with `source_file` and its edition's `sourceId`. Subsequent chunks retain the returned read identity and exact file hash. Close or release an interrupted read when it is no longer needed.
 
+### Operational renewals in the same merchant session
+
+The `merchant_service_renewals_` tools operate the original saved service case before the financial calendar receives its accepted continuation. Use `queue` with an explicit UTC `asOf` and page through `nextOffset`, then `read` the selected case. Keep its case revision SHA distinct from the renewal and service-terms edition numbers. The `preview`, `propose` and `decide` operations retain the original case writer, reviewed continuation, matching quotation and actual customer response.
+
+Receive the accepted handover with `handover` or the complete `handover_file` reader. Pin its original case revision and renewal UUID. When downloading chunks, keep the file digest, read identity and returned byte offset; verify the completed byte count and SHA256. `file_reads` inspects unfinished reads, and `file_release` releases one original read.
+
+Decode the complete handover JSON as UTF-8 and retain that exact string as `renewalJson`. Decode `materials.quote.data` and `materials.acceptance.data` from base64 to the exact `quoteContent` and `responseContent` strings. Send all three with the financial `create` or `amend` request, the reviewed accounting customer and original monthly calendar. The accepted service interval and same-calendar lineage remain enforced by that financial controller.
+
+The complete operational proposal, customer decision and recovery examples are in the installed `source/stellar-forge/mcp-merchant-operator/SERVICE_RENEWALS.md`. Keep each original operational request body for replay. Its case request UUID and revision guards belong to that case operation; each intended financial change has its own retained financial request and workspace guards.
+
 ## Product contents and integration
 
 The source-owned selection is `stellar/scf-starforge-20261009/distribution/selections/merchant-service-agreements.json`. Its contribution declares the command, controller/core/server exports, typed client, Applications provider, browser asset manifest and merchant provider.
 
-The selection retains the original receivables product's accounting, connection, support, commercial, implementation and service-operation contributions. It adds the original merchant MCP transport and accounting provider together with service agreements. The existing distribution builder resolves these selected sources and their imports.
+The selection retains the original receivables product's accounting, connection, support, commercial, implementation and service-operation contributions. Its merchant MCP registration includes service agreements and the original support provider's accounting and buyer-expense dependencies. The existing distribution builder resolves these selected sources and their imports.
 
 Persistent agreement state lives in the original accounting workspace. Accepted quotation sources and billing operations retain their original identities. Exports contain the agreement's complete file set; the native transport adds a complete TAR archive through the existing retained-file reader.

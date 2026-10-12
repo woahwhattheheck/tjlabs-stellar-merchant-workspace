@@ -383,6 +383,78 @@ function sourceLinks(agreementId, sourceId, renewal = null) {
     ...(renewal ? [['renewal.json', 'Original renewal handover']] : [])
   ].map(([file, title]) => '<a class="button-link small" href="' + esc(base + file) + '" download>' + title + '</a>').join('') + '</div>';
 }
+
+function tariffBasisView(tariff, imported = null) {
+  if (!tariff?.basis) return '';
+  const basis = tariff.basis;
+  const amount = value => 'USD ' + esc(value ?? '—');
+  return '<section class="section-title"><h3>Accepted tariff basis</h3><p class="help">' + esc(basis.text) + '</p>' +
+    '<dl class="definition-grid"><div><dt>Tariff</dt><dd>' + esc(basis.tariffLabel) +
+    '</dd></div><div><dt>Schedule</dt><dd>' + esc(label(basis.mode)) +
+    '</dd></div><div><dt>Saved selection volume / month</dt><dd class="amount">' + esc(basis.selectedQuantity) +
+    '</dd></div><div><dt>Quoted requests / month</dt><dd class="amount">' + esc(basis.quotedQuantity) +
+    '</dd></div><div><dt>Quoted uniform rate / request</dt><dd class="amount">' + amount(basis.uniformUnitUsd) +
+    '</dd></div><div><dt>Original selected tariff total</dt><dd class="amount">' + amount(basis.originalTariffGrossUsd) +
+    '</dd></div><div><dt>Original upward unit rounding</dt><dd class="amount">' + amount(basis.originalRoundingDeltaUsd) +
+    '</dd></div>' + (imported ? '<div><dt>Original quoted route / month</dt><dd class="amount">' +
+      amount(imported.originalMonthlyAmountUsd) + '</dd></div>' : '') + '</dl>' +
+    (basis.changedQuantity ? '<div class="notice"><strong>Quoted volume changed</strong><p>At ' + esc(basis.quotedQuantity) +
+      ' requests, the retained tier comparison totals ' + amount(basis.tariffGrossAtQuotedQuantityUsd) + '. ' +
+      (basis.derivedUnitAtQuotedQuantityUsd === null ? 'The zero-request comparison has no per-request rate.' :
+        'Its comparison rate is ' + amount(basis.derivedUnitAtQuotedQuantityUsd) + ' per request.') +
+      ' The accepted quotation uses its saved uniform rate of ' + amount(basis.uniformUnitUsd) + ' per request.</p></div>' : '') +
+    (imported?.includedInScope ? '<p class="help">This billing scope carries the original quoted route for ' +
+      esc(imported.periodCount) + ' complete month' + (imported.periodCount === 1 ? '' : 's') + ': ' +
+      amount(imported.invoiceAmount) + ' at the selected invoice precision.</p>' : '') +
+    '<details><summary>Original tariff tiers and source</summary><div class="table-wrap"><table><thead><tr>' +
+    '<th scope="col">Request quantity</th><th scope="col" class="align-right">USD / request</th></tr></thead><tbody>' +
+    array(tariff.tiers).map(tier => '<tr><td>' + (tier.upTo === null ? 'Remaining requests' : 'Through ' + esc(tier.upTo)) +
+      '</td><td class="align-right amount">' + esc(tier.unitPriceUsd) + '</td></tr>').join('') +
+    '</tbody></table></div><p class="meta">Original selection ' + esc(tariff.selectionRequestId) +
+    '</p><p class="meta">Source ' + esc(tariff.id) + '</p></details></section>';
+}
+
+
+function performanceBasisView(binding, imported = null) {
+  if (!binding) return '';
+  const period = binding.period || {}, measured = binding.measuredQuote || {}, proposed = binding.proposed || {};
+  const date = value => String(value || '').replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  const observed = [period.observedFrom, period.observedUntil].filter(Boolean).map(date).join(' → ');
+  const amount = value => value === null || value === undefined ? '—' : 'USD ' + esc(value);
+  const row = (name, value) => '<tr><th scope="row">' + esc(name) + '</th><td>' + value + '</td></tr>';
+  const counts = Object.entries(binding.basis?.counts || {});
+  const notes = Array.isArray(binding.issues) ? binding.issues : [];
+  return '<section class="section-title"><h3>Recorded usage and this quotation revision</h3>' +
+    '<p class="help">The saved review describes its measured period. This quotation records the proposed monthly requests and accepted price separately.</p>' +
+    '<div class="table-wrap"><table><tbody>' +
+    row('Measured quotation', esc(measured.title || measured.id)) +
+    row('Observed period', esc(observed || 'Saved observation period')) +
+    row('Recorded quantity', esc(binding.basis?.quantity ?? '—') + ' ' + esc(binding.basis?.label || '')) +
+    row('Measured route', esc(binding.route?.method) + ' ' + esc(binding.route?.path)) +
+    row('Earlier quoted uniform rate / request', amount(binding.quoted?.savedUnitUsd)) +
+    row('Earlier quote value at recorded quantity', amount(binding.quoted?.valueAtObservedQuantityUsd)) +
+    row('Original tariff total at recorded quantity', amount(binding.tariff?.quote?.totalUsd)) +
+    row('Proposed requests / month', esc(proposed.monthlyRequests)) +
+    row('Revised quoted rate / request', amount(proposed.unitUsd)) +
+    row('Revised quoted route / month', amount(proposed.amountUsd)) +
+    (imported?.includedInScope ? row('Imported route charge', amount(imported.invoiceAmount) + ' · ' +
+      esc(imported.periodCount) + ' complete month' + (imported.periodCount === 1 ? '' : 's')) : '') +
+    '</tbody></table></div><details class="section-title"><summary>Saved cost view, source counts and identities</summary>' +
+    '<div class="table-wrap"><table><tbody>' +
+    row('Estimated cost at recorded quantity', amount(binding.costs?.estimated?.valueAtBasisQuantityUsd)) +
+    row('Contribution using estimated unit cost', amount(binding.costs?.contributionUsingEstimatedUnitCostUsd)) +
+    (binding.costs?.recorded ? row('Recorded cost edition', esc(binding.costs.recorded.edition)) +
+      row('Cost period alignment', esc(typeof binding.costs.recorded.periodAlignment === 'object' ?
+        JSON.stringify(binding.costs.recorded.periodAlignment) : binding.costs.recorded.periodAlignment)) : '') +
+    counts.map(([key, value]) => row(key, esc(value ?? '—'))).join('') +
+    '</tbody></table></div>' +
+    (notes.length ? '<ul>' + notes.map(note => '<li>' + esc(note.message || note.code || '') + '</li>').join('') + '</ul>' : '') +
+    '<p class="meta">Measured quote ' + esc(measured.id) + ' · ' + esc(measured.sha256) +
+    '</p><p class="meta">Native source ' + esc(binding.nativeSourceId) +
+    '</p><p class="meta">Usage version ' + esc(binding.usageVersion) + ' · revision ' + esc(binding.usageRevision) +
+    '</p><p class="meta">Recorded-usage source ' + esc(binding.id) + '</p></details></section>';
+}
+
 function currentAgreement() {
   const id = state.selectedId;
   if (!id || state.detail?.agreement?.id !== id) return null;
@@ -434,7 +506,8 @@ function renderDetail() {
       '<h3 class="section-title">' + esc(edition.quote?.title || 'Original accepted quotation') + '</h3>' +
       '<p class="help">' + esc(edition.reason || 'Original agreement terms') + ' · ' + esc(edition.actor || '—') + ' · ' +
       esc(when(edition.createdAt)) + '</p>' + sourceLinks(agreement.id, edition.sourceId, edition.renewal) +
-      renewalIdentityView(edition.renewal) +
+      renewalIdentityView(edition.renewal) + tariffBasisView(edition.quote?.bindings?.tariff) +
+      performanceBasisView(edition.quote?.bindings?.performance) +
       '<details class="section-title"><summary>Source identity and complete edition</summary><pre>' + esc(json(edition)) +
       '</pre></details></div>').join('') : '<div class="panel-body"><p class="help">No quotation editions were returned.</p></div>') +
     '</section><section class="panel"><div class="panel-head"><h3>Complete agreement history</h3></div>' +
@@ -967,6 +1040,7 @@ function previewContents(preview, agreement) {
     '<p class="help">' + esc(review.calculation || draft.rounding || '') + '</p>' +
     (review.plannedRouteLines ? '<p class="help">' + esc(review.plannedRouteLines) +
       ' quoted planned-usage line' + (review.plannedRouteLines === 1 ? '' : 's') + ' included in this period.</p>' : '') +
+    tariffBasisView(review.tariff?.binding, review.tariff) + performanceBasisView(review.performance?.binding, review.performance) +
     sourceLinks(agreement.id, period.sourceId, renewal) + renewalIdentityView(renewal) +
     '<details class="section-title"><summary>Original customer, quote calculation and complete invoice preview</summary><pre>' +
     esc(json(preview)) + '</pre></details>' +
