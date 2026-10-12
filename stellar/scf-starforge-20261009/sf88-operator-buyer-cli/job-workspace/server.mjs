@@ -21,7 +21,7 @@ export async function startJobCustomerWorkspace({ model, port = 0, browserApprov
     if (failures.length === 1) throw failures[0];
     if (failures.length) throw new AggregateError(failures, 'JOB_WORKSPACE_CHECKOUT_CLOSE_FAILED');
   };
-  const route = async ({ request, url, send, body }) => {
+  const route = async ({ request, url, send, body, signal }) => {
     if (!url.pathname.startsWith('/api/job-workspace/')) return false;
     try {
       const method = request.method, path = url.pathname.slice('/api/job-workspace'.length);
@@ -33,7 +33,9 @@ export async function startJobCustomerWorkspace({ model, port = 0, browserApprov
         send(model.list({ q: url.searchParams.get('q') ?? '', state: url.searchParams.get('state') ?? '',
           view: url.searchParams.get('view') ?? 'active', offset: Number(url.searchParams.get('offset') ?? 0),
           limit: Number(url.searchParams.get('limit') ?? 50) }));
-      } else if (path === '/register' && method === 'POST') send(await model.register(await body()), 201);
+      } else if (/^\/jobs\/[a-f0-9]{64}\/outputs$/.test(path) && method === 'GET')
+        send(await model.outputs(path.split('/')[2], { signal }));
+      else if (path === '/register' && method === 'POST') send(await model.register(await body()), 201);
       else if (path === '/retain' && method === 'POST') {
         const input = await body(2 * 1024 * 1024), encoded = input.acceptanceBase64;
         requireValue(typeof encoded === 'string' && encoded.length <= 87384 &&

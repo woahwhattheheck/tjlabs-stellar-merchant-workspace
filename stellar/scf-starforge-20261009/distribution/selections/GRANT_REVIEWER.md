@@ -111,12 +111,43 @@ published presentation links. The four direct local downloads are:
 | Six-package budget | `/grant-data/budget.csv` |
 | Source and measure index | `/grant-data/source-index.json` |
 
-These six original grant files come from the reviewed source at
-`f7fe93c07355b1688a550bbcd349a5590fa1d680`; their contents remain unchanged.
-The source index retains the underlying manuscript and financial source
-identities. Read the published film and editable companion at the original
-release links on the page. The local package contains the application and
-economic-report source downloads.
+The source manifest identifies the complete selected application edition.
+The source index retains the underlying manuscript and financial identities;
+the preceding reviewer source at `f7fe93c07355b1688a550bbcd349a5590fa1d680`
+remains in the original history. Read the published film and editable
+companion at the original release links. The package retains the current
+application and economic-report source downloads.
+
+Begin with **Explore the working product** to inspect the original film and
+complete report, follow Applications, or prepare the same installed/source
+command and complete opening guide. Its [reviewer-opening guide](../../../../stellar-forge/developer-site/GRANT_ENTRY.md)
+travels with this selected source.
+
+Choose **Prepare submission** to edit the nine complete answers, map the
+actual issuer fields and limits, copy the selected full text, and save a
+complete version. Export and reopen the working draft with every source
+edition, manual answer, field mapping and review note. Receiving a later
+source edition preserves manual edits against their original baselines.
+The [submission operating guide](../../../../stellar-forge/developer-site/GRANT_SUBMISSION.md)
+covers that complete original workflow.
+
+The installed `grant-compose` command receives the owner's selected manuscript
+through the same maintained composer:
+
+~~~sh
+starforge grant-compose \
+  --directory /absolute/current/developer-site/dist \
+  --manuscript /absolute/current-scf-application.md \
+  --source-pins-output /absolute/current-grant-source-pins.json
+~~~
+
+Keep the current application, complete detailed companion, source index and
+page shell together in that directory. Existing product selections are
+retained from the source index; the [composition guide](../../../../stellar-forge/developer-site/GRANT_COMPOSITION.md)
+describes explicitly selecting a new economic, coastal, merchant-financial or paired Datasette source. Its [financial application guide](../../../../stellar-forge/developer-site/GRANT_FINANCIAL_OPERATIONS.md) covers **--finance-commit**, dated customer balances, settlement and accountant receiving within the same current application.
+The four emitted reader pins go to the original `inspectGrantApplication`
+callback. The selected installed renderer/projector hashes and the original
+canonical-front identity remain recorded in the source index.
 
 Ctrl+C closes this reader. Reopen the same command to read the same installed
 source. For a checkout, the original entry is
@@ -323,7 +354,7 @@ runtime.
 
 ## Preserve the installed source and receiving identity
 
-The selection retains six original component roots in their relative layout.
+The selection retains these original component roots in their relative layout.
 The maintained builder also follows their real static imports and required
 runtime declarations.
 
@@ -339,14 +370,17 @@ runtime declarations.
 
 The selected command catalog contains `installation`, `runtime-profile`,
 `runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
-`grant-demo`,
+`grant-compose`, `grant-demo`,
 `merchant-mcp`, `merchant-grant-reviewer` and
 `merchant-console-application-receive`.
 Its Applications providers are `grant-reviewer` and `merchant-console`; its
 merchant provider is `grant-reviewer-workbenches`. Its public workbench import is
 `@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. The application
 reader is also available through
-`@tokenjunkielabs/starforge-merchant/grant/application-server`. Use
+`@tokenjunkielabs/starforge-merchant/grant/application-server`, with the same
+native composer at `@tokenjunkielabs/starforge-merchant/grant/application-composer`.
+Its complete component keeps the financial, customer, Datasette, reviewer-entry
+and submission helpers together. Use
 `starforge --help` and `starforge registrations` for the actual installed
 declarations.
 

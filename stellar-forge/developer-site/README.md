@@ -162,6 +162,61 @@ Ctrl+C closes that listener. The retained grant purchase continues through its
 original Applications workbench and `grant-demo` commands, described in the
 [complete grant product guide](../../products/grant-reviewer/OPERATING.md).
 
+### Maintain the application and its reader
+
+The [merchant financial application chapter](GRANT_FINANCIAL_OPERATIONS.md) connects the current manuscript to settlement accounting, invoices, payment plans and Xero handover. The same composer accepts **--finance-commit** to select the actual merged product and preserves it through later manuscript refreshes. The concise nine answers and complete companion remain the original reader's source, and its current application identity also flows into **Prepare submission**.
+
+The recurring economic-report and coastal model-input sections connect their
+shipped analyst products to the same six funded implementation packages. Its priced unit is one advertised
+complete HTML or JSON report. A later reporting period or reviewed source
+edition provides the next useful purchase; original reports remain available
+with their original observations and payment terms.
+
+The maintained [application composer](grant-compose.mjs) reads the current
+application and product-and-finance downloads, renders the same nine answers
+into the existing page, and updates their byte counts and source hashes.
+The film, example, ten-section navigation, CSS, budget and existing-work
+section come from the original page and remain part of the same reader.
+
+To receive a fresh copy of the shared manuscript into the reviewer page:
+
+~~~sh
+node stellar-forge/developer-site/grant-compose.mjs \
+  --manuscript /absolute/path/to/current-scf-application.md \
+  --fred-commit be44be564e35b63af23246bad531a95374bbb4c0 \
+  --coops-commit 92eb1c73a3cab9781ef7dbabdc12067344fb6aa2 \
+  --source-pins-output /absolute/path/to/current-grant-source-pins.json
+~~~
+
+The manuscript input is the complete existing
+[shared application](https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF),
+including its reviewer answer and detailed source sections. The command imports
+the front answer and recurring economic installation subsection. Selecting the
+merged coastal commit also receives the complete coastal installation subsection,
+including its original source and Python receiving guides. The companion's other
+sections stay intact, and the command composes the same four application routes.
+The selected coastal commit is retained in the source index for subsequent
+manuscript refreshes. Omit --manuscript to render edits already made in the source
+downloads; omitting --coops-commit on an earlier index preserves its original
+economic-only selection.
+The installed reader opens with the original grant-application command above.
+
+The coastal example names the commissioning payer, source/release operator,
+independent buyer and receiving engineer. Its useful priced unit is the selected
+advertised model-input resource. The original $18,000 / 150-hour engineering
+proposal retains its own scope and milestones; selected future Stellar work is
+assigned once within the existing six-package grant plan. The original La Jolla
+native operation and contact inquiry retain their current in-progress state.
+The installed reader does not perform a source capture or send the inquiry.
+
+The optional source-pins output identifies the four composed route blobs.
+The original inspectGrantApplication function accepts that object as sourcePins
+when its owner receives this later source edition through the existing controlled
+Page. Omitting sourcePins continues to select the original retained edition.
+The actual source commit, receiving operation and output directory remain explicit
+in the original receiving call; the selection records every source file used.
+
+
 ## Source layout
 
 - dist/onboarding.mjs: pure original-config generator, supported imports, validation and deterministic ZIP writer.
@@ -358,3 +413,52 @@ Original CoCart product and managed operating results remain attached to
 PR1618 and PR1708; a following front-door receiving operation retains its own
 actual result. Publish this cumulative subtree through the same existing
 Site project and its current audience.
+
+## Prepare and retain the SCF submission
+
+The existing application reader now opens **Prepare submission** at
+/grant-submission.html. It receives the same nine complete canonical answers
+and their exact original source index, then carries answer editing, whole-text
+copying, actual issuer-field mapping, recorded limits and editorial review into
+a portable working draft.
+
+The editor uses the original browser draft store with optimistic revisions.
+Complete export/reopen includes every source edition, manual answer, field
+mapping, review note and saved version. A later source refresh preserves edited
+answers against their earlier baseline and shows the new source alongside them.
+The existing composer maintains the navigation entry and current source
+descriptor without another manuscript or data file.
+
+The complete [submission operating guide](GRANT_SUBMISSION.md) covers the
+issuer-form mapping, exact copy-format counts, receiving and source adoption.
+The maintained implementation is grant-submission.mjs plus the four
+dist/grant-submission assets, registered in the existing browser-assets
+declaration. Continue the original Site and issuer-submission operation with
+this same complete source.
+
+## Review the operating product before the application
+
+The existing `/grant.html` opens with the retained purchase film, complete economic
+report and original reviewer operating path. Choose **Explore the working product**
+to follow Applications, prepare the installed or source command for the selected
+private workbench, and download its complete opening and handover guide.
+
+The original film remains linked from its previous application section. The guided
+entry uses the same report, package, purchase and source URLs as the current
+reader. Its [full operating guide](GRANT_ENTRY.md) covers command preparation,
+original purchase receiving and the existing customer-delivery recipes.
+
+The complete composer and installed source contract is in
+[GRANT_COMPOSITION.md](GRANT_COMPOSITION.md). Its public customer projection,
+reviewer opening and submission workspace are composed into the same current
+application edition before the four reader identities are emitted.
+
+## Complete submission review and handover
+
+The existing SCF reader now opens **Review prepared draft** alongside **Prepare submission**. The original submission editor retains its native planning panel and adds the complete **Handover** view. These workspaces use the same saved-draft store and preserve full original source, plan, answer, field and version identities.
+
+An author can receive the complete application, prepare the actual issuer fields, send a full draft for named colleague review, receive a revised version with explicit decision carry, and retain that complete review as handover evidence. The original editor then freezes the selected output against its exact source bundle, records actual issuer observations or correction links, and compares subsequent working edits while keeping the prepared edition intact. Full draft, original source/evidence, readable review and prepared-output downloads support normal reopening and continued work.
+
+Use the [review-round guide](GRANT_REVIEW_ROUNDS.md), [handover guide](GRANT_HANDOVER.md) and [complete composition/receiving guide](GRANT_COMPOSITION.md). The original grant-reviewer installation contains both complete modules, their existing-page callbacks and original source-model examples. Source Tables remains available through its existing product navigation and `source-tables` selection.
+
+The cumulative manuscript owner supplies the current nine answers and detailed companion. The existing publisher retains the selected Site, and the original receiving owner supplies the actual source-bound browser and exported-work outcomes.

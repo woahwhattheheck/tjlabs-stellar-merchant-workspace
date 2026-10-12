@@ -7,7 +7,10 @@ import {inspectHandoff,renderCsv} from '../accountant/engine.mjs';
 import {QBO_DOCS,QBO_CURRENCIES,qboHash,qboCanonical,qboJson,qboCheck as check,qboId as id,qboText as text,
   createQboPlan,validateQboPlan,checkQboSource,inspectQboResponse,validateQboResult,qboReturnCsv,renderQboReview} from '../accountant/qbo.mjs';
 import {normalizeQboCompany} from '../accountant/qbo-company.mjs';
+import {isBuyerHandoff} from '../accountant/buyer-source.mjs';
+import {qboBuyerRows,isQboBuyerPlan,qboBuyerReservation,qboBuyerReservationOverlap} from '../accountant/qbo-buyer.mjs';
 import {QboHttpClient,qboRetryAt} from '../accountant/qbo-http.mjs';
+import {accountingWorkspaceBinding} from './binding.mjs';
 
 export const QBO_REQUEST_BYTES=32*1024*1024;
 const copy=value=>structuredClone(value),now=()=>new Date().toISOString();
@@ -18,7 +21,8 @@ function requestFields(value){
   return {id:id(value.id),name:text(value.name,'journal name'),actor:text(value.actor,'operator',1000),createdAt:value.createdAt,
     handoffId:id(value.handoffId),expectedParentId:value.expectedParentId??null,realmId:value.realmId,companyName:value.companyName,
     baseCurrency:value.baseCurrency,environment:value.environment??'sandbox',txnDate:value.txnDate,docNumber:value.docNumber??null,
-    rows:value.rows,companySnapshot:value.companySnapshot??null};
+    rows:copy(value.rows),companySnapshot:copy(value.companySnapshot??null),
+    ...(Object.hasOwn(value,'valuationBasis')?{valuationBasis:value.valuationBasis}:{})};
 }
 async function privateDir(path){
   try{await mkdir(path,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;}
@@ -70,13 +74,15 @@ export class QboWorkspace{
     const record=this.row(planId),plan=JSON.parse((await readExact(this.directory(planId),record.files.find(file=>file.name==='plan.json'))).toString('utf8'));
     validateQboPlan(plan);check(plan.id===record.id&&plan.integrity.sha256===record.integrity.sha256,'QBO_PLAN_CHANGED','The journal identity changed.',409);return plan;
   }
-  view(){return {revision:this.workspace.state.revision,handoffs:copy(this.workspace.state.accountantHandoffs??[]),plans:copy(records(this.workspace)),currencies:QBO_CURRENCIES,docs:QBO_DOCS,connection:this.connection()};}
+  view(){const {workspaceId,sourcesSha256}=accountingWorkspaceBinding(this.workspace.directory,this.workspace.state);return {binding:{workspaceId,sourcesSha256},reopenRequired:Boolean(this.workspace.commitUncertainty),revision:this.workspace.state.revision,handoffs:copy(this.workspace.state.accountantHandoffs??[]),plans:copy(records(this.workspace)),currencies:QBO_CURRENCIES,docs:QBO_DOCS,connection:this.connection()};}
   async current(handoffId){
     const record=this.accountant.row(handoffId),handoff=await this.accountant.readHandoff(handoffId),parent=await this.accountant.readRevision(record,handoff);
     return {record,handoff,parent};
   }
   async handoff(handoffId){
     const {record,handoff,parent}=await this.current(handoffId);
+    if(isBuyerHandoff(handoff))return {revision:this.workspace.state.revision,record:copy(record),source:copy(handoff.source),
+      sourceKind:'buyer-expense-period',buyer:copy(handoff.source.buyer),expectedParentId:parent?.id??null,rows:qboBuyerRows(handoff,parent)};
     return {revision:this.workspace.state.revision,record:copy(record),source:copy(handoff.source),expectedParentId:parent?.id??null,
       rows:inspectHandoff(handoff,parent).rows.map(row=>({rowId:row.rowId,eventId:row.eventId,at:row.original.at,optionId:row.original.optionId,
         network:row.original.network,transfer:row.original.transfer,delivery:row.original.delivery,amountAtomic:row.original.amountAtomic,
@@ -94,6 +100,7 @@ export class QboWorkspace{
   }
   async preview(value){const {plan,previewSha256,revision}=await this.preparePlan(value);return {plan,previewSha256,revision};}
   async create(value){
+    value=copy(value);
     return this.workspace.serial(async()=>{
       const request=requestFields(value),requestSha256=digest(request),prior=records(this.workspace).find(item=>item.id===request.id);
       if(prior){check(prior.requestSha256===requestSha256,'QBO_REQUEST_CHANGED','This journal request ID belongs to different source or mappings.',409);return {record:copy(prior),duplicate:true,revision:this.workspace.state.revision};}
@@ -108,7 +115,8 @@ export class QboWorkspace{
       await privateDir(join(this.directory(plan.id),'responses'));
       const record={id:plan.id,name:plan.name,actor:plan.actor,createdAt:plan.createdAt,handoffId:plan.handoffId,realmId:plan.realmId,
         companyName:plan.companyName,baseCurrency:plan.baseCurrency,environment:plan.environment,txnDate:plan.txnDate,docNumber:plan.docNumber,
-        status:'DRAFT',integrity:plan.integrity,summary:plan.summary,eventIds:plan.rows.map(row=>row.eventId),
+        status:'DRAFT',integrity:plan.integrity,summary:plan.summary,eventIds:isQboBuyerPlan(plan)?[]:plan.rows.map(row=>row.eventId),
+        ...qboBuyerReservation(plan),
         requestSha256,files,review:null,cancellation:null,responses:[]};
       this.workspace.state.qboPlans??=[];this.workspace.state.qboPlans.unshift(record);await syncDir(root);
       await this.workspace.commit('qbo_journal_prepared',request.actor,{planId:plan.id,handoffId:plan.handoffId,realmId:plan.realmId,planSha256:plan.integrity.sha256});
@@ -116,6 +124,7 @@ export class QboWorkspace{
     });
   }
   async review(planId,value){
+    value=copy(value);
     return this.workspace.serial(async()=>{
       const record=this.row(planId),request={id:id(value.id),actor:text(value.actor,'reviewer',1000),note:text(value.note??'','review note',4000,{empty:true}),planSha256:value.planSha256};
       const requestSha256=digest(request);
@@ -125,8 +134,8 @@ export class QboWorkspace{
       check(request.planSha256===plan.integrity.sha256,'QBO_PREVIEW_CHANGED','Review the exact retained journal.',409);checkQboSource(plan,handoff,parent);
       const selected=new Set(record.eventIds);
       const overlap=records(this.workspace).find(other=>other.id!==planId&&other.realmId===record.realmId&&other.environment===record.environment&&
-        ['REVIEWED','BOOKED'].includes(other.status)&&other.eventIds.some(eventId=>selected.has(eventId)));
-      check(!overlap,'QBO_EVENT_RESERVED','A reviewed or booked journal already contains a selected event for this company. Open that journal or cancel it if unused.',409);
+        ['REVIEWED','BOOKED'].includes(other.status)&&(isQboBuyerPlan(plan)?qboBuyerReservationOverlap(qboBuyerReservation(plan),other):other.eventIds.some(eventId=>selected.has(eventId))));
+      check(!overlap,'QBO_EVENT_RESERVED','A reviewed or booked journal already contains a selected source allocation or event for this company. Open that journal or cancel it if unused.',409);
       record.review={...request,createdAt:now(),requestSha256};record.status='REVIEWED';
       await this.workspace.commit('qbo_journal_reviewed',request.actor,{planId,reviewId:request.id,planSha256:request.planSha256});
       return {record:copy(record),duplicate:false,revision:this.workspace.state.revision};

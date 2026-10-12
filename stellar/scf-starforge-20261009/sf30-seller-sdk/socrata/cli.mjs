@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {openSocrataOperator, startSocrataWorkspace} from './server.mjs';
+import {readFacilitatorProfiles} from '../../sf82-seller-pilot/release-facilitator.mjs';
 
 const HELP = [
   'Socrata dataset workspace',
@@ -12,7 +13,8 @@ const HELP = [
   '  node cli.mjs workspace --directory DIR [--port 0] [--app-token-env NAME]',
   '  node cli.mjs status --directory DIR [--app-token-env NAME]',
   '  node cli.mjs action ACTION --directory DIR [--input FILE | --json JSON]',
-  '                      [--app-token-env NAME]',
+  '                      [--app-token-env NAME] [--facilitators FILE]',
+  '  --facilitators FILE also configures the workspace or status host.',
   '',
   'Actions:',
   '  source.configure  source.inspect  source.search',
@@ -21,6 +23,8 @@ const HELP = [
   '  merchant.configure  package.export  package.import',
   '  publisher.status  publisher.prepare  publisher.preview  publisher.reviewDraft',
   '  publisher.publish  publisher.activateSnapshot  publisher.collect',
+  '  publisher.facilitators.review  publisher.facilitators.stage',
+  '  publisher.facilitators.inspect publisher.facilitators.history',
   '  publisher.release.stage  publisher.release.inspect  publisher.release.activate',
   '  publisher.release.rollback  publisher.release.start  publisher.release.stop',
   '  publisher.buyer.review  publisher.buyer.prepare  publisher.buyer.session',
@@ -44,7 +48,7 @@ function parse(args) {
   const values = {};
   while (args.length) {
     const key = args.shift(), value = args.shift();
-    if (!['--directory', '--port', '--input', '--json', '--app-token-env'].includes(key) ||
+    if (!['--directory', '--port', '--input', '--json', '--app-token-env', '--facilitators'].includes(key) ||
         Object.hasOwn(values, key) || value === undefined || value.startsWith('--'))
       throw new TypeError('Invalid or repeated option; use --help.');
     values[key] = value;
@@ -63,15 +67,17 @@ function parse(args) {
     throw new TypeError('The selected credential environment variable is empty.');
   return {command, action, directory: resolve(values['--directory']),
     port: portValue === undefined ? 0 : Number(portValue),
-    appToken: process.env[tokenEnvironment], input: values['--input'], json: values['--json']};
+    appToken: process.env[tokenEnvironment], input: values['--input'], json: values['--json'],
+    facilitatorFile: values['--facilitators']};
 }
 
 export async function main(args = process.argv.slice(2)) {
   const options = parse([...args]);
   if (options.help) { console.log(HELP); return; }
   const {directory, appToken} = options;
+  const facilitators = options.facilitatorFile ? await readFacilitatorProfiles(resolve(options.facilitatorFile)) : undefined;
   if (options.command === 'workspace') {
-    const app = await startSocrataWorkspace({directory, appToken, port: options.port});
+    const app = await startSocrataWorkspace({directory, appToken, facilitators, port: options.port});
     console.log('Socrata workspace\n' + app.url + '\nKeep this session URL private. Stop with Ctrl+C.');
     let stopping = false;
     const stop = () => {
@@ -89,7 +95,7 @@ export async function main(args = process.argv.slice(2)) {
     payload = JSON.parse(text);
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new TypeError('The action payload must be a JSON object.');
   }
-  const workspace = await openSocrataOperator({directory, appToken});
+  const workspace = await openSocrataOperator({directory, appToken, facilitators});
   let result, originalError;
   try {
     result = options.command === 'status' ? await workspace.state() : await workspace.act(options.action, payload);

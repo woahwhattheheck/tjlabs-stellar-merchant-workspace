@@ -198,7 +198,7 @@ merchant-mcp pricing tariff-price-stage --url "$MCP_URL" --input native-price-st
 
 The three tariff plan files are plan.json, tariffs.json and comparison.csv. Their manifest binds the original plan ID, source Pricing version, tariff review hash and every file's byte count/SHA-256.
 
-The SDK's download, downloadPricing and downloadRepricing methods return complete bytes after reading the original SHA-pinned chunks and verifying the final digest. They share the 17-operation API with the native HTTP client.
+The SDK's download, downloadPricing and downloadRepricing methods return complete bytes after reading the original SHA-pinned chunks and verifying the final digest. They share the 18-operation surface with the native HTTP client.
 
 For durable receiving directories, use the original resumable downloader:
 
@@ -266,6 +266,30 @@ A portfolio contains complete tariff plans and their retained selection intents/
 
 The provider accepts the native portfolio's 64 MiB maximum plus one MiB for its JSON-RPC wrapper. Downloads keep their original chunk limit. The SDK receives a complete portfolio through verified chunks, so it can transfer the supported native artifact without putting all its contents into a tool-listing or manifest response.
 
+## Export one customer selection
+
+Use the original selection's `pricingRequestId` as `selectionRequestId`. The source-owned bundle operation returns that complete tariff plan and the exact retained selection journal, including both native request UUIDs and the saved result or pending result.
+
+~~~js
+const customerPortfolio = await client.bundle({ selectionRequestId: pricingRequestId });
+const sameCustomerPortfolio = await client.bundle({
+  selectionRequestId: pricingRequestId,
+  portfolioSha256: customerPortfolio.sha256
+});
+~~~
+
+For a complete private download:
+
+~~~sh
+merchant-mcp pricing tariff-portfolio-download --url "$MCP_URL" --workspace "$WORKSPACE" \
+  --selection-request-id "$PRICING_REQUEST_ID" \
+  --out /absolute/private-delivery/customer-tariff
+~~~
+
+Retain the returned `portfolioSha256` and original manifest digest when resuming. Supplying both the selection ID and a retained portfolio digest verifies that the saved export contains exactly that selection and its plan. File chunks continue to use only the retained portfolio digest. Existing full-portfolio exports and their original manifest bytes remain stable.
+
+The selected portfolio accompanies the customer's original Pricing backup through the existing Commercial source and receiving workflow. Its plan retains the original quantity comparison, chosen uniform quote and tariff assumptions for later source review.
+
 ## Receive the complete merchant workspace
 
 Preserve two artifacts together:
@@ -300,10 +324,15 @@ await restoreCostWorkspace({
 Declare the restored directory as an original Pricing alias through the maintained host configuration, retaining the matching seller and observation source. Then receive the complete portfolio through that alias:
 
 ~~~sh
+merchant-mcp pricing tariff-inspect --url "$RECEIVING_MCP_URL" \
+  --workspace "$RECEIVING_WORKSPACE" \
+  --portfolio-file /absolute/private-delivery/tariff-portfolio/tariff-portfolio.json
 merchant-mcp pricing tariff-receive --url "$RECEIVING_MCP_URL" \
   --workspace "$RECEIVING_WORKSPACE" \
   --portfolio-file /absolute/private-delivery/tariff-portfolio/tariff-portfolio.json
 ~~~
+
+The read-only `inspectPortfolio(bundle)` SDK method and `tariff-inspect` command run the original native source preflight on the entire input. The MCP reply uses schema `stellar-forge.merchant-tariff-portfolio-inspection.v1`: `portfolioSha256`, the native `sourceReviewSchema`, plan/selection counts, each original plan and source-version identity, and each selection's original scenario/Pricing request and saved-result identities. This compact reply keeps large portfolios within the existing JSON-RPC reply ceiling. The native HTTP client returns its full `TariffPortfolioInspection`; the MCP SDK declares the distinct `MerchantTariffPortfolioInspection` result. Complete original portfolio bytes remain available through the retained download protocol.
 
 The native receiver recomputes complete reviews against the restored saved sources, validates each original tariff save identity, binds the two native mutation bodies to the retained selection, and matches completed scenario/Pricing requests to their original records and manifests before registering the portfolio. Existing exact records are reused. The same original selection request then reopens its saved Pricing result.
 
@@ -322,7 +351,8 @@ The complete installed receiving and encrypted merchant recovery procedures rema
 | selection | merchant_pricing_tariff_selection | Full native selection and commercial preview |
 | commitSelection | merchant_pricing_tariff_commit_selection | Original scenario and Pricing save results |
 | download | merchant_pricing_tariff_download | Manifest or original plan file chunks |
-| bundle | merchant_pricing_tariff_bundle | Retained original portfolio manifest/chunks; SDK returns full JSON |
+| bundle | merchant_pricing_tariff_bundle | Retained full or selected original portfolio manifest/chunks; SDK returns complete JSON |
+| inspectPortfolio | merchant_pricing_tariff_inspect_portfolio | Validated original portfolio digest and plan/source/request identities |
 | receive | merchant_pricing_tariff_receive | Native complete-portfolio receiving result |
 | repricingSource | merchant_pricing_tariff_repricing_source | Original ordered native payment options |
 | downloadRepricing | merchant_pricing_tariff_download_repricing | Original decision/source manifest or file chunks |
@@ -343,6 +373,7 @@ For the four manifest/file tools, view defaults to manifest. File reads use view
 | selectionSha256 | Native scenario/Pricing input binding; live display fields remain outside it |
 | planRequestId | Original scenario save request |
 | pricingRequestId | Original Pricing save request |
+| selectionRequestId | The same Pricing request UUID when exporting its selected tariff plan and journal |
 | Pricing version / revision | Original saved review and compare-and-swap history |
 | Price decision / reviewSha256 | Original saved native amount decision and exact reviewed conversion |
 | portfolioSha256 | Logical digest of the complete native plans and selection journals |
@@ -351,6 +382,6 @@ For the four manifest/file tools, view defaults to manifest. File reads use view
 
 ## Source ownership
 
-[pricing-tariffs.mjs](pricing-tariffs.mjs) borrows the existing MerchantPricing model, retained-file reader and release renderer. [catalog/pricing-tariffs.mjs](catalog/pricing-tariffs.mjs) contains the complete 17-tool metadata and command map. [pricing-tariffs-client.mjs](pricing-tariffs-client.mjs) uses the original authenticated transport and resumable downloader; its [declarations](pricing-tariffs-client.d.mts) reuse the original native tariff types.
+[pricing-tariffs.mjs](pricing-tariffs.mjs) borrows the existing MerchantPricing model, retained-file reader and release renderer. [catalog/pricing-tariffs.mjs](catalog/pricing-tariffs.mjs) contains the complete 18-tool metadata and command map. [pricing-tariffs-client.mjs](pricing-tariffs-client.mjs) uses the original authenticated transport and resumable downloader; its [declarations](pricing-tariffs-client.d.mts) reuse the original native tariff types.
 
 The original Pricing runtime, catalogue, provider declaration, client and CLI each contain a narrow source join. They keep the original configuration key, source-owned registry, model ownership, request drainage and private file-read lifetime. The native [tariff workspace](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/workspace.mjs) remains the authority for saves, native selection recovery and portfolio receiving.

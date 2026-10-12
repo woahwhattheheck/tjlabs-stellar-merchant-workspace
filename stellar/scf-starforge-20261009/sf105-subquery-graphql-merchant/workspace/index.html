@@ -57,6 +57,16 @@
         <details><summary>Retained source requests and results</summary><div id="preview-history"></div></details>
       </section>
 
+      <section class="panel" id="request-sets-panel">
+        <div class="panel-heading"><h2>Saved request sets and connected runs</h2></div>
+        <p id="requests-context"></p>
+        <p>Name up to 32 operation and variable cases, retain their exact source admission, and run selected cases through the original handler. Every case keeps its own preview UUID, returned status and response bytes.</p>
+        <details open><summary>Define named operation and variable cases</summary><div id="requests-definition"></div></details>
+        <div id="requests-list"></div><div id="requests-set"></div><div id="requests-run"></div>
+        <div id="requests-compare"></div><div id="requests-packet"></div>
+        <details><summary>Continue original requests after interruption</summary><div id="requests-pending"></div><div id="requests-recovery"></div></details>
+      </section>
+
       <section class="panel">
         <div class="panel-heading"><div><span class="step">03</span><h2>Merchant routes and terms</h2></div><label class="file-button">Load merchant plan<input type="file" id="plan-file" accept=".json"></label></div>
         <label>Public merchant origin<input id="public-origin" placeholder="https://merchant.example"></label>
@@ -123,7 +133,7 @@
       </section>
       <section class="panel" id="handover-panel">
         <h2>Project handover</h2>
-        <p>Continue a saved project in another private workspace. The handover keeps every committed revision through the selection, completed previews, merchant and schema-baseline files, and the original deployment and host packets.</p>
+        <p>Continue a saved project in another private workspace. The handover keeps every committed revision through the selection, completed previews, saved request sets and original run/checkpoint/request history, merchant and schema-baseline files, and the original deployment and host packets.</p>
         <button id="prepare-handover" type="button">Prepare complete saved project</button>
         <div id="handover-prepared"></div>
         <h3>Reopen a received project</h3>

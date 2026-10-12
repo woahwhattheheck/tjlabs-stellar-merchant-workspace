@@ -7,11 +7,11 @@
   "selection": "prepaid-api",
   "driver": {
     "path": "operations/prepaid-api-installed-921ba0-20261012/operate.mjs",
-    "gitBlob": "e0d0310a227d13c1b0c556b9367384a97a8666fb"
+    "gitBlob": "4a3b092e065e8bb9ff5debe627e6e76b0f398bc0"
   },
   "guide": {
     "path": "operations/prepaid-api-installed-921ba0-20261012/OPERATING.md",
-    "gitBlob": "9bc9e5103d64d6354591f479c5095c870c5af9a8"
+    "gitBlob": "82f042d2da3645c503db401307c6c914f4fd39a6"
   },
   "originalModules": [
     {
@@ -29,6 +29,22 @@
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
       "gitBlob": "6d9374932166d7c597fb55148912be193116fa7b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/git-source.mjs",
+      "gitBlob": "3d2a0c9f34d27cce9b6ef64e39cf130dc620f8d7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/build-state.mjs",
+      "gitBlob": "eb9543e9ad3e594e4c343bb15375918a42149a9a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs",
+      "gitBlob": "1c2a8f3a3488bc1c687ad9fdfb2fba7964baaedc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs",
+      "gitBlob": "24f4a82f3fcbd205515b858e131039592e34702a"
     }
   ],
   "productFiles": [
@@ -96,5 +112,20 @@
     "orderReference": "api-pass-native-chain-921ba0",
     "requestId": "api-application-analyze-921ba0-20261011",
     "ownership": "SEPARATE_ORIGINAL_MERCHANT_CONTINUATION_UNCHANGED"
+  },
+  "receiver": {
+    "path": "operations/prepaid-api-installed-921ba0-20261012/receive-from-git.py",
+    "gitBlob": "8951f4d4749421a3d7190494d262ce3b92aefcd2"
+  },
+  "bulkPlacement": {
+    "option": "--bulk-directory",
+    "canonicalJournal": "UNCHANGED_ORIGINAL_OPERATION_DIRECTORY",
+    "authority": "ORIGINAL_OPERATION_UUID_REQUEST_SHA256_SOURCE_COMMIT_AND_RECORDED_FILESYSTEM",
+    "buildAndArchive": "RECORDED_PRIVATE_BULK_WORKSPACE",
+    "runtimeAndDependencies": "ORIGINAL_NATIVE_INSTALLER_AT_RECORDED_ATTEMPT",
+    "defaultNpmCache": "BULK/npm-cache",
+    "relocation": "EXPLICIT_RESUME_BEFORE_ORIGINAL_RUNTIME_INSTALLED",
+    "predecessor": "EXACT_PREPARATION_OBSERVATION_AND_ORIGINAL_INSTALL_LOCK",
+    "completedRuntime": "FIXED_ORIGINAL_PATH"
   }
 }

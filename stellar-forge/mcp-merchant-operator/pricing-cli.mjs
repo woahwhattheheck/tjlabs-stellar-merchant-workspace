@@ -5,7 +5,7 @@ import { open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { callMerchantPricing,downloadMerchantScenario,downloadMerchantCosts,downloadMerchantPriceDecision,pricingClientOperations,
-  downloadMerchantTariffPlan,downloadMerchantTariffPortfolio,downloadMerchantTariffPricingReview } from './pricing-client.mjs';
+  downloadMerchantTariffPlan,downloadMerchantTariffPortfolio,downloadMerchantTariffPricingReview,downloadMerchantPerformance } from './pricing-client.mjs';
 
 const fail=(code,message)=>Object.assign(new Error(message),{code:'PRICING_CLIENT_'+code});
 const HELP = `merchant-mcp pricing
@@ -32,15 +32,25 @@ const HELP = `merchant-mcp pricing
   tariff-load|tariff-manifest --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID
   tariff-selection --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --comparison-id SHA256
   tariff-download --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --out PRIVATE_DIRECTORY
-  tariff-bundle --url MCP_ENDPOINT --workspace ALIAS [--portfolio-sha256 SHA256]
+  tariff-bundle --url MCP_ENDPOINT --workspace ALIAS [--selection-request-id UUID] [--portfolio-sha256 SHA256]
   tariff-portfolio-download --url MCP_ENDPOINT --workspace ALIAS --out PRIVATE_DIRECTORY
-      [--portfolio-sha256 SHA256] [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
-  tariff-receive --url MCP_ENDPOINT --workspace ALIAS --portfolio-file PRIVATE_PORTFOLIO_JSON
+      [--selection-request-id UUID] [--portfolio-sha256 SHA256] [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
+  tariff-inspect|tariff-receive --url MCP_ENDPOINT --workspace ALIAS --portfolio-file PRIVATE_PORTFOLIO_JSON
   tariff-price-source|tariff-review-manifest --url MCP_ENDPOINT --workspace ALIAS --version UUID
   tariff-price-preview|tariff-price-save|tariff-price-stage --url MCP_ENDPOINT --input PRIVATE_JSON
   tariff-price-manifest --url MCP_ENDPOINT --workspace ALIAS --decision UUID
   tariff-price-download --url MCP_ENDPOINT --workspace ALIAS --decision UUID --out PRIVATE_DIRECTORY
   tariff-review-download --url MCP_ENDPOINT --workspace ALIAS --version UUID --out PRIVATE_DIRECTORY
+
+  performance-state|performance-sources|performance-list|performance-service-periods --url MCP_ENDPOINT --workspace ALIAS
+  performance-source --url MCP_ENDPOINT --workspace ALIAS --version SAVED_USAGE_REVIEW
+  performance-capture-service|performance-preview|performance-save --url MCP_ENDPOINT --input PRIVATE_JSON
+  performance-load|performance-capture --url MCP_ENDPOINT --workspace ALIAS --performance-id UUID
+  performance-inspect|performance-receive --url MCP_ENDPOINT --workspace ALIAS --source-file PRIVATE_SOURCE_JSON
+  performance-proposal --url MCP_ENDPOINT --workspace ALIAS --performance-id UUID --proposed-monthly-requests INTEGER_STRING
+  performance-save-proposal|performance-commit-proposal --url MCP_ENDPOINT --input PRIVATE_JSON
+  performance-download --url MCP_ENDPOINT --workspace ALIAS --performance-id UUID --out PRIVATE_DIRECTORY
+      [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
 
   cost-state|cost-list|cost-inputs --url MCP_ENDPOINT --workspace ALIAS [--kind KIND]
   cost-input --url MCP_ENDPOINT --workspace ALIAS --kind SOURCE|BOOK|PACKAGE --input-alias ALIAS
@@ -58,6 +68,11 @@ Preserve complete selection, planRequestId and pricingRequestId before tariff-co
 All tariff downloads accept --manifest-sha256 and --chunk-bytes and resume the same
 private directory. Portfolio receiving follows the original WORKSPACE_BACKUP
 restore; TARIFFS.md explains both complete artifacts and native source matching.
+
+Recorded performance retains the selected original Pricing source, completed tariff
+selection and exact observed population. Export all four complete files with
+performance-download. PERFORMANCE.md covers service snapshots, independent
+receiving, explicit monthly proposals and original native request recovery.
 
 Cost operations use the existing pricing alias and original cost model.
 A complete large book is selected by a host-declared bookSource with inspected
@@ -80,12 +95,13 @@ See PRICING.md for scenarios, exact quote conversion and the complete saved work
 const flags=new Set(['--url','--workspace','--input','--version','--plan-id','--scenario-id',
   '--view','--offset','--limit','--suggestion-kind','--out','--token-env','--manifest-sha256','--chunk-bytes',
   '--kind','--id','--source-id','--edition','--after','--input-alias','--expected-sha256','--expected-bytes','--decision',
-  '--comparison-id','--portfolio-sha256','--portfolio-file']);
+  '--comparison-id','--portfolio-sha256','--portfolio-file','--selection-request-id','--performance-id','--source-file','--proposed-monthly-requests']);
 const fieldFlags={'--workspace':'workspace','--version':'version','--plan-id':'planId',
   '--scenario-id':'scenarioId','--view':'view','--offset':'offset','--limit':'limit','--suggestion-kind':'suggestionKind',
   '--kind':'kind','--id':'id','--source-id':'sourceId','--edition':'edition','--after':'after',
   '--input-alias':'input','--expected-sha256':'expectedSha256','--expected-bytes':'expectedBytes','--decision':'decision',
-  '--comparison-id':'comparisonId','--portfolio-sha256':'portfolioSha256'};
+  '--comparison-id':'comparisonId','--portfolio-sha256':'portfolioSha256','--selection-request-id':'selectionRequestId',
+  '--performance-id':'performanceId','--proposed-monthly-requests':'proposedMonthlyRequests'};
 function options(args) {
   const result=new Map();
   for (let i=0;i<args.length;i+=2) {
@@ -121,7 +137,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
   if (!Object.hasOwn(pricingClientOperations,operation) && !['download','cost-download','price-download','tariff-download','tariff-portfolio-download','tariff-price-download','tariff-review-download'].includes(operation))
     throw fail('ARGUMENTS','Choose an operation listed by merchant-mcp pricing --help.');
   if (!values.has('--url')) throw fail('ARGUMENTS','Supply the existing --url MCP endpoint.');
-  const args=values.has('--input') ? await inputFile(values.get('--input'),operation.startsWith('tariff-')?128*1024*1024:8*1024*1024) : {};
+  const args=values.has('--input') ? await inputFile(values.get('--input'),(operation.startsWith('tariff-')||operation.startsWith('performance-'))?128*1024*1024:8*1024*1024) : {};
   for (const [flag,key] of Object.entries(fieldFlags)) if (values.has(flag)) {
     const value=['offset','limit','expectedBytes'].includes(key) ? count(values.get(flag),flag) : values.get(flag);
     if (Object.hasOwn(args,key) && args[key] !== value)
@@ -129,11 +145,20 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
     args[key]=value;
   }
   if(values.has('--portfolio-file')) {
-    if(operation!=='tariff-receive')throw fail('ARGUMENTS','--portfolio-file belongs to tariff-receive.');
+    if(!['tariff-inspect','tariff-receive'].includes(operation))
+      throw fail('ARGUMENTS','--portfolio-file belongs to tariff-inspect or tariff-receive.');
     const bundle=await inputFile(values.get('--portfolio-file'),64*1024*1024);
     if(Object.hasOwn(args,'bundle')&&JSON.stringify(args.bundle)!==JSON.stringify(bundle))
       throw fail('ARGUMENTS','The selected portfolio differs from the retained input bundle.');
     args.bundle=bundle;
+  }
+  if(values.has('--source-file')) {
+    if(!['performance-inspect','performance-receive'].includes(operation))
+      throw fail('ARGUMENTS','--source-file belongs to performance-inspect or performance-receive.');
+    const source=await inputFile(values.get('--source-file'),48*1024*1024);
+    if(Object.hasOwn(args,'source')&&JSON.stringify(args.source)!==JSON.stringify(source))
+      throw fail('ARGUMENTS','The full source differs from the retained performance input.');
+    args.source=source;
   }
   const controller=new AbortController();
   const stop=()=>controller.abort(fail('INTERRUPTED','The request was interrupted. Recover with the same request ID, inputs or download directory.'));
@@ -142,8 +167,9 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
     const connection={url:values.get('--url'),tokenEnv:values.get('--token-env')??'MCP_ACCESS_TOKEN',environment,signal:controller.signal};
     let result;
     const tariffDownloads={
+      'performance-download':{run:downloadMerchantPerformance,fields:['workspace','performanceId']},
       'tariff-download':{run:downloadMerchantTariffPlan,fields:['workspace','planId']},
-      'tariff-portfolio-download':{run:downloadMerchantTariffPortfolio,fields:['workspace','portfolioSha256']},
+      'tariff-portfolio-download':{run:downloadMerchantTariffPortfolio,fields:['workspace','portfolioSha256','selectionRequestId']},
       'tariff-review-download':{run:downloadMerchantTariffPricingReview,fields:['workspace','version']}
     };
     if(Object.hasOwn(tariffDownloads,operation)) {

@@ -1,3 +1,4 @@
+import {mountStatements} from './operations_statements.mjs';
 import {mountForecast} from './forecast.mjs';
 import {mountPortfolio} from './portfolio.mjs';
 import {mountSupportDelivery} from './operations_support.mjs';
@@ -6,15 +7,26 @@ import {mountExpenseAttribution} from './operations_expenses.mjs';
 import {mountCompletion} from './operations_completion.mjs';
 import {mountCohort} from './operations_cohort.mjs';
 import {mountInstallations} from './operations_installations.mjs';
+import {mountDispatch} from './operations_dispatch.mjs';
+import {mountPerformance} from './operations_performance.mjs';
+import {mountLedgerIntake} from './operations_ledger_intake.mjs';
+import {mountPayables} from './operations_payables.mjs';
 import {mountImplementationEvidence} from './operations_implementation.mjs';
+import {mountCommercialReceivables} from './operations_commercial.mjs';
 
+const retainedStatementSessions=new Map();
 const retainedSupportSessions=new Map();
 const retainedBuyerSessions=new Map();
 const retainedExpenseSessions=new Map();
 const retainedCompletionSessions=new Map();
 const retainedCohortSessions=new Map();
 const retainedInstallationSessions=new Map();
+const retainedDispatchSessions=new Map();
+const retainedPerformanceSessions=new Map();
+const retainedLedgerIntakeSessions=new Map();
+const retainedPayablesSessions=new Map();
 const retainedImplementationSessions=new Map();
+const retainedCommercialSessions=new Map();
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const title = value => String(value ?? '').toLowerCase().replaceAll('_',' ').replace(/^./, c => c.toUpperCase());
@@ -47,12 +59,12 @@ function downloadFile(raw,filename,type='application/json') {const url=URL.creat
 export function mountOperations({container,api:transport,plan,inform:notify,mutationId}) {
   const root=document.createElement('section');root.className='operations';root.setAttribute('aria-label','Delivery and cash operations');container.replaceChildren(root);
   const view={cases:[],current:null,tab:'overview',busy:false,events:[],nextAfter:null,form:null};
-  let active=true,forecastView=null,forecastViewCase=null,portfolioView=null,supportView=null,completionView=null,buyerView=null,expenseView=null,cohortView=null,installationView=null,implementationView=null;
+  let active=true,statementView=null,forecastView=null,forecastViewCase=null,portfolioView=null,supportView=null,completionView=null,buyerView=null,expenseView=null,cohortView=null,installationView=null,dispatchView=null,implementationView=null,performanceView=null,ledgerIntakeView=null,payablesView=null,commercialView=null;
   let localBusy=false,hostBusy=false;
   view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;
   const available=()=>active&&root.isConnected;
   function requireActive() {if(!available()){const error=new Error('This operations view is closed. Reopen the retained case to continue.');error.code='OPERATIONS_VIEW_CLOSED';throw error;}}
-  function dispose() {active=false;forecastView?.dispose();portfolioView?.dispose();supportView?.dispose();completionView?.dispose();buyerView?.dispose();expenseView?.dispose();cohortView?.dispose();installationView?.dispose();implementationView?.dispose();const dialog=root.querySelector('dialog.ops-dialog');if(dialog?.open)dialog.close();}
+  function dispose() {active=false;forecastView?.dispose();portfolioView?.dispose();supportView?.dispose();completionView?.dispose();buyerView?.dispose();expenseView?.dispose();cohortView?.dispose();installationView?.dispose();dispatchView?.dispose();implementationView?.dispose();statementView?.dispose();performanceView?.dispose();ledgerIntakeView?.dispose();payablesView?.dispose();commercialView?.dispose();const dialog=root.querySelector('dialog.ops-dialog');if(dialog?.open)dialog.close();}
   const inform=(...args)=>{if(available())notify(...args);};
   const download=(...args)=>{if(available())downloadFile(...args);};
   async function api(...args) {
@@ -86,8 +98,8 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   function applyBusy() {
     const value=localBusy||hostBusy;
     view.busy=value;root.setAttribute('aria-busy',String(value));
-    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-forecast,.portfolio,.support-delivery,.completion-desk,.buyer-receiving,.expense-desk,.cohort-desk,.installation-desk,.implementation-evidence-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
-    forecastView?.setHostBusy(value);portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);buyerView?.setHostBusy(value);expenseView?.setHostBusy(value);cohortView?.setHostBusy(value);installationView?.setHostBusy(value);implementationView?.setHostBusy(value);
+    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-forecast,.portfolio,.support-delivery,.completion-desk,.buyer-receiving,.expense-desk,.cohort-desk,.installation-desk,.delivery-queue,.implementation-evidence-desk,.statement-desk,.budget-performance,.ledger-intake,.supplier-accounts,.commercial-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
+    forecastView?.setHostBusy(value);portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);buyerView?.setHostBusy(value);expenseView?.setHostBusy(value);cohortView?.setHostBusy(value);installationView?.setHostBusy(value);dispatchView?.setHostBusy(value);implementationView?.setHostBusy(value);statementView?.setHostBusy(value);performanceView?.setHostBusy(value);ledgerIntakeView?.setHostBusy(value);payablesView?.setHostBusy(value);commercialView?.setHostBusy(value);
   }
   function setBusy(value) {localBusy=Boolean(value);applyBusy();}
   function setHostBusy(value) {hostBusy=Boolean(value);if(available())applyBusy();}
@@ -124,7 +136,27 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       +table(['Tranche','Conditional planned amount','Hypothetical payment day','Observed grant receipts'],r.tranches.map(row=>[esc(row.tranche),money(row.conditionalPlannedUsd),esc(row.hypotheticalPaidDay),money(row.observedGrantUsd)]))
       +heading('Open review items','These do not imply an issuer decision or release of a recorded liability.')
       +(r.unresolved.length?table(['Record','Current item','Amount'],r.unresolved.map(row=>[esc(row.kind),esc(row.message),row.amountUsd?money(row.amountUsd):'—'])):empty('No outstanding record-review items.'))
-      +(r.cash.unvaluedIds.length?'<p class="ops-note">Some original asset quantities have no recorded USD valuation; their original amounts remain in Cash.</p>':'');
+      +(r.cash.unvaluedIds.length?'<p class="ops-note">Some original asset quantities have no recorded USD valuation; their original amounts remain in Cash.</p>':'')+nodeAccounting();
+  }
+  function nodeAccounting() {
+    const report=view.current.report.delivery.nodeAccounting;
+    if(!report)return '';
+    const rows=report.rows.flatMap(group=>group.editions.map(edition=>[
+      esc(group.intentId)+'<small class="ops-break">'+esc(group.sourceIdentitySha256)+'</small>',
+      esc(name('deployments',edition.deploymentId))+'<small>'+esc(edition.purchaseId||'No purchase association')+'</small>',
+      title(edition.disposition)+'<small>'+title(edition.node.recordAuthority)+'</small>',
+      'HTTP '+esc(edition.output.httpStatus??'unknown')+'<small>Capture '+esc(title(edition.output.captureStatus))+' · body not embedded</small>',
+      esc(edition.node.sourceObservedAt)+'<small>Accounting '+esc(edition.node.accountingCompletedAt)+'</small>',
+      esc(edition.filename)+'<small class="ops-break">'+esc(edition.sourceSha256)+'</small>'+
+        button('Download original carrier','source-download','data-id="'+edition.sourceId+'"')
+    ]));
+    return heading('Original Node operational observations',
+      'Original identities and immutable source editions, separately from purchases and financial totals.')
+      +'<p>'+esc(report.operations)+' original operation'+(report.operations===1?'':'s')+' · '+
+        esc(report.sourceEditions)+' source edition'+(report.sourceEditions===1?'':'s')+' · '+
+        esc(report.unpaidOperations)+' original identities with an unpaid response observation.</p>'
+      +'<p class="ops-note">'+esc(report.basis)+'</p>'
+      +table(['Original intent / identity','Deployment / purchase','Source disposition','Response coverage','Original observation / accounting time','Source edition'],rows);
   }
   function contributors() {const rows=view.current.records.contributors;return heading('Contributors and suppliers','Actual named work and invoice counterparties; planned staffing remains in the selected plan.',kindButton('Add contributor','contributors'))+(rows.length?table(['Name','Kind','Contact','Source',''],rows.map(row=>[esc(row.name),title(row.kind),esc(row.contact),esc(sourceText(row)),kindButton('Edit','contributors',row)])):empty('Add a contributor to record work or an invoice.'));}
   function work() {const rows=view.current.records.work;return heading('Recorded contributor work','Log completed work against the original package, submit it for internal review, and retain any reopening.',kindButton('Log work','work'))+(rows.length?table(['Contributor / work','Package','Hours / basis','State','Actions'],rows.map(row=>[esc(name('contributors',row.contributorId))+'<p>'+esc(row.description)+'</p>',esc(row.costId||'Unplanned'),esc(row.hours)+' / '+title(row.fundingBasis),flag(row.state),'<div class="ops-actions">'+(row.state==='LOGGED'?kindButton('Edit','work',row)+transition('Submit','work.submit',row):'')+(row.state==='SUBMITTED'?transition('Accept work','work.accept',row):'')+(['SUBMITTED','ACCEPTED'].includes(row.state)?transition('Reopen','work.reopen',row):'')+(row.state!=='VOID'?transition('Void','work.void',row):'')+'</div>'])):empty('No completed work has been recorded.'));}
@@ -141,6 +173,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     +(view.current.records.purchases.length?table(['Deployment / original transaction','Network / quantity','Settlement / output','Original intent',''],view.current.records.purchases.map(row=>[esc(name('deployments',row.deploymentId))+'<small class="ops-break">'+esc(row.transactionHash||'Transaction not yet observed')+'</small>',esc(row.network)+'<p>'+esc(row.amountStroops)+' stroops</p>',title(row.settlementStatus)+' / '+title(row.outputStatus),esc(row.intentId||'Join not supplied'),flag(row.state)+(row.state==='RECORDED'?kindButton('Later observation','purchases',row)+transition('Void observation','purchase.void',row):'')])):empty('No native purchase observations have been recorded.'))
     +(r.purchaseGroups.length?table(['Network / participation','Canonical transactions','Settled atomic units','Complete outputs'],r.purchaseGroups.map(row=>[esc(row.network)+' / '+title(row.participantClass),esc(row.transactions),esc(row.settledAtomicUnits),esc(row.completeOutputs)])):'')
     +'<p>Known attempted intents: '+r.attemptedKnownIntents+'; completed: '+r.completedKnownIntents+'; completion rate: '+(r.completionRate===null?'No known denominator':Number(r.completionRate)*100+'%')+'. Observations without an original intent join: '+r.purchaseObservationsWithoutIntentJoin.length+'.</p>'
+    +nodeAccounting()
     +heading('Delivery outcomes','Retain the actual submitted or reviewed outcome and its original source. Internal review does not create issuer acceptance.',kindButton('Record outcome','outcomes'))
     +(view.current.records.outcomes.length?table(['Tranche','State','Outcome','Date',''],view.current.records.outcomes.map(row=>[esc(row.tranche),flag(row.state),esc(row.description),esc(row.date),kindButton('Update','outcomes',row)])):empty('No submitted or accepted outcome has been recorded.'));}
   function sources() {const rows=view.current.sources;return heading('Original documents and source records','Exact uploaded bytes remain with the case and complete export. Source URLs identify provenance; they are not fetched automatically.',button('Attach source','attach','',!editable()))
@@ -160,7 +193,12 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     buyerView?.dispose();buyerView=null;
     expenseView?.dispose();expenseView=null;
     installationView?.dispose();installationView=null;
-    implementationView?.dispose();implementationView=null;
+    dispatchView?.dispose();dispatchView=null;
+    performanceView?.dispose();performanceView=null;
+    payablesView?.dispose();payablesView=null;
+    ledgerIntakeView?.dispose();ledgerIntakeView=null;
+    implementationView?.dispose();statementView?.dispose();implementationView=null;statementView=null;
+    commercialView?.dispose();commercialView=null;
     const c=view.current;
     root.innerHTML='<div class="ops-heading"><div><h2>Delivery and cash operations</h2><p>New cases use saved plan '+esc(plan.name)+' · revision '+plan.revision+'</p></div><div class="ops-actions">'+button('Open case from saved plan','new-case')+button('Import complete case','import')+button('Import original source packet','intake')+'</div></div>'
       +'<div class="ops-toolbar">'+field('Recording operator','recordingActor',actor,{help:'Retained with every saved operation.'})+(view.cases.length?field('Retained case','caseSelect',c?.program.id,{options:view.cases.map(row=>[row.id,row.name+' · '+row.mode+' · v'+row.version])}):'')+'</div>'
@@ -168,7 +206,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       +(c?'<div class="ops-case-heading"><div><strong>'+esc(c.program.name)+'</strong> '+flag(c.program.state)+' <span>Version '+c.program.version+' · '+esc(c.plan.name)+' · pinned revision '+c.program.planRevision+'</span></div><div class="ops-actions">'+button('Refresh case','refresh')+button('Export complete case','export')+(c.program.state==='CLOSED'?button('Reopen review','reopen'):'')+'</div></div>'
        +(c.program.mode==='WALKTHROUGH'?'<p class="ops-note"><strong>Internal walkthrough.</strong> These fictional workflow records are separate from operating cash, awards and customer outcomes.</p>':'')
        +(c.program.currentPlanRevision!==c.program.planRevision?'<p class="ops-note">The planner has a newer saved revision. This case retains its originally selected revision '+c.program.planRevision+'.</p>':'')
-       +'<nav class="ops-tabs" aria-label="Delivery operations sections">'+[['overview','Plan / actual'],['contributors','Contributors'],['work','Work'],['invoices','Invoices'],['cash','Cash / issuer'],['completion','Tranche completion'],['cohort','Cohort acceptance'],['forecast','Operating forecast'],['portfolio','Portfolio allocation'],['delivery','Deployment / buyers'],['installations','Customer installations'],['implementation','Implementation evidence'],['support','Merchant support'],['buyer','Native buyer receiving'],['expenses','Issued costs / credits'],['sources','Sources'],['reviews','Reviews / history']].map(([id,label])=>'<button type="button" data-ops-tab="'+id+'"'+(view.tab===id?' aria-current="page"':'')+'>'+esc(label)+'</button>').join('')+'</nav><div class="ops-panel">'+({overview,contributors,work,invoices,cash,delivery,sources,reviews,support:()=>'<div data-ops-support></div>',buyer:()=>'<div data-ops-buyer></div>',expenses:()=>'<div data-ops-expenses></div>',completion:()=>'<div data-ops-completion></div>',cohort:()=>'<div data-ops-cohort></div>',installations:()=>'<div data-ops-installations></div>',implementation:()=>'<div data-ops-implementation></div>',forecast:()=>'<div data-ops-forecast></div>',portfolio:()=>'<div data-ops-portfolio></div>'}[view.tab])()+'</div>'
+       +'<nav class="ops-tabs" aria-label="Delivery operations sections">'+[['overview','Plan / actual'],['performance','Budget performance'],['ledger-intake','Bulk ledger intake'],['supplier-account','Supplier accounts'],['contributors','Contributors'],['work','Work'],['invoices','Invoices'],['cash','Cash / issuer'],['statements','Account statements'],['completion','Tranche completion'],['cohort','Cohort acceptance'],['forecast','Operating forecast'],['portfolio','Portfolio allocation'],['delivery','Deployment / buyers'],['installations','Customer installations'],['commercial','Customer billing'],['dispatch','Delivery queue'],['implementation','Implementation evidence'],['support','Merchant support'],['buyer','Native buyer receiving'],['expenses','Issued costs / credits'],['sources','Sources'],['reviews','Reviews / history']].map(([id,label])=>'<button type="button" data-ops-tab="'+id+'"'+(view.tab===id?' aria-current="page"':'')+'>'+esc(label)+'</button>').join('')+'</nav><div class="ops-panel">'+({overview,contributors,work,invoices,cash,delivery,sources,reviews,statements:()=>'<div data-ops-statements></div>',support:()=>'<div data-ops-support></div>',buyer:()=>'<div data-ops-buyer></div>',expenses:()=>'<div data-ops-expenses></div>',completion:()=>'<div data-ops-completion></div>',cohort:()=>'<div data-ops-cohort></div>',installations:()=>'<div data-ops-installations></div>',commercial:()=>'<div data-ops-commercial></div>',dispatch:()=>'<div data-ops-dispatch></div>',performance:()=>'<div data-ops-performance></div>','ledger-intake':()=>'<div data-ops-ledger-intake></div>','supplier-account':()=>'<div data-ops-payables></div>',implementation:()=>'<div data-ops-implementation></div>',forecast:()=>'<div data-ops-forecast></div>',portfolio:()=>'<div data-ops-portfolio></div>'}[view.tab])()+'</div>'
        :empty('Open a case from the selected saved plan or import an original case. Forecast staffing and payouts do not populate actual records.'))
       +'<dialog class="ops-dialog" aria-labelledby="ops-dialog-title"><form method="dialog" data-ops-form><h3 id="ops-dialog-title"></h3><div data-ops-fields class="ops-fields"></div><p data-ops-form-error role="alert"></p><div class="ops-actions"><button type="button" data-ops-action="cancel">Cancel</button><button type="submit" class="primary">Save</button></div></form></dialog>'
       +'<input type="file" data-ops-import hidden accept=".zip,application/zip"><input type="file" data-ops-intake hidden accept=".json,application/json">';
@@ -187,6 +225,20 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
         onForecastInputs:async(inputs,selection)=>{if(view.current?.program.id!==c.program.id)return;view.forecastDraft=structuredClone(inputs);view.forecastId=null;view.tab='forecast';render();inform('Opened an editable forecast from '+selection.alternativeId+'. Review original collection dates before previewing and saving its cash assumptions.');}});
       portfolioView.setHostBusy(view.busy);portfolioView.ready.catch(alertError);
     }
+    if(c&&view.tab==='statements'){
+      if(!retainedStatementSessions.has(c.program.id))retainedStatementSessions.set(c.program.id,{});
+      statementView=mountStatements({container:$('[data-ops-statements]'),current:c,saveApi:transport,
+        session:retainedStatementSessions.get(c.program.id),mutationId,recordingActor,
+        onCash:()=>{if(!available())return;view.tab='cash';render();},
+        onCase:async(next,result)=>{
+          if(!available()||view.current?.program.id!==next.program.id)return;
+          view.current=next;view.events=[];view.nextAfter=null;
+          const listed=view.cases.find(row=>row.id===next.program.id);
+          if(listed)Object.assign(listed,{version:next.program.version,state:next.program.state});
+          render();inform('Received the original account statement and reconciled its cash observations.');
+        }});
+      statementView.setHostBusy(view.busy);statementView.ready.catch(alertError);
+    }
     if(c&&view.tab==='implementation'){
       if(!retainedImplementationSessions.has(c.program.id))retainedImplementationSessions.set(c.program.id,{});
       implementationView=mountImplementationEvidence({container:$('[data-ops-implementation]'),current:c,saveApi:transport,
@@ -201,10 +253,69 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
         }});
       implementationView.setHostBusy(view.busy);implementationView.ready.catch(alertError);
     }
+    if(c&&view.tab==='supplier-account'){
+      if(!retainedPayablesSessions.has(c.program.id))retainedPayablesSessions.set(c.program.id,{});
+      payablesView=mountPayables({container:$('[data-ops-payables]'),current:c,api,saveApi:transport,
+        session:retainedPayablesSessions.get(c.program.id),mutationId,recordingActor,
+        onOpen:tab=>{if(!available())return;view.tab=tab;render();},
+        onCase:async(next,result)=>{
+          if(!available()||view.current?.program.id!==next.program.id)return;
+          view.current=next;view.events=[];view.nextAfter=null;
+          const listed=view.cases.find(row=>row.id===next.program.id);
+          if(listed)Object.assign(listed,{version:next.program.version,state:next.program.state,updatedAt:next.program.updatedAt});
+          render();inform((result.action==='refresh'||result.action==='reconcile'?'Opened current supplier account':'Recorded supplier account change')+' · case version '+result.version+'.');
+        }});
+      payablesView.setHostBusy(view.busy);payablesView.ready.catch(alertError);
+    }
+    if(c&&view.tab==='ledger-intake'){
+      if(!retainedLedgerIntakeSessions.has(c.program.id))retainedLedgerIntakeSessions.set(c.program.id,{});
+      ledgerIntakeView=mountLedgerIntake({container:$('[data-ops-ledger-intake]'),current:c,api,saveApi:transport,
+        session:retainedLedgerIntakeSessions.get(c.program.id),mutationId,recordingActor,
+        onOpen:tab=>{if(!available())return;view.tab=tab;render();},
+        onCase:async(next,result)=>{
+          if(!available()||view.current?.program.id!==next.program.id)return;
+          view.current=next;view.events=[];view.nextAfter=null;
+          const listed=view.cases.find(row=>row.id===next.program.id);
+          if(listed)Object.assign(listed,{version:next.program.version,state:next.program.state,updatedAt:next.program.updatedAt});
+          render();inform('Recorded complete ledger intake · case version '+result.version+'.');
+        }});
+      ledgerIntakeView.setHostBusy(view.busy);ledgerIntakeView.ready.catch(alertError);
+    }
+    if(c&&view.tab==='performance'){
+      if(!retainedPerformanceSessions.has(c.program.id))retainedPerformanceSessions.set(c.program.id,{});
+      performanceView=mountPerformance({container:$('[data-ops-performance]'),current:c,api,
+        session:retainedPerformanceSessions.get(c.program.id),
+        onOpen:tab=>{if(!available())return;view.tab=tab;render();}});
+      performanceView.setHostBusy(view.busy);performanceView.ready.catch(alertError);
+    }
+    if(c&&view.tab==='dispatch'){
+      if(!retainedDispatchSessions.has(c.program.id))retainedDispatchSessions.set(c.program.id,{});
+      dispatchView=mountDispatch({container:$('[data-ops-dispatch]'),current:c,api,
+        session:retainedDispatchSessions.get(c.program.id),
+        onOpen:(id,revision,edit,taskId)=>{
+          if(!available()||view.current?.program.id!==c.program.id)return;
+          if(id){
+            const retained=retainedInstallationSessions.get(c.program.id)||{};
+            retained.requestOpen={id,revision,edit,taskId};
+            retainedInstallationSessions.set(c.program.id,retained);
+          }
+          view.tab='installations';render();
+        }});
+      dispatchView.setHostBusy(view.busy);dispatchView.ready.catch(alertError);
+    }
+    if(c&&view.tab==='commercial'){
+      if(!retainedCommercialSessions.has(c.program.id))retainedCommercialSessions.set(c.program.id,{});
+      commercialView=mountCommercialReceivables({container:$('[data-ops-commercial]'),current:c,api,saveApi:transport,
+        session:retainedCommercialSessions.get(c.program.id),mutationId,recordingActor,
+        onSources:()=>{view.tab='sources';render();},
+        onInstallations:()=>{view.tab='installations';render();}});
+      commercialView.setHostBusy(view.busy);commercialView.ready.catch(alertError);
+    }
     if(c&&view.tab==='installations'){
       if(!retainedInstallationSessions.has(c.program.id))retainedInstallationSessions.set(c.program.id,{});
       installationView=mountInstallations({container:$('[data-ops-installations]'),current:c,api,saveApi:transport,
         session:retainedInstallationSessions.get(c.program.id),mutationId,recordingActor,
+      onSources:()=>{view.tab='sources';render();},
         onCase:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;
           view.current=next;view.events=[];view.nextAfter=null;
@@ -364,6 +475,23 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
           }else{
             const requestId=await mutationId('operations:import',{hash,name:data.name,actor});
             result=await api('/api/operations/import?name='+encodeURIComponent(data.name),raw,{raw:true,headers:{'content-type':'application/zip','X-Request-ID':requestId,'X-Recorded-By':encodeURIComponent(actor)}});
+          }
+          if(result.performance){
+            const retained=retainedPerformanceSessions.get(result.id)||{};
+            Object.assign(retained,{initialized:true,startDate:result.performance.startDate||'',
+              endDate:result.performance.endDate,page:0});
+            retainedPerformanceSessions.set(result.id,retained);view.tab='performance';
+          }
+          if(result.supplierAccount){
+            const selected=result.supplierAccount,retained=retainedPayablesSessions.get(result.id)||{};
+            Object.assign(retained,{initialized:true,contributorId:selected.contributorId,
+              startDate:selected.startDate||'',endDate:selected.endDate,panel:'summary',page:0});
+            retainedPayablesSessions.set(result.id,retained);view.tab='supplier-account';
+          }
+          if(result.deliveryQueue){
+            const retained=retainedDispatchSessions.get(result.id)||{};
+            Object.assign(retained,{initialized:true,asOfDate:result.deliveryQueue.asOfDate,page:0});
+            retainedDispatchSessions.set(result.id,retained);view.tab='dispatch';
           }
           if(result.selectedInstallation){
             installationView?.dispose();installationView=null;

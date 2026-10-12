@@ -256,6 +256,27 @@ tariff list --output received-plan-list.json
 
 The receiving workspace validates and stores the bundle through its original receiving method. Keep the accompanying seller configuration, source package, native observation history and original pricing state together when handing over the wider merchant operation.
 
+### Export one customer selection and inspect its sources
+
+The original `pricingRequestId` from a committed selection also identifies its portable tariff journal. Select it when exporting a customer case:
+
+~~~sh
+tariff export --selection-request-id "$PRICING_REQUEST_ID" --output customer-tariff-portfolio.json
+~~~
+
+This retains the complete original tariff plan, its selected comparison and both native request bodies/UUIDs. The journal also preserves a pending result when the original selection is still being recovered. The no-argument export continues to include the whole portfolio.
+
+Carry the selected portfolio beside the original Pricing `WORKSPACE_BACKUP`. Restore that original backup at the recipient, then inspect and receive the selected portfolio through the recipient's original tariff workspace:
+
+~~~sh
+tariff inspect --input customer-tariff-portfolio.json --output customer-tariff-source-review.json
+tariff receive --input customer-tariff-portfolio.json --output customer-tariff-received.json
+~~~
+
+The read-only inspection runs the same native source preflight as receiving and returns `{schema,sha256,plans,selections}`, with schema `stellar-forge.merchant-tariff-portfolio-review.v1`. It recalculates the saved source-bound review, checks the original scenario/Pricing request identities and checks completed native manifests. Receiving also checks every existing destination record before its first write.
+
+The HTTP client uses `client.bundle({selectionRequestId})` and `client.inspectPortfolio(portfolio)` for the same operations. The native merchant MCP client and CLI expose selected retained downloads and a compact inspection of the validated source and request identities; their complete original file protocol is documented in the installed `TARIFFS.md`.
+
 ### File behavior
 
 All JSON commands print the full result, or write a complete `--output` file. Output files are create-only: an already existing path produces `EEXIST` before the workspace opens and stays intact. The operator stages new output beside its destination, flushes the complete bytes, then publishes the new path atomically. Parent directories are created when necessary. If output publication fails after a workspace operation has returned, the command's error JSON includes the complete `operationResult`, preserving the original saved result and its recovery identities.
@@ -304,7 +325,23 @@ try {
 }
 ~~~
 
-The client copies the supplied URL and token at construction. Later changes to a caller-owned `URL` object leave the captured connection unchanged. Authentication uses `Authorization: Bearer TOKEN`; the token fragment is excluded from API URLs. The client accepts HTTP(S) loopback origins and an optional injected `fetch` implementation.
+The client copies the supplied URL and token at construction. The standalone `/#token=…` launch URL selects `/api` and sends `Authorization: Bearer TOKEN`. The original Pricing host returns `launch.tariffsUrl` ending in `/tariffs/`; that URL selects `/api/tariffs` and sends the original `x-sf97-workspace` header. Obtain its token from the original host's `GET /api/state` and pass it explicitly:
+
+~~~javascript
+// launch is the result of the existing startWorkspace(...) call.
+const bootstrap = await fetch(new URL('/api/state', launch.tariffsUrl), {
+  cache: 'no-store', credentials: 'omit', redirect: 'error'
+});
+if (!bootstrap.ok) throw new Error('Pricing workspace bootstrap failed: ' + bootstrap.status);
+const originalState = await bootstrap.json();
+const integratedClient = createTariffClient({
+  url: launch.tariffsUrl,
+  token: originalState.token
+});
+const integratedState = await integratedClient.state();
+~~~
+
+The read-only `apiPrefix` property reports the captured choice, and every method uses it. Later changes to a caller-owned `URL` object leave the captured connection unchanged. Tokens are excluded from API URLs. The client accepts HTTP(S) loopback origins and an optional injected `fetch` implementation.
 
 Every method accepts an optional final `{ signal }` for cancellation. Requests use fresh responses, omit unrelated cookies and reject HTTP redirects. The client preserves caller-provided payloads and request IDs and performs one request per method invocation.
 
@@ -323,7 +360,8 @@ All JSON routes return the workspace result directly.
 | `selection(input)` | `POST /api/selection` | Plan and comparison IDs |
 | `commitSelection(input)` | `POST /api/selection/commit` | Complete selection and both UUIDs |
 | `download(planId, name)` | `GET /api/plans/:id/files/:name` | Exact bytes |
-| `bundle()` | `GET /api/bundle` | Complete tariff bundle JSON |
+| `bundle({selectionRequestId}?)` | `GET /api/bundle?selectionRequestId=…` | Complete portfolio, or one original selected plan and journal |
+| `inspectPortfolio(bundle)` | `POST /api/portfolio/inspect` | Original complete read-only source review |
 | `receive(bundle)` | `POST /api/receive` | Complete original bundle |
 | `repricingSource(version)` | `GET /api/repricing/source?version=…` | Original repricing source |
 | `previewRepricing(input)` | `POST /api/repricing/preview` | Original repricing preview payload |
@@ -346,7 +384,7 @@ await writeFile('/absolute/path/received-comparison.csv', file.bytes, {
 
 ### Errors and recovery
 
-The server's error response is `{ error: { code, message } }`. `TariffHttpError` retains the HTTP status, method, token-free URL, complete raw response text, parsed body and response headers. Larger domain errors remain available in full.
+The standalone server returns `{ error: { code, message } }`; the original integrated Pricing host returns `{ code, message }`. `TariffHttpError` preserves the native `code` from either response, together with the HTTP status, method, token-free URL, complete raw response text, parsed body and response headers. Larger domain errors remain available in full.
 
 `TariffTransportError` identifies an incomplete response and retains its underlying cause. `TariffProtocolError` retains the full successful response text when it cannot be decoded as the declared JSON. For a mutating operation, these errors retain an `UNKNOWN` outcome so the existing workspace can recover the original operation using its saved UUIDs.
 

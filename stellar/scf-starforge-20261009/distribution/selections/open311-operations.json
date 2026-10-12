@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "open311-operations",
   "title": "Open311 municipal service operations",
-  "description": "Complete municipal source capture, saved case review, original-source comparisons, managed Applications, sixteen merchant tools and portable workspace receiving.",
+  "description": "Complete provider-native source collections, capped-window refinement, consolidated case review, managed Applications, twenty merchant tools and portable workspace receiving.",
   "base": {
     "commands": [
       "installation",
@@ -114,7 +114,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Open311 municipal service capture, internal review, managed merchant operation and complete customer receiving",
+    "description": "Open311 municipal service collections, source-version review, managed merchant operation and complete customer receiving",
     "readme": "products/open311/OPERATING.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"

@@ -69,6 +69,16 @@ export class GraphqlProductClient {
     }
     return client.call(name, selected, options);
   }
+  async prepareRequestSet(request) { return this.call('merchant_graphql_request_set_prepare', request); }
+  async inspectRequestSet(selection) { return this.call('merchant_graphql_request_set', selection); }
+  async recoverRequestSet(request) { return this.call('merchant_graphql_request_set_recover', request); }
+  async startRequestRun(request) { return this.call('merchant_graphql_request_run_start', request); }
+  async inspectRequestRun(selection) { return this.call('merchant_graphql_request_run', selection); }
+  async continueRequestRun(request) { return this.call('merchant_graphql_request_run_continue', request); }
+  async controlRequestRun(request) { return this.call('merchant_graphql_request_run_control', request); }
+  async recoverRequestRun(request) { return this.call('merchant_graphql_request_run_recover', request); }
+  async compareRequestRuns(request) { return this.call('merchant_graphql_request_run_compare', request); }
+  async prepareRequestPacket(selection) { return this.call('merchant_graphql_request_packet', selection); }
   async prepareComparison(request) { return this.call('merchant_graphql_comparison_prepare', request); }
   async inspectComparison(selection) { return this.call('merchant_graphql_comparison', selection); }
   async comparisonChanges(selection) { return this.call('merchant_graphql_comparison_changes', selection); }

@@ -1,7 +1,16 @@
 # OpenLineage operations workspace
 
+The [async Python producer](ASYNC_PYTHON_PRODUCER.md) operates the released 1.53.0 queue, ordering and retry worker through `cli.mjs native-python-async`. It retains each first native request and actual acknowledgement, resumes the same delivery after interruption, and exports the complete producer operation with the original workspace. The guide includes the full native customer receiving command.
+
+Native Python and Java OpenLineage 1.53.0 producers are included in the complete application. Use `cli.mjs native-python` or `cli.mjs native-java` to send retained original pipeline events and continue interrupted deliveries through the same workspace. The [producer guide](PRODUCERS.md), [Python guide](PYTHON_PRODUCER.md) and [Java guide](JAVA_PRODUCER.md) cover preparation, configuration, saved progress and customer receiving.
+
+The managed merchant producer desk prepares private Python or Java settings,
+sends complete host-pinned event files and continues their original delivery.
+Use `cli.mjs producer` and the [merchant guide](MERCHANT.md) to operate it.
+
 A private, editable operations workspace for original OpenLineage events.
-Import a producer's JSON or NDJSON, inspect its jobs, runs and datasets, follow
+Receive a producer's HTTP events or import original JSON, NDJSON or gzip files,
+inspect their jobs, runs and datasets, follow
 the reported dependencies, save an edition, record an operator decision and
 attach a complete result to the event context that explains it. Deliver that
 whole workspace, including the original files and editable application, to
@@ -60,18 +69,35 @@ not fetch it. Source downloads return the exact retained bytes.
 
 ### Producer HTTP transport
 
-A producer can send an original event or event batch to:
+Native Python, Java, Airflow and other OpenLineage HTTP clients can send their
+original bodies to:
 
     POST http://127.0.0.1:8767/api/v1/lineage
 
-The body is the original JSON/NDJSON bytes. The optional Idempotency-Key header
-sets the import operation ID. If-Match can select the current numeric revision.
-When omitted, the intake uses a content-derived operation ID and the revision
-read immediately before the mutation. A concurrent import may return 409 or
-423; retry the same original request after reading the current outcome.
+The receiver accepts uncompressed or gzip JSON/NDJSON. It retains compressed
+wire bytes unchanged and verifies their decoded byte identity. Native producer
+arrivals use the original workspace writer through a serial append queue.
+A response acknowledges the source only after its original operation is saved.
 
-The same endpoint is available at /api/sources?name=events.ndjson&source=URL.
-When a token is configured, send Authorization: Bearer followed by that token.
+The optional Idempotency-Key header selects the original operation ID. By
+default it is derived from the unchanged wire body. Repeat the exact body,
+name, reference and encoding after a lost response. An explicitly supplied
+If-Match retains its numeric revision check. Queue or writer backpressure
+returns 503 with Retry-After: 1.
+
+Use the browser's **Producer intake** control to inspect the actual endpoint,
+current queue and server counters and download complete Python or Java client
+settings. The CLI's producer-config command creates the same private
+configuration from the actual connection.json. A separate producer token can
+admit events while the operator token controls the whole workspace.
+
+[PRODUCERS.md](PRODUCERS.md) covers complete client setup, authentication, gzip,
+source inspection, retries, capacity and the native producer receiving journey.
+
+The explicit operator import route, /api/sources?name=events.ndjson&source=URL,
+keeps its normal revision checks. It also accepts Content-Encoding: gzip.
+To import a compressed original directly through the CLI, add
+--content-encoding gzip to the import command and retain the .gz filename.
 
 ## Operate the project
 
@@ -217,8 +243,9 @@ writer.lock. Read that original record and use:
 The recovery command checks that the exact original lock remains and that its
 process no longer exists.
 
-The default HTTP body limit is 64 MiB. Larger retained sources can be imported
-through the direct CLI, subject to available memory and disk. This first
+The default HTTP body limit is 64 MiB. The native producer queue has separate
+wire and decoded capacity settings described in PRODUCERS.md. Direct source
+imports have a 256 MiB wire/decoded ceiling, subject to available memory and disk. This first
 implementation keeps the saved event index in memory for projection and writes
 its JSON state atomically. Use a workspace per operational scope when the full
 event history outgrows the available host.
@@ -245,3 +272,19 @@ reader without an external package dependency.
 
 The application is MIT licensed. Upstream event fixtures retain their
 OpenLineage provenance and upstream license information in SOURCE_CONTRACT.md.
+
+## Schema change review and staff resolution
+
+Open **Schema changes** to compare two named saved editions, inspect original field observations and declared downstream paths, assign follow-up and retain complete staff decision history. Reviews use the existing workspace writer and saved-request recovery. HTML, CSV and JSON reports and editable workspace receiving carry the complete comparison, original sources and evidence. See [SCHEMA_OPERATIONS.md](SCHEMA_OPERATIONS.md) for the full UI, SDK, CLI, receiving and operating programme.
+
+## Pipeline service levels
+
+Open **Service levels** from the workspace header to maintain per-job freshness, duration and failure policies; evaluate original events at a stated time; and assign, acknowledge, resolve or accept incidents with complete decision history. The same workflow is available through `scf-lineage service-levels`, the typed service-levels client and the original native/merchant tools. See [SERVICE_LEVELS.md](SERVICE_LEVELS.md) for policy semantics, complete customer reports and editable receiving, and [SERVICE_LEVELS_OPERATOR.md](SERVICE_LEVELS_OPERATOR.md) for the operator desk.
+
+## Dataset quality operations
+
+The original browser's **Quality** view provides original metric and assertion history, exact dataset/run selection, saved rules, immutable evaluations and reasoned finding dispositions. Original producer severity, assertion success and observed run state are visible independently. A reported zero remains a value and an omitted metric remains unreported.
+
+Use `QualityClient` from `./quality-client.mjs`, or the installed `@tokenjunkielabs/starforge-merchant/seller/openlineage/quality` export. Its seven methods call the existing `quality.*` actions through the original workspace HTTP owner. Rule, evaluation and disposition saves use the same operation IDs, revision checks and replay handling as the other application workflows.
+
+The [complete quality operator and client guide](QUALITY_OPERATOR.md) explains the four desk views, metric and assertion rules, reports, original request recovery and full editable receiving. Existing schema and service-level operations remain available in the same application.

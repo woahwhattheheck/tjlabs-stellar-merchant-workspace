@@ -107,3 +107,7 @@ A native-currency forecast ZIP adds:
 The complete JSON and case archive remain the authoritative portable representation, including original attachments. Portfolio exports retain the same currency inputs and explain financial comparison eligibility. Importing the complete case validates and reopens the original saved records through the existing application.
 
 The CLI accepts the complete example with its existing `--inputs` option. Agent clients and Merchant's forecast preview/save tools accept the same object inline or through their original verified input references and `inputPointer`. No separate currency store is required.
+
+## Run the original case through the complete application
+
+Use [the native receiving workflow](examples/NATIVE_CURRENCY_RECEIVING.md) to import an existing complete case, recalculate its retained forecasts and portfolios, review a native quote in the application, and export and reopen the resulting case. The maintained caller and browser continuation use the application's original APIs and saved records. Customer-specific inputs belong in the private configuration described by that guide.

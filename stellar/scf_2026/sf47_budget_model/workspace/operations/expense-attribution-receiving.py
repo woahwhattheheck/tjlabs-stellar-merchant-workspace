@@ -208,7 +208,7 @@ def run(args):
         selected_files = {}
         repository_root = source.parents[3]
         members = list(managed_launch.BOOT_FILES) + [
-            "EXPENSE_ATTRIBUTION.md", "operations/expense-attribution-receiving.py",
+            "EXPENSE_ATTRIBUTION.md", "agent-client.d.mts", "operations/expense-attribution-receiving.py",
             "operations/expense-attribution-browser.mjs"]
         for name in members:
             path = (source / name).resolve()
@@ -216,6 +216,23 @@ def run(args):
                 raise ValueError("The original executable source closure is incomplete: " + name)
             raw = path.read_bytes()
             selected_files[path.relative_to(repository_root).as_posix()] = raw
+        if args.source_manifest:
+            additional = json.loads(Path(args.source_manifest).read_text())
+            if not isinstance(additional, dict) or len(additional) > 1000:
+                raise ValueError("Select the original complete source map")
+            for name, selected in additional.items():
+                relative = PurePosixPath(name)
+                path = (repository_root / name).resolve()
+                if (relative.is_absolute() or ".." in relative.parts or name != relative.as_posix()
+                        or not path.is_relative_to(repository_root) or not path.is_file()
+                        or not isinstance(selected, dict)):
+                    raise ValueError("The original complete source map contains an invalid member")
+                raw = path.read_bytes()
+                if len(raw) != selected.get("bytes") or digest(raw) != selected.get("sha256"):
+                    raise ValueError("The original complete source member changed: " + name)
+                selected_files[name] = raw
+            if sum(len(raw) for raw in selected_files.values()) > MAX_ARCHIVE:
+                raise ValueError("The original complete source exceeds its receiving archive bound")
         selection = {name: {"bytes": len(raw), "sha256": digest(raw)} for name, raw in selected_files.items()}
         source_sha = digest(raw_json(selection))
         source_destination = work / "source" / source_sha
@@ -375,12 +392,15 @@ def run(args):
             reopened_receipt = transition("primary-reopen", "expense.reopen", primary_id,
                 "Review the later accepted accountant references")
             reopened = original_after("primary-reopen", reopened_receipt)
-            obsolete = expenses.allocation_input(reopened)
-            body = {"expectedVersion": current()["program"]["version"], "actor": ACTOR,
-                "note": "Inspect retained earlier source selection", "requestId": OPERATION + "-old-source-refused",
-                "action": "expense.save", "data": obsolete}
-            rejected = api("POST", "/api/operations/" + case_id + "/command", body, expected=409)
-            assert rejected["error"]["code"] == "EXPENSE_CURRENT_EDITION_REQUIRED"
+            def obsolete_selection():
+                obsolete = expenses.allocation_input(reopened)
+                body = {"expectedVersion": current()["program"]["version"], "actor": ACTOR,
+                    "note": "Inspect retained earlier source selection", "requestId": OPERATION + "-old-source-refused",
+                    "action": "expense.save", "data": obsolete}
+                rejected = api("POST", "/api/operations/" + case_id + "/command", body, expected=409)
+                assert rejected["error"]["code"] == "EXPENSE_CURRENT_EDITION_REQUIRED"
+                return {"body": body, "response": rejected}
+            retained_step("obsolete-source-selection-refused", obsolete_selection)
             live = current()
             line = next(x for x in live["expenseAttribution"]["lines"]
                 if x["workspaceId"] == previous["source"]["workspaceId"] and x["sourceLineId"] == previous["source"]["sourceLineId"])
@@ -572,6 +592,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", required=True, help="Exact original SF47 workspace source directory")
     parser.add_argument("--work", required=True, help="Private retained directory for this same original operation")
+    parser.add_argument("--source-manifest", help="Original complete source map using SOURCE.json path/bytes/sha256 entries")
     parser.add_argument("--buyer-project", required=True, help="Complete original Buyer Expenses project ZIP")
     parser.add_argument("--buyer-sha256", required=True)
     parser.add_argument("--operations-case", required=True, help="Complete original SF47 Operations ZIP")

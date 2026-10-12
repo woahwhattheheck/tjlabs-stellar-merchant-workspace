@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-provider-supplier-accounts",
+  "description": "Complete supplier-account operating client, reviewed source changes and private native workspace receiving",
+  "merchantProviders": {
+    "supplier-accounts": "stellar-forge/mcp-merchant-operator/providers/supplier-accounts.mjs"
+  },
+  "commands": {
+    "supplier-account-client": "stellar-forge/mcp-merchant-operator/supplier-account-cli.mjs"
+  },
+  "commandDescriptions": {
+    "supplier-account-client": "Review and save supplier accounts, recover native changes and receive complete history through Merchant MCP"
+  },
+  "exports": {
+    "./merchant/supplier-accounts": "./source/stellar-forge/mcp-merchant-operator/supplier-account-workspaces.mjs",
+    "./merchant/supplier-accounts/connection": "./source/stellar-forge/mcp-merchant-operator/supplier-account-connection.mjs",
+    "./merchant/supplier-accounts/exports": "./source/stellar-forge/mcp-merchant-operator/supplier-account-exports.mjs",
+    "./clients/supplier-accounts": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/supplier-account-client.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/supplier-account-client.mjs"
+    },
+    "./clients/supplier-accounts/contracts": "./source/stellar-forge/mcp-merchant-operator/supplier-account-contracts.mjs",
+    "./clients/supplier-accounts/cli": "./source/stellar-forge/mcp-merchant-operator/supplier-account-cli.mjs",
+    "./clients/supplier-accounts/receiving": "./source/stellar-forge/mcp-merchant-operator/receiving/supplier-accounts-operator-native.mjs"
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/supplier-account-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/SUPPLIER_ACCOUNTS.md"
+  ]
+}

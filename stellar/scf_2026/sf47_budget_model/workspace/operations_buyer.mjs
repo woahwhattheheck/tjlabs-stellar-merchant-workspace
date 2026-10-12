@@ -110,15 +110,15 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
     finally{busy=false;if(available())sync();}
   }
   function deploymentForm(review){
-    const matched=review.rows.map(x=>x.matches?.[0]?.deploymentId).filter(Boolean),unique=[...new Set(matched)];
+    const matched=review.rows.map(x=>x.suggestedDeploymentId||x.matches?.[0]?.deploymentId).filter(Boolean),unique=[...new Set(matched)];
     const selected=unique.length===1?unique[0]:'__select__';
     const kinds=[['__select__','Choose an existing deployment or create one'],['__new__','New original buyer deployment'],
       ...review.deployments.filter(x=>['BUYER','BOTH'].includes(x.role)).map(x=>[x.id,x.name+' · '+x.operator+' · '+human(x.participantClass)])];
-    const networks=[...new Set(review.rows.map(x=>x.purchase.network))],environment=networks.length===1?
+    const networks=[...new Set(review.rows.filter(x=>x.purchase).map(x=>x.purchase.network))],environment=networks.length===1?
       networks[0]==='stellar:testnet'?'TESTNET':networks[0]==='stellar:pubnet'?'MAINNET':'OTHER':'OTHER';
     const costs=current.plan.scenario.future_costs.map(row=>[row.id,row.id]);
     return '<fieldset><legend>2 / Accountable deployment</legend>'+label('Existing deployment',selectField('deploymentId',kinds,selected),
-      'Later observations retain their original deployment and the participant class recorded for that purchase.')+
+      'Later observations retain the original deployment. Unpaid Node observations have no purchase; participant attribution remains an explicit operator decision.')+
       '<div class="buyer-fields" data-buyer-new hidden>'+
       label('Deployment name',input('name','','text',500))+
       label('Accountable operator',input('operator','','text',500))+
@@ -140,18 +140,33 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
   }
   function jobRows(review){
     return review.rows.map(row=>{
-      const blocked=row.receiving==='CONFLICT',selection=row.suggestedPurchaseId||'';
+      const blocked=row.receiving==='CONFLICT',selection=row.suggestedPurchaseId||'',unpaid=row.purchase===null;
       const purchaseOptions=[['','Record a new original purchase'],...review.purchases.map(value=>[value.id,
         (value.intentId||value.transactionHash||value.id)+' · '+human(value.settlementStatus)])];
-      return '<article class="buyer-job"><header><label class="buyer-check"><input type="checkbox" data-buyer-job="'+row.jobId+'"'+
-        (blocked?' disabled data-buyer-fixed="true"':' checked')+'><span><strong>'+esc(row.intentId)+'</strong><small>'+esc(row.method)+' '+esc(row.url)+'</small></span></label>'+tag(row.nativeState)+'</header>'+
-        '<dl class="buyer-facts"><div><dt>Accepted / original atomic amount</dt><dd>'+esc(row.purchase.amountStroops)+'<small>'+esc(row.purchase.network)+' / '+esc(row.purchase.asset)+'</small></dd></div>'+
+      const subtitle=row.sourceKind==='NODE_ACCOUNTING'?
+        'Original Node command '+row.node.commandId:(row.method||'')+' '+(row.url||'');
+      const facts=unpaid?
+        '<div><dt>Original disposition</dt><dd>No payment required<small>No asset, amount, reservation or purchase is recorded.</small></dd></div>'+
+        '<div><dt>Reported HTTP status</dt><dd>'+esc(row.output.httpStatus??'Unknown')+'<small>Original unsigned checkout observation</small></dd></div>'+
+        '<div><dt>Response capture</dt><dd>'+esc(human(row.output.captureStatus))+'<small>No response body is embedded in this carrier.</small></dd></div>'+
+        '<div><dt>Accounting outcome</dt><dd>'+esc(human(row.node.outcome))+'<small>'+esc(human(row.node.recordAuthority))+'</small></dd></div>':
+        '<div><dt>Accepted / original atomic amount</dt><dd>'+esc(row.purchase.amountStroops)+'<small>'+esc(row.purchase.network)+' / '+esc(row.purchase.asset)+'</small></dd></div>'+
         '<div><dt>Payment attempt</dt><dd>'+esc(human(row.purchase.attemptStatus))+'</dd></div>'+
         '<div><dt>Settlement</dt><dd>'+esc(human(row.purchase.settlementStatus))+'<small>'+esc(row.purchase.transactionHash||'Original transaction unavailable')+'</small></dd></div>'+
-        '<div><dt>Retained output at capture</dt><dd>'+esc(human(row.output.state))+'<small>'+esc(row.output.bytes==null?'':row.output.bytes+' bytes')+'</small></dd></div></dl>'+
+        '<div><dt>Retained output at capture</dt><dd>'+esc(human(row.output.state))+'<small>'+esc(row.sourceKind==='NODE_ACCOUNTING'?
+          'Response body not embedded in this carrier':row.output.bytes==null?'':row.output.bytes+' bytes')+'</small></dd></div>';
+      const association=unpaid?
+        '<p class="buyer-note">Receive this original operational observation against the selected deployment. It contributes no purchase, approved intent, cash, funding receipt or independent-customer count.</p>':
         '<div class="buyer-row-controls">'+label('Original purchase association','<select data-buyer-purchase="'+row.jobId+'">'+options(purchaseOptions,selection)+'</select>',
-          row.receiving==='OBSERVE_ORIGINAL'?'Receive this recovery or source observation against the existing original.':'A new record retains this exact source intent; no payment is made.')+'</div>'+
-        (row.identityConflicts?.length?'<p class="buyer-issue">Original identity differs: '+esc(row.identityConflicts.join(', '))+'. Use the existing purchase correction workflow before receiving.</p>':'')+
+          row.receiving==='OBSERVE_ORIGINAL'?'Receive this recovery or source observation against the existing original.':'A new record retains this exact source intent; no payment is made.')+'</div>';
+      const linked=row.operationMatches?.length?
+        '<p class="buyer-note">This original Node operation already has '+row.operationMatches.length+' retained source association'+
+          (row.operationMatches.length===1?'':'s')+'. Its deployment and any established purchase identity remain bound.</p>':'';
+      return '<article class="buyer-job"><header><label class="buyer-check"><input type="checkbox" data-buyer-job="'+row.jobId+'"'+
+        (blocked?' disabled data-buyer-fixed="true"':' checked')+'><span><strong>'+esc(row.intentId)+'</strong><small>'+esc(subtitle)+'</small></span></label>'+
+        tag(unpaid?'NO_PAYMENT_REQUIRED':row.nativeState)+'</header><dl class="buyer-facts">'+facts+'</dl>'+association+linked+
+        (row.currentObservationPreserved?'<p class="buyer-note">This accounting source predates the current purchase observation. Receiving retains the original source times and preserves the current purchase state and observation time.</p>':'')+
+        (row.identityConflicts?.length?'<p class="buyer-issue">Original identity differs: '+esc(row.identityConflicts.join(', '))+'. Review the retained deployment or purchase association before receiving.</p>':'')+
         (row.matches.length>1?'<p class="buyer-issue">This intent / transaction matches more than one active case record. Reconcile those original records first.</p>':'')+
         (row.issues.length?'<p class="buyer-issue">'+esc(row.issues.map(human).join(' · '))+'</p>':'')+
         '<details><summary>Original source, outcome and timing details</summary><pre>'+esc(JSON.stringify(row,null,2))+'</pre></details></article>';
@@ -159,39 +174,50 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
   }
   function received(){
     const files=current.sources.filter(nativeSource);
-    if(!files.length)return '<p class="buyer-empty">Received buyer handoffs will reopen here with their exact source, selected purchases and native report.</p>';
-    return files.map(file=>'<article class="buyer-received"><div><h4>'+esc(file.buyerHandoff.originalFilename||file.filename)+'</h4><p>'+
-      file.buyerHandoff.rows.length+' received of '+file.buyerHandoff.totalSourceJobs+' original jobs · '+esc(file.buyerHandoff.capturedAt)+
-      '</p><code>'+esc(file.sha256)+'</code></div><div class="buyer-actions">'+btn('Open original review','open-source','data-source="'+file.id+'"')+
-      btn('Download original source','download-source','data-source="'+file.id+'"')+
-      file.buyerHandoff.reports.map(report=>btn('Download native report','download-report','data-source="'+report.sourceId+'"')).join('')+'</div></article>').join('');
+    if(!files.length)return '<p class="buyer-empty">Received buyer sources will reopen here with their exact bytes, deployment/purchase associations and native reports.</p>';
+    return files.map(file=>{
+      const handoff=file.buyerHandoff,node=handoff.sourceSchema==='stellar-forge.node-operation-accounting-export.v1';
+      const observations=node?handoff.rows.map(row=>'<p class="buyer-note">'+esc(human(row.disposition))+
+        ' · '+esc(row.purchaseId?'Original purchase '+row.purchaseId:'Operational observation; no purchase')+
+        '<br>Reported HTTP '+esc(row.output.httpStatus??'unknown')+' · response capture '+esc(human(row.output.captureStatus))+
+        ' · response body not embedded<br>Original command <code>'+esc(row.node.commandId)+'</code>'+
+        '<br>Original identity <code>'+esc(row.node.sourceIdentitySha256)+'</code></p>').join(''):'';
+      return '<article class="buyer-received"><div><h4>'+esc(handoff.originalFilename||file.filename)+'</h4><p>'+
+        handoff.rows.length+' received of '+handoff.totalSourceJobs+' original jobs · '+esc(handoff.capturedAt)+
+        '</p><code>'+esc(file.sha256)+'</code>'+observations+'</div><div class="buyer-actions">'+
+        btn('Open original review','open-source','data-source="'+file.id+'"')+
+        btn('Download original source','download-source','data-source="'+file.id+'"')+
+        handoff.reports.map(report=>btn('Download native report','download-report','data-source="'+report.sourceId+'"')).join('')+'</div></article>';
+    }).join('');
   }
   function render(){
     if(!available())return;
     const review=session.review;
     root.innerHTML='<header class="buyer-heading"><div><p class="buyer-eyebrow">DELIVERY OPERATIONS / ORIGINAL BUYER</p><h3>Receive native buyer work</h3>'+
-      '<p>Bring retained Inbox attempts, payment observations and saved results into this delivery case. Review the accountable operator and keep recovery on the original purchase.</p></div>'+
+      '<p>Receive original Inbox handoffs or Node accounting exports in this delivery case. Keep unpaid operations separate from purchases, review the accountable deployment, and retain original source and request identities.</p></div>'+
       btn('Refresh original case','reload')+'</header><p data-buyer-message role="'+(session.error?'alert':'status')+'">'+esc(session.message||'')+'</p>'+
       '<section class="buyer-source"><h4>1 / Original source handoff</h4>'+
-      '<label class="buyer-file">'+(session.pending?'Reselect the exact file for the retained request':'Select the original SF88 operations handoff')+
+      '<label class="buyer-file">'+(session.pending?'Reselect the exact file for the retained request':'Select the original SF88 Inbox handoff or Node accounting export')+
       '<input type="file" accept=".json,application/json" data-buyer-file></label>'+
       (session.fileMeta?'<p>'+esc(session.fileMeta.filename)+' · '+session.fileMeta.bytes+' bytes<br><code>'+esc(session.fileMeta.sha256)+'</code></p>':'')+
       '<details><summary>Export from the existing native Inbox</summary><p>Use the installed original buyer component with the existing Inbox and explicit intent IDs. Choose a new private output filename.</p>'+
       '<pre>node sf88-operator-buyer-cli/operations-handoff/cli.mjs export \\\n  --inbox /private/original-inbox \\\n  --intent ORIGINAL_INTENT \\\n  --output /private/receiving/buyer-operations.json</pre>'+
       '<p>The export opens original records and verifies retained response files. It does not approve, sign, execute, recover, finalize or retry a purchase. The complete private source stays with this operating case.</p></details>'+
+      '<details><summary>Use an existing Node accounting export</summary><p>Select the original <code>Operation_Accounting.json</code> produced by the native Node operation. The reader checks its embedded original attempt, evidence and saved accounting result. An unsigned response requiring no payment is received as a deployment observation with no purchase. This carrier embeds no response body.</p></details>'+
       (session.selected&&!session.pending?btn('Review retained source','preview'):'')+
       (session.pending?'<div class="buyer-pending"><h4>Original request retained</h4><p>Request '+esc(session.pending.requestId)+
       ' was prepared at case version '+session.pending.expectedVersion+'. Continue that exact request to read its committed result or complete its original save.</p>'+
       btn('Recover original request','recover')+'</div>':'')+'</section>'+
       (review?'<section class="buyer-summary"><div><strong>'+review.counts.jobs+'</strong><span>Original jobs</span></div><div><strong>'+review.counts.knownSignedAttempts+
       '</strong><span>Established signed attempts</span></div><div><strong>'+review.counts.settled+'</strong><span>Retained settled observations</span></div><div><strong>'+
-      review.counts.verifiedRetainedOutputs+'</strong><span>Verified retained outputs</span></div></section>'+
+      review.counts.verifiedRetainedOutputs+'</strong><span>Verified retained outputs</span></div>'+
+      (review.counts.unpaidOperationalObservations?'<div><strong>'+review.counts.unpaidOperationalObservations+'</strong><span>Unpaid operational observations</span></div>':'')+'</section>'+
       '<p class="buyer-note">'+esc(review.interpretation)+'</p><form data-buyer-form><div data-buyer-draft>'+
-      deploymentForm(review)+'<fieldset><legend>3 / Original purchase observations</legend>'+
-      '<p data-buyer-selected></p><p class="buyer-note">The complete source preserves every exported job. Only selected jobs enter the case metrics; unselected and unresolved jobs remain visible in the retained source.</p>'+
+      deploymentForm(review)+'<fieldset><legend>3 / Original operation and purchase observations</legend>'+
+      '<p data-buyer-selected></p><p class="buyer-note">The complete source preserves every exported job. Selected paid observations retain their native purchase semantics; unpaid Node observations remain separate from financial metrics. Unselected and unresolved source facts stay visible.</p>'+
       '<div class="buyer-jobs">'+jobRows(review)+'</div></fieldset>'+
       '<fieldset><legend>4 / Receive into this case</legend>'+label('Receiving / reconciliation note','<textarea name="note" required rows="3" maxlength="12000"></textarea>',
-        'Explain this deployment association or the later observation of an existing purchase.')+
+        'Explain the original deployment association and, when applicable, the later observation of its existing purchase.')+
       '<p>Case '+esc(current.program.name)+' · reviewed version '+review.version+'. No award, cash, issuer acceptance or customer agreement is created.</p>'+
       '<button type="submit" data-buyer-send>Receive selected original jobs</button></fieldset></div></form>'+
       '<div class="buyer-actions">'+btn('Download source review','review-download')+'</div>':'')+
@@ -206,7 +232,7 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
     const response=await api('/api/operations/'+current.program.id+'/buyer-preview',{expectedVersion:current.program.version,...selected});
     activeCheck();if(session.selected!==selected)return;
     session.review=response;session.rejected=null;
-    tell('Original source reviewed against case version '+response.version+'. Choose the deployment and exact original purchase associations.');
+    tell('Original source reviewed against case version '+response.version+'. Choose the deployment and review the original operation or purchase association.');
     render();
   }
   async function selectFile(name,buffer){
@@ -252,8 +278,10 @@ export function mountBuyerReceiving({container,current,api,saveApi=api,mutationI
           }
           session.accepted=result;session.pending=null;session.rejected=null;
           session.review=null;session.selected=null;session.fileMeta=null;session.draft=null;
-          session.message=result.unchanged?'This exact source and its original purchase associations are already received.':
-            'Received '+result.purchaseIds.length+' original jobs at case version '+result.version+'.';
+          session.message=result.unchanged?'This exact source and its original associations are already received.':
+            'Received '+result.selectedJobIds.length+' original job'+(result.selectedJobIds.length===1?'':'s')+' at case version '+result.version+
+            '; '+result.purchaseIds.length+' purchase association'+(result.purchaseIds.length===1?'':'s')+
+            (result.operationalObservationIds?.length?', '+result.operationalObservationIds.length+' original Node operational observation'+(result.operationalObservationIds.length===1?'':'s'):'')+'.';
           session.error=false;
           try{persist();}catch{
             session.message+=' The original save is complete; this browser could not clear its local draft. Reopening the retained request will return that same saved result.';

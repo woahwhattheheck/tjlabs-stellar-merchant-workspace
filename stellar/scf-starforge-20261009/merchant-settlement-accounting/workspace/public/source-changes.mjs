@@ -123,34 +123,39 @@ function editable(parent,label,value,set,{multiline=false,type='text',required=f
  wrap.append(input);parent.append(wrap);return input;
 }
 function renderDraft(){const d=state.draft,shown=Boolean(d)&&!state.detail;$('mapping-panel').hidden=!shown;if(!d)return;
+ const buyer=d.kind==='qbo'&&d.inspection.defaults.sourceKind==='buyer-expense-period';
  $('successor-name').value=d.successor.name??'';$('txn-date').value=d.successor.txnDate??'';$('doc-number').value=d.successor.docNumber??'';
  $('valuation-basis').value=d.successor.valuationBasis??'';$('rationale').value=d.rationale??'';$('valuation-confirmed').checked=Boolean(d.valuationConfirmed);
- $('txn-label').hidden=d.kind!=='qbo';$('doc-label').hidden=d.kind!=='qbo';$('valuation-label').hidden=d.kind!=='xero';
- $('txn-date').required=d.kind==='qbo';$('valuation-basis').required=d.kind==='xero';
+ $('txn-label').hidden=d.kind!=='qbo';$('doc-label').hidden=d.kind!=='qbo';$('valuation-label').hidden=d.kind!=='xero'&&!buyer;
+ $('txn-date').required=d.kind==='qbo';$('valuation-basis').required=d.kind==='xero'||buyer;
  const currency=d.inspection.source.after.company.baseCurrency,before=d.inspection.source.before.company.baseCurrency;
  $('currency-note').textContent=before===currency?'All displayed values remain explicit '+currency+' amounts. Review the original valuation basis.':'Company base currency changed from '+before+' to '+currency+'. Enter and review every amount in '+currency+'; no exchange rate is inferred.';
  const list=$('account-options');list.replaceChildren();for(const a of d.inspection.accounts.filter(a=>a.eligible)){const option=node('option');option.value=d.kind==='qbo'?a.id:a.code;option.label=[a.code,a.name,a.id].filter(Boolean).join(' · ');list.append(option);}
  const root=$('economic-rows');root.replaceChildren();const rows=d.kind==='qbo'?d.successor.rows:d.successor.entries;
  for(const row of rows){const card=node('section',undefined,'sc-economic'),id=d.kind==='qbo'?row.rowId:row.componentId;card.dataset.sourceId=id;
- card.append(node('h3',d.kind==='xero'&&row.decision==='exclude'?'Original exclusion':'Original included row'),node('p',id,'mono'));
- if(d.kind==='xero'&&row.decision==='exclude'){card.append(node('p',row.reason,'excluded'));root.append(card);continue;}
+ card.append(node('h3',(d.kind==='xero'||buyer)&&row.decision==='exclude'?'Original exclusion':'Original included row'),node('p',id,'mono'));
+ if((d.kind==='xero'||buyer)&&row.decision==='exclude'){card.append(node('p',row.reason,'excluded'));root.append(card);continue;}
  const grid=node('div',undefined,'sc-row-grid');
  if(d.kind==='xero')editable(grid,'Journal date',row.date,v=>row.date=v,{type:'date',required:true});
  editable(grid,'Amount in '+currency,row.amount,v=>row.amount=v,{required:true,max:100});
  editable(grid,d.kind==='qbo'?'Debit account ID':'Debit account code',d.kind==='qbo'?row.debitAccount.value:row.debitAccountCode,v=>{if(d.kind==='qbo')row.debitAccount.value=v;else row.debitAccountCode=v;},{required:true,list:'account-options',max:240});
  editable(grid,d.kind==='qbo'?'Credit account ID':'Credit account code',d.kind==='qbo'?row.creditAccount.value:row.creditAccountCode,v=>{if(d.kind==='qbo')row.creditAccount.value=v;else row.creditAccountCode=v;},{required:true,list:'account-options',max:240});
- if(d.kind==='xero')editable(grid,'Valuation note',row.valuationNote,v=>row.valuationNote=v,{required:true,multiline:true,wide:true});
+ if(d.kind==='xero'||buyer)editable(grid,'Valuation note',row.valuationNote,v=>row.valuationNote=v,{required:true,multiline:true,wide:true});
  editable(grid,'Description',row.description,v=>row.description=v,{multiline:true,wide:true});
  card.append(grid);root.append(card);
  }availability();
 }
 function collectDraft(){check(state.draft,'Inspect the original source editions first.');const d=clone(state.draft);d.successor.name=$('successor-name').value.trim();d.successor.actor=$('operator').value.trim();d.rationale=$('rationale').value.trim();d.valuationConfirmed=$('valuation-confirmed').checked;
- if(d.kind==='qbo'){d.successor.txnDate=$('txn-date').value;d.successor.docNumber=$('doc-number').value.trim()||null;}else d.successor.valuationBasis=$('valuation-basis').value.trim();return d;}
+ if(d.kind==='qbo'){d.successor.txnDate=$('txn-date').value;d.successor.docNumber=$('doc-number').value.trim()||null;}
+ if(d.kind==='xero'||d.inspection.defaults.sourceKind==='buyer-expense-period')d.successor.valuationBasis=$('valuation-basis').value.trim();return d;}
 function validateDraft(d){check(d.successor.name&&d.successor.actor&&d.rationale,'Provide the operator, successor name and source-change reason.');check(d.valuationConfirmed,'Confirm the complete base-currency valuation and mapping review.');
+ const buyer=d.kind==='qbo'&&d.inspection.defaults.sourceKind==='buyer-expense-period';
+ if(d.kind==='xero'||buyer)check(d.successor.valuationBasis?.trim(),'Retain an explicit common valuation basis for this complete successor.');
  const eligible=new Set(d.inspection.accounts.filter(a=>a.eligible).map(a=>d.kind==='qbo'?a.id:a.code));
  const original=d.kind==='qbo'?d.inspection.defaults.rows:d.inspection.defaults.entries,rows=d.kind==='qbo'?d.successor.rows:d.successor.entries;
- check(rows.length===original.length&&rows.every((r,i)=>d.kind==='qbo'?r.rowId===original[i].rowId:r.componentId===original[i].componentId&&r.decision===original[i].decision&&(r.decision!=='exclude'||r.reason===original[i].reason)),'Keep every original included row and exclusion unchanged.');
- for(const r of rows){if(d.kind==='xero'&&r.decision==='exclude')continue;const debit=d.kind==='qbo'?r.debitAccount.value:r.debitAccountCode,credit=d.kind==='qbo'?r.creditAccount.value:r.creditAccountCode;
+ check(rows.length===original.length&&rows.every((r,i)=>(d.kind==='qbo'?r.rowId===original[i].rowId:r.componentId===original[i].componentId)&&(!(d.kind==='xero'||buyer)||r.decision===original[i].decision&&(r.decision!=='exclude'||r.reason===original[i].reason))),'Keep every original included row and exclusion unchanged.');
+ for(const r of rows){if((d.kind==='xero'||buyer)&&r.decision==='exclude')continue;
+ if(d.kind==='xero'||buyer)check(r.valuationNote?.trim(),'Retain an explicit valuation note for every included allocation.');const debit=d.kind==='qbo'?r.debitAccount.value:r.debitAccountCode,credit=d.kind==='qbo'?r.creditAccount.value:r.creditAccountCode;
  check(eligible.has(debit)&&eligible.has(credit),'Choose eligible accounts from the retained target chart for every included row.');
  check(typeof r.amount==='string'&&r.amount.trim(),'Enter an explicit amount for every included row.');}
  check(d.inspection.predecessor.eligible,'This original plan must be continued through its existing native reconciliation before replacement.');
@@ -186,7 +191,7 @@ function renderDetail(){const d=state.detail;$('review-panel').hidden=!d;if(!d)r
 }
 function validateDetail(data,id){assertBinding(data?.binding);check(data?.schema===SCHEMA&&data.record?.id===id&&['qbo','xero'].includes(data.record.kind)&&UUID.test(data.record.planId||'')&&UUID.test(data.record.successorId||'')&&SHA.test(data.record.previewSha256||'')&&data.review?.request?.id===data.record.successorId&&data.current&&data.review.comparison?.sha256===data.record.comparisonSha256,'The response does not bind the exact retained review and successor.');return data;}
 function samePrepare(detail,p){const r=detail.record,b=p.body;check(r.id===b.id&&r.kind===b.kind&&r.planId===b.planId&&r.successorId===b.successor.id&&r.predecessorSha256===b.predecessorSha256&&r.comparisonSha256===b.comparisonSha256&&r.name===b.successor.name&&r.actor===b.successor.actor&&r.rationale===b.rationale,'The returned review does not match the original prepared source and successor identity.');
- for(const key of ['id','createdAt','name','actor',...(b.kind==='qbo'?['txnDate','docNumber','rows']:['entries','valuationBasis'])])check(equal(detail.review.request[key]??null,b.successor[key]??null),'The returned native request changed the original '+key+' field.');}
+ for(const key of ['id','createdAt','name','actor',...(b.kind==='qbo'?['txnDate','docNumber','rows',...('valuationBasis' in b.successor?['valuationBasis']:[])]:['entries','valuationBasis'])])check(equal(detail.review.request[key]??null,b.successor[key]??null),'The returned native request changed the original '+key+' field.');}
 function sameApplication(detail,p){const r=detail.record;check(r.id===p.changeId&&r.successorId===p.successorId&&r.previewSha256===p.previewSha256,'The application returned a different review or successor.');
  check(r.intent?.id===p.id,'The original application ID has not been confirmed.');if(p.kind==='apply')check(r.intent.requestSha256===p.bodySha256,'The retained application body identity differs from the original command.');}
 async function retainCommand(kind,changeId,body,{successorId,previewSha256}={}){

@@ -2,6 +2,20 @@
 
 Run the original SF93 collector continuously, retain an actionable incident, notify the configured operator, acknowledge it from another terminal, and bring its original baseline and recovery captures into the existing SF74 case desk. The watcher owns its process and private state. Existing seller, operations and SF98 delivery processes retain their own lifecycle.
 
+## Watch an original Object buyer
+
+The same watcher accepts a reviewed saved ObjectSession alongside existing seller
+registrations. Use `review-object` to bind its exact session file, configuration and
+original intent, then apply that selection through the existing configuration
+revision. The watcher reads original per-request finalization views and verifies
+saved output without purchasing, assembling or finalizing anything.
+
+The [complete Object monitoring guide](OBJECT_MONITORING.md) covers bounded source
+review, the five incident conditions, original notification handling and the full
+SF74 case export/reopen flow. A missing view is not a zero payment or a completed
+delivery; financial state, verified output and process observations remain
+separate.
+
 ## Register and start
 
 Requirements are Node 22 or newer, Linux with util-linux `flock`, the original SF30 seller plus its operations listener, and a private directory on a local filesystem supporting file locks, atomic rename and fsync. Run the watcher as the same operating-system user as its private files. A foreground invocation can also be supervised by the deployment's existing process manager; configure it to send SIGTERM and allow current bounded requests/state writes to finish.
@@ -141,11 +155,11 @@ Configuration changes publish atomically. Results already being collected agains
 
 Completed incidents follow the configured day/count retention; active incidents and incidents referenced by unfinished notifications are retained. Terminal notifications have their own retained-count limit. The unfinished queue is capped at 1,024 events. If full, incident work still records its state and exposes `notificationIssue: QUEUE_CAPACITY` plus the cumulative capacity counter; cancel obsolete events or let delivery finish, then explicitly notify the incident. Paused events already occupy a slot, so retrying one does not reserve a second slot.
 
-Capture storage has a configured byte cap, 128 MiB by default. Referenced baseline, follow-up and latest merchant packets are preserved. Unreferenced packets and abandoned writes are collected under the same transaction lease. If a new packet cannot fit, the merchant reports `captureState: STORAGE_LIMIT`; the incident and its metadata still record the failure/recovery, and the missing packet is explicit. Increase the cap or reduce completed-case retention before collecting more evidence. Neither packet bytes nor state are silently truncated.
+Capture storage has a configured byte cap, 128 MiB by default. Referenced baseline, follow-up and latest merchant packets are preserved, together with captures retained by active snapshot pins. Unreferenced packets and abandoned writes are collected under the same transaction lease. If a new packet cannot fit, the merchant reports `captureState: STORAGE_LIMIT`; the incident and its metadata still record the failure/recovery, and the missing packet is explicit. Increase the cap or reduce completed-case retention before collecting more evidence. Neither packet bytes nor state are silently truncated.
 
-The private store exclusively owns `state.json`, reserved `state-UUID.tmp` files, its lock subdirectories and the `captures/` namespace (`capture-HASH.json`, `stage-capture-UUID.tmp`). Keep unrelated files elsewhere. Captures and state publish through file fsync, atomic rename and directory fsync; committed references publish before old captures are collected. Referenced capture reads verify content hashes and exact packet encoding. Export reads hold the same transaction lease so collection cannot remove their source mid-read.
+The private store exclusively owns `state.json`, reserved `state-UUID.tmp` files, its lock subdirectories, the `captures/` namespace (`capture-HASH.json`, `stage-capture-UUID.tmp`), and its reserved `snapshot-pins/` pin/release/stage namespace. Keep unrelated files elsewhere. Captures and state publish through file fsync, atomic rename and directory fsync; committed references publish before old captures are collected. Referenced capture reads verify content hashes and exact packet encoding. Export reads hold the same transaction lease so collection cannot remove their source mid-read.
 
-For a consistent backup, stop this watcher and pause its operator commands, copy its entire private directory, and preserve file permissions. Reopen the same copied configuration with its original environment references and runtime endpoints. Pending notifications retain their original destination identity. State and exported support files are private merchant operational records.
+The [complete incident-store recovery workflow](INCIDENT_RECOVERY.md) saves a reviewed live revision through the existing `snapshot` command, pins its original capture references while the watcher advances, and verifies every required file before receiving into a separate private store. The received store preserves original notification requests and receipts while holding unfinished deliveries for explicit reconciliation. The existing Support console provides the same snapshot, receiving, reopen, resume and abandonment controls when the source has an explicitly configured private recovery directory. State and exported support files remain private merchant operational records.
 
 ## Native integration result
 

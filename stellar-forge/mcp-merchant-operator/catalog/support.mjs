@@ -1,9 +1,11 @@
 import {commercialTools} from './commercial.mjs';
+import {serviceAdjustmentTools} from './service-adjustments.mjs';
 import {casePackageTools} from './case-packages.mjs';
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { CASE_STATUSES } from '../../../stellar/scf-starforge-20261009/sf74-merchant-support-console/case-statuses.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 import {serviceTools} from './service.mjs';
+import {serviceRenewalTools} from './service-renewals.mjs';
 
 const uuid = { type: 'string', pattern: '^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$' };
 
@@ -39,6 +41,8 @@ function supportTools(tool) {
   const read = { readOnly: true, idempotent: true };
   return [
     ...serviceTools(tool),
+    ...serviceRenewalTools(tool),
+    ...serviceAdjustmentTools(tool),
     ...casePackageTools(tool),
     ...commercialTools(tool),
     tool('merchant_support_incident_sources', 'Inspect the original support connection mode, configured incident source IDs/labels, bound source-file digest and host default. Reads no arbitrary path and starts no watcher.', {}, [], read),

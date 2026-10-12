@@ -4,7 +4,7 @@
 <body>
 <header><div><p class="eyebrow">STELLAR FORGE</p><h1>Economic editions</h1><p id="project-title">Opening project…</p></div><button id="refresh" type="button">Refresh state</button></header>
 <p class="source-notice">This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. By using this application, users agree to the <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use</a>.</p>
-<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
+<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="releases">Release planner</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
 <main>
 <div id="message" role="status" aria-live="polite"></div>
 <section id="summary" class="metrics" aria-label="Project summary"></section>
@@ -27,11 +27,165 @@
 <div class="buttons"><button id="rows-previous">Previous page</button><button id="rows-next">Next page</button></div>
 <div class="box"><h3>Combine retained public tables</h3><p>Select one original capture for each series to create a shared economic edition. Every observation keeps its own frequency, units and retrieval date.</p><label>Original source captures<select id="combine-captures" multiple size="5"></select></label><button id="combine-tables">Create combined edition</button></div>
 <div class="box"><h3>Review the customer edition</h3><p>Keep the original value, missing marker, date basis, units and frequency together. Configure the original dataset’s selected fields and query capabilities.</p>
-<label>Projection and page policy<textarea id="policy" rows="13" spellcheck="false"></textarea></label><label>Review note<textarea id="review-note" rows="3" maxlength="8000"></textarea></label><button id="save-review">Save reviewed edition</button></div>
+<label>Projection and page policy<textarea id="policy" rows="13" spellcheck="false"></textarea></label><label>Review note<textarea id="review-note" rows="3" maxlength="8000"></textarea></label><div id="briefing-editor" class="briefing-editor">
+<label class="check"><input id="briefing-enabled" type="checkbox">Include an analyst briefing in this reviewed edition</label>
+<div id="briefing-controls" hidden>
+<p>Select original series and a reporting interval. Period comparisons use the exact source calendar, including baselines before this interval. Missing values remain visible.</p>
+<div class="form-grid"><label class="wide">Briefing title<input id="briefing-title" maxlength="160" value="Economic briefing"></label>
+<label>Reporting start<input id="briefing-start" type="date"></label><label>Reporting end<input id="briefing-end" type="date"></label><label>Relative-change decimals<input id="briefing-decimals" type="number" min="0" max="12" value="6"></label></div>
+<h4>Original series and comparison methods</h4><div id="briefing-series" class="table-wrap"></div>
+<p class="briefing-method">Absolute changes preserve the source units. Changes in a series measured in Percent are percentage points. Relative percent change is a separate explicit selection; it is calculated from the two original values.</p>
+<label>Analyst note<textarea id="briefing-notes" rows="4" maxlength="8000"></textarea></label>
+<button type="button" id="briefing-preview">Preview complete briefing selection</button>
+</div></div>
+<button id="save-review">Save reviewed edition</button></div>
+<div class="box" id="briefing-report-panel">
+<h3>Analyst briefings</h3><p>Open a saved briefing or preview the current selection. The offline HTML, full measures CSV, report JSON and manifest are retained with the source review and included in complete project exports.</p>
+<label>Saved briefing<select id="briefing-saved"></select></label>
+<div class="buttons"><button id="briefing-open">Open saved briefing</button><button id="briefing-copy">Use this briefing selection</button><button id="briefing-html">Download offline HTML</button><button id="briefing-csv">Download full CSV</button><button id="briefing-json">Download report JSON</button><button id="briefing-manifest">Download manifest</button></div>
+<p id="briefing-view-state" role="status">Select an original source to author a briefing.</p>
+<div id="briefing-summary" class="metrics"></div><div id="briefing-series-summary" class="table-wrap"></div>
+<div id="briefing-measures" class="table-wrap"></div><div class="buttons"><button id="briefing-previous" disabled>Previous measures</button><button id="briefing-next" disabled>Next measures</button></div>
+<p id="briefing-method-summary" class="briefing-method"></p>
+</div>
+
 <h3>Compare two retained vintages</h3><div class="form-grid"><label>Earlier capture<select id="compare-before"></select></label><label>Later capture<select id="compare-after"></select></label></div>
 <div class="buttons"><button id="compare">Compare source editions</button><button id="download-comparison">Download full comparison</button></div><pre id="comparison-summary">Select the same series and observation interval in two captures.</pre><div id="comparison" class="table-wrap"></div>
 <div class="buttons"><button id="compare-previous">Previous changes</button><button id="compare-next">Next changes</button></div>
 </section>
+
+<section data-panel="recurring" hidden>
+<h2>Recurring briefings</h2>
+<p>Save a reviewed briefing's series and comparison methods, then apply that selection to later retained source. Each saved successor keeps its original report and a comparison with the selected predecessor.</p>
+<p><a href="/recurring-guide" target="_blank" rel="noopener">Operating guide and command reference</a></p>
+<div id="recurring-recovery" class="box" hidden><h3>Saved action</h3><p id="recurring-recovery-text"></p><div class="buttons"><button id="recurring-resume">Continue saved action</button><button id="recurring-discard">Clear unsent browser request</button></div></div>
+<div class="box">
+<h3>Save a briefing template</h3>
+<form id="template-form" class="form-grid">
+<label class="wide">Saved analyst briefing<select id="template-review" required></select></label>
+<label class="wide">Template name<input id="template-name" maxlength="160" required></label>
+<label>Calendar months<input id="template-months" type="number" min="1" max="1200" value="12" required></label>
+<label>Window anchor<select id="template-anchor"><option value="latest_all">Earliest latest observation date across the selected series</option><option value="latest_any">Latest observation date across the selected series</option></select></label>
+<label>Months to omit at the end<input id="template-lag" type="number" min="0" max="1200" value="0" required></label>
+<label>Earlier template version<select id="template-previous"><option value="">Create a new template</option></select></label>
+<p class="wide briefing-method">Monthly windows include complete calendar months. Quarterly and annual source dates label their observation periods. Missing observations remain part of the source and its coverage.</p>
+<div class="wide"><button type="submit" id="template-save">Save template</button></div>
+</form>
+</div>
+<div class="box">
+<h3>Prepare the next briefing</h3>
+<div class="form-grid">
+<label class="wide">Template<select id="recurring-template"></select></label>
+<label class="wide">Retained source capture<select id="recurring-capture"></select></label>
+<label>Compare with<select id="recurring-previous"><option value="">Original template briefing</option></select></label>
+<label>Specific observation date, optional<input id="recurring-anchor" type="date"><small>Leave empty to use the template's saved anchor rule.</small></label>
+<label class="wide">Review note<textarea id="recurring-note" rows="3" maxlength="8000"></textarea></label>
+</div>
+<div id="recurring-template-detail"></div>
+<div class="buttons"><button id="recurring-preview">Preview next briefing</button><button id="recurring-save" disabled>Save reviewed successor</button></div>
+</div>
+<div class="box">
+<h3>Saved successor history</h3>
+<label>Successor<select id="recurring-history"></select></label>
+<div class="buttons"><button id="recurring-open">Open successor</button><button id="recurring-use">Continue from this successor</button><button id="recurring-report">Open saved briefing</button><button id="recurring-html">Download offline comparison</button><button id="recurring-csv">Download full comparison CSV</button><button id="recurring-json">Download complete comparison JSON</button></div>
+<p>Publish a saved successor through the existing Merchant section. Its reviewed source, report and payment terms remain part of the same economic project.</p>
+</div>
+<div id="recurring-report-panel" class="box">
+<h3>Source coverage and changes</h3>
+<p id="recurring-status" role="status" aria-live="polite">Choose a template and retained source to preview the next briefing.</p>
+<div id="recurring-summary" class="metrics"></div>
+<h4>Source coverage</h4><div id="recurring-coverage" class="table-wrap"></div>
+<h4>Changes in series meaning</h4><div id="recurring-meaning" class="table-wrap"></div>
+<h4>Changes in source context</h4><div id="recurring-source" class="table-wrap"></div>
+<label class="check"><input id="recurring-changes-only" type="checkbox" checked>Show changed comparisons only</label>
+<div id="recurring-changes" class="table-wrap"></div>
+<div class="buttons"><button id="recurring-previous-page" disabled>Previous comparisons</button><button id="recurring-next-page" disabled>Next comparisons</button></div>
+<p id="recurring-page"></p>
+</div>
+</section>
+
+
+<section data-panel="releases" hidden>
+<h2>Release calendar and vintage capture</h2>
+<p>Watch the series used by your briefings, retain the published calendar and vintage history, then collect the observation editions you choose. Release dates help schedule work; returned vintage dates identify available editions.</p>
+<div class="box">
+<h3>Save a release watch</h3>
+<form id="release-watch-form" class="form-grid">
+<label class="wide">Watch name<input id="release-watch-name" maxlength="160" required></label>
+<label class="wide">Briefing template<select id="release-watch-template"></select><small>A linked template carries its full series selection into this watch.</small></label>
+<label class="wide">Series IDs<textarea id="release-watch-series" rows="2" required></textarea><small>One original FRED series ID per line or comma.</small></label>
+<label>Observation start<input id="release-watch-start" type="date" required></label>
+<label>First vintage already considered<input id="release-watch-baseline" type="date" required></label>
+<label>Capture policy<select id="release-watch-policy"><option value="all_vintages">Every selected vintage</option><option value="latest_vintage">Latest available selected vintage</option></select></label>
+<label class="check wide"><input id="release-watch-end-current" type="checkbox" checked> Use each selected vintage date as the observation end</label>
+<label>Fixed observation end<input id="release-watch-end" type="date" disabled></label>
+<div class="buttons wide"><button id="release-watch-save" type="submit">Save watch</button></div>
+</form>
+</div>
+<h3>Choose the watch and capture its source</h3>
+<div class="form-grid">
+<label class="wide">Saved watch<select id="release-watch"></select></label>
+<p id="release-watch-detail" class="wide"></p>
+</div>
+<form id="release-source-form" class="form-grid">
+<label>Series metadata as of<input id="release-as-of" type="date" required></label>
+<label>Calendar from<input id="release-calendar-start" type="date" required></label>
+<label>Calendar through<input id="release-calendar-end" type="date" required></label>
+<label>Vintage history from<input id="release-vintage-start" type="date" required></label>
+<label>Vintage history through<input id="release-vintage-end" type="date" required></label>
+<label>Rows per source request<input id="release-page-size" type="number" min="1" max="10000" step="1" value="1000" required></label>
+<label>Combined source row capacity<input id="release-max-rows" type="number" min="1" max="1000000" step="1" value="100000" required></label>
+<div class="buttons wide"><button id="release-capture" type="submit">Capture calendar and vintage history</button></div>
+</form>
+<details class="box"><summary>Import a complete source capture</summary>
+<p>Open an original release capture collected in another workspace.</p>
+<label>Original JSON capture<input id="release-import-file" type="file" accept=".json,application/json"></label>
+<div class="buttons"><button id="release-import" type="button" disabled>Import source</button></div>
+</details>
+<div class="box">
+<h3>Inspect retained source</h3>
+<div class="form-grid">
+<label class="wide">Source capture<select id="release-source"></select></label>
+<label>Source table<select id="release-source-section"><option value="calendar">Release calendar</option><option value="vintages">Available vintage dates</option><option value="series">Series metadata</option><option value="releases">Release definitions</option></select></label>
+<div class="buttons"><button id="release-source-open" type="button">Open source</button><button id="release-source-download" type="button">Download full source</button></div>
+</div>
+<p id="release-source-context"></p>
+<div id="release-source-table" class="table-wrap" role="region" aria-label="Retained release source" tabindex="0"></div>
+<div class="buttons"><button id="release-source-prev" type="button">Previous source rows</button><span id="release-source-page"></span><button id="release-source-next" type="button">Next source rows</button></div>
+</div>
+<h3>Review the capture plan</h3>
+<div class="form-grid">
+<label>Earlier source capture<select id="release-before"></select></label>
+<label>Current source capture<select id="release-after"></select></label>
+<div class="buttons"><button id="release-plan-preview" type="button">Preview capture plan</button><button id="release-plan-save" type="button" disabled>Save reviewed plan</button></div>
+</div>
+<p id="release-plan-status">Select a watch and its retained source to preview the observation editions available for collection.</p>
+<section id="release-plan-summary" class="metrics" aria-label="Release plan summary"></section>
+<p id="release-plan-coverage"></p>
+<div class="buttons"><button id="release-fill-history" type="button" hidden>Use the complete history interval</button></div>
+<div class="form-grid">
+<label class="wide">Saved plan<select id="release-plan"></select></label>
+<div class="buttons"><button id="release-plan-open" type="button">Open saved plan</button><button id="release-plan-download" type="button">Download full plan</button></div>
+<label>Plan table<select id="release-plan-section"><option value="acquisitions">Observation captures</option><option value="calendarChanges">Calendar changes</option><option value="vintageChanges">Vintage changes</option><option value="events">Capture reasons</option><option value="schedule">Release schedule</option></select></label>
+</div>
+<div id="release-plan-table" class="table-wrap" role="region" aria-label="Reviewed release plan" tabindex="0"></div>
+<div class="buttons"><button id="release-plan-prev" type="button">Previous plan rows</button><span id="release-plan-page"></span><button id="release-plan-next" type="button">Next plan rows</button></div>
+<div class="box">
+<h3>Capture a planned observation edition</h3>
+<p>Choose a date from the saved plan. The workspace collects all watched series at that same vintage, retaining the complete original observation responses.</p>
+<div class="form-grid">
+<label>Planned vintage<input id="release-capture-vintage" type="date" list="release-vintage-options"><datalist id="release-vintage-options"></datalist></label>
+<div class="buttons"><button id="release-vintage-capture" type="button">Capture selected vintage</button></div>
+<label class="wide">Completed captures<select id="release-completed"></select></label>
+<div class="buttons"><button id="release-open-observations" type="button">Open observation source</button><button id="release-open-briefing" type="button">Review recurring briefing</button></div>
+</div>
+</div>
+<div id="release-recovery" class="box" hidden>
+<h3>Continue a saved action</h3><p id="release-recovery-text"></p>
+<div class="buttons"><button id="release-resume" type="button">Continue original action</button><button id="release-discard" type="button">Clear browser request</button></div>
+</div>
+</section>
+
 <section data-panel="publication" hidden>
 <h2>Operate a reviewed merchant edition</h2><p>Publish a saved review with the merchant’s original public payment terms. Each edition keeps a stable snapshot and its own public resource path.</p>
 <form id="publication-form" class="form-grid"><label class="wide">Saved review<select id="review-select"></select></label><label>Public HTTPS origin<input id="public-origin" type="url" placeholder="https://your-merchant.example" required></label><label>Resource path<input id="public-path" value="/economic-data" required></label>

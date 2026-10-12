@@ -1,0 +1,104 @@
+{
+  "schema": "tjlabs.datacove-workshare.v1",
+  "caseId": "datacove-sensorthings-commissioning-20261012",
+  "operationId": "DATACOVE-SENSORTHINGS-COMMISSIONING-0C7A-20261012",
+  "preparedOn": "2026-10-12",
+  "company": "DataCove e.U.",
+  "recipient": {
+    "name": "Katharina Schleidt",
+    "email": "Kathi@DataCove.EU",
+    "source": "https://datacove.eu/contact/"
+  },
+  "title": "SensorThings commissioning workshare",
+  "subtitle": "One source family to an existing FROST service, with complete operating and receiving history",
+  "fee": {
+    "currency": "USD",
+    "fixed": 7800,
+    "kickoff": 3900,
+    "acceptance": 3900
+  },
+  "delivery": {
+    "businessDays": 12,
+    "reviewRounds": 2,
+    "handoffMinutes": 60,
+    "defectCorrectionBusinessDays": 10
+  },
+  "scope": {
+    "sourceFamilies": 1,
+    "editions": 2,
+    "maxStreams": 20,
+    "maxObservationsPerEdition": 20000,
+    "targets": 1,
+    "operatorHosts": 1,
+    "receivingEnvironments": 1
+  },
+  "sourceSelection": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "ff82f6268ef778d0401912076e229f03ba9a8a18",
+    "status": "merged_all_44_files_verified",
+    "pr": 248,
+    "component": "stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning",
+    "nativeReferenceState": "not_started_no_equipped_target",
+    "assetBuildState": "same_original_operation_transferred_to_equipped_owner_without_acceptance_yet",
+    "selectedHead": "1199af74723bc6b0cbb837717dec5080cd1b5992",
+    "files": 44,
+    "mergedAt": "2026-10-12T17:06:39Z"
+  },
+  "deliverables": [
+    {
+      "title": "Source and model intake",
+      "text": "Retain complete initial and corrected inputs, explicit selected/excluded population, exact values and timestamps, and approved entity, unit and relationship mapping."
+    },
+    {
+      "title": "Commissioning operator",
+      "text": "One authenticated workspace for source, target, mapping and payload review, native job recovery, STAM map/table inspection and complete project history."
+    },
+    {
+      "title": "Native target work",
+      "text": "Review and execute the agreed create, bind and update set through the original FROST client; retain complete requests, responses and typed target bindings."
+    },
+    {
+      "title": "Correction and recovery",
+      "text": "Verify every selected target field and relationship; exercise corrected source, cancellation/continuation and reviewed managed-change compensation."
+    },
+    {
+      "title": "Receiving handoff",
+      "text": "Deliver complete source, original inputs and native results; reopen a separate installation and retain repeat, forward and older-package behavior."
+    }
+  ],
+  "acceptance": [
+    "Every selected input and mapping rule is retained with its original row or JSON location.",
+    "The complete target set and exact planned changes are approved before native writes.",
+    "Each approved native step has its original receipt and typed binding, with selected field/relation verification.",
+    "Correction and recovery preserve original request/job history and disclose unresolved target differences.",
+    "The actual operator and separate receiving installation open the full source/result/history package."
+  ],
+  "responsibilities": {
+    "datacove": "Customer relationship; source rights; data model, units and interpretation; target/access and production approval; one consolidated reviewer; selected hosting and service charges.",
+    "tjlabs": "Defined implementation and commissioning; editable source and guides; two consolidated reviews; sixty-minute handoff; ten business days of accepted-scope defect correction."
+  },
+  "clockStart": "Accepted input scope, target/access and commissioning window, reviewers, receiving environment and kickoff payment.",
+  "implementationStatus": "Complete 44-file application is merged and independently read back. Native lifecycle and final receiver source reviews are closed. The original STAM asset operation and full FROST reference commissioning remain with their original operators; no completed reference target commissioning or customer acceptance is asserted.",
+  "reference": {
+    "operationId": "SCF_SENSORTHINGS_HAMBURG_NATIVE_1B40_20261012",
+    "observations": 660,
+    "responses": 28,
+    "recordingBytes": 2965230,
+    "recordingSha256": "34fb0322092a51525e94beda0d6c3b21548b7261d65d80909b27eb6fa6a2d466",
+    "meaning": "Original categorical observations and timestamp text. Retained connector text does not establish HTTP metadata, snapshot consistency, availability or scientific validation."
+  },
+  "links": {
+    "source": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning",
+    "services": "https://datacove.eu/services/",
+    "contact": "https://datacove.eu/contact/",
+    "operator": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning/OPERATOR.md",
+    "receiving": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning/RECEIVING.md",
+    "workshare": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning/WORKSHARE.md"
+  },
+  "firstContact": {
+    "to": "Kathi@DataCove.EU",
+    "subject": "DataCove SensorThings commissioning workshare | USD 7,800 fixed",
+    "body": "Katharina,\n\nYour data harmonization and provision services address the step from existing holdings to a usable shared data model. We have implemented an operating workflow for one practical part of that delivery: reviewed source-to-FROST commissioning with a complete receiving handoff.\n\nThe source joins retained CSV or SensorThings inputs, explicit entity/field/type/time mapping, approved create/bind/update plans, the original Fraunhofer FROST Python client, and your STAM map interface. It preserves native request/response bytes and target IDs, verifies the selected fields and relationships, and keeps correction, cancellation, same-job recovery and reviewed compensation in the original project history.\n\nWe can take one such workshare for a current DataCove customer or reference installation for USD 7,800 fixed, delivered in twelve business days after the agreed inputs and kickoff. Scope is one source family, an initial and corrected edition with up to twenty selected streams and twenty thousand observations each, one existing FROST target and one operator host, plus a separate receiving environment.\n\nThe handoff includes complete editable source and operating instructions, both reviewed editions, native results and recovery history, and a receiving engineer's full project reopen. Terms are USD 3,900 at kickoff and USD 3,900 at acceptance, two consolidated review rounds, a sixty-minute engineering handoff and ten business days of delivered-scope defect correction.\n\nDataCove retains the customer, data-model and interpretation decisions, service administration and production approval. We supply the implementation and commissioning work; existing hosting and service charges follow your chosen services.\n\nComplete source and operating contract:\nhttps://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning\n\nIs there one current harmonization or SensorThings onboarding where this delivery workshare would help?\n\nBryce\nTokenJunkie Labs",
+    "state": "prepared_not_sent"
+  }
+}

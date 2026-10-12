@@ -22,6 +22,9 @@ the service and the editable source workspace to another operator.
 | Receive a selected field source | starforge odk-central-receive source | Original rows, repeat relationships, versions/media, source review, exports, archive and comparison after reopen |
 | Receive the released forms on that service | starforge odk-central-receive released | Actual native project/form/submission IDs, complete field receiving and both commissioned periods |
 | Continue those original periods | starforge odk-central-receive periods | Accepted full-source capture, exact native period boundaries, saved commissioning IDs and independent archive reopening |
+| Complete the approved SQL handover | starforge odk-central-receive warehouse | All approved datasets, immutable PostgreSQL editions, full period reports and restored source/warehouse reopen |
+| Deliver the full released programme | starforge odk-central-receive released with its warehouse options | Released forms, both reporting periods, approved SQL reports and the complete customer ZIP |
+| Receive the installed operator | starforge odk-central-receive managed | Applications startup, private SDK, typed tools, three browser interfaces, archive download and editable receiving |
 | Attach an agent | starforge merchant-providers init odk-workspaces | Original merchant configuration, declared source/runtime profiles and complete retained-file access |
 | Continue on another host | Restore the complete workspace, then receive its publisher | The same workspace UUID, source history, original-to-local release mapping and continued authoring |
 
@@ -31,6 +34,7 @@ The complete source interfaces are documented in
 [commissioning](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/COMMISSIONING.md),
 [publisher receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/PUBLISHER_TRANSFER.md),
 [approved-period warehousing](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/warehouse/README.md)
+[complete SQL receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/warehouse/RECEIVING.md)
 and [service operation](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/central-host/HOST.md).
 The installed commands below invoke those same implementations.
 
@@ -83,8 +87,9 @@ starforge() {
 
 The function uses the original installer and selected package, including its
 Node dependencies. The ODK host entry finds the packaged Python controller.
-The released receiving entry uses this selected Node executable when its
-original Python launcher starts the receiver.
+The released and managed receiving entries use this selected Node executable
+when their original Python launchers start the receiver. Managed receiving also
+binds this installed package and its exact reviewed driver automatically.
 
 The selection includes the whole ODK and OData source directories, the native
 dataset publishers, SF82 release lifecycle, SF88 buyer operations, SF100 complete
@@ -874,6 +879,128 @@ A received host supplies its existing corresponding Authorization environment
 alias when it should acquire more Central source. Saved source, reports and
 complete received files remain available for offline inspection.
 
+## Receive the installed application and portable workspace
+
+Use the complete selected runtime from **Install the complete product**. The
+managed receiving entry composes the original Applications startup observer,
+private SDK, typed merchant operations, all three browser interfaces and the
+archive importer. It records one original workspace, its independently received
+workspace and the receiving operator's later editable agreement.
+
+The existing host supplies Playwright and Chromium. Select their actual absolute
+paths; the installed entry supplies the package directory, current Node executable
+and exact source driver:
+
+~~~sh
+starforge odk-central-receive managed \
+  --work-directory /srv/starforge/receiving/odk-managed \
+  --playwright /absolute/existing/playwright/index.mjs \
+  --chromium /absolute/existing/chromium \
+  --timeout-seconds 900
+~~~
+
+Use a canonical directory owned by the receiving operator with mode 0700.
+The command retains operation **CB57-ODK-MANAGED-RECEIVING** and its original
+request IDs. Repeating the same command continues that operation with the same
+installed package, browser and private directory. A different saved selection
+returns a conflict instead of replacing the original receiving history.
+
+The underlying Python launcher verifies the full managed driver, owns one native
+file lock and starts the original Node programme. Each launcher record uses a
+unique temporary in its original directory, file fsync, atomic replacement and
+directory fsync. A killed invocation's unused temporary cannot collide with a
+later process that receives the same PID. Cancellation settles the original
+owned programme and its application/browser cleanup before releasing the lock.
+
+The Linux launcher retains kernel custody of the original native process family.
+It acts as a child subreaper, observes the Node leader without reaping its PID,
+and first lets the original driver perform its normal cleanup. If that leader
+exits abnormally, orphaned descendants—including browsers with their own
+sessions—are adopted by the same launcher. Signals use pidfds after checking the
+actual kernel parent and process birth identity; selection never uses process
+names or an unverified PID list. The leader is reaped only after the owned child
+set is empty, and the complete result is printed after that closure succeeds.
+
+Handled SIGINT, SIGTERM and SIGHUP received during native process creation are
+recorded until the exact child is assigned and its owner/result are retained.
+The launcher then delivers cancellation through its normal owned cleanup. It
+does not change the child's inherited signal mask.
+
+The private launch result records the current DISPATCHING, RUNNING and CLOSED
+states. A known failure to create the native process records NOT_STARTED. An
+unobserved or incomplete closure remains CLOSURE_UNRESOLVED with its original
+process identities and error. On the same host boot, reconcile that exact launch
+and native operation before another start; an empty later PID lookup alone does
+not replace the missing descendant-closure result.
+
+### Original host identity and recovery
+
+Before dispatch, the launcher reads the native Linux machine ID and the DMI
+product UUID when available. Domain-separated SHA-256 values stay in the
+original private launch owner and result beside the kernel boot ID. Raw machine
+identifiers are neither printed nor added to the customer delivery. All
+available retained identity fields must match; an empty identity cannot
+establish host continuity.
+
+A changed kernel boot ID closes an unfinished launch only when the retained
+stable host identity matches the current host. The original closure record
+retains that identity, both boot IDs and the prior result hash before the
+ordinary launch result is updated. Copying or mounting the private directory on
+a different host does not establish that its original processes ended. Missing
+or changed identity, including an older boot-only closure, preserves the
+original evidence for reconciliation on the original host. The existing
+complete child-closure result continues to permit normal replay through the
+same operation and OS-owned lock.
+
+### Complete installed journey
+
+The programme starts the installed field application and asks the existing
+Applications observer to verify its startup file, process, instance and common
+workspace identity across Field, Customer commissioning and Reporting warehouse.
+
+It saves an editable agreement through the SDK, repeats the exact request,
+then saves a reviewed second edition through the original typed merchant
+operation and reads both extension states using their explicit paging. The
+initial agreement deliberately leaves the Central origin, project, forms,
+periods and customer output definitions for the accountable operator to fill.
+Its readiness remains incomplete until those original choices are supplied.
+
+The same typed operation creates one complete archive and repeats its original
+ID. The receiver streams the existing archive endpoint, retains the complete
+file through the original file API, and verifies the browser's actual archive
+download against the same byte count and SHA-256. Chromium opens Field,
+Customer commissioning and Reporting warehouse, selects the saved agreement
+and reads its complete value.
+
+After closing the first application, the programme reads its retained file,
+starts the original application with the exact archive into an empty receiving
+directory, and verifies the same workspace UUID and complete agreement history.
+The receiving operator saves another agreement edition. Restarting with the
+same archive must preserve that later work. The programme then cold-opens the
+original Store, commissioner and warehouse together and closes their handles.
+
+| Retained path under the receiving directory | Original content |
+| --- | --- |
+| original-workspace/ | First managed workspace and complete original request/history |
+| received-workspace/ | Same archived identity plus the receiving operator's later editable edition |
+| delivery/managed-receiving.json | Complete native stage results, source/runtime identity, both workspace paths and owned-process closure |
+| delivery/agreements.json | Complete original, reviewed and receiving agreement editions |
+| delivery/central-workspace.tar.gz | Original complete native archive |
+| delivery/browser-central-workspace.tar.gz | Exact archive downloaded through the real browser |
+| delivery/field-workspace.png; commissioning.png; warehouse.png | Full-page receiving views |
+| private/request.json; private/launch-selection.json; operation.json | Frozen original source, package, runtime, request and completed phases |
+
+Keep the private startup logs and browser profile with the original operator;
+the actual local bearer link is present there. Use the returned delivery file
+hashes and complete native result for the customer's receiving record.
+
+For an explicitly selected separately installed package, the original direct
+Python entry remains available in
+[MANAGED_RECEIVING.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/native/MANAGED_RECEIVING.md).
+The installed source export is
+@tokenjunkielabs/starforge-merchant/seller/odk/managed-receiving.
+Its original Python owner remains required for the full receiving function.
+
 ## Run the complete native receiving programme
 
 For an existing selected Central source, prepare the exact input described in
@@ -942,6 +1069,61 @@ The fixture controller reconciles native form/version/submission uniqueness.
 An ambiguous project creation is reconciled through its exact recorded unique
 name. A completed provider operation and field receiving result are reused.
 
+### Run released source through the complete customer ZIP
+
+The same released launcher can continue the original service/source operation
+through both commissioned periods, the approved-period warehouse receiver and
+the complete customer package in one invocation. Supply the existing warehouse
+profile, reviewer and note together:
+
+~~~sh
+starforge odk-central-receive released \
+  --host-config /private/central-host.json \
+  --work-directory /srv/central-receiving/field-product \
+  --warehouse-profiles /srv/starforge/private/warehouse-profiles.json \
+  --warehouse-profile ORIGINAL_PROFILE \
+  --warehouse-reviewer "Original receiving operator" \
+  --warehouse-note "Receive all approved value/state columns with their original row keys."
+~~~
+
+The host's original warehouse profile selects the PostgreSQL connectionEnv,
+installed Python package, schema and warehouse UUID. Supply that exact connection
+through the receiving process environment. When the existing connection is kept
+in a private JSON file, add
+--warehouse-environment-file /srv/starforge/private/warehouse-environment.json.
+That file contains only the selected connectionEnv key and its full original
+connection value. The launcher places it in its owned child's environment.
+
+The original provider/source and both-period receiving complete first. The
+warehouse stage consumes their exact
+receiving/commissioning/warehouse-selections.json, preserving every approval,
+review, import and report request. A failed stage returns its original exit
+before the next starts. Repeating the full command continues those same saved
+native operations.
+
+After the approved receiver has closed its listeners and independently reopened
+the source and warehouse, the original launcher assembles:
+
+~~~text
+customer-handover/Central_Complete_Reporting_Handover.zip
+customer-handover/handover.json
+customer-handover/READ_ME.md
+customer-handover/result.json
+~~~
+
+The ZIP includes full provider/source/commissioning results, the agreed source
+and actual period boundary, complete approved dataset files and dictionaries,
+all original and reopened warehouse reports, the final complete Central
+workspace archive, and both warehouse state records. Its handover manifest
+binds the original workspace, datasets, delivery and every complete member hash.
+Already compressed reports and the workspace archive are stored once.
+
+Packaging streams and rehashes the exact original files. A completed ZIP is
+reused only when its full member list, lengths and hashes still match. The
+result preserves the completed warehouse timestamp, original IDs, ZIP length,
+SHA-256 and actual listener closure. Full member and continuation details are in
+[RELEASED_RECEIVING.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/native/RELEASED_RECEIVING.md).
+
 ### Continue the original two-period commissioning
 
 The released programme continues its completed five-root source capture through
@@ -991,6 +1173,70 @@ actual database, schema, warehouse identity and installed Python interpreter.
 The full native source and continuation contract are in
 [RELEASED_PERIODS.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/native/RELEASED_PERIODS.md).
 
+### Complete the original approved-period SQL receiving
+
+After the source and commissioning programme closes its workspace, continue
+the generated warehouse selection with the installed receiver:
+
+~~~sh
+starforge odk-central-receive warehouse \
+  --request /srv/central-receiving/field-product/receiving/commissioning/warehouse-selections.json \
+  --profiles /srv/starforge/private/warehouse-profiles.json \
+  --profile ORIGINAL_PROFILE \
+  --reviewer "Original receiving operator" \
+  --note "Receive all approved value/state columns with their original row keys." \
+  --output /srv/central-receiving/warehouse-receiving \
+  --restore-directory /srv/central-receiving/warehouse-reopened
+~~~
+
+Select the actual profile already prepared under **Receive the approved
+periods in PostgreSQL**. Preserve its installed Python executable, original
+database environment reference, warehouse UUID and schema. Replace
+ORIGINAL_PROFILE with its saved profile ID. The receiver reads the original
+source directory from the generated selection and uses the existing host
+environment for its database connection.
+
+This entry invokes the original warehouse/receiving.mjs. It opens the
+original authenticated warehouse listener, verifies the complete original
+commissioning definition and exact emitted datasets, and resumes each saved
+approval, mapping review, import and period-report request. Each inspected
+mapping retains all approved value/state columns and original source keys.
+
+The full programme receives each approval and complete source projection,
+the original period report ZIP, and the full Central archive. It closes the
+first listener, restores the same archive in the separate recipient
+directory, reconnects to the original PostgreSQL warehouse, reinspects the
+relocated source, recovers its immutable editions and downloads the same
+complete reports. Its result is written after both listeners close.
+
+| Receiving path | Original completed work |
+| --- | --- |
+| operation.json; requests/; responses/ | Complete selection, exact request bodies, saved actions and receiving stages |
+| downloads/dataset-APPROVAL_ID/ | Approved export JSON, full CSV, semantics, source descriptor and table schema |
+| downloads/reports/ | Complete original comparison ZIP for every approved table |
+| central-workspace.tar.gz | Complete source, reviews, commissioning and warehouse state |
+| received-reports/ | Original full reports received again after source relocation |
+| original-warehouse-state.json; received-warehouse-state.json | Original operations and their receiving continuation |
+| result.json | Dataset and warehouse edition IDs, file identities, restored workspace and listener closure |
+
+Repeat that same command after an interruption. Its saved specification,
+private directories, profiles and original IDs identify the continuation.
+The receiver verifies completed file bodies before reuse. A completed result
+remains the original output of the same operation.
+
+For another complete two-period customer delivery, the original general
+request supports every approved root or repeat table. Follow the full
+[receiving guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/warehouse/RECEIVING.md)
+for its definition digest, table expectations and original mapping policy.
+Use the same installed warehouse entry with its request and explicit
+--directory.
+
+A host programme can import the typed nativeReceivingSelection and
+receiveApprovedCentralPeriods functions from
+@tokenjunkielabs/starforge-merchant/seller/odk/warehouse/receiving. The SDK
+retains the original commissioning dataset types, private profile type,
+full result and asynchronous stage callback.
+
 ## Receiving handover
 
 A complete delivery joins the agreed source and reporting interpretation,
@@ -1013,6 +1259,7 @@ periods, publish the next dataset edition and create another complete handover.
 - [Provider source manifest](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/PROVIDER_SOURCES.md).
 - [Released source provenance](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/native/RELEASED_FIXTURES.md)
   and [native receiving contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/native/RELEASED_RECEIVING.md).
+- [Installed managed receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odk/native/MANAGED_RECEIVING.md), including its complete original SDK, typed tools, browser and archive continuation.
 - [Source-owned distribution contribution](../../stellar/scf-starforge-20261009/distribution/contributions/odk.json)
   and [complete selection](../../stellar/scf-starforge-20261009/distribution/selections/odk-central.json).
 

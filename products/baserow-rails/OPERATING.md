@@ -325,6 +325,167 @@ Keep the manifests, original source/version/query identities and complete result
 with the handover. The application receiver verifies the actual saved database
 receipt and every current target value after a directory move.
 
+## 9. Receive the next data edition into the working application
+
+Open the existing **Ruby customer commissioning** desk and choose **Data
+editions**. Select the original application and stop its running Rails listener.
+Choose the completed native packet containing **dataset-customer.json** or the
+complete Baserow packet containing **baserow-delivery.json**. Those are the
+actual outputs of the customer receiving workflow above.
+
+**Read selected source** shows its original manifest, dataset/query identity,
+row count and projected fields. Retain the returned complete manifest SHA.
+Choose an edition ID, title and actual operator identity, then **Receive packet
+and prepare complete preview**. The native worker copies every original file
+and builds the original Rails preview against the application's current stream.
+
+Read all changes and the complete preview files before choosing **Commit this
+exact preview**. The original importer verifies the selected preview and applies
+its target changes, key state, immutable edition and receipt in one transaction.
+The app keeps its original mapping, tenant scope, logical source/query, exact
+numeric/null rules and removal policy.
+
+If the working data changed after the preview, use **Prepare another review**
+with a new retained review UUID. The previous review stays available with its
+original source and digest. If the connection or worker was interrupted, read
+and resume the same original operation.
+
+The installed CLI exposes the same complete workflow:
+
+~~~sh
+starforge ruby-application-editions source \
+  --format baserow --source-directory "$NEXT_RECEIVED_CUSTOMER"
+
+starforge ruby-application-editions stage \
+  --directory "$RUBY_RUNTIME" --input "$STAGE_EDITION_REQUEST" --wait
+
+starforge ruby-application-editions show \
+  --directory "$RUBY_RUNTIME" --id "$APPLICATION_ID" \
+  --edition-id "$EDITION_ID"
+
+starforge ruby-application-editions commit \
+  --directory "$RUBY_RUNTIME" --input "$COMMIT_EDITION_REQUEST" --wait
+~~~
+
+The [complete stage and commit request shapes](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/README.md#complete-cli-lifecycle)
+retain the application and edition IDs, original review/operation UUIDs,
+operator identity and exact source/preview hashes. Their complete source,
+JSON/CSV preview, original change records and committed receipt are available
+through the desk, the file command and the connected client.
+
+Verify and launch the updated application with the existing runtime controls.
+The application's original operator resolves its current source from the
+committed SQL edition and retained review. Its current dataset, complete history
+and applicable attachment links therefore follow the accepted revision.
+
+To hand over that updated application, stop and export it through the existing
+runtime. The full archive contains every received data packet, original review,
+receipt and mapping together with the current database, client, lock and cached
+dependencies. The receiving runtime verifies the current mapped target values
+and original receipt history at the new location.
+
+An environment created before data-edition support retains its original
+immutable support selection. Use its existing stopped export, then receive that
+archive with the current installed runtime before staging a new edition. The
+original application and data history travel through that normal receiving path.
+
+## 10. Automate the original customer and edition workflow
+
+The [connected client and MCP front door](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/connected/README.md)
+opens the same private managed directory. Its local JavaScript client and MCP
+clients use the original runtime methods, customer selections, application
+streams, reviews and operation records.
+
+| Work | Existing connected methods |
+| --- | --- |
+| Inspect and install the selected Ruby environment | inspect, probe, create, start, operation, log |
+| Commission or adopt an original customer | previewSource, previewExisting, selectCustomer, adoptCustomer, advanceCustomer |
+| Receive and review the next complete source edition | previewApplicationEditionSource, stageApplicationEdition, applicationEdition |
+| Review again after working data changes | prepareApplicationEdition |
+| Commit the exact approved preview | commitApplicationEdition |
+| Read all retained data editions | applicationEditions, applicationEdition |
+| Launch, stop, verify and export the current application | application, launchApplication, stopApplication, start |
+| Receive the complete archive on another host | receive or the client's streamed uploadFile |
+| Receive original source, review, receipt and log bytes | openTransfer, readTransfer, closeTransfer or the client's complete downloadFile |
+
+Retain the complete selected request and its operation UUID before calling a
+mutation. Poll that original operation for its native result. A reconnect reuses
+the same ID and arguments; a new actual source selection gets its own retained
+edition and review. The original actor and exact approved preview SHA travel
+through commit.
+
+To download an edition's complete file, select **kind: edition**, the
+application ID, edition ID and original filename. Include the review ID for
+preview or receipt files. The returned original byte count and SHA bind the
+whole transfer. The client continues a partial download from its saved byte
+cursor and verifies the complete selected file before completion.
+
+The 37 tool definitions include the six original data-edition operations.
+Local application callers use openRubyConnectedClient with their declared
+private runtime directory. An agent attaches through the installed stdio or
+authenticated HTTP MCP entry described in the connected guide. Both use the
+selected installation's existing MCP dependency profile.
+
+Run the same installed client directly, or create the agent's original stdio
+configuration from the selected source:
+
+~~~sh
+starforge ruby-runtime-agent tools
+
+starforge ruby-runtime-agent config \
+  --directory "$RUBY_RUNTIME" --output "$RUBY_MCP_CONFIGURATION"
+
+starforge ruby-runtime-agent call stageApplicationEdition \
+  --directory "$RUBY_RUNTIME" --input "$STAGE_EDITION_REQUEST" \
+  --output "$STAGE_EDITION_RESULT"
+
+starforge ruby-runtime-agent wait \
+  --directory "$RUBY_RUNTIME" --operation-id "$STAGE_OPERATION_UUID" \
+  --output "$STAGE_OPERATION_RESULT"
+
+starforge ruby-runtime-agent call commitApplicationEdition \
+  --directory "$RUBY_RUNTIME" --input "$COMMIT_EDITION_REQUEST" \
+  --output "$COMMIT_EDITION_RESULT"
+~~~
+
+The stage and commit input files are the same complete requests from section 9.
+STAGE_OPERATION_UUID is the literal operationId already saved in that stage
+request. Poll the commit's own original operation UUID in the same way. The
+generated configuration contains the agent's **mcpServers** entry, with the
+absolute selected Node/server paths and original private directory.
+
+An application can also attach to the original authenticated loopback server:
+
+~~~sh
+starforge ruby-runtime-mcp serve \
+  --directory "$RUBY_RUNTIME" --port 8476 \
+  --token-file "$RUBY_MCP_TOKEN_FILE" --startup-json
+~~~
+
+Its startup record contains the exact MCP URL and retained token-file path.
+The [connected guide](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/connected/README.md)
+gives the typed local client, stdio/HTTP connection shapes and the separate
+**--connection** file format accepted by operating CLI commands.
+
+For a complete retained edition file, save the selected original file descriptor
+as EDITION_FILE_SELECTOR: **kind** is **edition**, **id** is the original
+application ID, **editionId** is the selected data edition, and **name** is its
+actual filename. Include the original **reviewId** for preview or receipt files.
+Use the exact hash returned for that file:
+
+~~~sh
+starforge ruby-runtime-agent download \
+  --directory "$RUBY_RUNTIME" --transfer-id "$EDITION_FILE_TRANSFER_UUID" \
+  --source "$EDITION_FILE_SELECTOR" --sha256 "$EDITION_FILE_SHA256" \
+  --out "$EDITION_FILE_RECEIVING_DIRECTORY" \
+  --output "$EDITION_FILE_RECEIVING_RESULT"
+~~~
+
+The private output retains the original transfer selection, durable byte cursor,
+complete file and receiving result. Repeat this command with the same UUID,
+selector and output after a lost connection; the completed file is checked
+against its original byte count and SHA.
+
 ## Recovery choices
 
 | Original work | Continue |
@@ -334,6 +495,8 @@ receipt and every current target value after a directory move.
 | Ruby client package | client resume with the original source output |
 | Ruby receiving job | receive … resume with the original job |
 | Rails preview/import | Reopen the saved review/business operation and original receipt |
+| Later managed data edition | Reopen its original edition, review and runtime operation; resume that UUID |
+| Connected file download or runtime upload | Reopen the retained transfer or receiving operation and continue at its durable byte offset |
 | Full application continuation | commission … resume with the original phase |
 | Complete copied application | Original operator Commission.reopen API, or the managed fixed customer entry with the original reopen arguments |
 | Managed private Ruby installation or application export | ruby-runtime operation/resume with its original UUID |

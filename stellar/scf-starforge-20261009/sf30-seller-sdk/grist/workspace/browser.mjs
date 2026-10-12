@@ -16,7 +16,8 @@ let state = null, busy = false, pending = null, retryPayload = null, known = nul
 let metadata = null, sourceOrders = [], captureColumns = new Map(), editorColumns = new Map(), captureView = null;
 let draft = null, draftRevision = 0, dirty = false, queryName = null, preview = null, upload = null;
 let revision = 0, renderEpoch = 0, deployment = null, deploymentReview = null;
-let capturesOffset = 0, versionsOffset = 0, discoveriesOffset = 0, deploymentOffset = 0;
+let capturesOffset = 0, versionsOffset = 0, discoveriesOffset = 0, documentsOffset = 0, deploymentOffset = 0;
+let documentView = null, sourceIntent = 0;
 const limit = 25;
 const errorMessage = e => [e.code, e.message || String(e)].filter(Boolean).join(': ');
 function notice(value, error = false) { $('notice').textContent = value || ''; $('notice').hidden = !value; $('notice').classList.toggle('error', error); }
@@ -81,7 +82,7 @@ async function api(path, options = {}) {
 }
 async function refresh({ loadCurrentDraft = false } = {}) {
   const epoch = ++renderEpoch, editing = revision;
-  const latest = await api('/api/status?' + new URLSearchParams({capturesOffset,versionsOffset,discoveriesOffset,limit}));
+  const latest = await api('/api/status?' + new URLSearchParams({capturesOffset,versionsOffset,discoveriesOffset,documentsOffset,limit}));
   if (epoch !== renderEpoch) return state;
   state = latest; renderState();
   if (loadCurrentDraft && latest.draft && editing === revision) await loadDraft(latest.draft, latest.draftRevision);
@@ -90,6 +91,7 @@ async function refresh({ loadCurrentDraft = false } = {}) {
 async function finish(result, marker) {
   // Retain the same request marker through a failed status read or view refresh.
   await refresh();
+  if (marker.path === '/api/document') { loadDocument(result); tab('acquire'); }
   if (marker.path === '/api/discover') { loadDiscovery(result); tab('acquire'); }
   if (['/api/import-package','/api/capture','/api/draft'].includes(marker.path)) {
     if (state.draft) await loadDraft(state.draft, state.draftRevision);
@@ -165,7 +167,7 @@ function renderState(){
   $('summary').textContent='Draft '+state.draftRevision+' · Selected source '+(state.selectedVersion??'none');
   const stats=$('overview-stats');stats.replaceChildren();
   for(const [label,value] of [['Observations',state.pages.capturesTotal],['Saved versions',state.pages.versionsTotal],['Selected version',state.selectedVersion??'—']]){const e=node('div',null,'stat');e.append(node('strong',value),node('span',label));stats.append(e);}
-  const choice=$('connection'),old=choice.value;choice.replaceChildren(node('option','Select connection'));
+  const choice=$('connection'),old=choice.value,empty=node('option','Select connection');empty.value='';choice.replaceChildren(empty);
   for(const c of state.connections){const o=node('option',c.label+' · '+c.server+' · '+c.state);o.value=c.alias;choice.append(o);}if(state.connections.some(c=>c.alias===old))choice.value=old;
   $('connection-help').textContent=state.connections.length?'This host declares a credential or explicit anonymous public access. The browser selects only the reviewed connection alias.':'No live read connection is declared. Import a complete source packet, or restart with the private connections file described in WORKSPACE.md.';
   table($('captures'),['Observation','Rows / pages','Original source','Completed','Actions'],state.captures.map(c=>[
@@ -173,6 +175,10 @@ function renderState(){
     description(c.selection.tableId,c.selection.docId),when(c.completedAt),
     actions(button('Review',()=>readAction(()=>loadDraft(c.draft,state.draftRevision))),button('Download',()=>readAction(()=>download('/api/export-capture?id='+c.id))))]));
   pager('captures',capturesOffset,state.pages.capturesTotal);
+  table($('documents'),['Document','Actual tables','Observed','Actions'],(state.documents??[]).map(d=>[
+    description(d.document.name,d.source.docId),d.tableCount,when(d.receivedAt),
+    actions(button('Choose table',()=>readAction(()=>readDocument(d.id))),button('Download metadata',()=>readAction(()=>download('/api/export-document?id='+d.id))))]));
+  pager('documents',documentsOffset,state.pages.documentsTotal??0);
   table($('discoveries'),['Table','Source','Inspected','Actions'],state.discoveries.map(d=>[d.title,description(d.source.tableId,d.source.server),when(d.receivedAt),button('Use metadata',()=>{loadDiscovery(d);tab('acquire');})]));
   pager('discoveries',discoveriesOffset,state.pages.discoveriesTotal);
   table($('operations'),['Action','Request','State','Updated','Actions'],state.operations.map(o=>[
@@ -228,10 +234,61 @@ function mapFrom(fields,columns){
   for(const [name,spec]of Object.entries(columns))mapped.set(spec.source,{...clone(spec),alias:name,enabled:true});
   return mapped;
 }
+function clearDocument() {
+  documentView=null;$('document-catalog').hidden=true;$('known-tables').replaceChildren();
+}
+function documentMatches() {
+  return documentView && documentView.connectionAlias===$('connection').value &&
+    documentView.source.docId===$('doc-id').value.trim();
+}
+function documentSelection() {
+  return documentMatches()?{catalogId:documentView.id,expectedCatalogSha256:documentView.catalogSha256}:{};
+}
+function selectedDocumentText() {
+  const selected=$('table-id').value.trim();
+  $('document-selected').textContent=selected?
+    'Selected native table: '+selected+'. Inspect its current fields before capturing rows.':
+    'Choose one actual table. Its row permission, schema and complete typed records are checked by the following actions.';
+}
+function loadDocument(value,{preserveTable=false}={}) {
+  const same=documentView?.id===value.id;
+  sourceIntent++;documentView=value;
+  $('connection').value=value.connectionAlias;$('doc-id').value=value.source.docId;
+  if(!same||!preserveTable){metadata=null;$('acquisition').hidden=true;$('table-id').value='';}
+  $('document-catalog').hidden=false;
+  $('document-catalog-title').textContent=value.document.name+' · native tables';
+  $('document-catalog-binding').textContent=value.source.server+' · '+value.source.docId+
+    ' · Catalog '+value.catalogSha256+' · '+when(value.receivedAt);
+  $('document-catalog-scope').textContent=value.tableCount+' retained user table IDs. '+value.scope;
+  $('catalog-search').value=value.page.search;
+  const select=$('catalog-table'),previous=select.value,empty=node('option',value.tables.length?'Select an actual native ID':'No matching table IDs');empty.value='';
+  select.replaceChildren(empty);
+  const known=$('known-tables');known.replaceChildren();
+  for(const item of value.tables) {
+    const option=node('option',item.id);option.value=item.id;select.append(option);
+    const hint=node('option');hint.value=item.id;known.append(hint);
+  }
+  if(same&&value.tables.some(item=>item.id===previous))select.value=previous;
+  $('catalog-page').textContent=(value.page.total?value.page.offset+1:0)+'–'+
+    Math.min(value.page.offset+value.tables.length,value.page.total)+' of '+value.page.total;
+  $('catalog-prev').disabled=value.page.offset===0;$('catalog-next').disabled=!value.page.hasMore;
+  $('use-catalog-table').disabled=!select.value;
+  selectedDocumentText();
+}
+async function readDocument(id,{offset=0,search='',preserveTable=false}={}) {
+  const intent=++sourceIntent;
+  const observed=await api('/api/document?'+new URLSearchParams({id,offset,limit:100,search}));
+  if(intent!==sourceIntent)return;
+  loadDocument(observed,{preserveTable});tab('acquire');
+}
+
 function loadDiscovery(value){
+  sourceIntent++;
+  if(documentView?.id!==value.catalogSelection?.id)clearDocument();
   metadata=value;sourceOrders=[{field:'id',direction:'asc'}];
   $('connection').value=value.connectionAlias;$('doc-id').value=value.source.docId;
   $('table-id').value=value.source.tableId;$('filter').value=value.source.filter?JSON.stringify(value.source.filter,null,2):'';
+  if(documentView)selectedDocumentText();
   const list=$('known-tables');list.replaceChildren();
   for(const item of value.tables??[]){const option=node('option',item.title??item.id);option.value=item.id;list.append(option);}
   captureColumns=new Map();$('acquisition').hidden=false;$('acquisition-title').textContent=value.title;
@@ -340,14 +397,39 @@ function filterInput(){
   return value;
 }
 for(const id of ['connection','doc-id','table-id','filter'])$(id).addEventListener('input',()=>{
-  if(busy||pending)return;metadata=null;$('acquisition').hidden=true;
+  if(busy||pending)return;sourceIntent++;metadata=null;$('acquisition').hidden=true;
+  if(['connection','doc-id'].includes(id))clearDocument();
+  else if(documentView)selectedDocumentText();
 });
 function guarded(action){return async event=>{event?.preventDefault();if(busy||pending)return;try{await action();}catch(issue){notice(errorMessage(issue),true);}};}
 for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>tab(b.dataset.view));
 $('refresh').addEventListener('click',guarded(()=>readAction(()=>refresh())));
 $('load-current-draft').addEventListener('click',guarded(()=>readAction(async()=>{await refresh();if(state.draft)await loadDraft(state.draft,state.draftRevision);})));
+$('list-document').addEventListener('click',guarded(async()=>{
+  if(!$('connection').reportValidity()||!$('doc-id').reportValidity())return;
+  await mutate('/api/document',{connectionAlias:$('connection').value,docId:$('doc-id').value.trim()},'List original document tables');
+}));
+$('catalog-table').addEventListener('change',guarded(()=>{$('use-catalog-table').disabled=!$('catalog-table').value;}));
+$('use-catalog-table').addEventListener('click',guarded(()=>{
+  const selected=$('catalog-table').value;
+  if(!documentMatches()||!documentView.tables.some(table=>table.id===selected))throw new Error('Choose an actual native table from this document catalog.');
+  sourceIntent++;metadata=null;$('acquisition').hidden=true;$('table-id').value=selected;selectedDocumentText();
+  $('table-id').focus();
+}));
+$('catalog-search-form').addEventListener('submit',guarded(()=>readAction(()=>{
+  if(!documentMatches())throw new Error('Select the retained catalog for this document first.');
+  return readDocument(documentView.id,{search:$('catalog-search').value.trim(),preserveTable:true});
+})));
+for(const [name,delta]of [['prev',-100],['next',100]])$('catalog-'+name).addEventListener('click',guarded(()=>readAction(()=>{
+  if(!documentMatches())throw new Error('Select the retained catalog first.');
+  return readDocument(documentView.id,{offset:Math.max(0,documentView.page.offset+delta),search:documentView.page.search,preserveTable:true});
+})));
+$('export-document').addEventListener('click',guarded(()=>readAction(()=>{
+  if(!documentView)throw new Error('Select a retained document catalog first.');
+  return download('/api/export-document?id='+documentView.id);
+})));
 $('discover-form').addEventListener('submit',guarded(()=>mutate('/api/discover',{connectionAlias:$('connection').value,
-  docId:$('doc-id').value.trim(),tableId:$('table-id').value.trim(),filter:filterInput()},'Inspect actual table metadata')));
+  docId:$('doc-id').value.trim(),tableId:$('table-id').value.trim(),filter:filterInput(),...documentSelection()},'Inspect actual table metadata')));
 $('add-order').addEventListener('click',guarded(()=>{
   if(sourceOrders.length>=8)throw new Error('The original source supports at most eight stable-order fields.');
   const next=metadata.fields.find(f=>(f.scalarProjectionSupported||f.generatedRecordIdentity)&&!sourceOrders.some(o=>o.field===f.id));
@@ -433,7 +515,7 @@ $('close-release-console').addEventListener('click',guarded(()=>{
 }));
 for(const [name,get,set]of [
   ['captures',()=>capturesOffset,v=>{capturesOffset=v;}],['versions',()=>versionsOffset,v=>{versionsOffset=v;}],
-  ['discoveries',()=>discoveriesOffset,v=>{discoveriesOffset=v;}],['deploy',()=>deploymentOffset,v=>{deploymentOffset=v;}],
+  ['discoveries',()=>discoveriesOffset,v=>{discoveriesOffset=v;}],['documents',()=>documentsOffset,v=>{documentsOffset=v;}],['deploy',()=>deploymentOffset,v=>{deploymentOffset=v;}],
 ])for(const [suffix,delta]of [['prev',-limit],['next',limit]])$(name+'-'+suffix).addEventListener('click',guarded(()=>readAction(async()=>{
   set(Math.max(0,get()+delta));if(name==='deploy')await refreshDeployment();else await refresh();
 })));

@@ -534,6 +534,10 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
             "operatorEntryRecords": sum(row.get("sourceBasis") == "OPERATOR_ENTRY" for values in records.values() for row in values)},
         "unresolved": unresolved}
 
+    from operations_buyer import node_report
+    original_node = node_report({"sources": sources})
+    if original_node is not None:
+        result["delivery"]["nodeAccounting"] = original_node
     if expenseRecords and (expenseRecords.get("intakes") or expenseRecords.get("attributions")):
         from operations_expenses import expense_report
         result["expenseAttribution"] = expense_report({"program": program, "plan": plan, "records": records,

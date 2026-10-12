@@ -1,0 +1,28 @@
+[Unit]
+Description=Stellar Forge analytical A2A service
+After=network.target
+Documentation=https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace
+
+[Service]
+Type=simple
+User=stellar-forge
+Group=stellar-forge
+UMask=0077
+WorkingDirectory=/opt/stellar-forge/stellar-forge/a2a-analysis-agent
+EnvironmentFile=/etc/stellar-forge/a2a-analysis.env
+ExecStart=/usr/bin/node /opt/stellar-forge/stellar-forge/a2a-analysis-agent/cli.mjs serve --config /var/lib/stellar-forge/a2a-analysis/config.json
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=90
+StateDirectory=stellar-forge
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/stellar-forge
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

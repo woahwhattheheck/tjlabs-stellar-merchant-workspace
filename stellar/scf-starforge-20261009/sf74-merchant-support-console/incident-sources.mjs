@@ -7,11 +7,14 @@ import {configureIncidents,acknowledgeIncident,remindIncident,operateNotificatio
 import {runIncidentWatch} from '../sf93-seller-support-bundle/watch.mjs';
 import {resolveDestination} from '../sf93-seller-support-bundle/notifications.mjs';
 import {inspectSlackDestination} from '../sf93-seller-support-bundle/notifications-slack.mjs';
-import {activeIncident,idPattern,kinds} from '../sf93-seller-support-bundle/incident-config.mjs';
+import {activeIncident,idPattern,kinds,compileConfig} from '../sf93-seller-support-bundle/incident-config.mjs';
+import {reviewObjectSource} from '../sf93-seller-support-bundle/object-source.mjs';
 import {parseWorkspace,MAX_WORKSPACE_BYTES} from './workspace-file.mjs';
 import {inspectRuntimeFiles,exportRuntimeHandoff,RUNTIME_SCHEMA} from './runtime-support.mjs';
 import {caseMetadata} from './case-store.mjs';
 import {readServiceIncidentSnapshot} from './service-source.mjs';
+import {openIncidentRecoveryConsole,inspectIncidentRecoveryRoot} from './incident-recovery-console.mjs';
+import {recoveryView} from '../sf93-seller-support-bundle/incident-recovery-model.mjs';
 
 export const INCIDENT_SOURCES_SCHEMA='stellar-forge.support-incident-sources.v1';
 const MAX_CONFIG_BYTES=65_536;
@@ -59,7 +62,10 @@ function checkConfiguration(state,expected) {
   if(state.configRevision!==expected)
     throw fail('INCIDENT_CONFIGURATION_CONFLICT','Watcher configuration changed. Refresh it before continuing.',409);
 }
-const publicSource=source=>({id:source.id,label:source.label});
+const publicSource=source=>({id:source.id,label:source.label,...(source.recoveryDirectory?
+  {recovery:{enabled:true,workspaceId:source.recoveryAccess?.workspaceId??null,
+    restored:Boolean(source.recoveryBaseId),baseSourceId:source.recoveryBaseId??source.id}}:{}),...(source.objectSessions?.size?
+  {objectSessions:[...source.objectSessions.values()].map(({id,label})=>({id,label}))}:{})});
 const encodedFiles=files=>Object.fromEntries(Object.entries(files).map(([name,bytes])=>[name,bytes.toString('base64')]));
 
 const ORIGINAL_PROBLEMS={
@@ -122,9 +128,9 @@ async function configuredIncidentSources(configPath) {
   fields(config,['schema','sources'],'incident sources configuration');
   if(config.schema!==INCIDENT_SOURCES_SCHEMA||!Array.isArray(config.sources)||config.sources.length>8)
     throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Use the original incident sources schema with at most eight sources.',422);
-  const directories=new Set();
+  const directories=new Set(),recoveryDirectories=new Set();
   for(const entry of config.sources) {
-    fields(entry,['id','label','directory'],'incident source');
+    fields(entry,['id','label','directory','objectSessions','recoveryDirectory'],'incident source');
     const id=text(entry.id,64,'source ID');
     if(!SOURCE_ID.test(id)||['profiles','__proto__','constructor','prototype'].includes(id)||sources.has(id))
       throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Source IDs must be distinct lowercase identifiers; profiles is reserved.',422);
@@ -134,10 +140,37 @@ async function configuredIncidentSources(configPath) {
     if(directories.has(directory))
       throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Each original incident store may have only one source ID.',422);
     const store=directory===original.root?original:await openIncidentStore(directory);
-    const state=await store.read();
+    const state=await store.read(),objectSessions=new Map();
+    if(entry.objectSessions!==undefined&&(!Array.isArray(entry.objectSessions)||entry.objectSessions.length>8))
+      throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Configure at most eight named original Object sessions.',422);
+    for(const item of entry.objectSessions??[]) {
+      fields(item,['id','label','directory'],'allowed Object session');
+      const id=text(item.id,64,'Object source ID');
+      if(!idPattern.test(id)||['__proto__','constructor','prototype'].includes(id)||objectSessions.has(id))
+        throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Object source IDs must be distinct identifiers.',422);
+      objectSessions.set(id,{id,label:text(item.label??id,120,'Object source label'),
+        directory:resolve(dirname(path),text(item.directory,4096,'Object session directory'))});
+    }
+    // Existing trusted CLI registrations are also original startup capabilities.
+    // Browser configuration never grants access to another filesystem path.
+    for(const merchant of state.config.merchants.filter(row=>row.object)) {
+      const prior=objectSessions.get(merchant.id);
+      if(prior&&prior.directory!==merchant.object.directory)
+        throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Object source ID has two different original directories.',422);
+      if(!prior)objectSessions.set(merchant.id,{id:merchant.id,label:merchant.label,directory:merchant.object.directory});
+    }
+    let recovery=null;
+    if(entry.recoveryDirectory!==undefined) {
+      const selectedRecovery=resolve(dirname(path),text(entry.recoveryDirectory,4096,'recovery directory'));
+      recovery=await inspectIncidentRecoveryRoot({directory,recoveryDirectory:selectedRecovery});
+      if(recoveryDirectories.has(recovery.directory))
+        throw fail('INCIDENT_SOURCES_CONFIG_INVALID','Each base incident source needs a distinct private recovery directory.',422);
+      recoveryDirectories.add(recovery.directory);
+    }
     directories.add(directory);
-    sources.set(id,{id,label,directory,store,configuration:{revision:state.configRevision,sha256:state.configHash},
-      routeCache:new Map()});
+    sources.set(id,{id,label,directory,store,...(recovery?{recoveryDirectory:recovery.directory,recoveryIdentity:recovery}:{}),
+      configuration:{revision:state.configRevision,sha256:state.configHash},
+      routeCache:new Map(),objectSessions});
   }
   return {path,sha256:createHash('sha256').update(bytes).digest('hex'),sources};
 }
@@ -145,7 +178,8 @@ async function configuredIncidentSources(configPath) {
 function sourceConfigurationView(selected) {
   return {schema:INCIDENT_SOURCES_SCHEMA,path:selected.path,sha256:selected.sha256,
     sources:[...selected.sources.values()].map(source=>({id:source.id,label:source.label,directory:source.directory,
-      configuration:{...source.configuration}}))};
+      configuration:{...source.configuration},...(source.recoveryIdentity?{recovery:{...source.recoveryIdentity}}:{}),...(source.objectSessions.size?
+        {objectSessions:[...source.objectSessions.values()].map(row=>({...row}))}:{})}))};
 }
 /** Private managed-launch projection. Live incidents, capture bodies and tokens stay in the original store. */
 export async function inspectIncidentSourcesConfiguration(configPath) {
@@ -154,9 +188,14 @@ export async function inspectIncidentSourcesConfiguration(configPath) {
 
 /** Bind configured IDs to initialized private stores. Browser input never selects a path. */
 export async function openIncidentSources({configPath,environment=process.env}={}) {
-  const selected=await configuredIncidentSources(configPath),sources=selected.sources,workers=new Map();
+  const selected=await configuredIncidentSources(configPath),sources=new Map(selected.sources),workers=new Map();
   const configuration=()=>sourceConfigurationView(selected);
   let closing=false,closePromise=null;
+  const readAbort=new AbortController(),reads=new Set();
+  for(const source of sources.values())if(source.recoveryDirectory)
+    source.recoveryAccess=await openIncidentRecoveryConsole({directory:source.directory,
+      recoveryDirectory:source.recoveryDirectory,signal:readAbort.signal});
+  function tracked(pending) {reads.add(pending);return pending.finally(()=>reads.delete(pending));}
   function sourceFor(id) {
     if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
     if(typeof id!=='string'||!sources.has(id))
@@ -212,16 +251,17 @@ export async function openIncidentSources({configPath,environment=process.env}={
       serviceMerchants.set(incident.merchantId,{id:incident.merchantId,label:incident.merchantLabel??incident.merchantId,registered:false});
     for(const merchant of state.config.merchants)serviceMerchants.set(merchant.id,{id:merchant.id,label:merchant.label,registered:true});
     return {source:publicSource(source),revision:state.revision,configRevision:state.configRevision,
-      configHash:state.configHash,config:structuredClone(state.config),worker:workerView(source,state),counters,
+      configHash:state.configHash,config:structuredClone(state.config),worker:workerView(source,state),recovery:recoveryView(state),counters,
       serviceMerchants:[...serviceMerchants.values()].sort((a,b)=>a.label.localeCompare(b.label)||a.id.localeCompare(b.id)),
-      merchants:state.config.merchants.map(({id,label})=>({id,label})),filters:{q,status,merchant,kind},
+      merchants:state.config.merchants.map(({id,label,object})=>({id,label,...(object?{kind:'OBJECT_SESSION',
+        observation:state.merchants[id]?.objectObservation??null}:{})})),filters:{q,status,merchant,kind},
       page:{offset,limit,total:selected.length,hasMore:offset+limit<selected.length},
       incidents:selected.slice(offset,offset+limit)};
   }
   async function view(sourceId,incidentId) {
     const source=sourceFor(sourceId);identifier(incidentId,'incident ID');
     return source.store.transaction(async(state,io)=>{
-      const incident=currentIncident(state,incidentId),routes=new Map(),captureProblems={};
+      const incident=currentIncident(state,incidentId),routes=new Map(),captureProblems={},objectObservations={};
       for(const side of ['before','after']) {
         const ref=incident[side+'Capture'];if(!ref)continue;
         try {
@@ -230,12 +270,15 @@ export async function openIncidentSources({configPath,environment=process.env}={
           let available=source.routeCache.get(ref.id);
           if(!available) {
             const files=await io.readCapture(ref);
-            available=inspectRuntimeFiles({files:encodedFiles(files)}).routes.map(route=>({
-              id:route.id,method:route.method,...(route.path===undefined?{}:{path:route.path})}));
+            const inspected=inspectRuntimeFiles({files:encodedFiles(files)});
+            available={routes:inspected.routes.map(route=>({
+              id:route.id,method:route.method,...(route.path===undefined?{}:{path:route.path})})),
+              object:inspected.kind==='OBJECT_SESSION'?{observedAt:inspected.capturedAt,...inspected.object}:null};
             source.routeCache.set(ref.id,available);
             if(source.routeCache.size>64)source.routeCache.delete(source.routeCache.keys().next().value);
           }
-          for(const route of available) {
+          if(available.object)objectObservations[side]=available.object;
+          for(const route of available.routes) {
             const key=JSON.stringify(route),row=routes.get(key)??{...route,sides:[]};
             row.sides.push(side);routes.set(key,row);
           }
@@ -248,7 +291,7 @@ export async function openIncidentSources({configPath,environment=process.env}={
       return {source:publicSource(source),revision:state.revision,configRevision:state.configRevision,
         configHash:state.configHash,worker:workerView(source,state),incident:structuredClone(incident),
         latestNotificationId:latestNotificationId(state,incidentId),notifications,
-        routes:[...routes.values()],captureProblems};
+        routes:[...routes.values()],captureProblems,...(Object.keys(objectObservations).length?{objectObservations}:{})};
     },{readonly:true});
   }
   async function serviceSnapshot(sourceId,input) {
@@ -257,7 +300,10 @@ export async function openIncidentSources({configPath,environment=process.env}={
   }
   async function configure(sourceId,input) {
     const source=sourceFor(sourceId);fields(input,['config','expectedConfigRevision'],'configuration change');
-    return configureIncidents({directory:source.directory,config:input.config,
+    const config=compileConfig(input.config),allowed=new Set([...source.objectSessions.values()].map(row=>row.directory));
+    if(config.merchants.some(merchant=>merchant.object&&!allowed.has(merchant.object.directory)))
+      throw fail('INCIDENT_OBJECT_NOT_REGISTERED','Select an original Object session registered in this console’s private startup configuration.',409);
+    return configureIncidents({directory:source.directory,config,
       expectedConfigRevision:integer(input.expectedConfigRevision,1,Number.MAX_SAFE_INTEGER,'configuration revision'),environment});
   }
   async function acknowledge(sourceId,incidentId,input) {
@@ -283,6 +329,24 @@ export async function openIncidentSources({configPath,environment=process.env}={
       expectedAttempts:integer(input.expectedAttempts,0,100_000,'notification attempt count'),
       action:input.action,by:input.by,environment});
   }
+  async function inspectObject(sourceId,input) {
+    const source=sourceFor(sourceId);
+    fields(input,['objectSourceId','expectedConfigRevision','maxBytes','maxChunks','timeoutMs','financialAfterSeconds','outputAfterSeconds'],'Object source review');
+    const expected=integer(input.expectedConfigRevision,1,Number.MAX_SAFE_INTEGER,'configuration revision');
+    const selected=source.objectSessions.get(text(input.objectSourceId,64,'Object source ID'));
+    if(!selected)throw fail('INCIDENT_OBJECT_NOT_REGISTERED','Choose an original Object session registered for this console.',404);
+    checkConfiguration(await source.store.read(),expected);
+    if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
+    const pending=reviewObjectSource({directory:selected.directory,...Object.fromEntries(
+      ['maxBytes','maxChunks','timeoutMs','financialAfterSeconds','outputAfterSeconds'].filter(key=>own(input,key)).map(key=>[key,input[key]]))},
+      {signal:readAbort.signal});
+    reads.add(pending);
+    try {
+      const review=await pending;
+      checkConfiguration(await source.store.read(),expected);
+      return {source:publicSource(source),configRevision:expected,objectSourceId:selected.id,label:selected.label,...review};
+    } finally {reads.delete(pending);}
+  }
   async function inspectDestination(sourceId,input) {
     const source=sourceFor(sourceId);fields(input,['expectedConfigRevision'],'destination inspection');
     const expected=integer(input.expectedConfigRevision,1,Number.MAX_SAFE_INTEGER,'configuration revision');
@@ -301,6 +365,8 @@ export async function openIncidentSources({configPath,environment=process.env}={
       throw fail('INCIDENT_INPUT_INVALID','Supply the observed configuration digest.');
     if(workers.get(sourceId)?.active)
       throw fail('INCIDENT_WORKER_ALREADY_STARTED','This console already owns the source watcher.',409);
+    if([...workers.values()].filter(entry=>entry.active).length>=8)
+      throw fail('INCIDENT_WORKER_LIMIT','This console already owns eight active watchers. Stop one before starting another.',409);
     const controller=new AbortController();
     let readyResolve,readyReject,readySettled=false;
     const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
@@ -332,11 +398,55 @@ export async function openIncidentSources({configPath,environment=process.env}={
   }
   function close() {
     if(closePromise)return closePromise;
-    closing=true;
+    closing=true;readAbort.abort();
     const owned=[...workers.values()].filter(entry=>entry.active);
     for(const entry of owned){entry.phase='STOPPING';entry.controller.abort();}
-    closePromise=Promise.all(owned.map(entry=>entry.done)).then(()=>undefined);
+    closePromise=Promise.allSettled([...owned.map(entry=>entry.done),...reads]).then(()=>undefined);
     return closePromise;
+  }
+  async function recoveryOverview(sourceId,input={}) {
+    const source=sourceFor(sourceId);
+    if(!source.recoveryAccess)return {enabled:false,source:publicSource(source)};
+    return tracked(source.recoveryAccess.overview(input));
+  }
+  async function recoveryOperation(sourceId,action,envelope={}) {
+    const source=sourceFor(sourceId);
+    if(!source.recoveryAccess)throw fail('INCIDENT_RECOVERY_DISABLED',
+      'Configure a private recovery directory for this original incident source.',409);
+    fields(envelope,['workspaceId','input'],'recovery selection');
+    if(envelope.workspaceId!==source.recoveryAccess.workspaceId)
+      throw fail('INCIDENT_RECOVERY_SELECTION_CHANGED','The selected private recovery workspace changed. Refresh and review it before continuing.',409);
+    const input=envelope.input;
+    if(!input||typeof input!=='object'||Array.isArray(input))
+      throw fail('INCIDENT_INPUT_INVALID','Supply the reviewed recovery input.');
+    return tracked((async()=>{
+      const value=await source.recoveryAccess.run(action,input);
+      if(action!=='open')return value;
+      if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
+      const baseId=source.recoveryBaseId??source.id;
+      const id='recovered-'+createHash('sha256').update(baseId+'\0'+value.directory).digest('hex').slice(0,24);
+      let restored=sources.get(id),reused=Boolean(restored);
+      if(restored) {
+        if(restored.directory!==value.directory||restored.receivedIdentity?.dev!==value.identity.dev||
+          restored.receivedIdentity?.ino!==value.identity.ino)
+          throw fail('INCIDENT_RECOVERY_CHANGED','The opened recovery directory changed. Reopen the original console selection.',409);
+      } else {
+        if([...sources.values()].filter(row=>row.recoveryBaseId).length>=8)
+          throw fail('INCIDENT_RECOVERY_PROFILE_LIMIT','Eight received stores are already open. Reopen this console to select another group.',409);
+        const state=value.state,objectSessions=new Map(state.config.merchants.filter(row=>row.object).map(row=>
+          [row.id,{id:row.id,label:row.label,directory:row.object.directory}]));
+        restored={id,label:source.label.replace(/ · received .+$/,'')+' · received '+input.receiveName,
+          directory:value.directory,store:await openIncidentStore(value.directory),
+          configuration:{revision:state.configRevision,sha256:state.configHash},routeCache:new Map(),objectSessions,
+          recoveryDirectory:source.recoveryDirectory,recoveryBaseId:baseId,receivedIdentity:value.identity,
+          recoveryAccess:await openIncidentRecoveryConsole({directory:value.directory,
+            recoveryDirectory:source.recoveryDirectory,signal:readAbort.signal,allowContainedSource:true})};
+        if(closing)throw fail('INCIDENT_SOURCES_CLOSED','The incident console is closing.',503);
+        sources.set(id,restored);
+      }
+      return {source:publicSource(restored),profiles:profiles(),directory:restored.directory,receipt:value.receipt,
+        recovery:recoveryView(value.state),watcherStarted:false,reused};
+    })());
   }
   async function prepareCase(sourceId,incidentId,input) {
     const source=sourceFor(sourceId);identifier(incidentId,'incident ID');
@@ -361,7 +471,7 @@ export async function openIncidentSources({configPath,environment=process.env}={
     const incident=retained.incident,ack=incident.acknowledgment;
     const metadata=caseMetadata({merchant:incident.merchantLabel,owner:ack?.by??'',
       status:incident.status==='RECOVERED'?'ready':activeIncident(incident)?'in_progress':'waiting',followUpOn:'',
-      nextAction:incident.status==='RECOVERED'?'Review the recovered original seller capture in this case.':
+      nextAction:incident.status==='RECOVERED'?'Review the recovered original source capture in this case.':
         incident.status==='RETIRED'?'Review the retired source registration and current merchant configuration.':
           'Resolve the active '+incident.kind+' incident.',
       notes:'Original SF93 incident '+incident.id+'\nRegistered merchant: '+incident.merchantId+
@@ -373,6 +483,6 @@ export async function openIncidentSources({configPath,environment=process.env}={
     return {source:publicSource(source),incidentId,revision,
       handoff:result.handoff,html:result.html,report:result.report};
   }
-  return {profiles,configuration,list,view,serviceSnapshot,configure,acknowledge,notify,notification,inspectDestination,start,stop,close,prepareCase};
+  return {profiles,configuration,list,view,serviceSnapshot,configure,acknowledge,notify,notification,inspectDestination,start,stop,close,prepareCase,inspectObject,recoveryOverview,recoveryOperation};
 }
 

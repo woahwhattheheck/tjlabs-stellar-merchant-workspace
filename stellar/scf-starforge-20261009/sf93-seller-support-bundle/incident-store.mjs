@@ -8,6 +8,9 @@ import {compileConfig,configHash,hash,activeIncident,kinds} from './incident-con
 import {freshMerchant,pruneRecords} from './incident-model.mjs';
 import {checkPayload} from './notifications.mjs';
 import {slackTimestamp,validSlackReceipt,validSlackRequest} from './notifications-slack.mjs';
+import {OBJECT_FILES,readObjectObservationFiles} from './object-observation.mjs';
+import {validateRecoveryState,recoveryView} from './incident-recovery-model.mjs';
+import {createSnapshotPins} from './incident-snapshot-pins.mjs';
 
 export const STATE_SCHEMA='stellar-forge.seller-incidents.v1';
 const CAPTURE_SCHEMA='stellar-forge.seller-incident-capture.v1';
@@ -90,6 +93,7 @@ function validateState(state) {
     const row=state.merchants[merchant.id];
     if(!row||typeof row.binding!=='string'||!row.conditions||typeof row.conditions!=='object')fail('MERCHANT_STATE_INVALID');
   }
+  validateRecoveryState(state);
   return state;
 }
 function references(state) {
@@ -102,14 +106,16 @@ function references(state) {
 function parseCapture(bytes,id) {
   if(hash(bytes)!==id)fail('CAPTURE_DIGEST_MISMATCH');
   const value=decode(bytes);
-  if(value?.schema!==CAPTURE_SCHEMA||!value.files||Object.keys(value.files).length!==PACKET_FILES.length||
-      PACKET_FILES.some(name=>typeof value.files[name]!=='string'))fail('CAPTURE_INVALID');
+  const names=value?.kind==='OBJECT_SESSION'?OBJECT_FILES:PACKET_FILES;
+  if(value?.schema!==CAPTURE_SCHEMA||(value.kind!==undefined&&value.kind!=='OBJECT_SESSION')||!value.files||
+      Object.keys(value.files).length!==names.length||names.some(name=>typeof value.files[name]!=='string'))fail('CAPTURE_INVALID');
   const files={};
-  for(const name of PACKET_FILES) {
+  for(const name of names) {
     const data=Buffer.from(value.files[name],'base64');
     if(data.length>2_000_000||!data.length||data.toString('base64')!==value.files[name])fail('CAPTURE_INVALID');
     files[name]=data;
   }
+  if(value.kind==='OBJECT_SESSION')readObjectObservationFiles(files);
   return files;
 }
 export async function openIncidentStore(directory) {
@@ -143,8 +149,9 @@ export async function openIncidentStore(directory) {
       if(changed)await syncDirectory(folder);
     }
   }
-  async function collect(state) {
-    const keep=references(state);let removed=0,bytes=0,count=0;
+  async function collect(state,pinReferences=new Set()) {
+    const keep=references(state);for(const id of pinReferences)keep.add(id);
+    let removed=0,bytes=0,count=0;
     for(const file of await filesOnDisk()) {
       if(!keep.has(file.id)) {
         // This private directory's reserved capture namespace is owned by the
@@ -165,13 +172,28 @@ export async function openIncidentStore(directory) {
     }
     try {
       lease.assertHeld();const state=await read();
+      const snapshotPins=createSnapshotPins({directory:root,assertHeld:()=>lease.assertHeld(),
+        validateState,captureReferences:references,stateBytesLimit:MAX_STATE});
       if(!readonly)await collectStaging();
-      let census=readonly?null:await collect(state);
+      let census=readonly?null:await collect(state,await snapshotPins.references());
       const io={
+        snapshotPins,
+        async readStateBytes() {
+          const bytes=await readPrivateFile(statePath,MAX_STATE);
+          if(JSON.stringify(validateState(decode(bytes)))!==JSON.stringify(state))fail('SNAPSHOT_STATE_CHANGED');
+          lease.assertHeld();return bytes;
+        },
+        async readCaptureBytes(ref) {
+          if(!ref||!/^[a-f0-9]{64}$/.test(ref.id??''))fail('CAPTURE_REFERENCE_INVALID');
+          const bytes=await readPrivateFile(join(captureDirectory,'capture-'+ref.id+'.json'),MAX_CAPTURE);
+          parseCapture(bytes,ref.id);lease.assertHeld();return bytes;
+        },
         async capture(packet) {
           if(readonly)fail('READ_ONLY_TRANSACTION');
-          const files=Object.fromEntries(PACKET_FILES.map(name=>[name,packet.files[name].toString('base64')]));
-          const bytes=Buffer.from(JSON.stringify({schema:CAPTURE_SCHEMA,files})+'\n'),id=hash(bytes);
+          const object=packet.kind==='OBJECT_SESSION',names=object?OBJECT_FILES:PACKET_FILES;
+          const files=Object.fromEntries(names.map(name=>[name,packet.files[name].toString('base64')]));
+          const bytes=Buffer.from(JSON.stringify({schema:CAPTURE_SCHEMA,...(object?{kind:'OBJECT_SESSION'}:{}),files})+'\n'),id=hash(bytes);
+          if(object)parseCapture(bytes,id);
           if(bytes.length>MAX_CAPTURE)fail('CAPTURE_SIZE_LIMIT');
           const path=join(captureDirectory,'capture-'+id+'.json');
           let exists=false;
@@ -185,7 +207,8 @@ export async function openIncidentStore(directory) {
             } catch(error) {await unlink(temporary).catch(()=>{});throw error;}
             census.bytes+=bytes.length;census.count++;
           }
-          return {id,bytes:bytes.length,generatedAt:packet.report.generatedAt,sessionId:packet.report.observation.sessionId};
+          return {id,bytes:bytes.length,generatedAt:packet.report.generatedAt,sessionId:packet.report.observation.sessionId,
+            ...(object?{kind:'OBJECT_SESSION'}:{})};
         },
         async readCapture(ref) {
           if(!ref||!/^[a-f0-9]{64}$/.test(ref.id??''))fail('CAPTURE_REFERENCE_INVALID');
@@ -197,7 +220,9 @@ export async function openIncidentStore(directory) {
         pruneRecords(state,Date.now());state.revision++;state.updatedAt=new Date().toISOString();
         // Commit references before collecting their predecessors. A crash may
         // leave an orphan, never a committed reference to a deleted capture.
-        const keep=references(state),retained=(await filesOnDisk()).filter(file=>keep.has(file.id));
+        const pinReferences=await snapshotPins.references(),keep=references(state);
+        for(const id of pinReferences)keep.add(id);
+        const retained=(await filesOnDisk()).filter(file=>keep.has(file.id));
         state.captureStorage={bytes:retained.reduce((sum,file)=>sum+file.bytes,0),count:retained.length,
           limit:state.config.retention.captureBytes};
         validateState(state);
@@ -205,7 +230,7 @@ export async function openIncidentStore(directory) {
         const temporary=join(root,'state-'+randomUUID()+'.tmp');
         try {await writePrivate(temporary,bytes);lease.assertHeld();await rename(temporary,statePath);await syncDirectory(root);}
         catch(error){await unlink(temporary).catch(()=>{});throw error;}
-        await collect(state);
+        await collect(state,pinReferences);
       }
       return result;
     } finally {await lease.close();}
@@ -227,7 +252,7 @@ export async function initializeIncidentStore({directory,config}) {
 }
 export function statusView(state,{details=false}={}) {
   return {schema:STATE_SCHEMA,directoryRevision:state.revision,configRevision:state.configRevision,
-    configHash:state.configHash,worker:state.worker,
+    configHash:state.configHash,worker:state.worker,recovery:recoveryView(state),
     notificationDestination:state.config.notification ? {
       transport:state.config.notification.transport ?? 'webhook',id:state.config.notification.id,
       ...(state.config.notification.transport === 'slack' ? {
@@ -242,3 +267,6 @@ export function statusView(state,{details=false}={}) {
     notificationCapacityEvents:state.notificationCapacityEvents};
 }
 
+
+export {validateState as validateIncidentState,references as incidentCaptureReferences,parseCapture as validateIncidentCapture};
+export const INCIDENT_STORE_LIMITS=Object.freeze({stateBytes:MAX_STATE,captureBytes:MAX_CAPTURE});

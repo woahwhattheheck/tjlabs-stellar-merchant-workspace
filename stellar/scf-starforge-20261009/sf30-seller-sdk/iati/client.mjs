@@ -138,6 +138,95 @@ export class IatiWorkspaceClient{
  publishingReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose a complete original participant release up to 4 GiB.');
   return this.#request('/api/iati/publishing/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
 
+ #refreshPost(action,input,options){return this.#post('/api/iati/refresh/'+action,input,{...options,maximum:64*1024*1024});}
+ #refreshPage(route,selected,{offset=0,limit=50,snapshot,...options}={}){
+  if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>250)
+   throw problem('PAGE','Choose a saved refresh offset and a limit from 1 to 250.');
+  if(offset>0&&snapshot===undefined)throw problem('PAGE','Continue the original refresh page snapshot.');
+  if(snapshot!==undefined)hash(snapshot);
+  return this.#request('/api/iati/refresh/'+route+'?'+query({...selected,offset,limit,snapshot}),{...options,maximum:64*1024*1024});
+ }
+ refreshContext(options){return this.#request('/api/iati/refresh/context',options);}
+ refreshStatus(plan,options){return this.#request('/api/iati/refresh/status?'+query({plan:hash(plan)}),{...options,maximum:64*1024*1024});}
+ refreshPlans(options){return this.#refreshPage('plans',{},options);}
+ refreshPlan(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/refresh/plan?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ refreshHistory(plan,options){return this.#refreshPage('history',{plan:hash(plan)},options);}
+ refreshRuns(plan,options){return this.#refreshPage('runs',{plan:hash(plan)},options);}
+ refreshRun(plan,id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/refresh/run?'+query({plan:hash(plan),id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ refreshRunHistory(plan,id,options){return this.#refreshPage('run-history',{plan:hash(plan),id:hash(id)},options);}
+ refreshRequest(requestId,options){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the original refresh request ID.');
+  return this.#request('/api/iati/refresh/request?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ refreshPreview(input,options){return this.#refreshPost('preview',input,options);}
+ refreshSave(action,input,options){if(!['plan-save','start','review','promote','cancel','abandon'].includes(action))throw problem('ACTION','Choose an original saved publisher-refresh action.');
+  return this.#refreshPost(action,input,options);}
+ refreshResume(requestId,options){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the exact saved refresh request ID.');
+  return this.#refreshPost('resume',{requestId},options);}
+ refreshExport(plan,{snapshot,...options}={}){if(snapshot!==undefined)hash(snapshot);
+  return this.#request('/api/iati/refresh/export?'+query({plan:hash(plan),snapshot}),{...options,raw:true});}
+ refreshReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Select the complete original refresh ZIP, up to 4 GiB.');
+  return this.#request('/api/iati/refresh/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
+
+ /** Complete organisation planning through the same original authenticated console. */
+ #organisationPost(route,input,options={}){
+  if(!object(input))throw problem('INPUT','Use a complete organisation action object.');
+  const body=JSON.stringify(input);
+  if(Buffer.byteLength(body)>64*1024*1024)throw problem('INPUT_LIMIT','The complete organisation request exceeds 64 MiB.');
+  return this.#request('/api/iati/organisation/'+route,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body});
+ }
+ #organisationSelection(input){
+  if(!object(input))throw problem('SELECTION','Select the original organisation source or saved revision.');
+  const selected={...input};
+  if(Object.hasOwn(selected,'sourceId')){
+   hash(selected.sourceId);
+   if(Object.hasOwn(selected,'id')||Object.hasOwn(selected,'revision')||selected.view!==undefined&&selected.view!=='source')
+    throw problem('SELECTION','Select one original source edition for this read.');
+  }else{
+   hash(selected.id);
+   if(selected.revision===undefined)throw problem('REVISION','Select the explicit saved organisation revision.');
+   revision(selected.revision);
+   if(selected.view!==undefined&&!['source','candidate'].includes(selected.view))throw problem('SELECTION','Select source or candidate records.');
+  }
+  if(selected.expectedSnapshot!==undefined)hash(selected.expectedSnapshot);
+  if(selected.organisationKey!==undefined)hash(selected.organisationKey);
+  return selected;
+ }
+ organisationStatus(options){return this.#request('/api/iati/organisation/status',{...options,maximum:64*1024*1024});}
+ organisationProfile(sourceId,options){return this.#request('/api/iati/organisation/profile?'+query({sourceId:hash(sourceId)}),{...options,maximum:64*1024*1024});}
+ organisationPlan(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/organisation/plan?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ organisationHistory(id,options){return this.#request('/api/iati/organisation/history?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ organisationRequest(requestId,options){
+  if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the original organisation request ID.');
+  return this.#request('/api/iati/organisation/request?'+query({requestId}),{...options,maximum:64*1024*1024});
+ }
+ organisationRows(input,options){
+  const selected=this.#organisationSelection(input);
+  if(!['budgets','documents','issues'].includes(selected.section))throw problem('SECTION','Select budgets, documents or issues.');
+  for(const [key,fallback,min,max]of [['offset',0,0,Number.MAX_SAFE_INTEGER],['limit',50,1,250]]){
+   selected[key]??=fallback;
+   if(!Number.isSafeInteger(selected[key])||selected[key]<min||selected[key]>max)throw problem('PAGE','Choose an original organisation register page.');
+  }
+  return this.#request('/api/iati/organisation/rows?'+query(selected),{...options,maximum:64*1024*1024});
+ }
+ organisationDetail(input,options){
+  const selected=this.#organisationSelection(input);hash(selected.rowId);if(selected.targetId!==undefined)hash(selected.targetId);
+  return this.#request('/api/iati/organisation/detail?'+query(selected),{...options,maximum:64*1024*1024});
+ }
+ organisationSave(input,options){return this.#organisationPost('save',input,options);}
+ organisationReview(input,options){return this.#organisationPost('review',input,options);}
+ organisationRelease(input,options){return this.#organisationPost('release',input,options);}
+ organisationCompare(input,options){return this.#organisationPost('compare',input,options);}
+ organisationExport(id,{revision:selectedRevision,...options}={}){
+  return this.#request('/api/iati/organisation/export?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});
+ }
+ organisationFile(id,kind,{revision:selectedRevision,...options}={}){
+  if(!['source','candidate','report','budgets','documents'].includes(kind))throw problem('FILE','Select a complete organisation source, candidate, report, budget register or document register.');
+  return this.#request('/api/iati/organisation/file?'+query({id:hash(id),kind,revision:revision(selectedRevision)}),{...options,raw:true});
+ }
+ organisationReceive({body,bytes},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose the complete original organisation ZIP up to 4 GiB.');
+  return this.#request('/api/iati/organisation/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
+ }
+
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));
   await Promise.allSettled([...this.#pending]);}
 }

@@ -263,6 +263,20 @@ export class MerchantGristWorkspaces {
       case 'merchant_grist_inputs': return this.#inputs(workspace, input.input);
       case 'merchant_grist_import': return this.#import(entry, args, 'source');
       case 'merchant_grist_import_packet': return this.#import(entry, args, 'packet');
+      case 'merchant_grist_document_list': return { workspace, native:view(await original.listDocument(input)) };
+      case 'merchant_grist_document': {
+        const { catalogId, ...options } = input;
+        return { workspace, native:view(original.documentCatalog(nativeId(catalogId),options)) };
+      }
+      case 'merchant_grist_document_read': {
+        const catalogId = nativeId(input.catalogId);
+        const chunk = await this.#reads.read({ scope:this.#scope(workspace), key:'document:' + catalogId,
+          kind:'grist-document-catalog', directory:this.#definition(workspace).directory,
+          readId:input.readId, expectedSha256:input.expectedSha256, offset:input.offset, limit:input.limit,
+          load:async () => { const file = await original.exportDocument(catalogId);
+            return {name:file.filename,type:file.mime,bytes:file.bytes}; } });
+        return {workspace,catalogId,...chunk};
+      }
       case 'merchant_grist_discover': return { workspace, native: view(await original.discover(input)) };
       case 'merchant_grist_discovery': return { workspace, native: view(original.discovery(nativeId(input.requestId))) };
       case 'merchant_grist_capture': return { workspace, native: view(await original.readLive(input)) };

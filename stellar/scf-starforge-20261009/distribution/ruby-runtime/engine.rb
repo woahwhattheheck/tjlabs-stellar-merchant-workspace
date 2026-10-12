@@ -45,6 +45,15 @@ module StarforgeRubyRuntime
   def identity(value)
     Digest::SHA256.hexdigest(JSON.generate(canonical(value)))
   end
+  def working_capture(value)
+    return nil if value.nil?
+    need(value.is_a?(Hash) && value.keys.sort == %w[captureId expectedCaptureSha256 reviewId],
+      "RUBY_WORKING_CAPTURE_INVALID")
+    uuid = /\A[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\z/
+    need(uuid.match?(value["reviewId"].to_s) && uuid.match?(value["captureId"].to_s) &&
+      HASH.match?(value["expectedCaptureSha256"].to_s),"RUBY_WORKING_CAPTURE_INVALID")
+    value.dup
+  end
   def stamp
     Time.now.utc.iso8601(6)
   end
@@ -753,7 +762,8 @@ module StarforgeRubyRuntime
       if @request["applicationId"]
         path,record = application_record
         output = File.join(@attempt_root,"application-verification.json")
-        application_command("verify",File.join(path,"application.json"),output: output)
+        application_command("verify",File.join(path,"application.json"),output: output,
+          extra: {"workingCapture"=>working_capture(@request.fetch("parameters")["workingCapture"])})
         return {"environmentId"=>@request.fetch("environmentId"),"applicationId"=>record.fetch("id"),
           "installation"=>saved,"application"=>parse(output)}
       end
@@ -764,7 +774,9 @@ module StarforgeRubyRuntime
       selected = @request.fetch("parameters")
       entries = {
         "native-dataset-lifecycle"=>"developer/ruby-client/examples/native_dataset_lifecycle.rb",
-        "baserow-customer-lifecycle"=>"baserow/customer/lifecycle.rb"
+        "baserow-customer-lifecycle"=>"baserow/customer/lifecycle.rb",
+        "dataset-records"=>"developer/ruby-client/examples/rails_dataset/operator/records_cli.rb",
+        "dataset-records-lifecycle"=>"developer/ruby-client/examples/rails_dataset/operator/records_example.rb"
       }
       relative = entries[selected.fetch("entry")]
       arguments = selected.fetch("argv")
@@ -817,6 +829,20 @@ module StarforgeRubyRuntime
       save(File.join(path,"registered.json"),receipt)
       receipt
     end
+    def application_edition
+      path,record = application_record
+      saved = parse(File.join(path,"registered.json"))
+      need(saved["applicationSha256"] == record["sha256"],"RUBY_APPLICATION_CHANGED")
+      input = @request.fetch("parameters").merge("operationId"=>@operation_id)
+      output = File.join(@attempt_root,"edition-result.json")
+      application_command("edition",File.join(path,"application.json"),output: output,extra: {"edition"=>input})
+      answer = parse(output)
+      need(answer["schema"] == "stellar-forge.ruby-application-edition-operation.v1" &&
+        answer["applicationId"] == record["id"] &&
+        answer["editionId"] == input["editionId"] && answer["reviewId"] == input["reviewId"],
+        "RUBY_EDITION_RESULT_CHANGED")
+      answer
+    end
     def serve_application
       path,record = application_record
       saved = parse(File.join(path,"registered.json"))
@@ -845,7 +871,8 @@ module StarforgeRubyRuntime
         path,record = application_record
         output = File.join(@attempt_root,"application-snapshot.json")
         application_command("snapshot",File.join(path,"application.json"),output: output,
-          extra: {"out"=>File.join(payload,"application")})
+          extra: {"out"=>File.join(payload,"application"),
+            "workingCapture"=>working_capture(@request.fetch("parameters")["workingCapture"])})
         app = {"record"=>record,"snapshot"=>parse(output)}
       end
       files = inventory(payload)
@@ -895,6 +922,16 @@ module StarforgeRubyRuntime
           "directory"=>working,"requestId"=>@operation_id,"environmentSelectionSha256"=>@selection.fetch("sha256"),
           "receivedFrom"=>{"archiveSha256"=>input.fetch("sha256"),"applicationSha256"=>original.fetch("sha256")})
         body["title"] = body.fetch("title")[0,160]
+        snapshot = manifest.fetch("application").fetch("snapshot")
+        profile = working_capture(snapshot["workingCapture"])
+        if profile
+          need(snapshot["profile"] == "captured-working-state" &&
+            snapshot.dig("observation","workingCapture") == profile,"RUBY_WORKING_CAPTURE_CHANGED")
+          body["workingCapture"] = profile
+        else
+          need(!original["workingCapture"],"RUBY_WORKING_CAPTURE_REQUIRED")
+          body.delete("workingCapture")
+        end
         record = body.merge("sha256"=>identity(body))
         retained_record = optional(File.join(target,"application.json"))
         if retained_record
@@ -913,6 +950,9 @@ module StarforgeRubyRuntime
           output = File.join(@attempt_root,"received-application.json")
           application_command("verify",File.join(target,"application.json"),output: output)
           app_result = parse(output)
+          if profile
+            need(app_result == snapshot.fetch("observation"),"RUBY_RECEIVED_WORKING_STATE_CHANGED")
+          end
           save(File.join(target,"registered.json"),{"schema"=>"stellar-forge.ruby-application-registration.v1",
             "applicationSha256"=>record.fetch("sha256"),"operationId"=>@operation_id,"registeredAt"=>stamp,"result"=>app_result})
         end
@@ -936,9 +976,22 @@ module StarforgeRubyRuntime
       when "customer-command" then customer_command
       when "application-register" then register_application
       when "application-serve" then serve_application
+      when "application-edition" then application_edition
       else raise Error.new("RUBY_ACTION_INVALID")
       end
       outputs = []
+      if action == "application-edition"
+        outputs << output("edition-result.json",File.join(@attempt_root,"edition-result.json"))
+        app_path,app_record = application_record
+        result.fetch("files").each do |file|
+          name = "edition/" + member(file.fetch("name"))
+          destination = File.join(@attempt_root,name)
+          directories(@attempt_root,File.dirname(destination))
+          copy_file(File.join(app_record.fetch("directory"),member(file.fetch("path"))),destination,file)
+          outputs << {"name"=>name,"path"=>name,
+            "type"=>name.end_with?(".csv") ? "text/csv; charset=utf-8" : "application/json"}.merge(file.slice("bytes","sha256"))
+        end
+      end
       if action == "export"
         outputs << {"name"=>"ruby-runtime.tar","path"=>"ruby-runtime.tar","type"=>"application/x-tar"}.merge(
           file_descriptor(File.join(@attempt_root,"ruby-runtime.tar")))

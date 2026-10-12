@@ -57,8 +57,8 @@ export function gristWorkspaceTools(tool) {
     tool('merchant_grist_workspaces', 'List host-declared Grist authoring aliases, original workspace identities and current MCP ownership. Does not open a model, query the provider or start a publisher.', {}, [], read),
     tool('merchant_grist_open', 'Open one existing original Grist authoring workspace under its native lease and serve its same browser on loopback. Browser and MCP share one model. Stop a separately running source CLI or Application first. This does not read Grist or start the publisher.', selected, ['workspace'], { idempotent: true }),
     tool('merchant_grist_close', 'Close this exact owned Grist/browser instance, drain original operations, publisher, scheduler and deployment console/owned merchant, and release native workspace and file reads. Saved versions and original request receipts remain.', { ...selected, instanceId: uuid }, ['workspace', 'instanceId'], { destructive: true }),
-    tool('merchant_grist_status', 'Read original selected version, draft/revision, paginated discoveries/captures/versions, current preview, native request IDs and live browser/publisher/deployment ownership. Storage paths and credential references are omitted; public values are unchanged.', {
-      ...selected, capturesOffset: revision, versionsOffset: revision, discoveriesOffset: revision,
+    tool('merchant_grist_status', 'Read original selected version, draft/revision, paginated document catalogs/discoveries/captures/versions, current preview, native request IDs and live browser/publisher/deployment ownership. Storage paths and credential references are omitted; public values are unchanged.', {
+      ...selected, capturesOffset: revision, versionsOffset: revision, discoveriesOffset: revision, documentsOffset: revision,
       limit: { type: 'integer', minimum: 1, maximum: 100 },
     }, ['workspace'], read),
     tool('merchant_grist_inputs', 'List host-declared frozen-source/private-packet aliases or inspect one file for exact bytes and SHA256. Does not import or query Grist. Use this reviewed expectedSha256 for the subsequent original import.', { ...selected, input: alias }, ['workspace'], read),
@@ -68,8 +68,19 @@ export function gristWorkspaceTools(tool) {
     tool('merchant_grist_import_packet', 'Import one host-declared original private Grist source packet as a capture-backed editable draft. Recheck the whole file SHA256, original response/schema identities and the repeated typed-response/document-head evidence and current draft revision. No connection credential is imported and no provider read occurs.', {
       ...selected, input: alias, expectedSha256: digest, title: text, expectedDraftRevision: revision, requestId: uuid,
     }, ['workspace', 'input', 'expectedSha256', 'title', 'expectedDraftRevision', 'requestId'], { idempotent: true }),
-    tool('merchant_grist_discover', 'Explicitly read actual document/table metadata through one host-declared connection. Retains field IDs/types, typed-cell/identity semantics and exact document/filter binding. This does not capture rows. Recovery never repeats an uncertain provider read.', {
+    tool('merchant_grist_document_list', 'Explicitly read the native document metadata and visible table IDs through one host-declared connection, without a table placeholder or records request. Retains both raw responses before completing the original request UUID. Returns the first100 actual IDs and catalogSha256; use document to page/reopen and discover with that catalog ID/hash plus the chosen table. Lost-response recovery uses retained bytes only.', {
+      ...selected, connectionAlias, docId:{type:'string',minLength:6,maxLength:160}, requestId:uuid,
+    }, ['workspace','connectionAlias','docId','requestId'], {idempotent:true,openWorld:true}),
+    tool('merchant_grist_document', 'Read/search/page one original retained document table catalog by its native request UUID. Native table IDs and references are unchanged; a listed table does not prove row access or record completeness. Does not contact Grist.', {
+      ...selected, catalogId:uuid, offset:revision, limit:{type:'integer',minimum:1,maximum:100}, search:{type:'string',maxLength:128},
+    }, ['workspace','catalogId'], read),
+    tool('merchant_grist_document_read', 'Read the exact private document metadata observation through the existing retained-file reader. Includes both original JSON bodies, safe response headers, request URLs and account-binding digest; never a token. Bind catalog UUID/hash/offset, preserve the same readId until restart/expiry, then omit only readId. This is private operator metadata, not customer dataset delivery. Release through packet_release.', {
+      ...selected, catalogId:uuid, readId:uuid, expectedSha256:digest, offset:revision,
+      limit:{type:'integer',minimum:1,maximum:MAX_RETAINED_CHUNK_BYTES},
+    }, ['workspace','catalogId'], read),
+    tool('merchant_grist_discover', 'Explicitly read actual document/table metadata through one host-declared connection. Retains field IDs/types, typed-cell/identity semantics and exact document/filter binding. Optional catalogId and expectedCatalogSha256 must be provided together and bind the chosen actual native table to the same retained catalog, connection and read credential. This does not capture rows. Recovery never repeats an uncertain provider read.', {
       ...selected, connectionAlias, docId: {type: "string",minLength: 1,maxLength: 160}, tableId: providerId,
+      catalogId:uuid, expectedCatalogSha256:digest,
       filter: { type: ['object', 'null'], description: 'Native Grist membership filter: each column ID maps to a nonempty array of allowed scalar values; no SQL.' }, requestId: uuid,
     }, ['workspace', 'connectionAlias', 'docId', 'tableId', 'requestId'], { idempotent: true, openWorld: true }),
     tool('merchant_grist_discovery', 'Read one original retained metadata discovery by its request UUID. Does not make another provider request.', { ...selected, requestId: uuid }, ['workspace', 'requestId'], read),

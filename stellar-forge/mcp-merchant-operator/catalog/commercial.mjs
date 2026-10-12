@@ -1,4 +1,5 @@
 import {commercialReceivingTools} from './commercial-receiving.mjs';
+import {commercialTariffTools} from './commercial-tariffs.mjs';
 // MIT. Quotation controls use the configured original SF74 case writer.
 import {MAX_MATERIAL_BYTES} from '../../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs';
 import {MAX_RETAINED_CHUNK_BYTES} from '../retained-file-contracts.mjs';
@@ -15,6 +16,8 @@ const draft=object({parentId:nullable(uuid),title:text(400),customer:object({nam
   pricing:object({routes:rows(object({routeId:text(200),monthlyRequests:text(24)}))}),
   terms:object({scope:text(64000),deliverables:text(64000),exclusions:text(64000),payment:text(64000),acceptance:text(64000)}),
   notes:text(16000)});
+draft.properties.tariffSourceId=text(200);
+draft.properties.performanceSourceId=text(200);
 const selected={id:uuid,expectedRevision:digest},change={...selected,requestId:uuid,actor:text(200)};
 const implementationSelection={quoteId:uuid,quoteSha256:digest,acceptanceId:uuid,
   resolutions:{type:'object',additionalProperties:{enum:['accepted','current']}}};
@@ -22,6 +25,7 @@ export function commercialTools(tool) {
   const read={readOnly:true,idempotent:true},write={idempotent:true};
   return [
     ...commercialReceivingTools(tool),
+    ...commercialTariffTools(tool),
     tool('merchant_case_commercial','Open the complete original saved quotation workspace: implementation editions, service terms, received SF97 pricing sources, unfinished draft, immutable quotes, actual customer responses and accepted-quote implementation adoption. Keep its current case revision for a new change.',
       {id:uuid,revision:digest},['id'],read),
     tool('merchant_case_commercial_preview','Review explicit work hours, service fees and monthly route requests against the retained original sources. Returns exact decimal calculations, a customer-readable proposal and reviewSha256. No case write.',
@@ -48,6 +52,19 @@ export function commercialTools(tool) {
       {id:uuid,revision:digest,quoteId:uuid,quoteSha256:digest,kind:{enum:['QUOTE','QUOTE_JSON']},
         readId:uuid,expectedSha256:digest,offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:MAX_RETAINED_CHUNK_BYTES}},
       ['id','revision','quoteId','quoteSha256','kind'],read),
+    tool('merchant_case_commercial_performance_preview','Review a complete original SF97 recorded usage source against its saved customer quote and exact tariff. Recomputes the native usage, payment identities, schedule arithmetic and original source files before returning the review identity.',
+      {...selected,sourceText:text(MAX_MATERIAL_BYTES),sourceSha256:digest,quoteId:uuid,quoteSha256:digest,tariffSourceId:digest},
+      ['id','expectedRevision','sourceText','sourceSha256','quoteId','quoteSha256'],read),
+    tool('merchant_case_commercial_performance_receive','Save the complete reviewed native usage source as original case material bound to the measured customer quote. Retain sourceText, sourceSha256, quote identities, reviewSha256, actor, requestId and expectedRevision unchanged to resume the original request.',
+      {...change,sourceText:text(MAX_MATERIAL_BYTES),sourceSha256:digest,quoteId:uuid,quoteSha256:digest,tariffSourceId:digest,reviewSha256:digest},
+      ['id','expectedRevision','requestId','actor','sourceText','sourceSha256','quoteId','quoteSha256','reviewSha256'],write),
+    tool('merchant_case_commercial_performance_revision','Prepare the ordinary quote draft for the measured quotation or a later edition. Enter an explicit whole proposedMonthlyRequests and optionally a newer saved tariff source for the same route. Retains customer scope, implementation, service and quote ancestry. Review and publish through the original quotation tools.',
+      {...selected,sourceId:digest,quoteId:uuid,quoteSha256:digest,proposedMonthlyRequests:{type:'string',pattern:'^[1-9][0-9]*$',maxLength:16},targetTariffSourceId:digest},
+      ['id','expectedRevision','sourceId','quoteId','quoteSha256','proposedMonthlyRequests'],read),
+    tool('merchant_case_commercial_performance_file','Read the full original performance source, complete case attachment or readable report. Continue the original file using readId, expectedSha256 and nextOffset; cold reopen uses the same saved case revision, source and expectedSha256. Original commercial file status and release tools also manage these reads.',
+      {id:uuid,revision:digest,sourceId:digest,kind:{enum:['SOURCE','ATTACHMENT','REPORT']},readId:uuid,expectedSha256:digest,
+        offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:MAX_RETAINED_CHUNK_BYTES}},
+      ['id','revision','sourceId','kind'],read),
     tool('merchant_case_commercial_file_reads','List current original quotation file reads for this case, including exact descriptors and continuation IDs.',
       {id:uuid},['id'],read),
     tool('merchant_case_commercial_file_release','Close an original quotation file read after partial receiving. The immutable quote stays in the saved case for later reopen.',

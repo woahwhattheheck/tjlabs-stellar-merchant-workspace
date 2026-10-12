@@ -74,8 +74,11 @@ export async function startAccountingWorkspace({port=8446,host='127.0.0.1',rpcPr
     const workspace=await openAccountingWorkspace(options),accountant=new AccountantWorkspace(workspace);
     if(accountingSourceMode(workspace.state)==='buyer'){
       const xero=new XeroWorkspace(workspace,accountant,xeroClient?{client:xeroClient}:{});
-      try{check(!portfolioReview,'PORTFOLIO_MERCHANT_REQUIRED','Open the original merchant coordinator for the firm portfolio; this workspace retains an issued buyer period.',409);await xero.init();const sourceChanges=new SourceChangeWorkspace(workspace,{xero,connections:connectionsWorkspace});return {workspace,accountant,xero,sourceChanges};}
-      catch(error){await closeRuntime({workspace,xero}).catch(()=>{});throw error;}
+      let qbo;
+      try{check(!portfolioReview,'PORTFOLIO_MERCHANT_REQUIRED','Open the original merchant coordinator for the firm portfolio; this workspace retains an issued buyer period.',409);
+        qbo=new QboWorkspace(workspace,accountant,qboClient?{client:qboClient}:{});await qbo.recover();await xero.init();
+        const sourceChanges=new SourceChangeWorkspace(workspace,{qbo,xero,connections:connectionsWorkspace});return {workspace,accountant,qbo,xero,sourceChanges};}
+      catch(error){await closeRuntime({workspace,qbo,xero}).catch(()=>{});throw error;}
     }
     const cryptoworth=new CryptoworthWorkspace(workspace,accountant),runbooks=new RunbookWorkspace(workspace,accountant);
     const bitwave=new BitwaveWorkspace(workspace,accountant,bitwaveClient?{client:bitwaveClient}:{}),xero=new XeroWorkspace(workspace,accountant,xeroClient?{client:xeroClient}:{});let collection,portfolioClients;
@@ -90,9 +93,12 @@ export async function startAccountingWorkspace({port=8446,host='127.0.0.1',rpcPr
   };
   const maintenance=await openAccountingMaintenance({directory:options.directory,stateRoot:recoveryStateRoot,backupRoot:recoveryBackupRoot,
     passEnv:recoveryPassEnv,startPaused:recoveryStartPaused,openRuntime,closeRuntime});
+  const browserRecoveryWorkspaces=new WeakMap();
   const send=(response,status,value,{type='application/json; charset=utf-8',name}={})=>{
     if(response.destroyed)return;
     const bytes=Buffer.isBuffer(value)?value:Buffer.from(JSON.stringify(value));
+    const recoveryWorkspace=browserRecoveryWorkspaces.get(response);
+    if(recoveryWorkspace)response.setHeader('X-Accounting-Reopen-Required',recoveryWorkspace.commitUncertainty?'1':'0');
     response.writeHead(status,{'Content-Type':type,'Content-Length':bytes.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
       'Content-Security-Policy':"default-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
       ...(name?{'Content-Disposition':'attachment; filename="'+name+'"'}:{})});response.end(bytes);
@@ -125,6 +131,16 @@ export async function startAccountingWorkspace({port=8446,host='127.0.0.1',rpcPr
       const maintenancePath=path==='/api/maintenance'||path.startsWith('/api/maintenance/');
       const connectionsPath=path==='/api/oauth/connections'||path==='/api/oauth/connection'||path==='/api/oauth/command'||path==='/api/accounting-connections'||path.startsWith('/api/accounting-connections/');
       if(!maintenancePath&&!connectionsPath)operation=maintenance.enter();
+      // Optional expected scope for the existing QBO page and its accountant reads.
+      // Legacy clients without these headers retain their original API contract.
+      if(operation&&(path==='/api/qbo'||path.startsWith('/api/qbo/')||path==='/api/accountant'||path.startsWith('/api/accountant/'))){
+        const {workspaceId,sourcesSha256}=accountingWorkspaceBinding(operation.workspace.directory,operation.workspace.state);
+        response.setHeader('X-Accounting-Workspace-Id',workspaceId);response.setHeader('X-Accounting-Sources-Sha256',sourcesSha256);
+        browserRecoveryWorkspaces.set(response,operation.workspace);
+        const expectedWorkspace=request.headers['x-accounting-workspace-id'],expectedSources=request.headers['x-accounting-sources-sha256'];
+        if(expectedWorkspace!==undefined||expectedSources!==undefined)
+          check(expectedWorkspace===workspaceId&&expectedSources===sourcesSha256,'QBO_WORKSPACE_SCOPE_CHANGED','Reopen the original workspace and source selection for this saved browser request.',409);
+      }
       if(path===SIGNED_NOTICE_PATH){
         check(accountingSourceMode(operation.workspace.state)==='merchant','MERCHANT_SOURCES_REQUIRED','Signed merchant notices require their original merchant accounting workspace.',409);
         check(request.method==='POST'&&!url.search,'NOT_FOUND','This signed delivery endpoint accepts original POST notices only.',404);
@@ -148,8 +164,8 @@ export async function startAccountingWorkspace({port=8446,host='127.0.0.1',rpcPr
       if(maintenancePath){send(response,200,await maintenance.route({method:request.method,path,value}));return;}
       const {workspace,accountant,cryptoworth,runbooks,portfolio,portfolioClients,bitwave,qbo,xero,collection,statements,delivery,sourceChanges}=operation;
       if(accountingSourceMode(workspace.state)==='buyer')
-        check(path==='/api/state'||path==='/api/accountant'||path.startsWith('/api/accountant/')||path==='/api/xero'||path.startsWith('/api/xero/')||path==='/api/source-changes'||path.startsWith('/api/source-changes/'),
-          'BUYER_ACCOUNTING_OPERATION','Use this buyer workspace’s issued-source, accountant, Xero, source-change and recovery operations.',409);
+        check(path==='/api/state'||path==='/api/accountant'||path.startsWith('/api/accountant/')||path==='/api/qbo'||path.startsWith('/api/qbo/')||path==='/api/xero'||path.startsWith('/api/xero/')||path==='/api/source-changes'||path.startsWith('/api/source-changes/'),
+          'BUYER_ACCOUNTING_OPERATION','Use this buyer workspace’s issued-source, accountant, QuickBooks, Xero, source-change and recovery operations.',409);
       if(clientMount){
         check(clientMount[2]==='/api/runbooks'||clientMount[2].startsWith('/api/runbooks/'),'NOT_FOUND','Choose an original client-runbook operation.',404);
         check(portfolioClients,'PORTFOLIO_CLIENT_NOT_CONFIGURED','Open the configured portfolio host.',409);

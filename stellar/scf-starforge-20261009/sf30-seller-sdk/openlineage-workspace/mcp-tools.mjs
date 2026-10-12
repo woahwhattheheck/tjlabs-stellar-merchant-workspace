@@ -21,11 +21,20 @@ export function lineageWorkspaceTools(tool) {
     }, ["workspace", ...native.inputSchema.required], {
       readOnly: native.annotations.readOnlyHint, idempotent: native.annotations.idempotentHint
     })),
+    tool("merchant_lineage_producer_status", "Read the original native intake state, capacities, queue and acknowledged source counters.", workspace, ["workspace"], read),
+    tool("merchant_lineage_producer_profiles", "List host-declared Python and Java producer profiles and the selected authentication role.", workspace, ["workspace"], read),
+    tool("merchant_lineage_producer_configure", "Write or recover a complete private upstream client configuration on the merchant host. Returns its immutable file path and content identity.", {
+      ...workspace, profile: alias
+    }, ["workspace", "profile"], change),
+    tool("merchant_lineage_emit_file", "Send every original byte of a host-pinned source to the native producer endpoint. Retain the same operation ID, wire hash, encoding, name/reference and optional expected revision when recovering a send.", {
+      ...workspace, ...operation, input: alias, expectedSha256: hash, sourceUrl: { type: "string", maxLength: 8192 },
+      contentEncoding: { enum: ["identity", "gzip"] }
+    }, ["workspace", "operationId", "input", "expectedSha256"], change),
     tool("merchant_lineage_input", "Inspect one complete host-pinned original source or result file and verify its selected SHA-256.", {
       ...workspace, input: alias, expectedSha256: hash
     }, ["workspace", "input"], read),
     tool("merchant_lineage_import_file", "Import the complete original JSON/NDJSON file selected by the host. Preserve input alias, SHA-256, operation ID, and expected revision for recovery.", {
-      ...workspace, ...operation, input: alias, expectedSha256: hash, sourceUrl: { type: "string" }
+      ...workspace, ...operation, input: alias, expectedSha256: hash, sourceUrl: { type: "string" }, contentEncoding: { enum: ["identity", "gzip"] }
     }, ["workspace", "operationId", "expectedRevision", "input", "expectedSha256"], change),
     tool("merchant_lineage_attach_file", "Attach a complete host-selected result file to original entities and a saved edition. The source reference and full result remain in workspace exports.", {
       ...workspace, ...operation, input: alias, expectedSha256: hash,

@@ -10,6 +10,8 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_commercial_cli as commercial_cli
+import operations_ledger_intake as ledger_intake
 
 
 def register(subparsers, common):
@@ -43,6 +45,45 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("supplier-account", "Read the complete supplier account, original records and dated balances", case=True, output=True)
+    target.add_argument("--contributor", help="Original contributor or supplier record ID; defaults to the first supplier")
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int)
+    target = command("supplier-account-export", "Export the complete supplier account, original CSVs, offline HTML and original case", case=True)
+    target.add_argument("--contributor")
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--expected-report-sha256", required=True)
+    target.add_argument("--output", required=True)
+    target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
+    target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
+    target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
+    target.add_argument("--expected-version", type=int)
+    target = command("performance-export", "Export the reviewed report, all CSVs, offline HTML and complete operating case", case=True)
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--expected-report-sha256", required=True)
+    target.add_argument("--output", required=True)
+    command("ledger-intake", "Read table fields, templates and all recorded bulk intakes", case=True, output=True)
+    target = command("ledger-intake-original", "Reopen every original file and its recorded row-to-record mapping", case=True, output=True)
+    target.add_argument("--source", required=True)
+    target.add_argument("--document-only", action="store_true", help="Emit the complete intake input for reuse")
+    target = command("ledger-intake-template", "Write original CSV or TSV headers for a record table")
+    target.add_argument("--kind", choices=ledger_intake.KINDS, required=True)
+    target.add_argument("--format", choices=("csv", "tsv"), default="csv")
+    target.add_argument("--output", required=True)
+    target = command("ledger-intake-build", "Compile explicit sourceFile paths into a portable original-file intake document", output=True)
+    target.add_argument("--input", required=True)
+    target = command("ledger-intake-preview", "Review every resulting native record before recording the complete intake", case=True, output=True)
+    target.add_argument("--input", required=True, help="Complete intake JSON or downloaded browser desk")
+    target.add_argument("--expected-version", type=int)
+    target = command("ledger-intake-apply", "Record all files and native rows in one original workspace transaction", case=True, output=True)
+    target.add_argument("--input", required=True)
+    target.add_argument("--expected-preview-sha256", required=True)
+    mutation(target, version=True)
     target = command("history", "Page the original operations event history", case=True, output=True)
     target.add_argument("--after", type=int, default=0)
     target.add_argument("--limit", type=int, default=100)
@@ -91,14 +132,14 @@ def register(subparsers, common):
     target.add_argument("--format", choices=("attributions", "sources", "html"), required=True)
     target.add_argument("--expected-version", type=int, required=True)
     target.add_argument("--output", required=True)
-    target = command("buyer-preview", "Review selected original SF88 buyer jobs for this case", case=True, output=True)
-    target.add_argument("--file", required=True, help="Original private SF88 operations handoff")
+    target = command("buyer-preview", "Review original SF88 Inbox or Node accounting source for this case", case=True, output=True)
+    target.add_argument("--file", required=True, help="Original private SF88 Inbox handoff or Node Operation_Accounting.json")
     target.add_argument("--expected-version", type=int, required=True)
-    target = command("buyer-receive", "Receive exact buyer source and selected original purchase associations", case=True, output=True)
+    target = command("buyer-receive", "Receive exact buyer source with original operation/deployment and purchase associations", case=True, output=True)
     mutation(target, version=True)
     target.add_argument("--file", required=True, help="Same original handoff used for preview")
     target.add_argument("--expected-preview-sha256", required=True)
-    target.add_argument("--selections", required=True, help="JSON array of reviewed jobId/purchaseId selections")
+    target.add_argument("--selections", required=True, help="JSON file with reviewed jobId/purchaseId selections; purchaseId is null for unpaid Node observations or new original purchases")
     deployment = target.add_mutually_exclusive_group(required=True)
     deployment.add_argument("--deployment", help="Existing original buyer or combined deployment ID")
     deployment.add_argument("--deployment-file", help="Explicit JSON fields for a new buyer deployment")
@@ -145,9 +186,36 @@ def register(subparsers, common):
     target = command("cohort-export", "Export the complete frozen cohort and its original sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    target = command("delivery-queue", "Read current Installation work, assignments and civil-calendar due dates", case=True, output=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to the current UTC date")
+    target = command("delivery-queue-export", "Export the dated delivery report and complete original operating case", case=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to the current UTC date")
+    target.add_argument("--output", required=True)
     command("installations", "List current saved customer installation editions", case=True, output=True)
     target = command("installation-seed", "Prepare a complete installation from the original funded work packages", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
+    for verb in ("installation-workshares", "installation-workshare-seed"):
+        target = command(verb, "Read or receive complete original commercial Workshares from retained case sources", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--source", required=True, help="Original attached commissioning source ID")
+        target.add_argument("--expected-source-sha256", required=True)
+        target.add_argument("--packet-source", help="Original attached matching receiving packet source ID")
+        target.add_argument("--expected-packet-sha256")
+        if verb == "installation-workshare-seed":
+            target.add_argument("--workshare-case", required=True, help="Original commercial case ID from installation-workshares")
+            target.add_argument("--installation", help="Original installation ID; omit for a new installation")
+            target.add_argument("--expected-revision", type=int, required=True)
+            target.add_argument("--document", help="Optional complete current editable installation JSON")
+    for verb in ("installation-workflows", "installation-workflow-seed"):
+        target = command(verb, "Read or receive complete original customer operating periods", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--source", required=True, help="Original attached recurring-work source ZIP")
+        target.add_argument("--expected-source-sha256", required=True)
+        if verb == "installation-workflow-seed":
+            target.add_argument("--cycle", action="append", required=True, help="Original selected cycle ID; repeat for every selected period")
+            target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
+            target.add_argument("--expected-revision", type=int, required=True)
+            target.add_argument("--document", help="Optional complete current editable Installation JSON")
     target = command("installation-show", "Reopen one whole saved installation and its selected original records", case=True, output=True)
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, help="Exact saved edition; omission opens the latest")
@@ -187,6 +255,15 @@ def register(subparsers, common):
     target = command("completion-export", "Download the frozen form preparation and its exact selected sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    for verb in ("statement-preview", "statement-receive"):
+        target = command(verb, "Reconcile an original account CSV or receive its reviewed cash observations", case=True, output=True)
+        target.add_argument("--inputs", required=True, help="Complete statement input JSON, or mapping with original source metadata when --file is supplied")
+        target.add_argument("--file", help="Original UTF-8 statement CSV; exact bytes join the declared source metadata")
+        if verb == "statement-receive":
+            mutation(target, version=True)
+            target.add_argument("--expected-preview-sha256", required=True)
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
     target = command("forecast-preview", "Calculate a dated forecast from current original records", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Forecast input JSON file")
     target.add_argument("--expected-version", type=int, required=True)
@@ -203,6 +280,8 @@ def register(subparsers, common):
     target = command("portfolio-seed", "Prepare allocation inputs from one original saved forecast", case=True, output=True)
     target.add_argument("--forecast", required=True)
     target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--installation-selections", help="JSON array of exact saved installation editions for original commercial task IDs")
+    target.add_argument("--inputs", help="Complete existing Portfolio draft JSON to retain while selecting installation phases")
     for verb in ("portfolio-preview", "portfolio-save"):
         target = command(verb, "Calculate or retain source-bound delivery alternatives", case=True, output=True)
         target.add_argument("--inputs", required=True)
@@ -224,6 +303,7 @@ def register(subparsers, common):
     selection(target); mutation(target)
     target.add_argument("--file", required=True)
 
+    commercial_cli.register(command)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -232,6 +312,49 @@ def read_bytes(filename, maximum=MAX_BUNDLE):
     if len(raw) > maximum:
         raise Problem("Input exceeds its retained-source bound.", 413, "INPUT_TOO_LARGE")
     return raw
+
+
+def ledger_document(filename, compile_sources=False):
+    original = Path(filename).expanduser().resolve()
+    document = ledger_intake._json(read_bytes(original, 64 * 1024 * 1024), decimal_strings=False)
+    raw_defaults = {}
+    if isinstance(document, dict) and document.get("schema") == "stellar-forge.sf47-ledger-desk.v1":
+        raw_defaults = document.get("rawDefaults", {})
+        document = document.get("document")
+        if not isinstance(raw_defaults, dict):
+            raise Problem("The downloaded desk defaults must be an object.", 422, "INVALID_LEDGER_INTAKE")
+    if not isinstance(document, dict) or document.get("schema") != ledger_intake.SCHEMA:
+        raise Problem("Use a complete ledger-intake document or downloaded browser desk.", 422, "INVALID_LEDGER_INTAKE")
+    files = document.get("files")
+    if not isinstance(files, list) or not 1 <= len(files) <= ledger_intake.MAX_FILES:
+        raise Problem("Select one through twenty original source files.", 422, "INVALID_LEDGER_INTAKE")
+    total = 0
+    for spec in files:
+        if not isinstance(spec, dict):
+            raise Problem("Each source file needs its explicit table specification.", 422, "INVALID_LEDGER_INTAKE")
+        if "sourceFile" in spec:
+            if not compile_sources:
+                raise Problem("Compile sourceFile paths with ledger-intake-build before preview or apply.", 422, "INVALID_LEDGER_INTAKE")
+            selected = spec.pop("sourceFile")
+            if not isinstance(selected, str) or not selected or "\x00" in selected or "contentBase64" in spec:
+                raise Problem("Choose one explicit sourceFile path or original contentBase64 for each file.", 422, "INVALID_LEDGER_INTAKE")
+            source = Path(selected).expanduser()
+            if not source.is_absolute():
+                source = original.parent / source
+            raw = read_bytes(source, MAX_SOURCE)
+            spec.setdefault("filename", source.name)
+            spec["contentBase64"] = base64.b64encode(raw).decode()
+        if spec.get("id") in raw_defaults:
+            selected = raw_defaults[spec["id"]]
+            if not isinstance(selected, str):
+                raise Problem("Retained table defaults must be JSON text.", 422, "INVALID_LEDGER_INTAKE")
+            spec["defaults"] = ledger_intake._json(selected or "{}", decimal_strings=False)
+        if compile_sources:
+            inspection = ledger_intake.inspect(spec)
+            total += inspection["bytes"]
+    if total > ledger_intake.MAX_BYTES or len(canonical(document).encode()) > MAX_BUNDLE:
+        raise Problem("The complete intake supports twelve MiB of original source bytes.", 413, "LEDGER_INTAKE_LIMIT")
+    return document
 
 
 def publish(filename, raw):
@@ -261,10 +384,40 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if action.startswith("commercial-"):
+        return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "supplier-account":
+        result = ops.supplier_account(args.case, args.contributor, args.start_date, args.end_date, args.expected_version)
+    elif action == "supplier-account-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_supplier_account(
+            args.case, args.contributor, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
+    elif action == "performance":
+        result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
+    elif action == "performance-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_performance(
+            args.case, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
+    elif action == "ledger-intake":
+        result = ops.ledger_intake(args.case)
+    elif action == "ledger-intake-original":
+        result = ops.ledger_intake_original(args.case, args.source)
+        if args.document_only:
+            result = result["document"]
+    elif action == "ledger-intake-template":
+        return {"kind": args.kind, "format": args.format,
+                "output": publish(args.output, ledger_intake.template(args.kind, args.format).encode())}
+    elif action == "ledger-intake-build":
+        result = ledger_document(args.input, compile_sources=True)
+    elif action == "ledger-intake-preview":
+        result = ops.preview_ledger_intake(args.case, {"document": ledger_document(args.input),
+            **({"expectedVersion": args.expected_version} if args.expected_version is not None else {})})
+    elif action == "ledger-intake-apply":
+        result = ops.apply_ledger_intake(args.case, {"document": ledger_document(args.input),
+            "expectedVersion": args.expected_version, "expectedPreviewSha256": args.expected_preview_sha256,
+            "actor": args.actor, "note": args.note, "requestId": args.request_id})
     elif action == "history":
         result = ops.history(args.case, args.after, args.limit)
     elif action == "forecasts":
@@ -273,6 +426,30 @@ def operate(workspace, args):
         result = ops.forecast(args.case, args.forecast)
     elif action == "forecast-export":
         return {"forecastId": args.forecast, "output": publish(args.output, ops.export_forecast(args.case, args.forecast))}
+    elif action in ("statement-preview", "statement-receive"):
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_BUNDLE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Statement inputs must be complete UTF-8 JSON.", 422, "INVALID_STATEMENT") from exc
+        if not isinstance(inputs, dict):
+            raise Problem("Use one complete statement input object.", 422, "INVALID_STATEMENT")
+        if args.file:
+            source = inputs.get("source")
+            if not isinstance(source, dict):
+                raise Problem("Retain source filename, observation time and optional URL in the mapping JSON.", 422, "INVALID_STATEMENT")
+            filename = Path(args.file).name
+            if source.get("filename", filename) != filename:
+                raise Problem("The selected CSV filename differs from the declared original source.", 409, "STATEMENT_SOURCE_CONFLICT")
+            encoded = base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")
+            if source.get("contentBase64", encoded) != encoded:
+                raise Problem("The selected CSV differs from the retained input bytes.", 409, "STATEMENT_SOURCE_CONFLICT")
+            inputs["source"] = {**source, "filename": filename, "contentBase64": encoded}
+        if action == "statement-preview":
+            result = ops.preview_statement(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "statement.receive",
+                "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "expenses":
         result = ops.expense_attribution(args.case)
     elif action in ("expense-preview", "expense-receive"):
@@ -376,10 +553,46 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "cohort.prepare",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "delivery-queue":
+        result = ops.delivery_queue(args.case, args.as_of)
+    elif action == "delivery-queue-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_delivery_queue(args.case, args.as_of))}
     elif action == "installations":
         result = {"installations": ops.list_installations(args.case)}
     elif action == "installation-seed":
         result = ops.seed_installation(args.case, {"expectedVersion": args.expected_version})
+    elif action in ("installation-workshares", "installation-workshare-seed"):
+        selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
+                    "expectedSourceSha256": args.expected_source_sha256,
+                    "packetSourceId": args.packet_source, "expectedPacketSha256": args.expected_packet_sha256}
+        if action == "installation-workshares":
+            result = ops.installation_workshares(args.case, selected)
+        else:
+            selected.update({"workshareCaseId": args.workshare_case, "installationId": args.installation,
+                             "expectedRevision": args.expected_revision})
+            if args.document:
+                from operations_installations import MAX_DOCUMENT_BYTES
+                try:
+                    selected["document"] = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES))
+                except (UnicodeError, ValueError) as exc:
+                    raise Problem("Installation input must be a complete UTF-8 JSON document.",
+                                  422, "INVALID_JSON") from exc
+            result = ops.seed_workshare_installation(args.case, selected)
+    elif action in ("installation-workflows", "installation-workflow-seed"):
+        selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
+                    "expectedSourceSha256": args.expected_source_sha256}
+        if action == "installation-workflows":
+            result = ops.installation_workflows(args.case, selected)
+        else:
+            selected.update({"cycleIds": args.cycle, "installationId": args.installation,
+                             "expectedRevision": args.expected_revision})
+            if args.document:
+                from operations_installations import MAX_DOCUMENT_BYTES
+                try:
+                    selected["document"] = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES))
+                except (UnicodeError, ValueError) as exc:
+                    raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
+            result = ops.seed_workflow_installation(args.case, selected)
     elif action == "installation-show":
         result = ops.installation(args.case, args.installation, args.revision)
     elif action == "installation-history":
@@ -433,7 +646,22 @@ def operate(workspace, args):
                 "requestId": args.request_id, "note": args.note, "action": "forecast.save",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "portfolio-seed":
-        result = ops.seed_portfolio(args.case, {"expectedVersion": args.expected_version, "forecastId": args.forecast})
+        body = {"expectedVersion": args.expected_version, "forecastId": args.forecast}
+        for filename, field, expected_type in (
+            (args.installation_selections, "installationSelections", list),
+            (args.inputs, "inputs", dict),
+        ):
+            if filename is None:
+                continue
+            try:
+                value = json.loads(read_bytes(filename, MAX_SOURCE))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Portfolio " + field + " must be valid JSON.", 422, "INVALID_JSON") from exc
+            if not isinstance(value, expected_type):
+                kind = "array" if expected_type is list else "object"
+                raise Problem("Portfolio " + field + " must be a JSON " + kind + ".", 422, "INVALID_JSON")
+            body[field] = value
+        result = ops.seed_portfolio(args.case, body)
     elif action == "portfolios":
         result = {"portfolios": ops.list_portfolios(args.case)}
     elif action == "portfolio-show":

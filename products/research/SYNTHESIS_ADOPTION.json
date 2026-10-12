@@ -1,0 +1,243 @@
+{
+  "schema": "stellar-forge.synthesis-source-adoption.v1",
+  "operation": "D7CA-SCF-SYNTHESIS-STANDALONE-20261012",
+  "source": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "bd816fa3f50399d856533f2807286b64341ce63e",
+    "pullRequest": 2329
+  },
+  "destination": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "b97de5857cf14d673e89ef9b1f456694f3249a6e"
+  },
+  "product": {
+    "entry": "Analysis → Evidence synthesis",
+    "operatorGuide": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/SYNTHESIS_OPERATOR.md",
+    "browserAndNativeReceiving": "stellar/scf-starforge-20261009/distribution/receiving/synthesis/BROWSER_RECEIVING.md",
+    "sourceSelection": "stellar/scf-starforge-20261009/distribution/selections/research-workspace.json",
+    "extra": "synthesis",
+    "command": "stellar-forge-synthesis",
+    "standaloneGuide": "products/research/SYNTHESIS.md"
+  },
+  "files": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/evidence_synthesis.py",
+      "gitBlob": "0f3eafbb882d774e4439d2e40b5804c624128dd2",
+      "bytes": 30418,
+      "sha256": "852f71a1938731ceac8c13957a651f714e5c923a955b3ef8e4e42fbed380e35b",
+      "publicSourceBlob": "0f3eafbb882d774e4439d2e40b5804c624128dd2",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/synthesis_reports.py",
+      "gitBlob": "e9e415014931629c35c0693d9021a17aa116ab28",
+      "bytes": 18020,
+      "sha256": "f972cb8ffc0d6f6602625e396ff8630bafc74cb803eea3cfc3a961e266625f77",
+      "publicSourceBlob": "e9e415014931629c35c0693d9021a17aa116ab28",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_synthesis.py",
+      "gitBlob": "9c67b6a7f5302f7343e80b8e9a056921db5c7905",
+      "bytes": 25527,
+      "sha256": "a9333974d6ecc499873b7007251e8ad2a6174b11887c24300221f997532cccfa",
+      "publicSourceBlob": "9c67b6a7f5302f7343e80b8e9a056921db5c7905",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/synthesis_http.py",
+      "gitBlob": "fa430c925d211f06a78aff79a4026701f16cc6c8",
+      "bytes": 3204,
+      "sha256": "05837c752a50442f0204474e09d1e448069b5108926cacc5c1a3507e2636d53c",
+      "publicSourceBlob": "fa430c925d211f06a78aff79a4026701f16cc6c8",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_workspace.py",
+      "gitBlob": "a5505e6750d9791dfb141e0bec4bfaa005a955f8",
+      "bytes": 62392,
+      "sha256": "37e97e193f23be78111958f34ed3f20df92637a3079681d567f0e4abae3e0fe4",
+      "publicSourceBlob": "a5505e6750d9791dfb141e0bec4bfaa005a955f8",
+      "previousMaintainedBlob": "87c9f661c0659a4381d3be7f99509ad634b865bd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_synthesis_ui.py",
+      "gitBlob": "c5d505934f5f5ecee6de41aadbc9755248496b02",
+      "bytes": 80164,
+      "sha256": "3cb35ab7d2bfed586d95129afa7ef160b7d04c0fa705c3781c602aa64bccdbcb",
+      "publicSourceBlob": "c5d505934f5f5ecee6de41aadbc9755248496b02",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/synthesis_client.py",
+      "gitBlob": "bdf9a1d266f416f69ac04ba2a05e19b8b34e17c0",
+      "bytes": 26067,
+      "sha256": "52c0590ca73ac66f9e8c2f6c8d765e2cf0d4467a73c3e0bfa07d53e64608721e",
+      "publicSourceBlob": "bdf9a1d266f416f69ac04ba2a05e19b8b34e17c0",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_ui.py",
+      "gitBlob": "4e9e46472bca426715fac14065e5f14a530c8d97",
+      "bytes": 60477,
+      "sha256": "d06997dbd91450f8ab2e89547028c31769ec3a2eba7649a868a573cba31a03e9",
+      "publicSourceBlob": "4e9e46472bca426715fac14065e5f14a530c8d97",
+      "previousMaintainedBlob": "9303fdfac69e6119de04dd4f658d8205186e6c05"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/SYNTHESIS_OPERATOR.md",
+      "gitBlob": "f8a2f57968fd35e89d4bc2f60252fe345f457207",
+      "bytes": 19244,
+      "sha256": "790e82b2397da44681520a5c4c4652e33bbc30be0f7980b26d17ec7a8c354392",
+      "publicSourceBlob": "f8a2f57968fd35e89d4bc2f60252fe345f457207",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/synthesis_cli.py",
+      "gitBlob": "f0d2487345d7d12490006838afb3f7efb683249c",
+      "bytes": 15957,
+      "sha256": "09c63503851a89817f3b0401842492c6f5093d0de46dfdb9708a0ffda7305fbf",
+      "publicSourceBlob": "f0d2487345d7d12490006838afb3f7efb683249c",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/pyproject.toml",
+      "gitBlob": "70901207994383b51edaef6880b442b659e8a53f",
+      "bytes": 1738,
+      "sha256": "9282315c6fb313e135465dfc94de0c0c9ebc1dd3505892f2e3edf487df95efaf",
+      "publicSourceBlob": "079d8e6c862d0d55f6c2a6040e6e118321d09d94",
+      "previousMaintainedBlob": "a2f5386bac25b441fddcec184237e8766c545645"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/engine.py",
+      "gitBlob": "ccda868268a4ac9d1793dce43078d559dd1058d5",
+      "bytes": 44154,
+      "sha256": "08a8d4fcc7990310ce4a4a176e592deaee1c7ebbad5ea2a9e7b6a9afae2ecafe",
+      "publicSourceBlob": "ec5b340e4c5bc7f24a02ebcb74f603c9310655ce",
+      "previousMaintainedBlob": "137022659fbfd2739f3f3a707266642fc82393c0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/command-binding.mjs",
+      "gitBlob": "db6aa3e9a31689e98dfb28abd245a31a3463546f",
+      "bytes": 10834,
+      "sha256": "1e94e9d743eb906cb6e26a02e2a6c292e9344df2913dd8998d1d818cd885ad1d",
+      "publicSourceBlob": "1d71f83574213dba078290a639d213f976732371",
+      "previousMaintainedBlob": "8b22872ba48456cb5b411115001ed6db6dc04e98"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/python-runtime/README.md",
+      "gitBlob": "7a345b2837ae20c89936ce5f63e64d5c7ce4cdc9",
+      "bytes": 11814,
+      "sha256": "0e7970e81173a052cc15bbcbb39150d7317bf9639a5ad917ea07e4834650f963",
+      "publicSourceBlob": "7a345b2837ae20c89936ce5f63e64d5c7ce4cdc9",
+      "previousMaintainedBlob": "e5dae0b499e442f7aea5a9f9886c924b2f78cc95"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/synthesis/receive_synthesis_operator.mjs",
+      "gitBlob": "0bc1317c289f46b67f28aa3a1d093cfecf0a6d8a",
+      "bytes": 36200,
+      "sha256": "56308a7ae2c44696d7d7e9893edbd1b3219a8d9cf8750117738f15e0b011ec52",
+      "publicSourceBlob": "0bc1317c289f46b67f28aa3a1d093cfecf0a6d8a",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/synthesis/BROWSER_RECEIVING.md",
+      "gitBlob": "ef66f13223f828c1a6fe89afd3f702f3f2a89c14",
+      "bytes": 9762,
+      "sha256": "b1baa8d7234f11f7ba8fbfa5a07471ccc2cc53453cd787e77828a41e4dd0c8d7",
+      "publicSourceBlob": "ef66f13223f828c1a6fe89afd3f702f3f2a89c14",
+      "previousMaintainedBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/receiving/synthesis/receive_synthesis_reference.py",
+      "gitBlob": "f26344cca37f3196ac59cf241d05f515415cac39",
+      "bytes": 40799,
+      "sha256": "b2b74acadc0fc157c92eb28982f3dcc444ce52f583ef48c262e97d4d85047603",
+      "publicSourceBlob": "f26344cca37f3196ac59cf241d05f515415cac39",
+      "previousMaintainedBlob": null
+    }
+  ],
+  "references": {
+    "sourceCommit": "d1a595bc71f1653e5563f608e148111e7751db1c",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/original/dat.bcg.txt",
+        "gitBlob": "72433a53b1e15cd547a585a5a47423ec129b0fdb",
+        "bytes": 1036,
+        "sha256": "2dde71166d1ccdf9567ef330a5886b3faa51e8f42aa08fec2cd51a0085644a74"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/original/dat.bcg.r",
+        "gitBlob": "2813570ffdc23cf0c56a8560ef5da82bfdfe6bab",
+        "bytes": 694,
+        "sha256": "693531171f992228fef41ceee428d91192c0f84d3ac2aa03fe9666afc33144e5"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/original/dat.bcg.Rd",
+        "gitBlob": "db5d758100bb4210f0efa1fc84d05a30f5695bc0",
+        "bytes": 4223,
+        "sha256": "981c4adc48f6f85b2cbec8441e77fdcabc5fffe8a128930e87962c8bc4ff8823"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/original/metadat-DESCRIPTION",
+        "gitBlob": "fddd8bb84fc87037327aefb59da067875fb60bfd",
+        "bytes": 1767,
+        "sha256": "b9088c18bdb39979021b8a3f9da11f54229c6a7a70b4508fd0737309472452a9"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/bcg-source-rows.json",
+        "gitBlob": "8f4fd083b8801128108a8997d7d74234ff6adfd5",
+        "bytes": 37801,
+        "sha256": "61495fa362f46fca387d7174b1e1268395f2331063fd6fbe838ae7d3c63453d2"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/reference-protocol.json",
+        "gitBlob": "0170132ca8bef9f9425a4205fb2d9ccf0251d700",
+        "bytes": 3629,
+        "sha256": "6a2ef0cbaf5ddd6032e78fa6a460a4f6daa91da96ff9ae747bdc4a84dfef1cf4"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/README.md",
+        "gitBlob": "28b8ee1c1f590408fcee2488cc95789802ef58a1",
+        "bytes": 9951,
+        "sha256": "8ece5f54159d6f7843eb77b9c2d422f3a7258d3ff165b9552f0a9a7ac56b5f36"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/sources.json",
+        "gitBlob": "3f71f4176af02066c7ef230271efd744271b5c7c",
+        "bytes": 14300,
+        "sha256": "ea9e178ac97f6f01cb1d0033f3403f03f218209efa2f4a5376134a72a7476e48"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/publish-bcg-reference.mjs",
+        "gitBlob": "59633a119915263eef6bdfbb1d99287c5495d982",
+        "bytes": 32892,
+        "sha256": "bae97dd2a90bcd345d312be1433d9a2867f46f2f50072640fb0ecd026c6d8824"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/original/viechtbauer-2010-metafor.pdf",
+        "gitBlob": "356eb0690f86fa581267c520c0b06c92f0cc6a65",
+        "bytes": 518660,
+        "sha256": "b883a5a6c8cc358b5a367ddbfb94649b9cc2438044c6fac54dde08b1c8be3978"
+      }
+    ]
+  },
+  "runtimeComposition": {
+    "pyproject": "Retains the current VGI package, package data and script declarations, DBnomics and World Bank entrypoints; adds the original synthesis extra and entrypoint.",
+    "commandBinding": "Retains current VGI and DBnomics bindings; adds the original synthesis module/script, extra and source/database selection checks.",
+    "engine": "Retains original bounded log handling, source resolution, installation and receiving; preserves the maintained VGI Python requirement and module detection beside synthesis."
+  },
+  "receiving": {
+    "operation": "D7CA-SCF-EVIDENCE-SYNTHESIS-NATIVE-20261012",
+    "controller": "stellar/scf-starforge-20261009/distribution/receiving/synthesis/receive_synthesis_reference.py",
+    "referenceProgramme": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/synthesis-bcg-reference/publish-bcg-reference.mjs",
+    "recovery": "The original complete source identity, operation configuration, browser job, native requests, downloads, archive and provider transfer records remain with the existing receiving operation."
+  },
+  "producer": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "550bcb80a96652459f61b01737ed3ec489da9a7a",
+    "pullRequest": 2320,
+    "completeSourceMap": "3c3366d8def989b3100953ca91098418385a31e7",
+    "integration": "The original Research owner carries this complete producer through its current standalone Research/Zotero adoption."
+  }
+}

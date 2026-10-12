@@ -1,8 +1,31 @@
 # IATI publisher finance workspace
 
-This operator turns complete IATI 2.03 activity XML into retained activity, transaction and budget datasets, saved portfolio revisions, source comparisons, review reports and a complete receiving workspace.
+This operator turns complete IATI 2.03 activity and organisation XML into retained financial datasets, saved portfolios and planning editions, precise publisher corrections, review reports and complete receiving workspaces.
 
 It uses the existing XML source parser, retained Workspace, original SF30 immutable dataset engine, private operator server, Merchant Source Workspaces and installed Applications lifecycle. The IATI-specific code supplies domain projection and portfolio decisions to those components.
+
+## Saved publisher refresh
+
+[REFRESH.md](REFRESH.md) provides the complete saved baseline → explicit publisher/selection preview → original native run → named review → baseline promotion workflow. It retains every source, request and decision, resumes the original operation after interruption, and exports or receives the complete journal together with the original native portfolio. The same workflow is available in the browser, CLI, typed client and Merchant Source Workspaces.
+
+
+## Organisation budgets and planning documents
+
+[Organisation planning](organisation/GUIDE.md) operates a publisher's complete
+IATI 2.03 organisation file in this same retained workspace. Open **Organisation
+planning** in the console, select the original source and organisations, and set
+the actual assessment date, fiscal year and forward horizon. Read every budget,
+expenditure and document record; inspect the exact XML and supported correction
+targets; then save a complete candidate with a named review and release.
+
+The released edition includes original and candidate XML, complete financial and
+document CSVs, a readable report, dated methodology, all saved revisions and the
+original requests. Its portable ZIP reopens through the same organisation receiver.
+Later local receiving edits survive a repeat import of the older handover.
+[The operator guide](OPERATIONS.md#organisation-planning-and-complete-customer-handover)
+covers the browser, command, typed client, Merchant Source Workspaces and delivery
+workflow. [The complete FCDO receiving programme](receiving/ORGANISATION.md) runs
+those interfaces against the retained original publication.
 
 ## Operator workflow
 

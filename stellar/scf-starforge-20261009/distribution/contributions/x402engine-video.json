@@ -1,0 +1,22 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "x402engine-video",
+  "description": "Complete retained x402engine video receiving, local operation and portable customer handover",
+  "commands": {
+    "x402-video": "stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/cli.mjs"
+  },
+  "commandDescriptions": {
+    "x402-video": "Retain an accepted video job, receive the full result, operate its local workspace and reopen a complete handover"
+  },
+  "exports": {
+    "./buyer/x402engine-video": "./source/stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/x402engine.mjs",
+    "./buyer/x402engine-video/operator": "./source/stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/operator.mjs",
+    "./buyer/x402engine-video/cli": "./source/stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/cli.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/README.md",
+    "stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/public/index.html",
+    "stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/public/app.mjs",
+    "stellar/scf-starforge-20261009/sf31-buyer-client/video-receiving/public/style.css"
+  ]
+}

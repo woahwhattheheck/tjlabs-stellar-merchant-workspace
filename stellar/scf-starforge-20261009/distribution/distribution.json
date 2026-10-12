@@ -98,6 +98,18 @@
     {
       "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/workspace/server.mjs",
       "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/workspace/browser-assets.json"
+    },
+    {
+      "server": "stellar-forge/mcp-merchant-operator/console/service.mjs",
+      "manifest": "stellar-forge/mcp-merchant-operator/console/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/browser-assets.json"
     }
   ],
   "supportFiles": [
@@ -373,6 +385,7 @@
     "./runtime-install": "./source/stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
     "./runtime-transfer": "./source/stellar/scf-starforge-20261009/distribution/runtime-transfer.mjs",
     "./runtime-workspace": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
+    "./runtime-workspace/application-setup": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-setup-operations.mjs",
     "./runtime-workspace/server": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
     ".": "./source/stellar/scf-starforge-20261009/distribution/index.mjs",
     "./seller": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/serve.mjs",

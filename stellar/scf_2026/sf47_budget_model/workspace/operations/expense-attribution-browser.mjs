@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {mkdir,open,readFile,rename,stat} from 'node:fs/promises';
 import path from 'node:path';
+import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -57,6 +58,7 @@ export async function runExpenseAttributionBrowser({
   let report=await optionalJSON(reportFile),saved=await optionalJSON(stateFile);
   const continuing=Boolean(report||saved);
   const previouslyPassed=report?.status==='PASS';
+  const previousCompletedAt=report?.completedAt;
   if(report){
     assert.equal(report.schema,'stellar-forge.grant-expense-browser-receiving.v1','The retained browser report has another schema.');
     for(const key of ['operationId','caseId','planId'])assert.equal(report[key],binding[key],'The retained browser report selects another '+key+'.');
@@ -195,6 +197,7 @@ export async function runExpenseAttributionBrowser({
         await timeout(committed,30000,'The original retained save did not return its controlled response-loss receipt.');
         if(interceptionError)throw interceptionError;
         await openCase(true);
+        await reconcilePending();
       }
     }else await action('recover').click();
     await page.waitForFunction(key=>{
@@ -306,7 +309,12 @@ export async function runExpenseAttributionBrowser({
   try{
     for(const name of ['TMPDIR','TMP','TEMP'])process.env[name]=temporary;
     const selectedModule=playwrightModule||process.env.PLAYWRIGHT_MODULE;
-    const imported=await import(selectedModule?(path.isAbsolute(selectedModule)?pathToFileURL(selectedModule).href:selectedModule):'playwright');
+    let moduleSpecifier=selectedModule||'playwright';
+    if(selectedModule&&path.isAbsolute(selectedModule)){
+      const entry=(await stat(selectedModule)).isDirectory()?createRequire(import.meta.url).resolve(selectedModule):selectedModule;
+      moduleSpecifier=pathToFileURL(entry).href;
+    }
+    const imported=await import(moduleSpecifier);
     const chromium=imported.chromium||imported.default?.chromium;
     assert.ok(chromium,'The selected original Playwright module has no Chromium launcher.');
     browser=await chromium.launch({
@@ -329,7 +337,7 @@ export async function runExpenseAttributionBrowser({
         assert.equal(bytes.length,entry.bytes);assert.equal(sha(bytes),entry.sha256,
           'The original completed browser export changed.');
       }
-      report.status='PASS';report.completedAt=report.attempts.findLast(row=>row.status==='PASS')?.completedAt||report.startedAt;
+      report.status='PASS';report.completedAt=previousCompletedAt||report.attempts.findLast(row=>row.status==='PASS')?.completedAt||report.startedAt;
       attempt.status='PASS';attempt.completedAt=stamp();attempt.reopenedCompleteOriginal=true;
       report.reopenedAt=attempt.completedAt;
       await persist({capture:false});

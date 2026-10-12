@@ -35,7 +35,8 @@ function captureConnection(input, suppliedToken) {
   if (typeof token !== 'string' || !TOKEN_PATTERN.test(token)) {
     throw new TypeError('A 64-character hexadecimal tariff server token is required');
   }
-  return Object.freeze({ origin: parsed.origin, token });
+  const apiPrefix = ['/tariffs', '/tariffs/'].includes(parsed.pathname) ? '/api/tariffs' : '/api';
+  return Object.freeze({ origin: parsed.origin, token, apiPrefix });
 }
 
 function headerRecord(headers) {
@@ -70,7 +71,9 @@ export class TariffHttpError extends Error {
     this.rawBody = rawBody;
     this.body = body;
     this.code = body && typeof body === 'object' && body.error
-      && typeof body.error.code === 'string' ? body.error.code : 'TARIFF_HTTP_ERROR';
+      && typeof body.error.code === 'string' ? body.error.code
+      : body && typeof body === 'object' && typeof body.code === 'string'
+        ? body.code : 'TARIFF_HTTP_ERROR';
     this.requestId = headers['x-request-id'] || null;
   }
 }
@@ -122,6 +125,7 @@ function responseFilename(disposition, fallback) {
  */
 export class TariffClient {
   #origin;
+  #apiPrefix;
   #token;
   #fetch;
 
@@ -130,18 +134,24 @@ export class TariffClient {
     const selectedFetch = fetchImplementation === undefined ? globalThis.fetch : fetchImplementation;
     if (typeof selectedFetch !== 'function') throw new TypeError('A fetch implementation is required');
     this.#origin = connection.origin;
+    this.#apiPrefix = connection.apiPrefix;
     this.#token = connection.token;
     this.#fetch = selectedFetch.bind(globalThis);
   }
 
   get origin() { return this.#origin; }
+  get apiPrefix() { return this.#apiPrefix; }
 
   async #request(method, path, input, options = {}, binaryName = null) {
-    const url = new URL(path, this.#origin);
-    if (url.origin !== this.#origin || !url.pathname.startsWith('/api/')) {
+    const url = new URL(this.#apiPrefix + path.slice('/api'.length), this.#origin);
+    if (!path.startsWith('/api/') || url.origin !== this.#origin
+        || !url.pathname.startsWith(this.#apiPrefix + '/')) {
       throw new TypeError('A tariff request must stay within the captured API origin');
     }
-    const headers = { Authorization: 'Bearer ' + this.#token, Accept: binaryName === null ? 'application/json' : '*/*' };
+    const authentication = this.#apiPrefix === '/api/tariffs'
+      ? { 'x-sf97-workspace': this.#token }
+      : { Authorization: 'Bearer ' + this.#token };
+    const headers = { ...authentication, Accept: binaryName === null ? 'application/json' : '*/*' };
     const init = {
       method, headers, signal: options.signal,
       credentials: 'omit', cache: 'no-store', redirect: 'error'
@@ -216,7 +226,16 @@ export class TariffClient {
     return this.#request('GET', path, undefined, options, name);
   }
 
-  bundle(options) { return this.#request('GET', '/api/bundle', undefined, options); }
+  bundle(options = {}) {
+    const query = options.selectionRequestId === undefined ? '' : '?' + new URLSearchParams({
+      selectionRequestId: nonempty(options.selectionRequestId, 'selectionRequestId')
+    }).toString();
+    return this.#request('GET', '/api/bundle' + query, undefined, options);
+  }
+
+  inspectPortfolio(bundle, options) {
+    return this.#request('POST', '/api/portfolio/inspect', bundle, options);
+  }
 
   receive(bundle, options) { return this.#request('POST', '/api/receive', bundle, options); }
 

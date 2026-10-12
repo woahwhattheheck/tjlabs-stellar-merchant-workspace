@@ -22,6 +22,55 @@
         "style.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/schema-ui.js",
+      [
+        "schema-ui.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-levels",
+      [
+        "service-levels.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-levels.html",
+      [
+        "service-levels.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-levels-browser.js",
+      [
+        "service-levels-browser.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-levels.css",
+      [
+        "service-levels.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality-ui.mjs",
+      [
+        "quality-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality.css",
+      [
+        "quality.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

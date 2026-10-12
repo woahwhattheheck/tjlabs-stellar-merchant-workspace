@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // MIT. Operate the complete selected prepaid product through its original installer and workspaces.
-import {mkdir, readFile, writeFile, open, lstat, realpath, symlink, readdir, rename} from 'node:fs/promises';
+import {mkdir, readFile, writeFile, open, lstat, realpath, symlink, readdir, rename, link} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {resolve, join, dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash, randomUUID} from 'node:crypto';
-import {spawn} from 'node:child_process';
+import {spawn, spawnSync} from 'node:child_process';
 
 const SOURCE = '6e4a2bebf22cf809587406087efbce9c11d4e449';
 const BASE = 'stellar/scf-starforge-20261009/';
@@ -25,14 +25,16 @@ function options(args) {
   const out = {};
   while (args.length) {
     const flag = args.shift();
-    if (flag === '--resume') {need(out.resume === undefined, 'REPEATED_OPTION'); out.resume = true; continue;}
-    need(['--repo','--directory','--request','--dependencies','--python','--npm-cache'].includes(flag) &&
+    if (flag === '--resume' || flag === '--source-online') {
+      const key = flag.slice(2); need(out[key] === undefined, 'REPEATED_OPTION'); out[key] = true; continue;
+    }
+    need(['--repo','--directory','--request','--dependencies','--python','--npm-cache','--bulk-directory'].includes(flag) &&
       out[flag.slice(2)] === undefined && args.length, 'INSTALLED_OPERATION_OPTIONS_REQUIRED');
     out[flag.slice(2)] = args.shift();
   }
   for (const key of ['repo','directory','request']) need(typeof out[key] === 'string' && resolve(out[key]) === out[key],
     'INSTALLED_OPERATION_ABSOLUTE_PATH_REQUIRED');
-  for (const key of ['dependencies','npm-cache'])
+  for (const key of ['dependencies','npm-cache','bulk-directory'])
     if (out[key] !== undefined) need(resolve(out[key]) === out[key], 'INSTALLED_OPERATION_ABSOLUTE_PATH_REQUIRED');
   return out;
 }
@@ -128,8 +130,21 @@ export async function operateInstalledPrepaidProduct(input) {
   const requestSha256 = sha(requestBytes);
   const lease = await acquireStateLease(directory);
   const recordFile = join(directory, 'operation.json');
-  const runtimePath = index => join(directory, index === 0 ? 'runtime' :
-    'runtime-recovery-' + String(index).padStart(3, '0'));
+
+  const bulkRoot = (index, actual = record) => index === null ? directory : actual.bulkWorkspaces[index].directory;
+  const runtimePath = (index, bulkIndex = null, actual = record) => join(bulkRoot(bulkIndex, actual),
+    index === 0 ? 'runtime' : 'runtime-recovery-' + String(index).padStart(3, '0'));
+  const disjoint = (left, right) => left !== right && !left.startsWith(right + '/') && !right.startsWith(left + '/');
+  const filesystemIdentity = async path => {
+    const info = await lstat(path, {bigint:true});
+    return {device:info.dev.toString(),inode:info.ino.toString()};
+  };
+  const identityMatches = (left, right) => left?.device === right?.device && left?.inode === right?.inode;
+  const bulkMarker = entry => ({schema:'stellar-forge.prepaid-api-installed-bulk.v1',
+    operationId:record.id,operationDirectory:directory,requestSha256,sourceCommit:SOURCE,
+    sourceSelection:'prepaid-api',index:entry.index,directory:entry.directory,selectedAt:entry.selectedAt,
+    filesystem:entry.filesystem});
+  const bulkLeases = [], predecessorLeases = [];
   let record, merchant = null, customer = null, rawClose = null, rawClosed = false;
   const controller = new AbortController();
   let running = true, retryClose = null;
@@ -139,7 +154,8 @@ export async function operateInstalledPrepaidProduct(input) {
     else retryClose?.();
   };
   process.on('SIGINT', signal); process.on('SIGTERM', signal);
-  const check = () => {controller.signal.throwIfAborted(); lease.assertHeld();};
+  const check = () => {controller.signal.throwIfAborted(); lease.assertHeld();
+    for(const item of bulkLeases)item.lease.assertHeld();};
   const retainOwner = owner => {if (owner && typeof owner.close === 'function' && !owners.some(item => item.owner === owner))
     owners.push({owner, closed:false}); return owner;};
   const adoptFailureOwner = error => retainOwner(error?.merchantWorkspaceRecovery ?? error?.customerWorkspaceRecovery ?? error?.recovery);
@@ -155,17 +171,45 @@ export async function operateInstalledPrepaidProduct(input) {
       ['RUNNING','ATTENTION','COMPLETE'].includes(actual.status) && Array.isArray(actual.phases) &&
       actual.phases.length <= 8 && new Set(actual.phases.map(item=>item.name)).size === actual.phases.length,
       'INSTALLED_OPERATION_CHANGED');
+
+    if (actual.bulkWorkspaces !== undefined) {
+      need(Array.isArray(actual.bulkWorkspaces) && actual.bulkWorkspaces.length > 0 &&
+        actual.bulkWorkspaces.length <= 100 && actual.bulkWorkspaces.every((entry, index, all) =>
+          entry.index === index && typeof entry.directory === 'string' && resolve(entry.directory) === entry.directory &&
+          entry.directory !== '/' && !/[\x00-\x1f\x7f]/.test(entry.directory) &&
+          disjoint(entry.directory,directory) && disjoint(entry.directory,repository) &&
+          disjoint(entry.directory,dirname(opts.request)) &&
+          all.slice(0,index).every(previous => disjoint(previous.directory,entry.directory)) &&
+          typeof entry.selectedAt === 'string' && Number.isFinite(Date.parse(entry.selectedAt)) &&
+          (entry.filesystem === null || entry.filesystem &&
+            /^[0-9]+$/.test(entry.filesystem.device ?? '') && /^[0-9]+$/.test(entry.filesystem.inode ?? ''))),
+        'INSTALLED_BULK_SELECTION_CHANGED');
+    }
+    if (actual.archiveLocations !== undefined) {
+      const built = actual.phases.find(item=>item.name==='SELECTED_PRODUCT_BUILT')?.result;
+      need(built && Array.isArray(actual.archiveLocations) && actual.archiveLocations.length <= 100 &&
+        actual.archiveLocations.every((entry,index,all) =>
+          Number.isSafeInteger(entry.bulkIndex) && entry.bulkIndex >= 0 &&
+          entry.bulkIndex < (actual.bulkWorkspaces?.length ?? 0) &&
+          all.slice(0,index).every(previous=>previous.bulkIndex!==entry.bulkIndex) &&
+          entry.path === join(bulkRoot(entry.bulkIndex,actual),'selected-product.tgz') &&
+          entry.sha256 === built.sha256 && Number.isSafeInteger(entry.bytes) && entry.bytes > 0 &&
+          entry.bytes <= 64*1024*1024 && typeof entry.selectedAt === 'string' &&
+          Number.isFinite(Date.parse(entry.selectedAt))), 'INSTALLED_ARCHIVE_LOCATION_CHANGED');
+    }
     if (actual.runtimeAttempts !== undefined) {
       need(Array.isArray(actual.runtimeAttempts) && actual.runtimeAttempts.length > 0 &&
         actual.runtimeAttempts.length <= 100 && actual.runtimeAttempts.every((attempt, index, all) =>
-          attempt.index === index && attempt.directory === runtimePath(index) &&
+          attempt.index === index && (attempt.bulkIndex===undefined||attempt.bulkIndex===null||
+            Number.isSafeInteger(attempt.bulkIndex)&&attempt.bulkIndex>=0&&attempt.bulkIndex<(actual.bulkWorkspaces?.length??0)) &&
+          attempt.directory === runtimePath(index,attempt.bulkIndex??null,actual) &&
           attempt.from === (index === 0 ? null : all[index - 1].directory) &&
           (index === 0 ? attempt.fromPreparationSha256 === null &&
             attempt.fromPreparationState === null && attempt.fromPreparationBytes === null :
-            ['COMPLETE','ABSENT','EMPTY','INVALID_JSON'].includes(attempt.fromPreparationState) &&
+            ['COMPLETE','ABSENT','EMPTY','INVALID_JSON','ABSENT_DIRECTORY'].includes(attempt.fromPreparationState) &&
             Number.isSafeInteger(attempt.fromPreparationBytes) && attempt.fromPreparationBytes >= 0 &&
             attempt.fromPreparationBytes <= JSON_LIMIT &&
-            (attempt.fromPreparationState === 'ABSENT' ?
+            (['ABSENT','ABSENT_DIRECTORY'].includes(attempt.fromPreparationState) ?
               attempt.fromPreparationSha256 === null && attempt.fromPreparationBytes === 0 :
               /^[a-f0-9]{64}$/.test(attempt.fromPreparationSha256 ?? '')) &&
             (attempt.fromPreparationState !== 'EMPTY' || attempt.fromPreparationBytes === 0)) &&
@@ -207,6 +251,120 @@ export async function operateInstalledPrepaidProduct(input) {
     await originalStore.syncDirectory(directory);
     return reload();
   };
+
+  const rootAvailable = async index => {
+    if (index === null) return true;
+    const entry = record.bulkWorkspaces[index];
+    if (!(await exists(entry.directory))) return false;
+    await privateDir(entry.directory);
+    need(entry.filesystem !== null && identityMatches(entry.filesystem,await filesystemIdentity(entry.directory)),
+      'INSTALLED_BULK_DIRECTORY_CHANGED');
+    need((await bytes(join(entry.directory,'bulk-workspace.json'))).equals(originalStore.jsonBytes(bulkMarker(entry))),
+      'INSTALLED_BULK_OWNER_CHANGED');
+    return true;
+  };
+  const selectedBulk = async () => {
+    let actual = await reload();
+    let entry = actual.bulkWorkspaces?.at(-1) ?? null;
+    if (opts['bulk-directory'] !== undefined && opts['bulk-directory'] !== entry?.directory) {
+      need(actual.status !== 'COMPLETE' &&
+        !actual.phases.some(item=>item.name==='ORIGINAL_RUNTIME_INSTALLED'),
+        'INSTALLED_COMPLETED_RUNTIME_CANNOT_RELOCATE');
+      const selected = opts['bulk-directory'];
+      const forbidden = [directory,repository,dirname(opts.request),...(opts.dependencies?[await realpath(opts.dependencies)]:[])];
+      need(selected !== '/' && forbidden.every(path=>disjoint(selected,path)) &&
+        (actual.bulkWorkspaces??[]).every(previous=>disjoint(selected,previous.directory)),
+        'INSTALLED_BULK_PATH_MUST_DIFFER');
+      need(await realpath(dirname(selected)) === dirname(selected), 'INSTALLED_BULK_REAL_PARENT_REQUIRED');
+      if (await exists(selected)) {
+        await privateDir(selected);
+        need((await readdir(selected)).length===0, 'INSTALLED_NEW_PRIVATE_BULK_REQUIRED');
+      }
+      need((actual.bulkWorkspaces?.length??0)<100,'INSTALLED_BULK_SELECTION_LIMIT');
+      entry={index:actual.bulkWorkspaces?.length??0,directory:selected,selectedAt:now(),filesystem:null};
+      check();
+      await save({...actual,bulkWorkspaces:[...(actual.bulkWorkspaces??[]),entry],updatedAt:now()});
+      actual=await reload();entry=actual.bulkWorkspaces.at(-1);
+    }
+    return entry;
+  };
+  const openBulk = async entry => {
+    if (entry === null) return directory;
+    check();
+    if (!(await exists(entry.directory))) {
+      need(entry.filesystem===null, 'INSTALLED_RECORDED_BULK_DIRECTORY_MISSING');
+      need(await realpath(dirname(entry.directory))===dirname(entry.directory), 'INSTALLED_BULK_REAL_PARENT_REQUIRED');
+      await mkdir(entry.directory,{mode:0o700});
+      await originalStore.syncDirectory(dirname(entry.directory));
+    }
+    await privateDir(entry.directory);
+    const selectedLease=await acquireStateLease(entry.directory);
+    // Retain the raw close handle immediately; every later failure reaches retire().
+    const owned={directory:entry.directory,lease:selectedLease,closePromise:null};
+    bulkLeases.push(owned);
+    const observed=await filesystemIdentity(entry.directory);
+    const markerPath=join(entry.directory,'bulk-workspace.json');
+    if(entry.filesystem===null){
+      need((await readdir(entry.directory)).every(name=>name==='lease.lock'), 'INSTALLED_UNBOUND_BULK_NOT_EMPTY');
+      const actual=await reload(), current=actual.bulkWorkspaces[entry.index];
+      need(current.filesystem===null && current.directory===entry.directory,'INSTALLED_BULK_SELECTION_CHANGED');
+      const bound={...current,filesystem:observed};
+      await save({...actual,bulkWorkspaces:actual.bulkWorkspaces.map(item=>item.index===entry.index?bound:item),updatedAt:now()});
+      entry=(await reload()).bulkWorkspaces[entry.index];
+    }
+    need(identityMatches(entry.filesystem,observed),'INSTALLED_BULK_DIRECTORY_CHANGED');
+    const wanted=originalStore.jsonBytes(bulkMarker(entry));
+    if(await exists(markerPath)){
+      need((await bytes(markerPath)).equals(wanted),'INSTALLED_BULK_OWNER_CHANGED');
+    }else{
+      const temporary=/^\.write-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+      const retained=/^\.interrupted-write-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+      const names=await readdir(entry.directory), history=[];
+      need(names.every(name=>name==='lease.lock'||temporary.test(name)||retained.test(name)),
+        'INSTALLED_UNBOUND_BULK_NOT_EMPTY');
+      for(const name of names.filter(name=>temporary.test(name))){
+        const path=join(entry.directory,name), info=await lstat(path), raw=await bytes(path);
+        need(info.isFile()&&!info.isSymbolicLink()&&info.nlink===1&&!(info.mode&0o077)&&
+          (!process.getuid||info.uid===process.getuid())&&raw.length<=wanted.length&&
+          raw.equals(wanted.subarray(0,raw.length)), 'INSTALLED_BULK_MARKER_TEMPORARY_CHANGED');
+        history.push({name,info,sha256:sha(raw)});
+      }
+      await originalStore.writeBytes(markerPath,wanted,{exclusive:true});
+      for(const item of history){
+        const path=join(entry.directory,item.name),info=await lstat(path);
+        need(info.dev===item.info.dev&&info.ino===item.info.ino&&info.ctimeMs===item.info.ctimeMs&&
+          sha(await bytes(path))===item.sha256,'INSTALLED_BULK_MARKER_TEMPORARY_CHANGED');
+        const target=join(entry.directory,item.name.replace('.write-','.interrupted-write-'));
+        need(!(await exists(target)),'INSTALLED_BULK_MARKER_HISTORY_CHANGED');
+        await rename(path,target);
+      }
+      await originalStore.syncDirectory(entry.directory);
+    }
+    need(await rootAvailable(entry.index),'INSTALLED_RECORDED_BULK_DIRECTORY_MISSING');
+    return entry.directory;
+  };
+  const holdPredecessor = async previous => {
+    const index=previous.bulkIndex??null;
+    if(!(await rootAvailable(index))||!(await exists(previous.directory)))return;
+    await privateDir(previous.directory);
+    const path=join(previous.directory,'install.lock');
+    if(!(await exists(path)))return;
+    if(predecessorLeases.some(item=>item.directory===previous.directory))return;
+    // The original installer passes this exact open-description flock to npm.
+    // An orphaned original npm still blocks relocation; its PID is immaterial.
+    const handle=await open(path,constants.O_RDWR|constants.O_NOFOLLOW);
+    const owned={directory:previous.directory,handle,closePromise:null};
+    predecessorLeases.push(owned);
+    const info=await handle.stat(),named=await lstat(path);
+    need(info.isFile()&&named.isFile()&&!named.isSymbolicLink()&&info.nlink===1&&!(info.mode&0o077)&&
+      (!process.getuid||info.uid===process.getuid())&&info.dev===named.dev&&info.ino===named.ino,
+      'RUNTIME_PRIVATE_LOCK_REQUIRED');
+    const result=spawnSync('flock',['--exclusive','--nonblock','--conflict-exit-code','75','3'],
+      {stdio:['ignore','ignore','ignore',handle.fd],timeout:5000});
+    need(!result.error,'RUNTIME_FLOCK_UNAVAILABLE');
+    need(result.status===0,result.status===75?'RUNTIME_INSTALL_ALREADY_RUNNING':'RUNTIME_LOCK_FAILED');
+  };
+
   const phase = async (name, result) => {
     const actual = await reload(), previous = actual.phases.find(item => item.name === name);
     if (previous) {
@@ -225,14 +383,24 @@ export async function operateInstalledPrepaidProduct(input) {
   };
   const retire = async () => {
     await closeOwners();
-    if (!rawClose) rawClose = lease.close();
-    await rawClose; rawClosed = true;
+    let failure=null;
+    // All application owners drain first. Each raw descriptor close is retained
+    // once, including the original predecessor lock and private bulk lease.
+    for(const item of [...predecessorLeases,...bulkLeases].reverse()){
+      if(item.closePromise===null)item.closePromise=Promise.resolve().then(()=>item.lease?item.lease.close():item.handle.close());
+      try{await item.closePromise;}catch(error){failure??=error;}
+    }
+    if (!rawClose) rawClose=Promise.resolve().then(()=>lease.close());
+    try{await rawClose;rawClosed=true;}catch(error){failure??=error;}
+    if(failure)throw failure;
   };
   try {
     if (await exists(recordFile)) {
       need(opts.resume === true, 'ORIGINAL_INSTALLED_OPERATION_RESUME_REQUIRED');
       await reload();
     } else await initialRecord();
+
+    let placement=await selectedBulk();
     if (record.status === 'COMPLETE') {
       const body=await bytes(join(directory,'result.json')),result=JSON.parse(body);
       need(result.schema===SCHEMA&&result.status==='COMPLETE'&&result.operationId===record.id&&
@@ -240,18 +408,73 @@ export async function operateInstalledPrepaidProduct(input) {
         canonical(result.phases)===canonical(record.phases),'INSTALLED_OPERATION_RESULT_CHANGED');
       return result;
     }
+    const bulkDirectory=await openBulk(placement);
+    if(placement!==null)placement=(await reload()).bulkWorkspaces[placement.index];
+    const placementIndex=placement?.index??null;
     check();
-    const output = join(directory,'selected-release');
-    const packaged = await buildDistribution({repository,ref:SOURCE,output,selection:'prepaid-api',
-      offline:true,resume:await exists(output),python:opts.python ?? 'python3',
-      onProgress:event => {if (['selected','packaged','reused'].includes(event.phase))
-        process.stdout.write(JSON.stringify({build:event.phase,files:event.files ?? null}) + '\n');}});
-    need(packaged.sourceCommit === SOURCE && packaged.sourceSelection?.id === 'prepaid-api',
-      'INSTALLED_SELECTION_REQUIRED');
-    await phase('SELECTED_PRODUCT_BUILT', {archive:packaged.archive,sha256:packaged.sha256,
-      sourceCommit:packaged.sourceCommit,selection:packaged.sourceSelection.id,sourceFiles:packaged.sourceFiles});
+    const output=join(bulkDirectory,'selected-release');
+    let built=(await reload()).phases.find(item=>item.name==='SELECTED_PRODUCT_BUILT')?.result;
+    let packaged,archiveBody=null;
+    if(built){
+      need(built.sourceCommit===SOURCE&&built.selection==='prepaid-api'&&
+        typeof built.archive==='string'&&resolve(built.archive)===built.archive&&
+        [directory,...(record.bulkWorkspaces??[]).map(item=>item.directory)].some(root=>
+          dirname(built.archive)===join(root,'selected-release'))&&
+        /^[a-f0-9]{64}$/.test(built.sha256??'')&&Number.isSafeInteger(built.sourceFiles)&&built.sourceFiles>0,
+        'INSTALLED_SELECTION_REQUIRED');
+      const locations=[...(record.archiveLocations??[]).filter(item=>item.bulkIndex===placementIndex),
+        ...(record.archiveLocations??[]).filter(item=>item.bulkIndex!==placementIndex),
+        {path:built.archive,bulkIndex:(record.bulkWorkspaces??[]).find(item=>
+          built.archive.startsWith(item.directory+'/'))?.index??null}];
+      for(const item of locations){
+        if(!(await rootAvailable(item.bulkIndex))||!(await exists(item.path)))continue;
+        const body=await bytes(item.path,64*1024*1024);
+        need(body.length>0&&sha(body)===built.sha256,'INSTALLED_RUNTIME_ARCHIVE_CHANGED');
+        packaged={archive:item.path,sha256:built.sha256,sourceCommit:SOURCE,
+          sourceSelection:{id:'prepaid-api'},sourceFiles:built.sourceFiles};
+        archiveBody=body;break;
+      }
+    }
+    if(!packaged){
+      packaged=await buildDistribution({repository,ref:SOURCE,output,selection:'prepaid-api',
+        offline:opts['source-online'] !== true,resume:await exists(output),python:opts.python ?? 'python3',
+        onProgress:event => {if (['selected','packaged','reused'].includes(event.phase))
+          process.stdout.write(JSON.stringify({build:event.phase,files:event.files ?? null}) + '\n');}});
+      need(packaged.sourceCommit===SOURCE&&packaged.sourceSelection?.id==='prepaid-api','INSTALLED_SELECTION_REQUIRED');
+      if(built)need(packaged.sha256===built.sha256&&packaged.sourceFiles===built.sourceFiles,
+        'INSTALLED_REBUILT_ARCHIVE_CHANGED');
+      else{
+        await phase('SELECTED_PRODUCT_BUILT',{archive:packaged.archive,sha256:packaged.sha256,
+          sourceCommit:packaged.sourceCommit,selection:packaged.sourceSelection.id,sourceFiles:packaged.sourceFiles});
+        built=(await reload()).phases.find(item=>item.name==='SELECTED_PRODUCT_BUILT').result;
+      }
+    }
+    if(placement!==null){
+      check();need(await rootAvailable(placement.index),'INSTALLED_RECORDED_BULK_DIRECTORY_MISSING');
+      const target=join(bulkDirectory,'selected-product.tgz');
+      archiveBody??=await bytes(packaged.archive,64*1024*1024);
+      need(archiveBody.length>0&&sha(archiveBody)===built.sha256,'INSTALLED_RUNTIME_ARCHIVE_CHANGED');
+      let actual=await reload(), location=actual.archiveLocations?.find(item=>item.bulkIndex===placement.index);
+      if(!location){
+        location={bulkIndex:placement.index,path:target,sha256:built.sha256,bytes:archiveBody.length,selectedAt:now()};
+        await save({...actual,archiveLocations:[...(actual.archiveLocations??[]),location],updatedAt:now()});
+      }else need(location.bytes===archiveBody.length&&location.sha256===built.sha256,'INSTALLED_ARCHIVE_LOCATION_CHANGED');
+      if(!(await exists(target))){
+        try{await link(packaged.archive,target);await originalStore.syncDirectory(bulkDirectory);}
+        catch(error){
+          if(error.code!=='EXDEV'&&error.code!=='EEXIST')throw error;
+          if(error.code==='EXDEV')await originalStore.writeBytes(target,archiveBody,{exclusive:true});
+        }
+      }
+      need((await bytes(target,64*1024*1024)).equals(archiveBody),'INSTALLED_RUNTIME_ARCHIVE_CHANGED');
+      packaged={...packaged,archive:target};
+      archiveBody=null;
+    }
     check();
-    const preparation = async selectedDirectory => {
+    archiveBody=null;
+    const preparation = async (selectedDirectory,bulkIndex=null) => {
+      if(!(await rootAvailable(bulkIndex))||!(await exists(selectedDirectory)))
+        return {state:'ABSENT_DIRECTORY',bytes:0,sha256:null};
       await privateDir(selectedDirectory);
       const path = join(selectedDirectory, 'preparation.json');
       let info;
@@ -275,40 +498,49 @@ export async function operateInstalledPrepaidProduct(input) {
         'ORIGINAL_RUNTIME_PREPARATION_CHANGED');
       return {...observed,state:'COMPLETE'};
     };
+
     let actual = await reload();
     if (actual.runtimeAttempts === undefined) {
-      await save({...actual, runtimeAttempts:[{index:0,directory:runtimePath(0),from:null,
+      await save({...actual, runtimeAttempts:[{index:0,directory:runtimePath(0,placementIndex),from:null,
+        ...(placementIndex===null?{}:{bulkIndex:placementIndex}),
         fromPreparationSha256:null,fromPreparationState:null,fromPreparationBytes:null,
         archiveSha256:packaged.sha256,selectedAt:now()}],updatedAt:now()});
       actual = await reload();
     }
     let selectedRuntime = actual.runtimeAttempts.at(-1);
     need(selectedRuntime.archiveSha256 === packaged.sha256, 'INSTALLED_RUNTIME_ARCHIVE_CHANGED');
-    if (await exists(selectedRuntime.directory) &&
-        (!(await exists(join(selectedRuntime.directory,'runtime-install.json'))) ||
-         !(await exists(join(selectedRuntime.directory,'install-state.json'))))) {
-      need(opts.resume === true &&
-        !actual.phases.some(item => item.name === 'ORIGINAL_RUNTIME_INSTALLED'),
+    const placementChanged=(selectedRuntime.bulkIndex??null)!==placementIndex;
+    const priorRootPresent=await rootAvailable(selectedRuntime.bulkIndex??null);
+    const runtimePresent=priorRootPresent&&await exists(selectedRuntime.directory);
+    const incomplete=runtimePresent&&
+      (!(await exists(join(selectedRuntime.directory,'runtime-install.json')))||
+       !(await exists(join(selectedRuntime.directory,'install-state.json'))));
+    if(placementChanged||incomplete){
+      need(opts.resume===true&&!actual.phases.some(item=>item.name==='ORIGINAL_RUNTIME_INSTALLED'),
         'ORIGINAL_RUNTIME_PREPARATION_RECOVERY_REQUIRED');
-      // Keep every original partial runtime. Explicit resume records both the
-      // observed preparation bytes and the next original installer destination.
-      const previous = await preparation(selectedRuntime.directory);
-      const index = actual.runtimeAttempts.length;
-      need(index < 100, 'INSTALLED_RUNTIME_RECOVERY_LIMIT');
-      const nextDirectory = runtimePath(index);
-      need(!(await exists(nextDirectory)), 'INSTALLED_RUNTIME_RECOVERY_DESTINATION_EXISTS');
-      const next = {index,directory:nextDirectory,from:selectedRuntime.directory,
+      await holdPredecessor(selectedRuntime);
+      const previous=await preparation(selectedRuntime.directory,selectedRuntime.bulkIndex??null);
+      const index=actual.runtimeAttempts.length;
+      need(index<100,'INSTALLED_RUNTIME_RECOVERY_LIMIT');
+      const nextDirectory=runtimePath(index,placementIndex);
+      need(!(await exists(nextDirectory)),'INSTALLED_RUNTIME_RECOVERY_DESTINATION_EXISTS');
+      const next={index,directory:nextDirectory,from:selectedRuntime.directory,
+        ...(placementIndex===null?{}:{bulkIndex:placementIndex}),
         fromPreparationSha256:previous.sha256,fromPreparationState:previous.state,
         fromPreparationBytes:previous.bytes,archiveSha256:packaged.sha256,selectedAt:now()};
       check();
       await save({...actual,runtimeAttempts:[...actual.runtimeAttempts,next],updatedAt:now()});
-      actual = await reload(); selectedRuntime = actual.runtimeAttempts.at(-1);
+      actual=await reload();selectedRuntime=actual.runtimeAttempts.at(-1);
     }
     const runtime = selectedRuntime.directory;
     if (!(await exists(runtime))) {
+      need(!actual.phases.some(item=>item.name==='ORIGINAL_RUNTIME_INSTALLED'),
+        'INSTALLED_COMPLETED_RUNTIME_MISSING');
       check();
       if (selectedRuntime.from !== null) {
-        const previous = await preparation(selectedRuntime.from);
+        const predecessor=actual.runtimeAttempts[selectedRuntime.index-1];
+        await holdPredecessor(predecessor);
+        const previous=await preparation(selectedRuntime.from,predecessor.bulkIndex??null);
         need(previous.sha256 === selectedRuntime.fromPreparationSha256 &&
           previous.state === selectedRuntime.fromPreparationState &&
           previous.bytes === selectedRuntime.fromPreparationBytes,
@@ -317,9 +549,8 @@ export async function operateInstalledPrepaidProduct(input) {
           await installer.recoverRuntime({from:selectedRuntime.from,directory:runtime,
             install:false,python:opts.python ?? 'python3'});
         } else {
-          // The original preparation write never yielded readable JSON. The
-          // driver's already retained archive/selection is still authoritative;
-          // prepare a new original runtime without altering the failed bytes.
+          // The retained driver intent supplies the original archive/selection
+          // after an absent or unreadable first write, preserving its predecessor.
           await installer.prepareRuntimeInstall({directory:runtime,archive:packaged.archive,
             sha256:packaged.sha256,native:true,operator:true,features:['schema','openapi','mcp'],
             python:opts.python ?? 'python3',from:selectedRuntime.from});
@@ -341,7 +572,18 @@ export async function operateInstalledPrepaidProduct(input) {
       if (!(await exists(lockFile))) await writeFile(lockFile,lock,{flag:'wx',mode:0o600});
       else need((await bytes(lockFile,16 * 1024 * 1024)).equals(lock), 'ORIGINAL_DEPENDENCY_LOCK_CHANGED');
       await installer.installRuntime({directory:runtime,adoptExisting:true});
-    } else await installer.installRuntime({directory:runtime,...(opts['npm-cache']?{cache:opts['npm-cache']}:{})});
+    } else {
+      const cache=opts['npm-cache']??(placement===null?undefined:join(bulkDirectory,'npm-cache'));
+      if(cache!==undefined&&placement!==null){
+        need(disjoint(cache,repository)&&disjoint(cache,directory)&&cache!==bulkDirectory&&
+          disjoint(cache,runtime),'INSTALLED_PRIVATE_CACHE_MUST_DIFFER');
+        await privateDir(cache,true);
+      }
+      check();
+      await installer.installRuntime({directory:runtime,...(cache?{cache}:{})});
+    }
+    check();
+    if(placement!==null)need(await rootAvailable(placement.index),'INSTALLED_RECORDED_BULK_DIRECTORY_MISSING');
     const installation = await installer.inspectRuntimeInstall({directory:runtime,load:true,source:true});
     need(installation.ready && installation.sourceVerified && installation.sourceCommit === SOURCE,
       'INSTALLED_RUNTIME_NOT_READY');
@@ -448,6 +690,8 @@ export async function operateInstalledPrepaidProduct(input) {
     const finalRecord = await reload();
     let result = {schema:SCHEMA,status:'COMPLETE',operationId:record.id,completedAt:now(),sourceCommit:SOURCE,
       sourceSelection:'prepaid-api',archive:{path:packaged.archive,sha256:packaged.sha256},
+      ...(placement===null?{}:{bulk:{directory:bulkDirectory,index:placement.index,
+        workspaces:finalRecord.bulkWorkspaces,archives:finalRecord.archiveLocations}}),
       installation:{directory:runtime,installationId:installation.installationId,profileId:installation.profileId,
         attempts:finalRecord.runtimeAttempts},
       setupId:setup.setupId,merchantWorkspaceId:published.workspaceId,customerWorkspaceId:originalWorkspaceId,

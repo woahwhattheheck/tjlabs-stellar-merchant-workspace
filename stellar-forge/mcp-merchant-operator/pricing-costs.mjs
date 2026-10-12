@@ -5,7 +5,7 @@ import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { exact, failure, identifier, line, plain } from './config.mjs';
+import { exact, failure, identifier, line, plain } from './host-files.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 import { PricingCostArchiveReads } from './pricing-cost-files.mjs';
 import { MAX_SOURCE, MAX_DOCUMENT } from '../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/common.mjs';
