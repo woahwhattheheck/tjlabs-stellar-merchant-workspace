@@ -29,11 +29,24 @@ async function body(req) {
   catch { throw Object.assign(new Error('INVALID_JSON'), { status: 400 }); }
 }
 
-export async function startMysqlMerchantWorkspace({ model, port = 8439, ...options } = {}) {
+export async function startMysqlMerchantWorkspace({ model, port = 8439, extension = null, ownsModel = true, ...options } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new RangeError('WORKSPACE_PORT_INVALID');
   model ??= await createMysqlWorkspace(options);
   const files = new Map(await Promise.all([...FILES].map(async ([url, [name, type]]) =>
     [url, { type, bytes: await readFile(new URL('./public/' + name, import.meta.url)) }])));
+  if (extension) {
+    if (typeof extension !== 'object' || typeof extension.handle !== 'function' ||
+        typeof extension.head !== 'string' || extension.head.length > 4096 || !Array.isArray(extension.files))
+      throw new TypeError('MYSQL_WORKSPACE_EXTENSION_INVALID');
+    for (const file of extension.files) {
+      if (!file || !/^\/[A-Za-z0-9_./-]+$/.test(file.path) || file.path.includes('..') ||
+          files.has(file.path) || !Buffer.isBuffer(file.bytes) || typeof file.type !== 'string')
+        throw new TypeError('MYSQL_WORKSPACE_EXTENSION_INVALID');
+      files.set(file.path, { type: file.type, bytes: file.bytes });
+    }
+    const index = files.get('/');
+    index.bytes = Buffer.from(index.bytes.toString('utf8').replace('</head>', extension.head + '</head>'));
+  }
   const capability = randomBytes(32).toString('hex'), tickets = new Map(), sockets = new Set(), downloads = new Set();
   let origin, closing = false, closePromise;
   const authorized = req => {
@@ -66,7 +79,9 @@ export async function startMysqlMerchantWorkspace({ model, port = 8439, ...optio
           'x-content-type-options': 'nosniff', 'x-content-sha256': ticket.sha256 });
         return res.end(ticket.bytes);
       }
+      if (req.method === 'GET' && await extension?.download?.({ req, res, url, json })) return;
       if (!authorized(req)) return json(res, 403, { error: 'WORKSPACE_CAPABILITY_REQUIRED' });
+      if (extension && await extension.handle({ req, res, url, json, body })) return;
       if (req.method === 'GET') {
         if (url.pathname === '/api/info' && !url.search) return json(res, 200, await model.info());
         if (url.pathname === '/api/runtime' && !url.search) return json(res, 200, { runtime: await model.runtime() });
@@ -101,7 +116,7 @@ export async function startMysqlMerchantWorkspace({ model, port = 8439, ...optio
   server.on('connection', socket => { sockets.add(socket); socket.once('close', () => { sockets.delete(socket); downloads.delete(socket); }); });
   server.requestTimeout = 15000; server.headersTimeout = 10000; server.keepAliveTimeout = 3000;
   try { await new Promise((done, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', done); }); }
-  catch (error) { await model.close(); throw error; }
+  catch (error) { try { if (ownsModel) await model.close(); } finally { await extension?.close?.(); } throw error; }
   origin = `http://127.0.0.1:${server.address().port}`;
   return { url: origin + '/#' + capability, origin, model, server,
     close() {
@@ -109,13 +124,16 @@ export async function startMysqlMerchantWorkspace({ model, port = 8439, ...optio
       closing = true;
       closePromise = (async () => {
         const listenerClosed = new Promise(done => server.close(done)); server.closeIdleConnections();
-        try { await model.close(); }
+        try { if (ownsModel) await model.close(); }
         finally {
+          let extensionError;
+          try { await extension?.close?.(); } catch (error) { extensionError = error; }
           for (const socket of sockets) if (!downloads.has(socket)) socket.destroy();
           let grace;
           if (downloads.size) await Promise.race([listenerClosed, new Promise(done => { grace = setTimeout(done, 15000); })]);
           clearTimeout(grace); for (const socket of sockets) socket.destroy();
           await listenerClosed; tickets.clear();
+          if (extensionError) throw extensionError;
         }
       })();
       return closePromise;

@@ -1,0 +1,25 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "mysql-product",
+  "description": "Complete MySQL and MariaDB authoring, retained releases, scheduled snapshot publishing, native buyer delivery and managed customer applications.",
+  "components": [
+    "products/mysql-workspace"
+  ],
+  "commands": {
+    "mysql-product": "products/mysql-workspace/cli.mjs"
+  },
+  "commandDescriptions": {
+    "mysql-product": "Set up, author, run and publish a MySQL merchant; receive complete customer work and continue its original application."
+  },
+  "exports": {
+    "./products/mysql-workspace": "./source/products/mysql-workspace/workspace.mjs",
+    "./products/mysql-workspace/client": "./source/products/mysql-workspace/client.mjs",
+    "./products/mysql-workspace/managed": "./source/products/mysql-workspace/managed.mjs"
+  },
+  "applicationProviders": {
+    "mysql-product": "products/mysql-workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "mysql-products": "products/mysql-workspace/merchant-provider.mjs"
+  }
+}
