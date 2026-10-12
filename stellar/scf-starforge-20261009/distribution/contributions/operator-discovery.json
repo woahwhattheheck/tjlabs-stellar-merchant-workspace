@@ -6,10 +6,12 @@
     "stellar/scf-starforge-20261009/distribution/discovery"
   ],
   "commands": {
-    "discover": "stellar/scf-starforge-20261009/distribution/discovery/cli.mjs"
+    "discover": "stellar/scf-starforge-20261009/distribution/discovery/cli.mjs",
+    "grant-reporting-plan": "stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-plan-cli.mjs"
   },
   "commandDescriptions": {
-    "discover": "Find installed commands, match complete product requirements, prepare source build reviews and save customer operating plans with original registrations and revision history"
+    "discover": "Find installed commands, match complete product requirements, prepare source build reviews and save customer operating plans with original registrations and revision history",
+    "grant-reporting-plan": "Create a complete customer reporting procedure from original Grant case, source-table, report and Installation references"
   },
   "exports": {
     "./operator/discovery": {
@@ -45,6 +47,10 @@
     "./operator/product-plan-runtime": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/product-plan-runtime.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/product-plan-runtime.mjs"
+    },
+    "./operator/grant-reporting-plan": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-plan.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-plan.mjs"
     }
   },
   "applicationProviders": {

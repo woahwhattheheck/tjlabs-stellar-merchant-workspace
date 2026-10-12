@@ -46,7 +46,8 @@
     "merchant-provider-grant-workspaces",
     "grant-source-tables",
     "grant-application-handoff",
-    "grant-cohort-planning"
+    "grant-cohort-planning",
+    "operator-discovery"
   ],
   "components": [
     "stellar/scf_2026/sf47_budget_model",
