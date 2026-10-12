@@ -1168,8 +1168,8 @@
     "composition": {
       "operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
-      "canonical_front_sha256": "74d9738cf4f29047ca0f6555a6b168abe41a436042afeb0db7f2858176953828",
-      "canonical_front_bytes": 37734,
+      "canonical_front_sha256": "fe3c86a0873244c2250e4a5b14101070fd4f858f49c4fe23e41c43cf4da96ce8",
+      "canonical_front_bytes": 35612,
       "renderer_git_blob": "4286979763c4d530d65ba78e3b1b2f704d233a56",
       "source_editions": [
         {
@@ -1253,7 +1253,10 @@
       "application_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
       "application_git_blob": "025350138766fe87679b95ecfbd9bca11ba3d9d2",
       "renderer_git_blob": "adca97e4c94c253df927e75b9d5c6157bf0b6e70",
-      "canonical_sync": "Prepared against current canonical front; synchronization in progress."
+      "canonical_sync": "Verified by native Canvas readback after 37 atomic section operations; all eight revised bodies match the complete authored application with Canvas table spacing normalized, and the current applicant body remains in place.",
+      "canonical_front_sha256": "fe3c86a0873244c2250e4a5b14101070fd4f858f49c4fe23e41c43cf4da96ce8",
+      "canonical_front_bytes": 35612,
+      "verified_application_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a"
     }
   },
   "submission_workspace": {
