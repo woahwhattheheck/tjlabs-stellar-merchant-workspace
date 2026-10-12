@@ -139,7 +139,7 @@ try{
 
  const require=createRequire(import.meta.url);
  const {chromium}=require(options.playwrightModule);
- browser=await chromium.launch({headless:true,executablePath:options.chromiumExecutable,args:['--no-sandbox']});
+ browser=await chromium.launch({headless:true,executablePath:options.chromiumExecutable,args:['--no-sandbox','--disable-dev-shm-usage']});
  context=await browser.newContext({viewport:{width:1440,height:1080},acceptDownloads:true});
  const page=await context.newPage();const pageErrors=[];page.on('pageerror',error=>pageErrors.push(error.message));
  await page.goto(linked.url,{waitUntil:'networkidle',timeout:30000});
