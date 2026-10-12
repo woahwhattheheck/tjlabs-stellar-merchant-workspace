@@ -1,0 +1,615 @@
+{
+  "schema": "stellar-forge.analysis-lineage-source-adoption.v1",
+  "product": "analysis-lineage",
+  "originalSource": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "pullRequest": 2488,
+    "commit": "09368a63cb6a55a21595a8d59c19bc329f9ddb29"
+  },
+  "productBase": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "5395e6424cb99935c59a1c357fa6b31e3a0a4a0f"
+  },
+  "integration": {
+    "application": "python-analysis",
+    "setting": "lineageConnectionsFile",
+    "argument": "--lineage-connections",
+    "resource": "original python-analysis database resource",
+    "sourceSelection": "stellar/scf-starforge-20261009/distribution/selections/analysis-lineage.json",
+    "contributions": [
+      "python",
+      "openlineage-workspace",
+      "analysis-lineage"
+    ]
+  },
+  "originalFiles": [
+    {
+      "path": "stellar-forge/mcp-paid-agent/ANALYSIS.md",
+      "bytes": 29397,
+      "sha256": "337bf5274cf22dada8bb1bb61889a7857bdabfabae35e0d91893a3a7d46a494b",
+      "gitBlob": "01c983efb99fab250267c9c15e63d0d9a5f47b83"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/ANALYSIS_LINEAGE.md",
+      "bytes": 12316,
+      "sha256": "933035e275c8a1f047f111139a0c2884ecd4e540c0ae9e70157b62047b706498",
+      "gitBlob": "50a3e4a512f6373961e609a12b0b5d4fb411c033"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-lineage-download.d.mts",
+      "bytes": 3360,
+      "sha256": "8ce6f675d6ce1152c8089e63762623c34e1606312c61b82d420964994be25fdd",
+      "gitBlob": "d3cd0f93c16e5d193f9dbefd5604d08203ea6505"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-lineage-download.mjs",
+      "bytes": 15664,
+      "sha256": "f36cd992137f2fbeed474a419c783ba3631359490a1d4f5f143163f4e1014dc2",
+      "gitBlob": "83648b779c843b21991742393e4c377c108cb5b6"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-lineage-schema.mjs",
+      "bytes": 5383,
+      "sha256": "b9b119a3c231c5ebce73ba7b5f1c1172f683757ca3c56836fb915aba28cf7c43",
+      "gitBlob": "a4a2ca43e3f7ef19a1b69ee3c9def4a0843ee6a2"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-lineage.mjs",
+      "bytes": 21686,
+      "sha256": "766bab83d756f70ded88c75cdb628139802bd8ec272d0896f2e3f8dba60de3c5",
+      "gitBlob": "90c731d96ba31d63105007d339b012a48f4ab444"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-schema.mjs",
+      "bytes": 12978,
+      "sha256": "601dd802788f9bc80b8209bb2daefd3ac1b878e7194e2f22606b669efc01e4cc",
+      "gitBlob": "321c12dcd18f6de3928a57d8c09e04fc80828fa0"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis.mjs",
+      "bytes": 24192,
+      "sha256": "c9eae326f11b8b108d118282b609bbc3ec2ece6215df9dbc96f53b02118f78c0",
+      "gitBlob": "9229fcde65625429e4f4fb01de2ae349b404ed71"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/analysis-lineage.json",
+      "bytes": 1035,
+      "sha256": "4f51c47156ef63dafd202acfac15eb97e4f94401dafe0d932195435dc7defc8b",
+      "gitBlob": "e5a82e4e8dbe0310dec7423e4ff6fbd7c5a61953"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/ANALYSIS_LINEAGE_NATIVE.md",
+      "bytes": 16474,
+      "sha256": "9634702cc8faf41c0b6bc563a84fe4218854a2b21c0959800187e76fe1232e5c",
+      "gitBlob": "2b6923e764588f53c74f79ae5db94eb6feb193de"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/analysis_lineage_browser.mjs",
+      "bytes": 32248,
+      "sha256": "ac88b1c7684aefd5b7ef994b8635e8f2bd1e02fa62c792cc7d81f6594da20ade",
+      "gitBlob": "85eae30b6dadf5c18d0955bdba8f87c097bd45a6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/analysis_lineage_mcp.mjs",
+      "bytes": 16458,
+      "sha256": "ec384234c12d0e7408ba011baacdfce5baab7d38c99fdca2a52c3b6de536a976",
+      "gitBlob": "b57b2b66d91d3e4ce44eec7764324edcd3ee8509"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/analysis_lineage_native.py",
+      "bytes": 27416,
+      "sha256": "318c47fed1b6c2c2e71e8dacb90cc3a53f83485540663137b39011225f6e7070",
+      "gitBlob": "0425548f72516891a16029d5eb45c66b5af10498"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_lineage.py",
+      "bytes": 37589,
+      "sha256": "119f262b842f1539884e533c7e42e77170a267095c81ee3f14104ee28464b32e",
+      "gitBlob": "2b61335fed05563232644e1044a0dac409a769f5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_lineage_reports.py",
+      "bytes": 15744,
+      "sha256": "e6110e20722978021a958179afd0f3728ee9bf498d3bb141ebb613d402c6c752",
+      "gitBlob": "5c482a3eac862940b55c58b6d3984afc9fc5562e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/lineage_http.py",
+      "bytes": 3143,
+      "sha256": "6437a2b5c0b0d4aee1f929bb73e9e50c2b315fffa2031188641aa4379e0d444d",
+      "gitBlob": "227d18325b0e00c5fd52a2651095e59b5590da17"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_lineage_ui.py",
+      "bytes": 44219,
+      "sha256": "f9de297f1dcb38a6c0affc4fe4c25d8bc6df30854ec8baeb7d945613e1140781",
+      "gitBlob": "0af7d1c3a1d1a1331685f93471c0ec375a15b841"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_lineage_projection.py",
+      "bytes": 27094,
+      "sha256": "fda262baf228ebbe0e3c6841bb09632e56546955d6882d7779871b2d269402a6",
+      "gitBlob": "5eda2d9a1bb750b2d0c97de8661f25bc53077781"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_workspace.py",
+      "bytes": 67552,
+      "sha256": "153984fc9181882ec510bbc6614079a5e5162a9feffd096f8665f5b20601d68a",
+      "gitBlob": "e755bc94e75e1a922d47164dba73ef0fe9ee3046"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/runtime.py",
+      "bytes": 7552,
+      "sha256": "ea4aec6a1da24128f6801b65aeeadabc783a2787180b3a84bbf258014e96c40a",
+      "gitBlob": "36bc1c8c9c3946d278fe163a39a2cf18154d2d2a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_ui.py",
+      "bytes": 60777,
+      "sha256": "2eb0e44e35e3789c58eb7b53ac33ad6ace74abd61794a04cc0fef4b6c0bf9e29",
+      "gitBlob": "fe9b2377f2415901a5255ac5b5688eea9e4ece89"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/analysis-lineage-bridge.mjs",
+      "bytes": 12941,
+      "sha256": "392208b4d69b599f65fee0c9ced44b04767d6f468269cd8524f3dfb15332013c",
+      "gitBlob": "b6e613f1e1790a29ca972cb6beeb941ab08ba27a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/analysis-lineage-facet.schema.json",
+      "bytes": 5740,
+      "sha256": "8148d2019364e65f9d23d1435c54cf283b87ac3c2a9d89dcab554a5ca997623d",
+      "gitBlob": "cc3b5d4367b690cba020870c68f9b8b5177f5069"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/ANALYSIS_LINEAGE.md",
+      "bytes": 16625,
+      "sha256": "725b2104156d7d6a0f7a135bc9f04327e09db05bc73ba46d029306bfddf230ef",
+      "gitBlob": "38dbd9d925a0739e80996cc2353151f40fa1b4e4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/analysis_lineage_collector.mjs",
+      "bytes": 35270,
+      "sha256": "17a77b1de2824e29c064ed2756a493e2f8072f2a5ca521be9bafdc19f683d006",
+      "gitBlob": "6e9ba40add0179a8eb6540c7286b2d6fa17ce1c4"
+    }
+  ],
+  "preservedCollector": {
+    "directory": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/ASYNC_PRODUCER_RECEIVING.mjs",
+        "gitBlob": "79089835e8f18446db0cafa0cc6f755c2acfbfd8",
+        "bytes": 35375
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/ASYNC_PYTHON_PRODUCER.md",
+        "gitBlob": "f3aeb4e2688892a685bc02fe0d5b350b5dcec786",
+        "bytes": 22207
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/DATAPLEX.md",
+        "gitBlob": "d06fb47819442d9aa86f9ca8ccce4b09b042e55f",
+        "bytes": 15224
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_PRODUCER.md",
+        "gitBlob": "c4dceaf82f50ae88ee7ae76caf6982306de60722",
+        "bytes": 13249
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_PRODUCER.mjs",
+        "gitBlob": "8e2227dc6882cdf6fc0e0f974df86305063d9631",
+        "bytes": 25449
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RECEIVING.mjs",
+        "gitBlob": "763bfb61768db226c059aad64899c04aa0adf3af",
+        "bytes": 18433
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/LICENSE",
+        "gitBlob": "73bf5a1931c5a6f2538523cea21d74781dc9cce1",
+        "bytes": 1093
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/MERCHANT.md",
+        "gitBlob": "83cd5976d4cf88b6a3e7b26e75d25539b8977315",
+        "bytes": 18540
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/MERCHANT_PRODUCER_RECEIVING.mjs",
+        "gitBlob": "753cf960c75a7873803432ef43c6905fd2ae40ec",
+        "bytes": 14699
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/OPENLINEAGE_LICENSE",
+        "gitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+        "bytes": 11357
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/OpenLineageNativeProducer.java",
+        "gitBlob": "9826b9127d40394b60e1ace8245e5e059af53f71",
+        "bytes": 25875
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/PRODUCERS.md",
+        "gitBlob": "708071cb8504dd894ee90792eaaa5467f0ca266a",
+        "bytes": 12582
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/PRODUCER_RECEIVING.mjs",
+        "gitBlob": "d0c23228e02bcb44b6523d1fa17d51bd648045a1",
+        "bytes": 12749
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/PYTHON_PRODUCER.md",
+        "gitBlob": "a0ddaa633aebfac141c967087a8a7a1201e3166e",
+        "bytes": 7598
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/QUALITY_OPERATOR.md",
+        "gitBlob": "3be65a6a23977ddeff335ebe189d7d9cd8e49833",
+        "bytes": 17163
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/README.md",
+        "gitBlob": "b6ac48d975857e695234707085ff92d842e6bba2",
+        "bytes": 16443
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/RECEIVING.mjs",
+        "gitBlob": "7a31cf40a711149898122d720659ccf2d0701d85",
+        "bytes": 17222
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SCHEMA_OPERATIONS.md",
+        "gitBlob": "9483a4cb03d7a50f8ef7ca607fcdb81c5b2b4bcd",
+        "bytes": 13185
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SCHEMA_RECEIVING.mjs",
+        "gitBlob": "2fc0f2c9fb8d2e5233f9fed909edad001f28e939",
+        "bytes": 29211
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS.md",
+        "gitBlob": "3c3bdeb5dc32070bb370105f4ddeb09cf16e33f1",
+        "bytes": 13373
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS_OPERATOR.md",
+        "gitBlob": "1719154afdae77c277e42c777d0bc2fa1d6f95ec",
+        "bytes": 9153
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SOURCE_CONTRACT.md",
+        "gitBlob": "0e75e616fad9d194f2fbf32a9ab5b774c92b473c",
+        "bytes": 14541
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/app.js",
+        "gitBlob": "0b66c1b16d6d1c1879e359e4feb694225c986fc2",
+        "bytes": 74621
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs",
+        "gitBlob": "7893b655ae5221bbb43494d6e1414afb3ebdf2ba",
+        "bytes": 6340
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/async-producer.mjs",
+        "gitBlob": "b70a4ca963f10004893a90386f95f1ce277ce686",
+        "bytes": 2274
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/browser-assets-loader.mjs",
+        "gitBlob": "63801fa838c0479e6ae156d9f155461f02df0cfb",
+        "bytes": 4571
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/browser-assets.json",
+        "gitBlob": "40368851381dabc7b37911697ec76e433d4e0362",
+        "bytes": 1246
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/catalog.mjs",
+        "gitBlob": "42f492e1cd1671f09f44fc80cdf21c9aff131a44",
+        "bytes": 5857
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/cli.mjs",
+        "gitBlob": "b5b2dfdf948354861d4e9748bf8756c3145c79c3",
+        "bytes": 15142
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/client.d.ts",
+        "gitBlob": "fdea66efc49ca5bcc80517bd2e371d20d540a7ac",
+        "bytes": 8677
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/client.mjs",
+        "gitBlob": "24607877386d8ac8af1ea701eb7725f7580c288b",
+        "bytes": 7458
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/contribution.json",
+        "gitBlob": "4dd31cd83ce279b4dd44710a9713e7d5fc3d109a",
+        "bytes": 4335
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/dataplex-cli.mjs",
+        "gitBlob": "5d2f9ab752e6d17ccda1974a3a7913733e8b212d",
+        "bytes": 5999
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/dataplex.d.mts",
+        "gitBlob": "83a8c7154bf2024dfa1e52873f6d849f2d025e8d",
+        "bytes": 2841
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/dataplex.mjs",
+        "gitBlob": "624cb57a962543f1ce3c5896dd15fc9be4e63029",
+        "bytes": 36282
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/fixture-event-full.json",
+        "gitBlob": "d0f19663859955c95afde83bd7bd3fcdffc641e8",
+        "bytes": 9006
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/fixture-event-simple.json",
+        "gitBlob": "3b6936894172b4fc78f9b385771695fb6e2a8720",
+        "bytes": 729
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/fixture-lineage-dataset.json",
+        "gitBlob": "3541805ffabf604f9fb1c8398e0388d0d97e8a67",
+        "bytes": 777
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/fixture-lineage-implicit-job.json",
+        "gitBlob": "69c153f006d97018d0d41097e9f93579d449cd3b",
+        "bytes": 575
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/fixture-lineage-mixed-sources.json",
+        "gitBlob": "b93a3502f5f711aacc52dec765a1e50b635c8a27",
+        "bytes": 1313
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/fixtures.json",
+        "gitBlob": "69e725b5937b78e9601e6332a6e4768f759af267",
+        "bytes": 4335
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/index.html",
+        "gitBlob": "0d0a2e55ebbfcdf13db77fdd58e76039920ed0cc",
+        "bytes": 14028
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/java-producer-pom.xml",
+        "gitBlob": "4620a75672df9f575e4057871a87a1ea452e9d90",
+        "bytes": 875
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/mcp-client.mjs",
+        "gitBlob": "aa3adf4b95a2e915ae44f4e6f56ffed5014aceb5",
+        "bytes": 25913
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/mcp-setup.mjs",
+        "gitBlob": "7ba1402010f0eee707a93c8b240ed09d1b1e59ff",
+        "bytes": 4649
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/mcp-tools.mjs",
+        "gitBlob": "c03ccfdcaf276278ae5510caca4c638ebf949bb0",
+        "bytes": 4327
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/mcp.mjs",
+        "gitBlob": "7529782f6976c962b13d88e8921de0e32cf72994",
+        "bytes": 12082
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/merchant-provider.mjs",
+        "gitBlob": "26d10d7e291a2497399ca2bf245170566eb9b268",
+        "bytes": 2590
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/model.mjs",
+        "gitBlob": "309002cce196a0bf1958b74b4c2a0dbcc4c546f1",
+        "bytes": 32040
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/native-producer.mjs",
+        "gitBlob": "5b85e65be09ba6d58b95d9b967e35fc6fe8d1aae",
+        "bytes": 2513
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/native_async_producer.py",
+        "gitBlob": "9683ee4454d34d62a4956361a82f8344e6b1d928",
+        "bytes": 55881
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/native_python_producer.py",
+        "gitBlob": "f69fdbce4aa15978d97268d991d4e89376916d10",
+        "bytes": 20902
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/package.json",
+        "gitBlob": "3a6d7434552dab98277b30dcd297d6706873caaa",
+        "bytes": 307
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/producer.d.mts",
+        "gitBlob": "41d0336d14d17bb63642d68ad76797651ae389af",
+        "bytes": 2319
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/producer.mjs",
+        "gitBlob": "19294f8860b80cc1f3b1f8814f201e20bba8ef23",
+        "bytes": 8848
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/protocol.mjs",
+        "gitBlob": "142fa95e7eda2ced0ba64132c32342da1c88a83b",
+        "bytes": 3169
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/python-producer-requirements.txt",
+        "gitBlob": "59cac221416c450cc1c9ecb366289c5127c8cef5",
+        "bytes": 27
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-catalog.mjs",
+        "gitBlob": "fb6b3fc19dabc209a9e9913fb2578bb192e7e1c9",
+        "bytes": 3275
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-cli.mjs",
+        "gitBlob": "729cb5f91d7f606fcfe20f7d6194c71c5d90fcce",
+        "bytes": 4574
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-client.d.mts",
+        "gitBlob": "a1e2406e8edf0f1fcfb6238df6787f5b5127444d",
+        "bytes": 6733
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-client.mjs",
+        "gitBlob": "8fc5a7e1543334865609ea5944fd1e4be591509b",
+        "bytes": 799
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-reports.mjs",
+        "gitBlob": "3add29dd93a93ecf2689bf0b1be67a4de5f08d44",
+        "bytes": 5054
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-store.mjs",
+        "gitBlob": "e236682952504568d5dac5fc5c0cde8e4d523fdd",
+        "bytes": 6874
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-ui.mjs",
+        "gitBlob": "03839ea33586821404b0153aefa661fce494f1dc",
+        "bytes": 43298
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality.css",
+        "gitBlob": "43ea1fd74355767e08aafa7da7217303ae613840",
+        "bytes": 7239
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality.mjs",
+        "gitBlob": "268319f8c72fb01389151f2d4e9eaaff8e5812dc",
+        "bytes": 34468
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/reports.mjs",
+        "gitBlob": "d619733626fb9a7bb570da26ded65f5b58b1a53b",
+        "bytes": 6220
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/schema-core-1-0-1.json",
+        "gitBlob": "1215bd651abe077924f402ef8854f948a380859d",
+        "bytes": 18663
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/schema-core-1-0-5.json",
+        "gitBlob": "92ba83147885c9b5ae1a1124d8d01d49b9f1d3cc",
+        "bytes": 8493
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/schema-domain.mjs",
+        "gitBlob": "7c3d9fc0d0a43aa5d2a28d25558d5e6395064e2f",
+        "bytes": 27224
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/schema-ui.js",
+        "gitBlob": "c1a9229d642fcd144c51ab5d8315177701953808",
+        "bytes": 23206
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/schema-workflow.mjs",
+        "gitBlob": "1245480ff1016602793feacef5b2f7ede47545d9",
+        "bytes": 5895
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/server.mjs",
+        "gitBlob": "7addbb612b0b8dc667e95ef0f8991c65e268f36a",
+        "bytes": 12174
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-browser.js",
+        "gitBlob": "1dd16209b81ede7110e2abb9fa6c2f29995c2925",
+        "bytes": 49625
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-catalog.mjs",
+        "gitBlob": "c7e227c9d4d660d230d37af2cb326096bd20ada9",
+        "bytes": 3247
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-cli.mjs",
+        "gitBlob": "06614a6250a9df799b868311a1763ac48d96fbc6",
+        "bytes": 7550
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-client.d.mts",
+        "gitBlob": "3e1055953804e9143f306b2736c1db83e425aa6a",
+        "bytes": 4327
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-client.mjs",
+        "gitBlob": "45bf54fa68a24512df1e28e12d81d6373b4e6c93",
+        "bytes": 698
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels-example.json",
+        "gitBlob": "7115793b9154ef21f4b8c3b49c654cd7e6cd0939",
+        "bytes": 354
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels.css",
+        "gitBlob": "e4f0d46c62fba550a44611b16e793cc2be5cdf79",
+        "bytes": 10614
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels.html",
+        "gitBlob": "6dab4f772cd1f6d641eb7a67efb0a8d9be0c0dfc",
+        "bytes": 11519
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-levels.mjs",
+        "gitBlob": "4b2153024aefcc7a588b4b8284d0ee9483d4324e",
+        "bytes": 29341
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/source-encoding.mjs",
+        "gitBlob": "b145d965f1a1df91fd1a4aaed525492957b8f85d",
+        "bytes": 2236
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/store.mjs",
+        "gitBlob": "725c4aa21126516f2c4c3c8061136778911c19d3",
+        "bytes": 43228
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/style.css",
+        "gitBlob": "ec390a27723a7c7ed522c6d07435001ce8b2e9cf",
+        "bytes": 17614
+      }
+    ]
+  },
+  "receiving": {
+    "operationId": "SCF-ANALYSIS-LINEAGE-B9D2-20261012",
+    "sourceOwner": "B9D2",
+    "program": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/analysis_lineage_native.py",
+    "guide": "products/analysis-lineage/RECEIVING.md",
+    "sourceThread": "https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791835103929249?thread_ts=1791730510.712909",
+    "input": "Original completed Analysis backup and original completed job retained by this operation"
+  }
+}
