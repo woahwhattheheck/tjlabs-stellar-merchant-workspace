@@ -2,7 +2,7 @@
 
 Operate a retained FRED economic product from the installed command, a typed JavaScript client, or the existing authenticated merchant MCP host. All three paths attach to the original economic workspace: the same project, source captures, reviews, publication, merchant listener, configured SF88 buyer and saved customer intents.
 
-The client covers official source intake, complete public-table imports, combined macro editions, observations and revision comparisons, projection review, publication, merchant control, customer preparation/execution/recovery, complete downloads and project receiving. The MCP family contains 56 tools and loads its runtime only when that configured family is used.
+The client covers official source intake, complete public-table imports, combined macro editions, observations and revision comparisons, projection review, publication, merchant control, customer preparation/execution/recovery, complete downloads and project receiving. The MCP family contains 62 tools and loads its runtime only when that configured family is used.
 
 ## Start or reconnect the original workspace
 
