@@ -1,0 +1,58 @@
+{
+  "schema": "stellar-forge.sf88.python-review-runtime.v1",
+  "baseArchive": "Starforge_Edition_Review_Returns_2026-10-12.zip",
+  "baseArchiveSha256": "e307c943eb1db83d69090d7016e27cac088cee8e534c1ff5c99ad289e15e121e",
+  "python": ">=3.11 POSIX",
+  "node": ">=22.16",
+  "nativeSourcesOperated": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/library.mjs",
+      "bytes": 15495,
+      "gitBlob": "c08046e5be1aed2d198fdbbefd619584c5741e5d",
+      "sha256": "362652f2de3e9c06f6232abb0c0e58556b90b82ca20b57aacaab4a7651032338"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/files.mjs",
+      "bytes": 6135,
+      "gitBlob": "66ab78706fe03e630e54eb124ed4225398612c82",
+      "sha256": "224f53f416f88298575d562939d27a7ecd9c34e0e9bef2e180ba68a81bc5475f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/source.mjs",
+      "bytes": 3881,
+      "gitBlob": "73d1518ff33b56fadb8babf8a32aa8dc821679c8",
+      "sha256": "1d317e64664ad079cba2ae744fff76dbfb4b1471cf9c1c92eb5bfae1fe644f91"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/collections.mjs",
+      "bytes": 7025,
+      "gitBlob": "8f27d1b72d887c79ff9a08a09b27882e27f2258a",
+      "sha256": "35ae297becd52e28083d457b700f4e0df449b4520921cd5813747f55962b69bd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/comparisons.mjs",
+      "bytes": 19800,
+      "gitBlob": "8c59f74bef374200ee1f22422bd6cc5ce6a30931",
+      "sha256": "e9e3c33b33607092fc139a5a8700f5025f4d3f430220ae06ae224c63d42a5ddf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/comparison-returns.mjs",
+      "bytes": 14999,
+      "gitBlob": "00f595b011baea7e21bb91c5247089a1f9027ced",
+      "sha256": "2dc5a69c97cd734ec6a7ab563df79b85528fc867af9fabc2df7fbb9635f221ab"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/comparison-transfer.mjs",
+      "bytes": 2192,
+      "gitBlob": "7e1b942be81600fe5ab8f9f9f4b6c4dd1096d26e",
+      "sha256": "dbdd8e2a7e25912d0cd506de43467b9fa97a736e6be2e0b7a43f22e2cd284f2b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/comparison-report.mjs",
+      "bytes": 12620,
+      "gitBlob": "fa5e037bb7644293d4c4957847c439f6c7ee3057",
+      "sha256": "7adecf398f7219e0d4dd6eed1dcfa53581aa95e00d77a93477d3447e84200c71"
+    }
+  ],
+  "composition": "B41A shared source; F1CB original return compatibility; C12 native review engine. Python source is additive."
+}

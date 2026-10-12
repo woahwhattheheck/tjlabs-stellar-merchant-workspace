@@ -1,0 +1,115 @@
+{
+  "schema": "stellar-forge.economic-phone-layout.v1",
+  "before": {
+    "width": 390,
+    "scrollWidth": 606,
+    "overflows": [
+      {
+        "tag": "LABEL",
+        "id": "",
+        "class": "",
+        "left": 16,
+        "right": 606,
+        "width": 590,
+        "minWidth": "auto",
+        "whiteSpace": "normal"
+      },
+      {
+        "tag": "SELECT",
+        "id": "series-filter",
+        "class": "",
+        "left": 16,
+        "right": 606,
+        "width": 590,
+        "minWidth": "auto",
+        "whiteSpace": "pre"
+      }
+    ]
+  },
+  "after": {
+    "width": 390,
+    "scrollWidth": 390,
+    "overflows": []
+  },
+  "checks": [
+    {
+      "view": "summary",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflows": []
+    },
+    {
+      "view": "measures",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflows": []
+    },
+    {
+      "view": "sources",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflows": []
+    },
+    {
+      "view": "summary",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflows": []
+    },
+    {
+      "view": "measures",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflows": []
+    },
+    {
+      "view": "sources",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflows": []
+    },
+    {
+      "view": "summary",
+      "width": 700,
+      "scrollWidth": 700,
+      "overflows": []
+    },
+    {
+      "view": "measures",
+      "width": 700,
+      "scrollWidth": 700,
+      "overflows": []
+    },
+    {
+      "view": "sources",
+      "width": 700,
+      "scrollWidth": 700,
+      "overflows": []
+    },
+    {
+      "view": "summary",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflows": []
+    },
+    {
+      "view": "measures",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflows": []
+    },
+    {
+      "view": "sources",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflows": []
+    }
+  ],
+  "table": {
+    "clientWidth": 356,
+    "scrollWidth": 1262,
+    "scrollLeft": 200
+  },
+  "errors": [],
+  "correction": "@media(max-width:700px){.controls>*{flex:1 1 240px;min-width:0;max-width:100%}.controls select{width:100%;min-width:0}.pagination{flex-wrap:wrap}}"
+}

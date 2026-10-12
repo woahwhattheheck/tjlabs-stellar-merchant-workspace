@@ -1,0 +1,46 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "couchdb",
+  "description": "CouchDB retained document data products",
+  "commands": {
+    "couchdb": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/cli.mjs",
+    "couchdb-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/workspace-cli.mjs",
+    "couchdb-agent": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/agent/cli.mjs",
+    "couchdb-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/receive.mjs"
+  },
+  "commandDescriptions": {
+    "couchdb": "Capture and inspect native CouchDB document revisions and attachments",
+    "couchdb-workspace": "Operate, publish and receive complete CouchDB data-product workspaces",
+    "couchdb-agent": "Attach the original merchant tools to a managed CouchDB workspace",
+    "couchdb-receive": "Run and resume the complete actual CouchDB merchant and customer receiving operation"
+  },
+  "exports": {
+    "./seller/couchdb/capture": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/capture.mjs",
+    "./seller/couchdb/source": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/source.mjs",
+    "./seller/couchdb/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/publisher.mjs",
+    "./seller/couchdb/inspection": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/inspection.mjs",
+    "./seller/couchdb/declaration": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/declaration.mjs",
+    "./seller/couchdb/deployment": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/deployment.mjs",
+    "./seller/couchdb/operator": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/operator.mjs",
+    "./seller/couchdb/portable": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/portable.mjs",
+    "./seller/couchdb/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/server.mjs",
+    "./seller/couchdb/client": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/client.mjs",
+    "./seller/couchdb/managed": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/managed.mjs",
+    "./seller/couchdb/agent/client": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/agent/client.mjs",
+    "./seller/couchdb/agent/setup": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/agent/setup.mjs",
+    "./seller/couchdb": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/source.mjs",
+    "./seller/couchdb/receive": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/receive.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/browser-assets.json"
+    }
+  ],
+  "applicationProviders": {
+    "couchdb": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "couchdb-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/couchdb/agent/provider.mjs"
+  }
+}

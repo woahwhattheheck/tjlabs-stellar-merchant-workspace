@@ -196,3 +196,9 @@ provider, assessment, case, review, comparison and receiving contracts. The
 [complete installed DQA receiving procedure](../../sf30-seller-sdk/iati/receiving/DQA.md)
 operates this selected runtime, the same original Applications lifecycle and the
 full browser, CLI and MCP workflow against the original live source.
+
+## Complete compressed publisher and schema licence
+
+The original `examples/fcdo-wadi-2026/FCDO-set-20.xml.gz` and `publishing-schema/IATI-LICENSE.rst` are declared support files in this selection. The builder retains these exact original bytes through its explicit runtime-file rule. Undeclared compressed files remain outside the selection.
+
+The complete FCDO input therefore exists below the actual READY installation's source root, where the original `examples/fcdo-wadi-2026/prepare_receiving.py` resolves it. Its original receipt, complete XML schema and licence travel in the same source edition. The original compressed publisher is not rewritten or relabelled during installation.

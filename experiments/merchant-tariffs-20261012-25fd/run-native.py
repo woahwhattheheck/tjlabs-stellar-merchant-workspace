@@ -79,7 +79,31 @@ def main():
         checked.append((relative, body))
     if packet["fileCount"] != len(checked):
         raise ValueError("The complete source packet file count changed.")
+    # The original source packet remains unchanged. A companion manifest can
+    # select corrected callers without copying the complete source packet again.
+    program_manifest = Path(__file__).resolve().with_name("programs-manifest.json")
+    program_selection = {"kind": "original-packet"}
     programs = packet["programs"]
+    if program_manifest.exists():
+        manifest = json.loads(program_manifest.read_bytes())
+        if (manifest.get("schema") != "commons.merchant-tariff-native-programs.v1" or
+                manifest.get("sourcePacketGitBlob") != git_blob(raw_packet)):
+            raise ValueError("Native programs must bind this exact source packet.")
+        programs = []
+        for entry in manifest["programs"]:
+            relative = PurePosixPath(entry["path"])
+            if relative.is_absolute() or len(relative.parts) != 1 or relative.as_posix() != entry["path"]:
+                raise ValueError("Program must be an adjacent source file.")
+            program_path = program_manifest.parent / str(relative)
+            if program_path.is_symlink():
+                raise ValueError("Program must be an original regular file.")
+            body = program_path.read_bytes()
+            programs.append({**entry, "content": body.decode("utf-8")})
+        if len({item["path"] for item in programs}) != len(programs):
+            raise ValueError("Duplicate native program paths.")
+        program_selection = {"kind": "adjacent-manifest",
+            "sha256": hashlib.sha256(program_manifest.read_bytes()).hexdigest(),
+            "programs": manifest["programs"]}
     for item in programs:
         checked_source(item)
     root = Path(args.directory).absolute()
@@ -96,6 +120,7 @@ def main():
         "sourceCommit": packet["sourceCommit"],
         "packetSha256": hashlib.sha256(raw_packet).hexdigest(),
         "node": node,
+        "programSelection": program_selection,
         "sourceFiles": len(checked),
         "sourceBytes": sum(len(body) for _, body in checked),
         "runs": [],

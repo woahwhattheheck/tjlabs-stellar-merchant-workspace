@@ -45,9 +45,9 @@ const STYLE = `
 *{box-sizing:border-box}body{margin:0}header,main,footer{max-width:1440px;margin:auto;padding:24px 32px}header{background:#fff;border-bottom:1px solid #c7c7c7}
 h1{font-size:30px;line-height:1.2;font-weight:650;letter-spacing:-.02em;margin:6px 0 12px}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:0 0 8px}
 p{margin:8px 0 14px}.eyebrow{font-size:11px;letter-spacing:.12em;color:#555}.muted,small{color:#555}.notes{white-space:pre-wrap;max-width:110ch}
-.toolbar,.controls,.pagination{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0}.controls{align-items:end}.controls label{display:grid;gap:4px;font-size:12px}
+.toolbar,.controls,.pagination{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0}.controls{align-items:end}.controls label{display:grid;gap:4px;font-size:12px;flex:1 1 240px;min-width:0;max-width:100%}.controls select{width:100%;min-width:0;max-width:100%}
 button,select,input{font:inherit;border:1px solid #999;border-radius:3px;padding:8px 12px;background:#fff;color:#171717}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}
-button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #555;outline-offset:3px}a{color:#202020;text-underline-offset:3px}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,.table-wrap:focus-visible{outline:3px solid #555;outline-offset:3px}a{color:#202020;text-underline-offset:3px}
 .card{background:#fff;border:1px solid #ccc;padding:20px;margin-bottom:18px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
 .metric{background:#fff;border:1px solid #ccc;padding:14px}.metric strong{display:block;font-size:25px;font-weight:650;font-variant-numeric:tabular-nums}.metric span{font-size:12px;color:#555}
 .table-wrap{overflow:auto;border:1px solid #ccc;background:#fff}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:9px 12px;border-bottom:1px solid #ddd;white-space:nowrap}
@@ -178,15 +178,15 @@ export function renderFredBriefingSuccessor({ template, materialization, compari
     '<div class="toolbar"><button id="download-csv">Download all changes</button><button id="download-json">Download complete source comparison</button></div></header>',
     '<main><div id="metrics" class="metrics"></div><section class="card" id="window-policy"><h2>Calendar window</h2>',
     '<p class="muted">The anchor uses original observation dates, including missing markers. Dates label source periods. Each comparison uses its own retained capture and the original analyst calculation.</p></section>',
-    '<section class="card"><h2>Selected source coverage</h2><div class="table-wrap"><table><thead><tr>',
+    '<section class="card"><h2>Selected source coverage</h2><div class="table-wrap" role="region" aria-label="Selected source coverage" tabindex="0"><table><thead><tr>',
     '<th>Series</th><th>Title</th><th>Frequency</th><th>Units</th><th>Latest source date</th><th>Latest source state</th><th>Window rows</th><th>Missing</th>',
     '<th>First window date</th><th>Last window date</th><th>Rows after window</th></tr></thead><tbody id="coverage-body"></tbody></table></div></section>',
-    '<section class="card"><h2>Source meaning and information basis</h2><p id="context-empty" class="muted"></p><div class="table-wrap"><table><thead><tr>',
+    '<section class="card"><h2>Source meaning and information basis</h2><p id="context-empty" class="muted"></p><div class="table-wrap" role="region" aria-label="Source meaning and information basis" tabindex="0"><table><thead><tr>',
     '<th>Scope</th><th>Field</th><th>Before</th><th>After</th></tr></thead><tbody id="context-body"></tbody></table></div></section>',
     '<section class="card"><h2>Period changes</h2><div class="controls"><label>Series<select id="series-filter"><option value="">All selected series</option></select></label>',
     '<label>Change<select id="kind-filter"><option value="">All change kinds</option></select></label>',
     '<label>Display<select id="display-filter"><option value="changed">Economic and calculation changes</option><option value="context">Source context changes</option><option value="all">All comparisons</option></select></label></div>',
-    '<div class="table-wrap"><table><thead><tr><th>Series</th><th>Period</th><th>Comparison</th><th>Change</th><th>Before value</th><th>After value</th><th>Value revision</th>',
+    '<div class="table-wrap" role="region" aria-label="Period changes" tabindex="0"><table><thead><tr><th>Series</th><th>Period</th><th>Comparison</th><th>Change</th><th>Before value</th><th>After value</th><th>Value revision</th>',
     '<th>Before baseline</th><th>After baseline</th><th>Before change</th><th>After change</th><th>Change units</th><th>Before state</th><th>After state</th><th>Source details</th>',
     '</tr></thead><tbody id="changes-body"></tbody></table></div><div class="pagination"><button id="previous">Previous</button>',
     '<span id="comparison-count" class="count"></span><button id="next">Next</button></div>',

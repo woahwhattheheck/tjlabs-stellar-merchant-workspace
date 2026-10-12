@@ -1,4 +1,4 @@
-// MIT. Type-only project contracts; runtime functions live in ../project.mjs.
+// MIT. Release project SDK declarations; runtime functions live in ../project.mjs.
 import type { normalizeFredReleaseSelection, inspectFredReleaseCapture, sealFredReleaseCapture } from './model.mjs';
 import type { createFredReleaseWatch } from './watch.mjs';
 import type { planFredReleaseCatchUp, pageFredReleasePlan } from './planner.mjs';
@@ -118,6 +118,19 @@ export interface FredReleaseProjectApi {
     planId: string; asOf: string;
   }): Promise<FredPlannedVintageResult>;
 }
+export declare const fredReleaseCaptureDirectory: FredReleaseProjectApi['fredReleaseCaptureDirectory'];
+export declare const listFredReleaseCaptures: FredReleaseProjectApi['listFredReleaseCaptures'];
+export declare const getFredReleaseCapture: FredReleaseProjectApi['getFredReleaseCapture'];
+export declare const importFredReleaseCapture: FredReleaseProjectApi['importFredReleaseCapture'];
+export declare const acquireFredReleaseCapture: FredReleaseProjectApi['acquireFredReleaseCapture'];
+export declare const listFredReleaseWatches: FredReleaseProjectApi['listFredReleaseWatches'];
+export declare const saveFredReleaseWatch: FredReleaseProjectApi['saveFredReleaseWatch'];
+export declare const previewFredReleasePlan: FredReleaseProjectApi['previewFredReleasePlan'];
+export declare const saveFredReleasePlan: FredReleaseProjectApi['saveFredReleasePlan'];
+export declare const getFredReleasePlan: FredReleaseProjectApi['getFredReleasePlan'];
+export declare const downloadFredReleasePlan: FredReleaseProjectApi['downloadFredReleasePlan'];
+export declare const acquireFredPlannedVintage: FredReleaseProjectApi['acquireFredPlannedVintage'];
+
 /** Existing original state, economic captures, publication plans and analyst files are carried unchanged. */
 export interface FredReleaseProjectBundleV4<TState = Record<string, unknown>, TCapture = unknown,
   TPublicationPlan = unknown, TBriefing = unknown> {

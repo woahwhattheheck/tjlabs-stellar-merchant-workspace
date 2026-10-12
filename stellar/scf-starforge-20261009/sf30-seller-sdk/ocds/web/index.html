@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Procurement desk</title>
+<style>
+:root{--paper:#fff;--wash:#f4f4f2;--ink:#20201e;--muted:#666661;--line:#d6d6d0;--radius:4px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--wash);font-size:14px}
+*{box-sizing:border-box}body{margin:0;min-width:300px}button,input,select,textarea{font:inherit}button,a,input,select,textarea,summary{-webkit-tap-highlight-color:transparent}
+button{color:inherit;cursor:pointer;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:.55rem .8rem;line-height:1.35;font-weight:550}
+button:hover:not(:disabled){border-color:#898981;background:#f0f0ed}button:disabled{opacity:.48;cursor:default}button.primary{background:var(--ink);border-color:var(--ink);color:#fff}button.primary:hover:not(:disabled){background:#3c3c36}button.quiet{border-color:transparent;background:transparent}button.small{padding:.3rem .55rem;font-size:.85rem}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}:focus-visible{outline:2px solid #121211;outline-offset:3px}
+input,select,textarea{width:100%;max-width:100%;color:var(--ink);background:#fff;border:1px solid #bdbdb5;border-radius:var(--radius);padding:.55rem .6rem;line-height:1.4}textarea{resize:vertical;min-height:110px}
+input[type=checkbox]{width:1.05rem;height:1.05rem;margin:0;accent-color:#272724;flex-shrink:0}label{display:block;font-size:.88rem;line-height:1.45;font-weight:600}label input,label select,label textarea{margin-top:.35rem}label.check{display:flex;gap:.55rem;align-items:center;font-size:.9rem;font-weight:500}label.check input{margin:0}
+h1,h2,h3,h4,p{margin:0}h1{font-size:1.28rem;letter-spacing:-.025em;font-weight:650}h2{font-size:1.3rem;line-height:1.35;letter-spacing:-.02em;font-weight:650}h3{font-size:1rem;line-height:1.4;font-weight:650}h4{font-size:.9rem}p{line-height:1.55}.muted{color:var(--muted)}.small-text{font-size:.85rem}.mono,code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:.82rem}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.6;margin:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip-link{position:absolute;top:-60px;left:16px;z-index:20;padding:.8rem 1rem;color:white;background:#222}.skip-link:focus{top:8px}
+.app-header{background:#fff;border-bottom:1px solid var(--line);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1.2rem;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:.9rem}.brand-mark{width:31px;height:31px;border:1px solid #42423c;display:grid;place-items:center;font-size:11px;font-weight:750;letter-spacing:.06em}.eyebrow{display:block;color:var(--muted);font-size:.72rem;letter-spacing:.11em;text-transform:uppercase;margin-bottom:.2rem;font-weight:600}.actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.app-status{min-height:1.7rem;padding:.45rem 1.5rem;font-size:.82rem;color:var(--muted);background:#fafaf8;border-bottom:1px solid var(--line)}.app-status.error{color:#181817;background:#e9e9e4;border-bottom:2px solid #383832}
+.workspace-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line);background:#fff;padding:0 1.5rem}.stat{padding:.85rem 1.2rem .8rem 0;min-width:0}.stat+.stat{border-left:1px solid var(--line);padding-left:1.2rem}.stat-value{display:block;font-size:1.4rem;line-height:1.2;font-weight:600;font-variant-numeric:tabular-nums}.stat-label{display:block;font-size:.76rem;color:var(--muted);margin-top:.18rem}
+.workspace{display:grid;grid-template-columns:minmax(290px,350px) minmax(0,1fr);min-height:calc(100vh - 206px);align-items:start}.project-rail{background:#fafaf8;border-right:1px solid var(--line);min-width:0;align-self:stretch}.rail-controls{padding:1rem;border-bottom:1px solid var(--line);display:grid;gap:.75rem}.row{display:flex;justify-content:space-between;align-items:center;gap:.7rem;flex-wrap:wrap}.row.start{justify-content:flex-start}.filters{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.project-count{color:var(--muted);font-size:.82rem}.selection-bar{display:flex;gap:.7rem;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--line);font-size:.83rem}.project-list{margin:0;padding:0;list-style:none}
+.project-item{position:relative;display:grid;grid-template-columns:20px minmax(0,1fr);column-gap:.6rem;border-bottom:1px solid var(--line);padding:.9rem 1rem;background:transparent}.project-item.selected{background:#fff;box-shadow:inset 3px 0 #252522}.project-item .selection{padding-top:.1rem}.project-button{display:block;width:100%;text-align:left;border:0;padding:0;background:transparent;min-width:0;border-radius:0}.project-button:hover:not(:disabled){background:transparent}.project-title{display:block;font-size:.95rem;line-height:1.4;font-weight:600;overflow-wrap:anywhere}.project-buyer{display:block;font-weight:400;color:var(--muted);font-size:.82rem;line-height:1.4;margin-top:.28rem;overflow-wrap:anywhere}.project-meta{display:flex;gap:.45rem .7rem;flex-wrap:wrap;align-items:center;margin-top:.5rem;font-size:.76rem;color:var(--muted);font-weight:400}.tag{display:inline-flex;gap:.3rem;align-items:center;width:max-content;max-width:100%;border:1px solid #cecec6;border-radius:3px;padding:.15rem .4rem;font-size:.72rem;font-weight:500;color:#45453f;background:#f4f4f0;overflow-wrap:anywhere}.tag.strong{border-color:#52524b;background:#e7e7e0;color:#282824}
+.detail{padding:1.5rem 1.6rem 3rem;min-width:0;max-width:1350px;width:100%}.detail-header{display:grid;gap:.75rem}.identity{display:flex;align-items:flex-start;gap:.55rem;flex-wrap:wrap;font-size:.84rem;color:var(--muted)}.identity code{color:var(--ink);line-height:1.5}.edition-strip{border:1px solid var(--line);background:#fff;margin-top:1.1rem;padding:.9rem 1rem;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.8rem}.edition-meta{margin-top:.4rem;color:var(--muted);font-size:.78rem;line-height:1.5;overflow-wrap:anywhere}
+.tabs{display:flex;gap:1.1rem;border-bottom:1px solid #bcbcb5;margin:1.25rem 0;overflow-x:auto}.tabs button{border:0;border-radius:0;border-bottom:2px solid transparent;padding:.55rem .15rem .65rem;background:transparent;white-space:nowrap;color:var(--muted);font-size:.9rem}.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink)}.panel{display:grid;gap:1rem}.card{border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.1rem;background:#fff;min-width:0}.card>h3,.card>.row:first-child{margin-bottom:.7rem}.grid-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem 1.5rem;margin:0}.field{min-width:0}.field.wide{grid-column:1/-1}.field dt{color:var(--muted);font-size:.78rem;line-height:1.4;margin-bottom:.25rem}.field dd{margin:0;line-height:1.5;overflow-wrap:anywhere;font-size:.9rem}.description{line-height:1.65;font-size:.92rem;white-space:pre-wrap;overflow-wrap:anywhere}.empty{text-align:left;padding:2.5rem 1.2rem;color:var(--muted)}.empty h2,.empty h3{color:var(--ink);margin-bottom:.5rem}.empty .actions{margin-top:1rem}.welcome{max-width:690px;margin:2rem auto}.welcome-list{padding-left:1.2rem;line-height:1.7;margin:1rem 0}
+details{border-top:1px solid var(--line);padding:.7rem 0;min-width:0}details:last-child{padding-bottom:0}details>summary{cursor:pointer;line-height:1.5;font-weight:550;overflow-wrap:anywhere}details>.json{margin-top:.6rem}.json{background:#f6f6f2;border:1px solid #e1e1da;border-radius:3px;padding:.8rem;max-height:540px;overflow:auto}
+.table-wrap{overflow:auto;border:1px solid var(--line);background:#fff}table{width:100%;border-collapse:collapse;font-size:.85rem}th{text-align:left;color:var(--muted);font-size:.76rem;font-weight:600;background:#f2f2ee}th,td{vertical-align:top;padding:.7rem .8rem;border-bottom:1px solid var(--line);line-height:1.5;overflow-wrap:anywhere}tbody tr:last-child td{border-bottom:0}.compare-controls{display:grid;grid-template-columns:1fr 1fr auto;align-items:end;gap:.75rem}.diff-table{table-layout:fixed}.diff-table th:first-child{width:27%}.diff-table pre{font-size:.77rem;max-height:300px;overflow:auto}.diff-path{display:block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.75rem;margin-bottom:.35rem;overflow-wrap:anywhere}.missing{color:var(--muted);font-style:italic;font-size:.8rem}.callout{padding:.8rem 1rem;border-left:3px solid #6c6c62;background:#ebebe5;line-height:1.55;font-size:.88rem}
+.review-form{display:grid;gap:.9rem}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.form-help{color:var(--muted);font-size:.8rem;line-height:1.55;margin-top:.3rem;font-weight:400}.review-state{font-size:.82rem;color:var(--muted);line-height:1.5}.export-bar{display:flex;gap:.6rem;align-items:end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:1rem;margin-top:1.2rem}.export-bar label{width:145px}.export-context{flex:1;min-width:150px;padding-bottom:.5rem;color:var(--muted);font-size:.8rem}
+dialog{color:var(--ink);padding:0;width:min(750px,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);border:1px solid #9c9c92;border-radius:5px;background:#fff;box-shadow:0 18px 70px #0003}dialog::backdrop{background:#16161275}.dialog-header{padding:1.1rem 1.25rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:1rem}.dialog-body{padding:1.1rem 1.25rem;display:grid;gap:1rem}.dialog-footer{border-top:1px solid var(--line);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap}.drop-zone{border:1px dashed #a4a499;background:#f6f6f2;padding:1rem;text-align:center;display:grid;justify-items:center;gap:.6rem}.drop-zone.drag{border:2px solid #373730;background:#e8e8e0}.drop-zone p{font-size:.86rem}.file-name{overflow-wrap:anywhere;font-size:.8rem;color:var(--muted)}.dialog-error{background:#ebebe5;border-left:3px solid #3c3c36;padding:.75rem;font-size:.85rem;line-height:1.5}.separator{display:flex;align-items:center;gap:.7rem;color:var(--muted);font-size:.76rem}.separator:before,.separator:after{content:"";flex:1;height:1px;background:var(--line)}[hidden]{display:none!important}
+@media(min-width:1600px){.workspace{grid-template-columns:390px minmax(0,1fr)}.detail{padding-right:2.5rem;padding-left:2.5rem}}
+@media(max-width:1000px){.workspace{grid-template-columns:300px minmax(0,1fr)}.detail{padding:1.1rem}.grid-two{grid-template-columns:1fr}.compare-controls{grid-template-columns:1fr 1fr}.compare-controls button{grid-column:1/-1;justify-self:start}}
+@media(max-width:760px){.app-header{padding:1rem}.app-status{padding:.45rem 1rem}.workspace-stats{padding:0 1rem}.workspace{display:block}.project-rail{border-right:0;border-bottom:1px solid var(--line)}.rail-controls{grid-template-columns:1fr 1fr}.rail-controls>.row{grid-column:1/-1}.project-list{max-height:360px;overflow:auto}.detail{padding:1.25rem 1rem 2rem}.tabs{gap:.8rem}.stat{padding-right:.55rem}.stat+.stat{padding-left:.7rem}.stat-value{font-size:1.2rem}}
+@media(max-width:440px){.app-header{gap:.8rem}.app-header .actions{width:100%}.app-header .actions button{flex:1;font-size:.83rem;padding:.5rem .4rem}.brand{gap:.7rem}.workspace-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(3){border-left:0;padding-left:0;border-top:1px solid var(--line)}.stat:nth-child(4){border-top:1px solid var(--line)}.rail-controls{grid-template-columns:1fr}.rail-controls>.row{grid-column:auto}.fields,.form-row,.compare-controls{grid-template-columns:1fr}.edition-strip{grid-template-columns:1fr}.edition-strip>button{justify-self:start}.detail h2{font-size:1.15rem}.card{padding:.9rem}.diff-table{min-width:560px}.dialog-body,.dialog-footer,.dialog-header{padding:1rem}}
+@media(prefers-reduced-motion:no-preference){button{transition:background .12s,border-color .12s}}
+@media print{.app-header .actions,.project-rail,.tabs,.edition-strip button,.export-bar,dialog,.skip-link{display:none!important}body{background:#fff}.workspace{display:block}.detail{max-width:none;padding:1rem 0}.card{break-inside:avoid}.json{max-height:none;overflow:visible}.app-status{display:none}}
+.handoff-list{list-style:none;padding:0;display:grid;gap:.7rem}.handoff-list li{border:1px solid var(--line);padding:.8rem;border-radius:var(--radius)}.handoff-id{display:block;overflow-wrap:anywhere;font-size:.76rem;margin:.4rem 0}.handoff-review{border:1px solid var(--line);padding:.8rem;min-width:0}.handoff-review h4{margin:0 0 .5rem}.handoff-review dd{white-space:pre-wrap}.handoff-conflict{margin-top:1rem}#handoffs-dialog{width:min(1000px,calc(100% - 1.5rem))}#handoffs-body{max-height:76vh;overflow:auto}.draft-backups{margin-top:1rem}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#detail">Skip to selected procedure</a>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">PD</span><div><span class="eyebrow">Open contracting workspace</span><h1>Procurement desk</h1></div></div><div class="actions"><button id="view-handoffs">Handoffs</button><button id="receive-workspace">Receive workspace</button><button id="save-workspace">Save workspace</button><button id="open-import" class="primary">Import source</button></div></header>
+<div id="app-status" class="app-status" role="status" aria-live="polite">Opening workspace…</div>
+<section class="workspace-stats" aria-label="Workspace totals"><div class="stat"><span id="stat-processes" class="stat-value">—</span><span class="stat-label">Procedures</span></div><div class="stat"><span id="stat-releases" class="stat-value">—</span><span class="stat-label">Retained editions</span></div><div class="stat"><span id="stat-shortlist" class="stat-value">—</span><span class="stat-label">Shortlisted</span></div><div class="stat"><span id="stat-review" class="stat-value">—</span><span class="stat-label">To review</span></div></section>
+<main class="workspace"><aside class="project-rail" aria-label="Procurement procedures"><div class="rail-controls"><label>Find a procedure<input id="search" type="search" placeholder="Title, buyer, OCID, source…" autocomplete="off"></label><div class="filters"><label>Stage<select id="stage-filter"><option value="">All stages</option></select></label><label>Disposition<select id="review-filter"><option value="">All dispositions</option></select></label></div><div class="row"><label class="check"><input id="shortlist-filter" type="checkbox">Shortlist only</label><span id="project-count" class="project-count"></span></div></div><div class="selection-bar"><label class="check"><input id="select-visible" type="checkbox">Select page</label><span id="selection-count">0 selected</span></div><ul id="project-list" class="project-list"></ul><div id="rail-empty" class="empty small-text" hidden></div><div id="project-pagination" class="selection-bar" hidden></div></aside><section id="detail" class="detail" aria-label="Selected procedure" tabindex="-1"></section></main>
+<dialog id="import-dialog" aria-labelledby="import-title"><form id="import-form"><header class="dialog-header"><div><span class="eyebrow">Retain original source</span><h2 id="import-title">Import procurement data</h2></div><button type="button" id="close-import" class="quiet" aria-label="Close import">Close</button></header><div class="dialog-body"><p class="muted small-text">Import an OCDS release, release package, record, or record package. Every imported source and its exact editions remain available in the workspace.</p><div class="form-row"><label>Source label<input id="import-label" maxlength="300" placeholder="Publication or source name"></label><label>Source type<select id="import-kind"><option value="upload">OCDS JSON</option><option value="find-a-tender">Find a Tender</option></select></label></div><label>Original source URL<input id="import-url" type="url" placeholder="https://…" inputmode="url"><span class="form-help">Keep the publication address with the retained JSON.</span></label>
+<div id="find-tender-controls" class="card" hidden><h3>Capture from Find a Tender</h3><p class="small-text muted">Use a contracting process OCID for its record, or a notice ID for published releases. An official source URL above can fill the identifier.</p><div class="form-row" style="margin-top:.8rem"><label>Capture type<select id="capture-kind"><option value="record">Contracting process record</option><option value="releases">Published releases</option></select></label><label>OCID or notice ID<input id="capture-identifier" placeholder="ocds-h6vhtk-… or 095287-2026"></label></div><details><summary>Release feed filters</summary><div class="form-row" style="margin-top:.65rem"><label>Updated from (UTC)<input id="capture-from" type="datetime-local"></label><label>Updated to (UTC)<input id="capture-to" type="datetime-local"></label></div><div class="form-row" style="margin-top:.65rem"><label>Stages<input id="capture-stages" placeholder="planning, tender, award"></label><label>Page size<input id="capture-limit" type="number" min="1" max="100" value="100"></label></div><p class="form-help">These filters apply to published releases. Every returned page and its original source address are retained.</p></details><div class="actions" style="margin-top:.7rem"><button id="fetch-tender" type="button">Fetch and retain source</button></div></div>
+<details id="capture-history" hidden><summary>Retained Find a Tender captures<span id="capture-history-count"></span></summary><div id="capture-history-body"></div></details>
+<div id="drop-zone" class="drop-zone"><p>Drop one JSON file here, or choose a file.</p><button id="choose-source-file" type="button">Choose JSON file</button><input id="source-file" class="sr-only" type="file" accept=".json,application/json"><span id="source-file-name" class="file-name"></span></div><div class="separator">or paste JSON</div><label>Source JSON<textarea id="import-json" class="mono" rows="8" spellcheck="false" placeholder='{"releases": […]}'></textarea></label><div id="import-error" class="dialog-error" role="alert" hidden></div></div><footer class="dialog-footer"><span id="import-progress" class="small-text muted"></span><div class="actions"><button id="cancel-import" type="button">Cancel</button><button id="submit-import" type="submit" class="primary">Import and retain source</button></div></footer></form></dialog>
+<dialog id="receive-dialog" aria-labelledby="receive-title"><form id="receive-form"><header class="dialog-header"><div><span class="eyebrow">Portable handoff</span><h2 id="receive-title">Receive a saved workspace</h2></div><button type="button" id="close-receive" class="quiet" aria-label="Close receive workspace">Close</button></header><div class="dialog-body"><p class="muted small-text">Merge a previously exported workspace into this one. Original sources and new procedures are added; local review edits stay available, and conflicting received reviews are reported.</p><label>Workspace JSON file<input id="receive-file" type="file" accept=".json,application/json" required></label><div id="receive-summary" class="small-text muted"></div><div id="receive-error" class="dialog-error" role="alert" hidden></div></div><footer class="dialog-footer"><span id="receive-progress" class="small-text muted"></span><div class="actions"><button id="cancel-receive" type="button">Cancel</button><button id="submit-receive" type="submit" class="primary">Receive workspace</button></div></footer></form></dialog>
+<dialog id="handoffs-dialog" aria-labelledby="handoffs-title"><header class="dialog-header"><div><span class="eyebrow">Retained workspace transfers</span><h2 id="handoffs-title">Workspace handoffs</h2></div><button type="button" id="close-handoffs" class="quiet">Close</button></header><div id="handoffs-body" class="dialog-body"></div></dialog>
+<noscript><p class="callout">JavaScript is required to open and review this procurement workspace.</p></noscript>
+<script type="module">
+
+const $ = (id) => document.getElementById(id);
+const DISPOSITIONS = [['unreviewed','Unreviewed'],['reviewing','Reviewing'],['pursue','Pursue'],['passed','Passed']];
+const PAGE_SIZE = 40;
+const state = {data:null,projectId:null,entryId:null,tab:'overview',page:1,search:'',stage:'',disposition:'',shortlistOnly:false,selected:new Set(),entries:new Map(),entryChoices:new Map(),entryPending:new Map(),drafts:new Map(),compare:new Map(),detailToken:0,writePending:false,receivePackage:null,receivings:new Map(),receivingId:null,receivingRequest:0,handoffPage:1,capturePage:1,draftBackups:new Map(),sourceFileRaw:null,sourceFilePreview:null};
+
+function node(tag, attrs = {}, ...children) {
+  const result = document.createElement(tag);
+  for (const [key,value] of Object.entries(attrs)) {
+    if (value === undefined || value === null) continue;
+    if (key === 'class') result.className = value;
+    else if (key === 'text') result.textContent = value;
+    else if (key.startsWith('on') && typeof value === 'function') result.addEventListener(key.slice(2),value);
+    else if (['value','checked','disabled','hidden','selected','indeterminate','readOnly'].includes(key)) result[key] = value;
+    else result.setAttribute(key,value);
+  }
+  for (const child of children.flat(Infinity)) {
+    if (child === undefined || child === null || child === false) continue;
+    result.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return result;
+}
+function text(value,fallback='—') {if (value === undefined || value === null || value === '') return fallback; return typeof value === 'object' ? JSON.stringify(value) : String(value);}
+function pretty(value) {return JSON.stringify(value,null,2);}
+function titleCase(value) {return text(value,'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' ').replace(/^./,(s)=>s.toUpperCase());}
+function countLabel(count,singular,plural=singular+'s') {return count.toLocaleString()+' '+(count===1?singular:plural);}
+function dateLabel(value) {
+  if (!value) return '—';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())?String(value):date.toISOString().replace('T',' ').replace(/\.\d{3}Z$/,' UTC');
+}
+function money(value) {
+  if (!value || value.amount === undefined || value.amount === null) return '—';
+  const amount = value.amount;
+  if (typeof amount !== 'number' || !Number.isFinite(amount)) return text(value.amount)+' '+text(value.currency,'');
+  try {if (value.currency) return new Intl.NumberFormat(undefined,{style:'currency',currency:value.currency,maximumFractionDigits:2}).format(amount);} catch (_) {}
+  return amount.toLocaleString(undefined,{maximumFractionDigits:2})+(value.currency?' '+value.currency:'');
+}
+function safeURL(value) {if(typeof value!=='string')return null;try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)?url.href:null;}catch(_){return null;}}
+function sourceLink(url,label) {const href=safeURL(url);return href?node('a',{href,target:'_blank',rel:'noopener noreferrer'},label||url):node('span',{},text(label||url));}
+function dispositionLabel(value) {return DISPOSITIONS.find(([key])=>key===value)?.[1]||titleCase(value||'unreviewed');}
+function kindLabel(value) {return ({release:'Published release',compiledRelease:'Source compiled release',versionedRelease:'Source version history'})[value]||titleCase(value);}
+function buyerLabel(summary) {return typeof summary?.buyer==='string'?summary.buyer:summary?.buyer?.name||summary?.buyer?.id||'Buyer not specified';}
+function reviewOf(project) {return {revision:0,disposition:'unreviewed',owner:'',nextAction:'',note:'',shortlisted:false,...(project?.review||{})};}
+function currentProject() {return state.data?.projects.find((project)=>project.ocid===state.projectId);}
+function selectedEntryMeta() {return currentProject()?.entries.find((entry)=>entry.id===state.entryId);}
+function entryDocument(entry) {return entry?.document;}
+function entrySource(entry) {return entry?.source||state.data?.sources.find((source)=>source.id===selectedEntryMeta()?.sourceId)||{};}
+function entriesFor(project) {return [...(project?.entries||[])];}
+function defaultEntryId(project) {return project?.currentEntryId || entriesFor(project).find((entry)=>entry.kind!=='versionedRelease')?.id || entriesFor(project)[0]?.id || null;}
+function editionLabel(entry) {return dateLabel(entry.date)+' · '+kindLabel(entry.kind)+' · '+text(entry.releaseId,'No release ID');}
+function setStatus(message,isError=false) {$('app-status').replaceChildren(document.createTextNode(message));$('app-status').classList.toggle('error',isError);}
+function workspaceStatus(extra) {const workspace=state.data?.workspace;if(!workspace)return;setStatus((extra?extra+' · ':'')+text(workspace.title,'Procurement workspace')+' · revision '+text(workspace.revision,'0')+' · saved '+dateLabel(workspace.updatedAt));}
+async function request(path,options={}) {
+  const {json,...init}=options;
+  const response=await fetch(path,{cache:'no-store',...init,headers:{...(json!==undefined?{'Content-Type':'application/json'}:{}),...(init.headers||{})},...(json!==undefined?{body:JSON.stringify(json)}:{})});
+  const contentType=response.headers.get('content-type')||'';
+  const payload=contentType.includes('json')?await response.json():await response.text();
+  if(!response.ok){const error=new Error(payload?.error?.message||(typeof payload==='string'?payload:response.statusText)||'Request failed.');error.status=response.status;error.code=payload?.error?.code;error.details=payload?.error?.details;throw error;}
+  return payload;
+}
+function errorMessage(error) {return (error?.message||'The operation could not be completed.')+(error?.code?' ['+error.code+']':'');}
+function setWriting(value) {
+  state.writePending=value;
+  for(const id of ['open-import','receive-workspace','submit-import','fetch-tender','submit-receive','toggle-shortlist']) if($(id)) $(id).disabled=value;
+  for(const control of document.querySelectorAll('.review-form input,.review-form select,.review-form textarea')) control.disabled=value;
+  if($('review-save')) $('review-save').disabled=value||!state.drafts.get(state.projectId)?.dirty;
+  if($('review-revert')) $('review-revert').disabled=value||!state.drafts.get(state.projectId)?.dirty;
+  if($('import-dialog')?.open)renderCaptureHistory();
+}
+async function write(path,method,payload) {
+  if(state.writePending)throw new Error('A save is in progress. Wait for it to finish, then try again.');
+  setWriting(true);
+  try{const result=await request(path,{method,json:payload});if(!result?.workspace||!Array.isArray(result.projects))throw new Error('The server returned an incomplete workspace response. Refresh to read the saved result.');applyWorkspace(result);return result;}
+  finally{setWriting(false);}
+}
+function applyWorkspace(data) {
+  state.data=data;
+  const available=new Set(data.projects.map((project)=>project.ocid));
+  for(const id of state.selected)if(!available.has(id))state.selected.delete(id);
+  if(!available.has(state.projectId))state.projectId=data.projects[0]?.ocid||null;
+  const project=currentProject(),choice=state.entryChoices.get(state.projectId);
+  state.entryId=project?.entries.some((entry)=>entry.id===choice)?choice:defaultEntryId(project);
+  if(state.entryId)state.entryChoices.set(state.projectId,state.entryId);
+  for(const project of data.projects){const draft=state.drafts.get(project.ocid);if(draft&&!draft.dirty)state.drafts.delete(project.ocid);}
+  renderAll();workspaceStatus();ensureCurrentEntry();if($('handoffs-dialog')?.open)renderHandoffs();if($('import-dialog')?.open)renderCaptureHistory();
+}
+async function loadWorkspace() {
+  setStatus('Opening saved procurement workspace…');
+  try{const data=await request('/api/workspace');const hash=new URLSearchParams(location.hash.slice(1));if(!state.projectId&&hash.get('ocid'))state.projectId=hash.get('ocid');applyWorkspace(data);}
+  catch(error){setStatus('Workspace could not be opened. '+errorMessage(error),true);$('detail').replaceChildren(node('div',{class:'empty welcome'},node('h2',{},'Workspace unavailable'),node('p',{},errorMessage(error)),node('div',{class:'actions'},node('button',{onclick:loadWorkspace},'Try again'))));}
+}
+async function ensureCurrentEntry() {
+  const id=state.entryId;if(!id||state.entries.has(id))return;
+  const token=++state.detailToken;
+  try{
+    let pending=state.entryPending.get(id);
+    if(!pending){pending=request('/api/entries/'+encodeURIComponent(id));state.entryPending.set(id,pending);}
+    const result=await pending,entry=result.entry||result;
+    if(!entry||!Object.prototype.hasOwnProperty.call(entry,'document'))throw new Error('The retained edition did not include its source document.');
+    state.entries.set(id,entry);
+    if(state.entryId===id&&token===state.detailToken&&state.tab!=='review')renderPanel();
+  }catch(error){
+    if(state.entryId===id&&token===state.detailToken&&state.tab!=='review')$('active-panel')?.replaceChildren(node('div',{class:'callout'},node('p',{},errorMessage(error)),node('button',{class:'small',onclick:()=>{state.entryPending.delete(id);ensureCurrentEntry();}},'Retry edition load')));
+  }finally{state.entryPending.delete(id);}
+}
+function filteredProjects() {
+  const query=state.search.trim().toLowerCase();
+  return (state.data?.projects||[]).filter((project)=>{
+    const review=reviewOf(project);
+    if(state.stage&&project.summary?.stage!==state.stage)return false;
+    if(state.disposition&&review.disposition!==state.disposition)return false;
+    if(state.shortlistOnly&&!review.shortlisted)return false;
+    if(!query)return true;
+    const sourceText=project.entries.map((entry)=>{const source=state.data.sources.find((item)=>item.id===entry.sourceId);return [entry.releaseId,source?.label,source?.url].join(' ');}).join(' ');
+    return [project.ocid,project.summary?.title,buyerLabel(project.summary),project.summary?.status,sourceText,review.owner].join(' ').toLowerCase().includes(query);
+  });
+}
+function pageProjects() {const projects=filteredProjects(),maxPage=Math.max(1,Math.ceil(projects.length/PAGE_SIZE));state.page=Math.max(1,Math.min(state.page,maxPage));return {projects,visible:projects.slice((state.page-1)*PAGE_SIZE,state.page*PAGE_SIZE),maxPage};}
+function renderStats() {
+  const projects=state.data.projects;
+  $('view-handoffs').textContent='Handoffs'+(state.data.receivings?.length?' ('+state.data.receivings.length.toLocaleString()+')':'');
+  $('stat-processes').textContent=projects.length.toLocaleString();
+  $('stat-releases').textContent=projects.reduce((sum,project)=>sum+project.entries.length,0).toLocaleString();
+  $('stat-shortlist').textContent=projects.filter((project)=>reviewOf(project).shortlisted).length.toLocaleString();
+  $('stat-review').textContent=projects.filter((project)=>['unreviewed','reviewing'].includes(reviewOf(project).disposition)).length.toLocaleString();
+  const stages=[...new Set(projects.map((project)=>project.summary?.stage).filter(Boolean))].sort();
+  $('stage-filter').replaceChildren(node('option',{value:''},'All stages'),...stages.map((stage)=>node('option',{value:stage},titleCase(stage))));$('stage-filter').value=state.stage;
+  const dispositions=[...new Set([...DISPOSITIONS.map(([value])=>value),...projects.map((project)=>reviewOf(project).disposition)])];
+  $('review-filter').replaceChildren(node('option',{value:''},'All dispositions'),...dispositions.map((value)=>node('option',{value},dispositionLabel(value))));$('review-filter').value=state.disposition;
+}
+function renderList() {
+  const focused = $('project-list').contains(document.activeElement) ? document.activeElement.id : null;
+  const {projects,visible,maxPage}=pageProjects();
+  $('project-count').textContent=countLabel(projects.length,'result');$('selection-count').textContent=state.selected.size.toLocaleString()+' selected';
+  $('select-visible').checked=visible.length>0&&visible.every((project)=>state.selected.has(project.ocid));
+  $('select-visible').indeterminate=visible.some((project)=>state.selected.has(project.ocid))&&!$('select-visible').checked;$('select-visible').disabled=visible.length===0;
+  $('project-list').replaceChildren(...visible.map((project)=>{
+    const review=reviewOf(project),summary=project.summary||{};
+    const check=node('input',{id:'pick-'+encodeURIComponent(project.ocid),type:'checkbox',checked:state.selected.has(project.ocid),'aria-label':'Select '+text(summary.title,project.ocid),onchange:(event)=>{event.target.checked?state.selected.add(project.ocid):state.selected.delete(project.ocid);renderList();renderExportBar();}});
+    const value=summary.values?.find((item)=>item.stage==='tender')||summary.values?.[0];
+    return node('li',{class:'project-item'+(project.ocid===state.projectId?' selected':'')},
+      node('div',{class:'selection'},check),
+      node('button',{id:'open-'+encodeURIComponent(project.ocid),class:'project-button','aria-current':project.ocid===state.projectId?'true':'false',onclick:()=>selectProject(project.ocid)},
+        node('span',{class:'project-title'},text(summary.title,project.ocid)),node('span',{class:'project-buyer'},buyerLabel(summary)),
+        node('span',{class:'project-meta'},node('span',{class:'tag'+(review.shortlisted?' strong':'')},review.shortlisted?'Shortlisted':titleCase(summary.stage||'Unknown stage')),node('span',{},dispositionLabel(review.disposition)),node('span',{},countLabel(project.entries.length,'edition')),value?node('span',{},money(value)):null)));
+  }));
+  $('rail-empty').hidden=projects.length>0;$('rail-empty').textContent=state.data.projects.length?'No procedures match these filters.':'Import a source to begin building this workspace.';
+  $('project-pagination').hidden=maxPage<=1;
+  $('project-pagination').replaceChildren(node('button',{class:'small',disabled:state.page<=1,onclick:()=>{state.page--;renderList();}},'Previous'),node('span',{},'Page '+state.page+' of '+maxPage),node('button',{class:'small',disabled:state.page>=maxPage,onclick:()=>{state.page++;renderList();}},'Next'));
+  if(focused)document.getElementById(focused)?.focus({preventScroll:true});
+}
+function selectProject(ocid) {
+  state.projectId=ocid;const project=currentProject(),choice=state.entryChoices.get(ocid);
+  state.entryId=project?.entries.some((entry)=>entry.id===choice)?choice:defaultEntryId(project);
+  if(state.entryId)state.entryChoices.set(ocid,state.entryId);state.detailToken++;
+  history.replaceState(null,'','#'+new URLSearchParams({ocid}).toString());renderList();renderDetail();ensureCurrentEntry();
+}
+function renderAll(){renderStats();renderList();renderDetail();}
+
+function emptyWorkspace() {
+  return node('div',{class:'welcome'},
+    node('span',{class:'eyebrow'},'A retained source workspace'),node('h2',{},'Review procurement opportunities from one place.'),
+    node('p',{class:'muted',style:'margin-top:.7rem'},'Capture a Find a Tender record or import OCDS JSON, then keep its editions, changes, review decisions, and shortlisted procedures together.'),
+    node('ol',{class:'welcome-list muted'},node('li',{},'Import a release or record package with its original publication address.'),node('li',{},'Inspect exact editions and compare fields across releases.'),node('li',{},'Save the owner and next action, then export the selected procedures or a portable workspace.')),
+    node('div',{class:'actions'},node('button',{class:'primary',onclick:openImport},'Import a source'),node('button',{onclick:openReceive},'Receive a workspace')),
+    node('div',{class:'card',style:'margin-top:1.5rem'},node('h3',{},'Source identity stays visible'),node('p',{class:'small-text muted'},'Published releases, source-provided compiled releases, and source version history remain separately selectable. Each edition shows its OCID, release ID, source, and source pointer.')));
+}
+function renderDetail() {
+  const detail=$('detail'),project=currentProject();
+  if(!project){detail.replaceChildren(emptyWorkspace());return;}
+  const review=reviewOf(project),entries=entriesFor(project);
+  const selector=node('select',{id:'edition-select','aria-label':'Retained edition',onchange:(event)=>{
+    state.entryId=event.target.value;state.entryChoices.set(project.ocid,state.entryId);state.detailToken++;renderEditionMetadata();renderPanel();ensureCurrentEntry();
+  }},...entries.map((entry)=>node('option',{value:entry.id,selected:entry.id===state.entryId},editionLabel(entry))));
+  const shortlistButton=node('button',{id:'toggle-shortlist',class:review.shortlisted?'primary':'','aria-pressed':String(review.shortlisted),disabled:state.writePending,onclick:toggleShortlist},review.shortlisted?'Remove from shortlist':'Add to shortlist');
+  const tabs=[['overview','Overview'],['edition','Edition detail'],['compare','Compare'],['review','Review'],['source','Source']];
+  const tablist=node('div',{class:'tabs',role:'tablist','aria-label':'Procedure views'});
+  for(const [key,label]of tabs)tablist.append(node('button',{
+    id:'tab-'+key,role:'tab','aria-controls':'active-panel','aria-selected':String(state.tab===key),tabindex:state.tab===key?'0':'-1',
+    onclick:()=>activateTab(key),
+    onkeydown:(event)=>{
+      const index=tabs.findIndex(([id])=>id===key);let next;
+      if(event.key==='ArrowRight')next=(index+1)%tabs.length;if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+      if(event.key==='Home')next=0;if(event.key==='End')next=tabs.length-1;
+      if(next!==undefined){event.preventDefault();activateTab(tabs[next][0]);$('tab-'+tabs[next][0]).focus();}
+    }
+  },label));
+  detail.replaceChildren(
+    node('header',{class:'detail-header'},node('div',{class:'row'},node('span',{class:'eyebrow'},'Contracting procedure'),shortlistButton),
+      node('h2',{},text(project.summary?.title,project.ocid)),
+      node('div',{class:'identity'},node('span',{},'OCID'),node('code',{},project.ocid),node('button',{class:'small quiet',onclick:()=>copyText(project.ocid)},'Copy')),
+      node('div',{class:'row start'},node('span',{class:'small-text muted'},buyerLabel(project.summary)),node('span',{class:'tag'},dispositionLabel(review.disposition)),review.owner?node('span',{class:'small-text muted'},'Owner: '+review.owner):null)),
+    node('div',{class:'edition-strip'},node('div',{},node('label',{for:'edition-select'},'Retained edition'),selector,node('div',{id:'edition-meta',class:'edition-meta'})),node('button',{class:'small',onclick:downloadCurrentEntry},'Download edition JSON')),
+    tablist,node('section',{id:'active-panel',class:'panel',role:'tabpanel','aria-labelledby':'tab-'+state.tab}),node('div',{id:'export-bar',class:'export-bar'}));
+  renderEditionMetadata();renderPanel();renderExportBar();
+}
+function activateTab(key) {
+  state.tab=key;
+  for(const button of document.querySelectorAll('[role=tab]')){const active=button.id==='tab-'+key;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;}
+  $('active-panel')?.setAttribute('aria-labelledby','tab-'+key);renderPanel();
+}
+function renderEditionMetadata() {
+  const entry=selectedEntryMeta();if(!entry||!$('edition-meta'))return;
+  const source=state.data.sources.find((item)=>item.id===entry.sourceId);
+  $('edition-meta').replaceChildren(node('span',{},text(source?.label,entry.sourceId)),' · ',node('code',{},entry.sourcePointer||'/'),' · ',node('span',{},'Entry '+entry.id));
+}
+function fields(items) {
+  return node('dl',{class:'fields'},...items.map(([label,value,wide])=>node('div',{class:'field'+(wide?' wide':'')},node('dt',{},label),node('dd',{},value instanceof Node?value:text(value)))));
+}
+function card(heading,...children){return node('section',{class:'card'},node('h3',{},heading),...children);}
+function summaryLinks(links) {
+  if(!links?.length)return node('p',{class:'small-text muted'},'No links are present in this edition.');
+  return node('ul',{class:'small-text',style:'padding-left:1.2rem;line-height:1.9;margin:.2rem 0'},...links.map((link)=>node('li',{},sourceLink(link.url,link.title||link.url),link.kind?node('span',{class:'muted'},' · '+titleCase(link.kind)):null)));
+}
+function renderPanel() {
+  const panel=$('active-panel');if(!panel)return;
+  if(state.tab==='review'){renderReview(panel);return;}if(state.tab==='compare'){renderCompare(panel);return;}
+  const entry=state.entries.get(state.entryId);
+  if(!entry){panel.replaceChildren(node('p',{class:'muted'},'Loading the retained source edition…'));return;}
+  if(state.tab==='overview')panel.replaceChildren(...overviewView(entry));
+  else if(state.tab==='edition')panel.replaceChildren(...editionView(entry));
+  else if(state.tab==='source')panel.replaceChildren(...sourceView(entry));
+}
+function overviewView(entry) {
+  const doc=entryDocument(entry),summary=entry.summary||selectedEntryMeta()?.summary||{},meta=selectedEntryMeta();
+  if(meta.kind==='versionedRelease')return [card('Source version history',node('p',{class:'muted'},'This edition retains the source’s field-history structure. Open Edition detail to inspect all revisions and their original wrappers.')),rawDetails('Complete retained version history',doc,true)];
+  const values=(summary.values||[]).map((value)=>[titleCase(value.stage||value.role||'Value')+(value.id?' · '+value.id:''),money(value)]),next=reviewOf(currentProject());
+  const sections=[
+    card(text(summary.title,'Selected edition'),fields([
+      ['Buyer',buyerLabel(summary)],['Stage and status',[titleCase(summary.stage||'Unknown'),text(summary.status,'Not specified')].join(' · ')],
+      ['Procurement method',text(summary.procurementMethod||doc?.tender?.procurementMethod)],['Release date',dateLabel(meta.date)],
+      ['Release ID',node('code',{},text(meta.releaseId))],['Edition type',kindLabel(meta.kind)]
+    ]),summary.description||doc?.tender?.description?node('p',{class:'description',style:'margin-top:1rem'},summary.description||doc.tender.description):null),
+    node('div',{class:'grid-two'},
+      card('Dates',fields([['Tender opens',dateLabel(summary.dates?.tenderStart)],['Tender closes',dateLabel(summary.dates?.tenderEnd)],['Award period starts',dateLabel(summary.dates?.awardStart)],['Award period ends',dateLabel(summary.dates?.awardEnd)],['Contract starts',dateLabel(summary.dates?.contractStart)],['Contract ends',dateLabel(summary.dates?.contractEnd)]])),
+      card('Published values',values.length?fields(values):node('p',{class:'small-text muted'},'No monetary values are present in this edition.'))),
+    card('Review and next action',fields([['Disposition',dispositionLabel(next.disposition)],['Owner',next.owner],['Next action',next.nextAction,true],['Saved review','Revision '+next.revision+' · '+dateLabel(next.updatedAt),true]]),node('div',{class:'actions',style:'margin-top:.8rem'},node('button',{class:'small',onclick:()=>activateTab('review')},'Edit review'))),
+    card('Publication links',summaryLinks(summary.links||[]))
+  ];
+  const counts=summary.counts||{};
+  if(Object.keys(counts).length)sections.splice(2,0,card('Edition contents',fields(Object.entries(counts).map(([name,value])=>[titleCase(name),Number(value).toLocaleString()]))));
+  const diagnostics=(state.data.diagnostics||[]).filter((item)=>!item.ocid||item.ocid===state.projectId);
+  if(diagnostics.length)sections.push(card('Source notes',node('ul',{class:'small-text',style:'padding-left:1.2rem;line-height:1.7'},...diagnostics.map((item)=>node('li',{},text(item.message),item.path?node('code',{},' · '+item.path):null,item.packageId?node('button',{class:'small',style:'margin-left:.5rem',onclick:()=>openHandoffs(item.packageId)},'Open received review'):null)))));
+  return sections;
+}
+function scalarValue(value) {
+  if(value===null)return node('code',{},'null');if(value==='')return node('span',{class:'missing'},'Empty string');
+  if(typeof value==='string'&&safeURL(value))return sourceLink(value);
+  return node('span',{class:typeof value==='string'&&value.length>180?'description':''},text(value));
+}
+function lazyDetails(label,build,opened=false) {
+  const details=node('details',{},node('summary',{},label));let built=false;
+  const populate=()=>{if(!built){built=true;details.append(build());}};
+  details.addEventListener('toggle',()=>{if(details.open)populate();});
+  if(opened){details.open=true;populate();}return details;
+}
+function rawDetails(label,data,opened=false){return lazyDetails(label,()=>node('pre',{class:'json',tabindex:'0'},pretty(data)),opened);}
+function structured(value,path='',depth=0) {
+  if(value===null||typeof value!=='object')return node('div',{class:'small-text'},scalarValue(value));
+  if(depth>8)return node('pre',{class:'json',tabindex:'0'},pretty(value));
+  if(Array.isArray(value)){
+    if(!value.length)return node('p',{class:'small-text muted'},'Empty array');
+    const wrap=node('div'),scalar=value.every((item)=>item===null||typeof item!=='object');
+    if(scalar)return node('ul',{class:'small-text',style:'padding-left:1.2rem;line-height:1.8'},...value.map((item)=>node('li',{},scalarValue(item))));
+    for(let index=0;index<value.length;index++){const item=value[index],identity=item&&typeof item==='object'?item.title||item.name||item.id||item.releaseID:null;wrap.append(lazyDetails(String(index+1)+(identity?' · '+text(identity):''),()=>structured(item,path+'/'+index,depth+1),value.length===1));}
+    return wrap;
+  }
+  const wrap=node('div',{style:'margin-top:.55rem'}),scalars=Object.entries(value).filter(([,item])=>item===null||typeof item!=='object'),objects=Object.entries(value).filter(([,item])=>item!==null&&typeof item==='object');
+  if(scalars.length)wrap.append(fields(scalars.map(([key,item])=>[titleCase(key),scalarValue(item),typeof item==='string'&&item.length>180])));
+  for(const [key,item]of objects)wrap.append(lazyDetails(titleCase(key)+(Array.isArray(item)?' ('+item.length+')':''),()=>structured(item,path+'/'+key,depth+1)));
+  if(!scalars.length&&!objects.length)wrap.append(node('p',{class:'small-text muted'},'Empty object'));
+  return wrap;
+}
+function editionView(entry) {
+  const doc=entryDocument(entry),meta=selectedEntryMeta();
+  const intro=card('Exact edition data',fields([['OCID',node('code',{},state.projectId)],['Release ID',node('code',{},text(meta.releaseId))],['Edition type',kindLabel(meta.kind)],['Source pointer',node('code',{},text(meta.sourcePointer,'/'))]]));
+  if(!doc||typeof doc!=='object'||Array.isArray(doc))return [intro,rawDetails('Retained document',doc,true)];
+  const known=[['planning','Planning'],['tender','Tender'],['awards','Awards'],['contracts','Contracts'],['amendments','Amendments'],['parties','Parties'],['buyer','Buyer'],['documents','Documents'],['links','Links'],['relatedProcesses','Related procedures']];
+  const body=node('div',{class:'card'}),present=new Set();
+  for(const [key,label]of known){if(!Object.prototype.hasOwnProperty.call(doc,key))continue;present.add(key);const value=doc[key];body.append(lazyDetails(label+(Array.isArray(value)?' ('+value.length+')':''),()=>structured(value,'/'+key),key==='tender'));}
+  const other=Object.fromEntries(Object.entries(doc).filter(([key])=>!present.has(key)));
+  if(Object.keys(other).length)body.append(lazyDetails('Other published fields and extensions',()=>structured(other)));
+  return [intro,body,rawDetails('Complete edition JSON',doc)];
+}
+function sourceView(entry) {
+  const meta=selectedEntryMeta(),source=entrySource(entry),original=source.document??source.raw??source.package;
+  const info=card('Retained source',fields([
+    ['Source label',source.label],['Source ID',node('code',{},text(source.id,meta.sourceId))],
+    ['Original URL',source.url?sourceLink(source.url):'Not provided'],['Captured',dateLabel(source.retrievedAt)],
+    ['Publisher',typeof source.publisher==='object'?source.publisher?.name||pretty(source.publisher):source.publisher],['OCDS version',source.version],
+    ['License',source.license?sourceLink(source.license):'Not provided'],['Source fingerprint',node('code',{},text(source.sha256||source.hash||source.digest))],
+    ['Source pointer',node('code',{},text(meta.sourcePointer,'/'))],['Entry ID',node('code',{},meta.id)]
+  ]));
+  const buttons=node('div',{class:'actions',style:'margin-top:1rem'},node('button',{class:'small',onclick:downloadCurrentEntry},'Download exact edition'));
+  if(typeof source.body==='string')buttons.append(node('button',{class:'small',onclick:()=>downloadBlob(new Blob([source.body],{type:'application/json;charset=utf-8'}),'source-'+source.id+'.json')},'Download original source JSON'));
+  else if(original!==undefined)buttons.append(node('button',{class:'small',onclick:()=>downloadJSON(original,'source-'+source.id+'.json')},'Download original source JSON'));
+  info.append(buttons);const parts=[info];
+  if(source.extensions?.length)parts.push(card('Declared extensions',node('ul',{class:'small-text',style:'padding-left:1.2rem;line-height:1.8'},...source.extensions.map((url)=>node('li',{},sourceLink(url))))));
+  if(original!==undefined)parts.push(rawDetails('Complete original source JSON',original));
+  else if(typeof source.body==='string')parts.push(lazyDetails('Complete original source JSON',()=>node('pre',{class:'json',tabindex:'0'},source.body)));
+  parts.push(rawDetails('Complete retained edition JSON',entryDocument(entry)));return parts;
+}
+
+function compareState() {
+  let comparison=state.compare.get(state.projectId);
+  if(!comparison){
+    const all=entriesFor(currentProject()),documents=all.filter((entry)=>entry.kind!=='versionedRelease'),histories=all.filter((entry)=>entry.kind==='versionedRelease');
+    const editions=documents.length>=2?documents:histories.length>=2?histories:documents.length?documents:histories;
+    comparison={before:editions[1]?.id||editions[0]?.id||'',after:editions[0]?.id||'',result:null,loading:false,error:null,token:0,page:1};
+    state.compare.set(state.projectId,comparison);
+  }
+  return comparison;
+}
+function renderCompare(panel) {
+  const comparison=compareState(),entries=entriesFor(currentProject());
+  if(entries.length<2){panel.replaceChildren(card('Compare retained editions',node('p',{class:'muted'},'Import another edition of this contracting procedure to compare the exact published fields.')));return;}
+  const historyCount=entries.filter((entry)=>entry.kind==='versionedRelease').length;
+  if(historyCount<2&&entries.length-historyCount<2){panel.replaceChildren(card('Compare retained editions',node('p',{class:'muted'},'A comparison needs two release documents or two source version histories. Import another edition of this procedure to compare its published fields.')));return;}
+  function sameRepresentation(left,right) {return Boolean(left?.kind==='versionedRelease')===Boolean(right?.kind==='versionedRelease');}
+  function compareSelect(key,label) {
+    const before=entries.find((entry)=>entry.id===comparison.before);
+    return node('label',{},label,node('select',{'aria-label':label,onchange:(event)=>{
+      comparison[key]=event.target.value;
+      if(key==='before') {
+        const selected=entries.find((entry)=>entry.id===comparison.before);
+        const currentAfter=entries.find((entry)=>entry.id===comparison.after);
+        if(!sameRepresentation(selected,currentAfter)) comparison.after=entries.find((entry)=>entry.id!==selected.id&&sameRepresentation(selected,entry))?.id||selected.id;
+      }
+      comparison.result=null;comparison.error=null;comparison.loading=false;comparison.token++;comparison.page=1;renderCompare(panel);
+    }},...entries.map((entry)=>node('option',{value:entry.id,selected:entry.id===comparison[key],disabled:key==='after'&&!sameRepresentation(before,entry)},editionLabel(entry)))));
+  }
+  const controls=node('div',{class:'compare-controls'},compareSelect('before','Before edition'),compareSelect('after','After edition'),
+    node('button',{class:'primary',disabled:comparison.loading||comparison.before===comparison.after,onclick:runComparison},comparison.loading?'Comparing…':'Compare editions'));
+  const parts=[card('Compare exact retained editions',controls,node('p',{class:'form-help',style:'margin-top:.7rem'},'Each side uses the selected original document. Missing fields and explicit null values are shown separately. Field paths refer to the retained data.'))];
+  if(comparison.before===comparison.after)parts.push(node('p',{class:'small-text muted'},'Choose two different editions to compare.'));
+  if(comparison.error)parts.push(node('div',{class:'callout',role:'alert'},comparison.error));
+  if(comparison.result){
+    const result=comparison.result,changes=result.changes||[],counts=result.counts||{},maxPage=Math.max(1,Math.ceil(changes.length/100));
+    comparison.page=Math.max(1,Math.min(comparison.page,maxPage));
+    const visible=changes.slice((comparison.page-1)*100,comparison.page*100);
+    parts.push(node('div',{class:'row'},node('h3',{},countLabel(changes.length,'field change')),node('span',{class:'small-text muted'},(counts.added||0)+' added · '+(counts.removed||0)+' removed · '+(counts.changed||0)+' changed'),node('button',{class:'small',onclick:()=>downloadJSON(result,'comparison-'+state.projectId+'.json')},'Download comparison')));
+    if(!changes.length)parts.push(node('div',{class:'callout'},'The selected documents contain the same fields and values.'));
+    else{
+      const rows=visible.map((change)=>{
+        const identity=node('td',{},node('code',{class:'diff-path'},change.path||'/'),node('span',{class:'tag'},titleCase(change.type||change.kind)));
+        if(change.reason)identity.append(node('div',{class:'small-text muted'},titleCase(change.reason)));
+        if(change.beforePath&&change.afterPath&&change.beforePath!==change.afterPath)identity.append(node('div',{class:'small-text muted',style:'margin-top:.4rem'},'Before path: ',node('code',{},change.beforePath)));
+        const before=change.beforePresent===false?node('span',{class:'missing'},'Field absent'):node('pre',{},pretty(change.before));
+        const after=change.afterPresent===false?node('span',{class:'missing'},'Field absent'):node('pre',{},pretty(change.after));
+        return node('tr',{},identity,node('td',{},before),node('td',{},after));
+      });
+      parts.push(node('div',{class:'table-wrap'},node('table',{class:'diff-table'},node('thead',{},node('tr',{},node('th',{scope:'col'},'Field'),node('th',{scope:'col'},'Before'),node('th',{scope:'col'},'After'))),node('tbody',{},...rows))));
+      if(maxPage>1)parts.push(node('div',{class:'row'},node('button',{class:'small',disabled:comparison.page<=1,onclick:()=>{comparison.page--;renderPanel();}},'Previous changes'),node('span',{class:'small-text muted'},'Changes '+((comparison.page-1)*100+1)+'–'+Math.min(comparison.page*100,changes.length)+' of '+changes.length),node('button',{class:'small',disabled:comparison.page>=maxPage,onclick:()=>{comparison.page++;renderPanel();}},'Next changes')));
+    }
+  }
+  panel.replaceChildren(...parts);
+}
+async function runComparison() {
+  const projectId=state.projectId,comparison=compareState();
+  if(comparison.before===comparison.after)return;
+  const token=++comparison.token;comparison.loading=true;comparison.error=null;comparison.page=1;renderPanel();
+  try{const result=await request('/api/compare?'+new URLSearchParams({before:comparison.before,after:comparison.after}));if(token===comparison.token)comparison.result=result;}
+  catch(error){if(token===comparison.token)comparison.error=errorMessage(error);}
+  finally{if(token===comparison.token)comparison.loading=false;if(state.projectId===projectId&&state.tab==='compare')renderPanel();}
+}
+function draftFor(project) {
+  let draft=state.drafts.get(project.ocid);
+  if(!draft){const saved=reviewOf(project);draft={baseRevision:saved.revision,data:{...saved},dirty:false,message:'',conflict:false};state.drafts.set(project.ocid,draft);}
+  return draft;
+}
+function markDraftDirty(draft) {
+  draft.dirty=true;
+  if($('review-save'))$('review-save').disabled=state.writePending;
+  if($('review-revert'))$('review-revert').disabled=false;
+  if($('review-state'))$('review-state').textContent='Unsaved changes · based on review revision '+draft.baseRevision;
+}
+function renderReview(panel) {
+  const project=currentProject(),saved=reviewOf(project),draft=draftFor(project);
+  function bind(key,tag,attrs={}) {
+    return node(tag,{...attrs,disabled:state.writePending,id:'review-'+key,value:draft.data[key]||'',oninput:(event)=>{draft.data[key]=event.target.value;markDraftDirty(draft);}});
+  }
+  const disposition=bind('disposition','select'),choices=[...DISPOSITIONS];
+  if(!choices.some(([key])=>key===draft.data.disposition))choices.push([draft.data.disposition,dispositionLabel(draft.data.disposition)]);
+  disposition.replaceChildren(...choices.map(([key,label])=>node('option',{value:key,selected:key===draft.data.disposition},label)));
+  const form=node('form',{class:'review-form',onsubmit:saveReview},
+    node('div',{class:'form-row'},node('label',{for:'review-disposition'},'Disposition',disposition),node('label',{for:'review-owner'},'Owner',bind('owner','input',{maxlength:'32768',placeholder:'Person or team responsible'}))),
+    node('label',{for:'review-nextAction'},'Next action',bind('nextAction','textarea',{rows:'3',maxlength:'32768',placeholder:'What should happen next, and when?'})),
+    node('label',{for:'review-note'},'Review notes',bind('note','textarea',{rows:'7',maxlength:'32768',placeholder:'Fit, requirements, decisions, and relevant source details…'})),
+    node('label',{class:'check'},node('input',{type:'checkbox',disabled:state.writePending,checked:Boolean(draft.data.shortlisted),onchange:(event)=>{draft.data.shortlisted=event.target.checked;markDraftDirty(draft);}}),'Keep this procedure on the shortlist'),
+    node('div',{class:'row'},node('span',{id:'review-state',class:'review-state',role:'status'},draft.dirty?'Unsaved changes · based on review revision '+draft.baseRevision:'Saved review revision '+saved.revision+' · '+dateLabel(saved.updatedAt)),
+      node('div',{class:'actions'},node('button',{id:'review-revert',type:'button',disabled:!draft.dirty||state.writePending,onclick:()=>{state.drafts.delete(project.ocid);renderPanel();}},'Revert edits'),
+        node('button',{id:'review-save',type:'submit',class:'primary',disabled:!draft.dirty||state.writePending},state.writePending?'Saving…':'Save review'))));
+  const parts=[card('Review and ownership',form)];
+  if(draft.message)parts.unshift(node('div',{class:'callout',role:draft.conflict?'alert':'status'},node('p',{},draft.message)));
+  if(draft.conflict)parts.unshift(card('A newer review is saved',node('p',{class:'small-text muted'},'Your draft is retained. Compare it with the latest saved review before saving again.'),
+    node('div',{class:'actions',style:'margin-top:.7rem'},
+      node('button',{class:'small',onclick:()=>downloadJSON(draft.data,'review-draft-'+project.ocid+'.json')},'Download this draft'),
+      node('button',{class:'small',onclick:async()=>{await loadWorkspace();if(state.projectId===project.ocid){draft.message='Latest saved review is available below. Your draft is still retained.';renderPanel();}}},'Refresh saved review'),
+      node('button',{class:'small',onclick:()=>{draft.baseRevision=reviewOf(currentProject()).revision;draft.conflict=false;draft.message='Draft is now based on the displayed saved revision. Review the fields, then save.';renderPanel();}},'Use displayed revision')),
+    rawDetails('Latest saved review',saved,true)));
+  parts.push(node('p',{class:'form-help'},'A saved revision accompanies each review. Changes in another session are surfaced before your draft can replace them.'));
+  const backups=state.draftBackups.get(project.ocid)||[];
+  if(backups.length)parts.push(draftBackupsView(project,backups));
+  panel.replaceChildren(...parts);
+}
+async function saveReview(event) {
+  event.preventDefault();
+  const projectId=state.projectId,draft=draftFor(currentProject());
+  const payload={expectedRevision:draft.baseRevision,disposition:draft.data.disposition,owner:draft.data.owner||'',nextAction:draft.data.nextAction||'',note:draft.data.note||'',shortlisted:Boolean(draft.data.shortlisted)};
+  draft.message='';draft.conflict=false;
+  try{
+    await write('/api/projects/'+encodeURIComponent(projectId)+'/review','PATCH',payload);state.drafts.delete(projectId);
+    if(state.projectId===projectId)renderDetail();workspaceStatus('Review saved');
+  }catch(error){draft.message=errorMessage(error);draft.conflict=error.status===409;if(state.projectId===projectId&&state.tab==='review')renderPanel();setStatus('Review was not saved. '+errorMessage(error),true);}
+}
+async function toggleShortlist() {
+  const project=currentProject(),saved=reviewOf(project),draft=state.drafts.get(project.ocid);
+  try{
+    const result=await write('/api/projects/'+encodeURIComponent(project.ocid)+'/review','PATCH',{expectedRevision:saved.revision,disposition:saved.disposition,owner:saved.owner,nextAction:saved.nextAction,note:saved.note,shortlisted:!saved.shortlisted});
+    const next=reviewOf(result.projects.find((item)=>item.ocid===project.ocid));
+    if(draft?.dirty&&draft.baseRevision===saved.revision){draft.baseRevision=next.revision;draft.data.shortlisted=next.shortlisted;state.drafts.set(project.ocid,draft);}
+    if(state.projectId===project.ocid)renderDetail();workspaceStatus(next.shortlisted?'Procedure shortlisted':'Procedure removed from shortlist');
+  }catch(error){setStatus('Shortlist could not be saved. '+errorMessage(error),true);renderDetail();}
+}
+function downloadBlob(blob,filename) {
+  const url=URL.createObjectURL(blob),link=node('a',{href:url,download:filename.replace(/[^a-zA-Z0-9._-]/g,'_')});
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+function downloadJSON(data,filename){downloadBlob(new Blob([pretty(data)+'\n'],{type:'application/json;charset=utf-8'}),filename);}
+async function downloadCurrentEntry() {
+  const id=state.entryId;if(!id)return;
+  try{let entry=state.entries.get(id);if(!entry){const result=await request('/api/entries/'+encodeURIComponent(id));entry=result.entry||result;state.entries.set(id,entry);}downloadJSON(entryDocument(entry),'edition-'+id+'.json');}
+  catch(error){setStatus('Edition download failed. '+errorMessage(error),true);}
+}
+async function copyText(value){try{await navigator.clipboard.writeText(value);workspaceStatus('OCID copied');}catch(_){setStatus('Copy is unavailable in this browser. Select the visible OCID to copy it.');}}
+function renderExportBar() {
+  const bar=$('export-bar');if(!bar)return;
+  const scope=node('select',{id:'export-scope','aria-label':'Export procedures'},
+    node('option',{value:'selected',disabled:!state.selected.size,selected:state.selected.size>0},'Selected ('+state.selected.size+')'),
+    node('option',{value:'current',selected:!state.selected.size},'Current procedure'),node('option',{value:'shortlist'},'Saved shortlist'),node('option',{value:'all'},'All procedures'));
+  bar.replaceChildren(
+    node('label',{for:'export-scope'},'Export scope',scope),
+    node('label',{for:'export-format'},'Format',node('select',{id:'export-format'},node('option',{value:'json'},'Complete JSON'),node('option',{value:'csv'},'CSV'),node('option',{value:'html'},'HTML report'))),
+    node('button',{onclick:downloadExport,disabled:!state.projectId},'Export data'),node('span',{class:'export-context'},'Includes the selected procedures and their retained source data.'));
+}
+async function downloadExport() {
+  const format=$('export-format').value,choice=$('export-scope').value,query=new URLSearchParams({format,scope:choice==='shortlist'?'shortlist':'all'});
+  if(choice==='current')query.append('ocid',state.projectId);
+  if(choice==='selected'){if(!state.selected.size)return;for(const id of state.selected)query.append('ocid',id);}
+  try{
+    const response=await fetch('/api/export?'+query,{cache:'no-store'});
+    if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error?.message||'Export failed ('+response.status+').');}
+    downloadBlob(await response.blob(),'procurement-'+choice+'.'+format);workspaceStatus('Export prepared');
+  }catch(error){setStatus('Export could not be prepared. '+errorMessage(error),true);}
+}
+async function saveWorkspace() {
+  try{const packageData=await request('/api/package');downloadJSON(packageData,'procurement-workspace-'+text(state.data?.workspace?.id,'saved')+'.json');workspaceStatus('Portable workspace exported');}
+  catch(error){setStatus('Workspace export failed. '+errorMessage(error),true);}
+}
+
+function handoffWorkspaceLabel(value) {
+  return typeof value==='string'?value:[value?.title,value?.id].filter(Boolean).join(' · ')||'Source workspace';
+}
+function handoffReviewView(title,review) {
+  return node('section',{class:'handoff-review'},node('h4',{},title),fields([
+    ['Disposition',dispositionLabel(review?.disposition)],['Owner',review?.owner],
+    ['Shortlisted',review?.shortlisted?'Yes':'No'],['Review revision',review?.revision],
+    ['Next action',review?.nextAction,true],['Review notes',review?.note,true],
+    ['Updated',dateLabel(review?.updatedAt)],['Operator',review?.operator]
+  ]));
+}
+function archiveReviewDraft(project,draft,label) {
+  if(!draft?.dirty)return;
+  const backups=state.draftBackups.get(project.ocid)||[];
+  backups.push({id:Date.now().toString(36)+'-'+backups.length,label,createdAt:new Date().toISOString(),draft:{...draft,data:{...draft.data}}});
+  state.draftBackups.set(project.ocid,backups);
+}
+function draftBackupsView(project,backups) {
+  return card('Retained unsaved drafts',node('p',{class:'small-text muted'},'These drafts were retained while a received review or another draft was loaded. Restore, download, or discard each one.'),
+    ...backups.map((backup)=>node('div',{class:'draft-backups'},
+      node('div',{class:'small-text'},backup.label+' · '+dateLabel(backup.createdAt)+' · based on revision '+backup.draft.baseRevision),
+      node('div',{class:'actions',style:'margin-top:.5rem'},
+        node('button',{class:'small',disabled:state.writePending,onclick:()=>{
+          if(state.writePending)return;
+          const remaining=(state.draftBackups.get(project.ocid)||[]).filter((item)=>item.id!==backup.id);
+          if(remaining.length)state.draftBackups.set(project.ocid,remaining);else state.draftBackups.delete(project.ocid);
+          archiveReviewDraft(project,state.drafts.get(project.ocid),'Draft retained before restoring another draft');
+          const saved=reviewOf(currentProject());
+          state.drafts.set(project.ocid,{...backup.draft,data:{...backup.draft.data},dirty:true,conflict:backup.draft.baseRevision!==saved.revision,message:'Retained draft restored. Review its fields and saved revision before saving.'});
+          renderPanel();
+        }},'Restore draft'),
+        node('button',{class:'small',onclick:()=>downloadJSON(backup.draft,'review-draft-'+project.ocid+'.json')},'Download draft'),
+        node('button',{class:'small',disabled:state.writePending,onclick:()=>{
+          if(state.writePending)return;
+          const remaining=(state.draftBackups.get(project.ocid)||[]).filter((item)=>item.id!==backup.id);
+          if(remaining.length)state.draftBackups.set(project.ocid,remaining);else state.draftBackups.delete(project.ocid);
+          renderPanel();
+        }},'Discard retained draft')),
+      rawDetails('Retained review fields',backup.draft.data))));
+}
+function loadReceivedReview(record,conflict) {
+  if(state.writePending)return;
+  const project=state.data.projects.find((item)=>item.ocid===conflict.ocid);
+  if(!project||!conflict.receivedReview)return;
+  const saved=reviewOf(project),incoming=conflict.receivedReview;
+  archiveReviewDraft(project,state.drafts.get(project.ocid),'Draft retained before loading package '+record.packageId);
+  const data={...saved};
+  for(const key of ['disposition','owner','nextAction','note','shortlisted'])
+    if(Object.prototype.hasOwnProperty.call(incoming,key))data[key]=incoming[key];
+  state.drafts.set(project.ocid,{baseRevision:saved.revision,data,dirty:true,conflict:false,message:'Received review loaded from package '+record.packageId+'. Review the fields, then save.'});
+  $('handoffs-dialog').close();selectProject(project.ocid);activateTab('review');$('review-disposition')?.focus();
+  workspaceStatus('Received review opened as an unsaved draft');
+}
+function renderHandoffRecord(record) {
+  const container=node('div',{},
+    node('div',{class:'row'},node('button',{class:'small',onclick:()=>openHandoffs()},'All handoffs'),
+      node('button',{class:'small',onclick:()=>downloadJSON(record,'workspace-handoff-'+record.packageId+'.json')},'Download handoff record')),
+    node('h3',{style:'margin-top:1rem'},handoffWorkspaceLabel(record.sourceWorkspace)),
+    node('code',{class:'handoff-id'},record.packageId),
+    fields([['Received',dateLabel(record.receivedAt)],['Operator',record.operator],
+      ['Imported sources',(record.imports||[]).length],['Preserved review differences',(record.conflicts||[]).length]]));
+  const conflicts=Array.isArray(record.conflicts)?record.conflicts:[];
+  if(!conflicts.length)container.append(node('p',{class:'small-text muted'},'This transfer has no preserved review differences.'));
+  for(const conflict of conflicts) {
+    const project=state.data.projects.find((item)=>item.ocid===conflict.ocid),incoming=conflict.receivedReview;
+    const panel=card(text(project?.summary?.title,conflict.ocid||'Review difference'),
+      node('code',{class:'handoff-id'},text(conflict.ocid)),
+      node('p',{class:'small-text muted'},text(conflict.message,'The incoming review is retained with this transfer.')));
+    panel.classList.add('handoff-conflict');
+    if(incoming){
+      panel.append(node('div',{class:'grid-two',style:'margin-top:.8rem'},
+        project?handoffReviewView('Current saved review',reviewOf(project)):node('p',{class:'muted'},'This procedure is outside the current workspace selection.'),
+        handoffReviewView('Received review',incoming)));
+      if(project)panel.append(node('div',{class:'actions',style:'margin-top:.8rem'},
+        node('button',{class:'primary',disabled:state.writePending,onclick:()=>loadReceivedReview(record,conflict)},'Use received review as draft'),
+        node('button',{disabled:state.writePending,onclick:()=>{$('handoffs-dialog').close();selectProject(project.ocid);activateTab('review');}},'Open current review')));
+    }else panel.append(rawDetails('Retained difference record',conflict));
+    container.append(panel);
+  }
+  container.append(rawDetails('Source import results',record.imports||[]),rawDetails('Complete retained handoff record',record));
+  return container;
+}
+function renderHandoffs() {
+  const body=$('handoffs-body');
+  if(state.receivingId) {
+    const record=state.receivings.get(state.receivingId);
+    body.replaceChildren(record?renderHandoffRecord(record):node('p',{class:'muted',role:'status'},'Opening retained handoff…'));
+    return;
+  }
+  const records=[...(state.data?.receivings||[])].sort((a,b)=>String(b.receivedAt||'').localeCompare(String(a.receivedAt||'')));
+  const pageSize=20,totalPages=Math.max(1,Math.ceil(records.length/pageSize));
+  state.handoffPage=Math.max(1,Math.min(state.handoffPage,totalPages));
+  const offset=(state.handoffPage-1)*pageSize,visible=records.slice(offset,offset+pageSize);
+  const list=node('ul',{class:'handoff-list'});
+  for(const record of visible)list.append(node('li',{'data-package-id':record.packageId},
+    node('strong',{},handoffWorkspaceLabel(record.sourceWorkspace)),
+    node('code',{class:'handoff-id'},record.packageId),
+    node('div',{class:'small-text muted'},dateLabel(record.receivedAt)+' · '+countLabel((record.imports||[]).length,'source')+' · '+countLabel((record.conflicts||[]).length,'review difference')),
+    node('button',{class:'small',style:'margin-top:.5rem',onclick:()=>openHandoffs(record.packageId)},'Open handoff')));
+  const count=records.length?'Showing '+(offset+1)+'–'+(offset+visible.length)+' of '+countLabel(records.length,'handoff'):'No workspace handoffs have been received.';
+  body.replaceChildren(node('div',{class:'row'},node('p',{class:'small-text muted',role:'status'},count),
+    node('button',{class:'small',onclick:async()=>{await loadWorkspace();if($('handoffs-dialog').open)renderHandoffs();}},'Refresh handoffs')),list);
+  if(totalPages>1)body.append(node('div',{class:'row'},node('button',{disabled:state.handoffPage===1,onclick:()=>{state.handoffPage--;renderHandoffs();body.scrollTop=0;}},'Previous'),
+    node('span',{class:'small-text'},'Page '+state.handoffPage+' of '+totalPages),
+    node('button',{disabled:state.handoffPage===totalPages,onclick:()=>{state.handoffPage++;renderHandoffs();body.scrollTop=0;}},'Next')));
+}
+async function openHandoffs(packageId=null) {
+  state.receivingId=packageId;
+  const token=++state.receivingRequest;
+  if(!$('handoffs-dialog').open)$('handoffs-dialog').showModal();
+  $('handoffs-body').removeAttribute('aria-busy');
+  renderHandoffs();
+  if(!packageId||state.receivings.has(packageId))return;
+  $('handoffs-body').setAttribute('aria-busy','true');
+  try {
+    const result=await request('/api/receiving/'+encodeURIComponent(packageId)),record=result.receiving||result.record||result;
+    if(!record||record.packageId!==packageId)throw new Error('The retained handoff response did not match this package.');
+    state.receivings.set(packageId,record);
+    if(token===state.receivingRequest&&state.receivingId===packageId)renderHandoffs();
+  }catch(error) {
+    if(token===state.receivingRequest)$('handoffs-body').replaceChildren(
+      node('div',{class:'callout',role:'alert'},node('p',{},errorMessage(error)),
+        node('div',{class:'actions',style:'margin-top:.6rem'},node('button',{onclick:()=>openHandoffs(packageId)},'Retry handoff'),
+          node('button',{onclick:()=>openHandoffs()},'All handoffs'))));
+  }finally {
+    if(token===state.receivingRequest)$('handoffs-body').removeAttribute('aria-busy');
+  }
+}
+
+function captureLabel(capture) {
+  const selection=capture.selection||{};
+  return selection.ocid||selection.noticeId||[selection.kind==='record'?'Contracting record':'Release feed',selection.updatedFrom,selection.updatedTo].filter(Boolean).join(' · ');
+}
+function openCapturedPage(page) {
+  const project=state.data.projects.find((item)=>item.entries.some((entry)=>entry.sourceId===page.sourceId));
+  const entry=project?.entries.find((item)=>item.sourceId===page.sourceId);
+  if(!project||!entry)return;
+  $('import-dialog').close();selectProject(project.ocid);
+  state.entryId=entry.id;state.entryChoices.set(project.ocid,entry.id);state.detailToken++;
+  renderDetail();activateTab('source');ensureCurrentEntry();
+}
+function renderCaptureHistory() {
+  const history=$('capture-history'),body=$('capture-history-body');
+  if(!history||!body)return;
+  const captures=[...(state.data?.captures||[])].filter((capture)=>capture.provider==='find-tender')
+    .sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  history.hidden=!captures.length;
+  $('capture-history-count').textContent=' ('+captures.length.toLocaleString()+')';
+  if(!captures.length){body.replaceChildren();return;}
+  const pageSize=10,totalPages=Math.max(1,Math.ceil(captures.length/pageSize));
+  state.capturePage=Math.max(1,Math.min(state.capturePage,totalPages));
+  const offset=(state.capturePage-1)*pageSize,visible=captures.slice(offset,offset+pageSize),list=node('div');
+  for(const capture of visible) {
+    const pages=Array.isArray(capture.pages)?capture.pages:[],retryLater=capture.retryAt&&Date.parse(capture.retryAt)>Date.now();
+    const section=card(captureLabel(capture),
+      node('div',{class:'row'},node('span',{class:'tag'},titleCase(capture.status)),
+        node('span',{class:'small-text muted'},countLabel(pages.length,'retained page')+' · started '+dateLabel(capture.createdAt))),
+      node('code',{class:'handoff-id'},capture.id));
+    if(capture.lastError)section.append(node('p',{class:'small-text description',style:'margin-top:.5rem'},text(capture.lastError.message)));
+    if(retryLater)section.append(node('p',{class:'small-text muted'},'Source retry time: '+dateLabel(capture.retryAt)));
+    if(capture.status!=='complete'&&capture.nextURL)section.append(node('div',{class:'actions',style:'margin-top:.6rem'},
+      node('button',{type:'button',disabled:state.writePending||Boolean(retryLater),onclick:()=>resumeCapture(capture.id)},'Resume from saved page')));
+    section.append(lazyDetails('Retained pages ('+pages.length+')',()=>{
+      const pageList=node('ol',{class:'small-text',style:'padding-left:1.2rem'});
+      for(const page of pages) {
+        const hasEntry=state.data.projects.some((project)=>project.entries.some((entry)=>entry.sourceId===page.sourceId));
+        pageList.append(node('li',{style:'margin:.8rem 0'},sourceLink(page.url,'Source page '+((page.index??0)+1)),
+          node('div',{class:'muted'},dateLabel(page.retrievedAt)+' · '+text(page.bytes)+' bytes'),
+          node('code',{class:'handoff-id'},text(page.sourceId)),
+          hasEntry?node('button',{type:'button',class:'small',onclick:()=>openCapturedPage(page)},'Open retained source'):null));
+      }
+      return pageList;
+    }),rawDetails('Complete capture state',capture));
+    list.append(section);
+  }
+  body.replaceChildren(node('div',{class:'row',style:'margin:.8rem 0'},
+    node('span',{class:'small-text muted'},'Showing '+(offset+1)+'–'+(offset+visible.length)+' of '+countLabel(captures.length,'capture')),
+    node('button',{type:'button',class:'small',disabled:state.writePending,onclick:refreshCaptures},'Refresh captured pages')),list);
+  if(totalPages>1)body.append(node('div',{class:'row'},
+    node('button',{type:'button',disabled:state.capturePage===1,onclick:()=>{state.capturePage--;renderCaptureHistory();}},'Previous captures'),
+    node('span',{class:'small-text'},'Page '+state.capturePage+' of '+totalPages),
+    node('button',{type:'button',disabled:state.capturePage===totalPages,onclick:()=>{state.capturePage++;renderCaptureHistory();}},'Next captures')));
+}
+async function refreshCaptures() {
+  try {applyWorkspace(await request('/api/workspace'));renderCaptureHistory();}
+  catch(error){showDialogError('import-error',new Error('Capture history could not be refreshed. '+errorMessage(error)));}
+}
+async function retainCaptureError(error) {
+  try {applyWorkspace(await request('/api/workspace'));renderCaptureHistory();}
+  catch(refreshError){error.message=error.message+' Capture history refresh also failed: '+errorMessage(refreshError);}
+  showDialogError('import-error',error);
+  if((state.data?.captures||[]).some((capture)=>capture.provider==='find-tender'&&capture.status!=='complete'))$('capture-history').open=true;
+}
+async function resumeCapture(captureId) {
+  if(state.writePending)return;
+  $('import-error').hidden=true;$('import-progress').textContent='Resuming from the saved Find a Tender page…';
+  try {
+    const result=await write('/api/capture','POST',{captureId});
+    renderCaptureHistory();$('capture-history').open=true;
+    workspaceStatus('Capture completed'+(result.capture?.pages?' · '+countLabel(result.capture.pages.length,'retained page'):''));
+  }catch(error){await retainCaptureError(error);}
+  finally{$('import-progress').textContent='';renderCaptureHistory();}
+}
+
+function showDialogError(id,error){$(id).hidden=false;$(id).textContent=errorMessage(error);}
+function openImport(){$('import-error').hidden=true;$('import-progress').textContent='';renderCaptureHistory();$('import-dialog').showModal();$('import-label').focus();}
+function closeImport(){if(!state.writePending)$('import-dialog').close();}
+async function readSourceFile(file) {
+  if(!file)return;
+  try{
+    const content=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer());JSON.parse(content.replace(/^\uFEFF/,''));$('import-json').value=content;
+    state.sourceFileRaw=content;state.sourceFilePreview=$('import-json').value;
+    $('source-file-name').textContent=file.name+' · '+(file.size/1024).toLocaleString(undefined,{maximumFractionDigits:1})+' KB';
+    if(!$('import-label').value)$('import-label').value=file.name;
+    $('import-error').hidden=true;
+  }catch(error){showDialogError('import-error',new Error('The file could not be read as JSON. '+errorMessage(error)));}
+}
+async function importSource(event) {
+  event.preventDefault();$('import-error').hidden=true;
+  try{
+    const input=$('import-json').value;
+    const rawText=state.sourceFileRaw!==null&&input===state.sourceFilePreview?state.sourceFileRaw:input;
+    const content=rawText.trim();
+    if(!content)throw new Error('Choose a JSON file or paste source JSON first. Find a Tender capture uses its separate fetch button.');
+    const sourceDocument=JSON.parse(content),url=$('import-url').value.trim();
+    if(url&&!safeURL(url))throw new Error('Use an http or https original source URL.');
+    $('import-progress').textContent='Retaining source and indexing its editions…';
+    const prior=new Set(state.data?.projects.map((project)=>project.ocid));
+    const result=await write('/api/import','POST',{document:sourceDocument,rawText,label:$('import-label').value.trim(),url});
+    const imported=result.projects.find((project)=>!prior.has(project.ocid));
+    if(imported)selectProject(imported.ocid);
+    $('import-dialog').close();$('import-form').reset();state.sourceFileRaw=null;state.sourceFilePreview=null;$('source-file-name').textContent='';$('find-tender-controls').hidden=true;
+    workspaceStatus('Source imported');
+  }catch(error){showDialogError('import-error',error);}
+  finally{$('import-progress').textContent='';}
+}
+function captureParameters() {
+  const kind=$('capture-kind').value,supplied=$('capture-identifier').value.trim(),urlText=$('import-url').value.trim();
+  let identifier=supplied;
+  if(!identifier&&urlText){
+    const url=new URL(urlText);
+    if(!['find-tender.service.gov.uk','www.find-tender.service.gov.uk'].includes(url.hostname))throw new Error('Use an official Find a Tender source URL, or enter its OCID or notice ID.');
+    identifier=decodeURIComponent(url.pathname.split('/').filter(Boolean).pop()||'').replace(/\.json$/i,'');
+    if(!identifier.startsWith('ocds-')&&!/^\d{6}-\d{4}$/.test(identifier))identifier=url.searchParams.get('ocid')||url.searchParams.get('noticeId')||'';
+  }
+  if(identifier.startsWith('ocds-')&&!/^ocds-h6vhtk-[a-fA-F0-9]{6}$/.test(identifier))throw new Error('Use a Find a Tender OCID in the form ocds-h6vhtk-000000.');
+  const params={kind};
+  if(kind==='record'){
+    if(!identifier.startsWith('ocds-'))throw new Error('A contracting process record needs its OCID. Enter an OCID or its official record-package URL.');
+    params.ocid=identifier;
+  }else{
+    if(identifier){
+      if(identifier.startsWith('ocds-'))params.ocid=identifier;
+      else if(/^\d{6}-\d{4}$/.test(identifier))params.noticeId=identifier;
+      else throw new Error('Enter a notice ID such as 095287-2026 or a contracting process OCID.');
+    }
+    const from=$('capture-from').value,to=$('capture-to').value;
+    if(from)params.updatedFrom=new Date(from+'Z').toISOString();
+    if(to)params.updatedTo=new Date(to+'Z').toISOString();
+    if(from&&to&&params.updatedFrom>params.updatedTo)throw new Error('The updated-from time must be before the updated-to time.');
+    const stages=$('capture-stages').value.split(',').map((stage)=>stage.trim()).filter(Boolean);
+    if(stages.some((stage)=>!['planning','tender','award'].includes(stage)))throw new Error('Find a Tender stages are planning, tender, and award.');
+    if(stages.length)params.stages=stages;
+    const limit=Number($('capture-limit').value||100);
+    if(!Number.isInteger(limit)||limit<1||limit>100)throw new Error('Use a page size from 1 to 100.');
+    params.limit=limit;
+    if(!identifier&&!(from&&to))throw new Error('Enter a notice ID, OCID, or both ends of an update time range for release capture.');
+  }
+  return params;
+}
+async function captureSource() {
+  $('import-error').hidden=true;
+  try{
+    const params=captureParameters();$('import-progress').textContent='Fetching and retaining the Find a Tender response…';
+    const prior=new Set(state.data?.projects.map((project)=>project.ocid)),result=await write('/api/capture','POST',params);
+    const imported=result.projects.find((project)=>project.ocid===params.ocid)||result.projects.find((project)=>!prior.has(project.ocid));
+    if(imported)selectProject(imported.ocid);
+    $('import-dialog').close();workspaceStatus('Find a Tender source captured');
+  }catch(error){await retainCaptureError(error);}
+  finally{$('import-progress').textContent='';}
+}
+function openReceive() {
+  state.receivePackage=null;$('receive-form').reset();$('receive-summary').textContent='';$('receive-error').hidden=true;$('receive-progress').textContent='';
+  $('receive-dialog').showModal();$('receive-file').focus();
+}
+function closeReceive(){if(!state.writePending)$('receive-dialog').close();}
+async function previewReceive() {
+  const file=$('receive-file').files?.[0];state.receivePackage=null;if(!file)return;
+  try{
+    state.receivePackage=JSON.parse((await file.text()).replace(/^\uFEFF/,''));
+    $('receive-summary').textContent=file.name+' · '+(file.size/1024).toLocaleString(undefined,{maximumFractionDigits:1})+' KB'+(state.receivePackage.packageId?' · Package '+state.receivePackage.packageId:'');
+    $('receive-error').hidden=true;
+  }catch(error){showDialogError('receive-error',new Error('The workspace file is not valid JSON. '+errorMessage(error)));}
+}
+async function receiveWorkspace(event) {
+  event.preventDefault();$('receive-error').hidden=true;
+  try{
+    if(!state.receivePackage)throw new Error('Choose a saved workspace JSON file first.');
+    $('receive-progress').textContent='Receiving saved sources and reviews…';
+    const result=await write('/api/receive','POST',{package:state.receivePackage,expectedRevision:state.data.workspace.revision});
+    state.entries.clear();state.entryPending.clear();state.compare.clear();state.detailToken++;
+    renderDetail();ensureCurrentEntry();$('receive-dialog').close();
+    const receiving=result.receiving;
+    if(receiving?.packageId)state.receivings.set(receiving.packageId,receiving);
+    const differences=receiving?.conflicts?.length||0;
+    workspaceStatus((receiving?.repeated?'Workspace handoff already received':'Workspace received')+(differences?' · '+countLabel(differences,'review difference')+' retained':''));
+    if(differences)openHandoffs(receiving.packageId);
+  }catch(error){showDialogError('receive-error',error);}
+  finally{$('receive-progress').textContent='';}
+}
+
+$('search').addEventListener('input',(event)=>{state.search=event.target.value;state.page=1;renderList();});
+$('stage-filter').addEventListener('change',(event)=>{state.stage=event.target.value;state.page=1;renderList();});
+$('review-filter').addEventListener('change',(event)=>{state.disposition=event.target.value;state.page=1;renderList();});
+$('shortlist-filter').addEventListener('change',(event)=>{state.shortlistOnly=event.target.checked;state.page=1;renderList();});
+$('select-visible').addEventListener('change',(event)=>{for(const project of pageProjects().visible)event.target.checked?state.selected.add(project.ocid):state.selected.delete(project.ocid);renderList();renderExportBar();});
+$('open-import').addEventListener('click',openImport);
+$('close-import').addEventListener('click',closeImport);
+$('cancel-import').addEventListener('click',closeImport);
+$('import-dialog').addEventListener('cancel',(event)=>{if(state.writePending)event.preventDefault();});
+$('import-kind').addEventListener('change',(event)=>{$('find-tender-controls').hidden=event.target.value!=='find-a-tender';});
+$('choose-source-file').addEventListener('click',()=>$('source-file').click());
+$('source-file').addEventListener('change',(event)=>readSourceFile(event.target.files?.[0]));
+$('import-form').addEventListener('submit',importSource);
+$('import-json').addEventListener('input',()=>{state.sourceFileRaw=null;state.sourceFilePreview=null;});
+$('fetch-tender').addEventListener('click',captureSource);
+$('drop-zone').addEventListener('dragover',(event)=>{event.preventDefault();$('drop-zone').classList.add('drag');});
+$('drop-zone').addEventListener('dragleave',()=>$('drop-zone').classList.remove('drag'));
+$('drop-zone').addEventListener('drop',(event)=>{event.preventDefault();$('drop-zone').classList.remove('drag');const files=event.dataTransfer?.files;if(files?.length!==1){showDialogError('import-error',new Error('Drop one source file at a time. Each source remains a separately identified import.'));return;}readSourceFile(files[0]);});
+$('view-handoffs').addEventListener('click',()=>openHandoffs());
+$('close-handoffs').addEventListener('click',()=>$('handoffs-dialog').close());
+$('save-workspace').addEventListener('click',saveWorkspace);
+$('receive-workspace').addEventListener('click',openReceive);
+$('close-receive').addEventListener('click',closeReceive);
+$('cancel-receive').addEventListener('click',closeReceive);
+$('receive-dialog').addEventListener('cancel',(event)=>{if(state.writePending)event.preventDefault();});
+$('receive-file').addEventListener('change',previewReceive);
+$('receive-form').addEventListener('submit',receiveWorkspace);
+window.addEventListener('beforeunload',(event)=>{if([...state.drafts.values()].some((draft)=>draft.dirty)||[...state.draftBackups.values()].some((backups)=>backups.length)){event.preventDefault();event.returnValue='';}});
+loadWorkspace();
+</script>
+</body>
+</html>
