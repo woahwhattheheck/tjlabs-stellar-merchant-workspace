@@ -18,7 +18,8 @@ const state = {
   draft: null, draftVersion: 0, preview: null, previewBusy: false, saveBusy: false,
   pickerChecked: new Set(), pickerSearch: '', search: '', refreshing: false, routeVersion: 0, loadVersion: 0,
   comparison: null, comparisonPreviousId: '', compareBusy: false,
-  pending: readStored('pending', []), downloadBusy: false
+  pending: readStored('pending', []), downloadBusy: false,
+  rpcDirectories: new Map(), rpcViews: new Map(), rpcSelecting: 0
 };
 
 function readStored(key, fallback) {
@@ -221,6 +222,158 @@ function fieldMarkup(label, key, value, {multiline = false, help = '', required 
     (multiline ? '>' + esc(value) + '</textarea>' : ' value="' + esc(value) + '">') +
     (help ? '<span class="field-help">' + esc(help) + '</span>' : '') + '</label>';
 }
+
+function rpcDirectory(selection) {
+  return state.rpcDirectories.get(selection.intentId) ?? selection.rpcResult?.commerceDirectory ?? state.status?.roots?.commerce ?? '';
+}
+function rpcKey(intentId, directory) { return JSON.stringify([intentId, directory]); }
+function rpcView(selection) { return state.rpcViews.get(rpcKey(selection.intentId, rpcDirectory(selection).trim())); }
+function rpcAttributes(selection, index) {
+  return ' data-rpc-intent="' + esc(selection.intentId) + '"' + (index === null ? '' : ' data-rpc-index="' + index + '"');
+}
+function recoveredResultMarkup(value, {compact = false} = {}) {
+  if (!value) return '';
+  const observed = value.responseObservedAt ? formatDate(value.responseObservedAt) : null;
+  if (compact) return '<div class="muted small">Saved RPC read' + (observed ? ' · observed ' + esc(observed) : '') + '</div>';
+  return '<div class="rpc-result-summary"><h3>Selected recovered RPC result</h3><dl class="facts">' +
+    (observed ? '<div><dt>Observed</dt><dd>' + esc(observed) + '</dd></div>' : '') +
+    (value.recoveryReadStartedAt ? '<div><dt>Read started</dt><dd>' + esc(formatDate(value.recoveryReadStartedAt)) + '</dd></div>' : '') +
+    (value.publishedAt ? '<div><dt>Saved</dt><dd>' + esc(formatDate(value.publishedAt)) + '</dd></div>' : '') +
+    (value.bytes != null ? '<div><dt>Complete response</dt><dd>' + esc(formatBytes(value.bytes)) + '</dd></div>' : '') +
+    (value.httpStatus != null ? '<div><dt>Recovery HTTP outcome</dt><dd>HTTP ' + esc(value.httpStatus) + ' accepted by original recovery</dd></div>' : '') +
+    '</dl><details><summary>Saved read and settlement references</summary>' +
+    copyRow('Read reference',value.readId) + copyRow('Response SHA-256',value.sha256) +
+    copyRow('Settled transaction',value.transaction) + (value.httpStatusSource ? '<p class="small">' + esc(value.httpStatusSource) + '</p>' : '') +
+    '</details></div>';
+}
+function selectedRpcDetails(selection) {
+  const selected = selection.rpcResult;
+  if (!selected) return null;
+  const retained = inspectionEntry(selection.intentId)?.job?.rpcRecovery;
+  if (retained?.readId === selected.readId && retained?.responseFile?.sha256 === selected.responseSha256)
+    return retained.responseFile;
+  const packet = packetOutcome(selection.intentId)?.recoveredResult;
+  if (packet?.readId === selected.readId && packet?.sha256 === selected.responseSha256) return packet;
+  const viewed = state.rpcViews.get(rpcKey(selection.intentId,selected.commerceDirectory))?.detail;
+  return viewed?.recovery?.readId === selected.readId && viewed?.delivery?.sha256 === selected.responseSha256
+    ? viewed.delivery : null;
+}
+function rpcSelectionMarkup(selection, index = null) {
+  const selected = selection.rpcResult;
+  if (!selected) return '<p class="muted small">This task uses the original attempt’s response. A saved RPC read can be selected below.</p>';
+  return '<div class="notice"><strong>Saved RPC read selected for this task edition</strong>' +
+    (selectedRpcDetails(selection) ? recoveredResultMarkup(selectedRpcDetails(selection)) : '') +
+    '<details><summary>Exact selected read</summary>' + copyRow('Original commerce session',selected.commerceDirectory) +
+    copyRow('Read reference',selected.readId) + copyRow('Response SHA-256',selected.responseSha256) + '</details>' +
+    (index !== null ? '<button class="button quiet small-button" type="button" data-action="rpc-clear"' + rpcAttributes(selection,index) + (state.rpcSelecting || state.saveBusy ? ' disabled' : '') + '>Use original attempt response</button>' : '') + '</div>';
+}
+function rpcSelectorMarkup(selection, index = null) {
+  if (!selection.intentId) return '';
+  const directory = rpcDirectory(selection), view = rpcView(selection), result = view?.result;
+  const recovery = result?.native?.rpcRecovery, reads = recovery?.reads ?? [];
+  const attrs = rpcAttributes(selection,index), selected = selection.rpcResult;
+  const resultRows = result ? (recovery ? '<p class="small"><strong>' + esc(humanize(recovery.state)) + '</strong> · ' + reads.length + ' retained read edition' + (reads.length === 1 ? '' : 's') + '</p>' +
+    (reads.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Observation</th><th>Full response</th><th>Status</th><th>Open or select</th></tr></thead><tbody>' +
+      reads.map((read) => {
+        const current = selected?.commerceDirectory === recovery.commerceDirectory && selected?.readId === read.readId && selected?.responseSha256 === read.response?.sha256;
+        const values = attrs + ' data-rpc-read-id="' + esc(read.readId) + '" data-rpc-response-sha256="' + esc(read.response?.sha256) + '"';
+        return '<tr><td>' + esc(formatDate(read.responseObservedAt)) + '<details><summary>Read identity</summary>' + copyRow('Read reference',read.readId) +
+          copyRow('Response SHA-256',read.response?.sha256) + '<p class="small">Started ' + esc(formatDate(read.recoveryReadStartedAt)) + ' · Saved ' + esc(formatDate(read.publishedAt)) + '</p></details></td>' +
+          '<td>' + esc(formatBytes(read.response?.bytes)) + '</td><td>' + badge(current ? 'Selected' : read.complete ? 'Saved' : 'Publishing',current ? 'strong' : '') + '</td>' +
+          '<td><div class="button-row"><button class="button small-button" type="button" data-action="rpc-inspect"' + values + (!read.complete || view?.inspecting ? ' disabled' : '') + '>Inspect read</button>' +
+          '<button class="button small-button" type="button" data-action="rpc-use"' + values + (!read.complete || current || view?.inspecting || state.rpcSelecting || state.previewBusy || state.saveBusy ? ' disabled' : '') + '>' +
+          (index === null ? 'Create edition with read' : 'Use this read') + '</button></div></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="muted">This original request has no retained completed read yet. Refresh the saved reads after its existing recovery finishes.</p>') :
+      '<p class="muted">The original request has no saved RPC recovery record in this commerce session.</p>') : '';
+  const inspected = view?.detail;
+  return rpcSelectionMarkup(selection,index) +
+    '<details class="rpc-picker"' + (selected || view ? ' open' : '') + '><summary>Saved RPC read editions</summary>' +
+    '<p class="muted small">Open the existing commerce session to inspect its saved read editions. Choosing a read keeps its observation time and exact response in the task revision.</p>' +
+    '<div class="form-grid"><label><span class="field-caption">Original commerce session</span><input type="text" data-rpc-commerce="' + esc(selection.intentId) + '" value="' + esc(directory) + '" placeholder="/absolute/original/commerce-session"><span class="field-help">Use the session that contains this original Inbox. Selecting a read changes the task’s response selection.</span></label></div>' +
+    '<div class="button-row"><button class="button" type="button" data-action="rpc-list"' + attrs + (view?.busy ? ' disabled' : '') + '>' + (view?.busy ? 'Reading saved editions…' : 'Inspect saved reads') + '</button></div>' +
+    '<div class="rpc-read-results">' + (view?.error ? errorPanel('Saved reads could not be opened.',view.error) : '') + resultRows +
+    (view?.detailError ? errorPanel('The selected saved read could not be opened.',view.detailError) : '') +
+    (view?.inspecting ? '<p class="muted small">Opening and verifying the complete original read…</p>' : '') +
+    (inspected ? '<section class="rpc-inspection"><h3>Inspected original read</h3>' + recoveredResultMarkup(inspected.delivery) +
+      '<h4>Original attempt outcome</h4><pre>' + esc(pretty({state:inspected.job?.state,outcome:inspected.job?.outcome,lastError:inspected.job?.lastError})) + '</pre>' +
+      '<div class="button-row"><button class="button" type="button" data-action="rpc-download"' + attrs +
+      ' data-rpc-read-id="' + esc(inspected.recovery.readId) + '" data-rpc-response-sha256="' + esc(inspected.delivery.sha256) + '">Download complete original response</button></div>' +
+      '<details><summary>Complete verified result and original read records</summary><pre>' + esc(pretty(inspected)) + '</pre></details></section>' : '') +
+    (result ? '<details><summary>Complete native saved-read listing</summary><pre>' + esc(pretty(result)) + '</pre></details>' : '') +
+    '</div></details>';
+}
+function rpcContext(button) {
+  const intentId = button.dataset.rpcIntent;
+  const index = button.dataset.rpcIndex === undefined ? null : Number(button.dataset.rpcIndex);
+  const selection = index === null ? entriesOf().find(entry => entry.selection.intentId === intentId)?.selection : state.draft?.selections[index];
+  if (!selection || selection.intentId !== intentId) throw new Error('Open the current original request before selecting a saved read.');
+  const directory = rpcDirectory(selection).trim();
+  if (!directory) throw new Error('Choose the original absolute commerce session directory.');
+  return {intentId,index,selection,directory,key:rpcKey(intentId,directory),draft:state.draft,
+    taskId:state.taskId,taskSha256:state.detail?.record?.taskSha256,routeVersion:state.routeVersion};
+}
+function rpcContextCurrent(context) {
+  if (context.index !== null) return state.mode === 'draft' && state.draft === context.draft &&
+    state.draft?.selections.includes(context.selection) && context.selection.intentId === context.intentId &&
+    rpcDirectory(context.selection).trim() === context.directory;
+  return state.mode === 'task' && state.taskId === context.taskId && state.routeVersion === context.routeVersion &&
+    state.detail?.record?.taskSha256 === context.taskSha256 && state.selectedIntent === context.intentId &&
+    rpcDirectory(context.selection).trim() === context.directory;
+}
+async function listRpcReads(button) {
+  const context = rpcContext(button), previous = state.rpcViews.get(context.key);
+  if (previous?.busy || previous?.inspecting) return;
+  const view = {busy:true,error:null,result:null,detail:null,detailError:null};
+  state.rpcViews.set(context.key,view); clearNotice(); renderMain();
+  try { view.result = await client.listRpcResponses(context.intentId,{commerceDirectory:context.directory}); }
+  catch (error) { view.error = errorRecord(error); }
+  finally { view.busy = false; if (rpcContextCurrent(context)) renderMain(); }
+}
+async function inspectRpcRead(button, useInTask = false) {
+  const context = rpcContext(button), view = state.rpcViews.get(context.key);
+  const read = view?.result?.native?.rpcRecovery?.reads?.find(item => item.readId === button.dataset.rpcReadId &&
+    item.response?.sha256 === button.dataset.rpcResponseSha256);
+  if (!read?.complete) throw new Error('Refresh the original saved reads and choose a completed edition.');
+  if (view.inspecting || state.rpcSelecting || useInTask && (state.previewBusy || state.saveBusy)) return;
+  view.inspecting = true; view.detail = null; view.detailError = null;
+  if (useInTask) state.rpcSelecting++;
+  clearNotice(); renderMain();
+  try {
+    const detail = await client.getRpcResponse(context.intentId, {
+      commerceDirectory:context.directory,readId:read.readId,responseSha256:read.response.sha256,
+    });
+    if (detail.intentId !== context.intentId || detail.recovery?.readId !== read.readId ||
+      detail.delivery?.sha256 !== read.response.sha256 || detail.recovery?.commerceDirectory !== view.result.native.rpcRecovery.commerceDirectory)
+      throw new Error('The opened RPC result differs from the selected original read.');
+    view.detail = detail;
+    if (useInTask) {
+      if (!rpcContextCurrent(context)) { toast('The original read is available. Select it from the current task view.'); return; }
+      const selected = {commerceDirectory:detail.recovery.commerceDirectory,readId:detail.recovery.readId,responseSha256:detail.delivery.sha256};
+      state.rpcDirectories.set(context.intentId,selected.commerceDirectory);
+      state.rpcViews.set(rpcKey(context.intentId,selected.commerceDirectory),view);
+      if (context.index === null) {
+        showNewTask(state.detail);
+        state.draft.selections.find(item => item.intentId === context.intentId).rpcResult = selected;
+      } else context.selection.rpcResult = selected;
+      invalidatePreview();
+      toast('Saved RPC read selected. Preview and save this task edition.');
+    }
+  } catch (error) { view.detailError = errorRecord(error); if (rpcContextCurrent(context)) notify('The original saved read could not be selected.',error); }
+  finally {
+    view.inspecting = false;
+    if (useInTask) state.rpcSelecting--;
+    if (state.mode === 'draft' || rpcContextCurrent(context)) renderMain();
+  }
+}
+function downloadRpcRead(button) {
+  const context = rpcContext(button), detail = state.rpcViews.get(context.key)?.detail;
+  if (!detail || detail.recovery?.readId !== button.dataset.rpcReadId || detail.delivery?.sha256 !== button.dataset.rpcResponseSha256)
+    throw new Error('Inspect this exact original saved read before downloading it.');
+  const query = new URLSearchParams({commerceDirectory:detail.recovery.commerceDirectory,responseSha256:detail.delivery.sha256});
+  startNativeDownload('/api/jobs/' + encodeURIComponent(context.intentId) + '/rpc-results/' +
+    encodeURIComponent(detail.recovery.readId) + '/download?' + query,'rpc-result-' + detail.recovery.readId + '.json');
+}
+
 function selectionMarkup(selection, index) {
   const current = selection.intentId || '';
   const jobs = usableJobs();
@@ -233,6 +386,7 @@ function selectionMarkup(selection, index) {
     '<label><span class="field-caption">Original inbox request <span class="required-mark">Required</span></span><select data-selection-field="intentId" data-index="' + index + '" required><option value="">Choose an existing request</option>' + missingOption + options + '</select></label>' +
     fieldMarkup('Role in this task','role',selection.role ?? '',{index,help:'Keep this role stable when revising the task.'}) + '</div>' +
     (job ? '<p class="request-summary">' + esc(humanize(job.state || 'Retained')) + (job.bodyBytes != null ? ' · ' + esc(formatBytes(job.bodyBytes)) + ' request body' : '') + '</p><details><summary>Complete original request</summary><pre>' + esc(pretty(job.operation)) + '</pre>' + copyRow('Intent reference',current) + '</details>' : '') +
+    rpcSelectorMarkup(selection,index) +
     '<details><summary>Source, facilitator, and decision references</summary><div class="form-grid">' +
     fieldMarkup('Source edition','sourceEdition',selection.sourceEdition ?? '',{index,required:false}) +
     fieldMarkup('Facilitator HTTPS URL','facilitator',selection.facilitator ?? '',{index,required:false,help:'Use an HTTPS URL without a query, fragment, or embedded credentials.'}) +
@@ -244,7 +398,7 @@ function renderDraft() {
   main.innerHTML = '<div class="page-heading"><div><p class="eyebrow">' + (draft.predecessorId ? 'NEW TASK EDITION' : 'TASK PREPARATION') + '</p><h1>' +
     (draft.predecessorId ? 'Revise the task' : 'Create a task') + '</h1><p class="lead">Describe the work, choose the original requests, and inspect the native preview before saving.</p></div></div>' +
     (draft.predecessorId ? '<div class="notice"><strong>Based on ' + esc(draft.predecessorLabel) + '</strong>Choose the new revision and preserve the role names you want to compare across editions.</div>' : '') +
-    '<form id="new-task-form"><fieldset ' + (state.saveBusy ? 'disabled' : '') + '><section class="panel"><div class="panel-heading"><h2>Task details</h2><p class="muted small">These six fields identify the caller and the purpose of this task.</p></div><div class="form-grid">' +
+    '<form id="new-task-form"><fieldset ' + (state.saveBusy || state.rpcSelecting ? 'disabled' : '') + '><section class="panel"><div class="panel-heading"><h2>Task details</h2><p class="muted small">These six fields identify the caller and the purpose of this task.</p></div><div class="form-grid">' +
     fieldMarkup('Task title','title',draft.task.title) + fieldMarkup('Service','service',draft.task.service) +
     '<div class="span-all">' + fieldMarkup('Purpose','purpose',draft.task.purpose,{multiline:true}) + '</div>' +
     fieldMarkup('Calling system','system',draft.task.system) + fieldMarkup('Task reference','id',draft.task.id,{help:'The reference used by the calling system.'}) +
@@ -260,6 +414,7 @@ function invalidatePreview() {
   if ($('#preview-hint')) $('#preview-hint').textContent = 'A current preview is required to save this task.';
 }
 function buildTaskInput() {
+  if (state.rpcSelecting) throw new Error('Wait for the selected original RPC read to open.');
   const task = Object.fromEntries(Object.entries(state.draft.task).map(([key,value]) => [key,String(value).trim()]));
   if (Object.values(task).some((value) => !value)) throw new Error('Complete all six task fields.');
   if (!state.draft.selections.length || state.draft.selections.length > 500) throw new Error('Select between 1 and 500 original requests.');
@@ -268,6 +423,13 @@ function buildTaskInput() {
     if (!result.intentId || !result.role) throw new Error('Every request needs an original inbox selection and a role.');
     for (const key of ['sourceEdition','facilitator','decisionRef','reservationRef']) {
       const value = String(selection[key] ?? '').trim(); if (value) result[key] = value;
+    }
+    if (selection.rpcResult !== undefined) {
+      const {commerceDirectory,readId,responseSha256} = selection.rpcResult;
+      if (typeof commerceDirectory !== 'string' || !commerceDirectory ||
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(readId) ||
+        !/^[a-f0-9]{64}$/.test(responseSha256)) throw new Error('Choose a complete original saved RPC read.');
+      result.rpcResult = {commerceDirectory,readId,responseSha256};
     }
     return result;
   });
@@ -284,7 +446,7 @@ function previewMarkup() {
     '</tbody></table></div><details class="space-before-14"><summary>Complete native preview</summary><pre>' + esc(pretty(result)) + '</pre></details>';
 }
 async function previewTask() {
-  if (state.previewBusy || state.saveBusy) return;
+  if (state.previewBusy || state.saveBusy || state.rpcSelecting) return;
   const form = $('#new-task-form'); if (!form?.reportValidity()) return;
   let input; try { input = buildTaskInput(); } catch (error) { notify('Check the task details.',error); return; }
   const version = state.draftVersion; state.previewBusy = true; state.preview = null; clearNotice(); renderDraft();
@@ -297,7 +459,7 @@ async function previewTask() {
   finally { state.previewBusy = false; if (state.mode === 'draft') renderDraft(); }
 }
 async function saveTask() {
-  if (state.saveBusy || !state.preview) return;
+  if (state.saveBusy || state.rpcSelecting || !state.preview) return;
   let input; try { input = buildTaskInput(); } catch (error) { notify('Check the task details.',error); return; }
   if (state.preview.signature !== JSON.stringify(input)) { invalidatePreview(); return; }
   const expectedPreviewSha256 = state.preview.result.previewSha256;
@@ -346,7 +508,7 @@ function outcomeFor(intentId) {
   if (!job) return packetOutcome(intentId);
   const outcome = job.outcome;
   if (!outcome) return null;
-  return {intentId,state:job.state,nativeStatus:outcome.status,httpStatus:outcome.httpStatus,responseStatus:outcome.responseFile?.status,nativeError:outcome.error,lastError:job.lastError,evidenceError:outcome.evidenceError,responseCleanupError:outcome.responseCleanupError};
+  return {intentId,state:job.state,nativeStatus:outcome.status,httpStatus:outcome.httpStatus,responseStatus:outcome.responseFile?.status,nativeError:outcome.error,lastError:job.lastError,evidenceError:outcome.evidenceError,responseCleanupError:outcome.responseCleanupError,...(job.rpcRecovery?.responseFile ? {recoveredResult:job.rpcRecovery.responseFile} : {})};
 }
 function nativeOutcomeText(outcome) {
   if (!outcome) return 'Awaiting an outcome';
@@ -359,9 +521,12 @@ function nativeOutcomeText(outcome) {
   return parts.join(' · ') || 'Outcome recorded';
 }
 function responseState(intentId) {
-  const inspected = inspectionEntry(intentId)?.job;
-  const status = inspected ? inspected.outcome?.responseFile?.status : packetOutcome(intentId)?.responseStatus ?? jobFor(intentId)?.outcome?.responseFile?.status;
-  return status ? humanize(status) : 'Awaiting response file';
+  const entry = inspectionEntry(intentId), selected = entriesOf().find(item => item.selection.intentId === intentId)?.selection.rpcResult;
+  const packet = packetOutcome(intentId);
+  if (selected && (entry?.delivery?.status === 'SAVED' || packet?.recoveredResult)) return 'Saved RPC read';
+  const status = entry ? entry.delivery?.status ?? entry.job?.outcome?.responseFile?.status
+    : packet?.responseStatus ?? jobFor(intentId)?.outcome?.responseFile?.status;
+  return status ? humanize(status) : selected ? 'Selected RPC read awaits inspection' : 'Awaiting response file';
 }
 async function showTask(taskId, {operationId = null} = {}) {
   state.mode = 'task'; state.taskId = taskId; state.detail = null; state.packet = null; state.taskError = null;
@@ -437,11 +602,12 @@ function requestDetailMarkup() {
   const optionalFacts = ['sourceEdition','facilitator','decisionRef','reservationRef'].filter((key) => selection[key] !== null && selection[key] !== undefined && selection[key] !== '');
   return '<section class="panel"><div class="request-detail-heading"><div><p class="eyebrow">SELECTED ROLE</p><h2>' + esc(selection.role) + '</h2></div>' + badge(humanize(job?.state || 'Retained')) + '</div>' +
     (optionalFacts.length ? '<dl class="facts">' + optionalFacts.map((key) => '<div><dt>' + esc(humanize(key)) + '</dt><dd>' + esc(selection[key]) + '</dd></div>').join('') + '</dl><hr class="subtle-divider">' : '') +
-    '<h3>Native outcome</h3><p>' + esc(nativeOutcomeText(outcome)) + '</p><p class="muted small">Response file: ' + esc(responseState(selection.intentId)) + '</p>' +
+    '<h3>Original attempt outcome</h3><p>' + esc(nativeOutcomeText(outcome)) + '</p><p class="muted small">Response file: ' + esc(responseState(selection.intentId)) + '</p>' +
     (outcome ? '<details><summary>Complete outcome</summary><pre>' + esc(pretty(outcome)) + '</pre></details>' : '') +
-    (job?.outcome?.responseFile?.bytes != null ? '<p class="small muted">Saved response size: ' + esc(formatBytes(job.outcome.responseFile.bytes)) + '</p>' : '') +
+    (job?.outcome?.responseFile?.bytes != null ? '<p class="small muted">Original attempt response size: ' + esc(formatBytes(job.outcome.responseFile.bytes)) + '</p>' : '') +
     '<div class="download-actions"><button class="button small-button" type="button" data-action="download-response" data-intent-id="' + esc(selection.intentId) + '"' + (state.downloadBusy || !fileReady ? ' disabled' : '') + '>Download full saved response</button></div>' +
     (!fileReady ? '<p class="field-help">Receive the complete packet to download this response.</p>' : '') +
+    rpcSelectorMarkup(selection) +
     '<hr class="subtle-divider"><h3>Original request</h3><p class="muted small">This is the complete operation bound to the saved task.</p><details open><summary>View original request</summary><pre>' + esc(pretty(entry.request)) + '</pre></details>' +
     '<details><summary>Request identity and bindings</summary>' + copyRow('Intent reference',selection.intentId) +
     Object.entries(entry.binding ?? {}).map(([key,value]) => copyRow(humanize(key),value)).join('') + '</details>' +
@@ -695,7 +861,7 @@ function packetMarkup() {
       (state.detail?.packetOpenedAt ? 'Last opened ' + esc(formatDate(state.detail.packetOpenedAt)) + '.' : '') + '</p></div><div class="button-row"><button class="button primary" type="button" data-action="download-archive"' + (state.downloadBusy ? ' disabled' : '') + '>Download complete packet (.tar)</button><button class="button" type="button" data-action="download-report"' + (state.downloadBusy ? ' disabled' : '') + '>Download report HTML</button></div></div>' +
     '<p class="muted small">Extract the complete packet and open review.html with the response files kept in their original folders. The report’s attachment links use those files.</p>' +
     '<div class="table-wrap"><table class="data-table"><thead><tr><th>Task role</th><th>Response attachment</th><th>Size</th><th>Native outcome</th><th>Download</th></tr></thead><tbody>' +
-    files.map((file) => '<tr><td><strong>' + esc(roleFor(file.intentId)) + '</strong></td><td><span class="file-name">' + esc(file.path ? String(file.path).split('/').pop() : 'Saved response') + '</span><div class="muted">' + esc(file.contentType || '') + '</div><details><summary>Complete file identity</summary>' + copyRow('Packet path',file.path) + copyRow('SHA-256',file.sha256) + copyRow('Intent reference',file.intentId) + '</details></td><td>' + esc(formatBytes(file.bytes)) + '</td><td>' + esc(nativeOutcomeText(outcomes.find((outcome) => outcome.intentId === file.intentId))) + '</td><td><button class="button small-button" type="button" data-action="download-response" data-intent-id="' + esc(file.intentId) + '"' + (state.downloadBusy ? ' disabled' : '') + '>Full response</button></td></tr>').join('') +
+    files.map((file) => '<tr><td><strong>' + esc(roleFor(file.intentId)) + '</strong></td><td><span class="file-name">' + esc(file.path ? String(file.path).split('/').pop() : 'Saved response') + '</span><div class="muted">' + esc(file.contentType || '') + '</div><details><summary>Complete file identity</summary>' + copyRow('Packet path',file.path) + copyRow('SHA-256',file.sha256) + copyRow('Intent reference',file.intentId) + '</details></td><td>' + esc(formatBytes(file.bytes)) + '</td><td>' + esc(nativeOutcomeText(outcomes.find((outcome) => outcome.intentId === file.intentId))) + recoveredResultMarkup(outcomes.find((outcome) => outcome.intentId === file.intentId)?.recoveredResult,{compact:true}) + '</td><td><button class="button small-button" type="button" data-action="download-response" data-intent-id="' + esc(file.intentId) + '"' + (state.downloadBusy ? ' disabled' : '') + '>Full response</button></td></tr>').join('') +
     '</tbody></table></div>' +
     '<div class="button-row space-before-18"><button class="button" type="button" data-action="refresh-packet">Reopen saved packet</button><button class="button" type="button" data-action="download-packet-json">Download packet metadata</button></div>' +
     '<details class="space-before-15"><summary>Every native outcome and packet record</summary><pre>' + esc(pretty(packet)) + '</pre></details></section>';
@@ -729,7 +895,7 @@ function versionsMarkup() {
   if (!versions.some((entry) => entry.id === state.comparisonPreviousId)) {
     state.comparisonPreviousId = versions.find((entry) => entry.record?.taskSha256 === predecessor?.taskSha256)?.id ?? versions[0]?.id ?? '';
   }
-  return '<section class="panel"><div class="section-heading"><div><h2>Compare complete task editions</h2><p class="muted small">Compare stable roles, source editions, facilitators, and original requests against this task’s direct predecessor.</p></div><button class="button" type="button" data-action="revise-task">Create new edition</button></div>' +
+  return '<section class="panel"><div class="section-heading"><div><h2>Compare complete task editions</h2><p class="muted small">Compare stable roles, source editions, facilitators, original requests, and selected RPC results against this task’s direct predecessor.</p></div><button class="button" type="button" data-action="revise-task">Create new edition</button></div>' +
     (versions.length ? '<div class="compare-controls"><label><span class="field-caption">Direct predecessor</span><select id="comparison-previous">' +
       versions.map((entry) => '<option value="' + esc(entry.id) + '"' + (state.comparisonPreviousId === entry.id ? ' selected' : '') + '>' + esc(taskTitle(entry) + ' · Revision ' + callerOf(entry).revision + ' · ' + formatDate(entry.record?.createdAt)) + '</option>').join('') +
       '</select></label><button class="button primary" type="button" data-action="compare-versions"' + (state.compareBusy ? ' disabled' : '') + '>' + (state.compareBusy ? 'Comparing editions…' : 'Compare with this task') + '</button></div>' :
@@ -747,6 +913,7 @@ function comparisonMarkup(result) {
         if (entry.sourceChanged === true) labels.push('Source edition changed');
         if (entry.facilitatorChanged === true) labels.push('Facilitator changed');
         if (entry.requestChanged === true) labels.push('Original request changed');
+        if (entry.resultChanged === true) labels.push('Selected RPC result changed');
         if (entry.reusedOriginalIntent === true) labels.push('Original request retained');
         if (!entry.previous && entry.next) labels.push('Role added');
         if (entry.previous && !entry.next) labels.push('Role removed');
@@ -860,6 +1027,17 @@ async function act(button) {
   }
   if (action === 'remove-selection') { state.draft.selections.splice(Number(button.dataset.index),1); invalidatePreview(); renderDraft(); return; }
   if (action === 'pick-jobs') return openJobPicker();
+  if (action === 'rpc-list') return listRpcReads(button);
+  if (action === 'rpc-inspect') return inspectRpcRead(button);
+  if (action === 'rpc-use') return inspectRpcRead(button,true);
+  if (action === 'rpc-download') return downloadRpcRead(button);
+  if (action === 'rpc-clear') {
+    const selection = state.draft?.selections[Number(button.dataset.rpcIndex)];
+    if (state.mode === 'draft' && !state.rpcSelecting && !state.saveBusy && selection?.intentId === button.dataset.rpcIntent) {
+      delete selection.rpcResult; invalidatePreview(); renderDraft();
+    }
+    return;
+  }
   if (action === 'preview-task') return previewTask();
   if (action === 'save-task') return saveTask();
   if (action === 'select-intent') {
@@ -891,10 +1069,18 @@ $('#global-notice').addEventListener('click',(event) => {
 });
 main.addEventListener('input',(event) => {
   const target = event.target;
+  if (target.dataset.rpcCommerce !== undefined) {
+    state.rpcDirectories.set(target.dataset.rpcCommerce,target.value);
+    const results = target.closest('.rpc-picker')?.querySelector('.rpc-read-results');
+    if (results) results.innerHTML = '<p class="muted small">Inspect saved reads for the selected commerce directory.</p>';
+  }
   if (target.dataset.draftField && state.draft) { state.draft.task[target.dataset.draftField] = target.value; invalidatePreview(); }
   if (target.dataset.selectionField && state.draft) {
     const selection = state.draft.selections[Number(target.dataset.index)];
-    if (selection) { selection[target.dataset.selectionField] = target.value; invalidatePreview(); }
+    if (selection) {
+      if (target.dataset.selectionField === 'intentId' && selection.intentId !== target.value) delete selection.rpcResult;
+      selection[target.dataset.selectionField] = target.value; invalidatePreview();
+    }
   }
 });
 main.addEventListener('change',(event) => {

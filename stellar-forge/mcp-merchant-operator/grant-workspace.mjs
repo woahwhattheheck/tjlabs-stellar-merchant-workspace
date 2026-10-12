@@ -407,7 +407,7 @@ export class MerchantGrantWorkspaces {
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
-      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
+      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {
@@ -430,6 +430,17 @@ export class MerchantGrantWorkspaces {
     else if (verb === 'statement_receive') {
       const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
       original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
+    }
+    else if (verb === 'installation_return_seed') {
+      const {caseId,...body}=rest; original=await client.installationReturnSeed(caseId,body);
+    }
+    else if (['installation_return_preview','installation_return_review_preview','installation_return','installation_return_stage'].includes(verb)) {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const selected=await this.#modelInputs(alias,args,'Installation receiving');
+      const methods={installation_return_preview:'installationReturnPreview',
+        installation_return_review_preview:'installationReturnReviewPreview',
+        installation_return:'installationReturn',installation_return_stage:'installationReturnStage'};
+      original=await client[methods[verb]](caseId,{...body,inputs:selected});
     }
     else if (verb === 'work_intake_upload') {
       const {caseId,...body}=rest;original=await client.workIntakeUpload(caseId,body);

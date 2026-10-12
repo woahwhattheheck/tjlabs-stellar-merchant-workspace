@@ -4,6 +4,7 @@ import {createRefundUi} from './refunds.mjs';
 import {createCollectionsUi} from './collections.mjs';
 import {createCashPlanningUi} from './cash-planning.mjs';
 import {createCreditControlUi} from './credit-control.mjs';
+import {createBankUi} from './bank-statements.mjs';
 
 const $ = selector => document.querySelector(selector);
 const e = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -32,6 +33,10 @@ const cashPlanningUi = createCashPlanningUi({api,openDialog,closeDialog,mutate,g
 const creditControlUi = createCreditControlUi({api,openDialog,closeDialog,mutate,getState:()=>ui.state,
   getCustomer:()=>ui.customer,getSearch:()=>ui.search,saveBlob,setBusy,showError,readSession,saveSession,setMessage,render,
   openInvoice:async invoiceId=>{if(ui.editor){ui.parkedEditor=ui.editor;persistEditor();ui.editor=null;}ui.view='invoices';await selectInvoice(invoiceId);},isLocked:()=>ui.busy || Boolean(ui.pending)});
+const bankUi = createBankUi({api, openDialog, mutate, getState:()=>ui.state, getAsOf:()=>ui.asOf, showBank:()=>{ui.view='bank';},
+  units, amount, render, saveBlob, showError, setBusy, readSession, saveSession, setMessage,
+  isLocked:()=>ui.busy || Boolean(ui.pending)});
+$('#dialog').addEventListener('close',()=>bankUi.close());
 $('#operator').value = readSession('actor','merchant-operator');
 $('#as-of').value = ui.asOf;
 function customerName(customerId) {
@@ -122,7 +127,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...bankUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -139,6 +144,7 @@ async function runPending() {
     await collectionsUi.afterMutation(result,current);
     await cashPlanningUi.afterMutation(result,current);
     await creditControlUi.afterMutation(result,current);
+    await bankUi.afterMutation(result,current);
   } catch(error) {
     if (ui.pending?.requestId === current.requestId) {
       ui.pending.error=errorMessage(error);
@@ -163,6 +169,7 @@ async function refresh({quiet=false}={}) {
     await collectionsUi.loadList();
     await cashPlanningUi.loadList();
     await creditControlUi.loadList();
+    if(ui.view==='bank')await bankUi.load({quiet:true});
     if(ui.refreshVersion!==version||ui.asOf!==asOf)return;
     render();
     if (ui.selected && !ui.editor) await selectInvoice(ui.selected);
@@ -185,8 +192,12 @@ function render() {
   });
   $('#status-filter').disabled=ui.view!=='invoices';
   $('#as-of').disabled=ui.view==='credit-control';
+  $('#customer-filter').disabled=ui.view==='bank';
+  $('#search').disabled=ui.view==='bank';
+  $('#customer-filter').closest('.filters').hidden=ui.view==='bank';
   if(!ui.state)return;
-  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():renderActivity();
+  $('#revision').textContent='Revision '+ui.state.revision+(ui.view==='bank'?'':' · As of '+ui.asOf);
+  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='bank'?bankUi.render():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
 function renderInvoices() {
@@ -439,7 +450,7 @@ function openDialog(title,content) {
   if(!$('#dialog').open)$('#dialog').showModal();
   setBusy(ui.busy);
 }
-function closeDialog() { paymentUi.close(); refundUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
+function closeDialog() { paymentUi.close(); refundUi.close(); bankUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
 function currencyFields(currency={code:'USD',scale:2}) {
   return '<label>Currency<input name="currencyCode" maxlength="3" pattern="[A-Za-z]{3}" value="' + e(currency.code) + '" required></label><label>Decimal places<select name="currencyScale">' +
     [0,1,2,3,4,5,6].map(scale=>'<option value="' + scale + '"' + (Number(currency.scale)===scale?' selected':'') + '>' + scale + '</option>').join('') + '</select></label>';
@@ -672,6 +683,7 @@ document.addEventListener('input',event=>{
   refundUi.input(event.target);
   collectionsUi.input(event.target);
   cashPlanningUi.input(event.target);
+  bankUi.input(event.target);
   creditControlUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
@@ -687,6 +699,7 @@ document.addEventListener('change',event=>{
   const target=event.target;
   paymentUi.change(target);
   refundUi.change(target);
+  bankUi.change(target);
   collectionsUi.change(target);
   cashPlanningUi.change(target).catch(showError);
   creditControlUi.change(target);
@@ -714,6 +727,7 @@ document.addEventListener('submit',async event=>{
     if(await collectionsUi.submit(form,values))return;
     if(await cashPlanningUi.submit(form,values))return;
     if(await creditControlUi.submit(form,values))return;
+    if(await bankUi.submit(form,values))return;
     if(form.id==='draft-form'){
       if(!ui.editor.lines.length)throw new Error('Add an invoice line.');
       await mutate('saveDraft',[draftPayload()],'Save invoice draft');
@@ -752,7 +766,8 @@ document.addEventListener('click',async event=>{
     if(await collectionsUi.click(button))return;
     if(await cashPlanningUi.click(button))return;
     if(await creditControlUi.click(button))return;
-    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='credit-control'){await creditControlUi.loadList();render();}if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
+    if(await bankUi.click(button))return;
+    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();else if(ui.view==='credit-control'){await creditControlUi.loadList();render();}else if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');
     else if(action==='new-invoice'){

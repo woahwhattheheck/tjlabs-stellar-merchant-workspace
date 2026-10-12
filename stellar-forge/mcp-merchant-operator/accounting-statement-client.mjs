@@ -165,6 +165,8 @@ export function createAccountingStatementClient({workspace,call}={}){
     lookup:(requestId,options)=>invoke(PREFIX+'statement_lookup',{requestId:id(requestId,/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/,'retained request ID')},options),
     allCustomers:options=>all(offset=>client.status({view:'customers',offset,limit:200},options),'customers'),
     allUsage:options=>all(offset=>client.status({view:'usage',offset,limit:200},options),'usage'),
+    usageCaptures:(args={},options)=>invoke(PREFIX+'usage_captures',args,options),
+    allUsageCaptures:options=>all(offset=>client.usageCaptures({offset,limit:200},options),'usage-captures'),
     allBindings:(args={},options)=>all(offset=>client.bindings({...args,offset,limit:200},options),'bindings'),
     allStatements:(args={},options)=>all(offset=>client.statements({...args,offset,limit:200},options),'statements'),
     async saveCustomer(value,options){
