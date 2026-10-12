@@ -1,0 +1,81 @@
+{
+  "schema": "stellar-forge.git-source-part.v1",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "018f1c473e7470e0f5903010a3ac33a7e3bf2b89",
+    "tree": "3f2b9e10a850e0c944839cf7fd5acd1a4dbe356b",
+    "fileCount": 304,
+    "sourceBytes": 4329525
+  },
+  "part": 3,
+  "parts": 3,
+  "kind": "source-files",
+  "members": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/eligibility-review.mjs",
+      "mode": "100644",
+      "gitBlob": "1f237adccba62bcb01357788190acb6cbe080935",
+      "bytes": 58184
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/eligibility-routes.mjs",
+      "mode": "100644",
+      "gitBlob": "ce6f8630e380a922ca057e54543c0317fec4db42",
+      "bytes": 3314
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/app.js",
+      "mode": "100644",
+      "gitBlob": "bfa35ae995821ee1009e5d81c97a37b13f9feade",
+      "bytes": 60977
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/eligibility.css",
+      "mode": "100644",
+      "gitBlob": "10a074ecc145d10b9022502b4c691660b9680fdc",
+      "bytes": 8725
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/eligibility.js",
+      "mode": "100644",
+      "gitBlob": "f843ac46c05568d0ff51de3dc4c10429520b99cc",
+      "bytes": 76969
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/index.html",
+      "mode": "100644",
+      "gitBlob": "a963346f1c8608ed30eca79aa0f3fd01f909d9ef",
+      "bytes": 21931
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/report.mjs",
+      "mode": "100644",
+      "gitBlob": "ed34ae7cc2a6f431192340558474ed2f75bc5631",
+      "bytes": 15720
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/server.mjs",
+      "mode": "100644",
+      "gitBlob": "80b260ce5349ed59e107b14f4ef6172abbda1122",
+      "bytes": 43118
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "dbf719f6eb56a709cd3d652fe6832eb6cd95f80e",
+      "bytes": 18076
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-client.mjs",
+      "mode": "100644",
+      "gitBlob": "c57616da8ac5792b094438616fd2a926cfd7a25b",
+      "bytes": 21290
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-protocol.mjs",
+      "mode": "100644",
+      "gitBlob": "e35a5ee326161c1ac35074967a397eb290fd0ee7",
+      "bytes": 6832
+    }
+  ]
+}
