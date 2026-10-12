@@ -42,8 +42,8 @@ function normalize(raw) {
     'url','tokenEnv','workspaceId','intentId','maxAtomic','input','discovery','sourceRevision',
   ].includes(key)), 'CATALOG_JOURNEY_INPUT_INVALID', 'Use the documented native journey configuration.');
   need(typeof raw.url === 'string' && raw.url.length > 0 &&
-    atomic(raw.maxAtomic) && plain(raw.input), 'CATALOG_JOURNEY_INPUT_INVALID',
-  'Supply the running MCP endpoint, an explicit atomic cap, and the actual request input.');
+    atomic(raw.maxAtomic) && BigInt(raw.maxAtomic) > 0n && plain(raw.input), 'CATALOG_JOURNEY_INPUT_INVALID',
+  'Supply the running MCP endpoint, a positive explicit atomic cap, and the actual request input.');
   need(raw.tokenEnv === undefined || typeof raw.tokenEnv === 'string' &&
     /^[A-Z][A-Z0-9_]{0,127}$/.test(raw.tokenEnv), 'CATALOG_JOURNEY_INPUT_INVALID',
   'Select an environment-variable name for the existing MCP token.');
@@ -125,6 +125,10 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
     client = await phase('connect', () => openNativeRequestClient({
       url:request.url, workspaceId:request.workspaceId, tokenEnv:request.tokenEnv, environment, signal}));
     report.workspace = await phase('workspace', () => client.workspace());
+    const selected = report.workspace.workspaceId === undefined
+      ? client : client.forWorkspace(report.workspace.workspaceId);
+    if (report.workspace.workspaceId !== undefined)
+      report.workspaceId = report.workspace.workspaceId;
     need(BigInt(request.maxAtomic) <= BigInt(report.workspace.payment.maxAtomic),
       'CATALOG_JOURNEY_CAP_EXCEEDS_WORKSPACE', 'The explicit request cap exceeds this native workspace.');
     pages = await open(join(directory, 'catalog-pages.ndjson'), 'wx', 0o600);
@@ -150,12 +154,19 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
           if (prepared || pageIndex === 0 || !selectionMatches(resource, report.workspace)) continue;
           const acceptIndex = acceptedIndex(description, report.workspace, request.maxAtomic);
           if (acceptIndex < 0) continue;
-          need(description.source?.pageBytes <= report.workspace.limits.sourcePageBytes,
+          const source = description.source;
+          need(typeof source?.pageSha256 === 'string' && /^[0-9a-f]{64}$/.test(source.pageSha256) &&
+            Number.isSafeInteger(source.pageBytes) && source.pageBytes > 0 &&
+            Number.isSafeInteger(source.rowIndex) && source.rowIndex >= 0 &&
+            source.rowIndex < page.page.received && source.pageSha256 === page.source.pageSha256 &&
+            source.pageBytes === page.source.pageBytes,
+          'CATALOG_JOURNEY_SOURCE_INVALID', 'The description must identify its complete original provider page and original row.');
+          need(source.pageBytes <= report.workspace.limits.sourcePageBytes,
             'CATALOG_JOURNEY_NATIVE_PAGE_LIMIT', 'Use smaller real catalog pages for the original native preparer.');
           report.selection = {pageIndex, handle:resource.handle, resource:resource.resource,
             source:description.source, acceptIndex, accepted:description.accepts[acceptIndex]};
           notify({phase:'prepare', pageIndex, resource:resource.resource.url});
-          prepared = await phase('prepare-selected-later-page', () => client.prepare({
+          prepared = await phase('prepare-selected-later-page', () => selected.prepare({
             intentId:request.intentId, handle:resource.handle, acceptIndex,
             maxAtomic:request.maxAtomic, input:request.input}, {signal}));
           need(prepared.preparation.pageSha256 === description.source.pageSha256 &&
@@ -173,19 +184,24 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
       'No service matching the configured native route and payment terms appeared after the first original page.');
     // Reopen the durable identity after the complete walk, including any cache
     // retirement caused by later pages. Execution uses this intent, never a new search.
-    report.native = await phase('reopen-native-review', () => client.review(request.intentId, {signal}));
+    report.native = await phase('reopen-native-review', () => selected.review(request.intentId, {signal}));
     need(report.native.availableActions.includes('execute') && !report.native.attempt,
       'CATALOG_JOURNEY_ORIGINAL_INTENT_NOT_QUEUED', 'Continue this existing intent through its original native history.');
     notify({phase:'execute', approval:'ORIGINAL_HOST_OPERATOR', intentId:request.intentId});
-    report.execution = await phase('original-native-execute', () => client.execute(request.intentId, {signal}));
-    report.native = await phase('reopen-native-result', () => client.review(request.intentId, {signal}));
+    report.execution = await phase('original-native-execute', () => selected.execute(request.intentId, {signal}));
+    if (report.execution.execution === 'OPERATOR_BUSY')
+      throw Object.assign(new Error('The original operator is busy. Continue this queued intent in the same workspace after the active operation finishes.'), {
+        code:'CATALOG_JOURNEY_OPERATOR_BUSY',
+        nativeRequest:{workspaceId:report.workspaceId,intentId:request.intentId,action:'execute'},
+      });
+    report.native = await phase('reopen-native-result', () => selected.review(request.intentId, {signal}));
     need(report.native.availableActions.includes('read'), 'CATALOG_JOURNEY_RESULT_NOT_AVAILABLE',
       'The original native attempt has no saved response ready to read; inspect its retained result and recovery fields.');
-    report.result = await phase('complete-saved-result', () => client.downloadResult({
+    report.result = await phase('complete-saved-result', () => selected.downloadResult({
       intentId:request.intentId, destination:join(directory, 'result.bin')}, {signal}));
     report.history = await phase('original-history', async () => {
       let pageCount = 0;
-      for await (const page of client.historyPages({}, {signal})) {
+      for await (const page of selected.historyPages({}, {signal})) {
         pageCount++;
         const record = page.records.find(record => record.intentId === request.intentId);
         if (record) return {pageCount, total:page.total, record};
@@ -209,8 +225,20 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
 
 async function main() {
   const args = process.argv.slice(2);
+  const usage = [
+    'Usage: starforge mcp-catalog-journey --config /absolute/request.json --out /absolute/new-run',
+    '',
+    'Walk the configured catalog, prepare a matching later-page service, and complete its native request.',
+    'The configuration supplies url, a positive maxAtomic, actual input, and optional workspaceId/discovery.',
+    'Keep the existing operator console available for approval. The output directory must be new.',
+    'See CATALOG_JOURNEY.md for configuration, phase measurements and saved-result continuation.',
+  ].join('\n');
+  if (args.length === 1 && ['--help','-h'].includes(args[0])) {
+    process.stdout.write(usage + '\n');
+    return;
+  }
   need(args.length === 4 && args[0] === '--config' && args[2] === '--out',
-    'CATALOG_JOURNEY_ARGUMENTS', 'Usage: node catalog-native-journey.mjs --config /absolute/request.json --out /absolute/new-run');
+    'CATALOG_JOURNEY_ARGUMENTS', usage);
   const source = resolve(args[1]), raw = await readFile(source);
   need(raw.length <= 1048576, 'CATALOG_JOURNEY_CONFIG_TOO_LARGE', 'Use a request configuration of at most one MiB.');
   const configuration = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(raw));

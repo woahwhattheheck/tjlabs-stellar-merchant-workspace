@@ -19,7 +19,7 @@ Create a local JSON configuration with these fields:
 | `workspaceId` | Optional exact ID from the host's `request-workspaces` response |
 | `tokenEnv` | Optional existing access-token variable name; defaults to `MCP_ACCESS_TOKEN` |
 | `intentId` | Optional new stable ID; otherwise generated once and saved before connecting |
-| `maxAtomic` | Explicit atomic amount ceiling as a decimal string |
+| `maxAtomic` | Explicit positive atomic amount ceiling as a decimal string |
 | `input.query` | Actual declared query names with string or repeated string values |
 | `input.body` | Optional exact UTF-8 request text |
 | `discovery` | `{mode:"resources",arguments:{...}}` or `{mode:"search",arguments:{query:"...",...}}` |
@@ -42,6 +42,15 @@ page hash.
 
 ## Execute
 
+From the installed package:
+
+```sh
+starforge mcp-catalog-journey --help
+starforge mcp-catalog-journey \
+  --config /absolute/native-journey-request.json \
+  --out /absolute/new-native-journey
+```
+
 From the merchant workspace checkout:
 
 ```sh
@@ -56,7 +65,8 @@ ID, so the original operator can find the exact pending request.
 
 The journey completes these connected steps:
 
-1. Open the maintained native request client and inspect the original workspace.
+1. Open the maintained native request client, inspect the original workspace, and
+   bind the lifecycle to its resolved service ID when the host supplies one.
 2. Traverse every resources offset or search cursor, retaining each returned page
    and every HTTP/MCP description.
 3. Prepare the first matching later-page HTTP service whose original offer matches
@@ -68,7 +78,9 @@ The journey completes these connected steps:
 
 Preparation occurs while the selected page's handle is live. Later catalog pages
 may retire cached handles; the subsequent review and execution use the durable
-intent and its retained complete provider page.
+intent and its retained complete provider page. The selected description must match
+that page's hash, byte count and original row index before preparation, and the
+retained preparation must preserve the same page hash and row index.
 
 ## Read the results
 
@@ -82,6 +94,9 @@ intent and its retained complete provider page.
 `run.json` is updated after each phase. It retains the original error and native
 intent hints when a phase fails. Continue that ID through the normal SDK or console
 history after an interrupted run; the workflow makes one execution request.
+If the existing operator is busy, the report retains the queued intent and resolved
+workspace with an explicit execute continuation. Resume that same identity once the
+active operation finishes.
 
 The raw provider capture used by the SF41 ranking replay remains a separate input.
 The NDJSON page file contains the broker's documented discovery response, including
