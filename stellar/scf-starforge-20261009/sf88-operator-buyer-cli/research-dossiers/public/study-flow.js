@@ -66,7 +66,7 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  overview:null,source:null,definition:null,flowId:null,editionId:null,basisEditionId:null,sourceMode:'current',
  baseRevision:0,dirty:false,readOnly:false,report:null,svg:'',reportDirty:true,actor:{id:'',name:''},reason:'',
  importFile:null,view:'diagram',query:'',page:0,selected:new Set(),recordId:null,reportKey:null,metricId:null,
- history:[],historyOffset:0,historyTotal:0,pending:[],draftRecord:null,storageError:null,mutation:0,editorDrafts:{},editorBaselines:{},editorDirty:false,draftHistory:[]};
+ history:[],historyOffset:0,historyTotal:0,pending:[],draftRecord:null,storageError:null,loadError:null,mutation:0,editorDrafts:{},editorBaselines:{},editorDirty:false,draftHistory:[]};
  let persistTimer,persistQueue=Promise.resolve();
  const scope=()=>{if(!st.context)throw Error('Open the original dossier before editing a flow.');return copy(st.context);};
  const endpoint=suffix=>'/api/dossiers/'+encodeURIComponent(st.context.dossierId)+'/study-flow'+suffix;
@@ -97,8 +97,8 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  }
  async function run(work){
  if(st.closed||isBusy()||st.loading)return;
- st.loading=true;
- try{await task(async()=>{try{await work();}catch(err){notify(error(err),'error');throw err;}});}
+ st.loading=true;st.loadError=null;
+ try{await task(async()=>{try{await work();}catch(err){st.loadError=error(err);notify(st.loadError,'error');throw err;}});}
  finally{st.loading=false;draw();}
  }
  function applySnapshot(v){
@@ -651,7 +651,12 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  json(value)!==(st.editorBaselines[key]??json(value)));}
  function bufferMark(){st.editorDirty=hasPendingEditors();schedulePersist();updateSummary();}
  function draw(){
- if(!st.shown||!st.context||!st.definition)return;
+ if(!st.shown||!st.context)return;
+ if(!st.definition){
+ root.classList.add('study-flow');root.replaceChildren();append(root,heading('Study flow',st.loadError??'Loading the original dossier source…'),
+ button('Load original source',()=>run(()=>loadOverview()),{disabled:isBusy()||st.loading,key:'retry-source'}));
+ updateSummary();updateBusy();return;
+ }
  const active=root.contains(document.activeElement)?document.activeElement:null,focus=active?.dataset.sf,
  selection=active&&typeof active.selectionStart==='number'?[active.selectionStart,active.selectionEnd]:null;
  root.classList.add('study-flow');root.replaceChildren();
@@ -701,7 +706,7 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  Object.assign(st,{revision:dossier?.revision??0,needsLoad:Boolean(key),definition:null,overview:null,source:null,flowId:null,editionId:null,
  basisEditionId:null,sourceMode:'current',baseRevision:0,dirty:false,readOnly:false,report:null,svg:'',reportDirty:true,
  reason:'',importFile:null,view:'diagram',query:'',page:0,selected:new Set(),recordId:null,reportKey:null,metricId:null,history:[],pending:[],
- draftRecord:null,editorDrafts:{},editorBaselines:{},editorDirty:false,draftHistory:[],storageError:null});root.replaceChildren();
+ draftRecord:null,editorDrafts:{},editorBaselines:{},editorDirty:false,draftHistory:[],storageError:null,loadError:null});root.replaceChildren();
  }else if(dossier&&dossier.revision!==st.revision){st.revision=dossier.revision;st.needsLoad=true;updateSummary();}
  scheduleLoad();
  }
