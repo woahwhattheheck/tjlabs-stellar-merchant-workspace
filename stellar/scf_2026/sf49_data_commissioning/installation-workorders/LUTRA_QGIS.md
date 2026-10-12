@@ -6,7 +6,7 @@ The original proposal is USD 8,000 for 60 planned hours over twelve business day
 
 ## Original source and commercial programme
 
-The original company case is [Lutra migration](https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791801817838459). The retained [complete commissioning input](https://github.com/woahwhattheheck/commons/blob/ee2208a62a9c3531059d261adce64caa2d81276f/operations/lutra-qgis-migration-20261012/scf-installation/lutra-commissioning-inputs.json) is Git blob 284c895d43a963daf41311ee196fd90011f12621. Its original commercial case is lutra-qgis-migration-workshare-20261012 and canonical plan digest is 940a08a4c6496290c0d347b6e67c01c8961b2352d813f3e8dd23b36d9f42c667.
+Select the complete original commissioning input and its matching receiving packet from the existing private Lutra customer case. Retain that case's Workshare identifier, canonical plan digest, source filename, complete-file identity and private source location together in the same case. Use those exact source and commercial bindings when continuing the Installation. The migration lead and named receiving operator use the original case's authorized source access.
 
 | Commercial phase | Planned effort | Original delivery window | Complete result |
 | --- | ---: | --- | --- |
