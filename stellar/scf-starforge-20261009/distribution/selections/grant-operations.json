@@ -227,7 +227,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grant Operations: retained plans, reviewed baseline amendments with preserved work/cash identities and complete historical receiving, payment-derived delivery calendars, native currencies and sourced FX, statement receiving, delivery/cash forecasting and resource portfolios, buyer/support sources, customer installations and complete returned receiving, implementation evidence and receiving, cohort reviews and tranche completion. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
+    "description": "Grant planning and delivery: retained plans and baseline reviews, payment calendars, native currencies and sourced FX, statement receiving and cash forecasts, resource portfolios, contributor agreements and allocations, installations, returned cases, customer billing, implementation evidence, cohort reviews and tranche completion.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

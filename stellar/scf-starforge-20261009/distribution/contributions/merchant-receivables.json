@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing, original bank statement intake and split receipts, service quotations, reviewed Stellar collection and refunds, native transfer receiving, paid-credit disposition, installment schedules and dated account delivery, invoice-linked collections casework and customer reminder preparation, saved cash receipt scenarios and dated edition comparisons, customer credit policies and retained account decisions consumed by original invoice issue, exact customer remittance CSV receiving with batch invoice allocation and original-source recovery",
+  "description": "Customer invoicing and quotations; original bank statements and split receipts; Stellar collection, refunds and credit transfers; installment schedules and dated account delivery; collections and reminders; cash scenarios and edition comparisons; credit policies and account decisions; remittance CSV receiving and invoice allocations.",
   "commands": {
     "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs"
   },
