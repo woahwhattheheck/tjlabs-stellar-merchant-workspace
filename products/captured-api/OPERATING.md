@@ -568,6 +568,41 @@ inputs. A receiving recipe selects the destination's original declared delivery
 handle and complete export manifest; it reopens the package and can stage an
 explicit native release.
 
+### Review a changed operator host
+
+Open **Host → Review host** for the selected profile before adopting a changed
+merchant configuration or installed provider selection. The comparison shows
+added, removed and changed tools, provider declarations, source aliases and
+request capacity. Expand a change for its saved and current values, or open a
+changed tool in the original editor to inspect its current inputs.
+
+Choose **Save this host binding** to retain the displayed host under a new
+profile revision. The saved configuration and capability fingerprints must still
+match the displayed review. Earlier bindings, saved drafts, workflow editions,
+native calls, returned values and customer files remain in the same profile.
+
+Use **Retained host bindings** to compare an earlier revision against the current
+host. **Export comparison** downloads that full review. **Export profile**
+includes every immutable host binding with the original request, workflow and
+customer history. Receiving a newer profile archive extends that history while
+preserving the receiving workspace's selected host, profile name and favorites;
+reopening the same archive reuses its original receiving record.
+
+A profile created before complete capability snapshots retains its original
+saved host when first rebound. The review uses that host's available
+configuration, counts, provider membership and source aliases; subsequent
+bindings retain the full tool and declaration snapshots. Runtime load and
+shutdown state remain available in the original Host view.
+
+The Applications launch review binds the original operator and host-comparison
+source with the complete Console assets. Reopen the same private product after
+upgrading its runtime, then review and save the intended host binding in its
+retained `operator-console/` workspace.
+
+[Operator host review](../../stellar-forge/mcp-merchant-operator/console/README.md#review-host-changes-and-retain-bindings)
+provides the browser workflow, authenticated API and complete native
+customer-to-host receiving and return sequence.
+
 ## 6. Run, release and deliver the merchant
 
 Reopen the saved package. Its compiler output includes the merchant service,
@@ -762,6 +797,7 @@ alongside the saved process session.
 | Workflow stops at native review | Same paused run revision and the displayed original policy review SHA-256 |
 | Customer transfer stops | Same profile, export ID and export manifest SHA-256; reopen the original download |
 | Operator host restarts | Returned operator URL and the retained profile/run/customer state under `operator-console/` |
+| Operator capabilities or configuration change | Review the selected profile against the current host, then retain the exact displayed binding; earlier bindings and native work remain available |
 | Complete handover is interrupted | Same selection/output or receiving review/operation ID; completed native members reopen |
 | Browser handover draft or reply is interrupted | Original saved draft edition and retained request under Merchant handover |
 | Whole handover file transfer stops | Same original download or saved file upload; resume the retained byte range/chunk |
