@@ -128,16 +128,23 @@ export async function inspectCapturedApiLaunch(input = {}, { environment = proce
   const resourceId = digest(canonical({ schema: 'stellar-forge.captured-api-resource.v1',
     directory: profile.directory, projectsDirectory: profile.projectsDirectory,
     consoleOwnership: profile.console.ownership }));
+  // The original MCP owns this persistent Console. Its working files are created
+  // on first open, so bind the selected location without treating authoring state
+  // or creation of that child directory as a configuration change.
+  const operatorConsole = options.browserOnly ? null : {
+    directory: join(profile.directory, 'operator-console'), pathname: '/operator/',
+  };
   const binding = { schema: CAPTURED_API_LAUNCH_SCHEMA, resourceId, profile,
-    options, ...observed };
+    options, ...observed, operatorConsole };
   const bindingSha256 = digest(canonical(binding));
   const review = { name: profile.name, directory: profile.directory, projectsDirectory: profile.projectsDirectory,
     configuration: profile.configuration, consoleOwnership: profile.console.ownership, workspace: 'merchant',
     browserOnly: options.browserOnly, port: options.port, mcpPort: options.mcpPort,
     tokenEnv: options.tokenEnv, authorizationMode: observed.authorization.mode,
     sourceProviders: ['har','openapi'], configurationFileCount: observed.files.length,
-    oauthConnectionsFile: profile.oauthConnectionsFile };
-  return { schema: CAPTURED_API_LAUNCH_SCHEMA, binding, bindingSha256, resourceId, profile,
+    oauthConnectionsFile: profile.oauthConnectionsFile,
+    operatorConsoleDirectory: operatorConsole?.directory ?? null };
+  return { schema: CAPTURED_API_LAUNCH_SCHEMA, binding, bindingSha256, resourceId, profile, operatorConsole,
     directory: profile.directory, projectsDirectory: profile.projectsDirectory, configuration: profile.configuration,
     consoleOwnership: profile.console.ownership, files: observed.files, directories: observed.directories, review,
     browserOAuth: observed.browserOAuth,
@@ -156,7 +163,9 @@ export async function openCapturedApiManaged(input = {}, { environment = process
     bindingSha256: active.launchBinding.bindingSha256, resourceId: active.launchBinding.resourceId,
     name: active.name, directory: active.directory, projectsDirectory: active.projectsDirectory,
     configuration: active.configuration, consoleOwnership: active.console.ownership,
-    browserUrl: active.browserUrl, mcpUrl: active.mcpUrl, workspace: active.workspace,
+    browserUrl: active.browserUrl, mcpUrl: active.mcpUrl,
+    operatorUrl: active.operatorUrl, operatorConsoleDirectory: active.operatorConsoleDirectory,
+    workspace: active.workspace,
     browserOnly: options.browserOnly, port: options.port, mcpPort: options.mcpPort, tokenEnv: options.tokenEnv };
   return { ...active, bindingSha256: startup.bindingSha256, resourceId: startup.resourceId, startup };
 }

@@ -21,6 +21,19 @@ const sourceFiles = [
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs',
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/browser.mjs',
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/index.html',
+  'stellar-forge/mcp-merchant-operator/serve.mjs',
+  'stellar-forge/mcp-merchant-operator/console/service.mjs',
+  'stellar-forge/mcp-merchant-operator/console/store.mjs',
+  'stellar-forge/mcp-merchant-operator/console/customers.mjs',
+  'stellar-forge/mcp-merchant-operator/console/openapi-customers.mjs',
+  'stellar-forge/mcp-merchant-operator/console/openapi-customer-records.mjs',
+  'stellar-forge/mcp-merchant-operator/console/workflows.mjs',
+  'stellar-forge/mcp-merchant-operator/console/workflow-records.mjs',
+  'stellar-forge/mcp-merchant-operator/console/workflow-recipes.mjs',
+  'stellar-forge/mcp-merchant-operator/console/public/app.mjs',
+  'stellar-forge/mcp-merchant-operator/console/public/workflows.mjs',
+  'stellar-forge/mcp-merchant-operator/console/public/workflow-recipes.mjs',
+  'stellar-forge/mcp-merchant-operator/console/public/index.html',
 ]);
 
 function options(settings) {
@@ -47,11 +60,13 @@ function launchReview(selected) {
   if (!value.browserOnly) rows.push(
     { label: 'Agent port', value: port(value.mcpPort) },
     { label: 'Agent authorization', value: value.authorizationMode === 'oauth' ? 'Original OAuth resource configuration' : 'Existing fixed bearer token' },
-    { label: 'Token environment name', value: value.tokenEnv });
+    { label: 'Token environment name', value: value.tokenEnv },
+    { label: 'Operator workspace', value: 'Requests, reusable workflows, profiles and complete customer receiving on the same merchant host.' },
+    { label: 'Operator workspace directory', value: value.operatorConsoleDirectory });
   return {
     schema: 'stellar-forge.application-review-content.v1',
     title: 'Captured API merchant',
-    summary: 'Continue the retained API source, route worksheet, saved packages, running seller, releases and receiving in their original project directory.',
+    summary: 'Continue API sources, route prices and policies, reusable workflows, seller releases and complete customer receiving in the retained product.',
     sections: [
       { title: 'Selected product and sessions', rows },
       { title: 'Configuration files', collapsed: true, rows: selected.files.map(item => ({
@@ -86,7 +101,8 @@ export async function prepareCapturedApiApplication(settings, context) {
     ['PRODUCT', 'EXTERNAL'].includes(selected.consoleOwnership) &&
     Array.isArray(selected.files) && Array.isArray(selected.directories) && plain(selected.review) &&
     selected.review.browserOnly === selectedOptions.browserOnly && selected.review.port === selectedOptions.port &&
-    selected.review.mcpPort === selectedOptions.mcpPort && selected.review.tokenEnv === selectedOptions.tokenEnv,
+    selected.review.mcpPort === selectedOptions.mcpPort && selected.review.tokenEnv === selectedOptions.tokenEnv &&
+    selected.review.operatorConsoleDirectory === (selectedOptions.browserOnly ? null : join(selected.directory, 'operator-console')),
   'APPLICATION_CAPTURED_API_BINDING_CHANGED', 'Review the retained captured API product with its original configuration.');
   for (const item of selected.directories) {
     need(plain(item) && typeof item.path === 'string', 'APPLICATION_CAPTURED_API_INPUT_CHANGED');
@@ -167,7 +183,8 @@ export function capturedApiStartup(request, text) {
     links.push({ label: 'Merchant handover', url: handover.href });
   }
   if (selected.browserOnly) {
-    need(value.mcpUrl === null, 'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
+    need(value.mcpUrl === null && value.operatorUrl == null && value.operatorConsoleDirectory == null,
+      'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
   } else {
     const mcp = applicationPrivateUrl(value.mcpUrl);
     need(mcp, 'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
@@ -175,6 +192,16 @@ export function capturedApiStartup(request, text) {
     need(mcpUrl.hostname === '127.0.0.1' && mcpUrl.pathname === '/' && !mcpUrl.search && !mcpUrl.hash &&
       mcpUrl.origin !== browserUrl.origin && (selected.mcpPort === 0 || Number(mcpUrl.port || 80) === selected.mcpPort),
     'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
+    if (value.operatorUrl !== undefined && value.operatorUrl !== null) {
+      const operator = applicationPrivateUrl(value.operatorUrl);
+      need(operator, 'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
+      const operatorUrl = new URL(operator);
+      need(operatorUrl.origin === mcpUrl.origin && operatorUrl.pathname === '/operator/' &&
+        !operatorUrl.search && !operatorUrl.hash &&
+        value.operatorConsoleDirectory === join(selected.directory, 'operator-console'),
+      'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
+      links.push({ label: 'Operator workspace', url: operatorUrl.href });
+    }
     links.push({ label: 'Merchant agent endpoint', url: mcpUrl.href });
   }
   return { url: browserUrl.href, links, original: {
@@ -182,6 +209,7 @@ export function capturedApiStartup(request, text) {
     name: value.name, directory: value.directory, projectsDirectory: value.projectsDirectory,
     configuration: value.configuration, consoleOwnership: value.consoleOwnership, workspace: value.workspace,
     browserOnly: value.browserOnly, port: value.port, mcpPort: value.mcpPort, tokenEnv: value.tokenEnv,
+    ...(value.operatorUrl ? { operatorConsoleDirectory: value.operatorConsoleDirectory } : {}),
   } };
 }
 
@@ -191,7 +219,7 @@ export default {
     return [{
       id: 'captured-api', command: 'captured-api', title: 'Captured API merchant', terminal: false,
       requiredSource: PRODUCT + 'managed.mjs',
-      description: 'Open the retained captured API product, its original browser and merchant agent; continue source, pricing, seller releases and complete receiving.',
+      description: 'Open the captured API source editor, merchant agent and persistent operator workspace for pricing, policies, reusable workflows, releases and customer receiving.',
       fields: [
         field('workspaceDirectory', 'Private product directory', 'path', true,
           'Select the existing directory created by starforge captured-api init. It retains the product configuration and original API projects.'),
