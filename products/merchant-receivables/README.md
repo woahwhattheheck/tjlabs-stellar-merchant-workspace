@@ -2,7 +2,7 @@
 
 Operate a merchant's complete invoice and customer-payment cycle in the original private accounting workspace. The product brings customer records, service quotations, issued invoices, payment allocation, credit notes and dated account delivery into one installed operator.
 
-The maintained `merchant-receivables` selection includes 16 commands, 39 named exports and the original Merchant receivables, Merchant accounting and Merchant support Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery.
+The maintained `merchant-receivables` selection includes the invoice and quotation workflow, customer payment plans, dated collections, accounting and support commands, their explicit package exports and managed Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery. `starforge registrations` shows the inventory in the installed source edition.
 
 ## Install the selected product
 
@@ -92,7 +92,7 @@ starforge runtime-workspace serve \
 
 Choose **Merchant receivables**, select the initialized accounting directory, and use Review, Save, Start and Open. The source-owned adapter binds the original workspace ID and source configuration and rechecks them inside the accounting lease. **Merchant accounting** opens the maintained reconciliation/connection workflow; **Merchant support** opens the existing cases and quotation workflow.
 
-One process owns an accounting directory at a time. Use the running process's customer/receivables views together. Stop that process through its original application before opening the directory with another owner.
+One process owns an accounting directory at a time. Use the running process's customer, receivables and **Payment plans** views together. **Customer payment plans** in Applications opens the same combined server directly at its collection desk. Stop that process through its original application before opening the directory with another owner.
 
 ## From service quotation to invoice
 
@@ -167,6 +167,14 @@ starforge receivables export \
 ~~~
 
 Exports use a new output directory. The existing customer statements, accounting pricing, native reconciliation and recovery commands remain available in the same installed selection.
+
+## Schedule and collect an invoice balance
+
+Open **Payment plans** from the running receivables navigation. Choose an issued invoice and balance date, enter its installment dates and amounts or generate equal installments, save the draft, review the complete invoice basis and activate the customer schedule. Every edition retains printable HTML, CSV, JSON and its file manifest.
+
+The desk applies the same recorded allocations, releases and credit notes to the dated schedule. It separates overdue, due-today, upcoming, after-horizon and unscheduled amounts by currency and decimal precision. Revised editions preserve earlier schedule files and historical views; a dated cancellation returns the remaining invoice amount to unscheduled collections.
+
+The [complete payment-plan operating guide](../merchant-payment-plans/README.md) covers schedule preparation, collections, customer files, recovery and the installed HTTP/CLI interfaces. This receivables selection includes that same implementation, command, browser assets and managed **Customer payment plans** application. The `merchant-payment-plans` selection packages the same accounting and quotation dependencies with the payment-plan guide as its product entry.
 
 ## Continue after interruption or upgrade
 
