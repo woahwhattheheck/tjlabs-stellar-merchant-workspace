@@ -398,7 +398,12 @@ class CoastalReceiver(ReceiverJournal):
         return packet
 
     def record_decision(self, intent, decision_file):
-        decision = read_json(decision_file, maximum=65536, private=False)
+        directory = private_directory(self.directory / "decision-intents" / self.local_key(intent))
+        raw_identity = file_identity(decision_file, private=False, maximum=65536)
+        retained = directory / "decision-original.json"
+        copy_original(decision_file, retained, raw_identity)
+        # Decode the verified immutable copy, so dispatch and provenance share one input.
+        decision = read_json(retained, maximum=65536)
         fields = {"schema", "workspaceId", "returnId", "comparisonSha256", "expectedDecisionId", "status", "actor", "note"}
         require(isinstance(decision, dict) and set(decision) == fields and
                 decision["schema"] == "stellar-forge.coops-python-receiving-decision.v1" and
@@ -408,9 +413,6 @@ class CoastalReceiver(ReceiverJournal):
                 "COOPS_PY_DECISION", "Select the complete actual receiving decision, including its original comparison and current decision ID.")
         # The same original decision remains replayable even after a later staff decision exists.
         payload = {k: decision[k] for k in ("returnId", "comparisonSha256", "expectedDecisionId", "status", "actor", "note")}
-        directory = private_directory(self.directory / "decision-intents" / self.local_key(intent))
-        raw_identity = file_identity(decision_file, private=False, maximum=65536)
-        copy_original(decision_file, directory / "decision-original.json", raw_identity)
         immutable_json(directory / "decision.json", decision)
         result = self.action(intent + "/decision", "study.receive", payload)
         require(all(result.get(k) == payload[k] for k in ("returnId", "comparisonSha256", "status", "actor", "note")) and
