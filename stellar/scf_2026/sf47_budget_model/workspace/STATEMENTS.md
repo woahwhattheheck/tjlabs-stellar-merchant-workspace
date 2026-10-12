@@ -54,7 +54,7 @@ The report shows the calculated balance and its difference from the stated closi
 
 ## Receive the exact reviewed batch
 
-After reviewing the rows, classifications, invoice allocations and balances, confirm the preview and select Receive reviewed statement. The original case version and preview SHA bind the request to the complete source bytes and interpretation.
+After reviewing the rows, classifications, invoice allocations and balances, confirm the preview and select Import reviewed cash movements. The original case version and preview SHA bind the request to the complete source bytes and interpretation.
 
 Receiving uses the existing SF47 SQLite transaction. It retains:
 
@@ -81,7 +81,7 @@ The statement review remains attached after later normal cash voids. Complete-ca
 
 The browser retains the complete source, mapping, decisions and exact pending request in its existing-origin IndexedDB. Use the same host and port when reopening this browser state. It also provides a complete recovery JSON download and import.
 
-If a receive response is lost, use Retry original request. It sends the same request ID and exact original payload through the native request ledger. If the server has already returned success, Finish receipt readback reopens the case and checks the recorded source, new and existing cash IDs, case version and original preview identity.
+If a receive response is lost, use Resume original import. It sends the same request ID and exact original payload through the native request ledger. If the server has already returned success, Read saved case reopens the case and checks the recorded source, new and existing cash IDs, case version and original preview identity.
 
 An unresolved original request stays intact until its result is reconciled. Choosing another statement does not replace it. Keep the downloaded recovery input in the operator's private working directory; it contains the original financial source.
 
