@@ -231,15 +231,17 @@ export async function receiveGleifWorkspace({directory,package:input}={}) {
     key(review.id);need(review.resourceSha256===identity(review.originalResource)&&review.lei===review.originalResource?.id&&Number.isSafeInteger(review.version)&&review.version>0,'GLEIF_PACKAGE_REVIEW');
     const source=body.state.captures.find(c=>c.id===review.captureId);need(source&&source.pages.some(page=>page.sha256===review.sourcePage?.sha256),'GLEIF_PACKAGE_REVIEW_SOURCE');
   }
-  if(await exists(directory)){await privateDirectory(directory);const names=await readdir(directory);need(names.length===0||names.every(n=>['receiving.json','objects','datasets','publisher.lock'].includes(n)),'GLEIF_RECEIVE_DESTINATION','Choose an empty private receiving directory or resume its original receiving.',409);}
+  if(await exists(directory)){await privateDirectory(directory);const names=await readdir(directory);need(names.length===0||(names.every(n=>['receiving.json','objects','datasets','publisher.lock','state.json','workspace.json'].includes(n))&&(names.includes('receiving.json')||names.every(n=>n==='publisher.lock'))),'GLEIF_RECEIVE_DESTINATION','Choose an empty private receiving directory or resume its original receiving.',409);}
   else await privateDirectory(directory,true);
   const unlock=await acquireWorkspace(directory);
   try{
     const receiving={schema:SCHEMA+'.receiving',sha256,workspaceId:body.metadata.id};
     if(await exists(join(directory,'receiving.json')))need(stable(await readJson(join(directory,'receiving.json')))===stable(receiving),'GLEIF_RECEIVE_CHANGED');
     else await createFile(join(directory,'receiving.json'),bytes(receiving));
-    for(const folder of ['objects','datasets'])await privateDirectory(join(directory,folder),true);
     const immutable=async(path,raw)=>{if(await exists(path))need((await readPrivate(path,MAX)).equals(raw),'GLEIF_RECEIVE_CHANGED');else await createFile(path,raw);};
+    // A stopped receiver can already have written either final identity file. Reconcile the same package before continuing.
+    for(const[name,value]of [['state.json',body.state],['workspace.json',body.metadata]])if(await exists(join(directory,name)))need((await readPrivate(join(directory,name),MAX)).equals(bytes(value)),'GLEIF_RECEIVE_CHANGED','Open the existing received project or resume its original unchanged package.',409);
+    for(const folder of ['objects','datasets'])await privateDirectory(join(directory,folder),true);
     for(const[sha,raw]of rawByHash)await immutable(join(directory,'objects',sha),raw);
     for(const dataset of body.state.datasets){key(dataset.id);need(dataset.relativeDirectory==='datasets/'+dataset.id,'GLEIF_PACKAGE_DATASET');await privateDirectory(join(directory,dataset.relativeDirectory),true);
       for(const file of dataset.files){need(['dataset.csv','dataset.json','source.json'].includes(file.name),'GLEIF_PACKAGE_DATASET');await immutable(join(directory,dataset.relativeDirectory,file.name),rawByHash.get(file.sha256));}}
