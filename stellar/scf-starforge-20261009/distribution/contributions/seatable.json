@@ -1,0 +1,22 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "seatable",
+  "description": "Exact SeaTable v2 SQL and native-view observations, complete private capture receiving, original dataset publisher and SF82 releases.",
+  "commands": {
+    "seatable-source": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/cli.mjs",
+    "seatable-publisher": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/publisher/cli.mjs",
+    "seatable-deployment": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/deployment-cli.mjs"
+  },
+  "commandDescriptions": {
+    "seatable-source": "Inspect actual SeaTable metadata, capture complete SQL/view pages, resume retained work and import or freeze complete private observations.",
+    "seatable-publisher": "Review and publish SeaTable dataset editions through the original publisher.",
+    "seatable-deployment": "Review and package published SeaTable editions, stage original seller releases and operate the release console."
+  },
+  "exports": {
+    "./seller/seatable": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/source.mjs",
+    "./seller/seatable/declaration": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/declaration.mjs",
+    "./seller/seatable/capture": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/capture.mjs",
+    "./seller/seatable/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/publisher/model.mjs",
+    "./seller/seatable/deployment": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/deployment.mjs"
+  }
+}

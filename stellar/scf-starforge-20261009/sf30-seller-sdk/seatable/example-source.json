@@ -1,0 +1,56 @@
+{
+  "schema": "stellar-forge.seatable-source.v1",
+  "server": "https://cloud.seatable.io",
+  "apiVersion": "v2",
+  "baseId": "REPLACE_WITH_ACTUAL_BASE_UUID",
+  "tableId": "REPLACE_TABLE_ID",
+  "viewId": null,
+  "where": null,
+  "sourceOrder": [
+    {
+      "field": "_id",
+      "direction": "asc"
+    }
+  ],
+  "connection": {
+    "kind": "rest",
+    "tokenEnv": "SEATABLE_READ_TOKEN",
+    "tokenKind": "api",
+    "pageSize": 100,
+    "maxPageBytes": 16777216,
+    "maxCaptureBytes": 67108864,
+    "maxPages": 10000,
+    "maxRows": 1000000,
+    "timeoutMs": 300000,
+    "requestIntervalMs": 250
+  },
+  "queries": {
+    "catalog": {
+      "columns": {
+        "record_id": {
+          "source": "$recordId",
+          "type": "string",
+          "encoding": "identity-text",
+          "nullable": false,
+          "empty": "preserve"
+        },
+        "title": {
+          "source": "REPLACE_TEXT_KEY",
+          "providerType": "text",
+          "type": "string",
+          "encoding": "native",
+          "nullable": true,
+          "empty": "preserve"
+        },
+        "amount": {
+          "source": "REPLACE_NUMBER_KEY",
+          "providerType": "number",
+          "type": "string",
+          "encoding": "number-text",
+          "nullable": true,
+          "empty": "preserve"
+        }
+      }
+    }
+  }
+}
