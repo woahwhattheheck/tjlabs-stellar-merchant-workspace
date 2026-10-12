@@ -70,8 +70,15 @@ async function forwardNative(command, args) {
   const module = command === 'health'
     ? await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/health-cli.mjs')
     : await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/upgrade-cli.mjs');
+  const nativeMain = command === 'health' ? module.healthMain : module.upgradeMain;
+  need(typeof nativeMain === 'function', 'The original native CLI is unavailable.', 'NATIVE_CLI');
+  const forward = async original => {
+    const result = await nativeMain(original);
+    if (command === 'health' && ['FAILED', 'UNSUPPORTED', 'INTERRUPTED'].includes(result?.operation?.phase)) process.exitCode = 2;
+    return result;
+  };
   if (!args.length || args.length === 1 && ['--help', 'help'].includes(args[0]) || args[0] === 'inspect')
-    return module.main(args);
+    return forward(args);
   const positions = args.flatMap((value, index) => value === '--dir' ? [index] : []);
   need(positions.length === 1 && args[positions[0] + 1] && !args[positions[0] + 1].startsWith('--'),
     'Supply this product’s --dir to use its original running console.', 'ARGUMENTS');
@@ -79,7 +86,7 @@ async function forwardNative(command, args) {
     'This product command selects its original console; use the standalone native CLI for a different connection.', 'ARGUMENTS');
   const selected = await readGrpcProduct(resolve(args[positions[0] + 1]));
   const original = args.filter((_, index) => index !== positions[0] && index !== positions[0] + 1);
-  return module.main([...original, '--console-url-file', selected.profile.consoleUrlFile]);
+  return forward([...original, '--console-url-file', selected.profile.consoleUrlFile]);
 }
 export async function main(args = process.argv.slice(2)) {
   if (!args.length || args.length === 1 && ['help', '--help'].includes(args[0])) { process.stdout.write(HELP); return; }

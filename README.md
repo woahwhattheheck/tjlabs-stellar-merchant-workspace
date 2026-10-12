@@ -19,6 +19,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
 | Operate a native gRPC service as a merchant | **Applications → gRPC merchant product** or `starforge grpc-product` | Original protobuf/reflection source, unary and bidirectional message calls, seller releases, contract upgrades, retained service health and all customer files |
+| Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
 | Operate site weather and deliver original observations | **Applications → Site weather operations** or `starforge nws-product` | [Complete selected installation](products/nws-site-weather/README.md), retained NWS source and wire bytes, 30 merchant tools, original Applications reopen and customer receiving |
 | Receive scientific data and review a provider handoff | [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md) | Original grid/station-table capture, native dataset editions, reviewed provider profile, merchant delivery and complete customer receiving |
@@ -39,6 +40,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
 | Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
+| Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, customer work, original buyer and support observations, cohort review, tranche completion and complete workspace receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 | Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
@@ -115,6 +117,19 @@ Build its complete installed workflow with `--selection webdav-operator`.
 The installed `merchant-webdav-edition` command continues an original reviewed
 mapping and merchant through the next edition, native publisher preparation,
 and complete export/source-packet receiving.
+
+The [Grant Operations guide](products/grant-operations/OPERATING.md) connects
+budget and resource planning, cash forecasts, customer delivery, original buyer
+and support observations, cohort review, and tranche completion in one retained
+workspace. Build its complete installed application with
+`--selection grant-operations`; its browser, CLI and agent service share the same
+case versions, saved requests, review history and complete receiving workflow.
+
+The [CoCart merchant and customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/cocart/OPERATING.md)
+connects the local saved-file setup page, pinned native SDK, original Woo checkout,
+merchant agent connection, managed Applications and complete customer receiving.
+Build its complete installed product with `--selection cocart-merchant`; open
+`starforge cocart-setup --port 8787` to prepare the customer's original files.
 
 ## Open the source product
 
@@ -287,6 +302,7 @@ the replacement is operating as intended.
 
 - [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 - [Grant purchase review and complete receiving](products/grant-reviewer/OPERATING.md)
+- [Grant Operations: planning, customer delivery, cohort review and complete receiving](products/grant-operations/OPERATING.md)
 - [Research questions, source review and complete delivery](products/research/OPERATING.md)
 - [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
 - [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
