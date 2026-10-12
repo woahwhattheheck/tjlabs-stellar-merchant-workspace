@@ -785,11 +785,14 @@ export async function runDeliveryApplicationsPhase({
         await delay(250);
       } while (Date.now() < deadline);
       const running = value.current?.active || ['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(value.current?.phase);
-      await drainAdoption(kind);
       assert(!running, 'The original ' + kind + ' retains an unresolved application start; keep this receipt.');
     }
-    for (const kind of ['delivery-receiving', 'merchant-delivery'])
+    for (const kind of ['delivery-receiving', 'merchant-delivery']) {
       try { await closeOwned(kind); } catch (error) { closed.push(diagnostic(error.message)); }
+      finally {
+        try { await drainAdoption(kind); } catch (error) { closed.push(diagnostic(error.message)); }
+      }
+    }
     for (const target of [popup, page, browserContext, browser, server, model])
       try { await target?.close(); } catch (error) { closed.push(diagnostic(error.message)); }
     await Promise.allSettled([...responseWork]);
