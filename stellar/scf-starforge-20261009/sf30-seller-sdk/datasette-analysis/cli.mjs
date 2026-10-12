@@ -91,7 +91,7 @@ export async function inspectDatasetteAnalysisInstallation(root, {
   for (const path of files.keys()) {
     if (typeof path !== 'string' || !path.startsWith(DATASETTE_ANALYSIS_SOURCE)) continue;
     const name = path.slice(DATASETTE_ANALYSIS_SOURCE.length);
-    if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.md|kestra\/.+)$/.test(name)) continue;
+    if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.(?:md|json)|kestra\/.+)$/.test(name)) continue;
     need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
       'DATASETTE_ANALYSIS_SOURCE_CHANGED');
     required.add(path);
