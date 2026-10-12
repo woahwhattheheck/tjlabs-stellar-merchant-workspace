@@ -16,6 +16,7 @@ This guide is also retained at `package/source/products/grant-operations/OPERATI
 | --- | --- |
 | Grant planning | Original scenario, Decimal calculations, named plan, immutable revisions, staffing, work packages, pricing, contributor payment timing and explanatory notes. |
 | Delivery and cash | The exact selected plan revision; contributors, submitted and accepted work, invoices, disputes, actual payment observations, allocations, deployments, source attachments and original history. |
+| Contributor engagements | Immutable sourced terms and acceptance, named availability, remaining package allocations, exact native Forecast/Portfolio handover selections and complete receiving reviews. |
 | Forecast and Portfolio | Complete input, case version and source snapshot; dated cash assumptions, every remaining task, capacity calendars, alternatives, selected work dates and the original reviewed event release. |
 | Buyer and Support receiving | Exact exported files, original job/purchase/deployment identities, selected associations, reader results, native previews and same-request receipts. |
 | Customer installations | Complete commissioning and commercial source, useful task and priced unit, source population, exact payment and aggregate task budget, receiving application and maintainer, original funded assignments and acceptance records; immutable editions and complete selected-edition handover. |
@@ -26,6 +27,44 @@ This guide is also retained at `package/source/products/grant-operations/OPERATI
 A plan revision, case version, installed source commit and original request ID identify different things. Record each from its native response. The installed source can advance without rewriting an older plan or review. A case remains pinned to the plan revision chosen when it was created.
 
 Use named recording and reviewing operators. A contributor invoice, a prospective customer's quote, an issuer submission and an observed receipt retain their separate native meanings. Enter unknown facts as unknown; a testnet observation remains visibly testnet.
+
+## Plan useful customer adoption and complete-task costs
+
+Open **Delivery operations → Customer adoption plan** before choosing the original
+installation workorders. Start from the case's proposed tranche and select the
+customer's intended first date. The window length and targets come from the
+original case's saved proposal.
+
+Name the actual accountable buyers, merchants and facilitator operators, then
+describe each complete useful task and its expected output. Choose the customer's
+normal work calendar, holidays, recurring schedule or explicit delivery dates.
+Price the charged unit and account for all requests needed to finish the task.
+The planner keeps prepaid passes, consumed allowance, individual paid requests,
+complete tasks and expected output dates separately visible.
+
+The calendar and target tables show which normal-use schedule supplies the intended
+purchase population, which customers return on another completion day, and where
+the proposed timing leaves work unfinished. Fee, supplier-cost and active-hours
+inputs produce separate results for each currency; workshare alternatives show
+the effect of delivery effort on the original quote.
+
+Choose **Save new edition** to retain the entire reviewed plan, original
+proposal and calculation as one immutable source attachment. The original case
+journal supplies its recording operator, request identity and version. Reopen
+saved editions in this same pane, export the complete JSON/CSV or readable report,
+and use **Export complete case** for the existing whole-case receiving workflow.
+A revised plan creates another source edition and preserves its parent.
+
+The installed command is **starforge grant-cohort-plan** and the public application
+module is **@tokenjunkielabs/starforge-merchant/grant/cohort-planning**. The complete
+[Customer adoption planning guide](../../stellar/scf_2026/sf47_budget_model/workspace/COHORT-PLANNING.md)
+covers source seeding, calendar choices, exact costs, saved-edition recovery and
+command-line source preparation.
+
+Use the resulting calendar and complete-task estimate with the original
+[Customer launch guide](../merchant-workspace/CUSTOMER_LAUNCH.md). Actual purchases
+continue through Buyer receiving and the existing Cohort acceptance pane.
+
 
 ## 2. Receive and install one selected source edition
 
@@ -161,6 +200,25 @@ The [Statement receiving guide](../../stellar/scf_2026/sf47_budget_model/workspa
 ## Review the operating period against the pinned budget
 
 Open **Delivery operations → Budget performance** for opening, period and closing cash/invoice positions, complete package and category budget comparisons, contributor activity, invoice aging and source-linked work/payment rows. Select the actual reporting dates; the report keeps the current case version and original recognition dates together. **Export complete handover** carries the full report, every CSV row, offline HTML and complete original case. Importing that ZIP reopens the case at its selected dates. The [Budget performance guide](../../stellar/scf_2026/sf47_budget_model/workspace/PERFORMANCE.md) covers the exact business arithmetic, source basis, browser, CLI and Merchant client.
+
+## Contributor agreements and the received resource allocation
+
+Open **Delivery operations → Contributor engagements** in the same operating case. An agreement edition retains the original contributor, role and scope; the work period; actual weekday availability and dated exceptions; compensation and payment terms; source files and notes; and the recorded acceptance state. It also retains explicit remaining hours and uninvoiced cost against the original grant packages. A proposed agreement stays proposed until an operator records actual confirmation, the confirming person and its timestamp.
+
+Use the complete [Contributor engagements guide](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS.md) for the editor, every HTTP/CLI field and the typed agent/Merchant workflow. A practical receiving sequence is:
+
+1. Attach the original agreement and availability evidence through the case's existing source controls. Select the original contributors and grant-package IDs. Review the complete agreement document, including its as-of date, unallocated work and payment basis, and save it with a nonempty review note.
+2. When terms change, seed a successor from the exact saved review. Preserve its original review ID and SHA as the superseded edition. Earlier confirmations, proposals, declines and withdrawals remain in the saved history.
+3. Select confirmed agreements and an existing source-current Forecast with the same as-of date. Review every affected package's complete remaining amount, any explicit unassigned remainder, and its payment timing. Save the returned full input through the original Forecast writer.
+4. Map every selected contributor to one distinct original or new Portfolio resource. Review the complete original allocation, all alternatives, working calendars, task hours and any selected Installation phases. The handover captures the original Installation and Workshare source through the maintained phase reader. Save the returned full input through the original Portfolio writer.
+5. Retain the final receiving review joining the exact book, saved Forecast, saved Portfolio and both normalized selections. The browser keeps the original requests and intermediate receipts in its Resume workflow. It preserves the actual allocation outcome and unfinished alternative findings.
+6. Export the selected agreement edition as its complete operating-case ZIP, then receive that ZIP through the original case importer. The export includes the readable agreement, all original sources and editions, case history, Forecasts, Portfolios and the complete receiving review. Reopen the destination's original source and native IDs.
+
+Each of the three handover writes retains its own native request ID, reviewed case version and exact full input. After an uncertain response, resume that original request. A source or preview conflict requires a fresh review; changing the meaning of an accepted key does not recover it. Agreement preparation records the selected terms; actual work, invoice review and cash observations continue through their original native records.
+
+The CLI adds `engagements`, `engagement-seed`, `engagement-show`, `engagement-preview`, `engagement-prepare`, `engagement-forecast`, `engagement-portfolio`, `engagement-receiving` and `engagement-export` under the existing `grant operations` command. Both immutable review writes require `--note`. The typed client and Merchant MCP expose the same source, previews, exact writes, full export and retained file reads; use their complete source objects and normalized selections, including large inputs received through the existing transfer API.
+
+For a complete installed course, use [Contributor native receiving](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS_RECEIVING.md). The preparation step selects and verifies the complete original managed source before producing a private retained input. **ACTUAL** consumes the supplied existing case, agreement and source identities. **WALKTHROUGH** creates a clearly labeled illustrative case from the selected original plan and retains its example people and agreements there. The receiving caller borrows the selected authenticated native service and preserves completed domain requests, the complete original export/import and its final delivery. Source publication or a prepared input is reported separately from an executed native result.
 
 ## 5. Forecast cash and allocate the whole remaining workload
 
@@ -588,6 +646,16 @@ The command line exposes the same workflow under `operations`: `commercial-conne
 
 The planning workspace includes **Compare saved plans** for two explicit saved revisions, including named alternatives. It connects work-package and payment changes, milestone and delivery scope, staffing allocation, exact funding and capacity deltas, and complete daily cash outputs. A complete receiving package carries the selected snapshots and each original native plan ZIP. Browser, CLI and Merchant MCP use the same comparison engine. See the [saved plan comparison guide](../../stellar/scf_2026/sf47_budget_model/workspace/COMPARISON.md) for the full workflow.
 
+## Complete cash accounts and original corrections
+
+Open **Delivery operations → Cash / issuer** for the complete cash account. Choose original dates and exact network/currency/asset, inspect full payments and refund allocations, and retain the original source documents. The Accounts section keeps unspecified native values distinct from an all-account selection.
+
+A reviewed correction shows complete original and replacement observations, invoice/package/asset effects and the existing tranche/forecast work. Saving uses the original source, void and record commands inside one transaction. The retained correction chain lets an overlapping original statement recognize its current observation. Saved forecast editions retain their original snapshots; the account opens complete current inputs in the existing forecast editor.
+
+The full account ZIP contains offline HTML, complete JSON/CSVs, original correction history and the entire Operations case. Receiving validates the source and rebuilds the account before opening the same dates and dimensions. Browser drafts retain exact pending requests across navigation and use stored-revision comparisons between tabs. CLI, typed client and Merchant tools expose the same account, preview, apply, export and original request recovery.
+
+Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/CASH_ACCOUNTS.md) for the complete workflow and original native receiving continuation.
+
 ## Original source references
 
 | Area | Maintained source |
@@ -597,6 +665,7 @@ The planning workspace includes **Compare saved plans** for two explicit saved r
 | Planning | [workspace](../../stellar/scf_2026/sf47_budget_model/workspace/README.md), [CLI](../../stellar/scf_2026/sf47_budget_model/workspace/CLI.md) |
 | Delivery, API and intake | [Operations](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS.md), [API](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-API.md), [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) |
 | Resource and cash assumptions | [Forecast](../../stellar/scf_2026/sf47_budget_model/workspace/FORECAST.md), [Portfolio](../../stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md) |
+| Contributor agreements and receiving | [Complete engagements workflow](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS.md), [native receiving](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS_RECEIVING.md) |
 | Customer installation | [Commissioning, editions and complete handover](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md) |
 | Implementation source and receiving | [Complete implementation contract](../../stellar/scf_2026/sf47_budget_model/workspace/IMPLEMENTATION_EVIDENCE.md) |
 | Native evidence | [Buyer](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_OPERATIONS.md), [Support](../../stellar/scf_2026/sf47_budget_model/workspace/SUPPORT_DELIVERY.md), [Cohort](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md), [Completion](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) |

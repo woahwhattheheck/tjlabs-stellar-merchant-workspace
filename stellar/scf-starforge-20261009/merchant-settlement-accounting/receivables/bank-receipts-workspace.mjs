@@ -7,7 +7,7 @@ import {json,sha,need,plain,field,identifier,dateValue,today,currencyKey,receipt
 import {BANK_SOURCE_BYTES,BANK_SOURCE_ROWS,BANK_DERIVED_BYTES,BANK_IMPORT_SCHEMA,BANK_POSTING_SCHEMA,BANK_FILE_NAMES,
   bankAccountRows,bankImportRows,bankPage,bankHash,normalizeBankAccount,bankAccountSummary,
   inspectBankInput,normalizedBankSourceFiles,bankMatchIndex,bankSourceMatches,bankRowDecision,bankRowStatus,
-  bankImportSummary,bankRowView,compileBankPosting,bankPostingInput,applyBankPostingChanges,bankPostingDocuments} from './bank-receipts.mjs';
+  bankImportSummary,bankRowView,bankCurrentReceipts,compileBankPosting,bankPostingInput,applyBankPostingChanges,bankPostingDocuments} from './bank-receipts.mjs';
 const FILE=/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
 const clone=value=>structuredClone(value),at=()=>new Date().toISOString();
 const sourceIndex=row=>Object.fromEntries(['id','transactionKey','replacesTransactionKeys','economicKey','amount','bookedDate','kind',
@@ -285,7 +285,8 @@ export class BankReceiptsWorkspace {
       bytes:Buffer.from(json({schema:'stellar-forge.merchant-bank-import-status.v1',revision:this.workspace.state.revision,
         observedAt:at(),bankImport:bankImportSummary(bankImport,this.data()),history:bankImport.history}))};
     if(name==='reconciliation.json') {
-      const ids=new Set(bankImport.decisions.flatMap(row=>row.receiptIds??[]));
+      const ids=new Set(bankImport.decisions.flatMap(decision=>(decision.receiptIds??[]).flatMap(id=>[
+        id,...bankCurrentReceipts(this.data(),id,bankImport,bankImport.index.find(row=>row.id===decision.rowId)).map(row=>row.id)])));
       return {name:bankImport.id+'-reconciliation.json',type:'application/json; charset=utf-8',bytes:Buffer.from(json({
         schema:'stellar-forge.merchant-bank-reconciliation.v1',revision:this.workspace.state.revision,observedAt:at(),
         bankImport:bankImportSummary(bankImport,this.data()),source:bankImport.source,decisions:bankImport.decisions,

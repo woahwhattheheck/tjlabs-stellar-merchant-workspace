@@ -335,7 +335,8 @@ class Migration:
     def _create(self, _, value, operation):
         edition = self.ws.edition(value["editionId"])
         profile = normalize_profile(value.get("profile") or default_profile())
-        https_url(profile["instance"], "selected TIND instance URL")
+        if profile["instance"]:
+            https_url(profile["instance"], "selected TIND instance URL")
         identity = sha(jbytes(["tind-project", operation]))
         project = {"schema": SCHEMA, "id": identity, "title": plain(value.get("title"), "migration title", 256),
                    "revision": 0, "createdAt": stamp(), "updatedAt": stamp(), "editionId": edition["id"],
@@ -381,7 +382,8 @@ class Migration:
 
     def _profile(self, project, value, _):
         incoming = normalize_profile(value["profile"])
-        https_url(incoming["instance"], "selected TIND instance URL")
+        if incoming["instance"]:
+            https_url(incoming["instance"], "selected TIND instance URL")
         if incoming["instance"] != project["profile"]["instance"] and (project.get("snapshotId") or self.db.execute("SELECT 1 FROM tind_batches WHERE project_id=? LIMIT 1", (project["id"],)).fetchone()):
             raise InputError("Continue a different native institution in a separate migration")
         project["profile"] = incoming
@@ -670,6 +672,7 @@ class Migration:
         return {"items": items, "total": total, "offset": offset, "next": offset + len(items) if offset + len(items) < total else None}
 
     def _prepare(self, project, value, operation):
+        https_url(project["profile"]["instance"], "selected TIND institution before preparing its native batch")
         selection = value.get("identifiers", "ready")
         if selection != "ready" and (not isinstance(selection, list) or not 1 <= len(selection) <= 10000 or len(selection) != len(set(selection))):
             raise InputError("Choose every ready record or an explicit unique selection of up to 10,000 identifiers")

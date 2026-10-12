@@ -2,10 +2,10 @@ import type {
   CallerTask, TaskSelection, TaskPreview, TaskRecord, TaskInspection,
   InboxTask, ReceivedInboxTask, compareInboxTasks,
 } from "../inbox-task.mjs";
-import type { InboxJob, InboxReview, InboxResult } from "../../index.mjs";
+import type { InboxJob, InboxReview, InboxResult, Inbox, InboxRpcResponse } from "../../index.mjs";
 
 export type {
-  CallerTask, TaskSelection, TaskPreview, TaskRecord, TaskInspection,
+  CallerTask, TaskSelection, TaskRpcResultSelection, TaskPreview, TaskRecord, TaskInspection,
 } from "../inbox-task.mjs";
 
 export interface TaskDeskRequestOptions {
@@ -46,9 +46,27 @@ export interface TaskDeskStatus {
   instanceId: string;
   csrfToken: string;
   roots: { tasks: string; outputs: string; inbox: string;
-    existingTask?: string; existingOutput?: string };
+    existingTask?: string; existingOutput?: string; commerce?: string };
   runningOperations: number;
   [key: string]: unknown;
+}
+
+export interface TaskDeskRpcSourceOptions extends TaskDeskRequestOptions {
+  /** Original commerce session; omit to use the desk's configured --commerce root. */
+  commerceDirectory?: string;
+}
+export interface TaskDeskRpcSelection {
+  commerceDirectory?: string;
+  readId: string;
+  responseSha256: string;
+}
+export type TaskDeskRpcReads = Awaited<ReturnType<Inbox["rpcResponses"]>>;
+export interface TaskDeskRpcResponse {
+  intentId: string;
+  job: InboxRpcResponse["job"];
+  recovery: InboxRpcResponse["recovery"];
+  delivery: InboxRpcResponse["delivery"];
+  verified: Awaited<ReturnType<InboxRpcResponse["verify"]>>;
 }
 
 export interface TaskDeskDraft {
@@ -152,6 +170,10 @@ export class TaskDeskClient {
     jobs: InboxJob[];
     process: InboxResult["process"];
   }>;
+  listRpcResponses(intentId: string, options?: TaskDeskRpcSourceOptions): Promise<TaskDeskRpcReads>;
+  getRpcResponse(intentId: string, selection: TaskDeskRpcSelection, options?: TaskDeskRequestOptions): Promise<TaskDeskRpcResponse>;
+  /** Streaming complete saved read; the caller consumes Response.body. */
+  downloadRpcResponse(intentId: string, selection: TaskDeskRpcSelection, options?: TaskDeskRequestOptions): Promise<Response>;
   listTasks(options?: TaskDeskRequestOptions): Promise<{ tasks: TaskDeskListEntry[]; issues: { id: string; error: TaskDeskErrorBody }[] }>;
   previewTask(input: TaskDeskDraft, options?: TaskDeskRequestOptions): Promise<TaskPreview>;
   createTask(input: TaskDeskCreateInput, options?: TaskDeskRequestOptions): Promise<TaskDeskTaskDetail>;

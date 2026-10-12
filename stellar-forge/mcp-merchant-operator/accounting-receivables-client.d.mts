@@ -1,4 +1,11 @@
 import type {
+  BankFormat, BankAccountStatus, BankImportStatus, BankDirection, BankRowStatus, BankDateBasis, BankCsvColumns, BankCsvLayout, BankCsvInspectionLayout, BankCsvNormalizedLayout, BankStatementOptions, BankAccountInput, BankAccount, BankAccountsQuery, BankAccountsPage, BankAccountsInventory, BankSourceFile, BankSourceInspectionInput, BankSourceImportInput, BankSourceIdentity, BankSourceIssue, BankSourceSection, BankRawRow, BankSourceSample, BankSourceInspection, BankSourceRow, BankSourceMatch, BankRowDecision, BankRow, BankImportSummary, BankImportsQuery, BankImportsPage, BankImportsInventory, BankImportView, BankImportQuery, BankFileMetadata, BankFileName, BankDownload, BankImportRows, BankImportDetail, BankImportInventory, BankAllocationInput, BankPostingSplitInput, BankPostingSelectionInput, BankPostingPreviewInput, BankReviewedAllocation, BankReleasedAllocation, BankReceiptSourceBinding, BankSourceCoverage, BankResidualReceipt, BankOriginalReceipt, BankPostingSplit, BankPostingSelection, BankPostingProposal, BankReceiptBalance, BankInvoiceBalance, BankBalancePeriod, BankBalanceEffect, BankPostingTotals, BankPostingBalanceEffects, BankPostingPreview, PostBankReceiptsInput, IgnoreBankRowsInput, RestoreBankRowsInput, CloseBankImportInput, BankPostingSummary, BankMutationResult, BankAccountMutationResult, BankImportMutationResult, BankPostingMutationResult
+} from "../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-client-types.d.ts";
+export type {
+  BankFormat, BankAccountStatus, BankImportStatus, BankDirection, BankRowStatus, BankDateBasis, BankCsvColumns, BankCsvLayout, BankCsvInspectionLayout, BankCsvNormalizedLayout, BankStatementOptions, BankAccountInput, BankAccount, BankAccountsQuery, BankAccountsPage, BankAccountsInventory, BankSourceFile, BankSourceInspectionInput, BankSourceImportInput, BankSourceIdentity, BankSourceIssue, BankSourceSection, BankRawRow, BankSourceSample, BankSourceInspection, BankSourceRow, BankSourceMatch, BankRowDecision, BankRow, BankImportSummary, BankImportsQuery, BankImportsPage, BankImportsInventory, BankImportView, BankImportQuery, BankFileMetadata, BankFileName, BankDownload, BankImportRows, BankImportDetail, BankImportInventory, BankAllocationInput, BankPostingSplitInput, BankPostingSelectionInput, BankPostingPreviewInput, BankReviewedAllocation, BankReleasedAllocation, BankReceiptSourceBinding, BankSourceCoverage, BankResidualReceipt, BankOriginalReceipt, BankPostingSplit, BankPostingSelection, BankPostingProposal, BankReceiptBalance, BankInvoiceBalance, BankBalancePeriod, BankBalanceEffect, BankPostingTotals, BankPostingBalanceEffects, BankPostingPreview, PostBankReceiptsInput, IgnoreBankRowsInput, RestoreBankRowsInput, CloseBankImportInput, BankPostingSummary, BankMutationResult, BankAccountMutationResult, BankImportMutationResult, BankPostingMutationResult
+} from "../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-client-types.d.ts";
+
+import type {
   RefundStatus, RefundEffectiveStatus, RefundAccountingScope, CustomerFundsQuery,
   RefundFundingInput, RefundFundingProposal, RefundOperatorPayoutInput, RefundStellarPayoutInput,
   RefundAdoptedStellarPayoutInput, RefundAdjustmentPayoutInput, RefundPayoutInput, RefundPreviewInput,
@@ -88,7 +95,9 @@ export interface CreditRecord {
 export type Credit = CreditSummary;
 export interface Receipt {
   id: string; customerId: string; customer: Customer; currency: Currency; amount: Money; allocated: Money; available: Money;
-  receivedDate: DateOnly; method: string; reference: string; note: string; status: 'RECORDED' | 'VOID';
+  receivedDate: DateOnly; accountingDate: DateOnly; replacesReceiptId?: string | null; replacedByReceiptId?: string | null;
+  replacementReceiptIds?: string[]; replacementRole?: 'CORRECTION' | 'RESIDUAL';
+  bankSources?: BankReceiptSourceBinding[]; method: string; reference: string; note: string; status: 'RECORDED' | 'VOID';
   voidDate?: DateOnly | null; sourceKey: string; source: {kind: string; runId?: string; eventId?: string; [key: string]: unknown};
   refunded: Money; reserved: Money; netAmount: Money; availableBeforeUnreconciledRefunds: Money;
   unreconciledRefunds: Array<Record<string, unknown>>; unreconciledRefundAmount: Money; refundDeficit: Money;
@@ -129,6 +138,7 @@ export type QuoteImportInput = MutationContext & {
 export interface Operation {
   id: string; action: string; actor: string; at: string; intentSha256: string; replayed?: boolean;
   result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; refundId?: string; refundReturnId?: string; creditDispositionId?: string;
+    bankAccountId?: string; bankImportId?: string; bankPostingId?: string; receiptIds?: string[];
     invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
@@ -283,7 +293,9 @@ export interface PaymentCreateArguments extends MutationContext {
 }
 export interface PaymentCancelArguments extends MutationContext { paymentRequestId: string; reason: string }
 export interface PaymentReturnArguments extends MutationContext {
-  paymentRequestId: string; transaction: string; payer?: string; note?: string;
+  /** Omission preserves an existing payer constraint. An explicit account changes it before
+   * verification; null clears it. A changed or cleared constraint requires a note. */
+  paymentRequestId: string; transaction: string; payer?: string | null; note?: string;
 }
 export interface PaymentReceiveArguments extends MutationContext {
   paymentRequestId: string; returnId: string; allocate?: boolean; allocationAmount?: Money;
@@ -377,8 +389,16 @@ export interface RefundReturnArguments extends ReportRefundReturnInput { refundI
 export interface RefundReceiveArguments extends ReceiveRefundInput { refundId: string }
 export interface RefundFileSelection { kind: 'receivables-refund'; refundId: string; file: RefundFileName }
 
+export interface BankImportDetailArguments extends BankImportQuery {bankImportId: string}
+export interface BankPostingPreviewArguments extends BankPostingPreviewInput {bankImportId: string}
+export interface BankReceiptsPostArguments extends PostBankReceiptsInput {bankImportId: string}
+export interface BankRowsIgnoreArguments extends IgnoreBankRowsInput {bankImportId: string}
+export interface BankRowsRestoreArguments extends RestoreBankRowsInput {bankImportId: string}
+export interface BankImportCloseArguments extends CloseBankImportInput {bankImportId: string}
+export interface BankFileSelection {kind: 'receivables-bank'; bankImportId: string; file: BankFileName}
+
 export type ReceivablesFileSelection = DocumentFileSelection | QuoteFileSelection | PreviewFileSelection |
-  PaymentFileSelection | CustomerFileSelection | RefundFileSelection;
+  PaymentFileSelection | CustomerFileSelection | RefundFileSelection | BankFileSelection;
 export interface ReceivablesFileMetadata extends FileMetadata {name: string; type?: string}
 export interface ReceivablesFileIdentity<S extends ReceivablesFileSelection = ReceivablesFileSelection>
   extends ReceivablesFileMetadata {selection: S}
@@ -393,7 +413,8 @@ export interface ReceivablesMutationResult extends MutationResult {
   invoice?: InvoiceSummary; receipt?: Receipt; credit?: CreditRecord; allocation?: Allocation; issuer?: Issuer;
   paymentRequest?: PaymentRequestSummary; paymentReturn?: PaymentReturnReference;
   refund?: RefundSummary; refundReturn?: RefundReturn; creditDisposition?: CreditDispositionRecord;
-  invoices?: InvoiceSummary[]; allocations?: Allocation[];
+  invoices?: InvoiceSummary[]; allocations?: Allocation[]; receipts?: Receipt[];
+  bankAccount?: BankAccount; bankImport?: BankImportSummary; bankPosting?: BankPostingSummary;
 }
 export type PaymentRequestMutationResult = ReceivablesMutationResult & {
   invoice: InvoiceSummary; paymentRequest: PaymentRequestSummary;
@@ -416,6 +437,11 @@ export interface ReceivablesArgumentsMap {
   refund_list: RefundQuery; refund_detail: RefundDetailArguments; refund_cancel: RefundCancelArguments;
   refund_reverse: RefundReverseArguments; refund_return: RefundReturnArguments; refund_receive: RefundReceiveArguments;
   credit_disposition_preview: CreditDispositionPreviewInput; credit_disposition_apply: ApplyCreditDispositionInput;
+  bank_accounts: BankAccountsQuery; bank_account_save: BankAccountInput;
+  bank_source_inspect: BankSourceInspectionInput; bank_source_import: BankSourceImportInput;
+  bank_import_list: BankImportsQuery; bank_import_detail: BankImportDetailArguments;
+  bank_posting_preview: BankPostingPreviewArguments; bank_receipts_post: BankReceiptsPostArguments;
+  bank_rows_ignore: BankRowsIgnoreArguments; bank_rows_restore: BankRowsRestoreArguments; bank_import_close: BankImportCloseArguments;
 }
 export interface ReceivablesResultsMap {
   status: StatusResult; settings: ReceivablesMutationResult & {issuer: Issuer};
@@ -435,19 +461,29 @@ export interface ReceivablesResultsMap {
   refund_list: RefundPage; refund_detail: RefundDetail; refund_cancel: RefundMutationResult;
   refund_reverse: RefundMutationResult; refund_return: RefundReturnMutationResult; refund_receive: RefundReturnMutationResult;
   credit_disposition_preview: CreditDispositionPreview; credit_disposition_apply: CreditDispositionMutationResult;
+  bank_accounts: BankAccountsPage; bank_account_save: BankAccountMutationResult;
+  bank_source_inspect: BankSourceInspection; bank_source_import: BankImportMutationResult;
+  bank_import_list: BankImportsPage; bank_import_detail: BankImportDetail;
+  bank_posting_preview: BankPostingPreview; bank_receipts_post: BankPostingMutationResult;
+  bank_rows_ignore: BankImportMutationResult; bank_rows_restore: BankImportMutationResult; bank_import_close: BankImportMutationResult;
 }
 export type ReceivablesOperation = keyof ReceivablesArgumentsMap;
 export type ReceivablesMutation = 'settings' | 'draft_save' | 'quote_import' | 'invoice_issue' | 'invoice_void' | 'credit' |
   'receipt_record' | 'receipt_void' | 'settlement_import' | 'allocate' | 'release' |
   'payment_create' | 'payment_cancel' | 'payment_return' | 'payment_receive' |
-  'refund_commit' | 'refund_cancel' | 'refund_reverse' | 'refund_return' | 'refund_receive' | 'credit_disposition_apply';
-export type ReceivablesPagedOperation = 'status' | 'invoice_preview' | 'invoice_detail' | 'settlement_ledger' | 'payment_list' | 'payment_detail' | 'refund_list';
+  'refund_commit' | 'refund_cancel' | 'refund_reverse' | 'refund_return' | 'refund_receive' | 'credit_disposition_apply' |
+  'bank_account_save' | 'bank_source_import' | 'bank_receipts_post' | 'bank_rows_ignore' | 'bank_rows_restore' | 'bank_import_close';
+export type ReceivablesPagedOperation = 'status' | 'invoice_preview' | 'invoice_detail' | 'settlement_ledger' | 'payment_list' | 'payment_detail' | 'refund_list' | 'bank_accounts' | 'bank_import_list' | 'bank_import_detail';
 export type ReceivablesAllRows<K extends ReceivablesPagedOperation> =
   K extends 'status' ? StatusRows[keyof StatusRows] : K extends 'invoice_preview' ? InvoiceLine :
   K extends 'invoice_detail' ? InvoiceDetailRows[keyof InvoiceDetailRows] : K extends 'settlement_ledger' ? LedgerItem :
-  K extends 'payment_list' ? PaymentRequestSummary : K extends 'payment_detail' ? PaymentDetailRows[keyof PaymentDetailRows] : RefundSummary;
+  K extends 'payment_list' ? PaymentRequestSummary : K extends 'payment_detail' ? PaymentDetailRows[keyof PaymentDetailRows] :
+  K extends 'bank_accounts' ? BankAccount : K extends 'bank_import_list' ? BankImportSummary :
+  K extends 'bank_import_detail' ? BankImportRows[BankImportView] : RefundSummary;
 export type ReceivablesAllResult<K extends ReceivablesPagedOperation> =
-  (K extends 'refund_list' ? RefundInventory : ReceivablesInventory<ReceivablesAllRows<K>>) & NativeRecord;
+  (K extends 'refund_list' ? RefundInventory : K extends 'bank_accounts' ? BankAccountsInventory :
+    K extends 'bank_import_list' ? BankImportsInventory : K extends 'bank_import_detail' ? BankImportInventory :
+    ReceivablesInventory<ReceivablesAllRows<K>>) & NativeRecord;
 export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<{
   status: 'status'; saveSettings: 'settings'; saveDraft: 'draft_save'; importQuote: 'quote_import';
   invoicePreviewSummary: 'invoice_preview'; issueInvoice: 'invoice_issue'; invoice: 'invoice_detail';
@@ -460,6 +496,10 @@ export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<{
   commitRefund: 'refund_commit'; refunds: 'refund_list'; refund: 'refund_detail'; cancelRefund: 'refund_cancel';
   reverseRefund: 'refund_reverse'; reportRefundReturn: 'refund_return'; receiveRefund: 'refund_receive';
   previewCreditDisposition: 'credit_disposition_preview'; applyCreditDisposition: 'credit_disposition_apply';
+  bankAccounts: 'bank_accounts'; saveBankAccount: 'bank_account_save'; inspectBankSource: 'bank_source_inspect';
+  importBankSource: 'bank_source_import'; bankImports: 'bank_import_list'; bankImport: 'bank_import_detail';
+  previewBankPosting: 'bank_posting_preview'; postBankReceipts: 'bank_receipts_post'; ignoreBankRows: 'bank_rows_ignore';
+  restoreBankRows: 'bank_rows_restore'; closeBankImport: 'bank_import_close';
 }>;
 export const ACCOUNTING_RECEIVABLES_MUTATIONS: readonly ReceivablesMutation[];
 export function accountingReceivablesArguments<K extends ReceivablesMutation>(
@@ -483,6 +523,12 @@ export function accountingCreditDispositionPreview(preview: CreditDispositionPre
 export function accountingCreditDispositionArguments(
   preview: CreditDispositionPreview, identity: {actor: string; requestId: string},
 ): ApplyCreditDispositionInput;
+
+/** Validate the complete original proposal, balance effects, revision and combined review seal. */
+export function accountingBankPostingPreview(preview: BankPostingPreview): BankPostingPreview;
+export function accountingBankPostingArguments(
+  preview: BankPostingPreview, identity: {actor: string; requestId: string},
+): BankReceiptsPostArguments;
 
 /** One caller connection; disconnect drains its reads, closeWorkspace explicitly closes the original owner. */
 export interface AccountingReceivablesClient {
@@ -536,6 +582,21 @@ export interface AccountingReceivablesClient {
     Promise<{bytes: Uint8Array; file: ReceivablesFileMetadata}>;
   previewCreditDisposition(args: CreditDispositionPreviewInput, options?: ReceivablesCallOptions): Promise<CreditDispositionPreview>;
   applyCreditDisposition(args: ApplyCreditDispositionInput, options?: ReceivablesCallOptions): Promise<CreditDispositionMutationResult>;
+  bankAccounts(args?: BankAccountsQuery, options?: ReceivablesCallOptions): Promise<BankAccountsPage>;
+  saveBankAccount(args: BankAccountInput, options?: ReceivablesCallOptions): Promise<BankAccountMutationResult>;
+  inspectBankSource(args: BankSourceInspectionInput, options?: ReceivablesCallOptions): Promise<BankSourceInspection>;
+  importBankSource(args: BankSourceImportInput, options?: ReceivablesCallOptions): Promise<BankImportMutationResult>;
+  bankImports(args?: BankImportsQuery, options?: ReceivablesCallOptions): Promise<BankImportsPage>;
+  bankImport<V extends BankImportView = BankImportView>(
+    args: BankImportDetailArguments & {view?: V}, options?: ReceivablesCallOptions,
+  ): Promise<BankImportDetail<V>>;
+  previewBankPosting(args: BankPostingPreviewArguments, options?: ReceivablesCallOptions): Promise<BankPostingPreview>;
+  postBankReceipts(args: BankReceiptsPostArguments, options?: ReceivablesCallOptions): Promise<BankPostingMutationResult>;
+  ignoreBankRows(args: BankRowsIgnoreArguments, options?: ReceivablesCallOptions): Promise<BankImportMutationResult>;
+  restoreBankRows(args: BankRowsRestoreArguments, options?: ReceivablesCallOptions): Promise<BankImportMutationResult>;
+  closeBankImport(args: BankImportCloseArguments, options?: ReceivablesCallOptions): Promise<BankImportMutationResult>;
+  bankImportFile(args: {bankImportId: string; file: BankFileName}, options?: ReceivablesFileOptions & {maximumBytes?: number}):
+    Promise<{bytes: Uint8Array; file: ReceivablesFileMetadata}>;
   lookupOperation(args: RequestLookupArguments, options?: ReceivablesCallOptions): Promise<RequestLookupResult>;
   /** Every page must retain the original revision, total and accounting date. */
   listAll<K extends ReceivablesPagedOperation>(

@@ -4,6 +4,12 @@ OpenAQ Studies turns a selected station and period into a retained, attributed c
 
 One browser workflow, CLI, typed merchant provider and saved Applications entry compose the existing Frictionless publisher, dataset versions, SF82 releases, SF100 local receiving and original DuckDB customer. Those original engines retain their payment, extraction, import and process ownership.
 
+## Operate the merchant from the study
+
+After the original dataset is reviewed and published, prepare and stage its release on **Dataset & merchant**. The same page now opens the original Merchant Releases console for this project’s fixed store. It exposes the exact source/stage binding and original runtime status, then delegates activation, run, rollback, account receiving and customer delivery to that complete console. The OpenAQ host closes its owned console and merchant when the project stops.
+
+The [complete merchant operating guide](MERCHANT_OPERATIONS.md) covers the browser, CLI and typed tools, original payment/customer handoff, private link ownership, same-request recovery and restart. Package preparation uses a separate project directory, preserving the original publisher source and dataset.
+
 ## Start
 
 Use the complete Stellar Forge source release or a merchant archive containing the OpenAQ contribution. Linux, Node 22.16 or newer, Python 3.10 or newer and the original util-linux flock workspace lock are required. Original native seller dependencies come from the installed merchant archive. An independent customer DuckDB workspace is optional.

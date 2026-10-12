@@ -175,7 +175,16 @@ private project. Reopening needs no provider key and performs no provider
 request. Attribution, source editions, applicable license dates and named
 reviews travel with the files; a review does not grant additional rights.
 
-For paid deployment use actual public SF30 terms and the intended HTTPS origin.
-Original Merchant Releases owns activation, supervision and rollback. A local
-study or import is separate from a Stellar payment and from the independent
-merchant/customer operating-state backups.
+For merchant deployment, prepare and stage the reviewed dataset using actual
+public SF30 terms and the intended HTTPS origin. **Dataset & merchant → Operate
+this study’s merchant** now opens the original Merchant Releases console over
+this project’s fixed release store. Inspect its exact source/stage binding, then
+use the original activation, supervised Run/Stop, rollback, account receiving,
+client export and customer delivery controls. The OpenAQ project owns and drains
+that console lifetime. Browser, CLI, typed tools and Applications use the same
+source-bound workflow.
+
+The [complete merchant operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/MERCHANT_OPERATIONS.md)
+explains the native offer/customer path, exact console ownership and restart.
+A local study, import or 402 challenge is separate from a Stellar payment and
+from the independent merchant/customer operating-state backups.

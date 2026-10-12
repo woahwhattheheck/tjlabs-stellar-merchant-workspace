@@ -174,6 +174,7 @@ export function matchSuggestions(data,account,transaction) {
       return {id:row.id,reference:row.reference,customerId:row.customerId,customerName:row.customer.name,receivedDate:row.receivedDate,
         amount:row.amount,remaining:money(remaining,account.currency),exactAmount:remaining===amount,
         sourceMatch:existingIds.has(row.id)||sourceCovered>0n,sourceCoveredAmount:money(sourceCovered,account.currency),
+        coverageGroups:related.map(group=>({key:group.key,amount:money(group.amount,account.currency),sources:clone(group.links)})),
         referenceMatch:reference.length>0&&candidate.length>0&&(reference.includes(candidate)||candidate.includes(reference))};})
     .filter(row=>minor(row.remaining,account.currency)>0n)
     .sort((a,b)=>Number(b.sourceMatch)-Number(a.sourceMatch)||Number(b.exactAmount)-Number(a.exactAmount)||Number(b.referenceMatch)-Number(a.referenceMatch)||a.receivedDate.localeCompare(b.receivedDate));

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type {BankStatementSourceInput,BankStatementSourceReport,BankStatementRow,BankSourceAccount,SourceLocation,SourceClosing} from './source.mjs';
-import type {BankAccount as ReceiptIntakeAccount} from '../bank-client-types.d.ts';
+import type {BankAccount as ReceiptIntakeAccount,BankReceiptSourceBinding} from '../bank-client-types.d.ts';
 export type Currency={code:string;scale:number};
 export type RequestIdentity={revision:number;actor:string;requestId:string;workspaceId?:string};
 export type RequestOptions={signal?:AbortSignal};
@@ -33,7 +33,7 @@ export interface BankImport {id:string;accountId:string;statementId:string;kind:
   balances:BankStatementSourceReport['statements'][number]['balances'];issues:BankStatementSourceReport['issues'];
   sourceSummary:BankStatementSourceReport['statements'][number]['summary'];excludedRows:BankStatementSourceReport['statements'][number]['excludedRows'];
   createdAt:string;actor:string;requestId:string;files:Record<string,FileDescriptor>;rowCount?:number;pendingCount?:number;
-  rowIds?:string[];pendingRows?:BankStatementRow[]}
+  rowIds?:string[];pendingRows?:BankStatementRow[];supersedesImportId?:string|null}
 export interface BankClose {id:string;schema:string;accountId:string;name:string;note:string;from:string;until:string;
   openingBalance:string;closingBalance:string;currency:Currency;createdAt:string;actor:string;requestId:string;reviewSha256:string;
   transactionIds:string[];matchIds:string[];files:Record<string,FileDescriptor>;
@@ -55,9 +55,10 @@ export interface SourcePreview extends Omit<BankStatementSourceReport,'bytes'|'s
     sample:Array<Omit<BankStatementRow,'original'>>;pendingCount:number}>
 }
 export interface TransactionPage {items:BankTransaction[];total:number;offset:number;limit:number;revision:number}
+export interface ReceiptCoverageChoice {key:string;amount:string;sources:BankReceiptSourceBinding[]}
 export interface MatchSuggestions {
   receipts:Array<{id:string;reference:string;customerId:string;customerName:string;receivedDate:string;amount:string;
-    remaining:string;exactAmount:boolean;sourceMatch:boolean;sourceCoveredAmount:string;referenceMatch:boolean}>;
+    remaining:string;exactAmount:boolean;sourceMatch:boolean;sourceCoveredAmount:string;coverageGroups:ReceiptCoverageChoice[];referenceMatch:boolean}>;
   refunds:Array<{id:string;customerId:string;customerName:string;receiptId:string;currency:Currency;amount:string;
     remaining:string;exactAmount:boolean;reference:string|null;[key:string]:unknown}>
 }

@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import runpy
+import signal
 import subprocess
 import sys
 import time
@@ -34,6 +35,30 @@ def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+def settle_owned_group(process):
+    """Settle only the session created for this programme, including its browser/server children."""
+    sent = False
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+        sent = True
+    except ProcessLookupError:
+        return {"processGroup": process.pid, "signalSent": False}
+    deadline = time.monotonic() + 3
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(process.pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.1)
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    if process.poll() is None:
+        process.wait()
+    return {"processGroup": process.pid, "signalSent": sent}
+
 def run_program(argv, cwd, logs, label, phase_file=None):
     logs.mkdir(parents=True, exist_ok=True)
     stdout = logs / (label + ".stdout")
@@ -41,7 +66,7 @@ def run_program(argv, cwd, logs, label, phase_file=None):
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUNBUFFERED="1")
     with stdout.open("wb") as out, stderr.open("wb") as err:
         started_at = time.time()
-        process = subprocess.Popen(argv, cwd=cwd, env=environment, stdout=out, stderr=err)
+        process = subprocess.Popen(argv, cwd=cwd, env=environment, stdout=out, stderr=err, start_new_session=True)
         emit({"state": "PROGRAM_STARTED", "operationId": OPERATION, "program": label, "pid": process.pid,
               "directory": str(cwd), "stdout": str(stdout), "stderr": str(stderr)})
         seen = set()
@@ -74,11 +99,17 @@ def run_program(argv, cwd, logs, label, phase_file=None):
                                   "workspaceId": current.get("workspaceId"), "complete": current.get("complete", False)})
                 except (OSError, ValueError):
                     pass
-        while process.poll() is None:
+        settled = None
+        try:
+            while process.poll() is None:
+                observe_phases()
+                time.sleep(1)
             observe_phases()
-            time.sleep(1)
-        observe_phases()
-        code = process.returncode
+            code = process.returncode
+        finally:
+            if process.poll() is None or process.returncode:
+                settled = settle_owned_group(process)
+                emit({"state": "OWNED_PROGRAM_GROUP_SETTLED", "program": label, **settled})
     record = {"program": label, "returncode": code, "stdout": str(stdout), "stderr": str(stderr),
               "stdoutBytes": stdout.stat().st_size, "stderrBytes": stderr.stat().st_size}
     emit({"state": "PROGRAM_FINISHED", **record})
@@ -133,7 +164,103 @@ def run(config):
     result = {"operationId": OPERATION, "complete": False, "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
               "root": str(root), "sourceCommit": config["source_commit"], "sourceSha256": config["source_sha256"],
               "sourceBytes": config["source_bytes"], "commands": []}
+    prior_result_path = result_file if result_file.is_file() else original_root / "operations/source-editions/original-native-result.json"
+    prior_result = read_json(prior_result_path) if prior_result_path.is_file() else {}
     customer_package = None
+    def preserve(phase):
+        if result.get("preservationNeedsReconciliation"):
+            emit({"state": "NATIVE_SAVE_RECONCILIATION_REQUIRED", "phase": phase,
+                  "root": str(root), "preservation": result.get("preservation")})
+            return False
+        result["preservationPhase"] = phase
+        result["updatedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        write_json(result_file, result)
+        upload_stdout = logs / ("delivery-upload-" + phase + ".stdout")
+        upload_stderr = logs / ("delivery-upload-" + phase + ".stderr")
+        attempted = False
+        try:
+            pairs = [(p, "Datactivist_Original/original-operation/" + p.relative_to(original_root).as_posix())
+                     for p in original_root.rglob("*") if p.is_file()]
+            pairs += [(p, "Datactivist_Original/native-logs/" + p.relative_to(logs).as_posix())
+                      for p in logs.rglob("*") if p.is_file()]
+            pairs += [(p, "Datactivist_Original/controller/" + p.relative_to(controller).as_posix())
+                      for p in controller.rglob("*") if p.is_file()]
+            for path in (source_file, root / "original-operating-config.json", root / "customer-receiving-config.json", result_file):
+                if path.is_file():
+                    pairs.append((path, "Datactivist_Original/" + path.name))
+            if Path(config["capture_zip"]).is_file():
+                pairs.append((Path(config["capture_zip"]), "Datactivist_Original/Original_Public_Source.zip"))
+            if receiving_root.is_dir() and not result["complete"]:
+                pairs += [(p, "Datactivist_Original/customer-receiving/" + p.relative_to(receiving_root).as_posix())
+                          for p in receiving_root.rglob("*") if p.is_file()]
+            original_package = zip_paths(root / "Datactivist_Original_Operating_Workspace.zip", pairs)
+            result["originalOperatingPackage"] = original_package
+            write_json(result_file, result)
+            uploads = []
+            if customer_package:
+                uploads.append({"local_path": customer_package["path"], "purpose": "create_library_file", "library_artifact_type": "other"})
+            uploads += [{"local_path": original_package["path"], "purpose": "create_library_file", "library_artifact_type": "other"},
+                        {"local_path": str(result_file), "purpose": "create_library_file", "library_artifact_type": "other"}]
+            replacements = config.get("library_replacements", {})
+            for item in uploads:
+                retained = replacements.get(Path(item["local_path"]).name)
+                if retained:
+                    item.pop("library_artifact_type", None)
+                    item.update(purpose="replace_library_file",
+                                library_file_id=retained["library_file_id"],
+                                expected_current_version=retained["expected_current_version"],
+                                version_reason="Continue the original operating workspace and complete its customer handover")
+            request = {"uploads": uploads}
+            (root / "upload-state").mkdir(mode=0o700, exist_ok=True)
+            helper_entry = ("import runpy,sys,tempfile; "
+                            "tempfile.tempdir=sys.argv[1]; "
+                            "helper=sys.argv[2]; sys.argv=[helper]; "
+                            "runpy.run_path(helper,run_name='__main__')")
+            attempted = True
+            saved = subprocess.run([sys.executable, "-B", "-c", helper_entry,
+                                    str(root / "upload-state"), str(helpers / "library_upload.py")],
+                                   input=json.dumps(request), capture_output=True, text=True, cwd=root,
+                                   env=dict(os.environ, TMPDIR=str(root / "upload-state"), PYTHONDONTWRITEBYTECODE="1"))
+            (upload_stdout).write_text(saved.stdout, encoding="utf-8")
+            (upload_stderr).write_text(saved.stderr, encoding="utf-8")
+            try:
+                upload_result = json.loads(saved.stdout)
+                returned_identities = identities(upload_result)
+                upload_keys = list(upload_result) if isinstance(upload_result, dict) else []
+            except ValueError:
+                upload_result, returned_identities, upload_keys = None, [], []
+            result["preservation"] = {"returncode": saved.returncode, "identities": returned_identities,
+                                       "resultKeys": upload_keys, "stdout": str(upload_stdout),
+                                       "stderr": str(upload_stderr)}
+            if saved.returncode or not returned_identities:
+                result["preservation"]["error"] = re.sub(r"https?://\S+", "[private transfer URL]",
+                    saved.stderr[-3000:] or saved.stdout[-3000:])
+            if saved.returncode == 0 and returned_identities:
+                for retained in replacements.values():
+                    versions = [row.get("current_version_number", row.get("version_number"))
+                                for row in returned_identities
+                                if row.get("library_file_id") == retained["library_file_id"]]
+                    versions = [value for value in versions if isinstance(value, int) and not isinstance(value, bool)]
+                    if not versions:
+                        raise RuntimeError("The completed save did not return its current replacement version")
+                    retained["expected_current_version"] = max(versions)
+                result["preservationNeedsReconciliation"] = False
+            else:
+                result["preservationNeedsReconciliation"] = True
+            result.setdefault("preservationHistory", []).append({"phase": phase, **result["preservation"]})
+            write_json(result_file, result)
+            emit({"state": "NATIVE_DELIVERY_PRESERVED" if saved.returncode == 0 and returned_identities else "NATIVE_DELIVERY_SAVE_RESULT",
+                  "operationId": OPERATION, "complete": result["complete"], "root": str(root),
+                  "originalOperatingPackage": original_package, "customerPackage": customer_package,
+                  "preservation": result["preservation"]})
+        except BaseException as error:
+            result["preservation"] = {"error": str(error), "type": type(error).__name__}
+            result["preservationNeedsReconciliation"] = attempted
+            write_json(result_file, result)
+            emit({"state": "NATIVE_DELIVERY_SAVE_ERROR", "operationId": OPERATION,
+                  "type": type(error).__name__, "message": str(error), "root": str(root)})
+        return not result.get("preservationNeedsReconciliation", True)
+
     try:
         raw = source_file.read_bytes() if source_file.is_file() and source_file.stat().st_size == config["source_bytes"] and digest(source_file) == config["source_sha256"] else urllib.request.urlopen(config["source_url"], timeout=60).read()
         if len(raw) != config["source_bytes"] or hashlib.sha256(raw).hexdigest() != config["source_sha256"]:
@@ -165,6 +292,7 @@ def run(config):
             path.write_bytes(content)
         emit({"state": "APPLICATION_HYDRATED", "files": len(files), "bytes": len(raw),
               "sourceSha256": config["source_sha256"], "application": str(application)})
+        del raw, packet, files, content
         node = Path(config["node"])
         playwright = Path(config["playwright_module"])
         browser = Path(config["browser_executable"])
@@ -209,9 +337,33 @@ def run(config):
         original_config_file = root / "original-operating-config.json"
         write_json(original_config_file, original_config)
         original_result_file = original_root / "operations/operation-result.json"
-        result["commands"].append(run_program([str(node), str(application / SDK / "examples/operate.mjs"),
-                                                str(original_config_file)], root, logs,
-                                               "original-publisher", original_result_file))
+        publisher_reused = False
+        retained_original = read_json(original_result_file) if original_result_file.is_file() else {}
+        retained_stage = next((stage for stage in retained_original.get("stages", [])
+                               if stage.get("name") == "complete_archive_and_independent_receiving"), None)
+        retained_archive = original_root / "operations/publisher-workspace.datawork"
+        original_identity = read_json(original_root / "workspace/customer/customer-result.json")
+        if (prior_result.get("sourceSha256") == config["source_sha256"]
+                and prior_result.get("original")
+                and retained_original.get("operationId") == OPERATION
+                and retained_original.get("complete") is True
+                and retained_original.get("publicationId") == original_identity["publicationId"]
+                and retained_original.get("snapshot") == original_identity["snapshot"]
+                and prior_result["original"].get("publicationId") == original_identity["publicationId"]
+                and prior_result["original"].get("snapshot") == original_identity["snapshot"]
+                and retained_stage and retained_archive.is_file()
+                and digest(retained_archive) == retained_stage.get("archiveSha256")
+                and prior_result["original"].get("archiveSha256") == retained_stage["archiveSha256"]):
+            publisher_reused = True
+            record = {"program": "original-publisher", "reused": True,
+                      "result": str(original_result_file), "resultSha256": digest(original_result_file),
+                      "archiveSha256": retained_stage["archiveSha256"]}
+            result["commands"].append(record)
+            emit({"state": "COMPLETED_ORIGINAL_PUBLISHER_REUSED", **record})
+        else:
+            result["commands"].append(run_program([str(node), str(application / SDK / "examples/operate.mjs"),
+                                                    str(original_config_file)], root, logs,
+                                                   "original-publisher", original_result_file))
         original = read_json(original_result_file)
         if original.get("operationId") != OPERATION or original.get("complete") is not True:
             raise RuntimeError("Original operating programme did not complete its selected case")
@@ -221,11 +373,13 @@ def run(config):
                               if stage["name"] == "complete_archive_and_independent_receiving")
         if archived_stage["archiveSha256"] != original_archive_sha:
             raise ValueError("Original complete archive differs from its actual programme result")
-        result["original"] = {"workspaceId": original.get("workspaceId"), "publicationId": original["publicationId"],
+        result["original"] = {"workspaceId": original_identity["workspaceId"], "publicationId": original["publicationId"],
                               "snapshot": original["snapshot"], "result": str(original_result_file),
                               "archive": str(archive_path), "archiveSha256": original_archive_sha,
                               "stages": [stage["name"] for stage in original["stages"]]}
         write_json(result_file, result)
+        if not publisher_reused:
+            preserve("publisher-complete")
         receiving_config = {"root": str(receiving_root), "sourceFile": str(source_file),
                             "sourceSha256": config["source_sha256"], "archiveFile": str(archive_path),
                             "archiveSha256": original_archive_sha, "originalResult": str(original_result_file),
@@ -256,67 +410,7 @@ def run(config):
     finally:
         result["completedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         write_json(result_file, result)
-        try:
-            pairs = [(p, "Datactivist_Original/original-operation/" + p.relative_to(original_root).as_posix())
-                     for p in original_root.rglob("*") if p.is_file()]
-            pairs += [(p, "Datactivist_Original/native-logs/" + p.relative_to(logs).as_posix())
-                      for p in logs.rglob("*") if p.is_file()]
-            pairs += [(p, "Datactivist_Original/controller/" + p.relative_to(controller).as_posix())
-                      for p in controller.rglob("*") if p.is_file()]
-            for path in (source_file, root / "original-operating-config.json", root / "customer-receiving-config.json", result_file):
-                if path.is_file():
-                    pairs.append((path, "Datactivist_Original/" + path.name))
-            if Path(config["capture_zip"]).is_file():
-                pairs.append((Path(config["capture_zip"]), "Datactivist_Original/Original_Public_Source.zip"))
-            if receiving_root.is_dir() and not result["complete"]:
-                pairs += [(p, "Datactivist_Original/customer-receiving/" + p.relative_to(receiving_root).as_posix())
-                          for p in receiving_root.rglob("*") if p.is_file()]
-            original_package = zip_paths(root / "Datactivist_Original_Operating_Workspace.zip", pairs)
-            result["originalOperatingPackage"] = original_package
-            write_json(result_file, result)
-            uploads = []
-            if customer_package:
-                uploads.append({"local_path": customer_package["path"], "purpose": "create_library_file", "library_artifact_type": "other"})
-            uploads += [{"local_path": original_package["path"], "purpose": "create_library_file", "library_artifact_type": "other"},
-                        {"local_path": str(result_file), "purpose": "create_library_file", "library_artifact_type": "other"}]
-            replacements = config.get("library_replacements", {})
-            for item in uploads:
-                retained = replacements.get(Path(item["local_path"]).name)
-                if retained:
-                    item.pop("library_artifact_type", None)
-                    item.update(purpose="replace_library_file",
-                                library_file_id=retained["library_file_id"],
-                                expected_current_version=retained["expected_current_version"],
-                                version_reason="Continue the original operating workspace and complete its customer handover")
-            request = {"uploads": uploads}
-            (root / "upload-state").mkdir(mode=0o700, exist_ok=True)
-            saved = subprocess.run([sys.executable, "-B", str(helpers / "library_upload.py")],
-                                   input=json.dumps(request), capture_output=True, text=True, cwd=root,
-                                   env=dict(os.environ, TMPDIR=str(root / "upload-state"), PYTHONDONTWRITEBYTECODE="1"))
-            (logs / "delivery-upload.stdout").write_text(saved.stdout, encoding="utf-8")
-            (logs / "delivery-upload.stderr").write_text(saved.stderr, encoding="utf-8")
-            try:
-                upload_result = json.loads(saved.stdout)
-                returned_identities = identities(upload_result)
-                upload_keys = list(upload_result) if isinstance(upload_result, dict) else []
-            except ValueError:
-                upload_result, returned_identities, upload_keys = None, [], []
-            result["preservation"] = {"returncode": saved.returncode, "identities": returned_identities,
-                                       "resultKeys": upload_keys, "stdout": str(logs / "delivery-upload.stdout"),
-                                       "stderr": str(logs / "delivery-upload.stderr")}
-            if saved.returncode or not returned_identities:
-                result["preservation"]["error"] = re.sub(r"https?://\S+", "[private transfer URL]",
-                    saved.stderr[-3000:] or saved.stdout[-3000:])
-            write_json(result_file, result)
-            emit({"state": "NATIVE_DELIVERY_PRESERVED" if saved.returncode == 0 and returned_identities else "NATIVE_DELIVERY_SAVE_RESULT",
-                  "operationId": OPERATION, "complete": result["complete"], "root": str(root),
-                  "originalOperatingPackage": original_package, "customerPackage": customer_package,
-                  "preservation": result["preservation"]})
-        except BaseException as error:
-            result["preservation"] = {"error": str(error), "type": type(error).__name__}
-            write_json(result_file, result)
-            emit({"state": "NATIVE_DELIVERY_SAVE_ERROR", "operationId": OPERATION,
-                  "type": type(error).__name__, "message": str(error), "root": str(root)})
+        preserve("customer-complete" if result["complete"] else "customer-progress")
     emit({"state": "DATACTIVIST_ORIGINAL_AND_CUSTOMER_COMPLETE" if result["complete"] else "DATACTIVIST_ORIGINAL_CONTINUATION_RETAINED",
           "operationId": OPERATION, "root": str(root), "result": str(result_file),
           "sourceSha256": config["source_sha256"], "complete": result["complete"],

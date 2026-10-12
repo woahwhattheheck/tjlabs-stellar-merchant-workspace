@@ -11,6 +11,8 @@ import { jsonBytes, hash } from './source.mjs';
 import { pageFredBriefing } from './briefing/model.mjs';
 import { inspectFredReleaseCapture } from './releases/model.mjs';
 import { readFredWorkspaceLaunch, FRED_WORKSPACE_STARTUP } from './launch.mjs';
+import { QCEW_WORKSPACE_REQUEST_BYTES, QCEW_WORKSPACE_ACTIONS,
+  readQcewWorkspace, runQcewWorkspaceAction } from './qcew/workspace.mjs';
 import { readFredProject, fredProjectView, getFredCapture, configureFredProject, importFredCapture, acquireFredCapture,
   selectFredCapture, combineFredTables, reviewFredCapture, compareFredCaptures, publishFredReview, exportFredProject,
   selectFredPublication, abandonFredOperation, previewFredBriefing, getFredBriefing, downloadFredBriefing,
@@ -77,6 +79,8 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/style.css', ['style.css', 'text/css; charset=utf-8']], ['/briefing.js', ['briefing.js', 'text/javascript; charset=utf-8']],
     ['/recurring.js', ['recurring.js', 'text/javascript; charset=utf-8']],
     ['/releases.js', ['releases.js', 'text/javascript; charset=utf-8']],
+    ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
+    ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
   const assets = new Map();
   for (const [route, [file, type]] of assetMap) assets.set(route, [await readFile(new URL('./ui/' + file, import.meta.url)), type]);
@@ -89,6 +93,8 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     editionId: merchant.editionId, snapshot: merchant.snapshot, resource: merchant.resource } : null;
   const run = async request => {
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
+    if (QCEW_WORKSPACE_ACTIONS.includes(request.action))
+      return runQcewWorkspaceAction({ directory, projectId: binding.projectId, request, environment });
     switch (request.action) {
       case 'configure': return configureFredProject({ ...common, selection: request.selection });
       case 'capture': return acquireFredCapture({ ...common, environment, signal: abort.signal });
@@ -164,6 +170,10 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (req.method === 'GET' && url.pathname === '/api/state')
         return send(res, 200, { project: await fredProjectView(directory), merchant: runtimeView(),
           busy: pending?.action ?? null, buyerConfigured: Boolean(buyer) });
+      if (req.method === 'GET' && url.pathname.startsWith('/api/qcew/')) {
+        const result = await readQcewWorkspace({ directory, projectId: binding.projectId, url, environment });
+        return send(res, 200, result.value, result.contentType, result.filename);
+      }
       if (req.method === 'GET' && url.pathname === '/api/observations') {
         const capture = await getFredCapture(directory, url.searchParams.get('capture')), model = inspectCapture(capture);
         const series = url.searchParams.get('series') ?? '', offset = pageNumber(url.searchParams.get('offset'));
@@ -282,9 +292,11 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const result = await exportFredPurchase({ directory: selected, buyer, intentId: url.searchParams.get('intent') });
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
-      if (req.method === 'POST' && url.pathname === '/api/action') {
-        const request = await body(req);
+      if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
+        const countyAction = url.pathname === '/api/qcew/action';
+        const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : undefined);
         need(request && typeof request === 'object' && !Array.isArray(request) && typeof request.action === 'string', 'Select a workspace action.');
+        need(!countyAction || QCEW_WORKSPACE_ACTIONS.includes(request.action), 'Choose a county report action.');
         need(!pending, 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
         const task = run(request); pending = { action: request.action, task };
         try { return send(res, 200, await task); } finally { pending = null; }

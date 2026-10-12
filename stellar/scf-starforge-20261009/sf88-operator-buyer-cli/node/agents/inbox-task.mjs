@@ -41,8 +41,82 @@ function taskInput(value) {
     revision: text(value.revision, 'REVISION', 128), title: text(value.title, 'TITLE', 512),
     purpose: text(value.purpose, 'PURPOSE', 4096), service: text(value.service, 'SERVICE', 512) };
 }
+
+function rpcSelection(value) {
+  shape(value, ['commerceDirectory','readId','responseSha256'], 'TASK_RPC_RESULT_SELECTION_INVALID');
+  need(typeof value.readId === 'string' &&
+    /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value.readId) &&
+    HEX.test(value.responseSha256), 'TASK_RPC_RESULT_SELECTION_INVALID');
+  return { commerceDirectory:absolute(value.commerceDirectory), readId:value.readId,
+    responseSha256:value.responseSha256 };
+}
+function recoveryDocument(value) {
+  need(object(value) && typeof value.text === 'string' &&
+    Number.isSafeInteger(value.bytes) && value.bytes > 0 && value.bytes <= 131072 &&
+    HEX.test(value.sha256), 'TASK_RPC_RESULT_DOCUMENT_INVALID');
+  const bytes = Buffer.from(value.text);
+  need(bytes.length === value.bytes && digest(bytes) === value.sha256, 'TASK_RPC_RESULT_DOCUMENT_CHANGED');
+  try { return JSON.parse(value.text); } catch { throw new BuyerError('TASK_RPC_RESULT_DOCUMENT_INVALID'); }
+}
+function recoveryIdentity(entry, job) {
+  const selected = rpcSelection(entry.selection.rpcResult), recovered = job.rpcRecovery;
+  need(recovered?.schema === 'stellar-forge.commerce-rpc-saved-results.v1' &&
+    recovered.state === 'SETTLED_RESULT_RECOVERED' && recovered.providerReads === 0 &&
+    recovered.commerceDirectory === selected.commerceDirectory &&
+    recovered.readId === selected.readId && HEX.test(recovered.sessionSha256) &&
+    HEX.test(recovered.sellerConfigSha256) && HEX.test(recovered.planSha256) &&
+    recovered.readDocument?.sha256 === recovered.readSha256 &&
+    recovered.completedDocument?.sha256 === recovered.completedSha256,
+    'TASK_RPC_RESULT_BINDING_CHANGED');
+  const read = recoveryDocument(recovered.readDocument);
+  const complete = recoveryDocument(recovered.completedDocument);
+  const { publishedAt, publication, ...captured } = complete;
+  need(read.schema === 'stellar-forge.commerce-rpc-response-recovery.v1' &&
+    read.source === 'NEW_ORIGINAL_PROVIDER_READ_FOR_EXISTING_SETTLED_OPERATION' &&
+    sha(captured) === sha(read) && ['ORIGINAL_PRIVATE_RESPONSE_WRITER','ORIGINAL_LOCAL_BYTES_RECOVERED'].includes(publication) &&
+    Number.isFinite(Date.parse(publishedAt)) && Number.isFinite(Date.parse(read.recoveryReadStartedAt)) &&
+    Number.isFinite(Date.parse(read.responseObservedAt)) &&
+    Date.parse(publishedAt) >= Date.parse(read.responseObservedAt) &&
+    Date.parse(read.responseObservedAt) >= Date.parse(read.recoveryReadStartedAt),
+    'TASK_RPC_RESULT_CAPTURE_CHANGED');
+  const request = read.request, response = read.response, file = recovered.responseFile;
+  need(object(request) && object(response) && file?.status === 'SAVED' &&
+    request.intentId === job.operation.intentId && request.attemptId === job.attempt?.id &&
+    request.originalAttemptStartedAt === job.attempt.startedAt &&
+    Date.parse(read.recoveryReadStartedAt) >= Date.parse(job.attempt.startedAt) &&
+    request.configSha256 === job.configSha256 && request.bodySha256 === job.bodySha256 &&
+    request.bodyBytes === job.bodyBytes && request.method === job.operation.method &&
+    request.url === job.operation.url && request.routeId === job.merchant?.routeId &&
+    request.planSha256 === recovered.planSha256 && sha(request.settlement) === sha(recovered.settlement) &&
+    response.path === job.responseDestination && Number.isSafeInteger(response.bytes) && response.bytes > 0 &&
+    response.sha256 === selected.responseSha256 && response.contentType === 'application/json' &&
+    ['path','bytes','sha256','contentType'].every(key => response[key] === file[key]) &&
+    file.source === 'SETTLED_RPC_RECOVERY_READ' && file.readId === selected.readId &&
+    file.readSha256 === recovered.readSha256 && file.completedSha256 === recovered.completedSha256 &&
+    file.originalAttemptStartedAt === request.originalAttemptStartedAt &&
+    file.recoveryReadStartedAt === read.recoveryReadStartedAt &&
+    file.responseObservedAt === read.responseObservedAt && file.publishedAt === publishedAt &&
+    file.transaction === request.settlement.transaction && file.httpStatus === 200 &&
+    file.httpStatusSource === 'ORIGINAL_RPC_RECOVERY_HTTP_200_CONTRACT',
+    'TASK_RPC_RESULT_BINDING_CHANGED');
+  return { source:'SETTLED_RPC_RECOVERY_READ', commerceDirectory:recovered.commerceDirectory,
+    inboxDirectory:absolute(recovered.inboxDirectory), sessionSha256:recovered.sessionSha256,
+    sellerConfigSha256:recovered.sellerConfigSha256, planSha256:recovered.planSha256,
+    readId:recovered.readId, readSha256:recovered.readSha256,
+    completedSha256:recovered.completedSha256, responseSha256:response.sha256 };
+}
+function selectedDelivery(entry, job) {
+  boundJob(entry, job);
+  if (entry.selection.rpcResult) {
+    need(sha(recoveryIdentity(entry, job)) === entry.binding.rpcResultSha256,
+      'TASK_RPC_RESULT_EDITION_CHANGED');
+    return job.rpcRecovery.responseFile;
+  }
+  return job.outcome?.responseFile ?? null;
+}
+
 function selectionInput(value) {
-  shape(value, ['intentId', 'role', 'sourceEdition', 'facilitator', 'decisionRef', 'reservationRef'],
+  shape(value, ['intentId', 'role', 'sourceEdition', 'facilitator', 'decisionRef', 'reservationRef', 'rpcResult'],
     'TASK_SELECTION_FIELDS_INVALID');
   let facilitator = text(value.facilitator, 'FACILITATOR', 2048, true);
   if (facilitator !== null) {
@@ -55,7 +129,8 @@ function selectionInput(value) {
   return { intentId: intent(value.intentId), role: text(value.role, 'ROLE', 256),
     sourceEdition: text(value.sourceEdition, 'SOURCE_EDITION', 1024, true), facilitator,
     decisionRef: text(value.decisionRef, 'DECISION_REF', 1024, true),
-    reservationRef: text(value.reservationRef, 'RESERVATION_REF', 1024, true) };
+    reservationRef: text(value.reservationRef, 'RESERVATION_REF', 1024, true),
+    ...(value.rpcResult === undefined ? {} : {rpcResult:rpcSelection(value.rpcResult)}) };
 }
 function predecessorInput(value) {
   if (value === null || value === undefined) return null;
@@ -74,7 +149,10 @@ function jobBinding(job) {
     bodySha256, ticketSha256, operationSha256: sha(job.operation) };
 }
 function boundJob(entry, job) {
-  need(sha(jobBinding(job)) === sha(entry.binding), 'TASK_ORIGINAL_JOB_CHANGED');
+  const { rpcResultSha256, ...requestBinding } = entry.binding;
+  need(sha(jobBinding(job)) === sha(requestBinding), 'TASK_ORIGINAL_JOB_CHANGED');
+  if (rpcResultSha256 !== undefined && job.rpcRecovery !== undefined)
+    need(sha(recoveryIdentity(entry, job)) === rpcResultSha256, 'TASK_RPC_RESULT_EDITION_CHANGED');
   return job;
 }
 async function selectedJobs(inbox, ids, signal) {
@@ -108,6 +186,9 @@ function validateManifest(value) {
       (entry.binding.bodySha256 === null || HEX.test(entry.binding.bodySha256)) &&
       (entry.binding.ticketSha256 === null || HEX.test(entry.binding.ticketSha256)) &&
       entry.binding.operationSha256 === sha(entry.request), 'TASK_ENTRY_INVALID');
+    need((entry.selection.rpcResult === undefined && entry.binding.rpcResultSha256 === undefined) ||
+      (entry.selection.rpcResult !== undefined && HEX.test(entry.binding.rpcResultSha256)),
+      'TASK_RPC_RESULT_BINDING_INVALID');
     need(!ids.has(entry.selection.intentId), 'TASK_DUPLICATE_INTENT');
     ids.add(entry.selection.intentId);
   }
@@ -150,7 +231,7 @@ function validatePlan(value) {
       Number.isSafeInteger(file.bytes) && file.bytes >= 0 && HEX.test(file.sha256) &&
       (file.contentType === null || typeof file.contentType === 'string'), 'TASK_PACKET_FILE_INVALID');
     boundJob(entry, value.jobs[index]);
-    const saved = value.jobs[index].outcome?.responseFile;
+    const saved = selectedDelivery(entry, value.jobs[index]);
     need(saved?.status === 'SAVED' && saved.bytes === file.bytes && saved.sha256 === file.sha256 &&
       (saved.contentType ?? null) === file.contentType,
       'TASK_RECEIVING_SOURCE_CHANGED');
@@ -164,7 +245,17 @@ function nativeOutcome(job) {
     httpStatus: native?.httpStatus ?? null, nativeStatus: native?.status ?? null,
     nativeError: native?.error ?? null, lastError: job.lastError ?? null,
     evidenceError: native?.evidenceError ?? null,
-    responseCleanupError: native?.responseCleanupError ?? null };
+    responseCleanupError: native?.responseCleanupError ?? null,
+    ...(job.rpcRecovery?.responseFile ? { recoveredResult:{
+      readId:job.rpcRecovery.readId, source:job.rpcRecovery.responseFile.source,
+      httpStatus:job.rpcRecovery.responseFile.httpStatus,
+      httpStatusSource:job.rpcRecovery.responseFile.httpStatusSource,
+      recoveryReadStartedAt:job.rpcRecovery.responseFile.recoveryReadStartedAt,
+      responseObservedAt:job.rpcRecovery.responseFile.responseObservedAt,
+      publishedAt:job.rpcRecovery.responseFile.publishedAt,
+      transaction:job.rpcRecovery.responseFile.transaction,
+      bytes:job.rpcRecovery.responseFile.bytes, sha256:job.rpcRecovery.responseFile.sha256,
+    } } : {}) };
 }
 async function receiveIntent(task, directory) {
   const state = await privateDirectory(join(task.directory, 'receivings'));
@@ -213,6 +304,12 @@ function report(plan, { legacy = false } = {}) {
       escapeHtml(outcome.state) + '<br>HTTP ' + escapeHtml(outcome.httpStatus ?? 'not recorded') +
       '<br>Native status: ' + escapeHtml(outcome.nativeStatus ?? 'not recorded') +
       (Object.keys(errors).length ? '<pre>' + escapeHtml(JSON.stringify(errors, null, 2)) + '</pre>' : '') +
+      (outcome.recoveredResult ? '<p><strong>Recovered RPC result</strong><br>HTTP ' +
+        escapeHtml(outcome.recoveredResult.httpStatus) + ' accepted by original recovery<br>Read ' +
+        escapeHtml(outcome.recoveredResult.readId) + '<br>Started ' +
+        escapeHtml(outcome.recoveredResult.recoveryReadStartedAt) + '<br>Observed ' +
+        escapeHtml(outcome.recoveredResult.responseObservedAt) + '<br>Settled transaction ' +
+        escapeHtml(outcome.recoveredResult.transaction) + '</p>' : '') +
       '</td></tr>';
   }).join('');
   const details = plan.jobs.map((job, index) => '<details><summary>' +
@@ -279,11 +376,24 @@ export async function previewInboxTask({ inbox, task, selections, predecessor, s
   const ids = selections.map(item => item.intentId);
   need(new Set(ids).size === ids.length, 'TASK_DUPLICATE_INTENT');
   const { jobs, process } = await selectedJobs(inbox, ids, signal);
-  const manifest = { schema: TASK, task, inboxDirectory: inbox.directory,
-    predecessor: predecessorInput(predecessor), entries: selections.map(selection => {
-      const job = jobs.get(selection.intentId);
-      return { selection, binding: jobBinding(job), request: structuredClone(job.operation) };
-    }) };
+  const entries = [];
+  for (const selection of selections) {
+    const job = jobs.get(selection.intentId);
+    const entry = { selection, binding:jobBinding(job), request:structuredClone(job.operation) };
+    if (selection.rpcResult) {
+      const response = await inbox.rpcResponse(selection.intentId, {
+        commerceDirectory:selection.rpcResult.commerceDirectory, readId:selection.rpcResult.readId,
+        expectedResponseSha256:selection.rpcResult.responseSha256, signal });
+      need(response, 'TASK_RPC_RESULT_NOT_SAVED');
+      boundJob(entry, response.job);
+      const original = recoveryIdentity(entry, response.job);
+      need(original.inboxDirectory === inbox.directory, 'TASK_RPC_RESULT_INBOX_CHANGED');
+      entry.binding.rpcResultSha256 = sha(original);
+    }
+    entries.push(entry);
+  }
+  const manifest = { schema:TASK, task, inboxDirectory:inbox.directory,
+    predecessor:predecessorInput(predecessor), entries };
   validateManifest(manifest);
   need(jsonBytes(manifest).length <= 32 * 1024 * 1024, 'TASK_MANIFEST_LIMIT');
   return freeze({ previewSha256: sha(manifest), manifest, process });
@@ -345,10 +455,16 @@ export class InboxTask {
   async inspect({ signal } = {}) {
     const ids = this.manifest.entries.map(item => item.selection.intentId);
     const { jobs, process } = await selectedJobs(this.inbox, ids, signal);
-    const entries = this.manifest.entries.map(entry => {
-      const job = boundJob(entry, jobs.get(entry.selection.intentId));
-      return { selection: entry.selection, job, delivery: job.outcome?.responseFile ?? null };
-    });
+    const entries = [];
+    for (const entry of this.manifest.entries) {
+      let job = boundJob(entry, jobs.get(entry.selection.intentId));
+      if (entry.selection.rpcResult) {
+        const response = await this.response(entry.selection.intentId, { signal });
+        need(response, 'TASK_RPC_RESULT_NOT_SAVED');
+        job = response.job;
+      }
+      entries.push({ selection:entry.selection, job, delivery:selectedDelivery(entry, job) });
+    }
     return { schema: 'stellar-forge.inbox-task-inspection.v1', taskSha256: this.taskSha256,
       task: this.manifest.task, entries, process,
       savedResults: entries.filter(entry => entry.delivery?.status === 'SAVED').length,
@@ -386,8 +502,16 @@ export class InboxTask {
   }
   async response(intentId, { signal } = {}) {
     const entry = this._entry(intentId);
-    const response = await this.inbox.response(intentId, { signal });
-    if (response) boundJob(entry, response.job);
+    const selected = entry.selection.rpcResult;
+    const response = selected ? await this.inbox.rpcResponse(intentId, {
+      commerceDirectory:selected.commerceDirectory, readId:selected.readId,
+      expectedResponseSha256:selected.responseSha256, signal,
+    }) : await this.inbox.response(intentId, { signal });
+    if (selected) need(response, 'TASK_RPC_RESULT_NOT_SAVED');
+    if (response) {
+      boundJob(entry, response.job);
+      if (selected) selectedDelivery(entry, response.job);
+    }
     else boundJob(entry, (await this.inbox.show(intentId, { signal })).native);
     return response;
   }
@@ -523,6 +647,7 @@ export function compareInboxTasks(previous, next) {
         sourceChanged: (before?.selection.sourceEdition ?? null) !== entry.selection.sourceEdition,
         facilitatorChanged: (before?.selection.facilitator ?? null) !== entry.selection.facilitator,
         requestChanged: before?.binding.operationSha256 !== entry.binding.operationSha256,
+        resultChanged: (before?.binding.rpcResultSha256 ?? null) !== (entry.binding.rpcResultSha256 ?? null),
         previous: before ?? null, next: entry };
     }), removedRoles: [...old.keys()].filter(role => !b.manifest.entries.some(entry => entry.selection.role === role)) };
 }

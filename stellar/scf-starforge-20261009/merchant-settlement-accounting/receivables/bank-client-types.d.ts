@@ -116,7 +116,7 @@ export interface BankSourceRow {
   originalEntryMonthDay: string | null; sourcePageSha256: string | null; originalSourceOccurrences: unknown[];
   replacesTransactionKeys: string[]; transactionKey: string | null;
   /** Stable identity of this exact original statement occurrence. */
-  sourceOccurrenceKey: string;
+  sourceOccurrenceKey: string | null;
   sourceOrigin?: 'BANK_STATEMENT_RECONCILIATION' | string;
   statementReconciliation?: BankStatementReconciliation | null;
   transactionIdentity: 'BANK_TRANSACTION_ID' | 'STATEMENT_POSITION' | 'NONE'; economicKey: string;
@@ -125,6 +125,8 @@ export interface BankSourceRow {
 export interface BankSourceMatch {
   bankImportId: string; sourceName: string; rowId: string; match: 'TRANSACTION_ID' | 'SAME_PAYMENT_FIELDS' | 'SOURCE_LINE';
   amount: Money; bookedDate: DateOnly; kind: BankDirection; sameFacts: boolean; status: BankRowStatus; receiptIds: string[];
+  replacesTransactionKeys: string[]; sourceIdentity: Record<string, unknown> | null;
+  statementAccountId?: string | null; statementTransactionId?: string | null;
   sourceOrigin?: 'BANK_STATEMENT_RECONCILIATION' | string;
   statementReconciliation?: BankStatementReconciliation | null;
   [key: string]: unknown;
@@ -134,6 +136,7 @@ export interface BankRowDecision {
 }
 export interface BankRow extends BankSourceRow {
   status: BankRowStatus; canPost: boolean; decision: BankRowDecision | null; sourceMatches: BankSourceMatch[];
+  supersededBy: BankSourceMatch[];
   receiptCandidates: Array<{receipt: Receipt; reasons: string[]}>;
   invoiceCandidates: Array<{invoice: InvoiceSummary; reasons: string[]}>;
   customerCandidates: Array<{customer: Customer; reasons: string[]}>;
@@ -202,7 +205,7 @@ export interface BankReceiptSourceBinding {
   sourceSha256?: string; sourceRowSha256?: string; sourceName?: string; bookedDate?: DateOnly;
   transactionId?: string | null; transactionKey?: string | null; transactionAliases?: string[];
   bankReference?: string; reference?: string; coverageKey?: string; sourceAmount?: Money; splitAmount?: Money;
-  sourceOccurrenceKey?: string; sourceOccurrenceKeys?: string[];
+  sourceOccurrenceKey?: string | null; sourceOccurrenceKeys?: string[];
   sourceOrigin?: 'BANK_STATEMENT_RECONCILIATION' | string;
   statementAccountId?: string; statementImportId?: string; statementTransactionId?: string;
   statementMatchId?: string | null; statementMatchSha256?: string | null;
@@ -225,6 +228,7 @@ export interface BankOriginalReceipt {
 export interface BankPostingSplit {
   id: string; action: 'CREATE' | 'LINK' | 'CORRECT'; receiptId: string; customer: Customer;
   amount: Money; reference: string; effectiveDate: DateOnly; accountingDate: DateOnly;
+  coverageKey: string | null;
   reason: string; dateDifferenceReason: string; originalReceipt: BankOriginalReceipt | null;
   releasedAllocations: BankReleasedAllocation[]; allocations: BankReviewedAllocation[];
   sourceCoverage?: BankSourceCoverage; correctedOriginalAmount?: Money; replacementReceiptIds?: string[];

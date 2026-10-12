@@ -4,9 +4,13 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {BuyerRunbookAgent} from './agent-client.mjs';
+import {connectBuyerRunbookAgent} from './agent-connect.mjs';
 import {BUYER_AGENT_ACTIONS,BUYER_AGENT_PREFIX,buyerRunbookWorkspaceTools,need,fail,plain} from './agent-contract.mjs';
 import {readPrivate,parse} from './agent-connection.mjs';
 const HELP='Buyer runbook agent\n\n'+
+ 'node buyer-runbook/agent-cli.mjs connect --config PRIVATE_CONNECTIONS.json --workspace ALIAS --launch ORIGINAL_LAUNCH.json --storage PRIVATE_DIRECTORY [--operator ORIGINAL_SF88_DIRECTORY]\n'+
+ '  [--expected-connection-sha256 SHA256] [--label TEXT] [--operator-handle ALIAS] [--research-host PRIVATE_RESEARCH_HOST.json] [--research-buyer ALIAS]\n'+
+ '  [--checkout ORIGINAL_CHECKOUT.json --merchant ALIAS [--claim-env NAME]]\n'+
  'node buyer-runbook/agent-cli.mjs --config PRIVATE_CONNECTIONS.json workspaces\n'+
  'node buyer-runbook/agent-cli.mjs --config PRIVATE_CONNECTIONS.json call ACTION --input PRIVATE_REQUEST.json\n'+
  'node buyer-runbook/agent-cli.mjs --config PRIVATE_CONNECTIONS.json call ACTION --input -\n'+
@@ -21,7 +25,8 @@ function argumentsFor(argv){
   const token=argv[i];
   if(token==='--help'||token==='-h')return {help:true};
   if(token.startsWith('--')){
-   need(['--config','--input','--workspace','--export','--directory','--expected-manifest'].includes(token)&&!Object.hasOwn(options,token),
+   need(['--config','--input','--workspace','--export','--directory','--expected-manifest',
+    '--launch','--storage','--operator','--operator-handle','--label','--research-host','--research-buyer','--checkout','--merchant','--claim-env','--expected-connection-sha256'].includes(token)&&!Object.hasOwn(options,token),
     'INVALID_PARAMS','Use one documented Buyer agent option.');
    need(i+1<argv.length&&!argv[i+1].startsWith('--'),'INVALID_PARAMS','Supply a value for '+token+'.');
    options[token]=argv[++i];
@@ -40,14 +45,52 @@ function catalog(){
  const tool=(name,description,properties,required,annotations)=>({name,description,inputSchema:{type:'object',properties,required,additionalProperties:false},annotations});
  return {schema:'stellar-forge.buyer-runbook.agent-tools.v1',tools:buyerRunbookWorkspaceTools(tool)};
 }
-export async function buyerAgentCLI(argv=process.argv.slice(2),{write=value=>process.stdout.write(JSON.stringify(value,null,2)+'\n')}={}){
- const parsed=argumentsFor(argv);if(parsed.help){process.stdout.write(HELP);return;}
+async function streamText(stream,text){
+ return new Promise((resolve,reject)=>{
+  const cleanup=()=>{stream.removeListener('error',failed);stream.removeListener('close',closed);};
+  const failed=error=>{cleanup();reject(error);};
+  const closed=()=>{cleanup();reject(stream.errored??new Error('The output stream closed before its write completed.'));};
+  stream.once('error',failed);stream.once('close',closed);
+  try{stream.write(text,error=>{
+   if(error){
+    // Node invokes this callback before emitting the same stream error.
+    // Keep its listeners until error/close unless that stream already closed.
+    if(stream.closed)cleanup();
+    reject(error);return;
+   }
+   cleanup();resolve();
+  });}catch(error){cleanup();reject(error);}
+ });
+}
+async function output(value,write){
+ try{await write(value);}
+ catch(cause){throw fail('BUYER_AGENT_OUTPUT_FAILED',
+  'The original operation returned a result, but output failed. Reopen its retained files with the same selection.',
+  {cause,completedResult:value});}
+}
+export async function buyerAgentCLI(argv=process.argv.slice(2),{write=value=>streamText(process.stdout,JSON.stringify(value,null,2)+'\n')}={}){
+ need(typeof write==='function','INVALID_PARAMS','Use a callable result writer.');
+ const parsed=argumentsFor(argv);if(parsed.help){await streamText(process.stdout,HELP);return;}
  const {options,positionals}=parsed,[command,name]=positionals;
- if(command==='tools'){need(positionals.length===1&&Object.keys(options).length===0,'INVALID_PARAMS','The tool catalog takes no connection options.');const value=catalog();write(value);return value;}
+ if(command==='tools'){need(positionals.length===1&&Object.keys(options).length===0,'INVALID_PARAMS','The tool catalog takes no connection options.');const value=catalog();await output(value,write);return value;}
+ if(command==='connect'){
+  const mapping={'--config':'connectionFile','--workspace':'workspace','--launch':'launchFile','--storage':'storageDirectory',
+   '--operator':'operatorDirectory','--operator-handle':'operatorHandle','--label':'label','--research-host':'researchFile',
+   '--research-buyer':'researchBuyer','--checkout':'checkoutFile','--merchant':'merchant','--claim-env':'claimEnv',
+   '--expected-connection-sha256':'expectedConnectionSha256'};
+  need(positionals.length===1&&Object.keys(options).every(key=>Object.hasOwn(mapping,key)),
+   'INVALID_PARAMS','Connect one original running Buyer with the documented connection options.');
+  const controller=new AbortController(),stop=()=>controller.abort();
+  process.on('SIGINT',stop);process.on('SIGTERM',stop);
+  try{
+   const input=Object.fromEntries(Object.entries(options).map(([key,value])=>[mapping[key],value]));
+   const result=await connectBuyerRunbookAgent(input,{signal:controller.signal});await output(result,write);return result;
+  }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+ }
  need(options['--config']&&['workspaces','call','download'].includes(command),'INVALID_PARAMS',HELP);
  const agent=await BuyerRunbookAgent.fromFile(resolve(options['--config']));
  const controller=new AbortController(),stop=()=>controller.abort();
- process.once('SIGINT',stop);process.once('SIGTERM',stop);
+ process.on('SIGINT',stop);process.on('SIGTERM',stop);
  try{
   let result;
   if(command==='workspaces'){
@@ -65,16 +108,19 @@ export async function buyerAgentCLI(argv=process.argv.slice(2),{write=value=>pro
    result=await agent.download({workspace:options['--workspace'],exportId:options['--export'],directory:resolve(options['--directory']),
     expectedManifestSha256:options['--expected-manifest'],signal:controller.signal});
   }
-  write(result);return result;
+  await output(result,write);return result;
  }finally{
   process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);await agent.close();
  }
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
- buyerAgentCLI().catch(error=>{
+ buyerAgentCLI().catch(async error=>{
   const code=/^[A-Z][A-Z0-9_]{1,140}$/.test(error?.code??'')?error.code:'BUYER_AGENT_OPERATION_FAILED';
-  process.stderr.write(JSON.stringify({code,message:error?.buyerAgentPublic?error.message:'Read the original retained operation and current connection.',
-   ...(typeof error.outcomeUnknown==='boolean'?{outcomeUnknown:error.outcomeUnknown}:{}),...(error.requestId?{requestId:error.requestId}:{})})+'\n');
   process.exitCode=code==='INVALID_PARAMS'||code==='TOOL_NOT_FOUND'?2:3;
+  const report={code,message:error?.buyerAgentPublic?error.message:'Read the original retained operation and current connection.',
+   ...(typeof error.outcomeUnknown==='boolean'?{outcomeUnknown:error.outcomeUnknown}:{}),...(error.requestId?{requestId:error.requestId}:{}),
+   ...(error.completedResult!==undefined?{completedResult:error.completedResult}:{})};
+  try{await streamText(process.stderr,JSON.stringify(report)+'\n');}
+  catch{/* The nonzero exit status survives a closed diagnostic stream. */}
  });
 }

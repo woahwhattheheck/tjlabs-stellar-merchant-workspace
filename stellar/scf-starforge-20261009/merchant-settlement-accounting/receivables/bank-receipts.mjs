@@ -242,6 +242,7 @@ export function normalizedBankSourceFiles(compiled) {
 }
 
 export function bankRowDecision(bankImport,rowId) { return (bankImport.decisions??[]).find(row=>row.rowId===rowId)??null; }
+export function bankCurrentReceipts(data,id,bankImport=null,row=null) {return currentReceiptRows(data,id,bankImport,row);}
 export function bankMatchIndex(data) {
   const result={transactions:new Map(),economics:new Map(),occurrences:new Map()};
   const add=(map,key,value)=>{if(!map.has(key))map.set(key,[]);map.get(key).push(value);};
@@ -278,6 +279,8 @@ export function bankSourceMatches(data,bankImport,row,index=null) {
       amount:candidate.amount,bookedDate:candidate.bookedDate,kind:candidate.kind,
       sameFacts:candidate.amount===row.amount&&candidate.bookedDate===row.bookedDate,
       status:decision?.status??'UNASSIGNED',receiptIds,sourceOrigin:other.sourceOrigin??'BANK_RECEIPT_INTAKE',
+      replacesTransactionKeys:clone(candidate.replacesTransactionKeys??[]),sourceIdentity:clone(candidate.sourceIdentity??null),
+      statementAccountId:candidate.statementAccountId??null,statementTransactionId:candidate.statementTransactionId??null,
       statementReconciliation:clone(candidate.statementReconciliation??null)});
   }
   return matches;
@@ -338,7 +341,9 @@ export function bankRowView(data,bankImport,row,customers,asOf=today(),index=nul
     byReceipt.set(receipt.id,{receipt:receiptSummary(receipt,data,asOf),reasons});
     addCustomer(customers.find(customer=>customer.id===receipt.customerId),'Original matching receipt customer');
   }
-  return {...clone(row),status,canPost:row.kind==='CREDIT'&&row.cashSource!==false&&row.sourceEligible!==false&&bankImport.status==='OPEN'&&status!=='IGNORED',
+  const supersededBy=matches.filter(item=>item.sourceIdentity?.correctionAction==='REPLACE'&&
+    item.replacesTransactionKeys.includes(row.transactionKey)&&['POSTED','LINKED'].includes(item.status));
+  return {...clone(row),status,supersededBy,canPost:!supersededBy.length&&row.kind==='CREDIT'&&row.cashSource!==false&&row.sourceEligible!==false&&bankImport.status==='OPEN'&&status!=='IGNORED',
     decision:clone(decision),sourceMatches:matches,statementReconciliation:statementPostingAdjustment(matches,row,row.currency),receiptCandidates:[...byReceipt.values()].slice(0,50),
     invoiceCandidates:[...byInvoice.values()].slice(0,50),customerCandidates:[...byCustomer.values()].slice(0,50)};
 }
@@ -551,6 +556,10 @@ export function compileBankPosting(data,bankImport,rows,customers,input,{prior=n
       sourceResolutionReason=optional(value.sourceResolutionReason,'source resolution reason',3000),
       matches=bankSourceMatches(data,bankImport,row),exact=matches.filter(item=>['TRANSACTION_ID','SOURCE_LINE'].includes(item.match)),
       similar=matches.filter(item=>item.match==='SAME_PAYMENT_FIELDS');
+    const superseding=matches.filter(item=>item.sourceIdentity?.correctionAction==='REPLACE'&&
+      item.replacesTransactionKeys.includes(row.transactionKey)&&['POSTED','LINKED'].includes(item.status));
+    need(!superseding.length,'BANK_SOURCE_SUPERSEDED',
+      'Use the retained replacement source to correct its current receipt; this original FITID has already been superseded.',409);
     need(!(row.requiresSourceResolution||exact.some(item=>!item.sameFacts&&item.status!=='IGNORED'))||sourceResolutionReason,
       'BANK_SOURCE_CONFLICT_REVIEW','Explain the original statement correction when a retained transaction ID has different source amounts or dates.',409);
     need(!exact.some(item=>item.sameFacts&&item.statementReconciliation?.matchId&&!item.receiptIds.length),

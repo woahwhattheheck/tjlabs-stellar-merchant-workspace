@@ -133,6 +133,7 @@ export function createBankUi(host) {
         '</td><td>'+e(row.reference||row.bankReference||row.transactionId||'Source row '+row.rowNumber)+
         '<span class="subline">'+e(row.counterparty||row.invoiceReference)+'</span></td><td class="num">'+money(row.amount,row.currency)+
         '<span class="subline">'+e(formatStatus(row.kind))+'</span></td><td>'+status(row.status)+
+        (row.supersededBy?.length?'<span class="subline">Replaced by a later posted bank source. Open Source for its original correction.</span>':'')+
         (chosen[row.id]?'<span class="subline">'+chosen[row.id].splits.length+' prepared split'+(chosen[row.id].splits.length===1?'':'s')+'</span>':'')+
         '</td><td>'+candidateSummary(row)+'</td><td><div class="row">'+button('Source','row-source',' class="small" data-id="'+e(row.id)+'"')+
         (row.canPost&&open?button(chosen[row.id]?'Edit splits':'Match payment','assign',' class="small" data-id="'+e(row.id)+'"',true):'')+
@@ -158,6 +159,33 @@ export function createBankUi(host) {
       '</dl><details><summary>Complete original record</summary><pre class="bank-json">'+e(JSON.stringify(row,null,2))+'</pre></details></details>').join('')+'</div>';
   }
   function sourceRow(id) { return state.page?.items?.find(row=>row.id===id)||(state.editor?.row?.id===id?state.editor.row:null)||currentAssignments()[id]?.source; }
+  function reconciliationLink(transactionId='') {
+    return '/bank-statements/'+(transactionId?'?view=transactions&transaction='+encodeURIComponent(transactionId):'');
+  }
+  function renderSourceMatches(rows,currency,title) {
+    return '<h3 class="section">'+e(title)+'</h3><div class="table-wrap bank-original"><table><thead><tr><th>Original source</th><th>Bank date</th><th class="num">Amount</th><th>Current disposition</th><th>Open original</th></tr></thead><tbody>'+
+      rows.map(match=>{
+        const transactionId=match.statementTransactionId||match.statementReconciliation?.transactionId;
+        const navigation=match.sourceOrigin==='BANK_STATEMENT_RECONCILIATION'&&transactionId?
+          '<a href="'+e(reconciliationLink(transactionId))+'" target="_blank" rel="noopener">Bank reconciliation transaction</a>':
+          (!match.sourceOrigin||match.sourceOrigin==='BANK_RECEIPT_INTAKE')&&match.bankImportId&&match.rowId?
+          button('Bank receipt source','open-source-match',' class="small" data-import="'+e(match.bankImportId)+'" data-row="'+e(match.rowId)+'"'):'';
+        return '<tr><td>'+e(match.sourceName)+'<span class="subline">'+e(formatStatus(match.match))+'</span></td><td>'+e(match.bookedDate)+'</td><td class="num">'+money(match.amount,currency)+'</td><td>'+status(match.status)+'</td><td>'+navigation+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+renderRecords(rows,title);
+  }
+  async function openMatchedSource(bankImportId,rowId) {
+    if(!bankImportId||!rowId)throw new Error('Choose the retained original source match.');
+    captureEditor();
+    state.selectedId=bankImportId;state.rowOffset=0;state.rowStatus='';state.direction='';state.rowSearch=rowId;state.view='rows';
+    state.detail=null;state.page=null;state.review=null;state.dialog='source-row-loading';persist();host.showBank?.();
+    openDialog('Original matched bank source','<p>Opening the retained source row and its current customer receipts…</p>'+actions(null));
+    await load();
+    if(state.selectedId!==bankImportId||state.rowSearch!==rowId||state.dialog!=='source-row-loading')return;
+    if(state.error)return;
+    const row=state.page?.items?.find(item=>item.id===rowId);
+    if(!row)throw new Error('The current original statement does not contain this source row.');
+    state.dialog='source-row';openDialog('Original matched bank source',renderRaw(row)+actions(null));
+  }
   function renderRaw(row) {
     const raw=row.raw||{}, fields=raw.fields||{}, columns=state.detail?.columns||state.inspection?.columns||[];
     return '<dl class="definition"><dt>Booked date</dt><dd>'+e(row.bookedDate)+'</dd><dt>Value date</dt><dd>'+e(row.valueDate)+'</dd>'+
@@ -173,7 +201,8 @@ export function createBankUi(host) {
       '<details class="bank-original"><summary>Complete original source row</summary><pre class="bank-json">'+e(JSON.stringify(row,null,2))+'</pre></details>'+
       '<details class="bank-original"><summary>Original source identity</summary><p class="mono">'+e(row.sourceRowSha256)+'</p></details>'+
       renderStatementReconciliation(row)+
-      (row.sourceMatches?.length?'<h3 class="section">Other retained source matches</h3>'+renderRecords(row.sourceMatches,'Source match'):'');
+      (row.supersededBy?.length?renderSourceMatches(row.supersededBy,row.currency,'Posted source replacements'):'')+
+      (row.sourceMatches?.length?renderSourceMatches(row.sourceMatches,row.currency,'Other retained source matches'):'');
   }
 
 
@@ -392,7 +421,7 @@ export function createBankUi(host) {
       (adjustments.length?'<div class="table-wrap bank-original"><table><thead><tr><th>Saved adjustment</th><th class="num">Amount</th><th>Ledger / reference</th><th>Original note</th></tr></thead><tbody>'+
         adjustments.map(part=>'<tr><td>'+e(formatStatus(part.kind))+'</td><td class="num">'+money(part.amount,currency)+'</td><td>'+
           e([part.ledgerCode,part.reference].filter(Boolean).join(' · '))+'</td><td class="preline">'+e(part.note)+'</td></tr>').join('')+'</tbody></table></div>':'')+
-      '<p class="hint bank-original">The receipt and adjustment totals reconcile to the original bank amount. The saved adjustments stay in <a href="/bank-statements/">Bank reconciliation</a>.</p>'+
+      '<p class="hint bank-original">The receipt and adjustment totals reconcile to the original bank amount. Open this original <a href="'+e(reconciliationLink(saved.transactionId))+'" target="_blank" rel="noopener">Bank reconciliation transaction</a> to review its saved adjustments and current successors.</p>'+
       '<details><summary>Original reconciliation and source coverage</summary><dl class="definition">'+
         '<dt>Bank account</dt><dd class="mono">'+e(saved.statementAccountId)+'</dd><dt>Transaction</dt><dd class="mono">'+e(saved.transactionId)+'</dd>'+
         '<dt>Match</dt><dd class="mono">'+e(saved.matchId)+'</dd><dt>Match SHA256</dt><dd class="mono">'+e(saved.matchSha256)+'</dd></dl>'+
@@ -1015,7 +1044,8 @@ export function createBankUi(host) {
     else if(action==='bank-open-import') {
       state.selectedId=control.dataset.id;state.rowOffset=0;state.rowStatus='';state.direction='';state.rowSearch='';state.view='rows';
       state.review=null;persist();await load();
-    } else if(action==='bank-imports-page'){state.importOffset=Number(control.dataset.offset);await load();}
+    } else if(action==='bank-open-source-match')await openMatchedSource(control.dataset.import,control.dataset.row);
+    else if(action==='bank-imports-page'){state.importOffset=Number(control.dataset.offset);await load();}
     else if(action==='bank-rows-page'){state.rowOffset=Number(control.dataset.offset);await load();}
     else if(action==='bank-detail-view'){state.view=control.dataset.view;state.rowOffset=0;await load();}
     else if(action==='bank-files')await filesDialog();

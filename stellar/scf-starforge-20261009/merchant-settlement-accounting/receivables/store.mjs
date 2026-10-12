@@ -10,6 +10,7 @@ import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
 import {CreditControlWorkspace} from './credit-control-workspace.mjs';
+import {RemittancesWorkspace} from './remittances-workspace.mjs';
 import {BankReceiptsWorkspace} from './bank-receipts-workspace.mjs';
 import {bankAccountRows, bankAccountSummary} from './bank-receipts.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
@@ -89,6 +90,7 @@ export class ReceivablesWorkspace {
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
     this.creditControlWorkspace = new CreditControlWorkspace(this);
+    this.remittancesWorkspace = new RemittancesWorkspace(this);
     this.bankReceiptsWorkspace = new BankReceiptsWorkspace(this);
   }
   async init() {
@@ -134,6 +136,7 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.remittanceBatchId) Object.assign(result, this.remittancesWorkspace.result(record));
     if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
       Object.assign(result, this.creditControlWorkspace.result(record));
     if (record.collectionCaseId) {
@@ -212,6 +215,12 @@ export class ReceivablesWorkspace {
   async reportPaymentReturn(id, value) { return this.paymentRequestWorkspace.reportReturn(id, value); }
   async receivePaymentRequest(id, value) { return this.paymentRequestWorkspace.receive(id, value); }
   async paymentRequestFile(id, name) { return this.paymentRequestWorkspace.file(id, name); }
+  async remittances() { return this.remittancesWorkspace.list(); }
+  async remittance(id) { return this.remittancesWorkspace.detail(id); }
+  async previewRemittance(value) { return this.remittancesWorkspace.preview(value); }
+  async applyRemittance(value) { return this.remittancesWorkspace.apply(value); }
+  async remittanceOperation(requestId) { return this.remittancesWorkspace.operation(requestId); }
+  async remittanceFile(id, name) { return this.remittancesWorkspace.file(id, name); }
   async creditControl(query = {}) { return this.creditControlWorkspace.control(query); }
   async creditPolicy(id) { return this.creditControlWorkspace.policy(id); }
   async saveCreditPolicy(value) { return this.creditControlWorkspace.savePolicy(value); }
@@ -590,7 +599,7 @@ export class ReceivablesWorkspace {
     return this._mutate('payment_voided', {...value, receiptId: id}, async (data, actor) => {
       const receipt = this._receipt(id), voidDate = dateValue(value.voidDate, 'void date'), reason = field(value.reason, 'void reason', 3000);
       need(receipt.status === 'RECORDED', 'RECEIPT_ALREADY_VOID', 'This receipt is already void.', 409);
-      need(voidDate >= receipt.receivedDate, 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
+      need(voidDate >= (receipt.accountingDate ?? receipt.receivedDate), 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
       need(data.allocations.filter(row => row.receiptId === id).every(row => row.releasedDate && row.releasedDate <= voidDate),
         'RECEIPT_HAS_ALLOCATIONS', 'Release this receipt’s allocations before the selected void date.', 409);
       need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',

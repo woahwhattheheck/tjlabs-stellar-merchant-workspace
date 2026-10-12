@@ -2,6 +2,10 @@
 
 A complete local invoice and customer-payment workspace over the existing merchant accounting directory. It shares the original accounting lease, saved revision, customer UUIDs, order bindings, history and recovery. The browser uses a plain grayscale operator layout and produces offline printable customer documents.
 
+## Remittance receiving
+
+[Remittance receiving](REMITTANCES.md) imports an original customer remittance CSV, matches exact invoice and payment references, previews every allocation and conflict, and saves the whole batch in the original accounting transaction. It includes bulk receiving, reuse of existing Stellar settlement receipts, dated balance protection, exact source export and recovery through the original request ID. Open **Remittance receiving** from the desk.
+
 ## Open the workspace
 
 Use Node 22+ and the maintained source distribution.
