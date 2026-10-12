@@ -18,6 +18,38 @@ const inputRef = {type:'object', additionalProperties:false,
   oneOf:[{required:['hostInput']}, {required:['snapshotId']}, {required:['transferId']}]};
 const originalInput = {input:inputRef, expectedInputSha256:digest};
 const modelInput = {inputs:object, ...originalInput, inputPointer:str(4000)};
+const statementCategories={enum:['GRANT','INVOICE','CUSTOMER','CAPITAL','REFUND','OTHER']};
+const statementInput={type:'object',additionalProperties:false,
+  description:'Original statement bytes, exact source format, stable account identity and physical-row decisions. Money remains decimal text.',
+  properties:{
+    source:{type:'object',additionalProperties:false,
+      properties:{filename:nonempty(240),contentBase64:{...nonempty(Math.floor((8*1024*1024+2)*4/3)+16),
+        description:'Base64 of the complete original UTF-8 CSV, up to 8 MiB.'},
+        sourceUrl:str(4000),observedAt:{type:'string',format:'date-time'}},
+      required:['filename','contentBase64','observedAt']},
+    accountId:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$',
+      description:'Stable nonsecret account key; reuse it for overlapping statements from this account.'},
+    accountLabel:str(300),currency:nonempty(40),
+    format:{type:'object',additionalProperties:false,
+      properties:{delimiter:{enum:[',',';','\t','|']},decimalMark:{enum:['.',',']},
+        groupMark:{enum:['','.',',',' ','\u00a0',"'"]},
+        dateFormat:{enum:['YYYY-MM-DD','MM/DD/YYYY','DD/MM/YYYY','YYYY/MM/DD']},
+        amountMode:{enum:['SIGNED','DEBIT_CREDIT']},positiveDirection:{enum:['IN','OUT']}},
+      required:['delimiter','decimalMark','groupMark','dateFormat','amountMode','positiveDirection']},
+    columns:{type:'object',additionalProperties:false,
+      description:'Exact original CSV headings, including any heading whitespace. Map date/reference and the selected amount column or debit/credit pair.',
+      properties:Object.fromEntries(['date','reference','description','amount','debit','credit','currency','usdValue'].map(key=>[key,str(300)])),
+      required:['date','reference']},
+    defaultCategory:statementCategories,openingBalance:str(100),closingBalance:str(100),valuationNote:str(4000),
+    decisions:{type:'array',maxItems:5000,items:{type:'object',additionalProperties:false,
+      properties:{rowNumber:{type:'integer',minimum:2,maximum:10000000},action:{enum:['IMPORT','EXCLUDE']},
+        reason:str(4000),category:statementCategories,tranche:{anyOf:[{type:'integer',minimum:0,maximum:3},{type:'null'}]},
+        allocations:{type:'array',maxItems:200,items:{type:'object',additionalProperties:false,
+          properties:{invoiceId:id('invoice'),amountUsd:nonempty(100)},required:['invoiceId','amountUsd']}}},
+      required:['rowNumber','action'],
+      allOf:[{if:{properties:{action:{const:'EXCLUDE'}},required:['action']},then:{required:['reason'],properties:{reason:nonempty(4000)}}}]}}
+  },required:['source','accountId','currency','format','columns']};
+const statementModelInput={...modelInput,inputs:statementInput};
 const currencyCode = {type:'string', pattern:'^[A-Z]{3}$'};
 const nativeMoney = {type:'object', additionalProperties:false,
   properties:{
@@ -145,6 +177,11 @@ export const grantWorkspaceTools = [
   tool('case_command', 'Record or transition original contributor, work, invoice, cash, award, deployment, purchase, outcome or review data. Native action validation, state, version and same-ID replay remain authoritative.',
     {...ws, ...caseSelection, ...originalRequest, action:{enum:GRANT_CASE_ACTIONS}, data:object},
     ['workspace','caseId','expectedVersion','requestId','actor','action','data']),
+  tool('statement_preview', 'Review an original UTF-8 statement against the selected case. Keep exact account, currency, date/number/column mapping and source-row decisions; compare complete statement balances, original payment identities and supplier invoice allocations. Complete results remain available through snapshot and row paging.',
+    {...ws,...caseSelection,...statementModelInput},['workspace','caseId','expectedVersion'],true),
+  tool('statement_receive', 'Receive the exact reviewed statement through the original case transaction: retain the CSV and complete review, reconcile existing payment identities and add selected new cash observations. Preserve the reviewed preview SHA and original request ID for recovery.',
+    {...ws,...caseSelection,...statementModelInput,...originalRequest,expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','requestId','actor','expectedPreviewSha256']),
   tool('case_import', 'Receive the complete original operating-case ZIP, including every source, review, forecast and portfolio, into the named original workspace.',
     {...ws, ...originalInput, name:nonempty(300), requestId:requestIdentifier, actor:nonempty(300)},
     ['workspace','input','expectedInputSha256','name','requestId','actor']),

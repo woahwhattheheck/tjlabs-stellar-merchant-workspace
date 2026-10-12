@@ -144,6 +144,16 @@ grant operations --workspace "$GRANT_DATA" command --case CASE_ID --expected-ver
 
 Source-intake packets use the original [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) and native source-intake workflow. Inspect their full actual scope before import; a quoted workshare does not become paid cash through intake.
 
+### Receive account statements into the same cash records
+
+Open **Delivery operations → Statements** and choose the original UTF-8 CSV. Give the account a stable, nonsecret key and map its exact source headings, separator, date order and number format. Select one signed amount column or separate debit and credit columns. Keep one currency per file; a foreign-currency row can carry an explicit source USD valuation and its basis.
+
+Preview the complete file before importing. The review shows original physical source lines, transaction references, new and existing cash records, and exact statement inflow, outflow and net movement. When the source supplies opening and closing balances, enter both: the comparison includes every original movement, including explicitly excluded rows. Record a reason for each exclusion. Classify grant receipts and their tranches, customer cash and supplier payments; allocate supplier payments to retained invoices.
+
+**Import reviewed cash movements** commits the original CSV, complete review and new cash records in one case transaction. Overlapping statements reconcile by account, asset and original provider reference. Changed or voided payment identities remain visible for correction. The same reviewed statement and request ID recover an interrupted response without adding duplicate cash. The browser retains a full draft and offers a recovery download; **Open cash records** shows the saved result.
+
+The [Statement receiving guide](../../stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md) includes the complete input object, source format rules, CLI and typed client. Merchant clients use **merchant_grant_statement_preview** and **merchant_grant_statement_receive** with those same inputs. Inputs can be inline or selected from a complete retained JSON file through the existing input and byte-transfer tools. Case export carries the original CSV, review, invoice allocations and cash identities together.
+
 ## Review the operating period against the pinned budget
 
 Open **Delivery operations → Budget performance** for opening, period and closing cash/invoice positions, complete package and category budget comparisons, contributor activity, invoice aging and source-linked work/payment rows. Select the actual reporting dates; the report keeps the current case version and original recognition dates together. **Export complete handover** carries the full report, every CSV row, offline HTML and complete original case. Importing that ZIP reopens the case at its selected dates. The [Budget performance guide](../../stellar/scf_2026/sf47_budget_model/workspace/PERFORMANCE.md) covers the exact business arithmetic, source basis, browser, CLI and Merchant client.
@@ -441,7 +451,7 @@ node "$GRANT_TOOLKIT/runtime-install-cli.mjs" run --dir "$GRANT_RUNTIME" -- merc
 
 An existing Merchant configuration can add grantWorkspaceConnection with that same absolute connection path. The original [Merchant Grant guide](../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md) and [typed client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) describe the current complete tool catalog.
 
-Start with merchant_grant_workspaces and inspect the selected source hash. Open the exact alias with its expectedSelectionSha256, then read plans or cases and their native current versions. Use original preview/save pairs for forecasts, portfolios, buyer and support receiving, customer installations, implementation evidence, cohort preparation and completion. Each deliberate mutation has its own stable request ID and exact reviewed payload.
+Start with merchant_grant_workspaces and inspect the selected source hash. Open the exact alias with its expectedSelectionSha256, then read plans or cases and their native current versions. Use original preview/save pairs for statements, forecasts, portfolios, buyer and support receiving, customer installations, implementation evidence, cohort preparation and completion. Each deliberate mutation has its own stable request ID and exact reviewed payload.
 
 Successful responses retain the full original bytes, size, SHA and launch/source identity. Compact arrays refer to explicit original JSON pointers. Use merchant_grant_rows for array pages and native history cursors for further history responses. A large row remains available in the complete source file.
 

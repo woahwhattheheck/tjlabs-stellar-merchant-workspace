@@ -17,10 +17,114 @@ export type GrantDeliveryDueStatus = 'COMPLETE' | 'INACTIVE' | 'UNDATED' | 'OVER
 export type GrantCaseAction =
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
-  | 'cash.record' | 'cash.void' | 'award.save' | 'deployment.save'
+  | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'implementation.prepare'
   | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision';
+
+
+export type GrantStatementCategory = 'GRANT' | 'INVOICE' | 'CUSTOMER' | 'CAPITAL' | 'REFUND' | 'OTHER';
+export interface GrantStatementAllocation {
+  invoiceId: string;
+  amountUsd: string;
+}
+export interface GrantStatementDecision {
+  /** Physical source line at the beginning of the original CSV record. */
+  rowNumber: number;
+  action: 'IMPORT' | 'EXCLUDE';
+  /** Required for an exclusion. */
+  reason?: string;
+  category?: GrantStatementCategory;
+  tranche?: 0 | 1 | 2 | 3 | null;
+  allocations?: GrantStatementAllocation[];
+}
+export interface GrantStatementInput {
+  source: { filename: string; contentBase64: string; observedAt: string; sourceUrl?: string };
+  /** Stable nonsecret source account identity; case-sensitive and independent of the filename. */
+  accountId: string;
+  accountLabel?: string;
+  currency: string;
+  format: {
+    delimiter: ',' | ';' | '\t' | '|';
+    decimalMark: '.' | ',';
+    groupMark: '' | '.' | ',' | ' ' | '\u00a0' | "'";
+    dateFormat: 'YYYY-MM-DD' | 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY/MM/DD';
+    amountMode: 'SIGNED' | 'DEBIT_CREDIT';
+    positiveDirection: 'IN' | 'OUT';
+  };
+  /** Exact original heading strings, including any surrounding spaces. */
+  columns: {
+    date: string; reference: string; description?: string; amount?: string;
+    debit?: string; credit?: string; currency?: string; usdValue?: string;
+  };
+  defaultCategory?: GrantStatementCategory;
+  /** Original signed balances use the same selected decimal/thousands format. Supply both together. */
+  openingBalance?: string | null;
+  closingBalance?: string | null;
+  valuationNote?: string;
+  decisions?: GrantStatementDecision[];
+}
+export interface GrantStatementRow {
+  rowNumber: number;
+  reference: string;
+  date: GrantCivilDate | null;
+  description: string;
+  direction: 'IN' | 'OUT' | null;
+  amount: string | null;
+  currency: string;
+  usdValue: string | null;
+  category: GrantStatementCategory;
+  tranche: 0 | 1 | 2 | 3 | null;
+  allocations: GrantStatementAllocation[];
+  action: 'IMPORT' | 'EXCLUDE';
+  reason: string;
+  status: 'NEW' | 'EXISTING' | 'EXCLUDED' | 'CONFLICT';
+  recordId: string | null;
+  problems: string[];
+  original: Record<string, string>;
+  /** Original cash validator result; provisional source and new-record IDs are replaced atomically on receiving. */
+  record?: GrantObject;
+}
+export interface GrantStatementPreview {
+  schema: 'stellar-forge.sf47-statements.v1';
+  caseId: string;
+  expectedVersion: number;
+  inputsSha256: string;
+  previewSha256: string;
+  source: {
+    filename: string; bytes: number; sha256: string; sourceUrl: string; observedAt: string;
+    accountId: string; accountLabel: string; currency: string; editionSha256: string;
+  };
+  headers: string[];
+  rows: GrantStatementRow[];
+  summary: {
+    rows: number; newCount: number; existingCount: number; excludedCount: number; conflictCount: number;
+    inflow: string; outflow: string; net: string; importInflow: string; importOutflow: string;
+    completeAmounts: boolean;
+  };
+  balance: {
+    status: 'MATCH' | 'MISMATCH' | 'NOT_PROVIDED' | 'UNAVAILABLE';
+    openingBalance: string | null; closingBalance: string | null;
+    calculatedBalance: string | null; difference: string | null;
+  };
+  findings: { code: string; message: string; rowNumber?: number; recordId?: string | null }[];
+  canImport: boolean;
+  unchanged: boolean;
+  retainedSourceId: string | null;
+}
+export interface GrantStatementReceipt {
+  id: string;
+  version: number;
+  action: 'statement.receive';
+  kind: 'statement';
+  recordId: string;
+  sourceIds: string[];
+  cashIds: string[];
+  existingCashIds: string[];
+  unchanged: boolean;
+  statementSha256: string;
+  previewSha256: string;
+}
 
 export interface GrantBindingInput {
   directory: string;
@@ -993,6 +1097,8 @@ export class GrantWorkspaceClient {
   plan<T = GrantObject>(action: 'estimate' | 'save' | 'restore' | 'clone', planId: string, body: GrantObject): Promise<GrantJsonResponse<T>>;
   createCase<T = GrantObject>(body: { planId: string; selectedRevision: number; expectedContentSha256: string; name: string; mode: 'OPERATIONS' | 'WALKTHROUGH'; calendarStart?: GrantCivilDate; actor: string; requestId: string }): Promise<GrantJsonResponse<T>>;
   command<T = GrantObject>(caseId: string, body: GrantOperationRequest & { action: GrantCaseAction; data: GrantObject }): Promise<GrantJsonResponse<T>>;
+  statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
+  statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
   ledgerIntakeInspect(caseId: string, file: GrantLedgerFile): Promise<GrantJsonResponse<GrantLedgerInspection>>;
   ledgerIntakePreview(caseId: string, body: GrantLedgerPreviewInput): Promise<GrantJsonResponse<GrantLedgerPreview>>;
   ledgerIntakeApply(caseId: string, body: GrantLedgerApplyInput): Promise<GrantJsonResponse<GrantLedgerReceipt>>;
