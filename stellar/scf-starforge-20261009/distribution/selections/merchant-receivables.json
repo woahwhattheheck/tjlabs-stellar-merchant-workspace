@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-receivables",
   "title": "Merchant receivables and Stellar invoice collection",
-  "description": "Original merchant accounting, service quotations and issued invoices, reviewed Stellar wallet requests and native transfer receiving, installment schedules, customer allocations, credits and complete dated account delivery.",
+  "description": "Original service quotations, reviewed invoices and Stellar wallet requests, exact native transfer receiving, installment schedules, customer allocations, credits and dated account delivery through the merchant desk and existing accounting MCP session.",
   "base": {
     "commands": [
       "installation",
@@ -16,7 +16,10 @@
       "merchant-accounting-recovery",
       "support-console",
       "revenue-workspace",
-      "revenue-report"
+      "revenue-report",
+      "merchant-mcp",
+      "merchant-mcp-stdio",
+      "merchant-mcp-client-config"
     ],
     "exports": [
       "./installation",
@@ -37,11 +40,15 @@
       "./merchant/revenue-model",
       "./merchant/revenue-report",
       "./package.json",
-      "./manifest.json"
+      "./manifest.json",
+      "./merchant/mcp/server",
+      "./merchant/mcp/stdio",
+      "./merchant/mcp/client-config"
     ],
     "features": [
       "schema",
-      "openapi"
+      "openapi",
+      "mcp"
     ],
     "applicationProviders": [],
     "merchantProviders": [],
@@ -54,7 +61,8 @@
     "merchant-support",
     "merchant-commercial",
     "merchant-implementation",
-    "merchant-service-operations"
+    "merchant-service-operations",
+    "receivables-agent"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -67,7 +75,8 @@
     "stellar/scf-starforge-20261009/sf77-merchant-workorder",
     "stellar/scf-starforge-20261009/sf70-merchant-intake",
     "products/merchant-receivables",
-    "products/merchant-payment-plans"
+    "products/merchant-payment-plans",
+    "stellar-forge/mcp-merchant-operator"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
@@ -81,7 +90,8 @@
     "products/merchant-workspace/FINANCIAL_OPERATIONS.md",
     "products/merchant-receivables/README.md",
     "products/merchant-payment-plans/README.md",
-    "products/merchant-service-agreements/README.md"
+    "products/merchant-service-agreements/README.md",
+    "stellar-forge/mcp-paid-agent/package.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
