@@ -193,3 +193,8 @@ starforge api-application serve \
 ```
 
 The full application backup retains the original source/data closure, merchant state, and outbox. The original browser's separate operation journal remains in its existing workspace. Use the maintained operator guide to adopt the returned exact application/checkout into another configured merchant console.
+
+
+## Original thin source alias recovery
+
+The retained merchant source has an existing `stellar-forge` alias into the original application source. The receiver preserves that exact owned alias. For the two schema modules already identified by the native import, it accepts the existing exact verified bytes or replaces only their specifically recorded dangling source links with the original 671-file packet bytes. Existing different source bytes or changed link targets fail before the original merchant driver. Borrowed external source directories, the funded application and every original journal remain untouched.

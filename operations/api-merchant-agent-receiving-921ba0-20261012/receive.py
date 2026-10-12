@@ -43,40 +43,92 @@ def restore_original_schema(files):
     info=root.lstat()
     need(stat.S_ISDIR(info.st_mode) and not root.is_symlink() and info.st_uid==os.getuid()
          and root.resolve()==root,'ORIGINAL_SOURCE_DIRECTORY_CHANGED')
+    # This original merchant source deliberately retains one existing alias to
+    # our original application source. Its exact observed target is preserved.
+    alias=root/'stellar-forge'
+    application=Path('/dev/shm/921ba0-application-source')
+    physical=root
+    if alias.is_symlink():
+        info=alias.lstat()
+        need(info.st_uid==os.getuid() and
+             os.readlink(alias)==str(application/'stellar-forge'),'ORIGINAL_SOURCE_ALIAS_CHANGED')
+        info=application.lstat()
+        need(stat.S_ISDIR(info.st_mode) and not application.is_symlink() and
+             info.st_uid==os.getuid() and application.resolve()==application and
+             not stat.S_IMODE(info.st_mode)&0o022,'ORIGINAL_SOURCE_ALIAS_CHANGED')
+        physical=application
+    prior_links={
+        'stellar-forge/payment-auto-catalog/schema-validation.mjs':
+            '/workspace/scratch/9b238a12a516/grpc-merchant-agent/source/stellar-forge/payment-auto-catalog/schema-validation.mjs',
+        'stellar-forge/payment-auto-catalog/schema-pattern.mjs':
+            '/workspace/scratch/921ba0f574ac/scf-work/stellar-forge/payment-auto-catalog/schema-pattern.mjs',
+    }
     restored=[]
     for name,expected in ORIGINAL_SCHEMA.items():
         item=files.get(name)
         need(item is not None and item['gitBlob']==expected,'ORIGINAL_SCHEMA_SELECTION_CHANGED')
         body=item['content'].encode('utf-8')
         need(blob(body)==expected,'ORIGINAL_SCHEMA_BLOB_CHANGED')
-        target=root/name
-        parent=root
+        target=physical/name
+        parent=physical
         for part in Path(name).parts[:-1]:
             parent=parent/part
             try:parent.mkdir(mode=0o700)
             except FileExistsError:pass
             info=parent.lstat()
-            need(stat.S_ISDIR(info.st_mode) and not parent.is_symlink()
-                 and info.st_uid==os.getuid(),'ORIGINAL_SCHEMA_PARENT_CHANGED')
+            need(stat.S_ISDIR(info.st_mode) and not parent.is_symlink() and
+                 info.st_uid==os.getuid() and not stat.S_IMODE(info.st_mode)&0o022,
+                 'ORIGINAL_SCHEMA_PARENT_CHANGED')
         state='MATCHED'
-        if os.path.lexists(target):
+        retired_link=None
+        before_link=None
+        if target.is_symlink():
+            before_link=target.lstat()
+            retired_link=os.readlink(target)
+            need(before_link.st_uid==os.getuid() and retired_link==prior_links[name],
+                 'ORIGINAL_SCHEMA_LINK_CHANGED')
+            if target.exists():
+                read_exact(target.resolve(strict=True),expected,1024*1024)
+                restored.append({'path':name,'gitBlob':expected,'bytes':len(body),
+                                 'state':'MATCHED_ORIGINAL_LINK'})
+                continue
+        elif os.path.lexists(target):
             read_exact(target,expected,1024*1024)
-        else:
-            fd,temp=tempfile.mkstemp(prefix='.921ba0-schema-',dir=target.parent)
-            try:
-                with os.fdopen(fd,'wb') as stream:
-                    stream.write(body);stream.flush();os.fsync(stream.fileno())
+            restored.append({'path':name,'gitBlob':expected,'bytes':len(body),'state':state})
+            continue
+        fd,temp=tempfile.mkstemp(prefix='.921ba0-schema-',dir=target.parent)
+        try:
+            with os.fdopen(fd,'wb') as stream:
+                stream.write(body);stream.flush();os.fsync(stream.fileno())
+            if before_link is not None:
+                actual=target.lstat()
+                need(stat.S_ISLNK(actual.st_mode) and actual.st_uid==os.getuid() and
+                     (actual.st_dev,actual.st_ino,actual.st_ctime_ns)==
+                     (before_link.st_dev,before_link.st_ino,before_link.st_ctime_ns) and
+                     os.readlink(target)==retired_link and not target.exists(),
+                     'ORIGINAL_SCHEMA_LINK_CHANGED')
+                # Replace only our observed dangling source link. The external
+                # borrowed source and the original top-level alias are untouched.
+                os.replace(temp,target)
+                state='RESTORED_DANGLING_ORIGINAL_LINK'
+            else:
                 try:
                     os.link(temp,target)
                     state='RESTORED'
                 except FileExistsError:
                     read_exact(target,expected,1024*1024)
-                directory=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
-                try:os.fsync(directory)
-                finally:os.close(directory)
-            finally:os.unlink(temp)
-            read_exact(target,expected,1024*1024)
-        restored.append({'path':name,'gitBlob':expected,'bytes':len(body),'state':state})
+            directory=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+            try:os.fsync(directory)
+            finally:os.close(directory)
+        finally:
+            try:os.unlink(temp)
+            except FileNotFoundError:pass
+        read_exact(target,expected,1024*1024)
+        restored.append({'path':name,'gitBlob':expected,'bytes':len(body),'state':state,
+                         'retainedOriginalLink':retired_link})
+    if physical==application:
+        need(alias.is_symlink() and os.readlink(alias)==str(application/'stellar-forge'),
+             'ORIGINAL_SOURCE_ALIAS_CHANGED')
     return restored
 
 def main():
