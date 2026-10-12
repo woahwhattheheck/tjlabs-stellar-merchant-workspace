@@ -7,7 +7,8 @@ import { main as nativeMain } from '../../stellar/scf-starforge-20261009/distrib
 
 const commands = new Map([
   ['opensearch-workspace', 'Open the material catalog, customer matching and search operator workspace'],
-  ['opensearch-catalog', 'Operate saved catalogs, revisions, decisions and complete portable handovers'],
+  ['opensearch-catalog', 'Operate saved catalogs, supplier corrections, recipient deliveries and complete handovers'],
+  ['opensearch-materials-client', 'Operate material and supplier MCP workflows and receive complete resumable deliveries'],
   ['opensearch-prepare', 'Prepare the selected search merchant and its generated customer client'],
   ['opensearch', 'Preflight or run the prepared native Stellar search merchant'],
 ]);

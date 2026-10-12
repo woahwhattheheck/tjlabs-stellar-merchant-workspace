@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "material-catalog-product",
-  "description": "Material catalogs and original merchant runtime assets",
+  "description": "Material catalogues, supplier recipient workflows and original merchant runtime assets",
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch",
     "products/material-catalog"
@@ -84,7 +84,16 @@
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/index.html",
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/postgres.mjs",
     "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/receiving.mjs",
-    "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/style.css"
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/release-ui/style.css",
+    "stellar-forge/mcp-merchant-operator/OPENSEARCH_MATERIALS.md",
+    "stellar-forge/mcp-merchant-operator/OPENSEARCH_WORKSPACE.md",
+    "stellar-forge/mcp-merchant-operator/opensearch-material-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/receiving/OPENSEARCH_MATERIALS_NATIVE.md",
+    "stellar/scf-starforge-20261009/distribution/selections/MATERIAL_CATALOG.md",
+    "stellar/scf-starforge-20261009/distribution/selections/material-catalog.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/supplier.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/xchange.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/supplier/xchange/source/2BA_parameters_example.zip"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/receiving/PUBLIC-FLIGHT-PROFILE.md",
