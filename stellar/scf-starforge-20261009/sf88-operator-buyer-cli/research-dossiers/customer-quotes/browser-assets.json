@@ -64,6 +64,13 @@
         "../../../sf74-merchant-support-console/commercial/tariff-desk.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/customer-quotes/native/commercial/performance-desk.mjs",
+      [
+        "../../../sf74-merchant-support-console/commercial/performance-desk.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

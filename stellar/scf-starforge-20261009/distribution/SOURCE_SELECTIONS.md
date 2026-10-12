@@ -48,6 +48,13 @@ the original shared module. Console, job intake and job resolution maps are
 included when their original server components are selected. Every map and
 mapped file appears in the package's ordinary source manifest.
 
+Whole SF88 components also carry the original Research customer quotations
+server and its source-owned route map. That map serves the shared Commercial
+desk's receiving, tariff and performance modules at their original browser
+import URLs. A selected product therefore receives the full shared desk source
+even when it does not register the separate Research commands. Its command and
+runtime choices remain the recipe's own declarations.
+
 Static Node imports continue to use normalized repository paths. If an
 imported production helper has an acceptance-like filename, its explicit
 declaration in the original base support inventory permits that exact file.
