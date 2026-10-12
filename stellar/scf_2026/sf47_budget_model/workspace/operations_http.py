@@ -10,6 +10,7 @@ from operations import Operations, decoded
 import operations_calendar as calendar_model
 import operations_use_calendar as use_calendar
 from operations_commercial_http import handle as commercial_http
+from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
@@ -17,6 +18,8 @@ def register_static(static):
                    "/operations_funding.css": ("operations_funding.css", "text/css; charset=utf-8"),
                    "/COST_FUNDING.md": ("COST_FUNDING.md", "text/markdown; charset=utf-8")})
     static["/operations_funding_requests.mjs"] = ("operations_funding_requests.mjs", "text/javascript; charset=utf-8")
+    static.update({"/award-terms.mjs": ("award-terms.mjs", "text/javascript; charset=utf-8"),
+                   "/award-terms.css": ("award-terms.css", "text/css; charset=utf-8")})
     static.update({"/operations_task_outcomes.mjs": ("operations_task_outcomes.mjs", "text/javascript; charset=utf-8"),
                    "/operations_task_outcomes.css": ("operations_task_outcomes.css", "text/css; charset=utf-8")})
     static.update({"/operations_account_reconciliation.mjs": ("operations_account_reconciliation.mjs", "text/javascript; charset=utf-8"),
@@ -88,6 +91,8 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if award_terms_http(handler, parsed, ops, "GET"):
+        return True
     if commercial_http(handler, parsed, ops, "GET"):
         return True
     path = parsed.path
@@ -332,6 +337,8 @@ def write(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, path = store(handler), parsed.path
+    if award_terms_http(handler, parsed, ops, "POST"):
+        return True
     if commercial_http(handler, parsed, ops, "POST"):
         return True
     if path == "/api/operations/import":
