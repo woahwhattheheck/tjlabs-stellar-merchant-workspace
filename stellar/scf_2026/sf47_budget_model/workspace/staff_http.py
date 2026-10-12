@@ -205,9 +205,9 @@ def filter_response(handler, status, body):
     if status != 200 or not principal or principal["role"] == "owner" or not isinstance(body, dict):
         return body
     path, access = urlsplit(handler.path).path, handler.server.staff
-    if path == "/api/plans":
+    if handler.command == "GET" and path == "/api/plans":
         return {**body, "plans": [row for row in body["plans"] if access.plan_allowed(principal, row["id"])]}
-    if path == "/api/operations":
+    if handler.command == "GET" and path == "/api/operations":
         return {**body, "cases": [row for row in body["cases"] if access.case_allowed(principal, row["id"])]}
     if path == "/api/access":
         return {k: v for k, v in body.items() if k not in ("launch", "managedLaunch")} | {"principal": principal}
