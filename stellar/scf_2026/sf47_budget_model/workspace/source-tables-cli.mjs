@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // MIT. Headless source-table authoring uses the original Python planning writer.
-import {readFile, mkdir, open, link, unlink} from 'node:fs/promises';
+import {readFile, mkdir, open, link, unlink, mkdtemp, rename, rm, stat} from 'node:fs/promises';
 import {dirname, resolve, join} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {execFile} from 'node:child_process';
@@ -16,6 +16,10 @@ import {
 } from './source-tables-core.mjs';
 
 import {workbookUpload, decodeWorkbookBytes, workbookSelectionBody, validateWorkbookMaterials} from './source-workbooks.mjs';
+import {zipWorkspace} from '../../../../stellar-forge/developer-site/dist/onboarding.mjs';
+import {preparePlanningWorkbookHandover, receivePlanningWorkbookReturn,
+  validatePlanningWorkbookProfile, validatePlanningWorkbookReturnProfile,
+  defaultPlanningWorkbookProfile, defaultPlanningWorkbookReturnProfile} from './source-workbook-export.mjs';
 
 const execute = promisify(execFile), HERE = dirname(fileURLToPath(import.meta.url));
 const nativeCli = join(HERE, 'cli.py');
@@ -24,6 +28,10 @@ const json = value => JSON.stringify(value, null, 2) + '\n';
 const MAX = 128 * 1024 * 1024;
 const own = (value,key) => Object.prototype.hasOwnProperty.call(value,key);
 const COMMANDS = {
+  'export-plan-workbook': ['workspace','plan','revision','profile','output-directory','python'],
+  'receive-returned-workbook': ['project','file','return-profile','output','python'],
+  'workbook-export-profile': ['output'],
+  'workbook-return-profile': ['output'],
   'inspect-workbook': ['file','sheet','range','header-row','offset','limit','python','output'],
   'project-workbook': ['file','mapping','python','output'],
   'receive-workbook': ['project','role','file','mapping','selection','python','output'],
@@ -40,7 +48,7 @@ function need(value, message) { if (!value) throw new Error(message); }
 function argumentsFor(argv) {
   const [command, ...rest] = argv;
   if (!command || command === '--help' || command === 'help') return {command:'help'};
-  need(own(COMMANDS, command), 'Choose snapshot, receive, configure, review, rebase, preview, save, inspect-workbook, project-workbook, receive-workbook or export-workbooks.');
+  need(own(COMMANDS, command), 'Choose snapshot, receive, configure, review, rebase, preview, save, inspect-workbook, project-workbook, receive-workbook, export-workbooks, export-plan-workbook or receive-returned-workbook.');
   const options = {command};
   for (let i=0;i<rest.length;i++) {
     const key=rest[i].replace(/^--/,'');
@@ -52,7 +60,22 @@ function argumentsFor(argv) {
 }
 function required(options, ...keys) { for (const key of keys) need(typeof options[key] === 'string' && options[key], 'Use --'+key+' with '+options.command+'.'); }
 async function bytes(filename, maximum=MAX) {
-  const raw=await readFile(resolve(filename)); need(raw.length<=maximum, 'The complete input exceeds '+maximum+' bytes.'); return raw;
+  const handle=await open(resolve(filename),'r');
+  try {
+    const before=await handle.stat();
+    need(before.isFile()&&before.size<=maximum,'Choose a complete regular input within '+maximum+' bytes.');
+    const chunks=[];let count=0;
+    while(count<=maximum){
+      const chunk=Buffer.allocUnsafe(Math.min(65536,maximum+1-count));
+      const result=await handle.read(chunk,0,chunk.length,count);
+      if(!result.bytesRead)break;
+      chunks.push(chunk.subarray(0,result.bytesRead));count+=result.bytesRead;
+    }
+    const after=await handle.stat();
+    need(count<=maximum&&count===before.size&&after.size===before.size&&after.mtimeMs===before.mtimeMs,
+      'The complete input changed while it was being received or exceeds its byte allowance.');
+    return Buffer.concat(chunks,count);
+  }finally{await handle.close();}
 }
 async function readJson(filename) { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bytes(filename)).replace(/^\uFEFF/,'')); }
 async function readBook(filename) { return importPlanningBook(new TextDecoder('utf-8',{fatal:true}).decode(await bytes(filename))); }
@@ -186,6 +209,90 @@ async function exportWorkbooks(book, directory) {
   return {index,artifacts};
 }
 
+
+function sameJson(a,b) {
+  const ordered=value=>value&&typeof value==='object'&&!Array.isArray(value)?
+    Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):
+    Array.isArray(value)?value.map(ordered):value;
+  return JSON.stringify(ordered(a))===JSON.stringify(ordered(b));
+}
+async function existingWorkbookHandover(directory,plan,profile) {
+  let info;
+  try{info=await stat(directory);}catch(error){if(error.code==='ENOENT')return null;throw error;}
+  need(info.isDirectory(),'Choose a new workbook handover directory.');
+  const manifest=await readJson(join(directory,'WORKBOOK_EXPORT.json'));
+  need(sameJson(manifest.source,{id:plan.id,revision:plan.revision,contentSha256:plan.contentSha256})&&
+    sameJson(manifest.profile,profile),'The output directory belongs to different saved workbook choices.');
+  need(Array.isArray(manifest.files)&&manifest.files.length===14,'Retain the complete original workbook handover.');
+  const files=[],artifacts=[];
+  for(const file of manifest.files){
+    need(typeof file.path==='string'&&!file.path.startsWith('/')&&!file.path.split('/').some(x=>x==='.'||x==='..'||!x),
+      'The original handover contains an invalid relative filename.');
+    const raw=await bytes(join(directory,file.path));
+    need(raw.length===file.bytes&&digest(raw)===file.sha256,'The retained handover file changed: '+file.path);
+    files.push({path:file.path,content:new Uint8Array(raw)});
+    artifacts.push({path:join(directory,file.path),bytes:raw.length,sha256:digest(raw)});
+  }
+  const manifestBytes=await bytes(join(directory,'WORKBOOK_EXPORT.json'));
+  files.push({path:'WORKBOOK_EXPORT.json',content:new Uint8Array(manifestBytes)});
+  const archive=await bytes(join(directory,'planning-workbook-handover.zip'));
+  need(Buffer.from(zipWorkspace(files)).equals(archive),'Retain the complete original workbook handover archive.');
+  const nativeZip=files.find(x=>x.path==='planning.zip');
+  need(nativeZip,'Retain the original native planning ZIP.');
+  const received=await receivePlanningFile(nativeZip.content,{filename:'planning.zip',
+    inflate:(raw,max)=>new Uint8Array(inflateRawSync(raw,{maxOutputLength:Math.max(1,max)}))});
+  const currentRevision=received.document.revisions.find(x=>x.revision===received.document.currentRevision);
+  need(received.document.id===plan.id&&currentRevision?.revision===plan.revision&&currentRevision.contentSha256===plan.contentSha256,
+    'The retained ZIP differs from the selected saved native revision.');
+  artifacts.push({path:join(directory,'WORKBOOK_EXPORT.json'),bytes:manifestBytes.length,sha256:digest(manifestBytes)},
+    {path:join(directory,'planning-workbook-handover.zip'),bytes:archive.length,sha256:digest(archive)});
+  return {source:manifest.source,profile:manifest.profile,tables:manifest.tables,files:15,artifacts,replayed:true};
+}
+async function exportPlanWorkbook(options) {
+  required(options,'workspace','plan','revision','profile','output-directory');
+  need(workbookInteger(options.revision,'Saved revision')>0,'Select a positive saved revision.');
+  const plan=await current(options),profile=validatePlanningWorkbookProfile(await readJson(options.profile)),
+    destination=resolve(options['output-directory']);
+  const retained=await existingWorkbookHandover(destination,plan,profile);
+  if(retained)return retained;
+  await mkdir(dirname(destination),{recursive:true,mode:0o700});
+  const temporary=await mkdtemp(join(dirname(destination),'.planning-workbook-'));
+  let published=false;
+  try {
+    const zipPath=join(temporary,'planning.zip');
+    await native(['export','--workspace',resolve(options.workspace),'--plan',plan.id,
+      '--revision',String(plan.revision),'--output',zipPath],options);
+    const result=await preparePlanningWorkbookHandover(plan,profile,{
+      nativeZip:new Uint8Array(await bytes(zipPath,32*1024*1024)),
+      projectWorkbook:request=>workbookNative({action:'project',...request},options),
+      inflate:(raw,max)=>new Uint8Array(inflateRawSync(raw,{maxOutputLength:Math.max(1,max)})),
+    });
+    await workbookNative({action:'validate',retained:retainPlanningBook(result.book)},options);
+    const artifacts=[];
+    for(const file of [...result.files,{path:result.archive.filename,content:result.archive.data}]){
+      const output=join(temporary,file.path);await mkdir(dirname(output),{recursive:true,mode:0o700});
+      const saved=await publish(output,file.content);
+      artifacts.push({...saved,path:join(destination,file.path)});
+    }
+    // A complete private directory becomes visible only after all original files exist.
+    try{await stat(destination);throw new Error('The output directory was created by another operation. Use a new directory.');}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+    await rename(temporary,destination);published=true;
+    return {source:result.manifest.source,profile:result.manifest.profile,tables:result.manifest.tables,
+      files:result.files.length,artifacts,replayed:false};
+  }finally{if(!published)await rm(temporary,{recursive:true,force:true});}
+}
+async function receiveReturnedWorkbook(options,book) {
+  required(options,'file','return-profile');
+  const profile=validatePlanningWorkbookReturnProfile(await readJson(options['return-profile']));
+  const result=await receivePlanningWorkbookReturn(book,await uploadWorkbook(options.file),profile,{
+    inspectWorkbook:request=>workbookNative({action:'inspect',...request},options),
+    projectWorkbook:request=>workbookNative({action:'project',...request},options),
+  });
+  await workbookNative({action:'validate',retained:retainPlanningBook(result.book)},options);
+  return {...await outputBook(options,result.book),sourceId:result.source.id,received:result.received,profile:result.profile};
+}
+
 async function previewProject(options) {
   required(options,'project','output','workspace','plan');
   const book=await readBook(options.project), plan=await current(options);
@@ -284,6 +391,10 @@ export async function runPlanningSourceTables(argv=process.argv.slice(2)) {
     'receive-workbook --project source-project.json --role packages --selection workbook-selection.json --output next-project.json',
     'receive-workbook --project source-project.json --role packages --file ORIGINAL.xlsx --mapping workbook-mapping.json --output next-project.json',
     'export-workbooks --project source-project.json --output-directory NEW_DIRECTORY',
+    'workbook-export-profile --output WORKBOOK_PROFILE.json',
+    'workbook-return-profile --output RETURN_PROFILE.json',
+    'export-plan-workbook --workspace PATH --plan ID --revision N --profile WORKBOOK_PROFILE.json --output-directory NEW_DIRECTORY',
+    'receive-returned-workbook --project planning-source-project.json --file EDITED.xlsx --return-profile RETURN_PROFILE.json --output returned-project.json',
     'receive --project source-project.json --role packages --file costs.csv --delimiter comma --output next-project.json',
     'configure --project source-project.json --role packages --binding binding.json [--table-mapping mapping.json] --output mapped-project.json',
     'review --project mapped-project.json --role packages --output reviewed-project.json',
@@ -293,6 +404,12 @@ export async function runPlanningSourceTables(argv=process.argv.slice(2)) {
     'Use --python PATH on commands that invoke the original planner. Close its browser listener before headless commands open the same workspace.',
     'Every output is a complete new file. Retry the same save with the same preview, note, request ID and output directory.',
   ]};
+  if(options.command==='workbook-export-profile'||options.command==='workbook-return-profile'){
+    required(options,'output');const value=options.command==='workbook-export-profile'?
+      defaultPlanningWorkbookProfile():defaultPlanningWorkbookReturnProfile();
+    return {output:await publish(options.output,json(value)),profile:value};
+  }
+  if(options.command==='export-plan-workbook')return exportPlanWorkbook(options);
   if(options.command==='inspect-workbook')return inspectWorkbook(options);
   if(options.command==='project-workbook'){
     required(options,'output');const result=await projectWorkbook(options),body=workbookSelectionBody(result.projection);
@@ -310,6 +427,7 @@ export async function runPlanningSourceTables(argv=process.argv.slice(2)) {
   required(options,'project','output');
   let book=await readBook(options.project);
   if(options.command==='receive-workbook')return receiveWorkbook(options,book);
+  if(options.command==='receive-returned-workbook')return receiveReturnedWorkbook(options,book);
   if(options.command==='rebase')return outputBook(options,rebasePlanningBook(book,await current(options)));
   required(options,'role'); need(own(ROLES,options.role),'Choose packages, milestones, contributors or assignments.');
   if(options.command==='receive') {

@@ -399,3 +399,7 @@ Reviewed October 12, 2026:
 - [SCF Build submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria)
 
 The issuer guidance ties three delivery tranches to measurable development outcomes, with four conditional grant payments. It requires a self-contained application and a priced, feasible development plan. The original planner and application carry the selected financial assumptions, proposed scope and current source material.
+
+## Editable saved-plan workbooks
+
+Source tables also exports an exact saved plan as a complete editable workbook handover. The browser and grant-source-tables CLI retain the original native ZIP, four worksheet mappings, exact decimals, all source cells, and explicit receiving choices. Receive all four edited sheets, review their current mappings, calculate the original native result, then save and reopen the complete case. See [WORKBOOK_HANDOVER.md](WORKBOOK_HANDOVER.md) for the complete browser/CLI workflow and the production export-to-return operating programme.

@@ -11,6 +11,7 @@ import {initialMapping, TYPES, EMPTY_POLICIES, importProject}
   from '../../../../stellar-forge/developer-site/dist/source-table-workspace.mjs';
 
 import {createPlanningWorkbookIntake, planningWorkbookRows} from './source-workbooks.mjs';
+import {createPlanningWorkbookExport} from './source-workbook-export.mjs';
 
 const copy = value => JSON.parse(JSON.stringify(value));
 const $ = (name, text, className) => {
@@ -175,6 +176,10 @@ export function mountPlanningSourceTables(context) {
     retainSource:retainPlanningWorkbookSource, receive:receivePlanningWorkbook, chooseSelection:selectPlanningWorkbook,
     api:context.api, alive, redraw:render, store, status, work, button, field, select, checkbox,
     section, table, details, download, fileChooser,
+  });
+  const workbookExport = createPlanningWorkbookExport({
+    getPlan:context.getPlan, getBook:()=>book, api:context.api, alive, redraw:render,
+    store, status, button, field, select, checkbox, section, table, details, download, fileChooser,
   });
   function rowsPanel(result) {
     const panel = section('Complete source rows', result.rows.length + ' data rows. Included rows become planning inputs. Every excluded row retains its original position and your reason.');
@@ -453,7 +458,7 @@ export function mountPlanningSourceTables(context) {
       if (name === role) choose.setAttribute('aria-current','page'); choices.append(choose);
     }
     root.append(choices);
-    root.append(workbookIntake.render());
+    root.append(workbookExport.render(),workbookIntake.render());
     sourcePanel(); settingsPanel(); nativePreviewPanel();
     if (book.reviews.length) {
       const reviews=book.reviews.map(review=>details(sourceDate(review.reviewedAt || review.preparedAt) + ' · ' +
@@ -480,5 +485,5 @@ export function mountPlanningSourceTables(context) {
     if (!alive()) return;
     role = book.bindings[0]?.role || 'packages'; render();
   })();
-  return {root, ready, setHostBusy, dispose() { disposed = true; preview = null; projectChoice = null; workbookIntake.dispose(); }};
+  return {root, ready, setHostBusy, dispose() { disposed = true; preview = null; projectChoice = null; workbookIntake.dispose(); workbookExport.dispose(); }};
 }

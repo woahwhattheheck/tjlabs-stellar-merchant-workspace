@@ -28,6 +28,8 @@ BOOT_FILES = (
     "source_tables.py",
     "source_workbooks.py",
     "source-workbooks.mjs",
+    "source-workbook-export.mjs",
+    "WORKBOOK_HANDOVER.md",
     "../../../scf-starforge-20261009/sf30-seller-sdk/dataset-refresh/workbook/reader.py",
     "source-tables-core.mjs",
     "source-tables.mjs",
