@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Receive a reviewed local dataset and hand over the customer workspace | **Applications → Local dataset customer workspace** or `starforge local-dataset-agent` | [Complete selected installation](products/local-dataset/OPERATING.md), original Frictionless capture, full native pages, DuckDB editions and SQL, complete reports and portable receiving |
 | Receive an official World Bank edition through customer analysis | `starforge worldbank-product` and the original `worldbank-agent` Applications entry | Complete retained source, reviewed merchant edition, reports, typed workbook and reopened customer workspace |
 | Publish retained SEC facts and filings, then reopen the entire operator workspace | [SEC EDGAR operating guide](products/sec-edgar/OPERATING.md) | Original public-source editions, every saved revision, customer delivery, and a complete portable receiving package |
 | Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, station and datum review, model-input conventions, coastal workbooks, native publication and complete customer files |
@@ -161,6 +162,12 @@ source review, managed browser/MCP operation, native dataset delivery and the
 original analytical/customer workflow. Build its complete installed edition with
 `--selection worldbank`; [receiving](products/worldbank/RECEIVING.md) continues the
 same installed source through reports, workbook and a reopened customer application.
+
+The [Local dataset customer guide](products/local-dataset/OPERATING.md) connects
+reviewed Frictionless CSV, TSV, JSON and Parquet sources to complete native
+receiving, original DuckDB customer editions, saved SQL and reports, managed
+Applications and whole-workspace handover. Build its complete installed product
+with `--selection local-dataset`.
 
 ## Open the source product
 
