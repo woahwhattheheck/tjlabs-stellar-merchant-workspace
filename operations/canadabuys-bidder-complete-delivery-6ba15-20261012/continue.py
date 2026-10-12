@@ -13,12 +13,12 @@ import sys
 HERE = Path(__file__).resolve().parent
 PINS = {
   "input.json": {
-    "sha256": "60de2486a2db1d2f7fe702d2d6e6feb2dd25338805f4111d77a33f34cffd47cf",
-    "bytes": 2815260
+    "bytes": 2859018,
+    "sha256": "c4cdeb2a52423d2e2f3f3bfed2207f9de682fe9032c5a554590199d0b63290a3"
   },
   "complete_canadabuys_delivery.py": {
-    "sha256": "699e3e4b1cb69675b3f69c4fa9e7d1af207a85b8188988a761c5ac9620f11c64",
-    "bytes": 28307
+    "bytes": 28319,
+    "sha256": "a558da4c65e7e0a87681e0498411864fe169f17d6c22e26bed149eb885743292"
   },
   "run-canadabuys-bidder-receiving.mjs": {
     "bytes": 89006,
@@ -43,6 +43,10 @@ PINS = {
   "runtime-attempt-history.json": {
     "sha256": "70050b45a6e2671c9658e96921793d34af60ab2a49b7c0ec24cca2d484187a53",
     "bytes": 16535
+  },
+  "accepted-receiving-source.json": {
+    "bytes": 4904,
+    "sha256": "41238de645a725ef2abdfdf53ca6ec1e23dca4aeb38c998305ac36a7ac819997"
   }
 }
 
@@ -95,6 +99,10 @@ def main():
                   if item["path"] == "official_library_save_bridge.py")
     if bridge["content"].encode("utf-8") != selected["official_library_save_bridge.py"]:
         raise RuntimeError("The selected complete save transport differs")
+    accepted_source = next(item for item in payload["historyFiles"]
+                           if item["path"] == "accepted-receiving-source.json")
+    if accepted_source["content"].encode("utf-8") != selected["accepted-receiving-source.json"]:
+        raise RuntimeError("The accepted receiving source adoption differs")
     original_runtime = dict(payload["runtime"])
     for name in ("node", "playwright", "chromium"):
         value = getattr(options, name)
@@ -132,7 +140,7 @@ def main():
                            if item["path"] == "integrated-61367-runtime-history.json")
     if runtime_history["content"].encode("utf-8") != selected["runtime-attempt-history.json"]:
         raise RuntimeError("The original runtime attempt history differs")
-    del runtime_history
+    del runtime_history, accepted_source
     selected.clear()
     del fixture, original, runner, transition, history, bridge, raw, selection
     gc.collect()

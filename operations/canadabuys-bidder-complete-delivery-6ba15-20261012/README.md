@@ -42,9 +42,23 @@ The continuation protocol is one JSON header containing `bytes` and `sha256`, a 
 
 Retain the controller until the actual process exits. `--batch` exits after receiving and saves on a worker whose filesystem remains available for later image inspection.
 
+## Actual completed receiving and saved source correction
+
+The original receiving owner completed all 17 native, HTTP, browser and cold-receiving phases on October 12, 2026, between 22:55:10 and 22:55:30 UTC. The original execution record reports `PASS` and `RECEIVED_AND_VERIFIED`. Its three artifact saves succeeded at 23:02:21 UTC, and the owner inspected and approved all five original screens during 23:06–23:07 UTC.
+
+The original complete receiving ZIP is 15,336,675 bytes / SHA-256 `f86dbf2930c59bbf816d2bbf0a7a3e97eefc1fb5b80f2564d1c41ecad184c4ec`. The five images were captured in that original run and reviewed from the retained bytes after its producer disconnected.
+
+The saved execution record is 26,594 bytes / SHA-256 `1fbe38cd3775af1e26c553b3a90595003322e683f38ea8a20f027346b9d5846c`. These are the original receiving owner's retained results; publishing this source does not launch another case or replace the completed execution.
+
+The supported save bridge emits `name=filename`. The producer now uses `event_name` for its event parameter, retaining the filename field and the unchanged request/reply protocol. This is the same two-name substitution that completed the actual three saves.
+
+Current merchant main and the complete 37-file application packet already contain the exact 51,500-byte blank-commodity-code correction, SHA-256 `25e608ab4095944b10bc81ca0174b2d055bda4055d03a788ce7026f307b39835`. The original page pin in the receiving fixture and integrated selection remains deliberately unchanged: the maintained `UI_ADOPTION` flow preserves both complete page versions and the original phase binding.
+
+`accepted-receiving-source.json` records the source correction, exact original result identity, receiving-owner attribution and unchanged application/fixture/runner bindings. The full prior PR710 producer and entry are retained in the input's `published-710/` history. The previous complete input remains available through its immutable Git blob.
+
 ## Source and history
 
-The complete input is **2,815,260 bytes**, SHA-256 `60de2486a2db1d2f7fe702d2d6e6feb2dd25338805f4111d77a33f34cffd47cf`. Its unchanged 37-file application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`.
+The complete input is **2,859,018 bytes**, SHA-256 `c4cdeb2a52423d2e2f3f3bfed2207f9de682fe9032c5a554590199d0b63290a3`. Its unchanged 37-file application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`.
 
 The current fixture preserves the original captures, documents, supplier profile and expected results. The official tender and award row extracts retain every selected column. Authored amendments, operating documents and the entered supplier records are identified as examples in the fixture. The application retains the owner's faster CSV scanner, indexed publication lookup and the merged blank/wildcard commodity-code correction.
 
@@ -64,4 +78,5 @@ The current producer reads its own memory from `/proc/self/status` and resolves 
 - `run-canadabuys-bidder-receiving.mjs`: the complete native, HTTP, browser and receiving workflow.
 - `input.json`: complete application, programme, operating-case and historical source bodies.
 - `integrated-source-selection.json`: original and selected application members.
+- `accepted-receiving-source.json`: the exercised save correction and original completed receiving attribution.
 - `original-attempt-recovery.json`, `integrated-attempt-history.json` and `runtime-attempt-history.json`: actual retained execution history.
