@@ -44,7 +44,8 @@
     "grant-workspace",
     "grant-agent",
     "merchant-provider-grant-workspaces",
-    "grant-source-tables"
+    "grant-source-tables",
+    "grant-application-handoff"
   ],
   "components": [
     "stellar/scf_2026/sf47_budget_model",
