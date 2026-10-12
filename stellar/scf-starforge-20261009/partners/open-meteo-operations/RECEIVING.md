@@ -49,6 +49,23 @@ node stellar/scf-starforge-20261009/partners/open-meteo-operations/examples/rece
 
 Choose a new output directory beneath an existing private parent. This uses the original source values, windows, thresholds, responsible owner and disposition; the explicitly supplied receiving note creates the new decision revision. The saved `receiving-continuation.json` identifies both private settings files, the original and resulting report/source identities, the retained local revision and complete delivery files. Open either settings file through the normal `serve` command to continue the customer work.
 
+## Operate the complete browser receiving journey
+
+The [browser receiving programme](examples/browser-receiving.mjs) continues the original 7573 frozen report through two actual browser workspaces. It retains the original ZIP, opens its exact forecast/history/ensemble sources, saves one local decision revision, freezes a report with all three selected decisions, downloads complete report and editable packages, receives the onward work, and reopens the first delivery with the later local revision preserved. Both workspaces are closed before the final CLI reopen.
+
+~~~sh
+node stellar/scf-starforge-20261009/partners/open-meteo-operations/examples/browser-receiving.mjs \
+  --runtime /absolute/starforge-runtime \
+  --archive /private/weather-delivery/original-report.zip \
+  --output /private/weather-delivery/browser-receiving-operation \
+  --chrome /absolute/chrome-headless-shell \
+  --playwright /absolute/node_modules/playwright
+~~~
+
+Use Node with `node:sqlite`, Python 3, and the existing matching Playwright/browser runtime. The original source archive for this operation is 33,416 bytes with SHA-256 `28d56f92cdf35756773a40eb5a0125d03b5b0f86d5ebf63485d2c79365643f53`. The programme checks these exact input bytes before receiving. Its saved selection and progress keep a continuation on the same private roots. `operation/decision-update.json` records the receiving operator's explicit revision, and `deliveries/` contains the full original and onward customer files. The receiving note and report retain source dates and windows; the programme uses the saved source values.
+
+A recipient's revision history can create more local decision records than the number selected in a frozen report. The programme derives the second workspace's exact selection through the native receiving plan, including every retained revision and original-to-local mapping.
+
 ## Open the receiving workspace
 
 The review workspace has its own private directory and stable origin identity:
@@ -87,7 +104,7 @@ Open the returned local URL on the machine running the workspace. The server use
 
 1. **Frozen reports:** choose the complete `.weather.json` file, select **Review complete package**, then **Receive complete editable work**.
 2. Select **Edit received decisions**. The receiving report's selected decision opens with the original source and current local revision.
-3. Change the operating window, threshold, coverage, owner, disposition or notes, then **Save decision revision**. Each imported original revision is labelled separately from its current local revision.
+3. Change the operating window, threshold, coverage, owner, disposition or notes, then **Save decision revision**. The editor opens the decision's exact retained variable and unit, so changing notes preserves the numeric threshold and its meaning. Each imported original revision is labelled separately from its current local revision.
 4. **Frozen reports:** select the intended current decisions and freeze the next report. Download its **Editable package**, **Complete ZIP**, **HTML report** or **JSON**.
 5. **Receiving history:** reopen the exact original received file, inspect original-to-local relationships, or open every source in that delivery. Older received reports and sources remain directly addressable when the main recent-record tables have advanced.
 
