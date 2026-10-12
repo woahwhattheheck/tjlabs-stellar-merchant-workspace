@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.installed-product-description.v1",
+  "id": "stellar-expert",
+  "title": "Stellar asset investigation",
+  "selection": "stellar/scf-starforge-20261009/distribution/selections/stellar-expert.json",
+  "applicationKind": "stellar-expert",
+  "operatorCommand": "stellar-expert-product",
+  "originalWorkspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/stellar-expert/workspace.mjs",
+  "originalGuide": "stellar/scf-starforge-20261009/sf30-seller-sdk/stellar-expert/OPERATOR_GUIDE.md",
+  "receivingProgram": "products/stellar-expert/receive-installed.mjs",
+  "applicationRuntimeLayout": {
+    "source": "RUNTIME/package/source",
+    "dependencies": "RUNTIME/node_modules"
+  },
+  "sourceOperations": "Preserve original workspace and operation IDs across installation and restart.",
+  "customerFiles": [
+    "dataset.csv",
+    "dataset.jsonl",
+    "review.html",
+    "delivery.json",
+    "manifest.json"
+  ]
+}

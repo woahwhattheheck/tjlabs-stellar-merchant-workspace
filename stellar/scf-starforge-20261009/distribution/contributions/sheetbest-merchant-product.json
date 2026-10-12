@@ -1,0 +1,20 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "sheetbest-merchant-product",
+  "description": "Install and reopen a complete Sheet Best merchant product from original reviewed source and retained published editions.",
+  "commands": {
+    "sheetbest-product": "products/sheetbest-merchant/product.mjs",
+    "sheetbest-completed-input": "products/sheetbest-merchant/completed.mjs",
+    "sheetbest-receive": "products/sheetbest-merchant/receive.mjs"
+  },
+  "commandDescriptions": {
+    "sheetbest-product": "Prepare, open and inspect one private Sheet Best product on a verified original runtime.",
+    "sheetbest-completed-input": "Read completed original publisher runs and retain their exact private source packets and published CSV editions.",
+    "sheetbest-receive": "Receive those same original editions through field review, source versions, MCP, publisher plan and independent private reopen."
+  },
+  "exports": {
+    "./products/sheetbest": "./source/products/sheetbest-merchant/product.mjs",
+    "./products/sheetbest/completed": "./source/products/sheetbest-merchant/completed.mjs",
+    "./products/sheetbest/receiving": "./source/products/sheetbest-merchant/receive.mjs"
+  }
+}

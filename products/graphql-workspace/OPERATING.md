@@ -18,7 +18,7 @@ All source aliases, endpoint URLs, named credential references, runtime settings
 
 ## Applications review through reopen
 
-1. Select a complete ready Stellar merchant runtime containing this contribution and the original GraphQL schema dependency.
+1. Select the READY **graphql-workspace** product runtime, or a complete Stellar merchant runtime, with **schema, openapi, graphql and mcp** feature groups plus native/operator support. [PACKAGING.md](PACKAGING.md) supplies the original build, installation and receiving-machine steps.
 2. In Applications choose **GraphQL merchant workspace** and the initialized private product directory.
 3. Supply the original token environment name and optional private environment JSON. Use port 0 for an available agent listener. The original SF105 browser chooses its own listener.
 4. Review the actual product, alias, source list, host plans and configuration files. Save that review into the current native Applications home.

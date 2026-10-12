@@ -23,12 +23,16 @@ const HELP = 'Captured API merchant workspace\n\n' +
   'Original commands, with their arguments passed unchanged:\n' +
   '  starforge captured-api har prepare|inspect|review|save|export|copy|package|refresh ...\n' +
   '  starforge captured-api worksheet inventory|reconcile|review|save|export ...\n' +
+  '  starforge captured-api policies list|load|save|review|package|export|read ...\n' +
+  '  starforge captured-api workflows --help\n' +
   '  starforge captured-api releases ...\n' +
   '  starforge captured-api merchant ...\n\n' +
   'Use the source entrypoint before installation:\n' +
   '  node products/captured-api/cli.mjs COMMAND ...\n\n' +
   'Open the private browser to upload the actual HAR, review operations, author merchant\n' +
   'terms and exact route prices, save the original package, run it and continue releases.\n' +
+  'The operatorUrl opens persistent Requests, Workflows and Customers on the same\n' +
+  'merchant host. Profiles and complete customer downloads remain under operator-console.\n' +
   'Both native MCP providers use workspace alias merchant. Set the existing incoming\n' +
   'MCP access token in its environment; --browser-only opens the original browser alone.\n' +
   'An external Applications console keeps its original ownership and private URL record.\n' +
@@ -66,7 +70,8 @@ export async function main(args = process.argv.slice(2)) {
   const [command, ...rest] = args;
   if (command === 'handover') return (await import('./handover-cli.mjs')).runCapturedHandoverCLI(rest);
   if (command === 'har') return (await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/har/cli.mjs')).runHarCLI(rest);
-  const forwarded = { worksheet: 'merchant-route-worksheet', releases: 'releases', merchant: 'merchant-mcp' };
+  const forwarded = { worksheet: 'merchant-route-worksheet', policies: 'merchant-operation-policies',
+    workflows: 'merchant-openapi-workflows', releases: 'releases', merchant: 'merchant-mcp' };
   if (Object.hasOwn(forwarded, command))
     return (await import('../../stellar/scf-starforge-20261009/distribution/cli.mjs')).main([forwarded[command], ...rest]);
   const product = await import('./workspace.mjs');
@@ -126,6 +131,7 @@ export async function main(args = process.argv.slice(2)) {
       if (stopping) { await close(); return { state: 'CLOSED' }; }
       if (input.has('--managed-binding-sha256')) process.stdout.write(JSON.stringify(active.startup) + '\n');
       else print({ state: active.state, name: active.name, browserUrl: active.browserUrl, mcpUrl: active.mcpUrl,
+        operatorUrl: active.operatorUrl, operatorConsoleDirectory: active.operatorConsoleDirectory,
         workspace: active.workspace, directory: active.directory, projectsDirectory: active.projectsDirectory,
         configuration: active.configuration, consoleOwnership: active.console.ownership });
       return { ...active, close };
