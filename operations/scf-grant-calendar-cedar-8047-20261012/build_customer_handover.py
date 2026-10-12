@@ -202,6 +202,10 @@ def assemble(source: Path, operation: Path, output: Path, fulfillment_commit: st
             raise ValueError("The retained customer archive differs from this completed delivery.")
         if check.testzip() is not None:
             raise ValueError("The complete customer archive failed its ZIP integrity check.")
+        for row in files:
+            raw = check.read(row["path"])
+            if len(raw) != row["bytes"] or sha(raw) != row["sha256"]:
+                raise ValueError("A retained customer archive member differs from its original bytes: " + row["path"])
     result = {"stage": "COMPLETE", "operationId": OPERATION, "archive": str(archive), "bytes": archive.stat().st_size,
               "sha256": sha(archive.read_bytes()), "members": len(files) + 1, "handover": handover}
     write_json(output / "customer-handover-result.json", result)
