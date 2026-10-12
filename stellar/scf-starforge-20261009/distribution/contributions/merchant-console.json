@@ -5,12 +5,14 @@
   "commands": {
     "merchant-console-application-receive": "stellar-forge/mcp-merchant-operator/receiving/console-applications.mjs",
     "merchant-workflow-series": "stellar-forge/mcp-merchant-operator/console/workflow-series-cli.mjs",
-    "merchant-workflow-reports": "stellar-forge/mcp-merchant-operator/console/workflow-report-cli.mjs"
+    "merchant-workflow-reports": "stellar-forge/mcp-merchant-operator/console/workflow-report-cli.mjs",
+    "merchant-workflow-series-agent-receive": "stellar-forge/mcp-merchant-operator/receiving/workflow-series-agent-journey.mjs"
   },
   "commandDescriptions": {
     "merchant-console-application-receive": "Continue the original merchant customer through saved Applications, private console Open, Stop and reopen",
     "merchant-workflow-series": "Operate recurring customer tasks, retain original period runs, receive complete customer files and prepare the saved Installation handover",
-    "merchant-workflow-reports": "Compare original workflow runs, retain complete reports and receive their saved native history"
+    "merchant-workflow-reports": "Compare original workflow runs, retain complete reports and receive their saved native history",
+    "merchant-workflow-series-agent-receive": "Continue the complete original recurring customer through Merchant agent tools, review the native first call, and receive every customer file on a fresh Console"
   },
   "exports": {
     "./merchant/console/managed": "./source/stellar-forge/mcp-merchant-operator/console/managed.mjs",
@@ -24,7 +26,8 @@
       "import": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.mjs"
     },
     "./merchant/console/report-files": "./source/stellar-forge/mcp-merchant-operator/console/workflow-report-files.mjs",
-    "./merchant/console/series-agent": "./source/stellar-forge/mcp-merchant-operator/workflow-series-agent.mjs"
+    "./merchant/console/series-agent": "./source/stellar-forge/mcp-merchant-operator/workflow-series-agent.mjs",
+    "./merchant/console/series-agent-receiving": "./source/stellar-forge/mcp-merchant-operator/receiving/workflow-series-agent-journey.mjs"
   },
   "applicationProviders": {
     "merchant-console": "stellar-forge/mcp-merchant-operator/console/application-provider.mjs"

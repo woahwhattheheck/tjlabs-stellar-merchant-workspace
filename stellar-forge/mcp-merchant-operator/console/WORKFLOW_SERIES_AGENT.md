@@ -93,7 +93,7 @@ Prefix each suffix with `merchant_workflow_series_`. For example,
 
 Read the original profile and current host before binding or preparing new work.
 `profile_bind` takes `id`, `expectedRevision`, `expectedHostFingerprint` and an
-optional reviewed `expectedCompositionFingerprint`. A workflow retains its exact
+optional reviewed `expectedCompositionFingerprint`. Draft and workflow saves require a stable `input.id` so an interrupted reply can reopen the original request. A workflow retains its exact
 saved revision and native tool bindings. Recipe installation takes the full
 preparation returned by `recipe_prepare`, including the original recipe, review,
 input selections and install request.
@@ -241,3 +241,47 @@ Console and provider lifecycle owners.
 
 Read [WORKFLOW_SERIES.md](WORKFLOW_SERIES.md) for the original series formats,
 calendar rules and typed customer handover.
+
+## Continue the complete native receiving customer
+
+The distribution command `merchant-workflow-series-agent-receive` takes the
+complete extracted output of the original two-period receiving programme. Run it
+from the source checkout with its existing dependencies:
+
+~~~sh
+node stellar-forge/mcp-merchant-operator/receiving/workflow-series-agent-journey.mjs \
+  --original-directory /srv/merchant/original-complete-native \
+  --directory /srv/merchant/customer-agent-continuation \
+  --source-commit THE_SELECTED_40_CHARACTER_SOURCE_COMMIT
+~~~
+
+The original directory must contain its complete reports, both saved Console
+databases, native source inputs, release store, received customer files and
+`series-customer-handover`. The command copies that complete saved customer into
+the owned continuation directory before opening its archived receiving Console.
+It retains the source workspace IDs, calls, native returns and two finished
+periods.
+
+The command calls the actual configured tools over Merchant MCP. It saves a
+complete original request and an eight-step workflow that pauses after the first
+native return, adds a new series edition with the existing complete inputs and
+cadence, and prepares the next linked calendar period. It reads and retains that
+first native call before resuming the same run through customer generation and
+the owned merchant's stop.
+
+The receiving Console imports the original handover, then receives the new
+complete customer edition. Every original and new handover member is streamed
+through the agent file tools into private files with its displayed byte count and
+SHA256. Both native hosts close and reopen; the command checks the same saved
+calls, periods and run before completing.
+
+The continuation directory contains the complete reopened original customer,
+the new receiving Console, the original and updated complete customer handovers,
+the full agenda calendar, and one resumable native checkpoint. Repeating the same
+command uses those saved request, period, run and receiving identities. A native
+recovery condition remains attached to that exact run for its original recovery
+controls.
+
+The selected commit identifies the source base. The native checkpoint also retains
+the complete eight-file agent source selection with actual byte counts and hashes,
+so locally prepared source and a later published edition remain distinguishable.

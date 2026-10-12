@@ -14,6 +14,7 @@ const record = description => ({ type: 'object', description, additionalProperti
 const connection = { console: alias };
 const on = properties => ({ ...connection, ...properties });
 const input = description => on({ input: record(description) });
+const stableInput = description => on({ input: { ...record(description), properties: { id }, required: ['id'] } });
 const prep = kind => on({ preparation: record('The complete unchanged ' + kind + ' preparation returned by the preceding review, including its full review, action and contentSha256.') });
 const selected = on({ id });
 const period = { type: 'object', additionalProperties: false, required: ['start', 'end'],
@@ -40,11 +41,11 @@ const descriptions = [
   ['tool', 'Read one complete native tool definition and its schema SHA256.', on({ name: text(128) }), ['console', 'name'], true],
   ['draft', 'Read a complete original saved native request at its selected revision.', on({ id, revision }), ['console', 'id'], true],
   ['draft_save', 'Save the complete original native request used by a workflow step, retaining its tool, arguments and expected revision.',
-    input('The original drafts API request: id, profileId, name, tool, complete arguments and expectedRevision when editing.'), ['console', 'input'], false],
+    stableInput('The original drafts API request: stable id, profileId, name, tool, complete arguments and expectedRevision when editing.'), ['console', 'input'], false],
   ['workflows', 'List the original workflow definitions and runs for a customer profile.', on({ profileId: id }), ['console', 'profileId'], true],
   ['workflow', 'Read the complete original workflow at a selected saved revision.', on({ id, revision }), ['console', 'id'], true],
   ['workflow_save', 'Save a complete original Console workflow definition, preserving its steps, bindings, policies and expectedRevision.',
-    input('The complete original workflows API request with profileId, id, name, steps, inputFields and revision controls.'), ['console', 'input'], false],
+    stableInput('The complete original workflows API request with profileId, stable id, name, complete steps and revision controls.'), ['console', 'input'], false],
   ['recipes', 'List the retained recipe installations for this original customer profile.', on({ profileId: id }), ['console', 'profileId'], true],
   ['recipe_prepare', 'Prepare a complete recipe installation against the original destination tool definitions and inputs.',
     input('The original recipe preparation input, including stable id, profileId, complete recipe or maintenance/receiving source, inputs and acceptToolChanges.'), ['console', 'input'], true],
