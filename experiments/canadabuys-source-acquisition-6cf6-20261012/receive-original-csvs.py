@@ -97,7 +97,7 @@ def main():
     state_path = root / "source-receiving.json"
     if state_path.exists():
         state = json.loads(state_path.read_text(encoding="utf-8"))
-        if state.get("operation_id") != OPERATION:
+        if state.get("schema") != "commons.canadabuys.original-source-receiving.v1" or state.get("operation_id") != OPERATION:
             raise ValueError("Keep the original CanadaBuys source operation.")
     else:
         state = {"schema": "commons.canadabuys.original-source-receiving.v1",
@@ -118,6 +118,7 @@ def main():
         record = dict(prior or {})
         record.update(status="RECEIVING", requested_url=selected["url"])
         record.setdefault("started_at", now())
+        record.pop("error", None)
         state["sources"][name] = record
         write_json(state_path, state)
         body_path = originals / (name + ".http-body")
