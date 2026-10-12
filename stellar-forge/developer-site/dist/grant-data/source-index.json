@@ -5,9 +5,10 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 35902,
-    "sha256": "33b1d3148a05032c54c0a4ea19b5f62ffe0a4c39e2f8bee0f8978d038c5e376a",
-    "git_blob": "3afd2e508d42256ceb2afa762d829a604ac7d9ac"
+    "bytes": 35819,
+    "sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
+    "git_blob": "025350138766fe87679b95ecfbd9bca11ba3d9d2",
+    "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF"
   },
   "request": {
     "basis": "prospective",
@@ -1075,7 +1076,7 @@
         }
       }
     ],
-    "current_application_sha256": "33b1d3148a05032c54c0a4ea19b5f62ffe0a4c39e2f8bee0f8978d038c5e376a",
+    "current_application_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -1083,8 +1084,8 @@
     "composition": {
       "operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
-      "canonical_front_sha256": "d48256a13c5a1f87136974a142f970ae33b9b04d09d42b40fb85ed2361b936ae",
-      "canonical_front_bytes": 35906,
+      "canonical_front_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
+      "canonical_front_bytes": 35819,
       "renderer_git_blob": "adca97e4c94c253df927e75b9d5c6157bf0b6e70",
       "source_editions": [
         {
@@ -1155,7 +1156,16 @@
     "datasette_publisher_commit": "ab876f6dc2ad24b7938f6b928202d78fbdeef777",
     "datasette_application_operation": "SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012",
     "financial_product_commit": "179da2f13f9ef91ad1867142ec0556ed94f40133",
-    "financial_application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012"
+    "financial_application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012",
+    "reviewer_front": {
+      "operation": "SCF-REVIEWER-FRONT-B669-20261012",
+      "source_commit": "d6b918db4d87b553c21b63e42c64718b909fb75f",
+      "previous_application_git_blob": "3afd2e508d42256ceb2afa762d829a604ac7d9ac",
+      "retained_answer_identities": 9,
+      "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
+      "customer_calendar": "At least two independent buyers; thirty distinct useful purchases across fourteen days. Two weekday-only daily users supply twenty; selected workorders establish the additional useful demand or buyers.",
+      "complete_quality_receiving": "Original reported 1000 rows; reviewed 1001-row requirement failed; unreported column count remained unknown; original and received 76-file exports matched."
+    }
   },
   "submission_workspace": {
     "schema": "stellar-forge.grant-submission-workspace.v1",
