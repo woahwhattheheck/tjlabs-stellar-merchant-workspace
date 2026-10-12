@@ -33,7 +33,7 @@ Filters use the original typed native comparison. All filter clauses are joined 
 
 A selected pivot creates one measure column for each chosen value. Categories must remain distinct after native conversion to the source column type; different decimal spellings, values that round to the same FLOAT, and equal timestamp instants cannot create overlapping columns. NULL and other non-null values can each be included explicitly. The result records selected and unselected source-row coverage. Overall totals are computed directly from the selected source rows; averages and distinct counts are never obtained by adding grouped results.
 
-The reviewed definition includes SQL, bound parameters, original source identity and field meanings. A preview contains at most100 rows and is labeled. Execution materializes every native result group and retains its complete ordered typed fingerprint, exact original query recipe and separately computed source totals.
+The reviewed definition includes SQL, bound parameters, original source identity and field meanings. A preview contains at most 100 rows and is labeled. Execution materializes every native result group and retains its complete ordered typed fingerprint, exact original query recipe and separately computed source totals.
 
 Default row order uses the complete dimension keys with NULL last. An explicit order may select output columns, direction and NULL placement. Remaining dimension keys resolve ties. Measures over a single overall row need no key.
 
@@ -47,7 +47,7 @@ Numeric change is the exact decimal subtraction of the two native integer/decima
 
 ## Workbook editions and report behavior
 
-A workbook is an ordered set of pages. Table pages contain all selected result rows and fields. Bar/line pages declare a chart selection from the retained order, from1 to2,000 groups, and up to eight numeric series. Their complete result table remains included below the chart. NULL and non-finite chart values leave gaps. The graph uses a common linear scale, includes zero and retains exact values in point titles and tables. Chart positions are a visual representation; the native table and export carry exact values.
+A workbook is an ordered set of pages. Table pages contain all selected result rows and fields. Bar/line pages declare a chart selection from the retained order, from 1 to 2,000 groups, and up to eight numeric series. Their complete result table remains included below the chart. NULL and non-finite chart values leave gaps. The graph uses a common linear scale, includes zero and retains exact values in point titles and tables. Chart positions are a visual representation; the native table and export carry exact values.
 
 Editorial notes are plain text. No HTML, script or external visualization service is executed from source labels or notes.
 
@@ -79,7 +79,7 @@ The workspace remains the sole database and query owner. The package uses its or
 
 ## Independently receive a complete workbook
 
-Extract the ZIP as a new private directory with directory permissions0700 and file permissions0600. Preserve all member bytes. Use the exact manifest SHA-256 provided by the completed export.
+Extract the ZIP as a new private directory with directory permissions 0700 and file permissions 0600. Preserve all member bytes. Use the exact manifest SHA-256 provided by the completed export.
 
 ```sh
 PYTHONPATH=/absolute/private/package/application python \
@@ -129,7 +129,7 @@ python -m stellar_forge_buyer.duckdb_cli --workspace WORKSPACE analytics export 
 
 Save-analysis requests contain request_id, workspace_id, definition, expected_revision and review_sha256 from the native review. Run requests contain request_id, workspace_id, analysis_id and exact revision. Compare requests contain request_id, workspace_id, before_id, after_id, keys and optional title. Workbook saves contain request_id, workspace_id, definition and expected_revision. Publications contain request_id, workspace_id, workbook_id and revision. Exports contain request_id and report_id, and use the original retained export directory owner.
 
-Request IDs are32 lowercase hex, native record IDs are64 lowercase hex. Save request files before sending them and keep the same ID/body after a lost response. `analytics request ID` reads the actual retained state; `analytics resume ID --workspace-id ID` continues that original analytical operation. HTTP export requests use the original operator request/resume route.
+Request IDs are 32 lowercase hex, native record IDs are 64 lowercase hex. Save request files before sending them and keep the same ID/body after a lost response. `analytics request ID` reads the actual retained state; `analytics resume ID --workspace-id ID` continues that original analytical operation. HTTP export requests use the original operator request/resume route.
 
 ## Original MCP agent and client
 
@@ -137,7 +137,7 @@ The original merchant paid-agent action remains duckdb. Register the existing se
 
 The additive analytics operations cover source review, saved definitions, full execution, result grids, exact comparisons, workbook revisions, publication, request recovery and complete export. They are declared in native-duckdb-analytics-schema.mjs and dispatched through the original authenticated get/post functions. The original workspace identity is supplied by the existing host registration.
 
-Use analytics-export-manifest for the small manifest and whole-ZIP file descriptors. The existing file operation reads exact retained bytes in at most64KiB ranges with original SHA-256 checks. It neither reruns SQL nor starts another receiver. For large source contexts use paged records/grids and the full report/query/source files in the exported package.
+Use analytics-export-manifest for the small manifest and whole-ZIP file descriptors. The existing file operation reads exact retained bytes in at most 64 KiB ranges with original SHA-256 checks. It neither reruns SQL nor starts another receiver. For large source contexts use paged records/grids and the full report/query/source files in the exported package.
 
 ## Installation and source distribution
 
