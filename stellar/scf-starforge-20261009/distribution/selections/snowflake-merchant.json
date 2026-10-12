@@ -130,7 +130,8 @@
     "operations/scf-snowflake-merchant-receiving-20261012/receiving.json",
     "operations/scf-snowflake-merchant-receiving-20261012/partition-00000.json",
     "operations/scf-snowflake-merchant-receiving-20261012/partition-00001.json",
-    "operations/scf-snowflake-merchant-receiving-20261012/README.md"
+    "operations/scf-snowflake-merchant-receiving-20261012/README.md",
+    "operations/scf-snowflake-merchant-receiving-20261012/receive-browser.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
