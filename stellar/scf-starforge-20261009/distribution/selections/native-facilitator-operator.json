@@ -1,0 +1,67 @@
+{
+  "schema": "stellar-forge.distribution-source-selection.v1",
+  "id": "native-facilitator-operator",
+  "title": "Native Stellar facilitator and Bazaar operator",
+  "description": "Original managed native operator, immutable payment profiles, host commissioning, durable Bazaar publication, typed client and complete catalog receiving.",
+  "base": {
+    "commands": [
+      "installation",
+      "runtime-profile",
+      "runtime-install",
+      "runtime-workspace",
+      "runtime-transfer"
+    ],
+    "exports": [
+      "./runtime-profile",
+      "./installation",
+      "./installation/cli",
+      "./installation/product",
+      "./installation/runtime",
+      "./runtime-install",
+      "./runtime-transfer",
+      "./runtime-workspace",
+      "./runtime-workspace/server",
+      "./package.json",
+      "./manifest.json"
+    ],
+    "features": [
+      "schema"
+    ],
+    "applicationProviders": [],
+    "merchantProviders": [],
+    "browserAssets": []
+  },
+  "contributions": [
+    "native-facilitator-catalog",
+    "native-facilitator-host"
+  ],
+  "components": [
+    "stellar/scf-starforge-20261009/distribution",
+    "stellar/scf-starforge-20261009/sf46-release",
+    "stellar/scf-starforge-20261009/native-facilitator",
+    "stellar/scf-starforge-20261009/sf54-cataloging-sidechannel",
+    "stellar/scf-starforge-20261009/sf58-dual-network-frontdoor",
+    "stellar/scf-starforge-20261009/sf60-durable-catalog-transaction",
+    "stellar/scf-starforge-20261009/sf61-bazaar-explorer",
+    "stellar-forge/payment-auto-catalog",
+    "stellar-forge/catalog-lifecycle",
+    "scf46-stellar-bazaar/src"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/selections/NATIVE_FACILITATOR_OPERATOR.md",
+    "stellar/scf-starforge-20261009/native-facilitator/workspace/client.d.mts",
+    "stellar-forge/payment-auto-catalog/package.json",
+    "stellar-forge/payment-auto-catalog/package-lock.json"
+  ],
+  "excludeFiles": [
+    "stellar/scf-starforge-20261009/distribution/index.mjs"
+  ],
+  "product": {
+    "schema": "stellar-forge.merchant-product-package.v1",
+    "description": "Native Stellar facilitator: managed operator, immutable payment profiles, durable Bazaar publication and complete catalog receiving",
+    "readme": "stellar/scf-starforge-20261009/distribution/selections/NATIVE_FACILITATOR_OPERATOR.md",
+    "bin": {
+      "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
+    }
+  }
+}
