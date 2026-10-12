@@ -65,6 +65,16 @@ export class ReceivablesClient {
     return payload;
   }
   state(query) { return this.request('/state' + queryString(query)); }
+  cashPlans(query, {signal} = {}) { return this.request('/cash-plans' + queryString(query), {signal}); }
+  previewCashPlan(value, {signal} = {}) { return this.request('/cash-plans/preview', {method:'POST', body:value, signal}); }
+  cashPlan(id, query, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + queryString(query), {signal}); }
+  saveCashPlan(value, {signal} = {}) { return this.request('/cash-plans', {method:'POST', body:value, signal}); }
+  archiveCashPlan(id, value, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + '/archive', {method:'POST', body:value, signal}); }
+  reopenCashPlan(id, value, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + '/reopen', {method:'POST', body:value, signal}); }
+  cashPlanFile(id, name, query, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + '/files/' + segment(name) + queryString(query), {binary:true, signal}); }
+  compareCashPlans(query, {signal} = {}) { return this.request('/cash-plans/compare' + queryString(query), {signal}); }
+  cashPlanComparisonFile(name, query, {signal} = {}) { return this.request('/cash-plans/compare/export' + queryString({...query,name}), {binary:true, signal}); }
+  cashPlanOperation(requestId, {signal} = {}) { return this.request('/cash-plans/operations/' + segment(requestId), {signal}); }
   collectionCases(query, {signal} = {}) { return this.request('/collections' + queryString(query), {signal}); }
   collectionCase(id, query, {signal} = {}) { return this.request('/collections/' + segment(id) + queryString(query), {signal}); }
   saveCollectionCase(value, {signal} = {}) { return this.request('/collections', {method:'POST', body:value, signal}); }

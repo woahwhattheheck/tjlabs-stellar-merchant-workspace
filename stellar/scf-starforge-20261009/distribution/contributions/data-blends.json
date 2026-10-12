@@ -1,0 +1,33 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "data-blends",
+  "description": "Saved multi-source data joins, private review and complete customer delivery",
+  "commands": {
+    "data-blend": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/cli.mjs"
+  },
+  "commandDescriptions": {
+    "data-blend": "Retain CSVs, save explicit joins, create result editions, review, export and receive editable workspaces"
+  },
+  "exports": {
+    "./seller/data-blends": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/client.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/client.mjs"
+    },
+    "./seller/data-blends/sqlite": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/seller.mjs",
+    "./merchant/data-blends": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/mcp.mjs"
+  },
+  "applicationProviders": {
+    "data-blends": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "data-blends": "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/merchant-provider.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/cli.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/engine.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/server.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/ui/index.html",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/ui/app.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/data-blends/ui/style.css"
+  ]
+}

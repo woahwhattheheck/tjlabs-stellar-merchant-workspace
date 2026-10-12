@@ -261,7 +261,15 @@ and headless workflow, retained selection guards, configuration saves and recove
 The Applications editor can save named complete setup snapshots, export and
 receive all retained tool variants, and reconcile concurrent edits against the
 current saved application. See [Application setup and receiving](APPLICATION_SETUP.md)
-for the browser workflow and complete document format.
+for the browser workflow, complete document format and headless operator handoff.
+
+The native CLI can inspect or export that same setup document, prepare a receiving
+operation against an explicit host runtime, and save its original native review.
+The operation retains the full source, all variants, host bindings and request ID
+so another operator can continue it after interruption. Start with
+`application-setup-inspect --document COMPLETE_JSON`; the guide covers
+`application-setup-export`, `application-setup-prepare`,
+`application-setup-status` and `application-setup-save`.
 
 ## Application API and retained records
 
