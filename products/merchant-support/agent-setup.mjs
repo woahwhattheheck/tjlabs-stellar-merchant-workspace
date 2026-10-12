@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {CONFIG_SCHEMA,readSupportConfiguration,readMerchantConfig} from '../../stellar-forge/mcp-merchant-operator/config.mjs';
 import {fileBytes,line,privateSupportDirectory,failure} from '../../stellar-forge/mcp-merchant-operator/host-files.mjs';
 import {retainCaseArtifact} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/case-store.mjs';
+import {inspectServiceConnections} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/service-connections.mjs';
 import {initReleaseStore} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
 
 export const SUPPORT_AGENT_SETUP_SCHEMA='stellar-forge.merchant-support-agent-setup.v1';
@@ -34,17 +35,28 @@ async function originalConnection(path) {
 }
 
 /** Every write uses the existing release initializer or immutable case-artifact publisher. */
-export async function initializeSupportAgent({directory,connection,name='Merchant Support'}={}) {
+export async function initializeSupportAgent({directory,connection,name='Merchant Support',accountingConfig=null,buyerExpenseConnection=null}={}) {
   const root=absolute(directory,'agent directory'),source=absolute(connection,'Support connection file');
   name=line(name,'Merchant Support name');
   const selected=await originalConnection(source);
-  for(const path of [selected.selected.casesDirectory,selected.selected.sourceDirectory,selected.selected.packagesDirectory])
+  const service=await inspectServiceConnections({
+    accountingConfig:accountingConfig===null?null:absolute(accountingConfig,'accounting configuration file'),
+    buyerExpenseConnection:buyerExpenseConnection===null?null:absolute(buyerExpenseConnection,'buyer expense connection file'),
+  });
+  const nativeDirectories=[
+    ...Object.values(service.config.accounting?.workspaces??{}).flatMap(value=>
+      [value.directory,value.outboxDir,value.proofDir].filter(Boolean)),
+    ...Object.values(service.config.buyerExpenses?.workspaces??{}).map(value=>value.directory),
+  ];
+  for(const path of [selected.selected.casesDirectory,selected.selected.sourceDirectory,selected.selected.packagesDirectory,...nativeDirectories])
     if(inside(root,path)||inside(path,root))
-      throw failure('SUPPORT_SETUP_OVERLAP','Choose an agent directory separate from the original case, source and package stores.');
+      throw failure('SUPPORT_SETUP_OVERLAP','Choose an agent directory separate from the original case, source, package, accounting and buyer stores.');
   if(await realpath(dirname(root))!==dirname(root))
     throw failure('SUPPORT_SETUP_PATH','Use an existing canonical parent for the private agent directory.');
   await folder(root);
-  const request={schema:SUPPORT_AGENT_SETUP_SCHEMA,name,connection:source,connectionSha256:selected.sha256};
+  const serviceSelected=Boolean(service.selected.accounting||service.selected.buyer);
+  const request={schema:SUPPORT_AGENT_SETUP_SCHEMA,name,connection:source,connectionSha256:selected.sha256,
+    ...(serviceSelected?{serviceConnections:service.selected}:{})};
   const requestBytes=encode(request),requestPath=join(root,'support-agent-setup.json');
   const marker='setup-'+digest(requestBytes),entries=await readdir(root);
   if(entries.length&&!entries.includes('support-agent-setup.json')&&!entries.includes(marker))
@@ -58,44 +70,53 @@ export async function initializeSupportAgent({directory,connection,name='Merchan
   await folder(join(root,'customer-exports'));
   const configuration=join(root,'merchant-mcp.json');
   await retainCaseArtifact(configuration,encode({schema:CONFIG_SCHEMA,name,releaseStore:'./releases',
-    exportsDirectory:'./customer-exports',sources:{},supportConnection:source}));
+    exportsDirectory:'./customer-exports',sources:{},supportConnection:source,
+    ...(service.config.accounting?{accounting:service.config.accounting}:{}),
+    ...(service.selected.buyer?{buyerExpenseConnection:service.selected.buyer.path}:{})}));
   await readMerchantConfig(configuration);
   return {schema:SUPPORT_AGENT_SETUP_SCHEMA,state:'READY',configuration,connection:source,
     connectionSha256:selected.sha256,casesDirectory:selected.selected.casesDirectory,
-    sourceDirectory:selected.selected.sourceDirectory,packagesDirectory:selected.selected.packagesDirectory};
+    sourceDirectory:selected.selected.sourceDirectory,packagesDirectory:selected.selected.packagesDirectory,
+    ...(serviceSelected?{serviceConnections:service.selected,
+      accountingWorkspaces:Object.keys(service.config.accounting?.workspaces??{}),
+      buyerWorkspaces:Object.keys(service.config.buyerExpenses?.workspaces??{})}:{})};
 }
 
 /** Current host configuration can evolve after setup; inspection uses the original provider reader. */
 export async function inspectSupportAgent({configuration}={}) {
   const path=absolute(configuration,'merchant configuration file');
   const raw=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await fileBytes(path,1024*1024)));
-  await readMerchantConfig(path);
+  const merchant=await readMerchantConfig(path);
   if(typeof raw.supportConnection!=='string')throw failure('SUPPORT_SETUP_CONNECTION','Select a merchant host containing its original Support connection.');
   const connection=resolve(dirname(path),raw.supportConnection),selected=await originalConnection(connection);
   return {schema:SUPPORT_AGENT_SETUP_SCHEMA,state:'READY',configuration:path,connection,
     connectionSha256:selected.sha256,casesDirectory:selected.selected.casesDirectory,
     sourceDirectory:selected.selected.sourceDirectory,packagesDirectory:selected.selected.packagesDirectory,
     incidentSourcesFile:selected.selected.incidentSourcesFile??null,
-    packageSourcesFile:selected.selected.packageSourcesFile??null};
+    packageSourcesFile:selected.selected.packageSourcesFile??null,
+    accountingWorkspaces:Object.keys(merchant.accounting?.workspaces??{}),
+    buyerWorkspaces:Object.keys(merchant.buyerExpenses?.workspaces??{}),
+    buyerExpenseConnection:typeof raw.buyerExpenseConnection==='string'?resolve(dirname(path),raw.buyerExpenseConnection):null};
 }
 
 export async function supportAgentCli(argv=process.argv.slice(2)) {
   const {values,positionals}=parseArgs({args:argv,strict:true,allowPositionals:true,
-    options:{out:{type:'string'},connection:{type:'string'},name:{type:'string'},config:{type:'string'},help:{type:'boolean'}}});
+    options:{out:{type:'string'},connection:{type:'string'},name:{type:'string'},config:{type:'string'},'accounting-config':{type:'string'},'buyer-expense-connection':{type:'string'},help:{type:'boolean'}}});
   if(values.help) {
     if(positionals.length||Object.keys(values).length!==1)throw failure('SUPPORT_SETUP_OPTIONS','Use --help on its own.');
     return {command:'merchant-support-agent',
-      setup:'setup --out /private/support-agent --connection /private/support-connection.json [--name NAME]',
+      setup:'setup --out /private/support-agent --connection /private/support-connection.json [--name NAME] [--accounting-config /private/accounting.json] [--buyer-expense-connection /private/buyer-expenses.json]',
       inspect:'inspect --config /private/support-agent/merchant-mcp.json',
-      continuation:'Repeat setup with its original output, connection bytes and name. Inspect the original host after deliberately updating its connection.',
+      continuation:'Repeat setup with its original output, selected connection bytes and name. Inspect the original host after deliberately updating its connection.',
       guide:'products/merchant-support/OPERATING.md'};
   }
   if(positionals.length!==1||!['setup','inspect'].includes(positionals[0]))
     throw failure('SUPPORT_SETUP_OPTIONS','Choose setup or inspect.');
-  const action=positionals[0],allowed=action==='setup'?['out','connection','name']:['config'];
+  const action=positionals[0],allowed=action==='setup'?['out','connection','name','accounting-config','buyer-expense-connection']:['config'];
   if(Object.keys(values).some(key=>!allowed.includes(key)))
     throw failure('SUPPORT_SETUP_OPTIONS','Use only the options for the selected action.');
-  return action==='setup'?initializeSupportAgent({directory:values.out,connection:values.connection,name:values.name}):
+  return action==='setup'?initializeSupportAgent({directory:values.out,connection:values.connection,name:values.name,
+    accountingConfig:values['accounting-config']??null,buyerExpenseConnection:values['buyer-expense-connection']??null}):
     inspectSupportAgent({configuration:values.config});
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {

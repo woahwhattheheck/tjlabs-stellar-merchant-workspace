@@ -1,6 +1,6 @@
 # Merchant Support
 
-Operate a merchant from its original support case through implementation, service commitments, quotation and complete customer receiving. The browser, command line and merchant agent use the same saved case, source editions and native delivery operations.
+Operate a merchant from its original support case through implementation, service commitments, native adjustments, buyer period close, accountant handoff, quotation and complete customer receiving. The browser, command line and merchant agent use the same saved case, source editions and native delivery operations.
 
 ## Start with the existing work
 
@@ -14,6 +14,8 @@ The workspace provides the following complete workflow:
 | Agree and carry out the work | Workorder and Implementation | Original terms and packet, assigned tasks, full materials, receiving observations, measurements and edition comparisons |
 | Deliver the underlying files | Source delivery and Complete delivery | Original manifests and every source member, complete case history, native archives and a resumable customer receiving operation |
 | Operate service commitments | Service | Original terms, calendars, incident observations, exclusions, calculations and complete monthly reports |
+| Reconcile an agreed service adjustment | Adjustments | Reviewed service proposal, native adjustment and reverse-transfer verification, full native capture and buyer source |
+| Complete buyer and accountant work | Adjustments and original Buyer expenses | Purchase and credit coding, issued period, original accountant files, returned revisions and full project receiving |
 | Prepare and receive a quotation | Commercial | Full retained pricing inputs, quote editions, customer responses, source comparisons and complete pricing-workspace receiving |
 | Apply accepted scope and change orders | Commercial → Implementation | Exact accepted quotation, explicit task and plan choices, preserved delivery progress, linked commercial history and current receiving |
 | Continue through an agent | The installed Merchant Support provider | The same case operations, Service and quotation actions, complete-package operations and streamed original-file reads |
@@ -32,7 +34,7 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
 
 The existing **Build a product** view in Runtime workspace offers the same recipe. Its original request, selected commit, output and archive remain the inputs to installation and continuation. Follow [the original Source Build workflow](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md) to use the browser.
 
-Use the emitted archive and its actual SHA-256 with the original runtime profile and installer. The selection includes the original Support component, commissioning source engine, Service and commercial modules, merchant agent, native receiving code, Applications provider and this guide. It also carries the original runtime and managed release machinery.
+Use the emitted archive and its actual SHA-256 with the original runtime profile and installer. The selection includes the original Support component, commissioning source engine, Service and commercial modules, merchant agent, native receiving code, Applications providers and this guide. Accounting and buyer providers share their original owner lifecycles with Support; their complete native workspace source ships in the same selection. It also carries the original runtime and managed release machinery.
 
 The archive's README opens the complete product and operating guides under `source/`. Its `manifest.json` retains the original commit, every packaged file and the exact `merchant-support` recipe. The existing `starforge` executable exposes the selected original commands.
 
@@ -52,6 +54,8 @@ starforge support-console \
 Open the local URL printed by that original command. Choose the existing case or receive its complete package. The default source directory is `source-bundles` inside the case directory; the default package directory is a sibling named after the case directory with `-packages`. Keep the actual selected paths when reopening.
 
 A configured remote sender uses the existing `--handoff-sources` file. In Applications the corresponding optional field is **Private handoff source profiles**. The reviewed application binds that profile's bytes to the exact configuration loaded by its native listener.
+
+To operate Service adjustments and buyer/accountant handovers, select **Private accounting configuration** and **Private buyer expense connection** in Applications, or pass the corresponding `--accounting-config` and `--buyer-expense-connection` files to the direct command. [Operating instructions](OPERATING.md#connect-adjustments-buyer-work-and-the-accountant) cover the complete source-to-period workflow and native owner lifecycle.
 
 For a checkout, invoke the same command entry at `stellar/scf-starforge-20261009/sf74-merchant-support-console/server.mjs`. The native source archive engine uses Python; `SCF_PYTHON` can select the installed executable.
 
@@ -84,6 +88,6 @@ The [Complete delivery guide](../../stellar/scf-starforge-20261009/sf74-merchant
 
 ## Source ownership
 
-This product composes the maintained SF74 case store and codec, SF93 incidents, SF77 workorder, SF49 source editions and archives, SF97 pricing, original Support Handoffs receiver and merchant provider. Installation uses the existing Source Build, SF46 release, runtime profile and Applications lifecycle.
+This product composes the maintained SF74 case store and codec, SF93 incidents, SF77 workorder, SF49 source editions and archives, SF97 pricing, original Support Handoffs receiver, merchant provider, native settlement accounting and original SF36 buyer expense workspace. Installation uses the existing Source Build, SF46 release, runtime profile and Applications lifecycle.
 
 The original [implementation guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/IMPLEMENTATION.md), [Service guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_OPERATIONS.md) and [commercial guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/COMMERCIAL.md) describe the underlying records and operating commands. The [accepted quotation and change-order guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/COMMERCIAL_IMPLEMENTATION.md) connects those records to the same implementation and complete customer handoff.

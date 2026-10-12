@@ -185,3 +185,38 @@ The separate original customer portfolio operation completed all nine reported p
 https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791808699174559
 
 This entry owns the separate selected build/install/open operation. Its native completion is reported only when its original `result.json` is actually committed and read back. The funded workspace's existing33-tool receiving remains the separate original operation described in [the merchant continuation guide](../api-merchant-agent-receiving-921ba0-20261012/README.md).
+
+## 6. Continue this original host directly from Git
+
+The complete original host entry is [receive-from-git.py](./receive-from-git.py):
+
+~~~sh
+python3 receive-from-git.py
+~~~
+
+It creates or reopens the genuine private checkout at
+`/workspace/scratch/921ba0f574ac/prepaid-selected-source`, fetches the exact
+`6e4a2bebf22cf809587406087efbce9c11d4e449` commit from the maintained standalone
+repository, and verifies its origin, HEAD and unchanged tracked source. Sparse
+checkout reduces the initial working files; the original Git object selection
+remains available to the maintained distribution builder.
+
+The entry reads only the original TESTNET checkout's public origin and payment
+terms from `/dev/shm/921ba0-api-native-20261011/checkout.json`. It retains the
+starter request and exact original driver in
+`/dev/shm/921ba0-prepaid-installed-inputs-20261012`, then runs this same operation
+at `/dev/shm/921ba0-prepaid-installed-native-20261012`. An existing operation is
+continued with `--resume`. No purchase execution is requested.
+
+Both initial driver and request files use the selected original
+`sf88-operator-buyer-cli/node/store.mjs` writer and full byte comparison.
+An interrupted first write therefore preserves the original private temporary
+without leaving a partial named driver that a later continuation mistakes for
+complete source. Different existing named bytes are rejected.
+
+The original child is retained through real exit. SIGINT or SIGTERM received
+during dispatch is relayed to that same child. The selected driver then owns the
+documented installation-preparation recovery, source/receipt identity, native
+merchant/customer lifetime and complete result publication above. This entry
+does not change the already paid merchant's request or start a replacement
+purchase.
