@@ -421,13 +421,22 @@ class Workspace:
         for alias,source_id in recipe['bindings'].items():
             source = self.get('sources',source_id)
             db.execute(f'CREATE TEMP VIEW {ident(alias)} AS SELECT {",".join(ident(c) for c in source["columns"])} FROM main.{ident(source_id)}')
+        selected_reads = set()
         def authorizer(action, arg1,arg2, database,source):
             if action in {sqlite3.SQLITE_SELECT,sqlite3.SQLITE_RECURSIVE}: return sqlite3.SQLITE_OK
             if action==sqlite3.SQLITE_FUNCTION:
                 return sqlite3.SQLITE_DENY if str(arg2).lower() in {'load_extension','readfile','writefile','fts3_tokenizer'} else sqlite3.SQLITE_OK
             if action==sqlite3.SQLITE_READ:
                 if database=='temp' and arg1 in aliases: return sqlite3.SQLITE_OK
-                if database=='main' and arg1 in tables and source in aliases: return sqlite3.SQLITE_OK
+                if database=='main' and arg1 in tables and source in aliases:
+                    selected_reads.add(arg1)
+                    return sqlite3.SQLITE_OK
+                # SQLite count(*) may emit a second column-free table read with
+                # no view context. Permit it only after that selected view has
+                # authorized the table; unrelated/control tables remain denied.
+                # https://sqlite.org/c3ref/set_authorizer.html
+                if database=='main' and arg1 in selected_reads and arg2=='':
+                    return sqlite3.SQLITE_OK
             return sqlite3.SQLITE_DENY
         db.set_authorizer(authorizer)
         return db

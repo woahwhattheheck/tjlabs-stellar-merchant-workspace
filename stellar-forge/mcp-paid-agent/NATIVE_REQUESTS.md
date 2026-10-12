@@ -23,6 +23,16 @@ cover other resources, but native preparation requires this configured route and
 a matching offered payment option. The existing standalone quote workflow remains
 available on a broker workspace.
 
+## Use several configured services
+
+The [native registry](NATIVE_REGISTRY.md) joins existing native workspaces in one
+console and endpoint. Read **request-workspaces** or **client.workspaces()**, then
+retain the selected **workspaceId** with each intent. The console chooses among
+route/payment-compatible services. The typed client exposes
+**client.forWorkspace(id)** and **client.allHistoryPages()** for service-bound
+operations and complete shared history. Each original inbox, signer, approval
+channel and spending ledger remains in its configured service.
+
 ## Find an offer across the complete catalog
 
 Use **bazaar_resources** for browsing or **bazaar_search** for text search.

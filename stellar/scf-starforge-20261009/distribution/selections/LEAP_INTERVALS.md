@@ -1,5 +1,7 @@
 # Leap device intervals and Utility energy product
 
+Use the [energy operating guide](../../../../products/energy-operations/OPERATING.md) to choose among Utility, Leap and GridFabric and receive the selected customer installation.
+
 The `leap-intervals` selection packages the complete Leap interval operator and the original Utility energy product into one Starforge runtime. The original distribution builder owns selection, source acquisition, immutable package metadata and archive recovery. The original runtime installer owns dependency resolution, native preparation, lock validation and READY state.
 
 The product's `leap-intervals` command is a thin Node bridge to its original Python workspace. It supports source intake, explicit DEVICE ownership mapping, exact native load preparation, original upload jobs, errors, full-file reconciliation, complete missing-window pagination and portable receiving.
@@ -16,7 +18,7 @@ The product's `leap-intervals` command is a thin Node bridge to its original Pyt
 
 The Leap recipe extends the complete reviewed Utility recipe. It does not replace common provider registries or edit the Utility implementation to fit a stale dependency graph. Whole component directories cover dynamic source inputs, and explicit support members retain the application, guides, source declarations and executable receiving programs.
 
-The selection includes 9 source-owned contributions and 34 complete component directories. The original builder still discovers static imports and declared browser resources. Missing declared source, imports, licenses or required data remain concrete build failures.
+The selection includes 9 source-owned contributions and 36 complete component directories, including the current merchant console's budget and support dependencies. The original builder still discovers static imports and declared browser resources. Missing declared source, imports, licenses or required data remain concrete build failures.
 
 ## Build and preserve the original archive
 
@@ -107,7 +109,7 @@ Use the complete configuration in the [receiving guide](../../../../operations/s
 ```
 
 
-This single entrypoint builds and optionally preserves the selected archive, installs and inspects the original runtime, completes the original Utility receiving and then opens Leap. It preserves the existing stable operation IDs:
+A fresh sequence uses `sourceMode: "installed-package"` by default. It validates the selected Git checkout, builds and optionally preserves the complete archive, installs and inspects the original runtime, and passes that installation's full `package/manifest.json` and expected source commit to both receivers. Utility finishes before Leap opens. Existing sequence journals without `sourceMode` continue in their original legacy mode with their frozen declaration. It preserves the existing stable operation IDs:
 
 - `UTILITY-DATA-ENERGYTOOLBASE-20261012-1FB3`
 - `LEAP-DEVICE-INTERVAL-DELIVERY-20261012`

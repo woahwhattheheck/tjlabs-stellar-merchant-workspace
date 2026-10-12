@@ -196,3 +196,61 @@ The CLI returns zero after the requested operation completes, two when complete 
 An existing destination with different bytes remains intact. Reopen the original source and chosen receiving operation to resolve the changed file. Preserve original Inbox state, application state, task records and completed customer files together.
 
 This product supplies the caller/task and full-output receiving join. It composes the maintained Collections, Inbox, native approval, response reader and complete workspace recovery into one useful customer operation.
+
+
+## Receive an original recovered RPC result
+
+An original buyer can retain an uncertain transport outcome while its existing commerce recovery later saves the paid RPC result. The task receiver can select that exact saved read. The original attempt and the later result remain separate in the offline report.
+
+Use the installed original runtime and the same private commerce session. List its retained read editions first:
+
+```sh
+starforge buyer-inbox-task rpc-results \
+  --runtime /private/starforge/sf88-operator-buyer-cli \
+  --state /private/customer/node-state \
+  --inbox /private/commerce/session/inbox \
+  --commerce /private/commerce/session \
+  --intent ORIGINAL_INTENT
+```
+
+Each `native.rpcRecovery.reads` row contains the original `readId`, completion state, read/completed record hashes, retrieval timestamps and complete response identity. Select the intended complete row. The original SF36 reader authenticates its settlement against the same retained attempt, configuration, request and operator workspace.
+
+The Node API opens that selected edition as the existing verified-file interface:
+
+```js
+const found = await inbox.rpcResponses(intentId, { commerceDirectory });
+const selected = found.native.rpcRecovery.reads.find(row => row.readId === selectedReadId);
+if (!selected?.complete) throw new Error('Select a complete original RPC read');
+
+const response = await inbox.rpcResponse(intentId, {
+  commerceDirectory,
+  readId: selected.readId,
+  expectedResponseSha256: selected.response.sha256,
+});
+await response.saveAs('/private/customer/latest-ledger.json');
+const originalAttempt = response.native;
+const laterRead = response.recovery;
+```
+
+`rpc-results` and `rpcResponse` open the existing session source, compile its original seller offers, bind the selected buyer's exact method and terms, read the original authenticated finality journal, and select the existing recovery record. Complete receiving verifies every response byte. The read operation preserves the session's provider-read count at zero.
+
+For a full portable task packet, add the selected result to the existing task specification:
+
+```json
+{
+  "intentId": "ORIGINAL_INTENT",
+  "role": "Complete latest-ledger result",
+  "sourceEdition": "Original RPC recovery read",
+  "rpcResult": {
+    "commerceDirectory": "/private/commerce/session",
+    "readId": "READ_ID_FROM_RPC_RESULTS",
+    "responseSha256": "RESPONSE_SHA256_FROM_RPC_RESULTS"
+  }
+}
+```
+
+Run the normal `preview`, `create`, `receive` and `packet-inspect` commands. The task fingerprint includes the original request and the selected recovery edition: original commerce/session/plan identities, read ID, exact read/completed document hashes and response digest. The complete records are retained inside the receiving plan. Reopening verifies that same edition, and a predecessor comparison reports `resultChanged` when a later task selects another retained result.
+
+The report shows the original attempt's HTTP/status/error and the recovered result's retrieval time, settled transaction and original HTTP-200 acceptance separately. A mutable RPC value belongs to the later recorded observation time. Its full output link opens the complete original response file.
+
+For a direct verified copy, `rpc-read` accepts the same `--commerce`, `--intent`, `--read-id` and `--response-sha256` selection plus a new `--output` file. Existing task packets keep both supported original report byte sequences across the mobile-layout upgrade.

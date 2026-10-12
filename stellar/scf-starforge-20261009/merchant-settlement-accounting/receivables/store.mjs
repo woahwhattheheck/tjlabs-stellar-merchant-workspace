@@ -10,6 +10,8 @@ import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
 import {CreditControlWorkspace} from './credit-control-workspace.mjs';
+import {BankReceiptsWorkspace} from './bank-receipts-workspace.mjs';
+import {bankAccountRows, bankAccountSummary} from './bank-receipts.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
 import {paymentRequestSummary, requestRows} from './payment-requests.mjs';
 import {createInvoiceTransferVerifier} from './payment-requests-verifier.mjs';
@@ -87,6 +89,7 @@ export class ReceivablesWorkspace {
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
     this.creditControlWorkspace = new CreditControlWorkspace(this);
+    this.bankReceiptsWorkspace = new BankReceiptsWorkspace(this);
   }
   async init() {
     await this.statements.init();
@@ -138,6 +141,10 @@ export class ReceivablesWorkspace {
       result.workspaceId = this.collectionsWorkspace.workspaceId();
       if (record.collectionEventId) result.collectionEvent = structuredClone(this.collectionsWorkspace.row(record.collectionCaseId).events.find(row => row.id === record.collectionEventId));
     }
+    if (record.bankAccountId) result.bankAccount = bankAccountSummary(bankAccountRows(data).find(row => row.id === record.bankAccountId));
+    if (record.bankImportId) result.bankImport = this.bankReceiptsWorkspace.summary(record.bankImportId, data);
+    if (record.bankPostingId) result.bankPosting = this.bankReceiptsWorkspace.postingSummary(record.bankImportId, record.bankPostingId, data);
+    if (record.receiptIds) result.receipts = record.receiptIds.map(id => receiptSummary(this._receipt(id), data, asOf));
     if (record.invoiceIds) result.invoices = record.invoiceIds.map(id => invoiceSummary(this._invoice(id), data, asOf));
     if (record.allocationIds) result.allocations = record.allocationIds.map(id => structuredClone(this._allocation(id)));
     if (record.refundId) {
@@ -190,6 +197,8 @@ export class ReceivablesWorkspace {
         reason: row.document.reason, customerId: row.document.customer.id})),
       paymentRequests: requestRows(data).map(row => paymentRequestSummary(row, data, asOf)),
       refunds: this.refundsWorkspace.summaries(data, asOf),
+      bankAccounts: bankAccountRows(data).map(bankAccountSummary),
+      bankImports: this.bankReceiptsWorkspace.summaries(data),
       creditDispositions: dispositionRows(data).map(row => this.refundsWorkspace.dispositionSummary(row.id, data)),
       allocations: data.allocations, aging: agingReport(data, asOf),
       history: this.workspace.state.history.filter(row => row.action.startsWith('receivables_')).slice(-200).reverse()});
@@ -244,6 +253,18 @@ export class ReceivablesWorkspace {
   async refundFile(id, name) { return this.refundsWorkspace.refundFile(id, name); }
   async previewCreditDisposition(value) { return this.refundsWorkspace.previewCreditDisposition(value); }
   async applyCreditDisposition(value) { return this.refundsWorkspace.applyCreditDisposition(value); }
+  async bankAccounts(query = {}) { return this.bankReceiptsWorkspace.bankAccounts(query); }
+  async saveBankAccount(value) { return this.bankReceiptsWorkspace.saveBankAccount(value); }
+  async inspectBankSource(value) { return this.bankReceiptsWorkspace.inspectBankSource(value); }
+  async importBankSource(value) { return this.bankReceiptsWorkspace.importBankSource(value); }
+  async bankImports(query = {}) { return this.bankReceiptsWorkspace.bankImports(query); }
+  async bankImport(id, query = {}) { return this.bankReceiptsWorkspace.bankImport(id, query); }
+  async previewBankPosting(id, value) { return this.bankReceiptsWorkspace.previewBankPosting(id, value); }
+  async postBankReceipts(id, value) { return this.bankReceiptsWorkspace.postBankReceipts(id, value); }
+  async ignoreBankRows(id, value) { return this.bankReceiptsWorkspace.ignoreBankRows(id, value); }
+  async restoreBankRows(id, value) { return this.bankReceiptsWorkspace.restoreBankRows(id, value); }
+  async closeBankImport(id, value) { return this.bankReceiptsWorkspace.closeBankImport(id, value); }
+  async bankImportFile(id, name) { return this.bankReceiptsWorkspace.bankImportFile(id, name); }
   async settings(value) {
     return this._mutate('settings_saved', value, async data => {
       data.issuer = normalizeIssuer(value, data.issuer.version + 1); return {settings: true};
@@ -513,7 +534,7 @@ export class ReceivablesWorkspace {
       need(invoice.document.customer.id === receipt.customerId &&
         currencyKey(invoice.document.currency) === currencyKey(receipt.currency),
         'ALLOCATION_IDENTITY_MISMATCH', 'The invoice and receipt must have the same customer, currency and precision.', 409);
-      need(allocatedDate >= invoice.document.issueDate && allocatedDate >= receipt.receivedDate,
+      need(allocatedDate >= invoice.document.issueDate && allocatedDate >= (receipt.accountingDate ?? receipt.receivedDate),
         'INVALID_ALLOCATION_DATE', 'Allocate on or after both the invoice and receipt dates.');
       need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
         'Receive or adopt this payment’s original verified outgoing return before making another allocation.', 409);
@@ -559,7 +580,7 @@ export class ReceivablesWorkspace {
     return this._mutate('payment_voided', {...value, receiptId: id}, async (data, actor) => {
       const receipt = this._receipt(id), voidDate = dateValue(value.voidDate, 'void date'), reason = field(value.reason, 'void reason', 3000);
       need(receipt.status === 'RECORDED', 'RECEIPT_ALREADY_VOID', 'This receipt is already void.', 409);
-      need(voidDate >= receipt.receivedDate, 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
+      need(voidDate >= (receipt.accountingDate ?? receipt.receivedDate), 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
       need(data.allocations.filter(row => row.receiptId === id).every(row => row.releasedDate && row.releasedDate <= voidDate),
         'RECEIPT_HAS_ALLOCATIONS', 'Release this receipt’s allocations before the selected void date.', 409);
       need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
@@ -621,7 +642,8 @@ export class ReceivablesWorkspace {
           result.files.push({...file, name: 'documents/' + file.name});
         }
       }
-      for (const file of await this.refundsWorkspace.customerFiles(customerId, result.value.asOf)) {
+      for (const file of [...await this.refundsWorkspace.customerFiles(customerId, result.value.asOf),
+        ...await this.bankReceiptsWorkspace.customerFiles(customerId, result.value.asOf)]) {
         totalBytes += file.bytes.length;
         need(totalBytes <= 128_000_000, 'CUSTOMER_EXPORT_LIMIT', 'This customer export exceeds 128 MB. Select an earlier account date or individual documents.');
         result.files.push(file);

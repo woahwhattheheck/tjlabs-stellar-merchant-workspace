@@ -1,5 +1,7 @@
 # Utility energy product package
 
+Use the [energy operating guide](../../../../products/energy-operations/OPERATING.md) to choose among Utility, Leap and GridFabric and receive the selected customer installation.
+
 This source selection packages the complete Utility energy workflow through the existing Starforge distribution builder, runtime installer, Applications registry and merchant MCP host. Its original Python owner receives UtilityAPI and Green Button sources, retains source editions and reviews, queries native interval data, reconciles bills, prepares the original publisher and exports a complete customer workspace.
 
 The selection is named `utility-energy`. Its two installed product commands are `utility-energy` and the compatible alias `dataset-utility-energy`. The original installation, runtime, merchant, buyer, dataset, release and MCP commands selected by the recipe remain available.
@@ -79,7 +81,8 @@ Its input is one private JSON configuration file. Use the actual installed repos
 ```json
 {
   "sourceRoot": "/absolute/utility-runtime/package/source",
-  "sourceManifest": "/absolute/utility-runtime/package/source/operations/scf-utility-energy-receiving-20261012/source-manifest-891b.json",
+  "sourceManifest": "/absolute/utility-runtime/package/manifest.json",
+  "expectedSourceCommit": "FULL_ORIGINAL_COMMIT",
   "nodeExecutable": "/absolute/node",
   "pythonExecutable": "/absolute/python3",
   "chromium": "/absolute/chrome-headless-shell",
@@ -112,7 +115,9 @@ That completed core operation records 20 original imports, 1,340 selected rows a
 62266c0da32ddf56f862c7e3467a45a89278d59795238c12512bfbcaded5f8cf
 ```
 
-The separate `source-manifest-891b.json` records the 891b implementation identities: 62 members are identical to the preceding declaration; the shared retained-download member includes its original subsequent lease-close recovery. The first declaration remains intact for its own cut. The recipe and installer additionally bind the package's actual build commit; the source declaration identifies the reviewed implementation bytes. Every declared member is checked by byte length, SHA-256 and Git blob before a customer owner opens. Select the declaration that matches the package rather than editing source to satisfy a stale declaration.
+New receiving on this installed package uses its complete `package/manifest.json`. The receiver preserves all manifest members, verifies their byte lengths, SHA-256 values and Git blobs, and binds the installed declaration to the runtime's actual source commit and complete manifest before managed operation. The frozen Utility declaration supplies the original operation/tool metadata and required source paths.
+
+The separate `source-manifest-891b.json` retains the 891b implementation identities for its original source cut and existing receiving journals. Its first predecessor also remains intact. Continue an existing journal with its original selected declaration; use the full installed manifest for a new current-package receiving operation.
 
 ## Receiving phases and recovery
 

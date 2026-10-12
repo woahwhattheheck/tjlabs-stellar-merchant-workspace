@@ -183,11 +183,201 @@ async function verifiedRuntime(directory, intent, { allowUnobservedPreparation =
     throw new Error("The original Java dependency files changed; select a distinct dependency edition");
   if (prior.classpathSha256 && hash(await ordinary(join(directory, "classpath.txt"))) !== prior.classpathSha256)
     throw new Error("The original complete Java classpath changed");
+  if (prior.receiving) await verifiedReceivedRuntime(directory, prior);
   if (!allowUnobservedPreparation && prior.preparation?.code !== 0) {
     const error = new Error("Continue prepare on this original Java runtime to observe its complete Maven result");
     error.code = "OPENLINEAGE_JAVA_PREPARATION_UNOBSERVED"; throw error;
   }
   return prior;
+}
+
+const RUNTIME_PACKAGE_SCHEMA = "commons.openlineage.java-runtime-package.v1";
+const RUNTIME_RECEIVING_SCHEMA = "commons.openlineage.java-runtime-receiving.v1";
+const RUNTIME_ORIGIN_FILES = ["OpenLineageNativeProducer.java", "pom.xml", "runtime-intent.json", "java-runtime.json"];
+function runtimePayloadHash(payload) { return hash(encoded(payload)); }
+function packageFile(path, bytes) {
+  return { path, sha256: hash(bytes), bytes: bytes.length, base64: bytes.toString("base64") };
+}
+function dependencyPath(index, entry) {
+  return "dependencies/" + String(index).padStart(6, "0") + "-" + entry.sha256 + "/" + basename(entry.path);
+}
+function runtimeFilesFromPackage(bytes) {
+  const packageSha256 = hash(bytes), bundle = JSON.parse(Buffer.from(bytes).toString("utf8"));
+  const { payloadSha256, ...payload } = bundle;
+  if (payload.schema !== RUNTIME_PACKAGE_SCHEMA || runtimePayloadHash(payload) !== payloadSha256 ||
+      !Array.isArray(payload.dependencies) || !payload.dependencies.length || !Array.isArray(payload.files))
+    throw new Error("Read a complete original Java runtime package");
+  const files = new Map(), expected = new Set(RUNTIME_ORIGIN_FILES.map(name => "origin/" + name));
+  for (const name of ["maven-preparation.json", "maven.stdout", "maven.stderr", "runtime-received-origin.json"])
+    if (payload.originFiles?.includes(name)) expected.add("origin/" + name);
+  if (!Array.isArray(payload.originFiles) || payload.originFiles.some(name =>
+      ![...RUNTIME_ORIGIN_FILES, "maven-preparation.json", "maven.stdout", "maven.stderr", "runtime-received-origin.json"].includes(name)))
+    throw new Error("The runtime package declares an unexpected original preparation file");
+  for (let index = 0; index < payload.dependencies.length; index++) {
+    const entry = payload.dependencies[index];
+    if (!entry || !/^[0-9a-f]{64}$/.test(entry.sha256) || !Number.isSafeInteger(entry.bytes) || entry.bytes < 1 ||
+        typeof entry.originPath !== "string" || basename(entry.originPath) !== entry.name ||
+        !/^[A-Za-z0-9_.-]+\.jar$/.test(entry.name) || entry.path !== dependencyPath(index, { path: entry.originPath, sha256: entry.sha256 }))
+      throw new Error("The runtime package dependency identity differs");
+    expected.add(entry.path);
+  }
+  for (const file of payload.files) {
+    if (!file || !expected.has(file.path) || files.has(file.path) || typeof file.base64 !== "string" ||
+        !/^[0-9a-f]{64}$/.test(file.sha256) || !Number.isSafeInteger(file.bytes) || file.bytes < 0)
+      throw new Error("Unexpected or duplicate runtime package file");
+    const data = Buffer.from(file.base64, "base64");
+    if (data.toString("base64") !== file.base64 || data.length !== file.bytes || hash(data) !== file.sha256)
+      throw new Error("A complete runtime package file differs from its original bytes");
+    files.set(file.path, data);
+  }
+  if (files.size !== expected.size || [...expected].some(path => !files.has(path)))
+    throw new Error("The runtime package is missing complete original files");
+  const originalIntent = JSON.parse(files.get("origin/runtime-intent.json"));
+  const originalReceipt = JSON.parse(files.get("origin/java-runtime.json"));
+  if (!sameIntent(payload.intent, originalIntent) || !sameIntent(originalReceipt, originalIntent) ||
+      originalReceipt.preparation?.code !== 0 ||
+      hash(files.get("origin/OpenLineageNativeProducer.java")) !== originalIntent.javaSourceSha256 ||
+      hash(files.get("origin/pom.xml")) !== originalIntent.pomSha256 ||
+      originalReceipt.entries?.length !== payload.dependencies.length)
+    throw new Error("The runtime package must retain its original successful preparation and selected sources");
+  if (!originalReceipt.receiving) {
+    const preparation = files.has("origin/maven-preparation.json") && JSON.parse(files.get("origin/maven-preparation.json"));
+    if (!preparation || preparation.state !== "COMPLETE" || preparation.command?.code !== 0 ||
+        !sameIntent(preparation.intent, originalIntent) || preparation.id !== originalReceipt.preparationId ||
+        JSON.stringify(preparation.entries) !== JSON.stringify(originalReceipt.entries) ||
+        !files.has("origin/maven.stdout") || !files.has("origin/maven.stderr"))
+      throw new Error("Keep the original completed Maven preparation and its actual command output");
+  } else if (!files.has("origin/runtime-received-origin.json")) {
+    throw new Error("Keep the preceding runtime's complete original receiving descriptor");
+  }
+  for (let index = 0; index < payload.dependencies.length; index++) {
+    const entry = payload.dependencies[index], original = originalReceipt.entries[index], data = files.get(entry.path);
+    if (entry.originPath !== original.path || entry.sha256 !== original.sha256 || entry.bytes !== original.bytes ||
+        !data || hash(data) !== entry.sha256 || data.length !== entry.bytes)
+      throw new Error("The complete native dependency differs from the prepared original");
+  }
+  if (!payload.dependencies.some(entry => entry.name === "openlineage-java-" + JAVA_PRODUCER_VERSION + ".jar"))
+    throw new Error("The original released OpenLineage SDK is missing");
+  return { payload, files, originalReceipt, packageSha256, payloadSha256 };
+}
+
+/** Verify a complete runtime transfer without installing or invoking a resolver. */
+export async function verifyJavaProducerRuntimePackage(bytes) {
+  const verified = runtimeFilesFromPackage(bytes), { intent } = await selectedRuntimeSource();
+  if (!sameIntent(verified.payload.intent, intent))
+    throw new Error("The received runtime must select this application's original Java source and POM");
+  return { schema: verified.payload.schema, packageSha256: verified.packageSha256,
+    payloadSha256: verified.payloadSha256, sdkVersion: intent.sdkVersion,
+    javaSourceSha256: intent.javaSourceSha256, pomSha256: intent.pomSha256,
+    dependencies: verified.payload.dependencies.map(({ base64, ...entry }) => entry),
+    fileCount: verified.files.size, bytes: Buffer.from(bytes).length };
+}
+
+async function verifiedReceivedRuntime(directory, receipt) {
+  const origin = await json(join(directory, "runtime-received-origin.json"));
+  const selected = receipt.receiving;
+  if (origin.schema !== RUNTIME_RECEIVING_SCHEMA || selected.schema !== RUNTIME_RECEIVING_SCHEMA ||
+      selected.packageSha256 !== origin.packageSha256 || selected.payloadSha256 !== origin.payloadSha256 ||
+      hash(await ordinary(join(directory, "runtime-received-origin.json"))) !== selected.originDescriptorSha256 ||
+      !sameIntent(origin.intent, receipt) || origin.originReceipt.preparation?.code !== 0 ||
+      origin.dependencies.length !== receipt.entries.length || origin.originFiles.length < RUNTIME_ORIGIN_FILES.length)
+    throw new Error("The received runtime's original preparation descriptor changed");
+  for (const file of origin.originFiles) {
+    if (!/^origin\/[A-Za-z0-9_.-]+$/.test(file.path)) throw new Error("Unexpected retained runtime origin path");
+    const bytes = await ordinary(join(directory, file.path));
+    if (hash(bytes) !== file.sha256 || bytes.length !== file.bytes)
+      throw new Error("The received runtime's retained original source or preparation changed");
+  }
+  for (let index = 0; index < origin.dependencies.length; index++) {
+    const dependency = origin.dependencies[index], entry = receipt.entries[index];
+    if (dependency.path !== dependencyPath(index, { path: dependency.originPath, sha256: dependency.sha256 }) ||
+        entry.path !== join(directory, dependency.path) || entry.sha256 !== dependency.sha256 || entry.bytes !== dependency.bytes)
+      throw new Error("The received runtime's local classpath differs from the original dependency selection");
+  }
+}
+
+/** Carry complete unchanged resolved dependencies, source and preparation to an independent host. */
+export async function exportJavaProducerRuntime({ directory, destination } = {}) {
+  if (!directory || !destination) throw new Error("Provide the original runtime and its new output file");
+  directory = resolve(directory); destination = resolve(destination);
+  const { intent } = await selectedRuntimeSource();
+  return new LineageWorkspace(directory).lock(async () => {
+    const receipt = await verifiedRuntime(directory, intent), files = [], originFiles = [...RUNTIME_ORIGIN_FILES];
+    for (const name of originFiles) files.push(packageFile("origin/" + name, await ordinary(join(directory, name))));
+    if (receipt.receiving) {
+      const name = "runtime-received-origin.json";
+      originFiles.push(name); files.push(packageFile("origin/" + name, await ordinary(join(directory, name))));
+    } else {
+      const preparation = await json(join(directory, "maven-preparation.json"));
+      for (const [name, path] of [["maven-preparation.json", join(directory, "maven-preparation.json")],
+        ["maven.stdout", preparation.command?.stdoutPath], ["maven.stderr", preparation.command?.stderrPath]]) {
+        if (!path) throw new Error("Retain the original successful preparation output");
+        originFiles.push(name); files.push(packageFile("origin/" + name, await ordinary(path)));
+      }
+    }
+    const dependencies = [];
+    for (let index = 0; index < receipt.entries.length; index++) {
+      const entry = receipt.entries[index], bytes = await ordinary(entry.path), path = dependencyPath(index, entry);
+      if (hash(bytes) !== entry.sha256 || bytes.length !== entry.bytes)
+        throw new Error("The selected dependency changed while exporting its complete runtime");
+      dependencies.push({ path, name: basename(entry.path), originPath: entry.path, sha256: entry.sha256, bytes: entry.bytes });
+      files.push(packageFile(path, bytes));
+    }
+    const payload = { schema: RUNTIME_PACKAGE_SCHEMA, intent, originFiles, dependencies, files };
+    const bytes = encoded({ ...payload, payloadSha256: runtimePayloadHash(payload) });
+    const verified = await verifyJavaProducerRuntimePackage(bytes);
+    await newOrSame(destination, bytes);
+    return { ...verified, destination };
+  });
+}
+
+/** Receive the same runtime locally, rebinding only dependency paths and preserving every original byte. */
+export async function receiveJavaProducerRuntime({ bytes, directory } = {}) {
+  if (!bytes || !directory) throw new Error("Provide the complete original runtime package and receiving directory");
+  const complete = Buffer.from(bytes), verified = runtimeFilesFromPackage(complete);
+  const { intent } = await selectedRuntimeSource();
+  if (!sameIntent(verified.payload.intent, intent))
+    throw new Error("The runtime package belongs to a different original Java application source");
+  directory = resolve(directory); await privateDirectory(directory);
+  const receivingPath = join(directory, "java-runtime-receiving.json");
+  const selection = { schema: RUNTIME_RECEIVING_SCHEMA, packageSha256: verified.packageSha256,
+    payloadSha256: verified.payloadSha256, intent };
+  await initialDirectory(directory, "java-runtime-receiving.json", encoded(selection));
+  return new LineageWorkspace(directory).lock(async () => {
+    const prior = await exists(receivingPath) ? await json(receivingPath) : null;
+    if (prior && (prior.schema !== selection.schema || prior.packageSha256 !== selection.packageSha256 ||
+        prior.payloadSha256 !== selection.payloadSha256 || !sameIntent(prior.intent, intent)))
+      throw new Error("This receiving directory belongs to a different original runtime package");
+    if (!prior) await newOrSame(receivingPath, encoded(selection));
+    if (prior?.state === "COMPLETE") return verifiedRuntime(directory, intent);
+    for (const [name, content] of verified.files) {
+      await privateDirectory(dirname(join(directory, name)));
+      await newOrSame(join(directory, name), content);
+    }
+    await newOrSame(join(directory, "OpenLineageNativeProducer.java"), verified.files.get("origin/OpenLineageNativeProducer.java"));
+    await newOrSame(join(directory, "pom.xml"), verified.files.get("origin/pom.xml"));
+    await newOrSame(join(directory, "runtime-intent.json"), encoded(intent));
+    const origin = { ...selection, originReceipt: verified.originalReceipt,
+      originFiles: verified.payload.files.filter(file => file.path.startsWith("origin/")).map(({ base64, ...file }) => file),
+      dependencies: verified.payload.dependencies };
+    const originBytes = encoded(origin);
+    await newOrSame(join(directory, "runtime-received-origin.json"), originBytes);
+    const entries = verified.payload.dependencies.map(entry => ({ path: join(directory, entry.path), bytes: entry.bytes, sha256: entry.sha256 }));
+    const classpath = Buffer.from(entries.map(entry => entry.path).join(delimiter) + "\n");
+    await newOrSame(join(directory, "classpath.txt"), classpath);
+    const publication = { path: join(directory, "classpath.txt"), bytes: classpath.length, sha256: hash(classpath) };
+    const receipt = { ...intent, directory, preparedAt: verified.originalReceipt.preparedAt, entries,
+      preparation: { kind: "received", code: 0, originalPreparationId: verified.originalReceipt.preparationId,
+        originalCommand: verified.originalReceipt.preparation },
+      preparationId: verified.originalReceipt.preparationId,
+      classpathSha256: hash(classpath), classpathBytes: classpath.length, publication,
+      receiving: { ...selection, originDescriptorSha256: hash(originBytes) } };
+    await newOrSame(join(directory, "java-runtime.json"), encoded(receipt));
+    const received = await verifiedRuntime(directory, intent);
+    await save(receivingPath, { ...selection, state: "COMPLETE", receivedAt: new Date().toISOString(),
+      dependencyCount: entries.length, dependencyBytes: entries.reduce((total, entry) => total + entry.bytes, 0) });
+    return received;
+  });
 }
 
 /** Resolve only the native SDK runtime, preserving interrupted preparation in the same directory. */
@@ -375,7 +565,7 @@ export async function javaProducerCommand(args) {
   const [action, ...words] = args, values = {}, inputs = [];
   const flags = new Set(["--offline"]), options = new Set(["--runtime", "--directory", "--connection",
     "--token-file", "--input", "--operation-id", "--compression", "--java", "--maven", "--flock",
-    "--previous-java-source-sha256"]);
+    "--previous-java-source-sha256", "--out"]);
   for (let i = 0; i < words.length; i++) {
     const key = words[i];
     if (flags.has(key)) { values[key] = true; continue; }
@@ -389,11 +579,18 @@ export async function javaProducerCommand(args) {
   }
   if (action === "prepare") return prepareJavaProducer({ directory: values["--runtime"],
     maven: values["--maven"], flock: values["--flock"], offline: values["--offline"] === true });
+  if (action === "runtime-export") return exportJavaProducerRuntime({ directory: values["--runtime"], destination: values["--out"] });
+  if (action === "runtime-verify" || action === "runtime-receive") {
+    if (inputs.length !== 1) throw new Error("Select one complete original runtime package with --input");
+    const bytes = await ordinary(resolve(inputs[0]));
+    return action === "runtime-verify" ? verifyJavaProducerRuntimePackage(bytes)
+      : receiveJavaProducerRuntime({ bytes, directory: values["--runtime"] });
+  }
   if (action === "emit") return emitJavaProducer({ runtime: values["--runtime"], directory: values["--directory"],
     connection: values["--connection"], tokenFile: values["--token-file"], inputs,
     operationId: values["--operation-id"], compression: values["--compression"],
     java: values["--java"], previousJavaSourceSha256: values["--previous-java-source-sha256"] });
-  throw new Error("Use native-java prepare --runtime DIR, or native-java emit with the original connection and input files");
+  throw new Error("Use native-java prepare, emit, runtime-export, runtime-verify or runtime-receive with the original selected files");
 }
 if (process.argv[1] && await fs.realpath(resolve(process.argv[1])).then(path => path === fileURLToPath(import.meta.url), () => false)) {
   javaProducerCommand(process.argv.slice(2)).then(result => console.log(JSON.stringify(result, null, 2))).catch(error => {

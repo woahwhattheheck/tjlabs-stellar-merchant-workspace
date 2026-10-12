@@ -22,6 +22,8 @@ The first real publisher invocation failed while client-generator.mjs read a mis
 
 With those files present, the original native workflow advanced to MCP_RECEIVING_PREPARED. The receiver's export provider then required its merchant-exports private directory. The complete run-receiving.mjs postimage creates and validates that directory inside openOwner(), after the existing journal binding and initial directory checks and before constructing the original provider. Source, publisher, request, export and receiving identities remain unchanged.
 
+A subsequent actual restore reached the existing MCP journal and exposed a comparison of native modification times as if they were source content. Native file descriptors include receiving-host modifiedAt values. The receiver now preserves its complete original observed inventory and compares the full file membership, paths, byte counts, SHA256 values, workspace, schema and kind across restores. It retains the new physical modification times in the current observation. During each live run, it still compares the entire fresh native inventory before and after receiving. Any content or membership difference saves the complete changed inventory and identifies the differing paths.
+
 The previous saved checkpoint also retained its predecessor's generated manifest at the archive root. The continuation verifies that preceding manifest as an ordinary pinned member and retains the new manifest separately in run-history. Following archives keep those previous manifests in run-history and contain one current complete-checkpoint-manifest.json.
 
 ## Whole programme
@@ -38,6 +40,12 @@ Source and received application ports remain 53173 and 53174. DATASETTE_CHROMIUM
 
 ## Recovery and complete delivery
 
+The original publisher and all 17 MCP operations completed at 2026-10-12 21:02:35 UTC. This edition saves a complete Datasette_Publisher_Complete_Checkpoint.zip and result immediately after that phase, before fetching or building the installed application. The subsequent installed checkpoint retains the publisher save identities. A disconnected installed build can therefore continue from the completed publisher instead of repeating source and MCP work.
+
+The receiving entrypoint first reconciles the exact preceding producer using its observed physical PID and the SHA256 of its actual Python command argument. It reads that identity without printing command bytes. If the same producer is still active, it returns its current original journal phases for continuation; otherwise the complete original restore proceeds. The transfer verifies the exact archive size and SHA256 and, after a mismatched physical transfer, refreshes the same canonical file selection once before receiving it again. Expected and received byte identities are retained.
+
+New checkpoint manifests preserve each regular file's nanosecond modification time and the complete original runtime symlink targets. Restore validates all regular files before creating the declared links, checks parent links before writing, and restores the original times. The selected Git fetch keeps genuine commit/tree/blob objects and uses a single pack thread with a 32MiB pack window to reduce memory pressure on the shared host.
+
 Each native exit records the original publisher and installed journals, logs and complete result. At the same normal save boundary it captures the existing cgroup memory counters and filesystem capacity for the fleet's original capacity recovery, without starting another worker. The full checkpoint retains source, original inputs, all workspaces, received files, application/runtime state, browser images and downloads, actual Git objects and the controller. Runtime sockets and reproducible temporary caches are recorded as exclusions.
 
 The same process uploads the full checkpoint and result and validates every per-file succeeded status and returned file identity. An actual transfer failure retries the same file; if the complete archive still cannot transfer, the exact archive is saved as ordered 10MiB parts with a complete assembly manifest. The receiver retains its process for retry-save input if that transfer recovery is still unfinished.
@@ -46,3 +54,22 @@ The authoritative current case and source-owner integration are kept in the orig
 https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791836903596469
 
 The separate customer Analysis workbook programme retains its original receiver and saved analytical workspace.
+
+## Browser runtime continuation on a receiving host
+
+The first recovered host completed the canonical installed Git fetch and checkout, then revealed that the preceding host's Chromium path was absent. The whole genuine checkout and completed publisher were saved as the exact 224,425,002-byte archive in 22 ordered parts; the canonical parts manifest is libfile_f62e9b0bfa1481918321ab975cf4d87e. The complete receiver now downloads and verifies each original part, concatenates them in order, verifies the full archive and restores that same workspace.
+
+The controller resolves the actual existing Playwright module and its own Chromium executable path, with supported host browser commands as additional candidates. When an existing browser runtime is absent, it selects the actual published Playwright version, installs that exact version with its npm package lock in native-browser/node, and invokes its original Chromium installer under native-browser/browsers. The real executable version and paths are retained before the maintained installed browser programme begins. DATASETTE_PLAYWRIGHT and DATASETTE_CHROMIUM can select already equipped paths.
+
+A completed publisher save is reused when the current complete publisher result and original source identities exactly match the retained completed-phase report and both returned saved file identities are present. This keeps the original publisher artifact while the actual installed runtime continues. The final archive retains the current complete application, repository objects, browser runtime, original workspaces, downloads, logs and screenshots.
+
+## Empty directory restoration
+
+The actual full-archive receiving operation restored all Git files and object bytes, but the predecessor's file-only inventory omitted empty .git/refs. Git therefore could not recognize the otherwise complete repository. This edition records every retained directory's original mode and modification time in the complete manifest and restores those directories alongside all original files and runtime links. For the already saved predecessor, the controller checks its detached HEAD, config and object store, then uses Git's own initialization to recreate the missing Git directories. It verifies that the original HEAD bytes remain unchanged and resolves the exact selected commit before continuing. That original repair completed successfully in the native receiving run on 12 October.
+
+Independent canonical archive-part downloads use four workers, while assembly remains ordered and each part plus the entire archive must match its original byte count and SHA256. The actual22-part restoration completed without repeating the source fetch or the completed publisher operation.
+
+
+## Existing browser selected on the receiving host
+
+The 21:43 UTC continuation restores the complete 226,343,282-byte archive with SHA-256 `dce93f305f636c9266f8a768382ce840daf1a1308d66885ff86050baa67c6c45`, using all 22 saved parts and the exact manifest `libfile_6384df28cb18819191dc60e2e80080a6`. The previous receiver exited after that save. The current host has Playwright 1.62.1 and a working Chrome for Testing 151.0.7922.34 at `/workspace/scratch/64b7f381b23e/browser-runtime/chrome-151.0.7922.34/chrome-linux64/chrome`. The complete receiver considers that actual existing executable before invoking a browser installer. `DATASETTE_CHROMIUM` remains the explicit host override. The selected executable and its actual version are recorded in the original programme result.

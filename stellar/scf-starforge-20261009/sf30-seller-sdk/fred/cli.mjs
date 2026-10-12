@@ -84,10 +84,11 @@ async function foreground(session, connectionFile) {
   return { state: 'CLOSED' };
 }
 export async function main(args = process.argv.slice(2)) {
+  if (args[0] === 'qcew') return (await import('./qcew/cli.mjs')).runQcewCli(args.slice(1));
   if (args[0] === 'releases') return runFredReleaseAcquisitionCli(args.slice(1));
   if (!args.length || args.includes('--help') || ['help','-h'].includes(args[0])) {
     console.log(USAGE + '\n\n' + FRED_TEMPLATE_USAGE + '\n\n' + FRED_RELEASE_PROJECT_USAGE +
-      '\n\nStandalone release source acquisition, inspection and planning:\nstarforge fred releases --help'); return;
+      '\n\nStandalone release source acquisition, inspection and planning:\nstarforge fred releases --help\n\nCounty wage-report production, original BLS sources and complete report receiving:\nstarforge fred qcew --help'); return;
   }
   const [command, ...rest] = args;
   if (FRED_TEMPLATE_COMMANDS.includes(command)) {

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Native request preparation shares the original SF43 tool and SF88 intent.
-export const nativeRequestActions = ['request-workspace','request-prepare','request-review'];
+export const nativeRequestActions = ['request-workspace','request-workspaces','request-history','request-prepare','request-review'];
 export const NATIVE_REQUEST_LIMITS = Object.freeze({
   bodyBytes:1048576, toolRequestBytes:131072, sourcePageBytes:1048576, preparedConfigBytes:65536,
 });
 export const nativeRequestSchema = {
   properties:{
+    workspaceId:{type:'string',pattern:'^[a-z0-9][a-z0-9-]{0,63}$',
+      description:'Exact trusted host workspace ID from request-workspaces. Keep this ID with the original intent for every lifecycle call and result range.'},
     handle:{type:'string',minLength:1,maxLength:128,
       description:'Original cached Bazaar handle selected in this connected buyer workspace.'},
     input:{type:'object',additionalProperties:false,properties:{
@@ -18,7 +20,7 @@ export const nativeRequestSchema = {
     }},
   },
   anyOf:[
-    {required:['action'],properties:{action:{const:'request-workspace'}}},
+    {required:['action'],properties:{action:{enum:['request-workspace','request-workspaces','request-history']}}},
     {required:['action','intentId','handle','maxAtomic','input'],properties:{action:{const:'request-prepare'}}},
     {required:['action','intentId'],properties:{action:{const:'request-review'}}},
   ],

@@ -6,9 +6,11 @@ The original accepted operation is the 56,586-byte `Utility_Original_Customer_Op
 
 ## Source and runtime
 
-Use a complete checkout containing the source commit named by `source-manifest.json`, or the complete repository-shaped `source/` directory of a maintained merchant package with the declared exact postimages. The root must contain both `stellar/` and `stellar-forge/`.
+For a new receiving operation on a maintained installation, set `sourceRoot` to its complete `package/source` directory and `sourceManifest` to that installation's `package/manifest.json`. Set `expectedSourceCommit` to the selected full release commit. The receiver verifies the complete installed member list, and managed receiving binds that declaration to the actual READY runtime manifest.
 
-The declaration pins all 63 Utility, original source, native Python/XML and receiving transport files. That is an identity check for this workflow's declared source. The entire maintained repository/package supplies the other transitive modules, source-owned contributions, merchant provider registry, Applications worker and selected native dependencies. The runner imports the actual `config.mjs`, `operator.mjs`, `serve.mjs`, Utility owner/client and original Socrata publisher before opening the customer writer.
+An existing operation may continue with its original frozen Utility declaration and the complete source cut it names. Keep that journal's selected declaration unchanged. In either mode, the source root contains both `stellar/` and `stellar-forge/`.
+
+The frozen declaration pins all 63 Utility, original source, native Python/XML and receiving transport files. Installed mode retains those required source paths and the original operation/tool metadata while checking every file from the complete current package manifest. The entire maintained repository/package supplies the other transitive modules, source-owned contributions, merchant provider registry, Applications worker and selected native dependencies. The runner imports the actual `config.mjs`, `operator.mjs`, `serve.mjs`, Utility owner/client and original Socrata publisher before opening the customer writer.
 
 The installed public Green Button examples are `sf30-seller-sdk/utility-energy/examples/test_usage_data.xml` and `examples/test_usage_data_01.xml`, with the original Apache 2.0 text at `contracts/GreenButtonAlliance-LICENSE.txt`. Their bytes and Git blobs are identical to the retained upstream reference files. The source contract preserves the original upstream paths, URLs and commit. These explicit production example paths are accepted by the existing package collector.
 
@@ -28,7 +30,9 @@ A configuration for reconstructing the closed original example operation from it
 
 ~~~json
 {
-  "sourceRoot": "/complete/merchant/source",
+  "sourceRoot": "/completed/original-native-runtime/package/source",
+  "sourceManifest": "/completed/original-native-runtime/package/manifest.json",
+  "expectedSourceCommit": "FULL_SELECTED_COMMIT",
   "nodeExecutable": "/existing/node",
   "pythonExecutable": "/existing/python3",
   "chromium": "/existing/chrome-headless-shell",

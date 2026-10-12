@@ -1,5 +1,7 @@
 # GridFabric Plaid selected product
 
+Use the [energy operating guide](../../../../products/energy-operations/OPERATING.md) to choose among Utility, Leap and GridFabric and receive the selected customer installation.
+
 This source-owned selection adds the complete GridFabric Plaid operator to the original Leap and Utility product recipe. The original Starforge builder still owns source acquisition, dependency closure, recipe binding and archive recovery; the original installer owns preparation, dependency resolution, load validation and READY state.
 
 The new `gridfabric-plaid` command opens the original Node SQLite application. It retains source and correction bytes, reviewed report mappings, original callback deliveries, event and opt histories, queued device intents, management receipts, complete report files and portable recovery. Plaid remains responsible for native event scheduling.
@@ -10,7 +12,7 @@ The GridFabric contribution exposes the original CLI and its actual workspace, H
 
 The recipe extends the existing `leap-intervals` selection without changing its original components, provider registrations, Utility implementation members or feature groups. It adds one product contribution and the complete GridFabric application and receiving component directories. Explicit support members preserve the source declaration and original functional generator/data manifest.
 
-The resulting recipe selects 10 source-owned contributions and 37 complete component directories. The builder still discovers static imports and declared dynamic resources. A missing actual import or declaration remains a build failure; a complete installed runtime is established only by its original installer receipt.
+The resulting recipe selects 10 source-owned contributions and 39 complete component directories, including the current merchant console's budget and support dependencies. The builder still discovers static imports and declared dynamic resources. A missing actual import or declaration remains a build failure; a complete installed runtime is established only by its original installer receipt.
 
 ## Build the original package
 

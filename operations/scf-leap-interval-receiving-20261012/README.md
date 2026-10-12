@@ -138,6 +138,7 @@ Create one private configuration with the actual paths and reviewed Leap input:
 {
   "repository": "/complete/source",
   "sourceCommit": "FULL_JOINED_COMMIT",
+  "sourceMode": "installed-package",
   "nodeExecutable": "/host/node",
   "pythonExecutable": "/host/python3",
   "playwright": "/host/node_modules/playwright/index.mjs",
@@ -168,11 +169,11 @@ Run the selected Python once:
 
 The sequence:
 
-1. Reads the exact Git checkout and validates the complete declared implementation bytes.
+1. Reads the exact tracked Git checkout and selected recipe. New installed-package mode lets the original builder resolve the current complete source; legacy mode retains its frozen declaration checks.
 2. Calls the original distribution builder with `--selection leap-intervals`, retaining its original build journal and full archive.
 3. Saves the complete build receipt and optionally transfers the archive/receipt to already prepared targets before installation begins.
 4. Calls original `prepareRuntimeInstall`, `installRuntime` and `inspectRuntimeInstall` with the selected native/schema/OpenAPI/MCP/operator profile. It checks the READY runtime and full source verification.
-5. Runs the unchanged complete Utility receiver, including the original report comparison, browser/client, 22-name MCP catalog and original receiving calls, CLI cold restore, managed start/stop and reopen.
+5. Passes that READY installation's complete manifest and expected source commit to Utility, then runs the original report comparison, browser/client, 22-name MCP catalog, CLI cold restore, managed start/stop and reopen.
 6. After Utility exits, runs the Leap browser/action/file workflow through one original owner.
 7. Closes that owner, exports through the original CLI and restores into a separate private workspace.
 8. Opens the restored Leap workspace for read-only desktop/mobile receiving, then drains its browser and owner.
@@ -189,7 +190,9 @@ It records the completed 20-import, 1,340-row, 14-page core, two reviews, two bu
 
 The selected runtime lives at `runtimeDirectory`. Its repository-shaped source is `runtimeDirectory/package/source`; its dependencies belong to the original runtime directory. Supply an existing complete dependency graph only through the maintained installer options and original lock validation. A partial preparation remains with that installer's recover/inspect workflow.
 
-The source declaration binds files by byte length, SHA-256 and Git blob. It names the reviewed root backend cut separately from the actual selected release commit, which the original package manifest and runtime record retain. The source declaration excludes itself to avoid a recursive hash.
+The full installed source declaration binds every package member by byte length, SHA-256 and Git blob. Both runtime-backed receivers also bind it to the actual READY package manifest and selected source commit. Their original frozen declarations remain unchanged and supply the required application paths and original metadata.
+
+Fresh sequence journals default to `installed-package`; the explicit field in the example records that choice. Existing journals without `sourceMode` retain `legacy`, using their original frozen source declarations. Keep the chosen mode, source, original operation directories and request IDs when continuing.
 
 ## 4. Leap-only receiving on an existing READY runtime
 
@@ -199,6 +202,8 @@ The original Leap receiver can also run independently against an already complet
 {
   "operationId": "LEAP-DEVICE-INTERVAL-DELIVERY-20261012",
   "sourceRoot": "/retained/runtime/package/source",
+  "sourceManifest": "/retained/runtime/package/manifest.json",
+  "expectedSourceCommit": "FULL_JOINED_COMMIT",
   "runtimeDirectory": "/retained/runtime",
   "nodeExecutable": "/host/node",
   "pythonExecutable": "/host/python3",

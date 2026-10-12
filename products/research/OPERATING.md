@@ -979,6 +979,32 @@ The installed product includes the original SF101 merchant, Buyer Runbook and Re
 
 The complete source-owned walkthrough is [Paid Research delivery](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-commerce/OPERATING.md). The Research and Zotero selections retain that guide, the whole Buyer application and its typed agent, the complete SF101 receiver, all Research customer-commerce source and the existing retained-download helpers.
 
+### Connect the running Buyer
+
+The installed `buyer-agent connect` command prepares the original Buyer connection and its Research host declaration together. Start or reopen the existing Buyer through **Applications → Buyer runbook**, then use that application's complete private launch file. The native Buyer workspace, SF88 accounting directory and receiving store each keep their own path.
+
+```sh
+starforge buyer-agent connect \
+  --config /absolute/private/research-buyer-agent.json \
+  --workspace research-acquisition \
+  --launch /absolute/private/buyer-launch.json \
+  --storage /absolute/private/research-buyer-receiving \
+  --operator /absolute/private/original-sf88-operator \
+  --research-host /absolute/private/research-commerce.json \
+  --research-buyer research-acquisition \
+  --checkout /absolute/private/research-checkout.json \
+  --merchant research-report \
+  --claim-env SF101_CLAIM_TOKEN
+```
+
+Use the actual retained checkout and declared claim environment name for this installation. The checkout must already be initialized through the original merchant operation. For a buyer-only host, omit `--checkout`, `--merchant` and `--claim-env`. When the host already declares its merchant, the command preserves that complete declaration. The accounting `--operator` is optional and selects the existing SF88 directory containing its original operator manifest and ledger.
+
+The command reads the actual running Buyer's launch, checks the selected application and source, validates the original accounting and merchant selections, then saves the two complete private configuration files. Its result includes the connection file digest, workspace alias, selected instance and browser URL. Select the saved `research-commerce.json` in the Research Application as described below; the existing Research paid-delivery view then uses that Buyer.
+
+Repeat the same command after an interrupted setup. A saved first file is reopened and the original Research declaration is completed. Existing aliases, input handles, accounting handles, receiving limits and operation history remain with their saved connection. For a deliberate source upgrade of this same Buyer, provide `--expected-connection-sha256` with its current complete configuration digest and the updated original launch file. A normal restart of the same selected source reuses the connection after its lifecycle owner updates that launch.
+
+The [complete Buyer connection guide](../../stellar/scf-starforge-20261009/buyer-runbook/AGENT.md#connect-the-running-buyer-and-research) covers the original standalone launch, optional accounting, new aliases, configured Merchant provider and complete receiving. The same `connectBuyerRunbookAgent` function is exported by the installed `./buyer/agent/setup` entry.
+
 ### Select the existing hosts in Applications
 
 In **Applications → Research dossiers**, set **Original paid Research host configuration** (`customerCommerceHost`) to the private JSON file that declares the existing merchant and Buyer aliases. It composes with the same Zotero, extraction Python, Object, document-pipeline and source-workspace settings. When no explicit Research connection path is selected, the existing application writes `research-connection.json` in its private Research directory.
@@ -1267,6 +1293,37 @@ Use the actual connection file and owned store directory from the original liste
 For application code, use `ResearchWorkspaceClient.risSources()`; its methods retain the original connection identity and source/revision bindings. The installed `./buyer/research-dossiers/ris/client` entry exports the original client factory. The Merchant Research attachment provides seven RIS tools and eleven export forms through its existing retained-file API. It preserves the original Research Commerce, extraction, appraisal, citation and eligibility tools.
 
 A later review may retain or deselect earlier selections according to its explicit reviewed choice. Compare the two received editions and save JSON, HTML or Markdown comparison exports. Original document and record downloads retain their exact bytes; selected RIS is a declared derived UTF-8 representation. Export a specific dossier revision when a report must retain its before, reviewed or later state. The complete portable dossier carries these editions and review histories.
+
+## Complete a selected customer Research programme
+
+The installed **research-customer-programme** command carries one explicit customer selection through original source intake, citation review, chronology, Europe PMC, analyst workbooks and complete editable delivery. Select the original documents and reviewer decisions using the [complete customer input contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md). The [Europe PMC contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/EUROPE_PMC.md) covers the complete selected library, linked search continuations, comparisons and independent restoration.
+
+A selection identifies the actual dossier or new dossier description; selected questions; exact document bytes, SHA256 values, source declarations and licences; source editions and citation occurrences; affected finding decisions; and the chronology's original date facts and explicit interpretations. It also contains the complete Europe PMC query/operation/review selection and the delivery volume. The receiver retains those full original inputs before native mutations.
+
+Use the installed entry on an equipped Node24+/Python3.11+ host with the original workbook extra, selected Playwright module and compatible Chromium:
+
+~~~sh
+starforge registrations --command research-customer-programme
+starforge research-customer-programme \
+  --selection /absolute/customer/selection.json \
+  --selection-sha256 ACTUAL_SELECTION_SHA256 \
+  --directory /absolute/private/customer-programme \
+  --engine-root /absolute/research-package/source \
+  --engine-manifest /absolute/research-package/manifest.json \
+  --engine-manifest-sha256 ACTUAL_MANIFEST_SHA256 \
+  --playwright-module /absolute/node_modules/playwright/index.mjs \
+  --chromium /absolute/chromium \
+  --python /absolute/python3 \
+  --node /absolute/node
+~~~
+
+Use the actual source root and original manifest of the installed release, and run the command from that same release. A retained native receiving cohort can instead select its original ENGINE_SOURCE.json and corresponding complete source directory, with the complete customer-programme directory installed inside that source tree. A separate selected checkout must match every original source member in the executing source tree. Both forms retain all original file identities and source authority.
+
+For an existing dossier, also pass --workspace /absolute/original/research-workspace and select its actual ID and expected revision in the input. This programme owns its original Research listeners through completion; continue its private operation directory when interrupted.
+
+Original Europe PMC editions are received before citation decisions so the citation fingerprint sees the complete selected source set. The programme then saves citation reviews, attaches the complete chronology/source bundle, runs original Python/Analysis workbook receiving, and reopens saved reviews through Merchant and the browser. It exports the complete dossier and history, packages all input/source/output members, and opens the actual extracted archive with the included engine in a separate editable workspace.
+
+Open **delivery/START_HERE.html** for the readable handover. **COMPLETE.json** records the actual dossier revision, final archive and independent receiving result. Deliver the selected ZIP with its complete original inputs, reports, source and operating guides. See [the installed customer receiving chapter](RECEIVING.md#20-receive-the-complete-customer-selected-programme) for extraction and ongoing edits.
 
 ## Operating source
 
