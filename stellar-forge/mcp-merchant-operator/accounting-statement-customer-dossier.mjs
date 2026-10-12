@@ -246,7 +246,8 @@ async function sourceStatement(directory,report,row,summary){
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 function csvCell(value){
   let text=value===null||value===undefined?'':String(value);
-  if(/^\s*[=+\-@]/.test(text)||/^[\t\r\n]/.test(text))text="'"+text;
+  const numeric=typeof value==='number'&&Number.isFinite(value)||typeof value==='string'&&/^-?(?:0|[1-9][0-9]*)$/.test(value);
+  if(!numeric&&(/^\s*[=+\-@]/.test(text)||/^[\t\r\n]/.test(text)))text="'"+text;
   return '"'+text.replaceAll('"','""')+'"';
 }
 const csv=rows=>rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n';
@@ -254,7 +255,7 @@ function statementCsv(customer,rows){
   const headers=['customerReference','cycleRow','requestId','statementId','statementNumber','status','phase','included',
     'kind','orderRef','serviceFrom','serviceUntil','usageCapturedAt','statusObservedAt','replacesId','supersededBy','statementPath','planId','planRevision','planLabel','purchasePasses'];
   return csv([headers,...rows.map(row=>[customer.reference,row.index+1,row.requestId,row.statement?.id,row.statement?.number,row.statement?.status,
-    row.phase,row.included?'yes':'no',row.servicePeriod?'SERVICE_PERIOD':'CUMULATIVE',row.servicePeriod?.orderRef,row.servicePeriod?.from,
+    row.phase,row.included?'yes':'no',row.servicePeriod?'SERVICE_PERIOD':row.usageSource?'CUMULATIVE':'PURCHASE',row.servicePeriod?.orderRef,row.servicePeriod?.from,
     row.servicePeriod?.until,row.usageSource?.createdAt,row.statusObservedAt,row.statement?.replacesId,row.statement?.supersededBy,
     row.path?row.path+'/statement.html':'',row.plan?.id,row.plan?.revision,row.plan?.label,
     row.passes.map(pass=>[pass.label,pass.plan?.label,pass.orderRef].filter(Boolean).join(' · ')).join('; ')])]);
@@ -274,6 +275,14 @@ function periodCsv(customer,rows){
       row.path?row.path+'/period.csv':''];
   })]);
 }
+function displayDate(value){
+  const date=new Date(value);if(!Number.isFinite(date.getTime()))return String(value??'Not recorded');
+  const pad=number=>String(number).padStart(2,'0'),month=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][date.getUTCMonth()];
+  return date.getUTCDate()+' '+month+' '+date.getUTCFullYear()+', '+pad(date.getUTCHours())+':'+pad(date.getUTCMinutes())+':'+
+    pad(date.getUTCSeconds())+(date.getUTCMilliseconds()?'.'+String(date.getUTCMilliseconds()).padStart(3,'0'):'')+' UTC';
+}
+const displayStatus=value=>({RETAINED:'Current',SUPERSEDED:'Superseded',WITHDRAWN:'Withdrawn',REVIEWED:'Ready to issue',NOT_RETAINED:'Ready to issue',
+  SENDING:'Issuing statement',DELIVERED:'Packet complete',EXPORT_PENDING:'Packet in progress',RECONCILE_PENDING:'Resume original statement',REVIEW_REQUIRED:'Review changed sources'}[value]??String(value??'Pending'));
 function renderIndex({customer,cycle,counts:summary,statements,observedAt,complete}){
   const included=new Map(statements.filter(row=>row.included).map(row=>[row.statement.id,row]));
   function related(id,label){
@@ -288,17 +297,17 @@ function renderIndex({customer,cycle,counts:summary,statements,observedAt,comple
       '<a href="'+row.path+'/index.html">Open complete packet</a><small><a href="'+row.path+'/statement.html">Statement</a> · '+
       '<a href="'+row.path+'/status.json">Status and history</a></small>':'<span>Packet pending</span>';
     return '<tr><td><strong>'+escape(statement?.number??'Statement pending')+'</strong><small>'+
-      escape(period?'Service period':'Cumulative statement')+'</small>'+related(statement?.replacesId,'Corrects')+
+      escape(period?'Service period':row.usageSource?'Cumulative statement':'Purchase statement')+'</small>'+related(statement?.replacesId,'Corrects')+
       related(statement?.supersededBy,'Replacement')+'</td><td>'+
       (period?'<strong>'+escape(row.plan?.label??period.orderRef)+'</strong><small>'+escape(period.orderRef)+'</small>'+
-        escape(period.from)+'<small>to '+escape(period.until)+'</small>':
-        passes(row)+'<small>'+(row.usageSource?'Usage captured '+escape(row.usageSource.createdAt):'Original customer purchases')+'</small>')+'</td><td>'+
+        escape(displayDate(period.from))+'<small>to '+escape(displayDate(period.until))+'</small>':
+        passes(row)+'<small>'+(row.usageSource?'Usage captured '+escape(displayDate(row.usageSource.createdAt)):'Original customer purchases')+'</small>')+'</td><td>'+
       (period?escape(period.totals?.consumedUnits)+' consumed<small>'+escape(period.totals?.releasedUnits)+' released</small>'+
         '<small>Available '+escape(period.opening?.unitsRemaining)+' → '+escape(period.closing?.unitsRemaining)+'</small>':'See original statement')+
-      '</td><td><strong>'+escape(statement?.status??row.phase)+'</strong>'+
-      (row.statusObservedAt?'<small>Observed '+escape(row.statusObservedAt)+'</small>':'')+
-      (row.withdrawal?'<small>'+escape(row.withdrawal.reason)+' · '+escape(row.withdrawal.at)+'</small>':'')+
-      (!row.included?'<small>'+escape(row.phase)+'</small>':'')+'</td><td>'+links+'</td></tr>';
+      '</td><td><strong>'+escape(displayStatus(statement?.status??row.phase))+'</strong>'+
+      (row.statusObservedAt?'<small>Observed '+escape(displayDate(row.statusObservedAt))+'</small>':'')+
+      (row.withdrawal?'<small>'+escape(row.withdrawal.reason)+' · '+escape(displayDate(row.withdrawal.at))+'</small>':'')+
+      (!row.included?'<small>'+escape(displayStatus(row.phase))+'</small>':'')+'</td><td>'+links+'</td></tr>';
   }).join('');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
     '<title>'+escape(customer.name)+' — customer statements</title><style>'+
@@ -306,11 +315,11 @@ function renderIndex({customer,cycle,counts:summary,statements,observedAt,comple
     'h1{font-size:28px;margin:0 0 6px}h2{font-size:19px;margin-top:28px}p{max-width:1000px}a{color:#222;text-underline-offset:3px}'+
     'small{display:block;color:#555;overflow-wrap:anywhere}strong{font-weight:650}.summary{display:flex;flex-wrap:wrap;gap:12px 30px;border-block:1px solid #bbb;padding:16px 0;margin:24px 0}'+
     '.summary strong{display:block;font-size:21px}.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:920px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #bbb;vertical-align:top}'+
-    'th{background:#f2f2f2}th:first-child,td:first-child{padding-left:0}footer{margin-top:30px;padding-top:16px;border-top:1px solid #bbb;color:#555;font-size:13px;overflow-wrap:anywhere}'+
+    'th{background:#f2f2f2}th:first-child,td:first-child{padding-left:0}details{margin-top:25px;padding:12px 0;border-top:1px solid #bbb}summary{cursor:pointer;font-weight:600}dl{font-size:13px;overflow-wrap:anywhere}dt{margin-top:10px;color:#555}dd{margin:0}footer{margin-top:30px;padding-top:16px;border-top:1px solid #bbb;color:#555;font-size:13px;overflow-wrap:anywhere}'+
     '@media(max-width:600px){main{margin:20px auto;padding:0 16px}h1{font-size:24px}.summary{gap:12px 20px}}@media print{main{margin:0;padding:0}.table{overflow:visible}table{min-width:0;font-size:11px}a{text-decoration:none}}'+
     '</style></head><body><main><h1>'+escape(customer.name)+'</h1><p>'+escape(customer.reference)+' · '+escape(cycle.label)+'</p>'+
     '<div class="summary"><div><strong>'+summary.delivered+' of '+summary.total+'</strong>Original packets included</div>'+
-    '<div><strong>'+summary.current+'</strong>Retained statements</div><div><strong>'+summary.superseded+'</strong>Corrected statements</div>'+
+    '<div><strong>'+summary.current+'</strong>Current statements</div><div><strong>'+summary.superseded+'</strong>Superseded statements</div>'+
     '<div><strong>'+summary.withdrawn+'</strong>Withdrawn statements</div></div>'+
     '<p>'+(complete?'The complete selected customer handover is available below.':
       escape(summary.pending)+' selected packet'+(summary.pending===1?' is':'s are')+' still being completed. Every included packet is complete.')+
@@ -318,8 +327,9 @@ function renderIndex({customer,cycle,counts:summary,statements,observedAt,comple
     '<p><a href="statements.csv">Statement register CSV</a> · <a href="periods.csv">Service periods CSV</a> · <a href="dossier.json">Complete file manifest</a></p>'+
     '<h2>Statements and service periods</h2><div class="table"><table><thead><tr><th>Statement</th><th>Purchased pass and period</th><th>Service activity</th><th>Observed status</th><th>Customer files</th></tr></thead><tbody>'+
     rows+'</tbody></table></div><p>Each purchased pass keeps its own plan, service units and original period. Purchase amounts and asset details appear in the original statement files.</p>'+
-    '<footer>Customer '+escape(customer.customerId)+'<br>Original cycle '+escape(cycle.cycleId)+'<br>Source status observations through '+escape(observedAt)+
-    '<br>Original cycle request SHA256 '+escape(cycle.requestSha256)+'</footer></main></body></html>\n';
+    '<details><summary>Source references</summary><dl><dt>Customer ID</dt><dd>'+escape(customer.customerId)+'</dd><dt>Original cycle</dt><dd>'+escape(cycle.cycleId)+
+    '</dd><dt>Original request SHA256</dt><dd>'+escape(cycle.requestSha256)+'</dd><dt>Original manifest SHA256</dt><dd>'+escape(cycle.manifestSha256)+'</dd></dl></details>'+
+    '<footer>Saved statement status through '+escape(displayDate(observedAt))+'</footer></main></body></html>\n';
 }
 function safePayloadPath(path){
   if(typeof path!=='string'||path.length>100)return false;
