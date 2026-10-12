@@ -332,3 +332,5 @@ The same programme is retained under `SCF-MERCHANT-RECEIVABLES-DFF77-20261012`. 
 [Source lineage](SOURCE_LINEAGE.json) retains the exact adopted public product, original accounting dependency files and existing quotation/customer source identities. The original accounting, SF74, native transfer and distribution owners continue to maintain those components.
 
 Partial bank receipt corrections also preserve cash from the original customer’s other source credits. The desk reviews the corrected portion and remaining receipt, and can allocate that remaining cash to original-customer invoices in the same posting. Agent callers use the same complete proposal and residualAllocations input.
+
+The Xero handover uses these same dated receipts, refunds and credit dispositions. Its package includes the reconciliation schedules and original customer bank/refund advice, with a customer-cash-files.json index retaining the original filenames and file identities. Receipt selection follows the effective accounting date, so corrections appear in the correct customer period.

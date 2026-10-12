@@ -124,6 +124,14 @@ MCP file selection is:
 
 The existing accounting file reader preserves the selection and expected SHA256 while reading every chunk. The native HTTP client uses bankImportFile(bankImportId, name) and returns the original response bytes.
 
+## Complete the Xero customer handover
+
+The existing Xero handover workspace uses the same customer cash ledger. Preparing an invoice or credit package now selects receipts by their effective accounting date, includes original commercial refunds and credit dispositions in the account snapshot, and emits their complete dated reconciliation schedules.
+
+For each selected customer it also retains the original bank receipt and refund advice. File bytes remain unchanged. The package uses stable flat filenames and includes customer-cash-files.json to map each handover file to its customer, original filename, byte count and SHA256. That index and those files take part in the original Xero source fingerprint and review.
+
+Use the receipt, allocation, refund and credit-disposition schedules with the package's original Xero document resolutions. A partial bank correction keeps the old receipt, replacement receipts and remaining customer cash visible at their respective dates. The normal Xero package download carries the customer advice and the original returned Xero document files together.
+
 ## HTTP and native methods
 
 | Method | HTTP route relative to /api/receivables |
