@@ -28,7 +28,7 @@ export async function openOpenAQPublication({directory,captureDirectory,capture,
    const args=['capture','--descriptor',join(directory,'source','datapackage.json'),'--output',output,
     '--reference',join(directory,'source','openaq-capture.json'),'--reference',join(directory,'source','openaq-review.json')];
    const references=new Set();
-   for(const receipt of capture.receipts){references.add(join(captureDirectory,receipt.file));references.add(join(captureDirectory,'requests',receipt.requestId,'receipt.json'));}
+   for(const receipt of capture.receipts){references.add(join(captureDirectory,receipt.file));references.add(join(captureDirectory,receipt.receiptFile??('requests/'+receipt.requestId+'/receipt.json')));}
    for(const path of references)args.push('--reference',path);
    await runFrictionlessCommand(args,{env:environment,stdout:null});
   }
@@ -39,8 +39,20 @@ export async function openOpenAQPublication({directory,captureDirectory,capture,
  need(identity(await readJson(join(directory,'binding.json')))===identity(original),'OPENAQ_PUBLICATION_BINDING_CHANGED',undefined,409);
  const sourceFile=join(directory,'source.json'),publisherDirectory=join(directory,'publisher'),targetDirectory=join(directory,'dataset-versions');
  const publisher=await openFrictionlessPublisher({directory:publisherDirectory,create:!await exists(publisherDirectory),sourceFile,targetDirectory,environment});
- let local=null,schedule=null,browser=null,closed=false,closing=null;
+ if(publisher.reviewRequestVersion!==1){await publisher.close();throw fault('OPENAQ_PUBLISHER_UPDATE_REQUIRED','Install the complete OpenAQ selection to reopen saved publisher reviews.',409);}
+ let closed=false,closing=null;
+ const handles=new Map(),opening=new Map();
  const check=()=>need(!closed,'OPENAQ_PUBLICATION_CLOSED');
+ function owner(name,create){
+  check();if(handles.has(name))return Promise.resolve(handles.get(name));
+  let pending=opening.get(name);
+  if(!pending){
+   pending=Promise.resolve().then(create).then(handle=>{handles.set(name,handle);return handle;});
+   opening.set(name,pending);
+   pending.finally(()=>{if(opening.get(name)===pending)opening.delete(name);}).catch(()=>{});
+  }
+  return pending;
+ }
  async function prepare(runId){
   check();uuid(runId);
   let saved;try{saved=publisher.run(runId);}catch(e){if(e.code!=='RUN_NOT_FOUND')throw e;}
@@ -63,20 +75,22 @@ export async function openOpenAQPublication({directory,captureDirectory,capture,
  }
  async function customerWorkspace(){
   check();need(customer,'OPENAQ_CUSTOMER_CONFIGURATION_REQUIRED','Choose the existing original DuckDB customer workspace in the host configuration.');
-  if(!local)local=await openLocalDatasetReceiving({publisher,customer,environment});
-  return local;
+  return owner('local',()=>openLocalDatasetReceiving({publisher,customer,environment}));
  }
  async function customerBrowser(){
   const workspace=await customerWorkspace();
-  if(!schedule)schedule=await openPostgresSchedule({publisher});
-  if(!browser)browser=await startLocalDatasetReceivingServer({workspace,port:0,schedule,ownsWorkspace:false});
+  const schedule=await owner('schedule',()=>openPostgresSchedule({publisher}));
+  const browser=await owner('browser',()=>startLocalDatasetReceivingServer({workspace,port:0,schedule,ownsWorkspace:false}));
   return {url:browser.url??browser.origin,workspaceId:workspace.workspaceId,customer:workspace.customer,publisherDirectory:publisher.directory};
  }
  async function close(){
   if(closing)return closing;closed=true;
   closing=(async()=>{const errors=[];
-   for(const [name,handle]of[['browser',browser],['local',local],['schedule',schedule],['publisher',publisher]]){
-    if(!handle)continue;try{await handle.close();if(name==='browser')browser=null;if(name==='local')local=null;if(name==='schedule')schedule=null;}catch(e){errors.push({name,error:e});}
+   // Accepted creation promises retain their resulting handles before disposal begins.
+   await Promise.allSettled([...opening.values()]);
+   for(const name of ['browser','local','schedule','publisher']){
+    const handle=name==='publisher'?publisher:handles.get(name);
+    if(!handle)continue;try{await handle.close();if(name!=='publisher')handles.delete(name);}catch(e){errors.push({name,error:e});}
    }
    if(errors.length){closing=null;throw new AggregateError(errors.map(x=>x.error),'OpenAQ original publication disposals failed: '+errors.map(x=>x.name).join(', '));}
   })();return closing;

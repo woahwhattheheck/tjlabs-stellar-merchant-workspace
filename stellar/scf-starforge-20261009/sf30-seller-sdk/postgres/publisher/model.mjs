@@ -69,7 +69,9 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       CREATE TABLE IF NOT EXISTS plans(id INTEGER PRIMARY KEY, created TEXT NOT NULL, folder TEXT NOT NULL UNIQUE, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, plan INTEGER NOT NULL REFERENCES plans(id), state TEXT NOT NULL,
         created TEXT NOT NULL, updated TEXT NOT NULL, data TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, run TEXT, created TEXT NOT NULL, kind TEXT NOT NULL, data TEXT NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, run TEXT, created TEXT NOT NULL, kind TEXT NOT NULL, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS review_requests(request_id TEXT PRIMARY KEY, run TEXT NOT NULL REFERENCES runs(id),
+        input_sha256 TEXT NOT NULL, result TEXT NOT NULL);`);
     if (create) {
       await createFile(join(directory, 'workspace.json'), bytes({ schema: driver.workspaceSchema,
         sourceFile, targetDirectory, createdAt: stamp() }));
@@ -103,11 +105,11 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       if (!row) throw fault('RUN_NOT_FOUND', 'Choose a retained extraction.', 404);
       return row;
     }
-    function change(id, state, patch, kind) {
+    function change(id, state, patch, kind, retain = null) {
       return transaction(() => {
         const current = run(id), data = { ...current.data, ...patch };
         db.prepare('UPDATE runs SET state=?,updated=?,data=? WHERE id=?').run(state, stamp(), JSON.stringify(data), id);
-        event(kind, id, { state, ...patch }); return run(id);
+        event(kind, id, { state, ...patch }); const result = run(id); if (retain) retain(result); return result;
       });
     }
     function available() {
@@ -272,8 +274,23 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     }
     async function review(id, input) {
       return mutate('review', id, async () => {
-      const current = await candidate(id), observed = await target();
       const reviewer = note(input.reviewer, 'the reviewer name', 128), text = note(input.note, 'the review note');
+      const requestId = input.requestId ?? null;
+      if (requestId !== null && (typeof requestId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(requestId)))
+        throw fault('REVIEW_REQUEST_ID_INVALID', 'Use a UUID for the original review request.');
+      const inputHash = requestId === null ? null : identity({ runId: id, reviewer, note: text,
+        initialize: input.initialize === true,
+        ...(input.initialize === true ? {} : { expectedSnapshot: input.expectedSnapshot, expectedRevision: input.expectedRevision }) });
+      if (requestId !== null) {
+        const retained = db.prepare('SELECT run,input_sha256,result FROM review_requests WHERE request_id=?').get(requestId);
+        if (retained) {
+          if (retained.run !== id || retained.input_sha256 !== inputHash)
+            throw fault('REVIEW_REQUEST_CHANGED', 'This review request ID already belongs to its original run and reviewed input.', 409);
+          // The original completed review remains readable after later reviews or publication.
+          return JSON.parse(retained.result);
+        }
+      }
+      const current = await candidate(id), observed = await target();
       let binding;
       if (input.initialize === true) {
         if (!observed.initializable) throw fault('TARGET_ALREADY_EXISTS', 'Review the running target before publishing.', 409);
@@ -288,9 +305,13 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
         binding = { mode: 'refresh', directory: targetDirectory,
           expectedSnapshot: observed.versions.current, expectedRevision: observed.versions.revision };
       }
-      const record = { id: randomUUID(), reviewer, note: text, recordedAt: stamp(),
-        candidateDigest: current.manifest.candidateDigest, target: binding };
-      return change(id, 'REVIEWED', { review: record, error: null }, 'CANDIDATE_REVIEWED');
+      const record = { id: requestId ?? randomUUID(), reviewer, note: text, recordedAt: stamp(),
+        candidateDigest: current.manifest.candidateDigest, target: binding,
+        ...(requestId === null ? {} : { requestId }) };
+      return change(id, 'REVIEWED', { review: record, error: null }, 'CANDIDATE_REVIEWED',
+        requestId === null ? null : result => db.prepare(
+          'INSERT INTO review_requests(request_id,run,input_sha256,result) VALUES(?,?,?,?)')
+          .run(requestId, id, inputHash, JSON.stringify(result)));
       });
     }
     async function publish(id, reviewId) {
@@ -373,7 +394,7 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       closing = (async () => { try { await active?.promise; } finally { db.close(); await release(); } })();
       return closing;
     }
-    return Object.freeze({ directory, settings, sourceName, source, savePlan, plan, run, target, status, startExtraction,
+    return Object.freeze({ directory, settings, sourceName, source, savePlan, plan, run, target, status, startExtraction, reviewRequestVersion: 1,
       cancel, inspect, review, publish, recover, candidate, buyerOffer, prepareBuyer, close });
   } catch (issue) { db?.close(); await release(); throw issue; }
 }

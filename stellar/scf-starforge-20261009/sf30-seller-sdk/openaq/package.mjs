@@ -21,7 +21,7 @@ export async function exportOpenAQProject({directory,workspaceId,project,selecti
  for(let i=0;i<captures.length;i++){
   const c=captures[i],r=reviews[i],prefix='captures/'+uuid(c.id)+'/';
   await add(prefix+'capture.json',bytes(c));await add(prefix+'measurements.csv',await readLogical(prefix+'measurements.csv',64*1024*1024));
-  for(const receipt of c.receipts){await add(prefix+receipt.file,await readLogical(prefix+receipt.file,32*1024*1024));const p=prefix+'requests/'+receipt.requestId+'/receipt.json';await add(p,await readLogical(p,262144));}
+  for(const receipt of c.receipts){await add(prefix+receipt.file,await readLogical(prefix+receipt.file,32*1024*1024));const p=prefix+(receipt.receiptFile??('requests/'+receipt.requestId+'/receipt.json'));await add(p,await readLogical(p,262144));}
   await add('reviews/'+uuid(r.id)+'.json',bytes(r));
   const descriptor=sourceDescriptor(c,r,prefix+'measurements.csv').resources[0];resources.push({...descriptor,name:'capture_'+c.id.replaceAll('-','')});
  }

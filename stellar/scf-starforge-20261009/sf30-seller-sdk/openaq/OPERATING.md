@@ -133,3 +133,8 @@ Applications Stop or SIGTERM closes only the original host's listener and projec
 Reopen the same project after interruption, inspect the original ID and explicitly resume if appropriate. Exact-ID reads cover the full history; visible paging does not impose a retention limit.
 
 Selected scientific/source delivery is the complete project archive. Existing merchant/customer backup commands remain authoritative for their independent operating state; a copy of a live private directory is not promoted to a complete backup.
+
+
+## Reopening a named publisher review
+
+The complete OpenAQ selection includes the original publisher’s saved review request support. The project passes its existing operation UUID into that publisher; the reviewed candidate, native review identity, event and completed result commit in the publisher’s existing SQLite transaction. Continuing the same saved operation reopens that exact result, including after a later review or publication. It does not create a second reviewer decision. A new review uses a new project operation ID and the currently displayed candidate and target. Install the complete selection when updating a customer installation so that this original publisher capability travels with the OpenAQ workspace.

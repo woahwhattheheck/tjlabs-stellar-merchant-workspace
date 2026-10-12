@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { gunzip } from 'node:zlib';
 import { promisify } from 'node:util';
 import { createSupplierQuotaRegistry } from '../supplier-quota/application.mjs';
-import { privateDirectory, readJson, readPrivate, createFile, atomicJson, digest, identity, bytes, fault, stamp } from '../postgres/publisher/files.mjs';
+import { privateDirectory, readJson, readPrivate, createFile, atomicJson, syncDirectory, digest, identity, bytes, fault, stamp } from '../postgres/publisher/files.mjs';
 import { need, metadataContext, archiveURL, whole } from './contract.mjs';
 import { parseAPI, apiRows, archiveRows, encodeRows, seriesSummary } from './projection.mjs';
 const unzip=promisify(gunzip),API='https://api.openaq.org',ARCHIVE='https://openaq-data-archive.s3.amazonaws.com';
@@ -42,11 +42,50 @@ export function createOpenAQSource({configuration,environment=process.env,fetchI
   if(isAPI)prepareAPI();
   const id=identity({method:'GET',url:u.href}),rd=join(directory,'requests',id);
   await privateDirectory(rd,true);
-  const recordPath=join(rd,'receipt.json');
+  const recordPath=join(rd,'receipt.json'),selectionPath=join(rd,'response-selection.json');
+  const pairPaths=attempt=>{const prefix='responses/'+String(attempt).padStart(5,'0')+'/';return{responseFile:prefix+'response.bin',receiptFile:prefix+'receipt.json'};};
+  const returned=(receipt,data,paths,reopened)=>({data,receipt:{...receipt,file:'requests/'+id+'/'+paths.responseFile,
+   receiptFile:'requests/'+id+'/'+paths.receiptFile,role,archiveLocalDay,reopened}});
+  function validReceipt(receipt,data){
+   need(receipt.schema==='stellar-forge.openaq-response.v1'&&receipt.requestId===id&&receipt.url===u.href&&receipt.method==='GET'&&receipt.status===200
+    &&Number.isSafeInteger(receipt.attempt)&&receipt.attempt>=1&&receipt.sha256===digest(data)&&receipt.bytes===data.length,'OPENAQ_RESPONSE_CHANGED',undefined,409);
+  }
+  async function selectPair(receipt,data,paths,reopened){
+   validReceipt(receipt,data);
+   const selected={schema:'stellar-forge.openaq-response-selection.v1',requestId:id,attempt:receipt.attempt,...paths,
+    sha256:receipt.sha256,bytes:receipt.bytes,receiptSha256:identity(receipt)};
+   if(await exists(selectionPath))need(identity(await readJson(selectionPath))===identity(selected),'OPENAQ_RESPONSE_SELECTION_CHANGED',undefined,409);
+   else{await syncDirectory(join(rd,'responses',String(receipt.attempt).padStart(5,'0')));await syncDirectory(join(rd,'responses'));await atomicJson(rd,'response-selection.json',selected);}
+   return returned(receipt,data,paths,reopened);
+  }
+  if(await exists(selectionPath)){
+   const selected=await readJson(selectionPath),paths=pairPaths(selected.attempt);
+   need(selected.schema==='stellar-forge.openaq-response-selection.v1'&&selected.requestId===id
+    &&Number.isSafeInteger(selected.attempt)&&selected.attempt>=1&&selected.responseFile===paths.responseFile&&selected.receiptFile===paths.receiptFile,'OPENAQ_RESPONSE_SELECTION_CHANGED',undefined,409);
+   const receipt=await readJson(join(rd,paths.receiptFile)),data=await readPrivate(join(rd,paths.responseFile),32*1024*1024);
+   validReceipt(receipt,data);need(selected.attempt===receipt.attempt&&selected.sha256===receipt.sha256&&selected.bytes===receipt.bytes
+    &&selected.receiptSha256===identity(receipt),'OPENAQ_RESPONSE_SELECTION_CHANGED',undefined,409);
+   return returned(receipt,data,paths,true);
+  }
   if(await exists(recordPath)){
    const receipt=await readJson(recordPath),data=await readPrivate(join(rd,'response.bin'),32*1024*1024);
-   need(receipt.url===u.href&&receipt.method==='GET'&&receipt.sha256===digest(data)&&receipt.bytes===data.length,'OPENAQ_RESPONSE_CHANGED',undefined,409);
-   return {data,receipt:{...receipt,file:'requests/'+id+'/response.bin',role,archiveLocalDay,reopened:true}};
+   validReceipt(receipt,data);
+   return returned(receipt,data,{responseFile:'response.bin',receiptFile:'receipt.json'},true);
+  }
+  // An interrupted write can leave a full original pair before the small selection
+  // is published. Reconcile that exact edition before any further GET or quota use.
+  const responses=join(rd,'responses');await privateDirectory(responses,true);
+  const retained=(await readdir(responses)).filter(n=>/^\d{5,}$/.test(n)).sort((a,b)=>Number(a)-Number(b));
+  for(const name of retained){
+   const attempt=Number(name);if(!Number.isSafeInteger(attempt)||attempt<1)continue;
+   const paths=pairPaths(attempt);if(name!==String(attempt).padStart(5,'0'))continue;
+   if(!await exists(join(rd,paths.receiptFile))||!await exists(join(rd,paths.responseFile)))continue;
+   const receipt=await readJson(join(rd,paths.receiptFile)),data=await readPrivate(join(rd,paths.responseFile),32*1024*1024);
+   need(receipt.requestId===id&&receipt.attempt===attempt&&receipt.url===u.href&&receipt.method==='GET'&&receipt.status===200,'OPENAQ_RESPONSE_CHANGED',undefined,409);
+   // A failed original body write stays in that attempt. A later explicit GET
+   // gets a new directory and can never relabel or replace the earlier bytes.
+   if(receipt.bytes!==data.length||receipt.sha256!==digest(data))continue;
+   return selectPair(receipt,data,paths,true);
   }
   const attempts=(await readdir(rd)).filter(n=>/^attempt-\d+\.json$/.test(n)).sort();
   const attempt=attempts.length+1,controller=new AbortController();
@@ -90,12 +129,17 @@ export function createOpenAQSource({configuration,environment=process.env,fetchI
    if(isAPI)parseAPI(data);
    const receipt={schema:'stellar-forge.openaq-response.v1',requestId:id,method:'GET',url:u.href,status:200,headers,
     acquiredAt:stamp(),attempt,bytes:data.length,sha256:digest(data)};
-   await immutable(join(rd,'response.bin'),data);await immutable(recordPath,bytes(receipt));
-   return {data,receipt:{...receipt,file:'requests/'+id+'/response.bin',role,archiveLocalDay,reopened:false}};
+   const paths=pairPaths(attempt),responseDirectory=join(rd,'responses',String(attempt).padStart(5,'0'));
+   await privateDirectory(responseDirectory,true);
+   // Retain the actual original metadata before the body. Atomic JSON never
+   // exposes a partial receipt; each interrupted body remains in its own attempt.
+   await atomicJson(responseDirectory,'receipt.json',receipt);
+   await immutable(join(rd,paths.responseFile),data);
+   return await selectPair(receipt,data,paths,false);
   }catch(e){
    if(started)await immutable(join(rd,'outcome-'+String(attempt).padStart(5,'0')+'.json'),bytes({attempt,recordedAt:stamp(),error:safeError(e)})).catch(writeError=>{e.recordError=writeError.code;});
    throw e;
-  }finally{if(timeout)clearTimeout(timeout);controllers.delete(controller);signal?.removeEventListener('abort',abort);}
+  }finally{if(timeout)clearTimeout(timeout);controller.abort();controllers.delete(controller);signal?.removeEventListener('abort',abort);}
  }
  async function capture(capture,directory,{signal,onProgress=()=>{}}={}){
   need(!closed,'OPENAQ_SOURCE_CLOSED');

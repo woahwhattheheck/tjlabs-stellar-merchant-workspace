@@ -26,7 +26,7 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
  if(create)need(!await exists(join(directory,'workspace.json')),'OPENAQ_WORKSPACE_EXISTS','Open this project without --create.',409);
  await privateDirectory(directory,create);
  const unlock=await acquireWorkspace(directory);let settings,source,closed=false,closing=null,admission=Promise.resolve(),active=null;
- const pending=new Set(),publications=new Map();
+ const pending=new Set(),publications=new Map(),publicationOpening=new Map();
  try{
   if(create){
    const selected=configuration(config);settings={schema:SCHEMA,id:randomUUID(),createdAt:stamp(),configuration:selected,configurationSha256:identity(selected)};
@@ -85,12 +85,18 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    const c=await capture(captureId),r=await review(reviewId);
    need(r.captureId===c.id&&r.captureSha256===c.captureSha256,'OPENAQ_REVIEW_FROM_ANOTHER_CAPTURE',undefined,409);
    const key=c.id+'/'+r.id;
-   if(!publications.has(key)){
-    const pub=await openOpenAQPublication({directory:join(directory,'publications',c.id,r.id),captureDirectory:cp(c.id),capture:c,review:r,
-     customer:settings.configuration.customer,environment,create});
-    publications.set(key,pub);
+   if(publications.has(key))return publications.get(key);
+   let opening=publicationOpening.get(key);
+   if(!opening){
+    opening=(async()=>{
+     const pub=await openOpenAQPublication({directory:join(directory,'publications',c.id,r.id),captureDirectory:cp(c.id),capture:c,review:r,
+      customer:settings.configuration.customer,environment,create});
+     publications.set(key,pub);return pub;
+    })();
+    publicationOpening.set(key,opening);
+    opening.finally(()=>{if(publicationOpening.get(key)===opening)publicationOpening.delete(key);}).catch(()=>{});
    }
-   return publications.get(key);
+   return opening;
   }
   async function logical(name,maximum=MAX_RECORD){
    need(typeof name==='string'&&!name.startsWith('/')&&!/[\\\0]/.test(name)&&name.split('/').every(x=>x&&x!=='.'&&x!=='..'),'OPENAQ_FILE_PATH_INVALID');
@@ -124,7 +130,7 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    if(record.action.startsWith('publication.')){
     const pub=await publisherFor(uuid(input.captureId),uuid(input.sourceReviewId),record.action==='publication.prepare');
     if(record.action==='publication.prepare')return {publication:await pub.prepare(record.id),captureId:input.captureId,sourceReviewId:input.sourceReviewId};
-    if(record.action==='publication.review')return pub.review(uuid(input.runId),{reviewer:text(input.reviewer,'publisher reviewer',128),note:text(input.note,'publisher review',2000),
+    if(record.action==='publication.review')return pub.review(uuid(input.runId),{requestId:record.id,reviewer:text(input.reviewer,'publisher reviewer',128),note:text(input.note,'publisher review',2000),
      initialize:input.initialize===true,...(input.initialize===true?{}:{expectedSnapshot:input.expectedSnapshot,expectedRevision:input.expectedRevision})});
     if(record.action==='publication.publish')return pub.publish(uuid(input.runId),uuid(input.publicationReviewId));
     if(record.action==='publication.recover')return pub.recover(uuid(input.runId));
@@ -180,7 +186,8 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    check();need(!active,'OPENAQ_WORKSPACE_BUSY','The original project operation is still active.',409);
    const controller=new AbortController(),item={record,controller,promise:null};active=item;
    record.state='RUNNING';record.updatedAt=stamp();record.attempt=(record.attempt??0)+1;delete record.error;
-   await atomicJson(join(directory,'operations'),record.id+'.json',record);
+   try{await atomicJson(join(directory,'operations'),record.id+'.json',record);}
+   catch(e){if(active===item)active=null;throw e;}
    item.promise=(async()=>{
     try{record.result=await perform(record,controller.signal);record.state='COMPLETE';}
     catch(e){record.error=safeError(e);record.state=controller.signal.aborted||/PAUSED|COOLDOWN|PROVIDER|UNAVAILABLE|BUSY|UNKNOWN|TIMEOUT|OWNER/.test(record.error.code)?'INTERRUPTED':'FAILED';}
@@ -247,7 +254,7 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    async wait(id){const current=active;if(current?.record.id===id)await current.promise;return operation(id);},
    close(){
     if(closing)return closing;closed=true;if(active&&['capture','export'].includes(active.record.action))active.controller.abort();
-    closing=(async()=>{const errors=[];await admission;await active?.promise?.catch(e=>errors.push(e));await Promise.allSettled([...pending]);
+    closing=(async()=>{const errors=[];await admission;await active?.promise?.catch(e=>errors.push(e));await Promise.allSettled([...pending]);await Promise.allSettled([...publicationOpening.values()]);
      try{await source.close();}catch(e){errors.push(e);}
      for(const[key,value]of publications)try{await value.close();publications.delete(key);}catch(e){errors.push(e);}
      if(errors.length){closing=null;throw new AggregateError(errors,'OpenAQ owned operations or original resources did not close.');}
