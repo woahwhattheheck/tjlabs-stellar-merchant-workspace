@@ -69,6 +69,14 @@ export function createResponseCache({ handler, admit, shareAcrossBuyers,
     sourceErrors: 0, sourceTimeouts: 0, cancelledConsumers: 0, evictions: 0,
     expired: 0, bypasses: 0, invalidations: 0, rejectedAtCapacity: 0 };
   let bytes = 0, generation = 0, revision = 0, closed = false, consumers = 0;
+  const idleWaiters = new Set();
+  function notifyIdle() {
+    if (tasks.size || consumers) return;
+    for (const resolve of idleWaiters) resolve();
+    idleWaiters.clear();
+  }
+  const whenIdle = () => tasks.size === 0 && consumers === 0 ? Promise.resolve() :
+    new Promise(resolve => idleWaiters.add(resolve));
 
   function project(context) {
     if (!plain(context) || !['GET', 'HEAD'].includes(context.method) ||
@@ -212,7 +220,7 @@ export function createResponseCache({ handler, admit, shareAcrossBuyers,
     }).catch(() => {
       totals.sourceErrors++;
       return { response: responseSnapshot(failed(502, 'CACHE_SOURCE_RESPONSE_INVALID')).response, reusable: false };
-    }).finally(() => { clearTimeout(task.timer); tasks.delete(task); });
+    }).finally(() => { clearTimeout(task.timer); tasks.delete(task); notifyIdle(); });
     task.settled = source;
     task.promise = Promise.race([source, interruption]).then(outcome => {
       task.done = true;
@@ -234,7 +242,7 @@ export function createResponseCache({ handler, admit, shareAcrossBuyers,
         finished = true; task.waiters--; consumers--;
         signal?.removeEventListener('abort', cancel);
         if (!task.waiters && !task.done) task.controller.abort();
-        fn(result);
+        fn(result); notifyIdle();
       };
       const cancel = () => { totals.cancelledConsumers++; done(reject, aborted()); };
       signal?.addEventListener('abort', cancel, { once: true });
@@ -314,5 +322,5 @@ export function createResponseCache({ handler, admit, shareAcrossBuyers,
       new Promise(resolve => { timer = setTimeout(resolve, graceMs); })]);
     clearTimeout(timer); return { drained: tasks.size === 0, ...stats() };
   }
-  return Object.freeze({ handler: cached, admit: admission, stats, inspect, configure, invalidate, close });
+  return Object.freeze({ handler: cached, admit: admission, stats, inspect, configure, invalidate, close, whenIdle });
 }

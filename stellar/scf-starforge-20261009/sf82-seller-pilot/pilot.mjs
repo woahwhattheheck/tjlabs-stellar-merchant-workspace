@@ -187,6 +187,8 @@ async function status(out, source) {
 
 /** First compile or resume a saved seller, always using original SF30 serving. */
 export async function launch(args = process.argv.slice(2), deps = {}) {
+  if (deps.noSignals !== undefined && typeof deps.noSignals !== 'boolean')
+    throw new TypeError('noSignals must be a boolean');
   const opts = optionsFrom(args);
   if (!opts) { process.stdout.write(USAGE + '\n'); return null; }
   const out = resolve(opts.get('--resume') ?? opts.get('--status') ?? opts.get('--out'));
@@ -220,7 +222,7 @@ export async function launch(args = process.argv.slice(2), deps = {}) {
     const serve = runtime.upstreams
       ? deps.upstreamServe ?? (await import('../sf30-seller-sdk/upstream-serve.mjs')).main
       : deps.serve ?? (await import('../sf30-seller-sdk/serve.mjs')).main;
-    session = await serve(serveArgs);
+    session = await serve(serveArgs, {noSignals:deps.noSignals ?? false});
     if (!session || typeof session.url !== 'string' || typeof session.close !== 'function')
       throw new TypeError('Original seller runtime returned no live session');
     const health = await readListener(session.url, source, runtime.facilitator ? 'NATIVE_X402' : 'CHALLENGE_ONLY');
@@ -236,9 +238,32 @@ export async function launch(args = process.argv.slice(2), deps = {}) {
     process.stderr.write(`Seller running (${health.mode}): ${session.url}\nHealth: ${receipt.healthEndpoint}\nOffers: ${receipt.offersEndpoint}\nStop: Ctrl-C\nRestart: ${command('--resume', out)}\nStatus: ${command('--status', out)}\n`);
     return session;
   } catch (error) {
-    try { await session?.close?.(); } catch {}
-    throw runtimeFailure(error, out);
+    const failure = runtimeFailure(error, out);
+    const close = typeof session?.close === 'function' ? session.close.bind(session) :
+      typeof error.close === 'function' ? error.close.bind(error) : null;
+    if (close) {
+      try { await close(); }
+      catch (cleanupError) { failure.cleanupError = cleanupError; failure.close = close; }
+    }
+    throw failure;
   }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
-  launch().catch(error => { process.stderr.write(String(error?.message ?? error) + '\n'); process.exitCode = 1; });
+  launch().catch(async error => {
+    process.exitCode = 1;
+    try { process.stderr.write(String(error?.message ?? error) + '\n'); } catch { /* Reporting must not release the original cleanup owner. */ }
+    if (typeof error?.close !== 'function') return;
+    const close = error.close.bind(error);
+    const preserveFailure = () => { process.exitCode = 1; };
+    process.on('SIGINT', preserveFailure); process.on('SIGTERM', preserveFailure);
+    try {
+      for (;;) {
+        try { await close(); return; }
+        catch { await new Promise(resolve => setTimeout(resolve, 1000)); }
+      }
+    } finally {
+      process.removeListener('SIGINT', preserveFailure);
+      process.removeListener('SIGTERM', preserveFailure);
+      process.exitCode = 1;
+    }
+  });

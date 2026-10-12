@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readUpstreamBindings, createUpstreamApplication } from './upstream.mjs';
 import { validateAvailabilityDirectory } from './availability/store.mjs';
+import { bindSellerSignals } from './lifecycle.mjs';
 
 const USAGE = `Usage: node upstream-serve.mjs --config SELLER.json --upstreams BINDINGS.json
   [--port 8423] [--allow-loopback-upstream] [--check]
@@ -51,7 +52,8 @@ function parse(args) {
     facilitator, maxInFlight, drainGraceMs};
 }
 
-export async function main(args = process.argv.slice(2), {env=process.env}={}) {
+export async function main(args = process.argv.slice(2), {env=process.env,noSignals=false}={}) {
+  if (typeof noSignals !== 'boolean') throw new TypeError('noSignals must be a boolean');
   if(env===null||typeof env!=='object'||Array.isArray(env))throw new TypeError('Use the host environment object for the original upstream launcher');
   if (args.length === 1 && args[0] === '--help') { process.stdout.write(USAGE + '\n'); return null; }
   let options;
@@ -76,72 +78,119 @@ export async function main(args = process.argv.slice(2), {env=process.env}={}) {
       })),{allowLocalhost:!config.publicOrigin});
     }
   } catch (error) {
+    const close = application ? () => application.close() :
+      typeof error.close === 'function' ? error.close.bind(error) : null;
+    if (close) {
+      try { await close(); }
+      catch (cleanupError) { error.cleanupError = cleanupError; error.close = close; }
+    }
     error.cliMessage = error instanceof TypeError ? error.message :
       /^UPSTREAM_TLS_[A-Z_]+$/.test(error?.code ?? '') ? error.code : 'Cannot read valid seller/upstream JSON files';
     throw error;
   }
   if (options.check) {
-    const upstreams = application.snapshot().bindings;
-    process.stdout.write(JSON.stringify({status:'CONFIG_VALID',routes:config.routes.length,
-      upstreamBindings:upstreams.length,protectedUpstreamBindings:upstreams.filter(row => row.protected).length,
-      cachedUpstreamBindings:upstreams.filter(row => row.cache).length,
-      oauthUpstreamBindings:upstreams.filter(row => row.oauth2||row.oauthConnection).length,
-      tlsUpstreamBindings:upstreams.filter(row => row.tls).length,
-      supplierQuotaBindings:upstreams.filter(row => row.supplierAccount).length,
-      upstreamTransports:upstreams.filter(row => row.transport).map(row => ({binding:row.name,...row.transport}))}) + '\n');
-    await application.close();
+    let failure;
+    try {
+      const upstreams = application.snapshot().bindings;
+      process.stdout.write(JSON.stringify({status:'CONFIG_VALID',routes:config.routes.length,
+        upstreamBindings:upstreams.length,protectedUpstreamBindings:upstreams.filter(row => row.protected).length,
+        cachedUpstreamBindings:upstreams.filter(row => row.cache).length,
+        oauthUpstreamBindings:upstreams.filter(row => row.oauth2||row.oauthConnection).length,
+        tlsUpstreamBindings:upstreams.filter(row => row.tls).length,
+        supplierQuotaBindings:upstreams.filter(row => row.supplierAccount).length,
+        upstreamTransports:upstreams.filter(row => row.transport).map(row => ({binding:row.name,...row.transport}))}) + '\n');
+    } catch (error) { failure = error; }
+    const close = () => application.close();
+    try { await close(); }
+    catch (cleanupError) {
+      if (failure) failure.cleanupError = cleanupError;
+      else failure = cleanupError;
+      failure.close = close;
+    }
+    if (failure) throw failure;
     return null;
   }
-  let nativeFactory = null;
-  if (options.facilitator) {
-    const [{HTTPFacilitatorClient},{createNativeSellerServer}] = await Promise.all([
-      import('@x402/core/server'),import('./native-factory.mjs'),
-    ]);
-    nativeFactory = routes => createNativeSellerServer(routes,{
-      facilitatorClient:new HTTPFacilitatorClient({url:options.facilitator}),
+  let session, nativeClose, nativeClosed = false, nativeResult, closing, cleanup, closeSession;
+  const closeApplication = () => {
+    if (cleanup) return cleanup;
+    cleanup = Promise.resolve().then(() => session?.lifecycle.whenIdle())
+      .then(() => application.close()).catch(error => { cleanup = null; throw error; });
+    return cleanup;
+  };
+  function close() {
+    if (closing) return closing;
+    closing = (async () => {
+      if (!nativeClosed) {
+        nativeResult = nativeClose ? await nativeClose() : undefined;
+        nativeClosed = true;
+      }
+      await closeApplication();
+      return nativeResult;
+    })().catch(error => {
+      // Preserve the original drain error. Its eventual native idle point can
+      // finish independent upstream cleanup; failed owners remain retryable.
+      if (session) closeApplication().catch(() => {});
+      closing = null;
+      throw error;
     });
+    return closing;
   }
-  let session;
   try {
+    let nativeFactory = null;
+    if (options.facilitator) {
+      const [{HTTPFacilitatorClient},{createNativeSellerServer}] = await Promise.all([
+        import('@x402/core/server'),import('./native-factory.mjs'),
+      ]);
+      nativeFactory = routes => createNativeSellerServer(routes,{
+        facilitatorClient:new HTTPFacilitatorClient({url:options.facilitator}),
+      });
+    }
     session = await startSellerService({config:application.config,port:options.port,
       handlers:application.handlers,nativeFactory,
       availabilityDirectory:options.availabilityDirectory,
       maxInFlight:options.maxInFlight,drainGraceMs:options.drainGraceMs});
-  } catch(error) { await application.close(); throw error; }
-  session.upstreamSnapshot = application.snapshot;
-  if (application.supplierQuotaSnapshot) session.supplierQuotaSnapshot = application.supplierQuotaSnapshot;
-  session.operationControl = application.operationControl;
-  session.invalidateUpstreamCache = application.invalidateCache;
-  session.cacheBinding = application.cacheBinding;
-  session.cacheManagement = application.cacheManagement;
-  const nativeClose = session.close.bind(session);
-  let closing, cleanup;
-  const closeApplication = () => cleanup ??= session.lifecycle.whenIdle().then(() => application.close());
-  session.close = () => closing ??= (async () => {
-    try {
-      const result = await nativeClose();
-      await closeApplication();
-      return result;
-    } catch (error) {
-      // Preserve the bounded drain failure while late original work still owns
-      // its durable records. Its eventual idle signal performs resource cleanup.
-      closeApplication().catch(() => {});
-      throw error;
-    }
-  })();
-  process.stdout.write(JSON.stringify({url:session.url,mode:session.mode,
-    health:session.url + '/_seller/health',ready:session.url + '/_seller/ready',
-    offers:session.url + '/_seller/offers',
-    upstreamBindings:application.snapshot().bindings.length}) + '\n');
-  for (const signal of ['SIGINT','SIGTERM']) process.once(signal,() => {
-    session.close().then(() => { process.exitCode = 0; },() => { process.exitCode = 1; });
-  });
-  return session;
+    nativeClose = session.close.bind(session);
+    session.upstreamSnapshot = application.snapshot;
+    if (application.supplierQuotaSnapshot) session.supplierQuotaSnapshot = application.supplierQuotaSnapshot;
+    session.operationControl = application.operationControl;
+    session.invalidateUpstreamCache = application.invalidateCache;
+    session.cacheBinding = application.cacheBinding;
+    session.cacheManagement = application.cacheManagement;
+    session.close = close;
+    try { if (!noSignals) bindSellerSignals(session); }
+    finally { closeSession = session.close.bind(session); }
+    process.stdout.write(JSON.stringify({url:session.url,mode:session.mode,
+      health:session.url + '/_seller/health',ready:session.url + '/_seller/ready',
+      offers:session.url + '/_seller/offers',
+      upstreamBindings:application.snapshot().bindings.length}) + '\n');
+    return session;
+  } catch (error) {
+    if (!session && typeof error.close === 'function' && error.close !== close)
+      nativeClose = error.close.bind(error);
+    const retainedClose = closeSession ?? close;
+    try { await retainedClose(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = retainedClose; }
+    throw error;
+  }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch(error => {
+  main().catch(async error => {
     // File/system/SDK exceptions can contain credentials or private local paths.
-    process.stderr.write(typeof error?.cliMessage === 'string' ? error.cliMessage + '\n' : 'UPSTREAM_SELLER_START_FAILED\n');
     process.exitCode = 1;
+    try { process.stderr.write(typeof error?.cliMessage === 'string' ? error.cliMessage + '\n' : 'UPSTREAM_SELLER_START_FAILED\n'); } catch { /* Reporting must not release the original cleanup owner. */ }
+    if (typeof error?.close !== 'function') return;
+    const close = error.close.bind(error);
+    const preserveFailure = () => { process.exitCode = 1; };
+    process.on('SIGINT', preserveFailure); process.on('SIGTERM', preserveFailure);
+    try {
+      for (;;) {
+        try { await close(); return; }
+        catch { await new Promise(resolve => setTimeout(resolve, 1000)); }
+      }
+    } finally {
+      process.removeListener('SIGINT', preserveFailure);
+      process.removeListener('SIGTERM', preserveFailure);
+      process.exitCode = 1;
+    }
   });
 }

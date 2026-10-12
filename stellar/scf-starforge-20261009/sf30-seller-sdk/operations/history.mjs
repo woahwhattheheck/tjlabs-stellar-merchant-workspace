@@ -403,24 +403,69 @@ function lockOwner(bytes) {
   return owner;
 }
 async function publishLock(directory, path, owner) {
-  // A published lock is always complete. A crash during preparation leaves only an
-  // unreferenced private temporary file, never an unreadable owner at the lock path.
+  // Publish only complete original owner bytes. A failed acquisition retains
+  // cleanup for its own descriptor and names until every effect completes.
   const temporary = join(directory, `.lock-${randomUUID()}.tmp`);
-  let fd, published = false;
+  let fd, info, published = false, temporaryRemoved = false, publishedRemoved = false;
+  let descriptorClosed = false, cleanupPromise, cleanupComplete = false;
+  function cleanup() {
+    if (cleanupComplete) return Promise.resolve();
+    if (cleanupPromise) return cleanupPromise;
+    cleanupPromise = (async () => {
+      if (!fd) { cleanupComplete = true; return; }
+      info ??= await fd.stat();
+      if (!descriptorClosed) { await fd.close(); descriptorClosed = true; }
+      const removeOwned = async name => {
+        let current;
+        try { current = await lstat(name); }
+        catch (error) { if (error.code === 'ENOENT') return; throw error; }
+        // The failed acquisition owns only this inode. A replaced name belongs
+        // to its current owner and is never removed by our cleanup.
+        if (current.dev === info.dev && current.ino === info.ino && current.isFile() && !current.isSymbolicLink())
+          await unlink(name).catch(error => { if (error.code !== 'ENOENT') throw error; });
+      };
+      if (published && !publishedRemoved) { await removeOwned(path); publishedRemoved = true; }
+      if (!temporaryRemoved) { await removeOwned(temporary); temporaryRemoved = true; }
+      await syncDirectory(directory); cleanupComplete = true;
+    })().catch(error => { cleanupPromise = null; throw error; });
+    return cleanupPromise;
+  }
   try {
     fd = await open(temporary, 'wx', 0o600);
     await fd.writeFile(JSON.stringify(owner)); await fd.sync();
-    const info = await fd.stat();
-    await link(temporary, path); // Atomic exclusive publication; EEXIST leaves the existing owner intact.
+    info = await fd.stat();
+    await link(temporary, path); // EEXIST preserves the original current owner.
     published = true;
-    await unlink(temporary); await syncDirectory(directory);
+    await unlink(temporary); temporaryRemoved = true;
+    await syncDirectory(directory);
     return { fd, info };
   } catch (error) {
-    await fd?.close().catch(() => {});
-    if (published) await unlink(path).catch(() => {});
-    await unlink(temporary).catch(() => {});
+    try { await cleanup(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = cleanup; }
     throw error;
   }
+}
+function retainedLockRelease(directory, path, owner, published) {
+  const {fd, info:ownedInfo} = published;
+  let releasing, descriptorClosed = false, unlinked = false, released = false;
+  return function release() {
+    if (released) return Promise.resolve();
+    if (releasing) return releasing;
+    releasing = (async () => {
+      if (!descriptorClosed) { await fd.close(); descriptorClosed = true; }
+      if (!unlinked) {
+        const current = await privateFile(path, 4096);
+        if (current.info.dev !== ownedInfo.dev || current.info.ino !== ownedInfo.ino ||
+            lockOwner(current.bytes).token !== owner.token)
+          fail('History writer ownership changed', 'HISTORY_LOCK_LOST');
+        await unlink(path); unlinked = true;
+      }
+      // Once our name was removed, a retry only completes its directory
+      // flush. It never reads or removes a subsequent writer's lock.
+      await syncDirectory(directory); released = true;
+    })().catch(error => { releasing = null; throw error; });
+    return releasing;
+  };
 }
 async function acquireLock(directory) {
   const path = join(directory, '.usage-writer.lock');
@@ -432,16 +477,12 @@ async function acquireLock(directory) {
     try {
       const published = await publishLock(directory, path, owner);
       fd = published.fd;
-      const ownedInfo = published.info;
-      return { recovered, async release() {
-        await fd.close();
-        const current = await privateFile(path, 4096);
-        if (current.info.ino !== ownedInfo.ino || lockOwner(current.bytes).token !== owner.token)
-          fail('History writer ownership changed', 'HISTORY_LOCK_LOST');
-        await unlink(path); await syncDirectory(directory);
-      } };
+      return { recovered, release:retainedLockRelease(directory, path, owner, published) };
     } catch (error) {
-      await fd?.close().catch(() => {});
+      // A failed publication with pending cleanup must finish that exact owner
+      // before this caller can inspect or recover another writer.
+      if (typeof error.close === 'function') throw error;
+      await fd?.close();
       if (error.code !== 'EEXIST') throw error;
     }
     let previous;
@@ -452,12 +493,12 @@ async function acquireLock(directory) {
       fail('Another live or nonlocal process owns this history directory', 'HISTORY_IN_USE');
     // An exclusive per-old-owner recovery marker serializes ordinary stale-lock recovery.
     const recoveryPath = join(directory, `.usage-reclaim-${old.token}.lock`);
-    let recovery;
+    let releaseRecovery;
     try {
-      recovery = (await publishLock(directory, recoveryPath, owner)).fd;
+      const recovery = await publishLock(directory, recoveryPath, owner);
+      releaseRecovery = retainedLockRelease(directory, recoveryPath, owner, recovery);
     } catch (error) {
-      await recovery?.close().catch(() => {});
-      if (error.code !== 'EEXIST') throw error;
+      if (typeof error.close === 'function' || error.code !== 'EEXIST') throw error;
       const pending = await privateFile(recoveryPath, 4096), recoveryOwner = lockOwner(pending.bytes);
       if (await liveOwner(recoveryOwner, owner))
         fail('History stale-writer recovery is already running', 'HISTORY_RECOVERY_IN_USE');
@@ -466,14 +507,22 @@ async function acquireLock(directory) {
         await unlink(recoveryPath);
       continue;
     }
+    let recoveryFailure;
     try {
       const current = await privateFile(path, 4096), currentOwner = lockOwner(current.bytes);
       if (current.info.ino === previous.info.ino && currentOwner.token === old.token &&
           !(await liveOwner(currentOwner, owner))) {
         await unlink(path); recovered = true;
       }
-    } catch (error) { if (error.code !== 'ENOENT') throw error; }
-    finally { await recovery.close(); await unlink(recoveryPath).catch(() => {}); }
+    } catch (error) { if (error.code !== 'ENOENT') recoveryFailure = error; }
+    try { await releaseRecovery(); }
+    catch (cleanupError) {
+      const error = recoveryFailure ?? cleanupError;
+      if (recoveryFailure) error.cleanupError = cleanupError;
+      error.close = releaseRecovery;
+      throw error;
+    }
+    if (recoveryFailure) throw recoveryFailure;
   }
   fail('History directory ownership changed during startup; retry startup', 'HISTORY_LOCK_RACE');
 }
@@ -503,6 +552,7 @@ export async function createTrafficHistory({ directory, retentionDays = 90, now 
   const lock = await acquireLock(directory), records = new Map(), damaged = [];
   let activeSessionId = null, lastCheckpointAt = null, lastError = null,
     checkpointFailures = 0, closed = false, closing = false, closePromise,
+    finalSnapshot, finalizationSelected = false, finalizationSaved = false,
     tail = Promise.resolve();
   const filename = id => `session-${id}.json`;
   try {
@@ -521,7 +571,11 @@ export async function createTrafficHistory({ directory, retentionDays = 90, now 
         damaged.push({ sessionId: FILE.exec(name)[1], code: error.code ?? 'HISTORY_INVALID_DATA' });
       }
     }
-  } catch (error) { await lock.release().catch(() => {}); throw error; }
+  } catch (error) {
+    try { await lock.release(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = () => lock.release(); }
+    throw error;
+  }
 
   const status = () => ({ enabled: true, healthy: !lastError && damaged.length === 0,
     activeSessionId, lastCheckpointAt, checkpointFailures, lastError,
@@ -653,11 +707,24 @@ export async function createTrafficHistory({ directory, retentionDays = 90, now 
     },
     close(snapshot) {
       if (closePromise) return closePromise;
+      if (!finalizationSelected) {
+        // A failed final write retries these same original counters. No later
+        // caller can replace the selected final snapshot during shutdown.
+        finalSnapshot = snapshot === undefined ? undefined : structuredClone(snapshot);
+        finalizationSelected = true;
+      }
       closing = true;
       closePromise = (async () => {
-        try { if (snapshot) await enqueue(snapshot, true); else await tail; }
-        finally { closed = true; await lock.release(); }
-      })();
+        if (!finalizationSaved) {
+          if (finalSnapshot !== undefined) await enqueue(finalSnapshot, true);
+          else await tail;
+          finalizationSaved = true;
+        }
+        // Retain this writer if the final checkpoint fails. Once saved, a
+        // failed release retries only the original lock's remaining effects.
+        await lock.release();
+        closed = true;
+      })().catch(error => { closePromise = null; throw error; });
       return closePromise;
     },
   };

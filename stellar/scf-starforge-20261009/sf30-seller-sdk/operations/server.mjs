@@ -59,19 +59,8 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
   const revision = snapshot => [snapshot.totals.started, snapshot.totals.completed,
     snapshot.observerErrors, snapshot.ignoredMetadata, snapshot.attached,
     snapshot.capturedAt.slice(0, 10)].join(':');
-  try {
-    if (historyDirectory !== undefined) {
-      history = await createTrafficHistory({ directory: historyDirectory, retentionDays: historyRetentionDays });
-      const initial = observer.snapshot();
-      await history.checkpoint(initial); savedRevision = revision(initial);
-    }
-  } catch (error) {
-    observer.detach();
-    await history?.close().catch(() => {});
-    throw error;
-  }
   function checkpoint() {
-    if (!history || checkpointPending) return checkpointPending;
+    if (stopping || !history || checkpointPending) return checkpointPending;
     const current = observer.snapshot(), currentRevision = revision(current);
     // An idle service must not rewrite months of aggregate data every tick.
     // A UTC date change still triggers retention; failed saves keep retrying.
@@ -88,7 +77,18 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
   const snapshot = () => ({ ...observer.snapshot(), usageHistory: storage(),
     ...(typeof session.upstreamSnapshot === 'function' ? { upstreams: session.upstreamSnapshot() } : {}) });
   let allowedHosts = new Set(), allowedOrigins = new Set();
+  let stopping = false, closing, listenerStop, startupCleanup, finalSnapshot;
+  const pending = new Set(), closedOwners = new Set();
   const server = createServer((req, res) => {
+    const operation = handleRequest(req, res).catch(() => {
+      if (res.destroyed || res.writableEnded) return;
+      if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain', 'cache-control': 'no-store' });
+      res.end('Snapshot unavailable');
+    });
+    pending.add(operation);
+    operation.then(() => pending.delete(operation), () => pending.delete(operation));
+  });
+  async function handleRequest(req, res) {
     const reply = (code, type, data, extra = {}) => {
       const bytes = Buffer.isBuffer(data) ? data : Buffer.from(data);
       res.writeHead(code, { 'content-type': type, 'content-length': String(bytes.length),
@@ -112,30 +112,27 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
           ['cross-site', 'same-site'].includes(req.headers['sec-fetch-site'])))) {
         return reply(403, 'text/plain', 'Operator origin required');
       }
+      if (stopping) return reply(503, 'text/plain', 'Operator is closing', { connection: 'close' });
       if(req.url==='/delivery-workspace' || req.url?.startsWith('/delivery-workspace/')) {
         if(!deliveryWorkspaceHandler)return reply(503,'application/json; charset=utf-8',JSON.stringify({error:'DELIVERY_WORKSPACE_UNAVAILABLE'}));
-        deliveryWorkspaceHandler(req,res).catch(()=>{
+        return deliveryWorkspaceHandler(req,res).catch(()=>{
           if(!res.destroyed&&!res.headersSent)reply(503,'application/json; charset=utf-8',JSON.stringify({error:'DELIVERY_WORKSPACE_UNAVAILABLE'}));
         });
-        return;
       }
       if (merchantDesk.accepts(req.url)) {
-        merchantDesk.dispatch(req,allowedOrigins).then(result => {
+        return merchantDesk.dispatch(req,allowedOrigins).then(result => {
           if (!res.destroyed) reply(result.status,'application/json; charset=utf-8',JSON.stringify(result.body),result.headers);
         });
-        return;
       }
       if (availabilityDesk.accepts(req.url)) {
-        availabilityDesk.dispatch(req,allowedOrigins).then(result => {
+        return availabilityDesk.dispatch(req,allowedOrigins).then(result => {
           if (!res.destroyed) reply(result.status,'application/json; charset=utf-8',JSON.stringify(result.body),result.headers);
         });
-        return;
       }
       if (deliveryDesk.accepts(req.url)) {
-        deliveryDesk.dispatch(req,allowedOrigins).then(result => {
+        return deliveryDesk.dispatch(req,allowedOrigins).then(result => {
           if (!res.destroyed) reply(result.status,'application/json; charset=utf-8',JSON.stringify(result.body),result.headers);
         });
-        return;
       }
       if (!['GET', 'HEAD'].includes(req.method)) return reply(405, 'text/plain', 'Read only', { allow: 'GET, HEAD' });
       if (req.url === '/api/snapshot' || req.url === '/export.json') {
@@ -148,7 +145,7 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
       }
       if (['/api/supplier-quotas', '/supplier-quotas.json', '/supplier-quotas.csv'].includes(req.url)) {
         // Each explicit read observes the same original shared-account ledger.
-        readSupplierQuotas(session).then(view => {
+        return readSupplierQuotas(session).then(view => {
           if (res.destroyed) return;
           if (req.url === '/supplier-quotas.csv') return reply(200, 'text/csv; charset=utf-8',
             supplierQuotasCsv(view), { 'content-disposition': 'attachment; filename="supplier-accounts.csv"' });
@@ -159,7 +156,6 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
           if (!res.destroyed) reply(503, 'application/json; charset=utf-8',
             JSON.stringify({ error: 'SUPPLIER_QUOTA_UNAVAILABLE' }));
         });
-        return;
       }
       if (req.url === '/export.csv') return reply(200, 'text/csv; charset=utf-8', trafficCsv(observer.snapshot()),
         { 'content-disposition': 'attachment; filename="seller-traffic.csv"' });
@@ -171,7 +167,7 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
         }
         // The journal read happens only for explicit operator GET/HEAD requests.
         // Read failures never affect seller HTTP traffic or reveal private paths.
-        readDelivery({fresh:req.url === '/api/delivery'}).then(view => {
+        return readDelivery({fresh:req.url === '/api/delivery'}).then(view => {
           if (res.destroyed) return;
           if (req.url === '/delivery.metrics') return reply(200,
             'text/plain; version=0.0.4; charset=utf-8', deliveryPrometheus(view));
@@ -184,19 +180,17 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
           if (!res.destroyed) reply(503, 'application/json; charset=utf-8',
             JSON.stringify({ error: 'DELIVERY_JOURNAL_UNAVAILABLE' }));
         });
-        return;
       }
       if (req.url === '/metrics') {
         const http = trafficPrometheus(observer.snapshot());
         if (!readDelivery) return reply(200, 'text/plain; version=0.0.4; charset=utf-8', http);
-        readDelivery().then(view => {
+        return readDelivery().then(view => {
           if (!res.destroyed) reply(200, 'text/plain; version=0.0.4; charset=utf-8',
             http + deliveryPrometheus(view));
         }, () => {
           if (!res.destroyed) reply(200, 'text/plain; version=0.0.4; charset=utf-8',
             http + '\n# TYPE sf98_outbox_read_available gauge\nsf98_outbox_read_available 0\n');
         });
-        return;
       }
       if (req.url?.startsWith('/api/history') || req.url?.startsWith('/history.csv') || req.url?.startsWith('/history.json')) {
         const url = new URL(req.url, `http://${req.headers.host}`);
@@ -223,33 +217,67 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
       if (asset) return reply(200, asset.type, asset.bytes);
       return reply(404, 'text/plain', 'Not found');
     } catch { return reply(500, 'text/plain', 'Snapshot unavailable'); }
-  });
+  }
   server.requestTimeout = 10000; server.headersTimeout = 8000; server.keepAliveTimeout = 2000;
-  let closing;
-  const close = () => {
+  function stopListener() {
+    if (listenerStop) return listenerStop;
+    // server.listening becomes false before accepted connections finish. Keep
+    // the original callback promise across retries until that listener drains.
+    listenerStop = new Promise((done, fail) => {
+      server.close(error => error && error.code !== 'ERR_SERVER_NOT_RUNNING' ? fail(error) : done());
+    }).catch(error => { listenerStop = null; throw error; });
+    server.closeIdleConnections?.();
+    return listenerStop;
+  }
+  function close() {
     if (closing) return closing;
+    stopping = true;
     clearInterval(checkpointTimer);
-    observer.detach();
     closing = (async () => {
-      try {
-        await new Promise((done, fail) => {
-          if (!server.listening) { done(); return; }
-          server.close(error => error ? fail(error) : done());
-          server.closeIdleConnections?.();
+      const failures = [];
+      const finish = async (name, operation) => {
+        if (closedOwners.has(name)) return true;
+        try { await operation(); closedOwners.add(name); return true; }
+        catch (error) { failures.push(error); return false; }
+      };
+      const listener = finish('listener', stopListener);
+      await finish('observer', () => {
+        observer.detach();
+        finalSnapshot = observer.snapshot();
+      });
+      const handlerClosed = await finish('workspace-handler', () => deliveryWorkspaceHandler?.close());
+      const [, , deliveryClosed, requestsClosed] = await Promise.all([
+        finish('merchant-desk', () => merchantDesk.close()),
+        finish('availability-desk', () => availabilityDesk.close()),
+        finish('delivery-desk', () => deliveryDesk.close()),
+        finish('requests', () => Promise.allSettled([...pending])),
+      ]);
+      // Accepted operation and read-only HTTP work can use the same delivery
+      // model even after its response disconnects. Drain those callers first.
+      if (handlerClosed && deliveryClosed && requestsClosed)
+        await finish('workspace-model', () => deliveryWorkspaceModel?.close());
+      if (requestsClosed && closedOwners.has('observer'))
+        await finish('history', async () => {
+          await checkpointPending;
+          await history?.close(finalSnapshot);
         });
-      } finally {
-        await merchantDesk.close();
-        await availabilityDesk.close();
-        await deliveryDesk.close();
-        deliveryWorkspaceHandler?.close();
-        await deliveryWorkspaceModel?.close();
-        await checkpointPending;
-        await history?.close(observer.snapshot());
+      await finish('startup-cleanup', () => startupCleanup?.());
+      await listener;
+      if (failures.length) {
+        const error = new AggregateError(failures, 'Original seller operations did not fully close',
+          { cause: failures[0] });
+        error.close = close;
+        throw error;
       }
-    })();
+    })().catch(error => { closing = null; throw error; });
     return closing;
-  };
+  }
   try {
+    if (historyDirectory !== undefined) {
+      history = await createTrafficHistory({ directory: historyDirectory, retentionDays: historyRetentionDays });
+      const initial = observer.snapshot();
+      await history.checkpoint(initial); savedRevision = revision(initial);
+    }
     await new Promise((done, fail) => {
       const onError = error => { server.removeListener('listening', onListen); fail(error); };
       const onListen = () => { server.removeListener('error', onError); done(); };
@@ -279,6 +307,12 @@ export async function startSellerOperations(session, { port = 8424, recentLimit 
       deliveryWorkspace:deliveryWorkspaceModel,
       deliveryWorkspaceUrl:deliveryWorkspaceModel?url+'/delivery-workspace/':null,
       observer, history, close };
-  } catch (error) { await close().catch(() => {}); throw error; }
+  } catch (error) {
+    // An original child may retain its own partial-start owner for retry.
+    if (typeof error.close === 'function' && error.close !== close) startupCleanup = error.close.bind(error);
+    try { await close(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = close; }
+    throw error;
+  }
 }
 

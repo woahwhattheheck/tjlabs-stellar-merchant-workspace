@@ -62,9 +62,22 @@ export function createCachedUpstream(options, cacheOptions) {
     sourceStarted: 0, sourceCompleted: 0, sourceInFlight: 0, sourceFailed: 0, sourceResponseBytes: 0 };
   let current = null, sequence = 0, revision = 0, closed = false, closing;
 
+  function closeGeneration(generation, options) {
+    if (generation.closing) return generation.closing;
+    generation.closing = Promise.resolve().then(() => generation.cache.close(options))
+      // The bounded close result does not retire a source that is still
+      // unwinding after cancellation. Retain its original native cache owner.
+      .then(() => generation.cache.whenIdle()).then(() => {
+        generation.drained = true;
+        if (generation !== current && generation.users === 0 && generation.active === 0)
+          generations.delete(generation);
+      }).catch(error => { generation.closing = null; throw error; });
+    return generation.closing;
+  }
   function release(generation) {
     if (generation !== current && generation.users === 0 && generation.active === 0) {
-      generation.cache.close(); generations.delete(generation);
+      if (generation.drained) generations.delete(generation);
+      else closeGeneration(generation).catch(() => {});
     }
   }
   function retire() {
@@ -189,12 +202,14 @@ export function createCachedUpstream(options, cacheOptions) {
     if (closing) return closing;
     closed = true;
     const credentialDrains = [...credentialWaiters].map(waiting => { waiting.lifetime.cancel(); return waiting.done; });
-    const pending = [...credentialDrains, admission.close(options), ...[...generations].map(generation => generation.cache.close(options))];
     current = null;
+    const pending = [...credentialDrains,
+      admission.close(options).then(() => admission.whenIdle()),
+      ...[...generations].map(generation => closeGeneration(generation, options))];
     closing = Promise.all(pending).then(() => {
       for (const generation of generations) release(generation);
       return stats();
-    });
+    }).catch(error => { closing = null; throw error; });
     return closing;
   };
   handler.admit = admission.admit;
