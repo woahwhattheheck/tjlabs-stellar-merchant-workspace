@@ -8,7 +8,7 @@ import { bindingFacts } from '../mpp-charge/config.mjs';
 import { responseRecord, storedResponse } from '../mpp-charge/merchant.mjs';
 import { requireValue as need, hash, stable, now } from '../mpp-charge/storage.mjs';
 import { merchantConfig, profileKey, humanAmount, MAX_BODY, streamKey } from './config.mjs';
-import { loadChannelNative, observeChannel, nativeStore, merchantCumulativeKey, settlingKey, closedKey } from './runtime.mjs';
+import { loadChannelNative, observeChannel, assertFreshCommitment, nativeStore, merchantCumulativeKey, settlingKey, closedKey } from './runtime.mjs';
 import { groups, serialChannel, deliveryView } from './state.mjs';
 export function merchantContract(config) {
   return {schema:'stellar-forge.mpp-channel-contract.v1',title:config.title,origin:config.publicOrigin,
@@ -35,9 +35,20 @@ export async function createMerchant({workspace,profile,environment=process.env}
   const sdkStore={
     get:store.get,delete:store.delete,
     put:(key,value)=>store.update(key,current=>({op:'set',value:owns(key,value,current),result:undefined})),
-    update:(key,fn)=>store.update(key,current=>{
-      const change=fn(current); return change.op==='set'?{...change,value:owns(key,change.value,current)}:change;
-    })
+    update:async(key,fn)=>{
+      if(key===cumulativeKey) {
+        // The SDK reaches this atomic acceptance only after native signature and replay checks.
+        const row=context.getStore();
+        need(row, 'MPP_CHANNEL_NATIVE_DELIVERY_CONTEXT_REQUIRED');
+        const observation=await observeChannel(native,config.channel);
+        const outstanding=assertFreshCommitment(observation,row.amountAtomic);
+        Object.assign(row,{observation,outstandingAtomic:outstanding,updatedAt:now()});
+        await workspace.put(groups.deliveries,row.id,row);
+      }
+      return store.update(key,current=>{
+        const change=fn(current); return change.op==='set'?{...change,value:owns(key,change.value,current)}:change;
+      });
+    }
   };
   const handlers=config.handlersModule?await import(pathToFileURL(await inputPathFor(workspace,config,config.handlersModule)).href):{};
   const routes=new Map(config.routes.map(route=>{
@@ -45,7 +56,9 @@ export async function createMerchant({workspace,profile,environment=process.env}
     const method=native.channelServer.stellar.channel({channel:config.channel.address,
       commitmentKey:config.channel.commitmentKey,network:config.channel.network,
       recipient:config.channel.recipient,currency:config.channel.token,decimals:config.channel.decimals,
-      rpcUrl:config.channel.rpcUrl,store:sdkStore,checkOnChainState:true});
+      // The mandatory coherent observation at atomic acceptance validates cumulative minus withdrawn.
+      // Native SDK signature, challenge claim, replay and atomic cumulative acceptance remain enabled.
+      rpcUrl:config.channel.rpcUrl,store:sdkStore,checkOnChainState:false});
     const mpp=native.server.Mppx.create({realm:new URL(config.publicOrigin).hostname,secretKey:secret,methods:[method]});
     return [route.method+' '+route.path,{route,mpp}];
   }));
@@ -153,10 +166,6 @@ export async function createMerchant({workspace,profile,environment=process.env}
         signature:credential.payload.signature,amountAtomic:credential.payload.amount,
         createdAt:row?.createdAt ?? now(),updatedAt:now()};
       await workspace.put(groups.deliveries,key,row);
-    }
-    if(credential) {
-      const observation=await observeChannel(native,config.channel);
-      need(observation.closeEffectiveAtLedger===null, 'MPP_CHANNEL_CLOSING',409);
     }
     try {
       const invoke=()=>selected.mpp.channel({amount:humanAmount(selected.route.amountAtomic,config.channel.decimals),

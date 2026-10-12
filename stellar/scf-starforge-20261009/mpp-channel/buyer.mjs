@@ -6,7 +6,7 @@ import { requestBytes, bindingFacts } from '../mpp-charge/config.mjs';
 import { responseRecord, storedResponse } from '../mpp-charge/merchant.mjs';
 import { requireValue as need, hash, stable, now, id } from '../mpp-charge/storage.mjs';
 import { taskConfig, taskRequest, reviewChallenge, amount, profileKey } from './config.mjs';
-import { loadChannelNative, observeChannel, nativeStore, clientCumulativeKey } from './runtime.mjs';
+import { loadChannelNative, observeChannel, assertFreshCommitment, nativeStore, clientCumulativeKey } from './runtime.mjs';
 import { groups, readTask, serialChannel, reservePurchase, markSigned, completePurchase, purchaseView } from './state.mjs';
 function options(request,credential) {
   const body=requestBytes(request), headers={};
@@ -77,9 +77,7 @@ export async function executePurchase({workspace,purchaseId,environment=process.
       if(!row.credentialHeader) {
         reviewChallenge(row.challenge,config,{fresh:row.phase!=='SIGNING'});
         const observation=await observeChannel(native,config.channel);
-        need(observation.closeEffectiveAtLedger===null &&
-          BigInt(row.reservation.cumulativeAtomic)<=BigInt(observation.balanceAtomic),
-          'MPP_CHANNEL_DEPOSIT_OR_LIFECYCLE_CHANGED',409);
+        assertFreshCommitment(observation,row.reservation.cumulativeAtomic);
         const key=native.sdk.Keypair.fromSecret(environment[config.signer.keyEnv] ?? '');
         need(key.publicKey()===config.channel.commitmentKey, 'MPP_CHANNEL_COMMITMENT_SIGNER_MISMATCH');
         const stored=await store.get(clientCumulativeKey(config.channel));
