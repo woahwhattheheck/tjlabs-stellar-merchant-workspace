@@ -45,7 +45,7 @@ window.IatiOrganisationUi=function(api){
   for(const el of document.querySelectorAll('[data-org-save]'))el.disabled=busy||!!pending||(!!plan&&!editable);
   for(const el of document.querySelectorAll('[data-org-edit]'))el.disabled=busy||!!pending||!editable||!detail;
   for(const el of document.querySelectorAll('[data-org-review]'))el.disabled=busy||!!pending||!editable||drafts.length>0;
-  $('org-release').disabled=busy||!!pending||!editable||!plan?.review||plan.review.decision!=='approve'||drafts.length>0;
+  $('org-release').disabled=busy||!!pending||!editable||plan?.state!=='REVIEWED'||!!plan.release||!plan?.review||plan.review.decision!=='approve'||drafts.length>0;
   $('org-rows-prev').disabled=busy||!page||page.offset===0;
   $('org-rows-next').disabled=busy||!page||page.offset+page.rows.length>=page.total;
   $('org-open').disabled=busy||!$('org-plan-select').value;
