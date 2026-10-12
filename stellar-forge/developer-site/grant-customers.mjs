@@ -296,6 +296,8 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/AMENDMENT_CALENDAR\.md)/, companion);
   receive('grant-work-invoice-intake', 'Recorded work, supplier invoice intake and original-case receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/WORK_INTAKE\.md)/, companion);
+  receive('grant-customer-operating-procedures', 'Editable customer procedures from original grant work packages',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar-forge\/developer-site\/GRANT_OPERATING_PLANS\.md)/, companion);
   receive('grant-operating-forecast', 'Reviewed remaining effort, cash obligations and original operating forecast',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/FORECAST\.md)/, companion);
   receive('grant-application-handoff', 'Complete grant case and saved Application customer handoff',
