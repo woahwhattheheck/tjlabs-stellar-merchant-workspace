@@ -11,6 +11,8 @@ import shutil
 import stat
 import subprocess
 import sys
+import signal
+import time
 import zipfile
 
 PACKAGE_SHA = '38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577'
@@ -95,11 +97,47 @@ def main():
     environment['STARFORGE_PYTHON'] = sys.executable
     environment['TMPDIR'] = str(directory)
     driver = Path(__file__).with_suffix('.mjs')
-    result = subprocess.run([
+    def resources():
+        values = {}
+        for name in ['memory.current', 'memory.max', 'memory.events', 'pids.current', 'pids.max']:
+            path = Path('/sys/fs/cgroup')/name
+            try:
+                values[name] = path.read_text().strip()
+            except OSError:
+                pass
+        return values
+    before = resources()
+    started = time.monotonic()
+    child = subprocess.Popen([
         args.node, str(driver), str(source), str(directory), str(directory/'receiving-options.json')
-    ], env=environment, timeout=240)
-    if result.returncode:
-        raise RuntimeError('The original managed customer journey failed; its directory is retained')
+    ], env=environment, start_new_session=True)
+    timed_out = False
+    try:
+        returncode = child.wait(timeout=240)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        os.killpg(child.pid, signal.SIGTERM)
+        try:
+            returncode = child.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            os.killpg(child.pid, signal.SIGKILL)
+            returncode = child.wait()
+    if returncode:
+        # This is the process group created for this one receiving programme.
+        # Draining it also retires a native listener after its Node parent exits.
+        try:
+            os.killpg(child.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    process_result = {
+        'pid': child.pid, 'returncode': returncode, 'signal': -returncode if returncode < 0 else None,
+        'timedOut': timed_out, 'seconds': round(time.monotonic()-started, 3),
+        'before': before, 'after': resources(),
+    }
+    write(directory/'native-process.json', json.dumps(process_result, indent=2).encode())
+    print(json.dumps({'stage': 'MANAGED_RECEIVING_PROCESS_EXIT', **process_result}), flush=True)
+    if returncode:
+        raise RuntimeError('Original managed receiving ended with code '+str(returncode)+'; its complete directory is retained')
     result_path = directory/'receiving-result.json'
     received = json.loads(result_path.read_text())
     for name in ['browser-project.zip', 'project.zip', 'sdk-project.zip', 'customer-edited-project.zip']:
