@@ -6,6 +6,11 @@ const make = (tag, text, className) => {
   return node;
 };
 const query = (path, values) => path + '?' + new URLSearchParams(Object.entries(values).filter(([, value]) => value !== null && value !== undefined && value !== ''));
+const displayTime = value => {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value ?? '—') :
+    parsed.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+};
 const facts = values => {
   const dl = make('dl', undefined, 'paths');
   for (const [label, value] of values) { const row = make('div'); row.append(make('dt', label), make('dd', String(value ?? '—'))); dl.append(row); }
@@ -18,7 +23,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
   let scope = 0, navigation = 0, loading = false, refreshAgain = false, busy = false, workGeneration = 0;
   let workspaceId = null, selectedId = null, selectedRunId = null, data = null, applications = [], applicationsReadAt = 0;
   let review = null, cursor = null, cursorTrail = [], outputSelection = null, outputGeneration = 0, runSignature = '';
-  let draft = { groupId: null, expectedRevision: null, label: '', applicationIds: [] }, dirty = false;
+  let draft = { groupId: null, expectedRevision: null, label: '', applicationIds: [] }, dirty = false, draftRetained = true, choicePage = 0;
   root.classList.add('application-groups');
   const title = make('div', undefined, 'section-title');
   const heading = make('div'); heading.append(make('p', 'APPLICATIONS / LAUNCH GROUPS', 'eyebrow'), make('h2', 'Launch a saved group'));
@@ -29,8 +34,9 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
   const editor = make('details'), editorSummary = make('summary', 'Create or edit a group'), editorFields = make('fieldset');
   const nameLabel = make('label', 'Group name'), name = make('input'); name.maxLength = 120; name.autocomplete = 'off'; nameLabel.append(name);
   const searchLabel = make('label', 'Find a saved Application'), search = make('input'); search.type = 'search'; search.placeholder = 'Name, kind, runtime or ID'; searchLabel.append(search);
-  const choices = make('div', undefined, 'group-choices'), order = make('ol', undefined, 'group-order'), draftStatus = make('p', undefined, 'note'), editorActions = make('div', undefined, 'actions');
-  editorFields.append(nameLabel, searchLabel, choices, make('h3', 'Launch order'), order, draftStatus, editorActions);
+  const choices = make('div', undefined, 'group-choices'), choiceSummary = make('p', undefined, 'note'), choiceControls = make('div', undefined, 'actions'),
+    order = make('ol', undefined, 'group-order'), draftStatus = make('p', undefined, 'note'), editorActions = make('div', undefined, 'actions');
+  editorFields.append(nameLabel, searchLabel, choiceSummary, choices, choiceControls, make('h3', 'Launch order'), order, draftStatus, editorActions);
   editor.append(editorSummary, editorFields); root.append(editor);
   const reviewPanel = make('section', undefined, 'panel'), reviewContent = make('div'), reviewActions = make('div', undefined, 'actions');
   reviewPanel.append(make('h3', 'Review the exact selection'), reviewContent, reviewActions); reviewPanel.hidden = true; root.append(reviewPanel);
@@ -47,7 +53,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     try { if (value === null) storage.removeItem(key(suffix)); else storage.setItem(key(suffix), JSON.stringify(value)); return true; } catch { return false; }
   }
   function preferences() { retain('selection', { selectedId, selectedRunId }, localStorage); }
-  function saveDraft() { retain('draft', { ...draft, dirty }); }
+  function saveDraft() { draftRetained = retain('draft', { ...draft, dirty }); return draftRetained; }
   function button(label, action, disabled = false) {
     const node = make('button', label); node.type = 'button'; node.disabled = disabled || busy;
     node.addEventListener('click', () => { if (!busy) Promise.resolve().then(action).catch(error); }); return node;
@@ -66,13 +72,19 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
       label: typeof saved.label === 'string' ? saved.label : '',
       applicationIds: saved.applicationIds.filter(id => typeof id === 'string' && /^[a-f0-9]{24}$/.test(id)),
     } : { groupId: null, expectedRevision: null, label: '', applicationIds: [] };
-    dirty = Boolean(saved?.dirty); name.value = draft.label; editor.open = dirty;
+    dirty = Boolean(saved?.dirty); draftRetained = Boolean(saved); choicePage = 0; name.value = draft.label; editor.open = dirty;
     return true;
   }
   function changed() { dirty = true; draft.label = name.value; saveDraft(); renderEditor(); }
   function renderEditor() {
     const needle = search.value.trim().toLocaleLowerCase(), selected = new Set(draft.applicationIds);
-    const matches = applications.filter(item => [item.label, item.kind, item.runtime?.directory, item.id].join(' ').toLocaleLowerCase().includes(needle)).slice(0, 60);
+    const allMatches = applications.filter(item => [item.label, item.kind, item.runtime?.directory, item.id].join(' ').toLocaleLowerCase().includes(needle));
+    const pageSize = 30, lastPage = Math.max(0, Math.ceil(allMatches.length / pageSize) - 1);
+    choicePage = Math.min(choicePage, lastPage);
+    const start = choicePage * pageSize, matches = allMatches.slice(start, start + pageSize);
+    choiceSummary.textContent = allMatches.length ? 'Showing ' + (start + 1) + '–' + (start + matches.length) + ' of ' + allMatches.length + ' saved Applications' : '0 matching saved Applications';
+    choiceControls.replaceChildren(button('Previous Applications page', () => { choicePage--; renderEditor(); }, choicePage === 0),
+      button('Next Applications page', () => { choicePage++; renderEditor(); }, choicePage >= lastPage));
     choices.replaceChildren(...matches.map(item => {
       const row = make('div', undefined, 'group-choice');
       const label = make('div'); label.append(make('strong', item.label ?? item.id), make('small', (item.kind ?? 'Application') + ' · ' + item.id));
@@ -90,7 +102,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
         button('Remove', () => { draft.applicationIds.splice(index, 1); changed(); }));
       row.append(make('strong', label), make('small', id), actions); return row;
     }));
-    draftStatus.textContent = draft.applicationIds.length + ' / 32 members' + (dirty ? ' · Unsaved draft retained in this browser' : draft.groupId ? ' · Saved selection' : '');
+    draftStatus.textContent = draft.applicationIds.length + ' / 32 members' + (dirty ? draftRetained ? ' · Unsaved draft retained in this browser' : ' · Unsaved changes; browser storage is unavailable' : draft.groupId ? ' · Saved selection' : '');
     editorActions.replaceChildren(button(draft.groupId ? 'Save changes' : 'Save group', async () => {
       await mutate('/api/application-groups/save', { requestId: crypto.randomUUID(), ...draft }, 'Save group');
     }, !draft.label.trim() || !draft.applicationIds.length), button('Discard draft', () => {
@@ -104,7 +116,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
       { groupId: null, expectedRevision: null, label: '', applicationIds: [] };
     name.value = draft.label; dirty = false; saveDraft(); editor.open = true; renderEditor(); name.focus();
   }
-  name.addEventListener('input', changed); search.addEventListener('input', renderEditor);
+  name.addEventListener('input', changed); search.addEventListener('input', () => { choicePage = 0; renderEditor(); });
   selector.addEventListener('change', () => {
     selectedId = selector.value || null; selectedRunId = null; cursor = null; cursorTrail = []; navigation++; review = null;
     outputSelection = null; outputPanel.hidden = true; outputGeneration++; preferences(); refresh().catch(error);
@@ -194,7 +206,8 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     if (!run) { runPanel.append(make('p', 'Review this group to start its first retained run.', 'note')); return; }
     const runHeading = make('div', undefined, 'section-title'); runHeading.append(make('h3', 'Current selection: ' + run.label), make('span', run.phase, 'status')); runPanel.append(runHeading);
     runPanel.append(facts([['Group run', run.id], ['Progress', run.started + ' of ' + run.total + ' original operations retained'],
-      ['Created', run.createdAt], ['Progress version', run.version]]));
+      ['Created', displayTime(run.createdAt)], ['Progress version', run.version]]),
+      detail('Exact run dates', { createdAt: run.createdAt, updatedAt: run.updatedAt }));
     if (run.groupRevision !== selected.revision) runPanel.append(make('p', 'This run retains an earlier saved selection. Its member order and original operations remain available below.', 'note'));
     if (run.waitingApplicationId) runPanel.append(make('p', 'Waiting on ' + (run.members.find(item => item.applicationId === run.waitingApplicationId)?.label ?? run.waitingApplicationId) + '. Open its output, recover its original request, or accept its final result before continuing.', 'note'));
     const controls = make('div', undefined, 'actions'), next = run.members.find(item => item.applicationId === run.nextApplicationId);
@@ -246,12 +259,17 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
     if (!selected) return;
     const history = selected.history;
     historyContent.replaceChildren(make('p', history.total + ' retained group runs', 'note'));
-    for (const run of history.items) historyContent.append(button(
-      (run.id === selected.run?.id ? 'Selected · ' : '') + run.createdAt + ' · ' + run.label + ' · ' + run.id,
-      () => {
-        selectedRunId = run.id; navigation++; review = null; outputSelection = null; outputPanel.hidden = true; outputGeneration++;
-        preferences(); refresh().catch(error);
-      }));
+    for (const run of history.items) {
+      const item = button(
+        (run.id === selected.run?.id ? 'Selected · ' : '') + displayTime(run.createdAt) + ' · ' + run.label + ' · ' + run.id,
+        () => {
+          selectedRunId = run.id; navigation++; review = null; outputSelection = null; outputPanel.hidden = true; outputGeneration++;
+          preferences(); refresh().catch(error);
+        });
+      item.setAttribute('data-created-at', run.createdAt);
+      item.title = 'Created ' + run.createdAt;
+      historyContent.append(item);
+    }
     const controls = make('div', undefined, 'actions');
     controls.append(button('Previous runs page', () => { cursor = cursorTrail.pop() ?? null; navigation++; refresh().catch(error); }, !cursorTrail.length),
       button('Older runs', () => { cursorTrail.push(cursor); cursor = history.nextCursor; navigation++; refresh().catch(error); }, !history.nextCursor),
@@ -307,7 +325,7 @@ export function createApplicationGroupsView({ root, api, getState, openApplicati
       scope++; navigation++; workGeneration++; workspaceId = null; selectedId = selectedRunId = null; data = null; review = null;
       cursor = null; cursorTrail = []; applications = []; applicationsReadAt = 0; runSignature = '';
       outputSelection = null; outputGeneration++; outputPanel.hidden = reviewPanel.hidden = true;
-      busy = false; draft = { groupId: null, expectedRevision: null, label: '', applicationIds: [] }; dirty = false; name.value = '';
+      busy = false; draft = { groupId: null, expectedRevision: null, label: '', applicationIds: [] }; dirty = false; draftRetained = true; choicePage = 0; name.value = '';
     },
   };
 }
