@@ -17,6 +17,9 @@ const HELP = 'Captured API merchant workspace\n\n' +
   '       [--label NAME] [--sha256 ORIGINAL_SHA256] [--previous SAVED_SELECTION.json]\n' +
   '  starforge captured-api adopt --dir PRIVATE_DIRECTORY --kind capture|refresh\n' +
   '       --from COMPLETE_NATIVE_SOURCE_DIRECTORY [--label NAME]\n\n' +
+  'Complete selected source and merchant handover:\n' +
+  '  starforge captured-api handover inventory|prepare|publish|inspect ...\n' +
+  '  starforge captured-api handover receive-review|receive|status ...\n\n' +
   'Original commands, with their arguments passed unchanged:\n' +
   '  starforge captured-api har prepare|inspect|review|save|export|copy|package|refresh ...\n' +
   '  starforge captured-api worksheet inventory|reconcile|review|save|export ...\n' +
@@ -61,6 +64,7 @@ export async function main(args = process.argv.slice(2)) {
     process.stdout.write(HELP); return;
   }
   const [command, ...rest] = args;
+  if (command === 'handover') return (await import('./handover-cli.mjs')).runCapturedHandoverCLI(rest);
   if (command === 'har') return (await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/har/cli.mjs')).runHarCLI(rest);
   const forwarded = { worksheet: 'merchant-route-worksheet', releases: 'releases', merchant: 'merchant-mcp' };
   if (Object.hasOwn(forwarded, command))

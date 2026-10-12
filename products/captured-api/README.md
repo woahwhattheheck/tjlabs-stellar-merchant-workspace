@@ -81,8 +81,12 @@ browser and seller. Retained operating files stay in place.
 | Manage the full product in Applications | Select the initialized product, review/save/start both original listeners, and reopen through its retained operation |
 | Use an existing managed browser | Initialize with its exact projects directory and private Applications URL record |
 | Update from a later capture | Select the previous saved source review and continue the native refresh workflow |
-| Move a complete source or merchant | Native source copy/adoption and complete package transfer |
+| Hand over a complete merchant collection | Select actual saved packages and captured histories, review/publish the full files, then review/receive/reopen in another product |
 | Recover an interrupted setup or session | Reopen the same private product, source identity, saved package and release |
+
+The [complete handover guide](HANDOVER.md) covers source/merchant selection,
+full native file delivery, package-name review and resumable receiving with the
+original saved plans and exact prices.
 
 The [complete operating guide](OPERATING.md) follows these paths through
 installation, first source, exact prices, release, customer receiving and
