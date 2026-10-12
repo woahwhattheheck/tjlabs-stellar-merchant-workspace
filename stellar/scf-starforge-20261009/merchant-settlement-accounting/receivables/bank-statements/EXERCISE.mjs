@@ -68,7 +68,8 @@ function tarEntries(bytes) {
   const result=new Map();let offset=0;
   while(offset+512<=bytes.length) {
     const header=bytes.subarray(offset,offset+512);if(header.every(byte=>byte===0))break;
-    const name=header.subarray(0,100).toString('utf8').replace(/\0.*$/,'');
+    const leaf=header.subarray(0,100).toString('utf8').replace(/\0.*$/,''),prefix=header.subarray(345,500).toString('utf8').replace(/\0.*$/,'');
+    const name=prefix?prefix+'/'+leaf:leaf;
     const size=parseInt(header.subarray(124,136).toString('ascii').replace(/\0.*$/,'').trim(),8);
     assert(Number.isSafeInteger(size)&&size>=0);assert(!result.has(name),'Unique original archive filename');
     result.set(name,bytes.subarray(offset+512,offset+512+size));offset+=512+Math.ceil(size/512)*512;

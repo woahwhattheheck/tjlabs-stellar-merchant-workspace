@@ -31,7 +31,7 @@ export async function receiveOriginalIntakeAlias({origin,workspace,account,origi
   assert.equal(closing.closings[0].dates.DTCLOSE.local_date,'2026-10-04');
   assert.equal(parsedSource.statements[0].pending_asof.local_date,'2026-10-04');
   const full=await api.bankImport(imported.id,{view:'rows',limit:500});
-  const rows=full.rows.items;
+  const rows=full.items;
   const net=rows.find(row=>row.transactionId==='B100'),existing=rows.find(row=>row.transactionId==='C200');
   assert(net&&existing);assert.equal(net.amount,'97.00');
   assert.equal(net.statementReconciliation.adjustmentAmount,'-3.00');
@@ -79,7 +79,7 @@ export async function receivePartialIntake({origin,workspace,client,receivables,
     amountMode:'SIGNED',creditSign:'POSITIVE',columns:{date:'Date',amount:'Amount',transactionId:'ID',reference:'Reference',counterparty:'Payee'}};
   const intakeSource=(content,name)=>({accountId:intake.id,format:'CSV',file:{name,dataBase64:Buffer.from(content).toString('base64')},csvLayout});
   const imported=(await api.importBankSource(request(intakeSource(originalCsv,'Original three bank credits.csv')))).bankImport;
-  const originalRows=(await api.bankImport(imported.id,{view:'rows',limit:500})).rows.items;
+  const originalRows=(await api.bankImport(imported.id,{view:'rows',limit:500})).items;
   const aliasSelection=ids=>({selections:ids.map(id=>{
     const row=originalRows.find(row=>row.transactionId===id);
     return {rowId:row.id,splits:[{action:'LINK',receiptId:originalReceipt.id,amount:row.amount,
@@ -119,7 +119,7 @@ export async function receivePartialIntake({origin,workspace,client,receivables,
 
   const correctedCsv='Date,Amount,ID,Reference,Payee\n2026-09-04,65.00,P60,COVERAGE-CUSTOMER,Original partial payment customer\n';
   const correctedImport=(await api.importBankSource(request(intakeSource(correctedCsv,'Original corrected bank credit.csv')))).bankImport;
-  const correctionRow=(await api.bankImport(correctedImport.id,{view:'rows',limit:500})).rows.items.find(row=>row.transactionId==='P60');
+  const correctionRow=(await api.bankImport(correctedImport.id,{view:'rows',limit:500})).items.find(row=>row.transactionId==='P60');
   const correction=await api.previewBankPosting(correctedImport.id,{selections:[{rowId:correctionRow.id,
     sourceResolutionReason:'The original bank corrected this transaction from60.00 to65.00',splits:[{
       action:'CORRECT',receiptId:originalReceipt.id,amount:'65.00',effectiveDate:'2026-09-07',

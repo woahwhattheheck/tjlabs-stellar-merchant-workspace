@@ -20,7 +20,7 @@ function queryString(query = {}) {
 export class ReceivablesClient {
   constructor({baseUrl = '/api/receivables', fetch: fetcher = globalThis.fetch, expectedWorkspaceId, expectedSourcesSha256} = {}) {
     if (typeof fetcher !== 'function') throw new TypeError('A fetch implementation is required.');
-    this.baseUrl = String(baseUrl).replace(/\/$/, ''); this.fetch = fetcher;
+    this.baseUrl = String(baseUrl).replace(/\/$/, ''); this.fetch = fetcher.bind(globalThis);
     if (expectedWorkspaceId !== undefined || expectedSourcesSha256 !== undefined) {
       if (!/^[a-f0-9]{64}$/.test(expectedWorkspaceId || '') || !/^[a-f0-9]{64}$/.test(expectedSourcesSha256 || '')) {
         throw new TypeError('Both original accounting workspace and source identities are required.');
