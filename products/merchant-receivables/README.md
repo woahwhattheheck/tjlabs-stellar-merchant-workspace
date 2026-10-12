@@ -96,6 +96,27 @@ Choose **Merchant receivables**, select the initialized accounting directory, an
 
 One process owns an accounting directory at a time. Use the running process's customer, receivables and **Payment plans** views together. **Customer payment plans** in Applications opens the same combined server directly at its collection desk. Stop that process through its original application before opening the directory with another owner.
 
+## Close customer statements from the merchant connection
+
+**Customer statements** in Applications opens the complete customer closing workbench included in this merchant receivables package. Select the original running merchant MCP address, its accounting workspace alias, the named operator and a private folder for saved customer closing work. The access token stays in the original environment or a private environment file.
+
+Review, save, start and open that application through the existing Runtime workspace. The original startup records the local opening address with the reviewed merchant connection and saved-work folder. Reopen the same folder after a restart or package upgrade.
+
+~~~sh
+starforge customer-closing \
+  --directory /private/merchant/customer-closes \
+  --url http://127.0.0.1:8787/mcp \
+  --workspace accounting --actor operator --port 4419
+~~~
+
+Use **Customers and service** to create or edit billing profiles, assign original order references, compare them with a retained accounting run and import configured service captures. Every change is reviewed and saved before application. The same saved request can be reconciled or resumed after an interrupted reply.
+
+Choose customers, accounting runs and the original opening and closing service captures in **Compose a cycle**. Review each customer's complete native statement before issuing the selected closing cycle. Progress, original statement identities and completed files stay available during a resumed close. **Download customer delivery** provides that customer's full original files; the whole-cycle download preserves the complete operator folder for continued work.
+
+Issued statements expose the original customer details, complete history and retained files. Prepare a correction from that original statement to retain its customer, sources and period; withdrawals record an explicit reason while preserving its original files and history. Customer profile edits update the source customer while issued documents keep their original billing details.
+
+The [complete customer closing guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md) covers customer intake, capture configuration, closing cycles, correction, withdrawal, saved-operation recovery, file delivery and the typed interfaces. The workbench uses the original accounting writer through the existing MCP host.
+
 ## From service quotation to invoice
 
 The original Merchant support desk creates and retains commercial quotations. Its existing commercial guide and command remain packaged:
