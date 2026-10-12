@@ -382,6 +382,13 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/discoverygarden_msu2026112_\d{8}\/tind-operator\/OPERATOR_CASES\.md)/, institutionalRepository);
   receive('tind-institutional-repository-contribution', 'Repository commissioning, recurring service and funded contribution',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/GRANT\.md)/, institutionalRepository);
+  const companyResearch = section(companion, '## Company research, recurring reference data and complete receiving')?.text || '';
+  receive('gleif-company-research-operating', 'Company research, source review, customer files and native dataset receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/OPERATING\.md)/, companyResearch);
+  receive('gleif-company-source-contract', 'Original legal-entity records, source editions and complete receiving contract',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/gleif\/SOURCE_CONTRACT\.md)/, companyResearch);
+  receive('gleif-company-grant-workflow', 'Company research service, customer commissioning and existing funded packages',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/gleif\/GRANT\.md)/, companyResearch);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),
