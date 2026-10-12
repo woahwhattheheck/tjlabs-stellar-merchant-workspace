@@ -40,9 +40,11 @@ runtime dependencies.
 
 The repository's `native-patches/customer-journal-continuation.json` contains all
 ten complete replacement files with their original and resulting Git blob identities.
-Use the adjacent Python installer from a checkout containing this delivery:
+Run the installer and builder from this delivery checkout's Python directory.
+The separate `--checkout` argument names B41A's retained composed source root:
 
 ```sh
+cd /absolute/delivery-checkout/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python
 python apply_review_continuation.py \
   --checkout /absolute/current-composed-source \
   --source-manifest /absolute/current-source-selection.json \
