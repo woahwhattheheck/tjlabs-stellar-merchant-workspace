@@ -176,6 +176,23 @@ def register(subparsers, common):
     target.add_argument("--source", required=True)
     target.add_argument("--sha256", required=True)
     target.add_argument("--output", required=True)
+    for name in ("customer-use-calendar", "customer-use-calendar-export", "customer-use-calendar-cohort"):
+        target = command(name, "Read saved customer-use editions, export complete dated use or open the original Cohort input",
+                         case=True, output=name != "customer-use-calendar-export")
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--installation-refs", help="JSON array of exact saved id/revision/optional sha256 selections; omission selects current editions")
+        target.add_argument("--as-of", help="YYYY-MM-DD for the calendar; original ISO timestamp for the Cohort observation cutoff")
+        if name == "customer-use-calendar-export":
+            target.add_argument("--format", choices=("json", "csv", "ics"), default="json")
+            target.add_argument("--output", required=True)
+        if name == "customer-use-calendar-cohort":
+            target.add_argument("--group", required=True, help="Original window group ID returned by customer-use-calendar")
+            target.add_argument("--inputs-only", action="store_true", help="Output native inputs directly for original cohort-preview/prepare")
+    target = command("customer-use-calendar-expand", "Expand explicit working dates into an editable complete Installation document", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--document", required=True, help="Complete editable Installation JSON")
+    target.add_argument("--pattern", required=True, help="Explicit task/buyer/weekday/include/exclude date expansion JSON")
+    target.add_argument("--document-only", action="store_true", help="Output the complete Installation document directly for original preview/save")
     target = command("cohort-seed", "Open the original proposed 7/14-day acceptance rule and explicit input", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -555,6 +572,34 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "implementation.prepare",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action.startswith("customer-use-calendar"):
+        def calendar_json(filename, maximum=MAX_SOURCE):
+            try:
+                return json.loads(read_bytes(filename, maximum))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Use complete UTF-8 customer-use selection, pattern or Installation JSON.",
+                              422, "INVALID_CUSTOMER_USE_CALENDAR") from exc
+        body = {"expectedVersion": args.expected_version}
+        if action == "customer-use-calendar-expand":
+            from operations_installations import MAX_DOCUMENT_BYTES
+            body.update(document=calendar_json(args.document, MAX_DOCUMENT_BYTES), pattern=calendar_json(args.pattern, 131072))
+            result = ops.expand_customer_use_calendar(args.case, body)
+            if args.document_only:
+                result = result["document"]
+        else:
+            if args.installation_refs:
+                body["installationRefs"] = calendar_json(args.installation_refs, 32768)
+            if action == "customer-use-calendar-cohort":
+                body.update(groupId=args.group, asOfAt=args.as_of)
+                result = ops.seed_customer_use_cohort(args.case, body)
+                if args.inputs_only:
+                    result = result["inputs"]
+            else:
+                body["asOfDate"] = args.as_of
+                if action == "customer-use-calendar-export":
+                    return {"caseId": args.case, "format": args.format,
+                            "output": publish(args.output, ops.export_customer_use_calendar(args.case, body, args.format))}
+                result = ops.customer_use_calendar(args.case, body)
     elif action == "cohort-seed":
         result = ops.seed_cohort(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "cohort-export":

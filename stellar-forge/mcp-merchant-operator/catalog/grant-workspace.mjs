@@ -113,6 +113,20 @@ const workshareSources = {sourceId:id('source'),expectedSourceSha256:digest,
   packetSourceId:{anyOf:[id('source'),{type:'null'}]},
   expectedPacketSha256:{anyOf:[digest,{type:'null'}]}};
 const installationRevision = {type:'integer',minimum:1,maximum:500};
+const customerUseInstallationRefs={type:'array',maxItems:100,items:{type:'object',additionalProperties:false,
+  properties:{id:id('installation'),revision:installationRevision,sha256:digest},required:['id','revision']}};
+const customerUsePattern={type:'object',additionalProperties:false,properties:{
+  id:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$'},
+  taskIds:{type:'array',items:nonempty(120),uniqueItems:true,maxItems:80},
+  buyerDeploymentIds:{type:'array',items:id('deployment'),uniqueItems:true,maxItems:20},
+  weekdays:{type:'array',items:{type:'integer',minimum:0,maximum:6},uniqueItems:true,maxItems:7},
+  includeDates:{type:'array',items:supportDate,uniqueItems:true,maxItems:366},
+  excludeDates:{type:'array',items:supportDate,uniqueItems:true,maxItems:366},
+  mode:{enum:['PURCHASE','ALLOWANCE_USE','REOPEN','FREE_USE']},
+  fundingByBuyer:{type:'object',additionalProperties:{type:'array',items:nonempty(120),uniqueItems:true,maxItems:100}},
+  replacePattern:{type:'boolean'}},required:['id','taskIds','buyerDeploymentIds']};
+const customerUseExpansionInput={...modelInput,inputs:{type:'object',additionalProperties:false,
+  properties:{document:object,pattern:customerUsePattern},required:['document','pattern']}};
 const cohortReviewIds = {type:'array',items:id('review'),uniqueItems:true,maxItems:20};
 const implementationReviewIds = {type:'array',items:id('review'),uniqueItems:true,maxItems:20};
 const implementationCutoff = {type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$'};
@@ -304,6 +318,14 @@ export const grantWorkspaceTools = [
   tool('installation_history', 'Page original immutable installation editions using the returned nextBefore cursor. Preserve the same original installation identity.',
     {...ws,caseId:id('operation'),installationId:id('installation'),before:installationRevision,
       limit:{type:'integer',minimum:1,maximum:100}},['workspace','caseId','installationId'],true),
+  tool('customer_use_calendar', 'Read complete saved Installation customer-use calendars, their pinned proposal rules, dated useful requests, separately planned direct/prepaid settlements and linked original receipt states. Supply exact editions to reopen historical choices. Planned counts do not qualify as actual cohort results.',
+    {...ws,...caseSelection,installationRefs:customerUseInstallationRefs,asOfDate:supportDate},
+    ['workspace','caseId','expectedVersion'],true),
+  tool('customer_use_calendar_expand', 'Expand explicitly selected task/buyer weekdays and date exceptions into a complete editable Installation. inputs contains document and pattern; the whole returned document remains at /document. Review and save through the original Installation commands. No native request or purchase is created.',
+    {...ws,...caseSelection,...customerUseExpansionInput},['workspace','caseId','expectedVersion'],true),
+  tool('customer_use_calendar_cohort', 'Prepare the original Cohort input from an exact saved customer-use window and linked native receipts. Preserve original purchase identities and source files. Transfer/output/order and coverage decisions remain unreviewed; use the returned /inputs in original cohort_preview/prepare.',
+    {...ws,...caseSelection,installationRefs:customerUseInstallationRefs,groupId:nonempty(100),asOfAt:{type:'string',format:'date-time'}},
+    ['workspace','caseId','expectedVersion','groupId'],true),
   tool('installation_seed', 'Open a complete customer installation document with the pinned plan original work packages and measurable criteria. The document is at /document in the original response.',
     {...ws,...caseSelection},['workspace','caseId','expectedVersion'],true),
   tool('installation_workshares', 'Read complete original commercial Workshares from an attached commissioning source and optional matching receiving packet. Preserve original case identity, complete plan, commercial currency/status, milestone amounts, phase count and effort.',
@@ -421,11 +443,12 @@ export const grantWorkspaceTools = [
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
   tool('export', 'For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, completion preparation, selected installation handover, complete dated delivery queue, grant delivery calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account and whole case, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','implementation','implementation-original','delivery-queue','delivery-calendar','performance','supplier-account','commercial']},
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','commercial']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),billingId:commercialIdentifier,revision:installationRevision,sha256:digest,asOfDate:supportDate,
-      format:{enum:['ics','csv','json'],description:'Delivery calendar format; defaults to ICS.'},
+      installationRefs:customerUseInstallationRefs,
+      format:{enum:['ics','csv','json'],description:'Grant delivery calendar defaults to ICS; customer-use calendar defaults to JSON.'},
       contributorId:id('person'),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},
     ['workspace','kind'], true),
   tool('snapshot', 'Inspect an exact retained JSON snapshot or one original JSON pointer. Large values remain available through rows and the complete file.',

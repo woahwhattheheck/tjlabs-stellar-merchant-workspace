@@ -495,6 +495,208 @@ export interface GrantInstallationCheck {
   outcomeIds: string[];
 }
 /** Start from a native seed or saved edition and retain its entire document. */
+/** A dated useful request is separate from its original direct/prepaid settlement. */
+export type GrantCustomerUseMode = 'PURCHASE' | 'ALLOWANCE_USE' | 'REOPEN' | 'FREE_USE';
+export interface GrantCustomerUseTask {
+  id: string;
+  name: string;
+  purpose: string;
+  request: string;
+  completeOutput: string;
+  repeatTrigger: string;
+  pricedUnit: string;
+  sourceIds: string[];
+}
+export interface GrantCustomerUseSettlement {
+  id: string;
+  buyerDeploymentId: string;
+  taskId: string;
+  date: GrantCivilDate;
+  kind: 'DIRECT' | 'PREPAID';
+  /** Existing native observations only. A use row never creates a purchase. */
+  purchaseIds: string[];
+  sourceIds: string[];
+  note: string;
+  patternId: string | null;
+}
+export interface GrantCustomerUseEntry {
+  id: string;
+  buyerDeploymentId: string;
+  taskId: string;
+  date: GrantCivilDate;
+  state: 'PLANNED' | 'CANCELLED';
+  mode: GrantCustomerUseMode;
+  fundingIds: string[];
+  sourcePeriod: string;
+  sourceIds: string[];
+  note: string;
+  patternId: string | null;
+}
+export interface GrantCustomerUseDocument {
+  schema: 'stellar-forge.sf47-customer-use-calendar.v1';
+  name: string;
+  tranche: 2 | 3 | null;
+  startDate: GrantCivilDate;
+  endDate: GrantCivilDate;
+  sourceIds: string[];
+  note: string;
+  tasks: GrantCustomerUseTask[];
+  settlements: GrantCustomerUseSettlement[];
+  entries: GrantCustomerUseEntry[];
+}
+export interface GrantCustomerUsePattern {
+  id: string;
+  taskIds: string[];
+  buyerDeploymentIds: string[];
+  /** Explicit civil weekdays: Monday=0 through Sunday=6. No inferred holidays. */
+  weekdays?: Array<0 | 1 | 2 | 3 | 4 | 5 | 6>;
+  includeDates?: GrantCivilDate[];
+  excludeDates?: GrantCivilDate[];
+  mode?: GrantCustomerUseMode;
+  fundingByBuyer?: Record<string, string[]>;
+  /** Replace only this named expansion; other draft rows remain. */
+  replacePattern?: boolean;
+}
+export interface GrantCustomerUseEditionSelection {
+  id: string;
+  revision: number;
+  sha256?: string;
+}
+export interface GrantCustomerUseSelection {
+  expectedVersion: number;
+  installationRefs?: GrantCustomerUseEditionSelection[];
+  asOfDate?: GrantCivilDate;
+}
+export interface GrantCustomerUseCounts {
+  datedUses: number;
+  purchaseUses: number;
+  allowanceUses: number;
+  reopens: number;
+  freeUses: number;
+  plannedSettlementGroups: number;
+  directSettlementGroups: number;
+  prepaidSettlementGroups: number;
+  namedBuyerOperators: number;
+  repeatNamedBuyerOperators: number;
+  activeDates: number;
+  basis: string;
+}
+export interface GrantCustomerUseTarget {
+  key: string;
+  expected: number;
+  plannedPotential: number | null;
+  countSufficient: boolean | null;
+  qualification: 'UNREVIEWED_PLAN';
+  actual: null;
+}
+export interface GrantCustomerUseWindow {
+  startDate: GrantCivilDate;
+  endDate: GrantCivilDate;
+  calendarDays: number;
+  requiredCalendarDays: number;
+  matches: boolean;
+}
+export interface GrantCustomerUseReceipt extends GrantObject {
+  id: string;
+  deploymentId: string;
+  network: string;
+  asset: string;
+  amountStroops: string;
+  feesStroops?: string | null;
+  intentId?: string | null;
+  operationId?: string | null;
+  requestId?: string | null;
+  transactionHash?: string | null;
+  ledger?: number | null;
+  attemptStatus: string;
+  settlementStatus: string;
+  outputStatus: string;
+  orderStatus?: string;
+  state: string;
+  observedAt?: string;
+  settledAt?: string | null;
+  outputCompletedAt?: string | null;
+  sourceIds?: string[];
+}
+export interface GrantCustomerUseReport {
+  schema: 'stellar-forge.sf47-customer-use-calendar.v1.report';
+  name: string;
+  planned: GrantCustomerUseCounts;
+  rule: GrantObject | null;
+  window: GrantCustomerUseWindow | null;
+  targets: GrantCustomerUseTarget[];
+  findings: Array<{code: string; id: string | null; field?: string; message: string}>;
+  settlements: Array<GrantCustomerUseSettlement & {task: GrantCustomerUseTask; uses: string[];
+    receipts: GrantCustomerUseReceipt[]; receiptCount: number; receiptIdentityCount: number;
+    firstUsefulResultDate: GrantCivilDate | null; actualQualification: 'USE_ORIGINAL_COHORT_REVIEW'}>;
+  entries: Array<GrantCustomerUseEntry & {task: GrantCustomerUseTask; buyer: GrantObject}>;
+  receiptInventory: GrantCustomerUseReceipt[];
+  receiptStates: Record<string, number>;
+  sourceIds: string[];
+  actualPurchaseCount: null;
+  actualPurchaseBasis: string;
+}
+export interface GrantCustomerUseCalendar {
+  schema: 'stellar-forge.sf47-customer-use-calendar.v1.selection';
+  source: {caseId: string; caseVersion: number; mode: 'OPERATIONS' | 'WALKTHROUGH';
+    planId: string; planContentSha256: string};
+  asOfDate: GrantCivilDate;
+  selection: GrantInstallationRef[];
+  calendars: Array<GrantInstallationRef & {createdAt: string; sourceVersion: number; name: string;
+    stage: GrantInstallationStage; groupId: string; document: GrantCustomerUseDocument;
+    report: GrantCustomerUseReport; savedReport: GrantCustomerUseReport | null; sourceChanged: boolean;
+    currentChanges: {missingRecords: Array<{kind: string; id: string}>; changedRecords: GrantObject[]; missingSources: string[]; changedSources: string[]}}>;
+  groups: Array<{id: string; tranche: 2 | 3 | null; startDate: GrantCivilDate; endDate: GrantCivilDate;
+    planContentSha256: string; planChanged: boolean; planned: GrantCustomerUseCounts;
+    rule: GrantObject | null; window: GrantCustomerUseWindow | null; targets: GrantCustomerUseTarget[]}>;
+  dueUses: Array<{installationId: string; revision: number; entryId: string; date: GrantCivilDate; mode: GrantCustomerUseMode}>;
+  receipts: Array<{purchase: GrantCustomerUseReceipt; currentAvailable: boolean;
+    savedObservations: Array<{installationId: string; revision: number; purchase: GrantCustomerUseReceipt}>;
+    bindings: Array<{installationId: string; revision: number; fundingId: string}>}>;
+  receiptConflicts: Array<{purchaseId: string;
+    bindings: Array<{installationId: string; revision: number; fundingId: string}>}>;
+  unlinkedPurchases: GrantCustomerUseReceipt[];
+  sources: GrantObject[];
+  qualification: string;
+}
+export interface GrantCustomerUseExpansionInput {
+  expectedVersion: number;
+  document: GrantInstallationDocument;
+  pattern: GrantCustomerUsePattern;
+}
+export interface GrantCustomerUseExpansion {
+  schema: 'stellar-forge.sf47-customer-use-calendar.v1.expansion';
+  document: GrantInstallationDocument;
+  pattern: GrantCustomerUsePattern;
+  dates: GrantCivilDate[];
+  generatedIds: string[];
+  calendar: GrantCustomerUseReport;
+  source: GrantObject;
+  save: string;
+}
+export interface GrantCustomerUseCohortSelection {
+  expectedVersion: number;
+  installationRefs?: GrantCustomerUseEditionSelection[];
+  groupId: string;
+  asOfAt?: string;
+}
+export interface GrantCustomerUseCohortInput extends GrantObject {
+  schema: 'stellar-forge.sf47-cohort-evaluation.v1';
+  source: {programId: string; version: number; planContentSha256: string};
+  rule: GrantObject;
+  /** Original Cohort input; transfer/output/order and coverage remain unreviewed. */
+  inputs: GrantObject;
+  inventory: GrantObject;
+  sources: GrantObject[];
+  customerUse: {schema: 'stellar-forge.sf47-customer-use-calendar.v1.cohort-selection';
+    groupId: string; selection: GrantInstallationRef[]; caseVersion: number; automaticQualification: false};
+}
+export interface GrantCustomerUseDownloadSelection extends GrantCustomerUseSelection {
+  caseId: string;
+  /** Defaults to complete JSON. */
+  format?: 'json' | 'csv' | 'ics';
+}
+
 export interface GrantInstallationDocument {
   name: string;
   stage: GrantInstallationStage;
@@ -510,6 +712,7 @@ export interface GrantInstallationDocument {
   workshare?: GrantObject;
   workflowPeriods?: unknown;
   coordination?: GrantDeliveryCoordinationInput;
+  useCalendar?: GrantCustomerUseDocument | null;
 }
 export interface GrantInstallationRef {
   id: string;
@@ -1477,6 +1680,7 @@ export interface GrantDownloadSelections {
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
   'delivery-calendar': GrantDeliveryCalendarDownloadSelection;
+  'customer-use-calendar': GrantCustomerUseDownloadSelection;
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
@@ -1531,6 +1735,9 @@ export class GrantWorkspaceClient {
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   portfolioSave<T = GrantPortfolioSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSelection<T = GrantPortfolioSelection>(caseId: string, expectedVersion: number, portfolioId: string, alternativeId: string): Promise<GrantJsonResponse<T>>;
+  customerUseCalendar(caseId: string, body: GrantCustomerUseSelection): Promise<GrantJsonResponse<GrantCustomerUseCalendar>>;
+  customerUseCalendarExpand(caseId: string, body: GrantCustomerUseExpansionInput): Promise<GrantJsonResponse<GrantCustomerUseExpansion>>;
+  customerUseCalendarCohort(caseId: string, body: GrantCustomerUseCohortSelection): Promise<GrantJsonResponse<GrantCustomerUseCohortInput>>;
   installationSeed(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<GrantInstallationSeed>>;
   installationWorkshares<T = GrantObject>(caseId: string, body: GrantWorkshareSourceSelection): Promise<GrantJsonResponse<T>>;
   installationWorkshareSeed(caseId: string, body: GrantWorkshareSourceSelection & GrantInstallationSelection & { workshareCaseId: string; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;

@@ -140,6 +140,8 @@ def normalize(context, raw, installation):
         if any(settlements[ident]["buyerDeploymentId"] != buyer_id or settlements[ident]["date"] > when for ident in funding):
             fail("Funding must belong to the same buyer and be dated no later than the use.")
         expected_kind = "PREPAID" if mode == "ALLOWANCE_USE" else "DIRECT"
+        if mode == "PURCHASE" and any(settlements[ident]["taskId"] != task_id for ident in funding):
+            fail("A direct settlement and its complete useful request must select the same task. Prepaid funding may support other selected tasks.")
         if any(settlements[ident]["kind"] != expected_kind for ident in funding):
             fail("Allowance uses select prepaid groups; purchase uses select direct settlement groups.")
         use_rows.append({"id": key(row.get("id"), "Dated use ID"), "buyerDeploymentId": buyer_id,
@@ -182,22 +184,31 @@ def receipt_view(row):
 
 
 def counts(context, calendars):
-    deployments = {row["id"]: row for row in context["records"]["deployments"]}
     active, settlements = [], []
-    for owner, document in calendars:
+    for selected in calendars:
+        owner, document = selected[:2]
+        source_context = selected[2] if len(selected) > 2 else context
+        deployments = {row["id"]: row for row in source_context["records"]["deployments"]}
         value = document["useCalendar"]
         uses = [row for row in value["entries"] if row["state"] != "CANCELLED"]
-        funding = {ident for row in uses for ident in row["fundingIds"]}
+        uses_by_funding = defaultdict(list)
+        for row in uses:
+            for ident in row["fundingIds"]:
+                uses_by_funding[ident].append(row)
         active.extend((owner, row) for row in uses)
-        settlements.extend((owner, row) for row in value["settlements"]
-                           if row["id"] in funding and value["startDate"] <= row["date"] <= value["endDate"])
+        for row in value["settlements"]:
+            funding_uses = uses_by_funding[row["id"]]
+            if funding_uses and value["startDate"] <= row["date"] <= value["endDate"]:
+                # One funded intent projects at its first whole useful result.
+                # Later allowance calls do not add another purchase or repeat.
+                settlements.append((owner, row, min(item["date"] for item in funding_uses),
+                                    deployments.get(row["buyerDeploymentId"], {})))
     buyer_days = defaultdict(set)
     buyer_groups = defaultdict(set)
-    for owner, row in settlements:
-        buyer = deployments.get(row["buyerDeploymentId"], {})
+    for owner, row, completion_date, buyer in settlements:
         operator = buyer.get("operatorId")
         if operator:
-            buyer_days[operator].add(row["date"])
+            buyer_days[operator].add(completion_date)
             buyer_groups[operator].add((owner, row["id"]))
     return {"datedUses": len(active),
         "purchaseUses": sum(row["mode"] == "PURCHASE" for _, row in active),
@@ -205,12 +216,12 @@ def counts(context, calendars):
         "reopens": sum(row["mode"] == "REOPEN" for _, row in active),
         "freeUses": sum(row["mode"] == "FREE_USE" for _, row in active),
         "plannedSettlementGroups": len(settlements),
-        "directSettlementGroups": sum(row["kind"] == "DIRECT" for _, row in settlements),
-        "prepaidSettlementGroups": sum(row["kind"] == "PREPAID" for _, row in settlements),
+        "directSettlementGroups": sum(row["kind"] == "DIRECT" for _, row, _, _ in settlements),
+        "prepaidSettlementGroups": sum(row["kind"] == "PREPAID" for _, row, _, _ in settlements),
         "namedBuyerOperators": len(buyer_days),
         "repeatNamedBuyerOperators": sum(len(buyer_days[key]) >= 2 and len(buyer_groups[key]) >= 2 for key in buyer_days),
         "activeDates": len({row["date"] for _, row in active}),
-        "basis": "Distinct planned funding groups in the entered window. Uses, allowance calls and reopened outputs do not add settlements. Operator qualification and actual purchases require the original Cohort review."}
+        "basis": "Distinct planned funding groups dated in the entered window. Repeat compares each group's first whole useful-result date, keeping one prepaid group once. Uses, allowance calls and reopened outputs do not add settlements. Operator qualification, native first-attempt windows and actual purchase completion require the original Cohort review."}
 
 
 def target_view(context, tranche, start, end, planned):
@@ -270,6 +281,7 @@ def report(context, document):
             findings.append({"code": "UNUSED_FUNDING", "id": row["id"],
                 "message": "This planned funding group has no active dated use; it is excluded from projected counts."})
         settlement_views.append({**deepcopy(row), "task": deepcopy(tasks[row["taskId"]]),
+            "firstUsefulResultDate": min((item["date"] for item in uses_by_funding[row["id"]] if item["state"] != "CANCELLED"), default=None),
             "uses": active_uses, "receipts": original, "receiptCount": len(original),
             "receiptIdentityCount": len(groups), "actualQualification": "USE_ORIGINAL_COHORT_REVIEW"})
     planned = counts(context, [("installation", document)])
@@ -402,14 +414,16 @@ def selected_rows(operations, context, supplied):
 def calendar(context, selected, as_of=None):
     as_of = day(as_of or now()[:10], "Calendar observation date")
     groups, original_calendars, receipt_bindings = {}, [], defaultdict(list)
+    retained_receipts, retained_sources = defaultdict(list), []
+    current_maps = {kind: {row["id"]: row for row in values} for kind, values in context["records"].items()}
     for edition in selected:
         document = edition["preview"]["document"]
         value = document.get("useCalendar")
         if not value:
             continue
         ident = edition["id"]
-        source_plan = edition["preview"]["snapshot"]["plan"]
-        source_context = {**context, "plan": source_plan}
+        source_context = edition["preview"]["snapshot"]
+        source_plan = source_context["plan"]
         group_id = "window-" + digest({"tranche": value["tranche"],
             "startDate": value["startDate"], "endDate": value["endDate"],
             "planContentSha256": source_plan["contentSha256"]})[:24]
@@ -419,14 +433,36 @@ def calendar(context, selected, as_of=None):
             "planChanged": source_plan["contentSha256"] != context["plan"]["contentSha256"],
             "sourceContext": source_context, "members": []})
         owner = ident + "@" + str(edition["revision"])
-        group["members"].append((owner, document))
+        group["members"].append((owner, document, source_context))
         original = {"id": ident, "revision": edition["revision"], "sha256": edition["sha256"],
             "createdAt": edition["createdAt"], "sourceVersion": edition["preview"]["source"]["version"],
             "name": document["name"], "stage": document["stage"], "groupId": group_id}
-        current_report = report(source_context, document)
-        original_calendars.append({**original, "document": deepcopy(value), "report": current_report,
-            "savedReport": deepcopy(edition["preview"]["report"].get("useCalendar")),
+        saved_report = deepcopy(edition["preview"]["report"].get("useCalendar"))
+        if saved_report is None:
+            saved_report = report(source_context, document)
+        changes = {"missingRecords": [], "changedRecords": [], "missingSources": [], "changedSources": []}
+        for kind, values in source_context["records"].items():
+            for saved in values:
+                current = current_maps.get(kind, {}).get(saved["id"])
+                if current is None:
+                    changes["missingRecords"].append({"kind": kind, "id": saved["id"]})
+                elif canonical(current) != canonical(saved):
+                    changes["changedRecords"].append({"kind": kind, "id": saved["id"],
+                        "savedState": saved.get("state"), "currentState": current.get("state")})
+        for source_id, saved in source_context["sources"].items():
+            current = context["sources"].get(source_id)
+            if current is None:
+                changes["missingSources"].append(source_id)
+            elif canonical(current) != canonical(saved):
+                changes["changedSources"].append(source_id)
+            retained_sources.append({**deepcopy(saved), "installationId": ident, "revision": edition["revision"],
+                                     "currentSource": deepcopy(current)})
+        original_calendars.append({**original, "document": deepcopy(value), "report": saved_report,
+            "savedReport": deepcopy(saved_report), "currentChanges": changes,
             "sourceChanged": edition["preview"]["source"]["version"] != context["program"]["version"]})
+        for saved in source_context["records"]["purchases"]:
+            retained_receipts[saved["id"]].append({"installationId": ident, "revision": edition["revision"],
+                                                  "purchase": receipt_view(saved)})
         for funding in value["settlements"]:
             for purchase_id in funding["purchaseIds"]:
                 receipt_bindings[purchase_id].append({"installationId": ident, "revision": edition["revision"],
@@ -444,20 +480,20 @@ def calendar(context, selected, as_of=None):
                       for row in calendar_row["document"]["entries"] if row["state"] != "CANCELLED"]
     return {"schema": SCHEMA + ".selection", "source": {"caseId": context["program"]["id"],
         "caseVersion": context["program"]["version"], "mode": context["program"]["mode"],
-        "planId": context["program"]["planId"] if "planId" in context["program"] else context["program"].get("plan_id"),
+        "planId": context["plan"]["id"],
         "planContentSha256": context["plan"]["contentSha256"]},
         "asOfDate": as_of,
         "selection": [{"id": row["id"], "revision": row["revision"], "sha256": row["sha256"]} for row in selected],
         "calendars": original_calendars, "groups": sorted(views, key=lambda row: (row["startDate"], row["id"])),
         "dueUses": [{"installationId": owner["id"], "revision": owner["revision"], "entryId": row["id"],
                      "date": row["date"], "mode": row["mode"]} for owner, row in active_entries if row["date"] <= as_of],
-        "receipts": [{"purchase": receipt_view(receipts[ident]), "bindings": bindings}
+        "receipts": [{"purchase": receipt_view(receipts[ident]) if ident in receipts else deepcopy(retained_receipts[ident][0]["purchase"]),
+                      "currentAvailable": ident in receipts, "savedObservations": deepcopy(retained_receipts[ident]), "bindings": bindings}
                      for ident, bindings in sorted(receipt_bindings.items())],
         "receiptConflicts": [{"purchaseId": ident, "bindings": bindings}
                             for ident, bindings in sorted(receipt_bindings.items()) if len(bindings) > 1],
         "unlinkedPurchases": [receipt_view(row) for row in context["records"]["purchases"] if row["id"] not in linked],
-        "sources": [deepcopy(context["sources"][ident]) for ident in sorted({
-            ident for row in original_calendars for ident in row["report"]["sourceIds"]})],
+        "sources": retained_sources,
         "qualification": "Dates and funding groups describe planned business use. Native receipts retain their actual states. Continue through the original Cohort editor and review for actual grant target results."}
 
 
