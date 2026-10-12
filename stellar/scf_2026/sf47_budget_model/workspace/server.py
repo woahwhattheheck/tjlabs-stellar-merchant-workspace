@@ -28,6 +28,8 @@ VERSION = "1.0.0"
 
 import operations_http
 operations_http.register_static(STATIC)
+import source_tables
+source_tables.register_static(STATIC)
 
 
 def atomic_private(path, data):
