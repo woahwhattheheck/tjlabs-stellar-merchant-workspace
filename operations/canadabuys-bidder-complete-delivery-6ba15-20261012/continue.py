@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import ast
+import gc
 import hashlib
 import json
 from pathlib import Path
@@ -12,24 +13,32 @@ import sys
 HERE = Path(__file__).resolve().parent
 PINS = {
   "input.json": {
-    "sha256": "cc200bbd28811ce975d9eb801b1c06f1586e0b39295b384f9c329d1fd9cbddbe",
-    "bytes": 2647299
+    "sha256": "51d6e681705ad4816789c9fdfb928e1cf357b4b466e1c0e469855ea091ffab8e",
+    "bytes": 2748876
   },
   "complete_canadabuys_delivery.py": {
-    "sha256": "d66be5c52aaa11cb9de196878e0fd73cdadeaeabe91d48a29a68d7472605c088",
-    "bytes": 18542
+    "sha256": "fcb8555e35b7c260547c013c0525bc2782e2ec734284c0cc8ced48c8a18035ad",
+    "bytes": 23370
   },
   "run-canadabuys-bidder-receiving.mjs": {
     "bytes": 89006,
     "sha256": "c2e11f67957a9466cda91dd305b5b9ee5ff0771cad703c3c85b80794f30c2b8f"
   },
   "integrated-source-selection.json": {
-    "sha256": "4f6decb00ee1488c4bcb15948753ab72282baa6441b5d9fd2eba27dec4295c3d",
-    "bytes": 14297
+    "bytes": 14297,
+    "sha256": "4f6decb00ee1488c4bcb15948753ab72282baa6441b5d9fd2eba27dec4295c3d"
   },
   "original-attempt-recovery.json": {
-    "sha256": "70643d3613d6d63112c4ec8203152953faac3807ad6bf43015159a0b810a1126",
-    "bytes": 6281
+    "bytes": 6281,
+    "sha256": "70643d3613d6d63112c4ec8203152953faac3807ad6bf43015159a0b810a1126"
+  },
+  "integrated-attempt-history.json": {
+    "bytes": 10541,
+    "sha256": "cb7bc950f51f7fcc8413006d3337e7bf4c473f9c6277861d303c7e26e187d933"
+  },
+  "official_library_save_bridge.py": {
+    "bytes": 6048,
+    "sha256": "e9715e42eea200b04489da61f05e5058bd21dc5c817f3830a379b7c541afe21d"
   }
 }
 
@@ -49,6 +58,7 @@ def main():
     parser.add_argument("--node", help="Actual installed Node executable")
     parser.add_argument("--playwright", help="Actual installed Playwright index.mjs")
     parser.add_argument("--chromium", help="Actual installed Chromium executable")
+    parser.add_argument("--shared-directory", help="Absolute artifact staging directory available to the current file tool")
     parser.add_argument("--directory-parent", action="append",
                         help="Existing writable parent for this complete operation; may repeat")
     parser.add_argument("--batch", action="store_true",
@@ -75,11 +85,19 @@ def main():
                                if item["path"] == "original-receiving-input.json"))
     if any(fixture[key] != original[key] for key in ("captures", "documents", "profile", "expected")):
         raise RuntimeError("The original complete operating cases changed")
+    if payload["libraryBridgePin"] != PINS["official_library_save_bridge.py"]:
+        raise RuntimeError("The supported save transport pin differs")
+    bridge = next(item for item in payload["programmeFiles"]
+                  if item["path"] == "official_library_save_bridge.py")
+    if bridge["content"].encode("utf-8") != selected["official_library_save_bridge.py"]:
+        raise RuntimeError("The selected complete save transport differs")
     original_runtime = dict(payload["runtime"])
     for name in ("node", "playwright", "chromium"):
         value = getattr(options, name)
         if value is not None:
             payload["runtime"][name] = str(Path(value).resolve(strict=True))
+    if options.shared_directory:
+        payload["sharedDirectory"] = str(Path(options.shared_directory).resolve())
     if options.directory_parent:
         payload["directoryParents"] = [str(Path(value).resolve(strict=True))
                                       for value in options.directory_parent]
@@ -90,6 +108,8 @@ def main():
         "publishedInput": PINS["input.json"],
         "originalRuntime": original_runtime,
         "selectedRuntime": payload["runtime"],
+        "sharedDirectory": payload["sharedDirectory"],
+        "librarySaveTool": "library_create_library_file",
         "directoryParents": payload["directoryParents"],
         "keepAlive": payload["keepAlive"],
         "entrypoint": str(HERE / "continue.py"),
@@ -100,6 +120,13 @@ def main():
         "path": "worker-runtime-selection.json", "content": raw.decode("utf-8"),
         "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()
     })
+    history = next(item for item in payload["historyFiles"]
+                   if item["path"] == "integrated-12385-receiving-history.json")
+    if history["content"].encode("utf-8") != selected["integrated-attempt-history.json"]:
+        raise RuntimeError("The retained integrated receiving history differs")
+    selected.clear()
+    del fixture, original, runner, transition, history, bridge, raw, selection
+    gc.collect()
     ast.parse(producer, filename=str(HERE / "complete_canadabuys_delivery.py"))
     print(json.dumps({"phase": "COMPLETE_CANADABUYS_INPUT_VERIFIED",
                       "sourceCommit": payload["sourceCommit"],

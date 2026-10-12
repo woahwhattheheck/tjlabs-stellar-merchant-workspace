@@ -146,8 +146,9 @@ export async function runInstalledDatasetteBrowser({
   try{
     await save('ORIGINAL_PROGRAMME_RETAINED');
     const {buildDistribution}=await fromRepo(DIST+'build.mjs');
-    state.build=await buildDistribution({repository,ref:sourceRef,output:join(outputDirectory,'build'),
-      selection:'datasette',offline:true,resume:true,python,onProgress:event=>{
+    const buildDirectory=join(outputDirectory,'build');
+    state.build=await buildDistribution({repository,ref:sourceRef,output:buildDirectory,
+      selection:'datasette',offline:true,resume:await exists(buildDirectory),python,onProgress:event=>{
         if(['selected','materializing','packaged','reused'].includes(event.phase))
           process.stderr.write(JSON.stringify({operation:'datasette-installed-build',...event})+'\n');
       }});

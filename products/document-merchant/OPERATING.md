@@ -334,6 +334,26 @@ The original Jobs and customer journals own recovery. A request that already exi
 | PDF received but customer transfer incomplete | Fetch the existing completed job and named outputs again |
 | Customer needs cancellation, refund or restoration | Use original Jobs resolution and maintained recovery flows |
 
+### Read the original paid-job failure category
+
+The original Jobs worker records a supported failure category when a paid application fails. This adapter maps the supplier result at that boundary so the job explains the required recovery action. A direct renderer call retains the original `DOCUMENT_*` error, HTTP status and returned supplier identifiers; a native paid job retains the category below.
+
+| Native job category | Merchant action |
+| --- | --- |
+| `JOB_NATIVE_DOCUMENT_AUTHENTICATION` | Inspect the selected provider key environment and the original supplier account |
+| `JOB_NATIVE_DOCUMENT_SUBSCRIPTION` | Inspect the original account's plan and billing response |
+| `JOB_NATIVE_DOCUMENT_RATE_OR_QUOTA` | Read the selected supplier's account usage and actual allowance before an explicit continuation |
+| `JOB_NATIVE_DOCUMENT_CAPACITY` or `JOB_NATIVE_DOCUMENT_HTTP_FAILURE` | Review the original supplier response and service availability |
+| `JOB_NATIVE_DOCUMENT_RESPONSE_UNCERTAIN` or `JOB_NATIVE_DOCUMENT_TIMEOUT` | Reconcile the original attempt and supplier usage because a dispatched render may have consumed a unit |
+| `JOB_INPUT_DOCUMENT_PROVIDER_REJECTED`, `JOB_INPUT_DOCUMENT_SETTINGS` or `JOB_INPUT_DOCUMENT_PAGE_DIMENSIONS` | Review the original input and the selected provider's declared settings before preparing a corrected request |
+| Other `JOB_INPUT_DOCUMENT_*` categories | Inspect the original sealed source file's type, bytes, size and format |
+| `JOB_OUTPUT_DOCUMENT_INTERRUPTED` or `JOB_OUTPUT_DOCUMENT_INCOMPLETE` | Keep the original attempt while resolving the partial PDF receipt |
+| `JOB_OUTPUT_DOCUMENT_TOO_LARGE` or `JOB_OUTPUT_DOCUMENT_METADATA_LIMIT` | Compare the selected complete-output allowance with the actual response |
+| `JOB_OUTPUT_DOCUMENT_PDF_INVALID` | Inspect the original supplier response; its returned body did not satisfy the binary-PDF contract |
+| `JOB_NATIVE_DOCUMENT_CONFIGURATION` | Inspect the immutable generated application and its selected provider configuration |
+
+The worker's original transport stores the category, not arbitrary HTTP headers or error causes. Use the existing supplier account operation and any original direct-run failure file for available request identifiers and allowance details. Original Jobs cancellation and sealed-input failures keep their native categories.
+
 The application performs one provider request per execution. It never automatically resends a possibly accepted render. An explicit native job retry can consume another supplier unit; the merchant retains that decision with the existing job.
 
 The original setup can be inspected while offline. It does not need a provider request to disclose its chosen source, payment terms, file policies or declared credential names.
@@ -343,3 +363,12 @@ The original setup can be inspected while offline. It does not need a provider r
 A useful first task starts from a report or invoice template the customer already produces. Select the renderer that accepts that source, prepare one actual paid request, and receive the complete PDF plus its editable source into the customer's existing library. Review the entire output with the customer and retain the original task reference for the next reporting cycle.
 
 A merchant can then price repeat use from actual returned supplier usage and its provider account. Whole-task completion and repeat-customer adoption come from the original buyer workflow. The grant's paid-purchase, parent-task and prepaid-consumption records keep their existing counting rules.
+
+## Fulfill and deliver complete document batches
+
+Use [BATCHES.md](BATCHES.md) for a customer's complete order or reporting period. The installed `document-merchant batch` workflow stages whole HTML/Markdown sources, reviews every native document price, continues the original payment and job records, receives all four output files, and exports one portable Resource library Collection with a complete customer table. It includes full invoice and greeting-card source for one shared task, plus commands for interrupted preparation, checkout recovery, partial file receiving and independent Collection receiving.
+
+~~~sh
+starforge document-merchant batch --help
+~~~
+

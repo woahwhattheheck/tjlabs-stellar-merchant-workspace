@@ -1,12 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "openaq",
-  "description": "Attributed OpenAQ station studies, original dataset publication, customer reports and complete portable receiving",
+  "description": "Attributed OpenAQ station studies, original dataset publication, operated merchant releases and complete customer receiving",
   "commands": {
-    "openaq": "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/cli.mjs"
+    "openaq": "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/cli.mjs",
+    "openaq-buyer": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/cli.mjs"
   },
   "commandDescriptions": {
-    "openaq": "Capture source editions, review observations, publish original datasets and receive complete customer studies."
+    "openaq": "Capture and review source editions, operate original dataset merchant releases, and receive complete customer studies.",
+    "openaq-buyer": "Acquire a reviewed OpenAQ release with the original Buyer, and receive complete source, typed output and accounting."
   },
   "exports": {
     "./seller/openaq": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/workspace.mjs",
@@ -15,7 +17,9 @@
     "./seller/openaq/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/publisher.mjs",
     "./seller/openaq/package": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/package.mjs",
     "./seller/openaq/download": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/download.mjs",
-    "./merchant/mcp/openaq": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/operator.mjs"
+    "./merchant/mcp/openaq": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/operator.mjs",
+    "./seller/openaq/merchant": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/merchant.mjs",
+    "./buyer/openaq-study": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/index.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/README.md",
@@ -29,7 +33,10 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/study.tgz",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/report.html",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/report.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/READING_GUIDE.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/READING_GUIDE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/MERCHANT_OPERATIONS.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/index.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/OPERATING.md"
   ],
   "browserAssets": [
     {

@@ -122,3 +122,18 @@ set/run history, original requests and responses for the receiving operator.
 See [REQUEST_SETS.md](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/REQUEST_SETS.md)
 for the whole browser and installed-client workflow, exact request shapes,
 source-selection rules, request recovery and continued work after receiving.
+
+## Prepare, recover and receive original merchants
+
+Merchant and schema-revision preparation now records a stable original request
+and each native attempt before the existing compiler writes its package. The
+browser and six installed CLI/client operations inspect immutable history,
+recover a complete original output after a lost response, or deliberately
+continue a partial attempt without replacing its earlier files.
+
+Native preparation packets and whole-project handover retain the original
+source, requests, complete/partial files and baseline identities. Receiving can
+continue that same project while preserving later destination edits and the
+original merchant/deployment owners. Existing export calls remain compatible.
+
+See [the complete preparation guide](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/MERCHANT_PREPARATION.md).

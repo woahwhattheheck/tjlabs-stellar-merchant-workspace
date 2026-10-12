@@ -45,7 +45,8 @@
     "grant-agent",
     "merchant-provider-grant-workspaces",
     "grant-source-tables",
-    "grant-application-handoff"
+    "grant-application-handoff",
+    "grant-cohort-planning"
   ],
   "components": [
     "stellar/scf_2026/sf47_budget_model",
@@ -191,7 +192,29 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_returns.css",
     "stellar/scf_2026/sf47_budget_model/workspace/installation-return-receiving.py",
     "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_RETURNS.md",
-    "stellar/scf_2026/sf47_budget_model/workspace/installation-return-page-receiving.mjs"
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-return-page-receiving.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/adjustments.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/core.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/native-usage.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/period-usage.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/reconcile.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/recovery.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/route-path.mjs",
+    "stellar/scf-starforge-20261009/sf93-seller-support-bundle/object-observation.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/analyze.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/common.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/engine.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/inputs.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/limits-contracts.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/model.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/source.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/planning/scenarios.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/planning/workspace.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/model.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/workspace.mjs",
+    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-return-complete.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_RETURN_COMPLETE.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

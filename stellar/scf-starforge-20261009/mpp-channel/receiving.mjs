@@ -37,6 +37,7 @@ async function sourceClosure() {
   }
   async function seed(path) {
     for(const entry of await readdir(path,{withFileTypes:true})) {
+      if(entry.name==='__pycache__' || /\.py[co]$/.test(entry.name)) continue;
       need(!entry.isSymbolicLink(), 'MPP_CHANNEL_SOURCE_SYMLINK_UNSUPPORTED');
       if(entry.isDirectory()) await seed(join(path,entry.name));
       else if(entry.isFile()) await visit(join(path,entry.name));
