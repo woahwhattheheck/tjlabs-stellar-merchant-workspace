@@ -33,7 +33,7 @@ async function accountingRead(directory,options,signal) {
     if(page.interrupted||!Number.isSafeInteger(page.range?.total)||page.range.total<1||
       page.range.total>options.maxChunks||page.range.offset!==offset||
       !Array.isArray(page.entries)||!page.entries.length)fail('OBJECT_INSPECTION_WORKLOAD_LIMIT');
-    const current={directory:page.directory,sessionId:page.sessionId,configurationSha256:page.configurationSha256,
+    const current={directory:page.directory,sessionId:page.sessionId,sessionSha256:page.sessionSha256,configurationSha256:page.configurationSha256,
       terms:page.terms,deliveryMode:page.deliveryMode,workspace:page.workspace};
     if(total!==null&&(total!==page.range.total||!isDeepStrictEqual(identity,current)))
       fail('OBJECT_ACCOUNTING_CHANGED_DURING_READ');

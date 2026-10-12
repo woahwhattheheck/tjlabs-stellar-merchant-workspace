@@ -27,7 +27,7 @@ export function updateConfiguration(state,config,digest,env,now) {
   state.merchants=merchants;
 }
 function signalsFor(config,merchant,observation,previous,now) {
-  if(merchant.object)return objectObservationSignals(merchant,observation,now);
+  if(merchant.object)return objectObservationSignals(merchant,observation,now,previous);
   const packet=observation.packet;
   if(!packet) return {signals:{ENDPOINT_UNAVAILABLE:{bad:true,values:{}}},error:observation.error};
   const o=packet.report.observation,captured=Date.parse(o.capturedAt),start=Date.parse(o.startedAt);
@@ -90,7 +90,8 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
   const result=signalsFor(state.config,merchant,observation,row.previous,now);
   row.lastAttemptAt=iso(now);row.lastError=result.error ?? null;
   if(merchant.object&&result.packet?.object)row.objectObservation={observedAt:result.packet.object.generatedAt,
-    ...result.packet.object.summary};
+    ...result.packet.object.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
+      successful:result.successful===true,reason:result.error??null}};
   let currentCapture;
   const capture=async()=>{
     if(currentCapture!==undefined)return currentCapture;
@@ -99,7 +100,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     if(currentCapture)row.lastCapture=currentCapture;
     return currentCapture;
   };
-  if(result.packet) {
+  if(result.packet&&(!merchant.object||result.successful===true)) {
     const changedSession=row.previous?.sessionId!==result.previous.sessionId;
     if(changedSession) {
       row.sessionsSeen++;
@@ -108,6 +109,10 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     }
     row.previous=result.previous;row.lastSuccessAt=iso(now);row.window=result.window;
     if(!row.lastCapture||changedSession||now-Date.parse(row.lastCapture.generatedAt)>=state.config.captureEveryMs) await capture();
+  } else if(result.packet) {
+    // Retain incomplete/stale Object evidence without replacing the last
+    // successful native observation or advancing a healthy recovery poll.
+    await capture();
   }
   for(const kind of kinds) {
     const condition=row.conditions[kind]??={badStreak:0,goodStreak:0,lastState:'UNKNOWN',incidentId:null};

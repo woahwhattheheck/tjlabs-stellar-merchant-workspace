@@ -230,6 +230,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     add(box,'p','Verified bytes: '+(o.verifiedBytes??'unknown')+' / '+(o.expectedBytes??'unknown')+
       ' · Chunks: '+(o.verifiedChunks??'unknown')+' / '+(o.chunks??'unknown'),'hint');
     add(box,'p','Original session '+summary.selection.sessionId+' · Intent '+summary.selection.sourceIntentId,'hint');
+    if(summary.poll&&!summary.poll.successful)add(box,'p','This poll did not establish a fresh complete native observation: '+human(summary.poll.reason)+'.','status error');
     if(summary.nativeCodes.length)add(box,'p',summary.nativeCodes.join(', '),'status error');
     const original=add(box,'details',undefined,'source-details');add(original,'summary','Recorded selection, financial view and output');
     add(original,'pre',JSON.stringify(summary,null,2)).tabIndex=0;

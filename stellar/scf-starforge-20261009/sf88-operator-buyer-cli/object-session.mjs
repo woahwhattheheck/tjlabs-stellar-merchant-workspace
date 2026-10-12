@@ -695,7 +695,11 @@ export async function accountObjectSession(directory, {workspace,offset=0,limit=
   await privateDirectory(directory);
   const release=finalize?await acquireLock(directory,{kind:'FINALIZE'}):null;
   try {
-    const definition=validateDefinition(await readJson(join(directory,'session.json')),directory);
+    const sessionBytes=await readPrivate(join(directory,'session.json'),131072);
+    let sessionValue;
+    try {sessionValue=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(sessionBytes));}
+    catch {throw new InputError('OBJECT_STATE_JSON_INVALID');}
+    const definition=validateDefinition(sessionValue,directory);
     const selectedWorkspace=workspace===undefined?definition.workspace:workspace;
     need(definition.workspace===null||selectedWorkspace===definition.workspace,'OBJECT_SAVED_WORKSPACE_MISMATCH');
     if(finalize)absolute(selectedWorkspace,'OBJECT_ACCOUNTING_WORKSPACE_REQUIRED');
@@ -734,7 +738,7 @@ export async function accountObjectSession(directory, {workspace,offset=0,limit=
     }
     const next=offset+entries.length;
     return {schema:'stellar-forge.sf88.session-accounting.v1',kind:'object',directory,
-      sessionId:definition.sessionId,configurationSha256:definition.configurationSha256,
+      sessionId:definition.sessionId,sessionSha256:sha(sessionBytes),configurationSha256:definition.configurationSha256,
       deliveryMode:definition.deliveryMode,
       workspace:selectedWorkspace,mode:finalize?'FINALIZE':'VIEW',observedAt:now(),
       terms:execution(definition.config).op.expect,

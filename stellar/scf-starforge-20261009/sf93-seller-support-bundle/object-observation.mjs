@@ -61,11 +61,11 @@ function readAccount(read) {
   for(const page of read.pages) {
     need(plain(page)&&page.schema==='stellar-forge.sf88.session-accounting.v1'&&page.kind==='object'&&
       page.mode==='VIEW'&&page.interrupted===false&&instant(page.observedAt)&&plain(page.range)&&Array.isArray(page.entries));
-    need(UUID.test(page.sessionId??'')&&HASH.test(page.configurationSha256??'')&&typeof page.directory==='string');
+    need(UUID.test(page.sessionId??'')&&HASH.test(page.sessionSha256??'')&&HASH.test(page.configurationSha256??'')&&typeof page.directory==='string');
     need(count(page.range.total)&&page.range.total>=1&&page.range.total<=100000&&page.range.offset===position&&
       Number.isSafeInteger(page.range.limit)&&page.range.limit>=1&&page.range.limit<=250&&
       page.entries.length===Math.min(page.range.limit,page.range.total-position));
-    const binding={directory:page.directory,sessionId:page.sessionId,configurationSha256:page.configurationSha256,
+    const binding={directory:page.directory,sessionId:page.sessionId,sessionSha256:page.sessionSha256,configurationSha256:page.configurationSha256,
       deliveryMode:page.deliveryMode,workspace:page.workspace,terms:page.terms,total:page.range.total,
       recordAuthority:page.recordAuthority};
     first??=binding;need(isDeepStrictEqual(first,binding));
@@ -108,7 +108,7 @@ function readReport(value) {
 }
 function matches(selection,report,account) {
   return (!report||['directory','sessionId','sessionSha256','configurationSha256','sourceIntentId']
-    .every(key=>report[key]===selection[key]))&&(!account||['directory','sessionId','configurationSha256']
+    .every(key=>report[key]===selection[key]))&&(!account||['directory','sessionId','sessionSha256','configurationSha256']
       .every(key=>account.binding[key]===selection[key]));
 }
 function age(now,dates) {
@@ -194,15 +194,20 @@ export function readObjectObservationFiles(files) {
   need(isDeepStrictEqual(meta.summary,summary),'SF93_OBJECT_CAPTURE_SUMMARY_CHANGED');
   return {meta,report,accounting,summary};
 }
-export function objectObservationSignals(merchant,observation,now) {
+export function objectObservationSignals(merchant,observation,now,previous=null) {
   const packet=observation.packet,meta=packet?.object;
   if(!meta)return {signals:{OBJECT_SOURCE_UNAVAILABLE:{bad:true,values:{}}},error:observation.error??'OBJECT_SOURCE_READ_FAILED'};
   need(isDeepStrictEqual(meta.selection,merchant.object)&&meta.registration.id===merchant.id&&meta.registration.label===merchant.label);
-  const s=meta.summary,complete=s.coverage==='COMPLETE';
+  const s=meta.summary,captured=Date.parse(meta.generatedAt),same=previous?.sessionId===meta.selection.sessionId;
+  const fresh=Number.isFinite(now)&&captured<=now+5000&&now-captured<=30000&&
+    (!same||captured>Date.parse(previous.capturedAt));
+  if(!fresh)return {packet,successful:false,fresh:false,
+    signals:{OBJECT_SOURCE_UNAVAILABLE:{bad:true,values:{}}},error:'OBJECT_SOURCE_CLOCK_OR_AGE_INVALID'};
+  const complete=s.coverage==='COMPLETE';
   const aged=(number,seconds,unknown,threshold)=>({bad:!complete?null:number===0?false:
     seconds!==null&&seconds>=threshold?true:unknown?null:false,
     values:{requests:number,oldestPendingSeconds:seconds??0,thresholdSeconds:threshold}});
-  return {packet,previous:{sessionId:meta.selection.sessionId,startedAt:s.sessionCreatedAt,capturedAt:meta.generatedAt},
+  return {packet,successful:complete,fresh:true,previous:{sessionId:meta.selection.sessionId,startedAt:s.sessionCreatedAt,capturedAt:meta.generatedAt},
     window:{from:meta.startedAt,through:meta.generatedAt,complete,sessionStartedAt:s.sessionCreatedAt},
     error:meta.errorCode??(complete?null:s.coverage),signals:{
       OBJECT_SOURCE_UNAVAILABLE:{bad:s.identityContradiction?null:!complete,values:{}},

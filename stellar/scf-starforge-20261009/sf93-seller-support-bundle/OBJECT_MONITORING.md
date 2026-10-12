@@ -88,7 +88,7 @@ A temporarily unavailable original Object remains an observable source condition
 
 ## What an observation establishes
 
-One observation contains a complete native accounting view before verification, the original byte-verifying Object report, and a complete accounting view afterward. Every page and every original request entry is retained. Accounting changes across those reads produce `CHANGED_DURING_READ`; missing data, a deadline or a workload limit cannot be interpreted as a recovered payment or completed output.
+One observation contains a complete native accounting view before verification, the original byte-verifying Object report, and a complete accounting view afterward. Every page and every original request entry is retained. Each before/after accounting page also binds the exact original session-file SHA-256, so a changed snapshot or saved selection cannot hide behind unchanged payment terms. Accounting changes across those reads produce `CHANGED_DURING_READ`; missing data, a deadline or a workload limit cannot be interpreted as a recovered payment or completed output.
 
 | Field | Meaning |
 | --- | --- |
@@ -101,6 +101,8 @@ One observation contains a complete native accounting view before verification, 
 | Assembly receipt | Original recorded assembly history. The external assembled file is not revalidated by this watcher. |
 
 The native `actualAtomicUnits`, receipt, completion time, request SHA-256, view status and earlier finalization data remain available per request. Their complete values are preserved. The monitor does not guess a currency, sum heterogeneous amounts or turn maximum authorizations into charges.
+
+A poll applies only an observation captured within 30 seconds of application time, at most five seconds ahead of that clock, and later than the previous accepted capture for the same session. A slow source in the same sweep can therefore make an earlier capture stale. That complete old packet remains available as evidence, but it cannot advance a healthy streak, replace the last successful native observation or clear an incident.
 
 A successful observation of an incomplete Object is a complete observation with incomplete output. It is not a successful delivery. A complete Object read during a changing accounting view remains unconfirmed for monitoring recovery until a coherent observation is available.
 
@@ -150,7 +152,7 @@ The existing configure/start/stop/ack/notify/case routes remain authoritative. T
 
 Source interfaces:
 
-- `object-session.mjs: inspectObjectSession(directory, {signal?, maxBytes?, maxChunks?})` retains its original default behavior and adds bounded/cancellable read options, exact session-file SHA-256 and original attempt timestamps.
+- `object-session.mjs: inspectObjectSession(directory, {signal?, maxBytes?, maxChunks?})` retains its original default behavior and adds bounded/cancellable read options, exact session-file SHA-256 and original attempt timestamps. The original read-only accounting pages also retain that session-file SHA-256.
 - `object-source.mjs: reviewObjectSource(input, {signal?})` provides the explicit receiving review.
 - `object-source.mjs: collectObjectObservation(merchant, signal)` supplies the existing SF93 sweep.
 - `object-observation.mjs` validates and recomputes complete file observations and condition inputs.
