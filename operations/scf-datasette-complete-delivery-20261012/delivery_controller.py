@@ -108,6 +108,114 @@ def run(arguments,label,cwd=None,timeout=None):
     if code:
         raise RuntimeError(label+" returned "+str(code)+": "+err.read_text(errors="replace")[-6000:])
     return {"returncode":code,"stdout":str(out),"stderr":str(err)}
+def persist_complete_phase(original_outcome,phase):
+    outcome=json.loads(json.dumps(original_outcome))
+    outcome["checkpoint_phase"]=phase
+    if phase=="publisher":outcome["state"]="PUBLISHER_COMPLETE"
+    delivery_result={}
+    def delivered(**values):
+        delivery_result.update({"state":outcome["state"],"checkpoint_phase":phase,**values})
+        emit("datasette_delivery_saved",**delivery_result)
+    outcome["finished_at"]=stamp()
+    capacity={"observed_at":stamp(),"cgroup":{},"filesystems":{}}
+    for name in ("memory.stat","memory.current","memory.max","memory.events"):
+        path=P("/sys/fs/cgroup")/name
+        try:capacity["cgroup"][name]=path.read_text(encoding="utf-8").strip()
+        except OSError as error:capacity["cgroup"][name]={"error":type(error).__name__,"errno":error.errno}
+    for selected_path in ("/workspace/scratch/49aa6abb32bb","/dev/shm","/dev","/mnt/data"):
+        try:
+            value=os.statvfs(selected_path)
+            capacity["filesystems"][selected_path]={"total_bytes":value.f_blocks*value.f_frsize,"free_bytes":value.f_bfree*value.f_frsize,"available_bytes":value.f_bavail*value.f_frsize,"free_inodes":value.f_favail}
+        except OSError as error:capacity["filesystems"][selected_path]={"error":type(error).__name__,"errno":error.errno}
+    outcome["host_capacity_at_save"]=capacity
+    save_json(root/"host-capacity-at-save.json",capacity)
+    emit("datasette_host_capacity_at_save",**capacity)
+    report=root/("Datasette_Publisher_Complete_Result.json" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Result.json")
+    save_json(report,outcome)
+    prior_manifest=root/"complete-checkpoint-manifest.json"
+    if prior_manifest.is_file():
+        previous_digest=digest(prior_manifest)
+        retained_manifest=root/"run-history"/"checkpoint-manifests"/(previous_digest+".json")
+        retained_manifest.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+        if retained_manifest.exists():
+            if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
+        else:shutil.copy2(prior_manifest,retained_manifest)
+    export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
+    archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
+    members=[];excluded=[]
+    with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
+        for folder,dirs,files in os.walk(root,followlinks=False):
+            dirs.sort();files.sort()
+            for name in list(dirs):
+                path=P(folder)/name
+                if path in (tmp,export):
+                    excluded.append({"path":path.relative_to(root).as_posix(),"kind":"reproducible-temporary-cache" if path==tmp else "generated-export"});dirs.remove(name)
+                elif path.is_symlink():
+                    info=path.lstat();rel=path.relative_to(root).as_posix()
+                    data=os.readlink(path).encode()
+                    zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
+                    members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});dirs.remove(name)
+            for name in files:
+                path=P(folder)/name;rel=path.relative_to(root).as_posix();info=path.lstat()
+                if rel=="complete-checkpoint-manifest.json":excluded.append({"path":rel,"kind":"preceding-manifest-preserved-in-run-history"});continue
+                if stat.S_ISSOCK(info.st_mode):excluded.append({"path":rel,"kind":"runtime-socket"});continue
+                if stat.S_ISLNK(info.st_mode):
+                    data=os.readlink(path).encode();zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
+                    members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});continue
+                if not stat.S_ISREG(info.st_mode):excluded.append({"path":rel,"kind":"non-regular-runtime-member"});continue
+                z.write(path,rel);members.append({"path":rel,"bytes":info.st_size,"sha256":digest(path),"mtime_ns":info.st_mtime_ns})
+        z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"excluded":excluded},indent=2)+"\n")
+    archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
+    emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
+    def save_files(paths,label):
+        request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
+        completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
+        for line in completed.stderr.decode(errors="replace").splitlines():
+            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
+        if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
+        response=json.loads(completed.stdout);rows=response.get("results")
+        if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
+        for path,row in zip(paths,rows):
+            if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
+            if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
+        return rows
+    saved=save_files([archive_path,report],"complete-save-01")
+    for i,row in enumerate(saved):
+        if not succeeded(row) and row.get("error_code")=="transfer_failed":
+            emit("datasette_save_transfer_retry",artifact=[archive_path,report][i].name)
+            saved[i]=save_files([[archive_path,report][i]],"complete-save-retry-"+str(i))[0]
+    if all(succeeded(row) for row in saved):
+        delivered(mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved])
+    else:
+        parts=[];partsdir=export/"parts";partsdir.mkdir(mode=0o700,exist_ok=True)
+        with archive_path.open("rb") as source:
+            while True:
+                data=source.read(10*1024*1024)
+                if not data:break
+                path=partsdir/(archive_path.name+".part-"+str(len(parts)+1).zfill(3));path.write_bytes(data);parts.append(path)
+        rows=save_files(parts,"complete-parts-save-01")
+        for i,row in enumerate(rows):
+            if not succeeded(row) and row.get("error_code")=="transfer_failed":rows[i]=save_files([parts[i]],"complete-part-retry-"+str(i))[0]
+        if not succeeded(saved[1]):saved[1]=save_files([report],"complete-report-retry")[0]
+        manifest=export/"Datasette_Operating_Checkpoint_Parts.json"
+        value={"schema":"commons.complete-checkpoint-parts.v1","operation":OP,"state":outcome["state"],"archive":archive_identity,"parts":[{"order":i+1,"file_name":path.name,"bytes":path.stat().st_size,"sha256":digest(path),"saved":public_save(rows[i])} for i,path in enumerate(parts)],"report":public_save(saved[1]),"assembly":"Concatenate the complete raw part files in ascending order, verify the complete archive byte count and SHA256, then restore its original retained root before resuming the same journals."}
+        save_json(manifest,value);manifest_row=save_files([manifest],"complete-parts-manifest")[0]
+        if all(succeeded(row) for row in [*rows,saved[1],manifest_row]):delivered(mode="complete_archive_parts",archive=archive_identity,parts=value["parts"],saved=[public_save(saved[1]),public_save(manifest_row)])
+        else:
+            emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in [*saved,*rows,manifest_row]])
+            while True:
+                line=sys.stdin.readline()
+                if not line:raise RuntimeError("The full original Datasette checkpoint awaits canonical save at "+str(archive_path))
+                if json.loads(line).get("action")!="retry-save":continue
+                needed=[i for i,row in enumerate(saved) if not succeeded(row)]
+                updates=save_files([[archive_path,report][i] for i in needed],"complete-held-save")
+                for i,row in zip(needed,updates):saved[i]=row
+                if all(succeeded(row) for row in saved):
+                    delivered(mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved]);break
+                emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in saved])
+    return delivery_result
+
 native_error=None
 try:
     raw=payload["capsule_raw"].encode("utf-8")
@@ -161,13 +269,14 @@ try:
     if programme.get("sourceRefresh",{}).get("state")!="COMPLETE" or not programme.get("mcpReceiving",{}).get("passed") or programme.get("managedUpload",{}).get("resumed",{}).get("state")!="COMPLETE":raise RuntimeError("The whole original refresh, upload and MCP receiving programme must complete.")
     outcome["publisher_native"]=native;outcome["publisher"]=programme
     emit("datasette_publisher_complete",journal=str(root/"journey/publisher-programme-state.json"),received_workspace=programme.get("receiving",{}).get("directory"),refresh=programme["sourceRefresh"]["state"],mcp_passed=programme["mcpReceiving"]["passed"])
+    outcome["publisher_checkpoint"]=persist_complete_phase(outcome,"publisher")
     repository=root/"canonical-repository";repository.mkdir(mode=0o700,exist_ok=True)
     if not (repository/".git").is_dir():
         run(["git","init",repository],"canonical-git-init")
         run(["git","-C",repository,"remote","add","origin",payload["repository_url"]],"canonical-git-origin")
     resolved=subprocess.run(["git","-C",repository,"rev-parse","--verify",payload["installed_source_ref"]+"^{commit}"],capture_output=True,text=True)
     if resolved.returncode:
-        run(["git","-C",repository,"-c","http.version=HTTP/1.1","fetch","--depth","1","origin",payload["installed_source_ref"]],"canonical-git-fetch",timeout=600)
+        run(["git","-C",repository,"-c","http.version=HTTP/1.1","-c","pack.threads=1","-c","pack.windowMemory=32m","fetch","--depth","1","--no-tags","origin",payload["installed_source_ref"]],"canonical-git-fetch",timeout=600)
     run(["git","-C",repository,"checkout","--detach",payload["installed_source_ref"]],"canonical-git-checkout")
     got=subprocess.check_output(["git","-C",repository,"rev-parse","HEAD"],text=True).strip()
     if got!=payload["installed_source_ref"]:raise RuntimeError("The canonical installed Git source differs.")
@@ -196,103 +305,6 @@ except BaseException as error:
     emit("datasette_original_continuation_preserved",error_type=native_error["type"],message=native_error["message"])
 finally:
     done.set()
-outcome["finished_at"]=stamp()
-capacity={"observed_at":stamp(),"cgroup":{},"filesystems":{}}
-for name in ("memory.stat","memory.current","memory.max","memory.events"):
-    path=P("/sys/fs/cgroup")/name
-    try:capacity["cgroup"][name]=path.read_text(encoding="utf-8").strip()
-    except OSError as error:capacity["cgroup"][name]={"error":type(error).__name__,"errno":error.errno}
-for selected_path in ("/workspace/scratch/49aa6abb32bb","/dev/shm","/dev","/mnt/data"):
-    try:
-        value=os.statvfs(selected_path)
-        capacity["filesystems"][selected_path]={"total_bytes":value.f_blocks*value.f_frsize,"free_bytes":value.f_bfree*value.f_frsize,"available_bytes":value.f_bavail*value.f_frsize,"free_inodes":value.f_favail}
-    except OSError as error:capacity["filesystems"][selected_path]={"error":type(error).__name__,"errno":error.errno}
-outcome["host_capacity_at_save"]=capacity
-save_json(root/"host-capacity-at-save.json",capacity)
-emit("datasette_host_capacity_at_save",**capacity)
-report=root/"Datasette_Publisher_Installed_Operating_Result.json"
-save_json(report,outcome)
-prior_manifest=root/"complete-checkpoint-manifest.json"
-if prior_manifest.is_file():
-    previous_digest=digest(prior_manifest)
-    retained_manifest=root/"run-history"/"checkpoint-manifests"/(previous_digest+".json")
-    retained_manifest.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
-    if retained_manifest.exists():
-        if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
-    else:shutil.copy2(prior_manifest,retained_manifest)
-export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
-archive_path=export/"Datasette_Publisher_Installed_Operating_Checkpoint.zip"
-members=[];excluded=[]
-with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
-    for folder,dirs,files in os.walk(root,followlinks=False):
-        dirs.sort();files.sort()
-        for name in list(dirs):
-            path=P(folder)/name
-            if path in (tmp,export):
-                excluded.append({"path":path.relative_to(root).as_posix(),"kind":"reproducible-temporary-cache" if path==tmp else "generated-export"});dirs.remove(name)
-            elif path.is_symlink():
-                info=path.lstat();rel=path.relative_to(root).as_posix()
-                data=os.readlink(path).encode()
-                zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
-                members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});dirs.remove(name)
-        for name in files:
-            path=P(folder)/name;rel=path.relative_to(root).as_posix();info=path.lstat()
-            if rel=="complete-checkpoint-manifest.json":excluded.append({"path":rel,"kind":"preceding-manifest-preserved-in-run-history"});continue
-            if stat.S_ISSOCK(info.st_mode):excluded.append({"path":rel,"kind":"runtime-socket"});continue
-            if stat.S_ISLNK(info.st_mode):
-                data=os.readlink(path).encode();zi=zipfile.ZipInfo(rel);zi.create_system=3;zi.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(zi,data)
-                members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});continue
-            if not stat.S_ISREG(info.st_mode):excluded.append({"path":rel,"kind":"non-regular-runtime-member"});continue
-            z.write(path,rel);members.append({"path":rel,"bytes":info.st_size,"sha256":digest(path)})
-    z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"excluded":excluded},indent=2)+"\n")
-archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
-emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
-def save_files(paths,label):
-    request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"report" if path.suffix==".json" else "other"} for path in paths]}
-    completed=subprocess.run([sys.executable,helpers/"library_private_upload.py",tmp],input=json.dumps(request).encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    (tmp/(label+".stdout")).write_bytes(completed.stdout);(tmp/(label+".stderr")).write_bytes(completed.stderr)
-    for line in completed.stderr.decode(errors="replace").splitlines():
-        if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__"):print(line,flush=True)
-    if completed.returncode:raise RuntimeError("Canonical save helper failed: "+str(completed.returncode))
-    response=json.loads(completed.stdout);rows=response.get("results")
-    if not isinstance(rows,list) or len(rows)!=len(paths):raise RuntimeError("The canonical save returned another artifact selection.")
-    for path,row in zip(paths,rows):
-        if row.get("local_path")!=str(path):raise RuntimeError("The save returned another original local file.")
-        if row.get("status")=="succeeded" and not succeeded(row):raise RuntimeError("The saved file identity is incomplete.")
-    return rows
-saved=save_files([archive_path,report],"complete-save-01")
-for i,row in enumerate(saved):
-    if not succeeded(row) and row.get("error_code")=="transfer_failed":
-        emit("datasette_save_transfer_retry",artifact=[archive_path,report][i].name)
-        saved[i]=save_files([[archive_path,report][i]],"complete-save-retry-"+str(i))[0]
-if all(succeeded(row) for row in saved):
-    emit("datasette_delivery_saved",state=outcome["state"],mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved])
-else:
-    parts=[];partsdir=export/"parts";partsdir.mkdir(mode=0o700,exist_ok=True)
-    with archive_path.open("rb") as source:
-        while True:
-            data=source.read(10*1024*1024)
-            if not data:break
-            path=partsdir/(archive_path.name+".part-"+str(len(parts)+1).zfill(3));path.write_bytes(data);parts.append(path)
-    rows=save_files(parts,"complete-parts-save-01")
-    for i,row in enumerate(rows):
-        if not succeeded(row) and row.get("error_code")=="transfer_failed":rows[i]=save_files([parts[i]],"complete-part-retry-"+str(i))[0]
-    if not succeeded(saved[1]):saved[1]=save_files([report],"complete-report-retry")[0]
-    manifest=export/"Datasette_Operating_Checkpoint_Parts.json"
-    value={"schema":"commons.complete-checkpoint-parts.v1","operation":OP,"state":outcome["state"],"archive":archive_identity,"parts":[{"order":i+1,"file_name":path.name,"bytes":path.stat().st_size,"sha256":digest(path),"saved":public_save(rows[i])} for i,path in enumerate(parts)],"report":public_save(saved[1]),"assembly":"Concatenate the complete raw part files in ascending order, verify the complete archive byte count and SHA256, then restore its original retained root before resuming the same journals."}
-    save_json(manifest,value);manifest_row=save_files([manifest],"complete-parts-manifest")[0]
-    if all(succeeded(row) for row in [*rows,saved[1],manifest_row]):emit("datasette_delivery_saved",state=outcome["state"],mode="complete_archive_parts",archive=archive_identity,parts=value["parts"],saved=[public_save(saved[1]),public_save(manifest_row)])
-    else:
-        emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in [*saved,*rows,manifest_row]])
-        while True:
-            line=sys.stdin.readline()
-            if not line:raise RuntimeError("The full original Datasette checkpoint awaits canonical save at "+str(archive_path))
-            if json.loads(line).get("action")!="retry-save":continue
-            needed=[i for i,row in enumerate(saved) if not succeeded(row)]
-            updates=save_files([[archive_path,report][i] for i in needed],"complete-held-save")
-            for i,row in zip(needed,updates):saved[i]=row
-            if all(succeeded(row) for row in saved):
-                emit("datasette_delivery_saved",state=outcome["state"],mode="complete_archive",archive=archive_identity,saved=[public_save(row) for row in saved]);break
-            emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in saved])
+persist_complete_phase(outcome,"installed")
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
 if native_error:raise SystemExit(1)
