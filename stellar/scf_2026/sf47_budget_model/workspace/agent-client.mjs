@@ -85,6 +85,12 @@ function performanceQuery(args, exported = false) {
   }
   return values.size ? '?' + values.toString() : '';
 }
+function supplierAccountQuery(args, exported = false) {
+  const values = new URLSearchParams(performanceQuery(args, exported));
+  if (args.contributorId !== undefined && args.contributorId !== null)
+    values.set('contributorId', id(args.contributorId, 'person'));
+  return values.size ? '?' + values.toString() : '';
+}
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
     'GRANT_INVALID_INPUT', 'Select at most 20 distinct original frozen cohort reviews.');
@@ -399,6 +405,7 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
       'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
       'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
@@ -715,6 +722,7 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',

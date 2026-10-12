@@ -530,6 +530,14 @@ The complete intake uses one native workspace transaction. It retains each origi
 
 The same workflow is available in the CLI, typed Grant client and Merchant MCP. The full [Bulk ledger intake guide](../../stellar/scf_2026/sf47_budget_model/workspace/LEDGER_INTAKE.md) covers original file formats, source references, templates, complete-record replacement, financial handling, capacity and receiving.
 
+## Supplier account operations
+
+Open **Delivery operations → Supplier accounts** for a complete dated account covering one original contributor or supplier. Work and invoice source details remain linked; invoice review, disputes and reopenings use their original states. Payments and refunds retain every original invoice allocation, including mixed supplier observations.
+
+The screen supports original supplier/work/invoice recording, source attachments, invoice/work lifecycle actions and observed payment/refund entry. It shows opening/period/closing USD balances, invoice aging, work without an issued nonvoid invoice link and full period activity. A retained browser desk preserves unfinished input and original requests across navigation; the complete account ZIP reopens the same supplier and dates on receipt.
+
+Use the [Supplier accounts guide](../../stellar/scf_2026/sf47_budget_model/workspace/PAYABLES.md) for the complete operator, CLI/client/MCP and receiving workflow.
+
 ## Original source references
 
 | Area | Maintained source |

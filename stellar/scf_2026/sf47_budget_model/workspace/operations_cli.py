@@ -44,6 +44,18 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("supplier-account", "Read the complete supplier account, original records and dated balances", case=True, output=True)
+    target.add_argument("--contributor", help="Original contributor or supplier record ID; defaults to the first supplier")
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int)
+    target = command("supplier-account-export", "Export the complete supplier account, original CSVs, offline HTML and original case", case=True)
+    target.add_argument("--contributor")
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--expected-report-sha256", required=True)
+    target.add_argument("--output", required=True)
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -343,6 +355,11 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "supplier-account":
+        result = ops.supplier_account(args.case, args.contributor, args.start_date, args.end_date, args.expected_version)
+    elif action == "supplier-account-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_supplier_account(
+            args.case, args.contributor, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":

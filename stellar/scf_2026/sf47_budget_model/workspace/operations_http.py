@@ -9,7 +9,9 @@ from operations import Operations, decoded
 
 
 def register_static(static):
-    static.update({"/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),
+    static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
+                   "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),
                    "/operations_ledger_intake.css": ("operations_ledger_intake.css", "text/css; charset=utf-8"),
                    "/operations_performance.mjs": ("operations_performance.mjs", "text/javascript; charset=utf-8"),
                    "/operations_performance.css": ("operations_performance.css", "text/css; charset=utf-8"),
@@ -52,7 +54,7 @@ def read(handler, parsed):
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -68,6 +70,19 @@ def read(handler, parsed):
         handler.send(200, ops.history(ident, int(query.get("after", ["0"])[0]), int(query.get("limit", ["100"])[0])))
     elif action == "export.zip":
         handler.send(200, ops.export(ident), "application/zip", ident + ".zip")
+    elif action in ("supplier-account", "supplier-account/export.zip"):
+        supplied = query.get("expectedVersion", [None])[0]
+        try:
+            expected = int(supplied) if supplied is not None else None
+        except ValueError as exc:
+            raise Problem("Use the original supplier account case version.", 422, "INVALID_SUPPLIER_VERSION") from exc
+        contributor = query.get("contributorId", [None])[0]
+        start, end = query.get("startDate", [None])[0], query.get("endDate", [None])[0]
+        if action.endswith("/export.zip"):
+            handler.send(200, ops.export_supplier_account(ident, contributor, start, end, expected,
+                query.get("expectedReportSha256", [None])[0]), "application/zip", ident + "-supplier-account.zip")
+        else:
+            handler.send(200, ops.supplier_account(ident, contributor, start, end, expected))
     elif action == "performance":
         expected = query.get("expectedVersion", [None])[0]
         try:
