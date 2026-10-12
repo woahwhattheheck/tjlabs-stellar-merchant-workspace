@@ -307,6 +307,21 @@ try:
         data=file["content"].encode()
         if len(data)!=file["bytes"] or hashlib.sha256(data).hexdigest()!=file["sha256"]:raise RuntimeError("The complete installed source postimage differs.")
         (continuation/P(file["path"]).name).write_bytes(data)
+    for repair in payload.get("installed_runner_repairs",[]):
+        relative=P(repair["path"])
+        if relative.name!=str(relative):raise RuntimeError("Installed continuation repair must name its original runner.")
+        target=continuation/relative
+        before=target.read_bytes()
+        after=repair["content"].encode("utf-8")
+        if hashlib.sha256(before).hexdigest()!=repair["before_sha256"] or hashlib.sha256(after).hexdigest()!=repair["sha256"]:
+            raise RuntimeError("The exact installed continuation repair source differs.")
+        original=continuation/("original-"+repair["before_sha256"]+"-"+relative.name)
+        if original.exists():
+            if original.read_bytes()!=before:raise RuntimeError("The retained original runner differs.")
+        else:original.write_bytes(before)
+        target.write_bytes(after)
+        outcome.setdefault("installed_runner_repairs",[]).append({key:repair[key] for key in ("path","before_sha256","sha256","reason","source_reply")})
+        emit("datasette_installed_runner_repaired",**outcome["installed_runner_repairs"][-1])
     browser_home=root/"native-browser";browser_home.mkdir(mode=0o700,exist_ok=True)
     modules=P(os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES","/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"))
     module_candidates=[]
@@ -359,4 +374,35 @@ finally:
     done.set()
 persist_complete_phase(outcome,"installed")
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
-if native_error:raise SystemExit(1)
+if payload.get("retain_receiver"):
+    if sys.stdin.isatty():
+        import termios
+        terminal=termios.tcgetattr(sys.stdin.fileno())
+        terminal[3]&=~(termios.ICANON|termios.ECHO)
+        terminal[6][termios.VMIN]=1;terminal[6][termios.VTIME]=0
+        termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,terminal)
+    emit("datasette_saved_receiver_ready",operation=OP,root=str(root),procfs_pid=os.readlink("/proc/self"),state=outcome["state"])
+    for line in sys.stdin.buffer:
+        try:
+            request=json.loads(line)
+            if request.get("operation")!=OP or request.get("root")!=str(root):raise RuntimeError("Continuation belongs to another original operation.")
+            if request.get("action")=="close":
+                emit("datasette_saved_receiver_closed",state=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json").get("state"))
+                break
+            if request.get("action")!="source":raise RuntimeError("Supply the complete reviewed continuation source.")
+            source=request["source"]
+            if hashlib.sha256(source.encode("utf-8")).hexdigest()!=request["sha256"]:raise RuntimeError("Continuation source identity differs.")
+            folder=root/"continuation-source";folder.mkdir(mode=0o700,exist_ok=True)
+            path=folder/(request["sha256"]+".py")
+            if path.exists() and path.read_text()!=source:raise RuntimeError("Saved continuation source differs.")
+            path.write_text(source,encoding="utf-8")
+            emit("datasette_continuation_source_started",sha256=request["sha256"],path=str(path))
+            exec(compile(source,str(path),"exec"),{"delivery_payload":payload,"delivery_root":root,"__name__":"__main__"})
+            emit("datasette_continuation_source_returned",sha256=request["sha256"])
+        except BaseException as error:
+            if isinstance(error,KeyboardInterrupt):raise
+            emit("datasette_continuation_source_error",error_type=type(error).__name__,message=str(error),traceback=traceback.format_exc())
+    last_result=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json")
+    if not last_result or last_result.get("state")!="COMPLETE":raise SystemExit(1)
+else:
+    if native_error:raise SystemExit(1)
