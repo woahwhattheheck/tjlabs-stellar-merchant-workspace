@@ -640,19 +640,24 @@ def native_plan_rows(raw):
                     or sum(item.file_size for item in infos) > MAX_BUNDLE):
                 fail("The original planning archive exceeds its native bound.")
             document = json.loads(archive.read("workspace.json"))
-        values = document.get("revisions")
-        if not isinstance(values, list) or not 1 <= len(values) <= 10000:
-            fail("Keep the complete native planning history.")
-        result = {}
-        for value in values:
-            core = plan_core(value)
-            number = core["revision"]
-            if number in result:
-                fail("The original planning history repeats a revision.")
-            result[number] = core
-        return result
+        return native_document_rows(document)
     except (zipfile.BadZipFile, KeyError, UnicodeError, ValueError, TypeError, RuntimeError) as exc:
         raise Problem("The selected original planning history is unreadable.", 422, "AMENDMENT_PLAN_SOURCE") from exc
+
+
+def native_document_rows(document):
+    """Select the same immutable revision cores from an already validated native history."""
+    values = document.get("revisions")
+    if not isinstance(values, list) or not 1 <= len(values) <= 10000:
+        fail("Keep the complete native planning history.")
+    result = {}
+    for value in values:
+        core = plan_core(value)
+        number = core["revision"]
+        if number in result:
+            fail("The original planning history repeats a revision.")
+        result[number] = core
+    return result
 
 
 def _records_at(events, version, work_intakes=()):
@@ -704,7 +709,7 @@ def _record_set(records):
     return {kind: sorted(values, key=lambda row: row["id"]) for kind, values in records.items()}
 
 
-def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=()):
+def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=(), planning_document=None):
     if not isinstance(rows, list) or len(rows) > MAX_EDITIONS or len(canonical(rows).encode()) > MAX_HISTORY_BYTES:
         fail("The complete amendment history exceeds its supported bound.", "AMENDMENT_LIMIT", 413)
     if not isinstance(work_intakes, (list, tuple)) or any(not isinstance(row, dict) for row in work_intakes):
@@ -716,7 +721,7 @@ def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=()
         return []
     if len(expected_events) != len(rows):
         fail("Retain every original amendment edition and event.", "AMENDMENT_HISTORY")
-    native = native_plan_rows(planning_raw)
+    native = native_plan_rows(planning_raw) if planning_document is None else native_document_rows(planning_document)
     grouped, versions = {}, set()
     ordered = sorted(rows, key=lambda row: row.get("version", 0))
     original_sources = context["sources"]
