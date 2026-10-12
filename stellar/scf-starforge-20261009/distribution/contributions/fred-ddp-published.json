@@ -20,6 +20,10 @@
     "./seller/fred/ddp/published-programme": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-cli.d.mts",
       "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-cli.mjs"
+    },
+    "./seller/fred/ddp/published-workspace": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs"
     }
   },
   "supportFiles": [
@@ -27,6 +31,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-comparison.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-cli.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-collector.py",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-http.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/publication-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED-WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp-published.js"
   ]
 }

@@ -1,3 +1,4 @@
+import {renderGrantOperatingPlan} from './grant-operating-plan-workspace.mjs';
 import {renderPlanningUpdates} from './grant-plan-update-workspace.mjs';
 import {selectPlanningRevision} from './grant-plan-update-core.mjs';
 // MIT. Native planning review and application use the existing submission editor.
@@ -95,6 +96,7 @@ export function renderPlanning(root, context) {
     }
     root.append(card);
   }
+  renderGrantOperatingPlan(root, context, {source, plan, review: selected});
   const finance = node('details');
   finance.append(node('summary', 'Conditional payment schedule and native cash requirement'));
   const paymentTable = node('table', undefined, 'plan-table'), paymentHead = node('thead'), header = node('tr');

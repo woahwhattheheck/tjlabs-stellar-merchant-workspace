@@ -65,7 +65,7 @@ Rerun the same private configuration and physical output directory. Keep the ori
 | --- | --- |
 | `INPUT.json` | Complete source inventory, programme source, four input files and selected report |
 | `RUN.json` | Original operation UUID, start time and physical output identity |
-| `workspaces/` | Original SQLite inode, bound before the first action |
+| `workspaces/` | Original SQLite inode, bound before the first action and checked before every incomplete continuation can reuse a saved step |
 | `actions/` | Actual HTTP input saved before submission, followed by its original native result; request kind, canonical input hash and result are verified |
 | `steps/` and `phases/` | Completed work received from its original result after a lost parent acknowledgement |
 | `cli/` | One CLI request, complete file identity, returned command output when observed, and original native result |

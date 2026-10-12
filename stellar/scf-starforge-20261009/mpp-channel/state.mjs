@@ -5,7 +5,8 @@ import { streamKey, channelIdentity, amount } from './config.mjs';
 import { nativeStore, clientCumulativeKey } from './runtime.mjs';
 export const groups=Object.freeze({
   tasks:'channel-tasks', streams:'channel-streams', purchases:'channel-purchases',
-  deliveries:'channel-deliveries', settlements:'channel-settlements', receiving:'channel-receiving', settings:'channel-settings'
+  deliveries:'channel-deliveries', settlements:'channel-settlements', receiving:'channel-receiving', settings:'channel-settings',
+  funding:'channel-funding',funders:'channel-funders',observations:'channel-observations'
 });
 const operations=new WeakMap(),operationContext=new AsyncLocalStorage();
 export function serialChannel(workspace, terms, operation) {
@@ -107,7 +108,9 @@ export async function snapshot(workspace) {
     streams:await workspace.list(groups.streams),
     purchases:(await workspace.list(groups.purchases)).map(purchaseView),
     deliveries:(await workspace.list(groups.deliveries)).map(deliveryView),
-    settlements:await workspace.list(groups.settlements)};
+    settlements:(await workspace.list(groups.settlements)).map(({signedXdr,signature,...row})=>row),
+    funding:(await workspace.list(groups.funding)).map(({signedXdr,...row})=>row),
+    funderProfiles:await workspace.list(groups.funders),observations:await workspace.list(groups.observations)};
 }
 function responseView(response) {
   return response?{status:response.status,bytes:response.bytes,sha256:response.sha256,
@@ -122,4 +125,16 @@ export function purchaseView(row) {
 export function deliveryView(row) {
   const {credentialHeader,response,requestBodyBase64,...rest}=row;
   return {...rest,response:response?{status:response.status,bytes:response.bytes,sha256:response.sha256}:null};
+}
+
+export async function rememberObservation(workspace,terms,observation,origin) {
+  need(observation.network===terms.network && observation.channel===terms.address,
+    'MPP_CHANNEL_OBSERVATION_IDENTITY_CHANGED');
+  return workspace.update(groups.observations,streamKey(terms),current=>{
+    if(current && current.observation.currentLedger>observation.currentLedger)
+      return {op:'noop',result:current};
+    const row={schema:'stellar-forge.mpp-channel-observation-record.v1',channel:terms,observation,
+      origin,updatedAt:now()};
+    return {op:'set',value:row,result:row};
+  });
 }

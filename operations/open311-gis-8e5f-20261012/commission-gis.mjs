@@ -479,6 +479,11 @@ export async function runGISCommissioning(config) {
     }
     check(mode !== 'inspect', 'This original programme is incomplete; use run to continue its retained actions.');
     equal(await directoryIdentity(output), run.origin, 'An incomplete operation must continue in its original physical output directory.');
+    // Completed steps can skip their original workspace-opening path. Receive
+    // every saved physical binding before any incomplete continuation does so.
+    for (const role of ['sender', 'receiver', 'cli-received']) {
+      if (await programme.saved('workspaces/' + role + '.json')) await programme.workspace(role);
+    }
     for (const name of ['inputs', 'downloads', 'screenshots', 'merchant-exports', 'workspaces'])
       await mkdir(join(output, name), { recursive: true, mode: 0o700 });
     attemptStarted = timestamp();
