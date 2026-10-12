@@ -34,6 +34,18 @@ Only one writer owns an accounting directory at a time. Close that directory in 
 6. **Maintain the relationship.** Add a newly accepted quotation edition, extend the agreement by whole months, or cancel future periods at an original monthly boundary.
 7. **Deliver the account record.** Export the agreement's reports and complete retained quotation files. Follow the invoice references into customer statements and the existing receivables history.
 
+### Accepted service renewals
+
+When an original service case has an accepted operational renewal, export its complete renewal handover from Service Renewals. Choose that one JSON file in the agreement creation or amendment form. The browser retains the handover and extracts the exact original quotation and acceptance bytes. Review the selected accounting customer, monthly calendar, accepted head and distinct original, proposed and active terms before saving.
+
+The original Service Renewals validator checks the full retained histories, acceptance and document materials. The financial edition stores its sealed handover identity, original case and service agreement references, accepted renewal reference and exact UTC service interval. The financial agreement keeps its own UUID. You can download the complete `renewal.json` from the source review or the agreement export.
+
+Every billed monthly period must fit inside the accepted service interval. Original times and an open-ended interval are retained exactly. To continue a calendar past a finite accepted interval, first amend at the current original end boundary using the next accepted renewal, then extend the calendar. The accepted continuation supplies the new price edition for the added months. Existing billed periods remain attached to their original editions.
+
+The same accepted renewal cannot create another financial calendar through a new request or a differently sealed later export. A duplicate identifies its existing agreement so the operator can reopen it. Later amendments on that joined calendar require the complete accepted handover and retain the same original service case and agreement lineage. Reusing the same accepted handover on its original calendar remains available for a payment-term change.
+
+CLI, typed HTTP and merchant-tool creation/amendment inputs accept optional `renewalJson` alongside the exact `quoteContent` and `responseContent` extracted from that handover. Keep all three original strings in the same retained request. Their combined source bytes and the complete transport request retain the existing two-megabyte limit.
+
 ### Calendar and pricing rules
 
 | Setting | Behavior |

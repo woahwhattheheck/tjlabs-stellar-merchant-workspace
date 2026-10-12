@@ -87,6 +87,18 @@ export function agreementStatus(agreement, asOf) {
   if (agreement.cancellation && asOf >= end) return 'CANCELLED';
   return asOf >= end ? 'ENDED' : 'ACTIVE';
 }
+export function assertRenewalServicePeriod(edition, startDate, endDate) {
+  if (!edition.renewal) return;
+  const period = edition.renewal.servicePeriod;
+  const start = period && Date.parse(period.effectiveFrom);
+  const end = period?.effectiveUntil === null ? null : Date.parse(period?.effectiveUntil);
+  need(plain(period) && Number.isFinite(start) && (end === null || Number.isFinite(end)),
+    'AGREEMENT_RENEWAL_SERVICE_CHANGED', 'Keep the accepted renewal with its original exact service interval.', 409);
+  need(Date.parse(startDate + 'T00:00:00.000Z') >= start &&
+    (end === null || Date.parse(endDate + 'T00:00:00.000Z') <= end),
+    'AGREEMENT_RENEWAL_SERVICE_PERIOD',
+    'Keep each billed service period within the accepted renewal interval. Attach the next accepted continuation at the original monthly boundary before extending its calendar.', 409);
+}
 export function schedule(agreement, receivables, asOf) {
   dateValue(asOf, 'calendar date');
   const end = effectiveEnd(agreement);
@@ -103,6 +115,7 @@ export function schedule(agreement, receivables, asOf) {
     for (let first = segmentStart; first < segmentEnd; first += edition.billingMonths) {
       const last = Math.min(first + edition.billingMonths, segmentEnd);
       const startDate = monthDate(agreement.startDate, first), endDate = monthDate(agreement.startDate, last);
+      assertRenewalServicePeriod(edition, startDate, endDate);
       const issueDate = edition.invoiceTiming === 'START' ? startDate : endDate;
       const matches = agreement.billings.filter(row => row.startMonth < last && row.endMonth > first);
       const occupied = matches.find(row => billingOccupied(row, receivables));
