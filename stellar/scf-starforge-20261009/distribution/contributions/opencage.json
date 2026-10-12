@@ -1,8 +1,33 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "opencage",
-  "description": "opencage original Applications",
+  "description": "OpenCage source, CSV customer delivery, managed merchant and original host deployment",
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage"
+  ],
+  "commands": {
+    "opencage-workbench": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/cli.mjs"
+  },
+  "commandDescriptions": {
+    "opencage-workbench": "Review geocoding and CSV rows, retain customer files, and operate the original merchant and host"
+  },
+  "exports": {
+    "./seller/opencage": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/index.mjs",
+    "./seller/opencage/config": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/config.mjs",
+    "./seller/opencage/source": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/source.mjs",
+    "./seller/opencage/merchant": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/merchant.mjs",
+    "./seller/opencage/customer": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/customer.mjs",
+    "./seller/opencage/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/workspace.mjs",
+    "./seller/opencage/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/server.mjs",
+    "./merchant/mcp/opencage": "./source/stellar-forge/mcp-merchant-operator/opencage-workspace.mjs",
+    "./seller/opencage/batch": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/batch.mjs",
+    "./seller/opencage/batch-delivery": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/batch-delivery.mjs",
+    "./seller/opencage/deployment": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/deployment.mjs"
+  },
   "applicationProviders": {
     "opencage": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/opencage.mjs"
-  }
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/OPENCAGE_WORKSPACES.md"
+  ]
 }

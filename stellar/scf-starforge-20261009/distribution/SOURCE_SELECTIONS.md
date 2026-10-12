@@ -66,6 +66,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `webdav-operator` | WebDAV or Nextcloud file editions, native merchant and customer, complete remote operator and source receiving | WebDAV source and merchant workspace; Runtime management | [Operating guide](../../../products/webdav/OPERATING.md) |
 | `eurostat` | Eurostat official source editions, exact economic reports, native publication and complete customer receiving | Eurostat economic editions; Runtime management | [Operating guide](../../../products/eurostat/OPERATING.md) |
 | `openapi-merchant` | Captured API, OpenAPI/Postman authoring, reusable policies, persistent workflows, native releases and complete customer receiving | Captured API, OpenAPI, merchant console | [Operating guide](../../../products/captured-api/OPERATING.md) |
+| `opencage` | Original geocoding and CSV review, merchant releases, host preparation and complete customer/accounting receiving | OpenCage geocoding; Runtime management | [Operating guide](../../../products/opencage/OPERATING.md) and [receiving guide](../../../products/opencage/RECEIVING.md) |
 | `huwise` | Huwise source review, tenant ingestion and native publication, merchant and complete customer receiving | Runtime management; original Huwise browser and merchant agent | [Operating guide](../../../products/huwise/OPERATING.md) |
 | `water-operations` | USGS observations, editions, Water workspace, merchant and complete customer files | Water, Buyer, merchant console | [Operating guide](selections/WATER_OPERATIONS.md) |
 | `woo-merchant` | Existing WooCommerce orders, native checkout, Operations, purchased files and refunds | WooCommerce, Buyer, merchant console | [Operating guide](selections/WOO_MERCHANT.md) |
@@ -137,7 +138,7 @@ its dependency profile from the complete installed workflow linked above:
 | --- | --- |
 | `study-research` | `--native --feature schema --feature openapi --feature mcp --feature postgres --operator` |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
-| `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations`, `dbnomics`, `coingecko` | `--native --feature schema --feature openapi --feature mcp --operator` |
+| `opencage`, `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations`, `dbnomics`, `coingecko` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `redis-applications` | `--native --feature redis --feature schema --feature openapi --feature mcp --operator` |
 | `grpc-merchant` | `--native --feature grpc --feature schema --feature openapi --feature mcp --operator` |
 | `mssql` | `--native --feature mssql --feature mcp --operator` |
