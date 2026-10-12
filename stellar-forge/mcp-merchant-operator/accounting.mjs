@@ -50,7 +50,7 @@ const sourceKinds = ['recoveredSources', 'recoveryRequests', 'proofFiles', 'term
 
 
 
-const fileSelections = ['runId', 'recoveryId', 'exportId', 'collectionId', 'sourceId', 'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', ...statementFileSelectors, ...cryptoworthFileSelectors, ...runbookFileSelectors, ...portfolioFileSelectors];
+const fileSelections = ['changeId', 'runId', 'recoveryId', 'exportId', 'collectionId', 'sourceId', 'reviewId', 'closeId', 'handoffId', 'revisionId', 'adjustmentId', 'jobId', 'planId', 'responseId', 'nativePost', 'attemptId', 'file', ...statementFileSelectors, ...cryptoworthFileSelectors, ...runbookFileSelectors, ...portfolioFileSelectors];
 
 
 
@@ -205,7 +205,8 @@ function collectionResult(value, args = {}) {
 
 export class MerchantAccounting {
   #config; #sessions = new Map(); #closing = false; #close; #substitutions; #platformOptions;
-  #files = new RetainedFileReads({ errorPrefix: 'ACCOUNTING' });
+  // Native chart-change handoffs may contain up to384 MiB of preserved source.
+  #files = new RetainedFileReads({ errorPrefix: 'ACCOUNTING', maxSnapshotBytes: 512 * 1024 * 1024 });
   #sourcePreviews = new Set();
   constructor(config, { environment = process.env, quickbooksOAuth = {} } = {}) {
     this.#config = config.accounting ?? { workspaces: {} };
@@ -454,6 +455,7 @@ export class MerchantAccounting {
     const { kind, runId, recoveryId, exportId, collectionId, sourceId, reviewId, closeId, handoffId, revisionId, adjustmentId, file } = args;
     const selectors = { 'buyer-source': [], response: ['recoveryId', 'runId'], report: ['runId', 'file'], export: ['exportId'], collection: ['collectionId', 'sourceId'],
       pricing: ['reviewId', 'runId', 'file'], period: ['closeId', 'file'], accountant: ['handoffId', 'revisionId', 'file'], adjustment: ['adjustmentId', 'jobId', 'file'], qbo: ['planId', 'responseId', 'nativePost', 'attemptId', 'file'], xero: ['planId', 'file'],
+      'qbo-source-change': ['changeId', 'file'], 'xero-source-change': ['changeId', 'file'],
       'customer-statement': ['statementId', 'file'],
       cryptoworth: ['profileId', 'planId', 'captureId', 'returnId', 'rollbackId', 'scope', 'file'],
       runbooks: ['cycleId', 'fileId', 'file'],
@@ -465,7 +467,7 @@ export class MerchantAccounting {
     if (kind === 'cryptoworth') return session.cryptoworth.file(args);
     if (kind === 'runbooks') return session.runbooks.file(args);
     if (kind === 'portfolio') return session.portfolio.file(args);
-    if (kind === 'qbo' || kind === 'xero') return session.platforms.file(args);
+    if (['qbo', 'xero', 'qbo-source-change', 'xero-source-change'].includes(kind)) return session.platforms.file(args);
     if (kind === 'customer-statement' || kind === 'customer-statement-preview') return session.statements.file(args);
     if (kind === 'response') {
       if (!recoveryId) throw fail('ACCOUNTING_INVALID_ARGUMENTS', 'Response retrieval requires recoveryId and optionally a captured runId.');
