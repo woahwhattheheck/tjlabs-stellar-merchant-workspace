@@ -352,3 +352,11 @@ The [service-level guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/o
 The companion `starforge openlineage-google` carries a saved original source edition through Google project/quota-project review, explicit event approval, Data Lineage import, stable request recovery, exact table-edge receiving and a complete editable package. Its wrapper retains both the original source application and the current receiver; the original workspace format and application version remain intact.
 
 Use the [Google catalog operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/DATAPLEX.md) for preparation, customer credentials, genuine OpenLineage 1.x requirements, expected catalog identities and independent reopening. Source editions retain every original event and facet, including event kinds outside Google's importer contract. Receiving preserves all API attempts and distinguishes field edges from table edges.
+
+## Operate dataset quality
+
+Open **Quality** in the original OpenLineage workspace to inspect original metric and assertion history, select an exact dataset and run, save threshold or assertion rules, retain evaluations and record reasoned dispositions against individual saved findings. Producer assertion success, severity and run completion state remain separate. Missing measurements remain unreported.
+
+The desk shares the existing workspace, selected edition, server connection, source browser and pending-request recovery. HTML, JSON and CSV quality reports retain the selected evaluation; the original complete workspace export carries the rules, immutable evaluations, decision history and editable quality application.
+
+The typed `@tokenjunkielabs/starforge-merchant/seller/openlineage/quality` export exposes `QualityClient` through the original HTTP action owner. The complete [quality operator and client guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/QUALITY_OPERATOR.md) covers source semantics, rule configuration, evaluation, decisions, reports, recovery and independent receiving.
