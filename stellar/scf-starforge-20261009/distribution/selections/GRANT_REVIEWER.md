@@ -177,6 +177,21 @@ source. For a checkout, the original entry is
 `node stellar-forge/developer-site/grant.mjs --port 8787`.
 The retained purchase workbench below keeps its own saved packet and lifecycle.
 
+## Turn selected grant work into an operating procedure
+
+This product also includes Command finder and Operating plans. In the saved
+submission's **Planning** section, select the native revision and work packages,
+enter the customer and receiving details, then create the complete operating
+JSON. Import it at `/operating-plan.html` on the `starforge discover serve`
+listener and continue the detailed work as saved operating revisions.
+
+The installed `starforge grant-operating-plan --file ORIGINAL --out NEW.json`
+command accepts the same complete submission or native SF47 JSON/ZIP. Export
+the toolkit's complete registration source with `starforge discover plan
+catalog --out NEW.json` when selecting commands for its packages. The
+[complete procedure guide](../../../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+travels with the installed product.
+
 ## Open through Applications
 
 Keep the private parent directories under the operator's control. Create the
@@ -393,7 +408,7 @@ runtime declarations.
 
 The selected command catalog contains `installation`, `runtime-profile`,
 `runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
-`grant-compose`, `grant-demo`,
+`grant-compose`, `grant-export`, `grant-operating-plan`, `discover`, `grant-demo`,
 `merchant-mcp`, `merchant-grant-reviewer` and
 `merchant-console-application-receive`.
 Its Applications providers are `grant-reviewer` and `merchant-console`; its
