@@ -16,8 +16,10 @@ import uuid
 from model import Problem, canonical, digest, now, text
 import operations_domain as domain
 import operations_workshare_installations as workshares
+import operations_commercial_installations as commercial
 import operations_installation_workflows as workflows
 import operations_dispatch as dispatch
+import operations_use_calendar as use_calendar
 
 SCHEMA = "stellar-forge.sf47-installation.v1"
 SELECTION_SCHEMA = SCHEMA + ".selection"
@@ -98,7 +100,10 @@ def summary(row):
             "sourceVersion": value["source"]["version"],
             "configurationComplete": report["configurationComplete"],
             "acceptedChecks": report["acceptedChecks"], "totalChecks": report["totalChecks"],
-            "openFindings": len(report["findings"])}
+            "openFindings": len(report["findings"]),
+            **({"useCalendar": {key: value["document"]["useCalendar"][key]
+                                for key in ("name", "startDate", "endDate", "tranche")}}
+               if value["document"].get("useCalendar") else {})}
 
 
 def latest_refs(rows):
@@ -136,7 +141,7 @@ def get(operations, program_id, installation_id, selected_revision=None):
 
 def normalized(context, raw):
     raw = object_value(deepcopy(raw), ("name", "stage", "merchantDeploymentId", "buyerDeploymentIds",
-        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination"), "installation")
+        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "commercial", "useCalendar"), "installation")
     records, sources, plan = context["records"], context["sources"], context["plan"]
     maps = {kind: {row["id"]: row for row in records[kind]} for kind in COLLECTIONS}
     retained = lambda value, label: domain.reference_list(value if value is not None else [], sources, label)
@@ -254,12 +259,16 @@ def normalized(context, raw):
               "merchantDeploymentId": merchant, "buyerDeploymentIds": buyers, "workorder": workorder,
               "task": task, "source": source, "payment": payment, "receiving": receiving,
               "assignments": assignments, "checks": checks}
+    if "commercial" in raw:
+        result["commercial"] = commercial.normalize_binding(context, raw["commercial"])
     if "workshare" in raw:
         result["workshare"] = workshares.normalize_binding(context, raw["workshare"])
     if "workflowPeriods" in raw:
         result["workflowPeriods"] = workflows.normalize_binding(context, raw["workflowPeriods"])
     if "coordination" in raw:
         result["coordination"] = dispatch.normalize(raw["coordination"], check_ids)
+    if "useCalendar" in raw:
+        result["useCalendar"] = use_calendar.normalize(context, raw["useCalendar"], result) if raw["useCalendar"] is not None else None
     if len(canonical(result).encode("utf-8")) > MAX_DOCUMENT_BYTES:
         fail("The complete installation input exceeds 128 KiB.", status=413)
     return result
@@ -273,8 +282,14 @@ def capture(context, document):
         selected["deployments"].add(document["merchantDeploymentId"])
     source_ids = set(document["source"]["sourceIds"] + document["payment"]["termsSourceIds"]
                      + document["receiving"]["sourceIds"])
+    calendar_refs = use_calendar.references(document)
+    source_ids.update(calendar_refs["sourceIds"])
+    selected["purchases"].update(calendar_refs["purchaseIds"])
     if document["workorder"]["sourceId"]:
         source_ids.add(document["workorder"]["sourceId"])
+    if document.get("commercial"):
+        source_ids.add(document["commercial"]["sourceId"])
+        source_ids.update(row["sourceId"] for row in document["commercial"]["sourceFiles"])
     if document.get("workshare"):
         source_ids.add(document["workshare"]["sourceId"])
         if document["workshare"]["packetSourceId"]:
@@ -389,7 +404,8 @@ def report(snapshot, document):
                                                 for row in purchases).items())),
             "purchaseAmounts": sorted(groups.values(), key=lambda row: (row["network"], row["asset"])),
             "sourceFiles": len(snapshot["sources"]), "sourceBytes": sum(row["bytes"] for row in snapshot["sources"].values()),
-            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {})}
+            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {}),
+            **({"useCalendar": use_calendar.report(snapshot, document)} if document.get("useCalendar") else {})}
 
 
 def differences(before, after, path=""):
@@ -448,6 +464,8 @@ def preview(operations, context, body):
         old = previous["preview"]["document"]["workshare"]
         if document.get("workshare", {}).get("caseId") != old["caseId"]:
             fail("Keep this installation joined to its original Workshare case.", "WORKSHARE_CASE_CONFLICT", 409)
+    original_commercial = commercial.verify_document(operations, context, document)
+    commercial.verify_transition(operations, context, previous, document, original=original_commercial)
     original_workshare = workshares.verify_document(operations, context, document)
     workshares.verify_transition(operations, context, previous, document, original=original_workshare)
     original_workflow = workflows.verify_document(operations, context, document)
@@ -569,6 +587,10 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
                 or candidate["source"] != _source(snapshot)):
             fail("The installation must retain its original selected case and funding plan.")
         document = normalized(snapshot, candidate.get("document"))
+        if document.get("commercial"):
+            if source_files is None:
+                fail("Receive the complete original commercial source files with this Installation.")
+            commercial.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
         if document.get("workshare"):
             if source_files is None:
                 fail("Receive the complete original Workshare attachments with this installation.")
@@ -608,6 +630,8 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
                     or candidate["changes"] != (differences(previous["preview"]["document"], candidate["document"]) if previous else [])
                     or previous is not None and previous["version"] >= row["version"]):
                 fail("The original installation edition sequence is incomplete.")
+            commercial.verify_transition(None, candidate["snapshot"], previous, candidate["document"],
+                lambda source_id: source_files.get("sources/" + source_id))
             workshares.verify_transition(None, candidate["snapshot"], previous, candidate["document"],
                 lambda source_id: source_files.get("sources/" + source_id))
             workflows.verify_transition(None, candidate["snapshot"], previous, candidate["document"],
@@ -618,7 +642,7 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
         fail("The complete case is missing an original saved installation.")
 
 
-def html_document(row, original_workshare=None):
+def html_document(row, original_workshare=None, original_commercial=None):
     value, document = row["preview"], row["preview"]["document"]
     e = lambda item: escape(str(item if item is not None else "Unentered"), quote=True)
     def table(headings, values):
@@ -638,8 +662,10 @@ def html_document(row, original_workshare=None):
         body += "<h2>" + label + "</h2>" + table(["Field", "Selected value"],
             [[e(name), pretty(item)] for name, item in document[key].items()])
     body += dispatch.installation_section(document)
+    body += commercial.html_section(original_commercial)
     body += workshares.html_section(original_workshare)
     body += workflows.html_section(document)
+    body += use_calendar.installation_section(document)
     body += "<h2>Acceptance and corrections</h2>" + table(
         ["Step", "Original criterion", "State", "Operator / observed", "Result / source"],
         [[e(item["title"]), e(item["criterion"]), e(item["state"]),
@@ -690,7 +716,13 @@ def selected_files(context, rows, installation_id, selected_revision, source_fil
             fail("Export the complete recurring-work source with the selected Installation.")
         workflows.verify_document(None, row["preview"]["snapshot"], row["preview"]["document"],
                                   lambda source_id: source_files.get("sources/" + source_id))
-    document = html_document(row, original)
+    original_commercial = None
+    if row["preview"]["document"].get("commercial"):
+        if source_files is None:
+            fail("Export the complete original quotation and customer-response source files with this Installation.")
+        original_commercial = commercial.verify_document(None, row["preview"]["snapshot"], row["preview"]["document"],
+            lambda source_id: source_files.get("sources/" + source_id))
+    document = html_document(row, original, original_commercial)
     selection = {"schema": SELECTION_SCHEMA, "caseId": context["program"]["id"],
                  "caseVersion": context["program"]["version"], "installationId": ident,
                  "revision": number, "sha256": row["sha256"],

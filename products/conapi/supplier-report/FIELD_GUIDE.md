@@ -40,15 +40,15 @@ Use the record actions according to the intended accepted table.
 
 | Action | Intended disposition |
 | --- | --- |
-| Use candidate | Accept the candidate record for this business key. |
-| Keep baseline | Retain the baseline record for this key. |
-| Exclude record | Omit the key from the accepted table while retaining its source and review history. |
-| Enter corrected record | Enter an explicit authored record using every configured canonical field. |
+| Use candidate record | Accept the candidate record for this business key. |
+| Keep baseline record | Retain the baseline record for this key. |
+| Exclude this key | Omit the key from the accepted table while retaining its source and review history. |
+| Enter complete corrected record | Enter an explicit authored record using every configured canonical field. |
 | Choose one original source row | Select the source side and exact original record when resolving an ambiguous source choice. |
 
 Supply Reviewer and Decision reason for every saved decision. “Supplier confirmed the twelve-unit pack” or “Retain current item until replacement code is mapped” tells the next operator what supports the choice. Use the actual supporting source or correspondence reference when it is available.
 
-Enter corrected record supplies an operator-authored result with every canonical field. Use the field's null checkbox for null; an unchecked empty value is an empty string. Preserve identifiers and decimal values as exact text. Preserve the original source records and describe the change. Changing a review outcome does not edit a publisher's source file.
+Enter complete corrected record supplies an operator-authored result with every canonical field. Use the field's null checkbox for null; an unchecked empty value is an empty string. Preserve identifiers and decimal values as exact text. Preserve the original source records and describe the change. Changing a review outcome does not edit a publisher's source file.
 
 Use Save review while working to download the complete retained JSON. The review is portable in that saved JSON. Keep its selected configuration and original files with it when transferring the case to another operator.
 

@@ -3,12 +3,11 @@
 import {readFileSync, writeFileSync, openSync, closeSync, fsyncSync, linkSync, unlinkSync,
   existsSync, mkdirSync, lstatSync, realpathSync} from "node:fs";
 import {dirname, join, resolve} from "node:path";
-import {fileURLToPath} from "node:url";
 import {createHash, randomUUID} from "node:crypto";
 import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
+import {profileCatalog, readProfile} from "./profiles.mjs";
 
-const here = dirname(fileURLToPath(import.meta.url));
 const schema = "stellar-forge.installation-workshare-receiving.v1";
 const usage = "node receive.mjs --operations-cli /absolute/workspace/cli.py --workspace /absolute/original-workspace --case operation-ID --plan plan-ID --inputs PAIR_RECEIVING.json --source-root /absolute/original-files --out /absolute/private-output --receiving-workspace /absolute/receiving-workspace --actor ACTUAL_OPERATOR [--receiving-actor ACTUAL_RECEIVER] [--python python3]";
 const fail = message => { throw new Error(message); };
@@ -114,8 +113,9 @@ function readInputs() {
       !Array.isArray(value.customers) || !value.customers.length || value.customers.length > 20)
     fail("Use a complete receiving input with a stable requestPrefix and customer list.");
   const cases = new Set();
+  const profileIds = new Set(profileCatalog().map(profile => profile.id));
   for (const customer of value.customers) {
-    if (!record(customer) || !["cocart", "blockscout", "queryfarm", "ars-air-quality", "supplier-catalogues", "supplier-orders"].includes(customer.profile) ||
+    if (!record(customer) || !profileIds.has(customer.profile) ||
         typeof customer.workshareCaseId !== "string" || !customer.workshareCaseId ||
         cases.has(customer.workshareCaseId) || !/^[a-f0-9]{64}$/.test(customer.planSha256 || "") ||
         !Array.isArray(customer.files) || !customer.files.length)
@@ -193,7 +193,7 @@ function appliedBindings(base, supplied, sourceIds) {
   return result;
 }
 function receiveCustomer(customer, attached) {
-  const profile = JSON.parse(regular(join(here, customer.profile + ".json")).toString("utf8"));
+  const profile = readProfile(customer.profile).value;
   return retryCurrent(state => {
     const before = existingInstallation(state, customer.workshareCaseId);
     const version = state.program.version;

@@ -22,6 +22,7 @@ import refresh_cli
 import geography_cli
 import results.cli as results_cli
 import amp_cli
+import document_evidence_cli
 
 
 @contextmanager
@@ -107,6 +108,7 @@ def main(argv=None):
     geography_cli.register(sub)
     results_cli.register(sub)
     amp_cli.register(sub)
+    document_evidence_cli.register(sub)
     args = parser.parse_args(argv)
     if args.command == "binding":
         print(json.dumps(inspect_binding(args.workspace), ensure_ascii=False, separators=(",", ":"), allow_nan=False), flush=True)
@@ -118,6 +120,7 @@ def main(argv=None):
         command = args.command
         if command.startswith("geography-"): result = geography_cli.command(ws, args)
         elif command == "reconciliation": result = organisation_reconciliation_cli.command(ws, args)
+        elif command.startswith("document-evidence-"): result = document_evidence_cli.command(ws, args)
         elif command.startswith("amp-"): result = amp_cli.command(ws, args)
         elif command.startswith("organisation-"): result = organisation_cli.command(ws, args)
         elif command.startswith("refresh-"): result = refresh_cli.command(ws, args)

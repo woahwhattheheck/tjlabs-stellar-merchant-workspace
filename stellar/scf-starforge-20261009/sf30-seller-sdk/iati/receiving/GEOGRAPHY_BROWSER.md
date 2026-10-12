@@ -2,7 +2,7 @@
 
 This module is the browser leg of the original IATI geography receiving operation. The parent owns the original workspace, source preparation, server, complete native financial and geographic calculation, installed runtime and final customer package. This leg borrows that server and creates and closes only its own persistent Chromium context and typed-client handle.
 
-Run the complete selected source. The application, typed client, geography engine, portable receiver, offline renderer, this module and this guide must come from the same composed product edition. The receiver writes an exact file identity inventory for those selected files.
+Run the complete selected source. The application, typed client, geography engine, portable receiver, offline renderer, this module and this guide start from the same composed product edition. The receiver records the exact selected files. A correction confined to this receiving driver can continue the existing case as described below.
 
 ## Parent invocation
 
@@ -98,6 +98,8 @@ The offline page is observed for network attempts; any HTTP or HTTPS request is 
 ## Same-operation recovery
 
 selection.json binds the original resolved paths, source, baseline review/revision and actual native counts. progress.json points to complete original outputs, observations, downloads, screenshots, phases and the persistent native workspace identity.
+
+If an actual receiving-driver error interrupts the case, preserve its complete original file as browser/source-history/<original-sha256>.mjs before replacing geography-browser.mjs. The continuation checks that every selected application file and the guide remain unchanged, verifies the retained original driver, and records the corrected driver alongside the original source selection. It then uses the existing profile, saved request, downloads and observations. This permits a driver correction without discarding completed work or changing the selected product.
 
 browser-save-intent.json retains the complete intended definition before the UI save click. browser-save-request.json then retains the UI's actual full request and UUID atomically before the original review request is forwarded. If the parent ends after the UI saves its IndexedDB pending record but before route interception, the receiver can adopt that exact request only after the complete pending definition matches the previously retained intent. After interruption, the receiver reads the exact saved request and uses native geographyRequest(requestId). A recorded action must match the full original request and persistent workspace identity. A completed action returns the original saved review. An unrecorded request is placed back into the original browser pending-request store with the same UUID and full body and is continued through the original UI.
 

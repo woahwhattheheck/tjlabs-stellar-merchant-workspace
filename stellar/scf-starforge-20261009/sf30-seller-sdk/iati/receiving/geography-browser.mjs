@@ -14,7 +14,7 @@ const same=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 const digest=v=>createHash('sha256').update(v).digest('hex');
 const bytes=v=>Buffer.from(JSON.stringify(v,null,2)+'\n');
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
-const observed=promise=>{promise.catch(()=>{});return promise;};
+const observePromise=promise=>{promise.catch(()=>{});return promise;};
 async function exists(path){try{await access(path);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}}
 async function json(path,maximum=129*1024*1024){
  const info=await lstat(path);assert(info.isFile()&&!info.isSymbolicLink()&&info.nlink===1&&info.size<=maximum,'Use the complete original regular JSON file: '+path);
@@ -138,7 +138,24 @@ export async function runGeographyBrowserReceiving(input){
  await access(input.ownerWorkspace);await access(input.offlineHtml);
  const sources=[];
  for(const path of ['public/app.js','public/index.html','public/geography.js','public/geography.css','client.mjs','client.d.mts','geography.py','geography_portable.py','geography_html.py','GEOGRAPHY_UI.md','receiving/geography-browser.mjs','receiving/GEOGRAPHY_BROWSER.md'])sources.push({relative:path,...await fileIdentity(join(sourceRoot,PREFIX,path))});
- await record('selected-source.json',{schema:SCHEMA,files:sources});
+ const sourceSelection={schema:SCHEMA,files:sources},sourceSelectionPath=join(out,'selected-source.json');
+ if(await exists(sourceSelectionPath)){
+  const original=await json(sourceSelectionPath);
+  assert(original.schema===SCHEMA&&Array.isArray(original.files)&&original.files.length===sources.length,'The original complete source selection is incomplete.');
+  const previous=new Map(original.files.map(file=>[file.relative,file]));
+  const changed=sources.filter(file=>!same(previous.get(file.relative),file));
+  if(changed.length){
+   // A corrected receiving driver can resume the same product, request, and
+   // browser profile. Keep its complete earlier source and every observation.
+   assert(changed.every(file=>file.relative==='receiving/geography-browser.mjs'),'A continuation changed application source; use the original application for this case.');
+   const before=previous.get('receiving/geography-browser.mjs'),after=changed[0];
+   assert(before&&before.path===after.path,'The receiving correction selected another original driver path.');
+   const retained=await fileIdentity(join(out,'source-history',before.sha256+'.mjs'));
+   assert(retained.bytes===before.bytes&&retained.sha256===before.sha256,'Preserve the complete original receiving driver before applying its correction.');
+   remember(retained);remember(await fileIdentity(sourceSelectionPath));
+   await record('receiving-source-'+after.sha256+'.json',{schema:SCHEMA,reason:'Continue the original case with a corrected receiving driver.',originalSelection:await fileIdentity(sourceSelectionPath),before,retainedBefore:retained,after,files:sources});
+  }else remember(await fileIdentity(sourceSelectionPath));
+ }else await record('selected-source.json',sourceSelection);
  if(await exists(workflowPath)){
   const completed=await json(workflowPath);assert(completed.state==='WORKFLOW_COMPLETE'&&completed.selectionSha256===selectionSha256,'A retained browser workflow belongs to another selection.');await verifyFiles(completed.files);
   if(!await exists(cleanupPath)){
@@ -361,8 +378,8 @@ export async function runGeographyBrowserReceiving(input){
   await page.locator('[data-geo-tab="handover"]').click();
   for(const format of ['packet','geojson','csv','json','html']){
    if(progress.downloads[format]){await verifyFiles([progress.downloads[format].file]);assert(progress.downloads[format].descriptor.review===selected.id&&progress.downloads[format].descriptor.revision===selected.revision,'A retained complete export belongs to another review.');continue;}
-   const returned=observed(page.waitForResponse(response=>new URL(response.url()).pathname===base+'/export'&&response.request().method()==='POST'&&response.request().postDataJSON()?.format===format));
-   const downloading=observed(page.waitForEvent('download',{timeout:120000}));
+   const returned=observePromise(page.waitForResponse(response=>new URL(response.url()).pathname===base+'/export'&&response.request().method()==='POST'&&response.request().postDataJSON()?.format===format));
+   const downloading=observePromise(page.waitForEvent('download',{timeout:120000}));
    await page.locator('[data-geo-export="'+format+'"]').click();
    const response=await returned,descriptor=await response.json();assert(response.ok()&&descriptor.review===selected.id&&descriptor.revision===selected.revision&&descriptor.format===format,'The native export descriptor selected another original review.');
    const download=await downloading,file=await retainDownload(download,format+'-'+descriptor.filename,descriptor);await idle();
@@ -413,7 +430,7 @@ export async function runGeographyBrowserReceiving(input){
   const offlineUpdatePath=join(out,'downloads','offline-review-update.json');
   if(!offlineUpdate&&await exists(offlineUpdatePath)){offlineUpdate={file:await fileIdentity(offlineUpdatePath),request:await json(offlineUpdatePath)};progress.offlineUpdate=offlineUpdate;remember(offlineUpdate.file);await save();}
   if(!offlineUpdate){
-   const waiting=observed(offline.waitForEvent('download',{timeout:30000}));await offline.locator('#download-update').click();
+   const waiting=observePromise(offline.waitForEvent('download',{timeout:30000}));await offline.locator('#download-update').click();
    const file=await retainDownload(await waiting,'offline-review-update.json');const update=await json(file.path);
    assert(typeof update.requestId==='string'&&update.id===original.id&&update.expectedRevision===original.revision,'The offline update lost its original review/expected revision.');
    for(const key of ['sources','selection','portfolio','acquisition','baselineRevision','findings'])assert(same(update[key],original[key]),'The offline review update changed unrelated original '+key+'.');

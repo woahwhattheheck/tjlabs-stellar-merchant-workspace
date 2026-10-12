@@ -61,4 +61,9 @@ export function exactFredDdpScaledValue(value,scale='1'){
   const number=decimal(value),factor=decimal(scale);if(!number||!factor)return null;
   return formatted({integer:number.integer*factor.integer,scale:number.scale+factor.scale});
 }
-export function fredDdpObservationMissing(value){return decimal(value)===null;}
+// The Board uses the numeric -9999 sentinel with these original CL_OBS_STATUS
+// meanings: No data, Not available and Not calculable. Preserve status
+// semantics instead of treating that retained numeric string as a figure.
+export function fredDdpObservationMissing(value,status=null){
+  return ['ND','NA','NC'].includes(status)||decimal(value)===null;
+}

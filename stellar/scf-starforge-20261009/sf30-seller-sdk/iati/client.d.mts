@@ -1,4 +1,6 @@
 import type { OrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
+import type { DocumentEvidenceClient } from './document_evidence_client.mjs';
+export type * from './document_evidence_client.mjs';
 import type { AmpStatus, AmpCapture, AmpPlan, AmpSelection, AmpDecisionState, AmpRows, AmpRunSummary, AmpRun, AmpEvents, AmpRequest, AmpAction, AmpCaptureInput, AmpCaptureResult, AmpSave, AmpSaved, AmpScope, AmpScopePreview, AmpDecisions, AmpAdvance, AmpReview, AmpPrepare, AmpNativeCapture, AmpNativeStart, AmpNativeStarted, AmpCredentials, AmpNativeReconcile, AmpNativeReceived, AmpFileKind, AmpReceiving } from './amp_client.mjs';
 export type * from './amp_client.mjs';
 import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
@@ -654,6 +656,7 @@ export interface GeographyReceiving {
 
 export declare class IatiWorkspaceClient {
   readonly organisationReconciliation: OrganisationReconciliationClient;
+  readonly documentEvidence: DocumentEvidenceClient;
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
   state(options?: RequestOptions): Promise<WorkspaceState>;

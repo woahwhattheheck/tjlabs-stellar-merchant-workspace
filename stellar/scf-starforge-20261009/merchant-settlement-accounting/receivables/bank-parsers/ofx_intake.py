@@ -30,6 +30,30 @@ DATE_RE = re.compile(r"([0-9]{8})([0-9]{2}(?:[0-9]{2}(?:[0-9]{2})?)?)?(?:\.([0-9
 TYPES = frozenset("CREDIT DEBIT INT DIV FEE SRVCHG DEP ATM POS XFER CHECK PAYMENT CASH DIRECTDEP DIRECTDEBIT REPEATPMT OTHER HOLD".split())
 AGGREGATES = frozenset("OFX SIGNONMSGSRSV1 SONRS STATUS FI BANKMSGSRSV1 CREDITCARDMSGSRSV1 STMTTRNRS CCSTMTTRNRS STMTRS CCSTMTRS BANKACCTFROM CCACCTFROM BANKTRANLIST BANKTRANLISTP STMTTRN STMTTRNP LEDGERBAL AVAILBAL CURRENCY ORIGCURRENCY PAYEE BANKACCTTO CCACCTTO".split())
 LEAVES = frozenset("TRNUID CODE SEVERITY MESSAGE DTSERVER LANGUAGE ORG FID INTU.BID CLTCOOKIE CURDEF BANKID BRANCHID ACCTID ACCTTYPE ACCTKEY DTSTART DTEND TRNTYPE DTPOSTED DTUSER DTAVAIL TRNAMT FITID CORRECTFITID CORRECTACTION SRVRTID CHECKNUM REFNUM SIC PAYEEID NAME EXTDNAME MEMO DTASOF BALAMT MKTGINFO DTTRAN DTEXPIRE CURRATE CURSYM ADDR1 ADDR2 ADDR3 CITY STATE POSTALCODE COUNTRY PHONE CASHADVBALAMT CASHADVAVAILAMT CASHADVCREDITLIMIT INTRATE INTRATEPURCH INTRATECASH INTRATEXFER".split())
+# OFX 2.3 sections 3.1.6.1 and 11.5: closing information belongs to its
+# original account and response, separately from posted and pending activity.
+_CLOSING_FIELDS = {
+    "CLOSING": set("FITID DTOPEN DTCLOSE DTNEXT BALOPEN BALCLOSE BALMIN DEPANDCREDIT CHKANDDEB TOTALFEES TOTALINT INTRATE INTYTD DTPOSTSTART DTPOSTEND CREDITLINEINFO MKTGINFO IMAGEDATA CURRENCY ORIGCURRENCY".split()),
+    "CCCLOSING": set("FITID DTOPEN DTCLOSE DTNEXT BALOPEN BALCLOSE INTYTD DTPMTDUE MINPMTDUE PASTDUEAMT LATEFEEAMT FINCHG INTRATEPURCH INTRATECASH INTRATEXFER PAYANDCREDIT PURANDADV DEBADJ CREDITLIMIT CASHADVBALAMT CASHADVAVAILAMT CASHADVCREDITLIMIT DTPOSTSTART DTPOSTEND AUTOPAY LASTPMTINFO REWARDINFO MKTGINFO IMAGEDATA CURRENCY ORIGCURRENCY".split()),
+    "CREDITLINEINFO": set("CREDITLIMIT DTPMTDUE MINPMTDUE INTAMT PASTDUEAMT LATEFEEAMT AUTOPAY LASTPMTINFO LOANDETAIL".split()),
+    "LOANDETAIL": set("LOANINITNUMPMTS LOANRMNPMTS LOANFREQ ESCROWBAL PRINCIPALBAL DTLOANSTART LOANINITBAL DTLOANMATURITY".split()),
+    "LASTPMTINFO": {"LASTPMTDATE", "LASTPMTAMT"},
+    "REWARDINFO": {"NAME", "REWARDBAL", "REWARDEARNED"},
+    "IMAGEDATA": set("IMAGETYPE IMAGEREF IMAGEREFTYPE IMAGEDELAY DTIMAGEAVAIL IMAGETTL CHECKSUP".split()),
+    "CURRENCY": {"CURRATE", "CURSYM"},
+    "ORIGCURRENCY": {"CURRATE", "CURSYM"},
+}
+_CLOSING_REQUIRED = {
+    "CLOSING": {"FITID", "DTOPEN", "DTCLOSE", "DTNEXT", "BALCLOSE"},
+    "CCCLOSING": {"FITID", "DTOPEN", "DTCLOSE", "DTNEXT", "BALCLOSE"},
+    "LASTPMTINFO": {"LASTPMTDATE", "LASTPMTAMT"},
+    "IMAGEDATA": {"IMAGETYPE", "IMAGEREF", "IMAGEREFTYPE"},
+    "CURRENCY": {"CURRATE", "CURSYM"},
+    "ORIGCURRENCY": {"CURRATE", "CURSYM"},
+}
+_CLOSING_AMOUNTS = set("BALOPEN BALCLOSE BALMIN DEPANDCREDIT CHKANDDEB TOTALFEES TOTALINT INTRATE INTYTD MINPMTDUE PASTDUEAMT LATEFEEAMT FINCHG INTRATEPURCH INTRATECASH INTRATEXFER PAYANDCREDIT PURANDADV DEBADJ CREDITLIMIT CASHADVBALAMT CASHADVAVAILAMT CASHADVCREDITLIMIT INTAMT LASTPMTAMT REWARDBAL REWARDEARNED CURRATE ESCROWBAL PRINCIPALBAL LOANINITBAL".split())
+AGGREGATES |= frozenset(_CLOSING_FIELDS) | {"STMTENDTRNRS", "STMTENDRS", "CCSTMTENDTRNRS", "CCSTMTENDRS"}
+LEAVES |= frozenset().union(*_CLOSING_FIELDS.values()) - AGGREGATES
 
 
 class IntakeError(ValueError):
@@ -472,6 +496,47 @@ def transaction(node: Node) -> dict:
             "pending": pending, "source_line": node.line}
 
 
+def closing_information(node: Node) -> dict:
+    """Retain the source's closing data without generating receipt activity."""
+    dates, amounts = {}, {}
+    def read(part: Node, prefix: str = "") -> dict:
+        allowed = _CLOSING_FIELDS[part.tag]
+        required = _CLOSING_REQUIRED.get(part.tag, set())
+        children = fields(part, required, allowed - required)
+        out = {}
+        for key, child in children.items():
+            location = prefix + key
+            if key in _CLOSING_FIELDS:
+                out[key] = read(child, location + "/")
+                continue
+            value = scalar(child, 255 if key == "FITID" else MAX_TEXT)
+            if key.startswith("DT") or key == "LASTPMTDATE":
+                dates[location] = timestamp(value, location)
+            elif key in _CLOSING_AMOUNTS:
+                amounts[location] = decimal_text(value, location)
+            elif key in {"LOANINITNUMPMTS", "LOANRMNPMTS", "IMAGEDELAY", "IMAGETTL"}:
+                require(re.fullmatch(r"[0-9]{1,5}", value) is not None, "INVALID_INTEGER", location)
+            elif key == "AUTOPAY":
+                require(value in {"Y", "N"}, "INVALID_BOOLEAN", location)
+            elif key == "CURSYM":
+                require(re.fullmatch(r"[A-Z]{3}", value) is not None, "CURRENCY_CODE", location)
+            elif key == "IMAGEREFTYPE":
+                require(value in {"URL", "OPAQUE"}, "IMAGE_REFERENCE_TYPE", location)
+            elif key == "CHECKSUP":
+                require(value in {"FRONTONLY", "BACKONLY", "FRONTANDBACK"}, "CHECK_IMAGE_TYPE", location)
+            out[key] = value
+        for left, right in [("CURRENCY", "ORIGCURRENCY"), ("IMAGEDELAY", "DTIMAGEAVAIL")]:
+            require(not (left in out and right in out), "EXCLUSIVE_FIELDS", part.tag)
+        return out
+    raw = read(node)
+    require(dates["DTOPEN"]["local_date"] <= dates["DTCLOSE"]["local_date"],
+            "REVERSED_CLOSING_PERIOD", node.tag)
+    if "DTPOSTSTART" in dates and "DTPOSTEND" in dates:
+        require(dates["DTPOSTSTART"]["utc"] <= dates["DTPOSTEND"]["utc"],
+                "REVERSED_DOWNLOAD_WINDOW", node.tag)
+    return {"raw": raw, "dates": dates, "amounts": amounts, "source_line": node.line}
+
+
 def parse_source(raw: bytes) -> dict:
     text, syntax, headers, line_offset = _decode(raw)
     root = _parse_xml(text) if syntax == "XML" else _parse_sgml(text, line_offset)
@@ -485,13 +550,15 @@ def parse_source(raw: bytes) -> dict:
         signon["fi"] = leaves(sign_fields["FI"], {"ORG", "FID"})
     if "INTU.BID" in sign_fields:
         signon["intu_bid"] = scalar(sign_fields["INTU.BID"], 255)
-    statements, responses = [], []
-    for msg, wrapper, stmt, acct in [("BANKMSGSRSV1", "STMTTRNRS", "STMTRS", "BANKACCTFROM"),
-                                    ("CREDITCARDMSGSRSV1", "CCSTMTTRNRS", "CCSTMTRS", "CCACCTFROM")]:
+    statements, responses, closing_statements = [], [], []
+    for msg, wrapper, stmt, acct, end_wrapper, end_stmt, closing_tag in [
+            ("BANKMSGSRSV1", "STMTTRNRS", "STMTRS", "BANKACCTFROM", "STMTENDTRNRS", "STMTENDRS", "CLOSING"),
+            ("CREDITCARDMSGSRSV1", "CCSTMTTRNRS", "CCSTMTRS", "CCACCTFROM", "CCSTMTENDTRNRS", "CCSTMTENDRS", "CCCLOSING")]:
         if msg not in top:
             continue
-        wrappers = fields(top[msg], set(), repeated={wrapper}).get(wrapper, [])
-        require(bool(wrappers), "EMPTY_MESSAGE_SET", msg)
+        message_fields = fields(top[msg], set(), repeated={wrapper, end_wrapper})
+        wrappers = message_fields.get(wrapper, [])
+        require(bool(wrappers or message_fields.get(end_wrapper)), "EMPTY_MESSAGE_SET", msg)
         for wrap in wrappers:
             wf = fields(wrap, {"TRNUID", "STATUS"}, {stmt, "CLTCOOKIE"})
             response = {"kind": msg, "trnuid": scalar(wf["TRNUID"], 255),
@@ -529,10 +596,28 @@ def parse_source(raw: bytes) -> dict:
                 statement["pending_asof"] = timestamp(scalar(pf["DTASOF"]))
                 statement["pending"] = [transaction(t) for t in pf.get("STMTTRNP", [])]
             statements.append(statement)
+        for wrap in message_fields.get(end_wrapper, []):
+            wf = fields(wrap, {"TRNUID", "STATUS"}, {end_stmt, "CLTCOOKIE"})
+            response = {"kind": msg, "type": end_wrapper, "trnuid": scalar(wf["TRNUID"], 255),
+                        "status": status(wf["STATUS"]), "line": wrap.line}
+            if "CLTCOOKIE" in wf:
+                response["client_cookie"] = scalar(wf["CLTCOOKIE"], 255)
+            responses.append(response)
+            if end_stmt not in wf:
+                require(not response["status"]["success"], "SUCCESS_MISSING_STATEMENT")
+                continue
+            sf = fields(wf[end_stmt], {"CURDEF", acct}, repeated={closing_tag})
+            currency = scalar(sf["CURDEF"], 3)
+            require(re.fullmatch(r"[A-Z]{3}", currency) is not None, "CURRENCY_CODE")
+            closing_statements.append({
+                "kind": "BANK" if acct == "BANKACCTFROM" else "CREDITCARD",
+                "account": account(sf[acct]), "currency": currency,
+                "response": response, "line": wf[end_stmt].line,
+                "closings": [closing_information(item) for item in sf.get(closing_tag, [])]})
     require(bool(responses), "NO_STATEMENT_RESPONSE")
     require(sum(len(s["transactions"]) + len(s["pending"]) for s in statements) <= MAX_ROWS, "ROW_LIMIT")
     return {"syntax": syntax, "headers": headers, "signon": signon, "responses": responses,
-            "statements": statements}
+            "statements": statements, "closing_statements": closing_statements}
 
 
 def compile_report(plan: object, sources: dict[str, bytes]) -> dict:

@@ -11,3 +11,10 @@ export {
   prepareDocumentMerchant, inspectDocumentMerchant, readDocumentSetupRequest
 } from './setup.mjs';
 export {renderDocumentBytes, renderPaidDocument, readDocumentSupplierUsage} from './renderer.mjs';
+export {
+  DOCUMENT_BATCH_SCHEMA, DOCUMENT_BATCH_PLAN_SCHEMA, DOCUMENT_BATCH_SNAPSHOT_SCHEMA,
+  documentBatchTemplate, normalizeDocumentBatch, prepareDocumentBatch, readDocumentBatch,
+  inspectDocumentBatch, runDocumentBatch, receiveDocumentBatch, saveDocumentBatchReport,
+  exportDocumentBatch, receiveDocumentBatchCollection, openDocumentBatchCustomer
+} from './batch.mjs';
+export {renderDocumentBatchHtml, renderDocumentBatchCsv} from './batch-render.mjs';

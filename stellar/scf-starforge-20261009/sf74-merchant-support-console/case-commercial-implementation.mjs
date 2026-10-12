@@ -322,6 +322,21 @@ async function checkedPrepare(context,args) {
 export async function previewCommercialImplementation(context,args) {
   return (await checkedPrepare(context,args)).review;
 }
+
+/** Read the accepted definition without saving or changing the original case.
+ * A receiving application owns its own operator edits; choices made here expose
+ * the original accepted values using the same prepared task identities.
+ */
+export async function inspectAcceptedCommercialImplementation(context,args) {
+  let prepared=await checkedPrepare(context,args);
+  if(prepared.review.conflicts.length) {
+    const resolutions=Object.fromEntries(prepared.review.conflicts.map(row=>[row.key,'accepted']));
+    prepared=await checkedPrepare(context,{...args,resolutions});
+  }
+  return {review:copy(prepared.review),plan:copy(prepared.acceptedPlan),
+    tasks:prepared.bindings.map(row=>({taskId:row.taskId,lineIds:copy(row.lineIds),
+      accepted:copy(row.accepted)}))};
+}
 function requestIdentity(args) {
   const requestArgs=copy(args);delete requestArgs.scope;
   return {action:'adoptImplementation',actor:args.actor,
