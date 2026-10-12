@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.git-source-part.v1",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "115c0addcc8ef99296465a9680c09554bddd5d10",
+    "tree": "f281c3d0678d9ada53361355c0f0aae2dfc937d1",
+    "fileCount": 453,
+    "sourceBytes": 6418552
+  },
+  "part": 1,
+  "parts": 3,
+  "kind": "git-authority",
+  "members": [],
+  "authorities": [
+    {
+      "path": "SOURCE-COMMIT.json",
+      "kind": "github-git-commit-response",
+      "bytes": 1318,
+      "sha256": "4aaa45e2be06e5ed0ebfc19dac416e0a7a649bc1d148ca37556cf13307e00595"
+    },
+    {
+      "path": "SOURCE-TREE.json",
+      "kind": "github-recursive-git-tree-response",
+      "bytes": 162593,
+      "sha256": "2cf2b93f1daf595b2de8e14fd107b3bed95c93309c2e9947b729037d04b9b385"
+    }
+  ]
+}
