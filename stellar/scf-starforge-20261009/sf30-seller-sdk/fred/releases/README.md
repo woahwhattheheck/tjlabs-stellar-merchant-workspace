@@ -4,6 +4,8 @@ This native source arm connects watched FRED series and recurring briefing templ
 
 A release source capture preserves the exact request, full response text, byte digest and actual receipt time for every page in the selected metadata date and calendar/vintage intervals. Calendar dates guide scheduling; returned series vintage dates drive observation acquisition.
 
+For the full saved project workflow, follow [PROJECT.md](PROJECT.md): source capture, watch, reviewed plan, explicit observation vintage, original briefing successor, and complete project receiving.
+
 ## Source and operating entrypoints
 
 | Module | Responsibility |

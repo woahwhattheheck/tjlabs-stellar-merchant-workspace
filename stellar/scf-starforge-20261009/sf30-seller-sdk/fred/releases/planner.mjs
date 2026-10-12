@@ -142,9 +142,14 @@ export function planFredReleaseCatchUp({ watch: supplied, before: beforeCapture 
     selected = completedSet.has(asOf) ? [] : [{ asOf, triggerVintageDates: [...grouped.keys()].sort(),
       reasons: new Set([...grouped.values()].flatMap(item => [...item.reasons])) }];
   }
+  const vintageSeries = new Map();
+  for (const row of current.vintages) {
+    if (!vintageSeries.has(row.date)) vintageSeries.set(row.date, new Set());
+    vintageSeries.get(row.date).add(row.series);
+  }
   const acquisitions = selected.map(item => ({
     asOf: item.asOf,
-    changedSeries: [...new Set(current.vintages.filter(row => row.date === item.asOf).map(row => row.series))].sort(),
+    changedSeries: [...(vintageSeries.get(item.asOf) ?? [])].sort(),
     triggerVintageDates: [...new Set(item.triggerVintageDates)].sort(), reasons: [...item.reasons].sort(),
     selection: normalizeSelection({ series: watch.series, asOf: item.asOf, start: watch.observationStart,
       end: watch.observationEnd === 'as_of' ? item.asOf : watch.observationEnd, pageSize: watch.pageSize, maxRows: watch.maxRows }),
