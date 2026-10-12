@@ -42,7 +42,7 @@ SEATABLE_DIST="$SEATABLE_REPO/stellar/scf-starforge-20261009/distribution"
 SEATABLE_COMMIT="$(git -C "$SEATABLE_REPO" rev-parse HEAD)"
 SEATABLE_RELEASE=/absolute/private/seatable-release
 
-node "$SEATABLE_DIST/build.mjs"   --repo "$SEATABLE_REPO" --ref "$SEATABLE_COMMIT"   --out "$SEATABLE_RELEASE"
+node "$SEATABLE_DIST/build.mjs"   --repo "$SEATABLE_REPO" --ref "$SEATABLE_COMMIT"   --selection seatable-merchant --out "$SEATABLE_RELEASE"
 ~~~
 
 The original build retains its selected commit, source manifest, archive and SHA256 in its receipt. Read the actual `distribution.json`; use the returned archive path and digest rather than guessing an archive filename. If the build is interrupted, use the same selected commit and output with the original `--resume` option.
