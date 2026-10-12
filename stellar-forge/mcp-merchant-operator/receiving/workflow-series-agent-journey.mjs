@@ -18,6 +18,12 @@ const SCHEMA = 'stellar-forge.merchant-workflow-series-agent-receiving.v1';
 const PREFIX = 'merchant_workflow_series_', VERSION = '2025-11-25';
 const hash = value => createHash('sha256').update(value).digest('hex');
 const copy = value => JSON.parse(JSON.stringify(value));
+function secondaryFailure(primary, stage, error) {
+  if (primary === error) return;
+  const detail = { stage, code: error.code ?? 'WORKFLOW_SERIES_AGENT_SECONDARY', message: error.message };
+  try { (primary.secondaryErrors ??= []).push(detail); } catch {}
+  process.stderr.write(JSON.stringify({ secondaryFailure: detail }) + '\n');
+}
 const inside = (parent, path) => path !== parent && !relative(parent, path).startsWith('..' + sep) &&
   relative(parent, path) !== '..' && !relative(parent, path).startsWith(sep);
 const isoDay = value => value.toISOString().slice(0, 10);
@@ -118,7 +124,7 @@ async function copyHandover(call, selection, description, destination) {
       assert.equal(retained.bytes, file.bytes); assert.equal(retained.sha256, file.sha256);
       files.push({ path: file.path, ...retained }); continue;
     }
-    let readId;
+    let readId, primary;
     try {
       const result = await writeConsoleWorkflowStream(output, async handle => {
         const digest = createHash('sha256'); let bytes = 0;
@@ -141,8 +147,10 @@ async function copyHandover(call, selection, description, destination) {
         return { bytes, sha256 };
       });
       files.push({ path: file.path, bytes: result.bytes, sha256: result.sha256 });
-    } finally {
-      if (readId) await call('handover_file_release', { ...selection, readId });
+    } catch (error) { primary = error; throw error; }
+    finally {
+      if (readId) try { await call('handover_file_release', { ...selection, readId }); }
+      catch (error) { if (!primary) throw error; secondaryFailure(primary, 'handover file release', error); }
     }
   }
   return files;
@@ -291,6 +299,7 @@ export async function receiveMerchantWorkflowSeriesAgent({
     }
     return profile;
   };
+  let primaryFailure;
   try {
     state.result = 'RUNNING'; delete state.error; await save(); await openHosts();
     const connections = await call('connections');
@@ -455,11 +464,18 @@ export async function receiveMerchantWorkflowSeriesAgent({
       handoverSha256: handover.contentSha256 }) + '\n');
     return state;
   } catch (error) {
-    state.result = 'FAILED';
+    primaryFailure = error; state.result = 'FAILED';
     state.error = { code: error.code ?? 'WORKFLOW_SERIES_AGENT_RECEIVING', message: error.message,
       ...(error.outcomeUnknown === undefined ? {} : { outcomeUnknown: error.outcomeUnknown }) };
-    await save(); throw error;
-  } finally { await closeHosts(); }
+    try { await save(); } catch (savingError) { secondaryFailure(error, 'checkpoint save', savingError); }
+    throw error;
+  } finally {
+    try { await closeHosts(); }
+    catch (closingError) {
+      if (!primaryFailure) throw closingError;
+      secondaryFailure(primaryFailure, 'native host close', closingError);
+    }
+  }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const flags = new Map();
