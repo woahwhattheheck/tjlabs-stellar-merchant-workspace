@@ -68,7 +68,8 @@
     "stellar-forge/a2a-analysis-agent/cli.mjs",
     "stellar-forge/a2a-analysis-agent/receive.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/cli.mjs",
-    "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
