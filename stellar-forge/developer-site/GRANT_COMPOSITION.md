@@ -70,6 +70,8 @@ The workspace uses the existing `/drafts.mjs` and the same application/source-in
 
 The HTML reader and downloadable Markdown have different relative locations. The composer adjusts companion and source-index links only in the rendered HTML. Markdown sibling links remain relative to `grant-data/`.
 
+Canvas authoring uses the public `blob/main/stellar-forge/developer-site/dist/grant-data/product-and-finance.md` URL for companion links. The maintained customer projection receives that exact current-file URL as the Markdown sibling link, preserving its chapter fragment; pinned historical sources retain their original links. This keeps the canonical authoring copy, downloaded answer and installed page on the same complete companion.
+
 
 ## Preserve the complete authoring package
 
@@ -157,6 +159,23 @@ blob pin when its repository, commit or path changes. Composition preserves the
 original request, baseline, six funded packages, capacity, cash and submission
 fields. The reader distinguishes the completed organisation receiving and the
 recorded financial stages through the chapter's actual operating results.
+
+## Receive current delivery finance
+
+The ordinary `--manuscript` path receives the complete canonical **8. Delivery
+capacity and cash timing** section into the existing **8. Capacity and cash plan**
+companion chapter. This keeps the original receipt-derived deadlines, Calendar
+exports, reviewed remaining cash and effort, work and supplier invoices, and
+retained capacity/payment sensitivities together on each manuscript refresh.
+Other complete customer chapters keep their original identities.
+
+The source register follows the selected `CALENDAR.md`, `WORK_INTAKE.md` and
+`FORECAST.md` links into `grant-delivery-calendar`,
+`grant-work-invoice-intake` and `grant-operating-forecast`. Changed original
+source selections use the existing metadata refresh behavior. The full package
+valuation sensitivity remains distinct from agreed cash obligations and observed
+receipts. The nine-answer front and six funded packages retain their existing
+source and submission bindings.
 
 ## Read the complete companion
 
