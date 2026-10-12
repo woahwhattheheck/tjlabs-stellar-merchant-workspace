@@ -15,9 +15,17 @@
   "components": [
     "stellar/scf-starforge-20261009/distribution",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node"
   ],
-  "supportFiles": ["stellar/scf-starforge-20261009/distribution/runtime-workspace/applications.mjs"],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/README.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-session-portable.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace-recovery-ledger.py"
+  ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
     "description": "Original economic editions, complete DDP/current FRED publications, exact native comparisons and editable customer receiving",

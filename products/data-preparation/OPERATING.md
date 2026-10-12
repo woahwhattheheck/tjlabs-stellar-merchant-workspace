@@ -348,12 +348,15 @@ This managed contribution adds Applications, instance-bound attachment, source-o
 
 ## Continue the retained original customer project
 
-The complete native receiving programme is products/data-preparation/receiving.py with its adjacent receiving.mjs. It opens the exact original PREP12 demonstration package, preserves all 120,012 input rows and original recipe/result/review history, and continues it through Applications provider preparation, the managed listener, typed merchant tools, native browser downloads, complete retained files, stop/reopen and independent customer editing. It also loads the delivered six-row merchant dataset through the original SF30 command and assembles the complete runnable delivery.
+The full original receiving program is products/data-preparation/receiving.py with its adjacent receiving.mjs, receiving-source.json and RECEIVING.md. It opens the exact original PREP12 package, preserves all 120,012 input rows and original recipe/result/review history, and continues through Applications provider preparation, the managed listener, typed merchant tools, the original browser, complete retained downloads, stop/reopen and independent customer editing. It also loads the whole six-row merchant dataset through the original SF30 command.
+
+Use the complete native source selected by receiving-source.json, currently commit 88feb91bc5089dced81813642aca24dc24ca713b. PREP12_SOURCE_ROOT below is the selected source from that exact commit; current maintained receiver files can reside separately. The receiver freezes and verifies all 35 original native source files before opening the project.
 
 ~~~sh
-python3 "$PREPARATION_SOURCE_ROOT/products/data-preparation/receiving.py" \
-  --source-root "$PREPARATION_SOURCE_ROOT" \
-  --source-commit FULL_40_CHARACTER_COMMIT \
+PREP12_SOURCE_ROOT=/absolute/selected-source-at-88feb91b
+python3 products/data-preparation/receiving.py \
+  --source-root "$PREP12_SOURCE_ROOT" \
+  --source-commit 88feb91bc5089dced81813642aca24dc24ca713b \
   --package /absolute/private/Starforge_Data_Preparation_2026-10-12.zip \
   --directory /absolute/private/new-managed-receiving \
   --node /absolute/existing/node \
@@ -361,4 +364,6 @@ python3 "$PREPARATION_SOURCE_ROOT/products/data-preparation/receiving.py" \
   --chromium /absolute/existing/chromium
 ~~~
 
-The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577. Its existing attachment is F0C8Q7QV5G9 in the original preparation Slack case. Use the existing full package and an empty receiving directory under an owned private parent. The programme retains its original operation directory on failure so the same customer state can be inspected. Its complete output links the maintained source and includes the original project, complete delivered files, independently editable customer project and the actual operating result.
+The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577; its existing original attachment is F0C8Q7QV5G9. Use a new receiving directory beneath an owned private parent.
+
+The program captures the original child's process identity across Linux PID namespaces and drains that exact owned group. Its complete delivery contains the original package, both closed editable workspaces, all complete downloads, preserved native directories and the actual operating result. An interrupted operation retains a complete closed checkpoint through the same packaging and save path. RECEIVING.md documents the whole journey, exact source/input identities and the optional supported five-helper save.

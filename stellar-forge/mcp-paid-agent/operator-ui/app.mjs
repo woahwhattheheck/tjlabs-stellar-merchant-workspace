@@ -1,5 +1,6 @@
 /** MIT. Original quote workflow and complete native result consumption. */
 import {BuyerConsoleClient} from './client.mjs';
+import {createHttpPathFields} from './path-form.mjs';
 import {createNativeRequestDesk} from './native-request.mjs';
 
 const client = new BuyerConsoleClient();
@@ -303,10 +304,12 @@ async function describe(handle) {
   target.removeAttribute('aria-busy');
   state.description = value;
   const preview = value.preview, container = preview.input.container;
-  const declarationErrors = [preview.input.inputError, preview.input.requiredKeysError, preview.remoteMcpError]
+  const declarationErrors = [preview.input.pathInputError, preview.input.inputError, preview.input.requiredKeysError, preview.remoteMcpError]
     .filter((error, index, errors) => error && errors.findIndex(other => other?.code === error.code && other?.message === error.message) === index);
   const canPreview = preview.allowedOrigin && preview.methodSupported && declarationErrors.length === 0;
   let inputRevision = 0;
+  const pathFields = container === 'query' ? createHttpPathFields(value, {node, empty}) : null;
+  pathFields?.onChange(() => { inputRevision++; });
   const options = node('select', {id:'payment-option', 'aria-label':'Payment option'}, value.accepts.map((option, index) =>
     node('option', {value:index, text:(index + 1) + ' · ' + option.amount + ' ' + option.asset + ' · ' + option.network})));
   const choice = node('div');
@@ -314,7 +317,7 @@ async function describe(handle) {
   options.addEventListener('change', () => { inputRevision++; showChoice(); }); showChoice();
   const input = node('textarea', {id:'invocation-input', spellcheck:'false', 'aria-label':container === 'arguments' ? 'Tool arguments JSON' : 'Query values JSON'});
   input.value = '{}'; input.addEventListener('input', () => { inputRevision++; });
-  const form = node('form', {}, [node('label', {text:container === 'arguments' ? 'Tool arguments (JSON object)' : 'Query values (JSON object)'}, [input]),
+  const form = node('form', {}, [...(pathFields ? [pathFields.element] : []), node('label', {text:container === 'arguments' ? 'Tool arguments (JSON object)' : 'Query values (JSON object)'}, [input]),
     node('p', {className:'field-note', text:container === 'query'
       ? 'Enter explicit strings or nonempty arrays of strings. ' +
         (preview.input.querySerialization ? 'The seller’s declared form encoding applies to each field. ' : 'Strings stay literal; arrays repeat their key. ') +
@@ -343,7 +346,8 @@ async function describe(handle) {
       const revision = inputRevision, selection = ++state.selection;
       let quote;
       try {
-        quote = await client.call('bazaar_preview', {handle:value.handle, acceptIndex:Number(options.value), input:{[container]:parsed}});
+        const invocationInput = {[container]:parsed, ...(pathFields ? {path:pathFields.read()} : {})};
+        quote = await client.call('bazaar_preview', {handle:value.handle, acceptIndex:Number(options.value), input:invocationInput});
       } catch (error) {
         if (serial === state.serial && request === state.describing && state.description === value && selection === state.selection && revision === inputRevision) throw error;
         return;

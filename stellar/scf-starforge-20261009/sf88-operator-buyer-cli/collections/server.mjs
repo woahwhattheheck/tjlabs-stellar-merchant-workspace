@@ -7,6 +7,7 @@ import { basename, isAbsolute, resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readBrowserAssets } from '../../distribution/browser-assets.mjs';
 import { openCollections } from './model.mjs';
+import { openCollectionComposer } from '../collection-composer/model.mjs';
 import { openCollectionRecovery } from './recovery-jobs.mjs';
 import { collectionBundleFiles } from './recovery.mjs';
 import { createCollectionBrowserRunner } from './browser-run.mjs';
@@ -52,14 +53,14 @@ function sameToken(header, token) {
   const supplied = Buffer.from(header), expected = Buffer.from('Bearer ' + token);
   return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
-async function jsonBody(request) {
+async function jsonBody(request, maximum = JSON_LIMIT) {
   need((request.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase()
     === 'application/json', 'JSON_REQUIRED', 415);
   let size = 0;
   const chunks = [];
   for await (const chunk of request) {
     size += chunk.length;
-    need(size <= JSON_LIMIT, 'REQUEST_TOO_LARGE', 413);
+    need(size <= maximum, 'REQUEST_TOO_LARGE', 413);
     chunks.push(chunk);
   }
   let result;
@@ -108,6 +109,11 @@ export async function serveCollections(collections, {
   try { runner = approvals ? await createCollectionBrowserRunner({ collections, approvals, environment }) : null; }
   catch (error) { await approvals?.close(); throw error; }
   const adopted = new Set();
+  let composer = null;
+  const collectionComposer = () => {
+    need(collections, 'COLLECTION_RECOVERY_SOURCE_NOT_OPEN', 409);
+    return composer ??= openCollectionComposer({ collections });
+  };
   let recovery;
   try { recovery = await openCollectionRecovery({
     directory: receivingDirectory ?? join(collections.directory, 'recovery'),
@@ -203,7 +209,46 @@ export async function serveCollections(collections, {
           recoveryBusy: recovery.busy, busy: mutation || recovery.busy || Boolean(runner?.busy), paymentApproval:
             approvals ? 'original-browser' : 'original-terminal',
           command: 'buyer-collections', exportRoot: collections ? resolve(collections.directory, 'exports') : null,
-            agentApi: 1, recoveryApi: 1, connectionApi: 1 });
+            agentApi: 1, recoveryApi: 1, connectionApi: 1, composerApi: 1 });
+      if (url.pathname.startsWith('/api/composer/')) {
+        const authoring = collectionComposer();
+        if (url.pathname === '/api/composer/catalog') {
+          need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+          const input = fields(await jsonBody(request), ['path']);
+          return send(await authoring.inspectCatalog(input));
+        }
+        if (url.pathname === '/api/composer/plans') {
+          if (request.method === 'GET') return send(await authoring.listPlans());
+          need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+          const input = fields(await jsonBody(request, 2 * 1024 * 1024), ['plan']);
+          return send(await mutate(() => authoring.savePlan(input)), 201);
+        }
+        const plan = /^\/api\/composer\/plans\/([A-Za-z0-9][A-Za-z0-9._-]{0,79})\/([a-f0-9]{64})$/.exec(url.pathname);
+        if (plan) {
+          need(request.method === 'GET', 'METHOD_NOT_ALLOWED', 405);
+          return send(await authoring.inspectPlan(plan[1], plan[2]));
+        }
+        if (url.pathname === '/api/composer/editions/prepare') {
+          need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+          const input = fields(await jsonBody(request), ['planId', 'planSha256', 'collectionId', 'name', 'values']);
+          return send(await mutate(() => authoring.prepareEdition(input)), 201);
+        }
+        if (url.pathname === '/api/composer/editions') {
+          need(request.method === 'GET', 'METHOD_NOT_ALLOWED', 405);
+          return send(await authoring.listEditions());
+        }
+        const edition = /^\/api\/composer\/editions\/([A-Za-z0-9][A-Za-z0-9._-]{0,79})(\/create)?$/.exec(url.pathname);
+        if (edition) {
+          if (!edition[2]) {
+            need(request.method === 'GET', 'METHOD_NOT_ALLOWED', 405);
+            return send(await authoring.inspectEdition(edition[1]));
+          }
+          need(request.method === 'POST', 'METHOD_NOT_ALLOWED', 405);
+          const input = fields(await jsonBody(request), ['expectedEditionSha256', 'expectedPreviewSha256']);
+          return send(await mutate(() => authoring.createEdition({ ...input, collectionId: edition[1] })), 201);
+        }
+        need(false, 'ROUTE_NOT_FOUND', 404);
+      }
       if (request.method === 'GET' && url.pathname === '/api/run')
         return send({ run: runner ? await runner.inspect() : null });
       const originalRun = /^\/api\/runs\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.exec(url.pathname);
@@ -465,6 +510,7 @@ export async function serveCollections(collections, {
           server.closeAllConnections?.();
         });
         for (const model of adopted) await model.close();
+        composer?.close();
         reviews.clear(); exports.clear();
       })();
       return closePromise;

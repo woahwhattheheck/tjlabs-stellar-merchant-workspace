@@ -148,3 +148,74 @@ The native result records the selected source, original session and incident, co
 It also explicitly records notificationConfigured=false, notificationsSent=0, buyerPurchased=false and buyerFinalized=false for this original customer programme.
 
 Source validation and syntax checks do not produce that result. The application writes it only after the full HTTP journey and separate-process case reopen succeed. The programme writes delivery-result.json only after the complete package save returns a successful file identity.
+
+
+## Complete a customer after an archive write failure
+
+The complete native Support customer may finish successfully before its outer
+wrapper encounters a full filesystem while writing the package. Keep that
+customer and its case, profile, incident and original Object files. The
+`complete-support-recovery.py` entry delivers those completed results and can
+continue the current recovery programme in the same process.
+
+The entry reads the original configuration and requires the exact recorded
+customer-result SHA-256, both successful native child results, and the full
+737-file source receipt. It holds the original customer execution lock and a
+private completion lock. It copies the pinned customer, Git receiver, metadata
+and baseline guide into its own working lifetime, and reuses the unchanged
+original packager against the complete retained application.
+
+Use a private staging directory on an available filesystem. The original
+baseline configuration remains unchanged. Supply the exact guide selected by
+that baseline configuration; its byte identity may differ from this updated
+operating guide.
+
+```sh
+python complete-support-recovery.py \
+  --config /retained/baseline/configuration.private.json \
+  --original-runner /retained/baseline/source/run.py \
+  --staging-directory /dev/scf-support-completion \
+  --expected-customer-sha256 THE_ACTUAL_COMPLETED_RESULT_SHA256 \
+  --baseline-guide /retained/baseline/source/RECEIVING.md \
+  --recovery-programme /received/source/run-recovery.py \
+  --recovery-config /received/source/recovery-configuration.json
+```
+
+The default native inputs are `source/customer.mjs`,
+`source/git-object-receiving.py` and `source/source-metadata.json` inside the
+retained baseline project. The default application is its complete
+`application/` directory. Use `--baseline-customer`,
+`--baseline-source-receiver`, `--baseline-metadata` and
+`--application-source` to select other absolute locations containing those
+same bytes.
+
+The continuation first creates and saves the full baseline ZIP through the
+existing recorded upload workflow. It retains the actual returned file
+identity in its staging `delivery-result.json`. When the original filesystem
+is writable it also saves that complete result in the original project. An
+unwritable original receipt destination does not turn a successful persistent
+package save into another customer run.
+
+For a working directory that lasts only as long as the native process, provide
+both recovery arguments in the same invocation. The entry keeps that process
+alive, injects the actual `baselineDelivery` path into the selected current
+configuration, and runs the complete recovery programme before exiting. Set
+the current programme's `project` and `work` to separate private directories
+on the available filesystem; keep its original `baselineProject`,
+`originalRunner`, source input and driver selection. The baseline, current
+native calls and both uploads remain in this one retained lifetime.
+
+The current programme's optional absolute `baselineDelivery` selects the
+completed baseline result. Without it, the existing
+`baselineProject/delivery-result.json` location remains the default.
+The full current package includes the baseline ZIP, original baseline
+configuration, actual baseline delivery result and the continuation source
+when selected. The final `RETAINED_SUPPORT_AND_RECOVERY_COMPLETE` output
+contains both complete package identities and both actual saved-file
+identities. Its small combined result is also copied to the original project
+when writable.
+
+If a prior Library dispatch has no returned result, recover that exact
+recorded call before another upload. If a completed package/result already
+exists in the same staging directory, reopening verifies and reuses it.
+The continuation never invokes the original Support customer again.
