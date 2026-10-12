@@ -24,7 +24,19 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/SOURCE_CONTRACT.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/gleif-foundation-plan.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/name-plan.json",
-    "products/gleif/OPERATING.md"
+    "products/gleif/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/import-exact.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/import-name.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/report.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/report.html",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/entities.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/entities.spreadsheet.csv",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/entities.jsonl",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/review-foundation.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/review-branch.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/prepare-report.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/prepare-dataset.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/README.md"
   ],
   "browserAssets": [
     {

@@ -2,7 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GLEIF company research</title><link rel="stylesheet" href="/style.css"></head>
 <body><header><div><p class="eyebrow">STELLAR FORGE · COMPANY DATA</p><h1 id="title">GLEIF company research</h1><p>Official company records, source revisions and reviewed customer shortlists.</p></div><div class="toolbar"><button id="refresh">Refresh saved work</button><button id="export">Export complete project</button></div></header>
 <p id="notice" role="status" aria-live="polite"></p>
-<section id="pending" hidden><h2>Saved request</h2><p id="pending-text"></p><button id="resume">Continue this request</button><button id="pause" hidden>Pause source capture</button></section>
+<section id="pending" hidden><h2>Saved request</h2><p id="pending-text"></p><button id="resume">Continue this request</button><button id="pause" hidden>Pause source capture</button><button id="dismiss">Keep history and start another request</button></section>
+<details><summary>Requests retained in this browser</summary><div id="browser-requests" class="list"></div></details>
 <main><aside><section><h2>Capture an official source</h2><form id="capture-form">
 <label>Search type<select name="kind"><option value="name">Legal name</option><option value="lei">Exact LEI</option></select></label>
 <label>Name or complete LEI<input name="query" required maxlength="500"></label>

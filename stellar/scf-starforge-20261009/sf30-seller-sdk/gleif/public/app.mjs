@@ -3,7 +3,7 @@ import { escapeHtml as e, plan } from '/core.mjs';
 const $=id=>document.getElementById(id),forms=['capture-form','review-form','batch-form','report-form','compare-form','query-form'];
 let token=new URLSearchParams(location.hash.slice(1)).get('token')??sessionStorage.getItem('gleif-token')??'';
 if(token){sessionStorage.setItem('gleif-token',token);history.replaceState(null,'',location.pathname);}
-let state,workspaceId,instanceId,selectedCapture=null,offset=0,rows=null,detail=null,selected=new Map(),pending=null,polling=false,db;
+let state,workspaceId,instanceId,selectedCapture=null,offset=0,rows=null,detail=null,selected=new Map(),pending=null,polling=false,db,rowsRequest=0;
 const notice=(text,error=false)=>{$('notice').textContent=text;$('notice').setAttribute('role',error?'alert':'status');};
 async function api(path,{method='GET',body,raw=false}={}) {
   const response=await fetch(path,{method,headers:{authorization:'Bearer '+token,...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
@@ -12,11 +12,17 @@ async function api(path,{method='GET',body,raw=false}={}) {
   return raw?response.arrayBuffer():response.json();
 }
 async function database() {return new Promise((resolve,reject)=>{const request=indexedDB.open('stellar-forge-gleif',1);request.onupgradeneeded=()=>request.result.createObjectStore('work');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-async function stored(mode,value) {
-  return new Promise((resolve,reject)=>{const tx=db.transaction('work',mode==='get'?'readonly':'readwrite'),store=tx.objectStore('work'),key=workspaceId+'/pending';let result;
+async function stored(mode,value,slot='pending') {
+  return new Promise((resolve,reject)=>{const tx=db.transaction('work',mode==='get'?'readonly':'readwrite'),store=tx.objectStore('work'),key=workspaceId+'/'+slot;let result;
     const request=mode==='get'?store.get(key):mode==='delete'?store.delete(key):store.put(value,key);
     request.onsuccess=()=>{result=request.result;};tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('The saved request could not be retained.'));});
 }
+async function renderRequestHistory() {
+  const prefix=workspaceId+'/request/';
+  const keys=await new Promise((resolve,reject)=>{const tx=db.transaction('work','readonly'),req=tx.objectStore('work').getAllKeys(IDBKeyRange.bound(prefix,prefix+'\uffff'));req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+  $('browser-requests').innerHTML=keys.length?keys.map(key=>'<article><code>'+e(key.slice(prefix.length))+'</code><button data-browser-request="'+e(key.slice(prefix.length))+'">Restore original request</button></article>').join(''):'<p>No original browser requests have been retained.</p>';
+}
+function chooseCapture(id){rowsRequest++;selectedCapture=id;offset=0;selected.clear();detail=null;$('detail').hidden=true;$('batch').hidden=true;}
 function draftKey(id){return workspaceId+'/form/'+id;}
 function saveDraft(form) {if(!workspaceId)return;const value=Object.fromEntries(new FormData(form));if(form.id==='report-form')value.captureIds=[...form.elements.captureIds.selectedOptions].map(v=>v.value);localStorage.setItem(draftKey(form.id),JSON.stringify(value));}
 function restoreDraft(form){let value;try{value=JSON.parse(localStorage.getItem(draftKey(form.id))??'null');}catch{}if(!value)return;
@@ -43,11 +49,14 @@ async function refresh({loadRows=true}={}) {
 }
 function renderPending() {
   $('pending').hidden=!pending&&!state?.active;$('pause').hidden=!['capture','capture.resume'].includes(state?.active?.action);
-  $('resume').disabled=!!state?.active||!pending;
+  $('resume').disabled=!!state?.active||!pending;$('dismiss').disabled=!!state?.active||!pending;
   $('pending-text').textContent=state?.active?state.active.action+' · '+state.active.id+' · running':pending?pending.action+' · '+pending.id:'';
 }
 async function loadEntityRows() {
-  rows=await api('/api/captures/'+encodeURIComponent(selectedCapture)+'/rows?'+new URLSearchParams({offset:String(offset),limit:'50',search:$('row-search').value}));
+  const captureId=selectedCapture,sequence=++rowsRequest;
+  const incoming=await api('/api/captures/'+encodeURIComponent(captureId)+'/rows?'+new URLSearchParams({offset:String(offset),limit:'50',search:$('row-search').value}));
+  if(sequence!==rowsRequest||selectedCapture!==captureId)return;rows=incoming;
+  if(rows.issues?.length)notice(rows.issues[0].message,true);
   $('edition-title').textContent=rows.capture.plan.query;$('edition-meta').textContent=rows.capture.state+' · '+rows.total+' retained matching records · '+rows.capture.id;
   $('entity-rows').innerHTML=rows.items.map(item=>'<tr><td><input type="checkbox" data-select="'+e(item.row.lei)+'" '+(selected.has(item.row.lei)?'checked':'')+' aria-label="Select '+e(item.row.legalName)+'"></td><td><button data-entity="'+e(item.row.lei)+'">'+e(item.row.legalName)+'</button><small>'+e(item.row.lei)+'</small></td><td>'+e(item.row.legalJurisdiction)+'</td><td>'+e(item.row.entityStatus)+'</td><td>'+e(item.row.registrationStatus)+'</td><td>'+e(item.needsReview?'Source changed; review again':item.review?.decision??'Awaiting review')+'</td></tr>').join('');
   $('page-label').textContent=rows.total?(offset+1)+'–'+Math.min(offset+rows.items.length,rows.total)+' of '+rows.total:'0 records';
@@ -66,26 +75,26 @@ function showDetail(item) {
 }
 async function execute(request) {
   if(pending&&pending.id!==request.id)throw new Error('Continue the saved request before starting another operation.');
-  pending=request;await stored('put',pending);renderPending();
+  pending=request;await stored('put',pending,'request/'+pending.id);await stored('put',pending);renderPending();await renderRequestHistory();
   await api('/api/start',{method:'POST',body:request});notice('Running '+request.action+'. The complete request is saved.');
   if(!polling)poll();
 }
 async function poll() {
-  polling=true;
+  const id=pending?.id;if(!id)return;polling=true;
   try{
-    while(pending){
-      const result=await api('/api/operations/'+encodeURIComponent(pending.id));
-      await refresh();
+    while(pending?.id===id){
+      const result=await api('/api/operations/'+encodeURIComponent(id));if(pending?.id!==id)break;
+      await refresh();if(pending?.id!==id)break;
       if(result.state==='COMPLETE'){const action=pending.action;await stored('delete');pending=null;renderPending();notice('Completed '+action+'.');break;}
       if(result.state==='INTERRUPTED'){notice(result.error?.message??'The original request is ready to continue.',true);break;}
       await new Promise(resolve=>setTimeout(resolve,1000));
     }
-  }catch(error){notice(error.message,true);}finally{polling=false;renderPending();}
+  }catch(error){notice(error.message,true);}finally{polling=false;renderPending();if(pending&&pending.id!==id)poll();}
 }
 function request(action,input){return {id:crypto.randomUUID(),action,input,expectedRevision:state.revision};}
 function researchInput(item,form) {
   const current=state.reviews.filter(r=>r.lei===item.row.lei).at(-1);
-  return {id:current?.id??'lei-'+item.row.lei,title:item.row.legalName,captureId:selectedCapture,lei:item.row.lei,expectedVersion:current?.version??0,...Object.fromEntries(new FormData(form))};
+  return {id:current?.id??'lei-'+item.row.lei,title:item.row.legalName,captureId:item.row.captureId,lei:item.row.lei,expectedVersion:current?.version??0,...Object.fromEntries(new FormData(form))};
 }
 async function download(sha,name){const data=await api('/api/objects/'+sha,{raw:true}),url=URL.createObjectURL(new Blob([data]));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function run(fn){return async event=>{if(event?.type==='submit')event.preventDefault();try{await fn(event);}catch(error){notice(error.message,true);}};}
@@ -97,12 +106,14 @@ $('capture-form').onsubmit=run(async()=>{
 $('source-import').onclick=run(async()=>{const file=$('source-file').files[0];if(!file)throw new Error('Choose the original source-response file.');const input=JSON.parse(await file.text());await execute(request('source.import',input));});
 $('refresh').onclick=run(()=>refresh());
 $('resume').onclick=run(async()=>{if(pending)await execute(pending);});
+$('dismiss').onclick=run(async()=>{const original=pending;if(!original)return;await refresh({loadRows:false});if(state.active)throw new Error('Finish or pause the running project operation first.');if(pending?.id!==original.id)return;await stored('put',original,'request/'+original.id);await stored('delete');pending=null;renderPending();await renderRequestHistory();notice('The original request remains in browser and project history. Edit the form and start a new request.');});
+$('browser-requests').onclick=run(async event=>{const button=event.target.closest('[data-browser-request]');if(!button)return;const saved=await stored('get',undefined,'request/'+button.dataset.browserRequest);if(saved)await execute(saved);});
 $('pause').onclick=run(async()=>{if(state.active)await api('/api/pause/'+state.active.id,{method:'POST',body:{}});await refresh();});
 $('previous').onclick=run(async()=>{offset=Math.max(0,offset-50);await loadEntityRows();});
 $('next').onclick=run(async()=>{if(rows.nextOffset!==null){offset=rows.nextOffset;await loadEntityRows();}});
 let searchTimer;$('row-search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;loadEntityRows().catch(error=>notice(error.message,true));},250);};
-$('captures').onclick=run(async event=>{const continuation=event.target.closest('[data-continue-capture]');if(continuation){const id=continuation.dataset.continueCapture;if(pending&&(pending.id===id||pending.input?.captureId===id))await execute(pending);else await execute(request('capture.resume',{captureId:id}));return;}const button=event.target.closest('[data-capture]');if(!button)return;selectedCapture=button.dataset.capture;offset=0;selected.clear();detail=null;$('detail').hidden=true;$('batch').hidden=true;await refresh();});
-$('shortlist').onclick=run(async event=>{const button=event.target.closest('[data-review]');if(!button)return;const review=state.reviews.find(r=>r.id===button.dataset.review);selectedCapture=review.captureId;offset=0;$('row-search').value=review.lei;await refresh();const item=rows.items.find(r=>r.row.lei===review.lei);if(item)showDetail(item);});
+$('captures').onclick=run(async event=>{const continuation=event.target.closest('[data-continue-capture]');if(continuation){const id=continuation.dataset.continueCapture;if(pending&&(pending.id===id||pending.input?.captureId===id))await execute(pending);else await execute(request('capture.resume',{captureId:id}));return;}const button=event.target.closest('[data-capture]');if(!button)return;chooseCapture(button.dataset.capture);await refresh();});
+$('shortlist').onclick=run(async event=>{const button=event.target.closest('[data-review]');if(!button)return;const review=state.reviews.find(r=>r.id===button.dataset.review);chooseCapture(review.captureId);$('row-search').value=review.lei;await refresh();const item=rows.items.find(r=>r.row.lei===review.lei);if(item)showDetail(item);});
 $('entity-rows').onclick=run(async event=>{const entity=event.target.closest('[data-entity]');if(entity)showDetail(rows.items.find(r=>r.row.lei===entity.dataset.entity));
   const checkbox=event.target.closest('[data-select]');if(checkbox){const item=rows.items.find(r=>r.row.lei===checkbox.dataset.select);if(checkbox.checked)selected.set(item.row.lei,item);else selected.delete(item.row.lei);}});
 $('source-download').onclick=run(async()=>{if(detail)await download(rows.capture.pages[detail.page-1].sha256,'gleif-'+selectedCapture+'-page-'+detail.page+'.json');});
@@ -123,7 +134,7 @@ $('export').onclick=run(async()=>{const file=await api('/api/package-file',{meth
 for(const id of forms){const form=$(id);form.addEventListener('input',()=>{saveDraft(form);if(id==='review-form'&&detail)localStorage.setItem(workspaceId+'/review/'+detail.row.lei,JSON.stringify(Object.fromEntries(new FormData(form))));});}
 async function start(){
   const identity=await api('/api/identity');workspaceId=identity.workspaceId;instanceId=identity.instanceId;db=await database();pending=await stored('get')??null;
-  await refresh();for(const id of forms)restoreDraft($(id));
+  await refresh();await renderRequestHistory();for(const id of forms)restoreDraft($(id));
   if(pending){try{const result=await api('/api/operations/'+pending.id);if(result.state==='COMPLETE'){await stored('delete');pending=null;renderPending();}else if(result.state==='RUNNING')poll();}catch{}}
   notice('Saved company research is ready.');
 }

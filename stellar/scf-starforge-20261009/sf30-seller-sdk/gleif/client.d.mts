@@ -1,6 +1,6 @@
 export interface GleifPlan { kind: 'name'|'lei'; query: string; pageSize?: number; country?: string; entityStatus?: string; registrationStatus?: string; }
-export interface SourcePage { url:string; startedAt?:string; observedAt:string; status:number; headers:Record<string,string>; sha256:string; bytes:number; records:number; }
-export interface GleifCapture { schema:string; id:string; plan:GleifPlan; createdAt:string; completedAt?:string; state:'PENDING'|'FETCHING'|'INTERRUPTED'|'COMPLETE'; pages:SourcePage[]; attempts:SourcePage[]; next:string|null; notBefore:string|null; }
+export interface SourcePage { url:string; startedAt?:string; observedAt:string; status:number|null; headers:Record<string,string>|null; acquisition?:{kind:string;[key:string]:unknown}; sha256:string; bytes:number; records:number; }
+export interface GleifCapture { schema:string; id:string; plan:GleifPlan; createdAt:string; completedAt?:string; state:'PENDING'|'FETCHING'|'INTERRUPTED'|'SOURCE_REVIEW'|'COMPLETE'; pages:SourcePage[]; attempts:SourcePage[]; next:string|null; notBefore:string|null; }
 export interface ResearchReview { id:string; title:string; captureId:string; lei:string; decision:'include'|'exclude'|'research'; reviewer:string; rationale:string; useCase:string; nextWork:string; version:number; resourceSha256:string; originalResource:Record<string,unknown>; }
 export interface RetainedFile { name:string; sha256:string; bytes:number; }
 export interface Operation { id:string; action:string; state:'PENDING'|'RUNNING'|'INTERRUPTED'|'COMPLETE'; createdAt:string; updatedAt:string; error?:{code:string;message:string;status?:number}|null; input?:Record<string,unknown>; result?:unknown; }

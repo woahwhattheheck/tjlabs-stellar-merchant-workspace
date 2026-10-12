@@ -127,13 +127,13 @@ export function projectEntity(resource,context) {
 export function assembleCapture(capture,pages) {
   need(capture.schema===SCHEMA+'.capture'&&Array.isArray(capture.pages)&&capture.pages.length===pages.length,
     'GLEIF_CAPTURE','Choose a complete retained capture.');
-  const records=[],seen=new Map();let first=queryUrl(capture.plan),expected=first;
+  const records=[],issues=[],seen=new Map();let first=queryUrl(capture.plan),expected=first;
   for(let i=0;i<pages.length;i++) {
     const page=capture.pages[i],decoded=decodePage(pages[i],page.url);
     need(sameRequest(page.url,expected),'GLEIF_CAPTURE_SEQUENCE','The retained page sequence differs from its query.');
     for(const record of decoded.resources) {
-      need(!seen.has(record.id),'GLEIF_CAPTURE_DUPLICATE','The source repeated LEI '+record.id+' across this capture; retain the pages and refresh the query.');
-      seen.set(record.id,true);
+      if(seen.has(record.id))issues.push({code:'GLEIF_CAPTURE_DUPLICATE',message:'The source repeats LEI '+record.id+'. Retain this edition and acquire a new complete query before using it for company decisions.',lei:record.id,firstPage:seen.get(record.id),repeatedPage:i+1});
+      else seen.set(record.id,i+1);
       records.push({row:projectEntity(record,{captureId:capture.id,page:i+1,observedAt:page.observedAt}),resource:clone(record),page:i+1});
     }
     expected=nextPage(decoded.next,first,page.url);
@@ -141,7 +141,7 @@ export function assembleCapture(capture,pages) {
   }
   need((capture.next===null&&expected===null)||(typeof capture.next==='string'&&typeof expected==='string'&&sameRequest(capture.next,expected)),'GLEIF_CAPTURE_CURSOR','The saved continuation differs from the retained response.');
   need(capture.state!=='COMPLETE'||(pages.length>0&&expected===null),'GLEIF_CAPTURE_INCOMPLETE','The original source still has pages.');
-  return {records,complete:capture.state==='COMPLETE',next:expected};
+  return {records,complete:capture.state==='COMPLETE'&&issues.length===0,sourceComplete:pages.length>0&&expected===null,issues,next:expected};
 }
 export function compareRecords(before,after) {
   const a=new Map(before.map(x=>[x.resource.id,x])),b=new Map(after.map(x=>[x.resource.id,x])),added=[],missing=[],changed=[],unchanged=[];

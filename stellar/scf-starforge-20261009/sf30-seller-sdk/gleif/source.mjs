@@ -73,12 +73,19 @@ export function importCapture(id,input,createdAt) {
   let expected=queryUrl(result.plan);
   for(const page of input.pages) {
     need(expected!==null&&sameRequest(page.url,expected),'GLEIF_IMPORT_SEQUENCE','Imported pages must follow the original query in source order.');
-    need(typeof page.observedAt==='string'&&Number.isFinite(Date.parse(page.observedAt))&&page.status===200&&typeof page.body==='string',
-      'GLEIF_IMPORT_OBSERVATION','Retain the successful original status, observed time and complete UTF-8 body.');
+    need(typeof page.observedAt==='string'&&Number.isFinite(Date.parse(page.observedAt))&&typeof page.body==='string',
+      'GLEIF_IMPORT_OBSERVATION','Retain the original observed time and complete UTF-8 body.');
     const raw=Buffer.from(page.body),decoded=decodePage(page.body,page.url);need(raw.length<=MAX_PAGE,'GLEIF_PAGE_TOO_LARGE');
+    if(page.status!==200){
+      const acquisition=page.acquisition,receipt=acquisition?.receipt;
+      need(page.status===null&&page.headers===null&&acquisition?.kind==='SOURCE_URL_ATTACHMENT'&&sameRequest(acquisition.sourceUrl,page.url)&&
+        acquisition.sha256===digest(raw)&&receipt?.status==='uploaded'&&typeof receipt.file_upload_id==='string'&&receipt.file_upload_id.length>0&&
+        receipt.content_length===raw.length&&typeof receipt.content_type==='string'&&/json/i.test(receipt.content_type),
+        'GLEIF_IMPORT_OBSERVATION','Retain the original HTTP response or the complete source URL attachment acquisition receipt.');
+    }
     if(result.plan.kind==='lei')need(decoded.resources.every(r=>r.id===result.plan.query),'GLEIF_SOURCE_IDENTITY');
     const entry={url:page.url,observedAt:page.observedAt,startedAt:page.startedAt??page.observedAt,status:page.status,
-      headers:clone(page.headers??{}),sha256:digest(raw),bytes:raw.length,records:decoded.resources.length,acquisition:'IMPORTED_ORIGINAL_RESPONSE'};
+      headers:clone(page.headers??null),sha256:digest(raw),bytes:raw.length,records:decoded.resources.length,acquisition:clone(page.acquisition??{kind:'IMPORTED_HTTP_RESPONSE'})};
     result.pages.push(entry);result.attempts.push(entry);objects.push(raw);
     expected=nextPage(decoded.next,queryUrl(result.plan),page.url);
   }

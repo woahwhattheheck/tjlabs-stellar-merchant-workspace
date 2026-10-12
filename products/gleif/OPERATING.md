@@ -117,7 +117,12 @@ all completed original pages and resumes its next selected page.
 The UI displays the complete request while it runs. **Pause source capture**
 keeps the retained pages. Its saved request uses IndexedDB, so a lost HTTP
 response or a browser refresh can continue the same operation. A provider
-Retry-After is retained in the source state and respected on resume.
+Retry-After is retained in the source state and respected on resume. A stopped
+process reopens its saved running requests as interrupted and makes their exact
+input available through the operation history. To correct an invalid request,
+choose **Keep history and start another request**. The old request remains in
+browser history and any admitted project operation; the corrected form creates
+a new request.
 
 ## Receive a capture already acquired elsewhere
 
@@ -142,6 +147,13 @@ a connected research session can assemble:
   }]
 }
 ~~~
+
+The importer also accepts complete original JSON acquired by an attachment service
+using a source URL. Retain status and headers as null when that service does not
+expose origin HTTP fields, and provide acquisition.kind SOURCE_URL_ATTACHMENT,
+its original sourceUrl, the body sha256 and the complete uploaded receipt
+(file_upload_id, content_length and content_type). The original acquisition receipt
+stays with the source page. The included observed-foundation source uses this path.
 
 Replace the time and body entries with the original observed values. The importer
 retains those values as source observations and records its own import time
@@ -373,6 +385,13 @@ paged records, comparisons, operation recovery, source capture/import, individua
 and batch review, reports, native datasets/query, project files and exact chunked
 file reading. Disconnect closes that client; Applications retains its listener.
 
+Complete JSON project delivery has a 256 MiB limit, including base64 expansion,
+project state and retained histories. Every source response page can contain up
+to 16 MiB. The original CLI export and receiving path can carry larger complete
+JSON files when every retained object remains within its declared limit; browser
+and client responses retain the 256 MiB limit. Use the source archive and the
+original full CLI receiving path when a complete JSON exceeds browser delivery.
+
 For large project delivery, merchant_gleif_project_file returns one immutable
 file identity. Read it with merchant_gleif_file, retaining sha256 and nextOffset
 until all bytes arrive. This keeps the complete original package out of a single
@@ -399,7 +418,14 @@ starforge gleif serve \
 Receiving restores the same original workspace identity, complete captures and
 HTTP observations, all review revisions, frozen reports, native datasets and
 operation history. It checks every object identity and original source sequence.
-The original dataset files are recreated from their retained exact bytes.
+A source edition containing repeated LEIs is retained in full with a source-review
+issue; the receiving project keeps those original rows while company decisions,
+comparisons and customer datasets use a new complete edition without duplicates.
+The original dataset files are recreated from their retained exact bytes. New
+immutable files are staged and flushed before their completed filename appears,
+so interrupted object or dataset writes resume from the original input. The
+complete saved project state is checked against its 256 MiB reopening limit before
+replacing the previous readable state.
 
 A receiver interrupted before completion uses the same package and destination.
 An existing working project is opened normally rather than overwritten. Source
@@ -410,6 +436,14 @@ The receiving engineer should open the selected company detail, download an
 original source page and report, query the retained native dataset, then save
 the next agreed review or source edition. That completes the useful research
 handover in the same application.
+
+## Original source and ready receiving example
+
+The [observed foundation and Singapore branch example](../../stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/README.md)
+contains the complete original API bodies, actual acquisition receipts, full rendered
+company reports and ready source/review/report/dataset requests. Its source fields
+exercise legal jurisdiction, distinct legal and headquarters countries, reporting
+exceptions and branch relationship references using actual provider records.
 
 ## Source references
 

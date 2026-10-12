@@ -36,7 +36,15 @@ the original next page when the operator resumes the same operation ID.
 Pages are individually observed provider responses. A multi-page query is not a
 transactional registry snapshot. A repeated LEI across pages is surfaced while
 all original pages remain retained; it is not silently deduplicated into a
-different result.
+different result. The capture is marked SOURCE_REVIEW, and the complete project
+can still be exported and received with every repeated original row. Company
+decisions, comparisons and customer datasets require a complete unambiguous edition.
+
+Original source acquired through a service's source URL attachment import keeps
+that service's complete uploaded receipt, body identity, original URL and observed
+interval. Origin HTTP status and headers remain null when they are absent from the
+service return. The receipt-aware importer validates the exact body size and SHA-256
+against that retained acquisition, then uses the same original JSON:API page rules.
 
 ## Fields and source meaning
 
@@ -87,7 +95,9 @@ identifies GLEIF as the source and TokenJunkieLabs as the software publisher.
 A company review contains a stable review ID, LEI, exact source capture,
 original complete resource, source-page identity, reviewer, rationale, use case,
 next research work and Include / Exclude / Research decision. Every revision is
-retained. Updating a review supplies its current expectedVersion.
+retained. One stable current review ID belongs to each company LEI. Updating a
+review supplies its current expectedVersion; source-specific effective decisions
+come from the complete history for that LEI and capture.
 
 The browser retains edits independently of refresh. A changed source resource
 is labeled for another review. Selecting Include requires an explicit saved
@@ -119,4 +129,9 @@ dataset object bytes in base64 with lengths and SHA-256 identities. Its sha256
 binds the canonical package body without the sha256 field. Receiving validates
 the complete inventory and source sequence, restores native dataset files, and
 opens the same original project identity in the selected empty private directory.
+Immutable files are staged and flushed before their completed filename appears.
+The complete state is capped at its 256 MiB reopening limit before replacing the
+last readable state. Browser/client complete JSON delivery also has a 256 MiB
+limit, including base64 and state; the CLI can carry larger total JSON packages
+whose individual objects and project state fit their limits.
 The source package remains a separate versioned software deliverable.

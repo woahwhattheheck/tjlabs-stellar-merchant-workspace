@@ -1,13 +1,25 @@
 // SPDX-License-Identifier: MIT
 // One retained research project, original source responses and the native SF30 dataset.
-import { join } from 'node:path';
-import { lstat, readdir } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+import { lstat, readdir, rename, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { privateDirectory, readPrivate, readJson, createFile, atomicJson, acquireWorkspace, bytes, digest, identity, absolute } from '../postgres/publisher/files.mjs';
+import { privateDirectory, readPrivate, readJson, createFile, atomicJson, acquireWorkspace, bytes, digest, identity, absolute, syncDirectory } from '../postgres/publisher/files.mjs';
 import { SCHEMA, SOURCE, COLUMNS, clone, stable, key, need, label, plan, assembleCapture, reviewInput, compareRecords, csv, reportHtml } from './core.mjs';
 import { newCapture, captureSource, importCapture } from './source.mjs';
 const MAX=256*1024*1024;
 const exists=async path=>{try{await lstat(path);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}};
+async function immutableFile(path,raw) {
+  need(raw.length<=MAX,'GLEIF_FILE_TOO_LARGE','The retained file exceeds its complete-file limit.',413);
+  const same=async()=>need((await readPrivate(path,MAX)).equals(raw),'GLEIF_IMMUTABLE_CHANGED','The existing retained file differs from the original bytes.',409);
+  if(await exists(path)){await same();return;}
+  const temporary=join(dirname(path),'.gleif-write-'+randomUUID());
+  try{
+    await createFile(temporary,raw);
+    // The project lock and operation queue own this destination. Readers only receive the completed filename.
+    if(await exists(path))await same();else await rename(temporary,path);
+    await syncDirectory(dirname(path));
+  }finally{try{await unlink(temporary);}catch(error){if(error.code!=='ENOENT')throw error;}}
+}
 const actions=['capture','capture.resume','source.import','review.save','review.batch','report.prepare','dataset.prepare'];
 const now=()=>new Date().toISOString();
 const entry=record=>({id:record.id,action:record.action,state:record.state,createdAt:record.createdAt,updatedAt:record.updatedAt,error:record.error??null,result:record.result??null});
@@ -23,7 +35,7 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       for(const folder of ['objects','datasets'])await privateDirectory(join(directory,folder),true);
       // state is the authoritative current value; immutable identity is written last at creation.
       state={schema:SCHEMA+'.state',workspaceId:metadata.id,revision:0,captures:[],reviews:[],reports:[],datasets:[],operations:[]};
-      await atomicJson(directory,'state.json',state);await createFile(join(directory,'workspace.json'),bytes(metadata));
+      await atomicJson(directory,'state.json',state);await immutableFile(join(directory,'workspace.json'),bytes(metadata));
     }
     const metadata=await readJson(join(directory,'workspace.json'));state=await readJson(join(directory,'state.json'),MAX);
     need(metadata.schema===SCHEMA&&state.schema===SCHEMA+'.state'&&state.workspaceId===metadata.id,'GLEIF_WORKSPACE_IDENTITY','The saved project identity differs.',409);
@@ -32,14 +44,14 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     async function save() {
       if(persistenceFailure)throw persistenceFailure;
       state.revision++;
-      try{await atomicJson(directory,'state.json',state);}catch(error){persistenceFailure=Object.assign(new Error('The project write could not be confirmed: '+error.message+'. Reopen this same project to reconcile its retained state.'),{code:'GLEIF_PROJECT_WRITE',status:503});throw persistenceFailure;}
+      try{need(bytes(state).length<=MAX,'GLEIF_PROJECT_SIZE','The complete project state exceeds 256 MiB. Reopen its last retained state and select a source operation that fits the project.',413);await atomicJson(directory,'state.json',state);}catch(error){persistenceFailure=Object.assign(new Error('The project write could not be confirmed: '+error.message+'. Reopen this same project to reconcile its retained state.'),{code:error.code??'GLEIF_PROJECT_WRITE',status:error.status??503});throw persistenceFailure;}
     }
     function serial(fn) {const pending=queue.then(()=>{check();return fn();});queue=pending.catch(()=>{});return pending;}
     async function put(raw) {
       const data=Buffer.isBuffer(raw)?raw:Buffer.from(raw);need(data.length<=MAX,'GLEIF_OBJECT_TOO_LARGE');
       const sha256=digest(data),path=join(directory,'objects',sha256);
       if(await exists(path))need((await readPrivate(path,MAX)).equals(data),'GLEIF_OBJECT_CHANGED','The saved source differs.',409);
-      else await createFile(path,data);
+      else await immutableFile(path,data);
       return {sha256,bytes:data.length};
     }
     async function object(sha) {
@@ -53,13 +65,13 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       return {capture:clone(value),...assembleCapture(value,pages)};
     }
     function latestReviews() {
-      const rows=new Map();for(const r of state.reviews)rows.set(r.id,r);return [...rows.values()];
+      const rows=new Map();for(const r of state.reviews)rows.set(r.lei,r);return [...rows.values()];
     }
     async function selection(input) {
       need(Array.isArray(input.captureIds)&&input.captureIds.length>0&&new Set(input.captureIds).size===input.captureIds.length,'GLEIF_SELECTION','Select distinct complete source editions.');
       const captures=[],records=[];
       for(const id of input.captureIds){const full=await entities(id);need(full.complete,'GLEIF_SOURCE_INCOMPLETE','Complete the selected original source capture.');captures.push(full.capture);records.push(...full.records);}
-      const byEdition=new Map();for(const review of state.reviews)if(input.captureIds.includes(review.captureId))byEdition.set(review.id+'/'+review.captureId,review);
+      const byEdition=new Map();for(const review of state.reviews)if(input.captureIds.includes(review.captureId))byEdition.set(review.lei+'/'+review.captureId,review);
       const reviews=[...byEdition.values()];
       const selected=input.selection??'all';need(['all','included'].includes(selected),'GLEIF_SELECTION','Choose all source records or the included shortlist.');
       const rows=selected==='all'?records:records.filter(r=>reviews.some(v=>v.captureId===r.row.captureId&&v.lei===r.row.lei&&v.decision==='include'&&v.resourceSha256===identity(r.resource)));
@@ -91,6 +103,8 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     }
     async function saveReview(input,record) {
       const value=reviewInput(input,state.captures),full=await entities(value.captureId);
+      need(!full.issues.length,'GLEIF_SOURCE_REVIEW_REQUIRED','Acquire a complete source edition without repeated records before saving company decisions.',409);
+      const company=latestReviews().find(r=>r.lei===value.lei);need(!company||company.id===value.id,'GLEIF_REVIEW_IDENTITY','Continue this company under its existing review ID '+company?.id+'.',409);
       const item=full.records.find(r=>r.resource.id===value.lei);need(item,'GLEIF_REVIEW_ENTITY','The selected LEI is absent from this source capture.');
       const previous=state.reviews.filter(r=>r.id===value.id).at(-1);
       need((previous?.version??0)===(input.expectedVersion??0),'GLEIF_REVIEW_CHANGED','Reopen the latest saved review before editing.',409);
@@ -146,11 +160,13 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
         let current=record.action==='capture.resume'?capture(input.captureId):state.captures.find(c=>c.id===record.id);
         if(!current){current=newCapture(record.id,input.plan,record.createdAt);state.captures.push(current);await save();}
         await captureSource(current,{put,save:async()=>save(),fetchImpl,signal});
-        const full=await entities(current.id);return {capture:full.capture,records:full.records.length};
+        const full=await entities(current.id);if(full.issues.length){current.state='SOURCE_REVIEW';current.error=full.issues[0];}
+        return {capture:clone(current),records:full.records.length,issues:full.issues};
       }
       if(record.action==='source.import') {
         const received=importCapture(record.id,input,record.createdAt);
-        assembleCapture(received.capture,input.pages.map(p=>p.body));
+        const inspected=assembleCapture(received.capture,input.pages.map(p=>p.body));
+        if(inspected.issues.length){received.capture.state='SOURCE_REVIEW';received.capture.error=inspected.issues[0];}
         for(const data of received.objects)await put(data);
         state.captures.push(received.capture);return {capture:clone(received.capture),records:received.capture.pages.reduce((a,p)=>a+p.records,0)};
       }
@@ -201,9 +217,9 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       need(Number.isInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>0&&limit<=250,'GLEIF_ROWS');
       const full=await entities(id),needle=String(search).toLocaleLowerCase();
       const records=full.records.filter(r=>!needle||[r.row.lei,r.row.legalName,r.row.legalJurisdiction,r.row.registrationStatus].some(v=>v.toLocaleLowerCase().includes(needle)));
-      const reviews=latestReviews();
-      return {capture:full.capture,offset,total:records.length,nextOffset:offset+limit<records.length?offset+limit:null,
-        items:records.slice(offset,offset+limit).map(item=>{const candidates=reviews.filter(r=>r.lei===item.row.lei);const review=candidates.find(r=>r.captureId===id)??candidates.at(-1)??null;
+      const reviews=state.reviews;
+      return {capture:full.capture,issues:full.issues,usable:full.complete,sourceComplete:full.sourceComplete,offset,total:records.length,nextOffset:offset+limit<records.length?offset+limit:null,
+        items:records.slice(offset,offset+limit).map(item=>{const candidates=reviews.filter(r=>r.lei===item.row.lei);const review=candidates.filter(r=>r.captureId===id).at(-1)??candidates.at(-1)??null;
           return {...item,review:review?clone(review):null,needsReview:!!review&&review.resourceSha256!==identity(item.resource)};})};
     }
     async function datasetQuery(id,query='') {
@@ -220,6 +236,11 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       const objects=[];for(const sha of [...hashes].sort()){const raw=await object(sha);objects.push({sha256:sha,bytes:raw.length,base64:raw.toString('base64')});}
       const body={schema:SCHEMA+'.package',metadata:clone(metadata),state:snapshot,objects};return {...body,sha256:identity(body)};
     }
+    let recovered=false;
+    for(const operation of state.operations)if(['PENDING','RUNNING'].includes(operation.state)){operation.state='INTERRUPTED';operation.updatedAt=now();
+      operation.error={code:'GLEIF_PROCESS_REOPENED',message:'The previous process stopped. Resume this exact saved request.'};recovered=true;}
+    for(const capture of state.captures)if(capture.state==='FETCHING'){capture.state='INTERRUPTED';capture.error={code:'GLEIF_PROCESS_REOPENED',message:'The previous source process stopped. Continue its retained next page.'};recovered=true;}
+    if(recovered)await save();
     return {directory,metadata,start,wait,pause,operation,status,rows,entities,compare,datasetQuery,portable,object,async packageFile(){return {name:'gleif-project.json',...await put(bytes(await portable()))};},
       async close(){if(closed)return;closed=true;if(active){active.controller.abort(new Error('Project closed.'));await active.promise;}await queue;await unlock();}};
   } catch(e) {await unlock();throw e;}
@@ -249,14 +270,14 @@ export async function receiveGleifWorkspace({directory,package:input}={}) {
     key(review.id);need(review.resourceSha256===identity(review.originalResource)&&review.lei===review.originalResource?.id&&Number.isSafeInteger(review.version)&&review.version>0,'GLEIF_PACKAGE_REVIEW');
     const source=body.state.captures.find(c=>c.id===review.captureId);need(source&&source.pages.some(page=>page.sha256===review.sourcePage?.sha256),'GLEIF_PACKAGE_REVIEW_SOURCE');
   }
-  if(await exists(directory)){await privateDirectory(directory);const names=await readdir(directory);need(names.length===0||(names.every(n=>['receiving.json','objects','datasets','publisher.lock','state.json','workspace.json'].includes(n))&&(names.includes('receiving.json')||names.every(n=>n==='publisher.lock'))),'GLEIF_RECEIVE_DESTINATION','Choose an empty private receiving directory or resume its original receiving.',409);}
+  if(await exists(directory)){await privateDirectory(directory);const names=await readdir(directory);need(names.length===0||(names.every(n=>(['receiving.json','objects','datasets','publisher.lock','state.json','workspace.json'].includes(n)||/^\.gleif-write-[a-f0-9-]{36}$/.test(n)))&&(names.includes('receiving.json')||names.every(n=>n==='publisher.lock'||/^\.gleif-write-[a-f0-9-]{36}$/.test(n)))),'GLEIF_RECEIVE_DESTINATION','Choose an empty private receiving directory or resume its original receiving.',409);}
   else await privateDirectory(directory,true);
   const unlock=await acquireWorkspace(directory);
   try{
     const receiving={schema:SCHEMA+'.receiving',sha256,workspaceId:body.metadata.id};
     if(await exists(join(directory,'receiving.json')))need(stable(await readJson(join(directory,'receiving.json')))===stable(receiving),'GLEIF_RECEIVE_CHANGED');
-    else await createFile(join(directory,'receiving.json'),bytes(receiving));
-    const immutable=async(path,raw)=>{if(await exists(path))need((await readPrivate(path,MAX)).equals(raw),'GLEIF_RECEIVE_CHANGED');else await createFile(path,raw);};
+    else await immutableFile(join(directory,'receiving.json'),bytes(receiving));
+    const immutable=async(path,raw)=>{if(await exists(path))need((await readPrivate(path,MAX)).equals(raw),'GLEIF_RECEIVE_CHANGED');else await immutableFile(path,raw);};
     // A stopped receiver can already have written either final identity file. Reconcile the same package before continuing.
     for(const[name,value]of [['state.json',body.state],['workspace.json',body.metadata]])if(await exists(join(directory,name)))need((await readPrivate(join(directory,name),MAX)).equals(bytes(value)),'GLEIF_RECEIVE_CHANGED','Open the existing received project or resume its original unchanged package.',409);
     for(const folder of ['objects','datasets'])await privateDirectory(join(directory,folder),true);
