@@ -2,6 +2,7 @@
 import { readFile, lstat } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
+import {normalizeSupportedResponse, parseSupportedResponse} from './facilitator-supported.mjs';
 import { inspectRelease, readReleaseState, stageRetainedRelease } from './releases.mjs';
 import { compileSellerRoutes } from '../sf30-seller-sdk/resource-server.mjs';
 import { createNativeSellerServer, inspectNativePaymentRequirements, NATIVE_SDK_VERSION } from '../sf30-seller-sdk/native-factory.mjs';
@@ -86,7 +87,7 @@ function paymentChanges(before, after) {
 
 /** Use the exact SDK client, route factory and requirements builder. No handler,
  * signer, listener, verification or settlement is invoked by this read. */
-export async function reviewReleaseFacilitator(root, { profiles, provider: alias, releaseId, id, label } = {}) {
+export async function reviewReleaseFacilitator(root, { profiles, provider: alias, releaseId, id, label, response } = {}) {
   root = resolve(root);
   releaseId = identifier(releaseId, 'Retained release ID');
   id = identifier(id, 'New release ID');
@@ -102,9 +103,16 @@ export async function reviewReleaseFacilitator(root, { profiles, provider: alias
     maxRequestBytes: route.maxRequestBytes, handler: unusedHandler })));
   const { HTTPFacilitatorClient } = await import('@x402/core/server');
   const client = new HTTPFacilitatorClient({ url: selected.url, timeoutMs: selected.timeoutMs });
+  const receivedResponse = response === undefined ? null : normalizeSupportedResponse(response,
+    {expectedUrl:selected.url + '/supported'});
+  if (receivedResponse) {
+    const readOnly = async () => { throw fail('FACILITATOR_RESPONSE_ONLY', 'A received response only constructs native requirements.'); };
+    client.verify = readOnly; client.settle = readOnly;
+  }
   let supported = null, nativePayments = [], error = null;
   try {
-    const value = await client.getSupported();
+    const value = receivedResponse ? await parseSupportedResponse(receivedResponse,
+      {expectedUrl:selected.url + '/supported'}) : await client.getSupported();
     if (Buffer.byteLength(stable(value)) > 262144) throw new RangeError('Provider capabilities exceed the 256 KiB review limit.');
     supported = value;
     // The original server consumes this exact completed native read. A second
@@ -128,7 +136,8 @@ export async function reviewReleaseFacilitator(root, { profiles, provider: alias
       currentAllowLocalFacilitator: release.runtime.allowLocalFacilitator === true },
     proposed: { id, label: line(label ?? id, 'New release label'), provider: selected },
     compatible: error === null, supportedSha256: supported === null ? null : hash(stable(supported)),
-    supported, nativePayments, error };
+    supported, nativePayments, error,
+    ...(receivedResponse ? {receivedResponse} : {}) };
   if (Buffer.byteLength(stable(content)) > 1024 * 1024) throw new RangeError('Facilitator review exceeds 1 MiB.');
   return { ...content, id: hash(stable(content)) };
 }
@@ -140,6 +149,8 @@ function checkedReview(review) {
   if (!content.compatible || !/^[a-f0-9]{64}$/.test(content.supportedSha256))
     throw fail('FACILITATOR_NOT_COMPATIBLE', 'Review a provider that supports every retained native payment option.');
   identifier(content.source?.releaseId, 'Retained release ID'); identifier(content.proposed?.id, 'New release ID');
+  if (content.receivedResponse !== undefined) normalizeSupportedResponse(content.receivedResponse,
+    {expectedUrl:content.proposed.provider.url + '/supported'});
   return review;
 }
 export async function readFacilitatorReview(path) {
@@ -165,7 +176,8 @@ export async function stageReleaseFacilitator(root, { profiles, review } = {}) {
     return { reviewId: review.id, ...await stageRetainedRelease(root, options) };
   }
   const fresh = await reviewReleaseFacilitator(root, { profiles, provider: selected.alias,
-    releaseId: options.from, id: options.id, label: options.label });
+    releaseId: options.from, id: options.id, label: options.label,
+    ...(review.receivedResponse === undefined ? {} : {response:review.receivedResponse}) });
   if (!fresh.compatible || fresh.generation !== review.generation || stable(fresh.source) !== stable(review.source) ||
       fresh.supportedSha256 !== review.supportedSha256 || stable(fresh.nativePayments) !== stable(review.nativePayments))
     throw fail('FACILITATOR_REVIEW_CHANGED', 'The retained release or provider capabilities changed. Review the current provider before staging.');
@@ -185,7 +197,7 @@ export function createReleaseFacilitatorControl(root, profiles) {
     providers: Object.entries(profiles?.providers ?? {}).map(([alias, value]) => ({ alias, ...value })) });
   return { status,
     review: input => track(async () => {
-      exact(input, ['provider', 'releaseId', 'id', 'label'], ['provider', 'releaseId', 'id']);
+      exact(input, ['provider', 'releaseId', 'id', 'label', 'response'], ['provider', 'releaseId', 'id']);
       const review = await reviewReleaseFacilitator(root, { profiles, ...input });
       if (reviews.size >= 16) reviews.delete(reviews.keys().next().value);
       reviews.set(review.id, review); return structuredClone(review);

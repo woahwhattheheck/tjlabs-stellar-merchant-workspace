@@ -479,15 +479,25 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
   proposed.placeholder = 'hpd-periplo-1';
   const label = field('New release label', node('input'));
   label.maxLength = 240; label.placeholder = 'Same source with selected provider';
+  const reviewSource = field('Capability source', node('select'));
+  reviewSource.dataset.facilitatorResponseMode = '';
+  for (const [value, caption] of [['live','Read provider now'],['received','Use received public document']]) {
+    const choice = node('option', caption); choice.value = value; reviewSource.append(choice);
+  }
+  const responseFile = field('Received document file', node('input'));
+  responseFile.type = 'file'; responseFile.accept = '.json,application/json';
+  responseFile.dataset.facilitatorResponseFile = '';
+  const responseDetails = node('div', undefined, 'span-2');
   const providerDetails = node('div', undefined, 'span-2');
   const formActions = node('div', undefined, 'actions span-2');
   const reviewButton = node('button', 'Review provider'); reviewButton.type = 'submit';
-  formActions.append(reviewButton); form.append(providerDetails, formActions);
+  formActions.append(reviewButton); form.append(providerDetails, responseDetails, formActions);
   const reviewArea = node('div');
   const reviewActions = node('div', undefined, 'actions');
   const stage = node('button', 'Stage reviewed release'); stage.type = 'button';
   const exportReview = node('button', 'Download complete review'); exportReview.type = 'button';
-  reviewActions.append(stage, exportReview);
+  const exportResponse = node('button', 'Download received response'); exportResponse.type = 'button';
+  reviewActions.append(stage, exportReview, exportResponse);
   const stageReason = node('p', '', 'help');
   const historyHeading = node('div', undefined, 'panel-heading');
   const historyCount = node('span', '', 'badge');
@@ -500,7 +510,7 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
   section.append(heading, introduction, configuration, form, reviewArea, reviewActions,
     stageReason, historyHeading, historyArea, pageActions);
   host.append(section);
-  let locked = true, selected = null, page = null, after = null;
+  let locked = true, selected = null, page = null, after = null, receivedResponse = null;
   const model = () => getPublisher()?.facilitators;
   const releases = () => getPublisher()?.releases?.releases || [];
   const generation = () => getPublisher()?.releases?.state?.generation;
@@ -516,13 +526,16 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
   }
   function input() {
     return {provider:provider.value, releaseId:release.value, id:proposed.value,
-      ...(label.value.trim() ? {label:label.value.trim()} : {})};
+      ...(label.value.trim() ? {label:label.value.trim()} : {}),
+      ...(reviewSource.value === 'received' && receivedResponse ? {response:receivedResponse} : {})};
   }
   function sameInput() {
     const value = input();
     return selected && value.provider === selected.proposed.provider.alias &&
       value.releaseId === selected.source.releaseId && value.id === selected.proposed.id &&
-      (value.label || value.id) === selected.proposed.label;
+      (value.label || value.id) === selected.proposed.label &&
+      (reviewSource.value === 'received' ? sameReceivedDocument(receivedResponse, selected.receivedResponse) :
+        selected.receivedResponse === undefined);
   }
   function providerSame() {
     const declared = model()?.providers?.find(item => item.alias === selected?.proposed?.provider?.alias);
@@ -537,6 +550,27 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
       ['Local facilitator enabled', value.allowLocalFacilitator ? 'Yes' : 'No']
     ]) : node('p', 'Choose a provider declared by the host.', 'help'));
   }
+  function sameReceivedDocument(left, right) {
+    if (!left || !right) return false;
+    const ordered = value => Array.isArray(value) ? value.map(ordered) : object(value) ?
+      Object.fromEntries(Object.keys(value).sort().map(key => [key, ordered(value[key])])) : value;
+    return JSON.stringify(ordered(left)) === JSON.stringify(ordered(right));
+  }
+  function responseIdentity(value) {
+    return {id:value.id, url:value.url, retrieved:value.retrieved,
+      body:{bytes:value.body.bytes, sha256:value.body.sha256, contentType:value.body.contentType}};
+  }
+  function renderResponse() {
+    const value = reviewSource.value === 'received' ? receivedResponse : null;
+    responseDetails.replaceChildren(value ? facts([
+      ['Received document', value.id], ['Received endpoint', value.url],
+      ['Retrieval started', value.retrieved.startedAt], ['Retrieval completed', value.retrieved.completedAt],
+      ['Retrieval source', value.retrieved.source], ['Original body bytes', value.body.bytes],
+      ['Original body SHA-256', value.body.sha256]
+    ]) : node('p', reviewSource.value === 'received' ?
+      'Choose the complete JSON document produced by facilitator-response capture. The server verifies its full body and selected provider URL.' :
+      'The installed SDK reads the configured provider when you review it.', 'help'));
+  }
   function renderReview() {
     reviewArea.replaceChildren();
     if (!selected) {
@@ -550,7 +584,7 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
       ['Original SDK', review.nativeSdk], ['Source release', review.source.releaseId],
       ['Source release digest', review.source.releaseDigest], ['Source public origin', review.source.publicOrigin],
       ['Proposed release', review.proposed.id], ['Provider', review.proposed.provider.url],
-      ['Selection generation', review.generation], ['Supported body SHA-256', review.supportedSha256]
+      ['Selection generation', review.generation], ['Native supported SHA-256', review.supportedSha256]
     ]));
     if (review.error) reviewArea.append(node('p',
       text(review.error.code) + ': ' + text(review.error.message), 'error-detail'));
@@ -571,7 +605,18 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
       const scroll = node('div', undefined, 'table-scroll'); scroll.append(table); reviewArea.append(scroll);
       reviewArea.append(detail('Stored terms and all native changes', {storedPayment:route.storedPayment,changes:route.changes}));
     }
-    reviewArea.append(detail('Complete original review', review));
+    if (review.receivedResponse) {
+      reviewArea.append(node('h4', 'Received public document'), facts([
+        ['Original endpoint', review.receivedResponse.url],
+        ['Retrieved from', review.receivedResponse.retrieved.source],
+        ['Retrieval started', review.receivedResponse.retrieved.startedAt],
+        ['Retrieval completed', review.receivedResponse.retrieved.completedAt],
+        ['Original body bytes', review.receivedResponse.body.bytes],
+        ['Original body SHA-256', review.receivedResponse.body.sha256]
+      ]));
+      reviewArea.append(detail('Native review and document identity',
+        {...review, receivedResponse:responseIdentity(review.receivedResponse)}));
+    } else reviewArea.append(detail('Complete original review', review));
   }
   function renderHistory() {
     historyArea.replaceChildren();
@@ -586,7 +631,9 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
       inspect.dataset.facilitatorReviewId = item.id;
       card.append(title, facts([['Review', item.id], ['Observed', item.observedAt],
         ['Source release', item.releaseId], ['Provider', item.provider?.label || item.provider?.alias],
-        ['Native SDK', item.nativeSdk]]), inspect);
+        ['Native SDK', item.nativeSdk],
+        ['Capability source', item.receivedResponse ? 'Received public document' : 'Provider read'],
+        ...(item.receivedResponse ? [['Original body SHA-256',item.receivedResponse.body.sha256]] : [])]), inspect);
       historyArea.append(card);
     }
     if (!value.items.length) historyArea.append(node('p', 'No reviews on this retained page.', 'empty'));
@@ -595,7 +642,9 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
     locked = value;
     const configured = Boolean(model()?.configured), available = !locked;
     reviewButton.disabled = !available || !configured || !provider.value || !release.value ||
-      !proposed.checkValidity() || proposed.value === release.value;
+      !proposed.checkValidity() || proposed.value === release.value ||
+      reviewSource.value === 'received' && !receivedResponse;
+    reviewButton.textContent = reviewSource.value === 'received' ? 'Review received document' : 'Review provider';
     const staged = selected && releases().find(item => item.id === selected.proposed.id);
     const alreadyStaged = staged?.derivedFrom?.reviewId === selected?.id;
     const source = selected && releases().find(item => item.id === selected.source.releaseId);
@@ -608,12 +657,17 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
       !sameInput() ? 'The form now differs from the displayed review. Review these new selections.' :
       !providerSame() ? 'The configured provider changed. Review its current endpoint and capabilities.' :
       !alreadyStaged && !current ? 'The retained release or selection generation changed. Review the current source again.' :
+      selected.receivedResponse ?
+      'Staging interprets this same received document with the installed SDK and checks the current retained source. Select and start the release with the existing controls.' :
       'Staging verifies the original source and current provider response. Activation and seller process ownership remain in the release controls.';
     exportReview.disabled = !available || !selected;
+    exportResponse.disabled = !available || !selected?.receivedResponse;
     firstPage.disabled = !available || !model();
     nextPage.disabled = !available || !page?.nextCursor;
     for (const control of historyArea.querySelectorAll('button')) control.disabled = !available;
-    for (const control of [provider,release,proposed,label]) control.disabled = !available || !configured;
+    for (const control of [provider,release,proposed,label,reviewSource])
+      control.disabled = !available || !configured;
+    responseFile.disabled = !available || !configured || reviewSource.value !== 'received';
   }
   function render() {
     section.hidden = !model();
@@ -627,14 +681,16 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
     populate(provider, (model().providers || []).map(item => [item.alias, item.label + ' (' + item.alias + ')']));
     populate(release, releases().map(item => [item.id, item.label || item.id]), activeId);
     if (after === null) page = model().reviews;
-    renderProvider(); renderReview(); renderHistory(); controls(locked);
+    renderProvider(); renderResponse(); renderReview(); renderHistory(); controls(locked);
   }
   function selectReview(review) {
     selected = review;
     provider.value = review.proposed.provider.alias;
     release.value = review.source.releaseId;
     proposed.value = review.proposed.id; label.value = review.proposed.label;
-    renderProvider(); renderReview(); controls(locked);
+    receivedResponse = review.receivedResponse ?? null;
+    reviewSource.value = receivedResponse ? 'received' : 'live'; responseFile.value = '';
+    renderProvider(); renderResponse(); renderReview(); controls(locked);
   }
   form.addEventListener('submit', event => {
     event.preventDefault();
@@ -645,8 +701,25 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
         : 'The native incompatibility is retained with the full provider response.', review.compatible ? undefined : 'error');
     });
   });
-  for (const control of [provider,release,proposed,label]) control.addEventListener('input', () => {
-    renderProvider(); controls(locked);
+  for (const control of [provider,release,proposed,label,reviewSource]) control.addEventListener('input', () => {
+    renderProvider(); renderResponse(); controls(locked);
+  });
+  responseFile.addEventListener('change', () => {
+    const file = responseFile.files?.[0];
+    receivedResponse = null; renderResponse(); controls(locked);
+    if (!file) return;
+    handle(async () => {
+      if (file.size < 1 || file.size > 393216) throw new Error('Choose one complete received document up to 384 KiB.');
+      const value = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await file.arrayBuffer()));
+      if (value?.schema !== 'stellar-forge.facilitator-supported-response.v1' ||
+          !/^[a-f0-9]{64}$/.test(value.id || '') || typeof value.url !== 'string' ||
+          !object(value.retrieved) || !object(value.body) || value.body.encoding !== 'base64' ||
+          typeof value.body.data !== 'string')
+        throw new Error('Choose the complete document produced by facilitator-response capture.');
+      receivedResponse = value;
+      renderResponse(); controls(locked);
+      notice('The complete public document is loaded. Review it to verify its byte identity and native payment requirements.');
+    });
   });
   stage.addEventListener('click', () => handle(async () => {
     if (stage.disabled || !selected) return;
@@ -655,6 +728,7 @@ function createPublisherFacilitatorPanel({call, download, handle, notice, getPub
     controls(locked);
   }));
   exportReview.addEventListener('click', () => handle(() => download('facilitator-review', selected.id)));
+  exportResponse.addEventListener('click', () => handle(() => download('facilitator-response', selected.id)));
   historyArea.addEventListener('click', event => {
     const control = event.target.closest('[data-facilitator-review-id]');
     if (control) handle(async () => selectReview(await call('publisher.facilitators.inspect',
