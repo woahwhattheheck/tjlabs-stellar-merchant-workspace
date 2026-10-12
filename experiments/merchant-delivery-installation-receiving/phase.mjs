@@ -271,7 +271,7 @@ export async function runDeliveryInstallationPhase({
   if (!await exists(output)) await privateDirectory(output, true); else await privateDirectory(output);
   const sourceFiles = await verifyFiles(sourceRoot, BOOTSTRAP);
   const moduleAt = path => import(pathToFileURL(join(sourceRoot, DIST, path)).href);
-  const { operationLease, operationRunning } = await moduleAt('runtime-workspace/storage.mjs');
+  const { operationLease, operationRunning, workerAlive } = await moduleAt('runtime-workspace/storage.mjs');
   const { inspectRuntimeInstall } = await moduleAt('runtime-install.mjs');
   const { resolveRuntimeProfile } = await moduleAt('runtime-profile.mjs');
   const lease = await operationLease(join(output, 'installation-phase.lock'));
@@ -282,7 +282,7 @@ export async function runDeliveryInstallationPhase({
     suppliedInstallation: installedRoot, node: await realpath(node), python, npmCache, nodeHeaders, offlineSource };
   const interrupted = () => { if (signal?.aborted) throw signal.reason ?? fail('INSTALLATION_RECEIVING_INTERRUPTED', 'The original installation remains retained.'); };
   function save() {
-    const snapshot = structuredClone(receipt), next = saving.then(() => atomicJSON(receiptFile, snapshot));
+    const snapshot = structuredClone(receipt), next = saving.catch(() => {}).then(() => atomicJSON(receiptFile, snapshot));
     saving = next; return next;
   }
   async function milestone(key, value = {}) {
@@ -318,36 +318,75 @@ export async function runDeliveryInstallationPhase({
   }
   async function owners() {
     if (!receipt?.requests?.length || !await exists(receipt.runtimeWorkspace)) return [];
-    const state = model ? await model.state() : null, result = [];
+    const result = [];
     for (const input of receipt.requests) {
       const directory = join(receipt.runtimeWorkspace, 'operations', input.requestId);
       if (!await exists(directory)) continue;
-      const current = state?.operations.find(item => item.id === input.requestId);
       const retainedState = (await readJSON(join(directory, 'state.json'), true))?.value;
       const workerLock = join(directory, 'worker.lock');
       const worker = await exists(workerLock) ? await operationRunning(workerLock) : false;
+      const processActive = retainedState?.phase === 'RUNNING' && await workerAlive(retainedState);
       const nativeLocks = [];
       const original = (await readJSON(join(directory, 'request.json'), true))?.value;
+      if (original) {
+        const { requestHash, createdAt, ...definition } = original;
+        assert.equal(sha(json(canonical(definition))), requestHash, 'The original owner record changed');
+        assert.equal(original.clientRequestHash, sha(json(canonical(input))), 'The observed owner belongs to another input');
+      }
       for (const [kind, path] of [
         ['build', original?.sourceBuildOutput && join(original.sourceBuildOutput, 'build.lock')],
         ['install', original?.runtimeDirectory && join(original.runtimeDirectory, 'install.lock')],
       ]) if (path && await exists(path) && await operationRunning(path)) nativeLocks.push({ kind, path });
-      if (worker || current?.workerActive || current?.commandActive || nativeLocks.length || (current?.phase ?? retainedState?.phase) === 'QUEUED')
-        result.push({ requestId: input.requestId, operation: input.operation, phase: current?.displayPhase ?? retainedState?.phase ?? 'UNKNOWN',
-          workerActive: worker || current?.workerActive === true, nativeLocks });
+      if (worker || processActive || nativeLocks.length || retainedState?.phase === 'QUEUED')
+        result.push({ requestId: input.requestId, operation: input.operation, phase: retainedState?.phase ?? 'UNKNOWN',
+          workerActive: worker || processActive === true, nativeLocks });
     }
     return result;
   }
   async function drain() {
-    const deadline = Date.now() + drainTimeoutMs; let pending;
-    do {
-      pending = await owners();
-      receipt.pendingOwners = pending; receipt.ownedProcessesClosed = pending.length === 0; await save();
-      if (!pending.length) return;
-      if (Date.now() >= deadline) throw fail('ORIGINAL_INSTALLATION_OWNER_ACTIVE',
-        'The retained native request still owns work; continue this same phase after it finishes.', { pendingOwners: pending });
+    let queuedSince = null, lastProgress = 0, latestWriteError = null;
+    for (;;) {
+      let pending;
+      try { pending = await owners(); }
+      catch (error) {
+        // An unavailable observation is not proof that a detached worker ended.
+        receipt.ownerObservationError = errorView(error); receipt.ownedProcessesClosed = false;
+        try { await save(); } catch {}
+        if (Date.now() - lastProgress >= 10000) {
+          process.stdout.write(JSON.stringify({ phase: 'DELIVERY_INSTALLATION', state: 'WAITING_FOR_ORIGINAL_OWNER_OBSERVATION',
+            error: errorView(error), at: now() }) + '\n'); lastProgress = Date.now();
+        }
+        await delay(1000); continue;
+      }
+      delete receipt.ownerObservationError;
+      const active = pending.filter(item => item.workerActive || item.nativeLocks.length);
+      receipt.pendingOwners = pending; receipt.ownedProcessesClosed = pending.length === 0;
+      try { await save(); latestWriteError = null; }
+      catch (error) { latestWriteError = error; }
+      if (!pending.length) {
+        if (latestWriteError) throw fail('INSTALLATION_CLOSURE_RECEIPT_UNSAVED',
+          'The original owners closed, but their final receipt could not be saved.', { ownersClosed: true });
+        return;
+      }
+      if (Date.now() - lastProgress >= 10000) {
+        process.stdout.write(JSON.stringify({ phase: 'DELIVERY_INSTALLATION',
+          state: active.length ? 'DRAINING_ORIGINAL_OWNERS' : 'ORIGINAL_PUBLICATION_PENDING',
+          pending, ...(latestWriteError ? { receiptError: errorView(latestWriteError) } : {}), at: now() }) + '\n');
+        lastProgress = Date.now();
+      }
+      // Never end the enclosing receiving lifetime while an original native owner is live.
+      // A stalled QUEUED record without a live observation remains an unresolved request;
+      // it is not a cancellation or a claim that a delayed start cannot still occur.
+      if (active.length) queuedSince = null;
+      else {
+        queuedSince ??= Date.now();
+        if (Date.now() - queuedSince >= drainTimeoutMs)
+          throw fail('ORIGINAL_INSTALLATION_PUBLICATION_PENDING',
+            'No live owner was observed, but the original queued publication remains unresolved. Keep its request and reconcile startup.',
+            { pendingOwners: pending });
+      }
       await delay(1000);
-    } while (true);
+    }
   }
   try {
     receipt = (await readJSON(receiptFile, true))?.value ?? { ...selected, state: 'PREPARING', attempts: [],
@@ -467,7 +506,7 @@ export async function runDeliveryInstallationPhase({
     await createRuntimeWorkspace(receipt.initializationRequest);
   }
 
-      await initializeControl();
+      interrupted(); await initializeControl();
       model = await openRuntimeWorkspace({ directory: receipt.runtimeWorkspace });
       const workspace = await model.state();
       if (receipt.workspaceId) assert.equal(workspace.workspaceId, receipt.workspaceId);
@@ -526,6 +565,7 @@ export async function runDeliveryInstallationPhase({
           { requestId: input.requestId });
       }
       async function beginOrResume(input) {
+        interrupted();
         const current = await job(input);
         if (!current) return model.begin(input);
         if (current.phase === 'SUCCEEDED' || current.workerActive || current.commandActive) return current;
@@ -540,6 +580,7 @@ export async function runDeliveryInstallationPhase({
           { requestId: input.requestId });
       }
       if (!receipt.sourceReview) {
+        interrupted();
         const review = await model.sourceBuildsReview({ repository, ref: PRODUCT, selection: 'merchant-delivery',
           offline: offlineSource, python });
         assert.equal(review.sourceCommit, PRODUCT); assert.equal(review.selection, 'merchant-delivery');
@@ -559,6 +600,7 @@ export async function runDeliveryInstallationPhase({
       }
       const sourceInput = receipt.sourceRequest;
       let originalBuild = await job(sourceInput);
+      interrupted();
       if (!originalBuild || originalBuild.displayPhase === 'INITIALIZING' ||
           !await exists(join(receipt.runtimeWorkspace, 'operations', sourceInput.requestId, 'state.json'))) {
         await model.begin(sourceInput);
@@ -586,6 +628,7 @@ export async function runDeliveryInstallationPhase({
       await milestone('native-profile-reviewed', { profileId: profile.profileId, host: profile.host,
         selection: profile.selection, dependencies: profile.dependencies });
       async function newPreparation(previous = null) {
+        interrupted();
         let input;
         const name = 'merchant-delivery-' + (receipt.preparations.length + 1);
         if (previous) {
@@ -643,6 +686,7 @@ export async function runDeliveryInstallationPhase({
         const current = await job(install);
         if (current && (current.phase === 'FAILED' || current.displayPhase === 'INTERRUPTED' || current.displayPhase === 'INITIALIZING')) {
           await released(install);
+          interrupted();
           const state = await model.state({ runtimeId: receipt.runtimeId });
           assert.equal(state.selected.directory, receipt.installedRoot); assert.equal(state.selected.profileId, profile.profileId);
           assert.equal(state.selected.archiveSha256, receipt.build.sha256);
@@ -685,7 +729,7 @@ export async function runDeliveryInstallationPhase({
     if (selectedReceipt) {
       try { await drain(); }
       catch (error) {
-        receipt.state = 'INCOMPLETE'; receipt.ownedProcessesClosed = false;
+        receipt.state = 'INCOMPLETE'; receipt.ownedProcessesClosed = error.ownersClosed === true;
         receipt.cleanupError = errorView(error); failed ??= error; await save().catch(() => {});
       }
       if (activeAttempt) {
