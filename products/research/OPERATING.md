@@ -979,6 +979,32 @@ The installed product includes the original SF101 merchant, Buyer Runbook and Re
 
 The complete source-owned walkthrough is [Paid Research delivery](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-commerce/OPERATING.md). The Research and Zotero selections retain that guide, the whole Buyer application and its typed agent, the complete SF101 receiver, all Research customer-commerce source and the existing retained-download helpers.
 
+### Connect the running Buyer
+
+The installed `buyer-agent connect` command prepares the original Buyer connection and its Research host declaration together. Start or reopen the existing Buyer through **Applications → Buyer runbook**, then use that application's complete private launch file. The native Buyer workspace, SF88 accounting directory and receiving store each keep their own path.
+
+```sh
+starforge buyer-agent connect \
+  --config /absolute/private/research-buyer-agent.json \
+  --workspace research-acquisition \
+  --launch /absolute/private/buyer-launch.json \
+  --storage /absolute/private/research-buyer-receiving \
+  --operator /absolute/private/original-sf88-operator \
+  --research-host /absolute/private/research-commerce.json \
+  --research-buyer research-acquisition \
+  --checkout /absolute/private/research-checkout.json \
+  --merchant research-report \
+  --claim-env SF101_CLAIM_TOKEN
+```
+
+Use the actual retained checkout and declared claim environment name for this installation. The checkout must already be initialized through the original merchant operation. For a buyer-only host, omit `--checkout`, `--merchant` and `--claim-env`. When the host already declares its merchant, the command preserves that complete declaration. The accounting `--operator` is optional and selects the existing SF88 directory containing its original operator manifest and ledger.
+
+The command reads the actual running Buyer's launch, checks the selected application and source, validates the original accounting and merchant selections, then saves the two complete private configuration files. Its result includes the connection file digest, workspace alias, selected instance and browser URL. Select the saved `research-commerce.json` in the Research Application as described below; the existing Research paid-delivery view then uses that Buyer.
+
+Repeat the same command after an interrupted setup. A saved first file is reopened and the original Research declaration is completed. Existing aliases, input handles, accounting handles, receiving limits and operation history remain with their saved connection. For a deliberate source upgrade of this same Buyer, provide `--expected-connection-sha256` with its current complete configuration digest and the updated original launch file. A normal restart of the same selected source reuses the connection after its lifecycle owner updates that launch.
+
+The [complete Buyer connection guide](../../stellar/scf-starforge-20261009/buyer-runbook/AGENT.md#connect-the-running-buyer-and-research) covers the original standalone launch, optional accounting, new aliases, configured Merchant provider and complete receiving. The same `connectBuyerRunbookAgent` function is exported by the installed `./buyer/agent/setup` entry.
+
 ### Select the existing hosts in Applications
 
 In **Applications → Research dossiers**, set **Original paid Research host configuration** (`customerCommerceHost`) to the private JSON file that declares the existing merchant and Buyer aliases. It composes with the same Zotero, extraction Python, Object, document-pipeline and source-workspace settings. When no explicit Research connection path is selected, the existing application writes `research-connection.json` in its private Research directory.
