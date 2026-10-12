@@ -1,4 +1,4 @@
-import type { Inbox, InboxJob, InboxResult, InboxReview, InboxResponse, VerifiedFile } from '../index.mjs';
+import type { Inbox, InboxJob, InboxResult, InboxReview, InboxResponse, InboxRpcResponse, VerifiedFile } from '../index.mjs';
 
 export interface CallerTask {
   system: string;
@@ -8,6 +8,12 @@ export interface CallerTask {
   purpose: string;
   service: string;
 }
+export interface TaskRpcResultSelection {
+  commerceDirectory: string;
+  /** Original create-only recovery read directory identity. */
+  readId: string;
+  responseSha256: string;
+}
 export interface TaskSelection {
   intentId: string;
   role: string;
@@ -16,7 +22,10 @@ export interface TaskSelection {
   facilitator?: string | null;
   decisionRef?: string | null;
   reservationRef?: string | null;
+  /** Exact separately timed result of this original settled request. */
+  rpcResult?: TaskRpcResultSelection;
 }
+export type NormalizedTaskSelection = Required<Omit<TaskSelection, 'rpcResult'>> & Pick<TaskSelection, 'rpcResult'>;
 export interface TaskPredecessor {
   taskSha256: string;
   system: string;
@@ -24,10 +33,11 @@ export interface TaskPredecessor {
   revision: string;
 }
 export interface TaskEntry {
-  selection: Required<TaskSelection>;
+  selection: NormalizedTaskSelection;
   binding: {
     jobId: string; intentId: string; configSha256: string; bodySha256: string | null;
     ticketSha256: string | null; operationSha256: string;
+    rpcResultSha256?: string;
   };
   request: InboxJob['operation'];
 }
@@ -60,7 +70,7 @@ export interface TaskInspection {
   schema: 'stellar-forge.inbox-task-inspection.v1';
   taskSha256: string;
   task: CallerTask;
-  entries: { selection: Required<TaskSelection>; job: InboxJob; delivery: Record<string, unknown> | null }[];
+  entries: { selection: NormalizedTaskSelection; job: InboxJob; delivery: Record<string, unknown> | null }[];
   process: InboxResult['process'];
   savedResults: number;
   requiredResults: number;
@@ -108,7 +118,7 @@ export class InboxTask {
       {taskSha256: string; dispatched: true; result: InboxResult<InboxJob>}>;
   recover(intentId: string, options?: {signal?: AbortSignal}):
     Promise<{taskSha256: string; result: InboxResult<InboxJob>}>;
-  response(intentId: string, options?: {signal?: AbortSignal}): Promise<InboxResponse | null>;
+  response(intentId: string, options?: {signal?: AbortSignal}): Promise<InboxResponse | InboxRpcResponse | null>;
   receive(options: {directory: string; signal?: AbortSignal}): Promise<ReceivedInboxTask>;
 }
 export function openInboxTaskPacket(input: {
@@ -124,6 +134,9 @@ export interface TaskNativeOutcome {
   lastError: unknown;
   evidenceError: unknown;
   responseCleanupError: unknown;
+  recoveredResult?: {readId: string; source: 'SETTLED_RPC_RECOVERY_READ'; httpStatus: 200;
+    httpStatusSource: 'ORIGINAL_RPC_RECOVERY_HTTP_200_CONTRACT'; recoveryReadStartedAt: string;
+    responseObservedAt: string; publishedAt: string; transaction: string; bytes: number; sha256: string};
 }
 export class ReceivedInboxTask {
   readonly directory: string;
@@ -140,7 +153,7 @@ export class ReceivedInboxTask {
 export function compareInboxTasks(previous: TaskRecord, next: TaskRecord): {
   previous: string; next: string;
   entries: { role: string; previousIntent: string | null; nextIntent: string; reusedOriginalIntent: boolean;
-    sourceChanged: boolean; facilitatorChanged: boolean; requestChanged: boolean;
+    sourceChanged: boolean; facilitatorChanged: boolean; requestChanged: boolean; resultChanged: boolean;
     previous: TaskEntry | null; next: TaskEntry }[];
   removedRoles: string[];
 };

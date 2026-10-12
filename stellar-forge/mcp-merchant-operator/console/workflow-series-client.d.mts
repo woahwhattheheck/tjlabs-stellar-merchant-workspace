@@ -90,6 +90,30 @@ export interface CalendarResult {
   seriesId: string; seriesRevision: number; manual: boolean; nextFrom: string | null;
   periods: Array<{ key: string; label: string; period: { start: string; end: string }; dueDate: string; existing: CycleStatus | null }>;
 }
+export interface AgendaRequest {
+  profileId: string; from: string; to: string; today?: string; query?: string;
+  status?: 'all' | 'open' | 'PROPOSED' | 'PLANNED' | 'READY' | 'RUNNING' | 'PAUSED' | 'WAITING' | 'COMPLETE' | 'CANCELLED';
+  includeOverdue?: boolean; includeProposed?: boolean; offset?: number; limit?: number;
+}
+export interface AgendaItem {
+  id: string; kind: 'saved' | 'proposed'; profileId: string; seriesId: string; seriesRevision: number;
+  currentSeriesRevision: number; seriesName: string; customer: string; task: string; seriesEnabled: boolean;
+  key: string; label: string; period: { start: string; end: string }; dueDate: string;
+  sourceEdition: string; reason: string; runId: string | null; state: string; active: boolean;
+  stepsComplete: number; stepCount: number | null; completedAt: string | null;
+  nextAction: string; dueGroup: 'overdue' | 'today' | 'upcoming' | 'complete' | 'cancelled';
+  contentSha256?: Digest; previousCycleId?: string | null;
+}
+export interface AgendaResult {
+  schema: 'stellar-forge.merchant-workflow-agenda.v1'; profileId: string; generatedAt: string;
+  query: Required<AgendaRequest>; items: AgendaItem[]; total: number; offset: number; nextOffset: number | null;
+  counts: { total: number; saved: number; proposed: number; overdue: number; today: number;
+    upcoming: number; complete: number; cancelled: number; active: number; attention: number };
+}
+export interface AgendaCalendar {
+  filename: string; mediaType: 'text/calendar; charset=utf-8'; content: string;
+  events: number; generatedAt: string; query: Required<AgendaRequest>;
+}
 export interface CyclePreparation {
   schema: 'stellar-forge.merchant-workflow-series-preparation.v1'; kind: 'cycle'; reused: false;
   action: { request: Required<CycleRequest>; expectedReviewSha256: Digest }; review: CycleReview;
@@ -148,6 +172,8 @@ export declare class MerchantWorkflowSeriesClient {
   series(id: string, options?: { revision?: number; offset?: number; limit?: number }): Promise<SeriesPage>;
   saveSeries(input: SeriesSave): Promise<{ series: SeriesDefinition; currentSeries: SeriesSummary; reused: boolean }>;
   calendar(input: CalendarRequest): Promise<CalendarResult>;
+  agenda(input: AgendaRequest): Promise<AgendaResult>;
+  agendaCalendar(input: AgendaRequest): Promise<AgendaCalendar>;
   cycle(id: string): Promise<CycleView>;
   prepareCycle(input: CycleRequest): Promise<CyclePreparation>;
   saveCycle(input: CyclePreparation): Promise<CycleView>;

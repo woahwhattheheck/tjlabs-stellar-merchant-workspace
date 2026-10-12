@@ -834,6 +834,267 @@ class NativeWorkflowAdapter:
         self._save()
         return archive, files
 
+    def _supplier_input(self, value, filename, content_type):
+        _require(isinstance(value, dict) and isinstance(value.get("path"), str)
+                 and type(value.get("bytes")) is int and value["bytes"] >= 0
+                 and isinstance(value.get("sha256"), str) and _HASH.fullmatch(value["sha256"]),
+                 "WORKFLOW_SUPPLIER_DESCRIPTOR_REQUIRED", {"file": filename})
+        original = _file(_absolute(value["path"]), expected=value)
+        raw = Path(original["path"]).read_bytes()
+        _require(len(raw) == original["bytes"] and _sha(raw) == original["sha256"],
+                 "WORKFLOW_SUPPLIER_INPUT_CHANGED", {"file": filename})
+        retained = _preserve_bytes(self.outputs / filename, raw, content_type)
+        self._bind("supplierInput:" + filename, {"original": original, "retained": retained})
+        return retained
+
+    def _supplier_module(self, component, coverage):
+        names = ["supplier-report.mjs", "supplier-report-cli.mjs", "supplier_attachments.py"]
+        if coverage is not None:
+            names.append("catalogue-coverage.mjs")
+        source = {name: _file(component / name) for name in names}
+        self._bind("supplierInstalledSource", source)
+        key = "_starforge_supplier_attachments_" + source["supplier_attachments.py"]["sha256"]
+        if key not in sys.modules:
+            spec = importlib.util.spec_from_file_location(key, component / "supplier_attachments.py")
+            _require(spec is not None and spec.loader is not None,
+                     "WORKFLOW_SUPPLIER_ATTACHMENT_MODULE_REQUIRED")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[key] = module
+            try:
+                spec.loader.exec_module(module)
+            except BaseException:
+                sys.modules.pop(key, None)
+                raise
+        module = sys.modules[key]
+        _require(callable(getattr(module, "supplier_attachment_files", None)),
+                 "WORKFLOW_SUPPLIER_ATTACHMENT_MODULE_REQUIRED")
+        return module, source
+
+    def _supplier_export(self, config, component, original, module, reserved):
+        """Continue the maintained CLI export; adopt its complete manifest."""
+        directory = private_directory(self.directory / "supplier", create=True)
+        selected = self.state.get("bindings", {}).get("supplierExport")
+        attempts = self.state.setdefault("supplierExportAttempts", [])
+
+        def finished(attempt):
+            bundle = directory / attempt["directory"]
+            manifest = bundle / "manifest.json"
+            if not manifest.exists():
+                return None
+            expected = selected["manifestSha256"] if selected is not None else None
+            files = module.supplier_attachment_files(
+                bundle, request_workspace=self.directory,
+                expected_manifest_sha256=expected, reserved_names=reserved)
+            descriptor = next(item for item in files if item["name"] == "Supplier_Report_manifest.json")
+            value = _record(manifest)
+            _require(isinstance(value.get("requestId"), str) and value["requestId"]
+                     and isinstance(value.get("comparisonId"), str) and value["comparisonId"]
+                     and type(value.get("revision")) is int and value["revision"] >= 0
+                     and isinstance(value.get("status"), str) and value["status"],
+                     "WORKFLOW_SUPPLIER_NATIVE_IDENTITY_REQUIRED")
+            self._bind("supplierExport", {"directory": attempt["directory"],
+                "manifestSha256": descriptor["sha256"], "manifestBytes": descriptor["bytes"],
+                "requestId": value["requestId"], "comparisonId": value["comparisonId"],
+                "revision": value["revision"], "status": value["status"]})
+            attempt["status"] = "COMPLETE"
+            self._save()
+            return bundle, value, descriptor
+
+        if selected is not None:
+            attempt = next((item for item in attempts
+                            if item["directory"] == selected["directory"]), None)
+            _require(attempt is not None, "WORKFLOW_SUPPLIER_EXPORT_HISTORY_CHANGED")
+            result = finished(attempt)
+            _require(result is not None, "WORKFLOW_ORIGINAL_SUPPLIER_EXPORT_MISSING")
+            return result
+        for attempt in attempts:
+            result = finished(attempt)
+            if result is not None:
+                return result
+        number = len(attempts)
+        export_id = self._id("supplier-export-" + str(number))
+        attempt = {"id": export_id, "directory": "export-" + export_id, "status": "STARTING"}
+        attempts.append(attempt)
+        self._save()
+        bundle = directory / attempt["directory"]
+        _require(not bundle.exists(), "WORKFLOW_SUPPLIER_EXPORT_DIRECTORY_EXISTS")
+        command = [config.get("node", "node"), str(component / "supplier-report-cli.mjs"),
+                   "export", "--workspace", original["path"], "--out-dir", str(bundle),
+                   "--table-name", config.get("tableName", "supplier_feed_accepted")]
+        self._bind("supplierCommand:" + export_id, command)
+        stdout_path = self.records / ("supplier-export-" + export_id + ".stdout")
+        stderr_path = self.records / ("supplier-export-" + export_id + ".stderr")
+        self._emit("SUPPLIER_EXPORT", nativeId=export_id, status="RUNNING", attempt=number)
+        with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
+            os.chmod(stdout_path, 0o600)
+            os.chmod(stderr_path, 0o600)
+            try:
+                process = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=stdout,
+                                         stderr=stderr, shell=False, check=False,
+                                         timeout=self.wait_seconds)
+                attempt["exitCode"] = process.returncode
+            except subprocess.TimeoutExpired:
+                attempt["status"] = "INTERRUPTED"
+                self._save()
+                result = finished(attempt)
+                if result is not None:
+                    return result
+                raise WorkflowAnalysisError("WORKFLOW_SUPPLIER_EXPORT_TIMEOUT",
+                                            {"attempt": export_id}) from None
+            finally:
+                stdout.flush()
+                stderr.flush()
+                os.fsync(stdout.fileno())
+                os.fsync(stderr.fileno())
+        _file(original["path"], expected=original)
+        result = finished(attempt)
+        if result is not None:
+            return result
+        attempt["status"] = "INCOMPLETE"
+        self._save()
+        raise WorkflowAnalysisError("WORKFLOW_SUPPLIER_EXPORT_INCOMPLETE",
+            {"attempt": export_id, "exitCode": attempt["exitCode"], "stderr": str(stderr_path)})
+
+    def _supplier_coverage(self, config, component, editions):
+        if config is None:
+            return None, []
+        _require(isinstance(config, dict) and isinstance(config.get("sourceMetadata", {}), dict),
+                 "WORKFLOW_SUPPLIER_COVERAGE_CONFIGURATION_REQUIRED")
+        pricing_alias = config.get("pricingAlias", self.source_alias)
+        catalogue_alias = config.get("catalogueAlias", "catalog")
+        _require(pricing_alias in editions and catalogue_alias in editions
+                 and pricing_alias != catalogue_alias, "WORKFLOW_SUPPLIER_COVERAGE_ALIASES_REQUIRED")
+        pricing = self._supplier_input(config["pricing"], "coverage-pricing-source.csv",
+                                       "text/csv; charset=utf-8")
+        catalogue = self._supplier_input(config["catalogue"], "coverage-catalogue-source.csv",
+                                         "text/csv; charset=utf-8")
+        metadata = self._supplier_input(config["metadata"], "coverage-publisher-metadata.json",
+                                        "application/json")
+        for alias, original in ((pricing_alias, pricing), (catalogue_alias, catalogue)):
+            edition = editions[alias]
+            _require(edition["source"].get("source_mode") == "original-csv"
+                     and edition["source"].get("csv_sha256") == original["sha256"],
+                     "WORKFLOW_SUPPLIER_COVERAGE_SOURCE_CHANGED", {"source": alias})
+            selected_metadata = self.state["sources"][alias]["delivery"].get("metadata_sha256")
+            _require(selected_metadata is None or selected_metadata == metadata["sha256"],
+                     "WORKFLOW_SUPPLIER_COVERAGE_METADATA_CHANGED", {"source": alias})
+        program = (
+            "import{readFile}from'node:fs/promises';import{pathToFileURL}from'node:url';"
+            "let s='';for await(const b of process.stdin)s+=b;const p=JSON.parse(s);"
+            "const m=await import(pathToFileURL(p.module));"
+            "const read=async f=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await readFile(f));"
+            "const [pricingCSV,catalogueCSV,originalMetadataText]=await Promise.all("
+            "[read(p.pricing),read(p.catalogue),read(p.metadata)]);"
+            "const report=m.catalogueCoverage({pricingCSV,catalogueCSV,origin:p.origin,"
+            "sourceMetadata:{...p.sourceMetadata,originalMetadata:JSON.parse(originalMetadataText),"
+            "originalMetadataText}});"
+            "process.stdout.write(JSON.stringify({report,csv:m.coverageCSV(report),"
+            "html:m.coverageHTML(report)})+'\\n');")
+        result = self._invoke("supplier-coverage", [config.get("node", "node"),
+            "--input-type=module", "--eval", program], {
+                "module": str(component / "catalogue-coverage.mjs"),
+                "pricing": pricing["path"], "catalogue": catalogue["path"],
+                "metadata": metadata["path"], "origin": config["origin"],
+                "sourceMetadata": config.get("sourceMetadata", {})})
+        report = result.get("report")
+        _require(isinstance(report, dict) and isinstance(result.get("csv"), str)
+                 and isinstance(result.get("html"), str), "WORKFLOW_SUPPLIER_COVERAGE_RESULT_REQUIRED")
+        _require(report["sources"]["pricing"]["sha256"] == pricing["sha256"]
+                 and report["sources"]["catalogue"]["sha256"] == catalogue["sha256"],
+                 "WORKFLOW_SUPPLIER_COVERAGE_RESULT_CHANGED")
+        files = [pricing, catalogue, metadata,
+            _preserve_bytes(self.outputs / "catalogue-coverage.json", _json(report) + b"\n", "application/json"),
+            _preserve_bytes(self.outputs / "catalogue-coverage.csv", result["csv"].encode("utf-8"),
+                            "text/csv; charset=utf-8"),
+            _preserve_bytes(self.outputs / "catalogue-coverage.html", result["html"].encode("utf-8"),
+                            "text/html; charset=utf-8")]
+        for item in files[:3]:
+            _file(item["path"], expected=item)
+        binding = {"pricingAlias": pricing_alias, "catalogueAlias": catalogue_alias,
+            "pricing": {"editionId": editions[pricing_alias]["edition_id"],
+                        "bytes": pricing["bytes"], "sha256": pricing["sha256"]},
+            "catalogue": {"editionId": editions[catalogue_alias]["edition_id"],
+                          "bytes": catalogue["bytes"], "sha256": catalogue["sha256"]},
+            "metadataSha256": metadata["sha256"],
+            "reportSha256": files[3]["sha256"], "summary": report.get("summary"),
+            "joinPolicy": report.get("joinPolicy")}
+        self._bind("supplierCoverage", binding)
+        return binding, files
+
+    def _supplier(self, request, editions, views, native_files):
+        config = self.configuration.get("delivery", {}).get("supplier")
+        if config is None:
+            return None, []
+        _require(isinstance(config, dict), "WORKFLOW_SUPPLIER_CONFIGURATION_REQUIRED")
+        roles = config.get("sourceBindings")
+        _require(isinstance(roles, dict) and roles
+                 and all(alias in editions and role in {"baseline", "candidate"}
+                         for alias, role in roles.items()),
+                 "WORKFLOW_SUPPLIER_SOURCE_BINDINGS_REQUIRED")
+        for alias in roles:
+            _require(editions[alias]["source"].get("source_mode") == "original-csv",
+                     "WORKFLOW_SUPPLIER_ORIGINAL_CSV_REQUIRED", {"source": alias})
+        component = _absolute(config["component"])
+        original = self._supplier_input(config["workspace"], "original-supplier-workspace.json",
+                                         "application/json")
+        module, component_files = self._supplier_module(component, config.get("coverage"))
+        reserved = [item["name"] for item in native_files]
+        bundle, manifest, manifest_file = self._supplier_export(
+            config, component, original, module, reserved)
+        source_bindings = {}
+        declared = {item["filename"]: item for item in manifest["files"]}
+        for alias, role in sorted(roles.items()):
+            filename = role + "-source.csv"
+            member = declared.get(filename)
+            native_sha = editions[alias]["source"].get("csv_sha256")
+            _require(member is not None and member["sha256"] == native_sha,
+                     "WORKFLOW_SUPPLIER_REVIEW_SOURCE_CHANGED",
+                     {"source": alias, "role": role, "editionId": editions[alias]["edition_id"]})
+            source_bindings[alias] = {"role": role, "filename": filename,
+                "editionId": editions[alias]["edition_id"], "bytes": member["bytes"],
+                "sha256": member["sha256"], "collections": editions[alias]["collections"]}
+        self._bind("supplierSourceBindings", source_bindings)
+        coverage, coverage_files = self._supplier_coverage(config.get("coverage"), component, editions)
+        identity = {key: manifest[key] for key in ("requestId", "comparisonId", "revision", "status")}
+        link = {"schema": "stellar-forge.supplier-workflow-link.v1",
+            "workflow": {"runId": self.state["runId"], "requestId": request["requestId"],
+                         "correlationId": request.get("correlationId"), "profile": request["profile"],
+                         "parameters": request["parameters"],
+                         "parentRequestId": request.get("parentRequestId")},
+            "supplier": {**identity, "workspaceSha256": original["sha256"],
+                         "workspaceBytes": original["bytes"], "manifestSha256": manifest_file["sha256"],
+                         "manifestBytes": manifest_file["bytes"], "tableName": config.get("tableName", "supplier_feed_accepted")},
+            "analysis": {"operationId": self.configuration["analysis"]["operationId"],
+                         "viewSelection": views, "sourceBindings": source_bindings},
+            "coverage": coverage,
+            "installedSource": {name: {"bytes": value["bytes"], "sha256": value["sha256"]}
+                                for name, value in component_files.items()}}
+        link_path = self.outputs / "supplier-workflow-link.json"
+        _write(link_path, link, immutable=True)
+        additional = [original, *coverage_files, _file(link_path, content_type="application/json")]
+        files = module.supplier_attachment_files(
+            bundle, request_workspace=self.directory, expected_manifest_sha256=manifest_file["sha256"],
+            expected_request_id=manifest["requestId"], additional_files=additional, reserved_names=reserved)
+        for source in component_files.values():
+            _file(source["path"], expected=source)
+        _file(original["path"], expected=original)
+        names = {item["path"]: item["name"] for item in files}
+        mapping = [{"name": item["name"], "filename": Path(item["path"]).name} for item in files]
+        result = {**identity, "manifestName": names[manifest_file["path"]],
+            "manifestSha256": manifest_file["sha256"],
+            "workspaceSha256": original["sha256"],
+            "businessRequestId": request["requestId"], "correlationId": request.get("correlationId"),
+            "sourceBindings": source_bindings, "coverage": coverage, "files": mapping,
+            "workflowLinkName": names[str(link_path)]}
+        self.state["nativeIds"]["supplier"] = {**identity,
+            "manifestSha256": manifest_file["sha256"], "sourceBindings": source_bindings,
+            "workspaceSha256": original["sha256"]}
+        self._save()
+        self._emit("SUPPLIER_COMPLETE", status=manifest["status"],
+                   requestId=manifest["requestId"], comparisonId=manifest["comparisonId"],
+                   revision=manifest["revision"], files=len(files))
+        return result, files
+
     def run(self, request: dict, run_id: str) -> dict:
         _require(isinstance(request, dict) and request.get("schema") == REQUEST
                  and isinstance(request.get("requestId"), str) and request["requestId"]
@@ -906,6 +1167,8 @@ class NativeWorkflowAdapter:
                                                editions if self.related_sources else None)
             archive, native_files = self._deliver(edition, editions)
             files += comparison_files + query_files + report_files + native_files
+            supplier, supplier_files = self._supplier(request, editions, views, files)
+            files += supplier_files
             names = [item["name"] for item in files]
             _require(len(names) == len(set(names)), "WORKFLOW_DELIVERY_NAME_COLLISION")
             status = "PARTIAL" if report["status"] != "COMPLETE" or any(
@@ -923,6 +1186,8 @@ class NativeWorkflowAdapter:
                 "files": files,
                 "archive": {key: archive[key] for key in ("name", "path", "bytes", "sha256")},
                 "nativeIds": dict(self.state["nativeIds"])}
+            if supplier is not None:
+                result["supplier"] = supplier
             self.state.update(status=status, result=result)
             self._save()
             self._emit("COMPLETE", status=status, files=len(files), sourceRows=edition["row_count"])

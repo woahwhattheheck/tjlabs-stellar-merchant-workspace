@@ -350,6 +350,8 @@ export async function createMerchantConsole({operator,configPath,directory,autho
       }
       if(route==='workflow-series-save'){send(res,200,await series.save(input,context));return true;}
       if(route==='workflow-series-calendar'){send(res,200,await series.calendar(input,context));return true;}
+      if(route==='workflow-series-agenda'){send(res,200,await series.agenda(input,context));return true;}
+      if(route==='workflow-series-agenda-calendar'){send(res,200,await series.agenda(input,context,{calendar:true}));return true;}
       if(route==='workflow-cycle-review'){send(res,200,await series.review(input,context));return true;}
       if(route==='workflow-cycle-save'){send(res,200,await series.prepare(input,context));return true;}
       if(route==='workflow-cycle-start-review'){send(res,200,await series.startReview(input,context));return true;}

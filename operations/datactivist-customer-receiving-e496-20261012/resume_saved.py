@@ -62,6 +62,14 @@ def resume(config):
     for retained_file in workspace.rglob("*"):
         if retained_file.is_symlink():raise ValueError("The retained workspace contains a symlink")
         if retained_file.is_file():retained_file.chmod(0o600)
+    receiving=root/"customer-receiving"
+    if receiving.is_dir():
+        for directory in [receiving]+[p for p in receiving.rglob("*") if p.is_dir()]:
+            if directory.is_symlink():raise ValueError("The retained receiving tree contains a symlink")
+            directory.chmod(0o700)
+        for retained_file in receiving.rglob("*"):
+            if retained_file.is_symlink():raise ValueError("The retained receiving tree contains a symlink")
+            if retained_file.is_file():retained_file.chmod(0o600)
     customer=json.loads((workspace/"customer/customer-result.json").read_text(encoding="utf-8"))
     for key in ("workspaceId","publicationId","snapshot"):
         if customer[key]!=config["original_identity"][key]:raise ValueError("The retained original "+key+" differs")
@@ -93,6 +101,8 @@ def resume(config):
     native=dict(config["native"],root=str(root),capture_zip=str(root/"Original_Public_Source.zip"),source_url=selected.get("url",""),source_sha256=digest(joined),source_bytes=len(joined),source_files=len(packet["files"]),source_commit=packet["sourceCommit"],library_replacements=config["library_replacements"])
     (root/"resume-native-config.json").write_text(json.dumps({k:v for k,v in native.items() if k!="source_url"},indent=2)+"\n",encoding="utf-8")
     emit({"state":"CURRENT_APPLICATION_JOINED","files":len(packet["files"]),"sourceCommit":packet["sourceCommit"],"bytes":len(joined),"sha256":digest(joined)})
+    previous=None;old=None
+    del archive, raw, packet, joined
     runner=runpy.run_path(str(root/"runtime/native_runner.py"))
     return runner["run"](native)
 

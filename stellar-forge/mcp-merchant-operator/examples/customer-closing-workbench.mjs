@@ -16,6 +16,7 @@ import {createAccountingStatementClient,accountingStatementPreview,accountingSta
 import {inspectAccountingStatementCycle,runAccountingStatementCycle} from '../accounting-statement-cycle.mjs';
 import {startAccountingStatementCycleWorkbench} from '../accounting-statement-cycle-server.mjs';
 import {readAccountingStatementCustomerDossier} from '../accounting-statement-customer-dossier.mjs';
+import {validateAccountingStatementServicePlan} from '../accounting-statement-service-planner.mjs';
 import {createMcpToolHandler} from '../../mcp-paid-agent/http-tools.mjs';
 import {acquireStateLease} from '../../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
 import {openOutbox} from '../../../stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs';
@@ -131,7 +132,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
   const output=async(name,value)=>synced(join(directory,name),json(value),{replace:true});
   try{
     const complete=await readOptional(join(directory,'flow-result.json'));
-    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
+    if(complete?.state==='COMPLETE'&&complete.customerDossier?.complete&&complete.customerDossier.reopenedAfterWorkbenchRestart&&complete.servicePlanner?.complete){emit('REOPENED_COMPLETE_RESULT',{cycleId:complete.cycle.id});return complete;}
     const operation=await retained(join(directory,'operation.json'),async()=>({
       schema:SCHEMA,operationId:randomUUID(),createdAt:new Date().toISOString(),input:inputLabel,
       customerReference:'SCF-PERIOD-EXAMPLE',workspace:ALIAS,actor:ACTOR
@@ -216,6 +217,9 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-server.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-customer-dossier.mjs',
+      'stellar-forge/mcp-merchant-operator/accounting-statement-service-planner.mjs',
+      'stellar-forge/mcp-merchant-operator/catalog/accounting-statements.mjs',
+      'stellar-forge/mcp-merchant-operator/cycle-public/service-planner.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-cycle-browser-assets.json',
       'stellar-forge/mcp-merchant-operator/cycle-public/customer-dossiers.mjs',
       'stellar-forge/mcp-merchant-operator/accounting-statement-setup.mjs',
@@ -474,6 +478,71 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
         originalStatements:originals,archive:await fileIdentity(archive),directory:reopenedRoot};
       await output('customer-handover-'+label+'.json',result);return result;
     }
+    // Consume the planner through the same original customer and complete source captures.
+    const plannerRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-planner');
+    await page.locator('[data-view="service-planner"]').click();
+    const plannerResponse=await plannerRead,plannerInventory=await plannerResponse.json();
+    assert.ok(plannerResponse.ok(),json(plannerInventory));
+    const plannerRow=plannerInventory.rows.find(row=>row.customer.id===customer.id&&row.pass.orderRef===native.orderRef);
+    assert.ok(plannerRow,'The original assigned purchased pass appears in the native capture catalogue.');
+    assert.deepEqual(new Set(plannerRow.captures.map(row=>row.id)),new Set([opening.id,closing.id]));
+    assert.equal(plannerRow.captures.find(row=>row.id===opening.id).sha256,openingInput.sha256);
+    assert.equal(plannerRow.captures.find(row=>row.id===closing.id).sha256,closingInput.sha256);
+    if(!plannerRow.history.some(row=>row.status==='RETAINED')){
+      assert.equal(plannerRow.suggestion.state,'FIRST_PERIOD');
+      assert.equal(plannerRow.suggestion.openingId,opening.id);assert.equal(plannerRow.suggestion.closingId,closing.id);
+    }
+    if(await page.locator('#service-choices .service-choice').count())await page.locator('#service-clear').click();
+    await page.locator('#service-default-run').selectOption(run.id);
+    const plannerLabel=captureName+' — planned service close';
+    await page.locator('#service-label').fill(plannerLabel);
+    await page.locator('[data-service-add="'+plannerRow.id+'"]').click();
+    await page.locator('#service-choices [data-field="usageOpeningId"]').selectOption(opening.id);
+    await page.locator('#service-choices [data-field="usageId"]').selectOption(closing.id);
+    await page.locator('#service-choices [data-service-preview]').click();
+    await page.locator('#review-dialog[open]').waitFor();
+    await screenshot('desktop-planner-native-review.png');await page.locator('#close-review').click();
+    const compiledRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-planner/plan');
+    await page.locator('#service-compile').click();const compiledResponse=await compiledRead,compiledPlan=await compiledResponse.json();
+    assert.ok(compiledResponse.ok(),json(compiledPlan));validateAccountingStatementServicePlan(compiledPlan);
+    assert.deepEqual(compiledPlan.selections,[accountingStatementSelection({customerId:customer.id,runId:run.id,usageOpeningId:opening.id,usageId:closing.id})]);
+    await screenshot('desktop-service-close-plan.png');
+    const plannerFiles=[];
+    for(const format of ['json','csv','html']){
+      const downloadPromise=page.waitForEvent('download');
+      await page.locator('[data-service-export="'+format+'"]').click();const downloaded=await downloadPromise;
+      const path=join(downloadRoot,'service-close-plan.'+format);await downloaded.saveAs(path);
+      assert.equal(await downloaded.failure(),null);plannerFiles.push(await fileIdentity(path));
+    }
+    const portablePlan=validateAccountingStatementServicePlan(JSON.parse(await readFile(join(downloadRoot,'service-close-plan.json'),'utf8')));
+    assert.equal(portablePlan.planSha256,compiledPlan.planSha256);
+    const csv=await readFile(join(downloadRoot,'service-close-plan.csv'),'utf8');
+    assert.ok(csv.includes(opening.id)&&csv.includes(closing.id)&&csv.includes(run.id));
+    const readablePlan=await desktopContext.newPage();readablePlan.on('pageerror',error=>pageErrors.push(error.message));
+    await readablePlan.goto(pathToFileURL(join(downloadRoot,'service-close-plan.html')).href);
+    assert.ok((await readablePlan.locator('tbody').innerText()).includes(customer.name));
+    await screenshot('reopened-service-close-plan.png',readablePlan);await readablePlan.close();
+    const importedRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-planner/validate');
+    await page.locator('#service-plan-file').setInputFiles(join(downloadRoot,'service-close-plan.json'));
+    const importedResponse=await importedRead;assert.ok(importedResponse.ok(),await importedResponse.text());
+    await page.locator('#service-prepare').waitFor({state:'visible'});
+    let plannedCycle=(await api('/api/cycles')).items.find(row=>row.label===plannerLabel);
+    if(!plannedCycle){
+      const preparedRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-planner/cycles');
+      await page.locator('#service-prepare').click();const preparedResponse=await preparedRead;
+      plannedCycle=await preparedResponse.json();assert.ok(preparedResponse.ok(),json(plannedCycle));
+    }else if(plannedCycle.phase==='UNPREPARED'&&!active(plannedCycle))await api(cyclePath(plannedCycle.key)+'/prepare',{});
+    plannedCycle=await waitCycle(plannedCycle.key);
+    assert.deepEqual(plannedCycle.rows.map(row=>row.intent),compiledPlan.selections);
+    const plannedNativeReview=await api(cyclePath(plannedCycle.key)+'/items/1/review');
+    assert.equal(plannedNativeReview.draft.servicePeriod.openingSource.sha256,openingInput.sha256);
+    assert.equal(plannedNativeReview.draft.servicePeriod.closingSource.sha256,closingInput.sha256);
+    assert.equal(plannedNativeReview.draft.servicePeriod.totals.consumedUnits,'15');
+    await showCycle(plannedCycle.key);await screenshot('desktop-planner-prepared-cycle.png');
+    const plannerPrepared={cycleKey:plannedCycle.key,cycleId:plannedCycle.cycleId,planSha256:compiledPlan.planSha256,
+      inventorySha256:plannerInventory.inventorySha256,passIdentitySha256:plannerRow.periodIdentitySha256,
+      nativePreviewSha256:plannedNativeReview.previewSha256,selections:compiledPlan.selections,files:plannerFiles};
+    await output('service-planner-prepared.json',plannerPrepared);
     const periodSelection={customerId:customer.id,runId:run.id,usageOpeningId:opening.id,usageId:closing.id};
     const cumulativeSelection={customerId:customer.id,runId:run.id,usageId:closing.id};
     const cycleKey=await prepare(captureName,[periodSelection,cumulativeSelection]);
@@ -498,7 +567,7 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
         catch(error){if(error.code!=='ENOENT')throw error;}
         if(!originalPartial){
           const response=await fetch(new URL(cyclePath(cycleKey)+'/download',baseUrl));
-          assert.ok(response.ok(),await response.clone().text());
+          assert.ok(response.ok,await response.clone().text());
           await retainBytes(archive,Buffer.from(await response.arrayBuffer()));
         }
         const reopenedRoot=join(directory,'reopened-partial-cycle');
@@ -544,6 +613,21 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     const earlierHandover=await api(issuedHandover.manifestHref);
     assert.equal(earlierHandover.snapshotSha256,issuedHandover.snapshotSha256);
     assert.deepEqual(earlierHandover.statements.map(row=>row.statement.status),issuedHandover.originalStatements.map(row=>row.status));
+    const lifecycleRead=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-planner');
+    await page.locator('[data-view="service-planner"]').click();await page.locator('#service-refresh').click();
+    const lifecycleResponse=await lifecycleRead,plannerLifecycle=await lifecycleResponse.json();
+    assert.ok(lifecycleResponse.ok(),json(plannerLifecycle));
+    const plannerCurrent=plannerLifecycle.rows.find(row=>row.id===plannerRow.id);
+    assert.ok(plannerCurrent);assert.equal(plannerCurrent.suggestion.state,'NO_LATER_CAPTURE');
+    assert.equal(plannerCurrent.suggestion.openingId,closing.id);assert.equal(plannerCurrent.suggestion.closingId,null);
+    assert.equal(plannerCurrent.history.find(row=>row.id===correctionId).status,'RETAINED');
+    assert.equal(plannerCurrent.history.find(row=>row.id===originalIds[0]).status,'SUPERSEDED');
+    assert.equal(plannerCurrent.cumulativeStatements.find(row=>row.id===originalIds[1]).status,'WITHDRAWN');
+    await page.locator('[data-service-history="'+plannerRow.id+'"]').first().click();
+    await page.locator('#service-history-dialog[open]').waitFor();
+    assert.ok((await page.locator('#service-history-rows').innerText()).includes('Superseded'));
+    await screenshot('desktop-planner-correction-history.png');await page.locator('#service-history-close').click();
+    await output('service-planner-lifecycle.json',{inventorySha256:plannerLifecycle.inventorySha256,revision:plannerLifecycle.revision,row:plannerCurrent});
     const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
     contexts.push(phoneContext);
     const phone=await phoneContext.newPage();phone.on('pageerror',error=>pageErrors.push(error.message));
@@ -561,15 +645,22 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
     await screenshot('phone-customer-handover.png',phone);
     await phone.locator('[data-review-saved="1"]').click();await phone.locator('#review-dialog[open]').waitFor();
     await screenshot('phone-source-review.png',phone);await phone.locator('#close-review').click();
+    const phonePlannerRead=phone.waitForResponse(response=>new URL(response.url()).pathname==='/api/service-planner');
+    await phone.locator('[data-view="service-planner"]').click();assert.ok((await phonePlannerRead).ok());
+    await phone.locator('[data-service-history="'+plannerRow.id+'"]').first().waitFor();
+    await screenshot('phone-service-close-planner.png',phone);
+    await phone.locator('[data-service-history="'+plannerRow.id+'"]').first().click();
+    await phone.locator('#service-history-dialog[open]').waitFor();
+    await screenshot('phone-planner-correction-history.png',phone);await phone.locator('#service-history-close').click();
     const partialHandover=await readOptional(join(directory,'customer-handover-partial.json'));
-    const downloads=[issuedHandover.archive,finalHandover.archive,...(partialHandover?[partialHandover.archive]:[])];
+    const downloads=[...plannerFiles,issuedHandover.archive,finalHandover.archive,...(partialHandover?[partialHandover.archive]:[])];
     const setupArchive=join(downloadRoot,'customer-setup.tar.gz');
     const setupTar=spawnSync('tar',['-czf',setupArchive,'-C',cyclesRoot,'customer-operations'],{encoding:'utf8'});
     assert.equal(setupTar.status,0,setupTar.stderr||setupTar.error?.message||'Save the complete original customer operations.');
     downloads.push(await fileIdentity(setupArchive));
     async function download(route,name){
       const response=await fetch(new URL(route,baseUrl),{redirect:'error',signal:AbortSignal.timeout(120000)});
-      assert.ok(response.ok(),'Original workbench file: '+response.status+' '+route);
+      assert.ok(response.ok,'Original workbench file: '+response.status+' '+route);
       const body=Buffer.from(await response.arrayBuffer()),file=join(downloadRoot,name);
       await synced(file,body,{replace:true});const identity=await fileIdentity(file);downloads.push(identity);return file;
     }
@@ -632,6 +723,9 @@ export async function receiveCustomerClosingWorkbench({directory,browser}={}){
       deliveryInterruption:pause,reopened:{partial:!!(await readOptional(join(directory,'reopened-partial-result.json'))),
         complete:true,directory:reopenRoot,statementIds:reopened.rows.map(row=>row.statement.id)},
       customerPackets,customerDossier:{complete:finalHandover.complete,partial:partialHandover,issued:issuedHandover,lifecycle:finalHandover,reopenedAfterWorkbenchRestart:true},
+      servicePlanner:{complete:true,prepared:plannerPrepared,currentHistory:{inventorySha256:plannerLifecycle.inventorySha256,
+        revision:plannerLifecycle.revision,passIdentitySha256:plannerCurrent.periodIdentitySha256,suggestion:plannerCurrent.suggestion,
+        periodStatuses:plannerCurrent.history.map(row=>({id:row.id,status:row.status})),cumulativeStatuses:plannerCurrent.cumulativeStatements.map(row=>({id:row.id,status:row.status}))}},
       downloads,screenshots:images,browserErrors:pageErrors,
       nativeRetainedStatements:nativeStatements.items.length,toolCalls:Object.fromEntries(calls)};
     await synced(join(directory,'flow-result.json'),json(result),{replace:Boolean(complete)});

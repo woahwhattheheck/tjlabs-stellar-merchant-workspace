@@ -23,7 +23,9 @@ const HELP='OpenAQ station studies and customer delivery\n\n'+
  'Actions: study.save, capture, review, report, publication.prepare/review/publish/recover,\n'+
  'release.prepare/stage, customer.start/resume, export. A request JSON supplies requestId;\n'+
  'use the same UUID after a lost response. Completed captures reopen without source calls.\n'+
- 'Use the original SF82 release CLI to run, compare, activate or roll back a staged merchant.\n'+
+ 'Merchant reads: merchant.status, merchant.release, merchant.open, merchant.close.\n'+
+ 'Supply stageRequestId for release/open, and the current consoleId for close.\n'+
+ 'The owned original SF82 console performs activation, run, rollback and customer delivery.\n'+
  'Linux, Node22.16+ and Python3.10+ with util-linux flock; original DuckDB customer service\n'+
  'is optional and independently owned. Provider credentials remain environment references.\n';
 function options(argv){

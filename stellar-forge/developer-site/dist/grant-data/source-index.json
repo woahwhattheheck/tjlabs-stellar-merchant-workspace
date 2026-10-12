@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 37730,
-    "sha256": "c3a4e9935823c382e8b89b82f90079cc9478c40f017f7e3d08e08519dae18621",
-    "git_blob": "ad0854eee57ec53a54d21fa44d9ef93f3bdfb8ad"
+    "bytes": 37646,
+    "sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
+    "git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee"
   },
   "request": {
     "basis": "prospective",
@@ -542,10 +542,11 @@
       "repository": "woahwhattheheck/commons",
       "commit": "efeb06e05d82d1569b93a8f4b00d37ab88b6b211",
       "path": "opportunities/openfn-commissioning-20261012",
-      "url": "https://github.com/woahwhattheheck/commons/tree/efeb06e05d82d1569b93a8f4b00d37ab88b6b211/opportunities/openfn-commissioning-20261012",
       "operator_workflow": "Original source and strict mapping, reviewed buyer input digest, stable merchant-owned isolated namespace, quality review/apply/reconcile, inventoried editable handover, same-job recovery and independent receiving.",
       "paid_unit": "One complete commissioning/review-and-handover operation under its reviewed function offer; the implementation workshare has separate terms.",
-      "delivery_state": "Published complete source; original native and paid-job receiving operations continue."
+      "delivery_state": "Published complete source; original native and paid-job receiving operations continue.",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#openfn-paid-workflow-commissioning-and-complete-receiving"
     },
     {
       "id": "openfn-grant-inclusion",
@@ -555,7 +556,8 @@
       "commit": "2e3849c83ea968f2324c7402b30c2487b762b49c",
       "path": "opportunities/openfn-commissioning-20261012/SCF_INCLUSION.md",
       "git_blob": "f6fca247aa4a908fa2fabe76c7309666c76472d1",
-      "url": "https://github.com/woahwhattheheck/commons/blob/2e3849c83ea968f2324c7402b30c2487b762b49c/opportunities/openfn-commissioning-20261012/SCF_INCLUSION.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#openfn-paid-workflow-commissioning-and-complete-receiving"
     },
     {
       "id": "datasette-customer-analysis",
@@ -610,7 +612,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "732163f1642772d130e5e21d1c919be89582b730",
       "path": "tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/SOURCE_DOMAIN.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/732163f1642772d130e5e21d1c919be89582b730/tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/SOURCE_DOMAIN.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#referral-implementation-source-changes-returned-outcomes-and-complete-receiving"
     },
     {
       "id": "gravity-referral-receiving",
@@ -619,7 +622,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "732163f1642772d130e5e21d1c919be89582b730",
       "path": "tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/OPERATED_GRAVITY_RECEIVING.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/732163f1642772d130e5e21d1c919be89582b730/tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/OPERATED_GRAVITY_RECEIVING.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#referral-implementation-source-changes-returned-outcomes-and-complete-receiving"
     },
     {
       "id": "gravity-referral-commissioning",
@@ -628,7 +632,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "732163f1642772d130e5e21d1c919be89582b730",
       "path": "tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/Elimu_Referral_Implementation_Workshare_Offer_20261012.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/732163f1642772d130e5e21d1c919be89582b730/tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/Elimu_Referral_Implementation_Workshare_Offer_20261012.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#referral-implementation-source-changes-returned-outcomes-and-complete-receiving"
     },
     {
       "id": "risingwave-subscription-operation",
@@ -646,7 +651,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "0bd8be6087069d85d9efadbbe2af67562c78a7f2",
       "path": "tools/revenue_owner_console_20261010/case_assets/risingwave-subscription-delivery-pilot-20261012",
-      "url": "https://github.com/woahwhattheheck/commons/tree/0bd8be6087069d85d9efadbbe2af67562c78a7f2/tools/revenue_owner_console_20261010/case_assets/risingwave-subscription-delivery-pilot-20261012"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#recurring-subscription-delivery-and-streaming-data-commissioning"
     },
     {
       "id": "merchant-receivables-operation",
@@ -887,7 +893,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "40ce05d2096c77443b177c9f9b056f0dff225f59",
       "path": "operations/scf-a2a-native-analysis-0c7a-20261012/RUN_NATIVE.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/40ce05d2096c77443b177c9f9b056f0dff225f59/operations/scf-a2a-native-analysis-0c7a-20261012/RUN_NATIVE.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#a2a-analytical-services-complete-agent-work-merchant-delivery-and-customer-receiving"
     },
     {
       "id": "medstar-study-workspace",
@@ -896,7 +903,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "d0baf7f4f49bf34f890a7f6911942740c6c413fc",
       "path": "opportunities/medstar_shadow_study_2026/workspace/README.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/d0baf7f4f49bf34f890a7f6911942740c6c413fc/opportunities/medstar_shadow_study_2026/workspace/README.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#external-buyer-onboarding-and-study-operations-commissioning"
     },
     {
       "id": "medstar-study-integration",
@@ -905,7 +913,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "5f6b4b58155234262a18aa562b3058848a2dafee",
       "path": "opportunities/medstar_shadow_study_2026/workspace/INTEGRATION_HANDOVER.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/5f6b4b58155234262a18aa562b3058848a2dafee/opportunities/medstar_shadow_study_2026/workspace/INTEGRATION_HANDOVER.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#external-buyer-onboarding-and-study-operations-commissioning"
     },
     {
       "id": "medstar-study-api",
@@ -914,7 +923,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "d0baf7f4f49bf34f890a7f6911942740c6c413fc",
       "path": "opportunities/medstar_shadow_study_2026/workspace/API_CONTRACT.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/d0baf7f4f49bf34f890a7f6911942740c6c413fc/opportunities/medstar_shadow_study_2026/workspace/API_CONTRACT.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#external-buyer-onboarding-and-study-operations-commissioning"
     },
     {
       "id": "openaq-customer-operation",
@@ -1029,9 +1039,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "c2b9c5a4d2bf3a787de3206844b5bc53e6172fb8",
-    "bytes": 299274,
-    "sha256": "b1904ff24f9885cee06ba129de75a08b641d8659506aa179be706994dcc2a183",
+    "git_blob": "e67240067a9b7459ed1767306f73db1284fac5de",
+    "bytes": 295936,
+    "sha256": "f779c3db8e4f540dcfb7212fbc5df550b03b30c93daa1479bcb0663a322355ab",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -1149,7 +1159,7 @@
         "canonical_projection": "Complete native Canvas section serialization. Original chapter prose and every table cell retained; native table whitespace is projected by the original customer-section receiver."
       }
     ],
-    "current_application_sha256": "c3a4e9935823c382e8b89b82f90079cc9478c40f017f7e3d08e08519dae18621",
+    "current_application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -1159,7 +1169,7 @@
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
       "canonical_front_sha256": "74d9738cf4f29047ca0f6555a6b168abe41a436042afeb0db7f2858176953828",
       "canonical_front_bytes": 37734,
-      "renderer_git_blob": "adca97e4c94c253df927e75b9d5c6157bf0b6e70",
+      "renderer_git_blob": "4286979763c4d530d65ba78e3b1b2f704d233a56",
       "source_editions": [
         {
           "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -1216,7 +1226,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "d9bcf784022e98727add9d29e1b3243e3eff0d68",
+      "projector_git_blob": "aacfde59d72288ae2392e9428e9331d0cc463aa4",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -1237,8 +1247,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "c3a4e9935823c382e8b89b82f90079cc9478c40f017f7e3d08e08519dae18621",
-    "application_git_blob": "ad0854eee57ec53a54d21fa44d9ef93f3bdfb8ad",
+    "application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
+    "application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -1297,8 +1307,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "c3a4e9935823c382e8b89b82f90079cc9478c40f017f7e3d08e08519dae18621",
-    "application_git_blob": "ad0854eee57ec53a54d21fa44d9ef93f3bdfb8ad",
+    "application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
+    "application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -1311,8 +1321,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "b1904ff24f9885cee06ba129de75a08b641d8659506aa179be706994dcc2a183",
-    "source_bytes": 299274,
+    "source_sha256": "f779c3db8e4f540dcfb7212fbc5df550b03b30c93daa1479bcb0663a322355ab",
+    "source_bytes": 295936,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

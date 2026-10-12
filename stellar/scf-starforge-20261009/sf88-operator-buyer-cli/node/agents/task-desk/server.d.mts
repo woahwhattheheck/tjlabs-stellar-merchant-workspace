@@ -12,6 +12,8 @@ export interface TaskDeskOptions {
   existingTaskDirectory?: string;
   /** Original receiving destination, or a complete delivered packet opened for reading. */
   existingOutputDirectory?: string;
+  /** Optional original commerce session used by saved RPC read discovery and inspection. */
+  commerceDirectory?: string;
   /** Original operator workspace passed only to explicitly selected execution. */
   workspaceDirectory?: string;
   /** 0 selects an available local port. */

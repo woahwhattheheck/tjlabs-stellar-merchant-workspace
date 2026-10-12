@@ -340,6 +340,7 @@ try {
   await page.locator('.calendar-detail [data-calendar-action="source"]').click();
   await page.locator('.completion-desk').waitFor();
   await page.locator('[name="completionTranche"]').waitFor();
+  await page.locator('.completion-desk[aria-busy="false"]').waitFor();
   const reopened = await page.locator('[name="completionTranche"]').inputValue();
   const openedDate = await page.locator('[name="completionAsOfDate"]').inputValue();
   const openedReceipt = await page.locator('[name="completionReceipt"]').inputValue();

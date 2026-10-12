@@ -466,3 +466,9 @@ try {
 ~~~
 
 The client exposes original plan operations, case creation/commands, preview/save, complete downloads, bundle/scenario import, source attachment and intake. Its methods return complete native responses: value is the parsed native JSON; bytes, sha256 and source retain the exact response and launch. Local file destinations and application-specific decisions belong to the calling host; Merchant tools expose aliases and verified transfer IDs instead of filesystem paths.
+
+## Amend the original operating-case baseline
+
+The installed Grant Operations page and native CLI select an exact saved planner revision, retain a complete comparison and explicit operator review, and apply the same amendment to the existing case. Use `merchant_grant_amendments` to inspect saved revisions and amendment heads, `merchant_grant_amendment` to open an exact edition, and `merchant_grant_amendment_preview` with the selected case version and complete inputs or original verified input reference. The existing `merchant_grant_case_command` carries `amendment.save`, `amendment.review` and `amendment.apply` with the original request ID.
+
+Recorded package, invoice and cash identities stay attached to their original work. The comparison displays remaining and exceeded planning amounts and hours. The original full case export includes every amendment edition, source, historical planning snapshot and decision. See [the complete amendment receiving guide](../../stellar/scf_2026/sf47_budget_model/workspace/AMENDMENTS.md) for UI, source-basis, concurrency, replay and cold-import behavior.
