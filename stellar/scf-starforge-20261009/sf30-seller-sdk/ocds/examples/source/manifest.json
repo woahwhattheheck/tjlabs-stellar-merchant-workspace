@@ -1,0 +1,43 @@
+{
+  "schema": "starforge.ocds.original-inputs.v1",
+  "upstreamRepository": "open-contracting/ocdskit",
+  "upstreamCommit": "e6b9bf5ac6ac06ed77157fed01ccfbc974e36687",
+  "files": [
+    {
+      "file": "cdmx-release-package-01.json",
+      "upstreamPath": "tests/fixtures/realdata/release-package-1.json",
+      "url": "https://github.com/open-contracting/ocdskit/blob/e6b9bf5ac6ac06ed77157fed01ccfbc974e36687/tests/fixtures/realdata/release-package-1.json",
+      "sha256": "593f7453f774b88164dc2044f88b68045c4644b8fb855f713c7aabe7b4e4c10e",
+      "gitBlob": "3bd5b552c00572e4c844bf09df7cc80ed91a025f",
+      "bytes": 24612,
+      "ocid": "OCDS-87SD3T-AD-SF-DRM-063-2015",
+      "releases": 2,
+      "change": "Original release id/date changed; procurement fields unchanged.",
+      "originalGovernmentUri": "http://www.contratosabiertos.cdmx.gob.mx/api/contrato/OCDS-87SD3T-AD-SF-DRM-063-2015"
+    },
+    {
+      "file": "cdmx-release-package-02.json",
+      "upstreamPath": "tests/fixtures/realdata/release-package-2.json",
+      "url": "https://github.com/open-contracting/ocdskit/blob/e6b9bf5ac6ac06ed77157fed01ccfbc974e36687/tests/fixtures/realdata/release-package-2.json",
+      "sha256": "e7c068c49249aae9143d5814b2309e1d894737495e8bc2e6efe80ab00192d3cb",
+      "gitBlob": "b0b834e671fbeee9666147711baa998085118756",
+      "bytes": 12218,
+      "ocid": "OCDS-87SD3T-AD-SF-DRM-065-2015",
+      "releases": 2,
+      "change": "Award and contract exchangeRate added as17.7526; dateexchangeRate null becomes2016-03-09T00:00:00-06:00; original release id/date changed; USD75464.96 amounts unchanged.",
+      "originalGovernmentUri": "http://www.contratosabiertos.cdmx.gob.mx/api/contrato/OCDS-87SD3T-AD-SF-DRM-065-2015"
+    }
+  ],
+  "publisher": {
+    "scheme": "http://www.contratosabiertos.cdmx.gob.mx",
+    "name": "CDMX-SEFIN",
+    "uri": "http://www.finanzas.df.gob.mx/",
+    "uid": "0901"
+  },
+  "publishedDate": "2017-11-06T00:00:00-06:00",
+  "originalMetadata": {
+    "versionPresent": false,
+    "licensePresent": false
+  },
+  "transformations": []
+}

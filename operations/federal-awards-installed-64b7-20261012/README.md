@@ -42,3 +42,9 @@ An interrupted original programme retains its stdout, stderr, source and working
 ## Composition
 
 The canonical Applications registry preserves the original complete catalog API and adds the original source-bound single-provider loader required by USAspending. Merchant Console serves its existing ten static routes through the original shared browser asset manifest, including the gRPC operations module used by its customer browser. The federal-awards selection includes that same manifest contribution. Current console workflow-series source is retained.
+
+## Continue an interrupted installed run
+
+The Linux receiving programme retains selected runtime and managed-application paths in `installed-federal-awards/receiving-selection.json`. If original runtime preparation is incomplete, it uses the original `recoverRuntime` into a fresh private directory, preserving the earlier attempt and original archive. If a directory exists before its preparation record was written, the same original archive is prepared into a fresh directory. Existing complete runtime plans continue through the original installer.
+
+Each managed-application attempt retains its selected runtime, directory, process identity, logs and result. A still-running original child is received through its existing result. A completed unsuccessful attempt retains its workspaces and gets a fresh receiving directory under the same root operation. The final result names the selected runtime and application directories; the original root, merchant and source Applications stages remain its inputs. The completed handover includes the original customer ZIP exports.

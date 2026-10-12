@@ -93,7 +93,19 @@ export async function runTariffMcpContinuation({
     repricingDecision:original.repricingDecision,portfolioSha256:originalPortfolio.sha256,
     module:{gitBlob:gitBlob(moduleBytes),sha256:sha(moduleBytes),bytes:moduleBytes.length},sourceFiles
   };
-  const intentBytes=await retain(join(folder,'operation.json'),intent),intentSha256=sha(intentBytes);
+  // Preserve the first attempt and its retained file offsets when a source-owned
+  // caller repair resumes this operation. Only the caller module may differ;
+  // source leaves, original requests, workspace and all selected IDs must match.
+  let intentPath=join(folder,'operation.json');
+  try {
+    const previous=await json(intentPath);
+    const {module:oldModule,...oldBinding}=previous;
+    const {module:newModule,...newBinding}=intent;
+    assert.deepEqual(newBinding,oldBinding,'A caller repair must retain the original operation binding.');
+    if(oldModule.gitBlob!==newModule.gitBlob)
+      intentPath=join(folder,'operation-'+newModule.gitBlob+'.json');
+  } catch(error) { if(error.code!=='ENOENT')throw error; }
+  const intentBytes=await retain(intentPath,intent),intentSha256=sha(intentBytes);
   try{
     const previous=await json(join(folder,'result.json'));
     same(previous.intentSha256,intentSha256);
@@ -126,8 +138,17 @@ export async function runTariffMcpContinuation({
   });
   const config={pricing:await readPricingConfiguration(connectionPath)};
   const owner=new MerchantPricing(config),seen=new Set(),calls=[];
+  // Provider declarations expose a catalog factory, not the resulting tools.
+  // This is the original MerchantOperator catalog builder contract.
+  function tool(name,description,properties={},required=[],{
+    readOnly=false,destructive=false,idempotent=false,openWorld=false
+  }={}) {
+    return {name,description,annotations:{readOnlyHint:readOnly,destructiveHint:destructive,
+      idempotentHint:idempotent,openWorldHint:openWorld},
+      inputSchema:{type:'object',properties,required,additionalProperties:false}};
+  }
   const provider={
-    tools:declaration.tools,
+    tools:declaration.tools(tool),
     async call(name,args){
       seen.add(name);calls.push(name);
       return owner.call(name,args);

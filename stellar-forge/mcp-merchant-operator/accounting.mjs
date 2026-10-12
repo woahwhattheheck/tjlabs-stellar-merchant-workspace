@@ -672,6 +672,24 @@ export class MerchantAccounting {
     try { return await pending; }
     finally { record.calls.delete(pending); admission.release(); }
   }
+  /** Borrow the original accounting workspace for its service-agreement controller. */
+  async withServiceAgreementsWorkspace(key, operation) {
+    this.#definition(key);
+    if (typeof operation !== 'function') throw fail('ACCOUNTING_INVALID_ARGUMENTS', 'Use the original service-agreement operation.');
+    if (this.#closing) throw fail('ACCOUNTING_CLOSING', 'Merchant accounting is closing.');
+    const record = this.#sessions.get(key);
+    if (!record?.maintenance || record.closing)
+      throw fail('ACCOUNTING_NOT_OPEN', 'Open the selected accounting workspace before operating on service agreements.');
+    const admission = record.maintenance.enter();
+    const pending = Promise.resolve().then(() => {
+      if (admission.workspace !== record.workspace)
+        throw fail('ACCOUNTING_WORKSPACE_UNAVAILABLE', 'Select the original open accounting workspace.');
+      return operation(admission.workspace);
+    });
+    record.calls.add(pending);
+    try { return await pending; }
+    finally { record.calls.delete(pending); admission.release(); }
+  }
   async call(operation, args = {}) {
     const definition = byName.get(operation);
     if (!definition) throw fail('ACCOUNTING_UNKNOWN_TOOL', 'Unknown merchant accounting operation.');

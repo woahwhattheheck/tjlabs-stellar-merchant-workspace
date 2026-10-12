@@ -1,0 +1,21 @@
+{
+  "schema": "stellar-forge.grant-visual-native-attempt.v1",
+  "operation_id": "DCE4-SCF-GRANT-APPLICATION-RECEIVING-20261012",
+  "status": "INCOMPLETE",
+  "started_at": "2026-10-12T15:14:38.812Z",
+  "ended_at": "2026-10-12T15:14:59.527Z",
+  "source_commit": "e6a15209e5d8877ac4261f77e66eb859e035b842",
+  "node": "v24.19.0",
+  "chromium": "155.0.8059.39",
+  "result": null,
+  "errors": [
+    {
+      "phase": "original-receiving",
+      "name": "Error",
+      "code": null,
+      "message": "The original receiving remains incomplete: The economic report overflows the phone viewport.",
+      "stack": "Error: The original receiving remains incomplete: The economic report overflows the phone viewport.\n    at inspectGrantApplication (file:///dev/scf-grant-visual-6cf6-20261012/operation/source/stellar-forge/developer-site/GRANT_RECEIVING.mjs:463:11)\n    at async file:///dev/scf-grant-visual-6cf6-20261012/operation/launch-receiving.mjs:65:12"
+    }
+  ],
+  "interrupted": false
+}

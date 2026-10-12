@@ -58,7 +58,7 @@ The existing completion-payment rule uses the later of the chosen finish and the
 
 An allocation may therefore postpone work while a collection stays on its original date. Ready results include specific collection-timing findings where an original collection precedes allocated work or the revised completion. Read those findings beside the cash figures before choosing a delivery plan. **Collection timing to review** counts these findings; it does not change the original receipt dates.
 
-Cash needed before an opening balance, and the gap after an entered balance, remain distinct. An unentered opening balance stays unentered. All amounts are the original USD-valued forecast amounts.
+Cash needed before an opening balance, and the gap after an entered balance, remain distinct. An unentered opening balance stays unentered. USD reporting amounts come from the original forecast. A quote may also retain an explicit native price and delivery-cost currency. Missing valuation remains unresolved; the native amounts and observed USD cash stay visible.
 
 ## Save, reopen and select
 
@@ -92,7 +92,8 @@ The maintained workspace serves:
 | `operations.py` | Original authenticated case transaction, saved records and complete import/export |
 | `operations_http.py` | Original HTTP routes and static asset entries |
 | `operations_cli.py` | Original CLI seed, preview, save, show, export and selection |
-| `forecast.mjs` | Original cash editor, with an explicit initial-input handoff |
+| `forecast.mjs`, `forecast_currency.mjs` | Original cash/native-currency editor and exact native-amount formatter, with an explicit initial-input handoff |
+| `forecast_currency.py` | Original explicit rate and native cash-credit valuation used by the forecast |
 | `operations.mjs` | Original operator tab and selection integration |
 
 The browser uses these original authenticated case endpoints:
@@ -145,3 +146,87 @@ The quoted delivery window sets the promised deadline. The separate **Minimum wo
 Select a ready alternative through the original Forecast handoff to enter its chosen work window. Original milestone receipt dates remain their entered values, and the relative collection conditions stay attached to their original IDs. Undated customer collections remain outside the cash curve until those dates are known.
 
 The operating analysis displays the retained event conditions and the source forecast's undated cost, hours and collection amounts. A complete Portfolio ZIP adds `event-dependent-work.json` for these source tasks. The full operations case remains the portable source for reopening all original quotes, attachments, forecasts and allocations. Previously saved dated forecasts and portfolios retain their complete original calculations and identities.
+
+
+## Native-currency quotes and explicit valuation
+
+A selected customer project can preserve its quoted price, delivery cost and milestone amounts in their original currencies. Portfolio receives those terms from one immutable saved Forecast. The rate source and cash-credit decisions remain part of that Forecast; availability, dependencies and work dates remain Portfolio inputs.
+
+Start by reviewing the original **Operating forecast**:
+
+1. Retain the native price and delivery cost, including each currency. Price and cost may use different currencies.
+2. Select an explicit exchange-rate row for each amount that needs conversion to USD. The rate states its direction, observation date, publication date when available, source URL/reference, supporting source IDs, basis, rounding rule and operator note.
+3. Link any already recorded customer cash or delivery costs to their native-credit allocations. A USD bank/cash amount does not establish how much of a foreign-currency invoice or quote it settles.
+4. Preview the original forecast. Its coverage reports the selected scope and the dated cash separately. A missing rate or required native credit remains an editable unresolved input.
+5. Save the reviewed forecast, select it in Portfolio and create the allocation. Every original selected work task remains present even if its financial valuation is unresolved.
+
+The **Original currency terms** panel in a task shows its original quote and cost, selected rate identities and remaining cost valuation. The result's **Native currency and selected valuation** section includes the original amounts, quoted and effective delivery costs, milestone amounts, explicit native cash credits, unresolved record IDs and complete selected rate sources.
+
+Native amounts are displayed from their exact decimal strings. They are not relabelled as USD and do not pass through JavaScript floating-point conversion for display. USD reporting values are calculated by the original Forecast valuation engine.
+
+### Direction, source and settlement
+
+A rate is always **1 base currency = rate × quote currency**, with exactly one side USD. For example, a ZAR-per-USD quotation converts ZAR to USD by division. A selected USD-per-ZAR quotation converts by multiplication. Portfolio preserves the selected direction rather than guessing it from an exchange-rate number.
+
+A reference observation and an entered planning assumption remain separately labelled. Observation date, publication date, age in days and source identity are displayed with the selected rate. A later public rate does not silently replace a saved source. Changing that evidence requires a reviewed successor Forecast and, if its allocation is needed, a new Portfolio based on that successor.
+
+Actual cash records remain at their observed USD amounts. Native price credits identify the original customer-cash ID and the native amount allocated. Native cost credits identify an original invoice or direct-cash record and its allocated native amount. Missing native allocations remain visible even when the reference exchange rate is available.
+
+A native milestone's USD valuation, applied native credit, remaining native balance and settlement-rounding fields are distinct. The original Forecast owns cumulative milestone rounding and credit reconciliation. Portfolio does not independently round a quote into a second set of milestone totals or infer a settlement rate from a public reference.
+
+### Operational readiness and financial comparison
+
+The original **READY**, **INCOMPLETE** and **HORIZON_EXCEEDED** states continue to describe the work allocation. An alternative can be operationally ready while its currency valuation is incomplete.
+
+The financial comparison additionally requires:
+
+- Complete valuation of the selected commercial scope.
+- Complete valuation of dated cash.
+- A complete original baseline when reporting a funding-need delta against that baseline.
+
+A ready alternative with unresolved financial valuation remains selectable through **Open dated cash forecast draft**. The date handoff preserves the original native pricing, rate array, credit allocations, milestone IDs, receipt dates and event-dependent terms. The operator can then complete the missing financial input in the original Forecast editor, preview and save normally.
+
+An unresolved alternative has financialComparisonEligible=false, frontier=null and fundingNeedDeltaUsd=null. It neither dominates another alternative nor appears on the financial frontier. Fully valued alternatives may be compared with each other; if the original baseline is unvalued, their baseline funding deltas remain null. The complete result explains each exclusion.
+
+The **Known portion of dated cash** is explicitly separate. It contains only priced/allocated cash events and does not establish the full funding requirement. The paged dated-cash table shows complete and known-only USD changes and balances side by side. An unresolved complete metric is labelled **Unvalued** rather than displayed as zero.
+
+An undated price or cost remains part of the selected source scope. Entering work dates can change dated-cash coverage without changing the original amount. Portfolio continues to check that date allocation leaves the original Forecast's scope totals unchanged. Event release dates and the original promised delivery clock retain the existing rules described above.
+
+### Retained result fields
+
+Currency fields are conditional. When the original Forecast contains neither nativePricing nor fxRates, the legacy Portfolio input, report calculation and saved identity keep their previous shape and values. No empty currency object or extra comparison flag is inserted into a legacy saved report.
+
+For a currency-enabled source:
+
+| Result location | Retained meaning |
+| --- | --- |
+| sourceTasks[].nativePricing | Complete original native price, cost and explicit credit inputs for a selected native quote |
+| sourceTasks[].nativeReceipts | Original milestone identity, native amount and its source Forecast valuation |
+| baseline.currencyValuation | Complete original scope/dates/rate coverage |
+| alternatives[].summary.currencyValuation | Complete coverage after that alternative's selected work dates |
+| summary.scopeValuationComplete | Whether selected scope amounts are valued |
+| summary.datedCashValuationComplete | Whether the dated cash projection is valued |
+| summary.valuedPortion | Original known-only commercial cash metrics |
+| comparison[].financialComparisonEligible | Whether that operationally ready alternative may participate in financial comparison |
+| comparison[].financialComparisonReason | Explanation of readiness, missing valuation or unavailable baseline delta |
+| report.financialComparison | Eligible/excluded alternative IDs, baseline eligibility and the comparison basis |
+
+The complete original pricing/rate records stay in the Forecast snapshot and each calculated alternative. Compact comparison rows retain scalar coverage and known-only figures without repeating the entire source evidence again.
+
+### Complete currency export and receiving
+
+The existing saved Portfolio ZIP adds these members for a currency-enabled source:
+
+| Member | Contents |
+| --- | --- |
+| currency/original-native-source.json | Original saved Forecast identity, complete rate array and commercial input rows |
+| currency/valuation.json | Original coverage, comparison eligibility and every calculated alternative's coverage |
+| currency/native-commercial.csv | Native price/cost, currency, selected rates, credits, remaining valuation and unresolved IDs |
+| currency/native-receipts.csv | Complete original milestones, native credits/balances, USD valuation and original rounding fields |
+| currency/selected-rates.csv | Rate direction/value, dates, basis, source reference/IDs/hash, age and note |
+
+The complete portfolio.json remains the source-bound record. Each alternative's selected-forecast-inputs.json includes the original native pricing and rate inputs. Currency-enabled dated-cash CSVs add knownCommercialDeltaUsd and knownCommercialBalanceUsd; unresolved complete fields remain empty CSV cells, not numeric zero. Comparison CSVs retain explicit eligibility and its reason.
+
+The full original operations-case export still supplies the native reopening carrier, including source attachments, saved Forecasts, Portfolios and their original events. Receive that whole case through the existing import interface. Validation recalculates the saved Portfolio against its retained source and valuation rather than current external rates.
+
+To review the complete new mode, use the original native-currency case with a missing rate, create and save an operationally ready allocation, and inspect its explicit financial exclusion. Then save a reviewed Forecast successor with the selected source rate and any required native credits, create its allocation, compare the eligible alternatives and select a date plan. Export the complete Portfolio and case, reopen the original database and receive the whole case into a fresh workspace. Preserve each stage's original request IDs and source identities. This is the receiving procedure; execution evidence belongs to the accompanying actual native run.
