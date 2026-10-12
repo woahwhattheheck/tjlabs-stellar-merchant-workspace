@@ -34,6 +34,10 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
   const $=value=>root.querySelector(value),live=()=>active&&root.isConnected;
   const view=()=>current.expenseAttribution;
   const editable=()=>current.program.state==='OPEN'&&!session.pending&&!session.inFlight;
+  const lineKey=line=>line.workspaceId+'\n'+line.sourceLineId;
+  const selectionFor=(line,record)=>line?{workspaceId:line.workspaceId,sourceLineId:line.sourceLineId,
+    intakeId:line.intakeId,sourceRowSha256:line.sourceRowSha256,attributionId:record?.id??null,
+    attributionVersion:record?.version??null,attributionContentSha256:record?.contentSha256??null}:null;
   const selected=()=>view().lines.find(row=>row.workspaceId+'\n'+row.sourceLineId===session.selectedLine);
   const attributed=row=>row&&view().attributions.find(item=>item.id===row.attributionId);
   const currentRecord=()=>view().attributions.find(row=>row.id===session.selectedAttribution)||attributed(selected());
@@ -44,7 +48,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
     try{
       const saved=JSON.parse(localStorage.getItem(key)||'null');
       if(saved?.schema==='sf47.issued-expense-editor.v1'&&saved.caseId===current.program.id){
-        for(const name of ['draft','drafts','pending','fileMeta','selectedLine','selectedAttribution','filter','page','note','lastReceipt'])if(Object.hasOwn(saved,name))session[name]=saved[name];
+        for(const name of ['draft','drafts','draftSelection','draftBase','pending','fileMeta','selectedLine','selectedAttribution','filter','page','note','lastReceipt'])if(Object.hasOwn(saved,name))session[name]=saved[name];
         session.message=session.pending?'An original request is retained. Reconcile its exact receipt before sending another change.':'Retained expense selections reopened.';
       }
     }catch{session.message='This browser could not reopen its saved expense draft. The original case and source records are available.';}
@@ -56,9 +60,28 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
     if(value.body.action==='expense.receive')delete value.body.data.contentBase64;
     return value;
   }
+  function stashDraft(){
+    if(!session.draft||!session.selectedLine)return;
+    session.drafts??={};
+    session.drafts[session.selectedLine]={schema:'sf47.issued-expense-draft.v1',
+      selection:copy(session.draftSelection??null),base:copy(session.draftBase??null),
+      draft:copy(session.draft),note:session.note??''};
+  }
+  const draftStale=()=>Boolean(session.draft)&&canonical(session.draftSelection??null)!==
+    canonical(selectionFor(selected(),currentRecord()));
+  function draftContent(value){
+    if(!value)return null;const content=copy(value);
+    for(const key of ['valuationSources','rateSources','linkedInvoiceIds','linkedPurchaseIds','linkedWorkIds'])
+      if(Array.isArray(content[key]))content[key].sort();
+    for(const part of content.allocations??[])part.usdValue??='';
+    return content;
+  }
+  const draftDirty=()=>Boolean(session.draft)&&canonical(draftContent(session.draft))!==canonical(draftContent(session.draftBase));
   function persist(){
+    stashDraft();
     localStorage.setItem(key,JSON.stringify({schema:'sf47.issued-expense-editor.v1',caseId:current.program.id,
-      draft:session.draft??null,drafts:session.drafts??{},pending:retainedPending(),fileMeta:session.fileMeta??null,
+      draft:session.draft??null,drafts:session.drafts??{},draftSelection:session.draftSelection??null,
+      draftBase:session.draftBase??null,pending:retainedPending(),fileMeta:session.fileMeta??null,
       selectedLine:session.selectedLine??null,selectedAttribution:session.selectedAttribution??null,
       filter:session.filter,page:session.page,note:session.note,lastReceipt:session.lastReceipt??null}));
   }
@@ -81,7 +104,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       ['costId','fundingBasis','nativeAmount','usdValue','memo'].map(name=>[name,part.querySelector('[name="'+name+'"]').value])));
     const note=$('[name=expenseNote]');if(note)session.note=note.value;
     try{persist();}catch{message('The browser could not retain this draft. Keep the selected view open and free browser storage before sending.',true);}
-    updateBalance();
+    updateBalance();sync();
   }
   function sync(){
     if(!live())return;
@@ -94,8 +117,9 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       if(['select-line','select-attribution','discard-draft'].includes(el.dataset.expenseAction))disabled ||= Boolean(session.pending);
       if(el.dataset.expenseAction==='recover')disabled ||= !session.pending;
       if(['add-split','remove-split'].includes(el.dataset.expenseAction))disabled ||= Boolean(currentRecord()&&currentRecord().state!=='DRAFT');
-      if(el.dataset.expenseAction==='save')disabled ||= !session.draft||!editable()||Boolean(currentRecord()&&currentRecord().state!=='DRAFT');
-      if(el.dataset.expenseTransition)disabled ||= !currentRecord()?.allowedActions.includes(el.dataset.expenseTransition)||!editable();
+      if(el.dataset.expenseAction==='save')disabled ||= !session.draft||!editable()||draftStale()||Boolean(currentRecord()&&currentRecord().state!=='DRAFT');
+      if(el.dataset.expenseTransition)disabled ||= !currentRecord()?.allowedActions.includes(el.dataset.expenseTransition)||!editable()||
+        (['expense.review','expense.void'].includes(el.dataset.expenseTransition)&&(draftStale()||draftDirty()));
       el.disabled=disabled;
     }
     const mode=$('[name=valuationMode]')?.value;
@@ -113,7 +137,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
   function baseDraft(line,record){
     const val=record?.valuation,rate=val?.rate;
     return {intakeId:line.intakeId,sourceLineId:line.sourceLineId,expectedSourceRowSha256:line.sourceRowSha256,
-      ...(record?{id:record.id}:{}),allocations:record?record.allocations.map(({line,...row})=>copy(row)):
+      ...(record?{id:record.id}:{}),allocations:record?record.allocations.map(({line,...row})=>({...copy(row),usdValue:row.usdValue??''})):
         [{costId:'',fundingBasis:'GRANT',nativeAmount:line.original.amount,usdValue:'',memo:''}],
       unattributedReason:record?.unattributedReason??'',
       valuationMode:val?.mode??'NONE',valuationDate:val?.date??new Date().toISOString().slice(0,10),
@@ -126,18 +150,29 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       rateUrl:rate?.sourceUrl??'',rateSources:rate?.sourceIds??[],rateReference:rate?.sourceReference??'',rateNote:rate?.note??'',
       linkedInvoiceIds:record?.linkedInvoiceIds??[],linkedPurchaseIds:record?.linkedPurchaseIds??[],linkedWorkIds:record?.linkedWorkIds??[]};
   }
+  function selectDraft(line,record,discard=false){
+    const ident=lineKey(line),saved=discard?null:session.drafts?.[ident];
+    session.selectedLine=ident;session.selectedAttribution=record?.id??null;
+    if(saved?.schema==='sf47.issued-expense-draft.v1'&&saved.draft){
+      session.draft=copy(saved.draft);session.note=saved.note??'';
+      session.draftSelection=copy(saved.selection);session.draftBase=copy(saved.base);
+    }else if(saved?.allocations){
+      // Keep an older browser draft readable; its missing review binding requires an explicit reload.
+      session.draft=copy(saved);session.note='';session.draftSelection=null;session.draftBase=null;
+    }else{
+      session.draft=baseDraft(line,record);session.note='';
+      session.draftSelection=selectionFor(line,record);session.draftBase=copy(session.draft);
+    }
+  }
   function pick(line,record){
-    storeDraft();
-    session.selectedLine=line.workspaceId+'\n'+line.sourceLineId;
-    session.selectedAttribution=record?.id??null;
-    session.draft=baseDraft(line,record);
-    session.note='';persist();render();
-    $('[data-expense-editor] h4')?.focus();
+    storeDraft();selectDraft(line,record);
+    persist();render();$('[data-expense-editor] h4')?.focus();
   }
   function draftData(){
     storeDraft();
     const d=session.draft;
     if(!d)throw new Error('Select an original issued expense or credit.');
+    if(draftStale())throw new Error('This retained draft belongs to an earlier source or attribution revision. Save a copy, then reload the current selection before recording it.');
     const allocations=d.allocations.map(part=>({costId:part.costId,fundingBasis:part.fundingBasis,
       nativeAmount:part.nativeAmount,memo:part.memo,
       ...(d.valuationMode==='ENTERED_USD'?{usdValue:part.usdValue||null}:{})}));
@@ -178,6 +213,8 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       (record?'<p>Retained '+esc(record.id)+' · '+esc(human(record.state))+
         (record.bookkeepingChanged?' · later accountant references are available':'')+'</p>':'')+
       (disabled?'<p class="expense-note">Reopen the retained attribution before editing its native amounts or source edition.</p>':'')+
+      (draftStale()?'<p class="expense-note" role="alert">This draft retains an earlier source or attribution revision. Save its full values and note, then reload the current selection before recording changes.</p>':'')+
+      '<p data-expense-draft-state role="status"></p>'+
       '<div data-expense-splits>'+d.allocations.map(splitForm).join('')+'</div>'+
       action('Add work-package allocation','add-split')+'<p data-expense-balance role="status"></p>'+
       label('Reason for any unattributed remainder',area('unattributedReason',d.unattributedReason,'maxlength="4000"'))+
@@ -211,7 +248,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       '</div></fieldset>'+label('Recording / review note',area('expenseNote',session.note,'maxlength="12000"'))+
       '<div class="expense-actions">'+(disabled?'':action('Save native allocation','save'))+
       (record?record.allowedActions.filter(x=>x!=='expense.save').map(x=>action(human(x.split('.')[1])+' attribution','transition','data-expense-transition="'+x+'"')).join(''):'')+
-      action('Reload retained selection','discard-draft')+'</div>'+
+      action('Save draft and note','download-draft')+action('Reload retained selection','discard-draft')+'</div>'+
       '<details><summary>Original issued fields and accepted accountant references</summary><pre>'+esc(JSON.stringify({original,bookkeeping:line.bookkeeping,retainedSource:record?.source??null,review:record?.review??null},null,2))+'</pre></details></form>';
   }
   function summary(){
@@ -290,6 +327,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
     sync();updateBalance();
   }
   function updateBalance(){
+    const state=$('[data-expense-draft-state]');if(state)state.textContent=draftStale()?'Retained draft needs the current original selection.':draftDirty()?'Allocation edits are retained in this browser. Save them before reviewing the original attribution.':'The displayed allocation matches its selected original revision.';
     const output=$('[data-expense-balance]'),line=selected();if(!output||!line||!session.draft)return;
     try{
       const parts=session.draft.allocations.map(row=>row.nativeAmount);
@@ -341,7 +379,11 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       throw new Error('The returned original receipt does not match this selected request.');
     session.lastReceipt=copy(receipt);session.pending=null;session.review=null;
     if(receipt.action==='expense.receive'){session.file=null;session.fileMeta=null;session.receiveNote='';}
-    if(receipt.action==='expense.save'){session.draft=null;session.selectedAttribution=receipt.recordId;}
+    if(['expense.save','expense.review','expense.reopen','expense.void'].includes(receipt.action)){
+      if(session.drafts&&session.selectedLine)delete session.drafts[session.selectedLine];
+      session.draft=null;session.draftSelection=null;session.draftBase=null;session.note='';
+      session.selectedAttribution=receipt.recordId;
+    }
     session.message='Original '+human(receipt.action)+' retained at case version '+receipt.version+'.';
     session.error=false;
     try{persist();}catch{session.message+=' The save is complete; reopening the retained browser request will return this same receipt.';}
@@ -413,12 +455,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       const line=choice==='select-line'?view().lines.find(row=>row.workspaceId===target.dataset.workspace&&row.sourceLineId===target.dataset.line):
         view().lines.find(row=>row.workspaceId===record?.source.workspaceId&&row.sourceLineId===record?.source.sourceLineId);
       if(!line)return message('This original issued row is unavailable in the current source edition.',true);
-      if(session.draft&&session.selectedLine!==line.workspaceId+'\n'+line.sourceLineId){
-        // Drafts are retained per selected original; switching is explicit.
-        session.drafts??={};session.drafts[session.selectedLine]=copy(session.draft);
-      }
       pick(line,record||attributed(line));
-      if(session.drafts?.[session.selectedLine]&&!record){session.draft=copy(session.drafts[session.selectedLine]);render();}
       return;
     }
     if(choice==='add-split'||choice==='remove-split'){
@@ -448,11 +485,13 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
       if(choice==='transition'){
         const row=currentRecord(),verb=target.dataset.expenseTransition;
         if(!row?.allowedActions.includes(verb))throw new Error('That review transition is unavailable.');
+        storeDraft();
+        if(['expense.review','expense.void'].includes(verb)&&(draftStale()||draftDirty()))throw new Error('Save the edited allocation, or reload its retained selection, before reviewing or voiding the original record.');
         if(!note?.trim())throw new Error('Record the reason for this original attribution transition.');
         return prepare(verb,{id:row.id,expectedContentSha256:row.contentSha256},note);
       }
       if(choice==='discard-draft'){
-        const line=selected();if(line){session.draft=baseDraft(line,currentRecord());if(session.drafts)delete session.drafts[session.selectedLine];persist();render();}return;
+        const line=selected();if(line){if(session.drafts)delete session.drafts[session.selectedLine];selectDraft(line,currentRecord(),true);persist();render();}return;
       }
       if(choice==='page-prev'||choice==='page-next'){
         storeDraft();session.page+=choice==='page-prev'?-1:1;persist();render();return;
@@ -461,6 +500,10 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
         const source=current.sources.find(row=>row.id===target.dataset.source);
         if(!source)throw new Error('Select a retained source.');
         const bytes=await sourceBytes(source);download(bytes,source.filename,'application/octet-stream');return;
+      }
+      if(choice==='download-draft'){
+        storeDraft();const saved=session.drafts?.[session.selectedLine];if(!saved)throw new Error('Select an original allocation draft.');
+        download(JSON.stringify({caseId:current.program.id,...saved},null,2)+'\n','issued-expense-draft.json','application/json');return;
       }
       if(choice==='download-request'){
         const pending=await fullPending();download(JSON.stringify(pending.body,null,2)+'\n',pending.body.requestId+'.json','application/json');return;
@@ -473,7 +516,7 @@ export function mountExpenseAttribution({container,current,api,saveApi=api,mutat
     });
   });
   function dispose(){storeDraft();active=false;if(session.notify===render)session.notify=null;}
-  if(!session.draft&&selected()){session.draft=baseDraft(selected(),currentRecord());}
+  if(!session.draft&&selected())selectDraft(selected(),currentRecord());
   session.notify=render;render();
   const ready=(async()=>{
     if(session.inFlight){try{await session.inFlight;}catch{}return;}
