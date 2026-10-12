@@ -16,6 +16,7 @@ from server import OperatorServer
 from managed import inspect_binding, require_binding, startup
 import dqa_cli
 import publishing_cli
+import results.cli as results_cli
 import organisation_cli
 import refresh_cli
 
@@ -97,6 +98,7 @@ def main(argv=None):
     serve.add_argument("--startup-format", choices=["legacy", "json"], default="legacy")
     dqa_cli.register(sub)
     publishing_cli.register(sub)
+    results_cli.register(sub)
     organisation_cli.register(sub)
     refresh_cli.register(sub)
     args = parser.parse_args(argv)
@@ -110,6 +112,7 @@ def main(argv=None):
         command = args.command
         if command.startswith("organisation-"): result = organisation_cli.command(ws, args)
         elif command.startswith("refresh-"): result = refresh_cli.command(ws, args)
+        elif command.startswith("results-"): result = results_cli.command(ws, args)
         elif command.startswith("publishing-"): result = publishing_cli.command(ws, args)
         elif command.startswith("dqa-"): result = dqa_cli.command(ws, args)
         elif command in {"init", "list"}: result = ws.state()

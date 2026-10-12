@@ -82,6 +82,19 @@ const SOURCE_FILES = [
   'iati/refresh_http.py',
   'iati/public/refresh.js',
   'iati/public/refresh.css',
+  'iati/results/__init__.py',
+  'iati/results/model.py',
+  'iati/results/workspace.py',
+  'iati/results/report.py',
+  'iati/results/transfer.py',
+  'iati/results/http.py',
+  'iati/results/cli.py',
+  'iati/results/ui/app.js',
+  'iati/results/ui/style.css',
+  'iati/RESULTS.md',
+  'iati/results/receiving.py',
+  'iati/results/receiving_console.py',
+  'iati/results/browser_receiving.mjs',
   'xml/xml_source.py', 'xml/workspace.py', 'xml/server.py', 'xml/native.mjs',
   'dataset-handler.mjs',
 ];
@@ -91,9 +104,9 @@ const field = (name, label, type = 'path', required = false, description = '') =
 
 export function iatiApplication(common = []) {
   return {
-    id: 'iati', command: 'dataset-iati', title: 'IATI finance, planning, data quality and publishing', terminal: false,
+    id: 'iati', command: 'dataset-iati', title: 'IATI results, finance, planning and publishing', terminal: false,
     requiredSource: ROOT + '/iati/managed.py',
-    description: 'Review original IATI publisher XML, saved aid portfolios, exact currency/type/date groups, native edition comparisons, saved DQA assessments, organisation budgets and planning documents, precise correction/review/release and complete customer handoffs.',
+    description: 'Review original IATI publisher XML, saved aid portfolios, result baselines/targets/actuals with explicit periods and units, exact currency/type/date groups, native edition comparisons, saved DQA assessments, organisation budgets and planning documents, precise correction/review/release and complete customer handoffs.',
     fields: [
       field('workspaceDirectory', 'Original IATI workspace', 'path', true,
         'Choose the private directory initialized or received by the original IATI command.'),

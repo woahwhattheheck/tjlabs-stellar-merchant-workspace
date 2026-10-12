@@ -227,6 +227,38 @@ export class IatiWorkspaceClient{
   return this.#request('/api/iati/organisation/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
  }
 
+ // Results reuse this exact borrowed console and its original request journal.
+ #resultsPost(route,value,options={}){if(!object(value))throw problem('INPUT','Use a complete results definition.');
+  const data=JSON.stringify(value);if(Buffer.byteLength(data)>64*1024*1024)throw problem('INPUT_LIMIT','The complete results selection exceeds 64 MiB.');
+  return this.#request('/api/iati/results/'+route,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body:data});}
+ resultsInventory(options){return this.#request('/api/iati/results',{...options,maximum:64*1024*1024});}
+ resultsSource(source,options){return this.#resultsPost('source',{source:hash(source)},options);}
+ resultsIndicators(projection,{offset=0,limit=50,search='',measure='',...options}={}){
+  if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>100||typeof search!=='string'||search.length>256||typeof measure!=='string')
+   throw problem('PAGE','Select an original projection, nonnegative offset, 1–100 rows and bounded search.');
+  return this.#request('/api/iati/results/indicators?'+query({projection:hash(projection),offset,limit,search,measure}),{...options,maximum:64*1024*1024});}
+ resultsIndicator(projection,key,options){return this.#request('/api/iati/results/indicator?'+query({projection:hash(projection),key:hash(key)}),{...options,maximum:64*1024*1024});}
+ resultsPreview(definition,options){return this.#resultsPost('preview',definition,options);}
+ resultsSave(input,options){return this.#resultsPost('save',input,options);}
+ resultsCompare(input,options){return this.#resultsPost('compare',input,options);}
+ resultsAdopt(input,options){return this.#resultsPost('adopt',input,options);}
+ resultsCancel(input,options){return this.#resultsPost('cancel',input,options);}
+ resultsRequest(requestId,options){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the original complete results request ID.');
+  return this.#request('/api/iati/results/operation?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ resultsProject(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/results/project?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ resultsReport(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/results/report?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ resultsHistory(id,options){return this.#request('/api/iati/results/history?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ resultsComparisons(id,options){return this.#request('/api/iati/results/comparisons?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ resultsExport(id,{revision:selectedRevision,reportOnly=false,...options}={}){
+  if(typeof reportOnly!=='boolean')throw problem('EXPORT','Select the complete editable project or report-only packet.');
+  return this.#request('/api/iati/results/'+(reportOnly?'report/export':'export')+'?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});}
+ resultsOriginalSource(source,options){return this.#request('/api/iati/results/source/download?'+query({source:hash(source)}),{...options,raw:true});}
+ resultsReceive({body,bytes,sha256},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose the complete original results packet up to 4 GiB.');
+  if(sha256!==undefined)hash(sha256);
+  return this.#request('/api/iati/results/receive',{...options,maximum:64*1024*1024,body,
+   headers:{'content-type':'application/zip','content-length':String(bytes),'X-IATI-Results-Bytes':String(bytes),...(sha256===undefined?{}:{'X-IATI-Results-Sha256':sha256})}});}
+
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));
   await Promise.allSettled([...this.#pending]);}
 }
