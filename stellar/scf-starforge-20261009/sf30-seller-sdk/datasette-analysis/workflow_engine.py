@@ -103,6 +103,46 @@ def file_descriptor(path, *, name=None, expected_sha256=None, expected_bytes=Non
     return {"name": name or path.name, "path": str(path), "bytes": size, "sha256": sha}
 
 
+def delivery_members(result):
+    """Keep a supplier's original filenames together inside the full delivery."""
+    descriptors = [*result["files"], result["archive"]]
+    members = {}
+    for item in descriptors:
+        name = item["name"]
+        if (not isinstance(name, str) or not name or name in {".", ".."}
+                or "/" in name or "\\" in name
+                or any(ord(c) < 32 or ord(c) == 127 for c in name)
+                or name in members):
+            raise WorkflowError("WORKFLOW_DELIVERY_NAME", "Use each original plain delivery filename once.")
+        members[name] = "delivery/" + name
+    supplier = result.get("supplier")
+    if supplier is None:
+        return members
+    if not isinstance(supplier, dict) or not isinstance(supplier.get("files"), list):
+        raise WorkflowError("WORKFLOW_SUPPLIER_FILES", "Retain the supplier package's complete original filename map.")
+    selected, filenames = {}, set()
+    for item in supplier["files"]:
+        if not isinstance(item, dict):
+            raise WorkflowError("WORKFLOW_SUPPLIER_FILES", "Select each original supplier filename and delivery name.")
+        name, filename = item.get("name"), item.get("filename")
+        if (not isinstance(name, str) or name not in members or name in selected
+                or not isinstance(filename, str) or not filename or filename in {".", ".."}
+                or "/" in filename or "\\" in filename
+                or any(ord(c) < 32 or ord(c) == 127 for c in filename)
+                or filename in filenames):
+            raise WorkflowError("WORKFLOW_SUPPLIER_FILES", "The complete supplier filename map has changed.")
+        selected[name] = "delivery/supplier/" + filename
+        filenames.add(filename)
+    if selected.get(supplier.get("manifestName")) != "delivery/supplier/manifest.json":
+        raise WorkflowError("WORKFLOW_SUPPLIER_MANIFEST", "Retain the original supplier manifest with its files.")
+    if any(name.startswith("Supplier_Report_") and name not in selected for name in members):
+        raise WorkflowError("WORKFLOW_SUPPLIER_FILES", "Retain every supplier attachment's original filename.")
+    members.update(selected)
+    if len(set(members.values())) != len(members) or "delivery/supplier" in members.values():
+        raise WorkflowError("WORKFLOW_DELIVERY_NAME", "The supplier directory conflicts with another delivery file.")
+    return members
+
+
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         raise WorkflowError("WORKFLOW_CALLBACK_REDIRECT", "Use the configured callback's original address.")
@@ -381,7 +421,8 @@ class Workflow:
                     return {k: f[k] for k in ("name", "bytes", "sha256", "contentType")} | {
                         "href": route + quote(f["name"], safe="")}
 
-                public = {k: result[k] for k in ("edition", "analysis", "nativeIds", "complete") if k in result}
+                delivery_members(result)
+                public = {k: result[k] for k in ("edition", "analysis", "nativeIds", "complete", "supplier") if k in result}
                 public["files"] = [published_file(f) for f in result["files"]]
                 public["archive"] = published_file(result["archive"])
                 result_sha = digest(public)
@@ -679,6 +720,7 @@ class Workflow:
                                              expected_sha256=flow_selection.get("sha256"))
                              if isinstance(flow_selection, dict) else None)
             result = json.loads(row["result_json"])
+            member_names = delivery_members(result)
             package = {"schema": PACKAGE_SCHEMA, "createdAt": now(),
                        "request": json.loads(row["request_json"]), "configuration": config,
                        "requestState": dict(row), "result": result,
@@ -720,7 +762,7 @@ class Workflow:
                         verified = file_descriptor(descriptor["path"], name=descriptor["name"],
                                                    expected_sha256=descriptor["sha256"],
                                                    expected_bytes=descriptor["bytes"])
-                        member = "delivery/" + verified["name"]
+                        member = member_names[verified["name"]]
                         archive.write(verified["path"], member)
                         package["files"].append({**verified, "member": member, "kind": "native-delivery"})
                     member = "application/" + source["name"]
@@ -852,6 +894,11 @@ class Workflow:
                     or canonical(package["publicResult"]) != row["public_result_json"]):
                 raise WorkflowError("WORKFLOW_ARCHIVE_IDENTITY", "The request, plan and result differ from their originals.")
             result = json.loads(canonical(package["result"]))
+            selected_members = delivery_members(result)
+            declared_delivery = {item["name"]: item["member"] for item in package["files"]
+                                 if item.get("kind") == "native-delivery"}
+            if declared_delivery != selected_members:
+                raise WorkflowError("WORKFLOW_ARCHIVE_DELIVERY", "The complete native and supplier delivery layout has changed.")
             for file in result["files"] + [result["archive"]]:
                 file["path"] = mapped[file["path"]]
             row["result_json"] = canonical(result)

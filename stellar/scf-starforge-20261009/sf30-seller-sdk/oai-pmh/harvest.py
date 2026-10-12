@@ -14,10 +14,13 @@ import threading
 import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 from bridge import xml, storage, InputError
 from protocol import base_url, request_url, parse_page, date, same_request_url
 
 SCHEMA = "stellar-forge.oai-pmh-workspace.v1"
+RELAY_SCHEMA = "stellar-forge.oai-relay-response.v1"
+MAX_RELAY_RECEIPT = 256 * 1024
 IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 stamp = lambda: datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 jbytes, decode, sha = storage.json_bytes, storage.load_json, storage.digest
@@ -26,6 +29,41 @@ def plain(value, label, maximum=4096):
     if not isinstance(value, str) or not value.strip() or len(value) > maximum:
         raise InputError("Supply " + label)
     return value
+
+def relay_document(value, body):
+    """Bind an original relay receipt to the received XML; HTTP is a separate acquisition."""
+    if not isinstance(value, dict) or value.get("schema") != RELAY_SCHEMA:
+        raise InputError("Use a stellar-forge.oai-relay-response.v1 receipt")
+    allowed = {"schema", "provider", "receiptId", "sourceURL", "response", "providerReceipt", "observedAt", "notes"}
+    if set(value) - allowed:
+        raise InputError("The relay receipt contains unknown fields")
+    data = jbytes(value)
+    if len(data) > MAX_RELAY_RECEIPT:
+        raise InputError("Keep the original relay receipt within 256 KiB")
+    result = decode(data)
+    plain(result.get("provider"), "the relay provider", 256)
+    plain(result.get("receiptId"), "the provider's stable receipt ID", 2048)
+    url = plain(result.get("sourceURL"), "the original requested source URL", 65536)
+    parts = urlsplit(url)
+    if parts.scheme not in {"http", "https"} or not parts.hostname or parts.username or parts.password or parts.fragment or any(ord(c) < 33 for c in url):
+        raise InputError("Use the original HTTP(S) source URL without credentials or a fragment")
+    response = result.get("response")
+    if not isinstance(response, dict) or set(response) - {"bytes", "sha256", "filename"}:
+        raise InputError("The relay response describes its byte count, SHA-256 and optional filename")
+    if type(response.get("bytes")) is not int or response["bytes"] != len(body):
+        raise InputError("The original body byte count differs from its relay receipt")
+    if response.get("sha256") != sha(body):
+        raise InputError("The original body SHA-256 differs from its relay receipt")
+    if "filename" in response:
+        plain(response["filename"], "the original response filename", 1024)
+    original = result.get("providerReceipt")
+    if not isinstance(original, dict) or not original:
+        raise InputError("Retain the complete original provider receipt object")
+    if "observedAt" in result:
+        date(result["observedAt"], seconds=True)
+    if "notes" in result:
+        plain(result["notes"], "the relay acquisition note", 16384)
+    return result
 
 def page_values(offset, limit):
     if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 200:
@@ -49,6 +87,8 @@ class HarvestWorkspace:
                 attempt INTEGER NOT NULL,ordinal INTEGER NOT NULL,body TEXT NOT NULL,
                 UNIQUE(operation_id,attempt,ordinal));
             CREATE TABLE IF NOT EXISTS oai_http_exchanges(id TEXT PRIMARY KEY,request_id TEXT NOT NULL,body TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS oai_relay_receipts(id TEXT PRIMARY KEY,operation_id TEXT NOT NULL,
+                request_id TEXT NOT NULL,body_sha256 TEXT NOT NULL,receipt_sha256 TEXT NOT NULL,body TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS oai_observations(id TEXT PRIMARY KEY,operation_id TEXT NOT NULL,
                 attempt INTEGER NOT NULL,request_id TEXT NOT NULL,ordinal INTEGER NOT NULL,
                 identifier TEXT NOT NULL,datestamp TEXT NOT NULL,status TEXT NOT NULL,
@@ -192,27 +232,72 @@ class HarvestWorkspace:
                         (exchange_id,request["id"],jbytes(request).decode()))
         self.db.execute("UPDATE oai_requests SET body=? WHERE id=?", (jbytes(request).decode(),request["id"]))
 
-    def ingest(self, operation_id, filename, requested_url, status=200, headers=None,
-               final_url=None, observed_at=None, prepared=None):
-        """Import a real response from this host or an equipped source-acquisition host."""
-        op, req = prepared if prepared is not None else self._begin(operation_id,already_captured=True)
-        if req is None: raise InputError("This operation is complete or waiting for its recorded request time")
-        if not same_request_url(requested_url,req["url"]): raise InputError("The captured response URL differs from this operation's next request")
-        req["plannedURL"],req["url"]=req["url"],requested_url
+    def _response_body(self, filename):
         path = Path(filename)
         if not path.is_file() or path.is_symlink() or path.stat().st_size > xml.MAX_SOURCE:
             raise InputError("Use a complete response file within 256 MiB")
+        body = path.read_bytes()
+        if len(body) > xml.MAX_SOURCE:
+            raise InputError("Use a complete response file within 256 MiB")
+        return body
+
+    def ingest(self, operation_id, filename, requested_url, status=200, headers=None,
+               final_url=None, observed_at=None, prepared=None):
+        """Import a response with its observed HTTP exchange from either acquisition host."""
+        body = self._response_body(filename)
         if type(status) is not int or not 100 <= status <= 599:
             raise InputError("Supply the observed HTTP status")
         pairs = list(headers or [])
         if any(not isinstance(x,(list,tuple)) or len(x)!=2 or any(not isinstance(v,str) for v in x) for x in pairs):
             raise InputError("HTTP headers must be retained name/value pairs")
-        body = path.read_bytes()
+        with self.mutex:
+            if prepared is None and self.active is not None:
+                raise InputError("Finish or cancel the active harvest before importing a response")
+            return self._ingest_body(operation_id, body, requested_url, status, pairs,
+                                     final_url, observed_at, prepared=prepared)
+
+    def _relay_result(self, operation_id, saved, replayed):
+        return {**self.operation(operation_id), "relayImport": {**saved, "replayed": replayed}}
+
+    def ingest_relay(self, operation_id, filename, receipt):
+        """Receive exact relay bytes once; replay the same receipt after an unknown response."""
+        body = self._response_body(filename)
+        receipt = relay_document(receipt, body)
+        receipt_sha = sha(jbytes(receipt))
+        identity = sha(jbytes([receipt["provider"], receipt["receiptId"]]))
+        with self.mutex:
+            prior = self.db.execute("SELECT * FROM oai_relay_receipts WHERE id=?", (identity,)).fetchone()
+            if prior:
+                if prior["operation_id"] != operation_id or prior["body_sha256"] != sha(body) or prior["receipt_sha256"] != receipt_sha:
+                    raise InputError("This provider receipt already belongs to different received bytes, details or an operation")
+                return self._relay_result(operation_id, decode(prior["body"]), True)
+            if self.active is not None:
+                raise InputError("Finish or cancel the active harvest before importing a relayed response")
+            return self._ingest_body(operation_id, body, receipt["sourceURL"], None, [],
+                                     observed_at=receipt.get("observedAt"), relay=receipt)
+
+    def _ingest_body(self, operation_id, body, requested_url, status, pairs,
+                     final_url=None, observed_at=None, prepared=None, relay=None):
+        # The caller holds the original workspace mutex through this complete import.
+        if prepared is None:
+            current = self.operation(operation_id)
+            if current["status"] == "COMPLETE":
+                raise InputError("This operation is complete; choose its saved relay receipt or a new explicit selection")
+            planned = request_url(self.repository(current["repositoryId"])["baseURL"],
+                                  current["verb"], current["nextArguments"])
+            if not same_request_url(requested_url, planned):
+                raise InputError("The captured response URL differs from this operation's next request")
+        op, req = prepared if prepared is not None else self._begin(operation_id, already_captured=True)
+        if req is None:
+            raise InputError("This operation is complete or waiting for its recorded request time")
+        if not same_request_url(requested_url, req["url"]):
+            raise InputError("The captured response URL differs from this operation's next request")
+        req["plannedURL"], req["url"] = req["url"], requested_url
         body_sha = sha(body)
         source = None
         parsed = None
         parse_error = None
-        if 200 <= status < 300:
+        if relay is not None or 200 <= status < 300:
             try:
                 parsed = parse_page(io.BytesIO(body),op["verb"])
                 source = self.xml.add_source(io.BytesIO(body),"OAI "+operation_id+" page "+str(req["ordinal"]),body_sha+".xml")
@@ -225,9 +310,16 @@ class HarvestWorkspace:
             if not destination.exists(): storage.private_write(destination,body)
             elif storage.file_digest(destination) != body_sha: raise InputError("Retained HTTP bytes changed")
             relative = "oai/http/"+body_sha+".bin"
-        req.update(state="RECEIVED",observedAt=observed_at or stamp(),
-                   http={"status":status,"headers":pairs,"finalURL":final_url or requested_url},
+        received_at = stamp()
+        req.update(state="RECEIVED", receivedAt=received_at,
                    response={"path":relative,"sha256":body_sha,"bytes":len(body),"xmlSourceId":source})
+        if relay is None:
+            req.update(observedAt=observed_at or received_at,
+                       http={"status":status,"headers":pairs,"finalURL":final_url or requested_url},
+                       acquisition={"kind":"http"})
+        else:
+            req["acquisition"] = {"kind":"relay","receipt":relay,"receiptSha256":sha(jbytes(relay))}
+            if observed_at is not None: req["observedAt"] = observed_at
         with self.mutex, self.db:
             self._save_request(req)
             op["lastResponseId"]=req["id"]
@@ -241,10 +333,12 @@ class HarvestWorkspace:
                             except (TypeError,ValueError,OverflowError): pass
                 delay = max(delays or [30])
                 op.update(status="COOLDOWN",cooldownUntil=time.time()+delay,lastError="HTTP "+str(status))
-            elif not 200 <= status < 300:
+            elif relay is None and not 200 <= status < 300:
                 op.update(status="RESTART_REQUIRED" if status==422 and "resumptionToken" in req["arguments"] else "HTTP_ERROR",
                           lastError="HTTP "+str(status))
             elif parse_error:
+                req.update(state="RESPONSE_ERROR",parseError=parse_error)
+                self._save_request(req)
                 op.update(status="RESPONSE_ERROR",lastError=parse_error)
             else:
                 import hashlib
@@ -296,7 +390,15 @@ class HarvestWorkspace:
                 self._save_request(req)
             op["revision"] += 1
             self._put("oai_operations",op)
-        return self.operation(operation_id)
+            if relay is not None:
+                saved = {"schema":"stellar-forge.oai-relay-import.v1","provider":relay["provider"],
+                    "receiptId":relay["receiptId"],"requestId":req["id"],"attempt":req["attempt"],
+                    "ordinal":req["ordinal"],"responseSha256":body_sha,"receiptSha256":sha(jbytes(relay)),
+                    "operationRevision":op["revision"],"receivedAt":received_at}
+                identity = sha(jbytes([relay["provider"], relay["receiptId"]]))
+                self.db.execute("INSERT INTO oai_relay_receipts VALUES(?,?,?,?,?,?)",
+                    (identity, operation_id, req["id"], body_sha, saved["receiptSha256"], jbytes(saved).decode()))
+        return self._relay_result(operation_id, saved, False) if relay is not None else self.operation(operation_id)
 
     def _catalog_response(self,op,request,parsed,no_sets):
         repo=self.repository(op["repositoryId"])

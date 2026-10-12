@@ -135,6 +135,29 @@ The complete original model result, three native draft inputs, every review expo
 
 A receiving continuation keeps the original operation ID, full checkpoint, selected inputs and artifact bytes. Completed downloads are verified and reused before another UI export. Independent Save copy steps reconcile their durably selected original destination through the existing draft store. Preserve that checkpoint on interruption and invoke the same callback with it; do not create another reviewer round to replace unfinished work.
 
+## Receive IATI organisation and programme finance
+
+The canonical customer chapter **IATI publishing, programme finance and complete
+customer receiving** joins the existing application through `--manuscript`.
+It carries organisation publications, selected activity portfolios, reviewed
+programme-finance comparisons and complete customer receiving into the same
+companion. The three front-answer additions remain part of the original nine
+editable answers.
+
+The maintained customer projector follows the chapter's selected immutable
+source links into three source-index records:
+
+- `iati-organisation-financial-workspace`: the organisation/financial operating guide.
+- `iati-complete-financial-receiving`: the original complete receiving programme.
+- `iati-fcdo-wadi-original-source`: the retained FCDO/WADI source description.
+
+A later accepted chapter edition refreshes those records from its own links.
+The existing register retains all other product selections and clears a prior
+blob pin when its repository, commit or path changes. Composition preserves the
+original request, baseline, six funded packages, capacity, cash and submission
+fields. The reader distinguishes the completed organisation receiving and the
+recorded financial stages through the chapter's actual operating results.
+
 ## Read the complete companion
 
 Choose **Product and financing** in the application navigation. The maintained

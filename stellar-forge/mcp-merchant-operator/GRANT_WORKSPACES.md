@@ -388,7 +388,7 @@ The settlement tools operate the existing merchant accounting and SF47 cash engi
 | merchant_grant_settlement_correct | Save the exact reviewed correction under its original request and preview SHA. |
 | merchant_grant_export, kind settlement | Retain the complete selected review, original source and native inspection for existing download/byte paging. |
 
-Saved review IDs use settlement- followed by 32 lowercase hexadecimal characters. Receiving choices are RECORD_CASH, LINK_CASH, OBSERVE and OMIT. Cash dates, native units, asset precision, USD valuation and deployment/work associations are explicit native inputs. LINK_CASH retains the original cash values. CORRECT_CASH, VOID_CASH and RELINK create successor reviews in the existing source/event history.
+Saved review IDs use settlement- followed by 32 lowercase hexadecimal characters. Receiving choices are RECORD_CASH, LINK_CASH, OBSERVE and OMIT. Cash dates, native units, asset precision, USD valuation and deployment/work associations are explicit native inputs. LINK_CASH retains the original cash values. CORRECT_CASH, LINK_CASH, VOID_CASH and RELINK create successor reviews in the existing source/event history.
 
 The complete case export retains every settlement source, correction and cash/event history. Use the original case importer to continue it in another declared workspace. [Merchant settlements](../../stellar/scf_2026/sf47_budget_model/workspace/SETTLEMENTS.md) contains all exact bodies, limits, browser operations, CLI commands, typed interfaces and recovery behavior.
 
@@ -483,3 +483,13 @@ try {
 ~~~
 
 The client exposes original plan operations, case creation/commands, preview/save, complete downloads, bundle/scenario import, source attachment and intake. Its methods return complete native responses: value is the parsed native JSON; bytes, sha256 and source retain the exact response and launch. Local file destinations and application-specific decisions belong to the calling host; Merchant tools expose aliases and verified transfer IDs instead of filesystem paths.
+
+## Amend the original operating-case baseline
+
+The installed Grant Operations page and native CLI select an exact saved planner revision, retain a complete comparison and explicit operator review, and apply the same amendment to the existing case. Use `merchant_grant_amendments` to inspect saved revisions and amendment heads, `merchant_grant_amendment` to open an exact edition, and `merchant_grant_amendment_preview` with the selected case version and complete inputs or original verified input reference. The existing `merchant_grant_case_command` carries `amendment.save`, `amendment.review` and `amendment.apply` with the original request ID.
+
+Recorded package, invoice and cash identities stay attached to their original work. The comparison displays remaining and exceeded planning amounts and hours. The original full case export includes every amendment edition, source, historical planning snapshot and decision. See [the complete amendment receiving guide](../../stellar/scf_2026/sf47_budget_model/workspace/AMENDMENTS.md) for UI, source-basis, concurrency, replay and cold-import behavior.
+
+## Amendment delivery calendars
+
+The original amendment preview and saved-edition read include a complete native `calendarImpact` companion. `merchant_grant_amendment_calendar_export` accepts the exact draft or saved-edition selection through `inputs` or a verified input reference and returns both ICS/CSV/JSON calendars, offline comparison, original preview and complete operating case through the existing snapshot/byte-download route. Full selections and operating steps are in [AMENDMENT_CALENDAR.md](../../stellar/scf_2026/sf47_budget_model/workspace/AMENDMENT_CALENDAR.md).

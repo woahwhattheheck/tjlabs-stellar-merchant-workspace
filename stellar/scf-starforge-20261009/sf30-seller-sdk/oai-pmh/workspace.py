@@ -385,12 +385,13 @@ class Workspace(HarvestWorkspace):
                     for row in attempts or [(jbytes(request),)]:
                         req=decode(row[0])
                         req["retainedExchangeSha256"]=sha(jbytes(req))
-                        http=dict(req.get("http",{}))
-                        sensitive={"set-cookie","set-cookie2","authorization","proxy-authorization","cookie"}
-                        withheld=[key for key,value in http.get("headers",[]) if key.lower() in sensitive]
-                        http["headers"]=[[key,value] for key,value in http.get("headers",[]) if key.lower() not in sensitive]
-                        if withheld: http["withheldHeaderNames"]=withheld
-                        if http: req["http"]=http
+                        if isinstance(req.get("http"),dict):
+                            http=dict(req["http"])
+                            sensitive={"set-cookie","set-cookie2","authorization","proxy-authorization","cookie"}
+                            withheld=[key for key,value in http.get("headers",[]) if key.lower() in sensitive]
+                            http["headers"]=[[key,value] for key,value in http.get("headers",[]) if key.lower() not in sensitive]
+                            if withheld: http["withheldHeaderNames"]=withheld
+                            req["http"]=http
                         response=req.get("response")
                         if response:
                             suffix=".xml" if response.get("xmlSourceId") else ".bin"
@@ -411,6 +412,7 @@ class Workspace(HarvestWorkspace):
                     "recordsFile":"records.jsonl","requestsFile":"requests.jsonl",
                     "transportDisclosure":{"omittedHeaders":["authorization","proxy-authorization","cookie","set-cookie","set-cookie2"],
                         "originals":"Complete transport remains in the private workspace and its full backup",
+                        "relayReceipts":"The exact original provider receipt remains in acquisition.receipt; acquisition.kind distinguishes relay retrieval from observed HTTP",
                         "digest":"retainedExchangeSha256 binds original canonical exchange JSON before package path relocation"},
                     "files":sorted(files,key=lambda x:x["file"])}
                 manifest_bytes=jbytes(manifest)

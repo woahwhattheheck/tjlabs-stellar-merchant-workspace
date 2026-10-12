@@ -35,6 +35,7 @@ The server listens on `127.0.0.1`. With `--port 0`, it selects an available port
 | `--tasks` | Saved task revisions and retained desk command records. |
 | `--outputs` | Complete received task packets and response files. |
 | `--workspace` | Optional original native operator workspace directory used by execution. |
+| `--commerce` | Optional original commerce session containing the Inbox and its saved RPC read editions. |
 | `--existing-task` | Optional original task directory containing `task.json`; pair with `--existing-output`. |
 | `--existing-output` | That task's original receiving destination, or its complete delivered packet. |
 | `--port` | Local listening port; `0` selects an available port. |
@@ -55,6 +56,7 @@ Choose the READY installed runtime containing the desk, then enter the original 
 | Existing task revision | Optional `--existing-task`; select both existing-directory fields. |
 | Original receiving or delivered packet | Optional `--existing-output`. |
 | Original operator workspace | Optional `--workspace` |
+| Original RPC commerce session | Optional `--commerce`; the existing session containing this Inbox. |
 | Local port | `--port`; `0` chooses an available port |
 
 The installed runtime supplies the desk code. **Original SF88 runtime** selects the complete native buyer directory already used for these requests. **Private Node buyer state** and **Original buyer Inbox** select their existing private directories. Saved tasks and output packets can use new child directories in existing private parents. Keep the same task and output roots when reopening a previous desk.
@@ -248,6 +250,54 @@ starforge buyer-inbox-task packet-read --packet ./received-task --intent ORIGINA
 
 Use an actual selected intent in place of `ORIGINAL_INTENT`. Add `--task-sha256` with the saved task hash to `packet-inspect` when matching the handoff to a known task. `packet-read --format file` verifies the selected response and prints its file metadata. The `json` and `text` formats print decoded content; `csv` prints the parsed rows. Use the complete saved response file for its original bytes. The standalone executable is `starforge-inbox-task`; from source, use `node node/agents/inbox-task-cli.mjs` from the original SF88 runtime root with the same subcommand and options.
 
+## Select an existing saved RPC result
+
+A request can retain its original transport or payment outcome while the existing commerce recovery later saves a complete RPC response. The desk lets you select one of those retained read editions and include its complete bytes in the same task packet.
+
+Supply the original commerce session with `--commerce /absolute/original/commerce-session`, or choose that exact directory in **Saved RPC read editions**. In Applications, the equivalent optional field is **Original RPC commerce session**. It must be the existing session whose `inbox` directory is this desk's original Inbox. Applications review retains the selected session and native reader source; launch checks the same directory in the live desk status.
+
+### Choose the intended observation
+
+1. Open a request in a saved task, or choose an original request while preparing a task.
+2. Open **Saved RPC read editions**, enter the original commerce session, and choose **Inspect saved reads**.
+3. Review each read's observation time, complete byte count, completion state, original read ID and response SHA-256. **Inspect read** opens the exact saved edition through the original authenticated native reader and verifies its full response.
+4. While preparing a task, choose **Use this read**. In a saved task, **Create edition with read** starts a new task revision with the same original request and role.
+5. Supply the new revision where required, choose **Preview task**, inspect the complete manifest, and save that exact preview.
+6. Choose **Receive complete packet**. The original task receiver copies the selected saved response into the task's assigned receiving destination. A delivered packet then retains the full response and its original read records together.
+
+The browser keeps the original attempt outcome visible beside the selected recovered result. Its observation and read-start times describe that saved retrieval; its reported HTTP 200 comes from the original recovery writer's acceptance contract. The selected response is shown as ready even when the original attempt's response status remains `NOT_STARTED`.
+
+**Download complete original response** streams the exact inspected read through the native verified-file interface. The received packet's **Full response** and **Download complete packet (.tar)** controls remain the portable delivery path.
+
+Changing the commerce directory in the picker changes where the browser looks for saved reads. It leaves the task's current saved-read selection visible until another read is chosen. **Use original attempt response** explicitly removes the optional selection from a draft. Changing the original request clears its earlier read selection.
+
+### Keep the exact result in a revision
+
+The saved selection is part of the ordinary task specification:
+
+~~~json
+{
+  "intentId": "ORIGINAL_INTENT",
+  "role": "Complete ledger result",
+  "sourceEdition": "Retained original RPC observation",
+  "rpcResult": {
+    "commerceDirectory": "/absolute/original/commerce-session",
+    "readId": "ORIGINAL_READ_ID",
+    "responseSha256": "COMPLETE_ORIGINAL_RESPONSE_SHA256"
+  }
+}
+~~~
+
+Use the actual read ID and digest returned by the saved-read listing. The original task preview binds the selected read and complete-response identity, original commerce/session/source hashes, and exact read/completed documents. The native preview hash changes when the selected result changes, even when the request stays the same. **Compare editions** marks this as **Selected RPC result changed** and retains the complete before and after entries.
+
+Read discovery and inspection use the existing saved records through `Inbox.rpcResponses` and `Inbox.rpcResponse`. They do not open the provider or create a retrieval. An incomplete original read remains listed with its recorded publication state. Refresh the listing after the existing original recovery completes.
+
+### Reopen the same receiving
+
+Keep the task's recorded commerce directory, original Inbox, native runtime, and private buyer state when continuing its native inspection or receiving. The original `--existing-task` and `--existing-output` options also apply to a task with a selected RPC result. Each task keeps the same explicitly selected result edition.
+
+A complete packet retains the selected response file and full original recovery documents in its receiving plan. Extract the whole TAR and use the existing `packet-inspect` and `packet-read` commands to reopen it independently. The offline report includes the original attempt and selected recovered result with its original observation time and settlement reference.
+
 ## Use the typed client
 
 `client.mjs` exports `TaskDeskClient` and `TaskDeskError`. Its companion `client.d.mts` reuses the original InboxTask and Inbox types: caller tasks, selections, inspections, native execute and recover results, comparisons, and received packet metadata.
@@ -283,6 +333,44 @@ console.log(saved.id);
 ~~~
 
 These examples use `wx` to retain any existing saved command or task file. Choose the operation's own filenames when continuing a separate revision.
+
+### Select a saved RPC read through the client
+
+The desk client reuses the original `TaskRpcResultSelection`, `InboxRpcResponse`, and saved-read types. A configured `--commerce` root is the default; an explicit `commerceDirectory` selects the original session for that request.
+
+~~~js
+const commerceDirectory = "/absolute/original/commerce-session";
+const intentId = "ORIGINAL_INTENT";
+const readId = "ORIGINAL_READ_ID";
+
+const found = await desk.listRpcResponses(intentId, { commerceDirectory });
+const row = found.native.rpcRecovery?.reads.find(item => item.readId === readId);
+if (!row?.complete) throw new Error("Select a completed original RPC read");
+
+const selection = {
+  commerceDirectory,
+  readId: row.readId,
+  responseSha256: row.response.sha256,
+};
+const opened = await desk.getRpcResponse(intentId, selection);
+const draft = {
+  task: callerTask,
+  selections: [{ intentId, role: "Complete ledger result", rpcResult: {
+    commerceDirectory: opened.recovery.commerceDirectory,
+    readId: opened.recovery.readId,
+    responseSha256: opened.delivery.sha256,
+  } }],
+};
+const preview = await desk.previewTask(draft);
+const saved = await desk.createTask({
+  ...draft,
+  expectedPreviewSha256: preview.previewSha256,
+});
+~~~
+
+Here `desk` is the connected `TaskDeskClient` from the preceding example, and `callerTask` contains the caller's six task fields. Include `predecessorId` in the draft when revising an existing task. `opened.job` retains the original attempt, `opened.recovery` retains the selected read records, and `opened.verified` contains the full response byte count and SHA-256.
+
+`downloadRpcResponse(intentId, selection)` returns a streamed `Response`. Consume `Response.body` with the same complete-stream handling used below. Browser attachment downloads navigate directly to the same-origin download route, keeping full response bytes out of the page's memory.
 
 ### Review and issue one command
 
@@ -414,6 +502,9 @@ The client preserves the native response shapes. The status response includes th
 | --- | --- | --- |
 | `GET /api/status` | — | Desk status and `csrfToken`. |
 | `GET /api/jobs` | — | `{ jobs, process }` from the original Inbox. |
+| `GET /api/jobs/:intentId/rpc-results` | Optional `commerceDirectory` query; otherwise configured `--commerce`. | Original `InboxResult` with `native.rpcRecovery.reads` and original attempt metadata. |
+| `GET /api/jobs/:intentId/rpc-results/:readId` | `responseSha256`; optional `commerceDirectory`. | `{ intentId, job, recovery, delivery, verified }` for the exact original saved read. |
+| `GET /api/jobs/:intentId/rpc-results/:readId/download` | The same exact read and response queries. | Streamed complete original response attachment. |
 | `GET /api/tasks` | — | `{ tasks, issues }`; each task has `id`, `record`, `locations`, and optional `{ requests }` summary. |
 | `POST /api/tasks/preview` | `{ task, selections, predecessorId? }` | Original `{ previewSha256, manifest, process }`. |
 | `POST /api/tasks` | Preview input plus `expectedPreviewSha256` | `{ id, record, inspection, inspectionError, packet, packetError, packetOpenedAt, locations }`, with nullable inspection and packet. |
@@ -432,4 +523,4 @@ The client preserves the native response shapes. The status response includes th
 
 HTTP errors have the form `{ error: { code, message, details?, nativeResult? } }`. A successful command acceptance includes its retained operation. Read the native result and error fields to follow the original work through receiving.
 
-`locations` records `{ taskDirectory, outputDirectory, retained, mode, receiveAllowed }`. Its mode is `desk`, `original-receiving`, or `delivered-packet`. Status roots include `existingTask` and `existingOutput` when an original pair is selected. These fields preserve the actual operating paths while the API continues to use its stable task ID.
+`locations` records `{ taskDirectory, outputDirectory, retained, mode, receiveAllowed }`. Its mode is `desk`, `original-receiving`, or `delivered-packet`. Status roots include `existingTask` and `existingOutput` when an original pair is selected, and `commerce` when the original RPC session is configured. These fields preserve the actual operating paths while the API continues to use its stable task ID.

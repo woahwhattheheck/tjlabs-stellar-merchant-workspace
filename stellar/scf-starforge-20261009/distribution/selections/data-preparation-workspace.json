@@ -53,6 +53,7 @@
   "contributions": [
     "data-preparation",
     "data-preparation-workspace",
+    "data-preparation-pipelines",
     "merchant-provider-tools",
     "merchant-console-browser-assets"
   ],

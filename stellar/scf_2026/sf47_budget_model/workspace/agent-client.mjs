@@ -168,6 +168,27 @@ function supplierAccountQuery(args, exported = false) {
     values.set('contributorId', id(args.contributorId, 'person'));
   return values.size ? '?' + values.toString() : '';
 }
+function cashAccountQuery(args, exported = false) {
+  const values = new URLSearchParams(performanceQuery(args, exported));
+  for (const [key,maximum] of [['network',200],['currency',40],['asset',500]])
+    if (args[key] !== undefined && args[key] !== null)
+      values.set(key, text(args[key], 'Cash account ' + key, maximum, true));
+  return values.size ? '?' + values.toString() : '';
+}
+function cashCorrectionInput(body, applying = false) {
+  const keys = ['expectedVersion','selection','originalCashId','replacement','reason','attachments'];
+  const required = ['expectedVersion','originalCashId','replacement','reason'];
+  if (applying) { keys.push('expectedPreviewSha256','requestId','actor'); required.push('expectedPreviewSha256','requestId','actor'); }
+  exact(body, keys, required);
+  integer(body.expectedVersion, 'Current case version', 1, 10000000);
+  id(body.originalCashId, 'cash'); object(body.replacement, 'Complete replacement observation');
+  text(body.reason, 'Correction reason', 12000);
+  if (body.selection !== undefined) object(body.selection, 'Original cash account selection');
+  if (body.attachments !== undefined)
+    need(Array.isArray(body.attachments), 'GRANT_INVALID_INPUT', 'Use the complete original source attachments array.');
+  if (applying) { sha(body.expectedPreviewSha256); requestId(body.requestId); text(body.actor, 'Recording operator', 300); }
+  return body;
+}
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
     'GRANT_INVALID_INPUT', 'Select at most 20 distinct original frozen cohort reviews.');
@@ -366,6 +387,60 @@ function transport(connection, route, {body, contentType = 'application/json', h
   });
 }
 
+function ownGrantLauncher(child) {
+  const owned = {child, instanceId:null, done:null, closed:false, stopSent:false,
+    firstError:null, stopError:null, diagnostics:'', startup:null, startupData:null, automaticStopAttempted:false};
+  let resolveDone;
+  owned.done = new Promise(resolve => { resolveDone = resolve; });
+  owned.stop = () => {
+    if (owned.closed || child.exitCode !== null || child.signalCode !== null || owned.stopSent) return;
+    // A failed spawn still emits close. It has no process that this owner may signal.
+    if (!child.pid && owned.firstError) return;
+    const sent = child.kill('SIGTERM');
+    if (!sent && !owned.closed && child.exitCode === null && child.signalCode === null)
+      throw error('GRANT_SHUTDOWN_INCOMPLETE', 'The original grant launcher has not accepted its stop signal.');
+    if (sent) owned.stopSent = true;
+  };
+  const recordFailure = (failure, channel) => {
+    if (!owned.firstError) {
+      owned.firstError = failure;
+      owned.errorChannel = channel;
+    }
+    owned.startup?.(owned.firstError);
+    if (!owned.automaticStopAttempted) {
+      owned.automaticStopAttempted = true;
+      try { owned.stop(); } catch (stopFailure) { owned.stopError ??= stopFailure; }
+    }
+  };
+  const onError = failure => recordFailure(failure, 'launcher');
+  const onStdoutError = failure => recordFailure(failure, 'stdout');
+  const onStderrError = failure => recordFailure(failure, 'stderr');
+  const onStdout = chunk => {
+    try { owned.startupData?.(chunk); } catch (failure) { recordFailure(failure, 'stdout'); }
+  };
+  const onStderr = chunk => {
+    try { owned.diagnostics = (owned.diagnostics + chunk.toString('utf8')).slice(-16384); }
+    catch (failure) { recordFailure(failure, 'stderr'); }
+  };
+  child.on('error', onError);
+  child.stdout?.on('error', onStdoutError); child.stdout?.on('data', onStdout);
+  child.stderr?.on('error', onStderrError); child.stderr?.on('data', onStderr);
+  child.once('close', (code, signal) => {
+    owned.closed = true;
+    // Child close follows the original stdio close. Retain error ownership through
+    // the next event turn before releasing those listeners or resolving custody.
+    setImmediate(() => {
+      child.removeListener('error', onError);
+      child.stdout?.removeListener('error', onStdoutError); child.stdout?.removeListener('data', onStdout);
+      child.stderr?.removeListener('error', onStderrError); child.stderr?.removeListener('data', onStderr);
+      resolveDone({code, signal, error:owned.firstError?.code ?? null,
+        errorChannel:owned.errorChannel ?? null, diagnostics:owned.diagnostics,
+        ...(owned.firstError ? {message:String(owned.firstError.message ?? owned.firstError).slice(0,1024)} : {})});
+    });
+  });
+  return owned;
+}
+
 const SETTLEMENT_CASH_FIELDS = ['date','currency','decimals','unitSourceIds','unitNote','usdValue',
   'valuationSourceIds','valuationNote','category','tranche','allocations'];
 const settlementRecordId = (value,prefix) => {
@@ -434,7 +509,7 @@ function settlementArchive(bytes,filename) {
 
 export class GrantWorkspaceClient {
   #binding; #child = null; #connection = null; #opening = null; #closing = false; #close;
-  #pending = new Set();
+  #detaching = false; #detach = null; #pending = new Set();
   constructor(binding) { this.#binding = binding; }
   get summary() { return {schema:GRANT_AGENT_SCHEMA, label:this.#binding.label,
     selectionSha256:this.#binding.selectionSha256, allowStart:this.#binding.allowStart,
@@ -454,19 +529,29 @@ export class GrantWorkspaceClient {
       pid:record.pid, instanceId:record.instanceId, port:0, announcement:publicOriginal(record)});
     this.#connection = result; return result;
   }
-  async inspect() {
-    try {
-      const connection = await this.#readLaunch();
-      return {schema:GRANT_AGENT_SCHEMA, ...this.summary, original:connection.original};
-    } catch (failure) {
-      if (['ENOENT', 'GRANT_APPLICATION_NOT_RUNNING', 'GRANT_STARTUP_UNAVAILABLE', 'ECONNREFUSED'].includes(failure.code))
-        return {...this.summary, connection:'ORIGINAL_SERVICE_UNAVAILABLE', reason:failure.code,
-          recovery:this.#binding.allowStart ? 'Use open to start the original reviewed service.' : 'Start the original managed application, then open this alias.'};
-      throw failure;
-    }
+  async #admit(task) {
+    need(!this.#closing && !this.#detaching, 'GRANT_CLOSING',
+      'This grant client is draining its original connection. Finish or retry that close before reopening.');
+    const pending = Promise.resolve().then(task);
+    this.#pending.add(pending);
+    try { return await pending; } finally { this.#pending.delete(pending); }
+  }
+  inspect() {
+    return this.#admit(async () => {
+      try {
+        const connection = await this.#readLaunch();
+        return {schema:GRANT_AGENT_SCHEMA, ...this.summary, original:connection.original};
+      } catch (failure) {
+        if (['ENOENT', 'GRANT_APPLICATION_NOT_RUNNING', 'GRANT_STARTUP_UNAVAILABLE', 'ECONNREFUSED'].includes(failure.code))
+          return {...this.summary, connection:'ORIGINAL_SERVICE_UNAVAILABLE', reason:failure.code,
+            recovery:this.#binding.allowStart ? 'Use open to start the original reviewed service.' : 'Start the original managed application, then open this alias.'};
+        throw failure;
+      }
+    });
   }
   async open({expectedSelectionSha256} = {}) {
-    need(!this.#closing, 'GRANT_CLOSING', 'This grant client is closing.');
+    need(!this.#closing && !this.#detaching, 'GRANT_CLOSING',
+      'This grant client is draining its original connection. Finish or retry that close before reopening.');
     if (expectedSelectionSha256 !== undefined) need(sha(expectedSelectionSha256) === this.#binding.selectionSha256,
       'GRANT_SELECTION_CHANGED', 'Use the current host-reviewed workspace selection.');
     if (this.#opening) return this.#opening;
@@ -488,56 +573,79 @@ export class GrantWorkspaceClient {
         '--source-directory', selected.selection.sourceDirectory, '--startup-format', 'managed',
         '--expected-selection-sha256', binding.selectionSha256],
       {stdio:['ignore', 'pipe', 'pipe'], windowsHide:true, env:{...process.env, PYTHONDONTWRITEBYTECODE:'1'}});
-      const owned = {child, instanceId:null, done:null}; this.#child = owned;
-      owned.done = new Promise(resolveDone => {
-        child.once('error', failure => resolveDone({code:null, signal:null, error:failure.code}));
-        child.once('exit', (code, signal) => resolveDone({code, signal}));
-      });
-      owned.done.then(() => { if (this.#child === owned) this.#child = null; });
-      let diagnostics = '', lineBuffer = '';
-      child.stderr.on('data', chunk => { diagnostics = (diagnostics + chunk.toString('utf8')).slice(-16384); });
+      const owned = ownGrantLauncher(child); this.#child = owned;
+      let lineBuffer = '';
       try {
         await new Promise((ready, reject) => {
           let settled = false;
-          const finish = (failure, value) => { if (settled) return; settled = true; clearTimeout(timer);
-            failure ? reject(failure) : ready(value); };
-          const timer = setTimeout(() => finish(error('GRANT_START_TIMEOUT', 'The original service did not announce its listener.')), 30000);
-          child.stdout.on('data', chunk => {
+          const finish = (failure, value) => {
+            if (settled) return;
+            settled = true; clearTimeout(timer);
+            owned.startup = null; owned.startupData = null;
+            failure ? reject(failure) : ready(value);
+          };
+          const timer = setTimeout(() => finish(error('GRANT_START_TIMEOUT',
+            'The original service did not announce its listener.')), 30000);
+          owned.startup = finish;
+          owned.startupData = chunk => {
             lineBuffer += chunk.toString('utf8');
-            if (lineBuffer.length > 65536) return finish(error('GRANT_START_OUTPUT_INVALID', 'The original startup output exceeded its bound.'));
+            if (lineBuffer.length > 65536)
+              return finish(error('GRANT_START_OUTPUT_INVALID', 'The original startup output exceeded its bound.'));
             let cut;
             while ((cut = lineBuffer.indexOf('\n')) >= 0) {
               const line = lineBuffer.slice(0, cut); lineBuffer = lineBuffer.slice(cut + 1);
-              try { const value = JSON.parse(line);
+              try {
+                const value = JSON.parse(line);
                 if (value.schema === GRANT_LAUNCH_SCHEMA && value.state === 'LISTENING') finish(null, value);
               } catch {}
             }
-          });
-          owned.done.then(result => finish(error('GRANT_START_FAILED', 'The original grant launcher exited before startup.',
-            {exitCode:result.code, signal:result.signal, diagnostics})));
+          };
+          owned.done.then(result => finish(error('GRANT_START_FAILED',
+            'The original grant launcher closed before startup.', {
+              exitCode:result.code, signal:result.signal, originalCode:result.error,
+              diagnostics:result.diagnostics})));
+          if (owned.firstError) finish(owned.firstError);
         });
-        const connection = await this.#readLaunch(); owned.instanceId = connection.original.instanceId;
+        if (owned.firstError) throw owned.firstError;
+        need(!owned.closed && child.exitCode === null && child.signalCode === null,
+          'GRANT_START_FAILED', 'The original grant launcher stopped during startup.');
+        const connection = await this.#readLaunch();
+        owned.instanceId = connection.original.instanceId;
+        if (owned.firstError) throw owned.firstError;
+        need(!owned.closed && child.exitCode === null && child.signalCode === null,
+          'GRANT_START_FAILED', 'The original grant launcher stopped while its listener was verified.');
         return {schema:GRANT_AGENT_SCHEMA, ...this.summary, original:connection.original};
       } catch (failure) {
-        if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
-        await owned.done; if (this.#child === owned) this.#child = null;
-        // A concurrently opened original application is authoritative. This reads
-        // its real launch; no second launch or tool dispatch is attempted.
-        try { const connection = await this.#readLaunch(); return {schema:GRANT_AGENT_SCHEMA, ...this.summary, original:connection.original}; }
-        catch { throw failure; }
+        try {
+          owned.stop();
+          await owned.done;
+          if (this.#child === owned) this.#child = null;
+          if (owned.instanceId && this.#connection?.original.instanceId === owned.instanceId) this.#connection = null;
+        } catch (cleanupFailure) {
+          // The same child remains owned for detach/close retry. Never replace the
+          // original startup or output failure with a secondary stop failure.
+          owned.stopError ??= cleanupFailure;
+          throw failure;
+        }
+        if (owned.firstError) throw failure;
+        // A concurrently opened original application is authoritative. Read its
+        // real launch only after our own original child and pipes have closed.
+        try {
+          const connection = await this.#readLaunch();
+          return {schema:GRANT_AGENT_SCHEMA, ...this.summary, original:connection.original};
+        } catch { throw failure; }
       }
     })();
     try { return await this.#opening; } finally { this.#opening = null; }
   }
-  async browser() {
-    const connection = await this.#readLaunch();
-    return {schema:GRANT_AGENT_SCHEMA, url:connection.url, original:connection.original};
+  browser() {
+    return this.#admit(async () => {
+      const connection = await this.#readLaunch();
+      return {schema:GRANT_AGENT_SCHEMA, url:connection.url, original:connection.original};
+    });
   }
-  async #request(route, options) {
-    need(!this.#closing, 'GRANT_CLOSING', 'This grant client is closing.');
-    const pending = (async () => transport(await this.#readLaunch(), route, options))();
-    this.#pending.add(pending);
-    try { return await pending; } finally { this.#pending.delete(pending); }
+  #request(route, options) {
+    return this.#admit(async () => transport(await this.#readLaunch(), route, options));
   }
   read(view, args = {}) {
     const pid = () => id(args.planId, 'plan'), cid = () => id(args.caseId, 'operation');
@@ -551,6 +659,10 @@ export class GrantWorkspaceClient {
       'case-report':() => '/api/operations/' + cid() + '/report',
       'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'cash-account':() => '/api/operations/' + cid() + '/cash-account' + cashAccountQuery(args),
+      amendments:() => '/api/operations/' + cid() + '/amendments',
+      amendment:() => '/api/operations/' + cid() + '/amendments/' + id(args.amendmentId, 'amendment') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Amendment edition', 1, 300)),
       'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
       'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
@@ -562,11 +674,14 @@ export class GrantWorkspaceClient {
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
+      engagements:() => '/api/operations/' + cid() + '/engagements',
+      engagement:() => '/api/operations/' + cid() + '/engagements/' + id(args.reviewId, 'review'),
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
       settlements:() => '/api/operations/' + cid() + '/settlements',
       settlement:() => '/api/operations/' + cid() + '/settlements/' + id(args.reviewId,'settlement'),
       'delivery-queue':() => '/api/operations/' + cid() + '/delivery-queue' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
+      'installation-returns':() => '/api/operations/' + cid() + '/installation-returns',
       installations:() => '/api/operations/' + cid() + '/installations',
       installation:() => '/api/operations/' + cid() + '/installations/' + id(args.installationId,'installation') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Installation edition',1,500)),
@@ -607,6 +722,14 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  cashCorrectionPreview(caseId, body) {
+    id(caseId, 'operation'); cashCorrectionInput(body);
+    return this.#request('/api/operations/' + caseId + '/cash-correction-preview', {body, mutation:false});
+  }
+  cashCorrectionApply(caseId, body) {
+    id(caseId, 'operation'); cashCorrectionInput(body, true);
+    return this.#request('/api/operations/' + caseId + '/cash-correction', {body, originalRequestId:body.requestId});
   }
   ledgerIntakeInspect(caseId, file) {
     id(caseId, 'operation'); object(file, 'Original intake file');
@@ -667,6 +790,73 @@ export class GrantWorkspaceClient {
     return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
       action:'work-intake.' + action, data});
   }
+  amendmentPreview(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Amendment inputs');
+    return this.#request('/api/operations/' + caseId + '/amendment-preview',
+      {body:{expectedVersion, inputs}, mutation:false});
+  }
+  engagementSeed(caseId, expectedVersion, reviewId) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    if (reviewId !== undefined) id(reviewId, 'review');
+    return this.#request('/api/operations/' + caseId + '/engagement-seed',
+      {body:{expectedVersion, ...(reviewId === undefined ? {} : {reviewId})}, mutation:false});
+  }
+  engagementPreview(caseId, expectedVersion, document) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    object(document, 'Complete Contributor Engagements document');
+    return this.#request('/api/operations/' + caseId + '/engagement-preview',
+      {body:{expectedVersion, document}, mutation:false});
+  }
+  engagementPrepare(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'document', 'expectedPreviewSha256'],
+      ['expectedVersion', 'requestId', 'actor', 'note', 'document', 'expectedPreviewSha256']);
+    text(body.actor, 'Recording operator', 300); text(body.note, 'Recorded engagement review note', 12000);
+    object(body.document, 'Complete Contributor Engagements document'); sha(body.expectedPreviewSha256);
+    const {document, expectedPreviewSha256, ...original} = body;
+    return this.command(caseId, {...original, action:'engagement.prepare',
+      data:{document, expectedPreviewSha256}});
+  }
+  engagementForecast(caseId, expectedVersion, selection) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    object(selection, 'Complete engagement to Forecast selection');
+    return this.#request('/api/operations/' + caseId + '/engagement-forecast',
+      {body:{expectedVersion, selection}, mutation:false});
+  }
+  engagementPortfolio(caseId, expectedVersion, selection) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    object(selection, 'Complete engagement to Portfolio selection');
+    return this.#request('/api/operations/' + caseId + '/engagement-portfolio',
+      {body:{expectedVersion, selection}, mutation:false});
+  }
+  engagementReceiving(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'reviewId', 'reviewSha256',
+      'forecastId', 'portfolioId', 'forecastSelection', 'portfolioSelection'],
+    ['expectedVersion', 'requestId', 'actor', 'note', 'reviewId', 'reviewSha256',
+      'forecastId', 'portfolioId', 'forecastSelection', 'portfolioSelection']);
+    text(body.actor, 'Recording operator', 300); text(body.note, 'Recorded engagement receiving note', 12000);
+    id(body.reviewId, 'review'); sha(body.reviewSha256);
+    id(body.forecastId, 'forecast'); id(body.portfolioId, 'portfolio');
+    object(body.forecastSelection, 'Original normalized engagement to Forecast selection');
+    object(body.portfolioSelection, 'Original normalized engagement to Portfolio selection');
+    const {reviewId, reviewSha256, forecastId, portfolioId, forecastSelection, portfolioSelection, ...original} = body;
+    return this.command(caseId, {...original, action:'engagement.receiving',
+      data:{reviewId, reviewSha256, forecastId, portfolioId, forecastSelection, portfolioSelection}});
+  }
+  amendmentCalendarExport(caseId, selection) {
+    id(caseId, 'operation'); object(selection, 'Amendment calendar selection');
+    if (Object.hasOwn(selection, 'amendmentId')) {
+      exact(selection, ['amendmentId','revision','expectedAmendmentSha256','expectedImpactSha256']);
+      id(selection.amendmentId, 'amendment'); integer(selection.revision, 'Selected amendment edition', 1, 300);
+      sha(selection.expectedAmendmentSha256);
+    } else {
+      exact(selection, ['expectedVersion','inputs','expectedPreviewSha256','expectedImpactSha256']);
+      integer(selection.expectedVersion, 'Reviewed case version'); object(selection.inputs, 'Amendment inputs');
+      sha(selection.expectedPreviewSha256);
+    }
+    sha(selection.expectedImpactSha256);
+    return this.#request('/api/operations/' + caseId + '/amendment-calendar-export',
+      {body:selection, mutation:false});
+  }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
     return this.#request('/api/operations/' + caseId + '/forecast-preview', {body:{expectedVersion, inputs}, mutation:false});
@@ -719,6 +909,39 @@ export class GrantWorkspaceClient {
       'GRANT_INVALID_INPUT', 'Use the original saved alternative ID, including base for the base allocation.');
     return this.#request('/api/operations/' + caseId + '/portfolio-selection',
       {body:{expectedVersion, portfolioId, alternativeId}, mutation:false});
+  }
+  installationReturnSeed(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','revision','sha256'],['expectedVersion','installationId','revision','sha256']);
+    integer(body.expectedVersion,'Current case version'); id(body.installationId,'installation');
+    integer(body.revision,'Original Installation edition',1,500); sha(body.sha256);
+    return this.#request('/api/operations/'+caseId+'/installation-return-seed',{body,mutation:false});
+  }
+  installationReturnPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current receiving case version'); object(body.inputs,'Complete receiving observations');
+    return this.#request('/api/operations/'+caseId+'/installation-return-preview',{body,mutation:false});
+  }
+  installationReturnReviewPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current owner case version'); object(body.inputs,'Complete explicit owner decisions');
+    return this.#request('/api/operations/'+caseId+'/installation-return-review-preview',{body,mutation:false});
+  }
+  installationReturn(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete receiving observations');
+    text(body.note,'Receiving save reason',12000);
+    const {inputs,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'installation.return',data:{inputs,expectedPreviewSha256}});
+  }
+  installationReturnStage(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete explicit owner decisions');
+    text(body.note,'Owner receiving reason',12000);
+    const {inputs,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'installation.return-stage',data:{inputs,expectedPreviewSha256}});
   }
   installationSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
@@ -1010,12 +1233,15 @@ export class GrantWorkspaceClient {
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
       'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
+      'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
+      engagement:() => '/api/operations/' + id(args.caseId, 'operation') + '/engagements/' + id(args.reviewId, 'review') + '/export.zip',
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
       'delivery-queue':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-queue/export.zip' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       installation:() => '/api/operations/' + id(args.caseId,'operation') + '/installations/' + id(args.installationId,'installation') +
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
+      'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
       settlement:() => '/api/operations/' + id(args.caseId,'operation') + '/settlements/' + id(args.reviewId,'settlement') + '/export',
@@ -1063,26 +1289,57 @@ export class GrantWorkspaceClient {
     return this.#request('/api/operations/intake', {originalRequestId:body.requestId,
       body:{...body, packetBase64:bytes.toString('base64')}});
   }
-  async detach(expectedInstanceId) {
-    if (this.#opening) await this.#opening;
-    const owned = this.#child, connection = this.#connection;
-    if (expectedInstanceId !== undefined) need(connection?.original.instanceId === expectedInstanceId,
-      'GRANT_INSTANCE_CONFLICT', 'Read the original instance before closing this connection.');
-    await Promise.allSettled([...this.#pending]);
-    if (owned) {
-      need(!owned.instanceId || owned.instanceId === connection?.original.instanceId, 'GRANT_INSTANCE_CONFLICT',
-        'This client may stop only its original owned grant instance.');
-      if (owned.child.exitCode === null && owned.child.signalCode === null) owned.child.kill('SIGTERM');
-      const result = await owned.done;
-      if (this.#child === owned) this.#child = null;
-      this.#connection = null;
-      return {schema:GRANT_AGENT_SCHEMA, state:'OWNED_ORIGINAL_SERVICE_CLOSED', originalInstanceId:owned.instanceId, result};
+  detach(expectedInstanceId) {
+    if (this.#detach) {
+      return this.#detach.then(result => {
+        if (expectedInstanceId !== undefined) need(result.originalInstanceId === expectedInstanceId,
+          'GRANT_INSTANCE_CONFLICT', 'The pending detach belongs to another original instance.');
+        return result;
+      });
     }
-    this.#connection = null;
-    return {schema:GRANT_AGENT_SCHEMA, state:'BORROWED_CONNECTION_RELEASED', originalInstanceId:connection?.original.instanceId ?? null};
+    // Freeze admission before any await. Already accepted reads and writes keep
+    // their original request identity and complete before the launcher is stopped.
+    this.#detaching = true;
+    const detaching = (async () => {
+      if (this.#opening) {
+        try { await this.#opening; } catch {}
+        // A failed open may still own its original child after a stop failure.
+      }
+      await Promise.allSettled([...this.#pending]);
+      const owned = this.#child, connection = this.#connection;
+      if (expectedInstanceId !== undefined) need(connection?.original.instanceId === expectedInstanceId,
+        'GRANT_INSTANCE_CONFLICT', 'Read the original instance before closing this connection.');
+      let result;
+      if (owned) {
+        need(!owned.instanceId || owned.instanceId === connection?.original.instanceId, 'GRANT_INSTANCE_CONFLICT',
+          'This client may stop only its original owned grant instance.');
+        owned.stop();
+        const outcome = await owned.done;
+        if (this.#child === owned) this.#child = null;
+        if (this.#connection === connection) this.#connection = null;
+        result = {schema:GRANT_AGENT_SCHEMA, state:'OWNED_ORIGINAL_SERVICE_CLOSED',
+          originalInstanceId:owned.instanceId, result:outcome};
+      } else {
+        if (this.#connection === connection) this.#connection = null;
+        result = {schema:GRANT_AGENT_SCHEMA, state:'BORROWED_CONNECTION_RELEASED',
+          originalInstanceId:connection?.original.instanceId ?? null};
+      }
+      this.#detaching = false;
+      return result;
+    })();
+    this.#detach = detaching;
+    const releaseAttempt = () => { if (this.#detach === detaching) this.#detach = null; };
+    detaching.then(releaseAttempt, releaseAttempt);
+    // Failed drain keeps admission closed and the same child/connection retained.
+    // A later detach or permanent close retries those owners, not a new launcher.
+    return detaching;
   }
   close() {
-    if (!this.#close) { this.#closing = true; this.#close = this.detach(); }
+    this.#closing = true;
+    if (!this.#close) {
+      const closing = this.detach(); this.#close = closing;
+      closing.catch(() => { if (this.#close === closing) this.#close = null; });
+    }
     return this.#close;
   }
 }
