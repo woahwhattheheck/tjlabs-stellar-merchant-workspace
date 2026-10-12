@@ -170,7 +170,8 @@ def stop(signum, frame):
     global _stop_signal
     _stop_signal = signum
     if _active_child is not None and _active_child.poll() is None:
-        _active_child.send_signal(signum)
+        emit({"phase": "STOP_REQUESTED", "signal": signum,
+              "message": "The original managed operation is closing at its normal completion boundary."})
         return
     raise InterruptedError("Continue the same original product operation after the interruption.")
 
@@ -181,17 +182,26 @@ def managed_application(root, supplied, binding, source_root, lease):
     entry = source_root / "stellar-forge/mcp-merchant-operator/examples/worldbank-managed-receiving.mjs"
     # The original Node child inherits the lease. A terminated Python receiver
     # cannot permit another writer while this original child still owns models.
-    _active_child = subprocess.Popen([
-        supplied["node"], str(entry), "--runtime", binding["directory"],
-        "--workdir", str(directory), "--python", sys.executable,
-    ], pass_fds=(lease,))
-    try:
-        result = _active_child.wait()
-    finally:
-        if _active_child.poll() is None:
-            _active_child.terminate()
-            _active_child.wait()
-        _active_child = None
+    log_fd = os.open(directory / "process.log",
+        os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    with os.fdopen(log_fd, "ab", buffering=0) as log:
+        if not stat.S_ISREG(os.fstat(log.fileno()).st_mode):
+            raise ValueError("The managed process log must remain an ordinary private file.")
+        emit({"phase": "MANAGED_APPLICATION_RUNNING", "log": str(directory / "process.log")})
+        _active_child = subprocess.Popen([
+            supplied["node"], str(entry), "--runtime", binding["directory"],
+            "--workdir", str(directory), "--python", sys.executable,
+        ], pass_fds=(lease,), start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            result = _active_child.wait()
+        finally:
+            # Its original driver closes Applications and customer hosts in
+            # finally. Let that boundary settle before releasing the lease.
+            # A separate session protects it from terminal group interruption;
+            # the retained log also survives a lost parent's output transport.
+            if _active_child.poll() is None:
+                _active_child.wait()
+            _active_child = None
     if _stop_signal is not None:
         raise InterruptedError("The original native child has closed; resume this same workspace.")
     if result:

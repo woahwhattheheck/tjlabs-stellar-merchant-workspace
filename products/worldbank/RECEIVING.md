@@ -131,8 +131,11 @@ production service.
 Repeat the same runtime, command and private directory after interruption.
 Original engines reopen their source import, review, offer, download, report and
 archive operation IDs. A directory lease serializes the complete receiver;
-busy returns exit 75. The managed child inherits that lease so losing its Python
-parent cannot admit another writer while the child owns application models.
+busy returns exit 75. The managed child inherits that lease and runs in its own
+session with a retained private process log. SIGINT/SIGTERM requests stop after
+that original driver's normal cleanup boundary. The receiver waits for that
+child to close its models before returning the interruption. Losing the parent
+or its output transport preserves the child's lease and log.
 
 The runtime/source binding remains exact for this operation. Receive a different
 installed source edition into a new private directory. The customer's normal
