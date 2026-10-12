@@ -14,7 +14,7 @@ const HASH = /^[a-f0-9]{64}$/;
 const CORE = ['cli.mjs', 'cli.py', 'model.py', 'source.py', 'recipes.py',
   'operator_server.py', 'operator_client.py', 'operator.html', 'operator.css', 'operator.mjs',
   'workflow_engine.py', 'workflow_cli.py', 'workflow_server.py', 'workflow_analysis.py',
-  'workflow_app.html', 'workflow_app.mjs', 'workflow_app.css', 'WORKFLOW_ANALYSIS.md'];
+  'workflow_app.html', 'workflow_app.mjs', 'workflow_app.css', 'WORKFLOW.md', 'WORKFLOW_ANALYSIS.md'];
 const OPTIONS = new Map([
   ['--runtime-workspace', 'root'], ['--runtime-directory', 'runtimeDirectory'],
   ['--runtime-id', 'runtimeId'], ['--installation-id', 'installationId'],
