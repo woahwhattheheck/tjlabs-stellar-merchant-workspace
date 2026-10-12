@@ -2,7 +2,7 @@
 
 Operate a merchant's complete invoice and customer-payment cycle in the original private accounting workspace. The product brings customer records, service quotations, issued invoices, payment allocation, credit notes and dated account delivery into one installed operator.
 
-The maintained `merchant-receivables` selection includes 16 commands, 39 named exports and the original Merchant receivables, Merchant accounting and Merchant support Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery.
+The maintained `merchant-receivables` selection includes the billing commands, typed client and payment interfaces, and the original Merchant receivables, Merchant accounting and Merchant support Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery.
 
 ## Install the selected product
 
@@ -25,7 +25,7 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
   --out /private/receivables-release --status
 ~~~
 
-The original Runtime workspace also discovers this recipe in **Build a product**. Select **Merchant receivables and service billing**, review its exact source, then open the completed archive in **Source & profile**. The package version includes both the source commit and `selection.merchant-receivables`.
+The original Runtime workspace also discovers this recipe in **Build a product**. Select **Merchant receivables and Stellar invoice collection**, review its exact source, then open the completed archive in **Source & profile**. The package version includes both the source commit and `selection.merchant-receivables`.
 
 The complete installed accounting, quotation and managed-operator profile uses the existing Linux runtime: Node 22.16+, Python 3.11+, npm, `flock` and the original archive utilities. Prepare the selected original dependencies through the maintained installer:
 
@@ -191,6 +191,18 @@ For an upgrade, prepare a new runtime for the selected new source archive, retai
 | `@tokenjunkielabs/starforge-merchant/merchant/receivables/server` | Complete loopback server or handler over the existing open workspace. |
 
 Use the actual package name shown by the installed `package.json` and retain the suffixes above. The original distribution exports are explicit; `starforge registrations --source merchant-receivables` prints this product's command, client, browser and Applications registrations.
+
+## Collect an invoice through a Stellar wallet
+
+Open an issued invoice and use **Stellar payment requests** to prepare collection terms. The review binds the request to the original customer, invoice document and current amount due. Choose the public network or test network, the merchant's exact receiving account, the asset and amount in Stellar units, and the amount of the commercial invoice that the transfer will settle. When the asset value differs from the invoice currency, retain the agreed valuation in the request.
+
+Issue the reviewed request, then share its wallet link or original `payment-request.html` document. Each request has its own invoice-bound memo. The operator can issue separate partial collection requests, inspect saved returns, cancel replaced instructions and download the original request and full receiving record.
+
+After the customer sends the payment, record the transaction hash returned by their wallet and use **Receive**. The native verifier uses the original Stellar RPC catalogue and official SDK to check the ledger transaction's network, destination, payer constraint when selected, asset issuer, exact amount, memo and successful operation result. It supports classic payments, strict-send and strict-receive path payments, and fee-bump transactions reported by either their inner or outer hash.
+
+A verified public-network transfer produces an original customer receipt and dated invoice allocation. Both fee-bump hash identities participate in duplicate detection. Full native proof is retained as original private files and hydrated for downloads; the accounting journal keeps a compact reference. Test-network receiving remains visible as a verified test observation. All original invoice documents retain their issued content as payments and balances change.
+
+The [complete payment request guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md) covers browser operation, CLI requests, the typed HTTP client, exact file names and recovery of interrupted work.
 
 ## Original native exercise
 
