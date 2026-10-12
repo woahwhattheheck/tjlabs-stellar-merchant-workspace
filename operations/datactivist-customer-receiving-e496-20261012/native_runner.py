@@ -290,7 +290,12 @@ def run(config):
                                 version_reason="Continue the original operating workspace and complete its customer handover")
             request = {"uploads": uploads}
             (root / "upload-state").mkdir(mode=0o700, exist_ok=True)
-            saved = subprocess.run([sys.executable, "-B", str(helpers / "library_upload.py")],
+            helper_entry = ("import runpy,sys,tempfile; "
+                            "tempfile.tempdir=sys.argv[1]; "
+                            "helper=sys.argv[2]; sys.argv=[helper]; "
+                            "runpy.run_path(helper,run_name='__main__')")
+            saved = subprocess.run([sys.executable, "-B", "-c", helper_entry,
+                                    str(root / "upload-state"), str(helpers / "library_upload.py")],
                                    input=json.dumps(request), capture_output=True, text=True, cwd=root,
                                    env=dict(os.environ, TMPDIR=str(root / "upload-state"), PYTHONDONTWRITEBYTECODE="1"))
             (logs / "delivery-upload.stdout").write_text(saved.stdout, encoding="utf-8")
