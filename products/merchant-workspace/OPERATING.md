@@ -29,6 +29,7 @@ They retain its original dependency manifests and lock.
 | Retained grant purchase review and native Buyer results | Native Stellar packages, `mcp`, operator support and the original private workbench; receiving makes no new payment |
 | Kafka event datasets and complete customer clients | Python 3.11 or later; `confluent-kafka==2.16.0` in that Python environment for broker work; Node 22.16 or later for browser/client and the merchant's selected runtime features |
 | RSS/Atom/OPML collections and complete feed customer delivery | Python 3.11 or later for the existing feed console; Node 22.16 or later with `mcp` for the client/merchant host, plus the publisher or Buyer's selected runtime features |
+| Huwise source review, tenant ingestion and complete merchant/customer receiving | Node 24 or later and local file locks for the native workbench and bearer HTTP host; `schema`, `openapi`, `mcp` and native Stellar packages for the selected installed merchant/payment facilities |
 
 Use `starforge registrations` to inspect the selected package's actual command
 registrations. `starforge source` opens its source identity. Runtime upgrades
@@ -997,3 +998,35 @@ Node applications import openFeedsWorkspaceClient from
 before closing its enclosing merchant factory. The CLI retains signal handlers
 through its original request, file and provider drain. The existing console owns
 its continuing acquisition; cancel selects the actual running native job.
+
+
+## Operate and hand over a Huwise data product
+
+The complete [Huwise operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/huwise/OPERATING.md)
+follows installation, complete portal capture and analyst review, tenant
+ingestion, native publication, merchant operation and full customer receiving.
+Build the dedicated archive with the original distribution builder's
+`--selection huwise` option. It retains the complete original Huwise
+contribution and the runtime, publisher, seller and buyer sources it operates.
+
+Open the same private workbench with `starforge huwise serve`.
+Its grayscale browser retains catalog and complete source editions, notes,
+field selections and publication candidates. Supply the private
+`--automation-connection` file to enable Tenant ingestion. Preparing a
+tenant plan selects the actual source edition, tenant dataset/resource IDs and
+complete metadata, fields, processors, security and schedule settings. Inspect,
+review, apply, native status and complete receiving use that same saved plan.
+
+The merchant host initializer `init-opendatasoft-workspaces` binds this
+workbench's original seller-releases store. Its 44 Huwise actions operate the
+same source, notes, tenant plan, publisher and export identities. The typed
+client and `starforge merchant-huwise` deliver all original analyst files,
+any selected merchant and buyer files, and the complete tenant archive.
+
+Select the returned `tenantExportId` in the analyst export when tenant
+receiving belongs to its edition, capture hash and notes revision. Use the
+returned export ID and manifest hash for download, resume and offline reopen.
+The maintained `starforge merchant-huwise-receive` command performs that
+complete native journey from a public source or an existing completed project.
+Keep the original private workbench and receiving directories when upgrading
+the selected runtime.

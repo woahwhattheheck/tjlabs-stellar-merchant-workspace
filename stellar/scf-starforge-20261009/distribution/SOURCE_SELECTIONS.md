@@ -33,6 +33,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications |
 | --- | --- | --- |
+| `huwise` | Huwise source review, tenant ingestion and native publication, merchant and complete customer receiving | Runtime management; original Huwise browser and merchant agent |
 | `water-operations` | USGS observations, editions, Water workspace, merchant and customer file receiving | Water, Buyer, merchant console |
 | `woo-merchant` | Existing WooCommerce orders, native checkout, Operations, purchased files and refunds | WooCommerce, Buyer, merchant console |
 | `all` or no flag on a new build | Complete maintained toolkit | All registered applications |
@@ -42,6 +43,8 @@ for its included commands. Selected packages expose their explicit named package
 exports; the full toolkit's broad root `index.mjs` is excluded. This prevents
 its unrelated re-exports from forcing every product into a selected package.
 The original modules, their exports and implementations are unchanged.
+
+For Huwise, use `--selection huwise` and the [complete operating guide](../../../products/huwise/OPERATING.md). Its selected source retains the full tenant Automation API, all Huwise merchant actions, native publisher and buyer, browser assets, and upstream license.
 
 ## Continue the same build
 

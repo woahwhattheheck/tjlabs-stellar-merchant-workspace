@@ -30,6 +30,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review research sources and deliver cited analysis | `starforge research-workspace`, `starforge research-client` and the merchant Research tools | One saved question, original source editions, reviewed Crossref operations, analyst findings and complete report/portable receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
+| Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -55,6 +56,12 @@ delivery. Its [complete client](https://github.com/woahwhattheheck/tjlabs-stella
 and [customer download](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MERCHANT-DOWNLOAD.md)
 guides cover the same saved workspace and receiving an original export across
 an interrupted transfer.
+
+The [Huwise operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/huwise/OPERATING.md)
+connects complete source review, the tenant Automation API, native publication,
+merchant operation and delivery of every original customer file. Build its
+selected source with `--selection huwise`; its package retains the original
+publisher, buyer, host and runtime installation workflow.
 
 ## Open the source product
 
