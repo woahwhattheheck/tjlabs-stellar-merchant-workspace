@@ -33,7 +33,7 @@ export function readLabResult(bytes,{signal}={}){
       fail('The original source, field decisions and computed review identities disagree: '+prefix);
     return {source,document,review,nativePreparation:preparation};
   };
-  const nativeFiles=(identity,preparation)=>{
+  const nativeFiles=(identity,preparation,source)=>{
     if(!identity.prepared){
       if(preparation.status!=='REVIEW_REQUIRED')fail('The native preparation state is incomplete.');
       return [];
@@ -49,6 +49,16 @@ export function readLabResult(bytes,{signal}={}){
       if(expectedNames.has(expected.filename)||!member||member.bytes.length!==expected.bytes||member.sha256!==expected.sha256)
         fail('A native receiving file changed: '+expected.filename);
       expectedNames.add(expected.filename);
+      if(expected.formatConversion!==undefined||expected.sourceFile!==undefined){
+        const original=source.files?.find(file=>file.filename===expected.sourceFile?.filename);
+        if(source.profile?.id!=='geotech-dts8d'||!original||
+          !same(expected.sourceFile,{filename:original.filename,bytes:original.bytes,sha256:original.sha256})||
+          !/\.xls$/i.test(original.filename)||expected.filename!==original.filename+'.xlsx'||
+          !same(expected.formatConversion,{from:'xls-biff8',to:'xlsx',profileId:'geotech-dts8d',originalRetained:true}))
+          fail('The native format conversion differs from its complete original XLS source.');
+        member.sourceFile=expected.sourceFile;
+        member.formatConversion=expected.formatConversion;
+      }
     }
     if(expectedArchive.directMember){
       const direct=byName.get(expectedArchive.directMember);
@@ -56,14 +66,14 @@ export function readLabResult(bytes,{signal}={}){
     }
     return prepared;
   };
-  const current=fieldReview('',manifest),prepared=nativeFiles(manifest,current.nativePreparation);
+  const current=fieldReview('',manifest),prepared=nativeFiles(manifest,current.nativePreparation,current.source);
   let baseline=null,reconciliation=null;
   if(manifest.reconciliation){
     const identity=manifest.reconciliation;
     if(identity.schema!=='starforge.lab-edd-cross-profile-result.v1'||!manifest.originalMembers?.baseline)
       fail('The complete cross-profile result requires its original baseline.');
     baseline=fieldReview('baseline/',identity.baseline);
-    baseline.prepared=nativeFiles(identity.baseline,baseline.nativePreparation);
+    baseline.prepared=nativeFiles(identity.baseline,baseline.nativePreparation,baseline.source);
     signal?.throwIfAborted();
     const sourceIdentity=source=>Object.fromEntries(Object.entries(source).filter(([key])=>key!=='unassigned'));
     if(!same(sourceIdentity(current.source),current.review.source)||!same(sourceIdentity(baseline.source),baseline.review.source))

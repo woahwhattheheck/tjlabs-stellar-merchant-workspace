@@ -94,7 +94,7 @@ request and process ownership.
 | --- | --- |
 | `equis-lab-3` | Sample, batch and combined test/result/QC files, every physical row and parent identity |
 | `equis-lab-4` | Separate sample, test, result and batch files with complete native identities |
-| `geotech-dts8d` | Original 150-field DTS8D workbook contract, source cells/epoch, explicit literal corrections and native XLSX |
+| `geotech-dts8d` | Original XLSX or BIFF8 XLS, all 150 DTS8D fields, source cells/formulas/epoch, explicit literals and source-bound native XLSX |
 | EQuIS3 ↔ EQuIS4 | Both independent native families, candidate correspondence, explicit pair/separate/defer choices, entity links and full editable tables |
 
 Use [the complete reconciliation guide](../../sf30-seller-sdk/lab-edd/RECONCILIATION.md)
@@ -131,3 +131,13 @@ remain in that original private service directory.
 The selected `lab-edd` contribution now includes the `laboratory-workspaces` merchant provider and `starforge lab-edd-agent`. Follow [the complete operator guide](../../../../stellar-forge/mcp-merchant-operator/LAB_EDD_WORKSPACE.md) to reuse the saved application's paid-job connection and original buyer profile. All 42 tools operate the same source, decision, checkout, native task and result identities. The original paid-job provider remains the merchant/worker owner.
 
 The same full receiving driver walks both public 500-result EDD families, every physical row and correspondence group, CSV/TSV editing, immutable review and five-slot staging, native checkout, complete result delivery and independent cold reopening. Retain its actual `result.json`, source manifest and original runtime tuple with the application edition.
+
+## Original legacy Excel workbooks
+
+The selected installation includes the complete original BIFF8 parser and
+[legacy Excel operator guide](../../sf30-seller-sdk/lab-edd/LEGACY_XLS.md).
+An XLS source retains its exact binary and receives a separately named XLSX
+with a checked conversion binding. The existing Laboratory command, editor,
+42-operation merchant desk, sealed worker and result reader operate that same
+source. Python 3.10+ uses the included unchanged xlrd package.
+This product includes software developed by David Giffin <david@giffin.org>.
