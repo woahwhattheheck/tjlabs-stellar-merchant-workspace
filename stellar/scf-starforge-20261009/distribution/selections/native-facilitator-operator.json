@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "native-facilitator-operator",
   "title": "Native Stellar facilitator and Bazaar operator",
-  "description": "Original managed native operator, immutable payment profiles, host commissioning, durable Bazaar publication, agent tools and resumable complete profile/catalog receiving.",
+  "description": "Original managed native operator and agent Applications, immutable payment profiles, host commissioning, durable Bazaar publication and resumable complete profile/catalog receiving.",
   "base": {
     "commands": [
       "installation",
@@ -74,7 +74,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Native Stellar facilitator: managed operator, agent controls, immutable payment profiles, durable Bazaar publication and resumable complete catalog receiving",
+    "description": "Native Stellar facilitator: managed operator and agent Applications, immutable payment profiles, durable Bazaar publication and resumable complete receiving",
     "readme": "stellar/scf-starforge-20261009/distribution/selections/NATIVE_FACILITATOR_OPERATOR.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
