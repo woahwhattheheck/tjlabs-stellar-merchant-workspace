@@ -7,6 +7,8 @@ import {spawn} from 'node:child_process';
 import {dirname,isAbsolute,join,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {acquireStateLease} from '../../merchant-fleet-gateway/state-lease.mjs';
+import {accountingWorkspaceBinding,assertAccountingWorkspaceBinding} from './binding.mjs';
+import {accountingRelocation,relocateAccountingState,resolveAccountingSourcePath} from './relocation.mjs';
 
 const ENGINE=fileURLToPath(new URL('../../sf101-merchant-recovery/recover.mjs',import.meta.url));
 const STATE='stellar-forge.merchant-accounting-workspace.v1';
@@ -65,6 +67,7 @@ async function digest(path,signal){
 }
 function rootsFor(state,root,directory){
   need(object(state)&&state.schema===STATE&&Number.isSafeInteger(state.revision)&&object(state.sources)&&Array.isArray(state.runs)&&Array.isArray(state.proofs)&&object(state.notes),'ACCOUNTING_RECOVERY_WORKSPACE','Select an existing original accounting workspace.');
+  accountingRelocation(directory,state);
   const buyer=accountingSourceMode(state)==='buyer';
   if(buyer)buyerStartupDescriptor(directory,state);
   const roots=[{name:'Accounting',path:beneath(root,directory),kind:'directory'},
@@ -190,7 +193,8 @@ async function extrasFor(state,root,directory,roots,readConfig){
     need(hash(bytes)===preview.configSha256,'ACCOUNTING_RECOVERY_SOURCE_CHANGED','A saved original recovery request changed.');
     let config;try{config=JSON.parse(bytes.toString('utf8'));}catch{fail('ACCOUNTING_RECOVERY_JSON','Invalid original recovery request.');}
     need(object(config)&&config.schema==='stellar-forge.merchant-recovery-request.v1','ACCOUNTING_RECOVERY_WORKSPACE','Expected the original recovery request format.');
-    for(const path of [config.outcomeFile,config.requestFile,config.termsFile,...(config.response?[config.response.file]:[])]){
+    for(const original of [config.outcomeFile,config.requestFile,config.termsFile,...(config.response?[config.response.file]:[])]){
+      const path=resolveAccountingSourcePath(directory,state,original);
       beneath(root,path);if(!roots.some(r=>inside(r.path,path)))paths.add(path);
     }
   }
@@ -239,7 +243,10 @@ export async function accountingRecoveryStatus({directory}={}){
   await privateRoot(directory);const path=join(directory,RESTORE_MARKER),st=await info(path);
   if(!st)return {status:'NO_RESTORE_IN_PROGRESS',directory};
   const marker=await readJSON(path,16_000);need(marker.schema===RESTORE&&hex(marker.manifestSha256),'ACCOUNTING_RECOVERY_MARKER','The retained restore marker is invalid.');
-  return {status:'RESTORE_IN_PROGRESS',directory,manifestSha256:marker.manifestSha256,startedAt:marker.startedAt,nextOperation:'Resume restore with the same authenticated backup and original paths.'};
+  if(marker.relocate===true)need(hex(marker.expectedWorkspaceId)&&hex(marker.expectedSourcesSha256)&&hex(marker.installedWorkspaceSha256)&&marker.directory===directory,'ACCOUNTING_RECOVERY_MARKER','The retained relocation marker is invalid.');
+  return {status:'RESTORE_IN_PROGRESS',directory,manifestSha256:marker.manifestSha256,startedAt:marker.startedAt,
+    ...(marker.relocate===true?{relocate:true,stateRoot:marker.stateRoot,expectedWorkspaceId:marker.expectedWorkspaceId,expectedSourcesSha256:marker.expectedSourcesSha256}:{}),
+    nextOperation:marker.relocate===true?'Resume the same authenticated backup with --relocate and its recorded destination.':'Resume restore with the same authenticated backup and original paths.'};
 }
 async function retainedSources(directory,stateRoot,signal,hostSources){
   need(!(await info(join(directory,RESTORE_MARKER))),'ACCOUNTING_RECOVERY_INCOMPLETE','Complete the retained restore before taking another backup.');
@@ -317,11 +324,20 @@ export async function verifyAccountingBackup({bundle,expectedSha256,signal,...pa
   need(result.files===receipt.files&&result.bytes===receipt.bytes,'ACCOUNTING_RECOVERY_BACKUP_CHANGED','The completed backup counts changed.');
   return {...receipt,status:'ACCOUNTING_BACKUP_VERIFIED'};
 }
-async function restoredMapping(stage,manifest,{directory,stateRoot,hostSources}){
+async function restoredMapping(stage,manifest,{directory,stateRoot,hostSources,relocate=false,manifestSha256,expectedWorkspaceId,expectedSourcesSha256}){
+  const installedDirectory=directory,installedStateRoot=stateRoot;
   const mapping=await readJSON(join(stage,'Recovery'),16*1024**2);
-  need(mapping.schema===MAPPING&&mapping.directory===directory&&mapping.stateRoot===stateRoot&&hex(mapping.stateSha256)&&Array.isArray(mapping.roots)&&Array.isArray(mapping.extras),
-    'ACCOUNTING_RECOVERY_DESTINATION','Restore requires the original workspace path and private state root.');
+  need(mapping.schema===MAPPING&&hex(mapping.stateSha256)&&Array.isArray(mapping.roots)&&Array.isArray(mapping.extras),
+    'ACCOUNTING_RECOVERY_MAPPING','Retain the authenticated original operating mapping.');
+  absolute(mapping.stateRoot);beneath(mapping.stateRoot,mapping.directory);
+  need(relocate||mapping.directory===directory&&mapping.stateRoot===stateRoot,
+    'ACCOUNTING_RECOVERY_DESTINATION','Restore requires the original paths, or explicit --relocate into a separate private state root.');
+  need(!relocate||!inside(mapping.stateRoot,stateRoot)&&!inside(stateRoot,mapping.stateRoot),
+    'ACCOUNTING_RECOVERY_OVERLAP','Relocate into a separate private state root while preserving the original account.');
+  directory=mapping.directory;stateRoot=mapping.stateRoot;
   const stateBytes=await readBytes(join(stage,'Accounting','workspace.json'),32_000_000),state=JSON.parse(stateBytes),roots=rootsFor(state,stateRoot,directory);
+  const originalBinding=accountingWorkspaceBinding(directory,state);
+  assertAccountingWorkspaceBinding(directory,state,{expectedWorkspaceId,expectedSourcesSha256});
   const profile=mapping.hostProfile===undefined?null:hostProfile(mapping.hostProfile,stateRoot);
   need(profile||mapping.hostEntries===undefined,'ACCOUNTING_RECOVERY_HOST_MAPPING','An authenticated host inventory requires its original source profile.');
   const hostRoots=additionalHostRoots(profile,roots),hostEntries=profile?retainedHostEntries(mapping.hostEntries,hostRoots,stateRoot):new Map();
@@ -338,7 +354,7 @@ async function restoredMapping(stage,manifest,{directory,stateRoot,hostSources})
     return bytes;
   };
   if(accountingSourceMode(state)==='buyer')validateBuyerStartupBytes(directory,state,await readStaged(state.sources.buyerSourceFile,BUYER_STARTUP_LIMIT));
-  if(profile){
+  if(profile&&!relocate){
     need(typeof hostSources==='function','ACCOUNTING_RECOVERY_HOST_PROFILE_REQUIRED',
       'Open recovery with the original configured host source profile before restoring its authorization files.');
     const selected=hostProfile(await hostSources({readFile:readStaged}),stateRoot);
@@ -377,7 +393,58 @@ async function restoredMapping(stage,manifest,{directory,stateRoot,hostSources})
   }
   need(seenHosts.size===hostEntries.size,'ACCOUNTING_RECOVERY_HOST_MAPPING','An authenticated host source entry is missing.');
   need(entries.length&&new Set(entries.map(e=>e.destination)).size===entries.length,'ACCOUNTING_RECOVERY_MAPPING','Duplicate operating destination.');
-  return {mapping,roots:[...roots,...hostRoots],profile,extras,entries};
+  if(!relocate)return {mapping,state,roots:[...roots,...hostRoots],profile,extras,entries,binding:originalBinding,workspaceSha256:mapping.stateSha256};
+  const project=path=>{
+    beneath(stateRoot,path);
+    return inside(directory,path)?join(installedDirectory,relative(directory,path)):
+      join(installedStateRoot,relative(stateRoot,path));
+  };
+  const paths=[...[...roots,...hostRoots].map(item=>({from:item.path,to:project(item.path),kind:item.kind})),
+    ...extras.map(item=>({from:item.path,to:project(item.path),kind:'file'}))];
+  const mapPath=path=>{
+    absolute(path);
+    const source=paths.filter(item=>item.from===path||item.kind==='directory'&&inside(item.from,path))
+      .sort((a,b)=>b.from.length-a.from.length)[0];
+    need(source,'ACCOUNTING_RECOVERY_HOST_MAPPING','Project only authenticated captured source paths.');
+    return source.to+path.slice(source.from.length);
+  };
+  const readMapped=async(path,max)=>{
+    absolute(path);
+    const source=paths.filter(item=>item.to===path||item.kind==='directory'&&inside(item.to,path))
+      .sort((a,b)=>b.to.length-a.to.length)[0];
+    need(source,'ACCOUNTING_RECOVERY_HOST_MAPPING','Read only relocated authenticated captured source paths.');
+    return await readStaged(source.from+path.slice(source.to.length),max);
+  };
+  let installedProfile=null;
+  if(profile){
+    need(typeof hostSources==='function'&&typeof hostSources.relocateProfile==='function',
+      'ACCOUNTING_RECOVERY_HOST_RELOCATION_REQUIRED','Use the original host provider with its explicit path relocation projection.');
+    const expected=hostProfile(await hostSources.relocateProfile(structuredClone(profile),{mapPath}),installedStateRoot);
+    const selected=hostProfile(await hostSources({readFile:readMapped}),installedStateRoot);
+    need(json(selected)===json(expected),'ACCOUNTING_RECOVERY_HOST_PROFILE_CHANGED',
+      'The current configured host differs from its explicitly relocated original authorization profile.');
+    installedProfile=selected;
+  }
+  const installedState=relocateAccountingState({directory,state,stateRoot,installedDirectory,installedStateRoot,paths,
+    manifestSha256,workspaceSha256:mapping.stateSha256});
+  const installedRoots=rootsFor(installedState,installedStateRoot,installedDirectory);
+  const installedHostRoots=additionalHostRoots(installedProfile,installedRoots);
+  need(json([...roots,...hostRoots].map(item=>({...item,path:mapPath(item.path)})))===json([...installedRoots,...installedHostRoots]),
+    'ACCOUNTING_RECOVERY_MAPPING','Relocated source roots overlap or differ from the authenticated closure.');
+  const binding=accountingWorkspaceBinding(installedDirectory,installedState);
+  need(binding.workspaceId===originalBinding.workspaceId&&binding.sourcesSha256===originalBinding.sourcesSha256,
+    'ACCOUNTING_WORKSPACE_CHANGED','The relocated account must retain both original logical identities.');
+  const installedBytes=Buffer.from(json(installedState));
+  need(installedBytes.length<=32_000_000,'ACCOUNTING_RECOVERY_LIMIT','The relocated operating state exceeds its original 32 MB limit.');
+  const installedStatePath=join(stage,'Accounting','workspace.json'),relocatedSource=join(dirname(stage),'relocated-workspace.json');
+  await writeNew(relocatedSource,installedBytes);
+  const installedEntries=entries.map(item=>({...item,destination:mapPath(item.destination),
+    ...(item.source===installedStatePath?{source:relocatedSource,size:installedBytes.length,sha256:hash(installedBytes)}:{})}));
+  need(new Set(installedEntries.map(item=>item.destination)).size===installedEntries.length,
+    'ACCOUNTING_RECOVERY_MAPPING','Relocated operating destinations overlap.');
+  return {mapping,state:installedState,roots:[...installedRoots,...installedHostRoots],profile:installedProfile,
+    extras:extras.map(item=>({name:hash(mapPath(item.path)),path:mapPath(item.path)})),entries:installedEntries,binding,
+    workspaceSha256:hash(installedBytes)};
 }
 function partialPath(item,identity){return join(dirname(item.destination),'.accounting-restore-'+identity+'-'+hash(item.destination)+'.pending');}
 async function installFile(item,identity,root,signal){
@@ -390,7 +457,8 @@ async function installFile(item,identity,root,signal){
   }finally{await unlink(temporary);}
   await syncDirectory(dirname(item.destination));return version(await info(item.destination));
 }
-export async function restoreAccountingWorkspace({bundle,expectedSha256,directory,stateRoot,quiesced=false,signal,hostSources,...password}={}){
+export async function restoreAccountingWorkspace({bundle,expectedSha256,directory,stateRoot,quiesced=false,relocate=false,expectedWorkspaceId,expectedSourcesSha256,signal,hostSources,...password}={}){
+  need(typeof relocate==='boolean','ACCOUNTING_RECOVERY_RELOCATION','Choose whether to restore original paths or explicitly relocate the account.');
   need(quiesced===true,'ACCOUNTING_RECOVERY_QUIESCE','Stop the workspace and all original input writers, then pass --quiesced.');
   await privateRoot(stateRoot);beneath(stateRoot,directory);const credentials=passOptions(password),receipt=await inspectAccountingBackup({bundle,expectedSha256});
   const temporary=await mkdtemp(join(stateRoot,'.accounting-restore-'));let lease;
@@ -401,11 +469,11 @@ export async function restoreAccountingWorkspace({bundle,expectedSha256,director
     const manifestBytes=await readBytes(join(bundle,'encrypted','manifest.json'),12*1024**2);
     need(hash(manifestBytes)===receipt.manifestSha256,'ACCOUNTING_RECOVERY_BACKUP_CHANGED','The authenticated manifest changed before restore.');
     const manifest=JSON.parse(manifestBytes);
-    const {mapping,roots,profile,extras,entries}=await restoredMapping(stage,manifest,{directory,stateRoot,hostSources});
+    const {mapping,state:installedState,roots,profile,extras,entries,binding,workspaceSha256}=await restoredMapping(stage,manifest,{directory,stateRoot,hostSources,relocate,manifestSha256:receipt.manifestSha256,expectedWorkspaceId,expectedSourcesSha256});
     for(const item of [...roots,...extras])need(!inside(item.path,bundle)&&!inside(bundle,item.path)&&!inside(item.path,temporary),'ACCOUNTING_RECOVERY_OVERLAP','Keep the authenticated backup separate from restored operating paths.');
     await directories(stateRoot,directory,{create:true});await privateRoot(directory);lease=await acquireStateLease(directory);
     const markerPath=join(directory,RESTORE_MARKER),markerInfo=await info(markerPath),identity=receipt.manifestSha256;
-    if(markerInfo){const marker=await readJSON(markerPath,16_000);need(marker.schema===RESTORE&&marker.manifestSha256===identity&&marker.directory===directory&&marker.stateRoot===stateRoot,'ACCOUNTING_RECOVERY_OTHER_RESTORE','Resume the backup recorded by this workspace before selecting another restore.');
+    if(markerInfo){const marker=await readJSON(markerPath,16_000);need(marker.schema===RESTORE&&marker.manifestSha256===identity&&marker.directory===directory&&marker.stateRoot===stateRoot&&Boolean(marker.relocate)===relocate&&(!relocate||marker.installedWorkspaceSha256===workspaceSha256&&marker.expectedWorkspaceId===binding.workspaceId&&marker.expectedSourcesSha256===binding.sourcesSha256),'ACCOUNTING_RECOVERY_OTHER_RESTORE','Resume the backup recorded by this workspace before selecting another restore.');
       for(const item of entries.filter(e=>e.kind==='file')){if(!(await directories(stateRoot,dirname(item.destination))))continue;
         const path=partialPath(item,identity),st=await info(path);if(st){need(regular(st)&&(st.mode&0o077n)===0n,'ACCOUNTING_RECOVERY_PARTIAL','An unfinished restore file is unsafe.');await unlink(path);}}
     }
@@ -414,7 +482,7 @@ export async function restoreAccountingWorkspace({bundle,expectedSha256,director
     for(const entry of existing.entries){const item=expected.get(entry.path);need(item&&item.kind===entry.kind,'ACCOUNTING_RECOVERY_DESTINATION_CHANGED','An existing operating path is absent from the selected backup. Existing data was preserved.');
       if(item.kind==='file'){const actual=await digest(entry.path,signal);need(actual.sha256===item.sha256&&actual.bytes===item.size,'ACCOUNTING_RECOVERY_DESTINATION_CHANGED','An existing operating file differs from the selected backup. Existing data was preserved.');versions.set(entry.path,actual.version);}}
     aborted(signal);lease.assertHeld();
-    if(!markerInfo){await writeNew(markerPath,json({schema:RESTORE,manifestSha256:identity,directory,stateRoot,startedAt:new Date().toISOString()}));await syncDirectory(directory);}
+    if(!markerInfo){await writeNew(markerPath,json({schema:RESTORE,manifestSha256:identity,directory,stateRoot,startedAt:new Date().toISOString(),...(relocate?{relocate:true,installedWorkspaceSha256:workspaceSha256,expectedWorkspaceId:binding.workspaceId,expectedSourcesSha256:binding.sourcesSha256,originalDirectory:mapping.directory,originalStateRoot:mapping.stateRoot}:{})}));await syncDirectory(directory);}
     let restoredFiles=0,createdDirectories=0;const reusedFiles=versions.size;
     for(const item of entries.filter(e=>e.kind==='directory').sort((a,b)=>a.destination.length-b.destination.length)){
       if(!(await info(item.destination))){await directories(stateRoot,item.destination,{create:true});createdDirectories++;}
@@ -428,7 +496,8 @@ export async function restoreAccountingWorkspace({bundle,expectedSha256,director
     need(final.entries.length===entries.length,'ACCOUNTING_RECOVERY_DESTINATION_CHANGED','Operating paths changed during restore. Resume after stopping their writers.');
     for(const entry of final.entries){const item=expected.get(entry.path);need(item?.kind===entry.kind&&(entry.kind==='directory'||versions.get(entry.path)===entry.version),'ACCOUNTING_RECOVERY_DESTINATION_CHANGED','An operating file changed during restore. Resume after stopping its writer.');}
     aborted(signal);lease.assertHeld();await unlink(markerPath);await syncDirectory(directory);
-    return {status:'ACCOUNTING_WORKSPACE_RESTORED',manifestSha256:identity,directory,revision:mapping.revision,workspaceSha256:mapping.stateSha256,restoredFiles,reusedFiles,createdDirectories,operatingFiles:final.files,operatingBytes:final.bytes,
+    return {status:'ACCOUNTING_WORKSPACE_RESTORED',manifestSha256:identity,directory,revision:mapping.revision,workspaceSha256,originalWorkspaceSha256:mapping.stateSha256,relocated:relocate,binding,
+      ...(relocate?{relocation:{originDirectory:installedState.relocation.originDirectory,sourceDirectory:mapping.directory,sourceStateRoot:mapping.stateRoot,stateRoot}}:{}),restoredFiles,reusedFiles,createdDirectories,operatingFiles:final.files,operatingBytes:final.bytes,
       hostSourcesRestored:Boolean(profile),...(profile?{hostSources:hostSummary(profile,final)}:{})};
   }finally{await lease?.close();await rm(temporary,{recursive:true,force:true});}
 }
