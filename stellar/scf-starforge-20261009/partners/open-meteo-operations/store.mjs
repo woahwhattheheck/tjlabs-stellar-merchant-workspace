@@ -6,6 +6,7 @@ import {native} from './runtime.mjs';
 import {privateDirectory,privateSqliteFile} from './files.mjs';
 import {SCHEMA,need,keys,normalizeSite,normalizeRequest,parsePayload,canonical,sha,clone,text,ATTRIBUTION} from './contract.mjs';
 import {decisionInput,evaluate,reportDigest} from './analysis.mjs';
+import {createWeatherHandover,inspectWeatherHandover,prepareWeatherReceiving,weatherReceivingIdentity} from './portable.mjs';
 const {acquireStateLease}=await native('merchant-fleet-gateway/state-lease.mjs');
 const now=()=>new Date().toISOString(),parse=s=>s===null?null:JSON.parse(s);
 const ident=(id,prefix)=>{need(typeof id==='string'&&new RegExp('^'+prefix+'-[a-f0-9-]{36}$').test(id),'IDENTITY_INVALID');return id;};
@@ -22,9 +23,12 @@ export class WeatherStore{
     'CREATE TABLE IF NOT EXISTS source_reads(id TEXT PRIMARY KEY,request_id TEXT NOT NULL REFERENCES requests(id),spec_sha TEXT NOT NULL,raw BLOB NOT NULL,sha TEXT NOT NULL,provenance TEXT NOT NULL,created TEXT NOT NULL);'+
     'CREATE TABLE IF NOT EXISTS decisions(id TEXT NOT NULL,revision INTEGER NOT NULL,capture_id TEXT NOT NULL REFERENCES captures(id),payload TEXT NOT NULL,result TEXT NOT NULL,created TEXT NOT NULL,PRIMARY KEY(id,revision));'+
     'CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY,payload TEXT NOT NULL,sha TEXT NOT NULL,created TEXT NOT NULL);'+
+    'CREATE TABLE IF NOT EXISTS received_reports(package_sha TEXT PRIMARY KEY,receipt_id TEXT NOT NULL,original BLOB NOT NULL,created TEXT NOT NULL);'+
+    'CREATE TABLE IF NOT EXISTS receiving_history(id TEXT PRIMARY KEY,payload TEXT NOT NULL);'+
     'CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,subject TEXT NOT NULL,payload TEXT NOT NULL,created TEXT NOT NULL);PRAGMA user_version=1;');
    const store=new WeatherStore(directory,db,lease);
    store.db.prepare('INSERT OR IGNORE INTO meta VALUES (?,?)').run('schema',SCHEMA);
+   store.db.prepare('INSERT OR IGNORE INTO meta VALUES (?,?)').run('originId','weather-'+randomUUID());
    need(store.db.prepare('SELECT value FROM meta WHERE key=?').get('schema').value===SCHEMA,'WEATHER_STATE_SCHEMA_MISMATCH');return store;
   }catch(error){try{db?.close();}finally{await lease.close();}throw error;}
  }
@@ -142,8 +146,128 @@ export class WeatherStore{
  }
  report(id){this.assert();ident(id,'report');const r=this.db.prepare('SELECT * FROM reports WHERE id=?').get(id);need(r,'REPORT_NOT_FOUND');const payload=parse(r.payload);need(reportDigest(payload)===r.sha,'FROZEN_REPORT_CHANGED');return {...payload,sha256:r.sha};}
  reports(){this.assert();return this.db.prepare('SELECT id FROM reports ORDER BY created DESC LIMIT 200').all().map(r=>this.report(r.id));}
+ originId(){this.assert();return this.db.prepare('SELECT value FROM meta WHERE key=?').get('originId').value;}
+ receivingRecords(){
+  this.assert();return this.db.prepare('SELECT h.payload FROM received_reports r JOIN receiving_history h ON h.id=r.receipt_id ORDER BY r.created DESC').all().map(row=>parse(row.payload));
+ }
+ receivedPackage(packageSha256){
+  this.assert();need(/^[a-f0-9]{64}$/.test(packageSha256),'HANDOVER_HASH_INVALID');
+  const row=this.db.prepare('SELECT original FROM received_reports WHERE package_sha=?').get(packageSha256);
+  need(row,'RECEIVED_PACKAGE_NOT_FOUND');const bytes=Buffer.from(row.original);
+  need(sha(bytes)===packageSha256,'RECEIVED_PACKAGE_CHANGED');return bytes;
+ }
+ handover(reportId){
+  this.assert();const report=this.report(reportId),decisionMap=new Map();
+  const addDecision=(id,revision)=>{const decision=this.decision(id,revision);decisionMap.set(id+':'+revision,decision);};
+  for(const selected of report.decisions){
+   const rows=this.db.prepare('SELECT revision FROM decisions WHERE id=? AND revision<=? ORDER BY revision').all(selected.id,selected.revision);
+   for(const row of rows)addDecision(selected.id,row.revision);
+  }
+  const initialCaptures=new Set([...report.captures.map(c=>c.id),...[...decisionMap.values()].map(d=>d.captureId)]);
+  const records=this.receivingRecords().filter(record=>
+   record.mapping.captures.some(mapping=>initialCaptures.has(mapping.local))||
+   record.mapping.decisions.some(mapping=>report.decisions.some(d=>d.id===mapping.local)));
+  for(const record of records)for(const mapping of record.mapping.decisions)addDecision(mapping.local,mapping.revision);
+  const decisions=[...decisionMap.values()];
+  const captureIds=new Set([...report.captures.map(c=>c.id),...decisions.map(d=>d.captureId)]);
+  const captures=[...captureIds].map(id=>this.capture(id));
+  const history=new Map(),collect=record=>{
+   if(history.has(record.id))return;history.set(record.id,record);
+   for(const parent of record.historyIds??[]){
+    const row=this.db.prepare('SELECT payload FROM receiving_history WHERE id=?').get(parent);
+    need(row,'RECEIVING_HISTORY_MISSING');collect(parse(row.payload));
+   }
+  };
+  records.forEach(collect);
+  return createWeatherHandover({originId:this.originId(),report,captures,decisionHistory:decisions,receivingHistory:[...history.values()]});
+ }
+ receivingConflicts(plan,history){
+  const conflicts=[],check=(kind,identity,actual,expected)=>{
+   if(actual!==undefined&&canonical(actual)!==canonical(expected))conflicts.push({kind,id:identity});
+  };
+  for(const site of plan.sites){
+   const {id,revision,createdAt,...payload}=site;
+   const row=this.db.prepare('SELECT payload,created FROM sites WHERE id=? AND revision=?').get(id,revision);
+   check('site',id,row?{payload:parse(row.payload),createdAt:row.created}:undefined,{payload,createdAt});
+  }
+  for(const request of plan.requests){
+   const row=this.db.prepare('SELECT spec,spec_sha,state,native FROM requests WHERE id=?').get(request.id);
+   check('request',request.id,row?{spec:parse(row.spec),specSha256:row.spec_sha,state:row.state,native:parse(row.native)}:undefined,
+    {spec:request.spec,specSha256:request.specSha256,state:'RECEIVED',native:null});
+  }
+  for(const capture of plan.captures){
+   const row=this.db.prepare('SELECT * FROM captures WHERE id=?').get(capture.id);
+   check('capture',capture.id,row?{requestId:row.request_id,specSha256:row.spec_sha,sha256:row.sha,
+    rawSha256:sha(Buffer.from(row.raw)),provenance:parse(row.provenance),metadata:parse(row.metadata),capturedAt:row.created}:undefined,
+    {requestId:capture.requestId,specSha256:capture.specSha256,sha256:capture.sha256,rawSha256:capture.sha256,
+     provenance:capture.provenance,metadata:capture.metadata,capturedAt:capture.capturedAt});
+  }
+  for(const decision of plan.decisions){
+   const {id,revision,captureId,result,createdAt,...payload}=decision;
+   const row=this.db.prepare('SELECT * FROM decisions WHERE id=? AND revision=?').get(id,revision);
+   check('decision',id,row?{captureId:row.capture_id,payload:parse(row.payload),result:parse(row.result),createdAt:row.created}:undefined,
+    {captureId,payload,result,createdAt});
+  }
+  const report=this.db.prepare('SELECT payload,sha FROM reports WHERE id=?').get(plan.report.id);
+  const {sha256,...payload}=plan.report;
+  check('report',plan.report.id,report?{payload:parse(report.payload),sha256:report.sha}:undefined,{payload,sha256});
+  for(const record of history){
+   const row=this.db.prepare('SELECT payload FROM receiving_history WHERE id=?').get(record.id);
+   check('receiving history',record.id,row?parse(row.payload):undefined,record);
+  }
+  return conflicts;
+ }
+ reviewHandover(content){
+  this.assert();const inspection=inspectWeatherHandover(content);
+  const received=this.db.prepare('SELECT receipt_id FROM received_reports WHERE package_sha=?').get(inspection.packageSha256);
+  if(received)return {...inspection.review,canReceive:true,alreadyReceived:true,
+   receipt:parse(this.db.prepare('SELECT payload FROM receiving_history WHERE id=?').get(received.receipt_id).payload),conflicts:[]};
+  const plan=prepareWeatherReceiving(inspection),conflicts=this.receivingConflicts(plan,inspection.value.receivingHistory);
+  return {...inspection.review,canReceive:conflicts.length===0,alreadyReceived:false,conflicts};
+ }
+ receiveHandover(content,{expectedSha256}={}){
+  const inspection=inspectWeatherHandover(content);
+  need(expectedSha256===inspection.packageSha256,'HANDOVER_REVIEW_CHANGED');
+  const plan=prepareWeatherReceiving(inspection);
+  return this.transaction(()=>{
+   const existing=this.db.prepare('SELECT receipt_id FROM received_reports WHERE package_sha=?').get(expectedSha256);
+   if(existing)return {reopened:true,receipt:parse(this.db.prepare('SELECT payload FROM receiving_history WHERE id=?').get(existing.receipt_id).payload)};
+   need(this.receivingConflicts(plan,inspection.value.receivingHistory).length===0,'RECEIVING_ORIGINAL_COLLISION');
+   const receivedAt=now();
+   for(const site of plan.sites){
+    const {id,revision,createdAt,...payload}=site;
+    this.db.prepare('INSERT OR IGNORE INTO sites VALUES (?,?,?,?)').run(id,revision,canonical(payload),createdAt);
+   }
+   for(const request of plan.requests){
+    const capture=plan.captures.find(c=>c.requestId===request.id);
+    this.db.prepare('INSERT OR IGNORE INTO requests VALUES (?,?,?,?,?,NULL,?,NULL,?,?)')
+     .run(request.id,1,'RECEIVED',canonical(request.spec),request.specSha256,capture.id,receivedAt,receivedAt);
+   }
+   for(const capture of plan.captures)this.db.prepare('INSERT OR IGNORE INTO captures VALUES (?,?,?,?,?,?,?,?)')
+    .run(capture.id,capture.requestId,capture.specSha256,Buffer.from(capture.raw),capture.sha256,canonical(capture.provenance),canonical(capture.metadata),capture.capturedAt);
+   for(const decision of plan.decisions){
+    const {id,revision,captureId,result,createdAt,...payload}=decision;
+    this.db.prepare('INSERT OR IGNORE INTO decisions VALUES (?,?,?,?,?,?)').run(id,revision,captureId,canonical(payload),canonical(result),createdAt);
+   }
+   const {sha256:reportSha,...report}=plan.report;
+   this.db.prepare('INSERT OR IGNORE INTO reports VALUES (?,?,?,?)').run(report.id,canonical(report),reportSha,report.createdAt);
+   for(const record of inspection.value.receivingHistory)this.db.prepare('INSERT OR IGNORE INTO receiving_history VALUES (?,?)').run(record.id,canonical(record));
+   const parents=new Set(inspection.value.receivingHistory.flatMap(record=>record.historyIds??[]));
+   const receipt={schema:'stellar-forge.weather-receiving-record.v1',
+    id:weatherReceivingIdentity(this.originId(),expectedSha256),receivingOriginId:this.originId(),
+    packageSha256:expectedSha256,contentSha256:inspection.contentSha256,sourceOriginId:inspection.value.originId,
+    receivedAt,originalReport:clone(inspection.value.report),originalDecisions:clone(inspection.value.decisionHistory),
+    originalSources:inspection.value.sources.map(source=>clone(source.capture)),mapping:plan.mapping,
+    historyIds:inspection.value.receivingHistory.filter(record=>!parents.has(record.id)).map(record=>record.id)};
+   this.db.prepare('INSERT INTO receiving_history VALUES (?,?)').run(receipt.id,canonical(receipt));
+   this.db.prepare('INSERT INTO received_reports VALUES (?,?,?,?)').run(expectedSha256,receipt.id,Buffer.from(content),receivedAt);
+   this.event('REPORT_RECEIVED',plan.report.id,{packageSha256:expectedSha256,receiptId:receipt.id,sourceReportId:inspection.value.report.id,
+    sources:plan.captures.length,decisionRevisions:plan.decisions.length});
+   return {reopened:false,receipt};
+  });
+ }
  events({after=0,limit=100}={}){this.assert();need(Number.isSafeInteger(after)&&after>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=500,'PAGINATION_INVALID');return this.db.prepare('SELECT * FROM events WHERE sequence>? ORDER BY sequence LIMIT ?').all(after,limit).map(r=>({...r,payload:parse(r.payload)}));}
- summary(){this.assert();return {schema:SCHEMA,directory:this.directory,sites:this.sites(),requests:this.requests(),captures:this.captures(),decisions:this.decisions(),reports:this.reports(),attribution:ATTRIBUTION};}
+ summary(){this.assert();return {schema:SCHEMA,directory:this.directory,sites:this.sites(),requests:this.requests(),captures:this.captures(),decisions:this.decisions(),reports:this.reports(),receiving:this.receivingRecords(),attribution:ATTRIBUTION};}
  closeDatabase(){this.assert();this.db.close();this.db=null;}
  reopenDatabase(){need(!this.closed&&!this.db,'WEATHER_DATABASE_STATE_INVALID');this.db=new DatabaseSync(join(this.directory,'weather.sqlite'));this.db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=DELETE;PRAGMA synchronous=FULL;PRAGMA busy_timeout=5000;');}
  async close(){if(this.closed)return;this.closed=true;try{this.db?.close();}finally{await this.lease.close();}}
