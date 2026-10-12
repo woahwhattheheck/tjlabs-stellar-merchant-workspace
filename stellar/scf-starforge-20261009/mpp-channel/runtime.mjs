@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadNative, versions } from '../mpp-charge/runtime.mjs';
 import { requireValue as need, hash, now } from '../mpp-charge/storage.mjs';
-import { absolute, streamKey } from './config.mjs';
+import { absolute, streamKey, publicURL } from './config.mjs';
 export { versions };
 export async function loadChannelNative(dependencyRoot) {
   const native=await loadNative(dependencyRoot);
@@ -31,6 +31,13 @@ function networkPassphrase(native, network) {
   need(network==='stellar:pubnet', 'MPP_CHANNEL_NETWORK_INVALID'); return native.sdk.Networks.PUBLIC;
 }
 export { networkPassphrase };
+export async function channelRpc(native, terms, rpcUrl=terms.rpcUrl) {
+  const server=new native.sdk.rpc.Server(publicURL(rpcUrl).href);
+  const network=await timeout(server.getNetwork(),'channel network');
+  need(network?.passphrase===networkPassphrase(native,terms.network),
+    'MPP_CHANNEL_RPC_NETWORK_MISMATCH');
+  return server;
+}
 function enumKey(value, name, sdk) {
   try { const v=value.vec(); return v?.length===1 &&
     v[0].switch().value===sdk.xdr.ScValType.scvSymbol().value && v[0].sym().toString()===name; }
@@ -43,7 +50,7 @@ async function timeout(promise, label) {
   })]); } finally { clearTimeout(timer); }
 }
 export async function observeChannel(native, terms) {
-  const sdk=native.sdk, server=new sdk.rpc.Server(terms.rpcUrl);
+  const sdk=native.sdk, server=await channelRpc(native,terms);
   const instanceKey=sdk.xdr.LedgerKey.contractData(new sdk.xdr.LedgerKeyContractData({
     contract:sdk.Address.fromString(terms.address).toScAddress(),
     key:sdk.xdr.ScVal.scvLedgerKeyContractInstance(),
