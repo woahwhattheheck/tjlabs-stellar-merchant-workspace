@@ -114,7 +114,7 @@ The application uses the original channel contract's `close` function and the se
 | HISTORY_REQUIRED | Query the original hash through the selected archival RPC to recover the missing historical result |
 | CANCELLED | Unsigned close cancelled with its original records retained |
 
-For an old transaction, `close-reconcile` accepts `{settlementId, rpcUrl}`. The chosen archival RPC supplies the original transaction result. The original signed envelope and network continue to determine its identity.
+For an old transaction, `close-reconcile` accepts `{settlementId, rpcUrl}`. The chosen archival RPC supplies the original transaction result. The configured and archival RPC must first return the selected network passphrase through `getNetwork`. The original signed envelope and network continue to determine its identity, so another network's absent transaction cannot release a pending close.
 
 After a definitive expired or failed close, prepare a new close operation ID if collection remains necessary. It obtains a fresh recipient fee authorization. Every prior close record remains in the same channel history.
 
@@ -170,6 +170,7 @@ The exact installed dependency set is `@stellar/mpp 0.7.1`, `mppx 0.6.29`, `@ste
 
 - [Stellar MPP v0.7.1](https://github.com/stellar/stellar-mpp-sdk/tree/9f2f8254421e09906dfb7e983e2491a273120adf): channel request/payload, cumulative client store, native merchant atomic acceptance and commitment preparation.
 - [One-way channel contract](https://github.com/stellar-experimental/one-way-channel/blob/main/contracts/channel/src/lib.rs): actual deployed edition is selected by its WASM digest in the channel profile.
+- [Stellar RPC getNetwork](https://developers.stellar.org/docs/data/apis/rpc/api-reference/methods/getNetwork): confirms the selected network before channel observations, submission and archival recovery.
 - [Stellar RPC getTransaction](https://developers.stellar.org/docs/data/apis/rpc/api-reference/methods/getTransaction): transaction status, retained ledger boundaries and ledger close times used by close recovery.
 - Original `mpp-charge/storage.mjs`, `products/mpp-workspace` and distribution contribution remain the native lease, product identity and installed application path.
 

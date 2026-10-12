@@ -5,7 +5,7 @@ import { requireValue as need, hash, stable, now, id } from '../mpp-charge/stora
 import { merchantConfig, profileKey, streamKey, amount, publicURL } from './config.mjs';
 import { groups, serialChannel } from './state.mjs';
 import { loadChannelNative, observeChannel, nativeStore, merchantCumulativeKey, settlingKey, closedKey,
-  networkPassphrase } from './runtime.mjs';
+  networkPassphrase, channelRpc } from './runtime.mjs';
 import { terminalConsent } from './authority.mjs';
 async function highest(workspace,config,store) {
   const cumulative=await store.get(merchantCumulativeKey(config.channel));
@@ -113,10 +113,10 @@ async function reconcile(workspace,row,native,store,rpcUrl=row.config.channel.rp
   need(row.signedXdr && /^[a-f0-9]{64}$/.test(row.transaction), 'MPP_CHANNEL_SIGNED_CLOSE_REQUIRED');
   if(['SETTLED','FAILED','EXPIRED'].includes(row.phase)) return finishTerminal(workspace,row,store);
   const selectedRpc=publicURL(rpcUrl).href;
-  const rpc=new native.sdk.rpc.Server(selectedRpc);
+  const rpc=await channelRpc(native,row.config.channel,selectedRpc);
   const result=await rpc.getTransaction(row.transaction);
   const returned={
-    status:result.status,observedAt:now(),ledger:result.ledger ?? null,createdAt:result.createdAt ?? null,
+    status:result.status,network:row.config.channel.network,observedAt:now(),ledger:result.ledger ?? null,createdAt:result.createdAt ?? null,
     latestLedger:result.latestLedger ?? null,oldestLedger:result.oldestLedger ?? null,
     latestLedgerCloseTime:result.latestLedgerCloseTime ?? null,
     oldestLedgerCloseTime:result.oldestLedgerCloseTime ?? null,rpcUrl:selectedRpc,
@@ -198,7 +198,7 @@ export async function executeClose({workspace,settlementId,environment=process.e
       need(remaining<=BigInt(observation.balanceAtomic), 'MPP_CHANNEL_CLOSE_BALANCE_CHANGED',409);
       const key=native.sdk.Keypair.fromSecret(environment[config.settlement.keyEnv] ?? '');
       need(key.publicKey()===config.settlement.account, 'MPP_CHANNEL_RECIPIENT_SIGNER_MISMATCH');
-      const rpc=new native.sdk.rpc.Server(config.channel.rpcUrl), account=await rpc.getAccount(key.publicKey());
+      const rpc=await channelRpc(native,config.channel), account=await rpc.getAccount(key.publicKey());
       const operation=new native.sdk.Contract(config.channel.address).call('close',
         native.sdk.nativeToScVal(BigInt(row.cumulativeAtomic),{type:'i128'}),
         native.sdk.nativeToScVal(Buffer.from(row.signature,'hex'),{type:'bytes'}));
@@ -217,7 +217,7 @@ export async function executeClose({workspace,settlementId,environment=process.e
     const transaction=native.sdk.TransactionBuilder.fromXDR(row.signedXdr,networkPassphrase(native,config.channel.network));
     assertClose(native,transaction,row,{signed:true});
     need(transaction.hash().toString('hex')===row.transaction, 'MPP_CHANNEL_RETAINED_CLOSE_CHANGED');
-    const rpc=new native.sdk.rpc.Server(config.channel.rpcUrl), before=await rpc.getTransaction(row.transaction);
+    const rpc=await channelRpc(native,config.channel), before=await rpc.getTransaction(row.transaction);
     if(['SUCCESS','FAILED'].includes(before.status)) return closeView(await reconcile(workspace,row,native,store));
     if(Date.parse(row.expiresAt)<=Date.now()) return closeView(await reconcile(workspace,row,native,store));
     row=await updateClose(workspace,row,{phase:'SUBMITTING',submissionAttempts:(row.submissionAttempts ?? 0)+1});
