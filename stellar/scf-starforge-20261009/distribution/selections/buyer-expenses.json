@@ -80,8 +80,7 @@
     "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile",
     "stellar/scf-starforge-20261009/sf31-buyer-client",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
-    "stellar/scf-starforge-20261009/distribution/python-runtime",
-    "products/buyer-expenses"
+    "stellar/scf-starforge-20261009/distribution/python-runtime"
   ],
   "supportFiles": [
     "stellar-forge/mcp-merchant-operator/BUYER_EXPENSES.md",
@@ -182,7 +181,10 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace-recovery-ledger.py",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace-recovery.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace.mjs",
-    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs"
+    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+    "products/buyer-expenses/README.md",
+    "products/buyer-expenses/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
