@@ -10,6 +10,7 @@ import base64
 from dataclasses import dataclass
 import hashlib
 import logging
+import os
 import re
 from typing import ClassVar
 
@@ -241,7 +242,20 @@ def create_http_app(service, *, authenticate=None, snapshot=None):
     """Use the vendor HTTP and authentication implementation without another RPC layer."""
     from vgi.serve import create_app, _resolve_authenticate, _resolve_oauth_resource_metadata
 
-    original_authenticate = authenticate or _resolve_authenticate()
+    # The vendor CLI reports malformed pairs by printing the full entry.
+    # Validate that syntax at the private operator boundary before resolution.
+    if authenticate is None:
+        bearer = os.environ.get("VGI_BEARER_TOKENS", "")
+        _need(all(not item.strip() or "=" in item.strip()
+                  for item in bearer.split(",")),
+              "VGI_BEARER_CONFIGURATION_INVALID")
+    try:
+        original_authenticate = authenticate or _resolve_authenticate()
+        oauth_metadata = _resolve_oauth_resource_metadata()
+    except SystemExit:
+        # A CLI-style exit must become the original operator's JSON error,
+        # while its current process remains available to correct configuration.
+        raise StateError("VGI_AUTHENTICATION_CONFIGURATION_INVALID") from None
     _need(callable(original_authenticate), "VGI_HTTP_AUTHENTICATION_REQUIRED")
     worker, descriptor = build_worker(service, local=False, snapshot=snapshot)
 
@@ -260,7 +274,7 @@ def create_http_app(service, *, authenticate=None, snapshot=None):
         peer_authentication_policy=current_access,
         peer_service_name=descriptor["service_id"],
         cors_origins="", describe=True, log_level=logging.WARNING,
-        oauth_resource_metadata=_resolve_oauth_resource_metadata(),
+        oauth_resource_metadata=oauth_metadata,
         max_stream_response_bytes=8 * 1024 * 1024,
         max_externalized_response_bytes=16 * 1024 * 1024,
     )
