@@ -440,5 +440,231 @@
     "exports": 7,
     "expectedScientificReviewSha256": "Required exact saved identity",
     "nativeReceiving": "Prepared original worker, independent receive and cold seven-export comparison; execution receipt remains pending."
+  },
+  "commissioning": {
+    "schema": "starforge.kiwis-commissioning-installed-source.v1",
+    "integrationBaseCommit": "df0f89f5c46b6a47e5a50e5386c1aa8e9604ecb2",
+    "publicRepository": "woahwhattheheck/public-commons-sprint-2026",
+    "publicSourceCommit": "b63d5c2c16dd610bcd6a57d05087fa441e5d54a8",
+    "publicSourceTree": "c49d4ccd59150e27224c3aad0b62b58bbeb275f7",
+    "publicPullRequest": 2542,
+    "sourceSelection": "wqx-water-quality",
+    "sourcePrecedence": "The scientific files and application above retain their original source history. The commissioning files below are the current postimages for overlapping paths.",
+    "commands": [
+      "water-quality-kiwis",
+      "water-quality-commissioning-job"
+    ],
+    "paidJob": {
+      "function": "waterQualityReview",
+      "mode": "commissioning",
+      "sourceLimitBytes": 134217728,
+      "resultZipLimitBytes": 67108864,
+      "expandedArchiveLimitBytes": 536870912
+    },
+    "exports": [
+      "bundle",
+      "review",
+      "decisions",
+      "observations",
+      "counterparts",
+      "correspondences",
+      "series",
+      "report"
+    ],
+    "comparison": "Complete saved decisions and physical before/after review records, source comparisons, operator inspection, independent receiving and cold reproduction.",
+    "operatorGuide": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/GUIDE.md",
+    "receivingProgram": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/receiving.mjs",
+    "customerGuide": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/COMMISSIONING.md",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/workspace.mjs",
+        "previousGitBlob": "620c193963609545067400c06794818daafbe16e",
+        "gitBlob": "1f5fd0b56273056cd593b2711bbbddbda1d1b6ea",
+        "bytes": 26060,
+        "sha256": "4dcab2c14356af3c01afbf00f4c206bf9651ac49d2d234235c7c4617a83ff0b9"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/ui/app.mjs",
+        "previousGitBlob": "3d70baaf814e7c70f5ed292e253e02527aae2f6f",
+        "gitBlob": "246f043400431ccc80dffd197ddab47d829c1a99",
+        "bytes": 43986,
+        "sha256": "e088146125c8e06feda9b6bf92a38216245876c8faaf2e20af1a3596e7c9ab8c"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/ui/index.html",
+        "previousGitBlob": "4aa71a231b3ef8315c0a56817498b48d145bc892",
+        "gitBlob": "cfad23184b0cecf0371d05c4aade7a8e7acc64cf",
+        "bytes": 54434,
+        "sha256": "5d67ca8e174f0ab8b6bb6a1cd30702a6ed3cf1bd07a5322651173560d50b710c"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/browser-assets.json",
+        "previousGitBlob": "ffe72740347ca653e7f82629a99826366a747288",
+        "gitBlob": "c02a18d12ee5816667f2e1be759e06b629eb75cf",
+        "bytes": 1045,
+        "sha256": "bce73e333ad8215809bffd71818d44164bc1848204f952f35312bda28f2241fa"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/wqx-water-quality.json",
+        "previousGitBlob": "3a672a34aa7c725832e44f27ffd5210c83c02f8e",
+        "gitBlob": "c75f364fee13925acab20e0547447d8eba67ba34",
+        "bytes": 9503,
+        "sha256": "7dfcfafa4686171e3ddad2233356b1f68b38ca5ad91249e280285363c21e29ed"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/source.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "a78add5df0a30bf0d6b8bea5e4a693739078c6f2",
+        "bytes": 33363,
+        "sha256": "d2542548d8f6f1caf18f628f6ce9f671fc60c903223fb2bb18c7fb9769c4482a"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/model.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "89dc3aa899338b08258fbab18319157bf431e493",
+        "bytes": 39177,
+        "sha256": "1a46c25f11673654017256532ac5f79531e1ee7b33299164dc1e125afa4fb34b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/workflow.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "fd3004c3264580559946628363634a1cbed42d03",
+        "bytes": 15796,
+        "sha256": "cda7523e27a4a29cf83ed2e4ab593b74300d071a391b379291c9e0d83a24be74"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/formats.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "957abf179495f46e24effcd1f4747e4d6eb91bc4",
+        "bytes": 5718,
+        "sha256": "2772381362b0e9703ebe7991db48117485a495d1c1d29c0489e45063fc536d22"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/ui/kiwis.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "9802473eab484fad27b81a708edfcf2e3c16d688",
+        "bytes": 32810,
+        "sha256": "7ddb18a457f79041ba127d294668661da3eb154be88182c3d77e7fd9e7466413"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/cli.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "e46f19007cbab4495283f00f65e614dce2d67300",
+        "bytes": 10138,
+        "sha256": "08f41ceb8b16d50cbcf8949235a9363cc4b70850c274e37ec710e5749dbc002e"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/receiving.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "55a7b672f1180a71da4d53da3dd8ef918b985009",
+        "bytes": 23466,
+        "sha256": "56f39ccdba511fde21c41d7b0a6a1f453009dff400177cffb053376a2f8d57da"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/cli.mjs",
+        "previousGitBlob": "78b88ed1aff8636d74ff92712abf627bfbc3777d",
+        "gitBlob": "622d13751e1668b00e026c85b64dad975159523b",
+        "bytes": 13378,
+        "sha256": "dd8fc65de266542fa5aa71bab78422a5e10a6264781788c3b834a30b41716f6b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/managed.mjs",
+        "previousGitBlob": "777b83b54b7f1e77595b0dcdac370e6964c9f3c5",
+        "gitBlob": "85fc317fe29a63475ff708d55c1607864b1fc7ee",
+        "bytes": 19184,
+        "sha256": "20b0878c823f185dfb6f0b526a82081d03bf4d32bf3916f881a97e11d0d343e8"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/GUIDE.md",
+        "previousGitBlob": null,
+        "gitBlob": "db174c92e68bc91ddd5d858a8144e3c1f1ee00b5",
+        "bytes": 21701,
+        "sha256": "875c2150769164f55bc8a4e6a46628f9d3e6df14cc5b403381735a6a6f807027"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/receiving.example.json",
+        "previousGitBlob": null,
+        "gitBlob": "d736efd3657b24eebfb24d03b22449de999a1e52",
+        "bytes": 1932,
+        "sha256": "f291208769e65f92f84798d113e40768e86aed04aa18cd69bdd036c0ba432108"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/wqm.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "78543d95761fb7980dbab8d8ab35367306afe4a7",
+        "bytes": 5679,
+        "sha256": "13fe951a820e7a110c52428211cd8707acadfe396f20efe7799f8ae400a9f423"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/commissioning.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "084623270185f0d9e62ffdfa800e12b167a30e83",
+        "bytes": 10868,
+        "sha256": "83fea8561ed54a2685e8492ef80e3ebc7fab1bb7268a2a933f6039d1cdcca2b7"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/application.mjs",
+        "previousGitBlob": "22b7265dbc553904877de7fcb10dea8f3b1595e7",
+        "gitBlob": "85b7e9ac3696772d21df6703f0471f817e17705d",
+        "bytes": 18084,
+        "sha256": "13ed7a03f3cf071887e58f0b79158e2eed54cdf04fb1ab8006f33095d28890fb"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/merchant.example.json",
+        "previousGitBlob": "fd98db692efe9eefc3574ff21323d04276a3ddc8",
+        "gitBlob": "12fb3fb8d549ab4ee67fa64f0e7d11a9f3c71984",
+        "bytes": 4851,
+        "sha256": "b001e8edac6f84bf7d7f5712f57d56f01aa78050d184062479e75de2bac7146c"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/verify-result.py",
+        "previousGitBlob": "1dfb385151b96f4f48cfb3e3dbf0c6e8770ff1ca",
+        "gitBlob": "c3b42a9e6d556185a25965d81f790b871352fbc8",
+        "bytes": 7335,
+        "sha256": "94ec4c6581d36321970c3cd97e72d4425943c493824d99402af9b336407eae0b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/commissioning-client.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "b50f56b75c054d4cda98b8962cbfe3171e9c802b",
+        "bytes": 15588,
+        "sha256": "ab3671e609b9dd74ec7af259160eb810fff38e34166464edab8cda451cabe6c9"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/receive-commissioning.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "455c31cef61c4387702ab9749bc31d9956fe2c5a",
+        "bytes": 11083,
+        "sha256": "b00b4177ca80628f4c10ad3e8b30afbc7c44c2ef84c757d1f6c1964353bebcbe"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/commissioning-client.d.mts",
+        "previousGitBlob": null,
+        "gitBlob": "9273e2c742e1aae8ce5b2ff53df522c83a3ce957",
+        "bytes": 4673,
+        "sha256": "aa13f128f3eb9b236683cd783bf8ce038d7ebd860a14417fd3d066221826d6bb"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/commissioning-cli.mjs",
+        "previousGitBlob": null,
+        "gitBlob": "7cd7ace84e4fbf28e171d5f8aae24ad98ad0bbe9",
+        "bytes": 6711,
+        "sha256": "b60ff04132ebeccc3bfc4649fc4823f48d62eef0e0b6065f2f782998dfd98746"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/COMMISSIONING.md",
+        "previousGitBlob": null,
+        "gitBlob": "1e842e5a0c5960aeabed90b0c04d4f97b2dfeea2",
+        "bytes": 16414,
+        "sha256": "5b3619065b61a75fafb09ba9a7323676736ee03d04bebab18408320bed78be08"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/README.md",
+        "previousGitBlob": "fe36975b8e8ab4fd7d11af5788a2db688cda4c55",
+        "gitBlob": "8113576cb7838b47bfa56e755d410d16224c43c1",
+        "bytes": 17330,
+        "sha256": "e998551aefa6b93f8371e8559d1e3a8ca516d90528ae689e7d45dcedab3d9914"
+      }
+    ]
   }
 }
