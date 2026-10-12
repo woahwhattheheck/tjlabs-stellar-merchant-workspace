@@ -267,12 +267,28 @@ export async function openAnalysisServer(input,{environment=process.env}={}){
     card=makeCard(config);handler=new AnalysisRequestHandler(card,store,executor,buses);
     cardRoute=agentCardHandler({agentCardProvider:handler});
     rpcRoute=jsonRpcHandler({requestHandler:handler,userBuilder:async request=>request.analysisPrincipal});
-    async function close(){
-      if(closing)return;closing=true;
-      const stopped=new Promise(resolve=>server.close(()=>resolve()));
-      await executor.close();
-      server.closeAllConnections();
-      await stopped;await native.close();await db.destroy();await lease.close();
+    let closePromise;
+    function close(){
+      if(closePromise)return closePromise;
+      closing=true;
+      closePromise=(async()=>{
+        const failures=[];
+        const settle=async action=>{try{await action();}catch(error){failures.push(error);}};
+        const stopped=new Promise(resolve=>{
+          try{server.close(error=>{if(error)failures.push(error);resolve();});}
+          catch(error){failures.push(error);resolve();}
+        });
+        // Every owned resource must close even when one reports a failure.
+        // Concurrent callers receive the same complete shutdown promise.
+        await settle(()=>executor.close());
+        await settle(()=>server.closeAllConnections());
+        await stopped;
+        await settle(()=>native.close());
+        await settle(()=>db.destroy());
+        await settle(()=>lease.close());
+        if(failures.length)throw new AggregateError(failures,'A2A_ANALYSIS_CLOSE_FAILED');
+      })();
+      return closePromise;
     }
     return {config,card,handler,executor,store,server,address,close};
   }catch(error){
