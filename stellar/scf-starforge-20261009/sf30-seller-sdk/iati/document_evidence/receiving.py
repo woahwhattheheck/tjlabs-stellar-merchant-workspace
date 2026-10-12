@@ -309,14 +309,14 @@ def run_connected(config, *, node, mcp_directory, playwright_module=None, chromi
     private = physical_directory(directory / "private")
     output = physical_directory(directory / "connected")
     with case_owner(directory), ExitStack() as stack:
-        servers, threads, connection_files = [], [], []
+        servers, running, connection_files = [], [], []
         try:
             for alias in ("sender", "receiver"):
                 workspace = stack.enter_context(IatiWorkspace(directory / alias))
                 server = OperatorServer(workspace, port=0)
                 servers.append(server)
                 thread = threading.Thread(target=server.serve_forever, daemon=False)
-                thread.start(); threads.append(thread)
+                thread.start(); running.append((server, thread))
                 # The whole case lock and original workspace lease establish
                 # ownership. These ephemeral links belong only to this server.
                 path = private / (alias + "-console.url")
@@ -361,9 +361,11 @@ def run_connected(config, *, node, mcp_directory, playwright_module=None, chromi
                               "result": result}, ensure_ascii=False), flush=True)
             return result
         finally:
-            for server in servers:
+            # BaseServer.shutdown waits for serve_forever. A constructed server
+            # whose thread failed to start must only be closed, never shut down.
+            for server, thread in running:
                 server.shutdown()
-            for thread in threads:
+            for server, thread in running:
                 thread.join()
             for server in servers:
                 server.server_close()
