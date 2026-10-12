@@ -6,7 +6,7 @@
     "odata-subscriptions": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/cli.mjs"
   },
   "commandDescriptions": {
-    "odata-subscriptions": "Publish fixed-definition OData collection editions and apply, inspect, export or restore complete customer subscriptions."
+    "odata-subscriptions": "Publish, receive or restore complete customer subscriptions and operate their original managed Applications lifecycle."
   },
   "exports": {
     "./seller/odata/subscriptions": {
@@ -26,6 +26,8 @@
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/SUBSCRIPTIONS.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/connection.example.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/browser-assets.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/browser-assets.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/MANAGED_RECEIVING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/managed-receiving.example.json"
   ]
 }

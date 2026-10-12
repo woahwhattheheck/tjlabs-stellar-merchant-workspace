@@ -5,3 +5,6 @@ export {verifySubscriptionTransfer,receiveSubscription,inspectSubscriptionCustom
  subscriptionCustomerBackup,restoreSubscriptionCustomer,subscriptionAnalysisMapping,exportSubscriptionCustomer,restoreSubscriptionAnalytical} from './customer.mjs';
 export {CONNECTION_SCHEMA,OPERATIONS,readSubscriptionConnection,SubscriptionOperator,openSubscriptionOperator} from './operator.mjs';
 export {subscriptionHttpHandler,startSubscriptionServer} from './server.mjs';
+export const MANAGED_RECEIVING_SCHEMA='stellar-forge.odata-managed-subscription-receiving-input.v1';
+export async function prepareManagedSubscriptionReceiving(input){return (await import('./managed-receiving.mjs')).prepareManagedSubscriptionReceiving(input);}
+export async function runManagedSubscriptionReceiving(input){return (await import('./managed-receiving.mjs')).runManagedSubscriptionReceiving(input);}
