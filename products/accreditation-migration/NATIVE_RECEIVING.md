@@ -268,6 +268,24 @@ For a new independent target, initialize a new database with `describe`, save it
 
 Open each received original form mapping from its original bytes. Make the intended mapping, source selection or field change in the editable project, preserve its predecessor relationship, and prepare a successor request using the applicable observed target IDs/versions. Export the updated full project through the application so the next recipient receives the original delivery, new revision, original document bytes, accepted mappings, native operation history and the actual successor result together.
 
+### Byte-oriented document integration
+
+An existing native application can import the same maintained engine directly:
+
+```python
+from receiver import inspect_docx_bytes, fill_docx_bytes
+
+original_map = inspect_docx_bytes(original_bytes, filename=original_filename)
+filled = fill_docx_bytes(original_bytes, saved_mapping_bytes,
+                         filename=original_filename)
+```
+
+Both functions operate on the complete supplied bytes without filesystem, database or network side effects. They return the same complete form-map/form-fill objects as the CLI. Use the actual installed module path when the receiving application has its own module named `receiver`.
+
+`inspect_docx_bytes` accepts bytes, bytearray or memoryview plus the original filename. `fill_docx_bytes` also accepts the complete mapping bytes or a mapping object. Exact supplied mapping bytes define `mapping_sha256`; an object is serialized as canonical UTF-8 JSON with one final newline and then retained in the result.
+
+An existing Project document adapter can bind its original operation, revision, actor and source edition to these results while keeping its own storage and dispatch lifecycle. Its inspection/ rendering wrapper should retain the full map, source hash, explicit locations, original mapping, complete successor bytes and original-to-successor relation. The engine remains the same source used by direct CLI receiving.
+
 ## Maintained source
 
 The canonical field definitions are in [contracts/data-contract.json](contracts/data-contract.json). The process ABI is [contracts/native-protocol.md](contracts/native-protocol.md). The complete public source cohort is [examples/original-cohort.json](examples/original-cohort.json). The implementation is [receiver.py](receiver.py).

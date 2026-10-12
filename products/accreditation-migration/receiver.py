@@ -870,9 +870,9 @@ def analyse_word_part(path, root, declared, relationships):
             if field_stack:
                 field_stack[-1]["instruction"] += node.text or ""
                 field_stack[-1]["events"].append({"locator": locator(node), "kind": "instruction", "text": node.text or "", "attributes": dict(node.attrib)})
-        elif any(word(node, kind) for kind in ("t", "tab", "br", "cr", "delText")):
+        elif any(word(node, kind) for kind in ("t", "tab", "br", "cr", "delText", "noBreakHyphen", "softHyphen")):
             if nearest(node, "del") is None and nearest(node, "moveFrom") is None:
-                token = (node.text or "") if word(node, "t") else "\t" if word(node, "tab") else "\n" if word(node, "br") or word(node, "cr") else ""
+                token = (node.text or "") if word(node, "t") else "\t" if word(node, "tab") else "\n" if word(node, "br") or word(node, "cr") else "\u2011" if word(node, "noBreakHyphen") else "\u00ad" if word(node, "softHyphen") else ""
                 for field in field_stack:
                     if field["_phase"] == "result":
                         field["result"] += token
@@ -998,8 +998,19 @@ def form_map(input_path, max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=5
     path = Path(input_path).expanduser().resolve()
     need(path.is_file(), "DOCX_INPUT", "Select the complete original document file.", path=str(path))
     need(path.stat().st_size <= max_input_bytes, "DOCX_CAPACITY", "Original document exceeds selected input capacity.", path=str(path))
-    raw = path.read_bytes()
-    need(len(raw) <= max_input_bytes, "DOCX_CAPACITY", "Original document grew beyond selected input capacity.")
+    return inspect_docx_bytes(path.read_bytes(), filename=path.name,
+                              max_input_bytes=max_input_bytes, max_expanded_bytes=max_expanded_bytes)
+
+
+def inspect_docx_bytes(original_bytes, *, filename, max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=512 * 1024 * 1024):
+    """Map one complete original package without file, database or network side effects."""
+    need(isinstance(original_bytes, (bytes, bytearray, memoryview)), "DOCX_INPUT", "Supply the complete original document bytes.")
+    filename = text(filename, "Original document filename")
+    need("/" not in filename and "\\" not in filename and filename not in (".", ".."),
+         "DOCX_INPUT", "Retain the original document basename.", filename=filename)
+    need(max_input_bytes > 0 and max_expanded_bytes > 0, "DOCX_CAPACITY", "Use positive original document capacities.")
+    raw = bytes(original_bytes)
+    need(len(raw) <= max_input_bytes, "DOCX_CAPACITY", "Original document exceeds selected input capacity.")
     need(zipfile.is_zipfile(io.BytesIO(raw)), "DOCX_PACKAGE", "Original file is not a complete Office Open XML package.")
     members, contents, issues = [], {}, []
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
@@ -1076,7 +1087,7 @@ def form_map(input_path, max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=5
     if not main_candidates:
         issues.append({"code": "MISSING_ROOT_DOCUMENT_RELATIONSHIP", "part": main_part})
     result = {"schema": FORM_SCHEMA, "status": "MAPPED",
-              "original": {"filename": path.name, "bytes": len(raw), "sha256": digest(raw),
+              "original": {"filename": filename, "bytes": len(raw), "sha256": digest(raw),
                            "media_type": package_media_types[main_content_type],
                            "base64": base64.b64encode(raw).decode("ascii")},
               "main_part": main_part, "members": members,
@@ -1360,7 +1371,19 @@ def fill_replacement(value, label):
 
 
 def form_fill(input_path, mapping_path, max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=512 * 1024 * 1024):
-    mapping_bytes = Path(mapping_path).expanduser().resolve().read_bytes()
+    path = Path(input_path).expanduser().resolve()
+    need(path.is_file(), "DOCX_INPUT", "Select the complete original document file.", path=str(path))
+    need(path.stat().st_size <= max_input_bytes, "DOCX_CAPACITY", "Original document exceeds selected input capacity.", path=str(path))
+    return fill_docx_bytes(path.read_bytes(), Path(mapping_path).expanduser().resolve().read_bytes(),
+                           filename=path.name, max_input_bytes=max_input_bytes, max_expanded_bytes=max_expanded_bytes)
+
+
+def fill_docx_bytes(original_bytes, mapping_bytes_or_dict, *, filename,
+                    max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=512 * 1024 * 1024):
+    """Fill source-bound original locations using the same package engine as the CLI."""
+    need(isinstance(mapping_bytes_or_dict, (bytes, bytearray, memoryview, dict)), "DOCX_FILL_MAPPING",
+         "Supply the complete saved mapping bytes or mapping object.")
+    mapping_bytes = json_bytes(mapping_bytes_or_dict) if isinstance(mapping_bytes_or_dict, dict) else bytes(mapping_bytes_or_dict)
     mapping = parse_json(mapping_bytes, "Original form fill mapping")
     need(isinstance(mapping, dict) and mapping.get("schema") == FILL_SCHEMA, "DOCX_FILL_MAPPING",
          "Use a complete saved original form fill mapping.")
@@ -1369,7 +1392,8 @@ def form_fill(input_path, mapping_path, max_input_bytes=256 * 1024 * 1024, max_e
          "DOCX_FILL_SOURCE", "The mapping needs the exact original document SHA-256.")
     changes = mapping.get("changes")
     need(isinstance(changes, list) and changes, "DOCX_FILL_MAPPING", "Select actual original form locations and values.")
-    mapped = form_map(input_path, max_input_bytes, max_expanded_bytes)
+    mapped = inspect_docx_bytes(original_bytes, filename=filename,
+                               max_input_bytes=max_input_bytes, max_expanded_bytes=max_expanded_bytes)
     need(mapped["original"]["sha256"] == expected_sha, "DOCX_FILL_SOURCE",
          "The selected original document differs from the saved fill mapping.",
          expected_sha256=expected_sha, actual_sha256=mapped["original"]["sha256"])
@@ -1595,7 +1619,7 @@ def form_fill(input_path, mapping_path, max_input_bytes=256 * 1024 * 1024, max_e
             if name not in replacements:
                 preserved_members.append({"path": name, "bytes": len(received), "sha256": digest(received)})
     original = {key: mapped["original"][key] for key in ("filename", "bytes", "sha256", "media_type")}
-    source_path = Path(input_path)
+    source_path = Path(filename)
     output_filename = source_path.stem + ".filled" + source_path.suffix
     return {"schema": FILL_RESULT_SCHEMA, "status": "FILLED", "original": original,
             "output": {"filename": output_filename, "bytes": len(output), "sha256": digest(output),
