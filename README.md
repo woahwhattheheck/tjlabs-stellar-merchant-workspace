@@ -19,6 +19,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
 | Review exact economic series and source revisions | **Applications → DBnomics economic workspace** or `starforge dbnomics` | Original provider responses, precise native periods and values, saved analyst reports, reviewed publication and complete editable/customer receiving |
+| Receive an official World Bank edition through customer analysis | `starforge worldbank-product` and the original `worldbank-agent` Applications entry | Complete retained source, reviewed merchant edition, reports, typed workbook and reopened customer workspace |
 | Publish retained SEC facts and filings, then reopen the entire operator workspace | [SEC EDGAR operating guide](products/sec-edgar/OPERATING.md) | Original public-source editions, every saved revision, customer delivery, and a complete portable receiving package |
 | Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, reviewed multi-station studies, complete source/model-input delivery, returned-file receiving, analytical workbooks and native customer files |
 | Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
@@ -155,6 +156,12 @@ time-series discovery and report authoring to complete capture receiving,
 versioned publication and installed Applications. Build its committed source
 selection with `--selection questdb`; the package keeps the original native
 merchant, buyer, installer and release workflow.
+
+The [World Bank product guide](products/worldbank/README.md) connects official economic
+source review, managed browser/MCP operation, native dataset delivery and the
+original analytical/customer workflow. Build its complete installed edition with
+`--selection worldbank`; [receiving](products/worldbank/RECEIVING.md) continues the
+same installed source through reports, workbook and a reopened customer application.
 
 ## Open the source product
 
