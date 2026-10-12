@@ -1,6 +1,6 @@
 // MIT. Private operator UI over the ORIGINAL fleetControl adapter.
 import { createServer } from 'node:http';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +12,10 @@ const USAGE = `Usage: node workspace/server.mjs --state PRIVATE_FLEET_DIRECTORY
   [--manifest NAME=FILE ...] [--port 8402]
 Or: node workspace/server.mjs --releases ORIGINAL_PLAN --release-state PRIVATE_DIRECTORY
   [--state PRIVATE_GATEWAY_DIRECTORY] [--port 8402]
+Applications: managed --plan ORIGINAL_PLAN --directory PRIVATE_DIRECTORY
+  --source-root INSTALLED_SOURCE --expected-workspace-identity SHA256
+  --expected-source-sha256 SHA256 --operation-id UUID --port 0
+  [--state PRIVATE_GATEWAY_DIRECTORY]
 The existing gateway must be running with --state. Manifest names are declared
 by the operator at startup. Managed mode starts the original release sessions
 and gateway itself. The browser never supplies filesystem paths.`;
@@ -43,8 +47,15 @@ async function body(req, maximum = 8192) {
 }
 
 export async function startFleetWorkspace({ stateDirectory, manifests = {}, port = 8402,
-  releasePlan, releaseDirectory, expectedPlanDigest } = {}) {
+  releasePlan, releaseDirectory, expectedPlanDigest, managedBinding } = {}) {
   const managed = releasePlan !== undefined;
+  if (managedBinding !== undefined && (!managed || !object(managedBinding) ||
+      Object.keys(managedBinding).some(key => !['operationId', 'workspaceIdentity', 'sourceSha256'].includes(key)) ||
+      !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(managedBinding.operationId ?? '') ||
+      !/^[a-f0-9]{64}$/.test(managedBinding.workspaceIdentity ?? '') ||
+      !/^[a-f0-9]{64}$/.test(managedBinding.sourceSha256 ?? '')))
+    throw failure('FLEET_MANAGED_BINDING_INVALID');
+  const binding = managedBinding ? Object.freeze({ ...managedBinding }) : null;
   if (!managed && (typeof stateDirectory !== 'string' || !stateDirectory.trim())) throw new TypeError('--state is required');
   if (managed && (typeof releasePlan !== 'string' || !releasePlan.trim() ||
       typeof releaseDirectory !== 'string' || !releaseDirectory.trim())) throw new TypeError('--releases and --release-state are required together');
@@ -67,8 +78,16 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
     return { status: releaseStatus ? releaseStatus.native : await fleetControl(directory, 'status'),
       ...(releaseStatus ? { releaseStatus, planDigest: releases.planDigest } : {}), capturedAt: new Date().toISOString() };
   };
-  const sessionKey = randomBytes(32).toString('base64url');
+  const sessionKey = randomBytes(32).toString('base64url'), instanceId = randomUUID();
   let url, starting = true, closing = false, closingPromise;
+  const workspaceIdentity = () => ({
+    schema: 'stellar-forge.fleet-workspace-identity.v1',
+    instanceId, pid: process.pid, ppid: process.ppid, origin: url, managed,
+    planFile: managed ? resolve(releasePlan) : null,
+    directory: managed ? resolve(releaseDirectory) : null,
+    gatewayStateDirectory: directory, planDigest: releases?.planDigest ?? null,
+    ...(binding ?? {}),
+  });
   const headers = {
     'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
     'referrer-policy': 'no-referrer', 'cross-origin-resource-policy': 'same-origin',
@@ -107,6 +126,8 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
         return;
       }
       if (!sameSession(req)) return send(res, 403, { error: 'WORKSPACE_SESSION_REQUIRED' });
+      if (req.method === 'GET' && req.url === '/api/identity')
+        return send(res, 200, workspaceIdentity());
       if (req.method === 'GET' && req.url === '/api/status')
         return send(res, 200, await snapshot());
       if (releases && req.url.startsWith('/api/releases/delivery')) {
@@ -289,7 +310,8 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
       directory = releases.stateDirectory;
     }
     await snapshot(); starting = false;
-    return { url, ...(releases ? { publicURL: releases.publicURL } : {}), close };
+    return { url, identity: workspaceIdentity(), sessionKey,
+      ...(releases ? { publicURL: releases.publicURL } : {}), close };
   } catch (error) {
     try { await close(); } catch (cleanup) { error.cleanupError = nativeError(cleanup); }
     throw error;
@@ -297,18 +319,31 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
 }
 
 export async function main(args = process.argv.slice(2)) {
-  if (args.length === 1 && args[0] === '--help') { process.stdout.write(USAGE + '\n'); return null; }
+  if (args.length === 1 && args[0] === '--help' ||
+      args.length === 2 && args[0] === 'managed' && args[1] === '--help') {
+    process.stdout.write(USAGE + '\n'); return null;
+  }
   const manifests = Object.create(null), options = new Map();
-  for (let i = 0; i < args.length; i += 2) {
-    const flag = args[i], value = args[i + 1];
-    if (!['--state', '--manifest', '--port', '--releases', '--release-state'].includes(flag) || !value || value.startsWith('--')) throw new TypeError(USAGE);
-    if (flag === '--manifest') {
-      const split = value.indexOf('=');
-      if (split < 1 || Object.hasOwn(manifests, value.slice(0, split))) throw new TypeError(USAGE);
-      manifests[value.slice(0, split)] = value.slice(split + 1);
-    } else {
-      if (options.has(flag)) throw new TypeError(USAGE);
-      options.set(flag, value);
+  let launch, managedModule;
+  if (args[0] === 'managed') {
+    managedModule = await import('./managed.mjs');
+    launch = await managedModule.prepareFleetManagedLaunch(managedModule.parseFleetManagedArguments(args.slice(1)));
+    options.set('--releases', launch.selection.planFile);
+    options.set('--release-state', launch.selection.directory);
+    options.set('--state', launch.workspace.gatewayStateDirectory);
+    options.set('--port', String(launch.selection.port));
+  } else {
+    for (let i = 0; i < args.length; i += 2) {
+      const flag = args[i], value = args[i + 1];
+      if (!['--state', '--manifest', '--port', '--releases', '--release-state'].includes(flag) || !value || value.startsWith('--')) throw new TypeError(USAGE);
+      if (flag === '--manifest') {
+        const split = value.indexOf('=');
+        if (split < 1 || Object.hasOwn(manifests, value.slice(0, split))) throw new TypeError(USAGE);
+        manifests[value.slice(0, split)] = value.slice(split + 1);
+      } else {
+        if (options.has(flag)) throw new TypeError(USAGE);
+        options.set(flag, value);
+      }
     }
   }
   const portText = options.get('--port') ?? '8402';
@@ -328,13 +363,19 @@ export async function main(args = process.argv.slice(2)) {
   for (const signal of signals) process.once(signal, onSignal);
   try {
     service = await startFleetWorkspace({ stateDirectory: options.get('--state'), manifests, port: Number(portText),
-      releasePlan: options.get('--releases'), releaseDirectory: options.get('--release-state') });
+      releasePlan: options.get('--releases'), releaseDirectory: options.get('--release-state'),
+      ...(launch ? { expectedPlanDigest: launch.workspace.planDigest, managedBinding: launch.binding } : {}) });
     if (requestedClose) { await stop(); return null; }
-    process.stdout.write(JSON.stringify({ workspace: service.url, manifests: Object.keys(manifests),
-      ...(service.publicURL ? { merchantIngress: service.publicURL } : {}) }) + '\n');
+    const announcement = launch ? await managedModule.fleetManagedStartup({ launch, service }) : {
+      workspace: service.url, manifests: Object.keys(manifests),
+      ...(service.publicURL ? { merchantIngress: service.publicURL } : {}) };
+    if (requestedClose) { await stop(); return null; }
+    process.stdout.write(JSON.stringify(announcement) + '\n');
     return service;
   } catch (error) {
-    for (const signal of signals) process.off(signal, onSignal);
+    try { if (service) await service.close(); }
+    catch (cleanup) { error.cleanupError = nativeError(cleanup); }
+    finally { for (const signal of signals) process.off(signal, onSignal); }
     throw error;
   }
 }

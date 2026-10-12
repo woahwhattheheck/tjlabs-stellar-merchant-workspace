@@ -10,5 +10,8 @@
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-fleet-gateway/workspace/browser-assets.json"
-  ]
+  ],
+  "applicationProviders": {
+    "merchant-fleet": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-fleet.mjs"
+  }
 }
