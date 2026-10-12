@@ -22,7 +22,24 @@ The receiving continuation restores a copy of that exact completed state and kee
 | Portable driver | [`execute.mjs`](execute.mjs) |
 | Driver SHA-256 | `d2779b6726a4e0d228dfcc2340b0064f707c1bae5a3005c862cf1cc35b37bc3e` |
 
-Materialize each declared file from that exact public repository and commit with the existing source-receiving route. Preserve its original bytes and verify the Git blob identity and byte count in the manifest. The Git blob digest covers `blob `, the decimal byte length, one NUL byte and the complete file bytes. The manifest includes the original MCP entry graph, served browser/static files and Python child source. Its generated customer-client references and declared browser aliases remain identified in the manifest; existing native generators and routes own those references.
+The complete source carrier is included here: [`source-transfer.json`](source-transfer.json), all 24 files under [`source-parts/`](source-parts/), and [`receive-source.py`](receive-source.py). The parts contain the original UTF-8 text for all 1,095 selected files, together with their Git blobs, byte lengths, executable modes and SHA-256 hashes. No partial local checkout, raw terminal transfer, private workspace or dependency archive is required to receive these public source bytes.
+
+Receive this entire directory from one immutable product commit, preserving its `source-parts/` layout and the manifest. Then use Python 3.10 or newer on the existing POSIX host:
+
+~~~sh
+python3 /srv/starforge/operating-source/merchant-economics-receiving-20261012/receive-source.py \
+  --transfer /srv/starforge/operating-source/merchant-economics-receiving-20261012/source-transfer.json \
+  --directory /srv/starforge/source/cost-mcp-c460 \
+  --dependencies /srv/starforge/runtime/node_modules
+~~~
+
+Use the actual absolute paths. `--dependencies` is optional: it links only an already installed dependency directory and never installs or copies dependencies. An existing selected dependency link must match the explicit directory; omitting the option preserves it. The original cloud continuation reuses the already installed `89255` dependency tree.
+
+The receiver preflights all part bytes and every source row against the exact complete manifest before creating the selected source root. It then checks all existing target files before writing missing source. It reuses byte-identical files, retains the original executable class, and refuses a differing existing original rather than overwriting it. Every new source file is created exclusively and synced. If a transfer stops, repeat the same command and parts; matching completed files are reused. An earlier original 844-file manifest is retained as `SOURCE-MANIFEST.c460-initial.json`. The complete original manifest is committed as `SOURCE-MANIFEST.json` only after the full source postimage matches.
+
+`SOURCE-RECEIVING.json` records the actual source receipt, with `SOURCE_READY`, all 1,095 files, the original 15,535,816-byte total, the number written or reused, and the exact manifest/index hashes. This receipt starts no MCP operation and changes no business input. The transfer-index SHA-256 is `79a0c518673d181e2ca96758fe1a1031041ef760c4a140e0061a8f3bbe24e0b4`.
+
+The manifest includes the original MCP entry graph, served browser/static files and Python child source. Its generated customer-client references and declared browser aliases remain identified in the manifest; existing native generators and routes own those references. The Git blob digest covers `blob `, the decimal byte length, one NUL byte and the complete file bytes.
 
 Keep the manifest bytes unchanged as `SOURCE-MANIFEST.json` at the selected source root. Its earlier source-directory and dependency-directory metadata preserve the original source custody. `COST_MCP_SOURCE` supplies the actual receiving host's absolute source root. An existing checkout may provide the original Git objects; preserve other owners' working files while materializing this operation's selected directory.
 

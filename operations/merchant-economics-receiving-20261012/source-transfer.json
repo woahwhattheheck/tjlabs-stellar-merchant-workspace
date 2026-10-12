@@ -1,0 +1,205 @@
+{
+  "schema": "commons.sf97.source-transfer.v1",
+  "repository": "woahwhattheheck/public-commons-sprint-2026",
+  "sourcePin": "c46001aff910fa0356bbccc7410c4626e1ea9544",
+  "manifest": {
+    "path": "SOURCE-MANIFEST.json",
+    "sha256": "7786426b72019bf6747091155e5c597a595a61fa858449e5f6466071f4b9140b"
+  },
+  "fileCount": 1095,
+  "sourceBytes": 15535816,
+  "parts": [
+    {
+      "part": 1,
+      "path": "source-parts/part-001.json",
+      "bytes": 693682,
+      "sha256": "365ec3e4740eb4c069417b64bf1c5b5560e19ca8582b5265a42134374e6b4573",
+      "fileCount": 31,
+      "sourceBytes": 673963
+    },
+    {
+      "part": 2,
+      "path": "source-parts/part-002.json",
+      "bytes": 671639,
+      "sha256": "55554fff23d57e8f0726b07d7265348e1bbf10693f3f6fc6ca7fb3b1a7d0df3e",
+      "fileCount": 35,
+      "sourceBytes": 652538
+    },
+    {
+      "part": 3,
+      "path": "source-parts/part-003.json",
+      "bytes": 674639,
+      "sha256": "12e6f940d5be98e86a75072c36d01d19f40cfa7992e3eb8d1b710640419561ce",
+      "fileCount": 23,
+      "sourceBytes": 659040
+    },
+    {
+      "part": 4,
+      "path": "source-parts/part-004.json",
+      "bytes": 695846,
+      "sha256": "f191f853a895db7dac7e6a651b86540ab0e7bc8193ae11e7b02674d4c11afdd1",
+      "fileCount": 45,
+      "sourceBytes": 669589
+    },
+    {
+      "part": 5,
+      "path": "source-parts/part-005.json",
+      "bytes": 699386,
+      "sha256": "98954374a576153510f7cff96884fb46e647fd63e2013e279c660923ce56c20c",
+      "fileCount": 40,
+      "sourceBytes": 675521
+    },
+    {
+      "part": 6,
+      "path": "source-parts/part-006.json",
+      "bytes": 693408,
+      "sha256": "74fc3d21b50d17f6b0ddfafa09f001b19a810450f22c8d17c178d457d18fa11f",
+      "fileCount": 41,
+      "sourceBytes": 668812
+    },
+    {
+      "part": 7,
+      "path": "source-parts/part-007.json",
+      "bytes": 695649,
+      "sha256": "d06653895d9e15bb851b6e89d87819db5384a42ebdd12ded4e27a6f7214468e9",
+      "fileCount": 43,
+      "sourceBytes": 666716
+    },
+    {
+      "part": 8,
+      "path": "source-parts/part-008.json",
+      "bytes": 698231,
+      "sha256": "db29aac6b7f442cb37e2982ae1981c337b3598b858e3e158d3efba0b9ef08aa1",
+      "fileCount": 52,
+      "sourceBytes": 668084
+    },
+    {
+      "part": 9,
+      "path": "source-parts/part-009.json",
+      "bytes": 683948,
+      "sha256": "aeb9216850977a02f8f83603108ec027abcaf299ad4ac4813c2b72831a1f40b1",
+      "fileCount": 51,
+      "sourceBytes": 656600
+    },
+    {
+      "part": 10,
+      "path": "source-parts/part-010.json",
+      "bytes": 697690,
+      "sha256": "d514347b696310054e60f1d886bb4a7355a857b128b4eaa0f3fe9079c5960282",
+      "fileCount": 44,
+      "sourceBytes": 668374
+    },
+    {
+      "part": 11,
+      "path": "source-parts/part-011.json",
+      "bytes": 687888,
+      "sha256": "44ed95019294d7cd2d2e88760e8f9ad1c428e956c90998a706237a6c813cf243",
+      "fileCount": 57,
+      "sourceBytes": 658027
+    },
+    {
+      "part": 12,
+      "path": "source-parts/part-012.json",
+      "bytes": 682742,
+      "sha256": "0dd15abc52fcdeb68aa8e370942c01f29b6991e95e5c0c71011debc0731fdf71",
+      "fileCount": 63,
+      "sourceBytes": 650332
+    },
+    {
+      "part": 13,
+      "path": "source-parts/part-013.json",
+      "bytes": 690318,
+      "sha256": "12eb754cc6464659ecf81b05b3fff2da284d550f6d1722ff689bd653fe2e5749",
+      "fileCount": 60,
+      "sourceBytes": 659228
+    },
+    {
+      "part": 14,
+      "path": "source-parts/part-014.json",
+      "bytes": 685627,
+      "sha256": "5eaea951e8f5d00e01ae9f34c0bce1574f3dc916c7607b4b18c867c24ea0634d",
+      "fileCount": 56,
+      "sourceBytes": 656476
+    },
+    {
+      "part": 15,
+      "path": "source-parts/part-015.json",
+      "bytes": 693397,
+      "sha256": "db8c7d7e4d032430aba2b0534a1b31f65fd9d7f2bf2b26ee0bb24e9ed745b697",
+      "fileCount": 47,
+      "sourceBytes": 666577
+    },
+    {
+      "part": 16,
+      "path": "source-parts/part-016.json",
+      "bytes": 655864,
+      "sha256": "f9d5b1b0fb9fe8630a6d5e840e4ce9627628f0c3180121dfc4f99dca1b8713d1",
+      "fileCount": 47,
+      "sourceBytes": 630208
+    },
+    {
+      "part": 17,
+      "path": "source-parts/part-017.json",
+      "bytes": 693547,
+      "sha256": "b24918e3d48e58bdf7a2f44389adb9bb22f87ecb73b038b63b23ddc8cbece34e",
+      "fileCount": 41,
+      "sourceBytes": 661637
+    },
+    {
+      "part": 18,
+      "path": "source-parts/part-018.json",
+      "bytes": 692963,
+      "sha256": "569f21da3d2554103029701cfee50b0aa5efdedb9bb5da73ee85f404108416fa",
+      "fileCount": 51,
+      "sourceBytes": 664760
+    },
+    {
+      "part": 19,
+      "path": "source-parts/part-019.json",
+      "bytes": 681028,
+      "sha256": "51a13c284ebef0202f6693137e3b804a656668484662eaa669547b7c2dd6786f",
+      "fileCount": 55,
+      "sourceBytes": 652347
+    },
+    {
+      "part": 20,
+      "path": "source-parts/part-020.json",
+      "bytes": 674950,
+      "sha256": "688ac117317492635867a0360fb3be511a59a2411cf1996b6e02b1d63c9200ef",
+      "fileCount": 44,
+      "sourceBytes": 650852
+    },
+    {
+      "part": 21,
+      "path": "source-parts/part-021.json",
+      "bytes": 692803,
+      "sha256": "f919443ed31a9af8622d63056148881dfe6b9f7365cefcee750ee4c5eef96302",
+      "fileCount": 54,
+      "sourceBytes": 664391
+    },
+    {
+      "part": 22,
+      "path": "source-parts/part-022.json",
+      "bytes": 691986,
+      "sha256": "9f64d70350f1402911d53150dab2f13039b516cc4bbbc91103b54caffbf06e53",
+      "fileCount": 46,
+      "sourceBytes": 664665
+    },
+    {
+      "part": 23,
+      "path": "source-parts/part-023.json",
+      "bytes": 675619,
+      "sha256": "56899744352b87c9823c076bf9e3e272285aae219fe0b848789d70ecb595fe90",
+      "fileCount": 46,
+      "sourceBytes": 650141
+    },
+    {
+      "part": 24,
+      "path": "source-parts/part-024.json",
+      "bytes": 360637,
+      "sha256": "46fa85810a1a0acf1aef978e3ae035a5c7aed06d336661e44db02ab58245cc75",
+      "fileCount": 23,
+      "sourceBytes": 346938
+    }
+  ]
+}
