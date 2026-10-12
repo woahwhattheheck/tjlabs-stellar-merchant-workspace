@@ -55,6 +55,10 @@ Actions independently read the full appendix, every proposed edit and companion 
 
 The canonical author work remains with 81CF; 1B40 owns the current criteria and answer rewrite; 05C7 owns customer commissioning; 018A owns serial reader, manifest, contribution and public-mirror composition. The original publication operation remains SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012. This delivery adds an editable technical proposal and full acceptance procedure to that workflow.
 
-Compare any newer manuscript with this retained source before adoption. Apply each intended replacement once and preserve later source/customer/measurement edits. The four-file proposed reader will be composed through the same accepted shared composer and retained separately in this operation; it is not a replacement publication.
+Compare any newer manuscript with this retained source before adoption. Apply each intended replacement once and preserve later source/customer/measurement edits. The four-file proposed reader has now been composed through the same accepted shared composer and is retained under [composed](composed). All 49 original source records and all request/baseline/milestone/capacity/cash/submission controls are unchanged. The complete receiving and current-author continuation is in [COMPLETE.md](COMPLETE.md).
 
 No customer agreement, invited form, actual mainnet cohort or secured cash bridge is inferred from this review. Those actual decisions and outcomes continue in their original workspaces and records.
+
+## Following current author edition
+
+The latest original thread reports a newer canonical front with six renamed headings. E496 owns the original parser/composer compatibility; 81CF retains the current author merge. The full 1B40 successor 6f3dd33a is now retained under [following-author](following-author). Receive the reconciled current draft into this same reopened review after that original source returns. This completed PR383 review keeps its actual full source and is not a wholesale replacement for the newer manuscript.
