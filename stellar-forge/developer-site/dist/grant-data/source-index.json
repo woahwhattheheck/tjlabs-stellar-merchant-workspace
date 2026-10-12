@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 42195,
-    "sha256": "4102504fa44e0b0ffee7495d123e7ab6e795036617cbd1d5fc576d17fc4b3018",
-    "git_blob": "1db39453c7a6602da362f4d6e770df0b266a5141"
+    "bytes": 46398,
+    "sha256": "08fc96acdd223c0e33fa770f982901c5ae21db597bacffbe967a8d8d6e586bc4",
+    "git_blob": "0ce79c088ab068adeb538a4fa798f98111101349"
   },
   "request": {
     "basis": "prospective",
@@ -1499,6 +1499,82 @@
       "commit": "72619f000aa273e65d50d886625b15f284655912",
       "path": "products/tind/GRANT.md",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/72619f000aa273e65d50d886625b15f284655912/products/tind/GRANT.md"
+    },
+    {
+      "id": "buyer-declared-path-native-workflow",
+      "label": "Delivered catalog selection and declared HTTP path workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "3908aae1c74b64493a4dc11be1d59f1b501a1593",
+      "path": "stellar-forge/mcp-paid-agent/NATIVE_REQUESTS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3908aae1c74b64493a4dc11be1d59f1b501a1593/stellar-forge/mcp-paid-agent/NATIVE_REQUESTS.md",
+      "source_kind": "source-file",
+      "kind": "published-source",
+      "pull_request": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/689"
+    },
+    {
+      "id": "catalog-source-vellar-20261012",
+      "label": "Complete published Vellar catalog captured October 12",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/dist/grant-data/catalog-source-vellar-20261012.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/dist/grant-data/catalog-source-vellar-20261012.json",
+      "source_kind": "captured-public-response",
+      "kind": "published-source",
+      "git_blob": "b07c1e1546afa5948bf31d892098cdaf4b5140de",
+      "bytes": 45753,
+      "sha256": "7d088b72500e47da56170296de80aad2321bc5f707d8e074755d9059f4e4eebf",
+      "origin_url": "https://vellar-facilitator-testnet-production.up.railway.app/discovery/resources?network=stellar%3Atestnet&limit=100&offset=0",
+      "acquisition_started_at": "2026-10-12T21:44:51.728Z",
+      "verified_at": "2026-10-12T21:45:57.311Z",
+      "resources": 27,
+      "http_resources": 27,
+      "mcp_resources": 0,
+      "declared_total": 27
+    },
+    {
+      "id": "catalog-parameter-evaluation-20261012",
+      "label": "Complete same-source parameter discovery comparison",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "path": "stellar-forge/developer-site/dist/grant-data/catalog-parameter-evaluation-20261012.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/dist/grant-data/catalog-parameter-evaluation-20261012.json",
+      "source_kind": "functional-comparison",
+      "kind": "published-source",
+      "git_blob": "84061bf2c7259c8466fbaa575a8cfd1c29b534d7",
+      "bytes": 76641,
+      "sha256": "732c34097667c318b21c866a22858c18200e77f8320f6bb61f76ed54a2c78e25",
+      "execution": "V8_EXACT_DEPENDENCY_FREE_RANKING_FUNCTIONS",
+      "original_record_bytes": 76306,
+      "original_record_sha256": "bcee28bd6bb27fbd492558d5831753f7643423f40e66773bdee5980d52f3a777",
+      "public_projection": {
+        "omitted_fields": [
+          "sourceCapture.attachment"
+        ],
+        "reason": "Internal transfer locator",
+        "measurements": "All original query, result, ranking, coverage and source-identity values retained."
+      }
+    },
+    {
+      "id": "real-source-query-replay-20261012",
+      "label": "Maintained catalog replay and parameter-query derivation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "8887e40879d9cf946a6bfe1c0daf9e78ace65c1f",
+      "path": "stellar/scf-starforge-20261009/sf41-real-source-replay",
+      "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026/tree/8887e40879d9cf946a6bfe1c0daf9e78ace65c1f/stellar/scf-starforge-20261009/sf41-real-source-replay",
+      "source_kind": "source-tree",
+      "kind": "published-source"
+    },
+    {
+      "id": "stellar-builder-threat-model",
+      "label": "Stellar application threat-modeling guidance",
+      "url": "https://developers.stellar.org/docs/build/security-docs/threat-modeling",
+      "source_kind": "official-documentation",
+      "kind": "official-source"
+    },
+    {
+      "id": "stellar-builder-monitoring-template",
+      "label": "Stellar builder monitoring plan template",
+      "url": "https://developers.stellar.org/docs/build/security-docs/monitoring/monitoring-template-builders",
+      "source_kind": "official-documentation",
+      "kind": "official-source"
     }
   ],
   "product_and_finance": {
@@ -1632,9 +1708,74 @@
         "canonical_received_sha256": "9f97ab07e4dfe7d3c4d36758563f63f9ca2666cf49535b51ba19727d40951180",
         "canonical_received_bytes": 780073,
         "canonical_projection": "Complete native Canvas section serialization. Original chapter prose and every table cell retained; native table whitespace is projected by the original customer-section receiver."
+      },
+      {
+        "id": "catalog-buyer-request-workflow",
+        "application_operation": "SCF-CATALOG-BUYER-APPLICATION-20261012",
+        "basis": "Current nine-answer application, complete catalog capture and actual same-source ranking comparison.",
+        "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "source_commit": "3908aae1c74b64493a4dc11be1d59f1b501a1593",
+        "source_path": "stellar-forge/mcp-paid-agent",
+        "source_pull_request": 689,
+        "front_answers": [
+          "Defined architecture and operating behavior",
+          "Working product and demonstrated results",
+          "Threat response and outcome measurement"
+        ],
+        "delivered_capabilities": [
+          "Schema-aware catalog ranking",
+          "Complete browse and search continuation with original row and payment selection",
+          "Explicit HTTP path and query inputs and MCP arguments",
+          "Typed buyer clients and native service workspace registry",
+          "Native HTTP intent preparation, execution, recovery and complete retained response",
+          "Installed mcp-catalog-journey command"
+        ],
+        "functional_comparison": {
+          "source_id": "catalog-source-vellar-20261012",
+          "comparison_id": "catalog-parameter-evaluation-20261012",
+          "replay_source_id": "real-source-query-replay-20261012",
+          "execution": "V8_EXACT_DEPENDENCY_FREE_RANKING_FUNCTIONS",
+          "catalog_resources": 27,
+          "http_resources": 27,
+          "mcp_resources": 0,
+          "total_queries": 33,
+          "declaration_derived_queries": 24,
+          "original_baseline_queries": 9,
+          "scored_query_resource_pairs": 31,
+          "declaration_query_target_counts": {
+            "one_resource": 17,
+            "two_resources": 7
+          },
+          "original_probe_scoring": "The nine general baseline queries have no declared expected-resource mapping; their complete results are included in the 33-query comparison.",
+          "source_resource_found": {
+            "before": 22,
+            "after": 31
+          },
+          "source_resource_top_three": {
+            "before": 19,
+            "after": 29
+          },
+          "improved_source_positions": 11,
+          "unchanged_source_positions": 20,
+          "worsened_source_positions": 0,
+          "direct_indexed_parity_queries": 33,
+          "capture_sha256": "7d088b72500e47da56170296de80aad2321bc5f707d8e074755d9059f4e4eebf",
+          "comparison_sha256": "732c34097667c318b21c866a22858c18200e77f8320f6bb61f76ed54a2c78e25",
+          "original_comparison_sha256": "bcee28bd6bb27fbd492558d5831753f7643423f40e66773bdee5980d52f3a777",
+          "source_blobs": {
+            "baseline": "c0b32aea7fd1083a8b44f87f3d6dee4349194d6d",
+            "candidate": "9c4bb1b43d7d5f761c8ce0b3aecac0c0430a1c7b",
+            "queryProbes": "af2a378dd412ab25db5ac71198abf278f4ec5048",
+            "catalog": "03582e141a414b9f5c239deb65a9614de2d9a340",
+            "schemaQueryExtractor": "d258b965ccd988d2a1d2ed320ccb1f66d14b395c"
+          }
+        },
+        "funded_work_mapping": "The delivered buyer workflow is the completed foundation. The existing six packages fund the remaining selected-customer source and receiving adaptation, provider deployment, threat response, mainnet installation and handover.",
+        "common_budget_unchanged": true,
+        "native_execution_basis": "The existing development purchase baseline remains the original operated XLM services. The October 12 captured catalog and functional ranking comparison describe the separate published HTTP resource set."
       }
     ],
-    "current_application_sha256": "4102504fa44e0b0ffee7495d123e7ab6e795036617cbd1d5fc576d17fc4b3018",
+    "current_application_sha256": "08fc96acdd223c0e33fa770f982901c5ae21db597bacffbe967a8d8d6e586bc4",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -1798,8 +1939,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "4102504fa44e0b0ffee7495d123e7ab6e795036617cbd1d5fc576d17fc4b3018",
-    "application_git_blob": "1db39453c7a6602da362f4d6e770df0b266a5141",
+    "application_sha256": "08fc96acdd223c0e33fa770f982901c5ae21db597bacffbe967a8d8d6e586bc4",
+    "application_git_blob": "0ce79c088ab068adeb538a4fa798f98111101349",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -1860,8 +2001,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "4102504fa44e0b0ffee7495d123e7ab6e795036617cbd1d5fc576d17fc4b3018",
-    "application_git_blob": "1db39453c7a6602da362f4d6e770df0b266a5141",
+    "application_sha256": "08fc96acdd223c0e33fa770f982901c5ae21db597bacffbe967a8d8d6e586bc4",
+    "application_git_blob": "0ce79c088ab068adeb538a4fa798f98111101349",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
