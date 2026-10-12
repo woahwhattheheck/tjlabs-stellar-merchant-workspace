@@ -162,6 +162,45 @@ Ctrl+C closes that listener. The retained grant purchase continues through its
 original Applications workbench and `grant-demo` commands, described in the
 [complete grant product guide](../../products/grant-reviewer/OPERATING.md).
 
+### Maintain the application and its reader
+
+The recurring economic-report section connects the shipped analyst product to
+the same six funded implementation packages. Its priced unit is one advertised
+complete HTML or JSON report. A later reporting period or reviewed source
+edition provides the next useful purchase; original reports remain available
+with their original observations and payment terms.
+
+The maintained [application composer](grant-compose.mjs) reads the current
+application and product-and-finance downloads, renders the same nine answers
+into the existing page, and updates their byte counts and source hashes.
+The film, example, ten-section navigation, CSS, budget and existing-work
+section come from the original page and remain part of the same reader.
+
+To receive a fresh copy of the shared manuscript into the reviewer page:
+
+~~~sh
+node stellar-forge/developer-site/grant-compose.mjs \
+  --manuscript /absolute/path/to/current-scf-application.md \
+  --fred-commit be44be564e35b63af23246bad531a95374bbb4c0 \
+  --source-pins-output /absolute/path/to/current-grant-source-pins.json
+~~~
+
+The manuscript input is the complete existing
+[shared application](https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF),
+including its reviewer answer and detailed source sections. The command imports
+the front answer and the recurring economic installation subsection, preserves
+the companion's other sections, and composes the four existing application
+routes. Omit --manuscript to render edits already made in the source downloads.
+The installed reader opens with the original grant-application command above.
+
+The optional source-pins output identifies the four composed route blobs.
+The original inspectGrantApplication function accepts that object as sourcePins
+when its owner receives this later source edition through the existing controlled
+Page. Omitting sourcePins continues to select the original retained edition.
+The actual source commit, receiving operation and output directory remain explicit
+in the original receiving call; the selection records every source file used.
+
+
 ## Source layout
 
 - dist/onboarding.mjs: pure original-config generator, supported imports, validation and deterministic ZIP writer.
