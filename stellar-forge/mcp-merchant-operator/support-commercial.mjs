@@ -25,6 +25,19 @@ export function merchantCommercial({cases,casesDirectory,exportsDirectory,reads,
         if(!UUID.test(args.readId??''))throw failure('INVALID_PARAMS','Keep the original file read UUID.');
         await reads.release(scope,args.readId);return {id:args.id,readId:args.readId,released:true};
       }
+      if(name==='merchant_case_commercial_performance_file') {
+        exact(args,['id','revision','sourceId','kind','expectedSha256','readId','offset','limit'],['id','revision','sourceId','kind']);
+        if(!HASH.test(args.revision??'')||!HASH.test(args.sourceId??'')||
+            !['SOURCE','ATTACHMENT','REPORT'].includes(args.kind)||args.readId!==undefined&&!UUID.test(args.readId))
+          throw failure('INVALID_PARAMS','Select the saved case revision, recorded performance source and full file kind.');
+        const choice={id:args.id,revision:args.revision,sourceId:args.sourceId,kind:args.kind};
+        return {...choice,...await reads.read({scope,key:JSON.stringify(choice),kind:'merchant-commercial-performance',
+          directory:await privateSupportDirectory(exportsDirectory()),readId:args.readId,offset:args.offset,
+          limit:args.limit,expectedSha256:args.expectedSha256,load:async()=>{
+            const result=await (await original()).downloadPerformance(choice);
+            return {bytes:result.body,name:result.descriptor.filename,type:result.descriptor.mediaType};
+          }})};
+      }
       if(name==='merchant_case_commercial_file') {
         exact(args,['id','revision','quoteId','quoteSha256','kind','expectedSha256','readId','offset','limit'],
           ['id','revision','quoteId','quoteSha256','kind']);
@@ -44,6 +57,9 @@ export function merchantCommercial({cases,casesDirectory,exportsDirectory,reads,
         merchant_case_commercial_save_draft:'saveDraft',merchant_case_commercial_publish:'publish',
         merchant_case_commercial_receive_pricing:'receivePricing',merchant_case_commercial_receive:'receive',
         merchant_case_commercial_compare:'compare',
+        merchant_case_commercial_performance_preview:'previewPerformance',
+        merchant_case_commercial_performance_receive:'receivePerformance',
+        merchant_case_commercial_performance_revision:'preparePerformanceRevision',
         merchant_case_commercial_preview_implementation:'previewImplementation',
         merchant_case_commercial_adopt_implementation:'adoptImplementation',
       }[name];

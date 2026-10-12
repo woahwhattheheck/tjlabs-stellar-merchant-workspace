@@ -200,6 +200,36 @@ existing application. Installed source is separate from the existing customer
 project, WordPress site, merchant state, outbox, buyer operation and downloaded
 files. Use those original paths and operation identities through upgrades.
 
+## Recorded usage and customer pricing revisions
+
+The `merchant-performance` contribution selects the original SF97 recorded-usage workspace, complete portable source, native proposal workflow, browser, typed HTTP client and direct operator. Both `merchant-economics` and `merchant-support` retain this contribution alongside `merchant-tariffs`, the original Pricing provider, and the complete Commercial contribution.
+
+The installed command is `merchant-performance`. Its original source is `stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/cli.mjs`. It opens the original Pricing and Tariff owners with the same private state directory and saved source settings. The existing `revenue-workspace` launcher and managed Pricing Application retain their original owner and expose the same Performance page.
+
+| Source-owned export | Original member |
+| --- | --- |
+| `./merchant/performance` | `performance/model.mjs` |
+| `./merchant/performance-source` | `performance/source.mjs` |
+| `./merchant/performance-workspace` | `performance/workspace.mjs` |
+| `./merchant/performance-client` | Conditional `client.d.mts` and `client.mjs` |
+| `./merchant/performance-server` | `performance/server.mjs` |
+| `./merchant/performance-cli` | `performance/cli.mjs` |
+
+The maintained `merchant-commercial` contribution also includes the original customer performance source, typed Commercial client and quote desk exports. `merchant-commercial performance` receives a complete recorded comparison into the existing case and prepares an ordinary quote revision with an explicit monthly request volume. The original quotation, customer-response, accepted-implementation and complete receiving owners continue that draft.
+
+The original Pricing MCP provider exposes the sixteen Performance methods through its existing `pricing` registration. The original Support provider exposes the Commercial source review, receiving, revision and full-file operations. These selections preserve both providers and the original retained file downloader.
+
+The selected source includes the complete `sf97-merchant-revenue-ops`, `sf74-merchant-support-console` and `merchant-settlement-accounting` components. The service-period path imports the original `customer-statements/core.mjs`, `period-usage.mjs` and `native-usage.mjs`, with their original accounting dependencies. The original builder closes the source graph and includes the Performance browser assets, declaration files and complete operating guides.
+
+A saved Performance source retains its original Pricing version files, selected tariff portfolio, scenario plans, optional complete cost edition and paired service source. Its 48 MiB portable envelope can be inspected, retained and carried through Commercial material. Complete native receiving uses a new original Pricing `WORKSPACE_BACKUP` captured after the review and proposal operations, plus the full tariff portfolio. The backup retains the performance records, service sources and original proposal/selection journals. Restore it through the existing receiver, receive the portfolio through the original Tariff owner, then reopen Performance and continue its exact saved request UUIDs.
+
+Detailed operator contracts:
+
+- [Performance review, service capture, source transfer and native proposals](../sf97-merchant-revenue-ops/performance/README.md)
+- [Commercial performance material and customer quote revisions](../sf74-merchant-support-console/commercial/PERFORMANCE.md)
+- [Complete merchant economics operation](../../../products/merchant-economics/OPERATING.md)
+- [Complete Merchant support product](../../../products/merchant-support/README.md)
+
 ## Maintain a recipe
 
 Recipes live in `distribution/selections/ID.json` and use schema

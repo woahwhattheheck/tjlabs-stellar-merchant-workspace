@@ -1,6 +1,6 @@
 # Merchant Support
 
-Operate a merchant from its original support case through implementation, service commitments, native adjustments, buyer period close, accountant handoff, quotation and complete customer receiving. The browser, command line and merchant agent use the same saved case, source editions and native delivery operations.
+Operate a merchant from its original support case through implementation, service commitments, native adjustments, buyer period close, accountant handoff, recorded usage, pricing revision, quotation and complete customer receiving. The browser, command line and merchant agent use the same saved case, source editions and native delivery operations.
 
 ## Start with the existing work
 
@@ -72,6 +72,26 @@ A changed monthly quantity shows the original tier calculation alongside the cha
 Record the actual customer response and continue through the accepted-scope workflow below. The full case package retains quote editions, responses, tariff material, original pricing backup and delivery history. After receiving the case, restore its retained pricing workspace and receive the selected tariff portfolio through the original engine. The same saved plan, comparison and both native outcomes reopen there.
 
 Use `starforge merchant-tariffs` for the original planner and selected portfolio export/inspection. Use `starforge merchant-commercial tariffs` for customer source capture, inspection, attachment, quotation review, exact downloads and restoration. The existing Pricing and Support providers expose those same operations through the installed merchant agent. The complete [tariff customer guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/TARIFFS.md) contains every private input and receiving command; the [Merchant economics guide](../merchant-economics/OPERATING.md) covers supplier costs, original tariff planning and pricing adoption.
+
+## Recorded usage and customer pricing revisions
+
+Open **Performance** in the original Pricing console and select a completed tariff selection plus the original saved usage version. Choose its exact request-count basis, optional native payment option and supplier-cost edition. Service counts use the complete retained opening and closing service snapshots and their original customer-statement compiler.
+
+The review preserves the saved uniform per-request price, the original graduated or volume schedule and their values at the observed quantity. Save that review, then export its complete source envelope. The installed `starforge merchant-performance` command, typed HTTP client and original Pricing MCP provider use that same saved source.
+
+In the customer's **Commercial quotations → Usage and revisions** desk:
+
+1. Choose the measured original quotation and complete performance source. Preview the native comparison and save it as an original case material.
+2. Select the retained usage review and the measured quote or a later edition. Enter an explicit monthly request volume.
+3. Choose the existing tariff or a revised native selection already received through **Tariff sources** for the same route.
+4. Prepare the ordinary quote draft. Review work, service, scope, quantities and payment terms, then publish its new edition using the original quote controls.
+5. Record the actual customer response and continue accepted work through the original implementation and receiving flow.
+
+The explicit monthly proposal retains the recorded period separately. A quote revision keeps its original parent, measured quote and saved performance binding. Complete customer packages carry the full performance source as original case material alongside the quote editions and customer history.
+
+Use `starforge merchant-commercial performance` for `list`, `preview`, `receive`, `revision` and `file`. The original Support tools expose the same four case operations and retained file reader. The native Pricing proposal path uses `merchant-performance`. For complete receiving, create a new original Pricing backup after the review and proposal operations have been saved, retain the full tariff portfolio, restore that backup and receive the portfolio through the original Tariff owner. Reopening Performance over the same Pricing directory restores the complete proposal and selection history with its original request UUIDs.
+
+The [Performance operator guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/README.md) includes all original source selectors, portable source and sixteen HTTP/native methods. The [Commercial performance guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/PERFORMANCE.md) contains the full saved-case, quote revision, typed client and customer receiving contracts.
 
 ## Accepted quotations and change orders
 
