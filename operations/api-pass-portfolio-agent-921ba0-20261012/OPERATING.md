@@ -98,3 +98,16 @@ The customer product is PR84, the full prepaid product is PR88 and the agent por
 https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791807540908059
 
 Return the complete combined result to that thread so the product and grant owners can adopt the actual native result. The complete private checkpoint carries the local runtime state, while this repository contains the reusable operation and original selected product source.
+
+## Completed native receiving — October 12, 2026
+
+The exact operation at 29dd5074ade13e1f352e583968c5b041a0eab214 completed on Node24.19.0 in native session37410. The original customer ran from13:26:19.639 through13:26:21.061 UTC; the agent continuation ran from13:26:21.068 through13:26:23.423 UTC.
+
+All nine customer phases and all six agent phases passed. The original authenticated MCP endpoint advertised33 tools and served18 tool kinds during the complete workflow, including all five portfolio operations. Exactly three local upstream executions left the first original pass at0 available units and the second at10. The new84-byte response resumed from its retained32-byte checkpoint. Five complete exported files total17,586 bytes. The original customer, adapter journal, saved CLI result and complete exports all reopened successfully, and all original writers retired.
+
+The complete unmodified combined native report is [NATIVE_RESULT.json](NATIVE_RESULT.json). Its actual workspace UUID is f3fd2f93-699c-4374-9aea-a7aa826c450a. The complete closed-workspace ZIP contains816 retained files, is2,198,181 bytes and has SHA256 0d1292755658fca81188256662422d45df992672a6ef931096cfca3e768824c1.
+
+The original coordination return is:
+https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791811650244279
+
+The source packet and original fixture above reproduce the same product workflow. Preserve this completed operation's checkpoint and identities when reopening its actual results.

@@ -1,0 +1,303 @@
+{
+  "schema": "stellar-forge.sf101.api-pass-portfolio-agent-receiving.v1",
+  "operation": "SCF-API-PASS-PORTFOLIO-AGENT-921BA0-20261012",
+  "customerSourceCommit": "5c210c0be7d1ea5e3e6b87625e7bc9d389d42334",
+  "agentSourceCommit": "216e40d21c7264a7bb39351af8a7efce94f624fa",
+  "nativeExitCode": 0,
+  "upstreamExecutions": 3,
+  "merchantAllowances": [
+    {
+      "allowanceUnits": 4,
+      "consumedUnits": 4,
+      "reservedUnits": 0,
+      "availableUnits": 0,
+      "completedCalls": 2,
+      "consumedCallsWithoutResult": 0,
+      "reservedCalls": 0,
+      "releasedCalls": 0
+    },
+    {
+      "allowanceUnits": 12,
+      "consumedUnits": 2,
+      "reservedUnits": 0,
+      "availableUnits": 10,
+      "completedCalls": 1,
+      "consumedCallsWithoutResult": 0,
+      "reservedCalls": 0,
+      "releasedCalls": 0
+    },
+    {
+      "allowanceUnits": 20,
+      "consumedUnits": 0,
+      "reservedUnits": 0,
+      "availableUnits": 20,
+      "completedCalls": 0,
+      "consumedCallsWithoutResult": 0,
+      "reservedCalls": 0,
+      "releasedCalls": 0
+    }
+  ],
+  "customer": {
+    "schema": "stellar-forge.sf101.customer-portfolio-journey.v1",
+    "sourceCommit": "5c210c0be7d1ea5e3e6b87625e7bc9d389d42334",
+    "environment": "LOCAL_ORIGINAL_MERCHANT_GATEWAY",
+    "operation": "api-customer-portfolio-921ba0-20261012",
+    "startedAt": "2026-10-12T13:26:19.639Z",
+    "phases": [
+      {
+        "name": "Read two original purchased allowances",
+        "status": "PASS",
+        "workspaceId": "f3fd2f93-699c-4374-9aea-a7aa826c450a",
+        "profiles": [
+          "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+          "e7c8e0d3-e934-4502-9834-f3ff09da7a10"
+        ],
+        "available": [
+          4,
+          12
+        ],
+        "routeCalls": [
+          2,
+          6
+        ]
+      },
+      {
+        "name": "Send original request after changing default",
+        "status": "PASS",
+        "profileId": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "requestId": "portfolio-original-request",
+        "selectedProfileId": "e7c8e0d3-e934-4502-9834-f3ff09da7a10",
+        "responseBytes": 78,
+        "responseSha256": "5ea619f7723cf186672545f515c42467e5b50b72edac1b4e65b17c8dffe00655",
+        "available": [
+          2,
+          12
+        ]
+      },
+      {
+        "name": "Replay same saved call and same refresh action",
+        "status": "PASS",
+        "responseSha256": "5ea619f7723cf186672545f515c42467e5b50b72edac1b4e65b17c8dffe00655",
+        "available": [
+          2,
+          12
+        ]
+      },
+      {
+        "name": "Adopt and recover original merchant response",
+        "status": "PASS",
+        "profileId": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "requestId": "portfolio-merchant-retained",
+        "responseSha256": "b857c9606795d9234cbcd97e05ae509b1438ac2b870ad5761e49de2da2b20b35",
+        "available": [
+          0,
+          12
+        ],
+        "queueRemaining": 0
+      },
+      {
+        "name": "Retain and reopen original replacement handoff",
+        "status": "PASS",
+        "previousProfileId": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "replacementProfileId": "a2cf9880-5901-484e-aad8-a8810b9a6266",
+        "order": "portfolio-921ba0-3",
+        "intentId": "portfolio-replacement-intent"
+      },
+      {
+        "name": "Archive a selected pass and keep its saved response",
+        "status": "PASS",
+        "archivedProfileId": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "newDefault": "e7c8e0d3-e934-4502-9834-f3ff09da7a10"
+      },
+      {
+        "name": "Cold reopen original workspace and retained portfolio",
+        "status": "PASS",
+        "workspaceId": "f3fd2f93-699c-4374-9aea-a7aa826c450a",
+        "profiles": 3,
+        "selectedProfileId": "e7c8e0d3-e934-4502-9834-f3ff09da7a10"
+      },
+      {
+        "name": "Retire failed startup through the same close owner",
+        "status": "PASS",
+        "error": "EADDRINUSE",
+        "phase": "closed"
+      },
+      {
+        "name": "Continue retained close callback and reject late callback",
+        "status": "PASS",
+        "attempts": 2,
+        "phase": "closed"
+      }
+    ],
+    "history": {
+      "bytes": 9272,
+      "sha256": "9c52cbc5cbc81bb302f5371ea82c4bea4402d3699b0d0338c9ef59b3b29df1e6"
+    },
+    "status": "PASS",
+    "completedAt": "2026-10-12T13:26:21.061Z"
+  },
+  "agent": {
+    "schema": "stellar-forge.sf101.customer-portfolio-agent-journey.v1",
+    "operation": "SCF-API-PASS-PORTFOLIO-AGENT-921BA0-20261012",
+    "customerSourceCommit": "5c210c0be7d1ea5e3e6b87625e7bc9d389d42334",
+    "agentSourceCommit": "216e40d21c7264a7bb39351af8a7efce94f624fa",
+    "environment": "LOCAL_ORIGINAL_MERCHANT_GATEWAY_AND_AUTHENTICATED_MCP",
+    "startedAt": "2026-10-12T13:26:21.068Z",
+    "customerPhases": 9,
+    "phases": [
+      {
+        "name": "Open actual authenticated 33-tool MCP, typed client and command entry",
+        "status": "PASS",
+        "workspaceId": "f3fd2f93-699c-4374-9aea-a7aa826c450a",
+        "tools": 33,
+        "profiles": 3,
+        "first": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "second": "e7c8e0d3-e934-4502-9834-f3ff09da7a10",
+        "replacement": "a2cf9880-5901-484e-aad8-a8810b9a6266"
+      },
+      {
+        "name": "Capture caller arguments and continue the exact native refresh batch",
+        "status": "PASS",
+        "configureOperationId": "d96a8a82-a174-4a7c-be9c-2b9f6718ffdc",
+        "refreshOperationId": "53b21e38-de06-4085-9884-510a8fdd0e14",
+        "refreshed": [
+          "e7c8e0d3-e934-4502-9834-f3ff09da7a10"
+        ],
+        "archivedSkip": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "replayed": true
+      },
+      {
+        "name": "Prepare in retained CLI, send through MCP and resume the complete response",
+        "status": "PASS",
+        "callId": "8471ced1-1d13-4d70-b2dd-73d107fa7d7f",
+        "profileId": "e7c8e0d3-e934-4502-9834-f3ff09da7a10",
+        "requestId": "portfolio-agent-original-request",
+        "responseBytes": 84,
+        "responseSha256": "5b1be8fcc2f991e09e1b27e02169dfc21c47e1689403d684704539d64905d6ed",
+        "available": [
+          0,
+          10
+        ],
+        "resumedBytes": 32
+      },
+      {
+        "name": "Reopen the original replacement and complete original request inventory",
+        "status": "PASS",
+        "replacement": "a2cf9880-5901-484e-aad8-a8810b9a6266",
+        "predecessor": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241",
+        "originalCalls": 2,
+        "attention": 0
+      },
+      {
+        "name": "Download retained response and full histories with the customer stopped",
+        "status": "PASS",
+        "exports": 5,
+        "responseSha256": "5b1be8fcc2f991e09e1b27e02169dfc21c47e1689403d684704539d64905d6ed",
+        "bytes": 17586
+      },
+      {
+        "name": "Cold reopen customer, MCP journal, CLI result and complete exports",
+        "status": "PASS",
+        "workspaceId": "f3fd2f93-699c-4374-9aea-a7aa826c450a",
+        "retainedExports": 5,
+        "refreshReplayed": true,
+        "available": [
+          0,
+          10
+        ]
+      }
+    ],
+    "status": "PASS",
+    "workspaceId": "f3fd2f93-699c-4374-9aea-a7aa826c450a",
+    "downloads": [
+      {
+        "exportId": "portfolio-agent-response",
+        "directory": "/dev/921ba0-api-portfolio-agent-_mdwp1xn/agent/downloads/portfolio-agent-response",
+        "selection": {
+          "kind": "response",
+          "callId": "8471ced1-1d13-4d70-b2dd-73d107fa7d7f"
+        },
+        "manifestSha256": "753680480f8634bab926fbf9379c410107c05d121eb28bcf0209fffad614b95f",
+        "file": "response.bin",
+        "bytes": 84,
+        "sha256": "5b1be8fcc2f991e09e1b27e02169dfc21c47e1689403d684704539d64905d6ed",
+        "resumedBytes": 32
+      },
+      {
+        "exportId": "portfolio-previous-response",
+        "directory": "/dev/921ba0-api-portfolio-agent-_mdwp1xn/agent/downloads/portfolio-previous-response",
+        "selection": {
+          "kind": "response",
+          "callId": "de1290ee-778d-4b27-a763-0ef075ad1c0f"
+        },
+        "manifestSha256": "c97ba79370c86111621a967b94dcaac00df792fcc2b555d88bb2720ccec8d15f",
+        "file": "response.bin",
+        "bytes": 78,
+        "sha256": "5ea619f7723cf186672545f515c42467e5b50b72edac1b4e65b17c8dffe00655",
+        "resumedBytes": 0
+      },
+      {
+        "exportId": "portfolio-predecessor-history",
+        "directory": "/dev/921ba0-api-portfolio-agent-_mdwp1xn/agent/downloads/portfolio-predecessor-history",
+        "selection": {
+          "kind": "history",
+          "profileId": "cb69dcdd-21a1-4c66-9c9a-8ebca09c5241"
+        },
+        "manifestSha256": "9f87c0371ef23550431380ba8aea904224631c8458c7a6264643b2c26252a387",
+        "file": "customer-history.json",
+        "bytes": 9272,
+        "sha256": "3c028e5420c7b45fad75a9c8f96592762a8f17486c449d1242635d30f42fc353",
+        "resumedBytes": 0
+      },
+      {
+        "exportId": "portfolio-current-history",
+        "directory": "/dev/921ba0-api-portfolio-agent-_mdwp1xn/agent/downloads/portfolio-current-history",
+        "selection": {
+          "kind": "history",
+          "profileId": "e7c8e0d3-e934-4502-9834-f3ff09da7a10"
+        },
+        "manifestSha256": "63d74ce30558e5c429d243b38ada846ab0c1a2e76f73c1da53e199610eb6475e",
+        "file": "customer-history.json",
+        "bytes": 6685,
+        "sha256": "189e778ae95499071635ab9d8ab16cf264ba38f6a4ba17283f6c4084f7dec387",
+        "resumedBytes": 0
+      },
+      {
+        "exportId": "portfolio-replacement-history",
+        "directory": "/dev/921ba0-api-portfolio-agent-_mdwp1xn/agent/downloads/portfolio-replacement-history",
+        "selection": {
+          "kind": "history",
+          "profileId": "a2cf9880-5901-484e-aad8-a8810b9a6266"
+        },
+        "manifestSha256": "83e31d99c832db62253e69ee9c5563c8abeb9ece81db04a21cfe5d11c77a09e7",
+        "file": "customer-history.json",
+        "bytes": 1467,
+        "sha256": "468a25be74bc0c70fd167eaabde8ba023e317cec122aa5fe78ed02ef0fa844c9",
+        "resumedBytes": 0
+      }
+    ],
+    "toolCalls": {
+      "merchant_api_pass_open": 1,
+      "merchant_api_pass_portfolio": 8,
+      "merchant_api_pass_portfolio_configure": 2,
+      "merchant_api_pass_portfolio_refresh": 3,
+      "merchant_api_pass_task": 13,
+      "merchant_api_pass_operation": 3,
+      "merchant_api_pass_prepare_request": 1,
+      "merchant_api_pass_status": 3,
+      "merchant_api_pass_enqueue": 2,
+      "merchant_api_pass_call": 1,
+      "merchant_api_pass_capture": 5,
+      "merchant_api_pass_manifest": 7,
+      "merchant_api_pass_file": 16,
+      "merchant_api_pass_file_release": 1,
+      "merchant_api_pass_purchase_replenish": 1,
+      "merchant_api_pass_history": 1,
+      "merchant_api_pass_portfolio_requests": 1,
+      "merchant_api_pass_exports": 1
+    },
+    "completedAt": "2026-10-12T13:26:23.423Z"
+  },
+  "status": "PASS",
+  "writersRetired": true
+}
