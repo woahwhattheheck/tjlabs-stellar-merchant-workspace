@@ -302,8 +302,9 @@ export async function receiveQcewCustomerState(directory, value, merchant = null
       receiving: value.requests.filter(record => record.receiving !== null).length };
   });
 }
-export async function listQcewPurchases(directory) {
-  const state = await exportQcewCustomerState(directory);
+export async function listQcewPurchases(directory, { merchant = null } = {}) {
+  need(merchant === null || merchant.directory === resolve(directory), 'Use this publication’s original merchant view.');
+  const state = await exportQcewCustomerState(directory, merchant);
   return state.requests.map(({ purchase: value, receiving }) => ({
     intentId: value.intentId, publicationId: value.publicationId, editionId: value.editionId,
     file: value.file, url: value.url, purchaseSha256: value.purchaseSha256, expected: clone(value.expected), receiving
