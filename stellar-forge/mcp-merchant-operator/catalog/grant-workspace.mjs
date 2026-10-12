@@ -1,4 +1,5 @@
 // MIT. Original SF47 tool schemas without provider runtime imports.
+import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
@@ -283,6 +284,7 @@ export const grantWorkspaceTools = [
     {...ws, ...originalInput, kind:{enum:['scenario','plan']}, name:nonempty(300), requestId:requestIdentifier,
       note:str(12000), planning:object, filename:nonempty(240)},
     ['workspace','input','expectedInputSha256','kind','name','requestId']),
+  ...grantPlanningSourceTools,
   tool('cases', 'Read original operating case summaries, optionally for a selected saved plan.',
     {...ws, planId:id('plan')}, ['workspace'], true),
   tool('case', 'Read the entire original operating case, pinned plan, eight record collections, source metadata, reviews, forecasts and portfolios.',
@@ -577,11 +579,11 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
+  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
     {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
-      installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:installationRevision,sha256:digest,asOfDate:supportDate,
+      installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
       installationRefs:customerUseInstallationRefs,
       format:{enum:['ics','csv','json'],description:'Grant delivery calendar defaults to ICS; customer-use calendar defaults to JSON.'},
       reconciliationId:id('reconciliation'),contributorId:id('person'),network:str(200),currency:str(40),asset:str(500),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},

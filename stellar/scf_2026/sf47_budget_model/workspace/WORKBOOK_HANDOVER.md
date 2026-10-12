@@ -146,3 +146,7 @@ This reopens the original final-workbook-handover/planning.zip in a private rece
 - [SpreadsheetML document structure](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/structure-of-a-spreadsheetml-document)
 - [SpreadsheetML formulas and stored results](https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/working-with-formulas)
 - [Microsoft's explanation of Excel numeric precision](https://learn.microsoft.com/en-us/troubleshoot/microsoft-365-apps/excel/floating-point-arithmetic-inaccurate-result)
+
+## Workbook receiving through Merchant MCP
+
+The existing Grant agent can inspect original sheets, retain complete projections and return profiles, review all four collections, save the exact native preview and deliver an exact saved-plan workbook revision. The full archive and four original member files remain available through existing snapshot/chunk downloads, including completed handover recovery after Merchant restart. Continue the same original workbook case with receive-current-budget-workbook-mcp.mjs. See [SOURCE_TABLES_AGENT.md](SOURCE_TABLES_AGENT.md) for the complete operating sequence and original-case command.
