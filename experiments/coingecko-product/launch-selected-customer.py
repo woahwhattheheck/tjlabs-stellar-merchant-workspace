@@ -14,7 +14,7 @@ SOURCE = "ada4e3261a421010f93ef4bda9ce8b0b2624d4c1"
 PINS = {
     "builder.json": "ad1772df26785e6917f9edb6071828f581209a602004075b95258a315aba8c91",
     "customer.json": "c8cfb54174dbc381bde7f4581cd4e9c0f06b93a7b6145680c01d21474ab8020f",
-    "run-selected-customer.py": "ffa3b1ffaf327d326287ceb6232741da9ad1cb1baf42b052117d6439bd695786",
+    "run-selected-customer.py": "bd70fe442e90714838fa2c472e9d652582b423539f73eae548175daf8495af92",
 }
 HOST = "/workspace/scratch/dbc61db6310c/native-runtime-recovery-62c14ca9/host"
 ROOT = "/workspace/scratch/5403360e55a4/coingecko-product-native"
@@ -76,7 +76,7 @@ def source_input(args):
                               "maximum_bytes": 2 * 1024 * 1024}), flush=True)
             header = bytearray()
             while True:
-                ch = sys.stdin.buffer.read(1)
+                ch = os.read(sys.stdin.fileno(), 1)
                 need(ch, "Source input ended before its length.")
                 if ch == b"\n":
                     break
@@ -86,9 +86,12 @@ def source_input(args):
             need(0 < length <= 2 * 1024 * 1024, "Source input exceeds its declared bound.")
             chunks = bytearray()
             while len(chunks) < length:
-                chunk = sys.stdin.buffer.read(length - len(chunks))
+                chunk = os.read(sys.stdin.fileno(), min(16384, length - len(chunks)))
                 need(chunk, "Source input ended before all original bytes arrived.")
                 chunks.extend(chunk)
+                print(json.dumps({"event": "SOURCE_INPUT_PROGRESS", "operation": OPERATION,
+                                  "received_bytes": len(chunks), "total_bytes": length,
+                                  "prefix_sha256": sha(chunks)}), flush=True)
             body = bytes(chunks)
         finally:
             if saved_terminal is not None:

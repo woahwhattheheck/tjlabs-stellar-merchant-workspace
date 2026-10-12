@@ -12,9 +12,9 @@ All paths below are relative to this repository.
 | --- | --- | --- |
 | Original eight-module builder | artifacts/source_transfers/coingecko_selected_builder_20261012.json | Git blob f020ebf9261ddebbcf33ce0ff52308ccbb093c45; 104871 bytes; SHA256 ad1772df26785e6917f9edb6071828f581209a602004075b95258a315aba8c91 |
 | Customer programme and resumable archive selector | artifacts/source_transfers/coingecko_customer_receiving_20261012.json | Git blob 70a97aaa1650fd6ac2114fa2f33caf1ad8e65dc4; 17916 bytes; SHA256 c8cfb54174dbc381bde7f4581cd4e9c0f06b93a7b6145680c01d21474ab8020f |
-| Complete Python programme | experiments/coingecko-product/run-selected-customer.py | Git blob 25caa6937447bad50ed9b9d72d4906fa534efb20; 34983 bytes; SHA256 ffa3b1ffaf327d326287ceb6232741da9ad1cb1baf42b052117d6439bd695786 |
-| Maintained placement entry | experiments/coingecko-product/launch-selected-customer.py | Git blob 2d5c97e63d99cfd358d852ec06d519ec51ac745c; 16703 bytes; SHA256 1852e7510ad16851bcb98c87486fb8395ddbbee80065dda62e0a3eccab9972ff |
-| Exact framed input | artifacts/source_transfers/coingecko_native_input_20261012.json | 163690 bytes; SHA256 6c38339d72584ff5561282360f1263183731aa6b281727149ca5642126e79c03 |
+| Complete Python programme | experiments/coingecko-product/run-selected-customer.py | Git blob 3a6881e75ccfe6a641dff39de627224ef4e3a757; 38845 bytes; SHA256 bd70fe442e90714838fa2c472e9d652582b423539f73eae548175daf8495af92 |
+| Maintained placement entry | experiments/coingecko-product/launch-selected-customer.py | Git blob 8f8b92fd1914546065a1330aa09d59502523fd7d; 16985 bytes; SHA256 ca98f3741836d225e58448692a6717d3e4abed4c3c8b61f404403e37e5c51da8 |
+| Exact framed input | artifacts/source_transfers/coingecko_native_input_20261012.json | 167765 bytes; SHA256 e52205db8b592991cb40478c9753a87386e9ec005cda71ae29b8f2037d006ad3 |
 
 The input bundle includes the complete three source bodies, their byte lengths and SHA256 values. The launcher verifies the whole bundle, every member, and Python syntax before publishing the original input set. The programme separately verifies all original builder/customer members, including the builder Git blob identities.
 
@@ -56,14 +56,14 @@ Materialize the launcher and exact input bundle from the same published carrier.
 ```sh
 python3 -B experiments/coingecko-product/launch-selected-customer.py \
   --input-bundle artifacts/source_transfers/coingecko_native_input_20261012.json \
-  --bundle-sha256 6c38339d72584ff5561282360f1263183731aa6b281727149ca5642126e79c03 \
+  --bundle-sha256 e52205db8b592991cb40478c9753a87386e9ec005cda71ae29b8f2037d006ad3 \
   --archive /workspace/scratch/5403360e55a4/coingecko-product-original/CoinGecko_Complete_Research_and_Recovery_2026-10-12.zip \
   --git-objects /workspace/scratch/5403360e55a4/scf-engineering/.git/objects
 ```
 
 The explicit `--node`, `--git`, `--native-host`, `--root` and `--temporary-root` options allow the already selected equipped host's real paths. Retain that exact selection once the original placement/input exists.
 
-For a tool transport with a small command argument limit, run the exact launcher source in one Python process with `--stdin` instead of `--input-bundle`. It announces `AWAITING_SOURCE_INPUT`, disables terminal echo while receiving, then accepts the decimal UTF-8 byte count followed by a newline and exactly that many JSON bytes. The expected whole-bundle SHA remains required. Feed those exact bytes to the same terminal session; do not launch another process to complete a partial input.
+For a tool transport with a small command argument limit, run the exact launcher source in one Python process with `--stdin` instead of `--input-bundle`. It announces `AWAITING_SOURCE_INPUT`, disables terminal echo while receiving, then accepts the decimal UTF-8 byte count followed by a newline and exactly that many JSON bytes. The expected whole-bundle SHA remains required. Each actual read returns SOURCE_INPUT_PROGRESS with its received byte count and exact prefix SHA. Feed those exact bytes to the same terminal session; reconcile that original session and observed prefix after a lost response. Do not blindly replay a partially delivered frame. A lost unadmitted input process cannot reach native admission without the complete valid bundle.
 
 A returned `awaiting_capacity`/exit75 means the maintained source placement has not admitted a native request. A returned native_start includes the actual native record and foreground ownership. Keep its original handle. Inspect maintained derived owner state before deciding whether an existing native record needs its original supported continuation.
 
@@ -73,7 +73,7 @@ The full programme does these connected stages on the original selected inputs:
 
 1. Materialize the original eight builder modules and unchanged customer JS from their verified carriers.
 2. Create its own bare Git repository, resolve/fetch the exact ada4 commit through the normal Git remote, and run the original coingecko source selection.
-3. Verify the completed distribution, source manifest, pack receipt and archive bytes. Retain the complete source .tgz and all four original JSON receipts on persistent storage.
+3. Verify the completed distribution, source manifest, pack receipt and archive bytes. Save all four exact original JSON bodies and the archive identity in a durable receipt envelope. Publish and receive those four originals before publishing the complete source .tgz on persistent storage.
 4. Exercise the original completed-build resume and status on that same original build output. Preserve the real results.
 5. Select and safely publish the exact original market archive from the full retained ZIP.
 6. Create and inspect the complete customer files; repeat creation; receive the original market into the same independent recipient workspace; repeat receiving; save a real recipient note; repeat and reopen the customer database.
@@ -99,7 +99,7 @@ Use the actual record path from the original result, and choose one distinct nat
 ```sh
 python3 -B experiments/coingecko-product/launch-selected-customer.py \
   --input-bundle artifacts/source_transfers/coingecko_native_input_20261012.json \
-  --bundle-sha256 6c38339d72584ff5561282360f1263183731aa6b281727149ca5642126e79c03 \
+  --bundle-sha256 e52205db8b592991cb40478c9753a87386e9ec005cda71ae29b8f2037d006ad3 \
   --archive /workspace/scratch/5403360e55a4/coingecko-product-original/CoinGecko_Complete_Research_and_Recovery_2026-10-12.zip \
   --predecessor-record /actual/original/native/record \
   --native-operation-id COINGECKO-PRODUCT-DELIVERY-5403-20261012-CONTINUATION-01 \
@@ -114,7 +114,7 @@ The maintained placement retains the whole original terminal record. It does not
 
 If the complete original source archive and four original receipts were retained, the continuation uses the unchanged original runtime-unpack.py. It verifies every packaged source byte and the exact original manifest, records a new source-adoption receipt, and resumes the same customer directory. It does not perform a second Git build or rewrite the original distribution's historical path. Original completed-build resume/status observations remain available; if the first invocation ended before those optional observations, they are explicitly labelled NOT_OBSERVED_BEFORE_INTERRUPTION rather than fabricated.
 
-If no source artifacts were published, an accepted terminal continuation can complete the same fixed source selection. Partially published source retention is preserved and reported for reconciliation; it is not silently treated as an empty build. An interrupted native record without an actual terminal result remains interrupted and is outside this particular terminal-result route.
+A source-retention interruption first receives the original complete receipt envelope and finishes any missing receipt copies from those exact retained bytes. The .tgz is published last, so a complete retained archive is always accompanied by its original receipt set. If the archive itself was never retained, an accepted terminal continuation may complete the same fixed source selection, but that archive must match the first retained envelope's exact filename, bytes and SHA before publication. The later actual build result is retained separately; the original historical receipts are not replaced. An interrupted native record without an actual terminal result remains interrupted and is outside this particular terminal-result route.
 
 ## Archive publication and replay
 
@@ -134,7 +134,8 @@ Successful actual execution retains these under project/output:
 | source/build.json | Original immutable build intent |
 | source/package/manifest.json | Complete exact packaged source manifest |
 | source/pack-work/pack.json | Original npm-pack publication receipt |
-| source/retained-source.json | Original five retained files bound to the complete programme input |
+| source/receipt-envelope.json | All four complete original receipt bodies and archive identity, saved before final source artifacts |
+| source/retained-source.json | The original archive, four receipts and receipt envelope bound to the complete programme input |
 | source/completed-resume.json, source/completed-status.json | Actual same-build observations, when reached |
 | source-adoptions/*.json | Actual original-unpacker results for explicit later terminal continuations |
 | commands/* | Every full argv, stdout, stderr and actual process result |

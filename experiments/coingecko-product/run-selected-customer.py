@@ -2,6 +2,7 @@
 """Run one original selected build and complete customer receiving under native admission."""
 from __future__ import annotations
 import argparse
+import base64
 import fcntl
 import hashlib
 import json
@@ -334,30 +335,84 @@ class Programme:
         atomic(self.journal_path, encoded(self.journal))
         return handoff
 
-    def retained_source(self):
+    def source_receipts(self, build=None, distribution=None):
+        """Retain every original receipt before any archive can be published."""
         source_out = self.output / "source"
-        distribution_path = source_out / "distribution.json"
-        if not distribution_path.exists():
-            published = [path for path in source_out.iterdir() if not path.name.startswith(".")] if source_out.exists() else []
-            need(not published, "The original source retention is partial; preserve its actual artifacts and native logs.")
+        source_out.mkdir(exist_ok=True, mode=0o700)
+        envelope_path = source_out / "receipt-envelope.json"
+        names = ("distribution.json", "build.json", "package/manifest.json", "pack-work/pack.json")
+        if not envelope_path.exists():
+            published = [path for path in source_out.iterdir() if not path.name.startswith(".")]
+            need(not published, "Preserve the existing source artifacts without an original retention envelope.")
+            if build is None:
+                return None
+            archive_path = Path(distribution["archive"]).resolve()
+            original_archive = descriptor(archive_path)
+            need(archive_path.parent == build and distribution["status"] == "PACKAGED"
+                 and distribution["sourceCommit"] == SOURCE
+                 and original_archive["bytes"] == distribution["archiveBytes"]
+                 and original_archive["sha256"] == distribution["sha256"],
+                 "The original complete source archive differs.")
+            members = []
+            for name in names:
+                body = (build / name).read_bytes()
+                members.append({"path": name, "bytes": len(body), "sha256": sha_bytes(body),
+                                "content_base64": base64.b64encode(body).decode("ascii")})
+            envelope = {"schema": "commons.coingecko-native-source-retention.v1",
+                "input": self.input, "source_commit": SOURCE,
+                "archive": {"name": archive_path.name, "bytes": original_archive["bytes"],
+                            "sha256": original_archive["sha256"]}, "files": members}
+            atomic(envelope_path, encoded(envelope), immutable=True)
+        envelope = read_json(envelope_path)
+        need(envelope["schema"] == "commons.coingecko-native-source-retention.v1"
+             and envelope["input"] == self.input and envelope["source_commit"] == SOURCE,
+             "Keep the original complete source retention envelope.")
+        need(len(envelope["files"]) == len(names)
+             and {row["path"] for row in envelope["files"]} == set(names),
+             "The original receipt set changed.")
+        bodies = {}
+        for row in envelope["files"]:
+            body = base64.b64decode(row["content_base64"], validate=True)
+            need(len(body) == row["bytes"] and sha_bytes(body) == row["sha256"],
+                 "Original retained receipt bytes changed.")
+            bodies[row["path"]] = body
+        original = json.loads(bodies["distribution.json"])
+        manifest = json.loads(bodies["package/manifest.json"])
+        intent = json.loads(bodies["build.json"])
+        packed = json.loads(bodies["pack-work/pack.json"])
+        archive = envelope["archive"]
+        need(isinstance(archive["name"], str) and Path(archive["name"]).name == archive["name"]
+             and archive["name"] == Path(original["archive"]).name
+             and original["status"] == "PACKAGED" and original["sourceCommit"] == SOURCE
+             and archive["bytes"] == original["archiveBytes"] == packed["size"]
+             and archive["sha256"] == original["sha256"] == packed["sha256"]
+             and manifest["sourceCommit"] == intent["sourceCommit"] == packed["sourceCommit"] == SOURCE
+             and sha_bytes(bodies["package/manifest.json"]) == intent["manifestSha256"],
+             "The retained source, manifest and original pack receipt disagree.")
+        for name in names:
+            atomic(source_out / name, bodies[name], immutable=True)
+        return envelope, original, manifest
+
+    def retained_source(self):
+        received = self.source_receipts()
+        if received is None:
             return None
-        distribution = read_json(distribution_path)
-        need(distribution["status"] == "PACKAGED" and distribution["sourceCommit"] == SOURCE,
-             "Original completed source receipt changed.")
-        archive = source_out / Path(distribution["archive"]).name
+        envelope, distribution, manifest = received
+        source_out = self.output / "source"
+        archive = source_out / envelope["archive"]["name"]
+        if not archive.exists() and not archive.is_symlink():
+            # Original receipt copies are complete and durable; the archive
+            # itself has not yet been retained. A same-source build may finish
+            # that copy only if its full archive matches this original envelope.
+            return None
         observed = descriptor(archive)
-        need(observed["bytes"] == distribution["archiveBytes"] and observed["sha256"] == distribution["sha256"],
+        need(observed["bytes"] == envelope["archive"]["bytes"]
+             and observed["sha256"] == envelope["archive"]["sha256"],
              "Original retained source archive changed.")
         paths = [archive, source_out / "distribution.json", source_out / "build.json",
-                 source_out / "package/manifest.json", source_out / "pack-work/pack.json"]
+                 source_out / "package/manifest.json", source_out / "pack-work/pack.json",
+                 source_out / "receipt-envelope.json"]
         retained = [descriptor(path) for path in paths]
-        manifest = read_json(source_out / "package/manifest.json")
-        intent = read_json(source_out / "build.json")
-        packed = read_json(source_out / "pack-work/pack.json")
-        need(manifest["sourceCommit"] == intent["sourceCommit"] == packed["sourceCommit"] == SOURCE
-             and packed["sha256"] == observed["sha256"] and packed["size"] == observed["bytes"]
-             and sha_bytes((source_out / "package/manifest.json").read_bytes()) == intent["manifestSha256"],
-             "The retained native source, build pin and pack receipt disagree.")
         marker = {"schema": "commons.coingecko-retained-source.v1", "input": self.input,
                   "source_commit": SOURCE, "files": retained}
         atomic(source_out / "retained-source.json", encoded(marker), immutable=True)
@@ -476,10 +531,19 @@ class Programme:
                      "Original built archive differs from its receipt.")
                 source_out = self.output / "source"
                 source_out.mkdir(exist_ok=True, mode=0o700)
-                retained = [retain_file(archive_path, source_out / archive_path.name)]
-                for relative in ("distribution.json", "build.json", "package/manifest.json", "pack-work/pack.json"):
-                    retained.append(retain_file(build / relative, source_out / relative))
-                retained = self.retained_source()[4]
+                actual_build = distribution
+                envelope, original_distribution, original_manifest = self.source_receipts(build, distribution)
+                need(observed["bytes"] == envelope["archive"]["bytes"]
+                     and observed["sha256"] == envelope["archive"]["sha256"]
+                     and archive_path.name == envelope["archive"]["name"],
+                     "The selected source rebuild differs from the original retained archive identity.")
+                retain_file(archive_path, source_out / envelope["archive"]["name"])
+                distribution, manifest, _, _, retained = self.retained_source()
+                source_recovery = None if actual_build == original_distribution else {
+                    "schema": "commons.coingecko-source-retention-completed.v1",
+                    "reason": "Original receipts were durable before the complete archive copy.",
+                    "original_envelope": descriptor(source_out / "receipt-envelope.json"),
+                    "actual_same_source_build": actual_build, "original_archive_verified_equal": True}
                 repeated = self.command("selected-build-resume", [self.args.node, str(builder), "--repo", str(git),
                     "--out", str(build), "--resume"], parse_json=True)
                 need(repeated.get("reused") is True and repeated["sha256"] == distribution["sha256"],
@@ -495,7 +559,6 @@ class Programme:
                 self.event("selected_source_retained", archive=retained[0], source_files=distribution["sourceFiles"],
                            source_bytes=distribution["sourceBytes"], installed_bytes=distribution["installedBytes"])
                 built_source = build / "package/source"
-                source_recovery = None
             customer_root = self.project / "customer"
             customer_root.mkdir(exist_ok=True, mode=0o700)
             select_script = self.run / "customer-programme/select-original-archive.sh"
