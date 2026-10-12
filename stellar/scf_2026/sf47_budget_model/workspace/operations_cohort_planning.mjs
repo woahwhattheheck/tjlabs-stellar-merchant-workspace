@@ -1,6 +1,7 @@
 import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, COHORT_PLAN_COMPARISON_SCHEMA, seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv, compareCohortPlans, reopenCohortPlanComparison, exportCohortPlanComparisonCsv} from './cohort_planning.mjs';
 
 import {seedCohortPlanFromCalendar} from './cohort_planning_calendar.mjs';
+import {COHORT_DELIVERY_SCHEDULE_SCHEMA, seedCohortDeliveryScheduling, scheduleCohortDelivery, reopenCohortDeliverySchedule, exportCohortDeliveryScheduleCsv} from './cohort_planning_scheduling.mjs';
 
 const EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 const SESSION_SCHEMA='stellar-forge.sf47-cohort-planning-session.v1';
@@ -18,7 +19,7 @@ const classes=[['UNKNOWN','Unassigned'],['INDEPENDENT_OPERATOR','Independent ope
 const environments=[['UNKNOWN','Unassigned'],['LOCAL','Local'],['TESTNET','Testnet'],['MAINNET','Mainnet'],['OTHER','Other']];
 const collections=['buyers','merchants','facilitators','operations','schedules','workshares','capacityPools','fundingGroups'];
 const metrics=['scheduledTasks','scheduledRequests','plannedPaymentRequests','plannedPaidPurchases','plannedCompleteTasks','plannedCompletePurchases','independentPurchaseOpportunities','allowanceUnits'];
-const tabNames=[['setup','Plan & calendar'],['participants','Participants'],['operations','Useful operations'],['schedules','Schedules & prepaid'],['workshares','Workshares & sensitivity'],['capacity','Capacity & pricing'],['funding','Funding groups'],['report','Day & target report'],['compare','Compare plans'],['editions','Saved editions']];
+const tabNames=[['setup','Plan & calendar'],['participants','Participants'],['operations','Useful operations'],['schedules','Schedules & prepaid'],['workshares','Workshares & sensitivity'],['capacity','Capacity & pricing'],['scheduling','Schedule delivery'],['funding','Funding groups'],['report','Day & target report'],['compare','Compare plans'],['editions','Saved editions']];
 const note=text=>'<p class="cp-note">'+esc(text)+'</p>';
 const empty=text=>'<p class="cp-empty">'+esc(text)+'</p>';
 const badge=text=>'<span class="cp-badge">'+esc(text)+'</span>';
@@ -71,7 +72,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const sourceOptions=()=>{const values=new Map();for(const item of [...(state.latestSeed?.sources||[]),...(caseValue.sources||[])])values.set(item.id,item);return [...values.values()].map(item=>[item.id,item.filename+' · '+String(item.sha256||'').slice(0,12)]);};
   const inputMatchesReport=()=>Boolean(state.report&&plan()&&state.reportInput===JSON.stringify(plan()));
   function persist(critical=false){
-    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric'])retained[key]=state[key];
+    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId'])retained[key]=state[key];
     try{sessionStorage.setItem(storageKey,JSON.stringify(retained));state.storageWarning='';}catch(error){state.storageWarning='This browser could not retain the latest local draft. Download its JSON before closing this tab.';if(critical)throw new Error('The browser could not retain the exact source request before dispatch. Download the draft or free this site’s session storage, then save again. '+error.message);}
   }
   function controls(){
@@ -124,6 +125,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(el.dataset.cpFormat==='labeled-dates')return parseDates(el.value,true);
     if(el.dataset.cpFormat==='dates')return parseDates(el.value);
     if(el.dataset.cpFormat==='capacity-dates')return parseCapacityDates(el.value);
+    if(el.dataset.cpFormat==='date-allocations')return el.value.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const parts=line.split('|').map(item=>item.trim());return {sourceDate:parts[0],date:parts.slice(1).join('|')};});
     if(el.dataset.cpFormat==='decimal-list')return el.value.split(/[,\n]/).map(value=>value.trim()).filter(Boolean);
     if(el.dataset.cpFormat==='nullable')return el.value.trim()===''?null:el.value.trim();
     if(el.dataset.cpFormat==='nullable-id')return el.value||null;
@@ -314,6 +316,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       field('Facilitator','facilitatorId',row.facilitatorId,{options:namedOptions('facilitators',row.facilitatorId,'No facilitator selected'),attrs:'data-cp-format="nullable-id"'})+
       field('Scheduled time (UTC)','timeUtc',row.timeUtc,{type:'time',step:'60'})+
       '<fieldset class="cp-wide"><legend>Calendar and workload</legend><div class="cp-fields">'+recurrence+
+        field('Reviewed date allocations','dateAllocations',(row.dateAllocations||[]).map(item=>item.sourceDate+' | '+item.date).join('\n'),{area:true,wide:true,attrs:'data-cp-format="date-allocations"',help:'One original cadence date | allocated date per line. Blank restores the original dates. Both complete occurrences remain when dates coincide.'})+
         field('Useful tasks per scheduled date','tasksPerDate',row.tasksPerDate,{type:'number',min:0,step:'1',attrs:'data-cp-format="integer"'})+
         field('Underlying requests per useful task','requestsPerTask',row.requestsPerTask,{type:'number',min:1,step:'1',attrs:'data-cp-format="integer"'})+
         field('Shared delivery pool','capacityPoolId',row.capacityPoolId,{options:namedOptions('capacityPools',row.capacityPoolId,'Unassigned delivery capacity'),attrs:'data-cp-format="nullable-id"',help:'Assigned schedules share the same pool’s daily active hours. Set task effort in the estimates below.'})+
@@ -483,7 +486,10 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
 
 
   function editionEnvelope(report,actor,editionId=uid('cohort-edition'),createdAt=now()){
-    return {schema:EDITION_SCHEMA,editionId,createdAt,actor,parentSourceId:state.parentSourceId||null,plan:copy(plan()),report:report?copy(report):null};
+    const delivery=schedulingApplied()?reopenCohortDeliverySchedule(state.schedulingResult):null;
+    return {schema:EDITION_SCHEMA,editionId,createdAt,actor,parentSourceId:state.parentSourceId||null,plan:copy(plan()),report:report?copy(report):null,
+      ...(delivery?{deliverySchedule:copy(delivery),comparison:compareCohortPlans(delivery.sourceDocument,delivery.candidate,
+        {title:delivery.candidate.name+' · delivery allocation',note:delivery.constraints.note||''})}:{})};
   }
   async function readSource(meta){
     const response=await saveApi(prefix+'/sources/'+encodeURIComponent(meta.id),undefined,{download:true});
@@ -548,6 +554,12 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.pending={payload,raw,editionId};persist(true);await sendPending();
   }
   async function openDocument(document,{meta=null,raw=null}={}){
+    if(document?.schema===COHORT_DELIVERY_SCHEDULE_SCHEMA){
+      const result=reopenCohortDeliverySchedule(document);
+      await openDocument(copy(result.candidate),{meta:null,raw:null});
+      state.schedulingResult=result;state.schedulingInput=JSON.stringify(result.sourceDocument?.plan||result.sourceDocument?.input||result.sourceDocument);
+      captureSchedulingComparison(result);state.tab='scheduling';persist();return;
+    }
     if(document?.schema===COHORT_PLAN_COMPARISON_SCHEMA){adoptComparison(document,{meta,raw});return;}
     const envelope=document?.schema===EDITION_SCHEMA?document:null;
     const supplied=envelope?.plan||(document?.schema===COHORT_PLAN_REPORT_SCHEMA&&document.kind==='PLAN'?document.input:document);
@@ -564,6 +576,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     rememberPrior(meta?'Opened source '+meta.id:'Imported plan JSON');
     state.plan=copy(supplied);state.report=report;state.reportInput=JSON.stringify(state.plan);state.tranche=Number(supplied.rule.target.tranche);
     state.parentSourceId=meta?.id||envelope?.parentSourceId||null;state.savedSourceId=meta?.id||null;state.savedEnvelope=envelope?copy(envelope):null;
+    if(envelope?.deliverySchedule){state.schedulingResult=reopenCohortDeliverySchedule(envelope.deliverySchedule);state.schedulingInput=JSON.stringify(state.schedulingResult.sourceDocument);captureSchedulingComparison(state.schedulingResult);}
     if(meta)state.viewedSource={meta:copy(meta),raw,envelope:document};
     state.editor=null;state.editorDraft=null;state.pages={};state.tab='report';
     state.notice=meta?'Opened the original plan from '+meta.filename+'. Current source differences are shown in the report.':'Imported the plan with its original source, rule, identities, and editable rows.';
@@ -601,7 +614,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const envelope=editionEnvelope(report,state.savedEnvelope?.actor||'');
     download(JSON.stringify(envelope,null,2)+'\n',cleanName(plan().name)+'-draft.json');
   }
-  const csvColumns=['fundingGroupIds','fundingKind','date','origin','capacityPoolId','hoursByWeekday','dateOverrides','csvEncoding','caseId','draftId','sourceVersion','planContentSha256','kind','id','label','operatorId','participantClass','environment','deploymentId','serviceUrl','sourceIds','sourceNote','merchantId','scope','expectedOutput','sourcePeriod','operationId','buyerId','facilitatorId','cadenceKind','cadenceWeekdays','intervalDays','anchorDate','dates','tasksPerDate','requestsPerTask','timeUtc','deliveryDelayMinutes','excludedDates','paymentKind','atomicUnitPrice','network','asset','passCapacity','openingUnits','allowanceUnitsPerRequest','passGroupId','economicsEnabled','currency','unitRevenue','unitCost','feePerPayment','activeHoursPerTask','hourlyCost','note','fee','hours','otherCosts'];
+  const csvColumns=['dateAllocations','fundingGroupIds','fundingKind','date','origin','capacityPoolId','hoursByWeekday','dateOverrides','csvEncoding','caseId','draftId','sourceVersion','planContentSha256','kind','id','label','operatorId','participantClass','environment','deploymentId','serviceUrl','sourceIds','sourceNote','merchantId','scope','expectedOutput','sourcePeriod','operationId','buyerId','facilitatorId','cadenceKind','cadenceWeekdays','intervalDays','anchorDate','dates','tasksPerDate','requestsPerTask','timeUtc','deliveryDelayMinutes','excludedDates','paymentKind','atomicUnitPrice','network','asset','passCapacity','openingUnits','allowanceUnitsPerRequest','passGroupId','economicsEnabled','currency','unitRevenue','unitCost','feePerPayment','activeHoursPerTask','hourlyCost','note','fee','hours','otherCosts'];
   function csvCell(value){
     let text=String(value??'');if(text.startsWith("'"))text="'"+text;else if(/^[\s]*[=+@\t\r]/.test(text)||/^[\s]*-/.test(text)&&!/^-\d+(?:\.\d+)?$/.test(text))text="'"+text;
     return '"'+text.replaceAll('"','""')+'"';
@@ -611,6 +624,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       const result={csvEncoding:'sf47-editable-rows.v1',caseId:p.source.programId,draftId:p.draftId,sourceVersion:p.source.version,planContentSha256:p.source.planContentSha256,kind,...row};
       if(row.sourceIds)result.sourceIds=row.sourceIds.join('|');
       if(row.origin)result.origin=JSON.stringify(row.origin);
+      if(row.dateAllocations)result.dateAllocations=JSON.stringify(row.dateAllocations);
       if(row.fundingGroupIds)result.fundingGroupIds=row.fundingGroupIds.join('|');
       if(kind==='fundingGroups')Object.assign(result,{kind,fundingKind:row.kind,economicsEnabled:row.economics?'true':'false',...(row.economics||{})});
       if(kind==='capacityPools'){result.hoursByWeekday=JSON.stringify(row.hoursByWeekday);result.dateOverrides=JSON.stringify(row.dateOverrides||[]);}
@@ -672,6 +686,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
         else{row.economics=row.economics||{currency:'USD',unitRevenue:null,feePerPayment:null};for(const key of ['currency','unitRevenue','feePerPayment'])if(entry[key]!==undefined)row.economics[key]=key==='currency'?entry[key]:nullable(entry[key]);}
       }
       if(kind==='schedules'){
+        if(entry.dateAllocations!==undefined){try{if(entry.dateAllocations)row.dateAllocations=JSON.parse(entry.dateAllocations);else delete row.dateAllocations;}catch{throw new Error('Date allocations must contain the complete sourceDate/date array.');}}
         row.fundingGroupIds=entry.fundingGroupIds===undefined?row.fundingGroupIds||[]:entry.fundingGroupIds.split('|').filter(Boolean);
         row.capacityPoolId=entry.capacityPoolId===undefined?row.capacityPoolId||null:nullable(entry.capacityPoolId);
         row.facilitatorId=entry.facilitatorId===undefined?row.facilitatorId:nullable(entry.facilitatorId);
@@ -954,6 +969,119 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       '<p>Exported '+esc(now())+'. The complete comparison JSON preserves both source documents and full recalculated reports for reopening.</p></body></html>';
   }
 
+
+  function ensureScheduling(){
+    if(!plan())throw new Error('Open the complete customer-use plan first.');
+    plan().deliveryScheduling=seedCohortDeliveryScheduling(plan());changed();
+  }
+  function schedulingMatches(){
+    if(!state.schedulingResult||!plan())return false;
+    const current=JSON.stringify(plan());
+    return current===state.schedulingInput||current===JSON.stringify(state.schedulingResult.candidate);
+  }
+  function schedulingApplied(){return Boolean(state.schedulingResult&&JSON.stringify(plan())===JSON.stringify(state.schedulingResult.candidate));}
+  function schedulingReview(result,interactive=true){
+    const page=comparisonPage('scheduling-results',result.assignments,interactive);
+    const summary=result.summary;
+    return section('Delivery allocation',table(['Placement','Occurrences','Moved','Needs input','Capacity before','Capacity after'],[
+      [esc(label(summary.status)),esc(summary.occurrences),esc(summary.moved),esc(summary.unresolved),esc(label(summary.capacityBefore)),esc(label(summary.capacityAfter))]
+    ])+note(result.method)+
+      table(['Original occurrence','Date / complete output','Effort / pool','Result','Constraint and decision'],page.rows.map(row=>[
+        '<strong>'+esc(row.label)+'</strong><small>'+esc(row.occurrenceId)+'</small><small>Original cadence '+esc(row.sourceDate)+'</small>',
+        esc(row.originalDate)+' → '+esc(row.date)+'<small>'+esc(row.plannedCompleteAt)+'</small>',
+        esc(decimal(row.requiredHours))+' hours<small>'+esc(row.capacityPoolId||'Unassigned')+'</small>',
+        esc(label(row.status))+(row.fixedReason?'<small>'+esc(label(row.fixedReason))+'</small>':''),
+        (row.issues.length?row.issues.map(issue=>'<p>'+esc(issue.message)+'</p>').join(''):esc(row.moved?'Placed within the entered service window.':'Retained complete work.'))+
+          '<details><summary>Complete dates and constraints</summary>'+
+          jsonDetail('Service policy',result.constraints.schedules.find(policy=>policy.scheduleId===row.scheduleId))+
+          jsonDetail('Exact placement findings',row.issues)+jsonDetail('Permitted dates',row.permittedDates)+
+          jsonDetail('Reviewed dates with capacity or sequence constraints',row.rejectedDates)+'</details>'+
+          (interactive?btn('Edit service rule','scheduling-policy','data-id="'+esc(row.scheduleId)+'"')+
+            btn('Edit effort and pool','edit','data-kind="schedules" data-id="'+esc(row.scheduleId)+'"'):'')
+      ]))+page.controls);
+  }
+  function schedulingView(){
+    if(!plan()?.deliveryScheduling)return section('Schedule delivery',
+      note('Open the complete plan, enter its shared delivery capacity and task effort, then set the service’s permitted movement and deadlines.'),
+      btn('Set up delivery scheduling','scheduling-setup'));
+    const settings=plan().deliveryScheduling, data=filteredRows('schedules');
+    const policyById=new Map(settings.schedules.map((row,index)=>[row.scheduleId,{row,index}]));
+    const chosen=policyById.get(state.schedulingEditorId), result=state.schedulingResult, fresh=schedulingMatches();
+    const listing=section('Service flexibility',
+      '<section data-cp-plan><div class="cp-fields">'+
+      field('Date preference','deliveryScheduling.strategy',settings.strategy,{options:[['NEAREST','Nearest original service date'],['EARLIEST','Earliest permitted date']]})+
+      field('Scheduling basis','deliveryScheduling.note',settings.note,{area:true,wide:true,help:'Retain the customer’s actual flexibility, deadline and staffing assumptions.'})+'</div></section>'+
+      note('Each original occurrence remains whole. Future service moves only when its row permits it. Past work, purchase dates and cancelled rows retain their original meanings.')+
+      table(['Service','Movement','Release / completion deadline','Priority / spacing',''],data.rows.map(schedule=>{
+        const policy=policyById.get(schedule.id)?.row;
+        return ['<strong>'+esc(schedule.label)+'</strong><small>'+esc(schedule.id)+'</small>',
+          policy?.flexible?esc(policy.advanceDays)+' days earlier / '+esc(policy.delayDays)+' days later':esc('Fixed dates'),
+          esc(policy?.releaseDate||'Original window')+'<small>'+esc(policy?.dueDate||'Original completion window')+'</small>',
+          esc(policy?.priority??0)+' / '+esc(policy?.minimumGapDays??0)+' days',
+          btn('Edit service rule','scheduling-policy','data-id="'+esc(schedule.id)+'"')];
+      }))+pager('schedules',data)+
+      '<div class="cp-actions">'+btn('Calculate delivery dates','scheduling-calculate')+
+      btn('Edit capacity and pricing','tab','data-tab="capacity"')+btn('Download scheduling choices','scheduling-choices','data-cp-view="true"')+'</div>');
+    let edit='';
+    if(chosen){
+      const {row,index}=chosen,prefix='deliveryScheduling.schedules.'+index+'.';
+      edit=section('Service rule · '+(plan().schedules.find(item=>item.id===row.scheduleId)?.label||row.scheduleId),
+        '<section data-cp-plan><div class="cp-fields">'+
+        field('Permit date movement',prefix+'flexible',row.flexible,{checkbox:true})+
+        field('Days earlier than original occurrence',prefix+'advanceDays',row.advanceDays,{type:'number',min:0,step:'1',attrs:'data-cp-format="integer"'})+
+        field('Days later than original occurrence',prefix+'delayDays',row.delayDays,{type:'number',min:0,step:'1',attrs:'data-cp-format="integer"'})+
+        field('Release date',prefix+'releaseDate',row.releaseDate,{type:'date',attrs:'data-cp-format="nullable"'})+
+        field('Complete output due by',prefix+'dueDate',row.dueDate,{type:'date',attrs:'data-cp-format="nullable"',help:'End of this UTC date; the original output delay still applies.'})+
+        field('Priority',prefix+'priority',row.priority,{type:'number',min:0,step:'1',attrs:'data-cp-format="integer"',help:'Larger numbers receive shared capacity first.'})+
+        field('Minimum days between this service’s occurrences',prefix+'minimumGapDays',row.minimumGapDays,{type:'number',min:0,step:'1',attrs:'data-cp-format="integer"'})+
+        '<fieldset class="cp-wide"><legend>Permitted delivery weekdays</legend>'+dayChecks(prefix+'weekdays',row.weekdays)+'</fieldset>'+
+        field('Original commitment and flexibility note',prefix+'note',row.note,{area:true,wide:true})+
+        '</div></section><div class="cp-actions">'+btn('Calculate with these choices','scheduling-calculate')+
+        btn('Edit effort and pool','edit','data-kind="schedules" data-id="'+esc(row.scheduleId)+'"')+'</div>');
+    }
+    return listing+edit+(result?
+      (!fresh?'<p class="cp-alert">Inputs changed after this allocation. Calculate the current choices before adopting its dates.</p>':'')+
+      schedulingReview(result)+
+      section('Continue the complete plan',note('A saved successor carries the complete allocation, original source document, both comparison plans and all editable service choices in the existing case source edition.')+
+        '<div class="cp-actions">'+btn('Use dated successor','scheduling-adopt','',!fresh||schedulingApplied())+
+        btn('Save successor and comparison','scheduling-save','data-cp-save="true"',!fresh)+
+        btn('Open full comparison','scheduling-compare','',!fresh)+
+        btn('Download complete scheduling JSON','scheduling-json','data-cp-view="true"')+
+        btn('Download allocation CSV','scheduling-csv','data-cp-view="true"')+
+        btn('Download readable allocation','scheduling-html','data-cp-view="true"')+'</div>'):'');
+  }
+  function calculateScheduling(){
+    ensureScheduling();
+    state.schedulingResult=scheduleCohortDelivery(copy(plan()),copy(plan().deliveryScheduling));
+    state.schedulingInput=JSON.stringify(plan());persist();
+    state.notice='Calculated every original occurrence against the entered service windows and shared capacity.';
+  }
+  function captureSchedulingComparison(result){
+    retainComparison('Opened the complete delivery scheduling comparison');
+    state.comparison={before:{document:copy(result.sourceDocument),origin:{label:'Original delivery plan',caseId:plan().source.programId}},
+      after:{document:copy(result.candidate),origin:{label:'Dated delivery successor',caseId:plan().source.programId}},
+      title:result.candidate.name+' · delivery allocation',note:result.constraints.note||'',section:'capacity'};
+    state.comparisonSavedSourceId=null;comparisonCacheKey='';persist();
+  }
+  function adoptScheduling(){
+    if(!schedulingMatches())throw new Error('Calculate the current service choices before adopting their dates.');
+    const result=reopenCohortDeliverySchedule(state.schedulingResult);
+    if(!schedulingApplied()){
+      rememberPrior('Applied the reviewed delivery allocation');
+      state.plan=copy(result.candidate);state.savedEnvelope=null;state.savedSourceId=null;
+      state.editor=null;state.editorDraft=null;state.pages={};evaluate();
+    }
+    captureSchedulingComparison(result);state.tab='scheduling';
+    state.notice='Opened the full dated successor. Original work, funding groups, source dates and the complete comparison remain available.';
+  }
+  function readableSchedulingHtml(result){
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+
+      esc(result.candidate.name)+' · delivery allocation</title><style>body{font:14px/1.5 system-ui,sans-serif;color:#222;margin:32px;max-width:1500px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#f3f3f3}small{display:block}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{display:none}.cp-table{overflow:auto}@media print{body{margin:12mm}tr{break-inside:avoid}}</style></head><body><h1>'+
+      esc(result.candidate.name)+'</h1><p>Original case '+esc(result.candidate.source.programId)+' · '+esc(result.report.window.start)+'–'+esc(result.report.window.end)+'</p>'+
+      schedulingReview(result,false)+jsonDetail('Complete scheduling choices',result.constraints)+jsonDetail('Complete original plan document',result.sourceDocument)+
+      jsonDetail('Complete editable successor',result.candidate)+'</body></html>';
+  }
+
   function editions(){
     const selected=state.viewedSource,sources=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-plan-'));
     const other=(caseValue.sources||[]).filter(row=>!sources.some(value=>value.id===row.id)&&(row.mediaType==='application/json'||/\.json$/i.test(row.filename||'')));
@@ -972,7 +1100,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(!available())return;
     const dialog=$('dialog.cp-dialog'),scroll=dialog?.scrollTop||0,focus=document.activeElement?.dataset?.cpField;
     if(dialog?.open)dialog.close();
-    const body=state.tab==='setup'?setup():state.tab==='editions'?editions():state.tab==='compare'?comparisonView():!plan()?setup():state.tab==='participants'?participants():state.tab==='operations'?operations():state.tab==='schedules'?schedules():state.tab==='workshares'?workshares():state.tab==='capacity'?capacitySetup():state.tab==='funding'?fundingSetup():reportView();
+    const body=state.tab==='setup'?setup():state.tab==='editions'?editions():state.tab==='compare'?comparisonView():!plan()?setup():state.tab==='participants'?participants():state.tab==='operations'?operations():state.tab==='schedules'?schedules():state.tab==='workshares'?workshares():state.tab==='capacity'?capacitySetup():state.tab==='scheduling'?schedulingView():state.tab==='funding'?fundingSetup():reportView();
     root.innerHTML=header()+navigation()+body+editor();
     const resumed=$('dialog.cp-dialog');if(resumed){resumed.showModal();resumed.scrollTop=scroll;if(focus){const target=[...resumed.querySelectorAll('[data-cp-field]')].find(el=>el.dataset.cpField===focus);target?.focus({preventScroll:true});}}
     controls();
@@ -1014,7 +1142,20 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const target=event.target.closest('[data-cp-action]');if(!target||target.disabled)return;
     const action=target.dataset.cpAction;
     run(async()=>{
-      if(action==='tab'){state.tab=target.dataset.tab;return;}
+      if(action==='tab'){state.tab=target.dataset.tab;if(state.tab==='scheduling'&&plan()&&!isPending())ensureScheduling();return;}
+      if(action==='scheduling-setup'){ensureScheduling();return;}
+      if(action==='scheduling-policy'){ensureScheduling();state.schedulingEditorId=target.dataset.id;state.tab='scheduling';return;}
+      if(action==='scheduling-calculate'){calculateScheduling();state.tab='scheduling';return;}
+      if(action==='scheduling-adopt'){adoptScheduling();return;}
+      if(action==='scheduling-save'){adoptScheduling();await saveEdition();return;}
+      if(action==='scheduling-compare'){if(!schedulingMatches())throw new Error('Calculate the current scheduling choices.');captureSchedulingComparison(state.schedulingResult);state.tab='compare';return;}
+      if(action==='scheduling-choices'){download(JSON.stringify(plan().deliveryScheduling,null,2)+'\n',cleanName(plan().name)+'-scheduling-choices.json');return;}
+      if(['scheduling-json','scheduling-csv','scheduling-html'].includes(action)){
+        const result=reopenCohortDeliverySchedule(state.schedulingResult),name=cleanName(result.candidate.name)+'-delivery-allocation';
+        if(action==='scheduling-json')download(JSON.stringify(result,null,2)+'\n',name+'.json');
+        else if(action==='scheduling-csv')download(exportCohortDeliveryScheduleCsv(result),name+'.csv','text/csv');
+        else download(readableSchedulingHtml(result),name+'.html','text/html');return;
+      }
       if(action==='comparison-section'){comparisonState().section=target.dataset.section;return;}
       if(action==='comparison-page'){state.pages[target.dataset.key]=Number(target.dataset.page);return;}
       if(action==='comparison-select'){await selectComparisonSide(target.dataset.side);return;}
@@ -1082,7 +1223,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
         const consumers=[...(plan().schedules||[]),...(plan().fundingGroups||[])];
         const references=kind==='buyers'?consumers.filter(row=>row.buyerId===id):kind==='merchants'?(plan().operations||[]).filter(row=>row.merchantId===id):kind==='facilitators'?consumers.filter(row=>row.facilitatorId===id):kind==='operations'?consumers.filter(row=>row.operationId===id):kind==='capacityPools'?(plan().schedules||[]).filter(row=>row.capacityPoolId===id):kind==='fundingGroups'?(plan().schedules||[]).filter(row=>row.fundingGroupIds?.includes(id)):[];
         if(references.length){state.editorError='Reassign or remove the referencing rows first: '+references.map(row=>row.label).join(', ');return;}
-        rememberPrior('Removed '+kind+' row '+plan()[kind][index].label);plan()[kind].splice(index,1);delete state.rowDrafts[key];state.editor=null;state.editorDraft=null;changed();return;
+        rememberPrior('Removed '+kind+' row '+plan()[kind][index].label);plan()[kind].splice(index,1);if(kind==='schedules'&&plan().deliveryScheduling)plan().deliveryScheduling.schedules=plan().deliveryScheduling.schedules.filter(row=>row.scheduleId!==id);delete state.rowDrafts[key];state.editor=null;state.editorDraft=null;changed();return;
       }
       if(action==='receive-calendar'){await receiveCalendar();return;}
       if(action==='calendar-original'||action==='calendar-seed'){const original=plan()?.calendarSource;if(original)download(JSON.stringify(action==='calendar-original'?original.selection:original.cohortSeed,null,2)+'\n',cleanName(plan().name)+'-'+action+'.json');return;}
