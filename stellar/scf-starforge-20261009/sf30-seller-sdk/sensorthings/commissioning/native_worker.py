@@ -180,7 +180,10 @@ def time_value(value):
   if not match:return None
   base=dt.datetime.fromisoformat(match.group(1)+match.group(3).replace("Z","+00:00"))
   epoch=dt.datetime(1970,1,1,tzinfo=dt.timezone.utc);delta=base-epoch
-  result.append(decimal.Decimal(delta.days*86400+delta.seconds)+decimal.Decimal("0."+(match.group(2) or "0")))
+  fraction=match.group(2) or "0"
+  with decimal.localcontext() as context:
+   context.prec=max(40,len(fraction)+24)
+   result.append(decimal.Decimal(delta.days*86400+delta.seconds)+decimal.Decimal("0."+fraction))
  return tuple(result)
 def same(a,b):
  if isinstance(a,Number) and isinstance(b,Number):return decimal.Decimal(a.text)==decimal.Decimal(b.text)
@@ -190,7 +193,7 @@ def same(a,b):
  return a==b
 def display(value):
  return {"state":"value","json":exact(value),"type":"number" if isinstance(value,Number) else "null" if value is None else type(value).__name__}
-def compare_fields(expected,actual,kind,relations=None,strict=False):
+def compare_fields(expected,actual,kind,relations=None,strict=False,absent_fields=()):
  differences=[];equivalent=[]
  for key,value in expected.items():
   if key not in actual:differences.append({"field":key,"source":display(value),"target":{"state":"missing"}});continue
@@ -200,6 +203,8 @@ def compare_fields(expected,actual,kind,relations=None,strict=False):
   except (ValueError,OverflowError,decimal.InvalidOperation):temporal=False
   if temporal:equivalent.append({"field":key,"sourceJson":exact(value),"targetJson":exact(target),"meaning":"Same explicit instant/interval; original text differs."})
   else:differences.append({"field":key,"source":display(value),"target":display(target)})
+ for key in absent_fields:
+  if key in actual:differences.append({"field":key,"source":{"state":"missing"},"target":display(actual[key])})
  if strict:
   for key in WRITABLE[kind]:
    if key in actual and key not in expected:differences.append({"field":key,"source":{"state":"missing"},"target":display(actual[key])})
@@ -212,11 +217,13 @@ def compare_fields(expected,actual,kind,relations=None,strict=False):
   if len(ids)!=len(expected_ids) or any(id_key(a)!=id_key(b) for a,b in zip(ids,expected_ids)):
    differences.append({"relation":name,"expectedIdJson":expected_ids,"actualIdJson":ids,"state":"missing" if value is None else "different"})
  return {"matched":not differences,"differences":differences,"equivalentTimeRepresentations":equivalent,"meaning":"Selected original fields and typed relations; no inferred unit/quality conversion."}
-def response_wait(headers):
+def response_wait(headers,observed_at=None):
  value=headers.get("retry-after")
  if not value:return None
  try:
-  if re.fullmatch(r"\d+",value):return (dt.datetime.now(dt.timezone.utc)+dt.timedelta(seconds=int(value))).isoformat().replace("+00:00","Z")
+  if re.fullmatch(r"\d+",value):
+   observed=dt.datetime.fromisoformat(observed_at.replace("Z","+00:00")) if observed_at else dt.datetime.now(dt.timezone.utc)
+   return (observed+dt.timedelta(seconds=int(value))).isoformat().replace("+00:00","Z")
   return parsedate_to_datetime(value).astimezone(dt.timezone.utc).isoformat().replace("+00:00","Z")
  except (ValueError,OverflowError):return None
 def json_pointer(key):return "/"+key.replace("~","~0").replace("/","~1")
@@ -256,6 +263,8 @@ class Worker:
    actual_headers["Authorization"]=secret
   request={"method":method,"url":url,"body":retain(self.root,payload),"headers":headers or {},"authentication":"HOST_ENVIRONMENT" if environment_name else "NONE"}
   attempt={"attemptId":uuid.uuid4().hex,"workerAttemptId":self.attempt_id,"purpose":purpose,"state":"STARTED","startedAt":now(),"request":request}
+  if purpose=="target-write" and record.get("retryPermit"):
+   attempt["retryDecisionId"]=record["retryPermit"]["decisionId"];record["retryPermit"]=None
   record["attempts"].append(attempt);self.save_step(record);self.save(currentStepId=record["stepId"])
   response=None
   try:
@@ -275,6 +284,7 @@ class Worker:
     chunks.append(chunk);size+=len(chunk)
    data=b"".join(chunks);saved={**retain(self.root,data),"complete":complete}
    retained={"status":response.status_code,"url":target_url(self.profile,response.url),"headers":selected,"body":saved,"completedAt":now(),"bodyRepresentation":"requests-decoded-entity-body"}
+   retained["notBefore"]=response_wait(selected,retained["completedAt"])
    attempt["response"]=retained;attempt["state"]="RESPONSE";attempt["completedAt"]=retained["completedAt"];self.save_step(record)
    return {**retained,"_bytes":data}
   except Exception as error:
@@ -287,7 +297,7 @@ class Worker:
    if response is not None:response.close()
  def inspect_response(self,response):
   if not response["body"]["complete"]:raise NativeError("RESPONSE_CAPACITY","The retained original response exceeded the selected byte limit.",status=response["status"])
-  if not 200<=response["status"]<300:raise NativeError("HTTP_RESPONSE","The original FROST service returned an unsuccessful HTTP response.",status=response["status"],notBefore=response_wait(response["headers"]))
+  if not 200<=response["status"]<300:raise NativeError("HTTP_RESPONSE","The original FROST service returned an unsuccessful HTTP response.",status=response["status"],notBefore=response.get("notBefore") or response_wait(response["headers"],response.get("completedAt")))
   try:return source_loads(response["_bytes"])
   except (ValueError,UnicodeError) as error:raise NativeError("RESPONSE_JSON","The actual native response is not valid original JSON.") from error
  def materialize(self,definition):
@@ -319,31 +329,86 @@ class Worker:
   comparison=compare_fields(body,current,definition["entityKind"],relations,strict=True)
   if not comparison["matched"]:raise NativeError("TARGET_CHANGED","The selected target differs from its reviewed before-image.",comparison=comparison)
   return response["headers"].get("etag")
+ def consume_resolution(self,record,decision,outcome):
+  if decision["id"] not in record.setdefault("usedResolutionIds",[]):record["usedResolutionIds"].append(decision["id"])
+  if not any(x["id"]==decision["id"] for x in record.setdefault("resolutions",[])):record["resolutions"].append({**decision,"outcome":outcome,"completedAt":now()})
+  record["pendingResolutionId"]=None
  def resolve(self,record,definition):
   pending=[x for x in self.control().get("resolutions",{}).get(record["stepId"],[]) if x["id"] not in record.get("usedResolutionIds",[])]
   if not pending:return False
-  decision=pending[0];record.setdefault("usedResolutionIds",[]).append(decision["id"]);record.setdefault("resolutions",[]).append(decision);self.save_step(record)
+  decision=pending[0]
   if decision["decision"]=="retry":
-   record["state"]="QUEUED";record["error"]=None;self.save_step(record);return True
+   previous=next((x for x in reversed(record["attempts"]) if x["purpose"]=="target-write"),None)
+   record.update(state="QUEUED",error=None,retryPermit={"decisionId":decision["id"],"previousAttemptId":previous["attemptId"] if previous else None})
+   self.consume_resolution(record,decision,"RETRY_AUTHORIZED");self.save_step(record);return True
   identity=decision.get("targetIdJson");validate_id(identity)
-  body,relations=self.materialize(definition);doc,response=self.read_target(record,definition,identity,"reconcile-adopt")
-  expected={k:v for k,v in body.items() if k in WRITABLE[definition["entityKind"]]}
-  comparison=compare_fields(expected,doc,definition["entityKind"],relations)
-  record["reconciliationComparison"]=comparison
-  if not comparison["matched"]:record["state"]="AWAITING_RECONCILIATION";self.save_step(record);return False
-  record.update(state="COMPLETE",targetIdJson=identity,targetUrl=entity_url(self.profile,definition["entityKind"],identity),
-   materializedBodyText=exact(expected),materializedRelations=relations,completedAt=now(),adoptedBy=decision["id"])
-  self.bindings[definition.get("sourceKey")]=identity;self.save_step(record);return True
+  record["pendingResolutionId"]=decision["id"];self.save_step(record)
+  if definition["mode"]=="delete":
+   if id_key(identity)!=id_key(definition["targetIdJson"]):raise NativeError("DELETE_RECONCILIATION_ID","Confirm the exact original deletion target.")
+   response=self.request(record,"GET",entity_url(self.profile,definition["entityKind"],identity),purpose="reconcile-delete")
+   if response["status"]!=404 or not response["body"]["complete"]:
+    comparison={"matched":False,"meaning":"The retained target read does not establish that the exact deletion target is absent.","status":response["status"]}
+    record.update(state="AWAITING_RECONCILIATION",reconciliationComparison=comparison)
+    self.consume_resolution(record,decision,"ADOPTION_NOT_CONFIRMED");self.save_step(record);return False
+   record.update(state="COMPLETE",targetIdJson=identity,targetUrl=entity_url(self.profile,definition["entityKind"],identity),
+    completedAt=now(),adoptedBy=decision["id"],deletionVerified=True,reconciliationComparison={"matched":True,"status":404,"meaning":"The exact original target is absent."})
+  else:
+   body,relations=self.materialize(definition);doc,response=self.read_target(record,definition,identity,"reconcile-adopt")
+   expected={k:v for k,v in body.items() if k in WRITABLE[definition["entityKind"]]}
+   comparison=compare_fields(expected,doc,definition["entityKind"],relations,absent_fields=definition.get("removeFields",[]))
+   record["reconciliationComparison"]=comparison
+   if not comparison["matched"]:
+    record["state"]="AWAITING_RECONCILIATION";self.consume_resolution(record,decision,"ADOPTION_NOT_CONFIRMED");self.save_step(record);return False
+   record.update(state="COMPLETE",targetIdJson=identity,targetUrl=entity_url(self.profile,definition["entityKind"],identity),
+    materializedBodyText=exact(expected),materializedRelations=relations,completedAt=now(),adoptedBy=decision["id"])
+  self.bindings[definition.get("sourceKey")]=identity
+  self.consume_resolution(record,decision,"ADOPTED");self.save_step(record);return True
+ def finish_write(self,definition,record,response,attempt_id):
+  self.inspect_response_status(record,response)
+  target=returned_id(definition["entityKind"],response,self.profile) if definition["mode"]=="create" else definition["targetIdJson"]
+  if definition["mode"]=="create" and target is None:raise NativeError("CREATED_ID_UNOBSERVED","The successful create response has no retained target identifier.")
+  body,relations=self.materialize(definition)
+  record.update(state="COMPLETE",targetIdJson=target,targetUrl=entity_url(self.profile,definition["entityKind"],target),completedAt=response.get("completedAt") or now(),
+   materializedBodyText=exact({k:v for k,v in body.items() if k in WRITABLE[definition["entityKind"]]}),materializedRelations=relations,appliedAttemptId=attempt_id,error=None,notBefore=None)
+  self.bindings[definition.get("sourceKey")]=target;self.save_step(record)
+ def reconcile_write(self,definition,record):
+  previous=next((x for x in reversed(record["attempts"]) if x["purpose"]=="target-write"),None)
+  if previous is None:return
+  permit=record.get("retryPermit")
+  if permit and permit.get("previousAttemptId")==previous["attemptId"]:return
+  response=previous.get("response")
+  if response and 200<=response["status"]<300:
+   try:
+    retained={**response,"_bytes":object_bytes(self.root,response["body"])}
+    self.finish_write(definition,record,retained,previous["attemptId"]);return
+   except (NativeError,ValueError,UnicodeError) as error:
+    record.update(state="AWAITING_RECONCILIATION",error={"code":getattr(error,"code","RETAINED_WRITE_RESPONSE"),"message":"The retained successful write receipt needs explicit identity/result reconciliation."})
+    self.save_step(record);return
+  status=response.get("status") if response else None
+  if previous["state"] in ("STARTED","UNOBSERVED") or status is None or status>=500 or status==408 or response.get("body",{}).get("complete") is False:
+   record["state"]="AWAITING_RECONCILIATION";self.save_step(record);return
+  # A fully observed rejection may be retried by this explicitly resumed job.
+  # Preserve the original response's admission time; do not move it on reopen.
+  if status==429:
+   record["notBefore"]=response.get("notBefore") or response_wait(response.get("headers",{}),response.get("completedAt"))
+   record["state"]="DEFERRED";self.save_step(record)
  def execute_step(self,definition,record):
   mode=definition["mode"]
   if mode=="inspect-root":
    response=self.request(record,"GET",self.profile["serviceUrl"],purpose="service-inspection");self.inspect_response(response)
    record.update(state="COMPLETE",completedAt=now());self.save_step(record);return
+  if mode=="verify-delete":
+   target=definition["targetIdJson"];response=self.request(record,"GET",entity_url(self.profile,definition["entityKind"],target),purpose="verify-delete")
+   matched=response["status"]==404 and response["body"]["complete"]
+   record.update(state="COMPLETE",targetIdJson=target,targetUrl=entity_url(self.profile,definition["entityKind"],target),completedAt=now(),
+    verification={"matched":matched,"differences":[] if matched else [{"field":"entity","source":{"state":"absent"},"target":{"status":response["status"]}}],"equivalent":[]},
+    deletionVerified=matched)
+   self.save_step(record);return
   if mode in ("inspect","verify","bind"):
    target=definition["targetIdJson"];doc,response=self.read_target(record,definition,target,mode)
    if mode=="verify":
     expected=source_loads(definition.get("expectedBodyText",definition.get("bodyText","{}")))
-    record["verification"]=compare_fields(expected,doc,definition["entityKind"],definition.get("expectedRelations",{}))
+    record["verification"]=compare_fields(expected,doc,definition["entityKind"],definition.get("expectedRelations",{}),absent_fields=definition.get("expectedAbsentFields",[]))
    elif mode=="bind":
     body,relations=self.materialize(definition);expected={k:v for k,v in body.items() if k in WRITABLE[definition["entityKind"]]}
     comparison=compare_fields(expected,doc,definition["entityKind"],relations)
@@ -362,18 +427,16 @@ class Worker:
    else:
     # Same RFC6902 operation shape and content type as the original DAO.patch.
     method="PATCH";headers["Content-Type"]="application/json-patch+json"
-    payload=exact([{"op":"add","path":json_pointer(key),"value":value} for key,value in body.items()]).encode()
+    patches=[{"op":"remove","path":json_pointer(key)} for key in definition.get("removeFields",[])]
+    patches.extend({"op":"add","path":json_pointer(key),"value":value} for key,value in body.items())
+    payload=exact(patches).encode()
   response=self.request(record,method,url,payload,headers,purpose="target-write")
-  self.inspect_response_status(record,response)
-  target=returned_id(definition["entityKind"],response,self.profile) if mode=="create" else definition["targetIdJson"]
-  if mode=="create" and target is None:raise NativeError("CREATED_ID_UNOBSERVED","The successful create response has no retained target identifier.")
-  record.update(state="COMPLETE",targetIdJson=target,targetUrl=entity_url(self.profile,definition["entityKind"],target),completedAt=now())
-  self.bindings[definition.get("sourceKey")]=target;self.save_step(record)
+  self.finish_write(definition,record,response,record["attempts"][-1]["attemptId"])
  def inspect_response_status(self,record,response):
   status=response["status"]
   if not response["body"]["complete"]:raise NativeError("RESPONSE_CAPACITY","The actual native response exceeded its selected byte capacity.",status=status)
   if 200<=status<300:return
-  raise NativeError("HTTP_RESPONSE","The original target write returned an unsuccessful HTTP response.",status=status,notBefore=response_wait(response["headers"]))
+  raise NativeError("HTTP_RESPONSE","The original target write returned an unsuccessful HTTP response.",status=status,notBefore=response.get("notBefore") or response_wait(response["headers"],response.get("completedAt")))
  def run(self):
   runtime=selected_runtime(self.ready);self.journal["runtimeIdentity"]=runtime
   self.journal["attempts"].append({"attemptId":self.attempt_id,"startedAt":now(),"runtimeIdentity":runtime})
@@ -382,22 +445,25 @@ class Worker:
    record=self.records[definition["stepId"]]
    if record["state"]=="COMPLETE":continue
    if self.cancelled():self.save("CANCELLED",currentStepId=None,cancelledAt=now());return
-   # A previous started target write remains uncertain after process death.
-   last_write=next((x for x in reversed(record["attempts"]) if x["purpose"]=="target-write"),None)
-   if last_write and last_write["state"] in ("STARTED","UNOBSERVED"):record["state"]="AWAITING_RECONCILIATION";self.save_step(record)
-   if record["state"]=="AWAITING_RECONCILIATION":
-    if not self.resolve(record,definition):self.save("AWAITING_RECONCILIATION",currentStepId=record["stepId"]);return
-    if record["state"]=="COMPLETE":continue
-   not_before=record.get("notBefore")
-   if not_before and dt.datetime.fromisoformat(not_before.replace("Z","+00:00"))>dt.datetime.now(dt.timezone.utc):self.save("DEFERRED",notBefore=not_before,currentStepId=record["stepId"]);return
    try:
-    record["state"]="RUNNING";record["error"]=None;self.save_step(record);self.execute_step(definition,record);self.save("RUNNING",currentStepId=record["stepId"])
+    # Every unfinished write is reconciled from its actual retained response or
+    # explicit same-attempt retry decision before another provider mutation.
+    self.reconcile_write(definition,record)
+    if record["state"]=="COMPLETE":continue
+    if record["state"]=="AWAITING_RECONCILIATION":
+     if not self.resolve(record,definition):self.save("AWAITING_RECONCILIATION",currentStepId=record["stepId"],error=record.get("error"));return
+     if record["state"]=="COMPLETE":continue
+    not_before=record.get("notBefore")
+    if not_before and dt.datetime.fromisoformat(not_before.replace("Z","+00:00"))>dt.datetime.now(dt.timezone.utc):
+     self.save("DEFERRED",notBefore=not_before,currentStepId=record["stepId"]);return
+    record["state"]="RUNNING";record["error"]=None;self.save_step(record)
+    self.execute_step(definition,record);self.save("RUNNING",currentStepId=record["stepId"])
    except Exception as error:
     details=getattr(error,"details",{});code=getattr(error,"code","NATIVE_OPERATION_FAILED");status=details.get("status")
     last_write=next((x for x in reversed(record["attempts"]) if x["purpose"]=="target-write"),None)
-    current_write=bool(record["attempts"] and record["attempts"][-1]["purpose"]=="target-write")
     observed_status=last_write.get("response",{}).get("status") if last_write else None
-    unknown_write=last_write is not None and current_write and (last_write["state"] in ("STARTED","UNOBSERVED") or observed_status is not None and (200<=observed_status<300 or observed_status>=500 or observed_status==408) or code=="RESPONSE_CAPACITY")
+    permit=record.get("retryPermit");retry_pending=bool(last_write and permit and permit.get("previousAttemptId")==last_write["attemptId"])
+    unknown_write=last_write is not None and not retry_pending and (last_write["state"] in ("STARTED","UNOBSERVED") or observed_status is None or 200<=observed_status<300 or observed_status>=500 or observed_status==408)
     state="AWAITING_RECONCILIATION" if unknown_write else "DEFERRED" if status==429 else "FAILED"
     record.update(state=state,error={"code":code,"message":str(error) if isinstance(error,NativeError) else "The selected original native operation failed.","details":details},notBefore=details.get("notBefore"))
     self.save_step(record);self.save(state,currentStepId=record["stepId"],error=record["error"],notBefore=record.get("notBefore"));return

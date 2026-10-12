@@ -3,7 +3,7 @@ import {join} from 'node:path';
 import {lstat,readdir} from 'node:fs/promises';
 import {LIMITS,COMMISSIONING_SCHEMA as SCHEMA,COMMISSIONING_MEANING as MEANING} from './schema.mjs';
 import {identity,sha,json,plain,hash,text,paragraph,integer,choice,clone,stable,fail,find,statePart,ensureState,operationId,
- objectValue,saveValue,retainedInput,publicTarget,targetProfile,rowPage,typedId,KINDS,RELATIONS,exactParse,exact} from './common.mjs';
+ objectValue,saveValue,retainedInput,publicTarget,targetProfile,rowPage,typedId,KINDS,RELATIONS,exactParse,exact,nativeCustodyIdentity} from './common.mjs';
 import {normalizeMapping,normalizeSource,sourceFormat} from './sources.mjs';
 import {preparePlan,reviewPlan,verificationPlan,rollbackPlan} from './plans.mjs';
 import {createNativeRuntime} from './runtime.mjs';
@@ -56,23 +56,28 @@ export function commissioningContext(state,op,{inboxDirectory=null}={}){
  return c;
 }
 export function createCommissioningManager({store,edition,inboxDirectory=null,environment=process.env,runtime={}}){
- let closing=false,reconciling=null;const controlWork=new Map();let objectCache=null;
+ let closing=false,reconciling=null;const controlWork=new Map(),receivingProjects=new Set();let objectCache=null;
  const part=()=>statePart(store.read()),active=()=>{if(closing)throw fail('CLOSED','The commissioning workspace is closed.',503);};
  const readDocument=record=>objectValue(store,record.document??record);
  const jobRecord=id=>find(store.read(),'jobs',hash(id,'native job'));
- function localJob(job){
-  const local=part().local??{};return {...clone(job),received:local.receivedJobs?.[job.id]===true,localBinding:local.bindings?.[job.id]??null};
+ function localJob(job,state=store.read()){
+  const local=statePart(state).local??{};return {...clone(job),received:local.receivedJobs?.[job.id]===true,localBinding:local.bindings?.[job.id]??null};
  }
- async function recordNative(jobId,snapshot){
-  if(closing&&snapshot.closed!==true)return;
+ async function recordNative(jobId,snapshot,custodyKey){
+  if(closing&&snapshot.closed!==true)return false;
+  let accepted=false;
   await store.mutate(state=>{
-   const prior=find(state,'jobs',jobId);if(prior.latest?.document.sha256===snapshot.document.sha256)return;
+   const prior=find(state,'jobs',jobId);
+   // The check runs inside the actual writer, after any preceding receive.
+   // A completed read of retired local custody must never replace its successor.
+   if(receivingProjects.has(prior.projectId)||nativeCustodyIdentity(localJob(prior,state))!==custodyKey)return;
+   accepted=true;if(prior.latest?.document.sha256===snapshot.document.sha256)return;
    const cancelling=prior.controls?.at(-1)?.kind==='cancel'&&snapshot.closed!==true;
    const updated={...prior,state:cancelling?'CANCELLING':snapshot.state,latest:clone(snapshot),updatedAt:snapshot.updatedAt??now()};
    const eventId='native-'+identity({jobId,snapshot:snapshot.document.sha256});
    appendEvent(state,prior.projectId,{operationId:eventId,action:'commissioning.native.observed',createdAt:updated.updatedAt,
     changes:[{table:'jobs',record:updated}],details:{jobId,snapshot:snapshot.document,nativeState:snapshot.nativeState,closed:snapshot.closed}});
-  });
+  });return accepted;
  }
  const native=createNativeRuntime({store,environment,runtime,onSnapshot:recordNative});
  async function fullJournal(job){
@@ -81,10 +86,10 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
   for(const entry of journal.steps??[])steps.push(entry.record?await objectValue(store,entry.record):entry);
   return {...journal,steps};
  }
- async function nativeOutcome(id,result,error=null){
+ async function nativeOutcome(id,result,error=null,custodyKey=null){
   await store.mutate(state=>{
    const prior=find(state,'jobs',id);
-   if(prior.latest?.closed===false||native.hasOwner(id))return;
+   if(receivingProjects.has(prior.projectId)||(custodyKey!==null&&nativeCustodyIdentity(localJob(prior,state))!==custodyKey)||prior.latest?.closed===false||native.hasOwner(id))return;
    const stateName=error?'START_FAILED':result.state;
    if(prior.state===stateName&&stable(prior.launchError??null)===stable(error))return;
    const updated={...prior,state:stateName,updatedAt:now(),launchError:error};
@@ -93,10 +98,13 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
   });
  }
  async function launch(job){
-  try{const result=await native.launch(localJob(job));if(result.state==='RUNTIME_REQUIRED')await nativeOutcome(job.id,result);return result;}
-  catch(error){await nativeOutcome(job.id,{state:'START_FAILED'},{code:error.code??'NATIVE_START',message:String(error.message).slice(0,2000)});return {jobId:job.id,state:'START_FAILED'};}
+  if(receivingProjects.has(job.projectId))return {jobId:job.id,state:'RECEIVING_IN_PROGRESS'};
+  const local=localJob(job),custodyKey=nativeCustodyIdentity(local);
+  try{const result=await native.launch(local);if(result.state==='RUNTIME_REQUIRED')await nativeOutcome(job.id,result,null,custodyKey);return result;}
+  catch(error){await nativeOutcome(job.id,{state:'START_FAILED'},{code:error.code??'NATIVE_START',message:String(error.message).slice(0,2000)},custodyKey);return {jobId:job.id,state:'START_FAILED'};}
  }
  async function runControl(job){
+  if(receivingProjects.has(job.projectId))return;
   if(controlWork.has(job.id))return controlWork.get(job.id);
   const operation=(async()=>{
    const local=localJob(job);if(local.received&&!local.localBinding)return;
@@ -131,9 +139,14 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
   if(closing)return;if(reconciling)return reconciling;
   reconciling=(async()=>{
    for(const selected of [...part().jobs]){
+    if(receivingProjects.has(selected.projectId))continue;
     const local=localJob(selected);if(local.received&&!local.localBinding)continue;
     try{await runControl(selected);}catch(error){await nativeOutcome(selected.id,{state:'START_FAILED'},{code:error.code??'CONTROL_RECONCILIATION',message:String(error.message).slice(0,2000)});continue;}
-    const observed=await native.inspect(localJob(jobRecord(selected.id)));
+    if(receivingProjects.has(selected.projectId))continue;
+    const currentLocal=localJob(jobRecord(selected.id));
+    if(currentLocal.received&&!currentLocal.localBinding)continue;
+    const observed=await native.inspect(currentLocal);
+    if(receivingProjects.has(selected.projectId)||nativeCustodyIdentity(localJob(jobRecord(selected.id)))!==nativeCustodyIdentity(currentLocal))continue;
     const current=jobRecord(selected.id);
     // The request and job were committed before launch. Finish that original
     // queued launch after controller loss, only when no attempt ever started.
@@ -152,6 +165,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
   active();const s=store.read(),p=find(s,'projects',hash(id)),snap=snapshotProject(s,id);
   return {project:projectHead(p),...snap.tables,targets:snap.tables.targets.map(x=>({...x,profile:publicTarget(x.profile)})),
    jobs:snap.tables.jobs.map(localJob),handoffs:statePart(s).handoffs.filter(x=>x.projectId===id),
+   exports:statePart(s).handoffs.filter(x=>x.projectId===id),
    history:{total:p.history.length,headHash:p.headHash,rows:p.history.slice(-100)}};
  }
  function fileDescriptor(reference,name,type='application/json'){return {id:reference.sha256,name,type,bytes:reference.bytes,sha256:reference.sha256};}
@@ -176,7 +190,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
  }
  async function job(id,options={}){
   active();let selected=jobRecord(id);
-  if(!localJob(selected).received||localJob(selected).localBinding){await native.inspect(localJob(selected));selected=jobRecord(id);}
+  if(!receivingProjects.has(selected.projectId)&&(!localJob(selected).received||localJob(selected).localBinding)){await native.inspect(localJob(selected));selected=jobRecord(id);}
   const journal=await fullJournal(selected),page=rowPage(journal.steps,options),files=selected.latest?.files?await objectValue(store,selected.latest.files):{members:[]};
   return {...localJob(selected),progress:journal.counts??{total:selected.stepCount,complete:0},journal: selected.latest?.journal??null,
    runtimeIdentity:journal.runtimeIdentity??null,error:journal.error??selected.launchError??null,notBefore:journal.notBefore??null,
@@ -188,20 +202,84 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
    reviews:part().reviews.filter(x=>x.jobId===id)};
  }
  async function mapData(id){
-  active();const selected=jobRecord(id),candidates=[selected,...part().jobs.filter(x=>x.sourceJobId===selected.id&&x.kind==='verify'&&x.state==='COMPLETE')];
-  const index=new Map();let verificationId=null;
-  for(const current of candidates){
-   const journal=await fullJournal(current);
-   for(const step of journal.steps){
-    if(step.state!=='COMPLETE'||!step.targetIdJson||!KINDS.includes(step.entityKind))continue;
-    const attempt=[...(step.attempts??[])].reverse().find(x=>x.request?.method==='GET'&&x.response?.status>=200&&x.response.status<300);
-    if(!attempt)continue;const bytes=await store.object(attempt.response.body.sha256);
-    index.set(step.entityKind+'/'+step.targetIdJson,{kind:step.entityKind,idJson:step.targetIdJson,bodyText:bytes.toString('utf8'),responseSha256:attempt.response.body.sha256,stepId:step.stepId});
+  active();const selected=jobRecord(id),candidates=[selected,...part().jobs.filter(x=>x.sourceJobId===selected.id&&x.kind==='verify')];
+  const index=new Map(),unavailable=new Map(),observations=[],readRelations={
+   ...RELATIONS,Locations:{Things:{kind:'Things',many:true},HistoricalLocations:{kind:'HistoricalLocations',many:true}},
+   Things:{...RELATIONS.Things,Datastreams:{kind:'Datastreams',many:true},MultiDatastreams:{kind:'MultiDatastreams',many:true},HistoricalLocations:{kind:'HistoricalLocations',many:true}},
+   Sensors:{Datastreams:{kind:'Datastreams',many:true},MultiDatastreams:{kind:'MultiDatastreams',many:true}},
+   ObservedProperties:{Datastreams:{kind:'Datastreams',many:true},MultiDatastreams:{kind:'MultiDatastreams',many:true}},
+   FeaturesOfInterest:{Observations:{kind:'Observations',many:true}},
+   Datastreams:{...RELATIONS.Datastreams,Observations:{kind:'Observations',many:true}},
+   MultiDatastreams:{...RELATIONS.MultiDatastreams,Observations:{kind:'Observations',many:true}}};
+  let verificationId=null,verificationState=null;const pointerPart=value=>String(value).replace(/~/g,'~0').replace(/\//g,'~1');
+  function observe(kind,body,context,pointer='',selectedId=null,depth=0){
+   if(!plain(body)||depth>12)return;
+   let idJson;try{idJson=Object.hasOwn(body,'@iot.id')?typedId(exact(body['@iot.id'])):selectedId;}catch{return;}
+   if(!idJson)return;const key=kind+'/'+idJson,relations={};
+   for(const [name,spec]of Object.entries(readRelations[kind]??{})){
+    if(!Object.hasOwn(body,name))continue;const raw=body[name],members=Array.isArray(raw)?raw:raw===null?[]:[raw],values=[];
+    for(let i=0;i<members.length;i++){
+     const value=members[i];if(!plain(value)||!Object.hasOwn(value,'@iot.id'))continue;
+     let childId;try{childId=typedId(exact(value['@iot.id']));}catch{continue;}
+     values.push({kind:spec.kind,idJson:childId});
+     const childPointer=pointer+'/'+pointerPart(name)+(Array.isArray(raw)?'/'+i:'');
+     observe(spec.kind,value,context,childPointer,childId,depth+1);
+    }
+    relations[name]=values;
    }
-   if(current.kind==='verify')verificationId=current.id;
+   // These IDs are the actual request materialization retained by the native
+   // worker; an unexpanded navigation URL never supplies a target identity.
+   if(pointer===''&&context.materializedRelations)for(const [name,record]of Object.entries(context.materializedRelations)){
+    if(Object.hasOwn(relations,name)||!readRelations[kind]?.[name])continue;
+    relations[name]=(record.ids??[]).map(idJson=>({kind:record.kind,idJson:typedId(idJson)}));
+   }
+   if(!index.has(key)&&index.size>=LIMITS.entities)throw fail('MAP_CAPACITY','The retained map exceeds the selected entity limit.',413);
+   const value={kind,idJson,bodyText:pointer===''?context.bodyText:exact(body),bodyIsCompleteResponse:pointer==='',relations,responseSha256:context.responseSha256,
+    responseFileId:context.responseSha256,responsePointer:pointer,readId:context.readId,stepId:context.stepId,jobId:context.jobId,
+    observationScope:'An actual retained native entity read or its explicitly expanded entity.'};
+   const prior=index.get(key);
+   // A full entity read takes precedence over a later ID-only expansion.
+   if(!prior||pointer===''||prior.responsePointer!=='')index.set(key,value);
+   unavailable.delete(key);
+  }
+  for(const current of candidates){
+   const journal=await fullJournal(current);let reads=0,successfulReads=0,unavailableReads=0;
+   for(const step of journal.steps){
+    if(!KINDS.includes(step.entityKind))continue;
+    const attempts=step.attempts??[],lastWrite=attempts.findLastIndex(x=>x.purpose==='target-write'),
+     attempt=attempts.findLast((x,i)=>i>lastWrite&&x.request?.method==='GET'&&x.purpose!=='before-write');
+    const key=step.entityKind+'/'+(step.targetIdJson??('step:'+step.stepId));
+    if(!attempt){
+     const priorRead=attempts.findLast(x=>x.request?.method==='GET');index.delete(key);
+     unavailable.set(key,{kind:step.entityKind,idJson:step.targetIdJson??null,stepId:step.stepId,state:step.state,
+      reason:lastWrite>=0?'The selected target write has no later retained entity observation. Its before-write read is preserved in the original journal.':'No actual retained native target read is available for this selected step.',
+      ...(priorRead?.response?.body?.sha256?{responseSha256:priorRead.response.body.sha256}:{}),readId:priorRead?.attemptId??null});
+     continue;
+    }
+    reads++;const response=attempt.response;
+    if(!response||response.status<200||response.status>=300||response.body?.complete!==true||!response.body?.sha256){
+     unavailableReads++;index.delete(key);unavailable.set(key,{kind:step.entityKind,idJson:step.targetIdJson??null,stepId:step.stepId,state:step.state,
+      reason:response?'The latest retained native read did not return a complete successful entity.':'The latest native read has no observed response.',
+      ...(response?.body?.sha256?{responseSha256:response.body.sha256}:{}),status:response?.status??null});continue;
+    }
+    const bytes=await store.object(response.body.sha256);let body;
+    try{body=exactParse(bytes.toString('utf8'));}catch{unavailableReads++;index.delete(key);unavailable.set(key,{kind:step.entityKind,idJson:step.targetIdJson??null,stepId:step.stepId,state:step.state,
+      reason:'The retained successful response is not an original JSON entity.',responseSha256:response.body.sha256});continue;}
+    if(!plain(body)){unavailableReads++;index.delete(key);unavailable.set(key,{kind:step.entityKind,idJson:step.targetIdJson??null,stepId:step.stepId,state:step.state,
+      reason:'The retained successful response is not an entity object.',responseSha256:response.body.sha256,readId:attempt.attemptId});continue;}
+    observe(step.entityKind,body,{bodyText:bytes.toString('utf8'),responseSha256:response.body.sha256,readId:attempt.attemptId,stepId:step.stepId,jobId:current.id,
+     materializedRelations:step.materializedRelations},'',step.targetIdJson??null);successfulReads++;
+   }
+   observations.push({jobId:current.id,kind:current.kind,state:current.state,closed:current.latest?.closed??null,
+    selectedSteps:current.stepCount,observedReadSteps:reads,successfulReadSteps:successfulReads,unavailableReadSteps:unavailableReads,
+    nativeCounts:journal.counts??null,journal:current.latest?.journal??null});
+   if(current.kind==='verify'){verificationId=current.id;verificationState=current.state;}
   }
   const input=await objectValue(store,selected.input);
-  return {jobId:id,planId:selected.planId,targetServiceUrl:input.plan.target.serviceUrl,verificationId,entities:[...index.values()],
+  return {jobId:id,planId:selected.planId,targetServiceUrl:input.plan.target.serviceUrl,verificationId,
+   entities:[...index.values()],unavailable:[...unavailable.values()],
+   coverage:{scope:'Only the selected commissioning/verification jobs and their actual retained native reads. This is not a complete target inventory.',
+    jobs:observations,entityCount:index.size,unavailableCount:unavailable.size,verificationState},
    sourceIdentity:input.plan.sourceIdentity??{sourcePlanId:input.plan.sourcePlanId??null}};
  }
  async function allObjects(){
@@ -229,6 +307,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
  }
  async function execute(op,finish){
   active();const p=op.payload,c=op.context.commissioning,s=store.read();
+  if(c.project&&receivingProjects.has(c.project.id))throw fail('NATIVE_CUSTODY_BUSY','This project is receiving its selected original edition; retain this request until that local operation completes.',409);
   if(op.action==='commissioning.project.create'){
    const id=operationId('project',op),record={id,originWorkspaceId:c.workspaceId,label:text(p.label,'project label',240),description:paragraph(p.description??'','project description'),createdAt:op.createdAt};
    return commit(op,finish,{projectId:id,project:record},[],{project:record},record);
@@ -295,7 +374,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
    return createJob(op,finish,{kind:plan.kind,plan,planRecord:c.plan});
   }
   if(op.action==='commissioning.run.reconcile'){
-   await runControl(c.job);if(!localJob(c.job).received||localJob(c.job).localBinding)await native.inspect(localJob(c.job));
+   await runControl(c.job);const live=localJob(jobRecord(c.job.id));if(!receivingProjects.has(live.projectId)&&(!live.received||live.localBinding))await native.inspect(live);
    const current=jobRecord(c.job.id);return commit(op,finish,{jobId:current.id,state:current.state,snapshot:current.latest?.document??null},[],{jobId:current.id});
   }
   if(['commissioning.run.cancel','commissioning.run.resume','commissioning.run.resolve'].includes(op.action)){
@@ -346,7 +425,9 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
    return commit(op,finish,{reviewId:record.id,review:record},[{table:'reviews',record}],{jobId:current.id,snapshot:record.snapshot});
   }
   if(op.action==='commissioning.handoff.prepare'){
-   for(const job of c.snapshot.tables.jobs)if(job.latest?.closed===false||native.hasOwner(job.id))throw fail('NATIVE_CUSTODY_BUSY','Drain the original native owner before exporting its complete custody.',409);
+   for(const job of c.snapshot.tables.jobs){const local=localJob(job);
+    if(job.latest?.closed===false||native.hasOwner(job.id)||(!local.received||local.localBinding)&&await native.owned(local))throw fail('NATIVE_CUSTODY_BUSY','Drain the actual original native owner before exporting its complete custody.',409);
+   }
    const output=await exportProject(store,{snapshot:c.snapshot,edition,id:op.operationId,createdAt:op.createdAt,label:text(p.label??c.project.label,'handoff label',240)}),
     file={id:output.file.sha256,projectId:c.project.id,...output.file,storagePath:'exports/'+output.file.storage.operationId+'/'+output.file.storage.filename},
     record={id:operationId('handoff',op),projectId:c.project.id,direction:'export',sequence:c.snapshot.project.sequence,headHash:c.snapshot.project.headHash,
@@ -356,16 +437,26 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
    });
   }
   if(op.action==='commissioning.handoff.receive'){
-   const output=await importProject(store,{inboxDirectory:c.inboxDirectory,...p,id:op.operationId,createdAt:op.createdAt}),
-    disposition=receivingDisposition(store.read(),output.snapshot),projectId=output.snapshot.project.id,
-    record={id:operationId('handoff',op),projectId,direction:'receive',disposition,sequence:output.snapshot.project.sequence,headHash:output.snapshot.project.headHash,
-     createdAt:op.createdAt,archive:output.archive,manifest:output.manifest,sourceReceipts:output.sourceReceipts};
-   return finish({handoffId:record.id,projectId,disposition,receipt:record},state=>{
-    adoptProject(state,output.snapshot);for(const id of output.editionIds)if(!state.editionIds.includes(id))state.editionIds.push(id);
-    state.sourceReceipts??=[];for(const receipt of output.sourceReceipts)if(!state.sourceReceipts.some(x=>x.id===receipt.id))state.sourceReceipts.push(receipt);
-    const s=ensureState(state);if(!s.handoffs.some(x=>x.id===record.id))s.handoffs.push(record);
-    const file={id:output.archive.sha256,projectId,...output.archive,storagePath:'exports/'+output.archive.storage.operationId+'/'+output.archive.storage.filename};if(!s.files.some(x=>x.id===file.id))s.files.push(file);
-   });
+   const output=await importProject(store,{inboxDirectory:c.inboxDirectory,...p,id:op.operationId,createdAt:op.createdAt}),projectId=output.snapshot.project.id;
+   if(receivingProjects.has(projectId))throw fail('NATIVE_CUSTODY_BUSY','The original project already has a receiving operation in progress.',409);
+   receivingProjects.add(projectId);
+   try{
+    const existing=part().jobs.filter(x=>x.projectId===projectId);
+    await Promise.all(existing.map(x=>controlWork.get(x.id)).filter(Boolean));
+    for(const job of existing)if(await native.owned(localJob(job)))throw fail('NATIVE_CUSTODY_BUSY','The actual local native owner is still running. Drain that original job before receiving a project edition.',409);
+    // No new project inspection enters while the fence is held. Existing
+    // observations finish with their original custody key and are discarded.
+    await native.drainObservations(existing.map(x=>x.id));
+    const disposition=receivingDisposition(store.read(),output.snapshot),
+     record={id:operationId('handoff',op),projectId,direction:'receive',disposition,sequence:output.snapshot.project.sequence,headHash:output.snapshot.project.headHash,
+      createdAt:op.createdAt,archive:output.archive,manifest:output.manifest,sourceReceipts:output.sourceReceipts};
+    return await finish({handoffId:record.id,projectId,disposition,receipt:record},state=>{
+     adoptProject(state,output.snapshot);for(const id of output.editionIds)if(!state.editionIds.includes(id))state.editionIds.push(id);
+     state.sourceReceipts??=[];for(const receipt of output.sourceReceipts)if(!state.sourceReceipts.some(x=>x.id===receipt.id))state.sourceReceipts.push(receipt);
+     const s=ensureState(state);if(!s.handoffs.some(x=>x.id===record.id))s.handoffs.push(record);
+     const file={id:output.archive.sha256,projectId,...output.archive,storagePath:'exports/'+output.archive.storage.operationId+'/'+output.archive.storage.filename};if(!s.files.some(x=>x.id===file.id))s.files.push(file);
+    });
+   }finally{receivingProjects.delete(projectId);}
   }
   throw fail('ACTION','The commissioning action is not implemented.');
  }

@@ -90,3 +90,10 @@ export async function retainedInput(store,inboxDirectory,{filename,expectedBytes
  const obj=await store.putObject(bytes);return {...obj,filename};
 }
 export function editableSource(value){return Object.fromEntries(Object.entries(value).filter(([key])=>!['authorization','token','accessToken'].includes(key)));}
+
+// A host binding identifies mutable native custody, independently of its
+// changing observation/controls and the local copy-completion flag.
+export function nativeCustodyIdentity(job){
+ const b=job.localBinding;
+ return identity({inputSha256:job.input.sha256,received:job.received===true,binding:b?{operationId:b.operationId,createdAt:b.createdAt,serviceUrl:b.serviceUrl}:null});
+}

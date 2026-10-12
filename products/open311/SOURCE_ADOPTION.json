@@ -1,0 +1,264 @@
+{
+  "schema": "stellar-forge.open311-source-adoption.v1",
+  "source_repository": "woahwhattheheck/public-commons-sprint-2026",
+  "source_commit": "3b3d24a2bcb0cc809a8f6cba3426c31363f4d5cf",
+  "source_pull_request": 2285,
+  "target_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "target_base_commit": "c11fb82ebd1d5311d9f4b0c7319969644de00ab8",
+  "selection": "open311-operations",
+  "source_files": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/open311-operations.json",
+      "bytes": 1473,
+      "git_blob": "c691e5e5d2ce2e2fb2cbe90ea7b787f7639cec91",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/application-provider.mjs",
+      "bytes": 6844,
+      "git_blob": "d353b88e0755182cb0c3d7b65247f98727b83e82",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/browser-assets.json",
+      "bytes": 509,
+      "git_blob": "a85061b8c3b208a4035a23835623cda75e57f9f4",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/cli.mjs",
+      "bytes": 10462,
+      "git_blob": "db0d4143205226d7bcc41e2d837449c377570a25",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/client.mjs",
+      "bytes": 17281,
+      "git_blob": "98a5171a7168507c272a89db666a941803f8d376",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/commission.mjs",
+      "bytes": 20021,
+      "git_blob": "ab286aac9566aba8ed7823a002f4d17850eb17d9",
+      "mode": "100644",
+      "source_commit": "3b3d24a2bcb0cc809a8f6cba3426c31363f4d5cf",
+      "source_pull_request": 2285
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/domain.mjs",
+      "bytes": 11680,
+      "git_blob": "d0bee3658c498b466cfeb832e26be7bc40489919",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/examples/helsinki.commission.json",
+      "bytes": 947,
+      "git_blob": "108dc2c1af57cb1f9109142bf2a30dc29f2dd273",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/examples/helsinki.connection.json",
+      "bytes": 783,
+      "git_blob": "002b9cae37f686663128d5608810a90adfffd700",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/index.d.mts",
+      "bytes": 5325,
+      "git_blob": "235026495a9a1299c1b39c9e27e0160c97d046aa",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/index.mjs",
+      "bytes": 263,
+      "git_blob": "741f7a135f79adeb43798200f787769f0eb1df52",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp-client.d.mts",
+      "bytes": 6978,
+      "git_blob": "e884e17aa6eb70fe4ac4293954c66296d13703e0",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp-client.mjs",
+      "bytes": 11491,
+      "git_blob": "c6144b649e975d7893b0a944b31a7c470c028232",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp-setup.d.mts",
+      "bytes": 404,
+      "git_blob": "c4f436d46147704b9fbc6f9e5ad5e036abd3fb54",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp-setup.mjs",
+      "bytes": 5418,
+      "git_blob": "afd79d7f2ae891538f3c92fba8ce52a06121d14a",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp-tools.mjs",
+      "bytes": 6918,
+      "git_blob": "3daee53ee1d09976b511fd53c364f55558e0f0ff",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp.d.mts",
+      "bytes": 983,
+      "git_blob": "4c27d23941f977f092fe4c7f90e4249bdc9f705a",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/MCP.md",
+      "bytes": 17445,
+      "git_blob": "27f33b7faaa9952091f25de97fb95e14e0d30f0f",
+      "mode": "100644",
+      "source_commit": "b41f9255ab8d47fd874556995845a75bf3ee934a",
+      "source_pull_request": 2332
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/mcp.mjs",
+      "bytes": 13430,
+      "git_blob": "d56854b2d21ae792d76209b1be9b6a6f9346865d",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/merchant-provider.mjs",
+      "bytes": 2432,
+      "git_blob": "fa29a8aa221f03a8ddff5686a687281f0003e631",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/README.md",
+      "bytes": 12172,
+      "git_blob": "6c1154985021a8bbac313d43a0df21f9e438cec2",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/server.d.mts",
+      "bytes": 1082,
+      "git_blob": "780a2480f98300c985bb0965a3a6e8a5e3302ef7",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/server.mjs",
+      "bytes": 9448,
+      "git_blob": "65bab9f8240cd65645e5df97adb954a248037cef",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace.d.mts",
+      "bytes": 5435,
+      "git_blob": "2ea2c772f58a9e029a2234700e1ff47607d09b27",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace.mjs",
+      "bytes": 42137,
+      "git_blob": "10f1a1548dc0e9a7f26673db824e0eb236855e5a",
+      "mode": "100644",
+      "source_commit": "3b3d24a2bcb0cc809a8f6cba3426c31363f4d5cf",
+      "source_pull_request": 2285
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/app.mjs",
+      "bytes": 68826,
+      "git_blob": "1d2f5286326dd1d7ce97fc957f9a35f252259743",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/index.html",
+      "bytes": 22687,
+      "git_blob": "e1b4490fd157e13315878583c1d17c497bb54f5d",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/style.css",
+      "bytes": 12082,
+      "git_blob": "9ea4f80f06d8b1b505387cb56b608a2cac7cee31",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/WORKSPACE.md",
+      "bytes": 21493,
+      "git_blob": "a00c7e92ffa850ffbde85fa9ba3f940c541f7713",
+      "mode": "100644"
+    }
+  ],
+  "shared_contracts": [
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-contract.mjs",
+      "git_blob": "84a78fa4f594294b3b3e82d7056a5aeff740ab3d"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/host-files.mjs",
+      "git_blob": "a366cc4aa3e3ee3dfb7cb88320b84fcb00ab2fad"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
+      "git_blob": "0cc3502779b193521cd1d177e8d23b76ab625df2"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
+      "git_blob": "16dbce5411cddc372ac93cbe4813c373b9d81457"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+      "git_blob": "8ee253de89866a761ed415412e654e6c79235ff1"
+    }
+  ],
+  "runtime": {
+    "merchant_package_node": ">=22.16.0",
+    "open311_direct_module_node": ">=22.13.0",
+    "workspace_database": "node:sqlite",
+    "merchant_setup_lock": "Linux util-linux flock"
+  },
+  "entrypoints": {
+    "command": "open311",
+    "application": "open311-operations",
+    "merchant_provider": "open311-workspaces",
+    "merchant_configuration": "open311Workspaces"
+  },
+  "initial_source": {
+    "commit": "c768223233102a0bff4daa278ddbbfbb5b226f1f",
+    "pull_request": 2256
+  },
+  "shared_contracts_observed_at": "faa3cf93020be2514b376f6a4d9c5c8a93bfda10",
+  "previous_adoption": {
+    "source_commit": "1e0a6e93d4682b07c2cb081ea100df6c423fe793",
+    "source_pull_request": 2267,
+    "target_pull_request": 182,
+    "target_merge_commit": "523716fec5e8f4fc7c291c08dbe9aa530cf6e4ac"
+  },
+  "source_updates": [
+    {
+      "source_commit": "4a8040dcd714a589d5b97bbc5e7e940b68a444b2",
+      "source_pull_request": 2282,
+      "paths": [
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/app.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/index.html",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace/WORKSPACE.md"
+      ]
+    },
+    {
+      "source_commit": "ee561f8e76fe8c2cc40b22c027c8984cb4e7e6bb",
+      "source_pull_request": 2285,
+      "paths": [
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/commission.mjs",
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace.mjs"
+      ],
+      "target_pull_request": 189,
+      "target_merge_commit": "fa93751327c25e5afd077bcfa7332be1c207a55a"
+    },
+    {
+      "source_commit": "b41f9255ab8d47fd874556995845a75bf3ee934a",
+      "source_pull_request": 2332,
+      "paths": [
+        "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/MCP.md"
+      ]
+    }
+  ]
+}

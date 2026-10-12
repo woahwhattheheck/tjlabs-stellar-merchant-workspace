@@ -1,4 +1,5 @@
 // MIT. Retained chart-change review and unused-plan replacement in the original Store.
+import {qboBuyerReservation,isQboBuyerPlan,qboBuyerReservationOverlap} from '../accountant/qbo-buyer.mjs';
 import {constants} from 'node:fs';
 import {lstat,mkdir,open,link,rm} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -217,30 +218,60 @@ export class SourceChangeWorkspace{
     }
     const selected=new Set(preview.plan.rows.map(row=>row.eventId));
     need(!(this.workspace.state.qboPlans??[]).some(row=>row.id!==predecessorId&&row.id!==preview.plan.id&&
-      ['REVIEWED','BOOKED'].includes(row.status)&&row.realmId===preview.plan.realmId&&row.environment===preview.plan.environment&&row.eventIds.some(eventId=>selected.has(eventId))),
+      ['REVIEWED','BOOKED'].includes(row.status)&&row.realmId===preview.plan.realmId&&row.environment===preview.plan.environment&&
+       (isQboBuyerPlan(preview.plan)?qboBuyerReservationOverlap(qboBuyerReservation(preview.plan),row):row.eventIds.some(eventId=>selected.has(eventId)))),
       'SOURCE_CHANGE_OTHER_RESERVATION','Another reviewed or booked QuickBooks plan already reserves these original events.',409);
   }
-  prepare(value){
+  async analyzePrepare(value,inputSha256){
+    need(entries(this.workspace).length<MAX_REVIEWS,'SOURCE_CHANGE_LIMIT','This original workspace retains 2,000 source-change reviews.');
+    const inspected=await this.inspectInside(value);
+    need(inspected.public.predecessor.eligible,'SOURCE_CHANGE_PLAN_IN_USE',inspected.public.predecessor.blockers.join(' '),409);
+    need(value.predecessorSha256===inspected.public.predecessor.sha256&&value.comparisonSha256===inspected.comparison.sha256,
+      'SOURCE_CHANGE_INSPECTION_CHANGED','Inspect and review the exact current source editions before retaining mappings.',409);
+    text(value.rationale,'the reason for this source change',4000);
+    need(value.valuationConfirmed===true,'SOURCE_CHANGE_VALUATION','Review all values in the selected company’s base currency; this workflow does not infer exchange rates.');
+    const prepared=await this.originalPreview(inspected.provider,inspected.previous,inspected.captured.edition,value.successor);
+    assertSameEconomicSource(inspected.provider,inspected.previous,prepared.plan);
+    this.checkConflicts(inspected.provider,prepared,inspected.previous.id);
+    need(!(inspected.provider==='qbo'?this.workspace.state.qboPlans??[]:this.workspace.state.xeroPlans??[]).some(row=>row.id===prepared.request.id),
+      'SOURCE_CHANGE_SUCCESSOR_EXISTS','Use a new successor UUID; retain an existing successor through its original change review.',409);
+    need(!entries(this.workspace).some(row=>row.kind===inspected.provider&&row.successorId===prepared.request.id),
+      'SOURCE_CHANGE_SUCCESSOR_CLAIMED','Another retained source-change review already owns that successor UUID.',409);
+    return {inspected,prepared,public:{schema:SOURCE_CHANGE_SCHEMA,binding:this.binding(),revision:this.workspace.state.revision,
+      id:value.id,kind:inspected.provider,planId:inspected.previous.id,
+      predecessorSha256:planIdentity(inspected.provider,inspected.previous),comparisonSha256:inspected.comparison.sha256,
+      inputSha256,successorId:prepared.request.id,previewSha256:prepared.previewSha256,
+      comparison:inspected.comparison,source:inspected.public.source,request:prepared.request,plan:prepared.plan}};
+  }
+  preview(value){
     value=clone(value);this.assertBinding(value.binding);id(value.id);kind(value.kind);id(value.planId);
     const inputSha256=hash(value);
     return this.track(()=>this.workspace.serial(async()=>{
       this.assertWritable();this.assertBinding(value.binding);
       const prior=entries(this.workspace).find(row=>row.id===value.id);
-      if(prior){need(prior.inputSha256===inputSha256,'SOURCE_CHANGE_REQUEST_CHANGED','This review UUID belongs to another source or mapping request.',409);return this.detailInside(prior.id);}
-      need(entries(this.workspace).length<MAX_REVIEWS,'SOURCE_CHANGE_LIMIT','This original workspace retains 2,000 source-change reviews.');
-      const inspected=await this.inspectInside(value);
-      need(inspected.public.predecessor.eligible,'SOURCE_CHANGE_PLAN_IN_USE',inspected.public.predecessor.blockers.join(' '),409);
-      need(value.predecessorSha256===inspected.public.predecessor.sha256&&value.comparisonSha256===inspected.comparison.sha256,
-        'SOURCE_CHANGE_INSPECTION_CHANGED','Inspect and review the exact current source editions before retaining mappings.',409);
-      text(value.rationale,'the reason for this source change',4000);
-      need(value.valuationConfirmed===true,'SOURCE_CHANGE_VALUATION','Review all values in the selected company’s base currency; this workflow does not infer exchange rates.');
-      const prepared=await this.originalPreview(inspected.provider,inspected.previous,inspected.captured.edition,value.successor);
-      assertSameEconomicSource(inspected.provider,inspected.previous,prepared.plan);
-      this.checkConflicts(inspected.provider,prepared,inspected.previous.id);
-      need(!(inspected.provider==='qbo'?this.workspace.state.qboPlans??[]:this.workspace.state.xeroPlans??[]).some(row=>row.id===prepared.request.id),
-        'SOURCE_CHANGE_SUCCESSOR_EXISTS','Use a new successor UUID; retain an existing successor through its original change review.',409);
-      need(!entries(this.workspace).some(row=>row.kind===inspected.provider&&row.successorId===prepared.request.id),
-        'SOURCE_CHANGE_SUCCESSOR_CLAIMED','Another retained source-change review already owns that successor UUID.',409);
+      if(prior){
+        need(prior.inputSha256===inputSha256,'SOURCE_CHANGE_REQUEST_CHANGED','This review UUID belongs to another source or mapping request.',409);
+        const review=await this.review(prior);
+        return {schema:SOURCE_CHANGE_SCHEMA,binding:this.binding(),revision:this.workspace.state.revision,
+          id:prior.id,kind:prior.kind,planId:prior.planId,predecessorSha256:prior.predecessorSha256,
+          comparisonSha256:prior.comparisonSha256,inputSha256,successorId:prior.successorId,previewSha256:prior.previewSha256,
+          comparison:review.comparison,source:review.source,request:review.request,plan:review.plan};
+      }
+      return (await this.analyzePrepare(value,inputSha256)).public;
+    }));
+  }
+  prepare(value,{previewSha256}={}){
+    need(previewSha256===undefined||typeof previewSha256==='string'&&/^[a-f0-9]{64}$/.test(previewSha256),'SOURCE_CHANGE_PREVIEW_CHANGED','Use the original reviewed successor digest.');
+    value=clone(value);this.assertBinding(value.binding);id(value.id);kind(value.kind);id(value.planId);
+    const inputSha256=hash(value);
+    return this.track(()=>this.workspace.serial(async()=>{
+      this.assertWritable();this.assertBinding(value.binding);
+      const prior=entries(this.workspace).find(row=>row.id===value.id);
+      if(prior){need(prior.inputSha256===inputSha256,'SOURCE_CHANGE_REQUEST_CHANGED','This review UUID belongs to another source or mapping request.',409);
+        if(previewSha256!==undefined)need(previewSha256===prior.previewSha256,'SOURCE_CHANGE_PREVIEW_CHANGED','This saved review has a different successor digest.',409);
+        return this.detailInside(prior.id);}
+      const {inspected,prepared}=await this.analyzePrepare(value,inputSha256);
+      if(previewSha256!==undefined)need(previewSha256===prepared.previewSha256,'SOURCE_CHANGE_PREVIEW_CHANGED','Retain the exact reviewed successor preview before saving this change.',409);
       const review={schema:SOURCE_CHANGE_SCHEMA,id:value.id,binding:this.binding(),kind:inspected.provider,inputSha256,
         actor:prepared.request.actor,createdAt:prepared.request.createdAt,rationale:value.rationale,valuationConfirmed:true,
         source:inspected.public.source,target:clone(value.target),comparison:inspected.comparison,

@@ -61,9 +61,77 @@ The browser lists safe host aliases and configured/missing state. It cannot choo
 
 The optional --seller and --resource CLI flags bind original public buyer-handoff URLs together. Supplying them does not start a seller, extract data or submit a payment.
 
+## Select a document and actual table
+
+A source can begin with only its existing site connection and document ID. No invented table ID is needed. In **Capture source**, select the host connection, enter the exact document or URL ID, and choose **List document tables**.
+
+This explicit action reads only the native document metadata and `GET /api/docs/DOC_ID/tables`. It saves both complete JSON bodies, permitted response headers, request URLs, timestamps and byte/hash identities before completing one original `DOCUMENT` request. The document catalog is in the same `sources.sqlite` and `inputs/` directory as the rest of the authoring workspace.
+
+Choose an actual ID from **Document tables**, then **Choose this table** and **Inspect actual metadata**. The list uses native table IDs and native table references. It does not invent friendly titles from UI page names. Search and page controls read the saved catalog; they do not call Grist. **Retained document catalogs** reopens previous observations after the browser, CLI or MCP owner has stopped.
+
+The selection records the catalog UUID, complete catalog SHA256, original metadata hashes, actual table ID and native table reference. Field discovery checks the same document, declared connection and read credential. If a credential or host connection changes, make a new explicit document observation before choosing a table from it. This prevents a table choice from silently adopting a different account's metadata.
+
+A catalog entry is metadata visible to the selected account. It is not proof of permission to read all rows. Table inspection, field selection and the complete typed-record capture are subsequent actions with their own native receipts. The source API does not list saved UI views, resolve linked display values, join tables or establish a cross-table transaction.
+
+### CLI selection and recovery
+
+Stop the browser/Application owner before these CLI commands open its same workspace. Each command closes its own original model when complete. When using the shared MCP browser instead, run the equivalent MCP tools through that owner.
+
+~~~sh
+node "$GRIST_SOURCE/workspace/cli.mjs" document \
+  --directory "$GRIST_WORK" \
+  --connections /absolute/private/grist-connections.json \
+  --connection public_tasks --document hik1whAV5snj \
+  --request 61000000-0000-4000-8000-000000000001
+~~~
+
+The example document is the official public Task Management acquisition candidate. The command must return real native table IDs before choosing one; no table names or row counts are supplied as fixtures. Save the actual returned `id` and `catalogSha256`. The example UUID represents one deliberate metadata observation; a later new observation gets a new UUID.
+
+~~~sh
+node "$GRIST_SOURCE/workspace/cli.mjs" document-tables \
+  --directory "$GRIST_WORK" \
+  --catalog 61000000-0000-4000-8000-000000000001 \
+  --offset 0 --limit 100
+
+node "$GRIST_SOURCE/workspace/cli.mjs" document-tables \
+  --directory "$GRIST_WORK" \
+  --catalog 61000000-0000-4000-8000-000000000001 \
+  --search ACTUAL_NATIVE_ID_TEXT --offset 0 --limit 100
+
+node "$GRIST_SOURCE/workspace/cli.mjs" discover \
+  --directory "$GRIST_WORK" \
+  --connections /absolute/private/grist-connections.json \
+  --connection public_tasks --document hik1whAV5snj \
+  --table ACTUAL_RETURNED_TABLE_ID \
+  --catalog 61000000-0000-4000-8000-000000000001 \
+  --expected-catalog-sha256 ACTUAL_RETURNED_CATALOG_SHA256 \
+  --request 61000000-0000-4000-8000-000000000002
+~~~
+
+Use the actual matching `catalogSha256`; the uppercase values are placeholders, not accepted native identities. An ID absent from that retained catalog is refused. The existing direct `discover --document ... --table ...` remains available for an operator who already knows the native table ID. Supplying one of `--catalog` and `--expected-catalog-sha256` requires both.
+
+After a lost response, use `operation --request SAME_UUID` and `resume --request SAME_UUID`. A completed operation replays its original saved result. An interrupted document request adopts only its already retained complete metadata file. If that file was positively never published, recovery ends with `GRIST_DOCUMENT_CATALOG_NOT_RETAINED`; acknowledge that original failure before requesting a new observation. A transient unresolved I/O failure remains interrupted. No reopen, search, export or recovery step silently repeats the metadata reads.
+
+### Private metadata transfer
+
+~~~sh
+node "$GRIST_SOURCE/workspace/cli.mjs" document-export \
+  --directory "$GRIST_WORK" \
+  --catalog 61000000-0000-4000-8000-000000000001 \
+  --out /absolute/private/grist-document-observation.json
+~~~
+
+The export is the exact retained `stellar-forge.grist-document-observation.v1` envelope. It includes both original body byte sequences as base64, their sizes/hashes, fixed read URLs, safe headers, receive times, anonymous/bearer mode and a one-way read-authority binding. It contains no credential value or token environment reference. It may contain private document names and visible native metadata; keep it with the merchant's private recovery input. It is separate from a complete row capture/source packet and from the projected customer dataset.
+
+MCP uses `merchant_grist_document_list` with workspace alias, declared connection alias, document ID and original UUID. `merchant_grist_document` takes `catalogId`, offset, limit and optional search for the saved IDs. `merchant_grist_discover` accepts the same catalog/hash pair and explicit table ID. `merchant_grist_document_read` streams the exact private metadata through the original retained-file reader, with catalog UUID, read ID, expected SHA256 and offset. Release that read with the existing `merchant_grist_packet_release`. After owner restart or read expiry, omit only the old read ID while retaining the same catalog/hash/offset.
+
+### More than one table
+
+Use a distinct original authoring workspace and dataset output for each independently captured table when both outputs must remain independently operable. Declare both under the existing MCP workspace aliases, or open them one at a time through CLI/Applications. Each table has its own catalog-linked discovery, complete capture, source version, numeric publisher plan and release history. Reopening a saved edition does not retarget its original capture. There is no joined dataset, linked-reference expansion or atomic multi-table snapshot implied by the document chooser.
+
 ## Discover actual native fields
 
-In Capture source, choose the declared connection, original document ID or URL ID, and actual user table ID. Enter an optional native membership filter such as {"Status":["Published"]}. The exact column must exist in the selected document. Free-form SQL, saved UI view IDs and automatic display-value lookups are not supported.
+In Capture source, choose the declared connection and original document ID or URL ID. Use the retained document chooser above, or enter an already known actual user table ID. Enter an optional native membership filter such as {"Status":["Published"]}. The exact column must exist in the selected document. Free-form SQL, saved UI view IDs and automatic display-value lookups are not supported.
 
 Inspect actual metadata retains the document/table binding, native field IDs, full types, visible schema and original request UUID. Choose fields from that actual metadata. An existing retained discovery can be selected again without another provider read.
 
@@ -319,7 +387,7 @@ await workspace.openPublisher({ expectedSelectedVersion, requestId });
 await workspace.close();
 ~~~
 
-The original model also exposes discovery/readLive/captureAttempt, full packet export/import, withOpenPublisher, deployment review/prepare/stage/status/commands and request recovery. serveGristAuthoring({workspace,port:0}) returns origin, token, url, workspace and close. The HTTP header is x-grist-workspace-token. service.close owns workspace.close; close is idempotent and waits for the same original closing promise.
+The original model also exposes listDocument/documentCatalog/exportDocument, discovery/readLive/captureAttempt, full packet export/import, withOpenPublisher, deployment review/prepare/stage/status/commands and request recovery. serveGristAuthoring({workspace,port:0}) returns origin, token, url, workspace and close. The HTTP header is x-grist-workspace-token. service.close owns workspace.close; close is idempotent and waits for the same original closing promise.
 
 This guide documents implemented source. Report a particular provider capture, installed source selection, application start or buyer delivery only from the corresponding actual native receipt. Keep the same original operation through interruption and reopen.
 

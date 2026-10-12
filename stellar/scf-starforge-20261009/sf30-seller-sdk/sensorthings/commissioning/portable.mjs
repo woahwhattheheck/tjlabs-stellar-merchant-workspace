@@ -3,7 +3,7 @@
 import {open,link,unlink,readdir,lstat,readFile} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {join,dirname,resolve,relative,basename} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {createGzip,createGunzip} from 'node:zlib';
 import {Readable} from 'node:stream';
@@ -11,6 +11,7 @@ import {parseExactJSON} from '../../stellar-expert/exact-json.mjs';
 import {privateDirectory,readOwned,syncDir} from '../../stellar-expert/store.mjs';
 import {openPrivateFile,hashHeldFile,inspectRetainedFile,exportEdition,importEdition} from '../portable.mjs';
 import {retainStream,retainedPath} from '../analysis/artifacts.mjs';
+import {readBrowserAssets} from '../../../distribution/browser-assets.mjs';
 import {identity,sha,json,stable,plain,hash,clone,fail,objectValue,saveValue,safeName} from './common.mjs';
 import {validateProject,TABLES} from './history.mjs';
 import {LIMITS} from './schema.mjs';
@@ -65,8 +66,8 @@ export async function projectObjects(store,snapshot){
 }
 async function sourceClosure(store){
  const queue=[],seen=new Set(),files=[];let total=0;
- const accepted=name=>/\.(?:mjs|cjs|js|py|json|md|txt|html|css|mts|svg|csv|toml|yaml|yml|xml|in)$/.test(name)||/^(?:LICENSE|COPYING|NOTICE|README)(?:[.-]|$)/.test(name);
- async function add(path,{directory=false}={}){
+ const accepted=name=>/\.(?:mjs|cjs|js|py|json|md|txt|html|css|mts|svg|csv|toml|yaml|yml|xml|in|png|jpe?g|gif|webp|ico|woff2?|ttf|otf|map)$/.test(name)||/^(?:LICENSE|COPYING|NOTICE|README)(?:[.-]|$)/.test(name);
+ async function add(path,{directory=false,declaredAsset=false}={}){
   const full=resolve(path),rel=relative(REPO,full);if(!rel||rel.startsWith('..')||rel.startsWith('/'))throw fail('SOURCE_CLOSURE','An editable dependency leaves the original source root.',409);
   const stat=await lstat(full);if(stat.isSymbolicLink())throw fail('SOURCE_CLOSURE','The editable source closure contains a symlink.',409);
   if(stat.isDirectory()){
@@ -76,10 +77,11 @@ async function sourceClosure(store){
     if(e.isDirectory())await add(join(full,e.name),{directory:true});else if(accepted(e.name))await add(join(full,e.name));
    }return;
   }
-  if(!stat.isFile()||!accepted(basename(full)))return;if(!seen.has(full)){seen.add(full);queue.push(full);}
+  if(!stat.isFile()||!declaredAsset&&!accepted(basename(full)))return;if(!seen.has(full)){seen.add(full);queue.push(full);}
  }
- await add(HERE,{directory:true});
- for(const folder of ['../desk/public','../analysis/ui'])await add(resolve(HERE,folder),{directory:true});
+ // Preserve the complete maintained SensorThings operator, including its
+ // original launch/core/Desk entry points and every literal dependency.
+ await add(resolve(HERE,'..'),{directory:true});
  for(const name of ['package.json','LICENSE','README.md'])try{await add(join(REPO,name));}catch(error){if(error.code!=='ENOENT')throw error;}
  for(let at=0;at<queue.length;at++){
   if(queue.length>10000)throw fail('SOURCE_CLOSURE','The complete editable source exceeds its declared member capacity.',413);
@@ -87,6 +89,11 @@ async function sourceClosure(store){
   if(!isSame(before,after)||BigInt(bytes.length)!==before.size)throw fail('SOURCE_CLOSURE','An editable source file changed while being retained.',409);
   total+=bytes.length;count(total,128*1024*1024,'editable source closure');
   const object=await store.putObject(bytes),rel=relativePath(relative(REPO,path).split('\\').join('/'));files.push({path:rel,...object});
+  if(basename(path)==='browser-assets.json'){
+   const assets=await readBrowserAssets(pathToFileURL(path));
+   for(const entry of assets.values())await add(fileURLToPath(entry.url),{declaredAsset:true});
+   if(!isSame(after,await lstat(path,{bigint:true})))throw fail('SOURCE_CLOSURE','The original browser asset manifest changed during source selection.',409);
+  }
   if(/\.(?:mjs|cjs|js)$/.test(path)){
    const content=bytes.toString('utf8'),imports=new Set();
    for(const match of content.matchAll(/\b(?:from\s*|import\s*\(\s*|import\s*|require\s*\(\s*)['"](\.[^'"]+)['"]/g))imports.add(match[1]);
@@ -129,20 +136,44 @@ async function* fileChunks(handle,size){
  const b=Buffer.alloc(CHUNK);let offset=0;while(offset<size){const q=await handle.read(b,0,Math.min(b.length,size-offset),offset);if(!q.bytesRead)throw fail('PORTABLE_TRUNCATED','The retained file ended before its complete byte count.',409);offset+=q.bytesRead;yield Buffer.from(b.subarray(0,q.bytesRead));}
 }
 export async function exportProject(store,{snapshot,edition,id,createdAt,label}){
- validateProject(snapshot);const closure=await projectObjects(store,snapshot),originalSources=[];
- for(const editionId of closure.editionIds){
-  const selected=await edition(editionId),reviews=store.read().reviews.filter(x=>x.editionId===editionId),
-   receipt=await exportEdition(store,{edition:selected,reviews,id:'commissioning-source-'+identity({id,editionId}).slice(0,48),createdAt});
-  originalSources.push({editionId,receipt,archive:{name:receipt.file.filename,...receipt.file}});
+ validateProject(snapshot);
+ const directory=await privateDirectory(join(store.root,'exports',safeName(id)),{create:true}),selectionPath=join(directory,'commissioning-selection.json');
+ let selection;
+ try{selection=decode(await readOwned(selectionPath,META));}catch(error){if(error.code!=='ENOENT')throw error;}
+ if(!selection){
+  const closure=await projectObjects(store,snapshot),originalSources=[];
+  for(const editionId of closure.editionIds){
+   const selected=await edition(editionId),reviews=store.read().reviews.filter(x=>x.editionId===editionId),
+    receipt=await exportEdition(store,{edition:selected,reviews,id:'commissioning-source-'+identity({id,editionId}).slice(0,48),createdAt});
+   originalSources.push({editionId,receipt,archive:{name:receipt.file.filename,...receipt.file}});
+  }
+  const sourceFiles=await sourceClosure(store),objects=new Map(closure.objects.map(x=>[x.sha256,x]));
+  for(const item of sourceFiles)addObject(objects,item);
+  const manifest={schema:FORMAT,id,createdAt,label,originalWorkspaceId:snapshot.project.originWorkspaceId,snapshot:clone(snapshot),snapshotSha256:identity(snapshot),
+   objects:[...objects.values()].sort((a,b)=>a.sha256.localeCompare(b.sha256)),sourceFiles,
+   editions:originalSources.map(({editionId,archive})=>({editionId,archive})),
+   meaning:'Complete selected project history, original source edition archives, exact native files and editable application source. Host tokens and environment values are not source. Pending received jobs require explicit local target binding.'};
+  await validateManifest(store,manifest);
+  selection={schema:'stellar-forge.sensorthings-commissioning-export-selection.v1',id,createdAt,manifest,originalSources};
+  // Bank the exact source and review edition before the first stream plan.
+  // Recovery keeps that selection even when installed application files advance.
+  await store.immutable(selectionPath,json(selection));await syncDir(directory);
  }
- const sourceFiles=await sourceClosure(store),objects=new Map(closure.objects.map(x=>[x.sha256,x]));
- for(const item of sourceFiles)addObject(objects,item);
- const manifest={schema:FORMAT,id,createdAt,label,originalWorkspaceId:snapshot.project.originWorkspaceId,snapshot:clone(snapshot),snapshotSha256:identity(snapshot),
-  objects:[...objects.values()].sort((a,b)=>a.sha256.localeCompare(b.sha256)),sourceFiles,
-  editions:originalSources.map(({editionId,archive})=>({editionId,archive})),
-  meaning:'Complete selected project history, original source edition archives, exact native files and editable application source. Host tokens and environment values are not source. Pending received jobs require explicit local target binding.'};
- await validateManifest(store,manifest);const manifestSha256=manifestIdentity(manifest);
- const locations=new Map(originalSources.map(x=>['edition:'+x.editionId,join(store.root,'exports',x.receipt.id,x.archive.name)]));
+ const {manifest,originalSources}=selection;
+ if(selection.schema!=='stellar-forge.sensorthings-commissioning-export-selection.v1'||selection.id!==id||selection.createdAt!==createdAt||
+    manifest?.id!==id||manifest.createdAt!==createdAt||manifest.label!==label||manifest.snapshotSha256!==identity(snapshot)||stable(manifest.snapshot)!==stable(snapshot)||
+    !Array.isArray(originalSources))throw fail('PORTABLE_REPLAY','The retained original export selection belongs to another request or project edition.',409);
+ await validateManifest(store,manifest);
+ if(stable(originalSources.map(({editionId,archive})=>({editionId,archive})))!==stable(manifest.editions))throw fail('PORTABLE_REPLAY','The retained original source archive selection differs.',409);
+ const manifestSha256=manifestIdentity(manifest),locations=new Map();
+ for(const source of originalSources){
+  if(source.receipt?.file?.sha256!==source.archive.sha256||source.receipt.file.bytes!==source.archive.bytes)throw fail('PORTABLE_REPLAY','An original source receipt differs from the retained archive.',409);
+  const expectedId='commissioning-source-'+identity({id,editionId:source.editionId}).slice(0,48);
+  if(source.receipt.id!==expectedId)throw fail('PORTABLE_REPLAY','The retained source export belongs to another original operation.',409);
+  const path=join(store.root,'exports',safeName(source.receipt.id),safeName(source.archive.name));
+  await inspectRetainedFile(path,{expectedBytes:source.archive.bytes,expectedSha256:source.archive.sha256,maximum:LIMITS.portableBytes});
+  locations.set('edition:'+source.editionId,path);
+ }
  async function* lines(){
   yield Buffer.from(JSON.stringify({kind:'manifest',manifest})+'\n');
   for(const member of members(manifest)){
@@ -163,7 +194,7 @@ export async function exportProject(store,{snapshot,edition,id,createdAt,label})
  let file;try{file=await retainStream(store,gzip,{operationId:id,createdAt,filename:'commissioning-'+snapshot.project.id.slice(0,16)+'-r'+snapshot.project.sequence+'.ndjson.gz',
   type:'application/gzip',inputIdentity:{manifestSha256},maximum:LIMITS.portableBytes});}finally{input.destroy();gzip.destroy();}
  const saved=await saveValue(store,manifest);
- return {file,manifest:{...saved,identity:manifestSha256,projectId:snapshot.project.id,sequence:snapshot.project.sequence,objects:manifest.objects.length,sourceFiles:sourceFiles.length,editions:manifest.editions.length}};
+ return {file,manifest:{...saved,identity:manifestSha256,projectId:snapshot.project.id,sequence:snapshot.project.sequence,objects:manifest.objects.length,sourceFiles:manifest.sourceFiles.length,editions:manifest.editions.length}};
 }
 async function* readLines(handle){
  const input=handle.createReadStream({autoClose:false,start:0}),gunzip=createGunzip();let produced=0,pending=Buffer.alloc(0);

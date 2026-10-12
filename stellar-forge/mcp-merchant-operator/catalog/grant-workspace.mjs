@@ -24,6 +24,9 @@ const createCase = {planId:id('plan'), selectedRevision:integer, expectedContent
 const supportDate = {type:'string', pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
 const installationSelection = {installationId:{anyOf:[id('installation'),{type:'null'}]},
   expectedRevision:{type:'integer',minimum:0,maximum:500}};
+const workshareSources = {sourceId:id('source'),expectedSourceSha256:digest,
+  packetSourceId:{anyOf:[id('source'),{type:'null'}]},
+  expectedPacketSha256:{anyOf:[digest,{type:'null'}]}};
 const installationRevision = {type:'integer',minimum:1,maximum:500};
 const cohortReviewIds = {type:'array',items:id('review'),uniqueItems:true,maxItems:20};
 const implementationReviewIds = {type:'array',items:id('review'),uniqueItems:true,maxItems:20};
@@ -147,6 +150,12 @@ export const grantWorkspaceTools = [
       limit:{type:'integer',minimum:1,maximum:100}},['workspace','caseId','installationId'],true),
   tool('installation_seed', 'Open a complete customer installation document with the pinned plan original work packages and measurable criteria. The document is at /document in the original response.',
     {...ws,...caseSelection},['workspace','caseId','expectedVersion'],true),
+  tool('installation_workshares', 'Read complete original commercial Workshares from an attached commissioning source and optional matching receiving packet. Preserve original case identity, complete plan, commercial currency/status, milestone amounts, phase count and effort.',
+    {...ws,...caseSelection,...workshareSources},
+    ['workspace','caseId','expectedVersion','sourceId','expectedSourceSha256'],true),
+  tool('installation_workshare_seed', 'Receive one original commercial Workshare into a complete editable native Installation document at /document. Keep complete attached sources, phase criteria and the original commercial currency/status. To refresh a current draft, supply its whole document as inputs or one retained input. Changed original phases reopen their acceptance steps; deployment, native payment and receiving choices remain editable. Save through installation_preview and installation_save.',
+    {...ws,...caseSelection,...workshareSources,...installationSelection,...modelInput,workshareCaseId:nonempty(500)},
+    ['workspace','caseId','expectedVersion','sourceId','expectedSourceSha256','workshareCaseId','installationId','expectedRevision'],true),
   tool('installation_preview', 'Review the complete selected customer installation against the original case version and current saved edition. Supply the document as inputs or one exact retained input with inputPointer /document from the seed.',
     {...ws,...caseSelection,...installationSelection,...modelInput},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision'],true),

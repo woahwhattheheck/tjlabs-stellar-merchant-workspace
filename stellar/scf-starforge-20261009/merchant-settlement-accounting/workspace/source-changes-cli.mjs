@@ -9,7 +9,6 @@ import {openAccountingWorkspace} from './store.mjs';
 import {AccountantWorkspace} from './accountant-workspace.mjs';
 import {QboWorkspace} from './qbo-workspace.mjs';
 import {XeroWorkspace} from './xero-workspace.mjs';
-import {accountingSourceMode} from './buyer-startup.mjs';
 import {SourceChangeWorkspace,handleSourceChangeRequest,SOURCE_CHANGE_REQUEST_BYTES} from './source-changes.mjs';
 import {SOURCE_CHANGE_SCHEMA,changeCheck as need,changeHash as hash,changeCanonical as canonical} from '../accountant/source-change.mjs';
 
@@ -97,7 +96,7 @@ export async function sourceChangesMain(argv,{signal}={}){
       signal.throwIfAborted();workspace=await openAccountingWorkspace({directory});
       const accountant=new AccountantWorkspace(workspace);
       xero=new XeroWorkspace(workspace,accountant);
-      if(accountingSourceMode(workspace.state)!=='buyer')qbo=new QboWorkspace(workspace,accountant);
+      qbo=new QboWorkspace(workspace,accountant);
       // Read/replacement operations need no provider startup or interrupted-operation replay.
       changes=new SourceChangeWorkspace(workspace,{qbo,xero});
     }

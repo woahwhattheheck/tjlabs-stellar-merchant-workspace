@@ -1,6 +1,10 @@
 // MIT. Saved scenario operations through the original authenticated merchant MCP.
 import { createRetainedDownload, openMerchantFileClient } from './retained-download.mjs';
 import { pricingCostClientOperations } from './pricing-cost-client.mjs';
+import { tariffClientOperations } from './catalog/pricing-tariffs.mjs';
+export { MerchantTariffClient,createMerchantTariffClient,downloadMerchantTariffPlan,inspectMerchantTariffPlan,
+  downloadMerchantTariffPortfolio,inspectMerchantTariffPortfolio,downloadMerchantTariffPricingReview,
+  inspectMerchantTariffPricingReview } from './pricing-tariffs-client.mjs';
 export { downloadMerchantCosts, inspectMerchantCosts } from './pricing-cost-client.mjs';
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -12,6 +16,7 @@ const plain = value => value !== null && typeof value === 'object' && !Array.isA
 
 export const pricingClientOperations = Object.freeze({
   ...pricingCostClientOperations,
+  ...tariffClientOperations,
   status:'merchant_pricing_status',open:'merchant_pricing_open',close:'merchant_pricing_close',
   capture:'merchant_pricing_source','review-preview':'merchant_pricing_preview',
   'review-save':'merchant_pricing_save','review-load':'merchant_pricing_load',
@@ -28,6 +33,7 @@ export const pricingClientOperations = Object.freeze({
 export async function callMerchantPricing({operation,args={},...connection} = {}) {
   if (!Object.hasOwn(pricingClientOperations,operation) || !plain(args))
     throw fail('ARGUMENTS','Choose a declared pricing operation and its exact input object.');
+  args=structuredClone(args);
   if (operation !== 'status' && !ALIAS.test(args.workspace ?? ''))
     throw fail('ARGUMENTS','Supply the existing host-declared pricing workspace alias.');
   if (operation === 'price-manifest') {
@@ -37,7 +43,9 @@ export async function callMerchantPricing({operation,args={},...connection} = {}
       throw fail('ARGUMENTS','The selected price decision conflicts with the original manifest identity.');
     args={...selected,kind:'decision',...(decision !== undefined ? {id:decision} : {})};
   }
-  const client=await openMerchantFileClient({...connection,errorPrefix:'PRICING',clientName:'starforge-merchant-pricing'});
+  const client=await openMerchantFileClient({...connection,
+    ...(operation.startsWith('tariff-')?{maximumResponseBytes:128*1024*1024}:{}),
+    errorPrefix:'PRICING',clientName:'starforge-merchant-pricing'});
   if (!['status','open','close'].includes(operation))
     await client.call('merchant_pricing_open',{workspace:args.workspace});
   return client.call(pricingClientOperations[operation],args);

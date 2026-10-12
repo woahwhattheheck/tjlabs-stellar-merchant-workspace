@@ -21,6 +21,7 @@ import {
   DATASET_SOURCE_SCHEMA,
   CLICKHOUSE_SOURCE_SCHEMA,
   GRPC_SOURCE_SCHEMA,
+  A2A_SOURCE_SCHEMA,
 } from './release-source-contracts.mjs';
 import { prepareReleaseDelivery, verifyReleaseDeliveryStartup } from './release-delivery.mjs';
 import { acquireReleaseLease, releaseProcessOwner, releaseOwnerLiveness, recordedSellerAlive,
@@ -54,6 +55,8 @@ const stageDatasetRelease = async (...args) => (await import('./release-dataset.
 const inspectDatasetRelease = async (...args) => (await import('./release-dataset.mjs')).inspectDatasetRelease(...args);
 const stageClickHouseRelease = async (...args) => (await import('./release-clickhouse.mjs')).stageClickHouseRelease(...args);
 const inspectClickHouseRelease = async (...args) => (await import('./release-clickhouse.mjs')).inspectClickHouseRelease(...args);
+const stageA2ARelease = async (...args) => (await import('../sf30-seller-sdk/a2a/release.mjs')).stageA2ARelease(...args);
+const inspectA2ARelease = async (...args) => (await import('../sf30-seller-sdk/a2a/release.mjs')).inspectA2ARelease(...args);
 const stageGrpcRelease = async (...args) => (await import('./release-grpc.mjs')).stageGrpcRelease(...args);
 const inspectGrpcRelease = async (...args) => (await import('./release-grpc.mjs')).inspectGrpcRelease(...args);
 
@@ -79,6 +82,7 @@ const SQLITE_PILOT = fileURLToPath(new URL('./release-sqlite.mjs', import.meta.u
 const DATASET_PILOT = fileURLToPath(new URL('./release-dataset.mjs', import.meta.url));
 const CLICKHOUSE_PILOT = fileURLToPath(new URL('./release-clickhouse.mjs', import.meta.url));
 const GRPC_PILOT = fileURLToPath(new URL('./release-grpc.mjs', import.meta.url));
+const A2A_PILOT = fileURLToPath(new URL('../sf30-seller-sdk/a2a/release.mjs', import.meta.url));
 const CHILD = fileURLToPath(new URL('./release-child.mjs', import.meta.url));
 const LIMIT = 4 * 1024 * 1024;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -317,6 +321,12 @@ export { sourceSnapshot as inspectReleaseSource };
 async function sourceSnapshot(path, upstreams, allowLoopback = false) {
   const manifestBytes = await regular(join(path, 'manifest.json'), 2 * 1024 * 1024);
   const manifest = JSON.parse(manifestBytes);
+  if (manifest.schema === A2A_SOURCE_SCHEMA) {
+    if (upstreams) throw new TypeError('An A2A result release owns its exact retained output asset.');
+    const snapshot = await inspectA2ARelease(path);
+    const routes = sourceRoutes(snapshot.service, new Map()).map(route => ({ ...route, application: { ...route.application, a2aExecutionSha256: snapshot.a2a.executionSha256, responseSha256: snapshot.a2a.assetSha256 } }));
+    return { ...snapshot, routes };
+  }
   if (manifest.schema === GRPC_SOURCE_SCHEMA) {
     if (upstreams) throw new TypeError('A gRPC release owns its original method and transport bindings.');
     const snapshot = await inspectGrpcRelease(path);
@@ -474,7 +484,8 @@ function publicRelease(record) {
     ...(record.sqlite ? { sqlite: record.sqlite } : {}),
     ...(record.dataset ? { dataset: record.dataset } : {}),
     ...(record.clickhouse ? { clickhouse: record.clickhouse } : {}),
-    ...(record.grpc ? { grpc: record.grpc } : {}) };
+    ...(record.grpc ? { grpc: record.grpc } : {}),
+    ...(record.a2a ? { a2a: record.a2a } : {}) };
 }
 function checkFacilitatorReview(record) {
   const review = record.facilitatorReview;
@@ -526,7 +537,8 @@ async function releaseRecord(root, releaseId, verify = false) {
         stable(snapshot.sqlite ?? null) !== stable(record.sqlite ?? null) ||
         stable(snapshot.dataset ?? null) !== stable(record.dataset ?? null) ||
         stable(snapshot.clickhouse ?? null) !== stable(record.clickhouse ?? null) ||
-        stable(snapshot.grpc ?? null) !== stable(record.grpc ?? null))
+        stable(snapshot.grpc ?? null) !== stable(record.grpc ?? null) ||
+        stable(snapshot.a2a ?? null) !== stable(record.a2a ?? null))
       throw new Error('Release files changed after staging. Restore the selected immutable release.');
     if (record.handlerEntry && hash(await regular(installation?.runtime.handlers ?? record.handlerEntry.path)) !== record.handlerEntry.sha256)
       throw new Error('Trusted handler entry changed after staging. Restore it or stage a new release.');
@@ -555,6 +567,9 @@ export async function inspectReleaseInstallation(root, releaseId) {
 export async function stageRelease(root, options) {
   root = resolve(root); await readReleaseState(root);
   const releaseId = id(options.id), label = text(options.label ?? releaseId, 'Release label');
+  const a2aSource = options.a2aPackage !== undefined;
+  if (a2aSource && (Object.keys(options).some(key => !['id','label','alias','runtime','a2aPackage'].includes(key) && options[key] !== undefined) || options.runtime?.handlers || options.runtime?.upstreams || options.runtime?.allowLoopbackUpstream))
+    throw new TypeError('Choose the retained A2A result package or another source; its exact paid bytes and original seller terms remain fixed.');
   const datasetSource = options.datasetPackage !== undefined;
   if (datasetSource && (Object.keys(options).some(key =>
       !['id','label','alias','runtime','datasetPackage'].includes(key) && options[key] !== undefined) ||
@@ -637,7 +652,8 @@ export async function stageRelease(root, options) {
   let committed = false;
   try {
     let stagedDuckdb, stagedSqlite;
-    if (datasetSource) await stageDatasetRelease(temp, options.datasetPackage);
+    if (a2aSource) await stageA2ARelease(temp, options.a2aPackage);
+    else if (datasetSource) await stageDatasetRelease(temp, options.datasetPackage);
     else if (postgresSource) await stagePostgresRelease(temp, options.postgresPackage, {
       signal: options.signal, expectedInputManifestSha256: options.postgresInputManifestSha256 });
     else if (clickhouseSource) await stageClickHouseRelease(temp, options.clickhousePackage, { columnTypes: options.clickhouseColumnTypes });
@@ -696,8 +712,10 @@ export async function stageRelease(root, options) {
       ...(source.dataset ? { dataset: source.dataset } : {}),
       ...(source.clickhouse ? { clickhouse: source.clickhouse } : {}),
       ...(source.grpc ? { grpc: source.grpc } : {}),
+      ...(source.a2a ? { a2a: source.a2a } : {}),
       source: { offersSha256: source.manifest.offersSha256, serviceConfigSha256: source.manifest.serviceConfigSha256,
-        ...(source.grpc ? { kind: 'GRPC_MERCHANT_PACKAGE', packageSha256: source.grpc.packageSha256,
+        ...(source.a2a ? { kind: 'A2A_RESULT_EDITION', editionId: source.a2a.editionId, assetSha256: source.a2a.assetSha256, executionSha256: source.a2a.executionSha256 }
+          : source.grpc ? { kind: 'GRPC_MERCHANT_PACKAGE', packageSha256: source.grpc.packageSha256,
           protoSha256: source.grpc.protoSha256, sourceConfigSha256: source.grpc.sourceConfigSha256,
           planSha256: source.grpc.planSha256, bindingsSha256: source.grpc.bindingsSha256,
           executionSha256: source.grpc.executionSha256 }
@@ -907,6 +925,8 @@ export async function compareReleases(root, beforeId, afterId, { beforeRoot = ro
     runtimeChanges.push({ field: 'sqlite', before: before?.sqlite ?? null, after: after.sqlite ?? null });
   if (stable(before?.clickhouse ?? null) !== stable(after.clickhouse ?? null))
     runtimeChanges.push({ field: 'clickhouse', before: before?.clickhouse ?? null, after: after.clickhouse ?? null });
+  if (stable(before?.a2a ?? null) !== stable(after.a2a ?? null))
+    runtimeChanges.push({ field: 'a2a', before: before?.a2a ?? null, after: after.a2a ?? null });
   if (stable(before?.grpc ?? null) !== stable(after.grpc ?? null))
     runtimeChanges.push({ field: 'grpc', before: before?.grpc ?? null, after: after.grpc ?? null });
   if (stable(before?.dataset ?? null) !== stable(after.dataset ?? null))
@@ -1138,7 +1158,7 @@ export async function runActiveRelease(root, { startupTimeoutMs = 45000, shutdow
     const cacheRoutes = record.routes.filter(route => route.upstream?.cache).map(route => ({
       id: route.id, binding: route.application.handler, policy: route.upstream.cache }));
     await releaseLock.update({ instanceId, releaseId: record.id, releaseDigest: record.digest, selectionGeneration: state.generation });
-    child = spawn(process.execPath, [CHILD, record.grpc ? GRPC_PILOT : record.dataset ? DATASET_PILOT : record.clickhouse ? CLICKHOUSE_PILOT : record.postgres ? POSTGRES_PILOT : record.opensearch ? OPENSEARCH_PILOT : record.redis ? REDIS_PILOT : record.mysql ? MYSQL_PILOT : record.mssql ? MSSQL_PILOT : record.sqlite ? SQLITE_PILOT : record.jsonrpc ? JSONRPC_PILOT : record.s3 ? S3_PILOT : record.duckdb ? DUCKDB_PILOT : record.python ? PYTHON_PILOT : PILOT, path, instanceId, releaseCacheControlPath(root, instanceId), releaseLock.lifetime ? '4' : '-'],
+    child = spawn(process.execPath, [CHILD, record.a2a ? A2A_PILOT : record.grpc ? GRPC_PILOT : record.dataset ? DATASET_PILOT : record.clickhouse ? CLICKHOUSE_PILOT : record.postgres ? POSTGRES_PILOT : record.opensearch ? OPENSEARCH_PILOT : record.redis ? REDIS_PILOT : record.mysql ? MYSQL_PILOT : record.mssql ? MSSQL_PILOT : record.sqlite ? SQLITE_PILOT : record.jsonrpc ? JSONRPC_PILOT : record.s3 ? S3_PILOT : record.duckdb ? DUCKDB_PILOT : record.python ? PYTHON_PILOT : PILOT, path, instanceId, releaseCacheControlPath(root, instanceId), releaseLock.lifetime ? '4' : '-'],
       { stdio: ['ignore', 'pipe', 'pipe', 'ipc', ...(releaseLock.lifetime ? [releaseLock.lifetime.fd] : [])],
         windowsHide: true, detached: process.platform !== 'win32', env: { ...env } });
     let readyResolve, readyReject, ownerResolve, ownerReject, stdout = '', stderr = '';

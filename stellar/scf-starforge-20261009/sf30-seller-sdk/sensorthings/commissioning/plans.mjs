@@ -139,8 +139,8 @@ export function verificationPlan(original,journal,{id,createdAt}){
  for(const step of original.steps){
   const result=journal.steps.find(x=>x.stepId===step.stepId);
   if(result?.state!=='COMPLETE'||!result.targetIdJson)continue;
-  steps.push({...step,stepId:identity({verify:id,originalStepId:step.stepId}),originalStepId:step.stepId,mode:'verify',
-   targetIdJson:result.targetIdJson,expectedBodyText:result.materializedBodyText??step.bodyText,expectedRelations:result.materializedRelations??{},
+  steps.push({...step,stepId:identity({verify:id,originalStepId:step.stepId}),originalStepId:step.stepId,mode:step.mode==='delete'?'verify-delete':'verify',
+   targetIdJson:result.targetIdJson,expectedBodyText:result.materializedBodyText??step.bodyText,expectedRelations:result.materializedRelations??{},expectedAbsentFields:step.removeFields??[],
    originalMode:step.mode});
  }
  return {schema:'stellar-forge.sensorthings-commissioning-native-plan.v1',id,kind:'verify',projectId:original.projectId,target:clone(original.target),
@@ -167,7 +167,8 @@ export async function rollbackPlan({store,original,journal,verification,createdA
    if(!step.beforeImage){issues.push(issue('ROLLBACK_BEFORE_IMAGE_MISSING',{sourceKey:step.sourceKey},true));continue;}
    steps.push({...step,stepId:identity({rollback:original.id,sourceStepId:step.stepId,target:observed.targetIdJson,receipt:last.response.body.sha256}),
     sourceStepId:step.stepId,mode:'restore',targetIdJson:observed.targetIdJson,beforeImage,
-    bodyText:exact(cleanBody(step.entityKind,exactParse(step.beforeImage.bodyText)).values),relations:step.beforeImage.targetRelations??{}});
+    bodyText:exact(cleanBody(step.entityKind,exactParse(step.beforeImage.bodyText)).values),relations:step.beforeImage.targetRelations??{},
+    removeFields:Object.keys(cleanBody(step.entityKind,exactParse(beforeImage.bodyText)).values).filter(key=>!Object.hasOwn(cleanBody(step.entityKind,exactParse(step.beforeImage.bodyText)).values,key))});
   }
  }
  const body={schema:'stellar-forge.sensorthings-commissioning-plan.v1',kind:'rollback',projectId:original.projectId,sourceId:original.sourceId,

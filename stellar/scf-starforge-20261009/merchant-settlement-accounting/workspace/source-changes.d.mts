@@ -27,6 +27,11 @@ export type SourceChangeTarget =
 export interface SourceChangeQboRow {
   rowId: string; amount: string;
   debitAccount: { value: string }; creditAccount: { value: string }; description: string;
+  /** Required for original buyer allocations; merchant rows retain their original shape. */
+  decision?: "include"; valuationNote?: string;
+}
+export interface SourceChangeQboExcludedRow {
+  rowId: string; decision: "exclude"; reason: string;
 }
 export type SourceChangeXeroEntry =
   | { componentId: string; decision: "include"; date: string; amount: string;
@@ -34,7 +39,12 @@ export type SourceChangeXeroEntry =
   | { componentId: string; decision: "exclude"; reason: string };
 export interface SourceChangeSuccessorIdentity { id: string; createdAt: string; name: string; actor: string }
 export interface SourceChangeQboSuccessor extends SourceChangeSuccessorIdentity {
-  txnDate: string; docNumber?: string | null; rows: readonly SourceChangeQboRow[];
+  txnDate: string; docNumber?: string | null;
+  rows: readonly (SourceChangeQboRow | SourceChangeQboExcludedRow)[];
+  /** Required by the original compiler when the predecessor is a buyer plan. */
+  valuationBasis?: string;
+  /** Inspection defaults expose the original kind; the compiler derives it from the handoff. */
+  sourceKind?: "buyer-expense-period";
 }
 export interface SourceChangeXeroSuccessor extends SourceChangeSuccessorIdentity {
   entries: readonly SourceChangeXeroEntry[]; valuationBasis: string;
@@ -102,6 +112,18 @@ export interface SourceChangeInspection extends SourceChangeEnvelope {
     | Omit<SourceChangeXeroSuccessor, "id" | "createdAt" | "actor">;
   source: SourceChangeSource;
 }
+/** Read-only native analysis; no review file, cancellation, or successor is written. */
+export interface SourceChangePreview extends SourceChangeEnvelope {
+  revision: number; id: string; kind: SourceChangeKind; planId: string;
+  predecessorSha256: string; comparisonSha256: string; inputSha256: string;
+  successorId: string; previewSha256: string;
+  comparison: SourceChangeComparison; source: SourceChangeSource;
+  request: Record<string, unknown>; plan: Record<string, unknown>;
+}
+export interface SourceChangePrepareOptions {
+  /** Pin the exact native preview without changing the original inputSha256. */
+  previewSha256?: string;
+}
 export interface SourceChangeDetail extends SourceChangeEnvelope {
   revision: number; reopenRequired: boolean; record: SourceChangeRecord;
   review: { comparison: SourceChangeComparison; source: SourceChangeSource;
@@ -140,7 +162,8 @@ export declare class SourceChangeWorkspace {
   catalog(): Promise<SourceChangeCatalog>;
   sources(options?: { offset?: number; limit?: number }): Promise<SourceChangeSourcePage>;
   inspect(value: SourceChangeInspectInput): Promise<SourceChangeInspection>;
-  prepare(value: SourceChangePrepareInput): Promise<SourceChangeDetail>;
+  preview(value: SourceChangePrepareInput): Promise<SourceChangePreview>;
+  prepare(value: SourceChangePrepareInput, options?: SourceChangePrepareOptions): Promise<SourceChangeDetail>;
   detail(changeId: string): Promise<SourceChangeDetail>;
   apply(changeId: string, value: SourceChangeApplyInput): Promise<SourceChangeDetail>;
   resume(changeId: string, value: SourceChangeResumeInput): Promise<SourceChangeDetail>;

@@ -1,12 +1,12 @@
 // MIT. One original workspace writer; FROST workers own their actual kernel lease.
 import {spawn} from 'node:child_process';
 import {constants} from 'node:fs';
-import {open,lstat,readdir,readFile} from 'node:fs/promises';
+import {open,lstat,readdir,readFile,rename} from 'node:fs/promises';
 import {join,dirname,relative,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
 import {privateDirectory,readOwned,atomicJSON,acquireWorkspaceLease} from '../../stellar-expert/store.mjs';
-import {sha,json,identity,objectValue,fail,hash,clone,saveValue} from './common.mjs';
+import {sha,json,identity,objectValue,fail,hash,clone,saveValue,nativeCustodyIdentity} from './common.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url)),TERMINAL=new Set(['COMPLETE','FAILED','CANCELLED','AWAITING_RECONCILIATION','DEFERRED']);
 const nativeBytes=value=>Buffer.from(JSON.stringify(value)+'\n');
 const safeRelative=value=>typeof value==='string'&&value&&!value.startsWith('/')&&!value.includes('\\')&&!value.split('/').some(x=>!x||x==='.'||x==='..');
@@ -79,7 +79,7 @@ export function createNativeRuntime({store,environment=process.env,runtime={},on
  }
  async function inspect(job){
   if(reading.has(job.id))return reading.get(job.id);
-  const pending=(async()=>{
+  const custodyKey=nativeCustodyIdentity(job),pending=(async()=>{
    let prepared;
    try{prepared=await prepare(job);}catch(error){if(error.code==='ENOENT')return null;throw error;}
    const {dir,input}=prepared;let raw;
@@ -98,7 +98,7 @@ export function createNativeRuntime({store,environment=process.env,runtime={},on
    // Terminal provider state is adopted as complete only after the actual
    // native owner has released its kernel lock and all file writes are closed.
    const state=!closed&&TERMINAL.has(original.state)?'DRAINING':closed&&original.state==='RUNNING'?'INTERRUPTED':original.state;
-   const key=identity({native:sha(raw),closed,state});
+   const key=identity({native:sha(raw),closed,state,custodyKey});
    if(observations.get(job.id)?.key===key)return observations.get(job.id).snapshot;
    const members=await collect(dir),memberMap=new Map(members.map(x=>[x.path,x])),steps=[];
    for(const definition of input.plan.steps){
@@ -114,9 +114,17 @@ export function createNativeRuntime({store,environment=process.env,runtime={},on
      counts:{...original.counts,complete:steps.filter(x=>x.state==='COMPLETE').length},error:original.error??null,notBefore:original.notBefore??null,
      updatedAt:original.updatedAt,completedAt:state==='COMPLETE'?original.completedAt??null:null,runtimeIdentity:original.runtimeIdentity??null,journal,files:fileManifest};
    const saved={...snapshot,document:await saveValue(store,snapshot)};
-   await onSnapshot(job.id,saved);observations.set(job.id,{key,snapshot:saved});return saved;
+   const accepted=await onSnapshot(job.id,saved,custodyKey);
+   if(accepted===false){observations.delete(job.id);return null;}
+   observations.set(job.id,{key,snapshot:saved});return saved;
   })();reading.set(job.id,pending);
   try{return await pending;}finally{reading.delete(job.id);}
+ }
+ async function drainObservations(jobIds){
+  const selected=new Set(jobIds),pending=[...reading].filter(([id])=>selected.has(id)).map(([,work])=>work);
+  const outcomes=await Promise.allSettled(pending);
+  for(const id of selected)observations.delete(id);
+  const failed=outcomes.find(x=>x.status==='rejected');if(failed)throw failed.reason;
  }
  function launch(job){
   if(closing)throw fail('CLOSING','The original commissioning manager is closing.',503);
@@ -159,14 +167,40 @@ export function createNativeRuntime({store,environment=process.env,runtime={},on
   const snapshot=await inspect(job)??job.latest;if(!snapshot)return [];
   const manifest=await objectValue(store,snapshot.files);return manifest.members;
  }
+ async function owned(job){
+  if(running.has(job.id)||launches.has(job.id))return true;
+  const {input}=await prepare(job);return targetBusy(input);
+ }
  async function restore(job,members){
   if(running.has(job.id)||launches.has(job.id))throw fail('NATIVE_CUSTODY_BUSY','The original job has a live local owner.',409);
-  const {dir,input}=await prepare(job);if(await targetBusy(input))throw fail('NATIVE_CUSTODY_BUSY','The actual native target owner is still running.',409);
-  for(const member of members){
-   if(!safeRelative(member.path)||member.path.endsWith('.lock'))throw fail('NATIVE_CUSTODY','A received native file path is invalid.',409);
-   const path=join(dir,...member.path.split('/'));await privateDirectory(dirname(path),{create:true});
-   await store.immutable(path,await store.object(member.sha256));
-  }
+  let {dir,input}=await prepare(job),lease;
+  try{lease=await acquireWorkspaceLease(join(dir,'lifetime.lock'));}
+  catch(error){if(error.code==='STELLAR_WORKSPACE_BUSY')throw fail('NATIVE_CUSTODY_BUSY','The actual native target owner is still running.',409);throw error;}
+  try{
+   const selection={jobId:job.id,input:job.input,nativeSnapshot:job.latest?.document??null,
+    files:members.map(x=>({path:x.path,sha256:x.sha256,bytes:x.bytes}))},selectionSha256=identity(selection),
+    receivingRoot=await privateDirectory(join(store.root,'commissioning-receiving'),{create:true}),markerPath=join(receivingRoot,job.id+'.json');
+   let prior=null;try{prior=JSON.parse((await readOwned(markerPath,16*1024*1024)).toString('utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
+   if(prior?.selectionSha256!==selectionSha256){
+    const retiredRoot=await privateDirectory(join(store.root,'commissioning-native-retired'),{create:true}),retiredName=job.id+'-'+randomUUID();
+    lease.assert();await rename(dir,join(retiredRoot,retiredName));
+    observations.delete(job.id);for(const path of [...fileCache.keys()])if(path.startsWith(dir+'/'))fileCache.delete(path);
+    dir=await privateDirectory(directory(job.id),{create:true});
+    await atomicJSON(markerPath,{schema:'stellar-forge.sensorthings-local-receiving.v1',jobId:job.id,selectionSha256,selection,
+     state:'RESTORING',retiredDirectory:'commissioning-native-retired/'+retiredName});
+   }
+   // Only the exact received snapshot enters this new private writable tree.
+   // The former closed tree remains retained; no mutable file is overwritten.
+   for(const member of members){
+    if(!safeRelative(member.path)||member.path.endsWith('.lock'))throw fail('NATIVE_CUSTODY','A received native file path is invalid.',409);
+    const path=join(dir,...member.path.split('/'));await privateDirectory(dirname(path),{create:true});lease.assert();
+    const bytes=await store.object(member.sha256);if(bytes.length!==member.bytes)throw fail('NATIVE_CUSTODY','A received native file length differs.',409);
+    await store.immutable(path,bytes);
+   }
+   await prepare(job);const marker=JSON.parse((await readOwned(markerPath,16*1024*1024)).toString('utf8'));
+   await atomicJSON(markerPath,{...marker,state:'COMPLETE'});
+   observations.delete(job.id);return {jobId:job.id,selectionSha256,state:'RESTORED'};
+  }finally{if(lease)await lease.close();}
  }
  async function drain(job){
   const owner=running.get(job.id);if(!owner)return;
@@ -188,6 +222,6 @@ export function createNativeRuntime({store,environment=process.env,runtime={},on
    const failed=[...started,...drained,...read].find(x=>x.status==='rejected');if(failed)throw failed.reason;
   })();return closePromise;
  }
- return {selection,prepare,launch,inspect,cancel,resume,resolution,files,restore,drain,close,
+ return {selection,prepare,launch,inspect,cancel,resume,resolution,files,restore,drain,drainObservations,close,owned,
   hasOwner:id=>running.has(id)||launches.has(id),directory};
 }

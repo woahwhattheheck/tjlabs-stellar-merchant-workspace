@@ -2,6 +2,8 @@
 import {identity,stable,clone,hash,plain,fail,statePart,ensureState,find} from './common.mjs';
 export const TABLES=Object.freeze(['sources','targets','mappings','plans','reviews','jobs']);
 const IMMUTABLE=new Set(['sources','targets','mappings','plans','reviews']);
+const JOB_IDENTITY=['id','projectId','kind','planId','targetId','sourceJobId','input','createdAt','stepCount','targetTimeoutMs'];
+const jobIdentity=value=>Object.fromEntries(JOB_IDENTITY.map(key=>[key,value[key]??null]));
 export function projectHead(project){
  return {id:project.id,originWorkspaceId:project.originWorkspaceId,label:project.label,description:project.description,
   createdAt:project.createdAt,updatedAt:project.updatedAt,sequence:project.sequence,headHash:project.headHash};
@@ -24,6 +26,7 @@ export function appendEvent(state,projectId,{operationId,action,createdAt,change
   if(index>=0){
    if(values[index].projectId!==projectId)throw fail('HISTORY_SCOPE','The record belongs to another project.',409);
    if(IMMUTABLE.has(change.table)&&stable(values[index])!==stable(change.record))throw fail('IMMUTABLE_RECORD','The immutable project record changed.',409);
+   if(change.table==='jobs'&&stable(jobIdentity(values[index]))!==stable(jobIdentity(change.record)))throw fail('JOB_IDENTITY','A native job must retain its original input and target identity.',409);
    values[index]=clone(change.record);
   }else values.push(clone(change.record));
  }
@@ -50,6 +53,7 @@ export function validateProject(snapshot){
    if(!TABLES.includes(change.table)||!plain(change.record)||change.record.projectId!==p.id)throw fail('PROJECT_HISTORY','A retained event has another project record.',409);
    hash(change.record.id);const old=tables[change.table].get(change.record.id);
    if(old&&IMMUTABLE.has(change.table)&&stable(old)!==stable(change.record))throw fail('PROJECT_HISTORY','An immutable historical record was replaced.',409);
+   if(old&&change.table==='jobs'&&stable(jobIdentity(old))!==stable(jobIdentity(change.record)))throw fail('JOB_IDENTITY','The history changes an original native job input or target.',409);
    tables[change.table].set(change.record.id,change.record);
   }
   previous=claimed;
@@ -82,6 +86,16 @@ export function adoptProject(state,snapshot){
  if(index<0)part.projects.push(clone(snapshot.project));else part.projects[index]=clone(snapshot.project);
  for(const table of TABLES){part[table]=part[table].filter(x=>x.projectId!==id);part[table].push(...clone(snapshot.tables[table]));}
  part.local??={receivedJobs:{},bindings:{}};
- for(const job of snapshot.tables.jobs)if(!part.local.bindings[job.id])part.local.receivedJobs[job.id]=true;
+ for(const job of snapshot.tables.jobs){
+  const prior=part.local.bindings[job.id];
+  if(prior){
+   part.local.retiredBindings??=[];part.local.retiredBindings.push({jobId:job.id,binding:clone(prior),receivedHeadHash:snapshot.project.headHash,
+    reason:'A strictly newer original project edition superseded this closed local working selection.'});
+   delete part.local.bindings[job.id];
+  }
+  // Receiving never turns a prior host's mutable directory into the new
+  // authority. Explicit local resume selects/restores this incoming snapshot.
+  part.local.receivedJobs[job.id]=true;
+ }
  return disposition;
 }

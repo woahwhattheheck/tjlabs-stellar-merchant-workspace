@@ -51,7 +51,7 @@ export async function serveGristAuthoring({ workspace, port = 8482 } = {}) {
       if (req.method === 'GET') {
         if (path === '/api/status') {
           const options = {};
-          for (const key of ['limit', 'capturesOffset', 'versionsOffset', 'discoveriesOffset']) if (url.searchParams.has(key)) options[key] = Number(url.searchParams.get(key));
+          for (const key of ['limit', 'capturesOffset', 'versionsOffset', 'discoveriesOffset', 'documentsOffset']) if (url.searchParams.has(key)) options[key] = Number(url.searchParams.get(key));
           return send(200, await workspace.status(options));
         }
         if (path === '/api/deployment/status') {
@@ -67,6 +67,13 @@ export async function serveGristAuthoring({ workspace, port = 8482 } = {}) {
           return send(200, file.bytes, file.mime, file.filename);
         }
         if (path === '/api/capture') return send(200, await workspace.inspectCapture(url.searchParams.get('id')));
+        if (path === '/api/document') return send(200, workspace.documentCatalog(url.searchParams.get('id'), {
+          offset: Number(url.searchParams.get('offset') ?? 0), limit: Number(url.searchParams.get('limit') ?? 100),
+          search: url.searchParams.get('search') ?? '' }));
+        if (path === '/api/export-document') {
+          const file = await workspace.exportDocument(url.searchParams.get('id'));
+          return send(200, file.bytes, file.mime, file.filename);
+        }
         if (path === '/api/discovery') return send(200, workspace.discovery(url.searchParams.get('id')));
         if (path === '/api/capture-attempt') return send(200, await workspace.captureAttempt(url.searchParams.get('id')));
         if (path === '/api/export-capture') {
@@ -84,6 +91,7 @@ export async function serveGristAuthoring({ workspace, port = 8482 } = {}) {
       }
       if (req.method !== 'POST') throw fault('NOT_FOUND', 'Action not found.', 404);
       const input = await body(req);
+      if (path === '/api/document') return send(201, await workspace.listDocument(input));
       if (path === '/api/discover') return send(201, await workspace.discover(input));
       if (path === '/api/import-package') return send(201, await workspace.importPacket(input));
       if (path === '/api/capture') return send(201, await workspace.readLive(input));

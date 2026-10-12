@@ -74,8 +74,11 @@ export async function startAccountingWorkspace({port=8446,host='127.0.0.1',rpcPr
     const workspace=await openAccountingWorkspace(options),accountant=new AccountantWorkspace(workspace);
     if(accountingSourceMode(workspace.state)==='buyer'){
       const xero=new XeroWorkspace(workspace,accountant,xeroClient?{client:xeroClient}:{});
-      try{check(!portfolioReview,'PORTFOLIO_MERCHANT_REQUIRED','Open the original merchant coordinator for the firm portfolio; this workspace retains an issued buyer period.',409);await xero.init();const sourceChanges=new SourceChangeWorkspace(workspace,{xero,connections:connectionsWorkspace});return {workspace,accountant,xero,sourceChanges};}
-      catch(error){await closeRuntime({workspace,xero}).catch(()=>{});throw error;}
+      let qbo;
+      try{check(!portfolioReview,'PORTFOLIO_MERCHANT_REQUIRED','Open the original merchant coordinator for the firm portfolio; this workspace retains an issued buyer period.',409);
+        qbo=new QboWorkspace(workspace,accountant,qboClient?{client:qboClient}:{});await qbo.recover();await xero.init();
+        const sourceChanges=new SourceChangeWorkspace(workspace,{qbo,xero,connections:connectionsWorkspace});return {workspace,accountant,qbo,xero,sourceChanges};}
+      catch(error){await closeRuntime({workspace,qbo,xero}).catch(()=>{});throw error;}
     }
     const cryptoworth=new CryptoworthWorkspace(workspace,accountant),runbooks=new RunbookWorkspace(workspace,accountant);
     const bitwave=new BitwaveWorkspace(workspace,accountant,bitwaveClient?{client:bitwaveClient}:{}),xero=new XeroWorkspace(workspace,accountant,xeroClient?{client:xeroClient}:{});let collection,portfolioClients;
@@ -148,8 +151,8 @@ export async function startAccountingWorkspace({port=8446,host='127.0.0.1',rpcPr
       if(maintenancePath){send(response,200,await maintenance.route({method:request.method,path,value}));return;}
       const {workspace,accountant,cryptoworth,runbooks,portfolio,portfolioClients,bitwave,qbo,xero,collection,statements,delivery,sourceChanges}=operation;
       if(accountingSourceMode(workspace.state)==='buyer')
-        check(path==='/api/state'||path==='/api/accountant'||path.startsWith('/api/accountant/')||path==='/api/xero'||path.startsWith('/api/xero/')||path==='/api/source-changes'||path.startsWith('/api/source-changes/'),
-          'BUYER_ACCOUNTING_OPERATION','Use this buyer workspace’s issued-source, accountant, Xero, source-change and recovery operations.',409);
+        check(path==='/api/state'||path==='/api/accountant'||path.startsWith('/api/accountant/')||path==='/api/qbo'||path.startsWith('/api/qbo/')||path==='/api/xero'||path.startsWith('/api/xero/')||path==='/api/source-changes'||path.startsWith('/api/source-changes/'),
+          'BUYER_ACCOUNTING_OPERATION','Use this buyer workspace’s issued-source, accountant, QuickBooks, Xero, source-change and recovery operations.',409);
       if(clientMount){
         check(clientMount[2]==='/api/runbooks'||clientMount[2].startsWith('/api/runbooks/'),'NOT_FOUND','Choose an original client-runbook operation.',404);
         check(portfolioClients,'PORTFOLIO_CLIENT_NOT_CONFIGURED','Open the configured portfolio host.',409);

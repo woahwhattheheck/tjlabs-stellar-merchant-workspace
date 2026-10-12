@@ -64,7 +64,20 @@ Read bounds are explicit. maxPageBytes bounds each full response, not a provider
 
 ## Actual discovery and capture
 
-Discovery uses GET document, tables and columns through the same fixed-origin reader. A source may have queries:{} while discovering, but it still needs the actual original document and an intended table ID. The table listing is returned with discovery. To obtain an initial list before selecting a table, the authorized host may retain the real GET /api/docs/DOC_ID/tables response directly as provider acquisition context; it is not a completed capture.
+The [workspace document chooser](WORKSPACE.md#select-a-document-and-actual-table) obtains the initial table catalog without a table placeholder. Use the existing private connection file and original workspace command:
+
+~~~sh
+node "$GRIST_SOURCE/workspace/cli.mjs" document \
+  --directory "$GRIST_WORK" --connections "$GRIST_CONNECTIONS" \
+  --connection public_tasks --document hik1whAV5snj \
+  --request ACTUAL_SAVED_METADATA_UUID
+~~~
+
+This is the same authoring model and native request journal. It retains the complete document and tables response bodies and exposes native IDs/references. The selected catalog/hash and actual table ID can then be passed to the workspace's discover command. Catalog recovery reads its retained metadata and does not repeat a provider request. The source's existing direct discover command remains available when the exact table ID is already known.
+
+The document-only programmatic declaration is `stellar-forge.grist-document.v1` with `server`, `apiVersion:"unversioned"`, `docId` and the original REST `connection`; it contains no table, queries or record filter. `readGristDocumentFile` validates that private file. `discoverGristDocument(config)` uses the original bounded GET reader and returns `{catalog,observation,bytes,sha256}`. `readGristDocumentCatalog(bytes,config?)` validates both exact retained responses without provider access. Use the workspace entry when durable request/recovery is required.
+
+Table field discovery uses GET document, tables and columns through the same fixed-origin reader. A table source may have `queries:{}` while discovering. Neither the document catalog nor field metadata is a complete record capture.
 
 ~~~sh
 node "$GRIST_SOURCE/cli.mjs" discover --source "$GRIST_REST_SOURCE"
@@ -204,6 +217,8 @@ Do not transplant an absolute original capture path by editing an old declaratio
 The [official example page](https://support.getgrist.com/examples/2021-01-tasks/) identifies the public document URL ID hik1whAV5snj. The initial actual tables endpoint is:
 
 https://public.getgrist.com/api/docs/hik1whAV5snj/tables
+
+The complete installed document command in WORKSPACE.md now performs this initial metadata selection through the same original request journal and exports the exact native responses. If an earlier acquisition already retained the table listing, preserve that context and advance its same operation; do not claim it as a row capture or silently replace it.
 
 This is an acquisition candidate, not a supplied fixture. The operator must obtain and retain the real table listing, choose an actual user table and fields, then execute the original discovery/capture/freeze flow above. Select allowAnonymous:true. If the document is no longer public or the response is unavailable, retain its actual HTTP failure; do not substitute a mocked result.
 
