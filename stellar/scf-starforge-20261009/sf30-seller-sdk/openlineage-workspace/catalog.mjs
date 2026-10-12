@@ -1,3 +1,5 @@
+import { serviceLevelTools } from "./service-levels-catalog.mjs";
+
 const string = { type: "string" };
 const integer = { type: "integer", minimum: 0 };
 const stringList = { type: "array", items: string, minItems: 1 };
@@ -25,9 +27,9 @@ const definitions = [
   ["export.read", "Read an exact byte range from an existing export; continue using the returned nextOffset.", { id: string, offset: integer, length: { type: "integer", minimum: 1, maximum: 4194304 } }, ["id"]],
   ["report.read", "Produce the complete JSON, spreadsheet-safe CSV or printable HTML project report.", { edition: string, format: { enum: ["json", "csv", "html"] } }, []]
 ];
-export const tools = definitions.map(([action, description, properties, required]) => ({
+export const tools = [...serviceLevelTools, ...definitions.map(([action, description, properties, required]) => ({
   name: "lineage_" + action.replaceAll(".", "_"), description,
   inputSchema: { type: "object", properties, required, additionalProperties: false },
   annotations: { readOnlyHint: !["source.import", "edition.save", "review.save", "result.attach", "schema.review.save", "workspace.export"].includes(action), destructiveHint: false, idempotentHint: true, openWorldHint: false },
   action
-}));
+}))];

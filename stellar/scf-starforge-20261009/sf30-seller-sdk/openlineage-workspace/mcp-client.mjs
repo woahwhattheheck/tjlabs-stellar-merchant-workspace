@@ -5,13 +5,16 @@ import { dirname, resolve, basename } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { LineageClient } from "./client.mjs";
 import { producerConfiguration } from "./producer.mjs";
+import { tools as nativeLineageTools } from "./catalog.mjs";
 
 export const LINEAGE_HOST_SCHEMA = "stellar-forge.openlineage-workspace-host.v1";
 const STARTUP_SCHEMA = "commons.openlineage.startup.v1";
 const ALIAS = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
-const MUTATIONS = new Set(["source.import", "edition.save", "review.save", "result.attach", "schema.review.save"]);
+const MUTATIONS = new Set(nativeLineageTools
+  .filter(tool => tool.inputSchema?.required?.includes("operationId"))
+  .map(tool => tool.action));
 const plain = value => value !== null && typeof value === "object" && !Array.isArray(value);
 export function lineageHostError(message, status = 400, code = "OPENLINEAGE_HOST_INPUT", details) {
   return Object.assign(new Error(message), { status, code, ...(details ? { details } : {}) });
