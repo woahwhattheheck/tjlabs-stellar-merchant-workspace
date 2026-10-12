@@ -6,6 +6,10 @@
     "grist-workspace": {
       "component": "sf30-seller-sdk",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/cli.mjs"
+    },
+    "grist-receive": {
+      "component": "sf30-seller-sdk",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/receiving.mjs"
     }
   },
   "exports": {

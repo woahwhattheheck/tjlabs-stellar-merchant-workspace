@@ -23,6 +23,7 @@ Source authoring does not apply an additional row filter. Every retained row is 
 
 ## Guides
 
+- [RECEIVING.md](RECEIVING.md): complete installed browser/publisher/SF82/customer/Applications/MCP continuation, immutable input and closed private archive.
 - [WORKSPACE.md](WORKSPACE.md): browser, CLI, request recovery, private source packets, MCP, managed Applications and release operation.
 - [PROVIDER_INPUT.md](PROVIDER_INPUT.md): real Grist access, complete capture, typed-cell rules, anonymous public sample acquisition and packet custody.
 - [PROVENANCE.md](PROVENANCE.md): original code lineage and the pinned primary Grist API source used for the implementation.
