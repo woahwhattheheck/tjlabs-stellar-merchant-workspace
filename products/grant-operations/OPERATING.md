@@ -343,6 +343,14 @@ selection. Its source/control-archive validation has completed; the existing
 scientific report and portal receiving remain in their original correction
 journey. No report sale or customer acceptance is asserted by this guide.
 
+### Receive original merchant settlement cash
+
+Open **Merchant settlements** next to Cash to receive the original merchant accounting run, source-inclusive period close or accountant TAR. The original reconciliation, verification, accountant and refund readers retain the complete source and its original transfer identities.
+
+Select the row's cash treatment, explicit native unit/precision/date, any separately sourced USD value and the existing deployment/work associations. The full native preview shows the exact cash effects before receiving. Existing-cash links retain their original monetary fields. Saved reviews support attribution changes, void-and-replace corrections, complete source download and original review history.
+
+The seven settlement CLI commands and the corresponding Merchant MCP tools operate these same case records. Complete operating-case export/import preserves the source, native inspection, every settlement review and the associated cash/event history. [The complete settlement operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/SETTLEMENTS.md) provides the row decision table, exact commands, input bodies, typed client, routes and receiving workflow.
+
 ### Merchant Support
 
 Select an original SF74 portable handoff. Its exact filename and full bytes are inputs to the native preview. Choose an existing deployment or enter the complete reviewed new deployment fields.

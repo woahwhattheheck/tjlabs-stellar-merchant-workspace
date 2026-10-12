@@ -18,6 +18,7 @@ import portfolio as portfolios
 import portfolio_installations as portfolio_installations
 import operations_support as support
 import operations_buyer as buyer
+import operations_settlement as settlement_sources
 import operations_completion as completion
 import operations_calendar as calendar_model
 import operations_use_calendar as use_calendar
@@ -275,6 +276,26 @@ class Operations:
         self.db.execute("INSERT INTO ops_sources VALUES(?,?,?,?)", (program_id, row["id"], canonical(row), content))
         return row
 
+    def preview_settlement(self, program_id, body):
+        with self._snapshot():
+            return settlement_sources.preview(self._context(identifier(program_id, "operation")), body)
+
+    def preview_settlement_correction(self, program_id, body):
+        with self._snapshot():
+            return settlement_sources.correction_preview(self, self._context(identifier(program_id, "operation")), body)
+
+    def settlements(self, program_id):
+        with self._snapshot():
+            return settlement_sources.listing(self._context(identifier(program_id, "operation")))
+
+    def settlement(self, program_id, review_id):
+        with self._snapshot():
+            return settlement_sources.read(self, self._context(identifier(program_id, "operation")), review_id)
+
+    def export_settlement(self, program_id, review_id):
+        with self._snapshot():
+            return settlement_sources.export_review(self, self._context(identifier(program_id, "operation")), review_id)
+
     def command(self, program_id, body, *, _within_transaction=False):
         program_id = identifier(program_id, "operation")
         if not isinstance(body, dict) or not isinstance(body.get("data", {}), dict):
@@ -333,6 +354,16 @@ class Operations:
                             "recordId": record_id, **extra_receipt}
             elif command in work_intake.ACTIONS:
                 result = work_intake.command(self, context, command, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {key: value for key, value in result.items()
+                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
+                if result["unchanged"]:
+                    return {"id": program_id, "version": expected, "action": command, "kind": kind,
+                            "recordId": record_id, **extra_receipt}
+            elif command in ("settlement.receive", "settlement.correct"):
+                handler = settlement_sources.receive if command == "settlement.receive" else settlement_sources.correct
+                result = handler(self, context, data, actor, next_version, body.get("requestId"), note)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
                 source_change = result.get("sourceChange")
                 extra_receipt = {key: value for key, value in result.items()
@@ -1208,6 +1239,10 @@ class Operations:
                          "Conditional planning amounts are separate from recorded cash. Testnet purchases are product operations. A work review or case close does not create an award, payment, customer agreement or external tranche acceptance.\n"
                          "Private access keys are not included.\n").encode()}
             files.update(amendments.export_files(saved_amendments))
+            settlement_view = settlement_sources.observations(context)
+            if settlement_view:
+                files["merchant-settlements.json"] = (canonical(settlement_view) + "\n").encode()
+                files["merchant-settlements.csv"] = csv_bytes(settlement_sources.CSV_FIELDS, settlement_sources.csv_rows(context))
             node_view = buyer.node_observations(context)
             if node_view:
                 files["node-accounting-observations.json"] = (canonical(node_view) + "\n").encode()
@@ -1282,6 +1317,8 @@ class Operations:
         if node_names.intersection(files) or any(isinstance(row.get("buyerHandoff"), dict)
                 and row["buyerHandoff"].get("sourceSchema") == buyer.NODE_SCHEMA for row in document["sources"]):
             expected.update(node_names)
+        if settlement_sources.DERIVED_FILES.intersection(files) or any("settlementHandoff" in row for row in document["sources"]):
+            expected.update(settlement_sources.DERIVED_FILES)
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
@@ -1399,6 +1436,14 @@ class Operations:
                 domain.fail("A frozen review differs from its retained business snapshot.")
         cash_accounts.validate_import(context, events, files)
         statements.validate_import(context, events, files)
+        has_settlements = settlement_sources.validate_import(context, events, reviews, files)
+        if bool(has_settlements) != settlement_sources.DERIVED_FILES.issubset(files):
+            domain.fail("The complete merchant source report set is missing or unbound.", "SETTLEMENT_IMPORT_SOURCE")
+        if has_settlements:
+            if (files["merchant-settlements.json"] != (canonical(settlement_sources.observations(context)) + "\n").encode()
+                    or files["merchant-settlements.csv"] != csv_bytes(settlement_sources.CSV_FIELDS, settlement_sources.csv_rows(context))
+                    or json.loads(files["summary.json"]).get("merchantSettlements") != settlement_sources.report(context)):
+                domain.fail("A merchant source report differs from its original source and cash associations.", "SETTLEMENT_IMPORT_SOURCE")
         account_reconciliation.validate_import(context, events, files)
         has_node = buyer.validate_node_import(context, events, reviews, files)
         node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}

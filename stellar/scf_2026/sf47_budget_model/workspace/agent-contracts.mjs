@@ -11,7 +11,7 @@ export const GRANT_COMPLETION_ACTIONS = Object.freeze([
 export const GRANT_CASE_ACTIONS = Object.freeze([
   'work-intake.upload','work-intake.save','work-intake.apply','contributor.save', 'work.save', 'work.submit', 'work.accept', 'work.reopen', 'work.void',
   'invoice.save', 'invoice.review', 'invoice.dispute', 'invoice.reopen', 'invoice.void',
-  'cash.record', 'cash.void', 'statement.receive', 'award.save', 'deployment.save', 'purchase.record', 'purchase.observe',
+  'cash.record', 'cash.void', 'settlement.receive', 'settlement.correct', 'statement.receive', 'award.save', 'deployment.save', 'purchase.record', 'purchase.observe',
   'purchase.void', 'outcome.save', 'review', 'close', 'reopen',
   'cohort.prepare', 'installation.save', 'installation.return', 'installation.return-stage', 'implementation.prepare',
   'engagement.prepare', 'engagement.receiving',
