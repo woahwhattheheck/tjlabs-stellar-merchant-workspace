@@ -518,6 +518,71 @@ run sequentially in the owning foreground. Their complete customer ZIPs contain
 the runtime, original publisher and metadata, final reviewed portfolio/report,
 native merchant files and full handover guides.
 
+### Frozen scientific reports as merchant resources
+
+The [Groundwater Report Desk](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/9b6b92c2c290b73ca6e263d28603fdcad3a19bf6/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/OPERATOR.md) adds a complete
+source-preserving file product to this architecture. Its upstream source is
+[PR2441](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2441),
+merge `9b6b92c2c290b73ca6e263d28603fdcad3a19bf6`: 23 implementation,
+operator, client, provider and receiving files plus the original distribution
+contribution. A receiving installation must select that contribution and the
+reviewed Groundwater core in its actual source manifest. This source reference
+does not relabel an older installed archive.
+
+| Boundary | Original identity and decision retained |
+| --- | --- |
+| Scientific workspace to report | Actual source and edition, native run identities, frozen report ID and SHA-256, complete export manifest, original numerical and unit findings. |
+| Report to file offer | Complete ZIP and optional JSON/HTML/CSV bytes, public use/attribution terms, exact route and compiled native payment alternatives. |
+| Offer to buyer | Explicit catalog row and payment option, original intent/job, actual selected request, original approval/attempt history and complete verified response. |
+| Buyer to scientific receiving | Exact original catalog, saved Inbox handoff and matching response ZIP; the original Groundwater package reader verifies every retained member. |
+| Receiving to Operations | Attributed file decision and source hash, explicitly selected existing case/deployment/purchase, native preview/version and original command/result IDs. |
+| Complete handover | Original report assets, public terms, source captures, receiving reviews, command history and full private desk archive, restored under the same desk identity. |
+
+The native SF30 `responseAsset` compiler and service own the file offer.
+Inspection and interrupted publication verify that the actual native bundle's
+routes, assets and compiled offers match the selected frozen report and terms.
+The complete report ZIP is required; the original limits are 16 MiB per asset
+and 64 MiB in total. An oversized complete file remains an explicit finding.
+
+SF88 preparation consumes the original catalog and selected payment option.
+The buyer retains its existing signing and spending authority. A saved capture
+attempt is recorded before the original exporter runs; after an uncertain
+result, recovery inspects the same file instead of producing a different
+timestamped observation. The receiving operator can record a file decision
+without selecting an Operations case. When a case is selected, the adapter
+uses the original Buyer receiving, source attachment and purchase observation
+commands, preserving independently recorded order, payment and output facts.
+
+A paid transfer, verified file, scientifically suitable result and customer
+receiving decision are distinct observations. The Groundwater source retains
+its publisher recharge discrepancy, native solver unit/time declarations,
+steady-state meaning, mapped aquifers and budget-rate interpretation. A new
+merchant offer or file receipt does not change those findings. Native packages,
+model inputs and scientific assessment remain with the original scientific
+workspace and its execution owner.
+
+The software validation completed on October 12 with exact readback of all
+24 added source paths, 13 Python/JS entry checks on the actual Linux runtime,
+the maintained process lease, original request/phase/result replay, and a
+complete control-desk archive restored with its original UUID. The focused
+report/offer/Inbox/Operations source review is closed. That validation
+created no scientific report or buyer payment. The existing scientific
+customer operation currently retains an unresolved generated-package
+reference check; its corrected original import, frozen report and portal
+receiving are being continued by their existing owners. Their actual
+completion and any authorized buyer purchase belong in their native records.
+
+The [native report continuation](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/9b6b92c2c290b73ca6e263d28603fdcad3a19bf6/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/native-workflow.mjs) consumes
+that eventual actual frozen report. It prepares the reviewed original offer,
+operates the native challenge-only service and optional browser, then returns
+`PREPARED_AWAITING_ORIGINAL_BUYER` until the selected buyer's real handoff
+and response arrive. The same original continuation performs file receiving,
+optional Operations association, complete desk export and independent reopen.
+It contains no solver or buyer-payment dispatcher. The
+[API and source contract](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/9b6b92c2c290b73ca6e263d28603fdcad3a19bf6/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/API.md) supply exact fields; the
+[Grant Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
+explains the selected-case receiving boundary.
+
 ## 6. Fixed SCF46 delivery scope
 
 The selected Open Track proposal requests **$38,000 equivalent in XLM for 400 future
