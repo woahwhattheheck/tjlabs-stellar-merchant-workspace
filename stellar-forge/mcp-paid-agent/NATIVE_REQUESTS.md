@@ -141,6 +141,7 @@ The response includes:
 | preparation.acceptIndex | Original listing's payment-option index |
 | preparation.originalListing | Complete selected original listing |
 | preparation.accepted | Selected original payment terms |
+| preparation.pathBinding | Original route template, path values, advertised URL and exact concrete request URL |
 | preparation.body | Retained text, bytes, SHA-256 and Content-Type, or null |
 | availableActions | Actions currently available for this intent |
 

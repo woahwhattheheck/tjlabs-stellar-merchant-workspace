@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type {
   BazaarDiscoveryClient, CallOptions, DiscoveryClientOptions, DiscoveryPage,
-  HttpPath, HttpQuery, NativeRecord, PaymentOption,
+  HttpPath, HttpPathBinding, HttpQuery, NativeRecord, PaymentOption,
 } from './discovery-client.mjs';
 import type { Buffer } from 'node:buffer';
 
@@ -121,6 +121,8 @@ export interface NativePreparation {
   acceptIndex: number;
   originalListing: NativeRecord;
   accepted: PaymentOption;
+  /** Original declared template, explicit/fixed values and the exact queued URL. */
+  pathBinding?: HttpPathBinding;
   body: {
     text: string;
     bytes: number;

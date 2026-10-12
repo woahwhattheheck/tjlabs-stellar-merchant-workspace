@@ -69,6 +69,14 @@ function prepared(value, intentId) {
       Number.isSafeInteger(selected.body.bytes) && selected.body.bytes >= 0 && digest(selected.body.sha256)) &&
     actionList(value.availableActions),
   'NATIVE_REQUEST_PREPARATION_INVALID', 'The native review lacks its original page, selected offer or retained body.');
+  if (selected.pathBinding !== undefined) {
+    const binding = selected.pathBinding;
+    need(plain(binding) && (binding.routeTemplate === null || text(binding.routeTemplate)) &&
+      plain(binding.values) && [Object.prototype, null].includes(Object.getPrototypeOf(binding.values)) &&
+      Object.values(binding.values).every(item => typeof item === 'string') &&
+      text(binding.advertisedUrl) && binding.requestUrl === value.request.url,
+    'NATIVE_REQUEST_PREPARATION_INVALID', 'The retained path binding must identify this original concrete request.');
+  }
   return value;
 }
 function rangeRequest(request = {}) {

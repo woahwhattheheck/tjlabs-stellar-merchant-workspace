@@ -90,6 +90,14 @@ export interface HttpQueryParameter {
 }
 /** Explicit raw strings are encoded once into their advertised URL segments. */
 export type HttpPath = Record<string, string>;
+export interface HttpPathBinding {
+  routeTemplate: string | null;
+  values: HttpPath;
+  /** Complete original advertised resource URL, before explicit path values. */
+  advertisedUrl: string;
+  /** Concrete URL retained by the original preparation and durable intent. */
+  requestUrl: string;
+}
 export interface HttpPathParameter {
   name: string;
   required: boolean;
@@ -117,7 +125,10 @@ export interface HttpPathInput extends NativeRecord {
 export interface HttpPreviewInput extends NativeRecord {
   container: 'query';
   /** Present on path-aware servers; query metadata remains beside this descriptor. */
-  path?: HttpPathInput;
+  path?: HttpPathInput | null;
+  containers?: ['path', 'query'];
+  additionalContainers?: false;
+  pathInputError?: (ContinuationError & { details?: NativeRecord }) | null;
   advertisedKeys: string[];
   keysSource: string | null;
   parameters: HttpQueryParameter[];
