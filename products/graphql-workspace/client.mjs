@@ -71,7 +71,10 @@ export class GraphqlProductClient {
   }
   async inspectFiles(exportId) {
     await this.ready();
-    return inspectGraphqlWorkspaceFiles({ client: this, exportId });
+    const inspected = await inspectGraphqlWorkspaceFiles({ client: this, exportId });
+    if (inspected.manifest.workspace !== this.#identity.workspace)
+      throw failure('GRAPHQL_PRODUCT_EXPORT_CHANGED', 'The selected transfer belongs to another original GraphQL workspace.');
+    return inspected;
   }
   async receiveFiles({ exportId, selection, directory, expectedManifestSha256, chunkSize, onProgress, signal } = {}) {
     await this.ready();
