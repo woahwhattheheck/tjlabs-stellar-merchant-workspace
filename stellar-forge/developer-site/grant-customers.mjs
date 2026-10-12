@@ -232,6 +232,8 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/MERCHANT\.md)/, economic);
   receive('economic-county-source-methods', 'Original county source, calculation profiles and complete report production',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/qcew\/README\.md)/, economic);
+  receive('economic-fred-current-publications', 'Original Federal Reserve publication comparison and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/fred\/ddp\/PUBLISHED-WORKSPACE\.md)/, economic);
   const federal = section(companion, FEDERAL)?.text || '';
   receive('federal-awards-readme', 'Federal awards complete product guide',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/README\.md)/, federal);
