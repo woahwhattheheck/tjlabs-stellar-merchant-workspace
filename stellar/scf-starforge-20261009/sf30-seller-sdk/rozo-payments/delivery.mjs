@@ -1,8 +1,8 @@
-import { readSync, createReadStream, mkdirSync, readFileSync, lstatSync, readdirSync, openSync, writeFileSync, closeSync, fsyncSync, existsSync, realpathSync, copyFileSync, unlinkSync } from 'node:fs';
+import { readSync, createReadStream, mkdirSync, readFileSync, lstatSync, readdirSync, openSync, writeFileSync, closeSync, fsyncSync, existsSync, realpathSync, copyFileSync, unlinkSync, linkSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { RozoWorkspace } from './store.mjs';
 import { acquireLease, withLease } from './lease.mjs';
 import { sourcePath, inspectPublisher, inspectRozoSource } from './source.mjs';
@@ -19,15 +19,18 @@ export function hashOriginalFile(path){
 }
 export function putOriginal(path,bytes){
   const raw=Buffer.isBuffer(bytes)?bytes:Buffer.from(bytes);mkdirSync(dirname(path),{recursive:true,mode:0o700});
-  if(existsSync(path)){assert(lstatSync(path).isFile()&&!lstatSync(path).isSymbolicLink()&&readFileSync(path).equals(raw),'DELIVERY_CONFLICT','The original delivery member differs: '+path,409);return;}
-  const temp=path+'.rozo-write';if(existsSync(temp)){assert(lstatSync(temp).isFile()&&!lstatSync(temp).isSymbolicLink(),'DELIVERY_PATH','Unsafe temporary member.');unlinkSync(temp);}
-  const fd=openSync(temp,'wx',0o600);try{writeFileSync(fd,raw);fsyncSync(fd);}finally{closeSync(fd);}
-  // link/rename must not replace an accepted original file.
-  if(existsSync(path)){unlinkSync(temp);return putOriginal(path,raw);}
-  const fs=awaitlessFs();fs.renameSync(temp,path);
+  const reuse=()=>{
+    assert(lstatSync(path).isFile()&&!lstatSync(path).isSymbolicLink()&&readFileSync(path).equals(raw),'DELIVERY_CONFLICT','The original delivery member differs: '+path,409);
+  };
+  if(existsSync(path)){reuse();return;}
+  const temp=path+'.rozo-write-'+randomUUID();
+  const fd=openSync(temp,'wx',0o600);
+  try{
+    try{writeFileSync(fd,raw);fsyncSync(fd);}finally{closeSync(fd);}
+    try{linkSync(temp,path);}
+    catch(error){if(error.code!=='EEXIST')throw error;reuse();}
+  }finally{unlinkSync(temp);}
 }
-function awaitlessFs(){return {renameSync:rename};}
-import { renameSync as rename } from 'node:fs';
 function ordinaryFiles(root,prefix=''){
   const out=[];
   if(!existsSync(root))return out;

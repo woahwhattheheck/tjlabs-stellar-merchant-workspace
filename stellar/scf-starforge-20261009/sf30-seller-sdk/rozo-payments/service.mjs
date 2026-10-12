@@ -30,6 +30,10 @@ export function parseCSV(bytes){
   return {headers,rows:rows.filter(r=>r.some(Boolean)).map((values,index)=>{assert(values.length===headers.length,'CSV_WIDTH','CSV row '+(index+2)+' has another column count.');return {line:index+2,values:Object.fromEntries(headers.map((h,i)=>[h,values[i]]))};})};
 }
 function nativeResultId(result){return result?.result?.paymentId??null;}
+function definitivelyRejectedCreate(request){
+  const result=request.result?.result;
+  return request.envelope?.command==='merchant.create'&&request.state==='accepted'&&result?.outcome==='provider_rejected'&&[400,401,403,404,422,429].includes(result.nativeStatus);
+}
 function requestSummary(r){return {id:r.id,fingerprint:r.fingerprint,command:r.envelope.command,actor:r.envelope.actor,expectedRevision:r.envelope.expectedRevision,profileId:r.intent?.profile?.id??r.envelope.payload?.profileId??null,state:r.state,createdAt:r.createdAt,updatedAt:r.updatedAt,attempts:r.attempts.map(a=>({number:a.number,kind:a.kind,state:a.state,startedAt:a.startedAt,endedAt:a.endedAt})),resultRevision:r.result?.revision??null};}
 function nativeCreateDispatched(workspace,requestId){
   return workspace.capturesFor(requestId).some(c=>c.kind==='native_dispatch'&&c.request.method==='POST'&&(/\/create-invoice(?:\?|$)/.test(c.request.url)||(/\/payment-api(?:\/payments)?(?:\?|$)/.test(c.request.url)&&!c.request.url.includes('dryrun'))));
@@ -198,7 +202,7 @@ export class RozoService {
       fields(p,['profileId','orderId'],'create selection');const order=this.workspace.get('order',p.orderId);assert(order?.value.profileId===profile.id,'ORDER_MISSING','Select this profile’s saved original order.',404);
       base.order=clone(order.value);base.orderVersion=order.version;base.orderSha256=order.sha256;
       if(envelope.command.endsWith('.create')){
-        const old=this.profileRequests(profile.id).find(r=>r.envelope.command.endsWith('.create')&&r.intent?.order?.id===order.value.id);
+        const old=this.profileRequests(profile.id).find(r=>r.envelope.command.endsWith('.create')&&r.intent?.order?.id===order.value.id&&!definitivelyRejectedCreate(r));
         assert(!old,'ORIGINAL_CREATE_EXISTS','This saved order already has its original create operation.',409,{requestId:old?.id});
       }
       if(envelope.command==='merchant.create'){assert(profile.type==='merchant-key-v2','PROFILE_TYPE','Select the merchant Orders API profile.');return {...base,body:merchantCreateBody(profile,order.value)};}

@@ -44,7 +44,7 @@ export async function startNativeFixture({directory,checkoutSource}){
     create.expiresAt=expiry;payment.createdAt=at;payment.updatedAt=at;payment.expiresAt=expiry;payment.destination.tokenAddress=TARGET;
     invoice.rozoPayment.expiresAt=expiry;invoice.coinbase.preApprovalExpiry=expirySeconds;snapshot.coinbase.preApprovalExpiry=expirySeconds;
     const quote={linkId:snapshot.linkId,protocolVersion:snapshot.protocolVersion,merchant:snapshot.merchant,invoice:{amount:snapshot.original,fiat:snapshot.fiat},quote:{callerPays:snapshot.callerPays},quoteReceipt:'controlled-native-quote-receipt',coinbasePayment:snapshot.coinbase};
-    state={schema:'stellar-forge.rozo-native-provider-fixture.v1',dataContext:'DEVELOPMENT',createdAt:at,port:null,fixtures,overrides:{reason:'Current local exercise uses future expiry and original fixture identities; no public invoice is operated.',at,expiry,expirySeconds,fields:['create.expiresAt','payment.createdAt','payment.updatedAt','payment.expiresAt','payment.destination.tokenAddress','invoice.rozoPayment.expiresAt','invoice.coinbase.preApprovalExpiry','quote.coinbasePayment.preApprovalExpiry']},checkout:{create,quote,invoice,payment,postCount:0,dropFirstCreate:true},payments:Object.fromEntries(Array.from({length:105},(_,i)=>{const p=fixturePayment(i+1,at);return[p.id,p];})),merchantPostCount:0,dropFirstMerchant:true,registerCount:0,listOffsets:[],requests:0};
+    state={schema:'stellar-forge.rozo-native-provider-fixture.v1',dataContext:'DEVELOPMENT',createdAt:at,port:null,fixtures,overrides:{reason:'Current local exercise uses future expiry and original fixture identities; no public invoice is operated.',at,expiry,expirySeconds,fields:['create.expiresAt','payment.createdAt','payment.updatedAt','payment.expiresAt','payment.destination.tokenAddress','invoice.rozoPayment.expiresAt','invoice.coinbase.preApprovalExpiry','quote.coinbasePayment.preApprovalExpiry']},checkout:{create,quote,invoice,payment,postCount:0,dropFirstCreate:true},payments:Object.fromEntries(Array.from({length:105},(_,i)=>{const p=fixturePayment(i+1,at);return[p.id,p];})),merchantPostCount:0,merchantRejectedCount:0,rejectFirstMerchant:true,dropFirstMerchant:true,registerCount:0,listOffsets:[],requests:0};
     saveNative(stateFile,state);
   }
   assert(state.schema==='stellar-forge.rozo-native-provider-fixture.v1','NATIVE_FIXTURE','Select the original saved local fixture.',409);
@@ -59,7 +59,9 @@ export async function startNativeFixture({directory,checkoutSource}){
         if(req.headers['x-api-key']!==FIXTURE_KEY)return answer(401,{error:{code:'LOCAL_KEY',message:'Wrong controlled key'}});
         if(req.method==='POST'&&url.pathname==='/merchant'){
           assert(body.type==='exactIn'&&body.orderId&&body.source?.amount,'NATIVE_INPUT','The original merchant body differs.');
-          state.merchantPostCount++;let p=Object.values(state.payments).find(p=>p.orderId===body.orderId);
+          state.merchantPostCount++;
+          if(state.rejectFirstMerchant){state.rejectFirstMerchant=false;state.merchantRejectedCount++;return answer(429,{error:{code:'LOCAL_CREATE_LIMIT',message:'Controlled definitive first-create rejection; no payment was created.'}});}
+          let p=Object.values(state.payments).find(p=>p.orderId===body.orderId);
           if(!p){p=fixturePayment(0,state.createdAt);p.id='rozo-local-created';p.orderId=body.orderId;p.display=clone(body.display);p.source={...p.source,...clone(body.source)};state.payments[p.id]=p;}
           if(state.dropFirstMerchant){state.dropFirstMerchant=false;save();req.socket.destroy();return;}
           return answer(201,p);

@@ -75,11 +75,20 @@ export async function runRozoJourney({directory,sourceRoot,sourceManifest,python
       await invoke('checkout-order','order.save',{id:'checkout-order',profileId:'checkout',orderId:c.create.linkId,title:'Original Checkout invoice',source:{chainId:'900',tokenSymbol:'USDT',amount:'5.021000'},checkout:{url:'https://payments.coinbase.com/'+c.create.linkId,provider:'coinbase'}});
       return {profiles:w.list('profile',{all:true}).total,orders:w.list('order',{all:true}).total};
     });
+    await step('definite-create-rejection',async()=>{
+      const rejected=await invoke('merchant-create-rejected','merchant.create',{profileId:'merchant',orderId:'merchant-order'});
+      assert(rejected.result.outcome==='provider_rejected'&&rejected.result.nativeStatus===429,'NATIVE_REJECTION','Retain the definitive original provider rejection.');
+      assert(w.request(rejected.requestId).state==='accepted'&&fixture.state().merchantRejectedCount===1&&!fixture.state().payments['rozo-local-created'],'NATIVE_REJECTION','A rejected create must retain its outcome without creating a payment.');
+      const replay=await service.resume(rejected.requestId);
+      const originalResult=value=>{const {reused,...original}=value;return original;};
+      assert(canonical(originalResult(replay))===canonical(originalResult(rejected))&&fixture.state().merchantPostCount===1,'NATIVE_REJECTION','The same rejected request must replay without another dispatch.');
+      return {requestId:rejected.requestId,outcome:rejected.result,postCount:fixture.state().merchantPostCount};
+    });
     await step('accepted-create-response-loss',async()=>{
       try{await invoke('merchant-create','merchant.create',{profileId:'merchant',orderId:'merchant-order'});}catch(error){assert(['HTTP_TRANSPORT','HTTP_ABORTED'].includes(error.code),'NATIVE_CREATE','Only the controlled lost response is expected.',500,{code:error.code});}
       const request=w.request('native:merchant-create');assert(request,'NATIVE_CREATE','Retain the original create intent.');
       const result=request.state==='accepted'?request.result:await service.resume(request.id);
-      assert(result.result.paymentId==='rozo-local-created'&&fixture.state().merchantPostCount===1,'NATIVE_CREATE','Original order lookup must recover one accepted create without another POST.');
+      assert(result.result.paymentId==='rozo-local-created'&&fixture.state().merchantPostCount===2&&fixture.state().merchantRejectedCount===1,'NATIVE_CREATE','The explicit following request and original order lookup must recover one accepted create after its retained rejection, without another POST.');
       return {requestId:request.id,paymentId:result.result.paymentId,postCount:fixture.state().merchantPostCount,result};
     });
     const createdAt=fixture.state().createdAt,period={from:new Date(Date.parse(createdAt)-86400000).toISOString(),to:new Date(Date.parse(createdAt)+86400000).toISOString(),field:'createdAt'};
