@@ -1,5 +1,6 @@
 // MIT. Plain, retained-state operator UI; all domain behavior stays in the application.
 import { createCollectionView } from './collection-view.mjs';
+import { createComparisonView } from './comparison-view.mjs';
 const $=id=>document.getElementById(id),esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state,selectedEdition=null,loadedRows=[],rowPage=0,merchant=null,pageIdentity=null;
 let liveProducts=[],selectedLive=null,liveDetail=null,livePlanIdentity=null;
@@ -13,6 +14,7 @@ function table(headers,rows){return rows.length?`<table><thead><tr>${headers.map
 const badge=value=>`<span class="status ${value==='COMPLETE'?'complete':value==='FAILED'?'failed':''}">${esc(value)}</span>`;
 const time=value=>value?new Date(value).toLocaleString():'';
 const collectionView=createCollectionView({root:$('live-collections'),api,esc,table,notify});
+const comparisonView=createComparisonView({root:$('live-comparisons'),api,esc,table,notify});
 const connection=()=>state?.connections.find(value=>value.id===$('connection').value);
 const entity=()=>connection()?.catalog.entitySets.find(value=>value.name===$('entity-set').value);
 const fields=()=>entity()?.fields||[];
@@ -212,8 +214,8 @@ async function refreshLive(){const result=await api('/api/live');liveProducts=re
   $('live-products').innerHTML=table(['Service','Source query','State','Created','Actions'],liveProducts.map(row=>[esc(row.name),esc(state.plans.find(plan=>plan.id===row.planId)?.name||row.planId),badge(row.runtime?'RUNNING':'PREPARED'),esc(time(row.createdAt)),
     '<button class="small" data-live-open="'+esc(row.id)+'">Open</button>']));
   if(!liveProducts.some(row=>row.id===selectedLive))selectedLive=liveProducts.at(-1)?.id||null;
-  if(selectedLive){liveDetail=await api('/api/live/detail?id='+encodeURIComponent(selectedLive));drawLiveDetail();collectionView.setService(liveDetail);}
-  else collectionView.setService(null);}
+  if(selectedLive){liveDetail=await api('/api/live/detail?id='+encodeURIComponent(selectedLive));drawLiveDetail();collectionView.setService(liveDetail);comparisonView.setService(liveDetail);}
+  else {collectionView.setService(null);comparisonView.setService(null);}}
 $('live-plan').onchange=drawLiveScope;$('live-refresh').onclick=()=>action('Live service status',refreshLive);
 $('live-prepare').onsubmit=event=>{event.preventDefault();action('Prepare live service',async()=>{const data=Object.fromEntries(new FormData(event.target)),input={id:data.id,name:data.name,planId:data.planId,origin:data.origin,amount:data.amount,
     payment:{network:data.network,asset:data.asset,payTo:data.payTo,maxTimeoutSeconds:Number(data.maxTimeoutSeconds)},maxPageRows:Number(data.maxPageRows),maxTotalRows:Number(data.maxTotalRows),port:Number(data.port),operationsPort:Number(data.operationsPort)};
