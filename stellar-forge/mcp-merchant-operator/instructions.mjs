@@ -1,6 +1,10 @@
 /** Guidance from the original merchant host, selected by advertised tool prefixes. */
 const sections = [
   {
+    "prefix": "merchant_api_pass_",
+    "text": "For API customers, list the configured workspace aliases and reopen the original saved customer session. Use host-declared file and purchase handles, inspect their complete source hashes, and retain each exact operationId and expectedRevision before dispatch. After an interrupted reply, read merchant_api_pass_operation and recover the same original request and payload. Original purchase, request, approval and recovery semantics remain in the customer service. Page passes and complete customer history at the returned revision. Capture complete original response, review, proof, report or history files under a stable exportId; use the typed client or merchant-api-pass to resume SHA-pinned downloads after either process restarts. Retained exports remain available after the customer service closes. The optional private agent directory reopens the original connection, merchant settings and local MCP client together."
+  },
+  {
     "prefix": null,
     "text": "For Stellar asset workspaces, discover the host-declared alias and original workspaceId, then read schema/view before actions. Every original action requires operationId and expectedRevision; repeat the identical action identity after an unknown response, and preserve actual errors and revisions. Use retained file reads or stellar-expert-mcp to receive complete original sources, exports and customer receipts with their hashes. The original browser remains the workspace writer."
   },

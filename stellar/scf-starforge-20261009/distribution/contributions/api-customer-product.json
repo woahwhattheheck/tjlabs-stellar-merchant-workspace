@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "api-customer-product",
+  "description": "Purchased API access, original customer workspace, local agent setup and complete retained receiving.",
+  "components": [
+    "products/api-customer"
+  ],
+  "commands": {
+    "merchant-api-pass": "stellar-forge/mcp-merchant-operator/api-pass-cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-api-pass": "Operate purchased API access through the existing customer workspace, retained agent operations and complete downloads."
+  },
+  "exports": {
+    "./merchant/mcp/api-pass": "./source/stellar-forge/mcp-merchant-operator/api-pass-workspace.mjs",
+    "./merchant/mcp/api-pass/client": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/api-pass-client.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/api-pass-client.mjs"
+    },
+    "./merchant/mcp/api-pass/operations": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/api-pass-cli.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/api-pass-cli.mjs"
+    },
+    "./merchant/mcp/api-pass/setup": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/api-pass-setup.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/api-pass-setup.mjs"
+    },
+    "./merchant/api-pass-workspace/agent-setup": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/agent-setup.mjs"
+  }
+}

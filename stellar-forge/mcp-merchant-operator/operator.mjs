@@ -88,7 +88,10 @@ export class MerchantReleaseOperator {
     this.#options = { stellarExpert, woocommerce, mpp, opensearch, grpc, openapi, accounting, arcgis, opencage };
     this.#tools = structuredClone(merchantToolCatalog(config));
     this.#definitions = new Map(this.#tools.map(value => [value.name, value]));
-    this.#mutations = new Set(this.#tools.filter(value => !value.annotations.readOnlyHint).map(value => value.name));
+    // API mutations retain their original workspace operation and revision guards.
+    // Let cancellation and exact-request recovery reach that existing owner.
+    this.#mutations = new Set(this.#tools.filter(value => !value.annotations.readOnlyHint &&
+      merchantToolFamily(value.name) !== 'apiPassWorkspaces').map(value => value.name));
   }
   get tools() { return structuredClone(this.#tools); }
   get maxRequestBytes() {
