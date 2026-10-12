@@ -1292,8 +1292,8 @@ class CommercialReceivables:
                                    if row["obligationKey"] in keys]
             # All selected milestones passed current-preparation selection above.
             retained["externalCommands"] = []
-            source_metadata = {}
-            def select_sources(snapshot):
+            source_metadata, source_programs = {}, {}
+            def select_sources(snapshot, originating_program=None):
                 # Native snapshots already close check, work, purchase, outcome
                 # and contributor references to their original source files.
                 for source_id, metadata in snapshot["sources"].items():
@@ -1303,7 +1303,31 @@ class CommercialReceivables:
                         raise Problem("An original source identity describes different files.",
                                       409, "COMMERCIAL_SOURCE_CHANGED")
                     source_metadata.setdefault(source_id, copy.deepcopy(metadata))
-            select_sources(prepared["sourceSnapshot"]["installation"]["preview"]["snapshot"])
+                    owners = source_programs.setdefault(source_id, [])
+                    for owner in (program_id, originating_program, snapshot["program"]["id"]):
+                        if owner and owner not in owners:
+                            owners.append(owner)
+            def read_retained_source(source_id):
+                metadata = source_metadata[source_id]
+                for owner in source_programs[source_id]:
+                    try:
+                        current_metadata, content = self.operations.source(owner, source_id)
+                    except Problem as error:
+                        if error.status == 404:
+                            continue
+                        raise
+                    content = bytes(content)
+                    if (len(content) != metadata["bytes"]
+                            or hashlib.sha256(content).hexdigest() != metadata["sha256"]):
+                        raise Problem("A retained commercial or acceptance source changed.",
+                                      409, "COMMERCIAL_SOURCE_CHANGED")
+                    return content
+                raise Problem("The original acceptance file " + source_id
+                              + " belongs to the linked case. Receive that case's complete "
+                              "source archive before exporting this customer handoff.",
+                              404, "COMMERCIAL_SOURCE_NOT_RETAINED")
+            select_sources(prepared["sourceSnapshot"]["installation"]["preview"]["snapshot"],
+                           prepared["programId"])
             issue_intents = {row["obligationKey"]: row for row in retained["intents"]
                              if row["action"] == "issue"}
             acceptance, evidence_files = [], {}
@@ -1320,10 +1344,9 @@ class CommercialReceivables:
                     edition = installations.get(self.operations, program_id,
                                                 selected["id"], selected["revision"])
                 snapshot = _review_edition(prepared, milestone, review, edition)
+                select_sources(snapshot, intent.get("programId"))
                 workshares.verify_document(
-                    None, snapshot, edition["preview"]["document"],
-                    lambda ident: self.operations.source(program_id, ident)[1])
-                select_sources(snapshot)
+                    None, snapshot, edition["preview"]["document"], read_retained_source)
                 path = "acceptance/installations/" + edition["sha256"] + ".json"
                 evidence_files[path] = (canonical(edition) + "\n").encode("utf-8")
                 acceptance.append({
@@ -1335,13 +1358,7 @@ class CommercialReceivables:
                     "file": path})
             sources = []
             for source_id, metadata in sorted(source_metadata.items()):
-                current_metadata, content = self.operations.source(program_id, source_id)
-                content = bytes(content)
-                if (len(content) != metadata["bytes"]
-                        or hashlib.sha256(content).hexdigest() != metadata["sha256"]):
-                    raise Problem("A retained commercial or acceptance source changed.",
-                                  409, "COMMERCIAL_SOURCE_CHANGED")
-                sources.append((source_id, metadata, content))
+                sources.append((source_id, metadata, read_retained_source(source_id)))
         identity = self._identity(prepared["endpointId"])
         self._assert_identity(prepared["accountingIdentity"], identity)
         native = self._native("export", {
