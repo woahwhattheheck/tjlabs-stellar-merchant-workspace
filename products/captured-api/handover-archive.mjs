@@ -7,6 +7,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { createGzip, createGunzip } from 'node:zlib';
 import { inspectCapturedHandover, CAPTURED_HANDOVER_SCHEMA } from './handover.mjs';
+import { matchCapturedHandoverRecovery } from './handover-recovery-files.mjs';
 import {
   HASH, METADATA_LIMIT, absolute, inside, directory, parents,
   canonical, digest, decode, fileRows, bytes, present, readJSON,
@@ -320,7 +321,10 @@ async function verifiedExport(root, record, expectedManifestSha256) {
   await repairStage(root,ARCHIVE_NAME);
   const held = await openHandoverFile(join(root,ARCHIVE_NAME),{expectedBytes:record.file.bytes});
   try {
-    if (canonical(held.identity) !== canonical(record.file.identity))
+    if (canonical(held.identity) !== canonical(record.file.identity) &&
+        !await matchCapturedHandoverRecovery(root,{kind:'archive',file:ARCHIVE_NAME,
+          identity:held.identity,records:{'operation.json':await readJSON(root,'operation.json'),
+            'received.json':record},mode:'complete'}))
       fail('CAPTURED_HANDOVER_CHANGED', 'The original completed archive inode or contents changed.');
     return archiveResult(record,held.path,true);
   } finally { await held.close(); }
@@ -420,8 +424,11 @@ export async function openCapturedHandoverArchive({path,expectedBytes,expectedSh
       if (original.schema !== OPERATION_SCHEMA || original.mode !== 'export' ||
           original.manifestSha256 !== record.manifestSha256 || !HASH.test(record.handoverId ?? '') ||
           record.file?.name !== ARCHIVE_NAME || record.file.bytes !== expectedBytes ||
-          record.file.sha256 !== expectedSha256 ||
-          canonical(record.file.identity) !== canonical(held.identity))
+          record.file.sha256 !== expectedSha256)
+        fail('CAPTURED_HANDOVER_CHANGED', 'The retained downloadable archive changed.');
+      if (canonical(record.file.identity) !== canonical(held.identity) &&
+          !await matchCapturedHandoverRecovery(root,{kind:'archive',file:ARCHIVE_NAME,
+            identity:held.identity,records:{'operation.json':original,'received.json':record},mode:'complete'}))
         fail('CAPTURED_HANDOVER_CHANGED', 'The retained downloadable archive changed.');
     } else if (basename(path) === 'payload.sfhandover' &&
         record?.schema === 'stellar-forge.captured-api-handover-upload-complete.v1') {
@@ -434,9 +441,16 @@ export async function openCapturedHandoverArchive({path,expectedBytes,expectedSh
           original.expectedSha256 !== undefined && original.expectedSha256 !== expectedSha256 ||
           record.sha256 !== expectedSha256 ||
           record.inputSha256 !== digest(Buffer.from(canonical(original))) ||
-          canonical(record.identity) !== canonical(held.identity) ||
-          payload.schema !== 'stellar-forge.captured-api-handover-upload-payload.v1' ||
-          payload.device !== held.identity.device || payload.inode !== held.identity.inode)
+          payload.schema !== 'stellar-forge.captured-api-handover-upload-payload.v1')
+        fail('CAPTURED_HANDOVER_CHANGED', 'The original completed upload or its payload identity changed.');
+      if ((payload.device !== held.identity.device || payload.inode !== held.identity.inode) &&
+          !await matchCapturedHandoverRecovery(root,{kind:'upload',file:'payload.sfhandover',
+            identity:held.identity,records:{'operation.json':original,'records/payload.json':payload},mode:'payload'}))
+        fail('CAPTURED_HANDOVER_CHANGED', 'The original completed upload or its payload identity changed.');
+      if (canonical(record.identity) !== canonical(held.identity) &&
+          !await matchCapturedHandoverRecovery(root,{kind:'upload',file:'payload.sfhandover',
+            identity:held.identity,records:{'operation.json':original,'records/payload.json':payload,
+              'received.json':record},mode:'complete'}))
         fail('CAPTURED_HANDOVER_CHANGED', 'The original completed upload or its payload identity changed.');
     } else if (await hashHandoverFile(held) !== expectedSha256)
       fail('CAPTURED_HANDOVER_CHANGED', 'The complete selected archive SHA-256 changed.');

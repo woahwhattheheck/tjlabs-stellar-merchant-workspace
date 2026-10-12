@@ -174,6 +174,29 @@ export interface CapturedRecoveryReview {
   directoryEnvironment: Array<{ name: string; directory: AbsolutePath }>;
   runtime: RecoveryRuntime;
 }
+export interface CapturedRecoveredFileIdentity {
+  device: string;
+  inode: string;
+  bytes: number;
+  mtimeNs: string;
+  ctimeNs: string;
+}
+export interface CapturedRecoveredFileBinding {
+  /** Logical native snapshot root. */
+  root: string;
+  /** Root-relative immutable sidecar path. */
+  name: string;
+  kind: 'archive' | 'upload';
+  /** Root-relative original archive or upload payload. */
+  file: string;
+  bytes: number;
+  sha256: Sha256;
+  identity: CapturedRecoveredFileIdentity;
+  complete: boolean;
+  sidecarSha256: Sha256;
+  /** Exact immutable original records, with root-relative paths. */
+  records: Array<{ name: string; bytes: number; sha256: Sha256 }>;
+}
 export interface CapturedRecoveryReceivingResult {
   status: 'CAPTURED_RECOVERY_RECEIVED';
   operationId: Sha256;
@@ -186,7 +209,7 @@ export interface CapturedRecoveryReceivingResult {
   summary: RecoverySummary;
   runtime: RecoveryRuntime;
   roots: Array<RecoveryRoot & { source: RecoveryTree }>;
-  recoveryBindings: unknown[];
+  recoveryBindings: CapturedRecoveredFileBinding[];
   directoryEnvironment: Array<{ name: string; directory: AbsolutePath }>;
   environmentFiles: Array<{ name: string; path: AbsolutePath }>;
   reopen: { command: 'starforge'; argv: string[] };
