@@ -64,8 +64,19 @@ try{
  need(page.rows.length===1&&JSON.stringify(page.rows[0])===JSON.stringify(leading),'Actual HTTP customer values differ');
  const originalHttp=Buffer.from(await (await fetch(service.url+'/api/download?'+new URLSearchParams({kind:'original',id:retained.hash}))).arrayBuffer());need(hash(originalHttp)===retained.originalSha256,'Actual HTTP full original download differs');
  stage('http_source_and_customer_query',{port:service.server.address().port,originalDownloadBytes:originalHttp.length,sourceSha256:hash(originalHttp)});
+ const customerScript=join(sdk,'examples','customer.py'),python=args.pythonExecutable??process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3';
+ await new Promise((done,reject)=>{
+   const child=spawn(python,[customerScript,'--url',service.url,'--root',root,'--application-root',app,'--capture-manifest',captureFile,'--node',process.execPath],{stdio:['ignore','pipe','pipe']});
+   child.stdout.on('data',chunk=>process.stdout.write(chunk));child.stderr.on('data',chunk=>process.stderr.write(chunk));
+   child.once('error',reject);child.once('close',(code,signal)=>code===0?done():reject(new Error('The original Python customer operation ended with '+(signal??code))));
+ });
+ const pythonCustomer=JSON.parse(await readFile(join(work,'customer','customer-result.json'),'utf8'));
+ need(pythonCustomer.complete===true&&pythonCustomer.publicationId===publication.id&&pythonCustomer.snapshot===publication.snapshot,'The Python customer did not finish the original published edition');
+ stage('complete_python_customer',{rows:pythonCustomer.http.rows,httpPages:pythonCustomer.http.pages,nativePages:pythonCustomer.native.pages,
+   allOriginalCellsCompared:pythonCustomer.allOriginalCellsCompared,comparisonId:pythonCustomer.comparisonId,originalDecisionRequest:pythonCustomer.originalDecisionRequest,
+   customerDirectory:join(work,'customer'),result:join(work,'customer','customer-result.json')});
  if(args.browserExecutable){
-   const pw=await import(pathToFileURL(args.playwrightModule));browser=await pw.chromium.launch({headless:true,executablePath:args.browserExecutable,args:['--no-sandbox','--disable-dev-shm-usage']});
+   const pw=await import(pathToFileURL(args.playwrightModule)),chromium=pw.chromium??pw.default?.chromium;need(chromium?.launch,'The selected Playwright module does not expose Chromium');browser=await chromium.launch({headless:true,executablePath:args.browserExecutable,args:['--no-sandbox','--disable-dev-shm-usage']});
    const qa=join(root,'browser-qa');await mkdir(qa,{recursive:true,mode:0o700});const views=[];
    for(const width of [1440,390]){
      const context=await browser.newContext({viewport:{width,height:960},acceptDownloads:true});const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.goto(service.url,{waitUntil:'networkidle'});
