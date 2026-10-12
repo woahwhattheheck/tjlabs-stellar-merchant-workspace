@@ -54,7 +54,7 @@ function controls(){
  $('#save-folder').disabled=state.uiBusy>0||Boolean(v?.active)||!v?.delivery||!window.showDirectoryPicker;
  $('#load-selection').disabled=state.uiBusy>0||!selected;
  $$('#retry-form button').forEach(b=>b.disabled=busy||!selected||v?.source?.release?.mode!=='NATIVE_X402');
- $('[data-approve]').forEach(b=>b.disabled=state.uiBusy>0||b.dataset.approvalState!=='AWAITING_OPERATOR');
+ $$('[data-approve]').forEach(b=>b.disabled=state.uiBusy>0||b.dataset.approvalState!=='AWAITING_OPERATOR');
 }
 async function guarded(work){state.uiBusy++;controls();try{return await work();}catch(error){notice(message(error),true);}finally{state.uiBusy--;controls();}}
 function selectedRequest(){
@@ -84,9 +84,17 @@ function renderSource(){
   ['Source observations',h.capture.rows,'Capture '+h.capture.id],
   ['Retained snapshot',h.dataset.baselineSnapshot,'Original dataset · '+h.dataset.rowCount+' rows']]);
  fields($('#source-terms'),[['Resource',h.resource],['Mode',h.release.mode],['Facilitator',h.release.facilitator],
-  ['Accepted terms',h.offer.accepts],['Release ID',h.release.id],['Public origin',h.release.publicOrigin]]);
- fields($('#source-provenance'),[['Provenance',h.provenance],['Named review',h.sourceReview.id],
-  ['Decision',h.sourceReview.decision],['Study workspace',h.workspaceId]]);
+  ['Release ID',h.release.id],['Public origin',h.release.publicOrigin]]);
+ for(const [index,terms]of (h.offer.accepts??[]).entries()){
+  const termsNode=element('div',undefined,'offered-terms'),listing=element('div');termsNode.append(element('h3','Original payment option '+index));
+  fields(listing,[['Scheme',terms.scheme],['Network',terms.network],['Amount',terms.amount??terms.maxAmountRequired],
+   ['Asset',terms.asset],['Payee',terms.payTo],['Timeout seconds',terms.maxTimeoutSeconds]]);
+  termsNode.append(listing,details('Complete original accepted terms',terms));$('#source-terms').append(termsNode);
+ }
+ fields($('#source-provenance'),[['Named source review',h.sourceReview.id],['Decision',h.sourceReview.decision],
+  ['Publisher reviewer',h.provenance?.publisherReview?.reviewer],['Recorded',h.provenance?.publisherReview?.recordedAt],
+  ['Review note',h.provenance?.publisherReview?.note],['Study workspace',h.workspaceId]]);
+ $('#source-provenance').append(details('Original publication lineage and source file hashes',h.provenance));
  fields($('#source-study'),[['Study SHA-256',h.study.sha256],['Study bytes',h.study.bytes],['Source manifest',h.study.manifestSha256],
   ['Reports',h.study.reports],['Source file count',h.study.files.length]]);
  const files=element('div',undefined,'actions');for(const file of v.sourceFiles??[]){
