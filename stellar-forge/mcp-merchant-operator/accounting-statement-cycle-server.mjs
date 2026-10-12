@@ -133,7 +133,7 @@ export async function startAccountingStatementCycleWorkbench({
       return {key,cycleId:request.cycleId,label:request.label,workspace:request.workspace,preparedAt:request.createdAt,
         observedAt:new Date().toISOString(),phase:'UNPREPARED',complete:false,rows:[],counts:{total:request.selections.length,retained:0,delivered:0,errors:job?.phase==='ERROR'?1:0},
         job:job?{kind:job.kind,phase:job.phase,error:job.error,startedAt:job.startedAt,finishedAt:job.finishedAt}:null,
-        error:job?.error??cleanError(error)};
+        error:['QUEUED','RUNNING'].includes(job?.phase)?null:job?.error??{code:'WORKBENCH_PREPARATION_INCOMPLETE',message:'Continue preparing to finish the saved customer reviews.'}};
     }
   }
   function begin(key,kind,work){
