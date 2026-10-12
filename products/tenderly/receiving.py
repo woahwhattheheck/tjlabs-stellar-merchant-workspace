@@ -166,20 +166,24 @@ def main():
     )
     write(directory/"START_HERE.md",guide.encode())
     output=directory/(title+("_Customer.zip" if completed else "_Checkpoint.zip"))
-    members={}
+    members={};directories=[]
     with zipfile.ZipFile(output,"x",zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
         selected=[directory/"START_HERE.md",report,directory/"native-process.json",inputs/"original-workspace.tar.gz"]
         for folder in ["received","customer-exports","analysis-export"]:
             path=directory/folder
-            if path.is_dir():selected.extend(sorted(path.rglob("*")))
+            if path.is_dir():selected.append(path);selected.extend(sorted(path.rglob("*")))
         if result_path.is_file():selected.append(result_path)
         for path in selected:
             info=path.lstat()
             if stat.S_ISLNK(info.st_mode):raise ValueError("The complete customer operation contains a linked file")
+            if path.is_dir():
+                name=str(path.relative_to(directory))+"/";entry=zipfile.ZipInfo(name)
+                entry.create_system=3;entry.external_attr=((stat.S_IFDIR|0o700)<<16)|0x10
+                archive.writestr(entry,b"");directories.append(name);continue
             if not path.is_file():continue
             name="original-workspace.tar.gz" if path==inputs/"original-workspace.tar.gz" else str(path.relative_to(directory))
             data=path.read_bytes();members[name]={"bytes":len(data),"sha256":sha(data)};archive.writestr(name,data)
-        archive.writestr("files.json",json.dumps({"schema":"stellar-forge.tenderly-managed-customer-files.v1","members":members},indent=2)+"\n")
+        archive.writestr("files.json",json.dumps({"schema":"stellar-forge.tenderly-managed-customer-files.v1","members":members,"directories":directories},indent=2)+"\n")
     output.chmod(0o600)
     delivery={"completed":completed,"report":str(report),"archive":str(output),"archiveBytes":output.stat().st_size,
         "archiveSha256":sha(output.read_bytes()),"files":len(members),"directory":str(directory)}
@@ -187,10 +191,24 @@ def main():
     if args.save_helper:
         request={"uploads":[{"local_path":str(report),"purpose":"create_library_file","library_artifact_type":"other"},
                             {"local_path":str(output),"purpose":"create_library_file","library_artifact_type":"other"}]}
-        saved=subprocess.run([sys.executable,str(args.save_helper.resolve())],input=json.dumps(request),text=True,
+        worker="""import importlib.util,json,sys
+from pathlib import Path
+helper=Path(sys.argv[1]).resolve()
+spec=importlib.util.spec_from_file_location("tenderly_library_upload",helper)
+module=importlib.util.module_from_spec(spec);sys.modules[spec.name]=module;spec.loader.exec_module(module)
+result=module.LibraryUploadWorkflow(apps_client=module.HostedAppsClient(),
+    materializer=module.LibraryFileMaterializer(),uploader=module.SignedUrlUploader(),
+    state_parent=Path(sys.argv[2])).run(json.load(sys.stdin))
+print(json.dumps(result,separators=(",",":")),flush=True)
+sys.exit(0 if result.get("results") and all(item.get("status")=="succeeded" for item in result["results"]) else 1)
+"""
+        saved=subprocess.run([sys.executable,"-c",worker,str(args.save_helper.resolve()),str(directory)],input=json.dumps(request),text=True,
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=180)
         write(directory/"library-save-result.json",saved.stdout.encode())
+        write(directory/"library-save-stderr.txt",saved.stderr.encode())
         print(saved.stdout,end="",flush=True)
+        for line in saved.stderr.splitlines():
+            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__="):print(line,file=sys.stderr,flush=True)
         if saved.returncode:raise RuntimeError("The complete customer files remain in the receiving directory; their save did not finish")
     return 0 if completed else 1
 if __name__=="__main__":sys.exit(main())

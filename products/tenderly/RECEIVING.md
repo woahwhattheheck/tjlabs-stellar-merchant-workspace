@@ -1,6 +1,6 @@
 # Complete original Tenderly managed receiving
 
-This programme continues the existing saved Tenderly case through the managed product delivered in PR405. It receives the original operator, attaches Applications, the typed client and merchant tools to the same instance, reopens the saved provider observation and recovery, resumes the complete response after detachment, operates the original profile, receives its full analysis, reopens both original customer exports and restarts the operator.
+This program continues the existing saved Tenderly case through the managed product delivered in PR405. It receives the original operator, attaches Applications, the typed client and merchant tools to the same instance, reopens the saved provider observation and recovery, resumes the complete response after detachment, operates the original profile, receives its full analysis, reopens both original customer exports and restarts the operator.
 
 The complete original input and customer exports remain the source of the operation. The original private environment comes from its existing operator driver and is used only within the private native process. The customer delivery binds that original driver by hash.
 
@@ -54,7 +54,7 @@ python3 /ABSOLUTE/RECEIVING/receiving.py \
   --save-helper /ABSOLUTE/CURRENT/library_upload.py
 ```
 
-The optional current upload helper saves the complete result and customer archive together before the native lifetime closes. Without that argument, the same complete files remain in the private receiving directory for the executing host's existing file tools.
+The optional current upload helper saves the complete result and customer archive together before the native lifetime closes. Its unchanged workflow uses this operation's private directory for transfer state. Without that argument, the same complete files remain in the private receiving directory for the executing host's existing file tools.
 
 The full continuation uses the original saved response and operation identifiers. It attaches the managed merchant without taking over the Applications listener, proves that detaching its own client preserves the other live client, resumes the entire SHA-bound response in a new file-read handle, and lets the original Applications owner stop and restart its listener. The customer and analysis phases operate the complete retained original files.
 
@@ -63,7 +63,7 @@ The full continuation uses the original saved response and operation identifiers
 A successful whole operation creates:
 
 - `Starforge_Tenderly_Managed_2026-10-12_Receiving.json`: complete operating events, original workspace/response identities, original customer results, source identities and the actual native process outcome.
-- `Starforge_Tenderly_Managed_2026-10-12_Customer.zip`: closed operator workspace, full original Node and Python customer exports, complete received analysis, unchanged original workspace archive, operating guide and a full member hash map.
+- `Starforge_Tenderly_Managed_2026-10-12_Customer.zip`: closed operator workspace, full original Node and Python customer exports, complete received analysis, unchanged original workspace archive, operating guide and a full member hash map. The ZIP also retains all selected workspace and customer directories, including empty directories required when reopening.
 
 The source checkout and original private environment remain outside the customer ZIP. The delivered workspace and analysis use the maintained product and installed instructions in `OPERATING.md`.
 
