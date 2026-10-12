@@ -559,3 +559,13 @@ exact origin check. Saved-draft APIs select an immutable revision. A native job
 selects either that revision, a completed original review, a finished upload, or
 an existing receiving operation. The saved original job is resolved before a
 repeat can enter a new native writer.
+
+## Continue the complete handover through the merchant agent
+
+The same saved drafts, native jobs and complete file now have nineteen
+`merchant_handover_*` operations and a typed streaming client. Use
+`starforge captured-api handover remote --help` for ordinary terminal calls,
+whole source-to-receiver transfer, local file download/upload and exact job
+waiting. The [complete agent walkthrough](AGENT.md) follows original package
+and source selections through native review/publication, the complete archive,
+receiving name review, original receive and merchant reopen.

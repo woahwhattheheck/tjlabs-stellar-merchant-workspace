@@ -12,6 +12,7 @@ import { exportCapturedHandoverArchive, receiveCapturedHandoverArchive } from '.
 import { METADATA_LIMIT, decode } from './handover-files.mjs';
 
 const HELP = 'Complete captured merchant handover\n\n' +
+  '  starforge captured-api handover remote --help\n' +
   '  starforge captured-api handover inventory --dir PRIVATE_PRODUCT\n' +
   '  starforge captured-api handover prepare --dir PRIVATE_PRODUCT\n' +
   '       --selection PRIVATE_SELECTION.json --out NEW_PRIVATE_HANDOVER\n' +
@@ -68,6 +69,7 @@ export async function runCapturedHandoverCLI(args = process.argv.slice(2)) {
     process.stdout.write(HELP); return;
   }
   const [command,...rest] = args;
+  if (command === 'remote') return (await import('./handover-remote-cli.mjs')).runCapturedHandoverRemoteCLI(rest);
   if (rest.length === 1 && rest[0] === '--help') {process.stdout.write(HELP);return;}
   let result;
   if (command === 'inventory') {

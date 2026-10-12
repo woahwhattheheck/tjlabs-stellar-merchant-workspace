@@ -688,3 +688,17 @@ For another host or path, initialize a new private product and use the complete
 native source and merchant receiving workflows. Declare that host's own paths
 and credential references. Keep the prior runtime, source history and original
 delivery until the received merchant is operating.
+
+## 10. Operate complete handovers through the agent or terminal
+
+The existing merchant HAR workspace aliases also expose the captured handover
+companion. Select the original product ID, page its complete inventory, save
+an outgoing draft and native review, then publish the exact reviewed collection.
+Transfer the entire file directly into a declared receiving product, import it,
+review its saved package names and receive through the original native writers.
+
+`starforge captured-api handover remote` offers the same typed calls, original
+job wait, whole-file transfer and local download/upload from an ordinary terminal.
+Original request IDs, byte hashes, source revisions and receiving records carry
+through restart. The [agent and terminal guide](AGENT.md) includes the full
+selection/review/transfer/receive/reopen sequence and typed client API.
