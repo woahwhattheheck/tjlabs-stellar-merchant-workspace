@@ -109,6 +109,8 @@ async function retainOutput(path, write) {
   } finally { await unlink(temporary).catch(() => {}); }
   return { state, path, ...summary };
 }
+// Shared receiving uses this original atomic stream writer and completed-file reader.
+export { retainOutput as writeConsoleWorkflowStream, fileHash as inspectConsoleWorkflowFile };
 export async function writeOpenApiWorkflowFile(path, value) {
   const bytes = Buffer.isBuffer(value) ? value : typeof value === 'string' ? Buffer.from(value) : Buffer.from(JSON.stringify(value, null, 2) + '\n');
   return retainOutput(path, async handle => { await handle.writeFile(bytes); return { bytes: bytes.length, sha256: digest(bytes) }; });
