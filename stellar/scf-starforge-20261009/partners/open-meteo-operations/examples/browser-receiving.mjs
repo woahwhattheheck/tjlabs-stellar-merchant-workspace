@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {spawn} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
+import {publish,readPrivate} from '../files.mjs';
 
 const OPERATION='SCF-WEATHER-EDITABLE-RECEIVING-6ARMS-20261012';
 const ORIGINAL_ARCHIVE_SHA256='28d56f92cdf35756773a40eb5a0125d03b5b0f86d5ebf63485d2c79365643f53';
@@ -27,11 +28,15 @@ async function atomic(path,value){
  await writeFile(tmp,JSON.stringify(value,null,2)+'\n',{mode:0o600,flag:'wx'});
  await rename(tmp,path);
 }
-async function retained(path,bytes){
+async function retained(path,input){
  await mkdir(dirname(path),{recursive:true,mode:0o700});
- if(await exists(path)){if(!(await readFile(path)).equals(Buffer.from(bytes)))fail('RETAINED_FILE_CHANGED',{path});}
- else await writeFile(path,bytes,{mode:0o600,flag:'wx'});
- return {path,bytes:Buffer.byteLength(bytes),sha256:sha(bytes)};
+ const bytes=Buffer.isBuffer(input)?input:Buffer.from(input);
+ try{return await publish(path,bytes);}
+ catch(error){
+  if(error.code!=='EEXIST')throw error;
+  if(!(await readPrivate(path,bytes.length)).equals(bytes))fail('RETAINED_FILE_CHANGED',{path});
+  return {path,bytes:bytes.length,sha256:sha(bytes),status:'RETAINED'};
+ }
 }
 const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
 const equal=(left,right)=>JSON.stringify(canonical(left))===JSON.stringify(canonical(right));
