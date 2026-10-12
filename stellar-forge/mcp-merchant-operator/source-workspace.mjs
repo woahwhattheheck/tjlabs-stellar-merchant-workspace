@@ -4,6 +4,7 @@ import { IATI_ORGANISATION_TOOL_PREFIX } from './catalog/source-iati-organisatio
 import { executeIatiOrganisation, IATI_ORGANISATION_ROUTE } from './source-iati-organisation.mjs';
 // MIT. Agent access to the original XML/NDJSON/IATI console and its retained workspace.
 import { constants } from 'node:fs';
+import { request as httpRequest } from 'node:http';
 import { open, lstat, mkdir, readdir, link, unlink } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
@@ -129,6 +130,35 @@ async function responseBytes(response, maximum) {
   return Buffer.concat(pieces, length);
 }
 
+// Original consoles use HTTP/1.0. Keep their response stream on Node's native
+// HTTP carrier: affected built-in Undici versions crash on EOF under backpressure
+// (nodejs/undici#5360), including while a retained output file is being opened.
+function originalConsoleResponse(url, { method, signal, headers, body }) {
+  return new Promise((resolveResponse, reject) => {
+    const requestHeaders = { ...headers };
+    if (typeof body === 'string' || Buffer.isBuffer(body))
+      requestHeaders['Content-Length'] = String(Buffer.byteLength(body));
+    const outgoing = httpRequest(url, { method, signal, headers: requestHeaders }, incoming => {
+      let responseHeaders;
+      try {
+        responseHeaders = new Headers();
+        for (let index = 0; index < incoming.rawHeaders.length; index += 2)
+          responseHeaders.append(incoming.rawHeaders[index], incoming.rawHeaders[index + 1]);
+      } catch (error) { incoming.destroy(); reject(error); return; }
+      incoming.once('error', reject);
+      const status = incoming.statusCode ?? 0;
+      resolveResponse({ ok: status >= 200 && status < 300, status, headers: responseHeaders, body: incoming });
+    });
+    outgoing.once('error', reject);
+    if (body && typeof body.pipe === 'function') {
+      const sourceError = error => outgoing.destroy(error);
+      body.once('error', sourceError);
+      outgoing.once('close', () => { body.off('error', sourceError); body.unpipe(outgoing); });
+      body.pipe(outgoing);
+    } else outgoing.end(body);
+  });
+}
+
 export class MerchantSourceWorkspaces {
   #config; #pending = new Set(); #closing = false; #close;
   #reads = new RetainedFileReads({ errorPrefix: 'SOURCE_FILE' });
@@ -163,10 +193,11 @@ export class MerchantSourceWorkspaces {
   }
   async #request(definition, route, { body, headers = {}, method = body === undefined ? 'GET' : 'POST' } = {}, consume) {
     const connection = await this.#connection(definition);
+    let response;
     try {
-      const response = await fetch(connection.origin + route, { method, redirect: 'error', signal: AbortSignal.timeout(extendedIatiRoute(route) ? 900000 : 240000),
-        headers: { Authorization: 'Bearer ' + connection.token, ...headers },
-        ...(body === undefined ? {} : { body, ...(typeof body === 'string' || Buffer.isBuffer(body) ? {} : { duplex: 'half' }) }) });
+      response = await originalConsoleResponse(connection.origin + route, { method,
+        signal: AbortSignal.timeout(extendedIatiRoute(route) ? 900000 : 240000),
+        headers: { Authorization: 'Bearer ' + connection.token, ...headers }, body });
       if (!response.ok) {
         let detail = {}; try { detail = JSON.parse((await responseBytes(response, 65536)).toString('utf8')); } catch {}
         const issue = fail('SOURCE_CONSOLE_REJECTED', typeof detail.error === 'string' ? detail.error.slice(0,2000) : 'Original source console returned HTTP ' + response.status + '.');
@@ -178,7 +209,7 @@ export class MerchantSourceWorkspaces {
       if (['ENOSPC','EDQUOT','EROFS','EACCES'].includes(error.code))
         throw fail('SOURCE_STORAGE_UNAVAILABLE', 'Original export storage returned ' + error.code + '. Restore its private directory capacity or access and continue the saved source operation.');
       throw fail('SOURCE_CONSOLE_OPERATION_INTERRUPTED', 'Original console operation interrupted. Read its saved state and retained exports before repeating a change.');
-    }
+    } finally { response?.body.destroy(); }
   }
   #json(definition, route, body) {
     const payload = body === undefined ? undefined : JSON.stringify(body);
