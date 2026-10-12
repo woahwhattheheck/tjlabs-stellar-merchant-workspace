@@ -564,6 +564,10 @@ An interrupted draft or issue keeps its original request. Reopen the saved billi
 The command line exposes the same workflow under `operations`: `commercial-connect`, `commercial-customers`, `commercial-schedule`, `commercial-prepare`, `commercial-draft`, `commercial-preview`, `commercial-issue`, `commercial-refresh`, and `commercial-export`. Commands that accept an operator request read it from `--file`; readbacks can be written with `--output`. The Merchant grant client exposes these through its separate commercial methods. Browser, CLI, and managed client all use the same retained workflow.
 
 
+## Compare saved grant plans
+
+The planning workspace includes **Compare saved plans** for two explicit saved revisions, including named alternatives. It connects work-package and payment changes, milestone and delivery scope, staffing allocation, exact funding and capacity deltas, and complete daily cash outputs. A complete receiving package carries the selected snapshots and each original native plan ZIP. Browser, CLI and Merchant MCP use the same comparison engine. See the [saved plan comparison guide](../../stellar/scf_2026/sf47_budget_model/workspace/COMPARISON.md) for the full workflow.
+
 ## Original source references
 
 | Area | Maintained source |

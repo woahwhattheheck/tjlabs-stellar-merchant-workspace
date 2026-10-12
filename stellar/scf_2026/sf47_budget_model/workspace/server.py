@@ -27,7 +27,12 @@ STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
 VERSION = "1.0.0"
 
 import operations_http
+import plan_comparison
 operations_http.register_static(STATIC)
+STATIC.update({
+    "/plan_comparison.mjs": ("plan_comparison.mjs", "text/javascript; charset=utf-8"),
+    "/plan_comparison.css": ("plan_comparison.css", "text/css; charset=utf-8"),
+})
 import source_tables
 source_tables.register_static(STATIC)
 
@@ -158,6 +163,8 @@ class Handler(BaseHTTPRequestHandler):
             filename, mime = STATIC[path]
             return self.send(200, (HERE / filename).read_bytes(), mime)
         if operations_http.read(self, parsed):
+            return
+        if plan_comparison.read_http(self, parsed):
             return
         workspace = self.server.workspace
         if path == "/api/access":

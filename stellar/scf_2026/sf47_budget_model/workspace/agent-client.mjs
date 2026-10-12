@@ -128,6 +128,16 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function planComparisonQuery(args, exported = false) {
+  const values = new URLSearchParams({
+    fromRevision:String(integer(args.fromRevision,'Before saved revision',1,1000000)),
+    toRevision:String(integer(args.toRevision,'After saved revision',1,1000000)),
+  });
+  if(args.toPlanId !== undefined)values.set('toPlanId',id(args.toPlanId,'plan'));
+  if(args.expectedComparisonSha256 !== undefined || exported)
+    values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
+  return '?' + values.toString();
+}
 function performanceQuery(args, exported = false) {
   const values = new URLSearchParams();
   if (args.startDate !== undefined && args.startDate !== null && args.startDate !== '')
@@ -458,6 +468,7 @@ export class GrantWorkspaceClient {
       plans:() => '/api/plans',
       plan:() => '/api/plans/' + pid() + (args.revision === undefined ? '' : '/revision/' + integer(args.revision, 'Plan revision', 1, 1000000)),
       'plan-history':() => '/api/plans/' + pid() + '/history',
+      'plan-comparison':() => '/api/plans/' + pid() + '/comparison' + planComparisonQuery(args),
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
@@ -847,6 +858,11 @@ export class GrantWorkspaceClient {
     object(args);
     const routes = {
       plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip',
+      'plan-comparison':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/export.zip' + planComparisonQuery(args,true),
+      'plan-comparison-report':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/report.html' + planComparisonQuery(args,true),
+      'plan-comparison-changes':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/changes.csv' + planComparisonQuery(args,true),
+      'plan-comparison-impact':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/impact.csv' + planComparisonQuery(args,true),
+      'plan-comparison-daily':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/daily.csv' + planComparisonQuery(args,true),
       scenario:() => '/api/plans/' + id(args.planId, 'plan') + '/scenario.json',
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
