@@ -130,3 +130,20 @@ no persistent browser storage. Native text is rendered as text, never executed
 as markup. The console does not add CORS access, arbitrary filesystem routes,
 external resource fetching or a new authentication mode. Existing stdio clients
 continue to connect through their private subprocess and original transport.
+
+## Native HTTP requests
+
+On an original native SF43/SF88 workspace, inspect a discovered HTTP resource and
+use **Save a native HTTP request** to supply its actual query, exact UTF-8 body,
+selected offered terms and payment ceiling. The configured route and Content-Type
+come from the original operator. The complete selected catalog page is preserved
+through native preparation, including offers found on later pages.
+
+The **HTTP requests** view combines saved history, reopening by stable intent,
+original source/body review, host approval and execution, cancellation, recovery,
+and complete saved responses. Interrupted replies retain the original intent for
+reopening. Result reads follow every original byte range and check the completed
+SHA-256 before structured/text display and file download.
+
+See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for the full workflow, available actions,
+transport/body limits and installed typed client.
