@@ -55,6 +55,7 @@ const BOOT_FILES = [
   'portfolio.css',
   'support_handoff.mjs','implementation_handoff.mjs',
   'buyer_handoff.mjs',
+  'node_buyer_handoff.mjs',
   'agent-client.mjs',
   'agent-contracts.mjs'
 ];
