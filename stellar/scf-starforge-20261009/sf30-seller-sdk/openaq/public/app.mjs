@@ -7,7 +7,7 @@ const pretty=v=>JSON.stringify(v,null,2);
 const uid=()=>crypto.randomUUID();
 const short=v=>String(v??'').slice(0,8);
 const S={view:'overview',identity:null,status:null,collections:{captures:new Map(),studies:new Map(),reviews:new Map(),reports:new Map(),operations:new Map()},
- offsets:new Set(),capture:null,review:null,report:null,publication:null,study:null,plan:null,context:null,previewOffset:0,pubRun:'',pubReview:'',releasePreparation:'',deliveryId:'',busy:false,processed:new Set(),completedExample:null};
+ offsets:new Set(),capture:null,review:null,report:null,publication:null,study:null,plan:null,context:null,previewOffset:0,pubRun:'',pubReview:'',releasePreparation:'',merchantStage:'',merchantEpoch:0,merchant:null,deliveryId:'',busy:false,processed:new Set(),completedExample:null};
 const storageKey='openaq-study:'+location.origin;
 let token=new URLSearchParams(location.hash.slice(1)).get('token');
 if(token){sessionStorage.setItem(storageKey+':token',token);history.replaceState(null,'',location.pathname+location.search);}
@@ -50,6 +50,7 @@ function observe(op){
  if(op.action==='publication.prepare'){S.pubRun=r?.publication?.id??op.id;if($('#pub-run'))$('#pub-run').value=S.pubRun;if($('#customer-run'))$('#customer-run').value=S.pubRun;}
  if(op.action==='publication.review'){S.pubReview=r?.data?.review?.id??r?.review?.id??'';if($('#pub-review'))$('#pub-review').value=S.pubReview;}
  if(op.action==='release.prepare'){S.releasePreparation=op.id;if($('#release-preparation'))$('#release-preparation').value=op.id;}
+ if(op.action==='release.stage'){S.merchantStage=op.id;S.merchantEpoch++;S.merchant=null;renderMerchantPanel();}
  if(op.action==='customer.start'&&r){const native=r.operation;if(native?.state==='COMPLETE'&&native.result?.id)S.deliveryId=native.result.id;}
 }
 async function refresh(render=true,offset=0){
@@ -222,11 +223,99 @@ function publishView(){
  field('expected-snapshot','Expected current snapshot','','text','Required for an existing dataset. Use the current original publisher status.')+field('expected-revision','Expected current revision','','number')+'</div>'+
  check('initialize','Initialize a new dataset at this original publication directory.')+
  '<div class="actions">'+button('Inspect complete candidate','id="publication-inspect"')+button('Record original publisher review','id="publication-review" data-mutate')+button('Publish reviewed candidate','id="publication-publish" data-mutate',true)+button('Recover original publication','id="publication-recover" data-mutate')+'</div><div id="publication-result">'+(S.publication?objectDetails(S.publication,'Current original publisher result'):'')+'</div></section>'+
- '<section class="panel"><h2>Prepare a merchant release</h2><p class="hint">The original SF82 release package retains this published dataset, complete source capture and reviewed payment terms. Activation and the supervised merchant remain the original Merchant Releases workflow.</p>'+
+ '<section class="panel"><h2>Prepare a merchant release</h2><p class="hint">The original SF82 release package retains this published dataset, complete source capture and reviewed payment terms. The original Merchant Releases console below operates this project’s retained release store.</p>'+
  '<div class="grid">'+field('release-origin','Public merchant origin','','url')+field('release-path','Dataset route','/data')+area('payment-json','Reviewed native payment declaration','{}','Supply the real scheme, network, asset, payee and amount from the existing seller setup; these fields are never invented.',true)+'</div>'+
  '<div class="actions">'+button('Prepare original SF82 package','id="release-prepare" data-mutate')+'</div><div class="grid">'+field('release-preparation','Saved preparation operation',S.releasePreparation)+field('release-id','Release name')+field('release-label','Operator release label')+area('runtime-json','Reviewed release runtime',pretty({port:0}),'The original release store validates port/facilitator settings.',true)+'</div>'+
- '<div class="actions">'+button('Stage exact release','id="release-stage" data-mutate')+'</div><p class="hint">Use the original Merchant Releases application to inspect, activate, run, stop or roll back the staged release. Preparing or staging a release makes no payment and does not start a merchant.</p></section>';
+ '<div class="actions">'+button('Stage exact release','id="release-stage" data-mutate')+'</div><p class="hint">A prepared package stays outside the publisher source directory. Staging retains the exact dataset and payment declaration; open its original merchant console below to operate the release.</p></section>'+
+ '<div id="merchant-panel">'+merchantPanel()+'</div>';
 }
+function merchantPanel(){
+ const m=S.merchant,chosen=m?.selection,release=chosen?.release,state=m?.status?.state,runtime=m?.status?.runtime;
+ const stages=values('operations').filter(x=>x.action==='release.stage'&&x.state==='COMPLETE')
+  .sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+ const summary=m?table(['Original merchant state','Current value'],[
+  ['Release store',m.available?esc(m.releaseDirectory):'Prepare and stage a reviewed dataset first.'],
+  ['Selected study release',release?esc(release.label+' · '+release.id):'Choose a completed staging request.'],
+  ['Selected release mode',release?tag(release.mode):'—'],
+  ['Active / previous release',esc((state?.active??'none')+' / '+(state?.previous??'none'))],
+  ['Store generation',esc(state?.generation??'—')],
+  ['Original seller',tag(runtime?.state??'STOPPED')+(runtime?.message?'<div>'+esc(runtime.message)+'</div>':'')],
+  ['Project console',tag(m.state)+(m.consoleId?'<div class="overflow-id">'+esc(m.consoleId)+'</div>':'')],
+  ['Original source capture',esc(chosen?.captureId??'—')],
+  ['Named source review',esc(chosen?.sourceReviewId??'—')],
+  ['Published extraction',esc(chosen?.publicationRunId??'—')],
+ ]):'<p class="empty">Select a completed staging request to inspect its original release and source binding.</p>';
+ const live=m?.operatorUrl&&m.state==='OPEN';
+ return'<section class="panel"><h2>Operate this study’s merchant</h2>'+
+ '<p>Open the original Merchant Releases console for this project. Review the selected release there, activate it, run the supervised seller, receive a customer account, and create the original client or delivery handoff.</p>'+
+ '<div class="grid">'+select('merchant-known-stage','Loaded completed staging requests',[['','Choose a request'],...stages.map(x=>[x.id,(x.result?.id??'Staged release')+' · '+short(x.id)])],S.merchantStage)+
+ field('merchant-stage','Original staging request ID',S.merchantStage,'text','Any retained completed stage can be reopened by its full UUID, including older operations outside the current list.')+'</div>'+
+ '<div class="actions">'+button('Inspect original release','id="merchant-inspect"')+button('Refresh merchant status','id="merchant-status"')+
+ button(live?'Reopen merchant console':'Open merchant console','id="merchant-open" data-mutate',true)+
+ (m?.consoleId?button('Close owned merchant and console','id="merchant-close" data-mutate'):'')+'</div>'+
+ '<div id="merchant-state">'+summary+'</div>'+
+ (live?'<div class="callout"><p>This project owns the original release console and its seller lifetime. Closing the project also closes the console and drains its owned merchant and receiving work.</p><a class="button" target="_blank" rel="noreferrer noopener" href="'+esc(m.operatorUrl)+'">Open original merchant operations</a></div>':'')+
+ (release?objectDetails({release,preparationRequestId:chosen.preparationRequestId,stageRequestId:chosen.stageRequestId},'Retained release, dataset, routes and source identity'):'')+
+ '<details><summary>Complete the merchant and customer handoff</summary><ol>'+
+ '<li>Compare the selected release with the active release. Confirm its origin, complete scheme/network/asset/payee/amount and dataset snapshot.</li>'+
+ '<li>Use the console’s reviewed activation and Run actions. The seller status identifies challenge-only or native x402 mode; a started console alone is not a running seller.</li>'+
+ '<li>Use the original account receiving, client export and delivery controls. A real paid acquisition uses that original native offer and the customer’s reviewed account and spend approval.</li>'+
+ '<li>Read the actual original result, payment and retained file before sharing a delivery. An OpenAQ study export retains its observations, source attribution and reviews; a merchant deployment and customer account keep their own original identities.</li>'+
+ '<li>Use Stop or close the owned console when finished. Reopening this project retains the stage and release history; explicitly open a fresh console for another operating session.</li>'+
+ '</ol><p>The preparation and open actions do not issue provider requests or payments. The original release engine performs activation, rollback, supervision and account operations. The private console link is a live local capability, not a public delivery link.</p></details></section>';
+}
+function renderMerchantPanel(){const panel=$('#merchant-panel');if(panel){panel.innerHTML=merchantPanel();bindMerchantPanel();}}
+function merchantInput(required=false){
+ const stageRequestId=get('merchant-stage');
+ if(stageRequestId!==S.merchantStage){S.merchantStage=stageRequestId;S.merchantEpoch++;S.merchant=null;}
+ if(required&&!stageRequestId)throw Error('Choose the completed original staging request.');
+ return stageRequestId?{stageRequestId}:{};
+}
+function merchantSelection(){
+ return{epoch:S.merchantEpoch,stageRequestId:S.merchantStage,identity:S.identity};
+}
+function merchantSelectionCurrent(selection){
+ return selection.identity===S.identity&&selection.epoch===S.merchantEpoch&&
+  selection.stageRequestId===S.merchantStage&&
+  (!$('#merchant-stage')||get('merchant-stage')===selection.stageRequestId);
+}
+function acceptMerchant(value,selection){
+ if(!merchantSelectionCurrent(selection))return false;
+ const previous=S.merchant;
+ if(value.operatorUrl){
+  const url=new URL(value.operatorUrl);
+  if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||!Number(url.port)||url.username||url.password||url.search||url.pathname!=='/'||!/^#[a-f0-9]{64}$/.test(url.hash))
+   throw Error('The original merchant console returned an unexpected private origin.');
+ }else if(previous?.operatorUrl&&previous.consoleId===value.consoleId&&value.state==='OPEN'){
+  value={...value,operatorUrl:previous.operatorUrl};
+ }
+ S.merchant=value;renderMerchantPanel();return true;
+}
+function bindMerchantPanel(){
+ const change=()=>{S.merchantStage=get('merchant-stage');S.merchantEpoch++;S.merchant=null;renderMerchantPanel();};
+ $('#merchant-stage')?.addEventListener('change',change);
+ $('#merchant-known-stage')?.addEventListener('change',()=>{S.merchantStage=get('merchant-known-stage');S.merchantEpoch++;S.merchant=null;renderMerchantPanel();});
+ $('#merchant-inspect')?.addEventListener('click',()=>guarded(async()=>{
+  const input=merchantInput(true),selection=merchantSelection();S.merchant=null;
+  if(acceptMerchant(await read('merchant.release',input),selection))note('The exact original release, dataset and preparation are selected.');
+ }));
+ $('#merchant-status')?.addEventListener('click',()=>guarded(async()=>{
+  const input=merchantInput(),selection=merchantSelection();
+  if(acceptMerchant(await read('merchant.status',input),selection))note('Current original merchant and release-store status loaded.');
+ }));
+ $('#merchant-open')?.addEventListener('click',()=>guarded(async()=>{
+  const input=merchantInput(true),selection=merchantSelection();
+  if(acceptMerchant(await read('merchant.open',input),selection))note('The original merchant console is ready. Open its private link to operate the reviewed release.');
+ }));
+ $('#merchant-close')?.addEventListener('click',()=>guarded(async()=>{
+  const consoleId=S.merchant?.consoleId;if(!consoleId)throw Error('Refresh the current owned console identity.');
+  const input=merchantInput(),selection=merchantSelection();
+  const result=await read('merchant.close',{consoleId});
+  if(!acceptMerchant(result,selection))return;
+  if(acceptMerchant(await read('merchant.status',input),selection))note('The original owned merchant and console are closed; retained release and study history remain available.');
+ }));
+}
+
 function customerView(){
  return'<section class="panel"><h2>Receive the dataset in the original customer workspace</h2>'+pairFields()+
  '<p class="hint">This project delegates reviewed local delivery, dataset import, SQL analysis and collection/report exports to the existing DuckDB customer workspace selected by the host. Its ownership and source edition remain independent.</p>'+
@@ -284,6 +373,7 @@ function builderPlan(){
 }
 async function loadContext(){const r=await fetch('/examples/archive-context.json',{cache:'no-store'});if(!r.ok)throw Error('The installed example metadata is unavailable.');S.context=await r.json();if($('#context-json'))$('#context-json').value=pretty(S.context);}
 function bindForms(){
+ bindMerchantPanel();
  $('#capture-builder')?.addEventListener('submit',e=>{e.preventDefault();S.plan=builderPlan();$('#plan-json').value=pretty(S.plan);note('Plan JSON updated. Review it and its original source context before capture.');});
  $('#example-context')?.addEventListener('click',()=>guarded(loadContext));
  $('#example-plan')?.addEventListener('click',()=>guarded(async()=>{S.plan={mode:'archive',locationId:2178,label:'Del Norte · May 3, 2022',purpose:'Review the original OpenAQ public archive edition and its station-level observations.',sensorIds:[],dates:['2022-05-03'],maxRows:250000};S.study=null;await loadContext();renderView();}));

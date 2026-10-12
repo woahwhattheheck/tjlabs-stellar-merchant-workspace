@@ -486,3 +486,11 @@ A retained browser native-task document has `task` in place of `kind`; continue 
 - [Library of Congress MARC 024](https://www.loc.gov/marc/bibliographic/bd024.html), [773](https://www.loc.gov/marc/bibliographic/bd773.html) and [MARCXML](https://www.loc.gov/standards/marcxml/).
 
 The case-specific issuer documents, commercial programme, source acquisition and partner communication remain in the existing sales operation. This selected product is the reusable engineering workflow and complete editable delivery.
+
+## Prepare the original source before selecting a TIND institution
+
+A complete reviewed OAI edition can open immediately as an editable TIND migration. The institution field may remain empty while the operator maps original metadata, reviews source cases, preserves contributor identities, prepares rights and hierarchy decisions, and saves the full handover. This supports procurement and commissioning work before a receiving tenant has been selected.
+
+When the actual receiving institution is selected, open **Mapping**, set the profile's `instance` to that institution's HTTPS origin, and save the complete profile. Preparing a native batch, running native search, or sending an exact native request uses that selected institution. An institution already associated with received destination records or prepared native batches remains bound to the original migration.
+
+The OAI console also receives unchanged XML through `import-relay` or `import-relay-request`. Its original acquisition receipts, source bodies and replay history are retained through edition review, projection, the TIND project and the full editable workspace handover. See the adjacent OAI operator README for the complete receipt format and original-request recovery commands.

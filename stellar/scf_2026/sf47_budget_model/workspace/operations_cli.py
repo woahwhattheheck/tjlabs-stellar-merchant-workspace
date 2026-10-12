@@ -26,12 +26,12 @@ def register(subparsers, common):
         if output:
             target.add_argument("--output", help="New private JSON filename; omission prints JSON")
         return target
-    def mutation(target, version=False):
+    def mutation(target, version=False, note_required=False):
         target.add_argument("--actor", required=True, help="Recording operator, retained in the original history")
         target.add_argument("--request-id", required=True, help="Stable ID; reuse exact inputs to resume")
         if version:
             target.add_argument("--expected-version", type=int, required=True)
-        target.add_argument("--note", default="", help="Reason or review note")
+        target.add_argument("--note", default="", required=note_required, help="Reason or review note")
     def selection(target):
         target.add_argument("--plan", required=True)
         target.add_argument("--selected-revision", type=int, required=True)
@@ -111,6 +111,9 @@ def register(subparsers, common):
     target = command("amendment-preview", "Compare a selected native planning revision against the same recorded case", case=True, output=True)
     target.add_argument("--inputs", required=True)
     target.add_argument("--expected-version", type=int, required=True)
+    target = command("amendment-calendar-export", "Export both native amendment calendars, the full comparison and complete case", case=True)
+    target.add_argument("--selection", required=True, help="Original draft or saved-edition calendar export selection JSON")
+    target.add_argument("--output", required=True)
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -226,6 +229,20 @@ def register(subparsers, common):
     command("installations", "List current saved customer installation editions", case=True, output=True)
     target = command("installation-seed", "Prepare a complete installation from the original funded work packages", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
+    for verb in ("installation-commercial", "installation-commercial-seed"):
+        target = command(verb, "Read accepted SF74 quotations or prepare their complete Customer Installation", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--source", required=True, help="Complete original Merchant Support workspace or handoff source ID")
+        target.add_argument("--expected-source-sha256", required=True)
+        if verb == "installation-commercial-seed":
+            target.add_argument("--quote", required=True)
+            target.add_argument("--quote-sha256", required=True)
+            target.add_argument("--acceptance", required=True, help="Original recorded current customer acceptance UUID")
+            target.add_argument("--acceptance-sha256", required=True)
+            target.add_argument("--installation", help="Current Installation; omit to prepare a new one")
+            target.add_argument("--expected-revision", type=int, required=True)
+            target.add_argument("--document", help="Complete original editable Installation JSON")
+            target.add_argument("--resolutions", help="JSON object mapping reviewed conflicting fields to accepted or current")
     for verb in ("installation-workshares", "installation-workshare-seed"):
         target = command(verb, "Read or receive complete original commercial Workshares from retained case sources", case=True, output=True)
         target.add_argument("--expected-version", type=int, required=True)
@@ -304,6 +321,30 @@ def register(subparsers, common):
             target.add_argument("--expected-preview-sha256", required=True)
         else:
             target.add_argument("--expected-version", type=int, required=True)
+    command("engagements", "List complete sourced contributor agreement editions and native receivings", case=True, output=True)
+    target = command("engagement-seed", "Open a complete agreement draft or sourced successor of a saved edition", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--review", help="Original engagement review ID; omit for the native initial seed")
+    target = command("engagement-show", "Reopen the full saved agreement edition, source, report and receiving history", case=True, output=True)
+    target.add_argument("--review", required=True)
+    for verb in ("engagement-preview", "engagement-prepare"):
+        target = command(verb, "Review or retain the complete named agreement document and actual acceptance states", case=True, output=True)
+        target.add_argument("--document", required=True, help="Complete engagement document JSON from the original seed or saved edition")
+        if verb == "engagement-prepare":
+            mutation(target, version=True, note_required=True)
+            target.add_argument("--expected-preview-sha256", required=True)
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
+    for verb in ("engagement-forecast", "engagement-portfolio"):
+        target = command(verb, "Review a complete native agreement allocation into the original Forecast or Portfolio", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--selection", required=True, help="Complete original handover selection JSON, retaining all selected agreement and source IDs")
+    target = command("engagement-receiving", "Retain the validated original agreement, saved Forecast and saved Portfolio join", case=True, output=True)
+    mutation(target, version=True, note_required=True)
+    target.add_argument("--data", required=True, help="Exact review/hash, saved Forecast/Portfolio IDs and both normalized original selections")
+    target = command("engagement-export", "Export the selected agreement edition, readable report and whole original case with all sources", case=True)
+    target.add_argument("--review", required=True)
+    target.add_argument("--output", required=True)
     target = command("forecast-preview", "Calculate a dated forecast from current original records", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Forecast input JSON file")
     target.add_argument("--expected-version", type=int, required=True)
@@ -558,6 +599,12 @@ def operate(workspace, args):
         except (UnicodeError, ValueError) as exc:
             raise Problem("Use complete UTF-8 amendment inputs.", 422, "INVALID_AMENDMENT") from exc
         result = ops.preview_amendment(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+    elif action == "amendment-calendar-export":
+        try:
+            selection = json.loads(read_bytes(args.selection, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the original complete calendar export selection.", 422, "INVALID_AMENDMENT_CALENDAR") from exc
+        return {"caseId": args.case, "output": publish(args.output, ops.export_amendment_calendar(args.case, selection))}
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":
@@ -687,6 +734,23 @@ def operate(workspace, args):
         result = {"installations": ops.list_installations(args.case)}
     elif action == "installation-seed":
         result = ops.seed_installation(args.case, {"expectedVersion": args.expected_version})
+    elif action in ("installation-commercial", "installation-commercial-seed"):
+        selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
+                    "expectedSourceSha256": args.expected_source_sha256}
+        if action == "installation-commercial":
+            result = ops.installation_commercial(args.case, selected)
+        else:
+            selected.update({"quoteId": args.quote, "quoteSha256": args.quote_sha256,
+                             "acceptanceId": args.acceptance, "acceptanceSha256": args.acceptance_sha256,
+                             "installationId": args.installation, "expectedRevision": args.expected_revision})
+            for argument, field in ((args.document, "document"), (args.resolutions, "resolutions")):
+                if argument:
+                    from operations_installations import MAX_DOCUMENT_BYTES
+                    try:
+                        selected[field] = json.loads(read_bytes(argument, MAX_DOCUMENT_BYTES))
+                    except (UnicodeError, ValueError) as exc:
+                        raise Problem("Use complete UTF-8 Installation input or field choices.", 422, "INVALID_JSON") from exc
+            result = ops.seed_commercial_installation(args.case, selected)
     elif action in ("installation-workshares", "installation-workshare-seed"):
         selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
                     "expectedSourceSha256": args.expected_source_sha256,
@@ -766,6 +830,44 @@ def operate(workspace, args):
                 data = {"inputs": data}
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": action.replace("-", ".", 1), "data": data})
+    elif action == "engagements":
+        result = ops.list_engagements(args.case)
+    elif action == "engagement-show":
+        result = ops.engagement(args.case, args.review)
+    elif action == "engagement-seed":
+        body = {"expectedVersion": args.expected_version}
+        if args.review is not None:
+            body["reviewId"] = args.review
+        result = ops.seed_engagement(args.case, body)
+    elif action == "engagement-export":
+        return {"reviewId": args.review, "output": publish(args.output, ops.export_engagement(args.case, args.review))}
+    elif action in ("engagement-preview", "engagement-prepare", "engagement-forecast",
+                    "engagement-portfolio", "engagement-receiving"):
+        filename = (args.document if action in ("engagement-preview", "engagement-prepare") else
+                    args.selection if action in ("engagement-forecast", "engagement-portfolio") else args.data)
+        try:
+            selected = json.loads(read_bytes(filename, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the complete original UTF-8 engagement document or selection.",
+                          422, "INVALID_JSON") from exc
+        if not isinstance(selected, dict):
+            raise Problem("The original engagement input must be a JSON object.", 422, "INVALID_JSON")
+        if action == "engagement-preview":
+            result = ops.preview_engagement(args.case, {"expectedVersion": args.expected_version,
+                                                       "document": selected})
+        elif action == "engagement-forecast":
+            result = ops.preview_engagement_forecast(args.case, {"expectedVersion": args.expected_version,
+                                                                "selection": selected})
+        elif action == "engagement-portfolio":
+            result = ops.preview_engagement_portfolio(args.case, {"expectedVersion": args.expected_version,
+                                                                 "selection": selected})
+        else:
+            data = ({"document": selected, "expectedPreviewSha256": args.expected_preview_sha256}
+                    if action == "engagement-prepare" else selected)
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note,
+                "action": "engagement.prepare" if action == "engagement-prepare" else "engagement.receiving",
+                "data": data})
     elif action in ("forecast-preview", "forecast-save"):
         try:
             inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))

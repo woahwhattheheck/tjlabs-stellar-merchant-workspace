@@ -49,6 +49,15 @@ export {inspectStudyProtocolBundle,STUDY_PROTOCOL_INSPECTION} from './study-prot
 export {createStudyProtocolClient,inspectStudyProtocolReceiveRequest,STUDY_PROTOCOL_RECEIVE_REQUEST} from './study-protocol-client.mjs';
 export {runStudyProtocolReview,STUDY_PROTOCOL_PREPARED} from './study-protocol-operator.mjs';
 
+export {createResearchQuotesClient} from './customer-quotes/client.mjs';
+export {openResearchCustomerQuotes} from './customer-quotes/workspace.mjs';
+export {QUOTES_SCHEMA,QUOTE_OPERATION_SCHEMA,QUOTE_HOST_SCHEMA} from './customer-quotes/contracts.mjs';
+
+export {inspectResearchQuoteLaunch,assertResearchQuoteLaunch,researchQuoteLaunchView} from './customer-quotes/launch-inspection.mjs';
+export {normalizeResearchQuoteConfiguration,readResearchQuoteConfiguration} from './customer-quotes/configuration.mjs';
+export {prepareResearchQuotationSetup,readResearchQuotationSetup,saveResearchQuotationSetup,
+ exportResearchQuotationSetup,RESEARCH_QUOTATION_SETUP_SCHEMA} from './customer-quotes/setup.mjs';
+
 export {createStudyFlowClient} from './study-flow/client.mjs';
 export {FLOW_SCHEMA,FLOW_DEFINITION_SCHEMA,FLOW_OPERATION_SCHEMA,FLOW_TEMPLATES,FLOW_METRICS,
   flowDefinition,flowInput,parseFlowCsv} from './study-flow/contracts.mjs';

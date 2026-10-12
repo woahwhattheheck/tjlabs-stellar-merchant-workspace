@@ -13,7 +13,7 @@ const HELP = [
   'starforge merchant-workflow-series COMMAND --url http://127.0.0.1:PORT/operator/ [options]',
   '',
   'Original profiles: host, profiles, profile, profile-save, bind, profile-export, profile-import',
-  'Recurring work: list, series, save, calendar, prepare, plan, start-prepare, start, cycle, cancel',
+  'Recurring work: list, series, save, calendar, agenda, agenda-calendar, prepare, plan, start-prepare, start, cycle, cancel',
   'Original execution: run, resume, pause, resolve, handover',
   'Whole customer receiving: capture, receive, reopen, installation',
   '',
@@ -22,6 +22,14 @@ const HELP = [
   '--id ID               Original series, cycle, run or profile ID',
   '--profile ID          Original profile for list or capture',
   '--revision N          Exact series edition for series',
+  '--from YYYY-MM-DD     First due date for agenda or agenda-calendar',
+  '--to YYYY-MM-DD       Last due date (up to 366 days in one window)',
+  '--today YYYY-MM-DD    Calendar date used for overdue work; defaults to UTC today',
+  '--query TEXT          Search customer, task, series or source',
+  '--status STATE        open (default), all, PROPOSED, PLANNED, READY, RUNNING,',
+  '                      PAUSED, WAITING, COMPLETE or CANCELLED',
+  '--no-overdue          Exclude earlier overdue saved periods',
+  '--no-proposals        Show only saved original periods',
   '--offset N            Cycle history page offset, default 0',
   '--limit N             Cycle history page size, default 50, maximum 100',
   '--directory PATH      One private complete customer handover directory',
@@ -51,7 +59,7 @@ const HELP = [
   ''
 ].join('\n');
 const COMMANDS = new Set(['host','profiles','profile','profile-save','bind','profile-export','profile-import',
-  'list','series','save','calendar','prepare','plan','start-prepare','start','cycle','cancel',
+  'list','series','save','calendar','agenda','agenda-calendar','prepare','plan','start-prepare','start','cycle','cancel',
   'run','resume','pause','resolve','handover','capture','receive','reopen','installation']);
 async function readInput(path, maximum = 32 * 1024 * 1024) {
   if (typeof path !== 'string' || !path) throw fail('CONSOLE_SERIES_INPUT_FILE', 'Select the complete original JSON file with --input.', 400);
@@ -75,13 +83,15 @@ export async function main(args = process.argv.slice(2)) {
     python: { type: 'string' }, url: { type: 'string' }, input: { type: 'string' }, output: { type: 'string' }, id: { type: 'string' },
     profile: { type: 'string' }, revision: { type: 'string' }, offset: { type: 'string' }, limit: { type: 'string' },
     directory: { type: 'string' }, delivery: { type: 'string', multiple: true }, 'token-env': { type: 'string' },
+    from: { type: 'string' }, to: { type: 'string' }, today: { type: 'string' }, query: { type: 'string' }, status: { type: 'string' },
+    'no-overdue': { type: 'boolean', default: false }, 'no-proposals': { type: 'boolean', default: false },
     wait: { type: 'boolean', default: false }, 'timeout-ms': { type: 'string' }, help: { type: 'boolean', default: false }
   } });
   if (values.help) { process.stdout.write(HELP); return; }
   const command = positionals[0];
   if (positionals.length !== 1 || !COMMANDS.has(command))
     throw fail('CONSOLE_SERIES_COMMAND', 'Choose one recurring-work command; use --help for the complete workflow.', 400);
-  if (['prepare','start-prepare','profile-export','installation'].includes(command) && !values.output)
+  if (['prepare','start-prepare','profile-export','installation','agenda-calendar'].includes(command) && !values.output)
     throw fail('CONSOLE_SERIES_OUTPUT', 'Retain this complete original review or profile with --output before continuing.', 400);
   const client = ['reopen','installation'].includes(command) ? null : new MerchantWorkflowSeriesClient({
     url: values.url, tokenEnv: values['token-env'] ?? 'MCP_ACCESS_TOKEN'
@@ -100,6 +110,23 @@ export async function main(args = process.argv.slice(2)) {
         ...(values.revision === undefined ? {} : { revision: Number(values.revision) }) }); break;
       case 'save': result = await client.saveSeries(await readInput(values.input)); break;
       case 'calendar': result = await client.calendar(await readInput(values.input)); break;
+      case 'agenda': case 'agenda-calendar': {
+        const query = values.input ? await readInput(values.input) : {
+          profileId: values.profile ?? values.id, from: values.from, to: values.to,
+          ...(values.today === undefined ? {} : { today: values.today }),
+          query: values.query ?? '', status: values.status ?? 'open',
+          includeOverdue: !values['no-overdue'], includeProposed: !values['no-proposals'],
+          offset: Number(values.offset ?? 0), limit: Number(values.limit ?? 50)
+        };
+        if (command === 'agenda') result = await client.agenda(query);
+        else {
+          const calendar = await client.agendaCalendar(query);
+          const file = await writeWorkflowSeriesFile(values.output, Buffer.from(calendar.content, 'utf8'));
+          result = { file, events: calendar.events, query: calendar.query, generatedAt: calendar.generatedAt };
+          outputWritten = true;
+        }
+        break;
+      }
       case 'prepare': result = await client.prepareCycle(await readInput(values.input)); break;
       case 'plan': result = await client.saveCycle(await readInput(values.input)); break;
       case 'start-prepare': result = await client.prepareStart(values.id); break;

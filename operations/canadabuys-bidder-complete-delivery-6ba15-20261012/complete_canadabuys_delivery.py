@@ -3,6 +3,7 @@
 from __future__ import annotations
 import ast
 import codecs
+import gc
 import hashlib
 import json
 import os
@@ -33,6 +34,38 @@ def digest(raw):
 
 def event(name, **values):
     print(json.dumps({"event": name, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **values}, ensure_ascii=False), flush=True)
+
+def runtime_resources(stage, child_pid=None):
+    """Retain this operation's actual process and cgroup memory readings."""
+    value = {"stage": stage, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+             "namespacePid": os.getpid(), "childNamespacePid": child_pid}
+    paths = {"bootId": "/proc/sys/kernel/random/boot_id", "processCgroup": "/proc/self/cgroup",
+             "memoryCurrent": "/sys/fs/cgroup/memory.current", "memoryMax": "/sys/fs/cgroup/memory.max",
+             "memoryPeak": "/sys/fs/cgroup/memory.peak", "memoryEvents": "/sys/fs/cgroup/memory.events"}
+    for key, name in paths.items():
+        try:
+            value[key] = Path(name).read_text().strip()
+        except OSError as error:
+            value[key] = {"error": str(error)}
+    for label, pid in (("python", os.getpid()), ("node", child_pid)):
+        if pid is None:
+            continue
+        try:
+            value[label] = {line.split(":", 1)[0]: line.split(":", 1)[1].strip()
+                            for line in Path("/proc/" + str(pid) + "/status").read_text().splitlines()
+                            if line.startswith(("Name:", "State:", "VmPeak:", "VmSize:", "VmHWM:", "VmRSS:"))}
+        except OSError as error:
+            value[label] = {"error": str(error)}
+    if ROOT is not None:
+        try:
+            with (ROOT / "resource-history.jsonl").open("ab") as output:
+                output.write((json.dumps(value, ensure_ascii=False) + "\n").encode("utf-8"))
+                output.flush()
+                os.fsync(output.fileno())
+        except OSError as error:
+            value["resourceHistoryError"] = str(error)
+    event("CANADABUYS_RUNTIME_RESOURCES", **value)
+    return value
 
 def pin(raw, expected, label):
     if len(raw) != expected["bytes"] or digest(raw) != expected["sha256"]:
@@ -115,6 +148,7 @@ def run_node(command, environment):
         CHILD = subprocess.Popen(command, cwd=str(ROOT), env=environment, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True, bufsize=0)
         event("CANADABUYS_NATIVE_STARTED", namespacePid=CHILD.pid, command=command)
+        runtime_resources("native-started", CHILD.pid)
         fd = CHILD.stdout.fileno()
         os.set_blocking(fd, False)
         selector = selectors.DefaultSelector()
@@ -135,6 +169,7 @@ def run_node(command, environment):
                         sys.stdout.flush()
                 if time.monotonic() - last_heartbeat >= 30:
                     event("CANADABUYS_NATIVE_RUNNING", namespacePid=CHILD.pid)
+                    runtime_resources("native-running", CHILD.pid)
                     last_heartbeat = time.monotonic()
             remainder = decoder.decode(b"", final=True)
             if remainder:
@@ -152,6 +187,7 @@ def run_node(command, environment):
                 except subprocess.TimeoutExpired:
                     os.killpg(CHILD.pid, signal.SIGKILL)
                     CHILD.wait()
+    runtime_resources("native-exited", CHILD.pid)
     event("CANADABUYS_NATIVE_EXITED", namespacePid=CHILD.pid, exitCode=code)
     return code
 
@@ -166,9 +202,11 @@ def result_success(value):
 def save_delivery(paths):
     caller = ROOT / "programme" / "library_upload_private_state.py"
     request = {"uploads": [{"local_path": str(path), "purpose": "create_library_file",
-                           "library_file_name": path.name, "library_artifact_type": "other"} for path in paths]}
+                           "library_artifact_type": "other"} for path in paths]}
     environment = dict(os.environ)
     environment["AZCOPY_CONCURRENCY_VALUE"] = "1"
+    if PAYLOAD["runtime"].get("libraryHelper"):
+        environment["COMMONS_CANONICAL_LIBRARY_UPLOAD_HELPER"] = PAYLOAD["runtime"]["libraryHelper"]
     environment["COMMONS_LIBRARY_UPLOAD_STATE_PARENT"] = str(ROOT / "library-state")
     environment["TMPDIR"] = str(ROOT / "library-state" / "tmp")
     Path(environment["TMPDIR"]).mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -219,6 +257,7 @@ def preserve(status):
     archive_pin = record(destination)
     event("CANADABUYS_ARCHIVE_COMPLETE", **archive_pin, memberCount=len(members) + 1, outcome=status["outcome"])
     guide = ROOT / "application-source" / PAYLOAD["applicationPrefix"] / "BIDDER_DESK.md"
+    runtime_resources("before-artifact-save")
     uploads = save_delivery([destination, guide, ROOT / "execution.json"])
     event("CANADABUYS_DELIVERY_COMPLETE", outcome=status["outcome"], directory=str(ROOT),
           archive=archive_pin, sourceCommit=PAYLOAD["sourceCommit"], uploads=uploads)
@@ -239,6 +278,7 @@ def main():
         chromium = selected_runtime("chromium")
         ROOT, directory_attempts = select_root()
         event("CANADABUYS_DIRECTORY_READY", directory=str(ROOT), directoryAttempts=directory_attempts)
+        status["resourcesAtStart"] = runtime_resources("directory-ready")
         write_once(ROOT / "programme" / "complete_canadabuys_delivery.py", PAYLOAD["program"].encode("utf-8"))
         write_once(ROOT / "programme" / "input.json", encoded(PAYLOAD))
         write_once(ROOT / "source-packet.json", packet_raw)
@@ -285,7 +325,16 @@ def main():
         status["sourcePacket"] = record(ROOT / "source-packet.json")
         status["applicationSourceFiles"] = len(packet["files"])
         status["legacySourceFiles"] = len(packet["originalV1"])
+        # Full source and inputs are already retained on disk; release their duplicate buffers.
+        PAYLOAD["retainedCompleteInput"] = record(ROOT / "programme" / "input.json")
+        for key in ("program", "applicationPacketText", "programmeFiles", "historyFiles",
+                    "priorAttemptRecovery", "libraryCaller"):
+            PAYLOAD.pop(key, None)
+        del packet, packet_raw, caller, recovery, recovery_raw, recovery_value, item
+        gc.collect()
+        status["resourcesBeforeNative"] = runtime_resources("source-buffers-released")
         code = run_node(command, environment)
+        status["resourcesAfterNative"] = runtime_resources("native-result")
         status["nativeExitCode"] = code
         result_path = member(out, PAYLOAD["receiving"]["resultFile"])
         if result_path.exists():
@@ -302,6 +351,7 @@ def main():
     except BaseException as error:
         failure = error
         status["error"] = {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
+        status["resourcesAtFailure"] = runtime_resources("delivery-failure", CHILD.pid if CHILD else None)
         event("CANADABUYS_DELIVERY_FAILURE", **status["error"])
     finally:
         if CHILD is not None and CHILD.poll() is None:

@@ -1,0 +1,480 @@
+/**
+ * Public contract for the pure cohort planning engine.
+ * Inputs are JSON values; monetary and atomic quantities retain textual precision.
+ */
+export declare const COHORT_PLAN_SCHEMA: "stellar-forge.sf47-cohort-plan.v1";
+export declare const COHORT_PLAN_REPORT_SCHEMA: "stellar-forge.sf47-cohort-plan-report.v1";
+export type DecimalText = string;
+export type AtomicText = string;
+export type DateText = string;
+export type TimestampText = string;
+export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type Participation = "INDEPENDENT_OPERATOR" | "CUSTOMER" | "TEAM_OPERATED" | "UNKNOWN";
+export type Environment = "LOCAL" | "TESTNET" | "MAINNET" | "OTHER" | "UNKNOWN";
+export type AsOfPosition = "PAST" | "AS_OF_DAY" | "FUTURE";
+
+export declare class CohortPlanningError extends Error {
+  code: string;
+  path: string;
+  constructor(code: string, message: string, path?: string);
+}
+
+export interface PlanSource {
+  programId: string;
+  version: number;
+  planContentSha256: string;
+  planId?: string;
+  planRevision?: number;
+}
+
+/** All additional original rule fields survive normalization and comparison. */
+export interface CohortPlanningRule {
+  schema: "stellar-forge.scf-deployment-outcomes.v1";
+  target: {
+    tranche: 2 | 3;
+    proposed_window: {
+      consecutive_calendar_days: number;
+      [originalField: string]: unknown;
+    };
+    target_counts: Record<string, number>;
+    [originalField: string]: unknown;
+  };
+  [originalField: string]: unknown;
+}
+
+export interface OriginalDeploymentAcceptancePlan {
+  schema: "stellar-forge.scf-deployment-outcomes.v1";
+  targets: Array<{
+    tranche: number;
+    proposed_window: Record<string, unknown>;
+    target_counts: Record<string, number>;
+    [originalField: string]: unknown;
+  }>;
+  [originalField: string]: unknown;
+}
+
+export interface NativePlanningDeployment {
+  id: string;
+  role: "BUYER" | "MERCHANT" | "BOTH" | string;
+  label?: string;
+  name?: string;
+  operatorId?: string;
+  participantClass?: Participation;
+  environment?: Environment;
+  sourceIds?: string[];
+  sourceNote?: string;
+  [originalField: string]: unknown;
+}
+
+export interface NativeCohortPlanningSeed {
+  source: PlanSource;
+  rule: CohortPlanningRule;
+  inputs?: {
+    asOfAt?: TimestampText;
+    windowStart?: DateText | null;
+    [originalField: string]: unknown;
+  };
+  inventory?: {
+    deployments?: NativePlanningDeployment[];
+    [originalField: string]: unknown;
+  };
+  [originalField: string]: unknown;
+}
+
+export interface PlanningSeedOptions {
+  asOfAt?: TimestampText;
+  windowStart?: DateText;
+  draftId?: string;
+  name?: string;
+  planId?: string;
+  planRevision?: number;
+}
+
+export interface PlanningEvidence {
+  sourceIds: string[];
+  sourceNote: string;
+}
+
+export interface PlanningParticipant extends PlanningEvidence {
+  id: string;
+  label: string;
+  operatorId: string;
+  participantClass: Participation;
+  environment: Environment;
+  deploymentId: string | null;
+}
+
+export interface PlanningFacilitator extends PlanningEvidence {
+  id: string;
+  label: string;
+  operatorId: string;
+  participantClass: Participation;
+  serviceUrl: string;
+}
+
+export interface PlanningOperation extends PlanningEvidence {
+  id: string;
+  label: string;
+  merchantId: string;
+  scope: string;
+  expectedOutput: string;
+  sourcePeriod: string;
+}
+
+export interface PlanningDateExclusion {
+  date: DateText;
+  label: string;
+}
+
+export interface PlanningCalendar {
+  timezone: "UTC";
+  weekdays: Weekday[];
+  excludedDates: PlanningDateExclusion[];
+}
+
+export type PlanningCadence =
+  | { kind: "WEEKDAYS"; weekdays: Weekday[] }
+  | { kind: "EVERY_N_DAYS"; intervalDays: number; anchorDate: DateText }
+  | { kind: "EXPLICIT_DATES"; dates: DateText[] };
+
+export interface PlanningPaymentBase {
+  atomicUnitPrice: AtomicText;
+  network: string;
+  asset: string;
+}
+
+export type PlanningPayment =
+  | (PlanningPaymentBase & { kind: "PER_REQUEST" })
+  | (PlanningPaymentBase & { kind: "UNPAID" })
+  | (PlanningPaymentBase & {
+      kind: "PREPAID";
+      passCapacity: number;
+      openingUnits: number;
+      allowanceUnitsPerRequest: number;
+      passGroupId: string | null;
+    });
+
+export interface PlanningEconomics {
+  currency: string;
+  /** Revenue per new payment request or prepaid pass acquisition. */
+  unitRevenue: DecimalText | null;
+  /** Supplier cost per underlying request. */
+  unitCost: DecimalText | null;
+  feePerPayment: DecimalText | null;
+  activeHoursPerTask: DecimalText | null;
+  hourlyCost: DecimalText | null;
+}
+
+export interface PlanningSchedule {
+  id: string;
+  label: string;
+  operationId: string;
+  buyerId: string;
+  facilitatorId: string | null;
+  cadence: PlanningCadence;
+  tasksPerDate: number;
+  requestsPerTask: number;
+  timeUtc: string;
+  deliveryDelayMinutes: number;
+  excludedDates: PlanningDateExclusion[];
+  payment: PlanningPayment;
+  economics: PlanningEconomics | null;
+  note: string;
+}
+
+export interface PlanningWorkshare extends PlanningEvidence {
+  id: string;
+  label: string;
+  currency: string;
+  fee: DecimalText | null;
+  hours: DecimalText | null;
+  hourlyCost: DecimalText | null;
+  otherCosts: DecimalText | null;
+}
+
+export interface PlanningSensitivity {
+  effortIncreasesPct: DecimalText[];
+  completionSharesPct: DecimalText[];
+}
+
+/** Complete normalized plan; the edition may also retain the original caller JSON. */
+export interface CohortPlan {
+  schema: typeof COHORT_PLAN_SCHEMA;
+  draftId: string;
+  name: string;
+  source: PlanSource;
+  rule: CohortPlanningRule;
+  asOfAt: TimestampText;
+  windowStart: DateText;
+  calendar: PlanningCalendar;
+  buyers: PlanningParticipant[];
+  merchants: PlanningParticipant[];
+  facilitators: PlanningFacilitator[];
+  operations: PlanningOperation[];
+  schedules: PlanningSchedule[];
+  workshares: PlanningWorkshare[];
+  sensitivity: PlanningSensitivity;
+  note: string;
+}
+
+export interface PlannedMetrics {
+  scheduledTasks: number;
+  scheduledRequests: number;
+  plannedPaymentRequests: number;
+  plannedPaidPurchases: number;
+  plannedCompleteTasks: number;
+  plannedCompletePurchases: number;
+  independentPurchaseOpportunities: number;
+  allowanceUnits: number;
+}
+
+export interface PlanningSummary extends PlannedMetrics {
+  independentBuyerOperators: number;
+  independentMerchantOperators: number;
+  returningBuyerOperators: number;
+  sameOperationFacilitatorOperators: number;
+  excludedScheduleDates: number;
+  /** Paid purchases whose complete output falls after the original window. */
+  completionOutsideWindow: number;
+  elapsedScheduledDates: number;
+}
+
+export interface PlanningSourceComparison {
+  status: "NOT_COMPARED" | "MATCH" | "CHANGED";
+  fields: Array<{
+    key: "programId" | "version" | "planContentSha256" | "planId" | "planRevision";
+    planned: string | number;
+    current: string | number;
+    match: boolean;
+  }>;
+  ruleMatches: boolean | null;
+  currentSource: PlanSource | null;
+  currentRule: CohortPlanningRule | null;
+}
+
+export interface PlanningWindow {
+  start: DateText;
+  end: DateText;
+  calendarDays: number;
+  requiredCalendarDays: number;
+  tranche: 2 | 3;
+  expectedEnvironment: "TESTNET" | "MAINNET";
+  asOfAt: TimestampText;
+  asOfDay: DateText;
+}
+
+export interface PlanningDay extends PlannedMetrics {
+  date: DateText;
+  weekday: Weekday;
+  isWorkingDay: boolean;
+  exclusionLabels: string[];
+  asOfPosition: AsOfPosition;
+}
+
+export interface PlanningAllowance {
+  groupId: string;
+  openingActiveUnits: number;
+  consumedUnits: number;
+  plannedNewPasses: number;
+  retainedUnusedPreviousUnits: number;
+  remainingActiveUnits: number;
+}
+
+export interface PlanningEconomicAmounts {
+  currency: string;
+  revenue: DecimalText | null;
+  supplierCost: DecimalText | null;
+  paymentFees: DecimalText | null;
+  activeHours: DecimalText | null;
+  laborCost: DecimalText | null;
+  totalCost: DecimalText | null;
+  contribution: DecimalText | null;
+}
+
+export interface PlanningOccurrence extends PlannedMetrics {
+  id: string;
+  scheduleId: string;
+  label: string;
+  operationId: string;
+  buyerId: string;
+  merchantId: string;
+  facilitatorId: string | null;
+  buyerOperatorId: string;
+  merchantOperatorId: string;
+  facilitatorOperatorId: string | null;
+  date: DateText;
+  scheduledAt: TimestampText;
+  plannedCompleteAt: TimestampText;
+  completionDate: DateText;
+  withinWindow: boolean;
+  asOfPosition: AsOfPosition;
+  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID";
+  network: string;
+  asset: string;
+  allowance: PlanningAllowance | null;
+  qualificationGaps: string[];
+  atomicAmount: AtomicText;
+  economics: PlanningEconomicAmounts | null;
+}
+
+export interface PlanningExcludedDate {
+  scheduleId: string;
+  date: DateText;
+  reasons: string[];
+}
+
+export interface PlanningBuyerGroup extends PlannedMetrics {
+  operatorId: string | null;
+  label: string;
+  buyerIds: string[];
+  completionDates: DateText[];
+  returningPotential: boolean;
+}
+
+export interface PlanningMerchantGroup extends PlannedMetrics {
+  operatorId: string | null;
+  label: string;
+  merchantIds: string[];
+  buyerOperatorIds: string[];
+}
+
+export interface PlanningOperationGroup extends PlannedMetrics {
+  id: string;
+  label: string;
+  merchantId: string;
+  facilitatorOperatorIds: string[];
+  buyerOperatorIds: string[];
+  independentFacilitatorCount: number;
+}
+
+export interface PlanningFacilitatorGroup extends PlannedMetrics {
+  operatorId: string | null;
+  label: string;
+  serviceIds: string[];
+  operationIds: string[];
+}
+
+export interface PlanningTarget {
+  key: string;
+  expected: number;
+  planned: number | null;
+  gap: number | null;
+  status: "PLANNED_CAPACITY" | "SHORTFALL" | "OUTSIDE_SCHEDULE_SCOPE";
+}
+
+export type PlanningComponent = "revenue" | "supplierCost" | "paymentFees" | "activeHours" | "laborCost";
+
+export interface PlanningCurrency extends PlanningEconomicAmounts {
+  records: number;
+  knownSubtotals: Record<PlanningComponent, DecimalText>;
+  unknownRecordCounts: Record<PlanningComponent, number>;
+  complete: boolean;
+  marginPercent: DecimalText | null;
+}
+
+export interface PlanningAsset {
+  network: string;
+  asset: string;
+  atomicAmount: AtomicText;
+  plannedPaymentRequests: number;
+  plannedPaidPurchases: number;
+}
+
+export interface PlanningPassGroup {
+  id: string;
+  buyerId: string;
+  merchantId: string;
+  network: string;
+  asset: string;
+  passCapacity: number;
+  openingUnits: number;
+  remainingActiveUnits: number;
+  retainedUnusedPreviousUnits: number;
+  consumedUnits: number;
+  plannedNewPasses: number;
+  scheduleIds: string[];
+}
+
+export interface PlanningWorkshareCase {
+  effortIncreasePct: DecimalText;
+  hours: DecimalText | null;
+  laborCost: DecimalText | null;
+  totalCost: DecimalText | null;
+  contribution: DecimalText | null;
+  marginPercent: DecimalText | null;
+}
+
+export interface PlanningWorkshareReport extends PlanningWorkshare {
+  cases: PlanningWorkshareCase[];
+  breakEvenHours: DecimalText | null;
+}
+
+export interface PlanningCompletionSensitivity {
+  completionSharePct: DecimalText;
+  baseOpportunities: number;
+  potentialCompletedWholePurchases: number;
+  purchaseTarget: number | null;
+  requiredOpportunities: number | null;
+  shortfall: number | null;
+}
+
+export interface PlanningEffortSensitivity {
+  currency: string;
+  effortIncreasePct: DecimalText;
+  activeHours: DecimalText | null;
+  laborCost: DecimalText | null;
+  totalCost: DecimalText | null;
+  contribution: DecimalText | null;
+}
+
+export interface PlanningFinding {
+  code: string;
+  severity: "info" | "warning";
+  scope: string;
+  id: string | null;
+  message: string;
+}
+
+export interface CohortPlanReport {
+  schema: typeof COHORT_PLAN_REPORT_SCHEMA;
+  kind: "PLAN";
+  source: PlanSource;
+  rule: CohortPlanningRule;
+  input: CohortPlan;
+  sourceComparison: PlanningSourceComparison;
+  window: PlanningWindow;
+  summary: PlanningSummary;
+  days: PlanningDay[];
+  occurrences: PlanningOccurrence[];
+  excluded: PlanningExcludedDate[];
+  buyers: PlanningBuyerGroup[];
+  merchants: PlanningMerchantGroup[];
+  operations: PlanningOperationGroup[];
+  facilitators: PlanningFacilitatorGroup[];
+  targets: PlanningTarget[];
+  currencies: PlanningCurrency[];
+  assets: PlanningAsset[];
+  passGroups: PlanningPassGroup[];
+  workshares: PlanningWorkshareReport[];
+  sensitivity: {
+    completion: PlanningCompletionSensitivity[];
+    effort: PlanningEffortSensitivity[];
+  };
+  findings: PlanningFinding[];
+}
+
+export interface PlanningEvaluationOptions {
+  nativeSeed?: NativeCohortPlanningSeed;
+}
+
+/** Selects the complete native-shaped rule for tranche 2 or 3. */
+export declare function selectCohortPlanningRule(original: OriginalDeploymentAcceptancePlan, tranche: 2 | 3): CohortPlanningRule;
+/** Validates JSON, reports unsupported fields explicitly, and returns normalized values. */
+export declare function normalizeCohortPlan(raw: unknown): CohortPlan;
+/** Seeds identities and original rules; an explicit timestamp comes from options or native seed. */
+export declare function seedCohortPlan(nativeSeed: NativeCohortPlanningSeed, options?: PlanningSeedOptions): CohortPlan;
+/** Old plans retain their rule while current-source differences become report findings. */
+export declare function evaluateCohortPlan(input: CohortPlan, options?: PlanningEvaluationOptions): CohortPlanReport;
+export declare function evaluateCohortPlan(input: unknown, options?: PlanningEvaluationOptions): CohortPlanReport;
+/** One complete wide CSV string with RFC-style quoting, CRLF and formula-safe text cells. */
+export declare function exportCohortPlanCsv(report: CohortPlanReport): string;

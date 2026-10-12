@@ -14,11 +14,11 @@ python3 operations/canadabuys-bidder-complete-delivery-6ba15-20261012/continue.p
 
 The entrypoint verifies the full input and source, then the producer creates a private operation directory with the complete 37-file application and five original v1 modules. It runs the full 17-phase receiving workflow: source intake and migration; HTTP award intake; saved command recovery; source documents and requirements; saved profiles; fit decisions and action history; source-context comparison; native reports; complete and selected packages; independent receiving and cold reopening. It preserves all native output, workspaces, commands, original cases, full source editions, report/download files and five browser images.
 
-The selected default runtime is the actual existing ChatGPT Linux runtime: Node at `/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node`, Playwright at `/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs`, and Chromium at `/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell`. An equipped worker may select its actual installed paths with `--node`, `--playwright` and `--chromium`. Use `--directory-parent` for a writable operation parent. The exact original and selected runtime paths are retained in the operation history.
+The published original runtime selection is Node at `/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node`, Playwright at `/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs`, and Chromium at `/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell`. Select the worker's actual installed paths with `--node`, `--playwright` and `--chromium`; select the original canonical upload helper's actual location with `--library-helper`. Use `--directory-parent` for a writable operation parent. The exact original and selected runtime paths are retained in the operation history.
 
 The final native result is `working-delivery/receiving-result.json`, with `status: "PASS"` and `nativeState: "RECEIVED_AND_VERIFIED"`. Its report and member manifest identify the complete case and all saved files.
 
-The producer builds and reopens the complete ZIP, verifies every archived member, and saves the ZIP, full bidder guide and execution record through the existing canonical Library helper. The existing helper at `/dev/shm/openalex-6ba15/library-helpers-20261011-2256/library_upload.py` is the 44,876-byte version with SHA-256 `5bc473dadefe1f68ee8797baaed19d6662642d0ea4bcba128fa12938faa0d767`. The supplied 4,034-byte caller uses that original helper and its provider-issued upload/finalization flow.
+The producer builds and reopens the complete ZIP, verifies every archived member, and saves the ZIP, full bidder guide and execution record through the existing canonical Library helper. The existing helper at `/dev/shm/openalex-6ba15/library-helpers-20261011-2256/library_upload.py` is the 44,876-byte version with SHA-256 `5bc473dadefe1f68ee8797baaed19d6662642d0ea4bcba128fa12938faa0d767`. The supplied 4,097-byte caller uses that original helper and its provider-issued upload/finalization flow. Create requests contain `local_path`, `purpose` and `library_artifact_type`.
 
 ## Finish the live delivery
 
@@ -34,9 +34,17 @@ After visual review and final delivery, send:
 
 Wait for the actual process exit. On a persistent worker whose job controller keeps the complete filesystem available for later image review, `--batch` exits after the receiving result and canonical saves.
 
+## Continue on the current worker
+
+The integrated source was published in [PR585](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/585). Its actual session 12385 completed the same first six phases, then Node exited with signal 9 before the browser returned. The producer built and reopened all 238 local checkpoint members. Its save request included a replacement-only field, which the canonical helper rejected before preparing an upload. The original runtime later disconnected; the next observed host had a new boot identity and filesystem.
+
+This edition corrects the create request, retains the complete actual session history and previous producer/caller/entrypoint, and supports the actual restored runtime locations. It releases duplicate parsed source buffers after writing the complete input, application and history to disk. It records the boot ID, owned Python/Node process memory, and cgroup memory current/peak/max/events before, during and after native execution. Those readings appear in `resource-history.jsonl` and in the original console stream.
+
+The full retained input remains at `programme/input.json`. The live producer keeps the small runtime and receiving configuration in memory; a subsequent concrete controller action can reload the complete input from that original file.
+
 ## Original operating cases and integrated source
 
-The current complete input is **2,647,299 bytes**, SHA-256 `cc200bbd28811ce975d9eb801b1c06f1586e0b39295b384f9c329d1fd9cbddbe`. Its application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`. Every current application body matched the merged PR's original Git blob.
+The current complete input is **2,692,594 bytes**, SHA-256 `a484968b251e44f3f9cc4efb74c78b52f2eb5356e2250cb35c63ae3d8c738f2d`. Its application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`. Every current application body matched the merged PR's original Git blob.
 
 The current fixture changes only its application-source selection. Captures, documents, supplier profile and expected results are unchanged from the original receiving fixture. The exact original fixture remains in the delivered history. The selected source preserves the original owner's faster CSV scanner, indexed publication lookup and complete operating program. The editor correction preserves blank and wildcard commodity codes; the receiving programme retains both complete page editions and records that exact source change before the browser phase.
 
@@ -58,5 +66,6 @@ The current integrated source is received into its own complete working director
 - `input.json`: every selected application, runtime programme, operating-case and historical input body.
 - `integrated-source-selection.json`: original and current source members, unchanged case digest and merge identity.
 - `original-attempt-recovery.json`: exact earlier execution record and concrete page correction.
+- `integrated-attempt-history.json`: complete actual session 12385 output and the current runtime/save correction.
 
 The application guide is `stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/BIDDER_DESK.md`. The full procurement operator guide and `operator/OPERATING_TOOLS.mjs` remain beside it in the maintained application.

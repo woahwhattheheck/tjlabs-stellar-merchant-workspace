@@ -1,6 +1,7 @@
 // MIT. Operator-controlled recurring work over the original native Workflow owner.
 import { canonical, digest, fail } from './records.mjs';
 import { workflowCallId } from './workflow-records.mjs';
+import { workflowAgendaRequest, workflowAgenda, workflowAgendaCalendar } from './workflow-series-agenda.mjs';
 import { SERIES_SCHEMA, CYCLE_SCHEMA, SERIES_REVIEW_SCHEMA, SERIES_MAX_BYTES, SERIES_REQUEST_BYTES,
   plain, clone, same, seal, need, identifier, revision, note, fields, sha, seriesRequest, cycleRequest,
   resolvedCycleInputs, cycleId, cycleRunId, selectPointer, assignPointer, seriesCalendar } from './workflow-series-records.mjs';
@@ -203,6 +204,33 @@ export function createMerchantWorkflowSeries({ store, workflows, definitions, ge
         db.prepare('INSERT INTO workflow_series VALUES(?,?,?,?,?)').run(value.id, value.revision, value.profileId, requestId, JSON.stringify(value));
         return { series: value, currentSeries: summary(value), reused: false };
       });
+    },
+    async agenda(input, context, { calendar = false } = {}) {
+      const query = workflowAgendaRequest(input);
+      store.profile(query.profileId);
+      const entries = [], latest = db.prepare('SELECT chosen.value FROM workflow_series AS chosen WHERE chosen.profile_id=? AND chosen.revision=(SELECT MAX(history.revision) FROM workflow_series AS history WHERE history.id=chosen.id) ORDER BY chosen.id');
+      const originals = db.prepare('SELECT value FROM workflow_cycles WHERE series_id=? ORDER BY cycle_key');
+      for (const row of latest.iterate(query.profileId)) {
+        const current = JSON.parse(row.value);
+        try { await authorizeSeries(current, context); }
+        catch (error) { if (error.merchantConsoleAuthorization) continue; throw error; }
+        const cycles = [], occupiedKeys = [];
+        for (const original of originals.iterate(current.id)) {
+          const value = JSON.parse(original.value);
+          occupiedKeys.push(value.request.key);
+          const due = value.request.dueDate;
+          if (!(due >= query.from && due <= query.to) &&
+            !(query.includeOverdue && due < query.today && due < query.from)) continue;
+          try {
+            const status = await cycleView(value, context);
+            const selected = series(value.seriesId, value.seriesRevision);
+            cycles.push({ status, series: summary(selected) });
+          } catch (error) { if (!error.merchantConsoleAuthorization) throw error; }
+        }
+        entries.push({ series: summary(current), cycles, occupiedKeys });
+      }
+      const agenda = workflowAgenda({ query, entries, complete: calendar });
+      return calendar ? workflowAgendaCalendar(agenda) : agenda;
     },
     async calendar(input, context) {
       fields(input, ['id', 'revision', 'from', 'to', 'limit']);

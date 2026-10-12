@@ -23,6 +23,11 @@ class Console:
     def __init__(self,workspace):
         self.ws=workspace;self.worker=None;self.error=None;self.lock=threading.Lock()
         self.token=uuid.uuid4().hex
+        # Stable across console restarts; changes when this workspace directory or database is replaced.
+        from harvest import sha
+        root_info=workspace.root.stat(); database_info=(workspace.root/"workspace.sqlite").stat()
+        self.relay_identity=sha(jbytes([str(workspace.root),str(root_info.st_dev),str(root_info.st_ino),
+                                      str(database_info.st_dev),str(database_info.st_ino)]))
         self.islandora=IslandoraDesk(workspace)
 
     def run(self,identity):
@@ -84,13 +89,15 @@ class Console:
         if name=="mapping": return ws.save_mapping(p["plan"])
         if name=="build": return ws.build(p["editionId"],p["planId"])
         if name=="query": return ws.query(p["buildId"],p.get("query",{}))
-        if name=="import":
+        if name in {"import","import-relay"}:
             if self.worker and self.worker.is_alive(): raise InputError("The active harvest owns its response input; finish or cancel it before importing another host response")
             body=base64.b64decode(p["bodyBase64"],validate=True)
             if len(body)>32*1024*1024: raise InputError("Use the native import command for response pages larger than 32 MiB")
-            metadata=p["metadata"]
             with tempfile.NamedTemporaryFile(dir=ws.area/"tmp") as file:
                 file.write(body);file.flush()
+                if name=="import-relay":
+                    return ws.ingest_relay(p["operationId"],file.name,p["receipt"])
+                metadata=p["metadata"]
                 return ws.ingest(p["operationId"],file.name,metadata["url"],metadata["status"],
                                  metadata.get("headers",[]),metadata.get("finalURL"),metadata.get("observedAt"))
         raise InputError("Unknown operator action")
@@ -148,7 +155,7 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                     if launch is None:return self.send(404,{"error":"This console has no managed launch"})
                     return self.send(200,launch)
                 if url.path=="/api/state":
-                    return self.send(200,{**ws.state(),"workerError":console.error,
+                    return self.send(200,{**ws.state(),"relayWorkspaceIdentity":console.relay_identity,"workerError":console.error,
                         "running":bool(console.worker and console.worker.is_alive()),
                         "islandoraRunning":bool(console.islandora.worker and console.islandora.worker.is_alive()),
                         "islandoraError":getattr(console.islandora,"last_error",None)})
@@ -185,6 +192,19 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                         from bridge import storage
                         if storage.file_digest(path)!=body["sha256"]:raise InputError("Retained response bytes changed")
                     return self.file(path,body["sha256"]+(".xml" if body["xmlSourceId"] else ".bin"))
+                if url.path=="/download/relay-receipt":
+                    with ws.mutex:
+                        req=ws._get("oai_requests",q["id"])
+                        acquisition=req.get("acquisition",{})
+                        if acquisition.get("kind")!="relay":
+                            raise InputError("Choose a request received with a relay receipt")
+                        receipt=acquisition["receipt"]
+                        from bridge import storage
+                        content=jbytes(receipt)
+                        if storage.digest(content)!=acquisition["receiptSha256"]:
+                            raise InputError("The retained relay receipt changed")
+                    return self.send(200,content,extra={
+                        "Content-Disposition":'attachment; filename="oai-relay-'+q["id"]+'.json"'})
                 if url.path=="/download/islandora-guide":
                     return self.file(HERE/"ISLANDORA_OPERATOR_GUIDE.md","ISLANDORA_OPERATOR_GUIDE.md","text/markdown; charset=utf-8")
                 if url.path=="/download/islandora":

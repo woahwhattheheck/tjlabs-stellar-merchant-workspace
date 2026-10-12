@@ -1,3 +1,4 @@
+import {calendarImpactHtml,filterCalendarImpact,calendarImpactSelection} from './operations_amendment_calendar.mjs';
 // MIT. Reviewed plan amendments in the original SF47 Delivery view.
 const DB_NAME='sf47-plan-amendment-drafts-v1', STORE='drafts';
 const SCHEMA='stellar-forge.sf47-plan-amendment-draft.v1';
@@ -84,7 +85,7 @@ function previewHtml(p){
     +'<details><summary>Original payment-derived clocks</summary><pre>'+esc(pretty(p.paymentClocks))+'</pre></details>'
     +'<details><summary>Complete native reports and source pins</summary><pre>'+esc(pretty({source:p.source,reports:p.reports,previewSha256:p.previewSha256}))+'</pre></details></section>';
 }
-export function mountAmendments({container,current,api,saveApi=api,session={},mutationId,recordingActor,onCase,onSources}){
+export function mountAmendments({container,current,api,saveApi=api,session={},mutationId,recordingActor,onCase,onSources,onCalendarOpen}){
   if(!document.querySelector('link[data-sf47-amendments]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./operations_amendments.css',import.meta.url).href;link.dataset.sf47Amendments='';document.head.append(link);
   }
@@ -212,7 +213,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
       +input('Retained decision attachments','basis.sourceIds',d.inputs.basis.sourceIds,{multiple:true,options:sourceOptions,wide:true})
       +input('Source and decision note','basis.note',d.inputs.basis.note,{area:true,wide:true})
       +'</div><p>'+esc(d.amendmentId?'Editing original amendment '+d.amendmentId+' from edition '+d.amendmentRevision+'.':'This draft will create one new amendment identity.')+'</p><div class="amend-actions">'+button('Preview complete amendment','preview')+button('Save proposal','save','data-amend-mutation',!preview||caseNow.program.state!=='OPEN')+'</div></form>':'<p>Open a retained local draft or start a new one.</p>')
-      +previewHtml(preview)+'</section>'
+      +previewHtml(preview)+calendarImpactHtml(preview?.calendarImpact,'draft')+'</section>'
       +'<section><h4>Saved proposals and applied baselines</h4>'+((index?.amendments||[]).length?table(['Original amendment','State / edition','Baseline change','Reason','Open'],index.amendments.map(a=>[
         '<code>'+esc(a.id)+'</code>',esc(a.state)+' / '+a.revision,a.fromPlan.revision+' → '+a.selectedPlan.revision,esc(a.reason),
         button('Open exact edition','open','data-id="'+a.id+'" data-revision="'+a.revision+'"')])):'<p>No amendment has been recorded in this case.</p>')+'</section>'
@@ -220,7 +221,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
         +(!sameEdition?'<p class="amend-warning">A newer amendment edition exists. This complete historical edition remains available for inspection.</p>':'')
         +(latest&&!latest.current?.businessMatches&&row.state!=='APPLIED'?'<p class="amend-warning">The case baseline or its recorded facts changed since this proposal. Revise the proposal and preview it against the current case before deciding.</p>':'')
         +'<div class="amend-actions">'+button('Download complete saved amendment','saved-export')+button('Revise proposal in a new local draft','revise','',row.state==='APPLIED'||!sameEdition)+((detail.history||[]).length?input('Original amendment edition','savedEdition',row.revision,{options:detail.history.map(h=>[h.revision,h.revision+' · '+h.state+' · case version '+h.version])}):'')+'</div>'
-        +previewHtml(row.preview)
+        +previewHtml(row.preview)+calendarImpactHtml(detail.calendarImpact,'saved')
         +(row.review?'<h4>Retained operator review</h4><pre>'+esc(pretty(row.review))+'</pre>':'')
         +(row.application?'<h4>Applied baseline receipt</h4><pre>'+esc(pretty(row.application))+'</pre>':'')
         +(canReview&&desk?'<form data-amend-review><h4>Record your review of this exact edition</h4><p>The authenticated recording operator records this decision. Issuer or customer authority remains the selected original source.</p><div class="amend-fields">'
@@ -294,6 +295,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
   });
   root.addEventListener('change',event=>{
     const target=event.target;
+    if(target.matches('[data-amend-calendar-filter]')){filterCalendarImpact(target);return;}
     if(target.name==='localDraft'&&target.value)run(()=>openDraft(target.value));
     if(target.name==='savedEdition')run(()=>openSaved(detail.amendment.id,Number(target.value)));
   });
@@ -302,6 +304,22 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     const target=event.target.closest('[data-amend-action]');if(!target||!root.contains(target))return;
     const action=target.dataset.amendAction;
     run(async()=>{
+      if(action==='calendar-export'||action==='calendar-open'){
+        const saved=target.dataset.calendarScope==='saved';
+        const impact=saved?detail?.calendarImpact:preview?.calendarImpact;
+        if(!impact)throw new Error('Open the original complete calendar comparison first.');
+        if(action==='calendar-open'){
+          const selection=calendarImpactSelection(impact,target.dataset.calendarEntry);
+          if(selection)onCalendarOpen?.(selection.tab,selection.tranche,selection.context);
+          return;
+        }
+        const selected= saved ? {amendmentId:detail.amendment.id,revision:detail.amendment.revision,
+          expectedAmendmentSha256:detail.amendment.sha256,expectedImpactSha256:impact.impactSha256}
+          : {expectedVersion:preview.observedVersion,inputs:clone(preview.inputs),
+             expectedPreviewSha256:preview.previewSha256,expectedImpactSha256:impact.impactSha256};
+        const response=await saveApi(base+'/amendment-calendar-export',selected,{download:true});
+        download(await response.blob(),caseId+'-amendment-calendars.zip','application/zip');return;
+      }
       if(action==='draft-export'){
         await serial.catch(()=>{});
         const retained=visibleDraft();download(retained,retained.id+'.json');return;

@@ -25,7 +25,9 @@ The archive contains source and deliverables. Installed Node, Python, browser bi
 
 The integration cohort is the 1,444-file Research engine at standalone PR466 / 77a42db42b8158e718e568009c2fb7988072b6f3, with 20,803,666 original source bytes. Its materializer emits ENGINE_SOURCE.json, schema sf88-research-ris-engine-source-v1.
 
-The programme verifies every original manifest member and hash, total files/bytes, required Research/Python components and the original licence. It adds the complete current customer-programme implementation and preserves the original manifest in the delivery.
+The programme accepts that original receiving manifest or the maintained distribution builder's manifest.json (schema stellar-forge.merchant-distribution-manifest.v1). For a built release, --engine-root selects the release's source/ directory and --engine-manifest selects its original manifest.json. The complete original manifest bytes remain retained. The programme verifies every original member and hash, total files/bytes, required Research/Python components and the original licence. When the selected release already includes customer-programme, its files must match the executing implementation exactly; each source member is packaged once. A source cohort assembled before this feature receives the complete implementation alongside its original source.
+
+The selected engine also supplies the running command's native modules. Run from that same installed source tree, or assemble the complete customer-programme directory inside the retained original engine before invoking it. When --engine-root names a separate checkout, every selected original source member must also match the executing source tree byte for byte. This keeps native execution and the delivered engine on the same complete source selection.
 
 Install all files listed by IMPLEMENTATION_FILES in selection.mjs at:
 
@@ -60,6 +62,14 @@ node /absolute/checkout/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/r
   --python /absolute/python3 \
   --node /absolute/node
 ~~~
+
+The maintained research-workspace and zotero-research distributions include the same entry as **starforge research-customer-programme**. Its arguments pass unchanged to programme.mjs. Inspect the source-owned registration with:
+
+~~~bash
+starforge registrations --command research-customer-programme
+~~~
+
+For a built release, substitute --engine-root /absolute/research-package/source and --engine-manifest /absolute/research-package/manifest.json in the full invocation above, using that manifest's actual SHA256. The original source exports also expose customer-programme, customer-programme/selection, customer-programme/chronology, customer-programme/europe-pmc and customer-programme/receiving under @tokenjunkielabs/starforge-merchant/buyer/research-dossiers.
 
 For an existing dossier, pass --workspace /absolute/original/research-workspace and select its actual dossier ID and expected revision in the input. The programme starts and closes the original local listener; preserve one listener owner during the run. Its retained port keeps original Merchant operation bindings stable through continuation.
 

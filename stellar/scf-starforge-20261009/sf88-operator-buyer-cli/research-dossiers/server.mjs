@@ -13,6 +13,10 @@ import {handleCustomerUpdateRoute} from './customer-updates/routes.mjs';
 import {ResearchWorkspaceClient} from './workspace-client.mjs';
 import {openResearchCustomerCommerce} from './customer-commerce/controller.mjs';
 import {handleResearchCommerceRoute,readResearchCommerceAsset} from './customer-commerce/routes.mjs';
+import {readCommerceConfiguration,selectedMerchant} from './customer-commerce/configuration.mjs';
+import {openResearchCustomerQuotes} from './customer-quotes/workspace.mjs';
+import {handleResearchQuoteRoute,readResearchQuoteAsset} from './customer-quotes/routes.mjs';
+import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
 import {handleStudyExtractionRoute,STUDY_EXTRACTION_REVIEW_LIMIT} from './study-extraction-routes.mjs';
 import {handleStudyFlowRoute,STUDY_FLOW_REQUEST_LIMIT} from './study-flow/routes.mjs';
@@ -226,7 +230,7 @@ export async function loadEditionAdapters(modulePath) {
 
 /** Reuses the existing SF88 loopback / fragment-token operator convention. */
 export async function startDossierWorkspace({directory, port = 0, providers = {}, openalexWorkspace = null,
-  crossrefSource = null, crossrefIdentity = null, documentSource = null, pipelineSource = null, objectStateDirectory = null, clinicalTrialsInputs = null, clinicalTrialsPython = 'python3', europePmcRateDirectory = null, extractionPython = clinicalTrialsPython, extractionSignal, zoteroStateDirectory = null, customerCommerceConfiguration = null} = {}) {
+  crossrefSource = null, crossrefIdentity = null, documentSource = null, pipelineSource = null, objectStateDirectory = null, clinicalTrialsInputs = null, clinicalTrialsPython = 'python3', europePmcRateDirectory = null, extractionPython = clinicalTrialsPython, extractionSignal, zoteroStateDirectory = null, customerCommerceConfiguration = null, customerQuotesConfiguration = null, customerQuotesLaunchSha256 = null} = {}) {
   requireValue(typeof directory === 'string' && isAbsolute(directory) && resolve(directory) === directory,
     'WORKSPACE_ABSOLUTE_PATH_REQUIRED');
   requireValue(Number.isInteger(port) && port >= 0 && port <= 65535, 'WORKSPACE_PORT_INVALID');
@@ -253,6 +257,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
     studyFlow:true,studyFlowRequestLimit:STUDY_FLOW_REQUEST_LIMIT,
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
+    customerQuotes:true,customerQuotesConfigured:customerQuotesConfiguration!==null,customerQuoteRequestLimit:QUOTE_REQUEST_LIMIT,
     templateExchange:true,templateExchangeRequestLimit:MAX_TEMPLATE_REVIEW_BODY,templateWorkbookBytesLimit:MAX_WORKBOOK_BYTES,
     europePmcWorkspaces:true,citationUpdateReview:true,citationReviewRequestLimit:MAX_CITATION_REVIEW_BODY,
     eligibilityReview:true,eligibilityReviewRequestLimit:ELIGIBILITY_REVIEW_LIMIT,
@@ -291,6 +296,12 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
     client:()=>new ResearchWorkspaceClient({url:origin+'/#token='+token,directory:store.directory,expectedWorkspaceId:workspaceId})});
   // Its accepted receiving calls use this original listener and original source owners.
   owners.add('customer-commerce',()=>customerCommerce.close(),0);
+  const customerQuotes=await openResearchCustomerQuotes({directory:join(store.directory,'customer-quotes'),workspaceId,
+    configurationFile:customerQuotesConfiguration,launchSha256:customerQuotesLaunchSha256,dossiers:store,commerce:customerCommerce,
+    merchant:async id=>selectedMerchant(await readCommerceConfiguration(customerCommerceConfiguration),id)});
+  // Quotation publication can use Commerce's accepted loopback receiving while it drains.
+  owners.add('customer-quotes',()=>customerQuotes.close(),-10);
+  api.customerQuotesBindingSha256=customerQuotes.launch?.bindingSha256??null;
   const server = createServer(async (req, res) => {
     const headers = {
       'Cache-Control': 'no-store',
@@ -339,7 +350,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
         }
       }
       if(req.method==='GET'||req.method==='HEAD'){
-        const asset=await readResearchCommerceAsset(path);
+        const asset=await readResearchCommerceAsset(path)??await readResearchQuoteAsset(path);
         if(asset){
           if(req.method==='HEAD'){res.writeHead(200,{...headers,'Content-Type':asset.contentType,'Content-Length':asset.body.length});res.end();}
           else send(200,asset.body,asset.contentType);
@@ -380,6 +391,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
         }else send(200,result.body);
         return;
       }
+      if (await handleResearchQuoteRoute({req,res,url,send,readJson,controller:customerQuotes,headers})) return;
       if (await handleResearchCommerceRoute({req,res,url,send,readJson,controller:customerCommerce,headers})) return;
       if (await handleCustomerUpdateRoute({req,res,url,send,readJson,store,europePmc})) return;
       if (await handleEuropePmcRoute({req,res,url,send,readJson,controller:europePmc})) return;
@@ -760,7 +772,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   });
   origin = 'http://127.0.0.1:' + server.address().port;
   return {server, origin, url: origin + '/#token=' + token, token, workspaceId, instanceId, api, crossref, unstructured,
-    pipelines, objectInputs, clinicalTrials, europePmc, zotero, customerCommerce, close:owners.close};
+    pipelines, objectInputs, clinicalTrials, europePmc, zotero, customerCommerce, customerQuotes, close:owners.close};
   } catch(error) {await owners.preserve(error);throw error;}
 }
 
@@ -769,7 +781,7 @@ function parseOptions(args) {
   const options = {};
   for (let index = 0; index < args.length; index += 2) {
     const key = args[index];
-    requireValue(['--dir', '--port', '--edition-adapter', '--openalex-workspace', '--openalex-module', '--crossref-config', '--crossref-state', '--document-source', '--pipeline-source', '--connection-file', '--object-state', '--clinical-trials-python','--europe-pmc-rate-state','--extraction-python','--zotero-state','--customer-commerce-host'].includes(key) && !Object.hasOwn(options, key) &&
+    requireValue(['--dir', '--port', '--edition-adapter', '--openalex-workspace', '--openalex-module', '--crossref-config', '--crossref-state', '--document-source', '--pipeline-source', '--connection-file', '--object-state', '--clinical-trials-python','--europe-pmc-rate-state','--extraction-python','--zotero-state','--customer-commerce-host','--customer-quotes-host','--customer-quotes-binding-sha256'].includes(key) && !Object.hasOwn(options, key) &&
       typeof args[index + 1] === 'string' && args[index + 1].length > 0, 'ARGUMENT_INVALID_OR_REPEATED');
     options[key] = args[index + 1];
   }
@@ -780,11 +792,11 @@ function parseOptions(args) {
   return {directory: options['--dir'], port: Number(rawPort), adapter: options['--edition-adapter'],
     openalexDirectory:options['--openalex-workspace'], openalexModule:options['--openalex-module'],
     crossrefConfig:options['--crossref-config'],crossrefDirectory:options['--crossref-state'],
-    documentSourceConfig:options['--document-source'],pipelineSourceConfig:options['--pipeline-source'],connectionFile:options['--connection-file'],objectStateDirectory:options['--object-state']??null,clinicalTrialsPython:options['--clinical-trials-python']??'python3',europePmcRateDirectory:options['--europe-pmc-rate-state']??null,extractionPython:options['--extraction-python']??options['--clinical-trials-python']??'python3',zoteroStateDirectory:options['--zotero-state']??null,customerCommerceConfiguration:options['--customer-commerce-host']??null};
+    documentSourceConfig:options['--document-source'],pipelineSourceConfig:options['--pipeline-source'],connectionFile:options['--connection-file'],objectStateDirectory:options['--object-state']??null,clinicalTrialsPython:options['--clinical-trials-python']??'python3',europePmcRateDirectory:options['--europe-pmc-rate-state']??null,extractionPython:options['--extraction-python']??options['--clinical-trials-python']??'python3',zoteroStateDirectory:options['--zotero-state']??null,customerCommerceConfiguration:options['--customer-commerce-host']??null,customerQuotesConfiguration:options['--customer-quotes-host']??null,customerQuotesLaunchSha256:options['--customer-quotes-binding-sha256']??null};
 }
 async function main(args) {
   if (args.length === 0 || args.length === 1 && ['--help', '-h'].includes(args[0])) {
-    process.stdout.write('Usage: node server.mjs --dir /absolute/private/workspace [--port 8846] [--edition-adapter /absolute/provider-adapters.mjs] [--openalex-workspace /absolute/original/workspace] [--openalex-module /absolute/original/research/workspace.mjs] [--crossref-state /absolute/private/crossref-source] [--crossref-config /absolute/crossref-merchant.json] [--document-source /absolute/private/document-source.json] [--connection-file /absolute/private/research-connection.json] [--pipeline-source /absolute/private/pipeline-source.json] [--object-state /absolute/private/object-buyer] [--clinical-trials-python /absolute/python3] [--europe-pmc-rate-state /absolute/private/shared-rate] [--extraction-python /absolute/python3] [--zotero-state /absolute/private/zotero] [--customer-commerce-host /absolute/private/research-commerce.json]\n');
+    process.stdout.write('Usage: node server.mjs --dir /absolute/private/workspace [--port 8846] [--edition-adapter /absolute/provider-adapters.mjs] [--openalex-workspace /absolute/original/workspace] [--openalex-module /absolute/original/research/workspace.mjs] [--crossref-state /absolute/private/crossref-source] [--crossref-config /absolute/crossref-merchant.json] [--document-source /absolute/private/document-source.json] [--connection-file /absolute/private/research-connection.json] [--pipeline-source /absolute/private/pipeline-source.json] [--object-state /absolute/private/object-buyer] [--clinical-trials-python /absolute/python3] [--europe-pmc-rate-state /absolute/private/shared-rate] [--extraction-python /absolute/python3] [--zotero-state /absolute/private/zotero] [--customer-commerce-host /absolute/private/research-commerce.json] [--customer-quotes-host /absolute/private/research-quotes.json] [--customer-quotes-binding-sha256 REVIEWED_SHA256]\n');
     return;
   }
   const options = parseOptions(args);
@@ -868,7 +880,9 @@ async function main(args) {
     crossrefConfigured:crossrefSource !== null, documentSourceConfigured:documentSource !== null,
     documentWorkspaceId:documentSource?.workspaceId ?? null,clinicalTrialsConfigured:true,
     pipelineSourceConfigured:pipelineSource !== null,pipelineWorkspaceId:pipelineSource?.workspaceId ?? null,
-    objectSourceConfigured:options.objectStateDirectory!==null,objectWorkspaceId:app.objectInputs?.source().workspaceId??null}) + '\n');
+    objectSourceConfigured:options.objectStateDirectory!==null,objectWorkspaceId:app.objectInputs?.source().workspaceId??null,
+    customerQuotesConfigured:options.customerQuotesConfiguration!==null,
+    customerQuotesBindingSha256:app.customerQuotes.launch?.bindingSha256??null}) + '\n');
   } catch(error) {
     await owners.preserve(error);
     process.exitCode=1;

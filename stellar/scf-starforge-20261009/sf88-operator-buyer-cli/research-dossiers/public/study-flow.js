@@ -130,19 +130,19 @@ export function createStudyFlowPanel({root,tab,api,task,notify,getDossier,getWor
  }
  if(st.flowId&&!st.dirty&&!st.editorDirty&&!st.readOnly){
  const current=st.overview.flows.find(v=>v.id===st.flowId);
- if(current)await loadEdition(current.currentEditionId,{keepActor:true,persist:false});
+ if(current)await loadEdition(current.currentEditionId,{keepActor:true,keepReviewDraft:true,persist:false});
  }
  st.pending=(await storage.list(context,'study-flow/request/')).map(v=>v.value).sort((a,b)=>a.preparedAt.localeCompare(b.preparedAt));
  st.draftRecord=await storage.get(context,'study-flow/draft');draw();
  }
- async function loadEdition(editionId,{keepActor=true,persist:save=false}={}){
- const epoch=st.epoch;
+ async function loadEdition(editionId,{keepActor=true,keepReviewDraft=false,persist:save=false}={}){
+ const epoch=st.epoch,retainedReason=keepReviewDraft?st.reason:'';
  const value=await call('/report'+params({revision:st.revision,editionId}));
  if(epoch!==st.epoch)return;
  st.flowId=value.report.flowId;st.editionId=editionId;st.definition=copy(value.report.definition);
  st.report=value.report;st.svg=value.svg;st.reportDirty=false;st.dirty=false;st.readOnly=true;
  st.baseRevision=st.revision;st.basisEditionId=editionId;st.sourceMode='retained';st.importFile=null;
- if(!keepActor)st.actor=copy(value.report.edition.actor);st.reason='';
+ if(!keepActor)st.actor=copy(value.report.edition.actor);st.reason=retainedReason;
  st.selected.clear();st.recordId=null;st.reportKey=null;st.page=0;st.editorDrafts={};st.editorBaselines={};st.editorDirty=false;
  await loadSource();if(save)await persist();draw();
  }
