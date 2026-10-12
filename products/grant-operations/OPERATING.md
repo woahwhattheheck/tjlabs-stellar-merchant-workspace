@@ -251,6 +251,33 @@ The six typed Merchant calls—merchant_grant_installations, merchant_grant_inst
 The selected product includes both matching managed-launch readers and the complete original runtime files they bind, including the Installation and implementation-evidence modules. After adopting a new source edition, review and reopen the managed application, then continue its original case and saved request identities.
 
 
+
+### Complete CoCart and Blockscout workorders
+
+The installed `starforge grant-installation-workorder` command prepares complete
+customer task, source, payment and receiving inputs for the existing Installation
+desk. Start with the original `installation-workshare-seed` result so that the
+customer's complete commercial scope, phase criteria and source binding remain
+in the same operating case. Select the maintained `cocart` or `blockscout`
+profile, receive the actual customer/host/operator/payment bindings, and load
+the returned complete input into the existing preview/save workflow.
+
+```sh
+starforge grant-installation-workorder template --profile cocart \
+  --seed /absolute/private/original-seed.json --out /absolute/private/bindings
+
+starforge grant-installation-workorder prepare --profile cocart \
+  --seed /absolute/private/original-seed.json \
+  --bindings /absolute/private/bindings/bindings.json \
+  --out /absolute/private/installation
+```
+
+The [complete workorder guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/README.md)
+covers the original case selection, full source/receiving contract, exact native
+preview and save, whole export/reopen and later installation editions. The
+installed Grant Operations source includes both profiles and their preparation
+module, alongside the existing native Installation implementation.
+
 ### Review original implementation evidence
 
 Open **Implementation evidence** in the same operating case. Attach the complete original commissioning JSON, merchant workspace or Merchant Support handoff through the existing Sources intake. Select it by its actual filename, byte count and SHA-256, then **Read original implementation**. The installed SF74 producer supplies the original tasks, measurements, receiving records, comparisons and readable report.
