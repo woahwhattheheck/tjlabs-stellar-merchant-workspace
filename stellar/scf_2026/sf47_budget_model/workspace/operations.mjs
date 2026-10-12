@@ -46,6 +46,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   const root=document.createElement('section');root.className='operations';root.setAttribute('aria-label','Delivery and cash operations');container.replaceChildren(root);
   const view={cases:[],current:null,tab:'overview',busy:false,events:[],nextAfter:null,form:null};
   let active=true,forecastView=null,forecastViewCase=null,portfolioView=null,supportView=null,completionView=null,buyerView=null,cohortView=null,installationView=null,implementationView=null;
+  let localBusy=false,hostBusy=false;
   view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;
   const available=()=>active&&root.isConnected;
   function requireActive() {if(!available()){const error=new Error('This operations view is closed. Reopen the retained case to continue.');error.code='OPERATIONS_VIEW_CLOSED';throw error;}}
@@ -80,11 +81,14 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   const optional=(list,label='Unassigned')=>[['',label],...list];
   const commonSource=row=>'<fieldset class="ops-wide"><legend>Original sources</legend><div class="ops-fields">'+field('Retained attachments','sourceIds',row.sourceIds||[],{options:sourceOptions(),multiple:true,wide:true})+field('Original reference and observation','sourceNote',row.sourceNote||'',{area:true,wide:true,help:'Attach documents in Sources. A direct operator entry remains labeled as such.'})+'</div></fieldset>';
   const flag=value=>'<span class="ops-state">'+esc(title(value))+'</span>';
-  function setBusy(value) {
+  function applyBusy() {
+    const value=localBusy||hostBusy;
     view.busy=value;root.setAttribute('aria-busy',String(value));
-    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.portfolio,.support-delivery,.completion-desk,.buyer-receiving,.cohort-desk,.installation-desk,.implementation-evidence-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
-    portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);buyerView?.setHostBusy(value);cohortView?.setHostBusy(value);installationView?.setHostBusy(value);implementationView?.setHostBusy(value);
+    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-forecast,.portfolio,.support-delivery,.completion-desk,.buyer-receiving,.cohort-desk,.installation-desk,.implementation-evidence-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
+    forecastView?.setHostBusy(value);portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);buyerView?.setHostBusy(value);cohortView?.setHostBusy(value);installationView?.setHostBusy(value);implementationView?.setHostBusy(value);
   }
+  function setBusy(value) {localBusy=Boolean(value);applyBusy();}
+  function setHostBusy(value) {hostBusy=Boolean(value);if(available())applyBusy();}
   function alertError(error) {if(!available())return;inform(error.message,true);const target=$('[data-ops-message]');if(target){target.textContent=error.message;target.setAttribute('role','alert');}}
   async function run(action) {if(view.busy||!available())return;setBusy(true);try{await action();}catch(error){alertError(error);}finally{if(available())setBusy(false);}}
   function recordingActor() {requireActive();const value=($('[name=recordingActor]')?.value||actor).trim();if(!value)throw new Error('Enter the recording operator before saving.');actor=value;try{sessionStorage.setItem('sf47.operations.actor',value);}catch{}return value;}
@@ -118,7 +122,27 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       +table(['Tranche','Conditional planned amount','Hypothetical payment day','Observed grant receipts'],r.tranches.map(row=>[esc(row.tranche),money(row.conditionalPlannedUsd),esc(row.hypotheticalPaidDay),money(row.observedGrantUsd)]))
       +heading('Open review items','These do not imply an issuer decision or release of a recorded liability.')
       +(r.unresolved.length?table(['Record','Current item','Amount'],r.unresolved.map(row=>[esc(row.kind),esc(row.message),row.amountUsd?money(row.amountUsd):'—'])):empty('No outstanding record-review items.'))
-      +(r.cash.unvaluedIds.length?'<p class="ops-note">Some original asset quantities have no recorded USD valuation; their original amounts remain in Cash.</p>':'');
+      +(r.cash.unvaluedIds.length?'<p class="ops-note">Some original asset quantities have no recorded USD valuation; their original amounts remain in Cash.</p>':'')+nodeAccounting();
+  }
+  function nodeAccounting() {
+    const report=view.current.report.delivery.nodeAccounting;
+    if(!report)return '';
+    const rows=report.rows.flatMap(group=>group.editions.map(edition=>[
+      esc(group.intentId)+'<small class="ops-break">'+esc(group.sourceIdentitySha256)+'</small>',
+      esc(name('deployments',edition.deploymentId))+'<small>'+esc(edition.purchaseId||'No purchase association')+'</small>',
+      title(edition.disposition)+'<small>'+title(edition.node.recordAuthority)+'</small>',
+      'HTTP '+esc(edition.output.httpStatus??'unknown')+'<small>Capture '+esc(title(edition.output.captureStatus))+' · body not embedded</small>',
+      esc(edition.node.sourceObservedAt)+'<small>Accounting '+esc(edition.node.accountingCompletedAt)+'</small>',
+      esc(edition.filename)+'<small class="ops-break">'+esc(edition.sourceSha256)+'</small>'+
+        button('Download original carrier','source-download','data-id="'+edition.sourceId+'"')
+    ]));
+    return heading('Original Node operational observations',
+      'Original identities and immutable source editions, separately from purchases and financial totals.')
+      +'<p>'+esc(report.operations)+' original operation'+(report.operations===1?'':'s')+' · '+
+        esc(report.sourceEditions)+' source edition'+(report.sourceEditions===1?'':'s')+' · '+
+        esc(report.unpaidOperations)+' original identities with an unpaid response observation.</p>'
+      +'<p class="ops-note">'+esc(report.basis)+'</p>'
+      +table(['Original intent / identity','Deployment / purchase','Source disposition','Response coverage','Original observation / accounting time','Source edition'],rows);
   }
   function contributors() {const rows=view.current.records.contributors;return heading('Contributors and suppliers','Actual named work and invoice counterparties; planned staffing remains in the selected plan.',kindButton('Add contributor','contributors'))+(rows.length?table(['Name','Kind','Contact','Source',''],rows.map(row=>[esc(row.name),title(row.kind),esc(row.contact),esc(sourceText(row)),kindButton('Edit','contributors',row)])):empty('Add a contributor to record work or an invoice.'));}
   function work() {const rows=view.current.records.work;return heading('Recorded contributor work','Log completed work against the original package, submit it for internal review, and retain any reopening.',kindButton('Log work','work'))+(rows.length?table(['Contributor / work','Package','Hours / basis','State','Actions'],rows.map(row=>[esc(name('contributors',row.contributorId))+'<p>'+esc(row.description)+'</p>',esc(row.costId||'Unplanned'),esc(row.hours)+' / '+title(row.fundingBasis),flag(row.state),'<div class="ops-actions">'+(row.state==='LOGGED'?kindButton('Edit','work',row)+transition('Submit','work.submit',row):'')+(row.state==='SUBMITTED'?transition('Accept work','work.accept',row):'')+(['SUBMITTED','ACCEPTED'].includes(row.state)?transition('Reopen','work.reopen',row):'')+(row.state!=='VOID'?transition('Void','work.void',row):'')+'</div>'])):empty('No completed work has been recorded.'));}
@@ -135,6 +159,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     +(view.current.records.purchases.length?table(['Deployment / original transaction','Network / quantity','Settlement / output','Original intent',''],view.current.records.purchases.map(row=>[esc(name('deployments',row.deploymentId))+'<small class="ops-break">'+esc(row.transactionHash||'Transaction not yet observed')+'</small>',esc(row.network)+'<p>'+esc(row.amountStroops)+' stroops</p>',title(row.settlementStatus)+' / '+title(row.outputStatus),esc(row.intentId||'Join not supplied'),flag(row.state)+(row.state==='RECORDED'?kindButton('Later observation','purchases',row)+transition('Void observation','purchase.void',row):'')])):empty('No native purchase observations have been recorded.'))
     +(r.purchaseGroups.length?table(['Network / participation','Canonical transactions','Settled atomic units','Complete outputs'],r.purchaseGroups.map(row=>[esc(row.network)+' / '+title(row.participantClass),esc(row.transactions),esc(row.settledAtomicUnits),esc(row.completeOutputs)])):'')
     +'<p>Known attempted intents: '+r.attemptedKnownIntents+'; completed: '+r.completedKnownIntents+'; completion rate: '+(r.completionRate===null?'No known denominator':Number(r.completionRate)*100+'%')+'. Observations without an original intent join: '+r.purchaseObservationsWithoutIntentJoin.length+'.</p>'
+    +nodeAccounting()
     +heading('Delivery outcomes','Retain the actual submitted or reviewed outcome and its original source. Internal review does not create issuer acceptance.',kindButton('Record outcome','outcomes'))
     +(view.current.records.outcomes.length?table(['Tranche','State','Outcome','Date',''],view.current.records.outcomes.map(row=>[esc(row.tranche),flag(row.state),esc(row.description),esc(row.date),kindButton('Update','outcomes',row)])):empty('No submitted or accepted outcome has been recorded.'));}
   function sources() {const rows=view.current.sources;return heading('Original documents and source records','Exact uploaded bytes remain with the case and complete export. Source URLs identify provenance; they are not fetched automatically.',button('Attach source','attach','',!editable()))
@@ -171,14 +196,14 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       forecastView=mountForecast({container:$('[data-ops-forecast]'),current:c,api,mutationId,recordingActor,
         initialForecastId:retained,initialInputs:retained?null:view.forecastDraft,onSelection:id=>{view.forecastId=id;if(id)view.forecastDraft=null;},
         onSaved:async result=>{if(view.current?.program.id!==c.program.id)return;view.forecastId=result.recordId;view.forecastDraft=null;forecastView?.dispose();forecastView=null;await refresh();inform('Saved the original operating forecast with its source, dated cash and remaining work.');}});
-      forecastView.ready.catch(alertError);
+      forecastView.setHostBusy(view.busy);forecastView.ready.catch(alertError);
     }
     if(c&&view.tab==='portfolio'){
       portfolioView=mountPortfolio({container:$('[data-ops-portfolio]'),current:c,api,mutationId,recordingActor,
         initialPortfolioId:view.portfolioId,onSelection:id=>{view.portfolioId=id;},onReload:refresh,
         onSaved:async result=>{if(view.current?.program.id!==c.program.id)return;view.portfolioId=result.recordId;await refresh();inform('Saved the complete source-bound delivery allocation and original cash alternatives.');},
         onForecastInputs:async(inputs,selection)=>{if(view.current?.program.id!==c.program.id)return;view.forecastDraft=structuredClone(inputs);view.forecastId=null;view.tab='forecast';render();inform('Opened an editable forecast from '+selection.alternativeId+'. Review original collection dates before previewing and saving its cash assumptions.');}});
-      portfolioView.ready.catch(alertError);
+      portfolioView.setHostBusy(view.busy);portfolioView.ready.catch(alertError);
     }
     if(c&&view.tab==='implementation'){
       if(!retainedImplementationSessions.has(c.program.id))retainedImplementationSessions.set(c.program.id,{});
@@ -382,5 +407,5 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   });
   root.innerHTML='<p>Opening retained delivery operations…</p>';
   const ready=loadCases();
-  return {ready,refresh,dispose,root};
+  return {ready,refresh,dispose,setHostBusy,root};
 }

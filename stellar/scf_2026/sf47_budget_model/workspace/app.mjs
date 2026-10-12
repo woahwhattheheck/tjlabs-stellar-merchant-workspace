@@ -23,8 +23,10 @@ function inform(message, error = false) {
 function busy(value) {
   state.busy = value; $('#workbench').setAttribute('aria-busy',String(value));
   for(const control of document.querySelectorAll('#workbench button,#workbench input:not([type=file]),#workbench select,#workbench textarea')) {
+    if(control.closest('.operations')) continue;
     control.disabled = value || control.dataset.fixedDisabled === 'true' || control.dataset.action === 'save' && !state.dirty;
   }
+  operationsView?.setHostBusy(value);
 }
 async function api(path, body, options = {}) {
   const headers = {authorization:'Bearer ' + state.token,...options.headers};
@@ -225,7 +227,7 @@ function render(focus = false) {
   $('.savebar').hidden=state.tab==='operations';
   if(state.tab==='operations') {
     const mounted=mountOperations({container:$('#main-panel'),api,plan:state.current,inform,mutationId});
-    operationsView=mounted;
+    operationsView=mounted;mounted.setHostBusy(state.busy);
     mounted.ready.catch(error=>{if(operationsView===mounted&&mounted.root.isConnected)inform(error.message,true);});
   } else {
     $('#main-panel').innerHTML=({overview,work,milestones,staffing,payments,delivery,history}[state.tab])();

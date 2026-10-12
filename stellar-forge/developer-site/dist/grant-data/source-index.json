@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 36942,
-    "sha256": "ecbb2a3de67fe4201364fc9c4529fa1ab1c57c9f25bdfa72beaf81a91fbe618d",
-    "git_blob": "1376f100c426bae4bd5f078b5016a32fef5c30d1",
+    "bytes": 41628,
+    "sha256": "e6e987c4217015a46f1b590ce28798c99e703f42089f9bd61cb7ddd40010808d",
+    "git_blob": "ce32b5134a6c4a43b147959b90d952ae87ff64b5",
     "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF"
   },
   "request": {
@@ -343,9 +343,9 @@
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "8f9f58b8329a3fda48ee37077963aa35bd6376f1",
-    "bytes": 46612,
-    "sha256": "f3df0483be21ffb1cd2431d3fcd738746da2aaf67ae5a8b6408ba3ad4672d416",
+    "git_blob": "7d2612e89516328fab8d09fbc17710a8105a5dd5",
+    "bytes": 46724,
+    "sha256": "5b2f39abc0265b75db4325bc8b3721a0e2091d1524d29dcd55ab7977fba91b90",
     "basis": "Original product and finance companion with the current recurring economic-report installation from the canonical application; the six-package budget and original cost assumptions are retained. The selected coastal model-input installation retains the same funded packages and its separately proposed commercial scope."
   },
   "narrative_source": {
@@ -365,7 +365,7 @@
       }
     ],
     "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
-    "current_application_sha256": "ecbb2a3de67fe4201364fc9c4529fa1ab1c57c9f25bdfa72beaf81a91fbe618d",
+    "current_application_sha256": "e6e987c4217015a46f1b590ce28798c99e703f42089f9bd61cb7ddd40010808d",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",

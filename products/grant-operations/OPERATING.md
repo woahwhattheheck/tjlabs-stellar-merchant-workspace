@@ -183,7 +183,7 @@ grant operations --workspace "$GRANT_DATA" buyer-preview --case CASE_ID --expect
 
 A public result-only archive does not establish the complete Inbox source required by that exporter. For a received original handoff, use its unchanged bytes directly.
 
-In Buyer receiving, review the full source and choose the association for each selected job. The selections JSON is an array of 1–100 explicit objects containing the original jobId and a selected purchaseId or null for a new native purchase record. Preserve existing purchase, merchant-order and deployment observations that the handoff itself does not establish.
+In Buyer receiving, review the full source and choose the association for each selected job. The selections JSON is an array of 1–100 explicit objects containing the original jobId and a selected purchaseId or null for a new native purchase record. The separate unpaid Node path requires null and creates no purchase. Preserve existing purchase, merchant-order and deployment observations that the handoff itself does not establish.
 
 ~~~sh
 grant operations --workspace "$GRANT_DATA" buyer-receive --case CASE_ID --expected-version CASE_VERSION --file /absolute/working/buyer-operations.json --expected-preview-sha256 PREVIEW_SHA256 --selections /absolute/working/buyer-selections.json --deployment DEPLOYMENT_ID --actor "Receiving operator" --note "Original buyer observation and reviewed association" --request-id ORIGINAL_BUYER_RECEIVING_REQUEST
@@ -192,6 +192,14 @@ grant operations --workspace "$GRANT_DATA" buyer-receive --case CASE_ID --expect
 For a new deployment, use --deployment-file with complete original BUYER or BOTH fields instead of --deployment. Read the [Buyer Operations contract](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_OPERATIONS.md).
 
 A historical source replay keeps its original observation time and association. It must not overwrite a newer observation as though it were current. An OVER_LIMIT verification finding describes that bounded observation, and does not by itself mean the saved result was lost. Receipt, settlement, delivered output and merchant order remain separately inspectable.
+
+### Original Node accounting carrier
+
+The same Buyer receiving entry accepts an existing `Operation_Accounting.json` with schema `stellar-forge.node-operation-accounting-export.v1`. Use its exact original bytes in `buyer-preview` and then the unchanged `buyer-receive` command. The original validator retains the producing attempt, checkout evidence, command/context identity and saved accounting result; this operation does not start a buyer, reopen a signer or query a provider.
+
+For `UNPAID_RESPONSE / NO_PAYMENT_REQUIRED`, choose the actual deployment and a selection with `purchaseId:null`. The result is an immutable operational source observation with no payment asset, amount, reservation or purchase. Its HTTP status is separate from response-file coverage: this carrier embeds no response body. Existing paid outcomes keep original approved terms and saved SF36 finality; an accounting-only carrier preserves independently known Inbox output and settlement facts. A historical source keeps its actual times without moving the current purchase clock backward.
+
+The original Node identity retains its deployment and any established purchase across source editions. Repeat the exact saved request after an uncertain reply. The page reopens each original source and its native review; the report shows these observations separately from financial and purchase totals. Complete case export/receive preserves their JSON/CSV projections, native source bytes, accepted event bindings and frozen review copies. The installed receiver revalidates the original carrier before import. See the [complete Node source, CLI, MCP and receiving contract](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_OPERATIONS.md#receive-an-original-node-accounting-export).
 
 ### Merchant Support
 

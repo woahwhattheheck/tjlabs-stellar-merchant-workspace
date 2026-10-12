@@ -1,0 +1,1637 @@
+{
+  "schema": "commons.canadabuys.public-source-contract.v1",
+  "operation_id": "SCF-CANADABUYS-PROCUREMENT-9FCD-20261012",
+  "captured_on": "2026-10-12",
+  "source_scope": "Current complete award-notice file and the active SOSA source, with every catalog resource and both complete issuer dictionaries retained.",
+  "requested_csv_inputs": [
+    {
+      "id": "awards",
+      "dataset_id": "a1acb126-9ce8-40a9-b889-5da2b1dd20cb",
+      "resource_id": "ff4414ba-7d0b-40a4-8bd0-d102e83d9f32",
+      "title": "All CanadaBuys award notices, 2022-08-08 onwards",
+      "url": "https://canadabuys.canada.ca/opendata/pub/awardNoticeComplete-avisAttributionComplet.csv",
+      "dictionary": "canadabuys",
+      "required_identifiers": [
+        "solicitationNumber-numeroSollicitation",
+        "contractNumber-numeroContrat"
+      ],
+      "sample_identifiers": [
+        "solicitationNumber-numeroSollicitation",
+        "contractNumber-numeroContrat",
+        "supplierLegalName-nomLegalFournisseur-eng",
+        "contractEndDate-dateFinContrat",
+        "contractAmount-montantContrat"
+      ]
+    },
+    {
+      "id": "sosa",
+      "dataset_id": "f5c8a5a0-354d-455a-99ab-8276aa38032e",
+      "resource_id": "e5dcaf48-87d6-4ce1-b17a-35607916b640",
+      "title": "Active Standing Offers and Supply Arrangements",
+      "url": "https://sosa.canadabuys.canada.ca/cds/opendata/tpsgc-pwgsc_ocama-sosa.csv",
+      "dictionary": "sosa",
+      "required_identifiers": [
+        "agreement-number",
+        "supplier-legal-name",
+        "expiry-date"
+      ],
+      "sample_identifiers": [
+        "agreement-number",
+        "supplier-legal-name",
+        "supplier-operating-name",
+        "supplier-standardized-name",
+        "expiry-date",
+        "commodity"
+      ]
+    }
+  ],
+  "dictionaries": {
+    "canadabuys": {
+      "path": "sources/canadabuys-dictionary.xml",
+      "headings": 67,
+      "labels": [
+        "amendmentDate-dateModification",
+        "amendmentNumber-numeroModification",
+        "amendmentType-typeModification-eng",
+        "amendmentType-typeModification-fra",
+        "attachment-piecesJointes-eng",
+        "attachment-piecesJointes-fra",
+        "awardDescription-descriptionAttribution-eng",
+        "awardDescription-descriptionAttribution-fra",
+        "awardStatus-attributionStatut-eng",
+        "awardStatus-attributionStatut-fra",
+        "contactInfoAddressLine-contactInfoAdresseLigne-eng",
+        "contactInfoAddressLine-contactInfoAdresseLigne-fra",
+        "contactInfoCity-contacterInfoVille-eng",
+        "contactInfoCity-contacterInfoVille-fra",
+        "contactInfoCountry-contactInfoPays-eng",
+        "contactInfoCountry-contactInfoPays-fra",
+        "contactInfoEmail-informationsContactCourriel",
+        "contactInfoFax",
+        "contactInfoName-informationsContactNom",
+        "contactInfoPhone-contactInfoTelephone",
+        "contactInfoPostalcode",
+        "contactInfoProvince-contacterInfoProvince-eng",
+        "contactInfoProvince-contacterInfoProvince-fra",
+        "contractAmount-montantContrat",
+        "contractAwardDate-dateAttributionContrat",
+        "contractCurrency-contratMonnaie",
+        "contractEndDate-dateFinContrat",
+        "contractingEntityAddressCity-entiteContractanteAdresseVille-eng",
+        "contractingEntityAddressCity-entiteContractanteAdresseVille-fra",
+        "contractingEntityAddressCountry-entiteContractanteAdressePays-eng",
+        "contractingEntityAddressCountry-entiteContractanteAdressePays-fra",
+        "contractingEntityAddressLine-ligneAdresseEntiteContractante-eng",
+        "contractingEntityAddressLine-ligneAdresseEntiteContractante-fra",
+        "contractingEntityAddressPostalCode-entiteContractanteAdresseCodePostal",
+        "contractingEntityAddressProvince-entiteContractanteAdresseProvince-eng",
+        "contractingEntityAddressProvince-entiteContractanteAdresseProvince-fra",
+        "contractingEntityName-nomEntitContractante-eng",
+        "contractingEntityName-nomEntitContractante-fra",
+        "contractNumber-numeroContrat",
+        "contractStartDate-contratDateDebut",
+        "contractStatus-statutContrat-eng",
+        "contractStatus-statutContrat-fra",
+        "endUserEntitiesAddress-adresseEntitesUtilisateurFinal-eng",
+        "endUserEntitiesAddress-adresseEntitesUtilisateurFinal-fra",
+        "endUserEntitiesName-nomEntitesUtilisateurFinal-eng",
+        "endUserEntitiesName-nomEntitesUtilisateurFinal-fra",
+        "endUserEntitiesOfficeName-bureauNomEntitesUtilisateurFinal-eng",
+        "endUserEntitiesOfficeName-bureauNomEntitesUtilisateurFinal-fra",
+        "expectedContractEndDate-dateFinContratPrevue",
+        "expectedContractStartDate-dateDebutContratPrevue",
+        "gsinDescription-nibsDescription-eng",
+        "gsinDescription-nibsDescription-fra",
+        "gsin-nibs",
+        "instrumentType-typeInstrument-eng",
+        "instrumentType-typeInstrument-fra",
+        "limitedTenderingReason-raisonAppelOffresLimite-eng",
+        "limitedTenderingReason-raisonAppelOffresLimite-fra",
+        "noticeType-avisType-eng",
+        "noticeType-avisType-fra",
+        "noticeURL-URLavis-eng",
+        "noticeURL-URLavis-fra",
+        "numberOfRecords-nombreEnregistrements",
+        "percentageOfGoodsByCountry-pourcentageDeBiensParPays",
+        "procurementCategory-categorieApprovisionnement",
+        "procurementMethod-methodeApprovisionnement-eng",
+        "procurementMethod-methodeApprovisionnement-fra",
+        "procurementNumber-numeroApprovisionnement",
+        "publicationDate-datePublication",
+        "referenceNumber-numeroReference",
+        "regionsOfDelivery-regionsLivraison-eng",
+        "regionsOfDelivery-regionsLivraison-fra",
+        "regionsOfOpportunity-regionAppelOffres-eng",
+        "regionsOfOpportunity-regionAppelOffres-fra",
+        "selectionCriteria-criteresSelection-eng",
+        "selectionCriteria-criteresSelection-fra",
+        "solicitationNumber-numeroSollicitation",
+        "supplierAddressCity-fournisseurAdresseVille-eng",
+        "supplierAddressCity-fournisseurAdresseVille-fra",
+        "supplierAddressCountry-fournisseurAdressePays-eng",
+        "supplierAddressCountry-fournisseurAdressePays-fra",
+        "supplierAddressLine-ligneAdresseFournisseur-eng",
+        "supplierAddressLine-ligneAdresseFournisseur-fra",
+        "supplierAddressPostalCode-fournisseurAdresseCodePostal",
+        "supplierAddressProvince-fournisseurAdresseProvince-eng",
+        "supplierAddressProvince-fournisseurAdresseProvince-fra",
+        "supplierEmployeeCount-fournisseurNombreEmployes-eng",
+        "supplierEmployeeCount-fournisseurNombreEmployes-fra",
+        "supplierLegalName-nomLegalFournisseur-eng",
+        "supplierLegalName-nomLegalFournisseur-fra",
+        "supplierOperatingName-nomCommercialFournisseur-eng",
+        "supplierOperatingName-nomCommercialFournisseur-fra",
+        "supplierStandardizedName-nomNormaliseFournisseur-eng",
+        "supplierStandardizedName-nomNormaliseFournisseur-fra",
+        "tenderClosingDate-appelOffresDateCloture",
+        "tenderDescription-descriptionAppelOffres-eng",
+        "tenderDescription-descriptionAppelOffres-fra",
+        "tenderStatus-appelOffresStatut-eng",
+        "tenderStatus-appelOffresStatut-fra",
+        "title-titre-eng",
+        "title-titre-fra",
+        "totalContractValue-valeurTotaleContrat",
+        "tradeAgreements-accordsCommerciaux-eng",
+        "tradeAgreements-accordsCommerciaux-fra",
+        "unspsc",
+        "unspscDescription-eng",
+        "unspscDescription-fra"
+      ],
+      "fields": [
+        {
+          "id": "h1",
+          "labels": [
+            {
+              "language": null,
+              "name": "amendmentDate-dateModification"
+            }
+          ],
+          "descriptions": {
+            "en": "The date a tender notice, or subsequent contract, is amended. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La date à laquelle un avis d'appel d'offres, ou un contrat ultérieur, est modifié. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h2",
+          "labels": [
+            {
+              "language": null,
+              "name": "amendmentNumber-numeroModification"
+            }
+          ],
+          "descriptions": {
+            "en": "The number of amendments against a tender notice and/or a related awarded contract. While most values are purely numeric (with later amendments having higher numerical values) some historical values were alphanumeric. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le nombre de modifications apportées à un avis d'appel d'offres et/ou à un contrat attribué connexe. La plupart des valeurs sont purement numériques (les modifications ultérieures auront des valeurs numériques plus élevées), mais certaines valeurs historiques étaient alphanumériques. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h3",
+          "labels": [
+            {
+              "language": "en",
+              "name": "amendmentType-typeModification-eng"
+            },
+            {
+              "language": "fr",
+              "name": "amendmentType-typeModification-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "Whether the entry corresponds to the original contract, or a subsequent amendment or termination.",
+            "fr": "Si l’entrée correspond au contrat original, ou à une modification ou résiliation subséquente."
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^Original|Amendment|Administrative amendment|Termination|Modification|Modification administrative|Résiliation$"
+        },
+        {
+          "id": "h4",
+          "labels": [
+            {
+              "language": "en",
+              "name": "attachment-piecesJointes-eng"
+            },
+            {
+              "language": "fr",
+              "name": "attachment-piecesJointes-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A link (if applicable) to a file containing extra material (such as charts, tables, diagrams, etc.) that are attached to a tender notice. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Un lien (le cas échéant) vers un fichier contenant du matériel supplémentaire (tels que des graphiques, des tableaux, des diagrammes, etc.) qui sont joint à un avis d'appel d'offres. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h5",
+          "labels": [
+            {
+              "language": "en",
+              "name": "awardDescription-descriptionAttribution-eng"
+            },
+            {
+              "language": "fr",
+              "name": "awardDescription-descriptionAttribution-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A description associated with the award notice. (Used in the CanadaBuys award notices data files.)",
+            "fr": "Une description associée à l'avis d'attribution. (Utilisé dans les fichiers de données des avis d'attributions d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h7",
+          "labels": [
+            {
+              "language": "en",
+              "name": "awardStatus-attributionStatut-eng"
+            },
+            {
+              "language": "fr",
+              "name": "awardStatus-attributionStatut-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A status that indicates whether a contract award is Active, Expired, or Cancelled. (Used in the CanadaBuys award notices data files.)",
+            "fr": "Un statut qui indique si un attribution de contrat est Active, Expired, ou Cancelled. (Utilisé dans les fichiers de données des avis d'attributions d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^Active|Cancelled|Expired|Actif|Annulé|Expiré$"
+        },
+        {
+          "id": "h9",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contactInfoAddressLine-contactInfoAdresseLigne-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contactInfoAddressLine-contactInfoAdresseLigne-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The street address of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "L'adresse municipale de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h11",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contactInfoCity-contacterInfoVille-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contactInfoCity-contacterInfoVille-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The city of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le ville de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h13",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contactInfoCountry-contactInfoPays-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contactInfoCountry-contactInfoPays-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The country of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le pays de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h15",
+          "labels": [
+            {
+              "language": null,
+              "name": "contactInfoEmail-informationsContactCourriel"
+            }
+          ],
+          "descriptions": {
+            "en": "The email address of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "L'adresse e-mail de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h16",
+          "labels": [
+            {
+              "language": null,
+              "name": "contactInfoFax"
+            }
+          ],
+          "descriptions": {
+            "en": "The fax number of the contact organisation or individual, related to this tender, award or contract history entry, if applicable. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le numéro de fax de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat, le cas échéant. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h17",
+          "labels": [
+            {
+              "language": null,
+              "name": "contactInfoName-informationsContactNom"
+            }
+          ],
+          "descriptions": {
+            "en": "The name of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le nom de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h18",
+          "labels": [
+            {
+              "language": null,
+              "name": "contactInfoPhone-contactInfoTelephone"
+            }
+          ],
+          "descriptions": {
+            "en": "The phone number of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le numéro de téléphone de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h19",
+          "labels": [
+            {
+              "language": null,
+              "name": "contactInfoPostalcode"
+            }
+          ],
+          "descriptions": {
+            "en": "The postal code or zip code (or equivalent) of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le code postal ou le code zip (ou l'équivalent) de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h20",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contactInfoProvince-contacterInfoProvince-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contactInfoProvince-contacterInfoProvince-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The province of the contact organisation or individual, related to this tender, award or contract history entry. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le province de l'organisation ou de l'individu contact, lié à cet appel d'offres, attribution, ou entrée d'historique de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h22",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractAmount-montantContrat"
+            }
+          ],
+          "descriptions": {
+            "en": "The monetary value of the awarded contract, including taxes (display in the currency specified in the contractCurrency-contratMonnaie column). (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "La valeur monétaire du contrat attribué, taxes comprises (dans la devise indiquée dans la colonne contractCurrency-contratMonnaie). (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": "^$|^-?[0-9]*(\\.[0-9]{2})?$"
+        },
+        {
+          "id": "h23",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractAwardDate-dateAttributionContrat"
+            }
+          ],
+          "descriptions": {
+            "en": "The date when a contract is awarded. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "La date à laquelle un contrat a été attribué. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h24",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractCurrency-contratMonnaie"
+            }
+          ],
+          "descriptions": {
+            "en": "The currency of the contractAmount-montantContrat or totalContractValue-valeurTotaleContrat amount. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "Devise du montant contractAmount-montantContrat ou totalContractValue-valeurTotaleContrat. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^[A-Z]{0,4}$"
+        },
+        {
+          "id": "h25",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractEndDate-dateFinContrat"
+            }
+          ],
+          "descriptions": {
+            "en": "The last date on which an awarded contract is considered valid. The contract expires after this date. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "La dernière date à laquelle un contrat attribué est considéré comme valide. Le contrat expire après cette date. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h26",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contractingEntityAddressCity-entiteContractanteAdresseVille-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contractingEntityAddressCity-entiteContractanteAdresseVille-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The city of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La ville de résidence de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h28",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contractingEntityAddressCountry-entiteContractanteAdressePays-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contractingEntityAddressCountry-entiteContractanteAdressePays-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The country of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le pays de résidence de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h30",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contractingEntityAddressLine-ligneAdresseEntiteContractante-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contractingEntityAddressLine-ligneAdresseEntiteContractante-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The street address of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "L'adresse municipale de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h32",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractingEntityAddressPostalCode-entiteContractanteAdresseCodePostal"
+            }
+          ],
+          "descriptions": {
+            "en": "The postal code or zip code (or equivalent) of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le code postal ou le code zip (ou l'équivalent) de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h33",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contractingEntityAddressProvince-entiteContractanteAdresseProvince-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contractingEntityAddressProvince-entiteContractanteAdresseProvince-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The province or the state of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La province ou l'état de résidence de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h35",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contractingEntityName-nomEntitContractante-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contractingEntityName-nomEntitContractante-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The name of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le nom de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h37",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractNumber-numeroContrat"
+            }
+          ],
+          "descriptions": {
+            "en": "A unique identifier assigned to a contract that has been awarded. This value is generally derived from the contract workspace (CW #) value that is entered on the contract. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "Un identificateur unique attribué à un contrat qui a été attribué. Cette valeur est généralement dérivée de la valeur de l'espace de travail du contrat (CW #) qui est entrée sur le contrat. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h38",
+          "labels": [
+            {
+              "language": null,
+              "name": "contractStartDate-contratDateDebut"
+            }
+          ],
+          "descriptions": {
+            "en": "The date on which an awarded contract legally comes into effect. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "La date à laquelle un contrat attribué entre légalement en vigueur. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h39",
+          "labels": [
+            {
+              "language": "en",
+              "name": "contractStatus-statutContrat-eng"
+            },
+            {
+              "language": "fr",
+              "name": "contractStatus-statutContrat-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A status that indicates whether a specific contract award (past or present) is Active, Expired, or Cancelled. (Used in the CanadaBuys contract history data files.)",
+            "fr": "Un statut qui indique si un attribution spécifique (passée ou présente) d'un contrat est Active, Expired, ou Cancelled. (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^Active|Cancelled|Expired|Actif|Annulé|Expiré$"
+        },
+        {
+          "id": "h41",
+          "labels": [
+            {
+              "language": "en",
+              "name": "endUserEntitiesAddress-adresseEntitesUtilisateurFinal-eng"
+            },
+            {
+              "language": "fr",
+              "name": "endUserEntitiesAddress-adresseEntitesUtilisateurFinal-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The address of the Government of Canada entity that is procuring goods/services through a given contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "L'adresse de l'entité du gouvernement du Canada qui achète les biens ou services par l'entremise d'un contrat donné. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h43",
+          "labels": [
+            {
+              "language": "en",
+              "name": "endUserEntitiesName-nomEntitesUtilisateurFinal-eng"
+            },
+            {
+              "language": "fr",
+              "name": "endUserEntitiesName-nomEntitesUtilisateurFinal-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The name of the government entity (e.g. client department, agency, Crown corporation) on whose behalf the contract has been put in place. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le nom de l'entité gouvernementale (c.-à-d. le ministère client, l'organisme, société d'État) au nom de laquelle un contrat a été établi. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h45",
+          "labels": [
+            {
+              "language": "en",
+              "name": "endUserEntitiesOfficeName-bureauNomEntitesUtilisateurFinal-eng"
+            },
+            {
+              "language": "fr",
+              "name": "endUserEntitiesOfficeName-bureauNomEntitesUtilisateurFinal-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The name of the specific sub-organisation or sub-location within the government entity on whose behalf the contract has been put in place. (Used in the CanadaBuys contract history data files from CanadaBuys.)",
+            "fr": "Le nom de la sous-organisation ou de la sous-localisation spécifique au sein l'entité gouvernementale au nom de laquelle un contrat a été établi. (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h47",
+          "labels": [
+            {
+              "language": null,
+              "name": "expectedContractEndDate-dateFinContratPrevue"
+            }
+          ],
+          "descriptions": {
+            "en": "The expected end date of the contract that will come from this tender process. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Date de fin prévue du contrat qui résultera de cet appel d'offres. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h48",
+          "labels": [
+            {
+              "language": null,
+              "name": "expectedContractStartDate-dateDebutContratPrevue"
+            }
+          ],
+          "descriptions": {
+            "en": "The expected start date of the contract that will come from this tender process. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Date de début prévue du contrat qui résultera de cet appel d'offres. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h49",
+          "labels": [
+            {
+              "language": "en",
+              "name": "gsinDescription-nibsDescription-eng"
+            },
+            {
+              "language": "fr",
+              "name": "gsinDescription-nibsDescription-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The description of the good or service that corresponds to the Goods and Services Identification Number (GSIN). (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La description du bien ou du service correspondant au numéro d'identification de biens et services (NIBS). (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h50",
+          "labels": [
+            {
+              "language": null,
+              "name": "gsin-nibs"
+            }
+          ],
+          "descriptions": {
+            "en": "The Goods and Services Identification Number (GSIN) was code that was previously used by the federal government to identify generic product descriptions for its procurement activities. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le numéro d'identification de biens et services (NIBS) était un code qui était auparavant utilisé par le gouvernement fédéral pour identifier les descriptions de produits génériques aux fins de ses activités d'achat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^(?:\\*(?:[A-Z]{0,5}-{0,1}[0-9]{0,7})*\\n{0,1})*$"
+        },
+        {
+          "id": "h51",
+          "labels": [
+            {
+              "language": "en",
+              "name": "instrumentType-typeInstrument-eng"
+            },
+            {
+              "language": "fr",
+              "name": "instrumentType-typeInstrument-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The type of contracting instrument used, whether a contract, a contract against a supply arrangement, a standing offer, or a task authorization based contract.",
+            "fr": "Le type d’instrument contractuel utilisé, qu’il s’agisse d’un contrat, d’un contrat découlant d’un arrangement en matière d'approvisionnement, d’une offre à commandes ou d’un contrat reposant sur des autorisations de tâches."
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^Contract|Contract against SA|Standing Offer|Supply Arrangement|Task Authorization Based Contract|Arrangement en matière d’approvisionnement|Contrat|Contrat découlant d’un arrangement en matière d'approvisionnement|Contrat reposant sur des autorisations de tâches|Offre à commandes$"
+        },
+        {
+          "id": "h52",
+          "labels": [
+            {
+              "language": "en",
+              "name": "limitedTenderingReason-raisonAppelOffresLimite-eng"
+            },
+            {
+              "language": "fr",
+              "name": "limitedTenderingReason-raisonAppelOffresLimite-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The reason for a given contract not being awarded through competitive solicitation. This field will be blank or contain the value \"None\" for records it doesn't apply to. Otherwise, the potential values are as follows:\r\n- Exclusive Rights\r\n- Additional Deliveries\r\n- No response to bid solicitation\r\n- Extreme Urgency\r\n- Goods Purchased on a Commodity Market\r\n- Consulting Services Regarding Matters of a Confidential Nature (for contracts not covered by CETA, CFTA, WTO-GPA, CPTPP, CKFTA and CUFTA)\r\n- Purchases Made Under Exceptionally Advantageous Conditions\r\n- Subscriptions to newspapers, magazines, or other periodicals (for contracts that are only convered by the CFTA)\r\n- Work on a property by a by a contractor according to a warranty or guarantee (for contracts that are only covered by the CFTA), or\r\n- Prototype Purchase.\r\n(Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La raison pour laquelle un contrat donné n'a pas été attribué par voie concurrentielle. Ce champ sera vide ou contiendra la valeur \"Aucune\" pour les enregistrements auxquels il ne s'applique pas. Sinon, les valeurs potentielles sont les suivantes :\r\n- Droits exclusifs\r\n- Livraisons supplémentaires\r\n- Aucune réponse à une invitation à soumissionner\r\n- Extrême urgence\r\n- Biens achetés sur un marché de produits de base\r\n- Services de consultation sur des questions de nature confidentielle (pour les marchés qui ne sont pas assujettis aux dispositions de l'AECG, l'ALEC, l'AMP-OMC, PTPGP, l'ACCMT et l'ALECU)\r\n- Achats effectués selon des conditions exceptionnellement avantageuses\r\n- Abonnements à des journaux, à des magazines ou à d'autres périodiques (pour les marchés qui sont uniquement assujettis aux dispositions de l'Accord de libre-échange canadien)\r\n- Travaux effectués sur un bien par un entrepreneur conformément à une garantie (pour les marchés qui sont uniquement assujettis aux dispositions de l'Accord de libre-échange canadien), ou\r\n- Achat de prototype.\r\n(Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": null
+        },
+        {
+          "id": "h54",
+          "labels": [
+            {
+              "language": "en",
+              "name": "noticeType-avisType-eng"
+            },
+            {
+              "language": "fr",
+              "name": "noticeType-avisType-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The type of tender notice being published by PWGSC and/or other government departments. Tender notice types include the following:\r\n- Advance Contract Award Notice\r\n- Directed Contract\r\n- Invitation to Qualify\r\n- Not Applicable\r\n- Request for Information\r\n- Request for Proposal\r\n- Request for Standing Offer\r\n- Request for Supply Arrangement, and\r\n- RFP against Supply Arrangement.\r\n(Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le type d'avis d'appel d'offres publié par TPSGC ou un autre ministère. Parmi les divers types d'avis d'appel d'offres, mentionnons les suivants:\r\n- Contrat prescrit\r\n- Demande d'offre à commandes\r\n- Demande de proposition découlant d'un arrangement en matière d'approvisionnement\r\n- Demande de propositions\r\n- Demande de renseignements\r\n- Demande pour un arrangement en matière d'approvisionnement\r\n- Invitation à se qualifier\r\n- Préavis d'attribution du contrat, et\r\n- Sans objet.\r\n(Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": null
+        },
+        {
+          "id": "h56",
+          "labels": [
+            {
+              "language": "en",
+              "name": "noticeURL-URLavis-eng"
+            },
+            {
+              "language": "fr",
+              "name": "noticeURL-URLavis-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "This field may contain a link to any relevant procurement system involved in the bidding process for this tender. The information in this file is compiled from multiple procurement systems in use across the country, as such this field may be blank for some systems. Another relevant URL may also be listed in the attachment-piecesJointes field, or included in the tenderDescription-descriptionAppelOffres field. You may also use the solicitationNumber-numeroSollicitation field to look this record up directly in CanadaBuys (https://canadabuys.canada.ca/en/tender-opportunities) where additional bidding information may be provided. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Champ peut contenir un lien vers tout système d'approvisionnement pertinent impliqué dans le processus d'appel d'offres pour cet appel d'offres. Les informations contenues dans ce fichier sont compilées à partir de plusieurs systèmes d'approvisionnement utilisés dans tout le pays. Il se peut donc que ce champ soit vide pour certains systèmes. Une autre URL pertinente peut également être énumérée dans le champ attachment-piecesJointes, ou incluses dans le champs tenderDescription-descriptionAppelOffres. Vous pouvez également utiliser le champ solicitationNumber-numeroSollicitation pour rechercher cet enregistrement directement dans AchatsCanada (https://canadabuys.canada.ca/fr/occasions-de-marche) où des informations supplémentaires sur les appels d'offres peuvent être fournies. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h58",
+          "labels": [
+            {
+              "language": null,
+              "name": "numberOfRecords-nombreEnregistrements"
+            }
+          ],
+          "descriptions": {
+            "en": "The total number of records, including the original contract and any of the subsequent amendments. (Used in the CanadaBuys contract history data files.)",
+            "fr": "Le nombre total de dossiers, y compris le contrat original, ainsi que de toute modification ultérieure. (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Number",
+          "data_pattern": "^[1-9]\\d*$"
+        },
+        {
+          "id": "h59",
+          "labels": [
+            {
+              "language": null,
+              "name": "percentageOfGoodsByCountry-pourcentageDeBiensParPays"
+            }
+          ],
+          "descriptions": {
+            "en": "The percentage of the total of the manufactured goods, by country of origin. Countries are identified by the standard two letter abbreviations.  Ex:\r\n*99.81% - CA\r\n*0.19% - US\r\n(Used in the CanadaBuys contract history data files.)",
+            "fr": "Le pourcentage de l'ensemble des biens fabriqués, par pays d'origine. Les pays sont identifiés par les abréviations standard à deux lettres. Ex :\r\n*99.81% - CA\r\n*0.19% - US\r\n(Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h60",
+          "labels": [
+            {
+              "language": null,
+              "name": "procurementCategory-categorieApprovisionnement"
+            }
+          ],
+          "descriptions": {
+            "en": "The category of procurement, whether Construction (CNST), Goods (GD), Services (SRV), and/or Services Related to Goods (SRVTGD). (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La catégorie d'approvisionnement, qu'il s'agisse de construction (CNST), de biens (GD), de services (SRV) et/ou de services liés aux biens (SRVTGD). (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^(?:(?:\\*CNST|\\*GD|\\*SRV|\\*SRVTGD)\\n{0,1})*$"
+        },
+        {
+          "id": "h61",
+          "labels": [
+            {
+              "language": "en",
+              "name": "procurementMethod-methodeApprovisionnement-eng"
+            },
+            {
+              "language": "fr",
+              "name": "procurementMethod-methodeApprovisionnement-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The procuremnet method used in this tender notice. Tenders can follow the following procurement methods:\r\n- Advance contract award notice\r\n- Competitive - Limited tendering\r\n- Competitive - Open bidding\r\n- Competitive - Selective tendering\r\n- Competitive - Traditional\r\n- Non-competitive\r\n- Automated vendor rotation\r\n- Conditional, or\r\n- Single.\r\n(Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La méthode procuremnet utilisée dans cet avis d'appel d'offres. Les appels d'offres peuvent suivre les méthodes d'approvisionnement suivantes :\r\n- Préavis d'attribution du contrat\r\n- Concurrentielle - Appel d'offres limité\r\n- Concurrentielle - Appel d'offres sélectif\r\n- Concurrentielle - Invitation ouverte à soumissionner\r\n- Concurrentielle - Traditionnelle\r\n- Non concurrentielle\r\n- Système automatisé de rotation des fournisseurs\r\n- Conditionnelle, ou\r\n- Unique.\r\n(Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": null
+        },
+        {
+          "id": "h63",
+          "labels": [
+            {
+              "language": null,
+              "name": "procurementNumber-numeroApprovisionnement"
+            }
+          ],
+          "descriptions": {
+            "en": "An internal system identifier assigned to a procurement action that can relate to the sourcing project (WS #) or contract workspace (CW #). (Used in the CanadaBuys contract history data files.)",
+            "fr": "Un identifiant de système interne attribué à une action d'approvisionnement qui peut être lié au projet d'approvisionnement (WS #) ou à l'espace de travail du contrat (CW #). (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h64",
+          "labels": [
+            {
+              "language": null,
+              "name": "publicationDate-datePublication"
+            }
+          ],
+          "descriptions": {
+            "en": "The date a tender notice, award notice, or contract is publicly published. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La date à laquelle un avis d'appel d'offres, un avis d'attribution, ou un contrat est affiché publiquement. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Date",
+          "data_pattern": "^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        {
+          "id": "h65",
+          "labels": [
+            {
+              "language": null,
+              "name": "referenceNumber-numeroReference"
+            }
+          ],
+          "descriptions": {
+            "en": "An internal system identifier assigned to a tender notice, award notice, or contract history entry that can specify the sourcing project (WS #), contract workspace (CW #), and/or Contractor (ACM #). (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Un identifiant de système interne attribué à un avis d'appel d'offres, un avis d'attribution, ou une entrée d'historique de contrat qui peut spécifier le projet d'approvisionnement (WS #), l'espace de travail du contrat (CW #) et/ou l'entrepreneur (ACM #). (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h66",
+          "labels": [
+            {
+              "language": "en",
+              "name": "regionsOfDelivery-regionsLivraison-eng"
+            },
+            {
+              "language": "fr",
+              "name": "regionsOfDelivery-regionsLivraison-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The applicable region(s) that relate to delivery of the awarded contract. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La ou les régions applicables qui se rapportent à la livraison du contrat attribué. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h68",
+          "labels": [
+            {
+              "language": "en",
+              "name": "regionsOfOpportunity-regionAppelOffres-eng"
+            },
+            {
+              "language": "fr",
+              "name": "regionsOfOpportunity-regionAppelOffres-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The applicable region(s) that relate to a particular notice's opportunity area(s). (Used in the CanadaBuys tender notices data files.)",
+            "fr": "La ou les régions visées par une ou plusieurs occasions d'affaires pour un avis en particulier. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h70",
+          "labels": [
+            {
+              "language": "en",
+              "name": "selectionCriteria-criteresSelection-eng"
+            },
+            {
+              "language": "fr",
+              "name": "selectionCriteria-criteresSelection-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The method used to assess the bids and award a winner. The possible selection criteria values are as follows:\r\n- Government Objectives Representing Best Interests/Value to Govt\r\n- Highest Combined Rating of Technical Merit and Price\r\n- Highest Technical Merit within a Stipulated Maximum Budget\r\n- Lowest Cost-per-Point\r\n- Lowest Price\r\n- Not applicable\r\n- Rotational Sourcing\r\n- Subsequent/Follow-on Contracts, or\r\n- Variations or combinations of the above methods.\r\n(Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La méthode utilisée pour évaluer les offres et attribuer un gagnant. Les valeurs possibles des critères de sélection sont les suivantes :\r\n- Cote combinée la plus élevée pour le mérite technique et le prix\r\n- Coût par point le plus bas\r\n- Marchés subséquents\r\n- Mérite technique le plus élevé dans les limites du budget maximal stipulé\r\n- Objectifs gouvern. représentant les meilleurs intérets/valeur pour l'État\r\n- Prix le plus bas\r\n- Rotation des fournisseurs\r\n- Sans objet, ou\r\n- Variations ou combinaisons des méthodes susmentionnées.\r\n(Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": null
+        },
+        {
+          "id": "h72",
+          "labels": [
+            {
+              "language": null,
+              "name": "solicitationNumber-numeroSollicitation"
+            }
+          ],
+          "descriptions": {
+            "en": "A identification number that is provided by the government department issuing the solicitation, to identify the tender notices and award notices on GETS (ie: NPP, ACAN). (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Un identificateur délivré par un ministère émetteur de la sollicitation pour identifier les avis d'appel d'offres et les avis d'attribution de contrat dans le SEAOG (p. ex. des avis de projet de marché (APM), des préavis d'adjudication de contrat (PAC)). (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h73",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierAddressCity-fournisseurAdresseVille-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierAddressCity-fournisseurAdresseVille-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The city of the supplier to the Government of Canada. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "La ville de résidence du fournisseur du gouvernement du Canada. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h75",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierAddressCountry-fournisseurAdressePays-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierAddressCountry-fournisseurAdressePays-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The country of the supplier to the Government of Canada. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "Le pays de résidence du fournisseur du gouvernement du Canada. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h77",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierAddressLine-ligneAdresseFournisseur-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierAddressLine-ligneAdresseFournisseur-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The street address of the supplier to the Government of Canada. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "L'adresse municipale du fournisseur du gouvernement du Canada. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h79",
+          "labels": [
+            {
+              "language": null,
+              "name": "supplierAddressPostalCode-fournisseurAdresseCodePostal"
+            }
+          ],
+          "descriptions": {
+            "en": "The postal code or zip code (or equivalent) of the supplier to the Government of Canada. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "Le code postal ou le code zip (ou l'équivalent) du fournisseur du gouvernement du Canada. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h80",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierAddressProvince-fournisseurAdresseProvince-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierAddressProvince-fournisseurAdresseProvince-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The province or the state of the supplier to the Government of Canada. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "La province ou l'état de résidence du fournisseur du gouvernement du Canada. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h82",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierEmployeeCount-fournisseurNombreEmployes-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierEmployeeCount-fournisseurNombreEmployes-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A description of the number of individuals employed by the supplier to the Government of Canada.   This field my be blank or one of the following descriptions may be used:\r\n - Self-employed\r\n - 1 to 4 employees\r\n - 5 to 9 employees\r\n - 10 to 19 employees\r\n - 20 to 49 employees\r\n - 50 to 99 employees\r\n - 100 to 199 employees\r\n - 200 to 499 employees\r\n - 500 to 999 employees\r\n - 1000 to 1499 employees\r\n - 1500 to 2499 employees\r\n - 2500 to 4999 employees\r\n - 5000 employees and over\r\n - UNKNOWN\r\n(Used in the CanadaBuys contract history data files.)",
+            "fr": "Une description du nombre de personnes employées par le fournisseur du gouvernement du Canada.  Ce champ peut être vide ou l'une des descriptions suivantes peut être utilisée :\r\n - Travailleur autonome \r\n - 1 à 4 employés\r\n - 5 à 9 employés\r\n - 10 à 19 employés\r\n - 20 à 49 employés\r\n - 50 à 99 employés\r\n - 100 à 199 employés\r\n - 200 à 499 employés\r\n - 500 à 999 employés\r\n - 1000 à 1499 employés\r\n - 1500 à 2499 employés\r\n - 2500 à 4999 employés\r\n - 5000 employees and over\r\n - INCONNU\r\n (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h84",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierLegalName-nomLegalFournisseur-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierLegalName-nomLegalFournisseur-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "Legal registered name of a business entity (if available) that is a supplier to the Government of Canada. Note: this value may be in either English or French depending on the primary language(s) of the supplier organisation. (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "Dénomination sociale enregistrée d'une entité commerciale (si disponible) qui est un fournisseur du gouvernement du Canada. Remarque : cette valeur peut être en anglais ou en français selon la/les langue(s) principale(s) de l'organisation du fournisseur. (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h86",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierOperatingName-nomCommercialFournisseur-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierOperatingName-nomCommercialFournisseur-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The name(s) (if available) a business entity normally uses when conducting business as a supplier to the Government of Canada. Note: this value may be in either English or French depending on the primary language(s) of the supplier organisation. (Used in the CanadaBuys contract history data files.)",
+            "fr": "Le(s) nom(s) (si disponible) qu'une entité commerciale utilise habituellement lorsqu'elle réalise des affaires à titre de fournisseur du gouvernement du Canada.  Remarque : cette valeur peut être en anglais ou en français selon la langue principale de l'organisation du fournisseur.  (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h88",
+          "labels": [
+            {
+              "language": "en",
+              "name": "supplierStandardizedName-nomNormaliseFournisseur-eng"
+            },
+            {
+              "language": "fr",
+              "name": "supplierStandardizedName-nomNormaliseFournisseur-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The supplier's name (if available) used to simplify search results by grouping together closely related suppliers that conduct business using different operating or legal names. Note: this value may be in either English or French depending on the primary language(s) of the supplier organisation. (Used in the CanadaBuys contract history data files.)",
+            "fr": "Le nom du fournisseur (si disponible) utilisé pour simplifier les résultats de recherche en regroupant les fournisseurs étroitement liés qui font des affaires sous différents noms commerciaux ou dénominations sociales. Remarque : cette valeur peut être en anglais ou en français selon la langue principale de l'organisation du fournisseur. (Utilisé dans les fichiers de données des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h90",
+          "labels": [
+            {
+              "language": null,
+              "name": "tenderClosingDate-appelOffresDateCloture"
+            }
+          ],
+          "descriptions": {
+            "en": "The date of closing for a tender notice, after which no new submissions will be accepted for consideration.\r\nNote: the dates/times displayed are all in UTC-0500, or five hours earlier than the Universal Time Coordinate. This equates to EASTERN STANDARD TIME (and differs from Eastern DAYLIGHT SAVINGS time which is UTC-0400). So a value of 2023-08-01T13:00:00 (which is a day when the Canadian Eastern time zone uses daylight savings) would actually equate to 2pm on that day in Ottawa, Ontario; whereas a value of 2023-01-31T13:00 (which is a date when the Canadian Eastern time zone would be on Standard Time) would be 1pm on that day in Ottawa, Ontario. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Date de clôture d'un avis d'appel d'offres, après laquelle aucune nouvelle présentation ne sera acceptée pour examen.\r\nRemarque : Les dates et heures affichées sont toutes en heure UTC-0500, soit cinq heures plus tôt que la coordonnée de temps universel. Cela équivaut à l'heure standard de l'est (et diffère de l'heure avancée de l'Est qui est UTC-0400). Ainsi, une valeur de 2023-08-01T13:00:00 (qui est une date à laquelle l'heure d'été serait en vigueur dans le fuseau horaire de l'Est canadien) correspondrait à 14 heures ce jour-là à Ottawa, en Ontario. Alors qu'une valeur de 2023-01-31T13:00 (qui est une date où l'heure normale serait en vigueur dans le fuseau horaire de l'Est canadien) correspondrait à 13 heures ce jour-là à Ottawa, en Ontario. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}\\:[0-9]{2}\\:[0-9]{2}$"
+        },
+        {
+          "id": "h91",
+          "labels": [
+            {
+              "language": "en",
+              "name": "tenderDescription-descriptionAppelOffres-eng"
+            },
+            {
+              "language": "fr",
+              "name": "tenderDescription-descriptionAppelOffres-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A detailed description of the tender notice. This includes items such as any introductory or purpose text, a description of the notice, background information, instructions, any mandatory text inclusions, and line item information. The information included in this description does not duplicate the information or details found in the attachments, such as clauses or sample documents. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Une description détaillée de l'avis d'appel d'offres. Cela comprend des éléments tels que le texte d'introduction ou le texte décrivant l'objet, une description de l'avis, des renseignements généraux, des instructions, des inclusions de texte obligatoires, ainsi que des renseignements sur les articles d'exécution. Les renseignements contenus dans cette description ne reproduisent pas les renseignements ou les détails se trouvant dans les pièces jointes, telles que des clauses ou des modèles de documents. (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h93",
+          "labels": [
+            {
+              "language": "en",
+              "name": "tenderStatus-appelOffresStatut-eng"
+            },
+            {
+              "language": "fr",
+              "name": "tenderStatus-appelOffresStatut-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A status that indicates whether a tender is Open (ie: accepting bids), Expired (no longer accepting bids) or Cancelled. (Used in the CanadaBuys tender notices data files.)",
+            "fr": "Un statut qui indique si un appel d'offres est Open (c'est-à-dire : accepte des offres), Expired (n'accepte plus les offres), ou Cancelled (annulé). (Utilisé dans les fichiers de données des avis d'appel d'offres d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^Open|Cancelled|Expired|Ouvert|Annulé|Expiré$"
+        },
+        {
+          "id": "h95",
+          "labels": [
+            {
+              "language": "en",
+              "name": "title-titre-eng"
+            },
+            {
+              "language": "fr",
+              "name": "title-titre-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A succinct title, or name, that summarizes the tender notice. This title is shared with any resulting contract and tender award notice. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Un titre succinct, ou un nom, qui résume l'avis d'appel d'offres. Ce titre est reproduit dans tout contrat subséquent et avis d'adjudication de contrat. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h97",
+          "labels": [
+            {
+              "language": null,
+              "name": "totalContractValue-valeurTotaleContrat"
+            }
+          ],
+          "descriptions": {
+            "en": "The cumulative total value of a contract, from contract award date to present (original plus all amendments), and includes values that are pre-January 2009 (i.e. includes contract information that preceded the first public release of Contract History). (Used in the CanadaBuys award notices and contract history data files.)",
+            "fr": "Valeur totale cumulée d'un contrat, depuis la date d'attribution du contrat jusqu'à aujourd'hui (l'original plus toutes les modifications), et comprend les valeurs antérieures à janvier 2009 (c.-à-d. qu'elle comprend des informations sur les contrats qui ont précédé la première diffusion publique de l'historique des contrats). (Utilisé dans les fichiers de données des avis d'attributions et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Number",
+          "data_pattern": "^$|^-?[0-9]*(\\.[0-9]{2})?$"
+        },
+        {
+          "id": "h98",
+          "labels": [
+            {
+              "language": "en",
+              "name": "tradeAgreements-accordsCommerciaux-eng"
+            },
+            {
+              "language": "fr",
+              "name": "tradeAgreements-accordsCommerciaux-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "A list of any international trade agreements that apply to the procurement action, if applicable. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Une liste de tous les accords commerciaux internationaux qui s'appliquent à l'action d'approvisionnement, le cas échéant. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h100",
+          "labels": [
+            {
+              "language": null,
+              "name": "unspsc"
+            }
+          ],
+          "descriptions": {
+            "en": "The United Nations Standard Products and Services Code (UNSPSC) is an eight-digit number used as an international open standard for the classification of products and services in the context of procurement activities. (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "Le United Nations Standard Products and Services Code (UNSPSC) est un code à huit chiffres qui est un système de classification international à format ouvert servant à identifier les produits et les services dans le cadre d'activités d'approvisionnement. (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": "https://schema.org/Text",
+          "data_pattern": "^$|^\\*$|^(?:\\*\\s{0,1}[0-9]{8}\\s{0,1}\\n{0,1})*$"
+        },
+        {
+          "id": "h101",
+          "labels": [
+            {
+              "language": "en",
+              "name": "unspscDescription-eng"
+            },
+            {
+              "language": "fr",
+              "name": "unspscDescription-fra"
+            }
+          ],
+          "descriptions": {
+            "en": "The description of the product or service that corresponds to the United Nations Standard Products and Services Code (UNSPSC). (Used in the CanadaBuys tender notices, award notices, and contract history data files.)",
+            "fr": "La description du produit ou du service correspondant au United Nations Standard Products and Services Code (UNSPSC). (Utilisé dans les fichiers de données des avis d'appel d'offres, des avis d'attributions, et des contrats octroyés d'AchatsCanada.)"
+          },
+          "data_type": null,
+          "data_pattern": null
+        }
+      ]
+    },
+    "sosa": {
+      "path": "sources/sosa-dictionary.xml",
+      "headings": 14,
+      "labels": [
+        "agreement-number",
+        "agreement-type_en",
+        "agreement-type_fr",
+        "award-date",
+        "commodity",
+        "commodity-description_en",
+        "commodity-description_fr",
+        "date-file-published",
+        "delivery-point_en",
+        "delivery-point_fr",
+        "delivery-point-code",
+        "end-user-entity_en",
+        "end-user-entity_fr",
+        "expiry-date",
+        "sosa-description_en",
+        "sosa-description_fr",
+        "supplier-legal-name",
+        "supplier-operating-name",
+        "supplier-standardized-name"
+      ],
+      "fields": [
+        {
+          "id": "h1",
+          "labels": [
+            {
+              "language": null,
+              "name": "agreement-number"
+            }
+          ],
+          "descriptions": {
+            "en": "Agreement number: The standing offer or supply arrangement number. It is a unique identifier for each standing offer or supply arrangement.",
+            "fr": "Numéro d'accord : le numéro d'une offre à commandes ou d'un arrangement en matière d'approvisionnement. Il s'agit d'un code d'identification unique d'une offre à commandes ou d'un arrangement en matière d'approvisionnement."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h2",
+          "labels": [
+            {
+              "language": "en",
+              "name": "agreement-type_en"
+            },
+            {
+              "language": "fr",
+              "name": "agreement-type_fr"
+            }
+          ],
+          "descriptions": {
+            "en": "Agreement type: The type of agreement, either a supply arrangement or one of the following standing offer types: National Master Standing Offer (NMSO), Departmental Individual Standing Offer (DISO), Regional Individual Standing Offer (RISO), Regional Master Standing Offer",
+            "fr": "Type d'accord : il s'agit d'un arrangement en matière d'approvisionnement ou de l'un des types d'offres à commandes suivantes : offre à commandes principale et nationale (OCPN), offre à commandes individuelle et ministérielle (OCIM), offre à commandes individuelle et régionale (OCIR), offre à commandes principale et régionale (OCPR), offre à commandes individuelle et nationale (OCIN)."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h3",
+          "labels": [
+            {
+              "language": null,
+              "name": "award-date"
+            }
+          ],
+          "descriptions": {
+            "en": "Start date: The start date for the standing offer or supply arrangement.",
+            "fr": "Date de début : la date de début d'une offre à commandes ou d'un arrangement en matière d'approvisionnement."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h4",
+          "labels": [
+            {
+              "language": null,
+              "name": "commodity"
+            }
+          ],
+          "descriptions": {
+            "en": "Commodity: Code used by the federal government to identify generic product descriptions for its procurement activities.",
+            "fr": "Produit : code utilisé par le gouvernement fédéral pour identifier les descriptions de produits génériques aux fins de ses activités d'achat."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h5",
+          "labels": [
+            {
+              "language": "en",
+              "name": "commodity-description_en"
+            },
+            {
+              "language": "fr",
+              "name": "commodity-description_fr"
+            }
+          ],
+          "descriptions": {
+            "en": "Commodity description: The description of the good or service that corresponds to the commodity code.",
+            "fr": "Description du produit : la description du bien ou du service correspondant au code du produit."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h6",
+          "labels": [
+            {
+              "language": null,
+              "name": "date-file-published"
+            }
+          ],
+          "descriptions": {
+            "en": "Date file published: The date and time when the file was published.",
+            "fr": "Date de publication du fichier: La date et l'heure de publication du fichier."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h7",
+          "labels": [
+            {
+              "language": "en",
+              "name": "delivery-point_en"
+            },
+            {
+              "language": "fr",
+              "name": "delivery-point_fr"
+            }
+          ],
+          "descriptions": {
+            "en": "Region of delivery: The geographic coverage of the standing offer or supply arrangement, which may be subject to certain delivery terms and conditions specified in the agreement, such as sub-regional delivery points, and Comprehensive Land Claim Agreements (CLCA).",
+            "fr": "Région de livraison : la couverture géographique d'une offre à commandes ou d'un arrangement en matière d'approvisionnement qui pourrait être assujettie à certaines modalités de livraison prévues au contrat, comme les points de livraison infrarégionaux, et aux ententes sur les revendications territoriales globales (ERTG)."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h8",
+          "labels": [
+            {
+              "language": null,
+              "name": "delivery-point-code"
+            }
+          ],
+          "descriptions": {
+            "en": "Region of delivery code: A geographic code used to identify Canadian provinces and territories as defined in the International Organization for Standardization (ISO) 3166-2. Please note that the following three codes are not found in the ISO 3166-2:\n\nFD\nForeign\nNA\nNational - Canada\nNC\nNational Capital",
+            "fr": "Code de la région de livraison : un code géographique utilisé pour désigner les provinces et les territoires du Canada, tel que défini dans la norme 3166-2 de l'Organisation internationale de normalisation (ISO). Veuillez noter que les trois codes suivants ne figurent pas dans la norme ISO 3166-2 :\n\nFD\nÉtranger\nNA\nNational - Canada\nNC\nCapitale nationale"
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h9",
+          "labels": [
+            {
+              "language": "en",
+              "name": "end-user-entity_en"
+            },
+            {
+              "language": "fr",
+              "name": "end-user-entity_fr"
+            }
+          ],
+          "descriptions": {
+            "en": "End user: The end user identifies the entity (e.g. client department, agency, Crown corporation) on whose behalf the standing offer or supply arrangement has been put in place.",
+            "fr": "Utilisateur final : l'utilisateur final est l'entité (p. ex., le ministère client, l'organisme, la Société d'État) au nom de laquelle l'offre à commandes ou l'arrangement en matière d'approvisionnement a été établi."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h10",
+          "labels": [
+            {
+              "language": null,
+              "name": "expiry-date"
+            }
+          ],
+          "descriptions": {
+            "en": "Expiry date: The end date of a standing offer or supply arrangement.",
+            "fr": "Date d'expiration : la date de fin d'une offre à commandes ou d'un arrangement en matière d'approvisionnement."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h11",
+          "labels": [
+            {
+              "language": "en",
+              "name": "sosa-description_en"
+            },
+            {
+              "language": "fr",
+              "name": "sosa-description_fr"
+            }
+          ],
+          "descriptions": {
+            "en": "Description: A brief description of the good or service, for example: \"Armoured transportation services\".",
+            "fr": "Description : une brève description du bien ou du service (par exemple, « services de transport en véhicules blindés »)."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h12",
+          "labels": [
+            {
+              "language": null,
+              "name": "supplier-legal-name"
+            }
+          ],
+          "descriptions": {
+            "en": "Supplier legal name: Legal registered name of a business entity that is also a supplier to the Government of Canada.",
+            "fr": "Dénomination sociale du fournisseur : dénomination sociale enregistrée d'une entité commerciale qui est également un fournisseur du gouvernement du Canada."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h13",
+          "labels": [
+            {
+              "language": null,
+              "name": "supplier-operating-name"
+            }
+          ],
+          "descriptions": {
+            "en": "Supplier operating name: Name(s) a business entity normally uses when conducting business as a supplier to the Government of Canada.",
+            "fr": "Nom commercial du fournisseur : le nom qu'une entité commerciale utilise habituellement lorsqu'elle fait des affaires à titre de fournisseur du gouvernement du Canada."
+          },
+          "data_type": null,
+          "data_pattern": null
+        },
+        {
+          "id": "h14",
+          "labels": [
+            {
+              "language": null,
+              "name": "supplier-standardized-name"
+            }
+          ],
+          "descriptions": {
+            "en": "Supplier standardized name: A supplier name used to simplify search results by grouping together closely related suppliers that conduct business using different operating or legal names. The resulting search records will contain the suppliers' legal and operating names.",
+            "fr": "Nom normalisé du fournisseur : un nom du fournisseur utilisé pour simplifier les résultats de recherche en regroupant les fournisseurs étroitement liés qui font des affaires sous différents noms commerciaux ou légaux. les dossiers de recherche subséquents contiendront les noms légaux ou commerciaux des fournisseurs."
+          },
+          "data_type": null,
+          "data_pattern": null
+        }
+      ]
+    }
+  },
+  "implementation_rules": [
+    {
+      "rule": "Retain the two bilingual columns on each original row.",
+      "source": "sources/source-support.html"
+    },
+    {
+      "rule": "Use the exact solicitation number for an explained tender-to-award join; preserve reference and contract identifiers separately.",
+      "source": "sources/source-support.html"
+    },
+    {
+      "rule": "Keep amendment numbers as original strings, including leading zeros and historical alphanumeric values.",
+      "source": "sources/canadabuys-dictionary.xml"
+    },
+    {
+      "rule": "Retain contract currency exactly; the issuer defines an empty/null contract currency as CAD. A derived CAD display must preserve its source basis.",
+      "source": "sources/source-support.html"
+    },
+    {
+      "rule": "Contract amount includes taxes; total contract value is cumulative original plus amendments. Preserve decimal text and both concepts.",
+      "source": "sources/canadabuys-dictionary.xml"
+    },
+    {
+      "rule": "March-April 2026 restructuring added instrument and amendment types, corrected original award/date/administrative amount behavior and removed specified non-substantive records.",
+      "source": "sources/implementation-notice-2026.html"
+    },
+    {
+      "rule": "Use SRVTGD for Services Related to Goods from the current dictionary/catalog; retain the older support document's spelling discrepancy in source provenance.",
+      "source": "sources/canadabuys-dictionary.xml"
+    },
+    {
+      "rule": "The current award catalog describes daily complete/current-year files and monthly older-year/legacy files; this current catalog supersedes the 2023 guide's historical-file refresh description.",
+      "source": "sources/awards-catalog.json"
+    },
+    {
+      "rule": "ABE-origin award availability can lag the actual award by up to a month; distinguish award, publication, amendment and capture dates.",
+      "source": "sources/source-support.html"
+    },
+    {
+      "rule": "SOSA supplier standardized names group related suppliers. Preserve legal and operating names and review the relationship before treating a matched name as the same entity.",
+      "source": "sources/sosa-dictionary.xml"
+    },
+    {
+      "rule": "SOSA agreement-number is the original agreement identifier; preserve agreement type, commodity, delivery region, start and expiry dates before qualified-workshare review.",
+      "source": "sources/sosa-dictionary.xml"
+    },
+    {
+      "rule": "SOSA delivery region codes FD, NA and NC are issuer extensions to ISO 3166-2; retain them.",
+      "source": "sources/sosa-dictionary.xml"
+    }
+  ],
+  "license": {
+    "id": "ca-ogl-lgo",
+    "title": "Open Government Licence - Canada",
+    "url": "https://open.canada.ca/en/open-government-licence-canada"
+  }
+}

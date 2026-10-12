@@ -49,6 +49,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `openlineage-operations` | Native Python and Java producer intake, original compressed/source bytes, job/run/dataset lineage, saved reviews and complete editable customer receiving | OpenLineage operations; Runtime management | [Complete installed operation and producer guide](../../../products/openlineage/OPERATING.md) |
 | `study-research` | Study source editions, Property field surveys and comparables, Census ACS, BLS labor and HUD releases with original publishing and complete customer receiving | Study Source Refresh; Buyer runbook; Merchant console; PostgreSQL publisher; PostgreSQL workspace | [Complete study operator and receiving guide](selections/STUDY_RESEARCH.md) |
 | `merchant-support` | Merchant cases, original tariff quotations, accepted implementation, Service adjustments, buyer/accountant handover and complete customer receiving | Merchant support; Merchant pricing and scenario planning; Runtime management; original merchant agent | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
 | `healthcare-interoperability` | Original FHIR exports and eLTSS CarePlans, full source/field review, native merchant/customer editions and complete editable receiving | FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete installed operation and receiving](../../../products/healthcare-interoperability/OPERATING.md) |
@@ -65,6 +66,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `webdav-operator` | WebDAV or Nextcloud file editions, native merchant and customer, complete remote operator and source receiving | WebDAV source and merchant workspace; Runtime management | [Operating guide](../../../products/webdav/OPERATING.md) |
 | `eurostat` | Eurostat official source editions, exact economic reports, native publication and complete customer receiving | Eurostat economic editions; Runtime management | [Operating guide](../../../products/eurostat/OPERATING.md) |
 | `openapi-merchant` | Captured API, OpenAPI/Postman authoring, reusable policies, persistent workflows, native releases and complete customer receiving | Captured API, OpenAPI, merchant console | [Operating guide](../../../products/captured-api/OPERATING.md) |
+| `opencage` | Original geocoding and CSV review, merchant releases, host preparation and complete customer/accounting receiving | OpenCage geocoding; Runtime management | [Operating guide](../../../products/opencage/OPERATING.md) and [receiving guide](../../../products/opencage/RECEIVING.md) |
 | `huwise` | Huwise source review, tenant ingestion and native publication, merchant and complete customer receiving | Runtime management; original Huwise browser and merchant agent | [Operating guide](../../../products/huwise/OPERATING.md) |
 | `water-operations` | USGS observations, editions, Water workspace, merchant and complete customer files | Water, Buyer, merchant console | [Operating guide](selections/WATER_OPERATIONS.md) |
 | `woo-merchant` | Existing WooCommerce orders, native checkout, Operations, purchased files and refunds | WooCommerce, Buyer, merchant console | [Operating guide](selections/WOO_MERCHANT.md) |
@@ -74,9 +76,12 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `publisher-360giving` | Complete 360Giving publisher source/reviews, native grant datasets, typed SDK/merchant operation and complete customer receiving | 360Giving publisher workspace; Runtime management | [Operating guide](../../../products/360giving-publisher/OPERATING.md) |
 | `grant-portfolio` | Original IATI and 360Giving editions, portfolio reconciliation, source-linked decisions, native customer files and workspace recovery | Grant portfolio reconciliation; Runtime management | [Operating and receiving guide](../../../products/grant-portfolio/OPERATING.md) |
 | `laboratory-edd` | Complete EQuIS/DTS8D source review, native reissue and cross-profile correspondence | Laboratory EDD; paid-job merchant; Job checkout; Job result receiver | [Operating guide](selections/LABORATORY_EDD.md) |
+| `ckan-merchant` | Complete CKAN capture and source meanings, reviewed successor publication, browser/MCP and whole customer workspace receiving | CKAN data merchant; Dataset publisher; Dataset buyer; Python; Runtime management | [Complete operating and receiving guide](../../../products/ckan/OPERATING.md) |
 | `mssql` | SQL Server catalog and typed queries, retained sellers, merchant tools and complete customer/merchant receiving | SQL Server data products; merchant console | [Installed product and operating guide](../../../products/mssql/README.md) |
 | `accountant-portfolio` | Client procedures, exact close files, preparation/review, named backup handovers, staff capacity, native accounting and complete portfolio receiving | Client runbooks; Client portfolio; Merchant accounting; Cryptoworth accounting | [Complete installation and receiving](../../../products/accountant-portfolio/README.md) |
 | `merchant-economics` | Supplier sources, exact tariffs and pricing, customer quotations, accepted implementation, Service and buyer/accountant continuation, full receiving and seller releases | Merchant pricing and scenario planning; Merchant support; API merchant; Runtime management | [Complete installed workflow](../../../products/merchant-economics/OPERATING.md) |
+| `merchant-receivables` | Original service quotations, issued invoices, payments, credits, retained installment schedules, dated collections and complete customer accounts | Merchant receivables; Customer payment plans; Merchant accounting; Merchant support | [Complete installed operation](../../../products/merchant-receivables/README.md) |
+| `merchant-payment-plans` | Reviewed customer installments, dated collection desk, retained schedule editions and original invoice, payment and credit operation | Customer payment plans; Merchant receivables; Merchant accounting; Merchant support | [Complete installation and collection workflow](../../../products/merchant-payment-plans/README.md) |
 | `all` or no flag on a new build | Complete maintained toolkit | All registered applications | [Runtime installation](RUNTIME_INSTALL.md) |
 
 Use the product's installed `starforge --help` and `starforge registrations`
@@ -102,6 +107,8 @@ For World Bank, use `--selection worldbank` and the [complete product guide](../
 For DBnomics economic work, use `--selection dbnomics` and the [complete operating guide](../../../products/dbnomics/OPERATING.md). The original application retains official provider responses, native periods and values, saved analyst reports, reviewed publication, complete editable exports and customer files.
 
 For CoinGecko, use `--selection coingecko` and the [complete operating guide](../../../products/coingecko/OPERATING.md). The selected source retains the original provider and request contracts, complete source and operator workspace, browser assets, native merchant and governed buyer, all CoinGecko MCP tools, Applications provider, and the original installed and managed receiving programs. The `coingecko-product` command delegates to those original operations and receives complete customer deliveries through the product's [receiving guide](../../../products/coingecko/RECEIVING.md). Its full source includes the selected recipe, contribution, CLI, delivery module and all product guides from the same commit. The complete product profile is `--native --feature schema --feature openapi --feature mcp --operator`; an earlier runtime or source archive retains its own original profile and source identity. Receive the newly selected package through the maintained installer or its supported existing-dependency adoption, then inspect that exact runtime before opening its original application.
+
+For OpenLineage, use `--selection openlineage-operations` and the [complete operating guide](../../../products/openlineage/OPERATING.md). The selected source includes the original lineage workspace, Python and Java producer configuration, gzip intake with original source identities, browser and typed client, direct MCP and managed merchant tools, complete reports, and independent receiving of the editable application and workspace. The maintained merchant profile is `--native --feature schema --feature openapi --feature mcp --operator`.
 
 ## Continue the same build
 
@@ -131,9 +138,10 @@ its dependency profile from the complete installed workflow linked above:
 
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
+| `merchant-receivables`, `merchant-payment-plans` | `--native --feature schema --feature openapi --operator` |
 | `study-research` | `--native --feature schema --feature openapi --feature mcp --feature postgres --operator` |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
-| `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations`, `dbnomics`, `coingecko` | `--native --feature schema --feature openapi --feature mcp --operator` |
+| `opencage`, `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations`, `dbnomics`, `coingecko` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `redis-applications` | `--native --feature redis --feature schema --feature openapi --feature mcp --operator` |
 | `grpc-merchant` | `--native --feature grpc --feature schema --feature openapi --feature mcp --operator` |
 | `mssql` | `--native --feature mssql --feature mcp --operator` |

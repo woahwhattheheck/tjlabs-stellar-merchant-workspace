@@ -38,3 +38,40 @@ Return the complete archive and actual result to the existing ASTRA-DU/TARIFF-RX
 The Pricing and Pricing Costs modules import the same original configuration-file helpers directly from `host-files.mjs`. This avoids loading the complete provider registry merely to open the original Pricing owner. Their configuration behavior and helpers stay the same.
 
 The canonical product also contains the installed browser/CLI/client selection, the Merchant Pricing tariff tools and the existing HTTP/stdio host's configurable 65 MiB request allowance for the complete tariff portfolio. Smaller provider families keep their existing defaults.
+
+## Completed native operation and recovery
+
+The full original operation completed on 12 October 2026 using Node 22.16.0
+and Python 3.13.5. All 179 original product source files were retained unchanged.
+The original catalogue declaration is a **factory**: the MCP caller must use
+`declaration.tools(tool)` with the original MerchantOperator tool builder.
+The corrected native program now saves `pricing-flow-result.json` before entering
+MCP. All 17 tariff methods dispatched through 136 actual HTTP tool calls; four
+complete export families, owner close/reopen and same-manifest resume completed.
+
+`programs-manifest.json` selects the corrected adjacent callers and binds them to
+the exact original source-packet Git blob. `run-native.py` validates every caller
+before creating its output. Keep the complete experiment directory together when
+using it. The unchanged original source packet remains the product-source record;
+`source-materialized.json` also records the selected caller manifest and hashes.
+
+For the already completed Pricing phase of an interrupted caller, retain the
+whole operation root and use the included resume entrypoint instead of rerunning
+`run-native.py` or making a second pricing workspace:
+
+```bash
+node resume-native.mjs --native-run /absolute/operation/native
+```
+
+The resume entrypoint verifies all source files, fixture bytes, saved request IDs,
+Pricing and repricing results, the complete original backup, receiving workspace,
+and selected export bytes before continuing MCP. A corrected MCP caller retains
+the first intent, recording a new intent under its own module hash only when the
+original source and operation binding are unchanged. Completed MCP results reopen
+without redispatching the operation. The final `native/flow-result.json` and its
+original UUIDs are the input to the Commercial customer continuation.
+
+The original repository fixtures are illustrative. Their release-stage method
+returns `RELEASE_STORE_REQUIRED` because those inputs configure neither a source
+package nor a release store. This actual method result is retained alongside the
+completed planning, restore, HTTP, MCP and export operation.
