@@ -118,8 +118,8 @@ def write_tenders(source, capture, out):
             if found:
                 selected_rows.write(json.dumps({**row, "discovery_matches": found}, ensure_ascii=False) + "\n")
                 candidates.append(record)
-            if ("35133" in values.get("solicitationNumber-numeroSollicitation", "") or
-                "BPM026762" in values.get("referenceNumber-numeroReference", "")):
+            if (values.get("solicitationNumber-numeroSollicitation", "").strip() == "BPM026762/35133" or
+                values.get("referenceNumber-numeroReference", "").strip() == "SSC-26-00035133:T"):
                 apm.append(row)
     if count != capture["csv"]["records"]:
         raise ValueError("Tender index is not the complete selected source")
