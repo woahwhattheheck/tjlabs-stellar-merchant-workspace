@@ -65,3 +65,12 @@ The one-lifetime host must retain the entire output directory, native stdout/std
 ## Product source
 
 The complete product API and source-format contract are in [COLLECTION_COMPARISONS.md](../COLLECTION_COMPARISONS.md). Comparison commands are also exposed through `odata-live comparison-create --help` and the other recognized comparison subcommands. The native customer operation performs one complete source-backed customer workflow and returns its actual retained results.
+
+
+## Continue the original concurrent-reader preparation
+
+The comparison UI opens its first rows as soon as it displays the comparison heading. SDK readers can arrive at the same time. The comparison core serializes calls for the same canonical directory before taking the existing kernel lease, so these original readers share the complete application without competing for that lease. Different processes retain the original exclusive ownership behavior.
+
+A customer preparation from the first receiver edition can continue after this correction when its saved native error is `RELEASE_BUSY`, no review request has been submitted, and no Analysis job has started. Restore the complete retained checkpoint, materialize the corrected source from its frozen original runtime, and run the same original command with `--resume --resume-source-from ORIGINAL_SELECTION_SHA256`. The receiver accepts only the known comparison-core, receiver, and guide changes; all other source members and the original customer input must match. It retains the former source inventory, failed selection, and error in the same journal before selecting the corrected runtime. The existing original collections and completed comparison remain in that workspace.
+
+For the retained F971 operation, the first failed selection is `93a0700a0a41a3d2c2fd57cfd7ee7094b9b6e98b2a81d546bda7964cbaa02d1a` and its checkpoint is `b3e8da10dd02f26ebdaf2d1c30ea3ba6c68561521ac3c3620bfdb90ef8b4c11c`. Continue that exact input and workspace; the customer helper reopens the existing comparison before completing its original reviews and analytical delivery.

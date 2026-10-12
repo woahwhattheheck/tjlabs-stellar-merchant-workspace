@@ -1,13 +1,32 @@
-// MIT. Customer bookkeeping through the merchant's original MCP connection.
-// Wire schema: original accounting-platforms.mjs Git blob 8d41dae6fa79514b6658464dc9542ee425844b1e (34 native tools).
+// MIT. Buyer startup and customer bookkeeping through the original MCP connection.
+// Original QuickBooks/Xero wire schema plus the shared native source-change catalog.
 import { createHash } from 'node:crypto';
+import { sourceChangeDefinitions } from './catalog/accounting-source-changes.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { openMerchantFileClient } from './retained-download.mjs';
 import { createAccountingMaintenanceClient } from './accounting-maintenance-client.mjs';
+import { buyerAccountingClientSpec, buyerAccountingClientOperation, previewBuyerAccountingClient,
+  observeBuyerAccountingClient, buyerAccountingSourcePages } from './accounting-platform-buyer-client.mjs';
 
-const WIRE_RULES = [{"type":"string","pattern":"^[a-z0-9][a-z0-9_-]{0,63}$"},{"type":"string","pattern":"^[0-9]{1,64}$"},{"type":"string","enum":["sandbox","production"]},{"type":"string","pattern":"^[a-f0-9]{64}$"},{"type":"string","enum":["summary","accounts","snapshot"]},{"type":"integer","minimum":0},{"type":"integer","minimum":1,"maximum":200},{"type":"string","pattern":"^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$"},{"type":"integer","minimum":1},{"type":"string","minLength":1,"maxLength":1000},{"type":"string","minLength":1,"maxLength":80},{"anyOf":[{"type":"string","pattern":"^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$"},{"type":"null"}]},{"type":"string","enum":["summary","plans","handoffs"]},{"type":"string","enum":["summary","accounts"]},{"type":"string","maxLength":500},{"type":"string","enum":["summary","rows","lines","accounts"]},{"type":"string","enum":["summary","rows","lines","responses","files","accounts","native-attempts"]},{"type":"string","maxLength":4000},{"type":"string","minLength":1,"maxLength":4000},{"type":"boolean","enum":[true]},{"type":"string","minLength":1,"maxLength":160},{"type":"string","enum":["summary","errors","issues","rows"]},{"type":"string","enum":["summary","contexts","plans","handoffs"]},{"type":"string","enum":["summary","accounts","files"]},{"type":"string","enum":["components","accounts","reserved"]},{"type":"string","enum":["summary","entries","excluded","journals","lines","baseline","conflicts"]},{"type":"string","enum":["summary","entries","excluded","journals","lines","baseline","operations","captures","returnIntents","returns","files"]},{"type":"string","minLength":1,"maxLength":2000},{"type":"string","enum":["create-drafts","refresh"]},{"type":"string","enum":["summary","indexes","files","journalSources"]},{"type":"string","enum":["summary","journals","lines","issues","unassigned","files"]},{"type":"string","enum":["summary","conflicts","skipped","assignments","results","issues","missingRows"]}];
+const WIRE_RULES = [{"type":"string","pattern":"^[a-z0-9][a-z0-9_-]{0,63}$"},{"type":"string","pattern":"^[0-9]{1,64}$"},{"type":"string","enum":["sandbox","production"]},{"type":"string","pattern":"^[a-f0-9]{64}$"},{"type":"string","enum":["summary","accounts","snapshot"]},{"type":"integer","minimum":0},{"type":"integer","minimum":1,"maximum":200},{"type":"string","pattern":"^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$"},{"type":"integer","minimum":1},{"type":"string","minLength":1,"maxLength":1000},{"type":"string","minLength":1,"maxLength":80},{"anyOf":[{"type":"string","pattern":"^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$"},{"type":"null"}]},{"type":"string","enum":["summary","plans","handoffs"]},{"type":"string","enum":["summary","accounts"]},{"type":"string","maxLength":500},{"type":"string","enum":["summary","rows","excluded","lines","accounts"]},{"type":"string","enum":["summary","rows","excluded","lines","responses","files","accounts","native-attempts"]},{"type":"string","maxLength":4000},{"type":"string","minLength":1,"maxLength":4000},{"type":"boolean","enum":[true]},{"type":"string","minLength":1,"maxLength":160},{"type":"string","enum":["summary","errors","issues","rows"]},{"type":"string","enum":["summary","contexts","plans","handoffs"]},{"type":"string","enum":["summary","accounts","files"]},{"type":"string","enum":["components","accounts","reserved"]},{"type":"string","enum":["summary","entries","excluded","journals","lines","baseline","conflicts"]},{"type":"string","enum":["summary","entries","excluded","journals","lines","baseline","operations","captures","returnIntents","returns","files"]},{"type":"string","minLength":1,"maxLength":2000},{"type":"string","enum":["create-drafts","refresh"]},{"type":"string","enum":["summary","indexes","files","journalSources"]},{"type":"string","enum":["summary","journals","lines","issues","unassigned","files"]},{"type":"string","enum":["summary","conflicts","skipped","assignments","results","issues","missingRows"]}];
 const WIRE_TOOLS = {"qbo":{"connection":{"fields":{"workspace":0},"required":["workspace"],"readOnly":true},"company-fetch":{"fields":{"workspace":0,"realmId":1,"environment":2,"expectedCompanySha256":3,"view":4,"offset":5,"limit":6},"required":["workspace","realmId","environment"],"readOnly":true},"post-preview":{"fields":{"workspace":0,"planId":7,"revision":8,"id":7,"actor":9,"createdAt":10,"expectedParentId":11},"required":["workspace","planId","revision","id","actor","createdAt","expectedParentId"],"readOnly":true},"post":{"fields":{"workspace":0,"planId":7,"revision":8,"id":7,"actor":9,"createdAt":10,"expectedParentId":11,"previewSha256":3},"required":["workspace","planId","revision","id","actor","createdAt","expectedParentId","previewSha256"],"readOnly":false},"post-resume":{"fields":{"workspace":0,"planId":7,"revision":8,"id":7,"actor":9,"previewSha256":3},"required":["workspace","planId","revision","id","actor","previewSha256"],"readOnly":false},"status":{"fields":{"workspace":0,"view":12,"offset":5,"limit":6},"required":["workspace"],"readOnly":true},"company-preview":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"view":13,"offset":5,"limit":6},"required":["workspace","source"],"readOnly":true},"handoff":{"fields":{"workspace":0,"handoffId":7,"search":14,"offset":5,"limit":6},"required":["workspace","handoffId"],"readOnly":true},"preview":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"companySource":0,"companySourceSha256":3,"view":15,"offset":5,"limit":6},"required":["workspace","source"],"readOnly":true},"create":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"companySource":0,"companySourceSha256":3,"revision":8,"previewSha256":3},"required":["workspace","source","sourceSha256","revision","previewSha256"],"readOnly":false},"plan":{"fields":{"workspace":0,"planId":7,"view":16,"offset":5,"limit":6},"required":["workspace","planId"],"readOnly":true},"review":{"fields":{"workspace":0,"planId":7,"revision":8,"id":7,"actor":9,"note":17,"planSha256":3},"required":["workspace","planId","revision","id","actor","planSha256"],"readOnly":false},"cancel":{"fields":{"workspace":0,"planId":7,"revision":8,"id":7,"actor":9,"note":18,"planSha256":3,"unusedConfirmed":19},"required":["workspace","planId","revision","id","actor","note","planSha256","unusedConfirmed"],"readOnly":false},"response-preview":{"fields":{"workspace":0,"planId":7,"source":0,"sourceSha256":3,"id":7,"name":20,"actor":9,"createdAt":10,"realmId":1,"expectedParentId":11,"view":21,"offset":5,"limit":6},"required":["workspace","planId","source","id","name","actor","createdAt","realmId","expectedParentId"],"readOnly":true},"response-save":{"fields":{"workspace":0,"planId":7,"source":0,"sourceSha256":3,"id":7,"name":20,"actor":9,"createdAt":10,"realmId":1,"expectedParentId":11,"revision":8,"previewSha256":3},"required":["workspace","planId","source","sourceSha256","id","name","actor","createdAt","realmId","expectedParentId","revision","previewSha256"],"readOnly":false},"response-resume":{"fields":{"workspace":0,"planId":7,"responseId":7,"revision":8,"actor":9},"required":["workspace","planId","responseId","revision","actor"],"readOnly":false}},"xero":{"status":{"fields":{"workspace":0,"view":22,"offset":5,"limit":6},"required":["workspace"],"readOnly":true},"context":{"fields":{"workspace":0,"contextId":7,"view":23,"offset":5,"limit":6},"required":["workspace","contextId"],"readOnly":true},"context-preview":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"view":13,"offset":5,"limit":6},"required":["workspace","source"],"readOnly":true},"context-import":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"revision":8,"previewSha256":3},"required":["workspace","source","sourceSha256","revision","previewSha256"],"readOnly":false},"context-capture":{"fields":{"workspace":0,"revision":8,"id":7,"actor":9,"name":20,"tenant":0,"expectedTenantId":7},"required":["workspace","revision","id","actor","name","tenant","expectedTenantId"],"readOnly":false},"source":{"fields":{"workspace":0,"handoffId":7,"contextId":7,"view":24,"offset":5,"limit":6},"required":["workspace","handoffId","contextId"],"readOnly":true},"preview":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"view":25,"journalIndex":5,"offset":5,"limit":6},"required":["workspace","source"],"readOnly":true},"create":{"fields":{"workspace":0,"source":0,"sourceSha256":3,"revision":8,"previewSha256":3},"required":["workspace","source","sourceSha256","revision","previewSha256"],"readOnly":false},"plan":{"fields":{"workspace":0,"planId":7,"view":26,"journalIndex":5,"offset":5,"limit":6},"required":["workspace","planId"],"readOnly":true},"cancel":{"fields":{"workspace":0,"planId":7,"revision":8,"actor":9,"reason":27,"noExternalImport":19},"required":["workspace","planId","revision","actor","reason","noExternalImport"],"readOnly":false},"operate":{"fields":{"workspace":0,"planId":7,"revision":8,"id":7,"actor":9,"tenant":0,"action":28,"planSha256":3},"required":["workspace","planId","revision","id","actor","tenant","action","planSha256"],"readOnly":false},"operation":{"fields":{"workspace":0,"planId":7,"operationId":7,"view":29,"offset":5,"limit":6},"required":["workspace","planId","operationId"],"readOnly":true},"response-preview":{"fields":{"workspace":0,"planId":7,"source":0,"sourceSha256":3,"view":30,"journalIndex":5,"offset":5,"limit":6},"required":["workspace","planId","source"],"readOnly":true},"response-import":{"fields":{"workspace":0,"planId":7,"source":0,"sourceSha256":3,"revision":8,"previewSha256":3},"required":["workspace","planId","source","sourceSha256","revision","previewSha256"],"readOnly":false},"comparison":{"fields":{"workspace":0,"planId":7,"captureId":7,"view":30,"journalIndex":5,"offset":5,"limit":6},"required":["workspace","planId","captureId"],"readOnly":true},"return-preview":{"fields":{"workspace":0,"planId":7,"captureId":7,"id":7,"actor":9,"name":20,"createdAt":10,"expectedParentId":11,"view":31,"offset":5,"limit":6},"required":["workspace","planId","captureId","id","actor","name","createdAt","expectedParentId"],"readOnly":true},"return-apply":{"fields":{"workspace":0,"planId":7,"captureId":7,"id":7,"actor":9,"name":20,"createdAt":10,"expectedParentId":11,"revision":8,"previewSha256":3,"csvSha256":3},"required":["workspace","planId","captureId","id","actor","name","createdAt","expectedParentId","revision","previewSha256","csvSha256"],"readOnly":false},"return-resume":{"fields":{"workspace":0,"planId":7,"captureId":7,"returnId":7,"previewSha256":3},"required":["workspace","planId","captureId","returnId","previewSha256"],"readOnly":false}}};
 
+WIRE_TOOLS.buyer = Object.fromEntries(Object.entries(buyerAccountingClientSpec).map(([action, schema]) =>
+  [action, { fields: Object.fromEntries(Object.entries(schema.fields).map(([field, rule]) => {
+    const index = WIRE_RULES.length; WIRE_RULES.push(rule); return [field, index];
+  })), required: schema.required, readOnly: schema.readOnly }]));
+
+// The additive chart workflow shares its actual server schemas rather than another wire copy.
+for (const [name, , properties, required, annotations] of sourceChangeDefinitions) {
+  const match = name.match(/^merchant_accounting_(qbo|xero)_(.+)$/), fields = {};
+  for (const [field, schema] of Object.entries(properties)) {
+    const text = JSON.stringify(schema);
+    let index = WIRE_RULES.findIndex(value => JSON.stringify(value) === text);
+    if (index < 0) { index = WIRE_RULES.length; WIRE_RULES.push(schema); }
+    fields[field] = index;
+  }
+  WIRE_TOOLS[match[1]][match[2].replaceAll('_', '-')] = { fields, required, readOnly: annotations.readOnly === true };
+}
 const PREFIX = 'merchant_accounting_';
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const SHA = /^[a-f0-9]{64}$/;
@@ -27,10 +46,11 @@ const revisionOf = value => value?.revision ?? value?.state?.revision;
 const trimXero = value => { need(typeof value === 'string', 'Use the original Xero text value.'); return value.trim(); };
 const nativeTool = (platform, action) => PREFIX + platform + '_' + action.replaceAll('-', '_');
 const PREVIEWS = {
+  buyer: {},
   qbo: { create: 'preview', 'response-save': 'response-preview', post: 'post-preview' },
   xero: { 'context-import': 'context-preview', create: 'preview', 'response-import': 'response-preview', 'return-apply': 'return-preview' },
 };
-const INLINE = { qbo: ['review', 'cancel', 'response-resume', 'post-resume'], xero: ['context-capture', 'cancel', 'operate', 'return-resume'] };
+const INLINE = { buyer: ['initialize', 'handoff'], qbo: ['review', 'cancel', 'response-resume', 'post-resume'], xero: ['context-capture', 'cancel', 'operate', 'return-resume'] };
 const BINDINGS = {
   qbo: { create: ['planId', 'actor', 'createdAt', 'previewSha256'], review: ['planId', 'reviewId', 'requestSha256'],
     cancel: ['planId', 'cancellationId', 'requestSha256'], 'response-save': ['planId', 'responseId', 'responseSha256', 'previewSha256'],
@@ -44,6 +64,15 @@ const BINDINGS = {
     'return-apply': ['planId', 'captureId', 'returnId', 'previewSha256', 'csvSha256'],
     'return-resume': ['planId', 'captureId', 'returnId', 'previewSha256'] },
 };
+for (const platform of ['qbo', 'xero']) {
+  PREVIEWS[platform]['source-change-prepare'] = 'source-change-preview';
+  PREVIEWS[platform]['source-change-apply'] = 'source-change-apply-preview';
+  INLINE[platform].push('source-change-resume');
+  BINDINGS[platform]['source-change-prepare'] =
+    ['workspaceId', 'sourcesSha256', 'changeId', 'planId', 'successorId', 'inputSha256', 'previewSha256'];
+  for (const action of ['source-change-apply', 'source-change-resume']) BINDINGS[platform][action] =
+    ['workspaceId', 'sourcesSha256', 'changeId', 'planId', 'successorId', 'previewSha256', 'applicationId', 'requestSha256'];
+}
 function matches(value, rule) {
   if (rule.anyOf) return rule.anyOf.some(child => matches(value, child));
   if (rule.enum && !rule.enum.includes(value)) return false;
@@ -54,7 +83,7 @@ function matches(value, rule) {
     (rule.maxLength === undefined || value.length <= rule.maxLength) && (!rule.pattern || new RegExp(rule.pattern).test(value));
   return true;
 }
-function selectedPlatform(platform) { need(Object.hasOwn(WIRE_TOOLS, platform), 'Choose qbo or xero.'); return platform; }
+function selectedPlatform(platform) { need(Object.hasOwn(WIRE_TOOLS, platform), 'Choose buyer, qbo or xero.'); return platform; }
 function wireArguments(platform, action, value) {
   selectedPlatform(platform);
   const schema = WIRE_TOOLS[platform][action];
@@ -67,6 +96,11 @@ function wireArguments(platform, action, value) {
   return structuredClone(value);
 }
 function operationHash(platform, action, args) {
+  if (action === 'source-change-apply') return digest({
+    binding: { workspaceId: args.workspaceId, sourcesSha256: args.sourcesSha256 },
+    id: args.id, previewSha256: args.previewSha256, revision: args.revision, actor: args.actor, note: args.note,
+    unusedConfirmed: args.unusedConfirmed, noExternalImport: args.noExternalImport, mappingConfirmed: args.mappingConfirmed,
+  });
   if (platform === 'qbo' && action === 'review') return digest({ id: args.id, actor: args.actor, note: args.note ?? '', planSha256: args.planSha256 });
   if (platform === 'qbo' && action === 'cancel') return digest({ id: args.id, actor: args.actor, note: args.note, planSha256: args.planSha256, unusedConfirmed: true });
   if (platform === 'qbo' && action === 'response-save') return digest({ id: args.id, createdAt: args.createdAt, name: args.name,
@@ -77,19 +111,30 @@ function operationHash(platform, action, args) {
 /** Validate the original small command/binding; no native request or ID is generated. */
 export function accountingPlatformOperation(value) {
   need(plain(value?.command) && typeof value.command.tool === 'string' && plain(value.binding), 'Retain the complete original command and binding.', 'PREVIEW');
-  const match = value.command.tool.match(/^merchant_accounting_(qbo|xero)_([a-z_]+)$/);
-  need(match, 'Use an original QuickBooks or Xero command.', 'PREVIEW');
+  const match = value.command.tool.match(/^merchant_accounting_(buyer|qbo|xero)_([a-z_]+)$/);
+  need(match, 'Use an original buyer, QuickBooks or Xero command.', 'PREVIEW');
+  if (match[1] === 'buyer') return buyerAccountingClientOperation(value, wireArguments);
   const platform = match[1], action = match[2].replaceAll('_', '-'), fields = BINDINGS[platform][action];
   need(fields && !WIRE_TOOLS[platform][action].readOnly, 'Choose a reviewed native mutation.', 'PREVIEW');
   const args = wireArguments(platform, action, value.command.arguments), binding = structuredClone(value.binding);
   need(Object.keys(binding).length === fields.length && fields.every(field => Object.hasOwn(binding, field)),
     'Keep every original operation binding without additional fields.', 'PREVIEW');
   for (const [field, item] of Object.entries(binding)) {
-    if (field.endsWith('Id')) identifier(item, UUID, field + ' UUID');
+    if (field === 'workspaceId') identifier(item, SHA, 'original workspace identity digest');
+    else if (field.endsWith('Id')) identifier(item, UUID, field + ' UUID');
     else if (field.endsWith('Sha256')) identifier(item, SHA, field + ' digest');
     else need(typeof item === 'string', 'Keep original binding text.', 'PREVIEW');
   }
   const equal = (a, b) => need(a === b, 'The command differs from its reviewed original identity or source digest.', 'BINDING');
+  if (action.startsWith('source-change-')) {
+    for (const field of ['workspaceId', 'sourcesSha256', 'changeId', 'previewSha256']) equal(binding[field], args[field]);
+    if (action === 'source-change-prepare') {
+      equal(binding.successorId, args.successorId); equal(binding.inputSha256, args.inputSha256);
+    } else {
+      equal(binding.applicationId, args.id); equal(binding.requestSha256, args.requestSha256);
+      if (action === 'source-change-apply') equal(binding.requestSha256, operationHash(platform, action, args));
+    }
+  }
   if (args.planId !== undefined) equal(binding.planId, args.planId);
   if (args.captureId !== undefined) equal(binding.captureId, args.captureId);
   if (binding.previewSha256 !== undefined && args.previewSha256 !== undefined) equal(binding.previewSha256, args.previewSha256);
@@ -153,10 +198,19 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
       'Use the prepared platform and original workspace alias.', 'CONNECTION_BINDING');
     return operation;
   }
-  function read(action, args = {}, options) {
+  async function read(action, args = {}, options) {
     need(plain(args) && (args.workspace === undefined || args.workspace === workspace), 'Keep this selected original workspace alias.');
     need(WIRE_TOOLS[platform][action]?.readOnly, 'Choose a declared read; mutations use an explicitly prepared command.');
-    return invoke(nativeTool(platform, action), wireArguments(platform, action, { ...args, workspace }), options);
+    const tool = nativeTool(platform, action), selectedArguments = wireArguments(platform, action, { ...args, workspace });
+    try { return await invoke(tool, selectedArguments, options); }
+    catch (error) {
+      if (platform !== 'buyer' || !['startup', 'prepare'].includes(action) || error.code !== 'ACCOUNTING_NOT_OPEN') throw error;
+      // Reopen the configured native Store; only its explicit initialize command creates it.
+      // Native open reports INITIALIZATION_REQUIRED for a new buyer directory. Observation
+      // classifies that specific result; NOT_OPEN itself never means an absent source.
+      await invoke(PREFIX + 'open', {}, options);
+      return invoke(tool, selectedArguments, options);
+    }
   }
   async function findPage(action, args, view, predicate, options) {
     let offset = 0, expectedTotal, expectedRevision;
@@ -185,11 +239,17 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     return tenant.tenantId;
   }
   async function inlinePreview(action, value, options) {
+    if (platform === 'buyer') return previewBuyerAccountingClient(action, value, { workspace, read, wireArguments, options });
     need(INLINE[platform].includes(action), 'Use an action with a native preview or the documented original-record review.');
     need(plain(value) && (value.workspace === undefined || value.workspace === workspace), 'Keep this selected original workspace alias.');
     const args = wireArguments(platform, action, { ...value, workspace });
     let binding, observed;
-    if (platform === 'qbo') {
+    if (action === 'source-change-resume') {
+      observed = await read('source-change-detail', { changeId: args.changeId }, options);
+      need(observed.resume && canonical(observed.resume.command.arguments) === canonical(args),
+        'Resume the original retained chart-change application with its exact workspace, request and preview digests.', 'BINDING');
+      binding = observed.resume.binding;
+    } else if (platform === 'qbo') {
       observed = await read('plan', { planId: args.planId }, options);
       need(observed.record?.id === args.planId, 'The original journal identity differs.', 'REPLY');
       if (action === 'review' || action === 'cancel') {
@@ -236,10 +296,43 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     return { ...operation, reviewOrigin: 'CLIENT_REVIEW_OF_ORIGINAL_NATIVE_RECORD', observed };
   }
   async function observe(operation, options) {
+    if (platform === 'buyer') return observeBuyerAccountingClient(operation, { read, options });
     const { action, binding: b, command: { arguments: args } } = operation;
     const missing = () => ({ found: false, platform, action, binding: b, pending: false });
     const found = value => ({ found: true, platform, action, binding: b, pending: false, ...value });
     const same = (condition, message) => need(condition, message, 'NATIVE_BINDING');
+    if (action.startsWith('source-change-')) {
+      let result;
+      try { result = await read('source-change-detail', { changeId: b.changeId }, options); }
+      catch (error) { if (error.code === 'SOURCE_CHANGE_NOT_FOUND') return missing(); throw error; }
+      const record = result.record;
+      same(record?.id === b.changeId && record.kind === platform &&
+        record.binding?.workspaceId === b.workspaceId && record.binding?.sourcesSha256 === b.sourcesSha256 &&
+        record.planId === b.planId && record.successorId === b.successorId && record.previewSha256 === b.previewSha256,
+      'The review UUID belongs to another workspace, predecessor or successor.');
+      same(['PREPARED', 'APPLYING', 'CANCELLED_PENDING_SUCCESSOR', 'COMPLETED'].includes(record.phase),
+        'The native chart change returned an unknown phase.');
+      if (action === 'source-change-prepare') {
+        same(record.inputSha256 === b.inputSha256, 'The retained review has different original source input.');
+        return found(result);
+      }
+      const rejection = record.rejections?.find(value => value.id === b.applicationId);
+      if (rejection) {
+        same(rejection.requestSha256 === b.requestSha256, 'The application UUID belongs to another rejected request.');
+        return found({ ...result, rejected: true, rejection });
+      }
+      if (!record.intent) return missing();
+      same(record.intent.id === b.applicationId && record.intent.requestSha256 === b.requestSha256 &&
+        record.intent.successorId === b.successorId && record.intent.previewSha256 === b.previewSha256,
+      'The original review retains a different application intent.');
+      const observed = found({ ...result, pending: record.phase !== 'COMPLETED' });
+      if (observed.pending && !result.reopenRequired) {
+        same(result.resume?.binding?.requestSha256 === b.requestSha256, 'The original recovery command differs.');
+        const resume = chosen(result.resume);
+        observed.continuation = resume.command;
+      }
+      return observed;
+    }
     if (platform === 'qbo') {
       let result;
       try { result = await read('plan', { planId: b.planId }, options); }
@@ -343,15 +436,25 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     sources: options => invoke(PREFIX + 'sources', {}, options),
     open: options => invoke(PREFIX + 'open', {}, options),
     read,
-    status: (args = {}, options) => read('status', args, options),
+    status: (args = {}, options) => read(platform === 'buyer' ? 'startup' : 'status', args, options),
+    startup: options => read('startup', {}, options),
+    sourcePreview: (args, options) => read('source-preview', args, options),
+    prepareSource: (args, options) => read('prepare', args, options),
+    sourcePages(args, options) {
+      need(platform === 'buyer', 'Original source paging belongs to buyer mode.');
+      return buyerAccountingSourcePages(args, { read, options });
+    },
     plan: (args, options) => read('plan', args, options),
     handoff: (args, options) => read('handoff', args, options),
     companyPreview: (args, options) => read('company-preview', args, options),
     connection: options => read('connection', {}, options),
     companyFetch: (args, options) => read('company-fetch', args, options),
     context: (args, options) => read('context', args, options),
-    source: (args, options) => read('source', args, options),
+    source: (args, options) => read(platform === 'buyer' ? 'source-preview' : 'source', args, options),
     comparison: (args, options) => read('comparison', args, options),
+    sourceChangeStatus: (args = {}, options) => read('source-change-status', args, options),
+    sourceChangeInspect: (args, options) => read('source-change-inspect', args, options),
+    sourceChange: (args, options) => read('source-change-detail', args, options),
     operation: (args, options) => read('operation', args, options),
     async preview(action, args = {}, options) {
       const previewAction = PREVIEWS[platform][action];
@@ -361,9 +464,9 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
       return { ...result, platform, action };
     },
     command(value, options) { const operation = chosen(value); return invoke(operation.command.tool, operation.command.arguments, options); },
-    /** Reads original IDs; recover:true may finish the same pending accountant return, never a provider request. */
+    /** Reads original IDs; recover:true may finish the same retained return or chart-change intent, never a provider request. */
     async reconcile(value, { recover = false, onRecovery, ...options } = {}) {
-      need(typeof recover === 'boolean' && (onRecovery === undefined || typeof onRecovery === 'function'), 'Use an explicit original-return recovery option.');
+      need(typeof recover === 'boolean' && (onRecovery === undefined || typeof onRecovery === 'function'), 'Use an explicit recovery option for the original retained return or chart-change application.');
       const operation = chosen(value), result = await observe(operation, options);
       if (!recover || !result.continuation) return result;
       await onRecovery?.(structuredClone(result.continuation));
@@ -386,8 +489,11 @@ export function createAccountingPlatformClient({ workspace, platform, call } = {
     releaseFile: (readId, options) => maintenance.releaseFile(readId, options),
     drainFileReads: () => transition(() => maintenance.drainFileReads()),
     async *fileChunks(selection, options) {
-      accepting(); need(plain(selection) && (selection.kind === undefined || selection.kind === platform), 'Choose a file from this original platform.');
-      const iterator = maintenance.fileChunks({ ...selection, kind: platform }, options);
+      accepting(); need(plain(selection), 'Choose an original file selection.');
+      const kind = selection.kind ?? (platform === 'buyer' ? 'buyer-source' : platform);
+      need((platform === 'buyer' ? ['buyer-source', 'accountant'] : [platform, platform + '-source-change']).includes(kind),
+        'Choose the original source/accountant file for buyer mode or this platform’s retained journal or chart-change file.');
+      const iterator = maintenance.fileChunks({ ...selection, kind }, options);
       try { for (;;) { accepting(); const item = await iterator.next(); if (item.done) return; yield item.value; } }
       finally { await iterator.return?.(); }
     },

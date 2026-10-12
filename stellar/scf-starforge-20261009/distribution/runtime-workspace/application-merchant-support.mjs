@@ -11,7 +11,7 @@ const field=(name,label,type='path',required=false,description='')=>({name,label
 export function merchantSupportApplication(common=[]) {
   return {id:'merchant-support',command:'support-console',requiredSource:SOURCE+'/managed-launch.mjs',
     title:'Merchant support',terminal:false,
-    description:'Operate merchant cases, incidents, implementation work, service commitments, quotations and complete customer receiving.',
+    description:'Operate merchant cases, original tariff quotations, implementation, service commitments, adjustments, buyer period close, accountant handoff and complete customer receiving.',
     fields:[
       field('workspaceDirectory','Private merchant case directory','path',true,
         'Reopen the original case directory, or create one folder in an existing private parent.'),
@@ -23,6 +23,10 @@ export function merchantSupportApplication(common=[]) {
         'Retain complete case deliveries and receiving operations. The default is a sibling named after the case directory with -packages.'),
       field('handoffSources','Private handoff source profiles','path',false,
         'Optional original support-handoff-sources JSON for remote case and complete-package receiving. Bearer values stay in the private environment.'),
+      field('accountingConfig','Private accounting configuration','path',false,
+        'Select the original accounting workspace aliases for reviewed adjustments, transfer verification and accountant handoffs.'),
+      field('buyerExpenseConnection','Private buyer expense connection','path',false,
+        'Select the original buyer workspace aliases for purchase and credit coding, period close and accountant return.'),
       field('allowLoopback','Allow local seller captures','boolean',false,
         'Enable original capture support for an explicitly local seller.'),
       ...common,
@@ -51,6 +55,15 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
     handoffs=await inputPath(settings.handoffSources,'file');
     inputs.push(handoffs);
   }
+  const connections={};
+  for(const name of ['accountingConfig','buyerExpenseConnection']) {
+    if(settings[name]) {
+      connections[name]=await inputPath(settings[name],'file');
+      inputs.push(connections[name]);
+    }
+  }
+  if(Object.keys(connections).length)
+    inputs.push(await inputPath(join(native,'service-connections.mjs'),'file'));
   for(const name of ['managed-launch.mjs','server.mjs','incident-sources.mjs'])
     inputs.push(await inputPath(join(native,name),'file'));
   // Read the selected runtime's original parser. A copied profile document does
@@ -61,9 +74,18 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
   const selection=await original.inspectSupportSelection({casesDir:cases.path,incidentSources:profiles.path,
     sourceDir:directories.sourceDirectory??null,packageDir:directories.packagesDirectory??null,
     handoffSources:handoffs?.path??null,
+    accountingConfig:connections.accountingConfig?.path??null,
+    buyerExpenseConnection:connections.buyerExpenseConnection?.path??null,
     allowLoopback:settings.allowLoopback??false,allowMissingCases:!cases.exists});
   if(handoffs)need(selection.handoffs?.sha256===handoffs.sha256,'APPLICATION_SUPPORT_HANDOFFS_CHANGED',
     'Review the current private handoff source configuration.');
+  for(const [name,key] of [['accountingConfig','accounting'],['buyerExpenseConnection','buyer']]) {
+    if(!connections[name])continue;
+    const current=selection.serviceConnections?.[key];
+    need(current?.path===connections[name].path&&current?.sha256===connections[name].sha256,
+      'APPLICATION_SUPPORT_CONNECTION_CHANGED',
+      'Choose a runtime containing Service adjustments and review the current private connection file.');
+  }
   need(selection.incidents.sha256===profiles.sha256,'APPLICATION_SUPPORT_PROFILES_CHANGED',
     'Review the current private incident source configuration.');
   for(const source of selection.incidents.sources) {
@@ -84,6 +106,8 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
     }
   }
   if(handoffs)args.push('--handoff-sources',handoffs.path);
+  for(const [name,flag] of [['accountingConfig','--accounting-config'],['buyerExpenseConnection','--buyer-expense-connection']])
+    if(connections[name])args.push(flag,connections[name].path);
   if(settings.allowLoopback)args.push('--allow-loopback');
   return {args,inputs,createDirectories};
 }
@@ -91,7 +115,7 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
 function launchArguments(request) {
   need(Array.isArray(request.args),'APPLICATION_SUPPORT_STARTUP_CHANGED');
   const fields=new Map(),allowed=new Set(['--cases-dir','--source-dir','--package-dir','--handoff-sources','--incident-sources','--startup-format',
-    '--expected-selection-sha256','--port']);
+    '--expected-selection-sha256','--accounting-config','--buyer-expense-connection','--port']);
   let allowLoopback=false;
   for(let index=0;index<request.args.length;index++) {
     const flag=request.args[index];
@@ -117,5 +141,7 @@ export async function merchantSupportStartup(request,text) {
   if(!plain(announcement)||announcement.schema!==STARTUP)return null;
   const selected=launchArguments(request);
   const {readSupportLaunch}=await import('../../sf74-merchant-support-console/managed-launch.mjs');
-  return readSupportLaunch(announcement,selected);
+  const launch=await readSupportLaunch(announcement,selected);
+  // The original reader has matched this loopback listener to the reviewed native source and private selection.
+  return {...launch,links:[{label:'Commercial quotations',url:new URL('/commercial',launch.url).href}]};
 }

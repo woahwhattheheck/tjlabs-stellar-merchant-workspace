@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grpc-product",
-  "description": "Complete installed gRPC product setup, original managed browser, agent and persistent operator Console, typed client and frozen native receiving",
+  "description": "Complete installed gRPC product, original managed browser, agent and persistent Console, typed incident workflow and frozen native receiving",
   "components": [
     "products/grpc-merchant",
     "stellar-forge/mcp-merchant-operator/console"
@@ -11,7 +11,7 @@
     "grpc-product-receive": "products/grpc-merchant/receive.mjs"
   },
   "commandDescriptions": {
-    "grpc-product": "Open the original gRPC browser, agent and saved operator Console together; retain native contracts, calls, upgrades, health and complete customer receiving.",
+    "grpc-product": "Open the original gRPC browser, agent and saved operator Console; retain native contracts, calls, upgrades, health, reviewed incidents and complete customer receiving.",
     "grpc-product-receive": "Complete installed receiving from the original native health operation, saved merchant preparation and frozen customer/health files."
   },
   "exports": {
@@ -28,6 +28,7 @@
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/distribution/selections/GRPC_MERCHANT.md",
-    "stellar-forge/mcp-merchant-operator/console/CUSTOMER_GRPC.md"
+    "stellar-forge/mcp-merchant-operator/console/CUSTOMER_GRPC.md",
+    "products/grpc-merchant/OPERATIONS.md"
   ]
 }

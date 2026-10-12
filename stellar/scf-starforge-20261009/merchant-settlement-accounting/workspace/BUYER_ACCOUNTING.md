@@ -1,6 +1,6 @@
-# Buyer periods, accountant returns and Xero
+# Buyer periods, accountant returns and QuickBooks/Xero
 
-The original SF36 buyer workspace can issue a source for the maintained accountant workspace. Expense and credit allocations keep their buyer identity, native network, asset, exact atomic amount, cost center, project, account code and recognition date. The existing accountant CSV return engine supplies the four editable bookkeeping fields. The existing Xero compiler, retained context, draft plans, native operations and response reconciliation supply the Xero path.
+The original SF36 buyer workspace can issue a source for the maintained accountant workspace. Expense and credit allocations keep their buyer identity, native network, asset, exact atomic amount, cost center, project, account code and recognition date. The existing accountant CSV return engine supplies the four editable bookkeeping fields. The existing QuickBooks and Xero compilers, retained company/chart sources, plans, native operations and response reconciliation supply their respective bookkeeping paths.
 
 ## Start with an issued buyer period
 
@@ -19,7 +19,7 @@ The startup source is retained as `inputs/<sha256>.buyer-source.json`. The nativ
 
 In **Accountant handoff**, the source selector opens **Retained startup source**. Inspect its actual period, expense/credit totals, outstanding reservations and source hash, name the handoff and reviewer, then retain it. The same startup selection always uses its saved handoff UUID. If a response is lost after acceptance, refresh to open that original handoff and its returned history. A still-unaccepted request can be reviewed and retried against the current workspace revision. **Choose another original issued file** uses the maintained import flow for later buyer periods.
 
-The buyer workspace presents accountant handoffs, original Xero journals, configured Connections and operating recovery. Its source mode does not configure merchant collection or sign a payment. Existing merchant workspaces retain their original source paths, bindings, controls and source-import behavior.
+The buyer workspace presents accountant handoffs, original QuickBooks and Xero journals, configured Connections and operating recovery. Its source mode does not configure merchant collection or sign a payment. Existing merchant workspaces retain their original source paths, bindings, controls and source-import behavior.
 
 ### Native CLI
 
@@ -46,7 +46,7 @@ node stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/ser
 
 ### Complete operating backup and receiving
 
-The same encrypted recovery engine captures the buyer accounting directory, including the retained issued source, all original accountant handoffs/returns, Xero contexts, plans, operation responses and history. Its source inventory contains the actual buyer workspace; it does not require external merchant input roots.
+The same encrypted recovery engine captures the buyer accounting directory, including the retained issued source, all original accountant handoffs/returns, QuickBooks and Xero contexts, plans, operation responses and history. Its source inventory contains the actual buyer workspace; it does not require external merchant input roots.
 
 Stop the owned workspace before the command-line snapshot. Configure the private backup passphrase in the named environment variable without placing its value on the command line.
 
@@ -80,8 +80,8 @@ The encrypted operating bundle is paired with the selected original application 
 
 1. In the buyer expense workspace, finish allocation and review, then issue the period. Open the issued edition and choose **Export source to accountant**. This exports `stellar-forge.buyer-accountant-source.v1`, containing the exact frozen close and original workspace identity. A later workspace change does not change this file.
 2. Initialize a buyer workspace as above, or open **Accountant handoff** in the existing workspace at `/`. Choose the retained startup source or load the issued file, inspect its hash, period, source context and native totals, then create the handoff with a name and operator. Its `original-buyer-source.json` is retained unchanged.
-3. Use the normal accountant CSV process or continue to `/xero.html`. CSV editing is limited to `externalStatus`, `externalBookRef`, `externalAccountCode` and `externalNote`; the original parser keeps row identity, protected columns, partial returns and conflicts.
-4. For Xero, load the exact saved handoff and original retained organisation/account context. Review every included expense or credit component, enter the fiat amount and date, select actual debit and credit account codes, and document the valuation. Explicitly exclude a component if it is outside the draft. Unknown values remain unknown.
+3. Use the normal accountant CSV process or continue to `/qbo.html` or `/xero.html`. CSV editing is limited to `externalStatus`, `externalBookRef`, `externalAccountCode` and `externalNote`; the original parser keeps row identity, protected columns, partial returns and conflicts.
+4. For QuickBooks, follow [the complete buyer QuickBooks workflow](BUYER_QUICKBOOKS.md): select the exact company source, decide every allocation, record the home-currency amount and valuation, save/review the original journal, then continue its native result and accountant return. For Xero, load the exact saved handoff and original retained organisation/account context. Review every included expense or credit component, enter the fiat amount and date, select actual debit and credit account codes, and document the valuation. Explicitly exclude a component if it is outside the draft. Unknown values remain unknown.
 5. Preview and save the original Xero plan. Its source retains the buyer workspace and issued close. The original operation controls manage draft creation, recovery, refresh and retained native responses. Review the original returned journal data before applying it to the accountant handoff.
 6. Download `buyer-return.json` from the saved accountant return. In the original buyer issued edition, load it under **Bookkeeping returns**, inspect the source match and any existing handoff overlap, name the operator and acceptance, then save. The transaction retains the original file, complete return chain and accepted request identity.
 7. Export the issued buyer source, original returned packet, or complete period plus bookkeeping references. Export the complete buyer project to move the same history and included return reader to another private machine.
@@ -92,7 +92,7 @@ The buyer receives references and review status. Its original expenses, returned
 
 Buyer sources use their own schemas and `sourceLineId`; they do not manufacture merchant settlement event IDs. A handoff binds the original buyer source bytes, workspace, close, close context, coding edition and allocation line. Buyer credits retain the original purchase and returned-transfer identities.
 
-Native atomic amounts and any merchant store-currency amounts remain different fields. Xero journal amounts are an explicit operator valuation in the retained organisation currency. There is no automatic token conversion, assumed exchange rate or inferred price.
+Native atomic amounts and any merchant store-currency amounts remain different fields. QuickBooks and Xero journal amounts are an explicit operator valuation in the selected company's retained home currency. There is no automatic token conversion, assumed exchange rate or inferred price.
 
 The original Xero purpose rules continue to apply. A native demo-company context can exercise development and testnet sources. Organisation-books use requires the original operational, independently matched public-network source required by the existing compiler. A reviewed demo response is not represented as a production posting. The buyer's original data context is shown with the handoff and Xero plan.
 
@@ -111,13 +111,13 @@ The existing accountant server delegates these routes to `AccountantWorkspace`:
 | Save return | `POST /api/accountant/handoffs/{id}/returns` | Existing exact preview and expected revision |
 | Download native return | `GET /api/accountant/handoffs/{id}/download/buyer-return.json?revisionId={returnId}` | Exact saved return |
 
-The Xero routes and HTTP contract stay in [XERO.md](XERO.md). The company/tenant/consent controls remain in the original connection workspace. QuickBooks and other merchant-only adapters continue to validate their supported source type; this extension does not reinterpret a buyer source as merchant income.
+The Xero routes and HTTP contract stay in [XERO.md](XERO.md). The company/tenant/consent controls remain in the original connection workspace. QuickBooks uses the same typed buyer source through its original plan, native response and return controls; see [BUYER_QUICKBOOKS.md](BUYER_QUICKBOOKS.md). Buyer expense and credit identities are retained without manufacturing merchant settlement events.
 
 ## Existing accounting MCP host
 
 Declare `buyerSources: {issued_period: "/absolute/private/issued-buyer-accountant-source.json"}` in the original accounting workspace connection. It uses the same private source-map contract as its other original inputs.
 
-`merchant_accounting_accountant_buyer_prepare` takes the workspace alias, source alias and exact source SHA-256. `merchant_accounting_accountant_buyer_create` adds the existing revision, actor, name and stable handoff UUID. They call the same source preview and handoff factory used by the browser. The original accountant row/return and Xero tools then operate on that handoff. `merchant_accounting_file` can download its `original-buyer-source.json` and saved `buyer-return.json` with the original bounded retained-file contract.
+`merchant_accounting_accountant_buyer_prepare` takes the workspace alias, source alias and exact source SHA-256. `merchant_accounting_accountant_buyer_create` adds the existing revision, actor, name and stable handoff UUID. They call the same source preview and handoff factory used by the browser. The original accountant row/return, QuickBooks and Xero tools then operate on that handoff. QuickBooks journal inputs include the complete per-allocation decisions, explicit valuations and common valuation basis; preview/create keep their original source pins and native preview digest. `merchant_accounting_file` can download its `original-buyer-source.json` and saved `buyer-return.json` with the original bounded retained-file contract.
 
 The buyer-side return tools and this accounting-side source map belong to their existing separate workspace owners. No connection consent or platform credential is transferred by the handoff.
 
@@ -131,7 +131,7 @@ The buyer complete-project package includes the exact fixed Node reader and depe
 
 ## Source ownership
 
-The implementation composes `accountant/buyer-source.mjs`, `buyer-return.mjs`, the original accountant engine and Xero modules, and the existing SF36 `expense-workspace`. The merchant report source, shared connection lifecycle, Xero HTTP transport and current provider registrations retain their original owners and contracts.
+The implementation composes `accountant/buyer-source.mjs`, `buyer-return.mjs`, the original accountant engine and QuickBooks/Xero modules, and the existing SF36 `expense-workspace`. The merchant report source, shared connection lifecycle, Xero HTTP transport and current provider registrations retain their original owners and contracts.
 
 See [the buyer operator guide](../../sf36-spend-governor/expense-workspace/BOOKKEEPING.md) for native API and machine operations.
 

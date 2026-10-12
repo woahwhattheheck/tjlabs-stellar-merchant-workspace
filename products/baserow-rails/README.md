@@ -5,10 +5,11 @@ receive its complete rows and original files, and import it into a Rails
 application with a full change preview, one database transaction, edition history
 and a portable application handoff.
 
-The source browser, dataset publisher, customer receiver, managed Ruby environment
-and Rails operator are the maintained implementations. This product installs them
-together. The private runtime retains the selected interpreter, exact lock,
-dependency cache, full application database and files through receiving.
+The source browser, dataset publisher, customer receiver, managed Ruby environment,
+Rails operator and connected client ship together. The same working application
+receives later data editions through its original full preview, transaction and
+history. Its private runtime retains the selected interpreter, exact lock,
+dependency cache, complete database and files through independent receiving.
 
 ## Start with the work you have
 
@@ -23,6 +24,8 @@ dependency cache, full application database and files through receiving.
 | A selected host Ruby executable | **Applications → Ruby environments**, or **starforge ruby-runtime serve** | Private Bundler installation, exact lock, full logs and resumable customer operations |
 | A commissioned application directory | **Applications → Received Rails application**, or **starforge ruby-runtime launch** | The original Rails operator over its own managed database, source, previews and history |
 | A completed original Baserow source journey | **starforge baserow-rails commission** | Copied client, customer and closed application, followed by independent reopening |
+| An operating application and its next complete dataset | **Ruby customer commissioning → Data editions**, or **starforge ruby-application-editions** | Complete source receiving, exact change preview, transactional revision and a portable updated application |
+| An application or agent automating the same customer work | [Connected Ruby client and MCP](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/connected/README.md) | Typed original operations, retained customer and edition IDs, complete file downloads and resumable runtime receiving |
 
 Read the [operating guide](OPERATING.md) for the source, publisher, customer and
 application workflow. The [installation and receiving guide](RECEIVING.md)
@@ -88,6 +91,7 @@ This standalone edition incorporates the complete original source from:
 - [Baserow customer files and complete Rails operator, PR2088](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2088).
 - [Managed Ruby environments and complete Rails application receiving, PR2188](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2188).
 - [Original-source customer commissioning workspace, PR2230](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2230).
+- [Complete managed application data editions, PR2277](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2277).
 - [Original Superset and Directus native customer identity, PR2187](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2187).
 
 The source-specific [Baserow guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/README.md),
@@ -103,3 +107,10 @@ connects original native or Baserow source review, existing customer adoption,
 full original worker output, exact application registration and complete result
 receiving. Its existing-runtime controls cover private installation, live Rails,
 stopped export and offline receiving in the same operating directory.
+
+The [data-edition guide](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/editions/README.md)
+covers later complete source packets, full change review, commit recovery and
+revised application receiving. The [connected client](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/connected/README.md)
+uses these same saved environments, customers, applications, editions and
+operations through the local typed API and MCP. Its complete-file transfer
+reopens the original selected bytes after a reconnect.

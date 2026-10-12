@@ -8,6 +8,8 @@ import { openMerchantFileClient } from '../../stellar-forge/mcp-merchant-operato
 import { downloadGrpcExport, inspectGrpcExport } from '../../stellar-forge/mcp-merchant-operator/grpc-workspace-download.mjs';
 import { downloadGrpcHealthExport } from '../../stellar-forge/mcp-merchant-operator/grpc-health-download.mjs';
 import { downloadGrpcUpgrade } from '../../stellar-forge/mcp-merchant-operator/grpc-upgrade-download.mjs';
+import { downloadGrpcOperationsExport } from '../../stellar-forge/mcp-merchant-operator/grpc-operations-download.mjs';
+import { readGrpcOperations } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/receiving.mjs';
 import { GRPC_EXPORT_MANIFEST, parseGrpcExportManifest } from '../../stellar-forge/mcp-merchant-operator/grpc-workspace-export.mjs';
 import { readGrpcHealthSnapshotFile } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/health-receiving.mjs';
 import { readGrpcUpgradeDirectory } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/upgrade-receiving.mjs';
@@ -104,7 +106,23 @@ export class GrpcProductClient {
       chunkSize, onProgress, signal: signal ?? this.#signal };
     if (inspected.manifest.kind === 'health') return downloadGrpcHealthExport(options);
     if (inspected.manifest.kind === 'upgrade') return downloadGrpcUpgrade(options);
+    if (inspected.manifest.kind === 'operations') return downloadGrpcOperationsExport(options);
     return downloadGrpcExport(options);
+  }
+  captureOperations({ captureId, selection } = {}) {
+    return this.call('merchant_grpc_operations_capture', { captureId, ...(selection === undefined ? {} : { selection }) });
+  }
+  operationsCaptures(page = {}) { return this.call('merchant_grpc_operations_captures', page); }
+  readOperations({ captureId, ...selection } = {}) { return this.call('merchant_grpc_operations_read', { captureId, ...selection }); }
+  incidents(selection = {}) { return this.call('merchant_grpc_operations_cases', selection); }
+  incident(caseId, version) { return this.call('merchant_grpc_operations_case', { caseId, ...(version === undefined ? {} : { version }) }); }
+  saveIncident({ operationId, caseId, captureId, expectedVersion, edit } = {}) {
+    return this.call('merchant_grpc_operations_save', { operationId, caseId, captureId, expectedVersion, edit });
+  }
+  exportIncident({ caseId, version } = {}) { return this.call('merchant_grpc_operations_export', { caseId, version }); }
+  receiveIncident({ operationId, file, exportId } = {}) {
+    return this.call('merchant_grpc_operations_receive', { operationId,
+      ...(file === undefined ? {} : { file }), ...(exportId === undefined ? {} : { exportId }) });
   }
   status() { return this.call('merchant_grpc_status'); }
   revision(revision, section = 'summary', page = {}) { return this.call('merchant_grpc_revision', { revision, section, ...page }); }
@@ -162,6 +180,18 @@ export async function inspectReceivedGrpcProduct(directory, { expectedExportId, 
     need(saved.summary.id === manifest.original.operationId && saved.summary.baseRevision === manifest.original.revision,
       'The contract review belongs to another original operation.', 'EXPORT_CHANGED');
     native = { upgrade: saved.summary };
+  }
+  if (manifest.kind === 'operations') {
+    const saved = await readGrpcOperations(root);
+    need(manifest.original.operationId === saved.incident.id &&
+      manifest.original.reviewSha256 === saved.incident.sha256 &&
+      manifest.original.snapshotSha256 === saved.capture.captureSha256 &&
+      manifest.original.topic === 'operations:' + saved.exportSha256 &&
+      manifest.files.length === saved.files.length && manifest.files.every((file, index) =>
+        file.path === saved.files[index].path && file.bytes === saved.files[index].bytes &&
+        file.sha256 === saved.files[index].sha256),
+      'The complete incident belongs to another original capture or revision.', 'EXPORT_CHANGED');
+    native = { operations: { capture: saved.capture, incident: saved.incident, exportSha256: saved.exportSha256 } };
   }
   return { schema: 'stellar-forge.grpc-product-received.v1', state: 'COMPLETE', directory: root,
     exportId: manifest.exportId, manifestSha256: sha256(bytes), workspace: manifest.workspace,

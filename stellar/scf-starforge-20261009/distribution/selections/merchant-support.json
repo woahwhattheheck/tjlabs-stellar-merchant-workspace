@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-support",
   "title": "Merchant Support",
-  "description": "Complete merchant cases, original incident captures, implementation and source editions, service commitments, commercial quotations and independently continued customer receiving.",
+  "description": "Complete merchant cases, implementation, Service adjustments, buyer and accountant handover, original tariff pricing, commercial quotations and independent customer receiving.",
   "base": {
     "commands": [
       "installation",
@@ -17,7 +17,11 @@
       "merchant-mcp-stdio",
       "merchant-mcp-client-config",
       "revenue-workspace",
-      "revenue-report"
+      "revenue-report",
+      "merchant-accounting",
+      "merchant-accounting-workspace",
+      "merchant-accounting-adjustments",
+      "buyer-expenses"
     ],
     "exports": [
       "./runtime-profile",
@@ -43,7 +47,17 @@
       "./merchant/revenue-model",
       "./merchant/revenue-report",
       "./package.json",
-      "./manifest.json"
+      "./manifest.json",
+      "./merchant/accounting",
+      "./merchant/accounting-workspace",
+      "./merchant/accountant",
+      "./merchant/accounting-adjustments",
+      "./merchant/accounting-adjustments/operations",
+      "./merchant/scenario-planning",
+      "./merchant/scenario-workspace",
+      "./merchant/repricing",
+      "./merchant/quote-prices",
+      "./merchant/repricing-source"
     ],
     "features": [
       "schema",
@@ -61,7 +75,16 @@
     "merchant-implementation",
     "merchant-service-operations",
     "merchant-commercial",
-    "merchant-support-product"
+    "merchant-support-product",
+    "merchant-provider-accounting",
+    "merchant-provider-buyer-expenses",
+    "accounting-connections",
+    "buyer-expenses",
+    "merchant-service-adjustments",
+    "merchant-pricing",
+    "merchant-provider-pricing",
+    "merchant-tariffs",
+    "merchant-economics-product"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -73,7 +96,11 @@
     "stellar/scf-starforge-20261009/sf77-merchant-workorder",
     "stellar/scf-starforge-20261009/sf70-merchant-intake",
     "stellar-forge/mcp-merchant-operator",
-    "products/merchant-support"
+    "products/merchant-support",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting",
+    "stellar/scf-starforge-20261009/sf36-spend-governor",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
@@ -81,14 +108,15 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "products/merchant-workspace/OPERATING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant Support: original cases, implementation, service commitments, quotations, complete source delivery and continued receiving.",
+    "description": "Merchant Support: original cases, tariffs and quotations, accepted implementation, Service adjustments, buyer and accountant handover, and complete customer receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

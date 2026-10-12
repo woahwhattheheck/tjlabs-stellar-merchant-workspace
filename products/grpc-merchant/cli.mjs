@@ -26,11 +26,13 @@ const HELP = [
   '  grpc-product inspect-received --out PRIVATE_RECEIVING [--export-id SHA --manifest-sha256 SHA]',
   '  grpc-product health COMMAND --dir PRIVATE_PRODUCT [ORIGINAL_HEALTH_OPTIONS]',
   '  grpc-product upgrade COMMAND --dir PRIVATE_PRODUCT [ORIGINAL_UPGRADE_OPTIONS]',
+  '  grpc-product operations COMMAND --dir PRIVATE_PRODUCT [ORIGINAL_INCIDENT_OPTIONS]',
+  '  grpc-product operations inspect --directory PRIVATE_RECEIVING',
   '  grpc-product health inspect [ORIGINAL_OFFLINE_OPTIONS]',
   '  grpc-product upgrade inspect [ORIGINAL_OFFLINE_OPTIONS]',
   '',
   'The same native browser contains source capture/reflection, typed message editing, merchant preparation,',
-  'release control, contract upgrade review and Check/List/Watch history.',
+  'release control, contract upgrade review, Check/List/Watch history and reviewed incidents.',
   'Save operation UUIDs before invoking a native method or health observation; recover the original ID.',
   'Receive an already-created export ID to preserve its frozen original files across interruptions.',
   'See products/grpc-merchant/OPERATING.md and RECEIVING.md.',
@@ -69,8 +71,10 @@ const paging = options => ({ offset: number(options, '--offset', 0), limit: numb
 async function forwardNative(command, args) {
   const module = command === 'health'
     ? await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/health-cli.mjs')
-    : await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/upgrade-cli.mjs');
-  const nativeMain = command === 'health' ? module.healthMain : module.upgradeMain;
+    : command === 'operations'
+      ? await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/cli.mjs')
+      : await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/upgrade-cli.mjs');
+  const nativeMain = command === 'health' ? module.healthMain : command === 'operations' ? module.main : module.upgradeMain;
   need(typeof nativeMain === 'function', 'The original native CLI is unavailable.', 'NATIVE_CLI');
   const forward = async original => {
     const result = await nativeMain(original);
@@ -82,16 +86,16 @@ async function forwardNative(command, args) {
   const positions = args.flatMap((value, index) => value === '--dir' ? [index] : []);
   need(positions.length === 1 && args[positions[0] + 1] && !args[positions[0] + 1].startsWith('--'),
     'Supply this product’s --dir to use its original running console.', 'ARGUMENTS');
-  need(!args.includes('--state') && !args.includes('--console-url-file'),
+  need(!args.includes('--state') && !args.includes('--console-url-file') && !args.includes('--connection-file'),
     'This product command selects its original console; use the standalone native CLI for a different connection.', 'ARGUMENTS');
   const selected = await readGrpcProduct(resolve(args[positions[0] + 1]));
   const original = args.filter((_, index) => index !== positions[0] && index !== positions[0] + 1);
-  return forward([...original, '--console-url-file', selected.profile.consoleUrlFile]);
+  return forward([...original, command === 'operations' ? '--connection-file' : '--console-url-file', selected.profile.consoleUrlFile]);
 }
 export async function main(args = process.argv.slice(2)) {
   if (!args.length || args.length === 1 && ['help', '--help'].includes(args[0])) { process.stdout.write(HELP); return; }
   const [command, ...rest] = args;
-  if (['health', 'upgrade'].includes(command)) return forwardNative(command, rest);
+  if (['health', 'upgrade', 'operations'].includes(command)) return forwardNative(command, rest);
   if (command === 'init') {
     const options = parse(rest, ['--dir', '--workspace', '--alias', '--name', '--handles']);
     const result = await initializeGrpcProduct({ directory: required(options, '--dir'),
@@ -144,8 +148,11 @@ export async function main(args = process.argv.slice(2)) {
   try {
     const client = new GrpcProductClient({ directory: required(options, '--dir'), signal: controller.signal });
     let result;
-    if (command === 'call') result = await client.call(required(options, '--tool'),
-      options.has('--input') ? decode(await privateBytes(resolve(options.get('--input')), false, 2 * 1024 * 1024)) : {});
+    if (command === 'call') {
+      const name = required(options, '--tool'), maximum = name === 'merchant_grpc_operations_save' ? 8 * 1024 * 1024 : 2 * 1024 * 1024;
+      result = await client.call(name, options.has('--input')
+        ? decode(await privateBytes(resolve(options.get('--input')), false, maximum)) : {});
+    }
     if (command === 'status') result = await client.status();
     if (command === 'inventory') result = await client.inventory(required(options, '--kind'), paging(options));
     if (command === 'revision') result = await client.revision(required(options, '--revision'), options.get('--section') ?? 'summary', paging(options));

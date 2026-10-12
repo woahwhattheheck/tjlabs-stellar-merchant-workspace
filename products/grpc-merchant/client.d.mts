@@ -1,4 +1,6 @@
 // MIT. Original gRPC product client and retained receiving types.
+import type { OperationsSelection, IncidentEdit, Requests as OperationsRequests } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/client.mjs';
+export type { OperationsSelection, IncidentEdit } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/client.mjs';
 export type GrpcToolName =
   "merchant_grpc_attempt"
   | "merchant_grpc_call"
@@ -18,6 +20,14 @@ export type GrpcToolName =
   | "merchant_grpc_import"
   | "merchant_grpc_inventory"
   | "merchant_grpc_method"
+  | "merchant_grpc_operations_capture"
+  | "merchant_grpc_operations_captures"
+  | "merchant_grpc_operations_read"
+  | "merchant_grpc_operations_cases"
+  | "merchant_grpc_operations_case"
+  | "merchant_grpc_operations_save"
+  | "merchant_grpc_operations_export"
+  | "merchant_grpc_operations_receive"
   | "merchant_grpc_prepare"
   | "merchant_grpc_reflection_capture"
   | "merchant_grpc_reflection_inventory"
@@ -63,7 +73,7 @@ export interface ReceivedFile { name: string; path: string; bytes: number; sha25
 export interface GrpcReceived {
   schema: 'stellar-forge.grpc-product-received.v1'; state: 'COMPLETE'; directory: string;
   exportId: string; manifestSha256: string; workspace: string;
-  kind: 'customer' | 'revision' | 'attempt' | 'stream' | 'result' | 'upgrade' | 'health';
+  kind: 'customer' | 'revision' | 'attempt' | 'stream' | 'result' | 'upgrade' | 'health' | 'operations';
   original: { revision?: string; preparation?: string; operationId?: string; topic?: string; reviewSha256?: string; snapshotSha256?: string };
   files: ReceivedFile[]; bytes: number; customerDirectory?: string; native?: NativeResult;
 }
@@ -84,6 +94,14 @@ export declare class GrpcProductClient {
     browserUrl: string; mcpUrl: string; operatorUrl: string | null; operatorDirectory: string | null;
     operatorWorkspaceId: string | null; operatorSourceSha256: string | null }>;
   call(name: GrpcToolName, input?: Record<string, Json>, options?: CallOptions): Promise<NativeResult>;
+  captureOperations(input: { captureId: string; selection?: OperationsSelection }): Promise<NativeResult>;
+  operationsCaptures(page?: PageSelection): Promise<NativeResult>;
+  readOperations(input: Omit<OperationsRequests['read'], 'id'> & { captureId: string }): Promise<NativeResult>;
+  incidents(selection?: PageSelection & { state?: string; severity?: string; search?: string }): Promise<NativeResult>;
+  incident(caseId: string, version?: number): Promise<NativeResult>;
+  saveIncident(input: { operationId: string; caseId: string; captureId: string; expectedVersion: number; edit: IncidentEdit }): Promise<NativeResult>;
+  exportIncident(input: { caseId: string; version: number }): Promise<NativeResult>;
+  receiveIncident(input: { operationId: string } & ({ file: string; exportId?: never } | { exportId: string; file?: never })): Promise<NativeResult>;
   status(): Promise<NativeResult>;
   revision(revision: string, section?: 'summary' | 'source' | 'plan' | 'methods' | 'routes', page?: PageSelection): Promise<NativeResult>;
   inventory(kind: 'revisions' | 'prepared' | 'intents' | 'attempts' | 'reflections' | 'exports', page?: PageSelection): Promise<NativeResult>;

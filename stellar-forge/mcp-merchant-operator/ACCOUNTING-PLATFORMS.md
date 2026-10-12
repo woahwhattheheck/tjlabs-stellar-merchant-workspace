@@ -14,6 +14,13 @@ accountant handoffs and operating maintenance. The native operator contracts are
 the [QuickBooks workflow](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/QBO_WORKFLOW.md)
 and [Xero workflow](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/XERO.md).
 
+The same platform operations also accept an issued buyer handoff in a host-declared
+`sourceMode:"buyer"` accountant. Follow [buyer startup and QuickBooks/Xero operating
+instructions](ACCOUNTING_BUYER.md) to retain the original period and explicit
+allocation decisions. Company/OAuth selection, native request recovery and the
+accountant owner stay shared. [Chart changes](accounting-source-changes.md) use
+that same native engine and existing client/CLI operation directory.
+
 ## Configure the original workspace and source files
 
 Add the following fields inside the existing accounting workspace definition.

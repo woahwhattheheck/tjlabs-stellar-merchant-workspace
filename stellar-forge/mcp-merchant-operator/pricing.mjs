@@ -5,9 +5,10 @@ import { constants } from 'node:fs';
 import { open, realpath } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { exact, failure, identifier, line, plain, privateSupportDirectory } from './config.mjs';
+import { exact, failure, identifier, line, plain, privateSupportDirectory } from './host-files.mjs';
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 import { costToolDefinitions, normalizePricingCostSources, MerchantPricingCosts, PricingCostArchiveReads } from './pricing-costs.mjs';
+import { MerchantPricingTariffs } from './pricing-tariffs.mjs';
 import { normalizeReleaseRuntime, readReleaseState } from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
 
 export const PRICING_CONNECTION_SCHEMA = 'stellar-forge.pricing-workspace-connection.v1';
@@ -246,7 +247,7 @@ export class MerchantPricing {
     if (!entry) {
       // Only capture-handle ownership is shared here. Native writes continue to
       // use the original SF97 per-save CAS alongside browser/process handles.
-      entry = { model: null, planning: null, costs: null, source: null, pending: new Set(), closing: null, opening: null };
+      entry = { model: null, planning: null, costs: null, tariffs: null, source: null, pending: new Set(), closing: null, opening: null };
       this.#entries.set(name, entry);
       entry.opening = (async () => {
         const { openWorkspace } = await import('../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/workspace/model.mjs');
@@ -271,7 +272,7 @@ export class MerchantPricing {
       await this.#files.closeScope(name);
       await this.#costArchives.closeScope(name);
       if (this.#entries.get(name) === entry) this.#entries.delete(name);
-      entry.source = null; entry.model = null; entry.planning = null; entry.costs = null;
+      entry.source = null; entry.model = null; entry.planning = null; entry.costs = null; entry.tariffs = null;
       return { workspace: name, state: 'CLOSED' };
     })();
     return entry.closing;
@@ -298,6 +299,11 @@ export class MerchantPricing {
     return {bytes,manifest:JSON.parse(bytes.toString('utf8')),manifestFile:{name:'manifest.json',bytes:bytes.length,sha256:sha(bytes)}};
   }
   async #execute(name, args, entry) {
+    if (name.startsWith('merchant_pricing_tariff_')) {
+      entry.tariffs ??= new MerchantPricingTariffs({settings:this.#declared(args.workspace),model:()=>entry.model,
+        files:this.#files,operatorReleaseStore:this.#config.releaseStore,releaseView});
+      return entry.tariffs.call(name,args);
+    }
     if (name.startsWith('merchant_pricing_cost_')) {
       entry.costs ??= new MerchantPricingCosts({settings:this.#declared(args.workspace),model:()=>entry.model,
         files:this.#files,archives:this.#costArchives});
