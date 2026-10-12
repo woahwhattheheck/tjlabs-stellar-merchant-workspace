@@ -452,6 +452,12 @@ The workspace packet facade delegates `exportSeaTableCapturePacket`, `readSeaTab
 
 The implementation is derived from the maintained NocoDB authoring/recovery model and the source-owned Sheet Best registration/Applications pattern at standalone commit `cc0f9a8b860005b4cb8767974fee231c5151b835`. Their original donor files are unchanged. SeaTable's selection, exact capture portability and public type semantics remain with the SeaTable provider source. MIT source notices are preserved.
 
+## Complete installed receiving
+
+The same selected `seatable-merchant` product includes `seatable-receive`. Its [complete receiving guide](RECEIVING.md) prepares an exact input from the original SQL/native-view captures, then runs browser review, both original publisher editions, SF82/customer export, installed Applications and borrowed MCP in one retained operation. The full private workspace archive is verified before its delivery receipt is complete. Native counts come from the actual original captures; this continuation makes no provider extraction or payment.
+
+Use `seatable-receive --prepare /absolute/private/selection.json` and then `seatable-receive --input /absolute/private/receiving-input.json` through the installed dispatcher. Keep the original provider operation, source selection and request identities.
+
 ## Delivery and native status
 
 Source implementation and source review are distinct from installed/native receiving. A joined provider/authoring/publisher/merchant receiving result must identify its real captured source, exact selected source/runtime, native versions/publications and actual outcomes before it is described as complete.
