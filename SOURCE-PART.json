@@ -1,0 +1,1839 @@
+{
+  "schema": "stellar-forge.git-source-part.v1",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "d1868cba6fd5f3b57e0445a094da8a3d4002b00e",
+    "tree": "9e4112bc3da8a93aaa1eab045330ff96ae23c7d6",
+    "fileCount": 4940,
+    "sourceBytes": 65179698
+  },
+  "part": 16,
+  "parts": 18,
+  "kind": "source-files",
+  "members": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-page.mjs",
+      "mode": "100644",
+      "gitBlob": "3e0009ec97822d461e63e9f9056c0ae27f0a6d1b",
+      "bytes": 13157
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-session.mjs",
+      "mode": "100644",
+      "gitBlob": "e1dc725bb6a0d43a69328a1f306c3261063f46b6",
+      "bytes": 40741
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs",
+      "mode": "100644",
+      "gitBlob": "71e67f69753952e34d80394a1377bfad0553274e",
+      "bytes": 14419
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.py",
+      "mode": "100644",
+      "gitBlob": "abd89c75cc69c63b2125888a8076b6ef72c7553a",
+      "bytes": 3394
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/README.md",
+      "mode": "100644",
+      "gitBlob": "1df363bca05e87c2f37ba2e8eeaf16b2dd2212f1",
+      "bytes": 13994
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/analysis.mjs",
+      "mode": "100644",
+      "gitBlob": "b6020ee9a219b783c6d441882d5665d1d01789d7",
+      "bytes": 16147
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/launch.mjs",
+      "mode": "100644",
+      "gitBlob": "22549632da6c16bfcef2ae21b42e5c3b34b3d03d",
+      "bytes": 2503
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/model.mjs",
+      "mode": "100644",
+      "gitBlob": "c9734cb1901cc58898caca031a01dd0ebd1adfba",
+      "bytes": 21989
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "f6cf12d6c22f720a5caf5c43242a0ec8341f57b2",
+      "bytes": 29112
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/public/index.html",
+      "mode": "100644",
+      "gitBlob": "05b0c31edde790846c92ab40a8f6282ccb97a6b6",
+      "bytes": 5803
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/public/style.css",
+      "mode": "100644",
+      "gitBlob": "598df9a60de0f83e7079c9677eb24bec884584d2",
+      "bytes": 8861
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "e4c693989171e3d0031533e06bff2afdb8b27d02",
+      "bytes": 24500
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-workspace/server.mjs",
+      "mode": "100644",
+      "gitBlob": "cd31fff0105d28cca561d7bd51212c0a9c6aeeca",
+      "bytes": 14927
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/discovery.mjs",
+      "mode": "100644",
+      "gitBlob": "0de68d072be79f356297f472132529bd6a7db726",
+      "bytes": 4257
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/README.md",
+      "mode": "100644",
+      "gitBlob": "27f3ee484b3ba9a6b418d406b95d63c41c5d8180",
+      "bytes": 8621
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/cli.mjs",
+      "mode": "100644",
+      "gitBlob": "e8b64991a3ff961bc83c58f70f83e6426760b39b",
+      "bytes": 4711
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/index.mjs",
+      "mode": "100644",
+      "gitBlob": "6b066c5d3624c0620d795fd41b73a5d2ae679710",
+      "bytes": 192
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/subscriber.mjs",
+      "mode": "100644",
+      "gitBlob": "62d3e6f3de5133b0023578e4b79f1059a641c5ed",
+      "bytes": 24680
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workspace.html",
+      "mode": "100644",
+      "gitBlob": "74fa69b182bd2534ad48a7b9eb192a5b7367aaa6",
+      "bytes": 7856
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "966ebb8be6e0f27ba2fde691d5f9fc7e44aef9c9",
+      "bytes": 4665
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/execute.mjs",
+      "mode": "100644",
+      "gitBlob": "445c1009bd90b1ad1ea0ed8ec5c38016db136ce6",
+      "bytes": 9659
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/finalization.mjs",
+      "mode": "100644",
+      "gitBlob": "cbe6123f3affedf9247a79b6139b04d4ba96339d",
+      "bytes": 14702
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/README.md",
+      "mode": "100644",
+      "gitBlob": "004c7a42c7aa37cd6cf6cabef11f616c0dc01cd6",
+      "bytes": 16608
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/acquisitions.go",
+      "mode": "100644",
+      "gitBlob": "0a7fe1112ea7fa4f5ffeed97ffacaf30f70b8940",
+      "bytes": 11150
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/bridge.mjs",
+      "mode": "100644",
+      "gitBlob": "f581440e7e5c6594b8d0c4aaa605d6ad5c62a725",
+      "bytes": 14145
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/client.go",
+      "mode": "100644",
+      "gitBlob": "d0b4fb74cb76f6f203be462e5f83d5d797eb9d30",
+      "bytes": 15986
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/cmd/starforge-buyer/main.go",
+      "mode": "100644",
+      "gitBlob": "cf5c3965ef6c4ec992a0adb0fa4d46f55877b86a",
+      "bytes": 15521
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/files.go",
+      "mode": "100644",
+      "gitBlob": "894eb2b01bf3cf9f1b0e247477f87c44e7fb01c2",
+      "bytes": 5534
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/go.mod",
+      "mode": "100644",
+      "gitBlob": "5bd4cf3b19ef0eef618e7191e3f4f0126c97e81d",
+      "bytes": 130
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/go/inbox.go",
+      "mode": "100644",
+      "gitBlob": "24d6707770f44093e151dfd7b07456b229a75f4c",
+      "bytes": 5022
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs",
+      "mode": "100644",
+      "gitBlob": "746580291879f917a0f432bfe234de4bdbd48f3d",
+      "bytes": 7596
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/Build.java",
+      "mode": "100644",
+      "gitBlob": "525f85bb4316f094579fad335ebaf7a865fe39f2",
+      "bytes": 2779
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/LICENSE",
+      "mode": "100644",
+      "gitBlob": "695a7de0096ad7253293d52b2f84dfea6e9f2441",
+      "bytes": 1072
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/PROTOCOL.md",
+      "mode": "100644",
+      "gitBlob": "aedeecedd8c003a0c1a6ac3e6c9c0d1269bc99f6",
+      "bytes": 3457
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/README.md",
+      "mode": "100644",
+      "gitBlob": "fa1e80fcc74d0043bed98ecd077295d52af41036",
+      "bytes": 18565
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/examples/ApprovedRequest.java",
+      "mode": "100644",
+      "gitBlob": "6a94d6538b658e9562c3969f923ad5fa49c7d969",
+      "bytes": 1456
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/examples/ReceiveDataset.java",
+      "mode": "100644",
+      "gitBlob": "d4ef700a324c8286634ff47706c3085acab9e87f",
+      "bytes": 1347
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/Acquisition.java",
+      "mode": "100644",
+      "gitBlob": "1041db63d7e6e98af3ff43bfa610a3a7f34ea634",
+      "bytes": 6262
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/Buyer.java",
+      "mode": "100644",
+      "gitBlob": "25061184cc1e2cc8fe0c3704f62aaad0041412c9",
+      "bytes": 11945
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/BuyerException.java",
+      "mode": "100644",
+      "gitBlob": "2d2f9f7b1ce6b6bd58251455bb535bc9ce8cc28f",
+      "bytes": 1271
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/Inbox.java",
+      "mode": "100644",
+      "gitBlob": "f172d3e1b03c64de39a6ac2cee2be84456df0a0a",
+      "bytes": 3039
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/Json.java",
+      "mode": "100644",
+      "gitBlob": "9efdcce4d7922db5a96c5925cad7f2d3b9e57c3e",
+      "bytes": 11495
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/NativeCall.java",
+      "mode": "100644",
+      "gitBlob": "089167f08fd38e3704eff164fd69009c3e58145e",
+      "bytes": 11764
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/NativeFile.java",
+      "mode": "100644",
+      "gitBlob": "a5ee3879534e97d9c2f75b349d70cb96b2627a35",
+      "bytes": 6665
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/Operation.java",
+      "mode": "100644",
+      "gitBlob": "6a5f5214d0232aaf14264b664485dba60c6f7bb1",
+      "bytes": 2102
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/java/src/main/java/io/starforge/buyer/StarforgeBuyer.java",
+      "mode": "100644",
+      "gitBlob": "2cc7fa4c30854b24046f84e5946849a09ca6b184",
+      "bytes": 17724
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/README.md",
+      "mode": "100644",
+      "gitBlob": "7a2f1d299475990f9f399855d709692588bb3b2d",
+      "bytes": 14947
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/APPLICATIONS.md",
+      "mode": "100644",
+      "gitBlob": "f2f68b458bed8ea6ac0bc005382b5fc6c1157ee7",
+      "bytes": 12282
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/README.md",
+      "mode": "100644",
+      "gitBlob": "781097e2186c5d9ad2bfc32c2d7678431a2aa0da",
+      "bytes": 19447
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/contract.mjs",
+      "mode": "100644",
+      "gitBlob": "502504b43666961eb33bcaf85be74658041aed45",
+      "bytes": 8278
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/controller.mjs",
+      "mode": "100644",
+      "gitBlob": "4567fc4fb1bc2b97f81248e8109ff21562870df7",
+      "bytes": 33984
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/native-continuation.mjs",
+      "mode": "100644",
+      "gitBlob": "a8da3158e11db855a1f916d24406ff2d612daab6",
+      "bytes": 39822
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/native-continuation.py",
+      "mode": "100644",
+      "gitBlob": "d9377cad3c7cd3451510b9b9da25e3d579cf02b6",
+      "bytes": 19012
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "50237cfaaffb50028ca1d28c8c57589d66094fdf",
+      "bytes": 22571
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/public/index.html",
+      "mode": "100644",
+      "gitBlob": "a40fb0fa5573f7bcb2817b48b147b22a20028c6e",
+      "bytes": 7436
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/public/style.css",
+      "mode": "100644",
+      "gitBlob": "6c3a007229b23095f811ddf2d2b0ab8f982adee2",
+      "bytes": 1462
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/checkout/server.mjs",
+      "mode": "100644",
+      "gitBlob": "1b8bdc83810aa0264120fd7c91d1361c91b86f92",
+      "bytes": 3793
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/cli.mjs",
+      "mode": "100644",
+      "gitBlob": "3e0a44af7589a16105e2a142ab01aa03880150f7",
+      "bytes": 12447
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/continuation.mjs",
+      "mode": "100644",
+      "gitBlob": "445915e2fa727fd0b48f032cb40840a07da07486",
+      "bytes": 11128
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/index.d.mts",
+      "mode": "100644",
+      "gitBlob": "271be3d6645e04b3cb0fe0239d0ebdab4b4bd3d8",
+      "bytes": 12801
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/index.mjs",
+      "mode": "100644",
+      "gitBlob": "eebd17f90e6dd6cca315333e72869ad2c24a2f86",
+      "bytes": 688
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/controller.mjs",
+      "mode": "100644",
+      "gitBlob": "81c84a813191e4fc8285ba32f83435708f1b7637",
+      "bytes": 16247
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/index.d.mts",
+      "mode": "100644",
+      "gitBlob": "72a0d032f75d9212a4ab155a33584165746d6523",
+      "bytes": 4840
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/index.mjs",
+      "mode": "100644",
+      "gitBlob": "20a0a42131579b6064b9154afca8d3e9aa092556",
+      "bytes": 441
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/public/files.mjs",
+      "mode": "100644",
+      "gitBlob": "c886f2f347082cfd762a1e7d03a6f0ad832c217a",
+      "bytes": 12429
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/public/hash-worker.mjs",
+      "mode": "100644",
+      "gitBlob": "195799d759420d5d88429841ef8269af84708966",
+      "bytes": 1213
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/public/sha256.mjs",
+      "mode": "100644",
+      "gitBlob": "2a8b86e18b3c84ed7b4494f36e43a60805b6b148",
+      "bytes": 3383
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/inputs/server.mjs",
+      "mode": "100644",
+      "gitBlob": "b67ee2c1dc91ce0dffc8112c36026728ed2d412d",
+      "bytes": 3524
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/README.md",
+      "mode": "100644",
+      "gitBlob": "0f1a5e7690ad2b3072439ff5f4ef185d8885cd29",
+      "bytes": 13249
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/browser-assets.json",
+      "mode": "100644",
+      "gitBlob": "6a9feab6a842847bf894ea20ed640573b9230c79",
+      "bytes": 799
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/cli.mjs",
+      "mode": "100644",
+      "gitBlob": "2a8ff31bafab22a807c7d2e57d1e60ad5c370a8f",
+      "bytes": 8155
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/controller.mjs",
+      "mode": "100644",
+      "gitBlob": "5a1d9cedcff3e371ec7be2b755dabc027128a736",
+      "bytes": 29908
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/index.d.mts",
+      "mode": "100644",
+      "gitBlob": "743a5b478850d70bd6c6723a8c7eeb8840fdfdbe",
+      "bytes": 4901
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/index.mjs",
+      "mode": "100644",
+      "gitBlob": "2d50929d496721508bd15a3677cf523e93ae1573",
+      "bytes": 263
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "9b3cb4edda45ac67c5dda5581963666098dbc934",
+      "bytes": 24112
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/public/index.html",
+      "mode": "100644",
+      "gitBlob": "f38ac66f2590831bf0d021b7b7bcd3160c546859",
+      "bytes": 6979
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/public/style.css",
+      "mode": "100644",
+      "gitBlob": "158c84d478ee94ddbe29fb829fa24934c7ddf834",
+      "bytes": 5560
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/server.mjs",
+      "mode": "100644",
+      "gitBlob": "786bfdab44478e2c550d72757727e4baba8be8f8",
+      "bytes": 2657
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/launch.mjs",
+      "mode": "100644",
+      "gitBlob": "6205b94e56613c0272aa747517ec170a02c9a13c",
+      "bytes": 4556
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/library-source.mjs",
+      "mode": "100644",
+      "gitBlob": "f54aea6aacdb09ce4dc90fbfd93d9e18f589773c",
+      "bytes": 2635
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/model.mjs",
+      "mode": "100644",
+      "gitBlob": "9a58e18fdbd0ea294c7f966ab876c80be9651b62",
+      "bytes": 18712
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "7f3959d8a9bcbfc324edf2fefc5b0081edfd5ba4",
+      "bytes": 19503
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/public/index.html",
+      "mode": "100644",
+      "gitBlob": "ae30304972af7248df73ba86a93b0f38608d7209",
+      "bytes": 7310
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/public/style.css",
+      "mode": "100644",
+      "gitBlob": "8271389d9eb2bc99717f5d29ef82e93387bd8d6a",
+      "bytes": 6687
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/browser-assets.json",
+      "mode": "100644",
+      "gitBlob": "50817bf91367897ac459c95af4405069ec2a1dcd",
+      "bytes": 564
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/cli.mjs",
+      "mode": "100644",
+      "gitBlob": "f211833c3a76f0d88d885e02fbc37b0e24c72b0c",
+      "bytes": 3336
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/client.mjs",
+      "mode": "100644",
+      "gitBlob": "967a5d6235d6507302885905c516c8a0f3f0db9d",
+      "bytes": 16688
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/controller.mjs",
+      "mode": "100644",
+      "gitBlob": "0b5481cf4dfefd1df3fd2e75f3c633a8db19125a",
+      "bytes": 5422
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/index.d.mts",
+      "mode": "100644",
+      "gitBlob": "3e9c20c972fe8ac1b0ec0b3fba15bdbfc43b6ca7",
+      "bytes": 5484
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/index.mjs",
+      "mode": "100644",
+      "gitBlob": "7472b0d4720393590c91a529fd13f110768acff8",
+      "bytes": 305
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "5f247ce14e76d95060beb9cd4b9a41e596c2c6cc",
+      "bytes": 6438
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/public/index.html",
+      "mode": "100644",
+      "gitBlob": "bca93ede96508e9cb3622cb03fee4fd940a57c98",
+      "bytes": 2949
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/public/style.css",
+      "mode": "100644",
+      "gitBlob": "ce3dbc45bf39f4727adf2b3870ddd46ae4a7b727",
+      "bytes": 2837
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/server.mjs",
+      "mode": "100644",
+      "gitBlob": "2ff0307da06365d2612db6c593972a45c4cf625a",
+      "bytes": 2518
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/server.mjs",
+      "mode": "100644",
+      "gitBlob": "c8b8f2ef446782a5688f56a7bd5a4f0a56f36379",
+      "bytes": 8003
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/state.mjs",
+      "mode": "100644",
+      "gitBlob": "03a280635037386be0e789b5b7b6bf5050030b55",
+      "bytes": 4637
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/lost-output.mjs",
+      "mode": "100644",
+      "gitBlob": "0c14012c73c9e45d35d183d201352b891b81d186",
+      "bytes": 17061
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/missing-receipt.mjs",
+      "mode": "100644",
+      "gitBlob": "c2f930eb01630786a4bb01ac2c161fc0dc5d21fc",
+      "bytes": 12147
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/LICENSE",
+      "mode": "100644",
+      "gitBlob": "e3b6485204d8734f0973cd215270066e2f2bb766",
+      "bytes": 1073
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/README.md",
+      "mode": "100644",
+      "gitBlob": "8a9808157c82af238e8c876935af72f968abebf1",
+      "bytes": 11201
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/credentials/StarforgeBuyerWorkspace.credentials.js",
+      "mode": "100644",
+      "gitBlob": "c61667c50f8b83da5cf1db20711c60e612fed5ed",
+      "bytes": 2704
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/lib/native.cjs",
+      "mode": "100644",
+      "gitBlob": "1d515d72ab104352eb2027c2f72679585cbe7b09",
+      "bytes": 16715
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/nodes/StarforgeBuyer/StarforgeBuyer.node.js",
+      "mode": "100644",
+      "gitBlob": "98b721596f0b4b5eb7d9526bb994f31b801f0592",
+      "bytes": 10442
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/nodes/StarforgeBuyer/StarforgeBuyer.node.json",
+      "mode": "100644",
+      "gitBlob": "d1a02ab3e39368136ebd652ef141aa63bb87ebdc",
+      "bytes": 372
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/nodes/StarforgeBuyer/starforge.svg",
+      "mode": "100644",
+      "gitBlob": "1c2f9a2d82a746ed49979c121c2d23c05ab513f2",
+      "bytes": 348
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/package.json",
+      "mode": "100644",
+      "gitBlob": "dfc6a3595b99a0da96d2302592d3441a187063e8",
+      "bytes": 947
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflow.mjs",
+      "mode": "100644",
+      "gitBlob": "6929730357302dad355aed5053f6652553baca92",
+      "bytes": 8097
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/01_merchant_packet_intake.json",
+      "mode": "100644",
+      "gitBlob": "116e5063f204217cdae732f2d084174d313c88af",
+      "bytes": 2902
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/02_review_operator_handoff.json",
+      "mode": "100644",
+      "gitBlob": "9ac1de14553f192324b6f29e27e32e6334520cdf",
+      "bytes": 2009
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/03_read_verified_response.json",
+      "mode": "100644",
+      "gitBlob": "4af9fad4f38653fe34d785809b48a8a5b76fa48e",
+      "bytes": 2035
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/04_recover_existing_attempt.json",
+      "mode": "100644",
+      "gitBlob": "4a30fd772d92d45c5effa10c382dc666f25df8e1",
+      "bytes": 2801
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/05_finalize_and_export_history.json",
+      "mode": "100644",
+      "gitBlob": "9a6572398a538d6a7c86b2ae8c838746e9091c6c",
+      "bytes": 2772
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/06_resume_prepared_intake.json",
+      "mode": "100644",
+      "gitBlob": "a0460f260daa1d2359041caa8693cda03bc1e66a",
+      "bytes": 2789
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/n8n/workflows/manifest.json",
+      "mode": "100644",
+      "gitBlob": "4a76faceb6a27cbd0a65b4d5c3d5de7ac552705e",
+      "bytes": 1520
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "mode": "100644",
+      "gitBlob": "d09e1262086efc9c017bc54f9392c954fb3ea230",
+      "bytes": 13108
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/ACCOUNTING.md",
+      "mode": "100644",
+      "gitBlob": "913aa8cd0798e1e0dd9b492f6c85f81ca21a6133",
+      "bytes": 10869
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/ACQUISITIONS.md",
+      "mode": "100644",
+      "gitBlob": "33d60f783fd626e7bd6961136635de8c2d505567",
+      "bytes": 17043
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/EXPIRED_CONTINUATION.md",
+      "mode": "100644",
+      "gitBlob": "9a5bd02b1a276a8aba9a35767a36e8936ce00dbc",
+      "bytes": 8499
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/FRAMEWORKS.md",
+      "mode": "100644",
+      "gitBlob": "1f236e54230a234fa21d0ecf45efbc75847ad013",
+      "bytes": 13024
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/INBOX.md",
+      "mode": "100644",
+      "gitBlob": "33daac510914f427bcff0b03326a2e0571065014",
+      "bytes": 13419
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/LOST_OUTPUT_RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "28f0963068f6b7cea2ba99a5dc053db633e559c0",
+      "bytes": 9341
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/OBJECTS.md",
+      "mode": "100644",
+      "gitBlob": "82eabbfbe784d98015b6f023a66e092468f69e59",
+      "bytes": 14148
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/PREAPPROVAL_RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "a6f2ba6481b7386a829affc0a10461506b3f1a8b",
+      "bytes": 9813
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/README.md",
+      "mode": "100644",
+      "gitBlob": "ba942ed233019d57ac5f0b957f30f300335fa1b3",
+      "bytes": 35532
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "453cb220dafaaae5b56753c323f6bb8c8bf331b7",
+      "bytes": 9514
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/STREAMS.md",
+      "mode": "100644",
+      "gitBlob": "2bea6767bd34eff126a97f58de162d7aaf74bcee",
+      "bytes": 9571
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/UNDISPATCHED_CONTINUATION.md",
+      "mode": "100644",
+      "gitBlob": "ea6af76fefc4a0240f0b40029e710d12b5874af0",
+      "bytes": 9041
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/WORKSPACE.md",
+      "mode": "100644",
+      "gitBlob": "c4dc725de10052e6e728d62227d451625cfc8bfd",
+      "bytes": 7614
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/acquisitions.mjs",
+      "mode": "100644",
+      "gitBlob": "81e97517f065a11a20e5d9d653064e4296ea16f8",
+      "bytes": 11824
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/langchain.d.mts",
+      "mode": "100644",
+      "gitBlob": "1c8b7e2f7497b881923ed2a37eb2900702df3758",
+      "bytes": 534
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/langchain.mjs",
+      "mode": "100644",
+      "gitBlob": "c4113997629a6fad38580e953ef33fda5cb5c22b",
+      "bytes": 3626
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/langgraph.d.mts",
+      "mode": "100644",
+      "gitBlob": "5ef1588f2821123cb1f49339cc799f5c934a7627",
+      "bytes": 1382
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/langgraph.mjs",
+      "mode": "100644",
+      "gitBlob": "dcc166445bab444fd6c01b0da74e8225b9e8f196",
+      "bytes": 4630
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/operation.d.mts",
+      "mode": "100644",
+      "gitBlob": "7de3cf7f711652ea456d1941909d16e79c6a0597",
+      "bytes": 2918
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/operation.mjs",
+      "mode": "100644",
+      "gitBlob": "510e5597cde71845858f4790a233f4130c0891ca",
+      "bytes": 7463
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/sqlite.d.mts",
+      "mode": "100644",
+      "gitBlob": "361836e44b5626937087f0653d4e7d53c7f7f2bc",
+      "bytes": 493
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/sqlite.mjs",
+      "mode": "100644",
+      "gitBlob": "5fa06647e239ecbecb6da3c3905f509b119e6ca0",
+      "bytes": 1621
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/authorization-dispatch.mjs",
+      "mode": "100644",
+      "gitBlob": "1e6ab9f1016955ffba8a3cc7404728b30ccbdd41",
+      "bytes": 25478
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/client.mjs",
+      "mode": "100644",
+      "gitBlob": "8ff124f2c118d0b8b33996b220fa128a3b23b059",
+      "bytes": 28816
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/dataset-recovery.mjs",
+      "mode": "100644",
+      "gitBlob": "b392398fea1156063e4a311fa0208fdd0e4978f2",
+      "bytes": 30850
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/dataset-worker.mjs",
+      "mode": "100644",
+      "gitBlob": "6afd54ed5b178724c56593379a2ea0f7f1a2be9e",
+      "bytes": 9915
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/dataset.mjs",
+      "mode": "100644",
+      "gitBlob": "7ec8221fc1cf6cf9a0b15120e2ddf3d03a8ca382",
+      "bytes": 19390
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/LINKUP_DOSSIERS.md",
+      "mode": "100644",
+      "gitBlob": "998070cb7a50079761539174880c31b93c3fce3a",
+      "bytes": 9545
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/acquisitions.mjs",
+      "mode": "100644",
+      "gitBlob": "9037139a9e3bb1c84b9cf4d01e9393bef5961abf",
+      "bytes": 3622
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/agent-customer.mts",
+      "mode": "100644",
+      "gitBlob": "34bef7ca6c82870272383cea8a8bbe6b868e8da0",
+      "bytes": 1576
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/agent-workflow.mjs",
+      "mode": "100644",
+      "gitBlob": "c5eb0d434fead85128e4c0a8ac00b64026f1e644",
+      "bytes": 6005
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/agents/OPERATED.md",
+      "mode": "100644",
+      "gitBlob": "da776bac5b42a399a039849cb79b956131a7f8d8",
+      "bytes": 3235
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/agents/runtime-package-lock.json",
+      "mode": "100644",
+      "gitBlob": "ce5daca0fe2114af450161d5cd2003ba668c9d9e",
+      "bytes": 27189
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/agents/runtime-package.json",
+      "mode": "100644",
+      "gitBlob": "1d10767b44afdcfd44f55bd88c663ccfae99c4b5",
+      "bytes": 352
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/customer.mjs",
+      "mode": "100644",
+      "gitBlob": "6393bb2fd561d35125e9673f87ef9bfe8f722364",
+      "bytes": 31297
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/exa-answer.mjs",
+      "mode": "100644",
+      "gitBlob": "9d6a22ec03ac343d773a1521cd0091b3dcbf1174",
+      "bytes": 8326
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/linkup-dossier-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "5e7489d0ad09d781d38125441b283e059165a6d7",
+      "bytes": 5584
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/linkup-dossier.mjs",
+      "mode": "100644",
+      "gitBlob": "fe7e02ca30598fbf514c407cc7dbb417dfd88b6d",
+      "bytes": 13776
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/linkup-search.mjs",
+      "mode": "100644",
+      "gitBlob": "a6c57b8612cac1bfe10897aa8254eb7793ea7b45",
+      "bytes": 15289
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/recover_workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "a3c3ce99baa5c8ceca22ec2a16277cbc79f815de",
+      "bytes": 7341
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/workspace_customer.mjs",
+      "mode": "100644",
+      "gitBlob": "613de0b07da83d152c5f260f56494a1dfca9c6ca",
+      "bytes": 3511
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/expired-continuation.mjs",
+      "mode": "100644",
+      "gitBlob": "a50aadf42689f66ff9d279d2333b98c3c1e5fc63",
+      "bytes": 18531
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/expiry-evidence.mjs",
+      "mode": "100644",
+      "gitBlob": "7b2d00429652f183f9f4e0854b5c28f9fec5a7c4",
+      "bytes": 28717
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/inbox-worker.mjs",
+      "mode": "100644",
+      "gitBlob": "362b24b436ed08f4a031ec171558a6af1b1d4d34",
+      "bytes": 9118
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/inbox.mjs",
+      "mode": "100644",
+      "gitBlob": "f97dad1d33ceec462b499e1761f0a806baab99a6",
+      "bytes": 12844
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/index.d.mts",
+      "mode": "100644",
+      "gitBlob": "4b65a3fa4ed8213a7d34ef9a8f0c42bb0b1c1e88",
+      "bytes": 68967
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/index.mjs",
+      "mode": "100644",
+      "gitBlob": "7d97ccdfa3225d85a79ea7c8fce062e4ca91ec69",
+      "bytes": 612
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/lost-output.mjs",
+      "mode": "100644",
+      "gitBlob": "4a4429b4a9e4d9c1b99c8a32a21c38e954269750",
+      "bytes": 20309
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/object.mjs",
+      "mode": "100644",
+      "gitBlob": "a8853297efc57e3d70d0f8c12270619bc6ea2028",
+      "bytes": 20146
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/package.json",
+      "mode": "100644",
+      "gitBlob": "982f0b8581ee6c16ce61048b68163c24c05caf60",
+      "bytes": 1770
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/preapproval-native-record.py",
+      "mode": "100644",
+      "gitBlob": "a031b8cedb90b3238bdc4ec403a1bdacaa93f034",
+      "bytes": 22262
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/preapproval-recovery.mjs",
+      "mode": "100644",
+      "gitBlob": "8a1cc4432d9be38ddf4286628b1365e015deeab9",
+      "bytes": 30360
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/process-identity.mjs",
+      "mode": "100644",
+      "gitBlob": "a69d6961d138d483349d4bbab58dacb5d95b5e90",
+      "bytes": 4822
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/result.mjs",
+      "mode": "100644",
+      "gitBlob": "c4195f97fc07661c7580e2119312bc367ca5325d",
+      "bytes": 11333
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/runtime.mjs",
+      "mode": "100644",
+      "gitBlob": "29c73216fda31ec292340726f4595a787202d08c",
+      "bytes": 8969
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/session-accounting.mjs",
+      "mode": "100644",
+      "gitBlob": "aee41c346f60e67604ddd0c10bb98fdf789be269",
+      "bytes": 14255
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs",
+      "mode": "100644",
+      "gitBlob": "0943ad3ee08d671aee3f7c95c23d3821dee2cce4",
+      "bytes": 7549
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/unpaid-continuation.mjs",
+      "mode": "100644",
+      "gitBlob": "bd8d6aed3eebae4739fcb403551fdf5d70e88421",
+      "bytes": 18356
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/unstructured/contract.mjs",
+      "mode": "100644",
+      "gitBlob": "24508b89660c1ed99faa4ffcfae394ac9ae1e3e8",
+      "bytes": 11519
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/unstructured/dossier.mjs",
+      "mode": "100644",
+      "gitBlob": "3265f48307a0e9790cd69435825d30d6b9ae3c8d",
+      "bytes": 10092
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/unstructured/index.d.mts",
+      "mode": "100644",
+      "gitBlob": "b67ca99dd39bd9bbef741965283b3e19cb039ba3",
+      "bytes": 8802
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/unstructured/index.mjs",
+      "mode": "100644",
+      "gitBlob": "913bd9300af762e201994fc54be11facc5a3f941",
+      "bytes": 728
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/unstructured/purchase.mjs",
+      "mode": "100644",
+      "gitBlob": "59cb85f5bedfdd0b3981e7295e752e51cb0a350e",
+      "bytes": 20793
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/workspace-recovery.mjs",
+      "mode": "100644",
+      "gitBlob": "d4f4cadc1238cb21ab318ebd0ebf71fd9b4acf65",
+      "bytes": 7321
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "225fbef960996622bc5914a584febd30939174c9",
+      "bytes": 2463
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "514b112d19dcd2c2ade7387146ec59979d6d2eac",
+      "bytes": 21535
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-description.mjs",
+      "mode": "100644",
+      "gitBlob": "d930709a730fc8876d8cdbe3cc1656a390fe0c86",
+      "bytes": 4432
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-report.mjs",
+      "mode": "100644",
+      "gitBlob": "5008c3224a6f993aa22560e642e92aaf8578c2e5",
+      "bytes": 14527
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-session.mjs",
+      "mode": "100644",
+      "gitBlob": "82032b083af7bd3e498886319e6ecb45978a592e",
+      "bytes": 46139
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/README.md",
+      "mode": "100644",
+      "gitBlob": "a197cc27df28af8d7d530e01136afe743900ca67",
+      "bytes": 38495
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/intake.mjs",
+      "mode": "100644",
+      "gitBlob": "7b9b47033337b38cde3a3b8bad41ebee15be7e97",
+      "bytes": 26713
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/model.mjs",
+      "mode": "100644",
+      "gitBlob": "118986b4d75f1e7e251086c1a2d9d9220a9a99fa",
+      "bytes": 53023
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "19124c4415ac570806d743e6220a216545709597",
+      "bytes": 61824
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/public/index.html",
+      "mode": "100644",
+      "gitBlob": "52088cf83c535229a7e87b13794c8d8d45a7fe94",
+      "bytes": 24001
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/public/style.css",
+      "mode": "100644",
+      "gitBlob": "91a20b6d4ac4aa93bcdb5f0ee53774f5d69c2c53",
+      "bytes": 13016
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/recovery.mjs",
+      "mode": "100644",
+      "gitBlob": "9af1116cc99c32855f712e5e6b99bd5e54c09387",
+      "bytes": 21127
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/research.mjs",
+      "mode": "100644",
+      "gitBlob": "2682bd6d0141011e60c282249d44dac034de1457",
+      "bytes": 3362
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/object-workspace/server.mjs",
+      "mode": "100644",
+      "gitBlob": "593c9c26149c748c3dee2848d25bbcabe473d126",
+      "bytes": 18524
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/operation-handoff.mjs",
+      "mode": "100644",
+      "gitBlob": "c22d6267071d35174184aba7c01e25dfc0d41b6f",
+      "bytes": 15311
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/operation-ticket.mjs",
+      "mode": "100644",
+      "gitBlob": "5c702be112360e5d671cad7375cb3d970630b928",
+      "bytes": 6837
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
+      "mode": "100644",
+      "gitBlob": "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223",
+      "bytes": 20652
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+      "mode": "100644",
+      "gitBlob": "038f1824d7e2703b449fe50a5446b988d8f3bc3f",
+      "bytes": 258
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/LICENSE",
+      "mode": "100644",
+      "gitBlob": "2d2a35a69e3896b7c6b885c1faebae2f2f8bc9c1",
+      "bytes": 1091
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/README.md",
+      "mode": "100644",
+      "gitBlob": "aeaa776d4c04aa441c66d434c0681f1c50416cc6",
+      "bytes": 21940
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/bin/stellar-forge-acquisitions.php",
+      "mode": "100755",
+      "gitBlob": "2661612340dccc0b2d88ba1ae24effa37774c965",
+      "bytes": 241
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/composer.json",
+      "mode": "100644",
+      "gitBlob": "521b5b8ab726551f63b3d965a89bc39832e28957",
+      "bytes": 526
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/examples/acquisitions.php",
+      "mode": "100755",
+      "gitBlob": "f82ab5acec0a9f1f1c0614c06bd371722b8ab500",
+      "bytes": 1754
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/examples/settings.json",
+      "mode": "100644",
+      "gitBlob": "0add3fc523d9c99fb46583a130937987653e03dd",
+      "bytes": 448
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/src/Acquisitions.php",
+      "mode": "100644",
+      "gitBlob": "47309a9849ec8dc83a86d24ef359cce57f86cb1d",
+      "bytes": 30061
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/php/src/Console.php",
+      "mode": "100644",
+      "gitBlob": "675a2102ec1740750c7ac8bcb0791586189ffc9f",
+      "bytes": 14459
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/prepare.mjs",
+      "mode": "100644",
+      "gitBlob": "c1ccdb4cb8a5aaee726a4d89633047abb35b07ca",
+      "bytes": 11217
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/private-directory-lock.mjs",
+      "mode": "100644",
+      "gitBlob": "4672151fc835490ffc3a22b4924e95098abf8672",
+      "bytes": 4472
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/ACQUISITIONS.md",
+      "mode": "100644",
+      "gitBlob": "2b2564da1a8b024a8392cd9905527c1f213477dd",
+      "bytes": 15880
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/AGENT_CUSTOMERS.md",
+      "mode": "100644",
+      "gitBlob": "bf5069b6c9dfdae497db4c1eee06661fbbf58626",
+      "bytes": 13659
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/CUSTOMER_WORKFLOWS.md",
+      "mode": "100644",
+      "gitBlob": "16ad26e526031284a84ae9ae0a9676b2e881dd63",
+      "bytes": 11211
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/DATASETS.md",
+      "mode": "100644",
+      "gitBlob": "b44d44d91534877e0eb3f11ce5e6dae860cf381b",
+      "bytes": 7678
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/DUCKDB.md",
+      "mode": "100644",
+      "gitBlob": "79d8a40f71366bce5a7e35ad59c84a8f7bdea832",
+      "bytes": 20116
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/DUCKDB_SEMANTICS.md",
+      "mode": "100644",
+      "gitBlob": "c41c330abb43fc3a68d152109318f921bac7c09c",
+      "bytes": 9274
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/OBJECTS.md",
+      "mode": "100644",
+      "gitBlob": "64df1825f31e035c4429181083a5a9312e0a1b71",
+      "bytes": 13511
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/OBJECT_ANALYSIS.md",
+      "mode": "100644",
+      "gitBlob": "0286d94f50dcd3c2492d2ada15a82ceb858461b4",
+      "bytes": 6147
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/POSTGRESQL.md",
+      "mode": "100644",
+      "gitBlob": "8218e7cebca15e3fbe065e5a97a6cb119d6f3311",
+      "bytes": 25477
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/PROFILES.md",
+      "mode": "100644",
+      "gitBlob": "977fd3e9af444d468b9d156c12e377a030d4837c",
+      "bytes": 8746
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/QUERY_EXPORT_DELIVERY.md",
+      "mode": "100644",
+      "gitBlob": "c5ea1dbf24b7a2ac18aa73a411d54c3d71e13389",
+      "bytes": 7322
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/README.md",
+      "mode": "100644",
+      "gitBlob": "8b8cddcbeacf066027ddf4af025c67ff11feb929",
+      "bytes": 40864
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "432d806155233deed452312e10a87d5846f3dd00",
+      "bytes": 8700
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SEMANTICS.md",
+      "mode": "100644",
+      "gitBlob": "4c237d9550467d2924e3ece86ba2a3c3685a5319",
+      "bytes": 23274
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SOURCE_DOCUMENTS.md",
+      "mode": "100644",
+      "gitBlob": "3d3f7ed63e09f85dfe213c7ffc43f01e7de90a3e",
+      "bytes": 7975
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SQLITE.md",
+      "mode": "100644",
+      "gitBlob": "c95479630ab186da3992fe463bc5a3c12690b4f3",
+      "bytes": 8576
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SQL_EXPORTS.md",
+      "mode": "100644",
+      "gitBlob": "5bfadf2d40928e43f5ce437259efd17448748c3d",
+      "bytes": 8341
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/WORKBOOK_DELIVERY.md",
+      "mode": "100644",
+      "gitBlob": "a6535c4966fde3ef1b61d7a8c602ee7e508c9c9e",
+      "bytes": 19561
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/WORKSPACE.md",
+      "mode": "100644",
+      "gitBlob": "4024a553c535e48a930fa9bc12b76c4f24482a41",
+      "bytes": 33944
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/WORKSPACE_ARCHIVE_RECEIVING.md",
+      "mode": "100644",
+      "gitBlob": "3d848d0ebd91283a6c8aff610c69277ad59cca5f",
+      "bytes": 8506
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/WORKSPACE_EXPORTS.md",
+      "mode": "100644",
+      "gitBlob": "a8465fea5d7aa71c21cf9eeb1355f65c136febbf",
+      "bytes": 12050
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/bridge.mjs",
+      "mode": "100644",
+      "gitBlob": "ca4fa7d812daf37f8346e76e9a0f57025f24164e",
+      "bytes": 11549
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/consumer-bridge.mjs",
+      "mode": "100644",
+      "gitBlob": "921b2daffc745a523f3b3d9f2c8a124661a0c484",
+      "bytes": 6402
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/dataset-bridge.mjs",
+      "mode": "100644",
+      "gitBlob": "adabe375bb015e60ba3f8d05ec1e2d26776df536",
+      "bytes": 4738
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/acquire_dataset.py",
+      "mode": "100644",
+      "gitBlob": "54a7f0ba9d644278d5625c476a95b8e5f056f7d3",
+      "bytes": 3345
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/acquisitions.py",
+      "mode": "100644",
+      "gitBlob": "377ca126d3fe4c5118548ccf59a5f9c28b0764a6",
+      "bytes": 5103
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/agent_customer.py",
+      "mode": "100644",
+      "gitBlob": "d58c311bb55b45bd1e9b32d17767253826f068d5",
+      "bytes": 2621
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/buy_dataset.py",
+      "mode": "100644",
+      "gitBlob": "efe2ee4c8b89ba725daa186c7c2c3fbb99481077",
+      "bytes": 1619
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/buy_file.py",
+      "mode": "100644",
+      "gitBlob": "e42776168fd14d1b9f63d242008dfad6380a65f2",
+      "bytes": 3876
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/download_object.py",
+      "mode": "100644",
+      "gitBlob": "3fb4f8e5e0f98e6a117890bddba3af6351cc1bb7",
+      "bytes": 7316
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/duckdb_semantic_receiving.py",
+      "mode": "100755",
+      "gitBlob": "561cf6fe6756bbe7ec846caec60b92cfb3abc769",
+      "bytes": 19487
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/query_dataset.py",
+      "mode": "100644",
+      "gitBlob": "b77055d46993a7c7369bb083e9b137faf3b9991e",
+      "bytes": 3436
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/receive_query_export.py",
+      "mode": "100644",
+      "gitBlob": "1429e3143bd7691d6e92bef91a7b1b63756ca0a5",
+      "bytes": 1826
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/recover_workspace.py",
+      "mode": "100644",
+      "gitBlob": "d7af57fdaa6c12800ee95d8aa4fa501a012dcc3e",
+      "bytes": 7547
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/sec_source_document.mjs",
+      "mode": "100644",
+      "gitBlob": "b92a460d505f09ccf162b18c9a4bc8de861fdff9",
+      "bytes": 11231
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/semantic_analysis.py",
+      "mode": "100644",
+      "gitBlob": "5ee6cf736d650a1d5d94c28261661bb058353d44",
+      "bytes": 14445
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/use_api.py",
+      "mode": "100644",
+      "gitBlob": "551baf158c7309fc305e107163d67f1c87841b2d",
+      "bytes": 7941
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/finalized-dataset-bridge.mjs",
+      "mode": "100644",
+      "gitBlob": "32a7a4a056b5db94f4fe798f5bf525b36f507630",
+      "bytes": 1441
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/native-dataset-receive.py",
+      "mode": "100644",
+      "gitBlob": "5b03a40e0e045d8185faf3e92aa50c43a5f7895c",
+      "bytes": 1199
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/object-bridge.mjs",
+      "mode": "100644",
+      "gitBlob": "8bc2e2c754158a606ea37a1d5cfd83eaab629d40",
+      "bytes": 10291
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/pyproject.toml",
+      "mode": "100644",
+      "gitBlob": "0cd105303cf675d07706dafb316093c3bc82f0b4",
+      "bytes": 1056
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/__init__.py",
+      "mode": "100644",
+      "gitBlob": "50e9536553c635e4f3084a99c06a79473a53bf17",
+      "bytes": 1798
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/__main__.py",
+      "mode": "100644",
+      "gitBlob": "3201131de95bed88e18c9d2628259482ba9c4902",
+      "bytes": 7212
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_archive_ui.py",
+      "mode": "100644",
+      "gitBlob": "e18070fa7113d5434cacde3f88a55bc4bab9a156",
+      "bytes": 15250
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_export_http.py",
+      "mode": "100644",
+      "gitBlob": "d7410ee860a65575629ab5c861c58e5b6c7a0d1a",
+      "bytes": 4642
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_export_ui.py",
+      "mode": "100644",
+      "gitBlob": "ea41a275806097bb00ab98b91a7385b707f65a8e",
+      "bytes": 23160
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_profiles_ui.py",
+      "mode": "100644",
+      "gitBlob": "199c493a302bb37d6f2ae2710eb11f4f188658b6",
+      "bytes": 28514
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_reports_ui.py",
+      "mode": "100644",
+      "gitBlob": "0192daa9439cae36fc2b47a1fd8d849a82095657",
+      "bytes": 30801
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_response_ui.py",
+      "mode": "100644",
+      "gitBlob": "c09827e7a46334106d9d214354a16e85adea2097",
+      "bytes": 18350
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_ui.py",
+      "mode": "100644",
+      "gitBlob": "d02ee3c216f9e27a005855b33e2d3eab9b8f5a9f",
+      "bytes": 57986
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_workbook_refresh_ui.py",
+      "mode": "100644",
+      "gitBlob": "4804b5b559503f1fced7391b73d60a6a2f122c67",
+      "bytes": 13062
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_analysis_workbooks_ui.py",
+      "mode": "100644",
+      "gitBlob": "950d269257217d28a8eb2f56fb7db08c60b2b2bb",
+      "bytes": 25238
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_duckdb_ui.py",
+      "mode": "100644",
+      "gitBlob": "7b0f92f045b290053f7b4e4b778d216146edc4d1",
+      "bytes": 56012
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/_postgres_ui.py",
+      "mode": "100644",
+      "gitBlob": "f6ac66393ba8f45e9a887d298e26dc07bf08860f",
+      "bytes": 43941
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/acquisitions.py",
+      "mode": "100644",
+      "gitBlob": "22f482eaacfc9b03cf66812a9cb45b495900130d",
+      "bytes": 17307
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/agent_tools.py",
+      "mode": "100644",
+      "gitBlob": "9199c92ff03167f5d2a932ed19cd704f7971a168",
+      "bytes": 8983
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/agent_workflow.py",
+      "mode": "100644",
+      "gitBlob": "76202d8759d27ec68e64f7429c9235646b8a6a67",
+      "bytes": 41480
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_export_delivery.py",
+      "mode": "100644",
+      "gitBlob": "68fa8271cad6852c89cb87c02940b65e255136a1",
+      "bytes": 17847
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_exports.py",
+      "mode": "100644",
+      "gitBlob": "fff696d7d9ad3a97bf8d7c20de260bc47c786a57",
+      "bytes": 14395
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_native.py",
+      "mode": "100644",
+      "gitBlob": "c9b717cb593b53ede00084ac85784864824f6e2c",
+      "bytes": 4681
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_native_delivery.py",
+      "mode": "100644",
+      "gitBlob": "9035d4c74efdb3f62b27e105b61c09da6656ff22",
+      "bytes": 9946
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_native_sources.py",
+      "mode": "100644",
+      "gitBlob": "6c8b938361ab8690240c22c285472f188c1e50a0",
+      "bytes": 12709
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_reports.py",
+      "mode": "100644",
+      "gitBlob": "1352e505c52139e21962adeaa11f13090e9f81d5",
+      "bytes": 41758
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_workbooks.py",
+      "mode": "100644",
+      "gitBlob": "07da37b07c5a3c5790f9181f0ee1933df02472bc",
+      "bytes": 58296
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_workspace.py",
+      "mode": "100644",
+      "gitBlob": "ae96dcbf1d6b6886d22148072a2cede1589b800a",
+      "bytes": 55830
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/client.py",
+      "mode": "100644",
+      "gitBlob": "21c2bf28857b5d030911930d374c247d4a87189f",
+      "bytes": 44900
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/dataset_changes.py",
+      "mode": "100644",
+      "gitBlob": "23329087fec83bd3c58e5c0da8930ff41aa8a24a",
+      "bytes": 25843
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/dataset_profiles.py",
+      "mode": "100644",
+      "gitBlob": "47ca3ff7ef5554ed250accbad57a2afea693e5eb",
+      "bytes": 26354
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/dataset_semantics.py",
+      "mode": "100644",
+      "gitBlob": "291c39dabfd5043ba094b5a54386775c2f7d7e02",
+      "bytes": 13018
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/datasets.py",
+      "mode": "100644",
+      "gitBlob": "1f6764007081fb41ef2c9f04150456c23663d937",
+      "bytes": 24307
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_agent.py",
+      "mode": "100644",
+      "gitBlob": "7016fcb75660950e7f87ae2215413870b92b8150",
+      "bytes": 5728
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_cli.py",
+      "mode": "100644",
+      "gitBlob": "59c63ee3cf68dc2274efb5e044c8855e43df69a4",
+      "bytes": 10490
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_dataset.py",
+      "mode": "100644",
+      "gitBlob": "619799443072b0e4e5169bca6d2c860fddb9b8fd",
+      "bytes": 59195
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_http.py",
+      "mode": "100644",
+      "gitBlob": "9535b62ec24898417c2a71759e1d09c1bb8a4fbc",
+      "bytes": 26882
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/duckdb_semantics.py",
+      "mode": "100644",
+      "gitBlob": "7a86d0a3bba016986bd3619e0b2d2ffb8bbf740c",
+      "bytes": 10731
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/errors.py",
+      "mode": "100644",
+      "gitBlob": "3f7de049b94188454e4882ccb53b150286f78f09",
+      "bytes": 965
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/objects.py",
+      "mode": "100644",
+      "gitBlob": "9d70506185d8b94f49ea2fff93a0630cce2de6f3",
+      "bytes": 16158
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/postgres_cli.py",
+      "mode": "100644",
+      "gitBlob": "954d27a5d75f3e0302bb16c0a4e3b26f302f11ab",
+      "bytes": 10616
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/postgres_delivery.py",
+      "mode": "100644",
+      "gitBlob": "ea03e2c47f0feff4eb35a5151754b625d1dcdfc9",
+      "bytes": 39022
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/postgres_http.py",
+      "mode": "100644",
+      "gitBlob": "8c2b4618502ab65e2b10b37fa4bb8b13cf2d47d7",
+      "bytes": 11171
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/postgres_operator.py",
+      "mode": "100644",
+      "gitBlob": "dba661bf2ab1821536b2dcc371d90566aa3a48f4",
+      "bytes": 17965
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/profile_cli.py",
+      "mode": "100644",
+      "gitBlob": "8d4b1bf1ad9296a4c7d35fd5f0d9dd3ca5315af4",
+      "bytes": 8981
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/query_export.py",
+      "mode": "100644",
+      "gitBlob": "4fef52bba4b933a7e584048b723185f85147e2a8",
+      "bytes": 22980
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/query_stream.py",
+      "mode": "100644",
+      "gitBlob": "9ca4912887d8761be2161f9d13f16e11370ea646",
+      "bytes": 6332
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/recovery.py",
+      "mode": "100644",
+      "gitBlob": "856376273384b363c5073a09de7c23d4ca6182a1",
+      "bytes": 8803
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/requests.py",
+      "mode": "100644",
+      "gitBlob": "ebc389dc8212ab58313f66c4373c20075094077e",
+      "bytes": 2723
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/response_documents.py",
+      "mode": "100644",
+      "gitBlob": "65c8c9c8b347994e9d82e6834d56ace1ce19eaf6",
+      "bytes": 17213
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/response_tables.py",
+      "mode": "100644",
+      "gitBlob": "0eeddd3c723eb2b7a6816fff46c8c71da81a8eb3",
+      "bytes": 38725
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/result.py",
+      "mode": "100644",
+      "gitBlob": "236cc8bc61ea07ecfb1f38ec9e0fde769a3ce652",
+      "bytes": 12628
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/runtime.py",
+      "mode": "100644",
+      "gitBlob": "378b8418d4f1f41c08930b81e297377d1aa06068",
+      "bytes": 7330
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/sqlite_dataset.py",
+      "mode": "100644",
+      "gitBlob": "9d03674168ae866775abd02d89877c9e687f7444",
+      "bytes": 28578
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/storage.py",
+      "mode": "100644",
+      "gitBlob": "3b3426436f036718a560b9b70049fd065cc8a0a1",
+      "bytes": 3230
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/streams.py",
+      "mode": "100644",
+      "gitBlob": "79d0ece2aea7b3725acd6467b9fba0fff572ea25",
+      "bytes": 10820
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/workbook_client.py",
+      "mode": "100644",
+      "gitBlob": "ab298b2592da4e3d7b370276cba38d555ee7341f",
+      "bytes": 11954
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/workbook_refresh.py",
+      "mode": "100644",
+      "gitBlob": "c786dc772ca8b1fd912bc01aff2f239a937606cc",
+      "bytes": 17488
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/workspace_archive.py",
+      "mode": "100644",
+      "gitBlob": "0c13c4355a56398905944c49186e39687f254250",
+      "bytes": 31214
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/workspace_archive_receive.py",
+      "mode": "100644",
+      "gitBlob": "19a34f857eb9de8600aac24e003d073a081f8f45",
+      "bytes": 19605
+    }
+  ]
+}
