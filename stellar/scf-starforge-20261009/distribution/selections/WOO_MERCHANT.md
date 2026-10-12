@@ -30,6 +30,8 @@ The original source and guides travel under:
 Use the maintained commands and their complete original options:
 
 ```sh
+starforge woo-catalog --help
+starforge woo-erp help
 starforge woo-managed --help
 starforge woo-seller --help
 starforge woo-buyer --help
@@ -39,6 +41,55 @@ starforge delivery --help
 starforge delivery-workspace --help
 starforge buyer-agent --help
 ```
+
+## Commission current product terms
+
+Open **WooCommerce → Stellar catalog** in the original WordPress admin. Select the
+existing products, save an exact plan, compare current prices and gateway settings,
+and apply the reviewed mapping with its retained request identity. The plan editor
+keeps saved editions, source files, named application history and complete workspace
+exports in the same database. The original Woo product editor controls prices,
+stock, visibility and downloads.
+
+The seller handoff carries current routes plus the frozen versions needed by
+earlier pending orders. Receive it with `starforge woo-catalog receive` into a new
+configuration, keeping the existing configuration, secret environment binding and
+outbox. Review that exact configuration through the original managed application.
+The versioned seller selects the original order's terms by authenticated lookup;
+commissioning does not alter its amount, generation or payment state.
+
+Use the complete original guide at
+`source/stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/CATALOG.md`.
+It includes CSV and full-workspace imports, the original request recovery commands,
+version limits and same-origin ingress requirements.
+
+## Review connector sources and ERP mappings
+
+Open **WooCommerce → Order ERP delivery → Connector sources** in the same store.
+Retain the actual installed configuration or schema JSON/CSV, select its scope
+and typed row identities, save a source edition, and review its recipe against
+the current original ERP map. The original map store applies that reviewed
+change; existing order editions keep their selected maps and source lineage.
+
+The installed `woo-erp` command forwards to the original
+`merchant-erp-cli.mjs`, including its complete `kcf-*` source, comparison,
+mapping and receiving commands. It uses the existing merchant operator
+configuration and named WordPress credential environment:
+
+```sh
+starforge woo-erp help
+starforge woo-erp kcf-status --config /private/woo-operator.json
+starforge woo-erp kcf-export --config /private/woo-operator.json --installation INSTALLATION_SHA --include-orders yes --out /private/complete-connector.json
+starforge woo-erp kcf-import --config /private/receiving-operator.json --input /private/complete-connector.json --operation-id ORIGINAL_RECEIVING_ID
+```
+
+Use the original returned installation and operation IDs. The complete workflow
+and exact input shapes are in
+`source/stellar/scf-starforge-20261009/sf104-woocommerce-merchant-bridge/KCF.md`.
+The named export `./merchant/woocommerce/connector-sources` supplies the same
+original file-carrier and project validators; the merchant client exposes the
+authenticated source methods. Preserve complete private source/order exports
+and the original Woo database through an upgrade.
 
 ## Existing site, orders and purchased files
 

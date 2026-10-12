@@ -128,6 +128,118 @@ def close_original_child():
         else:child.wait()
     except ProcessLookupError:child.wait()
     child=None
+
+# This single-operation successor repairs the collection names proved by the
+# saved failure-1 checkpoint. It cannot reset any later producer work. Complete
+# predecessor bytes remain in INPUT and in every later customer delivery.
+COLLECTION_SUCCESSOR="collection-paths-20261012"
+PREDECESSOR_CHECKPOINT={"bytes":12777498,"sha256":"57b116213d038875a7eff778c71d71e7561ae7f87d6e598f840a3a94a92516df"}
+PREDECESSOR_FILES={
+ "subscription-native-host.py":{"bytes":45709,"sha256":"344b0689e7167c0d2ce3cda8ecad9df8badbf9c0fb13d7cfd91d60167b4deba6"},
+ "INPUT/subscription-customer-input.json":{"bytes":976,"sha256":"331bd7e8f1c28031c33fd1926a03e9288f027b0032e9d9972b8012aed6166ce4"},
+ "CUSTOMER/subscription-customer-operation.json":{"bytes":1036,"sha256":"f31fd55d2bb0376855e26b7a87b19a7f8c724c9e4739cbb4c06a9914636e2771"},
+ "CUSTOMER/steps/restore-source-workspace.json":{"bytes":147,"sha256":"be9cff824a728b08a0e602e6fba1096ceb5f58b1133d1551301aff9449ff53ed"}}
+COLLECTION_FILES={
+ "live/products/orders/collections/northwind-orders-complete/collection.json":{"bytes":11499,"sha256":"f811529bf906eb890b6654839a5ec1d201f6c71fa79a752745675caf29cca994"},
+ "live/products/orders/collections/orders-country-projection/collection.json":{"bytes":9216,"sha256":"0842c9b81efb9774b15f017ef7701b994453df2738cad424ae6234ea8f0bf0ee"}}
+def matches_bytes(raw,expected):
+    return len(raw)==expected["bytes"] and hashlib.sha256(raw).hexdigest()==expected["sha256"]
+def adopt_collection_successor():
+    selected_host=_receiving_host_source.encode()
+    host=PRIVATE/"subscription-native-host.py"
+    root=INPUT/"source-successors"/COLLECTION_SUCCESSOR
+    completed=root/"completed.json"
+    if not host.exists() and not root.exists():
+        immutable(host,selected_host);return
+    need(not host.is_symlink(),"Preserve a foreign original host.")
+    if host.read_bytes()==selected_host and not root.exists():return
+    previous={}
+    for name,expected in PREDECESSOR_FILES.items():
+        retained=root/"previous"/name
+        source=retained if retained.exists() else PRIVATE/name
+        need(source.is_file() and not source.is_symlink(),"Retain the complete original predecessor: "+name)
+        raw=source.read_bytes()
+        need(matches_bytes(raw,expected),"The original pre-producer predecessor changed: "+name)
+        previous[name]=raw
+    old_input=json.loads(previous["INPUT/subscription-customer-input.json"])
+    old_journal=json.loads(previous["CUSTOMER/subscription-customer-operation.json"])
+    old_restore=json.loads(previous["CUSTOMER/steps/restore-source-workspace.json"])
+    need(old_journal.get("state")=="NEEDS_ATTENTION" and
+         old_journal.get("operation_id")==OPERATION and
+         old_journal.get("input_sha256")==PREDECESSOR_FILES["INPUT/subscription-customer-input.json"]["sha256"] and
+         set(old_journal.get("steps",{}))=={"restore-source-workspace"} and
+         old_journal["steps"]["restore-source-workspace"]["state"]=="COMPLETE" and
+         old_journal.get("error",{}).get("code")=="ENOENT" and
+         old_restore=={"collections":2,"comparisons":1,"connections":1,"editions":0,"exports":0,"incompleteComparisons":0,"liveProducts":1},
+         "This successor is only for the proved collection-path failure before producer work.")
+    need(old_input.get("beforeCollection")=="live/products/orders/collections/orders-complete" and
+         old_input.get("afterCollection")=="live/products/orders/collections/orders-country-selection",
+         "The original collection selectors changed.")
+    new_input=dict(old_input)
+    new_input["beforeCollection"]="live/products/orders/collections/northwind-orders-complete"
+    new_input["afterCollection"]="live/products/orders/collections/orders-country-projection"
+    selected_input=encoded(new_input)
+    successor={"schema":"stellar-forge.odata-subscription-input-successor.v1","id":COLLECTION_SUCCESSOR,
+        "operation_id":OPERATION,"reason":"Use the two actual original collection names; retain the completed workspace Restore and every original request ID.",
+        "original_checkpoint":{**PREDECESSOR_CHECKPOINT,"library_file_id":"libfile_ebbcf504ec4881919704c8dbf41941ad",
+            "file_id":"file_00000000d93c81fb8e6f93770ce663af","version":0},
+        "previous_files":PREDECESSOR_FILES,"collection_files":COLLECTION_FILES,
+        "selected_host":{"bytes":len(selected_host),"sha256":hashlib.sha256(selected_host).hexdigest()},
+        "selected_input":{"bytes":len(selected_input),"sha256":hashlib.sha256(selected_input).hexdigest()}}
+    input_path=INPUT/"subscription-customer-input.json"
+    journal_path=OUTPUT/"subscription-customer-operation.json"
+    need(input_path.is_file() and not input_path.is_symlink() and
+         journal_path.is_file() and not journal_path.is_symlink(),"Preserve foreign original input/journal files.")
+    if completed.exists():
+        need(not completed.is_symlink() and json.loads(completed.read_bytes())==successor and
+             (root/"selection.json").read_bytes()==encoded(successor) and
+             (root/"selected-host.py").read_bytes()==selected_host and
+             host.read_bytes()==selected_host and input_path.read_bytes()==selected_input,
+             "Preserve the completed original source/input successor.")
+        current=json.loads(journal_path.read_bytes())
+        need(current.get("operation_id")==OPERATION and current.get("input_sha256")==successor["selected_input"]["sha256"] and
+             current.get("input_successors")==[successor],"Preserve the later original native journal.")
+        receipt["input_successors"]=[successor];return
+    need(child is None and receipt.get("state")=="NEEDS_ATTENTION" and
+         len(receipt.get("attempts",[]))==1 and receipt["attempts"][0].get("exit_code")==1 and
+         receipt["attempts"][0].get("label")=="subscription-customer" and
+         not any(key in receipt for key in ("native_result","customer_archive")),
+         "Close the original failed producer attempt before this exact successor.")
+    # Checkpoints retain regular files, so originally empty directories may be
+    # absent after receiving. The original native programme recreates them.
+    names={p.name for p in OUTPUT.iterdir()}
+    required={"subscription-customer-operation.json","source-workspace","steps",".sf82-state.lock.lifetime"}
+    need(required<=names<=required|{"backups","transfers"} and
+         all(not (OUTPUT/name).is_symlink() and
+             (not (OUTPUT/name).exists() or ((OUTPUT/name).is_dir() and not any((OUTPUT/name).iterdir())))
+             for name in ("backups","transfers")) and
+         {p.name for p in (OUTPUT/"steps").iterdir()}=={"restore-source-workspace.json"},
+         "Preserve any later or foreign customer work instead of upgrading its selection.")
+    need(digest(INPUT/"OData_Comparison_Workspace.json")==old_input["workspaceTransferSha256"]==
+         "b24e8ceb17ee656657bed81d163173dbc74290864bc43dbe35fabd5cff5806e8",
+         "The complete original workspace transfer changed.")
+    for name,expected in COLLECTION_FILES.items():
+        p=OUTPUT/"source-workspace"/name
+        need(p.is_file() and not p.is_symlink() and matches_bytes(p.read_bytes(),expected),
+             "The selected original collection changed: "+name)
+    need((OUTPUT/"steps"/"restore-source-workspace.json").read_bytes()==
+         previous["CUSTOMER/steps/restore-source-workspace.json"],"The completed original Restore result changed.")
+    new_journal=dict(old_journal);new_journal["input_sha256"]=successor["selected_input"]["sha256"]
+    new_journal["input_successors"]=[successor]
+    selected_journal=encoded(new_journal)
+    need(host.read_bytes() in (previous["subscription-native-host.py"],selected_host) and
+         input_path.read_bytes() in (previous["INPUT/subscription-customer-input.json"],selected_input) and
+         journal_path.read_bytes() in (previous["CUSTOMER/subscription-customer-operation.json"],selected_journal),
+         "Preserve an unrecognized partial source/input successor.")
+    for name,raw in previous.items():immutable(root/"previous"/name,raw)
+    immutable(root/"selection.json",successor);immutable(root/"selected-host.py",selected_host)
+    # Resume an interrupted prefix only against those saved original/derived
+    # bytes. The producer cannot run until all three writes and this marker end.
+    save(input_path,selected_input);save(journal_path,selected_journal);save(host,selected_host)
+    immutable(completed,successor)
+    receipt["input_successors"]=[successor]
+    print_status("subscription-original-collection-successor",selection=successor)
+
 def checkpoint_verify(path,label=None):
     with zipfile.ZipFile(path) as archive:
         members=archive.infolist()
@@ -156,8 +268,13 @@ def checkpoint_verify(path,label=None):
             with archive.open(member) as stream:
                 need(member.file_size==expected["bytes"] and hashlib.file_digest(stream,"sha256").hexdigest()==expected["sha256"],
                      "The complete checkpoint file changed: "+name)
-        need(declared["subscription-native-host.py"]["sha256"]==hashlib.sha256(_receiving_host_source.encode()).hexdigest(),
-             "Resume with the exact original checkpoint host source.")
+        host_sha=declared["subscription-native-host.py"]["sha256"]
+        if host_sha!=hashlib.sha256(_receiving_host_source.encode()).hexdigest():
+            need(path.stat().st_size==PREDECESSOR_CHECKPOINT["bytes"] and digest(path)==PREDECESSOR_CHECKPOINT["sha256"] and
+                 manifest.get("label")=="failure-1" and
+                 all(name in declared and all(declared[name][key]==value for key,value in expected.items())
+                     for name,expected in PREDECESSOR_FILES.items()),
+                 "Only the exact saved pre-producer checkpoint may adopt this original host successor.")
     return manifest
 def receive_checkpoint(selection):
     path=Path(selection["path"])
@@ -303,7 +420,7 @@ else:
 receipt["pid"]=os.getpid()
 if receiving:
     label=receiving["label"];receipt.setdefault("checkpoints",{}).setdefault(label,{})["received"]=receiving
-immutable(PRIVATE/"subscription-native-host.py",_receiving_host_source.encode())
+adopt_collection_successor()
 save(receipt_path,receipt)
 resource_snapshot("initial")
 def acquire_source_packet():
@@ -411,8 +528,8 @@ def stage_source():
         "title":"Orders subscription customer: original retained 830-row editions",
         "checkout":str(SOURCE),"outputDirectory":str(OUTPUT),"workspaceTransfer":str(baseline),
         "workspaceTransferSha256":digest(baseline),"archiveSha256":ARCHIVE_SHA,
-        "beforeCollection":"live/products/orders/collections/orders-complete",
-        "afterCollection":"live/products/orders/collections/orders-country-selection",
+        "beforeCollection":"live/products/orders/collections/northwind-orders-complete",
+        "afterCollection":"live/products/orders/collections/orders-country-projection",
         "expectedRows":830,
         "expectedChanges":{"after":830,"matched":830,"added":0,"removed":0,"changed":0,"unchanged":830,"events":0}}
     immutable(INPUT/"subscription-customer-input.json",descriptor)

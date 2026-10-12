@@ -81,6 +81,29 @@ This saved example is an initial population of an empty target. Open it to inspe
 
 The source metadata carries the original publisher, URL, declared capture date, license and source digests. The saved raw CSV is the complete original file listed above. The empty baseline is explicitly identified as an initial target.
 
+## Complete repeat-import and coverage example
+
+The complementary operation in examples/ELITE_SUPPLIER_WORKFLOW.md includes a full reviewed initial intake, the actual accepted-destination repeat import, and the complete catalogue coverage report.
+
+| File or directory | Operation |
+| --- | --- |
+| examples/elite-initial.rules.json | Source-shaped initial mapping with an explicit price_kind field: fixed or starting |
+| examples/elite-delivery/workspace.json | All 23 original prices accepted into the declared empty destination, with all 23 review decisions |
+| examples/elite-delivery/ | Full workspace, originals, rules, report, accepted CSV, SQLite snapshot, lineage and manifest |
+| examples/published-pricing-reimport.rules.json | Accepted canonical destination mapped to the original incoming price columns |
+| examples/elite-reimport-workspace.json | That actual destination compared with the unchanged publisher file: 23 unchanged accepted records |
+| examples/elite-coverage/ | Complete JSON, CSV and HTML coverage from the two original tables |
+
+Each saved case retains its own rules, request, comparison and decision history. The original published-pricing-intake example uses price_basis with from/published labels. The complementary Elite operation uses price_kind with starting/fixed labels. Both preserve the complete original display text and explicit GBP/period context. Use the selected workspace's embedded mapping when continuing its review.
+
+## Price basis and incoming supplier mappings
+
+The publisher's [pricing page](https://elitedigitalagency.io/pricing/), checked on 12 October 2026, states that its prices exclude VAT. Keep that separately sourced tax basis with the commissioning context when mapping a customer price list; the retained CSV and publisher capture date stay unchanged.
+
+For a quantity-priced supplier, include the actual price tier or minimum quantity in the business identity where the source uses those distinctions. The [MRPeasy import documentation](https://www.mrpeasy.com/resources/user-manual/crm/pricelists/import/) identifies a part number, selling price and minimum quantity, and illustrates one part at more than one price break. Select the complete source key before classifying repeated identifiers as duplicates.
+
+The [W3C tabular metadata vocabulary](https://www.w3.org/TR/tabular-metadata/) describes explicit columns, data types, null markers, keys and dialect configuration. Keep those choices with the actual imported source. [RFC 4180](https://www.rfc-editor.org/info/rfc4180/) documents CSV formatting and has Informational status. The component preserves the selected delimiter, complete original text and source row locations alongside its canonical mapping.
+
 ## Continue a received project
 
 Run the supplied supplier-report-cli.mjs with serve from the received supplier directory, open its localhost address, and load the adjacent workspace.json. Save a new complete workspace after an explicit review change.
