@@ -203,7 +203,14 @@ try {
   assert.equal(await page.evaluate(async () => (await fetch('/api/status')).status),200);
   await page.setViewportSize({ width:390, height:844 });
   await page.screenshot({ path:join(delivery,'video-phone.png'),fullPage:true });
-  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  report.phoneLayout = await page.evaluate(() => ({
+    viewport: innerWidth, width: document.documentElement.scrollWidth,
+    overflowing: [...document.querySelectorAll('main,header,section,div,dl,dd,p,video,a,button')].filter(element =>
+      element.getBoundingClientRect().right > innerWidth + 1 || element.scrollWidth > element.clientWidth + 1
+    ).map(element => ({ tag:element.tagName, id:element.id, className:element.className,
+      width:element.clientWidth, contentWidth:element.scrollWidth, right:element.getBoundingClientRect().right }))
+  }));
+  assert(report.phoneLayout.width <= report.phoneLayout.viewport, JSON.stringify(report.phoneLayout));
   assert.equal(browserErrors.length,0);
   record('desktop_phone_playback_complete_downloads_and_independent_sessions',
     { desktop:[1280,900], phone:[390,844], durationSeconds:duration, downloads:2, sessionCookies:2 });
