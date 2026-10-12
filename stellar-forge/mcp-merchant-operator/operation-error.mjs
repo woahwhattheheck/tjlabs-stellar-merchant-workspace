@@ -20,3 +20,17 @@ export function merchantOperationError(error) {
   if (Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599) result.status = error.status;
   return result;
 }
+
+/** Preserve existing merchant projections and their original recovery details. */
+export function withMerchantOperationErrors(original) {
+  if (original !== undefined && typeof original !== 'function')
+    throw new TypeError('Use the original synchronous merchant error projection.');
+  return error => {
+    const previous = original === undefined ? {} : original(error);
+    if (!plain(previous)) throw new TypeError('The original merchant error projection must return an object.');
+    const next = merchantOperationError(error);
+    if (!Object.keys(next).length) return previous;
+    return {...previous, ...next, ...(next.details && plain(previous.details)
+      ? {details: {...previous.details, ...next.details}} : {})};
+  };
+}
