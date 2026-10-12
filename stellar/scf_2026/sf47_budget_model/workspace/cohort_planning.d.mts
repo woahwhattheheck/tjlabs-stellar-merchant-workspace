@@ -144,6 +144,7 @@ export interface PlanningPaymentBase {
 }
 
 export type PlanningPayment =
+  | { kind: "FUNDED"; atomicUnitPrice: null; network: ""; asset: "" }
   | (PlanningPaymentBase & { kind: "PER_REQUEST" })
   | (PlanningPaymentBase & { kind: "UNPAID" })
   | (PlanningPaymentBase & {
@@ -165,7 +166,68 @@ export interface PlanningEconomics {
   hourlyCost: DecimalText | null;
 }
 
+
+/** Exact native reference. The full selected source also remains in calendarSource. */
+export interface PlanningFundingOrigin {
+  installationId: string;
+  revision: number;
+  sha256: string;
+  taskId?: string;
+  fundingId?: string;
+  entryId?: string;
+  mode?: "PURCHASE" | "ALLOWANCE_USE" | "REOPEN" | "FREE_USE";
+  state?: "PLANNED" | "CANCELLED";
+}
+export interface PlanningFundingEconomics {
+  currency: string;
+  unitRevenue: DecimalText | null;
+  feePerPayment: DecimalText | null;
+}
+export interface PlanningExplicitFunding extends PlanningEvidence {
+  id: string;
+  label: string;
+  kind: "DIRECT" | "PREPAID";
+  date: DateText;
+  buyerId: string;
+  /** Original purchased operation, retained separately from the later result's task. */
+  operationId: string;
+  facilitatorId: string | null;
+  atomicUnitPrice: AtomicText | null;
+  network: string;
+  asset: string;
+  economics: PlanningFundingEconomics | null;
+  origin: PlanningFundingOrigin | null;
+}
+export interface PlanningCalendarSource {
+  schema: "stellar-forge.sf47-cohort-plan-calendar-source.v1";
+  groupId: string;
+  /** Complete original native JSON documents, including saved records and source inventory. */
+  selection: Record<string, unknown>;
+  cohortSeed: NativeCohortPlanningSeed;
+}
+export interface PlanningExplicitFundingReport extends Omit<PlanningExplicitFunding, "economics">, PlannedMetrics {
+  merchantId: string;
+  buyerOperatorId: string;
+  merchantOperatorId: string;
+  facilitatorOperatorId: string | null;
+  scheduleIds: string[];
+  useOccurrenceIds: string[];
+  firstUsefulResultAt: TimestampText | null;
+  firstUsefulResultDate: DateText | null;
+  firstUseOccurrenceId: string | null;
+  withinWindow: boolean | null;
+  unpricedPaymentRequests: number;
+  unpricedIndependentOpportunities: number;
+  qualificationGaps: string[];
+  atomicAmount: AtomicText | null;
+  status: "UNUSED" | "EXISTING_FUNDING" | "UNPRICED" | "ZERO_PRICE" | "PLANNED";
+  sourceEconomics: PlanningFundingEconomics | null;
+  economics: PlanningEconomicAmounts | null;
+}
+
 export interface PlanningSchedule {
+  fundingGroupIds?: string[];
+  origin?: PlanningFundingOrigin | null;
   /** Shared active-hours pool; omission keeps delivery effort unassigned. */
   capacityPoolId?: string | null;
   id: string;
@@ -218,6 +280,8 @@ export interface CohortPlan {
   schedules: PlanningSchedule[];
   workshares: PlanningWorkshare[];
   capacityPools?: PlanningCapacityPool[];
+  fundingGroups?: PlanningExplicitFunding[];
+  calendarSource?: PlanningCalendarSource | null;
   sensitivity: PlanningSensitivity;
   note: string;
 }
@@ -234,6 +298,8 @@ export interface PlannedMetrics {
 }
 
 export interface PlanningSummary extends PlannedMetrics {
+  unpricedPaymentRequests?: number;
+  unpricedIndependentOpportunities?: number;
   independentBuyerOperators: number;
   independentMerchantOperators: number;
   returningBuyerOperators: number;
@@ -297,6 +363,7 @@ export interface PlanningEconomicAmounts {
 }
 
 export interface PlanningOccurrence extends PlannedMetrics {
+  fundingGroupIds?: string[];
   id: string;
   scheduleId: string;
   label: string;
@@ -313,7 +380,7 @@ export interface PlanningOccurrence extends PlannedMetrics {
   completionDate: DateText;
   withinWindow: boolean;
   asOfPosition: AsOfPosition;
-  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID";
+  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID" | "FUNDED";
   network: string;
   asset: string;
   allowance: PlanningAllowance | null;
@@ -364,12 +431,16 @@ export interface PlanningTarget {
   expected: number;
   planned: number | null;
   gap: number | null;
-  status: "PLANNED_CAPACITY" | "SHORTFALL" | "OUTSIDE_SCHEDULE_SCOPE";
+  status: "PLANNED_CAPACITY" | "SHORTFALL" | "OUTSIDE_SCHEDULE_SCOPE" | "PRICE_UNSPECIFIED";
+  unpricedAdditional?: number;
 }
 
 export type PlanningComponent = "revenue" | "supplierCost" | "paymentFees" | "activeHours" | "laborCost";
 
 export interface PlanningCurrency extends PlanningEconomicAmounts {
+  /** Unallocated linked estimates keep affected currency totals incomplete. */
+  unallocatedFundingIds?: string[];
+  unallocatedDeliveryIds?: string[];
   records: number;
   knownSubtotals: Record<PlanningComponent, DecimalText>;
   unknownRecordCounts: Record<PlanningComponent, number>;
@@ -380,7 +451,9 @@ export interface PlanningCurrency extends PlanningEconomicAmounts {
 export interface PlanningAsset {
   network: string;
   asset: string;
-  atomicAmount: AtomicText;
+  atomicAmount: AtomicText | null;
+  knownAtomicAmount?: AtomicText;
+  unpricedPaymentRequests?: number;
   plannedPaymentRequests: number;
   plannedPaidPurchases: number;
 }
@@ -503,11 +576,13 @@ export interface PlanningCapacityReport {
   sensitivity: Array<PlanningCapacitySummary & { poolId: string; label: string; effortIncreasePct: DecimalText }>;
 }
 export interface PlanningServicePricing {
+  fundingGroupIds?: string[];
+  currencies?: string[];
   id: string;
   label: string;
   scheduleIds: string[];
   currency: string | null;
-  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID";
+  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID" | "FUNDED";
   scheduledTasks: number;
   chargeUnits: number;
   unitRevenue: DecimalText | null;
@@ -527,6 +602,7 @@ export interface CohortPlanReport {
   /** Complete newer reports retain these extensions; earlier saved editions can omit them. */
   capacity?: PlanningCapacityReport;
   servicePricing?: PlanningServicePricing[];
+  fundingGroups?: PlanningExplicitFundingReport[];
 
   schema: typeof COHORT_PLAN_REPORT_SCHEMA;
   kind: "PLAN";
@@ -672,9 +748,9 @@ export interface CohortPlanComparison {
   inputChanges: {
     settings: PlanningFieldChange[];
     collections: Array<{
-      kind: "buyers" | "merchants" | "facilitators" | "operations" | "schedules" | "workshares" | "capacityPools";
+      kind: "buyers" | "merchants" | "facilitators" | "operations" | "schedules" | "workshares" | "capacityPools" | "fundingGroups";
       beforeOrder: string[]; afterOrder: string[];
-      rows: Array<PlanningRowChange<PlanningParticipant | PlanningFacilitator | PlanningOperation | PlanningSchedule | PlanningWorkshare | PlanningCapacityPool>>;
+      rows: Array<PlanningRowChange<PlanningParticipant | PlanningFacilitator | PlanningOperation | PlanningSchedule | PlanningWorkshare | PlanningCapacityPool | PlanningExplicitFunding>>;
     }>;
   };
   occurrences: Array<PlanningRowChange<PlanningOccurrence>>;
@@ -683,6 +759,7 @@ export interface CohortPlanComparison {
     rows: Array<PlanningRowChange<PlanningBuyerGroup | PlanningMerchantGroup | PlanningOperationGroup | PlanningFacilitatorGroup>>;
   }>;
   passGroups: Array<PlanningRowChange<PlanningPassGroup>>;
+  fundingGroups: Array<PlanningRowChange<PlanningExplicitFundingReport>>;
   workshares: Array<PlanningRowChange<PlanningWorkshareReport>>;
   sensitivity: {
     completion: Array<PlanningRowChange<PlanningCompletionSensitivity>>;
