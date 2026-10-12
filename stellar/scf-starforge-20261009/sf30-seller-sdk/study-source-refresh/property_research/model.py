@@ -95,11 +95,19 @@ def document(value):
     value["key"] = key(value.get("key"))
     value["title"] = text(value.get("title"), "title", maximum=1000)
     value["publisher"] = optional_text(value.get("publisher"), "publisher", 1000)
-    url = text(value.get("url"), "url", maximum=8000)
-    parsed = urlsplit(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
-        fail("PROPERTY_SOURCE_URL_INVALID")
-    value["url"] = url
+    # Published-source normalization stays byte-compatible. Customer exports and
+    # authored mappings use an explicit local source description, not an invented URL.
+    if value.get("url") is None or value.get("url") == "":
+        if value.get("source_kind") not in ("customer_export", "authored_mapping", "authored_projection"):
+            fail("PROPERTY_SOURCE_URL_INVALID")
+        value["source_reference"] = text(value.get("source_reference"), "source_reference", maximum=8000)
+        value["url"] = None
+    else:
+        url = text(value.get("url"), "url", maximum=8000)
+        parsed = urlsplit(url)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
+            fail("PROPERTY_SOURCE_URL_INVALID")
+        value["url"] = url
     value["published_date"] = date_value(value.get("published_date"), "published_date")
     value["pages"] = None if value.get("pages") is None else integer(value["pages"], "pages", minimum=1, maximum=100000)
     return dates(value)
