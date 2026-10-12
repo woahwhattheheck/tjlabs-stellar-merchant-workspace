@@ -58,6 +58,26 @@ def register(subparsers, common):
     target.add_argument("--expected-version", type=int, required=True)
     target.add_argument("--expected-report-sha256", required=True)
     target.add_argument("--output", required=True)
+    for verb in ("account-reconciliation", "account-reconciliation-export"):
+        target = command(verb, "Read or export the complete original statement reconciliation and saved period editions", case=True, output=verb == "account-reconciliation")
+        target.add_argument("--reconciliation", help="Retained reconciliation ID; omission lists the complete account")
+        target.add_argument("--revision", type=int, help="Original saved edition; omission opens its current head")
+        target.add_argument("--expected-version", type=int, required=verb == "account-reconciliation-export")
+        if verb == "account-reconciliation-export":
+            target.add_argument("--expected-report-sha256", required=True)
+            target.add_argument("--output", required=True)
+    target = command("account-reconciliation-statement-inputs", "Read the complete original statement bytes and retained mapping for its native writer", case=True, output=True)
+    target.add_argument("--source", required=True, help="Original statement source ID")
+    for verb in ("account-reconciliation-preview", "account-reconciliation-apply"):
+        target = command(verb, "Review or save the complete source, native cash matches and dated reconciliation edition", case=True, output=True)
+        target.add_argument("--input", required=True, help="Complete reconciliation JSON or downloaded browser desk")
+        target.add_argument("--expected-version", type=int, help="Original case version; must match if retained in the input")
+        if verb == "account-reconciliation-apply":
+            target.add_argument("--actor", help="Recording operator; must match if already retained")
+            target.add_argument("--request-id", help="Original request ID; must match if already retained")
+            target.add_argument("--expected-preview-sha256", help="Complete reviewed preview hash; must match if retained")
+    target = command("account-reconciliation-desk-resume", "Resume the exact original request retained in a complete browser reconciliation desk", case=True, output=True)
+    target.add_argument("--input", required=True)
     for verb in ("cash-account", "cash-account-export"):
         target = command(verb, "Read or export the complete dated cash account and original correction history", case=True, output=verb == "cash-account")
         target.add_argument("--start-date")
@@ -382,6 +402,58 @@ def read_bytes(filename, maximum=MAX_BUNDLE):
     return raw
 
 
+def reconciliation_document(filename, case_id, mode):
+    """Receive the complete original input and preserve every pending request field."""
+    try:
+        document = json.loads(read_bytes(filename, 64 * 1024 * 1024))
+    except (UnicodeError, ValueError) as exc:
+        raise Problem("Use a complete UTF-8 reconciliation input or downloaded desk.", 422, "INVALID_RECONCILIATION_INPUT") from exc
+    if not isinstance(document, dict):
+        raise Problem("Use the complete reconciliation input object.", 422, "INVALID_RECONCILIATION_INPUT")
+    if document.get("schema") == "stellar-forge.sf47-account-reconciliation-desk.v1":
+        if document.get("caseId") != case_id:
+            raise Problem("Open this reconciliation desk in its original case.", 409, "RECONCILIATION_DESK_CASE_MISMATCH")
+        pending = document.get("pending")
+        if mode == "resume" or pending is not None:
+            if (not isinstance(pending, dict) or pending.get("caseId") != case_id
+                    or pending.get("kind") != "account-reconciliation"
+                    or not isinstance(pending.get("body"), dict)
+                    or not isinstance(pending["body"].get("requestId"), str)
+                    or not pending["body"]["requestId"]):
+                raise Problem("Retain the complete original pending reconciliation request.", 422, "INVALID_RECONCILIATION_INPUT")
+            document = dict(pending["body"])
+        else:
+            draft = document.get("draft")
+            if not isinstance(draft, dict) or not isinstance(draft.get("document"), dict):
+                raise Problem("The downloaded desk needs its complete editable reconciliation document.", 422, "INVALID_RECONCILIATION_INPUT")
+            document = {"expectedVersion": document.get("caseVersion"),
+                        "reconciliationId": draft.get("reconciliationId"),
+                        "expectedRevision": draft.get("expectedRevision"), "state": draft.get("state"),
+                        "document": draft["document"]}
+    elif mode == "resume":
+        raise Problem("Resume from the complete original downloaded reconciliation desk.", 422, "INVALID_RECONCILIATION_INPUT")
+    if mode == "preview":
+        document = {key: value for key, value in document.items()
+                    if key not in ("requestId", "actor", "expectedPreviewSha256")}
+    return document
+
+
+def reconciliation_fields(document, args, applying=False):
+    body = dict(document)
+    supplied = [("expectedVersion", args.expected_version)]
+    if applying:
+        supplied += [("actor", args.actor), ("requestId", args.request_id),
+                     ("expectedPreviewSha256", args.expected_preview_sha256)]
+    for key, value in supplied:
+        if value is None:
+            continue
+        if key in body and body[key] is not None and body[key] != value:
+            raise Problem("The supplied " + key + " differs from the retained original reconciliation request.",
+                          409, "RECONCILIATION_REQUEST_MISMATCH")
+        body[key] = value
+    return body
+
+
 def cash_document(filename, case_id, mode):
     """Keep complete original requests while allowing a downloaded desk to resume."""
     try:
@@ -515,6 +587,23 @@ def operate(workspace, args):
     elif action == "supplier-account-export":
         return {"caseId": args.case, "output": publish(args.output, ops.export_supplier_account(
             args.case, args.contributor, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
+    elif action in ("account-reconciliation", "account-reconciliation-export"):
+        selected = {"reconciliationId": args.reconciliation, "revision": args.revision}
+        if action == "account-reconciliation-export":
+            return {"caseId": args.case, "output": publish(args.output, ops.export_account_reconciliation(
+                args.case, selected, args.expected_version, args.expected_report_sha256))}
+        result = ops.account_reconciliation(args.case, selected, args.expected_version)
+    elif action == "account-reconciliation-statement-inputs":
+        result = ops.account_reconciliation_statement_inputs(args.case, args.source)
+    elif action in ("account-reconciliation-preview", "account-reconciliation-apply", "account-reconciliation-desk-resume"):
+        mode = "preview" if action.endswith("-preview") else "apply" if action.endswith("-apply") else "resume"
+        body = reconciliation_document(args.input, args.case, mode)
+        if mode == "preview":
+            result = ops.account_reconciliation_preview(args.case, reconciliation_fields(body, args))
+        elif mode == "apply":
+            result = ops.account_reconciliation_apply(args.case, reconciliation_fields(body, args, applying=True))
+        else:
+            result = ops.account_reconciliation_apply(args.case, body)
     elif action in ("cash-account", "cash-account-export"):
         selected = {"startDate": args.start_date, "endDate": args.end_date,
                     "network": args.network, "currency": args.currency, "asset": args.asset}

@@ -448,6 +448,12 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
       catch{storageNote='Browser draft storage is unavailable. Download the complete desk to retain original input.';}
       session.initialized=true;
     }
+    if(session.incomingAccount){
+      const incoming=session.incomingAccount;
+      if(incoming.selection){session.selection=cleanSelection(incoming.selection);session.selectedId=null;}
+      if(incoming.cashId)session.selectedId=incoming.cashId;
+      session.panel='transactions';session.page=0;delete session.incomingAccount;
+    }
     render();await loadReport();render();
   }
   const ready=initialize().catch(problem=>{if(available())throw problem;});

@@ -98,7 +98,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
-  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted)};}
+  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),originalInputHandoff:clone(session.originalInputHandoff||null)};}
   async function persist(critical=false){
     const value=snapshot();
     persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
@@ -316,6 +316,25 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       '<div class="statement-actions">'+button('Preview updated decisions','preview')+button('Import reviewed cash movements','import',!preview.canImport||session.dirty||!session.confirmed,'class="statement-primary" data-statement-write="true"')+button('Download review','review-export',false,'data-statement-recovery="true"')+'</div>'+
       detail('Original source and review identity',{source:preview.source,caseId:preview.caseId,caseVersion:preview.expectedVersion,previewSha256:preview.previewSha256})+'</section>';
   }
+  async function openOriginalInputs(){
+    const selected=session.originalInputHandoff;if(!selected)return;
+    if(session.pending||session.accepted||session.inflight)throw new Error('Resume the retained original import before opening the selected source. Both complete inputs remain saved.');
+    if(selected.caseId!==current.program.id||!selected.inputs?.source?.contentBase64||!selected.inputs?.format||!selected.inputs?.columns||!Array.isArray(selected.inputs.decisions))throw new Error('The selected original statement needs its complete source bytes and mapping in this case.');
+    if(selected.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16)throw new Error('The selected original statement exceeds the native 8 MiB source size.');
+    const incoming=clone(selected.inputs),headers=statementHeaders(sourceText(incoming.source.contentBase64),incoming.format.delimiter);
+    if(source()&&JSON.stringify(session.inputs)!==JSON.stringify(incoming))download(snapshot(),'statement-before-original-source.json');
+    session.inputs=incoming;session.headers=headers;session.preview=null;session.dirty=true;session.confirmed=false;
+    session.page=0;session.status='ALL';session.query='';session.allocationRow=null;session.allocationDraft=[];
+    session.originalInputHandoff=null;
+    session.notice='Opened the exact retained statement source and original mapping. Review any corrections against the current case.';
+    await persist();
+  }
+  function originalInputPage(){
+    const selected=session.originalInputHandoff;if(!selected)return '';
+    return '<section class="statement-panel"><h4>Selected original statement</h4><p>'+esc(selected.inputs?.source?.filename||selected.statementSourceId||'Original source')+' is retained with its complete original mapping.</p><div class="statement-actions">'+
+      button('Open selected original statement','original-input',!!(session.pending||session.accepted||session.inflight))+
+      button('Download selected original inputs','original-input-export',false,'data-statement-recovery="true"')+'</div></section>';
+  }
   function recoveryPage(){
     if(session.accepted)return '<section class="statement-panel"><h4>Import accepted</h4><p>The original import has a server receipt. Read the saved case to finish receiving its cash records and sources.</p><div class="statement-actions">'+button('Read saved case','readback',false,'data-statement-recovery="true"')+button('Download recovery copy','draft-export',false,'data-statement-recovery="true"')+'</div></section>';
     if(session.pending)return '<section class="statement-panel"><h4>Resume the original import</h4><p>The exact reviewed request is retained. Resuming sends the same request identity and payload; the case returns its prior result if already saved.</p><div class="statement-actions">'+button('Resume original import','retry',false,'data-statement-recovery="true"')+button('Download recovery copy','draft-export',false,'data-statement-recovery="true"')+'</div></section>';
@@ -329,7 +348,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       (session.notice?'<p class="statement-notice" role="status" aria-live="polite">'+esc(session.notice)+'</p>':'')+
       (session.storageWarning?'<p class="statement-notice">'+esc(session.storageWarning)+'</p>':'')+
       (caseValue.program.state==='CLOSED'?'<p class="statement-notice">This case is closed. Reopen the case to import additional cash movements.</p>':'')+
-      recoveryPage()+sourcePage()+reviewPage()+
+      recoveryPage()+originalInputPage()+sourcePage()+reviewPage()+
       (session.lastReceipt?detail('Last statement import',session.lastReceipt):'');
     controls();
   }
@@ -340,7 +359,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   async function importDraft(file){
     if(!file)return;
     if(session.pending||session.accepted||session.inflight)throw new Error('Finish the retained import before opening another recovery copy.');
-    if(file.size>32*1024*1024)throw new Error('Select a recovery copy up to 32 MiB.');
+    if(file.size>64*1024*1024)throw new Error('Select a complete statement recovery copy up to 64 MiB.');
     const saved=JSON.parse(await file.text());
     if(saved.schema!=='sf47.statement-draft.v1'||saved.caseId!==current.program.id||!saved.inputs?.format||!saved.inputs?.columns||!Array.isArray(saved.inputs.decisions))throw new Error('Choose a statement recovery copy for this original case.');
     if(saved.inputs.source?.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The recovery copy contains a statement larger than 8 MiB.');
@@ -349,6 +368,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(request.action!=='statement.receive'||typeof request.requestId!=='string'||!request.data?.inputs?.source||!request.data.inputs.format||!request.data.inputs.columns||!Array.isArray(request.data.inputs.decisions)||typeof request.data.expectedPreviewSha256!=='string')throw new Error('The original import request in this recovery copy is invalid.');
       if(request.data.inputs.source.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The retained import contains a statement larger than 8 MiB.');
     }
+    if(saved.originalInputHandoff&&(saved.originalInputHandoff.caseId!==current.program.id||!saved.originalInputHandoff.inputs?.source?.contentBase64||!saved.originalInputHandoff.inputs.format||!saved.originalInputHandoff.inputs.columns||!Array.isArray(saved.originalInputHandoff.inputs.decisions)||saved.originalInputHandoff.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16))throw new Error('The queued original statement needs its complete source bytes and mapping in this case.');
+    session.originalInputHandoff=clone(saved.originalInputHandoff||null);
     const original=saved.pending?.payload||saved.accepted?.payload;
     session.inputs=clone(original?.data.inputs||saved.inputs);session.pending=clone(saved.pending||null);session.accepted=clone(saved.accepted||null);
     session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;headersFromSource();
@@ -398,6 +419,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       else if(action==='readback')await finishAccepted();
       else if(action==='refresh'){await refresh();session.notice='Read the current case. Preview again if its version changed.';}
       else if(action==='cash'){await persist();if(available())await onCash();}
+      else if(action==='original-input')await openOriginalInputs();
+      else if(action==='original-input-export')download(session.originalInputHandoff,'statement-original-inputs.json');
       else if(action==='draft-export')download(snapshot(),'statement-recovery.json');
       else if(action==='review-export')download(session.preview,'statement-review.json');
       else if(action==='draft-import'){
@@ -423,11 +446,17 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
         try{
           const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id){session.inputs=saved.inputs;session.headers=saved.headers||[];session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;}
+          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id){session.inputs=saved.inputs;session.headers=saved.headers||[];session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.originalInputHandoff=saved.originalInputHandoff||null;}
         }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
         session.loaded=true;
       })();
       await session.loadingDraft;
+    }
+    if(available()&&session.incomingOriginalInputs){
+      if(session.originalInputHandoff&&JSON.stringify(session.originalInputHandoff)!==JSON.stringify(session.incomingOriginalInputs))
+        download(session.originalInputHandoff,'statement-previous-original-inputs.json');
+      session.originalInputHandoff=clone(session.incomingOriginalInputs);delete session.incomingOriginalInputs;await persist();
+      if(!session.pending&&!session.accepted&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
     }
     loading=false;
     if(session.preview?.expectedVersion!==current.program.version){session.dirty=true;session.confirmed=false;}
