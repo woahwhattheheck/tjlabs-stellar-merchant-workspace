@@ -1,5 +1,6 @@
 /** MIT. Original quote workflow and complete native result consumption. */
 import {BuyerConsoleClient} from './client.mjs';
+import {createNativeRequestDesk} from './native-request.mjs';
 
 const client = new BuyerConsoleClient();
 const $ = id => document.getElementById(id);
@@ -8,9 +9,14 @@ const stringify = value => JSON.stringify(value, null, 2);
 const short = value => String(value ?? '').slice(0, 8);
 const time = value => Number.isFinite(value) ? new Date(value).toLocaleString() : String(value ?? '—');
 const size = bytes => Number.isFinite(bytes) ? bytes.toLocaleString() + ' bytes' : '—';
-const state = {connected:false, serial:0, view:'discover', resources:[], searchArgs:null, searchCursor:null,
+const state = {connected:false, serial:0, view:'discover', resources:[], searchArgs:null, searchPages:[],
+  searchContinuation:null, searchError:null, searching:0, searchBusy:false, searchSeen:new Set(),
   description:null, quote:null, history:[], historyCursor:null, results:[], resultCursor:null,
   result:null, reading:null, spending:null, spendingRead:0, selection:0, describing:0, executing:new Set(), uncertain:new Set(), urls:new Set()};
+
+const nativeDesk = createNativeRequestDesk({client,
+  ui:{node, table, facts, badge, detail, empty, pre, url, download, renderRecords, errorText, notice},
+  onView:() => setView('native')});
 
 function node(tag, {text, className, ...attrs} = {}, children = []) {
   const element = document.createElement(tag);
@@ -33,8 +39,15 @@ async function attempt(action, element) {
   const serial = state.serial;
   if (element) element.disabled = true;
   try { await action(); }
-  catch (error) { if (serial === state.serial) notice((error.code ? error.code + ' · ' : '') + error.message, true); }
+  catch (error) { if (serial === state.serial) notice(errorText(error), true); }
   finally { if (element?.isConnected && serial === state.serial) element.disabled = false; }
+}
+function errorText(error) {
+  const details = error.details ?? error.data?.details;
+  const keys = Array.isArray(details?.keys) ? details.keys.filter(key => typeof key === 'string') :
+    typeof details?.key === 'string' ? [details.key] : [];
+  return (error.code ? error.code + ' · ' : '') + error.message +
+    (keys.length ? ' Fields: ' + keys.join(', ') + '.' : '');
 }
 function pre(value) { return node('pre', {text:typeof value === 'string' ? value : stringify(value)}); }
 function detail(label, value) { return node('details', {}, [node('summary', {text:label}), pre(value)]); }
@@ -69,16 +82,18 @@ function download(bytes, filename, type = 'application/json') {
 }
 function setView(view) {
   state.view = view;
-  for (const name of ['discover','history','results']) $('view-' + name).hidden = name !== view;
+  for (const name of ['discover','history','results','native']) $('view-' + name).hidden = name !== view;
   for (const tab of document.querySelectorAll('[data-view]')) {
     if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
   }
 }
 function reset() {
-  state.serial++; client.disconnect(); revokeDownloads();
-  state.selection++; state.describing++;
+  state.serial++; client.disconnect(); revokeDownloads(); nativeDesk.reset();
+  state.selection++; state.describing++; state.searching++;
   Object.assign(state, {connected:false, resources:[], description:null, quote:null, result:null, reading:null, spending:null,
-    searchArgs:null, searchCursor:null, history:[], historyCursor:null, results:[], resultCursor:null});
+    searchArgs:null, searchPages:[], searchContinuation:null, searchError:null, searchBusy:false,
+    history:[], historyCursor:null, results:[], resultCursor:null});
+  state.searchSeen.clear();
   state.executing.clear(); state.uncertain.clear();
   $('workspace').hidden = true; $('connection').hidden = false; $('disconnect').hidden = true;
   $('connection-label').textContent = 'Disconnected'; $('access-token').value = '';
@@ -95,23 +110,68 @@ async function connect(event) {
     const init = await client.connect(token);
     state.connected = true; $('workspace').hidden = false; $('connection').hidden = true; $('disconnect').hidden = false;
     $('connection-label').textContent = 'Connected · ' + (init.serverInfo?.name ?? 'Workspace');
-    setView('discover'); notice('Connected. Select a resource or reopen an original quote.');
+    nativeDesk.connected();
+    setView('discover'); notice('Connected. Select a resource or reopen an original request.');
     await loadHistory(false);
   }, submit);
 }
 
-async function search(event, more = false) {
-  event?.preventDefault();
-  if (!more) {
-    state.searchArgs = {query:$('search-query').value, limit:25};
-    for (const [key, id] of [['network','search-network'], ['asset','search-asset'], ['maxAmount','search-amount']])
-      if ($(id).value) state.searchArgs[key] = $(id).value;
+const discoveryFields = [
+  ['type','search-type'], ['payTo','search-recipient'], ['network','search-network'],
+  ['extensions','search-extension'], ['scheme','search-scheme'], ['asset','search-asset'],
+  ['maxAmount','search-amount'],
+];
+function discoveryFormSelection() {
+  const query = $('search-query').value, mode = query.trim() ? 'search' : 'resources';
+  const args = {limit:Number($('search-limit').value)};
+  if (mode === 'search') args.query = query; else args.offset = 0;
+  for (const [key, id] of discoveryFields) if ($(id).value) args[key] = $(id).value;
+  return {mode, arguments:args};
+}
+function discoverySelectionKey(selection) {
+  return JSON.stringify([selection.mode, selection.arguments.query ?? '', selection.arguments.limit,
+    ...discoveryFields.map(([key]) => selection.arguments[key] ?? '')]);
+}
+function discoveryRequestKey(tool, args) {
+  return JSON.stringify([tool, Object.keys(args).sort().map(key => [key, args[key]])]);
+}
+function discoveryDraftChanged() {
+  return state.searchArgs !== null &&
+    discoverySelectionKey(discoveryFormSelection()) !== discoverySelectionKey(state.searchArgs);
+}
+function restoreDiscoverySelection() {
+  if (!state.searchArgs) return;
+  const args = state.searchArgs.arguments;
+  $('search-query').value = args.query ?? '';
+  $('search-limit').value = String(args.limit);
+  for (const [key, id] of discoveryFields) $(id).value = args[key] ?? '';
+  updateDiscoveryDraft();
+}
+function updateDiscoveryDraft() {
+  const target = $('discovery-draft');
+  if (!target) return;
+  const changed = discoveryDraftChanged();
+  target.replaceChildren(...(changed ? [
+    node('p', {className:'field-note', text:'The form has changed. Explore to apply it, or restore the displayed filters to continue these pages.'}),
+    button('Restore displayed filters', restoreDiscoverySelection),
+  ] : []));
+  for (const element of $('search-results').querySelectorAll('[data-discovery-next]'))
+    element.disabled = changed || state.searchBusy;
+}
+function renderDiscovery() {
+  const target = $('search-results');
+  if (!state.searchArgs) {
+    target.replaceChildren(state.searchBusy ? empty('Loading the requested catalog page…') : empty('Explore the catalog to load resources.'));
+    return;
   }
-  const serial = state.serial;
-  const result = await client.call('bazaar_search', {...state.searchArgs, ...(more ? {cursor:state.searchCursor} : {})});
-  if (serial !== state.serial) return;
-  state.resources = more ? [...state.resources, ...result.resources] : result.resources;
-  state.searchCursor = result.pagination?.nextCursor ?? result.pagination?.next_cursor ?? null;
+  const latest = state.searchPages.at(-1);
+  const caption = node('div', {className:'panel'}, [
+    node('h3', {text:state.searchArgs.mode === 'search' ? 'Search: ' + state.searchArgs.arguments.query : 'Catalog browse'}),
+    node('p', {className:'field-note', text:'Displayed resources use these applied filters and the original provider pages.'}),
+    facts(discoveryFields.filter(([key]) => state.searchArgs.arguments[key] !== undefined)
+      .map(([key]) => [key, state.searchArgs.arguments[key]])), node('div', {id:'discovery-draft'}),
+  ]);
+  if (state.searchBusy) caption.append(node('p', {className:'field-note', text:'Loading the requested catalog page…'}));
   const rows = state.resources.map(resource => [
     node('div', {}, [button(resource.resource?.description || resource.toolName || resource.resource?.url || 'Inspect resource',
       () => describe(resource.handle), {class:'linklike'}), node('div', {className:'mono muted', text:resource.resource?.url})]),
@@ -120,34 +180,157 @@ async function search(event, more = false) {
     badge(resource.allowedOrigin ? 'CONFIGURED ORIGIN' : 'HOST SETUP REQUIRED'),
     button('Inspect', () => describe(resource.handle)),
   ]);
-  $('search-results').replaceChildren(rows.length ? table(['Resource','Invocation','Payment choices','Access',''], rows) : empty('No resources matched this search.'));
-  const paging = node('div', {className:'pager'}, [node('span', {text:state.resources.length + ' resources loaded' + (result.partialResults ? ' · Catalog reports partial results' : '')})]);
-  if (state.searchCursor) paging.append(button('Load more resources', () => search(null, true)));
-  $('search-results').append(paging);
-  notice('Catalog response received. Inspect a resource to see its complete declaration.');
+  const counts = state.searchPages.reduce((sum, result) => ({
+    received:sum.received + result.page.received, filtered:sum.filtered + result.page.filtered,
+    invalid:sum.invalid + result.page.invalid, partial:sum.partial + Number(result.partialResults === true),
+  }), {received:0, filtered:0, invalid:0, partial:0});
+  const paging = node('div', {className:'pager'}, [
+    node('span', {text:state.resources.length + ' resources loaded · ' + state.searchPages.length +
+      ' provider pages · ' + counts.received + ' rows received · ' + counts.filtered + ' excluded by filters · ' + counts.invalid + ' unusable rows'}),
+  ]);
+  if (state.searchContinuation) paging.append(button('Load next provider page', () => search(null, true),
+    {disabled:state.searchBusy, 'data-discovery-next':true}));
+  else if (!state.searchError) paging.append(node('span', {text:'The provider reported no further page for this request.'}));
+  if (counts.partial) paging.append(node('span', {text:'The provider flagged ' + counts.partial + ' loaded page' + (counts.partial === 1 ? '' : 's') + ' as partial.'}));
+  target.replaceChildren(caption, rows.length ? table(['Resource','Invocation','Payment choices','Access',''], rows)
+    : empty('No resource matched the applied filters on the loaded pages.'), paging);
+  if (state.searchError) target.append(node('p', {className:'notice error', text:errorText(state.searchError)}));
+  target.append(detail('Provider pages and applied requests', state.searchPages.map(result => ({
+    source:result.source, page:result.page, partialResults:result.partialResults,
+    pagination:result.pagination, continuation:result.continuation,
+  }))));
+  if (latest) target.append(node('p', {className:'caption', text:'Latest page observed: ' + latest.source.observedAt}));
+  updateDiscoveryDraft();
+}
+async function search(event, more = false) {
+  event?.preventDefault();
+  if (more && (state.searchBusy || !state.searchContinuation)) return;
+  if (more && discoveryDraftChanged()) throw new Error('Restore the displayed filters before continuing these provider pages.');
+  const selection = more ? state.searchArgs : discoveryFormSelection();
+  const call = more ? state.searchContinuation : {tool:'bazaar_' + selection.mode, arguments:selection.arguments};
+  const args = structuredClone(call.arguments), requestKey = discoveryRequestKey(call.tool, args);
+  const serial = state.serial, request = ++state.searching;
+  state.searchBusy = true; renderDiscovery();
+  try {
+    const result = await client.call(call.tool, args);
+    if (serial !== state.serial || request !== state.searching) return;
+    if (!Array.isArray(result.resources) || !plain(result.source) || !plain(result.source.request) ||
+        !plain(result.page) || result.source.mode !== selection.mode ||
+        discoveryRequestKey(call.tool, result.source.request) !== requestKey)
+      throw new Error('The catalog response does not match the requested discovery page.');
+    if (!more) {
+      state.searchArgs = {mode:selection.mode, arguments:structuredClone(result.source.request)};
+      state.resources = []; state.searchPages = []; state.searchSeen.clear();
+    }
+    state.searchSeen.add(requestKey);
+    state.resources.push(...result.resources); state.searchPages.push(result);
+    state.searchContinuation = result.continuation;
+    state.searchError = result.page.continuationError;
+    if (state.searchContinuation && state.searchSeen.has(discoveryRequestKey(state.searchContinuation.tool, state.searchContinuation.arguments))) {
+      state.searchContinuation = null;
+      state.searchError = {code:'DISCOVERY_CURSOR_REPEATED', message:'The provider returned a page request already loaded in this view.'};
+    }
+    notice('Catalog page received. Inspect a resource to prepare its exact request.');
+  } catch (error) {
+    if (serial === state.serial && request === state.searching) throw error;
+  } finally {
+    if (serial === state.serial && request === state.searching) {
+      state.searchBusy = false; renderDiscovery();
+    }
+  }
 }
 
+function schemaShape(schema, depth = 0) {
+  if (depth >= 8) return 'See full schema';
+  if (schema === false) return 'Disallowed';
+  if (!plain(schema)) return 'See full schema';
+  const type = Array.isArray(schema.type) ? schema.type.join(' | ') : schema.type;
+  if (type === 'array') return 'array of ' + (plain(schema.items) ? schemaShape(schema.items, depth + 1) : 'declared items');
+  return typeof type === 'string' ? type : 'See full schema';
+}
+function invocationFields(value) {
+  const input = value.preview.input;
+  if (input.container === 'query') {
+    const parameters = input.parameters ?? [];
+    if (!parameters.length) return empty('The seller has not declared query parameter keys for this resource.');
+    let fixed;
+    try { fixed = new Set(new URL(value.resource.url).searchParams.keys()); } catch { fixed = new Set(); }
+    return table(['Query key','Declared shape','Required','Encoding and description'], parameters.map(parameter => [
+      node('span', {className:'mono', text:parameter.name}),
+      parameter.type === 'array' ? 'array of ' + (Array.isArray(parameter.itemType) ? parameter.itemType.join(' | ') : parameter.itemType ?? 'declared items')
+        : Array.isArray(parameter.type) ? parameter.type.join(' | ') : parameter.type ?? 'Unspecified',
+      parameter.required ? (fixed.has(parameter.name) ? 'Yes · present in URL' : 'Yes') : 'Optional',
+      node('div', {}, [
+        node('span', {text:parameter.encoding === 'form-comma' ? 'Comma-separated form value'
+          : parameter.encoding === 'form-repeated' ? 'Repeated form values' : 'Literal string or repeated values'}),
+        ...(parameter.title ? [node('div', {text:parameter.title})] : []),
+        ...(parameter.description ? [node('p', {text:parameter.description})] : []),
+      ]),
+    ]));
+  }
+  const schema = value.bazaar.info?.input?.inputSchema;
+  const properties = plain(schema?.properties) ? schema.properties : {};
+  const required = new Set(Array.isArray(schema?.required) ? schema.required.filter(key => typeof key === 'string') : []);
+  const names = [...new Set([...Object.keys(properties), ...required])];
+  if (!names.length) return empty('Use the complete declared tool schema to prepare this argument object.');
+  const shown = names.slice(0, 256);
+  return node('div', {}, [
+    table(['Argument','Declared shape','Required','Description'], shown.map(name => [
+      node('span', {className:'mono', text:name}), schemaShape(properties[name]), required.has(name) ? 'Yes' : 'Optional',
+      typeof properties[name]?.description === 'string' ? properties[name].description.slice(0, 2048) : 'See full schema',
+    ])),
+    ...(names.length > shown.length ? [node('p', {className:'field-note', text:'Showing the first ' + shown.length + ' top-level declarations. The complete schema is available below.'})] : []),
+  ]);
+}
 async function describe(handle) {
-  const serial = state.serial, request = ++state.describing, value = await client.call('bazaar_describe', {handle});
+  const serial = state.serial, request = ++state.describing;
+  const target = $('resource-detail');
+  state.description = null; target.hidden = false; target.setAttribute('aria-busy', 'true');
+  target.replaceChildren(empty('Loading the selected resource declaration…'));
+  let value;
+  try { value = await client.call('bazaar_describe', {handle}); }
+  catch (error) {
+    if (serial === state.serial && request === state.describing) {
+      target.removeAttribute('aria-busy');
+      target.replaceChildren(node('h3', {text:'Resource inspection failed'}),
+        node('p', {className:'notice error', text:errorText(error)}),
+        button('Retry inspection', () => describe(handle)));
+      throw error;
+    }
+    return;
+  }
   if (serial !== state.serial || request !== state.describing) return;
+  target.removeAttribute('aria-busy');
   state.description = value;
   const preview = value.preview, container = preview.input.container;
+  const declarationErrors = [preview.input.inputError, preview.input.requiredKeysError, preview.remoteMcpError]
+    .filter((error, index, errors) => error && errors.findIndex(other => other?.code === error.code && other?.message === error.message) === index);
+  const canPreview = preview.allowedOrigin && preview.methodSupported && declarationErrors.length === 0;
+  let inputRevision = 0;
   const options = node('select', {id:'payment-option', 'aria-label':'Payment option'}, value.accepts.map((option, index) =>
     node('option', {value:index, text:(index + 1) + ' · ' + option.amount + ' ' + option.asset + ' · ' + option.network})));
   const choice = node('div');
   const showChoice = () => choice.replaceChildren(facts(Object.entries(value.accepts[Number(options.value)])));
-  options.addEventListener('change', showChoice); showChoice();
+  options.addEventListener('change', () => { inputRevision++; showChoice(); }); showChoice();
   const input = node('textarea', {id:'invocation-input', spellcheck:'false', 'aria-label':container === 'arguments' ? 'Tool arguments JSON' : 'Query values JSON'});
-  input.value = '{}';
+  input.value = '{}'; input.addEventListener('input', () => { inputRevision++; });
   const form = node('form', {}, [node('label', {text:container === 'arguments' ? 'Tool arguments (JSON object)' : 'Query values (JSON object)'}, [input]),
     node('p', {className:'field-note', text:container === 'query'
-      ? 'Use the advertised query keys and string values. Required keys: ' + (preview.input.requiredKeys?.join(', ') || 'none declared') + '.'
+      ? 'Enter explicit strings or nonempty arrays of strings. ' +
+        (preview.input.querySerialization ? 'The seller’s declared form encoding applies to each field. ' : 'Strings stay literal; arrays repeat their key. ') +
+        'Required keys: ' + (preview.input.requiredKeys?.join(', ') || 'none declared') + '. Values already in the resource URL remain unless you replace that key.'
       : 'Enter the actual arguments for this tool. The live server validates the advertised input schema.'})]);
   const create = node('button', {type:'submit', className:'primary', text:'Review exact quote'});
-  create.disabled = !preview.allowedOrigin || !preview.methodSupported;
+  create.disabled = !canPreview;
   form.append(create);
   form.addEventListener('submit', event => {
-    event.preventDefault(); attempt(async () => {
+    event.preventDefault();
+    if (!canPreview) return;
+    if (serial !== state.serial || request !== state.describing || state.description !== value) {
+      notice('Inspect this resource again before preparing its request.', true);
+      return;
+    }
+    attempt(async () => {
       let parsed;
       try {
         parsed = JSON.parse(input.value, (_key, value) => {
@@ -157,25 +340,39 @@ async function describe(handle) {
         });
       } catch (error) { throw error instanceof RangeError ? error : new Error('Enter valid JSON for the invocation.'); }
       if (!plain(parsed)) throw new Error('The invocation input must be a JSON object.');
-      const quote = await client.call('bazaar_preview', {handle:value.handle, acceptIndex:Number(options.value), input:{[container]:parsed}});
-      if (serial !== state.serial) return;
-      state.selection++; selectQuote(quote); renderQuote(); $('quote-detail').scrollIntoView({behavior:'smooth', block:'start'});
+      const revision = inputRevision, selection = ++state.selection;
+      let quote;
+      try {
+        quote = await client.call('bazaar_preview', {handle:value.handle, acceptIndex:Number(options.value), input:{[container]:parsed}});
+      } catch (error) {
+        if (serial === state.serial && request === state.describing && state.description === value && selection === state.selection && revision === inputRevision) throw error;
+        return;
+      }
+      if (serial !== state.serial || request !== state.describing || state.description !== value || selection !== state.selection) return;
+      if (revision !== inputRevision) {
+        notice('Quote ' + quote.quoteId + ' was saved with the earlier input. Open it in Quote history to inspect that request.');
+        return;
+      }
+      selectQuote(quote); renderQuote(); $('quote-detail').scrollIntoView({behavior:'smooth', block:'start'});
       notice('Quote created. Review the exact invocation and terms before requesting host approval.');
     }, create);
   });
-  const target = $('resource-detail'); target.hidden = false;
   target.replaceChildren(node('div', {className:'detail-heading'}, [node('div', {}, [
     node('h3', {text:value.resource.description || value.resource.url}), node('p', {className:'mono', text:value.resource.url}),
   ]), badge(preview.resourceType.toUpperCase())]),
   node('div', {className:'detail-grid'}, [
     node('div', {}, [node('h4', {text:'Invocation'}), facts([
       ['Method', preview.method], ['Tool', preview.remoteMcp?.toolName], ['Endpoint', preview.remoteMcp?.endpoint ?? value.resource.url],
-    ]), form, ...(preview.remoteMcpError ? [pre(preview.remoteMcpError)] : []),
-    detail('Declared input and schema', {input:value.bazaar.info?.input, schema:value.bazaar.schema})]),
+    ]), node('h4', {text:container === 'query' ? 'Declared query fields' : 'Top-level argument declarations'}), invocationFields(value),
+    ...declarationErrors.map(error => node('p', {className:'notice error', text:errorText(error)})),
+    form, detail('Declared input and schema', {input:value.bazaar.info?.input, schema:value.bazaar.schema}),
+    detail('Request preparation details', preview.input)]),
     node('div', {}, [node('h4', {text:'Payment choice'}), node('label', {text:'Original option'}, [options]), choice,
       node('p', {className:'field-note', text:'Amounts use the asset’s original base units. A quote does not make a payment.'}),
       detail('Full original declaration', value.bazaar), detail('Discovery source', value.source)]),
   ]));
+  if (preview.resourceType === 'http') target.append(nativeDesk.offer(value,
+    () => serial === state.serial && request === state.describing && state.description === value));
   target.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -486,6 +683,8 @@ function renderResult() {
 $('connect-form').addEventListener('submit', connect);
 $('disconnect').addEventListener('click', () => { reset(); notice('Disconnected. Original operations and saved results remain in the workspace.'); });
 $('search-form').addEventListener('submit', event => { event.preventDefault(); attempt(() => search(event), event.submitter); });
+$('search-form').addEventListener('input', updateDiscoveryDraft);
+$('search-form').addEventListener('change', updateDiscoveryDraft);
 $('refresh-history').addEventListener('click', event => attempt(() => loadHistory(false), event.currentTarget));
 $('history-filter').addEventListener('submit', event => { event.preventDefault(); attempt(() => loadHistory(false), event.submitter); });
 $('refresh-results').addEventListener('click', event => attempt(() => loadResults(false), event.currentTarget));
@@ -493,5 +692,6 @@ for (const tab of document.querySelectorAll('[data-view]')) tab.addEventListener
   setView(tab.dataset.view);
   if (state.view === 'history') await loadHistory(false);
   if (state.view === 'results') await loadResults(false);
+  if (state.view === 'native') await nativeDesk.open();
 }));
-window.addEventListener('pagehide', () => { client.disconnect(); revokeDownloads(); });
+window.addEventListener('pagehide', () => { nativeDesk.reset(); client.disconnect(); revokeDownloads(); });

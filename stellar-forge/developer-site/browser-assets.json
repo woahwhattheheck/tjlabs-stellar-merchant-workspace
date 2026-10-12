@@ -269,6 +269,34 @@
       ]
     ],
     [
+      "/grant-companion-core.mjs",
+      [
+        "grant-companion-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-companion-workspace.mjs",
+      [
+        "grant-companion-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-companion.css",
+      [
+        "grant-companion.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-companion.html",
+      [
+        "grant-companion.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-data/application.md",
       [
         "grant-data/application.md",
@@ -342,6 +370,20 @@
       "/grant-plan-source.mjs",
       [
         "grant-plan-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-plan-update-core.mjs",
+      [
+        "grant-plan-update-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-plan-update-workspace.mjs",
+      [
+        "grant-plan-update-workspace.mjs",
         "text/javascript; charset=utf-8"
       ]
     ],

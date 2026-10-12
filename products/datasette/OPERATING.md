@@ -34,7 +34,7 @@ In Runtime workspace, attach the installed READY runtime and select **Applicatio
 
 Review and save the application, then Start and Open. The source-owned launcher reuses the original Datasette CLI after checking the reviewed immutable workspace declaration. A restart updates the same connection file. Changing the directory or declaration requires a current application review.
 
-The **Datasette customer Analysis** application is included beside the publisher. Select it when continuing the received edition into the original customer database, saved queries, reports and workbook.
+The **Datasette customer Analysis** application is included beside the publisher. Select it when continuing the received edition into the original customer database, saved queries, reports and workbook. The **Datasette source workflow** entry opens complete original business requests, named source families, supplier review and report delivery; its full sequence appears under [Operate a complete source workflow](#operate-a-complete-source-workflow).
 
 ## Capture a source
 
@@ -211,6 +211,195 @@ A workspace export snapshots the current customer database, source editions, que
 On the receiving host, use the original customer receive command with the full archive, returned SHA-256 and a stable receiving-operation ID, choosing an absent private destination. Reopen **Datasette customer Analysis** against the received directory with the original customer Analysis operation ID and a compatible installed Python/workbooks environment. The saved queries and workbook remain editable, and further exports carry subsequent customer work.
 
 The [original receive and reopen procedure](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/README.md#receive-and-reopen-the-original-workspace) includes exact CLI inputs. The source/publisher ZIP and the customer's Analysis ZIP keep their respective original archive engines and stores; deliver each workspace the receiving engineer is continuing.
+
+## Operate a complete source workflow
+
+Use **Applications → Datasette source workflow** for original requests that
+acquire selected source editions, run a saved SQL/report configuration and
+deliver the complete editable result. The maintained customer Analysis
+application owns the native database. The source workflow retains the original
+business request and correlation, selected configuration, native operation
+identities and delivery history.
+
+### Select the installed source and native owner
+
+In **Python & workbooks**, select the original retained workbooks installation.
+Use its 64-character installation ID and actual installation.python executable.
+The selected runtime has its own 24-character runtime ID and its original
+binding.sourceRoot. A built package commonly uses
+/opt/tjlabs/merchant/source as that source root.
+
+Keep the original **Datasette customer Analysis** application running. Use its
+private database directory and original 32-character Analysis operation ID.
+The [installed application guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/INSTALLATION.md)
+contains the exact Analysis and source workflow settings and startup sequence.
+
+For repeated installed workflow commands, retain the four actual runtime
+selection fields:
+
+~~~sh
+CONAPI_SOURCE=/opt/tjlabs/merchant/source
+CONAPI_RUNTIME_WORKSPACE=/srv/starforge/operator
+CONAPI_RUNTIME_DIRECTORY=/srv/starforge/runtime
+CONAPI_RUNTIME_ID=ORIGINAL_24_HEX_RUNTIME_ID
+CONAPI_PYTHON_INSTALLATION=ORIGINAL_64_HEX_PYTHON_INSTALLATION_ID
+CONAPI_COMPONENT="$CONAPI_SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis"
+CONAPI_SUPPLIER_COMPONENT="$CONAPI_SOURCE/products/conapi/supplier-report"
+CONAPI_ORIGINAL_INPUTS="$CONAPI_COMPONENT/sources/elite-digital-20261012"
+CONAPI_PROJECT=/srv/starforge/customer/conapi
+CONAPI_WORKFLOW="$CONAPI_PROJECT/workflow"
+CONAPI_ANALYSIS=/srv/starforge/customer/analysis
+CONAPI_OPERATION=ORIGINAL_32_HEX_ANALYSIS_OPERATION_ID
+
+conapi_workflow() {
+  starforge datasette-analysis \
+    --runtime-workspace "$CONAPI_RUNTIME_WORKSPACE" \
+    --runtime-directory "$CONAPI_RUNTIME_DIRECTORY" \
+    --runtime-id "$CONAPI_RUNTIME_ID" \
+    --installation-id "$CONAPI_PYTHON_INSTALLATION" \
+    -- workflow "$@"
+}
+~~~
+
+Replace the example directories and original IDs with the actual installed
+selection. The wrapper resolves the matching source and Python automatically;
+arguments after workflow are the maintained workflow_cli.py interface.
+
+### Configure the complete original supplier family
+
+The installed original example contains published-pricing.csv,
+services-catalogue.csv and datapackage.json. These are complete retained public
+files from Elite Digital AI Solutions Ltd, with the original August 12, 2026
+publisher edition and CC BY 4.0 attribution. Their
+[original source inventory](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/sources/elite-digital-20261012/README.md)
+records each URL, full byte count and SHA-256.
+
+The installed supplier component includes
+examples/published-pricing-intake.workspace.json: the complete native review
+for all 23 original price records entering an explicitly empty initial target.
+Its 23 decisions, original request conapi-elite-initial-import-20261012,
+comparison, revision 23 and reviewed status are retained. Use that workspace
+for this original source family. The workflow links its native identity to the
+new business request. A different customer candidate selects its corresponding
+complete native review workspace and original source together.
+
+The complete configuration command is:
+
+~~~sh
+conapi_workflow configure \
+  --template "$CONAPI_COMPONENT/WORKFLOW_SUPPLIER_EXAMPLE.json" \
+  --source-csv "$CONAPI_ORIGINAL_INPUTS/published-pricing.csv" \
+  --related-csv "catalog=$CONAPI_ORIGINAL_INPUTS/services-catalogue.csv" \
+  --source-metadata "$CONAPI_ORIGINAL_INPUTS/datapackage.json" \
+  --related-metadata "catalog=$CONAPI_ORIGINAL_INPUTS/datapackage.json" \
+  --supplier-component "$CONAPI_SUPPLIER_COMPONENT" \
+  --supplier-workspace "$CONAPI_SUPPLIER_COMPONENT/examples/published-pricing-intake.workspace.json" \
+  --supplier-table-name supplier_feed_accepted \
+  --supplier-pricing "$CONAPI_ORIGINAL_INPUTS/published-pricing.csv" \
+  --supplier-catalogue "$CONAPI_ORIGINAL_INPUTS/services-catalogue.csv" \
+  --supplier-metadata "$CONAPI_ORIGINAL_INPUTS/datapackage.json" \
+  --analysis-workspace "$CONAPI_ANALYSIS" \
+  --operation-id "$CONAPI_OPERATION" \
+  --source-archive /srv/starforge/releases/ACTUAL_COMPLETE_SOURCE_ARCHIVE.tgz \
+  --output "$CONAPI_PROJECT/supplier-configuration.json"
+~~~
+
+The template selects the original prices alias and related catalog alias.
+Its supplier sourceBindings maps prices to the native candidate source; coverage
+binds those same prices/catalog editions. The configured original files and
+parser are pinned to their actual bytes. A new source edition selects its
+corresponding new review workspace and complete input descriptors together.
+
+For WRI or another Datasette source, use WORKFLOW_EXAMPLE.json and the original
+source handover or native capture configuration described in
+[WORKFLOW_ANALYSIS.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/WORKFLOW_ANALYSIS.md).
+The same request and delivery engine runs against its selected native source.
+
+### Open, request and inspect the report
+
+Open **Applications → Datasette source workflow** and select:
+
+| Application field | Selection |
+| --- | --- |
+| Installed Python environment | CONAPI_PYTHON_INSTALLATION |
+| Original request workspace | CONAPI_WORKFLOW |
+| Installed source and report configuration | CONAPI_PROJECT/supplier-configuration.json |
+| Local port | 0, or a retained explicit loopback port |
+
+Review, Save, Start and Open. The original observer binds the configuration,
+workspace and live listener before publishing the Open link. Direct launch uses
+the same installed interface:
+
+~~~sh
+conapi_workflow serve \
+  --workspace "$CONAPI_WORKFLOW" \
+  --configuration "$CONAPI_PROJECT/supplier-configuration.json" \
+  --port 0
+~~~
+
+The workbench displays the source family and complete configured report before
+request creation. Enter the original business request ID and correlation ID,
+select its profile, and provide the required parameter object. The supplier
+example requires period with an original value such as month:
+
+~~~json
+{
+  "schema": "stellar-forge.source-workflow-request.v1",
+  "requestId": "conapi-supplier-a-20261012",
+  "correlationId": "conapi-supplier-receiving-20261012",
+  "profile": "elite-supplier-review",
+  "parameters": {"period": "month"}
+}
+~~~
+
+Accept and run the original request. The result retains the complete original
+source family and the following six native SQL sections:
+
+| Section | Customer result |
+| --- | --- |
+| original_prices | Every price and original field, keyed by the original name |
+| original_catalogue | Every service catalogue entry and its original canonical URL |
+| price_catalogue | Complete prices joined to the catalogue, with explicit unmatched entries and blank/zero charity-rate state |
+| catalogue_coverage | All catalogue entries and their actual count of matching price tiers |
+| catalogue_review | Complete original prices outside the selected catalogue |
+| selected_period | Original prices for the requested billing period and their catalogue fields |
+
+The joined report and baseline source reports keep GBP amounts, separate
+charity rates, one-off/month/free periods and published from-price wording.
+Repeated price paths preserve the publisher's distinct tiers. Missing catalogue
+matches remain visible. Query limits retain the native truncation outcome in
+the result, so the report displays its actual completeness.
+
+Open the retained source and query files, complete report and workbook, original
+supplier review and catalogue coverage. The result carries the source-owned
+supplier request ID, comparison, revision and actual review status. Its complete
+manifest, accepted outputs when reviewed, original inputs and unchanged native
+workspace travel together. The request's events and delivery controls keep its
+original correlation and native result identities.
+
+### Export, reopen and continue
+
+Use Export project after the request completes. Retain the complete ZIP and its
+returned hash. It contains all native outputs and the original Analysis archive,
+the full supplier package, source originals, selected software archive,
+request/history and workflow/flow source.
+
+Use the existing Applications Stop control to close this workflow listener.
+The original request directory and histories remain. Restart and Open that
+same application to obtain its new local capability and current listener.
+The selected Analysis owner remains separately available through its original
+application. Configure a different source or report through a new complete
+profile and current application review.
+
+For a received project, open the workflow application at the receiving
+directory without a configuration to inspect and re-export the retained result.
+Reopen the restored Analysis application and configure the actual received
+source files before a new report action. An edited report becomes a successor
+request with parentRequestId pointing to the original business request.
+[Installation and receiving](RECEIVING.md#receive-a-complete-report-project)
+and the [full native receiving programme](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/WORKFLOW_RECEIVING.md)
+provide the complete independent receive, actual source rebinding and successor
+export sequence.
 
 ## Agent and typed-client access
 

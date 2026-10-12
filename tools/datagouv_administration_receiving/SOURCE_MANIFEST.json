@@ -1,0 +1,26 @@
+{
+  "schema": "datagouv.administration-receiver-source/v1",
+  "operation_id": "DATACTIVIST-LINUX-ADMIN-018A-20261012-01",
+  "files": [
+    {
+      "path": "operate.py",
+      "bytes": 28736,
+      "sha256": "128c927305c29a8559fb46d97c71a6625dafa12537713b9e0fb4dc305d7ddf64"
+    },
+    {
+      "path": "receive.py",
+      "bytes": 50621,
+      "sha256": "6cb6b749ea74e236a38b90794559ef6d8ea627d62b55931795a0811a9c5aeecd"
+    },
+    {
+      "path": "SOURCE_SELECTION.json",
+      "bytes": 9512,
+      "sha256": "4bbf16044d345f3ebc37e3195fd1b6bf9a6a15b606519e6cc7b5efc05ae2af0e"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 19255,
+      "sha256": "e2efb455b3a737d540309842c0a8ca4b2411753b4e4c02e14e849a6da1d1fa01"
+    }
+  ]
+}

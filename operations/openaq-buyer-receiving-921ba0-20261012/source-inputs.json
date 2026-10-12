@@ -1,0 +1,46 @@
+{
+  "schema": "commons.source-native-receiving.v1",
+  "operation": "openaq-native-921ba0-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "productCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+  "parentSellerCommit": "3c9063c0872e835c25cb1e95c00ab27bd30326a2",
+  "productPullRequest": 593,
+  "originalSellerPullRequest": 517,
+  "sourceAcquisition": "original configured git fetch --no-tags --depth=1, exact HEAD and clean tracked source",
+  "dependencyProfile": {
+    "package": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+    "lockfile": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
+    "lockGitBlob": "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223"
+  },
+  "study": {
+    "file": "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/study.tgz",
+    "bytes": 13807,
+    "sha256": "9fcc10bd1c91816c51c790a45d6f6aa76053ea375092ff5a802c655a19acc0b6",
+    "captureId": "142e4ed4-b38c-4013-8718-d3050765ee66",
+    "reviewId": "d12ca7d5-edec-4496-9b41-c3c588167ceb",
+    "reportId": "b674c1dc-dacc-407f-92a3-7f4c851baebc"
+  },
+  "nativeMode": "NO_PAYMENT_REQUIRED",
+  "sourceProviderCalls": 0,
+  "paidContinuationOwner": "Original OpenAQ seller/Buyer accounting and signer owner, separate from this source-native programme",
+  "files": [
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/native-journey.mjs",
+      "gitBlob": "9e7c36402d33b75a6ffb2fbc938ec9351898f59f",
+      "bytes": 16654,
+      "sha256": "96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6"
+    },
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
+      "gitBlob": "705d187e497b671063f324867bb6015443878f93",
+      "bytes": 14052,
+      "sha256": "22fedb78f5b7568dbf9f39ca62f2067d3f1dd91463feb5a75fac8d6196906004"
+    }
+  ],
+  "nativeContinuation": {
+    "previousJourneySha256": "43bc5e869bbc5f5e3cfe9506512b0f8b36915cecac974012dad67eabed6013ba",
+    "reason": "The original host denied Unix broker sockets and did not allocate a controlling terminal with its tty stream. The receiver explicitly selects the original supported terminal channel, retains the Node Popen/process group and its actual controlling PTY, and supplies no approval response.",
+    "mutableJournalDirectory": "/dev/shm/921ba0-openaq-buyer-native-20261012/native",
+    "reproducibleSourceDirectory": "/dev/921ba0-openaq-runtime-20261012/source"
+  }
+}

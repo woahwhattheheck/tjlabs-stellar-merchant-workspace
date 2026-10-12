@@ -11,6 +11,8 @@ const HELP = [
   'starforge buyer-inbox-task ACTION [options]',
   '',
   'Original Inbox actions require --runtime SF88_DIR --state NODE_STATE --inbox ORIGINAL_INBOX.',
+  'rpc-results --commerce ORIGINAL_COMMERCE_SESSION --intent ORIGINAL_INTENT',
+  'rpc-read --commerce ORIGINAL_COMMERCE_SESSION --intent ORIGINAL_INTENT --read-id ORIGINAL_READ_ID --response-sha256 ORIGINAL_SHA [--output NEW_FILE]',
   'preview --spec TASK_SPEC.json [--output NEW_REVIEW.json]',
   'create --spec TASK_SPEC.json --directory TASK_DIR --preview-sha256 REVIEW_SHA',
   'inspect --directory TASK_DIR',
@@ -64,7 +66,8 @@ async function readResponse(response, values, signal) {
 
 export async function main(args = process.argv.slice(2)) {
   const stringOptions = ['runtime', 'state', 'inbox', 'spec', 'output', 'directory', 'preview-sha256',
-    'intent', 'review-file', 'workspace', 'format', 'read-limit', 'packet', 'task-sha256', 'previous', 'next'];
+    'intent', 'review-file', 'workspace', 'format', 'read-limit', 'packet', 'task-sha256', 'previous', 'next',
+    'commerce', 'read-id', 'response-sha256'];
   const options = Object.fromEntries(stringOptions.map(key => [key, { type: 'string' }]));
   for (const key of ['help', 'csv-headers', 'allow-partial']) options[key] = { type: 'boolean' };
   const { values, positionals } = parseArgs({ args, options, strict: true, allowPositionals: true });
@@ -87,10 +90,26 @@ export async function main(args = process.argv.slice(2)) {
       else await readResponse(packet.response(values.intent), values, signal);
       return 0;
     }
-    need(['preview', 'create', 'inspect', 'review', 'execute', 'recover', 'read', 'receive'].includes(action),
+    need(['rpc-results', 'rpc-read', 'preview', 'create', 'inspect', 'review', 'execute', 'recover', 'read', 'receive'].includes(action),
       'TASK_ACTION_INVALID');
     const buyer = new Buyer({ runtimeDirectory: absolute(values.runtime), stateDirectory: absolute(values.state) });
     const inbox = buyer.inbox(absolute(values.inbox));
+    if (action === 'rpc-results') {
+      json(await inbox.rpcResponses(values.intent, { commerceDirectory:absolute(values.commerce), signal }));
+      return 0;
+    }
+    if (action === 'rpc-read') {
+      const response = await inbox.rpcResponse(values.intent, {
+        commerceDirectory:absolute(values.commerce), readId:values['read-id'],
+        expectedResponseSha256:values['response-sha256'], signal,
+      });
+      need(response, 'TASK_RESULT_UNAVAILABLE');
+      if (values.output) {
+        const destination = await response.saveAs(absolute(values.output), { signal });
+        json({ path:destination, ...await response.verify({ signal }), recovery:response.recovery });
+      } else await readResponse(response, values, signal);
+      return 0;
+    }
     if (action === 'preview' || action === 'create') {
       const spec = await readJson(absolute(values.spec), 4 * 1024 * 1024);
       const input = { inbox, task: spec.task, selections: spec.selections, predecessor: spec.predecessor, signal };

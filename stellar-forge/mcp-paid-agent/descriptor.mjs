@@ -1,7 +1,6 @@
 /** SF32 read-only projection of one cached discovery record. MIT. */
-import { requiredQueryKeys } from './query-requirements.mjs';
+import { requiredQueryKeys, describeHttpQuery } from './query-requirements.mjs';
 import { prepareMcpInvocation, MCP_ARGUMENT_BYTES } from './remote-mcp.mjs';
-const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 function immutableCopy(value) {
   const copy = structuredClone(value);
@@ -19,7 +18,11 @@ function immutableCopy(value) {
 /** The broker owns handle lookup/expiry. This function never fetches a seller,
  * creates a quote, validates a payment option, approves or executes a call. */
 export function describeDiscoveredResource(record, { handle, allowedOrigin, expiresAt, remoteMcpPolicies = [] }) {
-  const advertisedKeys = plain(record.input?.queryParams) ? Object.keys(record.input.queryParams) : [];
+  let query = null, queryInputError = null;
+  if (record.type === 'http') {
+    try { query = describeHttpQuery(record); }
+    catch(error) { queryInputError = {code:error.code, message:error.message, ...(error.details ? {details:error.details} : {})}; }
+  }
   let requiredKeys=null, requiredKeysError=null;
   try { requiredKeys=requiredQueryKeys(record.bazaar?.schema); }
   catch(error) { requiredKeysError={code:error.code,message:error.message}; }
@@ -55,15 +58,12 @@ export function describeDiscoveredResource(record, { handle, allowedOrigin, expi
         validation:'The live tool schema must match the original advertisement; the server validates argument values.',
       } : {
         container: 'query',
-        advertisedKeys,
+        ...(query ?? {advertisedKeys:[], keysSource:null, parameters:[], querySerialization:null}),
+        inputError:queryInputError,
         requiredKeys,
         requiredKeysError,
         requiredKeysSource: 'bazaar.schema.properties.input.properties.queryParams.required',
         requiredKeysCheck: 'Presence in the final request URL only; fixed query values count. No defaults, type checks, refs or conditional schema evaluation.',
-        valueType: 'string',
-        maxKeys: 30,
-        maxKeyLength: 100,
-        maxValueLength: 1024,
         lengthUnit: 'UTF-16 code units',
         disallowedControlCharacters: 'U+0000–U+001F and U+007F',
         additionalContainers: false,

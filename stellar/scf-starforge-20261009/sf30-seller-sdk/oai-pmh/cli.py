@@ -1,5 +1,7 @@
 """MIT. Complete OAI operator workflow; all commands use one retained workspace."""
 import argparse
+import base64
+import tempfile
 import json
 from pathlib import Path
 import sys
@@ -24,6 +26,10 @@ def main():
         a=sub.add_parser(name);a.add_argument("--id",required=True)
     a=sub.add_parser("import-response");a.add_argument("--id",required=True);a.add_argument("--body",required=True)
     a.add_argument("--transport",required=True,help="JSON with observed url,status,headers,finalURL,observedAt")
+    a=sub.add_parser("import-relay");a.add_argument("--id",required=True);a.add_argument("--body",required=True)
+    a.add_argument("--receipt",required=True,help="Complete original relay receipt JSON with exact source URL, byte count and SHA-256")
+    a=sub.add_parser("import-relay-request");a.add_argument("--request",required=True,
+        help="Complete request downloaded by the browser, including original XML and receipt")
     a=sub.add_parser("preview");a.add_argument("--id",required=True);a.add_argument("--choices")
     a=sub.add_parser("review");a.add_argument("--id",required=True);a.add_argument("--expected",required=True)
     a.add_argument("--reviewer",required=True);a.add_argument("--note",required=True)
@@ -59,6 +65,21 @@ def main():
             elif c=="import-response":
                 m=document(args.transport)
                 result=ws.ingest(args.id,args.body,m["url"],m["status"],m.get("headers",[]),m.get("finalURL"),m.get("observedAt"))
+            elif c=="import-relay":
+                result=ws.ingest_relay(args.id,args.body,document(args.receipt))
+            elif c=="import-relay-request":
+                path=Path(args.request)
+                if not path.is_file() or path.is_symlink() or path.stat().st_size>48*1024*1024:
+                    raise InputError("Choose the complete browser import request within 48 MiB")
+                request=document(path)
+                if not isinstance(request,dict) or request.get("schema")!="stellar-forge.oai-relay-import-request.v1":
+                    raise InputError("Choose a complete original relay import request")
+                body=base64.b64decode(request["bodyBase64"],validate=True)
+                if len(body)>32*1024*1024:
+                    raise InputError("Use import-relay for response bodies larger than 32 MiB")
+                with tempfile.NamedTemporaryFile(dir=ws.area/"tmp") as original:
+                    original.write(body);original.flush()
+                    result=ws.ingest_relay(request["operationId"],original.name,request["receipt"])
             elif c=="preview":result=ws.preview(args.id,document(args.choices) if args.choices else None)
             elif c=="review":result=ws.review(args.id,args.expected,args.reviewer,args.note)
             elif c=="mapping":result=ws.save_mapping(document(args.plan))

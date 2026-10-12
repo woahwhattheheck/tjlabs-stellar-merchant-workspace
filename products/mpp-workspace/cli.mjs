@@ -20,6 +20,11 @@ const HELP = [
   '  starforge mpp-workspace customer-register --dir PRIVATE_PRODUCT --alias NAME --file PRIVATE_JSON --revision N [--label NAME]',
   '  starforge mpp-workspace customer-remove --dir PRIVATE_PRODUCT --alias NAME --revision N',
   '',
+  'Recurring channel work:',
+  '  starforge mpp-workspace channel help',
+  '  starforge mpp-workspace channel state --dir PRIVATE_PRODUCT',
+  '  starforge mpp-workspace channel OPERATION --dir PRIVATE_PRODUCT --input OPERATION.json',
+  '',
   'Original live console:',
   '  starforge mpp-workspace state|catalog|merchant-stop --dir PRIVATE_PRODUCT',
   '  starforge mpp-workspace merchant-start --dir PRIVATE_PRODUCT [--port 8788]',
@@ -94,6 +99,10 @@ export async function main(args = process.argv.slice(2)) {
   if (['runtime-template', 'runtime-receive', 'native'].includes(command)) {
     const original = await import('../../stellar/scf-starforge-20261009/mpp-charge/cli.mjs');
     return original.main(command === 'native' ? rest : [command, ...rest]);
+  }
+  if (command === 'channel') {
+    const channel = await import('../../stellar/scf-starforge-20261009/mpp-channel/cli.mjs');
+    return channel.main(rest);
   }
   let client, active;
   try {

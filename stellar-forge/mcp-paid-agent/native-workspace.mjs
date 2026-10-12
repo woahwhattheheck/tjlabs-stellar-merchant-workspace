@@ -6,7 +6,9 @@ import { constants } from 'node:fs';
 import { open, lstat, realpath, mkdir, rename, link, unlink, rm } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { requiredQueryKeys } from './query-requirements.mjs';
+import { requiredQueryKeys, prepareHttpQuery } from './query-requirements.mjs';
+import { normalizeDiscoveryArguments, discoveryRequestUrl } from './discovery.mjs';
+import { nativeRequestActions, NATIVE_REQUEST_LIMITS } from './native-request-schema.mjs';
 import {createNativeObjects, nativeObjectActions} from './native-objects.mjs';
 import {createNativeDatasets, nativeDatasetActions} from './native-datasets.mjs';
 import {createNativeAnalysis, nativeAnalysisActions} from './native-analysis.mjs';
@@ -174,6 +176,40 @@ function normalizedPurchase(args, manifest, current, {enforceCaps = true} = {}) 
     bodySha256:body === null ? null : sha(body), bodyBytes:body?.length ?? 0};
   return {specification, body};
 }
+
+/** Canonical caller input binds retries before an ephemeral catalog handle is read. */
+function normalizedSelection(args) {
+  intentKey(args.intentId);
+  need(typeof args.handle === 'string' && args.handle.length > 0 && args.handle.length <= 128 &&
+    !/[\u0000-\u001f\u007f]/.test(args.handle), 'MCP_NATIVE_HANDLE_REQUIRED');
+  const acceptIndex = args.acceptIndex === undefined ? 0 : args.acceptIndex;
+  need(Number.isSafeInteger(acceptIndex) && acceptIndex >= 0, 'MCP_NATIVE_ACCEPT_INDEX_INVALID');
+  need(typeof args.maxAtomic === 'string' && /^[1-9][0-9]{0,18}$/.test(args.maxAtomic),
+    'MCP_NATIVE_SPEND_CAP_EXCEEDED');
+  need(object(args.input) && Object.keys(args.input).every(key => ['query','body'].includes(key)),
+    'MCP_NATIVE_ARGUMENTS_INVALID');
+  const query = args.input.query === undefined ? {} : args.input.query;
+  need(object(query) && Object.keys(query).length <= 30, 'MCP_NATIVE_QUERY_INVALID');
+  const entries = Object.keys(query).sort().map(name => {
+    const value = query[name], items = Array.isArray(value) ? value : [value];
+    need(name.length > 0 && name.length <= 100 && !/[\u0000-\u001f\u007f]/.test(name) &&
+      items.length > 0 && items.length <= 1024 &&
+      items.every(item => typeof item === 'string' && item.length <= 1024 &&
+        !/[\u0000-\u001f\u007f]/.test(item)), 'MCP_NATIVE_QUERY_INVALID');
+    return [name, Array.isArray(value) ? [...value] : value];
+  });
+  need(args.input.body === undefined || typeof args.input.body === 'string', 'MCP_NATIVE_BODY_INVALID');
+  const body = args.input.body === undefined ? null : Buffer.from(args.input.body, 'utf8');
+  need(body === null || body.length <= NATIVE_REQUEST_LIMITS.bodyBytes, 'MCP_NATIVE_BODY_TOO_LARGE');
+  need(body === null || body.toString('utf8') === args.input.body, 'MCP_NATIVE_BODY_INVALID_UTF8');
+  return {request:{intentId:args.intentId, handle:args.handle, acceptIndex,
+    maxAtomic:args.maxAtomic, query:Object.fromEntries(entries),
+    bodySha256:body === null ? null : sha(body), bodyBytes:body?.length ?? 0}, body};
+}
+function contentType(headers) {
+  return Object.entries(headers ?? {}).find(([name]) => name.toLowerCase() === 'content-type')?.[1] ?? null;
+}
+
 function nativeView(record) {
   return {schema:RESULT, intentId:record.operation.intentId, state:record.state,
     createdAt:record.createdAt, request:{url:record.operation.url, method:record.operation.method,
@@ -226,7 +262,11 @@ function runOriginalQueue({root, workspace, intentId, signal}) {
   });
 }
 
-export async function openNativeWorkspace(directory) {
+export async function openNativeWorkspace(directory, {operationCoordinator} = {}) {
+  need(operationCoordinator === undefined || typeof operationCoordinator === 'function',
+    'MCP_NATIVE_COORDINATOR_INVALID');
+  const coordinate = (key, kind, signal, task) => operationCoordinator
+    ? operationCoordinator({key, kind, signal}, task) : task(signal);
   const root = nativeRoot(directory);
   await privateDirectory(root);
   const manifest = await privateJson(join(root, 'native-workspace.json'), 65536);
@@ -257,7 +297,7 @@ export async function openNativeWorkspace(directory) {
     const signal=AbortSignal.any([shutdown.signal,controller.signal,...(context.signal?[context.signal]:[])]);
     need(!closed&&!signal.aborted,'OPERATOR_ABORTED');
     const entry={controller,kind};
-    entry.promise=Promise.resolve().then(()=>task(signal));
+    entry.promise=Promise.resolve().then(()=>coordinate(key,kind,signal,task));
     active.set(key,entry);
     try{return await entry.promise;}finally{active.delete(key);}
   }
@@ -304,6 +344,179 @@ export async function openNativeWorkspace(directory) {
     need(record.sourceConfigSha256 === saved.saved.configSha256, 'MCP_NATIVE_INBOX_BINDING_CHANGED');
     return record;
   }
+
+  /** Both preparation entry points publish into the same original private inbox. */
+  async function retainPreparedRequest({intentId, specification, body, rawCatalog, source,
+    rowIndex, acceptIndex, current, selectionRequestSha256}) {
+    const key = intentKey(intentId), destination = join(root, 'requests', key);
+    const responseOut = join(root, 'downloads', key + '.bin');
+    const selected = prepareReview(rawCatalog, {rowIndex, acceptIndex,
+      intentId, url:specification.targetResourceURL, method:specification.targetMethod,
+      ...(body === null ? {} : {bodyFile:join(destination, 'body.bin'),
+        bodyBytes:body.length, bodySha256:sha(body)}),
+      headers:manifest.route.headers, responseOut});
+    const cfg = {...selected.draft, operator:current.config.operator,
+      signerModule:current.config.signerModule, evidenceDir:current.config.evidenceDir,
+      trustedPayer:current.config.trustedPayer, captureBody:false,
+      ...(current.config.buyerTransport === undefined ? {} : {
+        buyerTransport:structuredClone(current.config.buyerTransport)}),
+      // Retain the original preparer's asset hash, byte and content-type pins.
+      responseFile:{...selected.draft.responseFile, destination:responseOut, ...manifest.response}};
+    execution(cfg);
+    const raw = encoded(cfg);
+    need(raw.length <= NATIVE_REQUEST_LIMITS.preparedConfigBytes, 'MCP_NATIVE_CONFIG_TOO_LARGE');
+    const saved = {schema:SCHEMA, specification, specificationSha256:sha(encoded(specification)),
+      configSha256:sha(raw), discoverySha256:sha(rawCatalog), source, rowIndex, acceptIndex,
+      ...(selectionRequestSha256 === undefined ? {} : {selectionRequestSha256})};
+    const metadata = encoded(saved);
+    need(metadata.length <= 65536, 'MCP_NATIVE_REQUEST_METADATA_TOO_LARGE');
+    const stage = join(root, 'requests', '.prepare-' + randomUUID());
+    await mkdir(stage, {mode:0o700});
+    let published = false;
+    try {
+      await createFile(join(stage, 'buyer.json'), raw);
+      await createFile(join(stage, 'request.json'), metadata);
+      await createFile(join(stage, 'discovery.json'), rawCatalog);
+      if (body !== null) await createFile(join(stage, 'body.bin'), body);
+      await syncDirectory(stage);
+      try { await rename(stage, destination); published = true; await syncDirectory(dirname(destination)); }
+      catch (error) {
+        if (!['EEXIST','ENOTEMPTY'].includes(error.code)) throw error;
+        const prior = await retained(intentId);
+        need(prior.saved.specificationSha256 === saved.specificationSha256, 'MCP_NATIVE_INTENT_CONFLICT');
+      }
+    } finally { if (!published) await rm(stage, {recursive:true, force:true}).catch(() => {}); }
+    return nativeView(await requireQueued(await retained(intentId)));
+  }
+  async function requestWorkspace() {
+    const current = await currentWorkspace(), expected = current.config.operation.expect;
+    const ceiling = BigInt(expected.maxAtomic) < BigInt(current.manifest.signer.maxAtomic)
+      ? expected.maxAtomic : current.manifest.signer.maxAtomic;
+    return {schema:'stellar-forge.mcp-native-request-workspace.v1', available:true,
+      route:{origin:manifest.route.origin, pathname:manifest.route.pathname,
+        method:manifest.route.method, contentType:contentType(manifest.route.headers)},
+      payment:{scheme:expected.scheme, network:expected.network, asset:expected.asset,
+        payTo:expected.payTo, maxAtomic:ceiling},
+      limits:{...NATIVE_REQUEST_LIMITS, responseBytes:responseLimits(manifest.response).maxBytes},
+      actions:[...nativeRequestActions, 'execute','status','history','recover','cancel','read']};
+  }
+  async function reviewRequest(intentId) {
+    await currentWorkspace();
+    const saved = await retained(intentId), metadata = saved.saved;
+    const record = await requireQueued(saved);
+    let cfg;
+    try { cfg = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(saved.raw)); }
+    catch { fail('MCP_NATIVE_CONFIG_CHANGED'); }
+    const sourceBytes = await privateBytes(join(saved.path, 'discovery.json'), NATIVE_REQUEST_LIMITS.sourcePageBytes);
+    need(sha(sourceBytes) === metadata.discoverySha256 &&
+      cfg.preparedFrom?.discoveryFileSha256 === metadata.discoverySha256 &&
+      cfg.preparedFrom.rowIndex === metadata.rowIndex &&
+      cfg.preparedFrom.acceptIndex === metadata.acceptIndex, 'MCP_NATIVE_DISCOVERY_CHANGED');
+    let page;
+    try { page = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(sourceBytes)); }
+    catch { fail('MCP_NATIVE_DISCOVERY_CHANGED'); }
+    const rows = page?.mode === 'ORIGINAL_UNSIGNED_CATALOG' ? page.originalListings :
+      page?.schema === 'scf61-observed-native-page-v1' ? page.nativeProviderRows :
+        page?.[cfg.preparedFrom.sourceEnvelope];
+    const listing = rows?.[metadata.rowIndex], accepted = listing?.accepts?.[metadata.acceptIndex];
+    need(Array.isArray(rows) && object(listing) && object(accepted) &&
+      JSON.stringify(listing) === JSON.stringify(cfg.preparedFrom.originalListing),
+      'MCP_NATIVE_DISCOVERY_CHANGED');
+    if (metadata.specification.kind === 'BAZAAR_HANDLE') {
+      need(object(metadata.source) && metadata.source.pageSha256 === metadata.discoverySha256 &&
+        metadata.source.pageBytes === sourceBytes.length &&
+        sha(encoded(metadata.source)) === metadata.specification.sourceRequestSha256 &&
+        metadata.discoverySha256 === metadata.specification.sourcePageSha256,
+        'MCP_NATIVE_DISCOVERY_CHANGED');
+    }
+    let body = null;
+    const spec = metadata.specification;
+    if (spec.bodySha256 !== null) {
+      const bytes = await privateBytes(join(saved.path, 'body.bin'), NATIVE_REQUEST_LIMITS.bodyBytes);
+      need(bytes.length === spec.bodyBytes && sha(bytes) === spec.bodySha256 &&
+        record.bodyBytes === bytes.length && record.bodySha256 === spec.bodySha256,
+        'MCP_NATIVE_BODY_CHANGED');
+      let text;
+      try { text = new TextDecoder('utf-8', {fatal:true}).decode(bytes); }
+      catch { fail('MCP_NATIVE_BODY_INVALID_UTF8'); }
+      body = {text, bytes:bytes.length, sha256:spec.bodySha256, contentType:contentType(cfg.operation.headers)};
+    } else need(record.bodyBytes === 0 && record.bodySha256 === null, 'MCP_NATIVE_BODY_CHANGED');
+    const availableActions = ['status','request-review'];
+    if (active.has('request:'+intentId)) availableActions.push('cancel');
+    else if (record.state === 'QUEUED' && !record.attempt) availableActions.push('execute','cancel');
+    else if (record.state !== 'CANCELLED') availableActions.push('recover');
+    if (record.outcome?.responseFile?.status === 'SAVED') availableActions.push('read');
+    return {...nativeView(record), preparation:{source:structuredClone(metadata.source),
+      pageSha256:metadata.discoverySha256, rowIndex:metadata.rowIndex, acceptIndex:metadata.acceptIndex,
+      originalListing:structuredClone(listing), accepted:structuredClone(accepted), body},
+      availableActions};
+  }
+  async function prepareSelection(args, context) {
+    const key = intentKey(args.intentId);
+    if (preparing.has(key)) {
+      await preparing.get(key);
+      return prepareSelection(args, context);
+    }
+    const task = (async () => {
+      const {request, body} = normalizedSelection(args);
+      const selectionRequestSha256 = sha(encoded(request));
+      const current = await currentWorkspace(), before = await existing(args.intentId);
+      // A retained request is sufficient after a disconnect, handle expiry or restart.
+      if (before) {
+        need(before.saved.selectionRequestSha256 === selectionRequestSha256,
+          'MCP_NATIVE_INTENT_CONFLICT');
+        return reviewRequest(args.intentId);
+      }
+      need(!closed && !context.signal?.aborted, 'MCP_NATIVE_WORKSPACE_CLOSING');
+      const expected = current.config.operation.expect;
+      need(BigInt(request.maxAtomic) <= BigInt(expected.maxAtomic) &&
+        BigInt(request.maxAtomic) <= BigInt(current.manifest.signer.maxAtomic),
+        'MCP_NATIVE_SPEND_CAP_EXCEEDED');
+      need(typeof context.resolveDiscoverySelection === 'function', 'MCP_NATIVE_DISCOVERY_CONTEXT_REQUIRED');
+      const selection = await context.resolveDiscoverySelection(request.handle, request.acceptIndex);
+      need(object(selection) && selection.raw instanceof Uint8Array &&
+        selection.handle === request.handle && selection.eligibleAcceptIndex === request.acceptIndex &&
+        Number.isSafeInteger(selection.rowIndex) && selection.rowIndex >= 0 &&
+        Number.isSafeInteger(selection.acceptIndex) && selection.acceptIndex >= 0,
+        'MCP_NATIVE_DISCOVERY_CONTEXT_INVALID');
+      need(selection.raw.byteLength <= NATIVE_REQUEST_LIMITS.sourcePageBytes,
+        'MCP_NATIVE_SOURCE_PAGE_TOO_LARGE');
+      const rawCatalog = Buffer.from(selection.raw), source = structuredClone(selection.source);
+      need(object(source) && source.pageSha256 === sha(rawCatalog) && source.pageBytes === rawCatalog.length,
+        'MCP_NATIVE_DISCOVERY_CHANGED');
+      const discoveryRequest = normalizeDiscoveryArguments(source.mode, source.request);
+      need(discoveryRequestUrl(manifest.catalog.origin, source.mode, discoveryRequest).href === source.url,
+        'MCP_NATIVE_CATALOG_MISMATCH');
+      let catalog;
+      try { catalog = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(rawCatalog)); }
+      catch { fail('MCP_NATIVE_DISCOVERY_CHANGED'); }
+      const row = catalog?.resources?.[selection.rowIndex], accepted = row?.accepts?.[selection.acceptIndex];
+      const input = row?.extensions?.bazaar?.info?.input;
+      need(Array.isArray(catalog?.resources) && object(row) && object(accepted) &&
+        input?.type === 'http', 'MCP_NATIVE_HTTP_REQUIRED');
+      const advertised = https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
+      need(advertised.origin === manifest.route.origin && advertised.pathname === manifest.route.pathname &&
+        input.method === manifest.route.method, 'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
+      need(body === null || !['GET','HEAD'].includes(input.method), 'MCP_NATIVE_BODY_INVALID');
+      const selectedUrl = prepareHttpQuery({resource:{url:advertised.href}, input,
+        bazaar:row.extensions.bazaar}, {query:request.query});
+      need(['scheme','network','asset','payTo'].every(name => accepted[name] === expected[name]) &&
+        typeof accepted.amount === 'string' && accepted.amount.length <= request.maxAtomic.length &&
+        /^[1-9][0-9]*$/.test(accepted.amount) &&
+        BigInt(accepted.amount) <= BigInt(request.maxAtomic), 'MCP_NATIVE_PAYMENT_OPTION_MISMATCH');
+      const specification = {kind:'BAZAAR_HANDLE', ...request,
+        targetResourceURL:selectedUrl.href, targetMethod:input.method,
+        sourcePageSha256:source.pageSha256, sourceRequestSha256:sha(encoded(source)),
+        rowIndex:selection.rowIndex, providerAcceptIndex:selection.acceptIndex};
+      need(!closed && !context.signal?.aborted, 'MCP_NATIVE_WORKSPACE_CLOSING');
+      await retainPreparedRequest({intentId:args.intentId, specification, body, rawCatalog, source,
+        rowIndex:selection.rowIndex, acceptIndex:selection.acceptIndex, current, selectionRequestSha256});
+      return reviewRequest(args.intentId);
+    })();
+    preparing.set(key, task);
+    try { return await task; } finally { preparing.delete(key); }
+  }
+
   async function prepare(args) {
     const key = intentKey(args.intentId);
     if (preparing.has(key)) {
@@ -348,41 +561,9 @@ export async function openNativeWorkspace(directory) {
         BigInt(value.amount) <= BigInt(specification.maxAtomic));
       const chosen = specification.acceptIndex === null ? eligible : eligible.filter(value => value.index === specification.acceptIndex);
       need(chosen.length === 1, 'MCP_NATIVE_PAYMENT_OPTION_NOT_UNIQUE');
-      const rawCatalog = encoded(catalog);
-      const destination = join(root, 'requests', key);
-      const selected = prepareReview(rawCatalog, {rowIndex, acceptIndex:chosen[0].index,
-        intentId:args.intentId, url:specification.targetResourceURL, method:specification.targetMethod,
-        ...(body === null ? {} : {bodyFile:join(destination, 'body.bin')}),
-        headers:manifest.route.headers});
-      const cfg = {...selected.draft, operator:current.config.operator,
-        signerModule:current.config.signerModule, evidenceDir:current.config.evidenceDir,
-        trustedPayer:current.config.trustedPayer, captureBody:false,
-        ...(current.config.buyerTransport === undefined ? {} : {
-          buyerTransport:structuredClone(current.config.buyerTransport)}),
-        responseFile:{destination:join(root, 'downloads', key + '.bin'), ...manifest.response}};
-      execution(cfg);
-      const raw = encoded(cfg);
-      need(raw.length <= 65536, 'MCP_NATIVE_CONFIG_TOO_LARGE');
-      const saved = {schema:SCHEMA, specification, specificationSha256:sha(encoded(specification)),
-        configSha256:sha(raw), discoverySha256:sha(rawCatalog),
-        source:catalog.source, rowIndex, acceptIndex:chosen[0].index};
-      const stage = join(root, 'requests', '.prepare-' + randomUUID());
-      await mkdir(stage, {mode:0o700});
-      let published = false;
-      try {
-        await createFile(join(stage, 'buyer.json'), raw);
-        await createFile(join(stage, 'request.json'), encoded(saved));
-        await createFile(join(stage, 'discovery.json'), rawCatalog);
-        if (body !== null) await createFile(join(stage, 'body.bin'), body);
-        await syncDirectory(stage);
-        try { await rename(stage, destination); published = true; await syncDirectory(dirname(destination)); }
-        catch (error) {
-          if (!['EEXIST','ENOTEMPTY'].includes(error.code)) throw error;
-          const prior = await retained(args.intentId);
-          need(prior.saved.specificationSha256 === saved.specificationSha256, 'MCP_NATIVE_INTENT_CONFLICT');
-        }
-      } finally { if (!published) await rm(stage, {recursive:true, force:true}).catch(() => {}); }
-      return nativeView(await requireQueued(await retained(args.intentId)));
+      return retainPreparedRequest({intentId:args.intentId, specification, body,
+        rawCatalog:encoded(catalog), source:catalog.source, rowIndex,
+        acceptIndex:chosen[0].index, current});
     })();
     preparing.set(key, task);
     try { return await task; } finally { preparing.delete(key); }
@@ -404,8 +585,15 @@ export async function openNativeWorkspace(directory) {
       const before = await queue.show(args.intentId);
       if (before.attempt) return nativeView(before);
       need(!closed && !signal.aborted, 'OPERATOR_ABORTED');
-      const worker = await runOriginalQueue({root:queue.root, workspace:manifest.workspace, intentId:args.intentId, signal});
-      return {...nativeView(await queue.show(args.intentId)), execution:worker};
+      try {
+        const worker = await coordinate('request:'+args.intentId, 'execute', signal,
+          () => runOriginalQueue({root:queue.root, workspace:manifest.workspace, intentId:args.intentId, signal}));
+        return {...nativeView(await queue.show(args.intentId)), execution:worker};
+      } catch (error) {
+        if (error?.code === 'MCP_NATIVE_OPERATOR_BUSY')
+          return {...nativeView(await queue.show(args.intentId)), execution:'OPERATOR_BUSY'};
+        throw error;
+      }
     })();
     active.set('request:'+args.intentId, entry);
     try { return await entry.promise; } finally { active.delete('request:'+args.intentId); }
@@ -466,29 +654,32 @@ export async function openNativeWorkspace(directory) {
         responseFileStatus:file.status,stream:file.stream??null}},inputs);
   }
   const allowedFields = {
+    'request-workspace':[],
+    'request-prepare':['intentId','handle','acceptIndex','maxAtomic','input'],
+    'request-review':['intentId'],
     prepare:['intentId','search','targetResourceURL','targetMethod','maxAtomic','body','acceptIndex'],
     execute:['intentId','search','targetResourceURL','targetMethod','maxAtomic','body','acceptIndex'],
     status:['intentId'], recover:['intentId'], cancel:['intentId'],
     read:['intentId','byteOffset','maxBytes'], history:['limit','cursor'],
   };
-  return {
-    manifest:structuredClone(manifest),
-    registerObjects:objects.register,
-    registerDatasets:datasets.register,
-    registerReceivedDataset:datasets.registerReceived,
-    completedDataset:datasets.completedDataset,
-    completedObject:objects.completedObject,completedResponse,
-    registerAnalysis:analysis.register,
-    registerDuckDB:duckdb.register,
-    registerCollections:collections.register,
-    registerCollectionRecovery:collectionRecovery.register,
-    collectionRecoveryOpenedConnection:collectionRecovery.openedConnection,
-    async registerSourceInbox(options){need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');await currentWorkspace();return registerNativeSourceInbox(manifest,options);},
-    async call(args = {}, context = {}) {
+  async function dispatch(args = {}, context = {}) {
       need(!closed, 'MCP_NATIVE_WORKSPACE_CLOSING');
       need(object(args) && object(context) &&
         (context.signal === undefined || context.signal instanceof AbortSignal), 'MCP_NATIVE_ARGUMENTS_INVALID');
       const action = args.action ?? 'execute';
+      if (action === 'request-workspaces') {
+        need(Object.keys(args).every(key => key === 'action'), 'MCP_NATIVE_ARGUMENTS_INVALID');
+        const selected = {...await requestWorkspace(), workspaceId:'default', workspaceLabel:'Configured service'};
+        return {schema:'stellar-forge.mcp-native-request-workspaces.v1',
+          defaultWorkspaceId:'default', total:1, workspaces:[selected]};
+      }
+      if (action === 'request-history') {
+        need(Object.keys(args).every(key => ['action','limit','cursor'].includes(key)),
+          'MCP_NATIVE_ARGUMENTS_INVALID');
+        const page = await dispatch({...args, action:'history'}, context);
+        return {...page, schema:'stellar-forge.mcp-native-request-history.v1', workspaceCount:1,
+          records:page.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}))};
+      }
       if(nativeObjectActions.includes(action))return objects.call(args,context);
       if(nativeDatasetActions.includes(action))return datasets.call(args,context);
       if(nativeAnalysisActions.includes(action))return analysis.call(args,context);
@@ -497,7 +688,10 @@ export async function openNativeWorkspace(directory) {
       if(nativeCollectionRecoveryActions.includes(action))return collectionRecovery.call(args,context);
       need(Object.hasOwn(allowedFields, action) &&
         Object.keys(args).every(key => key === 'action' || allowedFields[action].includes(key)), 'MCP_NATIVE_ARGUMENTS_INVALID');
+      if (action === 'request-workspace') return requestWorkspace();
       if (action !== 'history') intentKey(args.intentId);
+      if (action === 'request-prepare') return prepareSelection(args, context);
+      if (action === 'request-review') return reviewRequest(args.intentId);
       if (action === 'prepare') return prepare(args);
       if (action === 'execute') return executeIntent(args, context);
       if (action === 'history') {
@@ -527,6 +721,34 @@ export async function openNativeWorkspace(directory) {
         return nativeView(record.attempt ? record : await queue.cancel(args.intentId));
       }
       return readResult(args);
+  }
+  return {
+    manifest:structuredClone(manifest),
+    registerObjects:objects.register,
+    registerDatasets:datasets.register,
+    registerReceivedDataset:datasets.registerReceived,
+    completedDataset:datasets.completedDataset,
+    completedObject:objects.completedObject,completedResponse,
+    registerAnalysis:analysis.register,
+    registerDuckDB:duckdb.register,
+    registerCollections:collections.register,
+    registerCollectionRecovery:collectionRecovery.register,
+    collectionRecoveryOpenedConnection:collectionRecovery.openedConnection,
+    async registerSourceInbox(options){need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');await currentWorkspace();return registerNativeSourceInbox(manifest,options);},
+    async call(args = {}, context = {}) {
+      need(object(args), 'MCP_NATIVE_ARGUMENTS_INVALID');
+      const forwarded = {...args};
+      if (forwarded.workspaceId !== undefined) {
+        need(forwarded.workspaceId === 'default', 'MCP_NATIVE_WORKSPACE_UNKNOWN');
+        delete forwarded.workspaceId;
+      }
+      const value = await dispatch(forwarded, context);
+      const action = forwarded.action ?? 'execute';
+      if (!Object.hasOwn(allowedFields, action)) return value;
+      const result = {...value, workspaceId:'default', workspaceLabel:'Configured service'};
+      if (action === 'history')
+        result.records = value.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}));
+      return result;
     },
     async close() {
       if (closed) return;

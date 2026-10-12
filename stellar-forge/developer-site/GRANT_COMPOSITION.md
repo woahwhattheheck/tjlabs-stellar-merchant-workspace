@@ -70,6 +70,8 @@ The workspace uses the existing `/drafts.mjs` and the same application/source-in
 
 The HTML reader and downloadable Markdown have different relative locations. The composer adjusts companion and source-index links only in the rendered HTML. Markdown sibling links remain relative to `grant-data/`.
 
+Canvas authoring uses the public `blob/main/stellar-forge/developer-site/dist/grant-data/product-and-finance.md` URL for companion links. The maintained customer projection receives that exact current-file URL as the Markdown sibling link, preserving its chapter fragment; pinned historical sources retain their original links. This keeps the canonical authoring copy, downloaded answer and installed page on the same complete companion.
+
 
 ## Preserve the complete authoring package
 
@@ -87,6 +89,7 @@ complete authoring source used by the existing command:
 | grant-entry.mjs | Joins the current product opening and original installed/source commands. |
 | grant-submission.mjs | Binds issuer preparation to the exact composed application. |
 | grant-review-round.mjs | Attaches the original named review, author revision and complete handover to that same application identity. |
+| grant-companion.mjs | Opens the complete current product and financing companion through its chapter reader. |
 
 Keep these original modules, their guides, **browser-assets.json** and its full
 declared files together when receiving a source edition. The manifest includes
@@ -133,3 +136,53 @@ Keep the four-reader callback on its original Page and continue with the complet
 The complete original model result, three native draft inputs, every review export and report are retained in [the operating source packet](../../operations/scf-submission-review-round-7108-20261012/README.md). The installed grant-reviewer contribution explicitly selects that entire packet and exposes the original model, composition helper and both receiving callbacks under `./grant/review-round`, `./grant/review-round/composition`, `./grant/review-round/model-receiving` and `./grant/review-round/browser-receiving`. Use the package's actual name when importing those exports. The native model result is complete; the existing Page owner records the actual browser result separately.
 
 A receiving continuation keeps the original operation ID, full checkpoint, selected inputs and artifact bytes. Completed downloads are verified and reused before another UI export. Independent Save copy steps reconcile their durably selected original destination through the existing draft store. Preserve that checkpoint on interruption and invoke the same callback with it; do not create another reviewer round to replace unfinished work.
+
+## Receive IATI organisation and programme finance
+
+The canonical customer chapter **IATI publishing, programme finance and complete
+customer receiving** joins the existing application through `--manuscript`.
+It carries organisation publications, selected activity portfolios, reviewed
+programme-finance comparisons and complete customer receiving into the same
+companion. The three front-answer additions remain part of the original nine
+editable answers.
+
+The maintained customer projector follows the chapter's selected immutable
+source links into three source-index records:
+
+- `iati-organisation-financial-workspace`: the organisation/financial operating guide.
+- `iati-complete-financial-receiving`: the original complete receiving programme.
+- `iati-fcdo-wadi-original-source`: the retained FCDO/WADI source description.
+
+A later accepted chapter edition refreshes those records from its own links.
+The existing register retains all other product selections and clears a prior
+blob pin when its repository, commit or path changes. Composition preserves the
+original request, baseline, six funded packages, capacity, cash and submission
+fields. The reader distinguishes the completed organisation receiving and the
+recorded financial stages through the chapter's actual operating results.
+
+## Receive current delivery finance
+
+The ordinary `--manuscript` path receives the complete canonical **8. Delivery
+capacity and cash timing** section into the existing **8. Capacity and cash plan**
+companion chapter. This keeps the original receipt-derived deadlines, Calendar
+exports, reviewed remaining cash and effort, work and supplier invoices, and
+retained capacity/payment sensitivities together on each manuscript refresh.
+Other complete customer chapters keep their original identities.
+
+The source register follows the selected `CALENDAR.md`, `WORK_INTAKE.md` and
+`FORECAST.md` links into `grant-delivery-calendar`,
+`grant-work-invoice-intake` and `grant-operating-forecast`. Changed original
+source selections use the existing metadata refresh behavior. The full package
+valuation sensitivity remains distinct from agreed cash obligations and observed
+receipts. The nine-answer front and six funded packages retain their existing
+source and submission bindings.
+
+## Read the complete companion
+
+Choose **Product and financing** in the application navigation. The maintained
+[companion reader](GRANT_COMPANION.md) consumes the same complete Markdown and
+source index, with chapter navigation, full-text chapter search, original-file
+downloads, selected or complete printing, and a self-contained offline export.
+Its four assets are declared by the existing browser manifest and travel with
+the complete developer-site source. Composition refreshes its source descriptor
+while retaining the original four-reader sourcePins contract.

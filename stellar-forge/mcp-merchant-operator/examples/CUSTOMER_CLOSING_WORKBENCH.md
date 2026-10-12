@@ -86,3 +86,21 @@ The programme consumes the existing exports from `accounting-statement-client.mj
 Return the retained result, complete customer packets, original cycle archives and screenshots to the existing SCF customer/MCP receiving thread. Continue any source repair in that same operation directory.
 
 The grouped handover appears in `flow-result.json` as `customerDossier`, retaining the partial, issued and lifecycle snapshots and the workbench restart result. It consumes the same original customer, captures, two cycle rows and one correction; each file comparison uses those original delivery identities.
+
+## Service-close planner in the same customer operation
+
+This original programme now also consumes **Plan service close** using the same imported opening and closing captures, original assigned pass, customer and completed accounting run. It opens the native capture catalogue, selects the exact pair, reads the full native statement review, and downloads/reopens the complete JSON plan, CSV register and readable HTML.
+
+The browser imports that saved JSON and prepares an original saved closing cycle. Its retained review must contain the same opening and closing source hashes and the original consumed service units. This extra prepared cycle supplies a full review; the existing original issuing/correction/withdrawal journey continues with its same three retained statement identities.
+
+After correction and withdrawal, the planner refreshes the actual native history. The current corrected period supplies the next opening. The superseded period and withdrawn cumulative snapshot remain visible with their original identities. Desktop and phone captures include the planner and its history dialog.
+
+Additional deliverables in the same operation directory:
+
+- service-planner-prepared.json — original prepared cycle, plan, capture and full native preview identities.
+- service-planner-lifecycle.json — actual current planner row after the original correction and withdrawal.
+- downloads/service-close-plan.json, .csv and .html — complete portable plan, register and readable document.
+- Desktop/phone planner, native-review, prepared-cycle, reopened-plan and correction-history screenshots.
+- flow-result.json includes the complete servicePlanner result alongside the original customer operation.
+
+A completed earlier customer-only result is continued from the same operation directory until this planner phase is recorded. The programme keeps the original operation, customer, capture, cycle and statement request identities.

@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 
 export const GRANT_LAUNCH_SCHEMA = 'stellar-forge.sf47.workspace-launch.v1';
 export const GRANT_SELECTION_SCHEMA = 'stellar-forge.sf47.workspace-selection.v1';
+// Includes both original and executed complete source-hash maps.
+export const GRANT_MAX_LAUNCH_BYTES = 256 * 1024;
 const SOURCE = dirname(fileURLToPath(import.meta.url));
 // The reviewed release includes every original operating module and its mounted UI.
 const BOOT_FILES = [
@@ -34,7 +36,17 @@ const BOOT_FILES = [
   'managed_launch.py',
   'workshare_intake.py',
   'operations.py',
+  'operations_work_intake.py',
+  'operations_work_intake.mjs',
+  'operations_work_intake.css',
   'operations_domain.py',
+  'operations_engagements.py',
+  'engagement_handover.py',
+  'operations_amendments.py',
+    'operations_amendment_calendar.py',
+    'operations_amendment_calendar.mjs',
+  'operations_amendments.mjs',
+  'operations_amendments.css',
   'operations_statements.py',
   'operations_statements.mjs',
   'operations_statements.css',
@@ -52,12 +64,68 @@ const BOOT_FILES = [
   'operations_commercial.css',
   '../../../scf-starforge-20261009/merchant-settlement-accounting/receivables/client.mjs',
   'operations_completion.py',
+  'operations_calendar.py',
   'operations_cohort.py','operations_implementation.py',
   'operations_installations.py',
+  'operations_installation_returns.py',
+  'operations_installation_returns_cli.py',
+  'operations_installation_returns.mjs',
+  'operations_installation_returns.css',
   'operations_dispatch.py',
   'operations_performance.py',
   'operations_ledger_intake.py',
   'operations_payables.py',
+  'operations_cash_accounts.py',
+  'operations_commercial_installations.py',
+  'operations_commercial_installations.mjs',
+  'operations_commercial_installations.css',
+  'commercial_installation_source.mjs',
+  '../../../scf-starforge-20261009/merchant-settlement-accounting/adjustments.mjs',
+  '../../../scf-starforge-20261009/merchant-settlement-accounting/customer-statements/core.mjs',
+  '../../../scf-starforge-20261009/merchant-settlement-accounting/customer-statements/native-usage.mjs',
+  '../../../scf-starforge-20261009/merchant-settlement-accounting/customer-statements/period-usage.mjs',
+  '../../../scf-starforge-20261009/merchant-settlement-accounting/reconcile.mjs',
+  '../../../scf-starforge-20261009/merchant-settlement-accounting/recovery.mjs',
+  '../../../scf-starforge-20261009/sf30-seller-sdk/http-methods.mjs',
+  '../../../scf-starforge-20261009/sf30-seller-sdk/operations/history.mjs',
+  '../../../scf-starforge-20261009/sf30-seller-sdk/route-path.mjs',
+  '../../../scf-starforge-20261009/sf30-seller-sdk/seller.mjs',
+  '../../../scf-starforge-20261009/sf31-buyer-client/public-transport.mjs',
+  '../../../scf-starforge-20261009/sf31-buyer-client/request-body.mjs',
+  '../../../scf-starforge-20261009/sf43-agent-commerce/verify.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/case-commercial-implementation.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/commercial-pricing.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/commercial-quote.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/tariff-performance.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/tariff-source.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/object-runtime.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/runtime-support.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/service-commitments.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/service-renewals.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/source-bundle-reference.mjs',
+  '../../../scf-starforge-20261009/sf74-merchant-support-console/workspace-file.mjs',
+  '../../../scf-starforge-20261009/sf85-live-402-capture/proxy-connect.mjs',
+  '../../../scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json',
+  '../../../scf-starforge-20261009/sf86-rpc-transfer-reconcile/rpc-transport.mjs',
+  '../../../scf-starforge-20261009/sf86-rpc-transfer-reconcile/terms.mjs',
+  '../../../scf-starforge-20261009/sf86-rpc-transfer-reconcile/verify.mjs',
+  '../../../scf-starforge-20261009/sf88-operator-buyer-cli/package.json',
+  '../../../scf-starforge-20261009/sf93-seller-support-bundle/object-observation.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/analyze.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/economics/common.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/economics/engine.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/economics/inputs.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/economics/limits-contracts.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/native-reconcile.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/performance/model.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/performance/source.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/planning/scenarios.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/planning/workspace.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/model.mjs',
+  '../../../scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/workspace.mjs',
+  '../../../scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs',
+  'COMMERCIAL_INSTALLATIONS.md',
   'operations_workshare_installations.py',
   'operations_workflow_source.py',
   'operations_installation_workflows.py',
@@ -72,12 +140,20 @@ const BOOT_FILES = [
   'style.css',
   'operations.mjs',
   'operations.css',
+  'operations_engagements.mjs',
+  'operations_engagements.css',
   'operations_support.mjs',
   'operations_buyer.mjs',
   'operations_buyer.css',
   'operations_completion.mjs',
   'operations_completion.css',
+  'operations_calendar.mjs',
+  'operations_calendar.css',
   'operations_cohort.mjs',
+  'cohort_planning.mjs',
+  'cohort_planning_cli.mjs',
+  'operations_cohort_planning.mjs',
+  'operations_cohort_planning.css',
   'operations_cohort.css','operations_implementation.mjs','operations_implementation.css',
   'operations_installations.mjs',
   'operations_installations.css',
@@ -88,6 +164,8 @@ const BOOT_FILES = [
   'operations_ledger_intake.css',
   'operations_payables.mjs',
   'operations_payables.css',
+  'operations_cash_accounts.mjs',
+  'operations_cash_accounts.css',
   'operations_performance.css',
   'forecast.mjs',
   'forecast_currency.mjs',
@@ -182,7 +260,7 @@ function probe(url, token) {
       const chunks = []; let bytes = 0;
       response.on('data', chunk => {
         bytes += chunk.length;
-        if (bytes > 32768) { request.destroy(fail('GRANT_STARTUP_RESPONSE_TOO_LARGE')); return; }
+        if (bytes > GRANT_MAX_LAUNCH_BYTES) { request.destroy(fail('GRANT_STARTUP_RESPONSE_TOO_LARGE')); return; }
         chunks.push(chunk);
       });
       response.once('error', reject);
@@ -215,7 +293,7 @@ export async function readGrantWorkspaceLaunch({workspaceDirectory, scenarioFile
   const privateLaunch = join(current.selection.workspaceDirectory, 'managed-launch.json');
   await privateDirectory(current.selection.workspaceDirectory);
   let record;
-  try { record = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await regular(privateLaunch, 32768, true))); }
+  try { record = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(await regular(privateLaunch, GRANT_MAX_LAUNCH_BYTES, true))); }
   catch (error) { if (error.code) throw error; throw fail('GRANT_PRIVATE_LAUNCH_INVALID'); }
   need(plain(record) && record.schema === GRANT_LAUNCH_SCHEMA && record.state === 'LISTENING' &&
     record.privateLaunch === privateLaunch && record.pid === pid && record.instanceId === instanceId &&

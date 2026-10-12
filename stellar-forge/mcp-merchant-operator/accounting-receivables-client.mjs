@@ -46,7 +46,11 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
   customerFunds: 'customer_funds', previewRefund: 'refund_preview', commitRefund: 'refund_commit',
   refunds: 'refund_list', refund: 'refund_detail', cancelRefund: 'refund_cancel', reverseRefund: 'refund_reverse',
   reportRefundReturn: 'refund_return', receiveRefund: 'refund_receive',
-  previewCreditDisposition: 'credit_disposition_preview', applyCreditDisposition: 'credit_disposition_apply'
+  previewCreditDisposition: 'credit_disposition_preview', applyCreditDisposition: 'credit_disposition_apply',
+  bankAccounts: 'bank_accounts', saveBankAccount: 'bank_account_save', inspectBankSource: 'bank_source_inspect',
+  importBankSource: 'bank_source_import', bankImports: 'bank_import_list', bankImport: 'bank_import_detail',
+  previewBankPosting: 'bank_posting_preview', postBankReceipts: 'bank_receipts_post',
+  ignoreBankRows: 'bank_rows_ignore', restoreBankRows: 'bank_rows_restore', closeBankImport: 'bank_import_close'
 });
 const OPERATIONS = new Set(Object.values(ACCOUNTING_RECEIVABLES_METHODS));
 const ACTIONS = Object.freeze({
@@ -57,10 +61,13 @@ const ACTIONS = Object.freeze({
   payment_cancel: 'payment_request_cancelled', payment_return: 'payment_return_reported',
   payment_receive: 'invoice_payment_received', refund_commit: 'refund_committed', refund_cancel: 'refund_cancelled',
   refund_reverse: 'refund_reversed', refund_return: 'refund_return_reported', refund_receive: 'refund_received',
-  credit_disposition_apply: 'credit_disposition_applied'
+  credit_disposition_apply: 'credit_disposition_applied', bank_account_save: 'bank_account_saved',
+  bank_source_import: 'bank_source_imported', bank_receipts_post: 'bank_receipts_posted',
+  bank_rows_ignore: 'bank_rows_ignored', bank_rows_restore: 'bank_rows_restored', bank_import_close: 'bank_import_closed'
 });
 export const ACCOUNTING_RECEIVABLES_MUTATIONS = Object.freeze(Object.keys(ACTIONS));
-const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail', 'refund_list']);
+const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail', 'refund_list',
+  'bank_accounts', 'bank_import_list', 'bank_import_detail']);
 
 /** Validate transport identity while preserving every original JSON field and string. */
 export function accountingReceivablesArguments(kind, value) {
@@ -121,6 +128,21 @@ export function accountingCreditDispositionArguments(preview, value) {
   return {...identity(value), revision: preview.revision,
     proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
 }
+export function accountingBankPostingPreview(preview) {
+  need(plain(preview) && plain(preview.proposal) &&
+    preview.proposal.schema === 'stellar-forge.merchant-bank-posting-proposal.v1' &&
+    UUID.test(preview.proposal.id ?? '') && UUID.test(preview.proposal.bankImportId ?? '') &&
+    Array.isArray(preview.proposal.selections) && plain(preview.balanceEffects) &&
+    SHA.test(preview.reviewSha256 ?? '') &&
+    digest({proposal: preview.proposal, balanceEffects: preview.balanceEffects}) === preview.reviewSha256,
+    'Keep the complete original bank posting proposal, its balance effects and review SHA-256.', 'PREVIEW');
+  version(preview.revision); return preview;
+}
+export function accountingBankPostingArguments(preview, value) {
+  accountingBankPostingPreview(preview);
+  return {bankImportId: preview.proposal.bankImportId, ...identity(value), revision: preview.revision,
+    proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
+}
 function nativeIntent(kind, input) {
   const value = wire(input);
   delete value.revision;
@@ -130,7 +152,8 @@ function nativeIntent(kind, input) {
   const selector = ['invoice_issue', 'invoice_void', 'credit', 'payment_create'].includes(kind) ? 'invoiceId' :
     kind === 'receipt_void' ? 'receiptId' : kind === 'release' ? 'allocationId' :
     ['payment_cancel', 'payment_return', 'payment_receive'].includes(kind) ? 'paymentRequestId' :
-    ['refund_cancel', 'refund_reverse', 'refund_return', 'refund_receive'].includes(kind) ? 'refundId' : null;
+    ['refund_cancel', 'refund_reverse', 'refund_return', 'refund_receive'].includes(kind) ? 'refundId' :
+    ['bank_receipts_post', 'bank_rows_ignore', 'bank_rows_restore', 'bank_import_close'].includes(kind) ? 'bankImportId' : null;
   if (selector) { const id = value[selector]; delete value[selector]; value[selector] = id; }
   return digest({action: ACTIONS[kind], value});
 }
@@ -187,7 +210,10 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
     async listAll(kind, args = {}, options) {
       need(PAGED.has(kind) && args.offset === undefined && args.limit === undefined,
         'Choose an original paged read and let this reader advance its offsets.');
-      const rowKey = kind === 'refund_list' ? 'refunds' : 'items';
+      if (kind === 'bank_import_detail') need(['rows', 'history', 'postings'].includes(args.view),
+        'Select rows, history or postings for a complete original bank import view.');
+      const rowKey = kind === 'refund_list' ? 'refunds' : kind === 'bank_accounts' ? 'accounts' :
+        kind === 'bank_import_list' ? 'imports' : 'items';
       const items = [], ids = new Set(); let offset = 0, total, revision, date, metadata;
       for (;;) {
         const result = await client.callOperation(kind, {...args, offset, limit: 200}, options);
@@ -231,6 +257,10 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       }
       need(metadata && length === metadata.bytes, 'The original complete file ended early.', 'FILE_REPLY');
       return {bytes: Buffer.concat(parts, length), file: metadata};
+    },
+    bankImportFile({bankImportId, file}, options) {
+      identifier(bankImportId, UUID, 'original bank import UUID');
+      return client.fileBytes({kind: 'receivables-bank', bankImportId, file}, options);
     },
     refundFile({refundId, file}, options) {
       identifier(refundId, UUID, 'original refund UUID');
@@ -320,6 +350,13 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return result;
     };
   }
+  const bankPreview = client.previewBankPosting;
+  client.previewBankPosting = async (args, options) => {
+    const result = accountingBankPostingPreview(await bankPreview(args, options));
+    need(result.proposal.bankImportId === args.bankImportId,
+      'The reviewed bank posting belongs to another original import.', 'PREVIEW');
+    return result;
+  };
   return Object.freeze(client);
 }
 export async function connectAccountingReceivablesClient({workspace, ...options} = {}) {

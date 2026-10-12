@@ -403,16 +403,29 @@ export class MerchantGrantWorkspaces {
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
-      case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
+      case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
+      engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
+      work_intakes:'work-intakes',work_intake:'work-intake',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
-      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
+      cash_account:'cash-account',supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {
       const {planId, ...body} = rest; original = await client.plan(verb.slice(5), planId, body);
     } else if (verb === 'case_create') original = await client.createCase(rest);
     else if (verb === 'case_command') { const {caseId, ...body} = rest; original = await client.command(caseId, body); }
+    else if (verb === 'cash_correction_preview' || verb === 'cash_correction_apply') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...selected}=rest;
+      const document=await this.#modelInputs(alias,args,'Cash correction',GRANT_MAX_BUNDLE_BYTES);
+      for (const [key,value] of Object.entries(selected))
+        need(!Object.hasOwn(document,key) || document[key] === value,'GRANT_INPUT_CONFLICT',
+          'The supplied ' + key + ' differs from the complete retained cash correction.');
+      const body={...document,...selected};
+      original=verb === 'cash_correction_preview'
+        ? await client.cashCorrectionPreview(caseId,body)
+        : await client.cashCorrectionApply(caseId,body);
+    }
     else if (verb === 'ledger_intake_inspect') {
       original=await client.ledgerIntakeInspect(args.caseId,
         await this.#modelInputs(alias,args,'Ledger source file',GRANT_MAX_BUNDLE_BYTES));
@@ -429,6 +442,48 @@ export class MerchantGrantWorkspaces {
     else if (verb === 'statement_receive') {
       const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
       original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
+    }
+    else if (verb === 'installation_return_seed') {
+      const {caseId,...body}=rest; original=await client.installationReturnSeed(caseId,body);
+    }
+    else if (['installation_return_preview','installation_return_review_preview','installation_return','installation_return_stage'].includes(verb)) {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const selected=await this.#modelInputs(alias,args,'Installation receiving');
+      const methods={installation_return_preview:'installationReturnPreview',
+        installation_return_review_preview:'installationReturnReviewPreview',
+        installation_return:'installationReturn',installation_return_stage:'installationReturnStage'};
+      original=await client[methods[verb]](caseId,{...body,inputs:selected});
+    }
+    else if (verb === 'work_intake_upload') {
+      const {caseId,...body}=rest;original=await client.workIntakeUpload(caseId,body);
+    }
+    else if (['work_intake_preview','work_intake_save','work_intake_apply'].includes(verb)) {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      if(inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined)
+        body.document=await this.#modelInputs(alias,args,'Work intake',GRANT_MAX_BUNDLE_BYTES);
+      const method={work_intake_preview:'workIntakePreview',work_intake_save:'workIntakeSave',work_intake_apply:'workIntakeApply'}[verb];
+      original=await client[method](caseId,body);
+    }
+    else if (verb === 'engagement_seed') original = await client.engagementSeed(args.caseId, args.expectedVersion, args.reviewId);
+    else if (verb === 'engagement_preview') original = await client.engagementPreview(args.caseId, args.expectedVersion,
+      await this.#modelInputs(alias, args, 'Contributor Engagements'));
+    else if (verb === 'engagement_prepare') {
+      const document = await this.#modelInputs(alias, args, 'Contributor Engagements');
+      original = await client.engagementPrepare(args.caseId, {
+        expectedVersion:args.expectedVersion, requestId:args.requestId, actor:args.actor, note:args.note,
+        document, expectedPreviewSha256:args.expectedPreviewSha256});
+    }
+    else if (verb === 'engagement_forecast') original = await client.engagementForecast(args.caseId, args.expectedVersion,
+      await this.#modelInputs(alias, args, 'Engagement to Forecast selection'));
+    else if (verb === 'engagement_portfolio') original = await client.engagementPortfolio(args.caseId, args.expectedVersion,
+      await this.#modelInputs(alias, args, 'Engagement to Portfolio selection'));
+    else if (verb === 'engagement_receiving') {
+      const data = await this.#modelInputs(alias, args, 'Engagement receiving');
+      // A referenced native selection cannot replace the separately retained command identity.
+      exact(data, ['reviewId','reviewSha256','forecastId','portfolioId','forecastSelection','portfolioSelection'],
+        ['reviewId','reviewSha256','forecastId','portfolioId','forecastSelection','portfolioSelection']);
+      original = await client.engagementReceiving(args.caseId, {
+        expectedVersion:args.expectedVersion, requestId:args.requestId, actor:args.actor, note:args.note, ...data});
     }
     else if (verb === 'installation_seed') original=await client.installationSeed(args.caseId,args.expectedVersion);
     else if (verb === 'installation_workshares') {
@@ -499,6 +554,10 @@ export class MerchantGrantWorkspaces {
         completion_submit:'completionSubmit',completion_decision:'completionDecision'}[verb];
       original=await client[method](caseId,body);
     }
+    else if (verb === 'amendment_preview') original = await client.amendmentPreview(args.caseId, args.expectedVersion,
+      await this.#modelInputs(alias, args, 'Plan amendment'));
+    else if (verb === 'amendment_calendar_export') original = await client.amendmentCalendarExport(args.caseId,
+      await this.#modelInputs(alias, args, 'Amendment calendar export'));
     else if (verb === 'forecast_preview') original = await client.forecastPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Forecast'));
     else if (verb === 'forecast_save') {
@@ -544,7 +603,7 @@ export class MerchantGrantWorkspaces {
       } else { const {caseId, ...fields} = body; original = await client.attach(caseId, selected.bytes, fields); }
     } else throw failure('GRANT_TOOL_UNKNOWN', 'Choose an original grant operation.');
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
-      ['planId','caseId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind',
+      ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','reviewSha256','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',
@@ -556,14 +615,31 @@ export class MerchantGrantWorkspaces {
     try { return await pending; } finally { this.#pending.delete(pending); }
   }
   close() {
+    this.#closing = true;
     if (!this.#close) {
-      this.#closing = true;
-      this.#close = (async () => {
-        await Promise.allSettled([...this.#pending]); await this.#readers.close();
-        const outcomes = await Promise.allSettled([...this.#clients.values()].map(client => client.close()));
-        if (outcomes.some(result => result.status === 'rejected'))
-          throw failure('GRANT_SHUTDOWN_INCOMPLETE', 'An original owned grant service reported an incomplete shutdown.');
+      const closing = (async () => {
+        await Promise.allSettled([...this.#pending]);
+        // Readers and clients are independent owned resources. Keep their actual
+        // instances and attempt every drain even if another owner reports failure.
+        const owners = [
+          {name:'retained file readers', close:() => this.#readers.close()},
+          ...[...this.#clients].map(([alias, client]) => ({name:alias, close:() => client.close()})),
+        ];
+        const outcomes = await Promise.allSettled(owners.map(owner => Promise.resolve().then(owner.close)));
+        const failed = outcomes.flatMap((result, index) => result.status === 'rejected'
+          ? [{owner:owners[index].name, error:result.reason}] : []);
+        if (failed.length) {
+          const first = failed[0].error;
+          throw Object.assign(failure('GRANT_SHUTDOWN_INCOMPLETE',
+            'An original grant reader or service has not finished shutdown.'), {
+              cause:first,
+              failures:failed.map(item => ({owner:item.owner, code:item.error?.code ?? null,
+                message:String(item.error?.message ?? item.error).slice(0,1024)})),
+            });
+        }
       })();
+      this.#close = closing;
+      closing.catch(() => { if (this.#close === closing) this.#close = null; });
     }
     return this.#close;
   }

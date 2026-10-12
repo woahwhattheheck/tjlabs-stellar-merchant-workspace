@@ -146,8 +146,9 @@ export async function runInstalledDatasetteBrowser({
   try{
     await save('ORIGINAL_PROGRAMME_RETAINED');
     const {buildDistribution}=await fromRepo(DIST+'build.mjs');
-    state.build=await buildDistribution({repository,ref:sourceRef,output:join(outputDirectory,'build'),
-      selection:'datasette',offline:true,resume:true,python,onProgress:event=>{
+    const buildDirectory=join(outputDirectory,'build');
+    state.build=await buildDistribution({repository,ref:sourceRef,output:buildDirectory,
+      selection:'datasette',offline:true,resume:await exists(buildDirectory),python,onProgress:event=>{
         if(['selected','materializing','packaged','reused'].includes(event.phase))
           process.stderr.write(JSON.stringify({operation:'datasette-installed-build',...event})+'\n');
       }});
@@ -332,12 +333,13 @@ export async function runInstalledDatasetteBrowser({
       'DATASETTE_INSTALLED_ORIGINAL_EDITION');
     const moduleName=isAbsolute(playwrightModule)?pathToFileURL(playwrightModule).href:playwrightModule;
     const browser=await import(moduleName);
-    need(browser.chromium?.launchPersistentContext,'DATASETTE_INSTALLED_BROWSER_RUNTIME');
+    const chromium=browser.chromium??browser.default?.chromium;
+    need(typeof chromium?.launchPersistentContext==='function','DATASETTE_INSTALLED_BROWSER_RUNTIME');
     browserAttempt={id:randomUUID(),startedAt:stamp(),errorOffset:state.browserErrors.length};
     state.browserAttempts??=[];state.browserAttempts.push(browserAttempt);
     await save('BROWSER_ATTEMPT_RETAINED');
     const openBrowser=async(url,width=1440,height=1000)=>{
-      context=await browser.chromium.launchPersistentContext(join(outputDirectory,'browser-profile'),{
+      context=await chromium.launchPersistentContext(join(outputDirectory,'browser-profile'),{
         headless:true,viewport:{width,height},acceptDownloads:true,
         ...(browserExecutable?{executablePath:browserExecutable}:{}),args:['--disable-dev-shm-usage']});
       const page=context.pages()[0]??await context.newPage();

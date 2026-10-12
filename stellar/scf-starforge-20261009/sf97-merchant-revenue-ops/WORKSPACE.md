@@ -314,7 +314,8 @@ and full payment terms are expanded for the selected choice.
 | `source-terms.json` | Exact original merchant terms from that review. |
 | `pricing-report.json` | Exact original commercial report that informed the change. |
 | `manifest.json` | Retained decision identity, file sizes and SHA-256 values. |
-| `source-manifest.json`, `source-plan.json` | Exact original API package manifest and merchant plan when a source package is attached. |
+| `source-manifest.json`, `source-plan.json` | Exact original source manifest and merchant authoring plan when an API or Python source package is attached. |
+| `source-runtime.json`, `proposed-python-plan.json` | Original runtime settings and the proposed Python merchant plan for an attached Python release. |
 | `source-package/…` | Updated original authoring package when one was attached at workspace launch. |
 
 For an existing service with a static response, run the local launch configuration
@@ -370,6 +371,61 @@ Open the merchant's existing [seller release console](../sf82-seller-pilot/RELEA
 to compare the staged configuration, select it and restart the original seller
 using the console's established controls. The same console retains the previous
 release for rollback.
+
+### Retain a Python application through the price change
+
+For a Python merchant, attach the complete original release directory. Use that
+release's `seller-service.json` as the seller configuration and the same
+workspace, observation and release-store options:
+
+```sh
+node stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/workspace/cli.mjs \
+  --config /private/merchant/releases/python-first/seller-service.json \
+  --state /private/merchant/pricing-workspace \
+  --ops-url http://127.0.0.1:8424 \
+  --source-package /private/merchant/releases/python-first \
+  --release-store /private/merchant/releases \
+  --release-runtime /private/merchant/release-runtime.json \
+  --port 8457
+```
+
+The attached release contains its original `manifest.json`,
+`python/declaration.json`, the retained `python/merchant.json` runtime declaration,
+compiled `seller-service.json`, and `python/source/` application tree. The adapter inspects this original release
+and matches its compiled seller to the pricing review before preparing a change.
+
+Use **Prepare price change**, edit the chosen atomic amounts, and select
+**Review price change**. The source-package panel identifies the Python entry,
+retained file count and application size. Expand **Application and source
+identity** to inspect the retained application, execution and source hashes
+and original interpreter.
+
+The price change updates the selected original function payment amounts in
+the Python declaration and compiles that declaration through the existing Python
+merchant compiler. It keeps the function bindings, input and output definitions,
+helper modules, assets, environment references, lifecycle settings, source scope
+and interpreter. When the original declaration is also part of the captured
+application source, the prepared package retains that relationship and the
+unchanged execution identity.
+
+**Save configuration** retains the full portable authoring package under
+`source-package/`: its manifest, offers, seller configuration, Python declaration,
+compiled merchant, application source tree and run instructions. The decision
+also retains the original source manifest, plan and runtime settings, and the
+proposed Python plan. Saved price changes identify whether their source is an API
+merchant or a Python application.
+
+**Stage retained release** passes the prepared declaration and retained source
+root to the original SF82 Python release implementation. Repeating that action
+returns the same staged release. Use the existing release console to compare
+the resulting prices, select the release, restart the seller and retain the
+previous release for rollback.
+
+The complete pricing-and-cost workspace backup includes these saved Python
+packages. It preserves legal source filenames with spaces, Unicode and long
+relative paths, so restoring the workspace retains the same application files
+and price decisions. Reopen the restored workspace with its existing seller
+and observation inputs.
 
 ## Saved-state and restart behavior
 

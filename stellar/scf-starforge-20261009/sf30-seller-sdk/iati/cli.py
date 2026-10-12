@@ -17,7 +17,9 @@ from managed import inspect_binding, require_binding, startup
 import dqa_cli
 import publishing_cli
 import organisation_cli
+import organisation_reconciliation_cli
 import refresh_cli
+import results.cli as results_cli
 import amp_cli
 
 
@@ -99,7 +101,9 @@ def main(argv=None):
     dqa_cli.register(sub)
     publishing_cli.register(sub)
     organisation_cli.register(sub)
+    organisation_reconciliation_cli.register(sub)
     refresh_cli.register(sub)
+    results_cli.register(sub)
     amp_cli.register(sub)
     args = parser.parse_args(argv)
     if args.command == "binding":
@@ -110,9 +114,11 @@ def main(argv=None):
     with IatiWorkspace(args.workspace, create=args.command == "init") as ws:
         if binding is not None: binding = require_binding(str(ws.root), binding["sha256"])
         command = args.command
-        if command.startswith("amp-"): result = amp_cli.command(ws, args)
+        if command == "reconciliation": result = organisation_reconciliation_cli.command(ws, args)
+        elif command.startswith("amp-"): result = amp_cli.command(ws, args)
         elif command.startswith("organisation-"): result = organisation_cli.command(ws, args)
         elif command.startswith("refresh-"): result = refresh_cli.command(ws, args)
+        elif command.startswith("results-"): result = results_cli.command(ws, args)
         elif command.startswith("publishing-"): result = publishing_cli.command(ws, args)
         elif command.startswith("dqa-"): result = dqa_cli.command(ws, args)
         elif command in {"init", "list"}: result = ws.state()
