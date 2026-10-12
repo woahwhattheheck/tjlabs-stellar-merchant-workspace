@@ -68,7 +68,7 @@ export function providerPayoutCandidates(source){
     const field=name=>{const values=[...new Set(observed.map(row=>row[name]).filter(value=>value!==null&&value!==undefined).map(String))];return values.length===1?values[0]:null;};
     for(const row of outgoing.filter(value=>value.to===event.provider)){
       let classification='requires-source-classification',basis='The source has a single provider-address transfer; vendor and provider identity need resolution.';
-      if(outgoing.length===2){
+      if(outgoing.length===2&&funding.donationEventKey===event.key){
         classification=row.key===outgoing.at(-1).key?'provider-payout':'vendor-fee';
         basis='Original donate call order: the immediate vendor transfer precedes the bucket payout and terminal donation event.';
       }else if(outgoing.length===1){
@@ -87,9 +87,12 @@ export function providerPayoutCandidates(source){
 }
 export function providerPayouts(source){return providerPayoutCandidates(source).filter(row=>row.classification==='provider-payout');}
 export function nativePayments(source){
-  return source.tables.transfers.filter(row=>completeTx(source,row.hash)&&source.tables.donationEvents.some(event=>
-    transactionFor(source,event.hash)?.hash===transactionFor(source,row.hash)?.hash&&event.network===row.network&&
-    event.contractId===row.to&&event.donor===row.from&&event.amountAtoms===row.amountAtoms));
+  return source.tables.transfers.filter(row=>{
+    if(!completeTx(source,row.hash)||!source.tables.donationEvents.some(event=>
+      transactionFor(source,event.hash)?.hash===transactionFor(source,row.hash)?.hash&&event.network===row.network&&
+      event.contractId===row.to&&event.donor===row.from&&event.amountAtoms===row.amountAtoms))return false;
+    return paymentFundingCapacity(source,row).donationEventKey!==null;
+  });
 }
 export function registrySummary(state,editionId){
   const source=registry(state,editionId);
@@ -430,7 +433,28 @@ export function prepareStatement(state,input){
   const receiptGroups=new Map();
   for(const row of selectedReceiptRows)if(row.transactionId){const resolved=native&&transactionFor(native,row.transactionId);const key=resolved?'stellar:'+resolved.network+':'+resolved.hash:keyForReceipt(row);const list=receiptGroups.get(key)||[];list.push(row.id);receiptGroups.set(key,list);}
   const relatedAllocations=native?state.allocations.filter(row=>active(row)&&row.ledgerEditionId===native.id&&row.parts.some(part=>paymentIds.has(part.paymentKey))):[];
-  const usedAllocationIds=new Set([...impacts.map(row=>row.allocationId),...relatedAllocations.map(row=>row.id)]),usedBridgeIds=new Set(impacts.map(row=>row.bridgeId));
+  const fundingVersions=[...new Map([...relatedAllocations,...impacts.map(row=>row.allocationSnapshot).filter(Boolean)]
+    .map(row=>[row.id+':'+row.version,row])).values()];
+  const selectedLinkIds=new Set(links.filter(row=>paymentIds.has(row.paymentKey)).map(row=>row.id));
+  function selectedFunding(part){
+    if(!(basis==='REGISTRY_CREATED'||selection.organizationId||selection.initiativeId))return copy(part);
+    const original=transferFor(native,part.paymentKey),all=state.paymentLinks.filter(row=>active(row)&&row.registryEditionId===registrySource.id&&
+      row.ledgerEditionId===native.id&&row.paymentKey===part.paymentKey);
+    const assigned=all.reduce((n,row)=>n+BigInt(row.amountAtoms),0n),gross=BigInt(original.amountAtoms);
+    need(assigned<=gross,'PAYMENT_LINK_OVERDRAWN','Saved donation shares exceed the original payment.');
+    const members=all.map(row=>({id:row.id,weight:BigInt(row.amountAtoms)}));
+    if(assigned<gross)members.push({id:'__unassigned__',weight:gross-assigned});
+    const split=apportion(BigInt(part.amountAtoms),members),selectedAtoms=split.filter(row=>selectedLinkIds.has(row.id)).reduce((n,row)=>n+row.amount,0n);
+    return {...copy(part),amountAtoms:String(selectedAtoms),sourceFundingAtoms:part.amountAtoms,
+      selectedLinkIds:all.filter(row=>selectedLinkIds.has(row.id)).map(row=>row.id)};
+  }
+  const relatedPayouts=fundingVersions.map(row=>({
+    payout:copy(transferFor(native,row.payoutKey)),allocationId:row.id,allocationVersion:row.version,method:row.method,
+    current:state.allocations.some(value=>active(value)&&value.id===row.id&&value.version===row.version),
+    usedForCarbon:impacts.some(value=>value.allocationId===row.id&&value.allocationVersion===row.version),
+    selectedFunding:row.parts.filter(part=>paymentIds.has(part.paymentKey)).map(selectedFunding),wholeFunding:copy(row.parts),
+  }));
+  const usedAllocationIds=new Set(fundingVersions.map(row=>row.id)),usedBridgeIds=new Set(impacts.map(row=>row.bridgeId));
   const toSource=source=>source?{id:source.id,label:source.label,kind:source.kind,importedAt:source.importedAt,
     sha256:source.sha256||null,metadata:copy(source.metadata)}:null;
   const totalCarbon=impacts.reduce((n,row)=>n+BigInt(row.carbonAtoms),0n),filled=impacts.reduce((n,row)=>n+BigInt(row.allocatedAtoms),0n);
@@ -452,8 +476,7 @@ export function prepareStatement(state,input){
     organization:registrySource?.tables.organizations.find(row=>row.id===selection.organizationId)||null,
     initiative:registrySource?.tables.initiatives.find(row=>row.id===selection.initiativeId)||null,
     donations:copy(selectedDonations),payments:copy(payments),receipts:copy(selectedReceiptRows),impacts,
-    relatedPayouts:relatedAllocations.map(row=>({payout:copy(transferFor(native,row.payoutKey)),method:row.method,
-      selectedFunding:copy(row.parts.filter(part=>paymentIds.has(part.paymentKey))),wholeFunding:copy(row.parts)})),
+    relatedPayouts,
     certificates:certificateRows,retirementRegister:certificateRows.filter(row=>row.withinRetirementPeriod),
     assignmentSnapshot:copy(links.filter(row=>paymentIds.has(row.paymentKey))),
     allocationSnapshot:copy([...new Map([...state.allocations.filter(row=>usedAllocationIds.has(row.id)),

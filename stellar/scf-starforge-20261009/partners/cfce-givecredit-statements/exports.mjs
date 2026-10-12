@@ -2,7 +2,7 @@
 import {decimal,dayOf} from './source.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 export const readableDate=value=>value?new Date(dayOf(value)+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}):'—';
-export const methodLabel=value=>({PROPORTIONAL_GROSS:'Proportional to available gross payments',FIFO_GROSS:'Oldest available gross payments first',EXPLICIT:'Explicit token amounts'}[value]||value);
+export const methodLabel=value=>({PROPORTIONAL_GROSS:'Proportional to original gross payments',FIFO_GROSS:'Oldest available provider contributions first',EXPLICIT:'Explicit token amounts'}[value]||value);
 function csvCell(value){
   let result=value===null||value===undefined?'':typeof value==='object'?JSON.stringify(value):String(value);
   if(/^[=+@]/.test(result)||/^-/.test(result)&&!/^-\d+(?:\.\d+)?$/.test(result))result="'"+result;
@@ -28,7 +28,9 @@ export function statementHTML(report){
     row.initiative?.title||'Direct donation',row.wallet||'—',row.amount+' '+(row.asset||'Unspecified asset'),row.usdvalue+' USD']);
   const payments=report.payments.map(row=>[readableDate(row.createdAt),row.from,row.to,money(row)+' '+(row.asset.code||row.asset.key),row.network]);
   const payouts=report.relatedPayouts.map(row=>[readableDate(row.payout.createdAt),row.payout.from,row.payout.to,
-    money(row.payout)+' '+(row.payout.asset.code||row.payout.asset.key),methodLabel(row.method)]);
+    money(row.payout)+' '+(row.payout.asset.code||row.payout.asset.key),
+    'Version '+row.allocationVersion+' · '+(row.current?'current':'retained')+(row.usedForCarbon?' · used for carbon':''),methodLabel(row.method),
+    decimal(row.selectedFunding.reduce((n,part)=>n+BigInt(part.amountAtoms),0n),Number(row.payout.asset.decimals))]);
   const impact=report.impacts.filter(row=>BigInt(row.carbonAtoms)>0n).map(row=>[row.sink.recipient,readableDate(row.sink.created_at),
     row.carbon,row.allocated,row.remaining,methodLabel(row.method)]);
   const certificates=report.certificates.map(row=>[row.certificate_id,readableDate(row.retirement_date),row.attributedAmount,
@@ -58,8 +60,8 @@ export function statementHTML(report){
     table(['Asset','Amount','Transfers'],report.totals.paymentAssets.map(row=>[row.asset.code||row.asset.key,row.amount,row.records]))+
     '<h2>Donations</h2>'+table(['Registry created','Organization','Initiative','Donor wallet','Registry amount','Reported USD'],donations)+
     '<h2>Ledger payments</h2>'+table(['Ledger closed','From','To','Selected payment amount','Network'],payments)+
-    '<h2>Related provider payouts</h2><p>Amounts below are whole original provider transfers. Their saved funding allocation identifies each selected payment’s participation.</p>'+
-    table(['Ledger closed','Contract','Provider','Whole payout','Funding method'],payouts)+
+    '<h2>Related provider payouts</h2><p>Each row is a retained funding revision of its original payout. Revisions can describe the same cash transfer; the original payout identity is retained in every export. Selected funding shows this statement’s attributed participation.</p>'+
+    table(['Ledger closed','Contract','Provider','Original whole payout','Funding revision','Method','Selected funding'],payouts)+
     '<h2>Carbon contributions and allocations</h2><p>'+esc(report.allocationBasis)+'</p>'+
     table(['Source recipient','Contribution date','Attributed CARBON','Allocated','Remaining','Funding method'],impact)+
     '<h2>Linked retirement certificates</h2><p>Each native certificate appears once. Attributed CARBON is separate from the certificate’s whole VCU quantity.</p>'+
@@ -83,9 +85,14 @@ export function statementFiles(report){
     'statement.html':{type:'text/html; charset=utf-8',content:statementHTML(report)},
     'donations.csv':{type:'text/csv; charset=utf-8',content:csv(['id','created','organizationId','initiativeId','wallet','chain','network','asset','issuer','amount','usdvalue','status'],report.donations)},
     'payments.csv':{type:'text/csv; charset=utf-8',content:csv(['key','hash','network','ledger','createdAt','from','to',['asset',r=>r.asset.key],['decimals',r=>r.asset.decimals],'amountAtoms',['amount',money],'sourceAmountAtoms'],report.payments)},
-    'payout-funding.csv':{type:'text/csv; charset=utf-8',content:csv(['payoutKey','payoutHash','paymentKey','method','amountAtoms','asset','decimals','selectedPayment'],
-      report.relatedPayouts.flatMap(group=>group.wholeFunding.map(part=>({payoutKey:group.payout.key,payoutHash:group.payout.hash,paymentKey:part.paymentKey,method:group.method,
-        amountAtoms:part.amountAtoms,asset:group.payout.asset.key,decimals:group.payout.asset.decimals,selectedPayment:group.selectedFunding.some(row=>row.paymentKey===part.paymentKey)}))))},
+    'payout-funding.csv':{type:'text/csv; charset=utf-8',content:csv(['payoutKey','payoutHash','allocationId','allocationVersion','currentRevision','usedForCarbon',
+      'paymentKey','method','amountAtoms','selectedFundingAtoms','asset','decimals','selectedPayment','grossWeightAtoms','providerCapacityAtoms'],
+      report.relatedPayouts.flatMap(group=>group.wholeFunding.map(part=>({payoutKey:group.payout.key,payoutHash:group.payout.hash,
+        allocationId:group.allocationId,allocationVersion:group.allocationVersion,currentRevision:group.current,usedForCarbon:group.usedForCarbon,
+        paymentKey:part.paymentKey,method:group.method,amountAtoms:part.amountAtoms,
+        selectedFundingAtoms:group.selectedFunding.find(row=>row.paymentKey===part.paymentKey)?.amountAtoms||'0',
+        asset:group.payout.asset.key,decimals:group.payout.asset.decimals,selectedPayment:group.selectedFunding.some(row=>row.paymentKey===part.paymentKey),
+        grossWeightAtoms:part.weightAtoms,providerCapacityAtoms:part.capacityAtoms}))))},
     'carbon-contributions.csv':{type:'text/csv; charset=utf-8',content:csv(['donationId','paymentKey','payoutKey','sinkHash','bridgeId','allocationId','allocationVersion','method','carbon','allocated','remaining'],report.impacts)},
     'carbon-allocations.csv':{type:'text/csv; charset=utf-8',content:csv(['donationId','paymentKey','payoutKey','sinkHash','bridgeId','allocationId','allocationVersion','method',
       'certificateId','retirementDate','certificateAllocated'],report.impacts.flatMap(row=>row.certificates.map(certificate=>({...row,

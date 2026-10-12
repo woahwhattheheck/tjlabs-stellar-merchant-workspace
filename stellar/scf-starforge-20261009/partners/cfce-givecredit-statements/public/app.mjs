@@ -7,7 +7,7 @@ const short=value=>{const s=String(value||'');return s.length>22?s.slice(0,10)+'
 const date=(value,time=false)=>{if(!value)return 'Date unavailable';const d=new Date(value);return Number.isFinite(d.getTime())?
   new Intl.DateTimeFormat('en',{timeZone:'UTC',year:'numeric',month:'short',day:'numeric',...(time?{hour:'2-digit',minute:'2-digit',timeZoneName:'short'}:{})}).format(d):String(value);};
 const kindLabel={registry:'Registry',ledger:'Ledger',carbon:'Stellarcarbon'};
-const methodLabel={PROPORTIONAL_GROSS:'Proportional to available gross payments',FIFO_GROSS:'Oldest available payments first',EXPLICIT:'Explicit payment amounts'};
+const methodLabel={PROPORTIONAL_GROSS:'Proportional to original gross payments',FIFO_GROSS:'Oldest available provider contributions first',EXPLICIT:'Explicit payment amounts'};
 const actionLabel={'import':'Source edition imported','payment-link':'Payment assignment saved',allocation:'Payout allocation saved',bridge:'Carbon association saved',statement:'Statement version saved',settings:'Workspace renamed','carry-payment-links':'Unchanged payment assignments carried forward'};
 const statusLabel={IDLE:'Ready',RUNNING:'Acquiring original records',COMPLETE:'Complete',INTERRUPTED:'Paused at retained checkpoint',
   complete:'Complete','complete-with-source-notes':'Complete with source notes',capturing:'Acquiring original records',interrupted:'Paused at retained checkpoint',
@@ -67,6 +67,9 @@ function statementSummary(report){
     '<p>'+h(report.allocationBasis)+'</p>'+table(['Registry asset','Recorded amount'],t.registryAssets.map(row=>[h(row.asset.code),h(row.amount)]))+
     table(['Payment asset','Attributed payment amount'],t.paymentAssets.map(row=>[h(row.asset.code||'Token'),h(row.amount)]))+
     '<p>Registry-reported USD: <strong>'+h(t.registryUSD)+'</strong>. These original registry values and actual ledger amounts have distinct source bases.</p>'+
+    '<h3>Provider payout funding revisions</h3><p>Rows retain each funding revision used by this statement. A repeated original payout describes the same cash transfer.</p>'+table(['Payout date','Revision','Method','Original whole payout','Selected funding'],report.relatedPayouts.map(row=>[
+      h(date(row.payout.createdAt)),h('Version '+row.allocationVersion+' · '+(row.current?'current':'retained')+(row.usedForCarbon?' · used for carbon':'')),h(methodLabel[row.method]),
+      h(token(row.payout.amountAtoms,row.payout.asset.decimals))+' '+h(row.payout.asset.code||'Token'),h(token(row.selectedFunding.reduce((n,part)=>n+BigInt(part.amountAtoms),0n).toString(),row.payout.asset.decimals))]))+
     '<h3>Linked retirement certificates</h3><p>'+h(report.retirementDateBasis)+'</p>'+
     table(['Certificate','Retirement date','Attributed CARBON','Whole certificate VCUs','Dated in selected period'],report.certificates.map(row=>[
       h(row.certificate_id),h(date(row.retirement_date)),h(row.attributedAmount),h(row.vcu_amount),row.withinRetirementPeriod?'Yes':'Later or earlier date']))+
@@ -198,6 +201,8 @@ function bridgeForm(){
   const sink=(choices.sinks||[]).find(row=>row.hash===(draft.sinkHash||context.sinkHash||edit?.sinkHash));
   return '<form class="panel grid" data-form="bridge"><h2 class="span-all">'+(edit?'Edit carbon association':'Associate an original carbon contribution')+'</h2>'+
     select('Saved provider payout allocation','allocationId',groups,group?.id||'','id','name','Choose an allocation',true)+
+    '<p class="span-all">'+(edit?'This association retains '+h(edit.allocationSnapshot?.name||'its saved allocation')+' · version '+h(edit.allocationVersion)+'. ':'')+
+      (group?'Saving '+(edit?'this edit':'the association')+' uses '+h(group.name)+' · version '+h(group.version)+'.':'Choose a saved allocation to associate its funding revision.')+'</p>'+
     select('Original Stellarcarbon contribution','sinkHash',choices.sinks||[],sink?.hash||'','hash',row=>row.carbon+' CARBON · '+date(row.createdAt)+' · '+short(row.recipient),'Choose an original sink',true)+
     field('Provider payout amount used','paymentAmount',draft.paymentAmount??(edit&&payout?token(edit.paymentAtoms,payout.asset.decimals):payout?token(payout.amountAtoms,payout.asset.decimals):''),'text',true,payout?(payout.asset.code||'Token')+' · original token precision':'')+
     field('CARBON attributed to this payout','carbonAmount',draft.carbonAmount??edit?.carbonAmount??sink?.carbon??'','text',true,'Retained Stellarcarbon precision: 3 decimals.')+
@@ -208,9 +213,9 @@ function bridges(){
   if(!selected.ledger||!selected.carbon)return '<h1>Carbon associations</h1>'+empty('Select the original ledger and Stellarcarbon source editions.','intake');
   if(current('ledger').network!==current('carbon').network)return '<h1>Carbon associations</h1>'+empty('Choose source editions from the same Stellar network.');
   return '<h1>Provider payout and carbon associations</h1><p>Associate a source-observed payout with its original sinking transaction. The note records the actual source connecting them, while donor attribution uses the saved payout funding method.</p>'+
-    table(['Payout allocation','CARBON','Payment used','Saved',''],state.bridges.filter(row=>row.ledgerEditionId===selected.ledger&&row.carbonEditionId===selected.carbon).map(row=>[
-      h(state.allocations.find(item=>item.id===row.allocationId)?.name||'Saved payout allocation')+(row.active===false?' '+tag('Archived'):''),
-      h(row.carbonAmount),h(token(row.paymentAtoms,row.source.payout.asset.decimals))+' '+h(row.source.payout.asset.code||'Token'),
+    table(['Payout allocation','Funding revision','CARBON','Payment used','Saved',''],state.bridges.filter(row=>row.ledgerEditionId===selected.ledger&&row.carbonEditionId===selected.carbon).map(row=>[
+      h(row.allocationSnapshot?.name||state.allocations.find(item=>item.id===row.allocationId)?.name||'Saved payout allocation')+(row.active===false?' '+tag('Archived'):''),
+      h('Version '+row.allocationVersion),h(row.carbonAmount),h(token(row.paymentAtoms,row.source.payout.asset.decimals))+' '+h(row.source.payout.asset.code||'Token'),
       h(date(row.updatedAt,true)),button('Edit','edit-bridge',{id:row.id})+(row.active===false?'':' '+button('Archive','archive-bridge',{id:row.id}))]))+
     bridgeForm()+(preview?.kind==='bridge'?'<div class="preview"><h2>Source association</h2><p>'+h(preview.value.carbonAmount)+' CARBON associated with the selected provider payout.</p>'+json(preview.value)+'</div>':'');
 }
@@ -408,7 +413,7 @@ document.addEventListener('click',event=>{
 });
 document.addEventListener('change',event=>{
   const input=event.target;
-  if(input.dataset.source){run(async()=>{selected[input.dataset.source]=input.value;context={};preview=null;drafts={};await refresh();});return;}
+  if(input.dataset.source){run(async()=>{selected[input.dataset.source]=input.value;page=({donation:'donations',transfer:'payments',source:'sources',statement:'statements'})[page]||page;context={};filters={};preview=null;drafts={};await refresh();});return;}
   if(input.hasAttribute('data-source-table')){context.table=input.value;context.offset=0;run(render);return;}
   if(input.hasAttribute('data-statement-version')){context.version=Number(input.value);run(render);return;}
   const form=input.closest('form');if(!form)return;
@@ -455,7 +460,7 @@ document.addEventListener('submit',event=>{
       const input=bindVersion(edit,{ledgerEditionId:selected.ledger,carbonEditionId:selected.carbon,allocationId:group.id,payoutKey:group.payoutKey,
         sinkHash:value.sinkHash,paymentAtoms:toAtoms(value.paymentAmount,payout.asset.decimals),carbonAmount:value.carbonAmount,note:value.note});
       if(submitter?.value==='preview'){preview={kind:'bridge',value:await api.preview('bridge',input)};await render();}
-      else{await save('bridge',input);context={};preview=null;await render();}return;
+      else{await save('bridge',input);context={};preview=null;drafts={};await render();}return;
     }
     if(type==='statement'){
       remember(form);const edit=context.id?state.statements.find(row=>row.id===context.id):null,input={...query(),...value,...(edit?{id:edit.id,expectedVersion:edit.versions}:{})};

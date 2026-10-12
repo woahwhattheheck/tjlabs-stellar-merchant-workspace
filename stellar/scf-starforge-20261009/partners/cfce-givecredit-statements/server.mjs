@@ -9,7 +9,7 @@ import {readNativeDirectory} from '../stellarcarbon-statements/store.mjs';
 import {GiveCreditWorkspace,sealSource,MAX_INPUT_BYTES,MAX_WORKSPACE_BYTES} from './store.mjs';
 import {need,copy,receiveRegistryFiles,receiveCarbon,sourceSummary} from './source.mjs';
 import {editionFor,donationsPage,donationDetail,transfersPage,transferDetail,poolRegister,providerPayoutCandidates,nativePayments,
-  prepareAllocation,prepareBridge,prepareStatement,statementVersion,compareEditions} from './engine.mjs';
+  prepareAllocation,prepareBridge,prepareStatement,statementVersion,compareEditions,transactionFor} from './engine.mjs';
 import {statementFiles,comparisonCSV} from './exports.mjs';
 import {captureRegistry} from './capture.mjs';
 import {paymentFundingCapacity,paymentBeforePayout} from './funding.mjs';
@@ -51,7 +51,7 @@ function choices(state,query){
     initiatives:registry?registry.tables.initiatives.map(row=>({id:row.id,title:row.title,organizationId:row.organizationId})):[],
     donations:registry?registry.tables.donations.map(row=>({id:row.id,created:row.created,wallet:row.wallet,amount:row.amount,asset:row.asset,
       organizationId:row.organizationId,initiativeId:row.initiativeId,organizationName:row.organization?.name||null,initiativeName:row.initiative?.title||null})):[],
-    transfers:ledger?ledger.tables.transfers.filter(row=>ledger.tables.transactions.some(tx=>tx.hash===row.hash&&tx.successful===true)).map(brief):[],
+    transfers:ledger?ledger.tables.transfers.filter(row=>transactionFor(ledger,row.hash)?.successful===true).map(brief):[],
     donorPayments:ledger?nativePayments(ledger).map(row=>({...brief(row),funding:paymentFundingCapacity(ledger,row),beforePayout:selectedPayout?paymentBeforePayout(ledger,row,selectedPayout):null})):[],payouts:payoutChoices.map(row=>({...brief(row),classification:row.classification,classificationBasis:row.classificationBasis})),
     sinks:carbon?carbon.carbon.tables.sinking_txs.map(row=>({hash:row.hash,createdAt:row.created_at,recipient:row.recipient,funder:row.funder,carbon:row.carbon_amount})):[]};
 }
