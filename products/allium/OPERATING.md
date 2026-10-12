@@ -40,7 +40,23 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect
   --dir /absolute/private/allium-runtime --load
 ~~~
 
-The installer records the available Node and Python tools. The original product uses Node 22.16 or later. Run the following starforge commands through the installed package binary or the existing runtime run command. The general build and installation references are retained in distribution/BUILDING.md and distribution/RUNTIME_INSTALL.md.
+The installer records the available Node and Python tools. The original product uses Node 22.16 or later.
+
+Inspection returns the READY installation's actual sourceRoot. Bind every following command to that private runtime:
+
+~~~sh
+ALLIUM_RUNTIME=/absolute/private/allium-runtime
+ALLIUM_SOURCE_ROOT=/ACTUAL_SOURCE_ROOT_RETURNED_BY_INSPECT
+export ALLIUM_SOURCE_ROOT
+starforge() {
+  node "$ALLIUM_SOURCE_ROOT/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs" \
+    run --dir "$ALLIUM_RUNTIME" -- "$@"
+}
+~~~
+
+The local function selects the same READY installation from any working directory.
+
+The JavaScript example uses that same exported sourceRoot, so its imports resolve the selected installed modules and adjacent dependencies from a private customer directory. The general build and installation references are retained in distribution/BUILDING.md and distribution/RUNTIME_INSTALL.md.
 
 ## Create or receive the original workspace
 
@@ -192,8 +208,13 @@ MCP disconnect and shutdown close the attachment and its file readers. Applicati
 ## Typed Node client
 
 ~~~js
-import {AlliumWorkspaceClient}
-  from '@tokenjunkielabs/starforge-merchant/seller/allium/workspace/connection';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+
+const sourceRoot = process.env.ALLIUM_SOURCE_ROOT;
+if (!sourceRoot) throw new Error('Set ALLIUM_SOURCE_ROOT to the READY runtime inspection sourceRoot.');
+const {AlliumWorkspaceClient} = await import(pathToFileURL(join(sourceRoot,
+  'stellar/scf-starforge-20261009/partners/allium-explorer-pilot/workspace/connection.mjs')).href);
 
 const client = await AlliumWorkspaceClient.connect(
   '/absolute/private/allium-operator/allium.connection.json'
@@ -214,7 +235,7 @@ try {
 
 The typed client returns full original responses. Native mutation methods return result and state. Transport bounds response bodies, rejects redirects, authenticates the actual Allium token header and instance, and checks the private connection identity before dispatch. Each logical native action is sent once.
 
-Additional typed exports are seller/allium/workspace/managed and seller/allium/workspace/mcp. Original seller/allium, seller/allium/workspace and seller/allium/workspace/server exports continue to expose the source engine.
+A project that installs this archive as its own npm dependency can import @tokenjunkielabs/starforge-merchant/seller/allium/workspace/connection and receive its TypeScript declarations. Additional typed exports are seller/allium/workspace/managed and seller/allium/workspace/mcp. Original seller/allium, seller/allium/workspace and seller/allium/workspace/server exports continue to expose the source engine.
 
 ## Original source references
 
