@@ -70,3 +70,19 @@
 .portfolio-currency code{font-size:.78rem}
 @media(max-width:800px){.portfolio-currency{padding:.75rem}.portfolio-currency .portfolio-section-heading{align-items:flex-start}.portfolio-currency-state{white-space:normal}}
 @media print{.portfolio-currency{background:#fff}.portfolio .portfolio-unvalued{color:#222}.portfolio-unvalued-panel{background:#fff}}
+
+/* Source-owned customer phases share the original resource and cash planner. */
+.portfolio-installation-plan{border:1px solid #bcbcbc;padding:1rem;margin:1rem 0;background:#fff}
+.portfolio-installation-picker{display:flex;align-items:end;gap:.65rem;flex-wrap:wrap;margin:.8rem 0}
+.portfolio-installation-picker>label{flex:1 1 22rem}
+.portfolio-phase-balance{font-variant-numeric:tabular-nums;font-weight:600}
+.portfolio-delivery-boundary{border-block:1px solid #ccc;background:#f7f7f7;padding:.85rem;margin:1rem 0}
+.portfolio-boundary-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin:.85rem 0}
+.portfolio-phase{background:#fff}
+.portfolio-phase summary small{display:block;font-weight:400;color:#555;margin-left:1.05rem}
+.portfolio-phase-terms{background:#f6f6f6;border-color:#ddd!important}
+.portfolio-phase-terms p{overflow-wrap:anywhere}
+.portfolio-phase-results{border-top:1px solid #aaa;padding-top:1rem;margin:1.2rem 0}
+.portfolio-phase-results article{margin:1rem 0}
+@media(max-width:800px){.portfolio-installation-plan{padding:.75rem}.portfolio-boundary-options{grid-template-columns:1fr}.portfolio-installation-picker>label{flex-basis:100%}.portfolio-installation-picker button{flex:1}.portfolio-delivery-boundary{padding:.7rem}}
+@media print{.portfolio-phase-results article{break-inside:avoid}}

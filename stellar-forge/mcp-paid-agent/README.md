@@ -16,6 +16,7 @@ files through the [native workspace](NATIVE_WORKSPACE.md).
 | Connect a desktop, editor or agent host | [Stdio launcher and client configuration](STDIO.md) |
 | Run a private HTTP MCP workspace | `serve.mjs`, with the configuration below |
 | Browse, review quotes and use complete results in a local browser | [Buyer operator console](CONSOLE.md), on the same server at `/console/` |
+| Browse or search every source page and prepare declared inputs from Node | [Discovery workflow and typed client](DISCOVERY.md) |
 | Discover and purchase remote MCP tools | [Remote MCP buyer and native operator](REMOTE_MCP.md) |
 | Expose an existing merchant function as a paid MCP tool | [Native paid tool server](PAID_TOOLS.md) |
 | Use the existing SF88 native HTTP purchase and returned-file workflow | [Native workspace](NATIVE_WORKSPACE.md) |
@@ -36,7 +37,8 @@ described in [REMOTE_MCP.md](REMOTE_MCP.md) before using native remote tools.
 
 | Tool | Result |
 | --- | --- |
-| `bazaar_search` | Search the configured discovery service and obtain temporary resource handles. |
+| `bazaar_resources` | Browse the configured catalog with its native offset pagination and obtain temporary resource handles. |
+| `bazaar_search` | Search the configured discovery service, preserve all filters across cursor pages and obtain temporary resource handles. |
 | `bazaar_describe` | Inspect the original declaration, input schema, examples, output and complete payment alternatives. |
 | `bazaar_preview` | Bind a selected alternative to the exact HTTP request or remote MCP invocation; create a quote. |
 | `bazaar_execute_approved` | Request approval from the trusted operator, then execute that quote once if approved. |
@@ -49,7 +51,11 @@ described in [REMOTE_MCP.md](REMOTE_MCP.md) before using native remote tools.
 | `bazaar_reconcile_payment` | Inspect the original transaction through the host's Stellar verifier and retain its observation on that quote. |
 | `sf43_discover_review_and_pay` | Use the separately configured original SF43/SF88 native buyer workspace. |
 
-Search performs a discovery GET. Describe and preview use the cached result;
+Browse and search perform discovery GETs. Each page preserves its exact request,
+source pagination, row coverage and complete next-call arguments. Both support
+resource type, recipient, network, scheme, asset, extension and maximum-amount
+filters. See [DISCOVERY.md](DISCOVERY.md) for partial results and continuation.
+Describe and preview use the cached result;
 neither calls a merchant or signs a payment. Execute requires both an independent
 host-owned approval callback and a signer. Model-supplied approval fields do not
 authorize a purchase. The default launcher can search, inspect and preview; it
@@ -109,7 +115,7 @@ not silently substitute a new ledger for the existing SF36 HTTP workflow.
 
 ## Construct the exact request
 
-Call `bazaar_describe` with a handle from search. Its `bazaar` field preserves the
+Call `bazaar_describe` with a handle from browse or search. Its `bazaar` field preserves the
 original extension, including schema, input examples and output declaration.
 `accepts` retains complete eligible alternatives in the order used by preview's
 `acceptIndex`. `source` records the discovery URL, observation time and original
@@ -147,18 +153,22 @@ before local client closure.
 }
 ```
 
-The direct SF32 HTTP path accepts GET/HEAD and advertised query keys, with values
-as strings. A discovered POST/PUT/PATCH operation requires the original body-aware
+The direct SF32 HTTP path accepts GET/HEAD and query keys from the seller's
+actual query schema, including optional fields omitted from its example.
+Supply explicit strings, or arrays of strings for declared array parameters.
+When the seller declares query serialization, the original SF30 codec applies
+its form/explode encoding and validates the selected wire values. Otherwise,
+strings stay literal and arrays become repeated query pairs. Fixed query pairs
+for other keys remain in the URL. A discovered POST/PUT/PATCH operation uses the original body-aware
 native buyer path described in [NATIVE_WORKSPACE.md](NATIVE_WORKSPACE.md).
 
 Preview checks the direct required query names at
 `bazaar.schema.properties.input.properties.queryParams.required` against the final
-URL. Existing fixed URL parameters count. Examples and defaults are not copied
-into a request, and an empty string counts as present. This presence check does
-not implement the seller's complete JSON Schema validation. Describe exposes
-these names through `preview.input.requiredKeys`; malformed direct declarations
-return `requiredKeysError`, and preview rejects them with
-`INPUT_SCHEMA_UNSUPPORTED`.
+URL. Existing fixed URL parameters count. Examples and defaults stay available
+for inspection and are included only through explicit customer input. Describe
+exposes the original `requiredKeys` and `requiredKeysError` alongside parameter
+names, types, descriptions, encoding and a structured `inputError`. The complete
+[discovery workflow](DISCOVERY.md) documents request preparation and error recovery.
 
 For HTTP, `resource` remains the catalog URL and `requestUrl` is the exact URL
 with chosen query values. Both the payment challenge and signer payload must

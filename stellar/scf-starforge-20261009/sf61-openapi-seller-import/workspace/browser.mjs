@@ -237,6 +237,10 @@ function drawRoutes(saved=[]) {
       const headers=make('label','Header → environment variable references'),headerInput=make('textarea');
       headerInput.value=JSON.stringify(previous?.headerEnv??{},null,2);headerInput.spellcheck=false;headers.className='wide';headers.append(headerInput);
       headers.append(make('span','Example: {"authorization":"MY_API_AUTH"}. Set the complete header value in that environment variable before launch.','hint'));
+      const queries=make('label','Private query → environment variable references'),queryCredentialInput=make('textarea');
+      queryCredentialInput.value=JSON.stringify(previous?.queryEnv??{},null,2);queryCredentialInput.spellcheck=false;
+      queryCredentialInput.autocomplete='off';queries.className='wide';queries.append(queryCredentialInput);
+      queries.append(make('span','Example: {"api_token":"MARKETAUX_API_TOKEN"}. These fields belong to the backend credential; public query examples omit them.','hint'));
       const alternatives=(op.authentication??[]).map(value=>[value.index,(value.names.length?value.names.join(' + '):'No additional backend authentication')+(value.supported?'':' (setup unavailable)')]);
       const security=selectField('Backend security alternative',alternatives,previous?.securityAlternative??0);
       const formats=[['json','JSON'],['bytes','Bytes'],...(op.method==='HEAD'?[]:(op.responseStreams??[]).map(value=>[value.format,value.format.toUpperCase()+' stream']))];
@@ -261,7 +265,7 @@ function drawRoutes(saved=[]) {
       const failureThreshold=field('Failures before pausing',previous?.availability?.failureThreshold??3,'number');
       const resetAfter=field('Initial recovery wait, milliseconds',previous?.availability?.resetAfterMs??30000,'number');
       const maxResetAfter=field('Maximum recovery wait, milliseconds',previous?.availability?.maxResetAfterMs??300000,'number');
-      fields.append(headers,security.container,mode.container,validation.container,timeout.container,size.container,requestSize.container,capacity.container,
+      fields.append(headers,queries,security.container,mode.container,validation.container,timeout.container,size.container,requestSize.container,capacity.container,
         stream.element,request,forwarded.container,guard.container,failureThreshold.container,resetAfter.container,maxResetAfter.container);
       if(op.streamError) fields.append(make('p','Stream declaration: '+op.streamError,'hint wide'));
       advanced.append(summary,fields);settings.append(advanced);card.append(settings);
@@ -286,7 +290,7 @@ function drawRoutes(saved=[]) {
       const query=createQuerySettings(op,previous);settings.append(query.element);
       const operation=createOperationSettings({make,field},previous,op.method);
       if(operation)settings.append(operation.element);
-      const controls=[server.input,transport.input,amount.input,description.input,requestInput,validation.input,headerInput,security.input,mode.input,timeout.input,size.input,requestSize.input,capacity.input,forwarded.input,guard.input];
+      const controls=[server.input,transport.input,amount.input,description.input,requestInput,validation.input,headerInput,queryCredentialInput,security.input,mode.input,timeout.input,size.input,requestSize.input,capacity.input,forwarded.input,guard.input];
       const guardControls=[failureThreshold.input,resetAfter.input,maxResetAfter.input];
       const toggle=()=>{
         const streaming=isStreamFormat(mode.input.value);
@@ -304,7 +308,7 @@ function drawRoutes(saved=[]) {
       check.addEventListener('change',toggle);guard.input.addEventListener('change',toggle);
       mode.input.addEventListener('change',()=>{if(mode.input.value!=='json')validation.input.value='none';toggle();});
       cache?.enabled.addEventListener('change',toggle);toggle();
-      routeFields.push({op,previous,check,card,toggle,transport,server:server.input,amount:amount.input,description:description.input,request:requestInput,validation:validation.input,headers:headerInput,security:security.input,
+      routeFields.push({op,previous,check,card,toggle,transport,server:server.input,amount:amount.input,description:description.input,request:requestInput,validation:validation.input,headers:headerInput,queryCredentials:queryCredentialInput,security:security.input,
         mode:mode.input,timeout:timeout.input,size:size.input,requestSize:requestSize.input,capacity:capacity.input,forwarded:forwarded.input,
         guard:guard.input,failureThreshold:failureThreshold.input,resetAfter:resetAfter.input,maxResetAfter:maxResetAfter.input,cache,authentication,operation,stream,query});
     }
@@ -322,7 +326,7 @@ function planFromForm(worksheetRows=null) {
     allowLoopbackUpstream:$('allow-loopback').checked,
     ...(Object.keys(transports).length?{transports}:{}),
     operations:routeFields.filter(included).map(r=>({method:r.op.method,path:r.op.path,
-      ...(r.previous?.id?{id:r.previous.id}:{}),...(r.transport.read()?{transport:r.transport.read()}:{}),serverIndex:Number(r.server.value),amountAtomic:price(r),headerEnv:JSON.parse(r.headers.value),
+      ...(r.previous?.id?{id:r.previous.id}:{}),...(r.transport.read()?{transport:r.transport.read()}:{}),serverIndex:Number(r.server.value),amountAtomic:price(r),headerEnv:JSON.parse(r.headers.value),queryEnv:JSON.parse(r.queryCredentials.value),
       publicDescription:r.description.value.trim(),responseValidation:r.validation.value,
       ...(r.request.value.trim()?{requestExample:JSON.parse(r.request.value)}:{}),
       ...r.query.read(),

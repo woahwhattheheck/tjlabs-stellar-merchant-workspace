@@ -133,6 +133,7 @@ export function createBankUi(host) {
         '</td><td>'+e(row.reference||row.bankReference||row.transactionId||'Source row '+row.rowNumber)+
         '<span class="subline">'+e(row.counterparty||row.invoiceReference)+'</span></td><td class="num">'+money(row.amount,row.currency)+
         '<span class="subline">'+e(formatStatus(row.kind))+'</span></td><td>'+status(row.status)+
+        (row.supersededBy?.length?'<span class="subline">Replaced by a later posted bank source. Open Source for its original correction.</span>':'')+
         (chosen[row.id]?'<span class="subline">'+chosen[row.id].splits.length+' prepared split'+(chosen[row.id].splits.length===1?'':'s')+'</span>':'')+
         '</td><td>'+candidateSummary(row)+'</td><td><div class="row">'+button('Source','row-source',' class="small" data-id="'+e(row.id)+'"')+
         (row.canPost&&open?button(chosen[row.id]?'Edit splits':'Match payment','assign',' class="small" data-id="'+e(row.id)+'"',true):'')+
@@ -172,6 +173,7 @@ export function createBankUi(host) {
       (row.sourceIssues?.length?'<h3 class="section">Source findings</h3>'+renderRecords(row.sourceIssues.map(item=>typeof item==='string'?{code:item}:item),'Source finding'):'')+
       '<details class="bank-original"><summary>Complete original source row</summary><pre class="bank-json">'+e(JSON.stringify(row,null,2))+'</pre></details>'+
       '<details class="bank-original"><summary>Original source identity</summary><p class="mono">'+e(row.sourceRowSha256)+'</p></details>'+
+      (row.supersededBy?.length?'<h3 class="section">Posted source replacements</h3>'+renderRecords(row.supersededBy,'Source replacement'):'')+
       (row.sourceMatches?.length?'<h3 class="section">Other retained source matches</h3>'+renderRecords(row.sourceMatches,'Source match'):'');
   }
 

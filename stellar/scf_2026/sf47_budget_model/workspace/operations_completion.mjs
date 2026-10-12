@@ -430,6 +430,10 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     if(session.inflight){try{await session.inflight;}catch{}}
     if(session.accepted||session.rejected){const next=await reloadCase();reconcileAccepted(next);session.rejected=null;}
     else if(session.asOfDate!==calendar.asOfDate)calendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(session.asOfDate));
+    if([1,2,3].includes(session.requestTranche)&&!session.pending&&!session.inflight&&!session.accepted){
+      const requested=session.requestTranche;delete session.requestTranche;
+      if(requested!==session.tranche)await selectTranche(requested);
+    }
     await loadDraft(session.tranche);chooseReceipt();
     if(session.reviewId)await openReview(session.reviewId);
     render();

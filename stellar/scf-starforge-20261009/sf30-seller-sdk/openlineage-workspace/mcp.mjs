@@ -66,7 +66,7 @@ function completeResponse(value, name, args) {
     413, "OPENLINEAGE_VIEW_TOO_LARGE", { recordsTool: "merchant_lineage_records_read", objectTool: "merchant_lineage_object_read", exportTool: "merchant_lineage_export_read" });
 }
 export class MerchantOpenLineageWorkspaces {
-  #config; #clients = new Map(); #tasks = new Set(); #closed = false; #close;
+  #config; #clients = new Map(); #tasks = new Set(); #workspaceBorrowers = new Set(); #closed = false; #close;
   constructor(config) { this.#config = config.openlineageWorkspaces ?? null; }
   get summary() {
     return { configured: Boolean(this.#config), workspaces: Object.keys(this.#config?.workspaces ?? {}),
@@ -89,6 +89,16 @@ export class MerchantOpenLineageWorkspaces {
       inputs: Object.entries(entry.inputs).map(([name, input]) => lineageInputMetadata(name, input)),
       producer: lineageProducerMetadata(entry),
       client: this.#clients.get(alias)?.metadata ?? { state: "UNATTACHED", workspaceId: entry.workspaceId } };
+  }
+  /** Borrow the original configured client; its accepted work remains in this owner's drain. */
+  withWorkspace(alias, operation) {
+    need(!this.#closed, "The original Lineage provider is closing.", 409, "OPENLINEAGE_PROVIDER_CLOSED");
+    need(typeof operation === "function", "Supply the original workspace operation.");
+    const client = this.#client(alias), selection = this.#selection(alias);
+    const task = Promise.resolve().then(() => operation(client, selection));
+    this.#tasks.add(task); this.#workspaceBorrowers.add(task);
+    task.finally(() => { this.#tasks.delete(task); this.#workspaceBorrowers.delete(task); }).catch(() => {});
+    return task;
   }
   async #call(name, args) {
     if (name === "merchant_lineage_workspaces") return { ...this.summary, workspaces: Object.keys(this.#config?.workspaces ?? {}).map(alias => this.#selection(alias)) };
@@ -146,6 +156,7 @@ export class MerchantOpenLineageWorkspaces {
     if (!this.#close) {
       this.#closed = true;
       this.#close = (async () => {
+        await Promise.allSettled([...this.#workspaceBorrowers]);
         await Promise.all([...this.#clients.values()].map(client => client.close()));
         await Promise.allSettled([...this.#tasks]); this.#clients.clear();
       })();

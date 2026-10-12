@@ -197,3 +197,7 @@ purchase or provider settlement side effect.
 The file writer, verified-file reader, original delivery lease, HTTP operator,
 CLI and browser assets all run from the selected source bytes. Inspect its
 retained report for the executed source identity and desktop/mobile results.
+
+## Existing x402engine MCP
+
+[MCP integration and complete handover](MCP.md) adds nine video tools to the original published x402engine MCP server, sharing its existing payment fetch, wallet selection and spending cap. The installer pins the upstream source and vendors the complete receiving runtime for ordinary npm builds and package delivery.

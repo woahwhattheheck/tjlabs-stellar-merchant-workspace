@@ -300,6 +300,14 @@ def parser():
     target = command("history", "Read the original saved revision history")
     plan_options(target)
     output_option(target)
+    target = command("compare", "Compare two explicit saved plan revisions and export their complete native receiving package")
+    plan_options(target)
+    target.add_argument("--from-revision", type=positive_revision, required=True)
+    target.add_argument("--to-revision", type=positive_revision, required=True)
+    target.add_argument("--to-plan", help="Named alternative plan ID; defaults to the before plan")
+    target.add_argument("--format", choices=("json", "zip", "html", "changes-csv", "impact-csv", "daily-csv"), default="json")
+    target.add_argument("--expected-comparison-sha256", help="Require the exact comparison previously read")
+    target.add_argument("--output", help="New private output file; required for formats other than JSON")
     target = command("import-scenario", "Create a named plan from exact original scenario JSON")
     target.add_argument("--file", required=True)
     target.add_argument("--name", required=True)
@@ -324,8 +332,13 @@ def parser():
     plan_options(target, expected=True)
     target.add_argument("--name", required=True)
     request_options(target)
-    target = command("export", "Export the original complete plan ZIP with every saved revision")
-    plan_options(target, expected=True)
+    target = command("export", "Export a complete saved plan ZIP with its consecutive original history")
+    plan_options(target)
+    selected_export = target.add_mutually_exclusive_group(required=True)
+    selected_export.add_argument("--expected-revision", type=positive_revision,
+                                 help="Export the reviewed current revision; reject later changes")
+    selected_export.add_argument("--revision", type=positive_revision,
+                                 help="Export this saved revision and its complete earlier history")
     target.add_argument("--output", required=True, help="New output ZIP filename")
     target = command("import-bundle", "Receive an original complete plan ZIP with its history and source")
     target.add_argument("--file", required=True)
@@ -394,6 +407,20 @@ def operate(args):
             return plan[args.part]
         if name == "history":
             return workspace.history(args.plan)
+        if name == "compare":
+            from plan_comparison import compare, export_bundle, render_html, changes_csv, impact_csv, daily_csv
+            if args.format != "json" and not args.output:
+                raise Problem("--output is required for a comparison file export.", 422, "OUTPUT_REQUIRED")
+            selection = (workspace, args.plan, args.from_revision, args.to_revision, args.to_plan,
+                         args.expected_comparison_sha256)
+            report = compare(*selection)
+            if args.format == "json" and not args.output:
+                return report
+            renderers = {"json": json_bytes, "html": render_html, "changes-csv": changes_csv,
+                         "impact-csv": impact_csv, "daily-csv": daily_csv}
+            raw = export_bundle(*selection) if args.format == "zip" else renderers[args.format](report)
+            return {"comparisonSha256": report["comparisonSha256"], "before": report["before"], "after": report["after"],
+                    "output": publish(args.output, raw)}
         if name == "import-scenario":
             return workspace.create(args.name, prepared, read_json(args.planning) if args.planning else {},
                                     args.note, args.request_id, source_name=Path(args.file).name,
@@ -409,8 +436,9 @@ def operate(args):
         if name == "clone":
             return workspace.clone(args.plan, args.expected_revision, args.name, args.request_id)
         if name == "export":
-            plan = selected_plan(workspace, args.plan, args.expected_revision)
-            output = publish(args.output, workspace.export(args.plan))
+            plan = (workspace.read(args.plan, args.revision) if args.revision is not None
+                    else selected_plan(workspace, args.plan, args.expected_revision))
+            output = publish(args.output, workspace.export(args.plan, revision=plan["revision"]))
             return {"plan": summary(plan), "output": output}
         if name == "import-bundle":
             plan = workspace.import_bundle(raw, args.name, args.request_id)

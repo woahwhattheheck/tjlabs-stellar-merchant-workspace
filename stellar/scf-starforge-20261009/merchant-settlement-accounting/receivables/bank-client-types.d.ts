@@ -107,6 +107,7 @@ export interface BankRowDecision {
 }
 export interface BankRow extends BankSourceRow {
   status: BankRowStatus; canPost: boolean; decision: BankRowDecision | null; sourceMatches: BankSourceMatch[];
+  supersededBy: BankSourceMatch[];
   receiptCandidates: Array<{receipt: Receipt; reasons: string[]}>;
   invoiceCandidates: Array<{invoice: InvoiceSummary; reasons: string[]}>;
   customerCandidates: Array<{customer: Customer; reasons: string[]}>;
@@ -194,6 +195,7 @@ export interface BankOriginalReceipt {
 export interface BankPostingSplit {
   id: string; action: 'CREATE' | 'LINK' | 'CORRECT'; receiptId: string; customer: Customer;
   amount: Money; reference: string; effectiveDate: DateOnly; accountingDate: DateOnly;
+  coverageKey: string | null;
   reason: string; dateDifferenceReason: string; originalReceipt: BankOriginalReceipt | null;
   releasedAllocations: BankReleasedAllocation[]; allocations: BankReviewedAllocation[];
   sourceCoverage?: BankSourceCoverage; correctedOriginalAmount?: Money; replacementReceiptIds?: string[];
