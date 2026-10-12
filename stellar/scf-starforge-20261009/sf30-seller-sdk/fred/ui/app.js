@@ -183,6 +183,11 @@ function restorePublicationDraft() {
       if (typeof saved[id] === 'string') $(id).value = saved[id];
   } catch {}
 }
+function clearCountyReceiving() {
+  countyReceiving = null; $('county-purchase-directory').value = '';
+  $('county-customer-downloads').replaceChildren(); $('county-customer-receipt').replaceChildren();
+  $('county-customer-status').textContent = ''; $('county-received-edition').replaceChildren();
+}
 function syncCustomerResource() {
   const county = customerPublication?.kind === 'QCEW';
   $('customer-query').disabled = county || Boolean($('customer-file').value);
@@ -198,6 +203,10 @@ async function showPublication(customer = false) {
   const value = await api('/api/publication?' + new URLSearchParams({ publication: id }));
   const county = value.kind === 'QCEW';
   if (customer) {
+    if (customerPublication && customerPublication.plan.publicationId !== value.plan.publicationId) {
+      if (customerPublication.requests.some(item => item.intentId === $('intent').value)) $('intent').value = freshId('economic');
+      previous = null; delivery = null; clearCountyReceiving();
+    }
     customerPublication = value;
     select('customer-file', [...(county ? [] : [['','Observation page']]),
       ...value.plan.downloads.map(item => [item.path,
@@ -337,23 +346,22 @@ event('merchant-start', async () => { await action('merchant-start', { publicati
 event('merchant-stop', async () => { await action('merchant-stop', { publicationId: $('publication-select').value }); message('Original seller drained and retained.'); });
 event('preview', async () => { const result = await api('/api/preview?' + new URLSearchParams({ publication: $('publication-select').value, query: $('preview-query').value })); table('preview-result', result.rows ?? []); message('Original native dataset preview: ' + result.page.returned + ' of ' + result.page.total + ' rows.'); });
 event('customer-publication', async () => {
-  previous = null; delivery = null; countyReceiving = null; $('county-customer-downloads').replaceChildren();
-  $('county-customer-receipt').replaceChildren(); $('county-customer-status').textContent = ''; $('county-purchase-directory').value = '';
+  previous = null; delivery = null; clearCountyReceiving();
   await showPublication(true);
 }, 'change');
 event('customer-file', () => {
-  previous = null; delivery = null;
+  previous = null; delivery = null; clearCountyReceiving();
   if (customerPublication?.requests.some(item => item.intentId === $('intent').value)) $('intent').value = freshId('economic');
   syncCustomerResource();
 }, 'change');
 event('new-customer-request', () => {
   $('intent').value = freshId('economic'); previous = null; delivery = null;
   $('request-select').value = ''; $('customer-result').textContent = 'A new original request is ready to prepare.';
-  $('county-purchase-directory').value = ''; countyReceiving = null; $('county-customer-downloads').replaceChildren();
-  $('county-customer-receipt').replaceChildren(); $('county-customer-status').textContent = ''; $('county-received-edition').replaceChildren();
+  clearCountyReceiving();
   syncCustomerResource();
 });
 $('customer-query').addEventListener('input', () => { previous = null; });
+$('intent').addEventListener('input', () => { previous = null; delivery = null; clearCountyReceiving(); });
 event('prepare', async () => {
   const result = await action('prepare', { publicationId: $('customer-publication').value, intentId: $('intent').value,
     query: $('customer-file').value ? '' : $('customer-query').value, file: $('customer-file').value || null, previous,
@@ -385,7 +393,7 @@ event('open-request', async () => {
   const item = customerPublication?.requests.find(item => item.intentId === $('request-select').value);
   if (!item) throw new Error('Select a retained original request.');
   $('intent').value = item.intentId; $('customer-file').value = item.file ?? ''; $('customer-query').value = new URL(item.url).search.slice(1);
-  previous = null; delivery = null; $('customer-result').textContent = JSON.stringify(item, null, 2);
+  previous = null; delivery = null; clearCountyReceiving(); $('customer-result').textContent = JSON.stringify(item, null, 2);
   $('county-purchase-directory').value = item.receiving?.directory ?? ''; syncCustomerResource();
   if (item.receiving) await showCountyReceiving().catch(error => {
     if (error.code === 'ENOENT') $('county-customer-status').textContent = 'The original receiving destination is saved. Continue the report receiving operation.';

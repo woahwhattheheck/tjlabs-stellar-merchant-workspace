@@ -19,7 +19,7 @@ export function normalizeQcewMerchantTerms({ origin, path = '/county-reports', p
     url.pathname === '/' && [url.origin, url.origin + '/'].includes(origin),
     'Choose the merchant’s canonical public HTTPS origin.');
   need(typeof path === 'string' && (path === '' || /^\/[A-Za-z0-9_.~/-]*$/.test(path)) && !path.includes('//') &&
-    !path.startsWith('/_seller/') && (path === '' || new URL(path, url.origin).pathname === path),
+    path !== '/_seller' && !path.startsWith('/_seller/') && (path === '' || new URL(path, url.origin).pathname === path),
     'Choose a canonical county-report resource path.');
   path = path.replace(/\/$/, '');
   need(plain(payment), 'Use the merchant’s original public payment terms.');
