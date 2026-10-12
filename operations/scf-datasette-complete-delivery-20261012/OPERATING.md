@@ -54,3 +54,11 @@ The authoritative current case and source-owner integration are kept in the orig
 https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791836903596469
 
 The separate customer Analysis workbook programme retains its original receiver and saved analytical workspace.
+
+## Browser runtime continuation on a receiving host
+
+The first recovered host completed the canonical installed Git fetch and checkout, then revealed that the preceding host's Chromium path was absent. The whole genuine checkout and completed publisher were saved as the exact 224,425,002-byte archive in 22 ordered parts; the canonical parts manifest is libfile_f62e9b0bfa1481918321ab975cf4d87e. The complete receiver now downloads and verifies each original part, concatenates them in order, verifies the full archive and restores that same workspace.
+
+The controller resolves the actual existing Playwright module and its own Chromium executable path, with supported host browser commands as additional candidates. When an existing browser runtime is absent, it selects the actual published Playwright version, installs that exact version with its npm package lock in native-browser/node, and invokes its original Chromium installer under native-browser/browsers. The real executable version and paths are retained before the maintained installed browser programme begins. DATASETTE_PLAYWRIGHT and DATASETTE_CHROMIUM can select already equipped paths.
+
+A completed publisher save is reused when the current complete publisher result and original source identities exactly match the retained completed-phase report and both returned saved file identities are present. This keeps the original publisher artifact while the actual installed runtime continues. The final archive retains the current complete application, repository objects, browser runtime, original workspaces, downloads, logs and screenshots.

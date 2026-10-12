@@ -269,7 +269,17 @@ try:
     if programme.get("sourceRefresh",{}).get("state")!="COMPLETE" or not programme.get("mcpReceiving",{}).get("passed") or programme.get("managedUpload",{}).get("resumed",{}).get("state")!="COMPLETE":raise RuntimeError("The whole original refresh, upload and MCP receiving programme must complete.")
     outcome["publisher_native"]=native;outcome["publisher"]=programme
     emit("datasette_publisher_complete",journal=str(root/"journey/publisher-programme-state.json"),received_workspace=programme.get("receiving",{}).get("directory"),refresh=programme["sourceRefresh"]["state"],mcp_passed=programme["mcpReceiving"]["passed"])
-    outcome["publisher_checkpoint"]=persist_complete_phase(outcome,"publisher")
+    prior_delivery=read_json(root/"Datasette_Publisher_Installed_Operating_Result.json") or {}
+    prior_publisher_save=prior_delivery.get("publisher_checkpoint",{})
+    if (all(prior_delivery.get(key)==value for key,value in source_identity.items())
+        and prior_delivery.get("publisher")==programme
+        and prior_publisher_save.get("state")=="PUBLISHER_COMPLETE"
+        and prior_publisher_save.get("mode")=="complete_archive"
+        and len(prior_publisher_save.get("saved",[]))==2
+        and all(succeeded(row) for row in prior_publisher_save["saved"])):
+        outcome["publisher_checkpoint"]=prior_publisher_save
+        emit("datasette_publisher_checkpoint_reused",archive=prior_publisher_save["archive"],saved=prior_publisher_save["saved"])
+    else:outcome["publisher_checkpoint"]=persist_complete_phase(outcome,"publisher")
     repository=root/"canonical-repository";repository.mkdir(mode=0o700,exist_ok=True)
     if not (repository/".git").is_dir():
         run(["git","init",repository],"canonical-git-init")
@@ -286,10 +296,41 @@ try:
         data=file["content"].encode()
         if len(data)!=file["bytes"] or hashlib.sha256(data).hexdigest()!=file["sha256"]:raise RuntimeError("The complete installed source postimage differs.")
         (continuation/P(file["path"]).name).write_bytes(data)
-    chromium=P(os.environ.get("DATASETTE_CHROMIUM","/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell"))
-    playwright=P(os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES","/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"))/"playwright/index.mjs"
-    if not playwright.is_file():playwright=playwright.with_name("index.js")
-    if not chromium.is_file() or not playwright.is_file():raise RuntimeError("Select the actual already installed Playwright and Chromium.")
+    browser_home=root/"native-browser";browser_home.mkdir(mode=0o700,exist_ok=True)
+    modules=P(os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES","/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"))
+    module_candidates=[]
+    if os.environ.get("DATASETTE_PLAYWRIGHT"):module_candidates.append(P(os.environ["DATASETTE_PLAYWRIGHT"]))
+    for base in (modules,root/"native-browser/node/node_modules"):
+        for name in ("playwright/index.mjs","playwright/index.js","playwright-core/index.mjs","playwright-core/index.js"):module_candidates.append(base/name)
+    playwright=next((path for path in module_candidates if path.is_file()),None)
+    if playwright is None:
+        # Select the actual published version once and retain its npm package lock.
+        run([node.parent/"npm","view","playwright","version","--json","--registry=https://registry.npmjs.org"],"browser-package-version",timeout=120)
+        selected_version=json.loads((root/"browser-package-version.stdout").read_text())
+        import re
+        if not isinstance(selected_version,str) or not re.fullmatch(r"[0-9]+[.][0-9]+[.][0-9]+(?:-[A-Za-z0-9.-]+)?",selected_version):raise RuntimeError("The published browser runtime version is invalid.")
+        run([node.parent/"npm","install","--prefix",browser_home/"node","--ignore-scripts","--no-audit","--no-fund","--save-exact","playwright@"+selected_version,"--registry=https://registry.npmjs.org"],"browser-runtime-install",timeout=600)
+        playwright=browser_home/"node/node_modules/playwright/index.mjs"
+        if not playwright.is_file():playwright=playwright.with_name("index.js")
+        if not playwright.is_file():raise RuntimeError("The installed browser module is missing.")
+    probe=browser_home/"describe.mjs"
+    probe.write_text('import {pathToFileURL} from "node:url";\nconst loaded=await import(pathToFileURL(process.argv[2]).href);\nconst chromium=loaded.chromium ?? loaded.default?.chromium;\nif(!chromium)throw new Error("The selected runtime has no Chromium launcher.");\nconsole.log(JSON.stringify({module:process.argv[2],executable:chromium.executablePath()}));\n',encoding="utf-8")
+    run([node,probe,playwright],"browser-runtime-location",timeout=60)
+    browser_description=json.loads((root/"browser-runtime-location.stdout").read_text())
+    candidates=[P(value) for value in (os.environ.get("DATASETTE_CHROMIUM"),browser_description.get("executable"),shutil.which("chromium"),shutil.which("chromium-browser"),shutil.which("google-chrome"),"/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell") if value]
+    chromium=next((path for path in candidates if path.is_file() and os.access(path,os.X_OK)),None)
+    if chromium is None:
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"]=str(browser_home/"browsers")
+        cli=playwright.parent/"cli.js"
+        if not cli.is_file():raise RuntimeError("The selected browser runtime has no original installer.")
+        run([node,cli,"install","chromium"],"browser-chromium-install",timeout=600)
+        run([node,probe,playwright],"browser-installed-location",timeout=60)
+        browser_description=json.loads((root/"browser-installed-location.stdout").read_text())
+        chromium=P(browser_description["executable"])
+        if not chromium.is_file() or not os.access(chromium,os.X_OK):raise RuntimeError("The original Chromium installer did not return its executable.")
+    run([chromium,"--version"],"browser-executable-version",timeout=60)
+    outcome["browser_runtime"]={"playwright_module":str(playwright),"chromium":str(chromium),"version":(root/"browser-executable-version.stdout").read_text().strip(),"retained_directory":str(browser_home)}
+    emit("datasette_browser_runtime_ready",**outcome["browser_runtime"])
     installed_input={"repository":str(repository),"sourceRef":got,"publisherProgrammeDirectory":str(root/"journey"),"outputDirectory":str(root/"installed"),"playwrightModule":str(playwright),"browserExecutable":str(chromium),"port":53173,"receivedPort":53174,"offline":False,"npmCache":str(tmp/"npm-cache"),"python":sys.executable,"npm":str(node.parent/"npm")}
     save_json(root/"installed-input.json",installed_input)
     emit("datasette_installed_started",source_ref=got,port=53173,received_port=53174,publisher_directory=str(root/"journey"))
