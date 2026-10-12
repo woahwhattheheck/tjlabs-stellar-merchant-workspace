@@ -27,6 +27,44 @@ A plan revision, case version, installed source commit and original request ID i
 
 Use named recording and reviewing operators. A contributor invoice, a prospective customer's quote, an issuer submission and an observed receipt retain their separate native meanings. Enter unknown facts as unknown; a testnet observation remains visibly testnet.
 
+## Plan useful customer adoption and complete-task costs
+
+Open **Delivery operations → Customer adoption plan** before choosing the original
+installation workorders. Start from the case's proposed tranche and select the
+customer's intended first date. The window length and targets come from the
+original case's saved proposal.
+
+Name the actual accountable buyers, merchants and facilitator operators, then
+describe each complete useful task and its expected output. Choose the customer's
+normal work calendar, holidays, recurring schedule or explicit delivery dates.
+Price the charged unit and account for all requests needed to finish the task.
+The planner keeps prepaid passes, consumed allowance, individual paid requests,
+complete tasks and expected output dates separately visible.
+
+The calendar and target tables show which normal-use schedule supplies the intended
+purchase population, which customers return on another completion day, and where
+the proposed timing leaves work unfinished. Fee, supplier-cost and active-hours
+inputs produce separate results for each currency; workshare alternatives show
+the effect of delivery effort on the original quote.
+
+Choose **Save new edition** to retain the entire reviewed plan, original
+proposal and calculation as one immutable source attachment. The original case
+journal supplies its recording operator, request identity and version. Reopen
+saved editions in this same pane, export the complete JSON/CSV or readable report,
+and use **Export complete case** for the existing whole-case receiving workflow.
+A revised plan creates another source edition and preserves its parent.
+
+The installed command is **starforge grant-cohort-plan** and the public application
+module is **@tokenjunkielabs/starforge-merchant/grant/cohort-planning**. The complete
+[Customer adoption planning guide](../../stellar/scf_2026/sf47_budget_model/workspace/COHORT-PLANNING.md)
+covers source seeding, calendar choices, exact costs, saved-edition recovery and
+command-line source preparation.
+
+Use the resulting calendar and complete-task estimate with the original
+[Customer launch guide](../merchant-workspace/CUSTOMER_LAUNCH.md). Actual purchases
+continue through Buyer receiving and the existing Cohort acceptance pane.
+
+
 ## 2. Receive and install one selected source edition
 
 ### Select the original release
