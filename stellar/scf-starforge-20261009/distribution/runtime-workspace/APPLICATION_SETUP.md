@@ -119,7 +119,12 @@ semantics, so equivalent saved and form representations do not create a conflict
 
 If either operator changes the application type, its type and complete settings
 are compared together. This keeps one tool's fields from being combined with
-another tool's configuration. An older retained draft that lacks complete
+another tool's configuration. If the selected type already has a retained draft
+in this setup, the reconciled family opens in a separate context. The earlier
+variant remains available in the draft selector with **Before reconciliation**,
+and its full raw source remains in the complete setup history.
+
+An older retained draft that lacks complete
 opening settings requires an explicit choice for that group while the known
 display name and runtime can still be reconciled individually.
 
