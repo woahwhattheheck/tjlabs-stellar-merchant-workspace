@@ -125,6 +125,12 @@ def authorize(handler):
         if role == "contributor":
             fail("Open the contributor work desk at /team.")
         return
+    if path in ("/api/source-tables/workbook/inspect", "/api/source-tables/workbook/project"):
+        if role == "contributor":
+            fail("Use the contributor desk for this person's source attachments.")
+        # These original parser routes only inspect the workbook supplied in the
+        # request; they do not read or change a saved plan or another case.
+        return
     plan = re.fullmatch(r"/api/plans/(plan-[a-f0-9]{32})(?:/(.*))?", path)
     if plan:
         if role == "contributor" or not access.plan_allowed(principal, plan[1]):

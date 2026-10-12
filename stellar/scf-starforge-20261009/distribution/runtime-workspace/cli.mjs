@@ -10,6 +10,7 @@ import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetu
   applicationSetupStatus, saveApplicationSetup } from './application-setup-operations.mjs';
 
 import { inspectProductPlanBundle, readProductPlanDocument } from './source-product-plans.mjs';
+import { saveTextExport } from '../discovery/write-json.mjs';
 
 const HELP = `Starforge customer runtime workspace
 
@@ -22,6 +23,7 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace source-plan-save --workspace DIRECTORY --request COMPLETE_JSON
   runtime-workspace source-plan-open --workspace DIRECTORY --plan-id ID [--binding-id ID]
   runtime-workspace source-plan-refresh --workspace DIRECTORY --plan-id ID [--binding-id ID]
+  runtime-workspace source-plan-briefing --workspace DIRECTORY --plan-id ID [--binding-id ID] [--format markdown|html|json --output NEW_FILE]
   runtime-workspace source-plan-export --workspace DIRECTORY --plan-id ID [--output NEW_JSON]
   runtime-workspace source-plan-receive --workspace DIRECTORY --document COMPLETE_JSON --repository ABSOLUTE_GIT [--offline true --python python3]
   runtime-workspace source-plan-receiving --workspace DIRECTORY --receipt-id ID [--output NEW_JSON]
@@ -89,6 +91,7 @@ const allowed = {
   'source-plan-open': ['--workspace', '--plan-id', '--binding-id'],
   'source-plan-build': ['--workspace', '--plan-id', '--binding-id'],
   'source-plan-refresh': ['--workspace', '--plan-id', '--binding-id'],
+  'source-plan-briefing': ['--workspace', '--plan-id', '--binding-id', '--format', '--output'],
   'source-plan-export': ['--workspace', '--plan-id', '--output'],
   'source-plan-receive': ['--workspace', '--document', '--repository', '--offline', '--python'],
   'source-plan-receiving': ['--workspace', '--receipt-id', '--output'],
@@ -202,6 +205,16 @@ export async function main(argv = process.argv.slice(2)) {
     const value = await model.sourcePlanRead({ planId: options['--plan-id'],
       ...(options['--binding-id'] ? { bindingId: options['--binding-id'] } : {}) });
     result = { planId: value.plan.planId, bindingId: value.bindingId, operation: await model.begin(value.buildRequest) };
+  }
+  else if (command === 'source-plan-briefing') {
+    if (!options['--plan-id']) fail('PRODUCT_PLAN_ID_REQUIRED');
+    const briefing = await model.sourcePlanBriefing({ planId: options['--plan-id'],
+      ...(options['--binding-id'] ? { bindingId: options['--binding-id'] } : {}),
+      ...(options['--format'] ? { format: options['--format'] } : {}) });
+    if (options['--output']) {
+      const output = resolve(options['--output']); await saveTextExport(output, briefing.content);
+      const { content, ...summary } = briefing; result = { ...summary, output };
+    } else { process.stdout.write(briefing.content); return; }
   }
   else if (command === 'source-plan-save') {
     if (!options['--request']) fail('PRODUCT_PLAN_REQUEST_REQUIRED');

@@ -2,7 +2,7 @@
 
 Use **starforge grant-application-handoff** to receive a complete original native Grant Operations case, or hand another operator that case together with the saved Application that opens its workspace. The receiving operator selects an installed runtime and private grant workspace, receives the original case through its native importer, reviews the destination Application, and saves it through the existing Applications writer.
 
-The single **grant-handoff.json** file contains the original complete operating-case ZIP and complete Applications setup JSON. It carries the pinned plan, original records and attachments, history, forecasts, portfolios, installation editions, statement and billing source, and every other item included by the installed case export. Its source metadata identifies the selected application revision, case version, runtime edition and original grant service. The setup document keeps the original application settings and source catalog beside those case bytes.
+The single **grant-handoff.json** file contains the original complete operating-case ZIP and complete Applications setup JSON. It carries the pinned plan, original records and attachments, history, forecasts, portfolios, installation editions, statement and billing source, and every other item included by the installed case export. A paired export's source metadata identifies the selected application revision, case version, runtime edition and original grant service. The setup document keeps the original application settings and source catalog beside those case bytes.
 
 The command is included in the **grant-operations** selected product. Its public API is **./grant/application-handoff**.
 
@@ -31,6 +31,8 @@ The producing operator does not need to create a historical Application or recre
 Preparation creates a new unsaved setup from the receiving workspace's maintained Grant Application catalogue. Its retained document identifies this input as **native-archive**. It contains the full original ZIP and complete new setup with its original field values. A paired **grant-handoff.json** continues to retain its saved producing-host Application and revision.
 
 Use **Receive case and review Application** to continue. The original Grant importer reads and validates the complete case and any selected delivery wrapper, then returns the actual received case, imported plan and original history. The handoff obtains the source case identity and version from that native import. The displayed receiving Application review uses the selected host's exact settings. **Save reviewed Application** commits the original Applications writer's request. Open that saved Application and choose the received case to continue its existing installations, operating records, forecasts and portfolios.
+
+The original launcher supplies its running Node executable to both the Buyer and Support source readers. A case containing original Node observations can therefore reopen through this same native receiving flow when the host was started with an absolute Node path. Explicit SF47_BUYER_NODE and SF47_SUPPORT_NODE selections remain available for an operator's existing environment.
 
 The installed command performs the same operation. With the complete receiving binding file described below:
 

@@ -34,6 +34,7 @@ STATIC.update({
     "/plan_comparison.css": ("plan_comparison.css", "text/css; charset=utf-8"),
 })
 import source_tables
+import source_workbooks
 source_tables.register_static(STATIC)
 import staff_http
 from staff_access import StaffAccess
@@ -211,7 +212,14 @@ class Handler(BaseHTTPRequestHandler):
         if action and action.startswith("revision/"):
             return self.send(200, workspace.read(pid, int(action.split("/")[1])))
         if action == "export.zip":
-            return self.send(200, workspace.export(pid), "application/zip", "sf47-planning-workspace.zip")
+            selected = parse_qs(parsed.query, keep_blank_values=True)
+            revision = None
+            if selected:
+                values = selected.get("revision", [])
+                if set(selected) != {"revision"} or len(values) != 1 or not re.fullmatch(r"[1-9][0-9]{0,8}", values[0]):
+                    raise Problem("Select one positive saved revision for the original planning ZIP.", 422, "INVALID_REVISION")
+                revision = int(values[0])
+            return self.send(200, workspace.export(pid, revision), "application/zip", "sf47-planning-workspace.zip")
         current = workspace.read(pid)
         if action == "scenario.json":
             return self.send(200, json.dumps(current["scenario"], ensure_ascii=False, indent=2) + "\n",
@@ -248,6 +256,8 @@ class Handler(BaseHTTPRequestHandler):
             result = workspace.import_bundle(raw, name, self.headers.get("X-Request-ID", ""))
             return self.send(201, result)
         body = self.json_body()
+        if source_workbooks.write_http(self, path, body):
+            return
         if path == "/api/import-scenario":
             if ("sourceText" in body) == ("sourceBase64" in body):
                 raise Problem("Supply exactly one sourceText or sourceBase64 field.")

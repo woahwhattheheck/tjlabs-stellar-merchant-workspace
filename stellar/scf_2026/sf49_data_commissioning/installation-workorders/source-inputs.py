@@ -21,7 +21,8 @@ import tempfile
 
 SCHEMA = "stellar-forge.installation-source-selection.v1"
 RECEIVING = "stellar-forge.installation-workshare-receiving.v1"
-PROFILES = {"cocart", "blockscout", "queryfarm", "ars-air-quality", "supplier-catalogues", "supplier-orders"}
+PROFILE_SCHEMA = "stellar-forge.installation-workorder-profile.v1"
+PROFILE_ID = re.compile(r"^[a-z][a-z0-9-]+$")
 MAX_FILE = 8 * 1024 * 1024
 MAX_TOTAL = 64 * 1024 * 1024
 FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,199}$")
@@ -94,6 +95,33 @@ def stable_file(path, maximum=MAX_FILE):
         return b"".join(chunks)
     finally:
         os.close(descriptor)
+
+
+
+def installed_profile(identifier):
+    """Select the same complete installed ID.json source as profiles.mjs."""
+    require(isinstance(identifier, str) and PROFILE_ID.fullmatch(identifier) is not None,
+            "Select a maintained installed workorder profile ID.")
+    path = Path(__file__).resolve().parent / (identifier + ".json")
+    try:
+        raw = stable_file(path, maximum=2 * 1024 * 1024)
+    except FileNotFoundError as error:
+        raise ValueError("Unknown installation profile: " + identifier
+                         + ". Run prepare.mjs profiles to see the installed choices.") from error
+    value = json_object(raw, "installed profile " + identifier)
+    require(value.get("schema") == PROFILE_SCHEMA and value.get("id") == identifier
+            and isinstance(value.get("title"), str) and bool(value["title"].strip())
+            and all(isinstance(value.get(key), dict) for key in ("task", "source", "receiving"))
+            and isinstance(value.get("steps"), list) and bool(value["steps"])
+            and all(isinstance(step, dict)
+                    and isinstance(step.get("title"), str) and bool(step["title"].strip())
+                    and isinstance(step.get("result"), str) and bool(step["result"].strip())
+                    for step in value["steps"])
+            and isinstance(value.get("inputs"), list) and isinstance(value.get("sourceFiles"), list),
+            "Retain the matching complete installed profile, task, source, receiving and implementation: "
+            + str(path))
+    return {"id": identifier, "title": value["title"], "path": str(path),
+            "bytes": len(raw), "sha256": sha(raw)}
 
 
 def private_directory(path):
@@ -348,15 +376,21 @@ def prepare(selection_path, source_root, destination):
     cases = selected["cases"]
     require(isinstance(cases, list) and 0 < len(cases) <= 20, "Select one to twenty complete original cases.")
     known, generated, total, case_ids, original_rows, packets, customer_rows, summaries = {}, {}, [0], set(), [], [], [], []
+    profiles = {}
     for case in cases:
         exact_keys(case, ("caseId", "profile", "packet", "planSha256", "productionEffort", "effortTotal", "files", "bindings", "phaseIdAmendment"),
                    ("caseId", "profile", "packet", "planSha256", "productionEffort", "effortTotal", "files"), "customer selection")
         ident = case["caseId"]
         require(isinstance(ident, str) and 0 < len(ident) <= 500 and ident not in case_ids,
                 "Select each original commercial case once.")
-        require(isinstance(case["profile"], str) and case["profile"] in PROFILES
-                and isinstance(case["planSha256"], str) and SHA256.fullmatch(case["planSha256"]) is not None,
-                "Select a maintained profile and the original canonical Workshare plan SHA-256.")
+        selected_profile = installed_profile(case["profile"])
+        if selected_profile["id"] in profiles:
+            require(profiles[selected_profile["id"]] == selected_profile,
+                    "The original installed profile changed during source preparation.")
+        else:
+            profiles[selected_profile["id"]] = selected_profile
+        require(isinstance(case["planSha256"], str) and SHA256.fullmatch(case["planSha256"]) is not None,
+                "Select the original canonical Workshare plan SHA-256.")
         require(isinstance(case["files"], list), "Retain the complete selected original document list.")
         raw, packet_file = source_descriptor(source_root, case["packet"], known, total)
         packet = json_object(raw, ident + " receiving packet")
@@ -417,6 +451,9 @@ def prepare(selection_path, source_root, destination):
     require(max(len(commissioning_bytes), len(packet_bytes)) <= MAX_FILE,
             "The complete commissioning and packet files must each fit the original receiver\'s 8 MiB bound.")
     require(not set(known) & set(generated), "Keep original and derived source filenames distinct.")
+    for selected_profile in profiles.values():
+        require(installed_profile(selected_profile["id"]) == selected_profile,
+                "The selected installed profile changed before retaining the complete source.")
     output = private_directory(destination)
     descriptor = os.open(output / "source-preparation.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
     try:
@@ -446,7 +483,7 @@ def prepare(selection_path, source_root, destination):
         report = {"schema": "stellar-forge.installation-source-preparation.v1", "state": "PREPARED_SOURCE",
                   "operationId": selected["operationId"],
                   "sourceSelection": {"bytes": len(selected_raw), "sha256": sha(selected_raw)},
-                  "originalIntake": native_source, "cases": summaries,
+                  "originalIntake": native_source, "profiles": list(profiles.values()), "cases": summaries,
                   "nativeWorkshares": [{"caseId": row["caseId"], "planSha256": row["planSha256"],
                                        "hours": row["hours"], "phaseCount": row["phaseCount"],
                                        "packetPresent": row["packetPresent"]} for row in verified],
