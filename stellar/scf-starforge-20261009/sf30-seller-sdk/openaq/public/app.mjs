@@ -7,7 +7,7 @@ const pretty=v=>JSON.stringify(v,null,2);
 const uid=()=>crypto.randomUUID();
 const short=v=>String(v??'').slice(0,8);
 const S={view:'overview',identity:null,status:null,collections:{captures:new Map(),studies:new Map(),reviews:new Map(),reports:new Map(),operations:new Map()},
- offsets:new Set(),capture:null,review:null,report:null,publication:null,study:null,plan:null,context:null,previewOffset:0,pubRun:'',pubReview:'',releasePreparation:'',deliveryId:'',busy:false,processed:new Set()};
+ offsets:new Set(),capture:null,review:null,report:null,publication:null,study:null,plan:null,context:null,previewOffset:0,pubRun:'',pubReview:'',releasePreparation:'',deliveryId:'',busy:false,processed:new Set(),completedExample:null};
 const storageKey='openaq-study:'+location.origin;
 let token=new URLSearchParams(location.hash.slice(1)).get('token');
 if(token){sessionStorage.setItem(storageKey+':token',token);history.replaceState(null,'',location.pathname+location.search);}
@@ -92,10 +92,87 @@ function pairsSelector(id,deliver=false){
  }).join('')+'</div>'+(captures.length?'':'<div class="empty">Complete and review a capture first.</div>');
 }
 function selectedPairs(id){const captureIds=[],reviewIds=[];for(const box of $$('input[data-pair-capture]:checked',$('#'+id))){captureIds.push(box.dataset.pairCapture);reviewIds.push($('select[data-pair-review="'+box.dataset.pairCapture+'"]',$('#'+id)).value);}if(!captureIds.length)throw Error('Choose at least one reviewed capture.');return{captureIds,reviewIds};}
+
+const EXAMPLE_ROOT='/examples/completed-del-norte/';
+async function completedExample(){
+ if(S.completedExample)return S.completedExample;
+ const e=await api(EXAMPLE_ROOT+'manifest.json'),hash=/^[a-f0-9]{64}$/;
+ if(e.schema!=='stellar-forge.openaq-completed-example.v1'||e.id!=='del-norte-20220503'||
+  e.archive?.file!=='study.tgz'||e.report?.html?.file!=='report.html'||e.report?.json?.file!=='report.json'||
+  !hash.test(e.archive.sha256)||!hash.test(e.capture?.sha256)||!hash.test(e.report?.sha256)||
+  !hash.test(e.report.html.sha256)||!hash.test(e.report.json.sha256)||
+  ![e.archive.bytes,e.report.html.bytes,e.report.json.bytes].every(n=>Number.isSafeInteger(n)&&n>0&&n<=2*1024*1024))
+  throw Error('The installed completed-study declaration is incomplete or changed.');
+ S.completedExample=e;return e;
+}
+async function completedExampleRequestId(e){
+ // UUIDv5: the original project is the namespace; the exact bundled archive is the name.
+ // The same receiving intent survives browser storage loss and application restart.
+ const namespace=S.identity.workspaceId.replaceAll('-',''),name=new TextEncoder().encode('openaq-completed-example:'+e.id+':'+e.archive.sha256);
+ if(!/^[a-f0-9]{32}$/.test(namespace))throw Error('The current original project identity is invalid.');
+ const data=new Uint8Array(16+name.length);for(let i=0;i<16;i++)data[i]=parseInt(namespace.slice(i*2,i*2+2),16);data.set(name,16);
+ const hash=new Uint8Array(await crypto.subtle.digest('SHA-1',data));hash[6]=(hash[6]&15)|80;hash[8]=(hash[8]&63)|128;
+ const hex=[...hash.slice(0,16)].map(n=>n.toString(16).padStart(2,'0')).join('');
+ return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
+}
+async function completedExampleBytes(kind){
+ const e=await completedExample(),file=kind==='archive'?e.archive:kind==='html'?e.report.html:kind==='json'?e.report.json:null;
+ if(!file)throw Error('Choose an existing completed-study file.');
+ const response=await request(EXAMPLE_ROOT+file.file);
+ if(response.headers.has('content-length')&&Number(response.headers.get('content-length'))!==file.bytes)throw Error('The installed completed-study file has changed.');
+ const data=await response.arrayBuffer(),hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',data))].map(n=>n.toString(16).padStart(2,'0')).join('');
+ if(data.byteLength!==file.bytes||hash!==file.sha256)throw Error('The installed completed-study bytes differ from their original saved edition.');
+ return {file,data,sha256:hash};
+}
+async function downloadCompletedExample(kind){
+ const {file,data}=await completedExampleBytes(kind),name=kind==='archive'?'OpenAQ_Del_Norte_20220503_Study.tgz':kind==='html'?'OpenAQ_Del_Norte_20220503_Report.html':'OpenAQ_Del_Norte_20220503_Report.json';
+ const blob=new Blob([data],{type:kind==='archive'?'application/gzip':kind==='html'?'text/html; charset=utf-8':'application/json; charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
+ note('Downloaded the original completed '+(kind==='archive'?'customer study':'report')+' · '+file.bytes+' bytes.');
+}
+function completedExampleCard(){
+ const e=S.completedExample;if(!e)return'';
+ const received=S.collections.captures.has(e.capture.id)&&S.collections.reviews.has(e.review.id)&&S.collections.reports.has(e.report.id);
+ return'<section class="panel"><h2>A complete worked study</h2><p><strong>'+esc(e.title)+'</strong> · '+esc(e.capture.rows)+' original observations across '+esc(e.capture.series.length)+' sensor series.</p>'+
+ '<p>Inspect the actual source review and report, or receive the complete study into this project. Receiving uses the bundled original delivery and makes no provider request. Your existing project records remain available.</p>'+
+ '<div class="actions">'+button(received?'Open the received study':'Receive the completed study','data-completed-example="receive" data-mutate',true)+button('Download report','data-completed-example="html"')+button('Download customer package','data-completed-example="archive"')+'</div>'+
+ '<p class="hint">The May 3, 2022 archive is a retained historical source. Sensor units, period-ending dates and unknown flag/coverage information remain distinct. The original engineering review accompanies the data; an actual client conclusion has its own named review.</p></section>';
+}
+async function openCompletedExample(e){
+ const [capture,review,report]=await Promise.all([read('capture',{id:e.capture.id}),read('review',{id:e.review.id}),read('report',{id:e.report.id})]);
+ if(capture.id!==e.capture.id||capture.captureSha256!==e.capture.sha256||review.id!==e.review.id||
+  review.captureId!==capture.id||review.captureSha256!==capture.captureSha256||
+  report.id!==e.report.id||report.reportSha256!==e.report.sha256||
+  !report.sources.some(s=>s.id===capture.id&&s.captureSha256===capture.captureSha256&&s.review?.id===review.id))
+  throw Error('The received study does not match the original completed capture, review and report.');
+ S.capture=capture;S.review=review;S.report=report;S.context=capture.context;S.plan=capture.plan;
+ await refresh(false);show('review');note('Opened the same completed source, named review and report. Reports and Delivery retain the original files.');
+}
+async function receiveCompletedExample(){
+ const e=await completedExample(),requestId=await completedExampleRequestId(e);let existing=null;
+ try{existing=await read('operation',{id:requestId});}catch(error){if(error.status!==404)throw error;}
+ if(existing){
+  if(existing.action!=='receive')throw Error('This original request ID is already bound to another action.');
+  observe(existing);
+  if(existing.state==='COMPLETE')return openCompletedExample(e);
+  if(existing.state==='RUNNING'){await refresh(false);show('history');note('The original completed-study receiving is still running: '+requestId);return;}
+ }else{
+  try{return await openCompletedExample(e);}catch(error){if(error.status!==404)throw error;}
+ }
+ const {data}=await completedExampleBytes('archive');
+ await api('/api/upload?'+new URLSearchParams({id:requestId,sha256:e.archive.sha256}),{method:'POST',body:new Blob([data],{type:'application/gzip'}),raw:true});
+ let op;
+ if(existing){op=await api('/api/resume',{body:{workspaceId:S.identity.workspaceId,requestId}});observe(op);await refresh(false);}
+ else op=await mutate('receive',{uploadId:requestId,sha256:e.archive.sha256},{requestId});
+ if(op.state==='COMPLETE')return openCompletedExample(e);
+ show('history');note('Receiving the original completed study. This same request is retained for continuation: '+requestId);
+}
+
 function overview(){
  return'<section class="panel"><h2>'+esc(S.status.project.name)+'</h2><p>'+esc(S.status.project.purpose)+'</p><dl><dt>Customer / team</dt><dd>'+esc(S.status.project.customer)+'</dd><dt>Configuration</dt><dd class="overflow-id">'+esc(S.status.configurationSha256)+'</dd><dt>Source access</dt><dd>'+esc(S.status.account?'Public archive and host-configured OpenAQ API account '+S.status.account.account:'Public OpenAQ AWS archive; no API account selected')+'</dd><dt>Customer workspace</dt><dd>'+esc(S.status.customer?S.status.customer.name+' · '+S.status.customer.workspaceId:'A DuckDB customer workspace is not selected in this project declaration.')+'</dd></dl>'+
  '<div class="actions">'+button('Capture a study','data-go="capture"',true)+button('Review retained sources','data-go="review"')+button('Receive a complete project','data-go="delivery"')+'</div></section>'+
  '<div class="metrics">'+[['Captures',S.status.captures.total],['Source reviews',S.status.reviews.total],['Reports',S.status.reports.total],['Saved studies',S.status.studies.total]].map(([l,v])=>'<div><div class="metric">'+esc(v)+'</div>'+esc(l)+'</div>').join('')+'</div>'+
+ completedExampleCard()+
  '<section class="panel"><h2>Saved monitoring studies</h2>'+table(['Study / edition','Purpose','Action'],values('studies').map(s=>['<strong>'+esc(s.name)+'</strong><div>Edition '+esc(s.version)+' · '+esc(short(s.id))+'</div>',esc(s.purpose),button('Reopen plan','data-study="'+esc(s.id)+'"')]))+'</section>'+
  '<section class="panel"><div class="split"><h2>Retained captures</h2>'+button('Load older records','data-older')+'</div>'+captureList()+'</section>'+
  '<section class="panel"><h2>How this project keeps observations interpretable</h2><p>'+esc(S.status.semantics.numeric)+'</p><p>'+esc(S.status.semantics.archive)+'</p><p>'+esc(S.status.semantics.coverage)+'</p></section>';
@@ -158,7 +235,7 @@ function customerView(){
  '<details><summary>Read or resume an original customer request</summary><div class="grid">'+field('native-request','Original customer operation ID')+'</div><div class="actions">'+button('Read original operation','id="customer-operation-read"')+button('Resume same original operation','id="customer-resume" data-mutate')+'</div></details><div id="customer-result"></div></section>';
 }
 function deliveryView(){
- return'<section class="panel"><h2>Deliver a complete reviewed project</h2><p class="hint">Select accepted capture/review pairs and compatible reports. The package includes original gzip/API responses, acquisition receipts, every projected observation, rights reviews and source-bound reports, using the original Frictionless source transport.</p>'+pairsSelector('delivery-pairs',true)+
+ return completedExampleCard()+'<section class="panel"><h2>Deliver a complete reviewed project</h2><p class="hint">Select accepted capture/review pairs and compatible reports. The package includes original gzip/API responses, acquisition receipts, every projected observation, rights reviews and source-bound reports, using the original Frictionless source transport.</p>'+pairsSelector('delivery-pairs',true)+
  '<h3>Reports to include</h3>'+values('reports').map(r=>'<label class="check"><input type="checkbox" data-report-select="'+esc(r.id)+'"><span>'+esc(r.title)+' · '+esc(short(r.id))+'</span></label>').join('')+
  '<div class="actions">'+button('Create complete project package','id="project-export" data-mutate',true)+'</div>'+
  '<h3>Saved exports</h3>'+table(['Export ID','State','Actions'],values('operations').filter(o=>o.action==='export').map(o=>['<span class="overflow-id">'+esc(o.id)+'</span>',tag(o.state),button('Inspect / download','data-open-operation="'+esc(o.id)+'"')]))+
@@ -246,6 +323,7 @@ async function previewRows(id,offset){
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.completedExample)return guarded(()=>b.dataset.completedExample==='receive'?receiveCompletedExample():downloadCompletedExample(b.dataset.completedExample));
  if(b.dataset.view)return show(b.dataset.view);if(b.dataset.go)return show(b.dataset.go);
  if(b.dataset.capture)return guarded(()=>inspectCapture(b.dataset.capture));
  if(b.dataset.reviewCapture)return guarded(async()=>{S.capture=await read('capture',{id:b.dataset.reviewCapture});S.review=eligibleReviews(S.capture.id).at(-1)??null;$('#detail').close();show('review');});
@@ -263,6 +341,6 @@ document.addEventListener('click',e=>{
  if(b.dataset.reconcile)return guarded(async()=>{const id=b.dataset.reconcile;try{return await inspectOperation(id);}catch(e){if(e.status!==404)throw e;}const original=pending()[id];if(!original||original.input.workspaceId!==S.identity.workspaceId)throw Error('This browser request belongs to another project.');const op=await api('/api/action',{body:original});observe(op);await refresh();note('Reconciled the original request '+id+'.');});
 });
 $('#refresh').addEventListener('click',()=>guarded(()=>refresh()));
-try{S.identity=await api('/api/identity');await refresh();}catch(e){$('#connection-state').textContent='Connection requires attention';note(e.message,true);}
+try{S.identity=await api('/api/identity');await completedExample();await refresh();}catch(e){$('#connection-state').textContent='Connection requires attention';note(e.message,true);}
 let polling=false;
 setInterval(async()=>{if(polling||S.busy||!S.identity||(!S.status?.active&&!Object.keys(pending()).length)||document.hidden)return;polling=true;try{await refresh(['overview','history'].includes(S.view));}catch(e){note(e.message,true);}finally{polling=false;}},2500);
