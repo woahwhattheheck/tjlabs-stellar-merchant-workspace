@@ -219,6 +219,9 @@ class Receiving:
     def preflight(self, *, inspect_runtime=True):
         manifest_path = Path(self.config.get("sourceManifest", HERE / "source-manifest.json")).absolute()
         manifest = read_source_manifest(manifest_path, self.source)
+        if manifest.get("installedPackage") and self.config.get("expectedSourceCommit"):
+            need(manifest["sourceCommit"] == self.config["expectedSourceCommit"],
+                 "The complete installed Leap source differs from the selected commit.")
         need(manifest.get("schema") == "stellar-forge.leap-receiving-source.v1" and isinstance(manifest.get("files"), list),
              "Use the original complete Leap source declaration.")
         members = []
@@ -242,6 +245,9 @@ class Receiving:
         )
         descriptor = self.command([self.node, "--input-type=module", "-e", code, str(helper), str(self.runtime)], "original-runtime-command")
         need(Path(descriptor["sourceRoot"]).resolve() == self.source.resolve(), "The READY runtime belongs to a different original source root.")
+        if manifest.get("installedPackage"):
+            need(descriptor["sourceCommit"] == manifest["sourceCommit"],
+                 "The complete Leap declaration belongs to a different READY installation.")
         self.original_command = [descriptor["executable"], *descriptor["args"], "--python", self.python]
         self.state["source"] = {
             "manifest": {"path": str(manifest_path), **identity(manifest_path)},
