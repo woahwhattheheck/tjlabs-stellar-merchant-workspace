@@ -58,6 +58,40 @@
       <p id="discovery-page-note" class="small"></p><div id="discovery-public-page" class="table-wrap"></div>
     </section>
   </section>
+  <section id="fleet-campaigns" class="panel campaign-panel" hidden aria-labelledby="campaign-heading">
+    <div class="section-head"><div><h2 id="campaign-heading">Saved release rollouts</h2><p>Choose staged releases, order merchants into waves, and review each wave before moving traffic.</p></div><button id="campaign-refresh" type="button">Refresh rollouts</button></div>
+    <p id="campaign-message" role="status" aria-live="polite" hidden></p>
+    <div class="campaign-layout">
+      <section class="campaign-draft" aria-labelledby="campaign-draft-heading">
+        <div class="section-head"><h3 id="campaign-draft-heading">Rollout proposal</h3><button id="campaign-new" type="button">New proposal</button></div>
+        <form id="campaign-form">
+          <div class="release-form"><label>Plan ID<input id="campaign-id" required maxlength="64" pattern="[a-z][a-z0-9-]{0,63}" autocomplete="off"></label><label>Title<input id="campaign-title" required maxlength="160" autocomplete="off" placeholder="October merchant releases"></label></div>
+          <p class="small">Stage each target in the existing release controls. A wave changes its selected merchants together; admitted requests keep draining on their original releases.</p>
+          <div id="campaign-waves"></div>
+          <div class="button-row"><button id="campaign-add-wave" type="button">Add wave</button><button id="campaign-save" type="submit" class="primary">Save rollout plan</button></div>
+        </form>
+        <div class="button-row"><button id="campaign-download-draft" type="button">Download proposal</button><button id="campaign-import" type="button">Open proposal</button><input id="campaign-file" type="file" accept="application/json,.json" hidden></div>
+      </section>
+      <section class="campaign-saved" aria-labelledby="campaign-saved-heading">
+        <h3 id="campaign-saved-heading">Saved plans</h3>
+        <label>Rollout<select id="campaign-select"><option value="">Choose a saved plan</option></select></label>
+        <div id="campaign-summary"></div>
+        <div class="button-row"><button id="campaign-review-wave" type="button">Review next wave</button><button id="campaign-pause" type="button">Pause rollout</button><button id="campaign-retry" type="button" hidden>Continue saved request</button></div>
+        <label>Pause reason<input id="campaign-pause-reason" maxlength="500" placeholder="Optional operating note"></label>
+        <div class="button-row"><button id="campaign-copy" type="button">Use as revised proposal</button><button id="campaign-export" type="button">Download plan and history</button></div>
+        <div id="campaign-order"></div>
+        <section id="campaign-rollback-area" hidden><h4>Restore an earlier rollout revision</h4><div class="release-form"><label>Original retained revision<select id="campaign-rollback-revision"></select></label><button id="campaign-review-rollback" type="button">Review rollback</button></div><div id="campaign-rollback-availability"></div></section>
+        <section id="campaign-retire-area" hidden><h4>Finish draining releases</h4><div id="campaign-retirements" class="table-wrap"></div></section>
+        <details><summary>Retained operating history</summary><div id="campaign-history"></div></details>
+      </section>
+    </div>
+    <section id="campaign-review" class="campaign-review" hidden aria-labelledby="campaign-review-heading">
+      <div class="section-head"><div><h3 id="campaign-review-heading">Review release wave</h3><p id="campaign-review-description"></p></div><button id="campaign-clear-review" type="button">Close review</button></div>
+      <div id="campaign-review-content"></div>
+      <div class="button-row"><button id="campaign-review-prev" type="button">Previous merchants</button><span id="campaign-review-page" class="small"></span><button id="campaign-review-next" type="button">Next merchants</button><button id="campaign-download-review" type="button">Download complete review</button><button id="campaign-apply" type="button" class="primary">Apply reviewed wave</button></div>
+    </section>
+  </section>
+
   <section id="fleet-delivery" class="panel" hidden aria-labelledby="delivery-heading">
     <div class="section-head"><div><h2 id="delivery-heading">Settlement delivery</h2><p>Deliver original merchant receipts to independent HTTPS destinations and retain a complete receiving package.</p></div><span id="delivery-scope" class="pill">Select a merchant</span></div>
     <div class="release-form"><label>Merchant<select id="delivery-tenant"></select></label><label>Release slot<select id="delivery-slot"></select></label><button id="delivery-refresh" type="button">Refresh delivery</button></div>

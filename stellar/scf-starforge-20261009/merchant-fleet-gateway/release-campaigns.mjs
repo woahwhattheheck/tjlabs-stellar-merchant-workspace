@@ -206,7 +206,8 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
       plan.state = plan.nextWave === plan.waves.length ? 'COMPLETE' : 'READY';
     } else plan.state = 'ROLLED_BACK';
     const detail = { requestId: row.id, waveIndex: pending.waveIndex ?? null, native: nativeIdentity(committed),
-      before: copy(pending.before), after: copy(pending.after), approval: copy(pending.approval) };
+      before: copy(pending.before), after: copy(pending.after), approval: copy(pending.approval),
+      ...(pending.restoreMode?{restoreMode:pending.restoreMode,targetRevision:pending.targetRevision}:{}) };
     plan.pending = null;
     return complete(plan, row, pending.kind === 'wave' ? 'WAVE_ACTIVATED' : 'ROLLED_BACK', detail,
       { native: nativeIdentity(committed) });
@@ -221,13 +222,15 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
     checkSelection(plan, observed, pending.before);
     if (control(plan.id).paused) return { ...summary(plan), requestId: row.id, awaiting: 'CONTINUE_APPROVED_REQUEST' };
     try {
-      if (pending.kind === 'wave') {
+      if (pending.kind === 'wave' || pending.restoreMode === 'RETAINED_RELEASES') {
         let prepared = await actions.recoverPrepared({ baseRevision: pending.before.revision,
           baseDigest: pending.before.digest, mapping: pending.after });
         if (!prepared) {
           observed = await snapshot(); checkSelection(plan, observed, pending.before);
-          need((!observed.native.candidate || observed.native.candidate.expiresAt <= Date.now()), 'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
-          const reviewed = await actions.reviewWave({ targets: selectedTargets(plan.waves[pending.waveIndex]) });
+          need((!observed.native.candidate || Date.parse(observed.native.candidate.expiresAt) <= Date.now()), 'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
+          const reviewed = pending.kind === 'wave'
+            ? await actions.reviewWave({ targets: selectedTargets(plan.waves[pending.waveIndex]) })
+            : await actions.reviewMapping({ mapping: pending.after });
           need(reviewed.baseRevision === pending.before.revision && reviewed.baseDigest === pending.before.digest &&
             sameMapping(reviewed.before, pending.before.mapping) && sameMapping(reviewed.after, pending.after),
             'FLEET_CAMPAIGN_APPROVED_SOURCE_CHANGED');
@@ -242,7 +245,7 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
         active(); pending.phase = 'ACTIVATING'; save(plan, 'WAVE_ACTIVATING', { requestId: row.id, waveIndex: pending.waveIndex });
         await actions.activate({ candidateId: pending.candidateId, expectedRevision: pending.before.revision });
       } else {
-        need((!observed.native.candidate || observed.native.candidate.expiresAt <= Date.now()), 'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
+        need((!observed.native.candidate || Date.parse(observed.native.candidate.expiresAt) <= Date.now()), 'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
         const reviewed = await actions.reviewRollback({ targetRevision: pending.targetRevision });
         need(reviewed.baseRevision === pending.before.revision, 'FLEET_CAMPAIGN_FLEET_CHANGED');
         active(); pending.phase = 'ROLLING_BACK'; save(plan, 'ROLLBACK_STARTED', { requestId: row.id, targetRevision: pending.targetRevision });
@@ -280,7 +283,23 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
           candidate: slot?.candidate ?? false, drainingRequests: slot?.drainingRequests ?? 0,
           canRetire: Boolean(slot?.canRetire && slot.runningDigest === item.releaseDigest) };
       });
-      return { ...summary(plan), plan: copy(plan), control: copy(control(plan.id)),
+      const earlier = [plan.baseline, ...plan.history.filter(row=>row.kind==='WAVE_ACTIVATED')
+        .map(row=>({...row.native,mapping:row.after}))];
+      const rollbackTargets = earlier.filter((row,index,all)=>row.revision!==observed.native.revision &&
+        all.findIndex(item=>item.revision===row.revision)===index).map(target=>{
+        const blockers = target.mapping.flatMap(item=>{
+          const slot=status.tenants.find(row=>row.id===item.tenant)?.slots.find(row=>row.name===item.slot);
+          if(!slot)return [{tenant:item.tenant,slot:item.slot,code:'SLOT_UNAVAILABLE'}];
+          return slot.owned && slot.runningDigest!==item.releaseDigest ?
+            [{tenant:item.tenant,slot:item.slot,code:'SLOT_IN_USE',serving:slot.serving,candidate:slot.candidate,
+              drainingRequests:slot.drainingRequests,canRetire:slot.canRetire,runningReleaseId:slot.runningReleaseId}] : [];
+        });
+        const retained=observed.native.history.some(row=>sameNative(row,target)) &&
+          observed.revisions.some(row=>sameNative(row,target) && sameMapping(row.mapping,target.mapping));
+        return {...nativeIdentity(target),mapping:copy(target.mapping),mode:retained?'NATIVE_HISTORY':'RETAINED_RELEASES',
+          availability:blockers.length?'SLOT_IN_USE':'REVIEW_REQUIRED',blockers};
+      });
+      return { ...summary(plan), plan: copy(plan), control: copy(control(plan.id)), rollbackTargets,
         observed: nativeIdentity(observed.native), relationship: committed ? 'COMMITTED_REQUEST_AVAILABLE' : matching ? 'CURRENT' : 'FLEET_CHANGED',
         retirements: retiring, pendingRequest: plan.pending ? copy(plan.requests.find(row => row.id === plan.pending.requestId)?.request) : null };
     },
@@ -313,7 +332,7 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
       need(!plan.pending && plan.state === 'READY' && plan.nextWave < plan.waves.length, 'FLEET_CAMPAIGN_REVIEW_UNAVAILABLE');
       need(!control(value).paused, 'FLEET_CAMPAIGN_PAUSED');
       const observed = await snapshot(); checkSelection(plan, observed);
-      need((!observed.native.candidate || observed.native.candidate.expiresAt <= Date.now()), 'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
+      need((!observed.native.candidate || Date.parse(observed.native.candidate.expiresAt) <= Date.now()), 'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
       const wave = plan.waves[plan.nextWave];
       need(sameMapping(plan.expected.mapping,wave.before), 'FLEET_CAMPAIGN_ORDER_CHANGED');
       const native = await actions.reviewWave({ targets: selectedTargets(wave) });
@@ -350,7 +369,8 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
       if(prior){need(prior.requestSha256===hash(input),'FLEET_CAMPAIGN_REQUEST_ID_REUSED');return copy(prior.result);}
       need(revision(input.expectedControlRevision)===held.revision,'FLEET_CAMPAIGN_CONTROL_REVISION_CHANGED');
       need(held.requests.length<MAX_REQUESTS,'FLEET_CAMPAIGN_REQUEST_LIMIT');
-      held.paused=input.paused; held.reason=input.reason===undefined?'':text(input.reason,500,'FLEET_CAMPAIGN_PAUSE_REASON_INVALID');
+      held.paused=input.paused; held.reason=input.reason===undefined||input.reason===''
+        ? '':text(input.reason,500,'FLEET_CAMPAIGN_PAUSE_REASON_INVALID');
       held.revision++; held.updatedAt=stamp();
       const result={id:input.id,paused:held.paused,controlRevision:held.revision,reason:held.reason,
         pendingRequest:plan.pending?.requestId??null};
@@ -361,15 +381,19 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
       active(); const plan=readPlan(value); need(plan,'FLEET_CAMPAIGN_NOT_FOUND',404);
       need(revision(expectedRevision)===plan.revision,'FLEET_CAMPAIGN_REVISION_CHANGED');
       need(!plan.pending&&plan.nextWave>0&&plan.state!=='ROLLED_BACK','FLEET_CAMPAIGN_ROLLBACK_UNAVAILABLE');
-      const observed=await snapshot();checkSelection(plan,observed);
-      need((!observed.native.candidate || observed.native.candidate.expiresAt <= Date.now()),'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
+      const observed=await snapshot();
+      need((!observed.native.candidate || Date.parse(observed.native.candidate.expiresAt) <= Date.now()),'FLEET_CAMPAIGN_OTHER_CANDIDATE_PRESENT');
       const selected=targetRevision??plan.baseline.revision;
       const allowed=[plan.baseline,...plan.history.filter(row=>row.kind==='WAVE_ACTIVATED').map(row=>({...row.native,mapping:row.after}))];
       const target=allowed.find(row=>row.revision===selected);
       need(target&&target.revision!==observed.native.revision,'FLEET_CAMPAIGN_ROLLBACK_TARGET_INVALID');
-      const native=await actions.reviewRollback({targetRevision:target.revision});
-      return reviewToken({id:value,kind:'rollback',revision:plan.revision,before:copy(plan.expected),
-        after:copy(target.mapping),targetRevision:target.revision,digest:target.digest,comparisons:native.comparisons});
+      const retained = observed.native.history.some(row => sameNative(row,target)) &&
+        observed.revisions.some(row => sameNative(row,target) && sameMapping(row.mapping,target.mapping));
+      const restoreMode = retained ? 'NATIVE_HISTORY' : 'RETAINED_RELEASES';
+      const native = retained ? await actions.reviewRollback({targetRevision:target.revision})
+        : await actions.reviewMapping({mapping:target.mapping});
+      return reviewToken({id:value,kind:'rollback',revision:plan.revision,before:nativeSelection(observed),
+        after:copy(target.mapping),targetRevision:target.revision,digest:target.digest,restoreMode,comparisons:native.comparisons});
     },
     async rollback(input) {
       active();fields(input,['id','expectedRevision','requestId','reviewId']);
@@ -382,7 +406,8 @@ export function createFleetCampaignDesk({ directory, planDigest, assertOpen, sna
         const reviewed=takeReview(input.reviewId,plan,'rollback');
         checkSelection(plan,await snapshot(),reviewed.before);row=request(plan,input,'rollback');
         plan.pending={kind:'rollback',requestId:row.id,phase:'APPROVED',before:copy(reviewed.before),
-          after:copy(reviewed.after),targetRevision:reviewed.targetRevision,digest:reviewed.digest,
+          after:copy(reviewed.after),targetRevision:reviewed.targetRevision,restoreMode:reviewed.restoreMode,
+          ...(reviewed.restoreMode==='NATIVE_HISTORY'?{digest:reviewed.digest}:{}),
           approval:{reviewId:reviewed.reviewId,reviewedAt:stamp(),comparisonSha256:hash(reviewed.comparisons),
             comparisons:copy(reviewed.comparisons)}};
         plan.state='PENDING';save(plan,'ROLLBACK_APPROVED',{requestId:row.id,targetRevision:reviewed.targetRevision});

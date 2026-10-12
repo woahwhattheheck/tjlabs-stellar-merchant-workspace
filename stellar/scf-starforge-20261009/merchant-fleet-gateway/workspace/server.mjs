@@ -163,6 +163,34 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
         }
         return send(res, 404, { error: 'WORKSPACE_ROUTE_NOT_FOUND' });
       }
+      if (releases && req.url.startsWith('/api/releases/campaigns')) {
+        const target = new URL(req.url, url), base = '/api/releases/campaigns';
+        const reads = { [base]: ['campaignList', []], [base + '/inspect']: ['campaignInspect', ['id']],
+          [base + '/export']: ['campaignExport', ['id']] };
+        if (req.method === 'GET' && Object.hasOwn(reads, target.pathname)) {
+          const [method, required] = reads[target.pathname], names = [...target.searchParams.keys()];
+          if (new Set(names).size !== names.length || required.some(name => !target.searchParams.has(name)) ||
+              names.some(name => !required.includes(name))) throw failure('WORKSPACE_REQUEST_INVALID');
+          return send(res, 200, await releases[method](Object.fromEntries(target.searchParams)));
+        }
+        const actions = {
+          save: ['campaignSave', ['id', 'title', 'waves', 'requestId', 'expectedRevision']],
+          review: ['campaignReview', ['id', 'expectedRevision']],
+          advance: ['campaignAdvance', ['id', 'expectedRevision', 'requestId', 'reviewId']],
+          pause: ['campaignPause', ['id', 'expectedControlRevision', 'requestId', 'paused', 'reason']],
+          'rollback-review': ['campaignRollbackReview', ['id', 'expectedRevision', 'targetRevision']],
+          rollback: ['campaignRollback', ['id', 'expectedRevision', 'requestId', 'reviewId']],
+          retire: ['campaignRetire', ['id', 'expectedRevision', 'requestId', 'tenant', 'slot', 'instanceId', 'expectedNativeRevision']],
+        };
+        const action = target.pathname.slice((base + '/').length);
+        if (req.method === 'POST' && !target.search && target.pathname.startsWith(base + '/') &&
+            Object.hasOwn(actions, action)) {
+          const [method, allowed] = actions[action], input = await body(req, 131072);
+          keys(input, allowed); operationDispatched = !['review', 'rollback-review'].includes(action);
+          return send(res, 200, { result: await releases[method](input) });
+        }
+        return send(res, 404, { error: 'WORKSPACE_ROUTE_NOT_FOUND' });
+      }
       if (releases && req.url.startsWith('/api/releases/discovery')) {
         const target = new URL(req.url, url), base = '/api/releases/discovery';
         const reads = {
@@ -288,6 +316,7 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
         releases?.cancelStaging?.();
         releases?.cancelClientTransfers?.();
         releases?.cancelDeliveryOperations?.();
+        releases?.cancelCampaigns?.();
         if (server.listening) await new Promise((done, fail) => {
           server.close(error => error ? fail(error) : done()); server.closeIdleConnections();
         });

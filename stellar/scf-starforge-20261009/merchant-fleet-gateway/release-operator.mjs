@@ -460,7 +460,7 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
       lease.assertHeld(); const runtime = owned.get(slotKey(tenant, slot));
       return runtime && !runtime.ended ? runtime.session : null;
     } });
-  async function reviewTargets(targetInputs) {
+  async function reviewTargets(targetInputs, retainedMapping = null) {
     if (!Array.isArray(targetInputs) || !targetInputs.length || targetInputs.length > plan.tenants.length)
       throw fail('FLEET_RELEASE_TARGETS_INVALID', 400);
     const native = await nativeStatus(), current = linked(native), targets = [], comparisons = [], seen = new Set();
@@ -470,7 +470,9 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
       seen.add(input.tenant);
       const target = await descriptor(input.tenant, input.slot, input.releaseId);
       const before = current.mapping.find(row => row.tenant === target.tenant);
-      if (before.slot === target.slot) throw fail('FLEET_RELEASE_REPLACEMENT_SLOT_REQUIRED');
+      if (!retainedMapping && before.slot === target.slot) throw fail('FLEET_RELEASE_REPLACEMENT_SLOT_REQUIRED');
+      if (retainedMapping && !sameDescriptor(target, retainedMapping.find(row => row.tenant === target.tenant)))
+        throw fail('FLEET_RELEASE_SOURCE_CHANGED');
       const beforeSlot = locate(before.tenant, before.slot).slot, afterSlot = locate(target.tenant, target.slot).slot;
       const comparison = await compareReleases(afterSlot.store, before.releaseId, target.releaseId, { beforeRoot: beforeSlot.store });
       if (comparison.before.digest !== before.releaseDigest || comparison.after.digest !== target.releaseDigest)
@@ -497,6 +499,10 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
     },
     async reviewWave(input) {
       keys(input, ['targets']); return reviewTargets(input.targets);
+    },
+    async reviewMapping({ mapping }) {
+      validateMapping(mapping);
+      return reviewTargets(mapping.map(({ tenant, slot, releaseId }) => ({ tenant, slot, releaseId })), mapping);
     },
     async prepare({ reviewId }) {
       const review = takeReview(reviewId, 'replace'); await checkReview(review);
@@ -595,7 +601,7 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
       if (!pending || pending.baseRevision !== baseRevision || stable(pending.mapping) !== stable(mapping)) return null;
       if (native.revision !== baseRevision || native.digest !== baseDigest || stable(current.mapping) === stable(mapping))
         throw fail('FLEET_RELEASE_REVISION_CHANGED');
-      if (!native.candidate || native.candidate.expiresAt <= Date.now()) return null;
+      if (!native.candidate || Date.parse(native.candidate.expiresAt) <= Date.now()) return null;
       if (native.candidate.baseRevision !== baseRevision ||
           native.candidate.digest !== (pending.expectedDigest ?? pending.digest))
         throw fail('FLEET_RELEASE_CANDIDATE_CHANGED');
