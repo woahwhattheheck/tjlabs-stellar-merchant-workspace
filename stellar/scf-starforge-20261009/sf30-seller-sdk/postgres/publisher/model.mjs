@@ -101,6 +101,9 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     sourceFile = settings.sourceFile; targetDirectory = settings.targetDirectory;
     await privateDirectory(join(directory, 'plans')); await privateDirectory(join(directory, 'runs'));
     const actionReceipts = publisherActionReceipts({ db, directory });
+    // Earlier OpenAQ editions retained completed review results in this original database.
+    // New actions use the current publisher receipt owner; historical rows remain unchanged.
+    const legacyReviewReceipts = Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='review_requests'").get());
     let active = null, closing = null, closed = false;
     const event = (kind, run, data = {}) => db.prepare('INSERT INTO events(run,created,kind,data) VALUES(?,?,?,?)')
       .run(run ?? null, stamp(), kind, JSON.stringify(data));
@@ -353,6 +356,23 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       const bound = actionReceipts.bind('publisher.review', id, input);
       const previous = actionReceipts.existing(bound.request);
       if (previous) return previous;
+      if (bound.request && legacyReviewReceipts) {
+        const retained = db.prepare('SELECT run,input_sha256,result FROM review_requests WHERE request_id=?').get(bound.request.requestId);
+        if (retained) {
+          const original = bound.input;
+          const reviewer = note(original.reviewer, 'the reviewer name', 128), text = note(original.note, 'the review note');
+          const inputHash = identity({ runId: id, reviewer, note: text, initialize: original.initialize === true,
+            ...(original.initialize === true ? {} : { expectedSnapshot: original.expectedSnapshot, expectedRevision: original.expectedRevision }) });
+          if (retained.run !== id || retained.input_sha256 !== inputHash)
+            throw fault('REVIEW_REQUEST_CHANGED', 'This review request ID belongs to its original run and reviewed input.', 409);
+          const result = JSON.parse(retained.result);
+          if (result.id !== id || result.data?.review?.id !== bound.request.requestId)
+            throw fault('PUBLISHER_ACTION_RECEIPT_INVALID');
+          // Adopt the exact completed historical result before observing a later target.
+          // Its original review, run, timestamps and legacy row are not rewritten.
+          return transaction(() => actionReceipts.remember(bound.request, result));
+        }
+      }
       input = bound.input;
       const current = await candidate(id), observed = await target();
       const reviewer = note(input.reviewer, 'the reviewer name', 128), text = note(input.note, 'the review note');
@@ -470,7 +490,7 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       closing = (async () => { try { await active?.promise; } finally { db.close(); await release(); } })();
       return closing;
     }
-    return Object.freeze({ directory, settings, sourceName, source, selectSource, savePlan, plan, run, target, status, startExtraction,
+    return Object.freeze({ directory, settings, sourceName, source, selectSource, savePlan, plan, run, target, status, startExtraction, reviewRequestVersion: 1,
       cancel, inspect, review, publish, recover, candidate, buyerOffer, prepareBuyer, close });
   } catch (issue) { db?.close(); await release(); throw issue; }
 }

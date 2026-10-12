@@ -70,6 +70,8 @@ async function originalOutputFiles(root,kind){
 }
 export class SubscriptionOperator {
  #config;#pending=new Set();#closing=false;
+ #scope(){return sha(bytes({schema:CONNECTION_SCHEMA,exportsDirectory:this.#config.exportsDirectory}));}
+ #binding(selection){const group=selection.publisher?'publishers':'customers',name=selection.publisher??selection.customer;return {scopeSha256:this.#scope(),group,alias:name,directorySha256:sha(Buffer.from(declared(this.#config,group,name).directory))};}
  constructor(config){need(config?.schema===CONNECTION_SCHEMA,'CONNECTION','Load an original subscription connection first.');this.#config=config;}
  get configuration(){return this.#config;}
  get summary(){return {configured:true,label:this.#config.label,pending:this.#pending.size,closing:this.#closing};}
@@ -80,7 +82,7 @@ export class SubscriptionOperator {
  }
  async #record(name,{verify=false}={}){
   alias(name);const record=await readJSON(this.#config.exportsDirectory,'records/'+name+'.json');
-  need(record.schema==='stellar-forge.odata-subscription-artifact.v1'&&record.artifact===name&&record.connectionSha256===this.#config.source.sha256&&artifactKinds.includes(record.kind)&&record.state==='COMPLETE','ARTIFACT_PENDING','Complete the originally selected export before using its files.');
+  need(record.schema==='stellar-forge.odata-subscription-artifact.v1'&&record.artifact===name&&record.scopeSha256===this.#scope()&&artifactKinds.includes(record.kind)&&record.state==='COMPLETE','ARTIFACT_PENDING','Complete the originally selected export before using its files.');
   need(Array.isArray(record.files)&&record.files.length<=LIMITS.files&&new Set(record.files.map(f=>f.path)).size===record.files.length&&record.manifest&&HASH.test(record.manifest.sha256),'ARTIFACT','The retained output inventory changed.');
   const root=await privateDirectory(join(this.#config.exportsDirectory,'artifacts',name));
   if(verify){const actual=await inventory(root,record.files.map(f=>f.path));need(same(actual,record.files),'ARTIFACT_CHANGED','The full original artifact differs from its retained file inventory.');}
@@ -93,8 +95,8 @@ export class SubscriptionOperator {
  }
  async #export(kind,artifact,selection,make){
   alias(artifact);return leased(this.#config.exportsDirectory,async root=>{
-   const name='records/'+artifact+'.json',existing=await maybeJSON(root,name),base={schema:'stellar-forge.odata-subscription-artifact.v1',artifact,kind,connectionSha256:this.#config.source.sha256,selection};
-   if(existing){need(same(existing.selection,selection)&&existing.kind===kind&&existing.connectionSha256===base.connectionSha256,'ARTIFACT_SELECTED','Reuse the exact selected export ID and edition.');
+   const name='records/'+artifact+'.json',existing=await maybeJSON(root,name),binding=this.#binding(selection),base={schema:'stellar-forge.odata-subscription-artifact.v1',artifact,kind,scopeSha256:this.#scope(),connectionSha256:this.#config.source.sha256,binding,selection};
+   if(existing){need(same(existing.selection,selection)&&existing.kind===kind&&existing.scopeSha256===base.scopeSha256&&same(existing.binding,binding),'ARTIFACT_SELECTED','Reuse the exact selected export ID and edition.');
     if(existing.state==='COMPLETE'){await this.#record(artifact,{verify:true});return {...publicArtifact(existing),reused:true};}
     need(existing.state==='SELECTED','ARTIFACT_STATE','Reconcile the original export state.');}
    else await atomic(root,name,{...base,state:'SELECTED'});

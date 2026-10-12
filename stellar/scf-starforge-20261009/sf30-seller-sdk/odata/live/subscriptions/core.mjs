@@ -184,8 +184,10 @@ export async function subscriptionBackup(directory,{output,expectedRevision}={})
   return leased(directory,async root=>{const s=await selected(root);need(!s.state.pending,'PENDING','Finish or cancel the selected publisher append before backup.');
     if(expectedRevision!==undefined)need(s.state.head===expectedRevision,'REVISION','The selected publisher edition advanced before backup.');
     const names=[definitionPath,'state.json',...(s.state.cancelledRequests??[]).map(r=>'requests/'+requestKey(r.requestId)+'.json')];
-    for(const entry of s.state.editions){const e=await editionAt(root,s,entry.revision);names.push(e.directory+'/edition.json',e.directory+'/rows.jsonl',e.directory+'/changes.jsonl',
-      'requests/'+requestKey(entry.requestId)+'.json');const c=await openCollection(join(root,'collections',e.edition.source.collectionSha256));
+    for(const entry of s.state.editions){const e=await editionAt(root,s,entry.revision),requestName='requests/'+requestKey(entry.requestId)+'.json',request=await readJSON(root,requestName);
+      need(request.bodySha256===entry.requestSha256&&sha(bytes(request.body))===entry.requestSha256&&request.state!=='CANCELLED','BACKUP_REQUEST','The committed edition request differs from its retained body.');
+      if(request.state!=='COMMITTED')await atomic(root,requestName,{...request,state:'COMMITTED',result:await receiptFor(root,s,entry)});
+      names.push(e.directory+'/edition.json',e.directory+'/rows.jsonl',e.directory+'/changes.jsonl',requestName);const c=await openCollection(join(root,'collections',e.edition.source.collectionSha256));
       for(const file of await collectionRetainedFiles(c))names.push('collections/'+c.manifestSha256+'/'+file.path);}
     const destination=await privateDirectory(output,{create:true});need(destination!==root&&!destination.startsWith(root+'/'),'OUTPUT','Place the complete backup outside the original publisher.');
     const files=await inventory(root,names);for(const file of files)await copy(destination,file.path,await pathAt(root,file.path),{bytes:file.bytes,sha256:file.sha256});

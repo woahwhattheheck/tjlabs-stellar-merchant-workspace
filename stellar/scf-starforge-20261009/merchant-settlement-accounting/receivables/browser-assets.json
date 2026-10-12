@@ -64,6 +64,13 @@
         "refunds.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/collections.mjs",
+      [
+        "collections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

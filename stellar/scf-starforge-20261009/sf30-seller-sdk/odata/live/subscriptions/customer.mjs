@@ -158,6 +158,7 @@ export async function restoreSubscriptionCustomer({directory,source,expectedSha2
       names.add(file.path);total+=file.bytes;need(total<=LIMITS.totalBytes,'BACKUP_LIMIT','The backup exceeds its complete byte limit.');await measureChecked(await pathAt(input,file.path),{bytes:file.bytes,sha256:file.sha256});}
     need(names.has('definition.json')&&names.has('customer.json'),'BACKUP_MISSING','The complete customer backup omits its state.');
     const original=await customerState(input);need(original&&original.state.revision===backup.revision&&original.state.editionSha256===backup.editionSha256&&original.state.definitionSha256===backup.definitionSha256,'BACKUP_STATE','The backed-up customer differs from its selected manifest.');
+    const selected=await selectedCustomerFiles(input,original);need(same(selected,backup.files),'BACKUP_CLOSURE','The selected backup omits or changes original transfer, snapshot or state bytes.');
     if(!intent)await atomic(root,'restore-intent.json',{sha256:expectedSha256,state:'SELECTED'});
     for(const transfer of original.state.transfers)await receiveUnlocked(root,{transferDirectory:join(input,'transfers',transfer.sha256),expectedSha256:transfer.sha256},{restoring:true});
     const reopened=await customerState(root);need(same(reopened.state,original.state),'BACKUP_REPLAY','The complete backup did not reproduce the original customer history.');

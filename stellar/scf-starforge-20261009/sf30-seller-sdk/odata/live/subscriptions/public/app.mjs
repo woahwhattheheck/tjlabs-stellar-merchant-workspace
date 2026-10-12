@@ -85,7 +85,7 @@ async function publishers(){
  }else{
   const e=current.current;
   content.append(panel(current.definition.title,el('p','Edition '+current.head+' · '+e.rows+' rows · '+e.counts.events+' changes',{class:'stat'}),
-   note('Entity set: '+current.definition.entitySet+' · Keys: '+current.definition.keys.join(', ')),el('pre',json({editionSha256:e.manifestSha256,query:e.source.query,counts:e.counts}))));
+   note('Entity set: '+current.definition.entitySet+' · Keys: '+current.definition.keyFields.join(', ')),el('pre',json({editionSha256:e.manifestSha256,query:e.source.query,counts:e.counts}))));
   if(current.pending)content.append(panel('Selected unfinished request',el('p',current.pending),button('Cancel selected request',()=>perform('publisher-cancel',{publisher:id,requestId:current.pending}))));
   const choices=options('collections');if(choices.length)content.append(panel('Append a complete collection',form('Append selected edition','publisher-append',f=>{
    field(f,'collection','Original collection',{options:choices,value:choices[0][0]});field(f,'requestId','Original request ID',{value:crypto.randomUUID()});

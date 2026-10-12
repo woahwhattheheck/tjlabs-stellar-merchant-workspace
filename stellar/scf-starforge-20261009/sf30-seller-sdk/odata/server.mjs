@@ -7,13 +7,18 @@ import { fault } from './state.mjs';
 
 const assets=fileURLToPath(new URL('./public/',import.meta.url));
 const files=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/collection-view.mjs',['collection-view.mjs','text/javascript; charset=utf-8']],['/comparison-view.mjs',['comparison-view.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
-export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true}={}){
+export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true,subscriptionConnection}={}){
   if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Choose a local TCP port.');
   if(typeof closeWorkspace!=='boolean')throw new TypeError('closeWorkspace must be a Boolean.');
   if(liveOperations!==undefined&&(!liveOperations||typeof liveOperations.status!=='function'||typeof liveOperations.start!=='function'))
     throw new TypeError('Pass the original open live operations object.');
   let publisher,live=liveOperations,closing;
   const ownsLive=liveOperations===undefined;
+  let subscriptions=null,subscriptionHandler=null;
+  if(subscriptionConnection!==undefined){
+    const [{openSubscriptionOperator},{subscriptionHttpHandler}]=await Promise.all([import('./live/subscriptions/operator.mjs'),import('./live/subscriptions/server.mjs')]);
+    subscriptions=await openSubscriptionOperator({connection:subscriptionConnection});subscriptionHandler=subscriptionHttpHandler({operator:subscriptions});
+  }
   const getPublisher=async()=>publisher||=(await import('./publisher.mjs')).openODataPublisher({workspace});
   const getLive=async()=>{
     if(!live)live=import('./live-operations.mjs').then(module=>module.openODataLiveOperations({
@@ -35,6 +40,8 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
       if(req.headers.host!=='127.0.0.1:'+address.port&&req.headers.host!=='localhost:'+address.port)throw fault('ODATA_LOCAL_HOST','Use the displayed local workspace address.',400);
       const url=new URL(req.url,origin);
       if(req.headers.origin&&req.headers.origin!==origin&&req.headers.origin!=='http://localhost:'+address.port)throw fault('ODATA_LOCAL_ORIGIN','Open the local workspace before submitting an operation.',403);
+      if(req.method==='GET'&&url.pathname==='/api/subscriptions-connection')return send(res,200,{configured:Boolean(subscriptions),url:subscriptions?'/subscriptions/':null});
+      if(subscriptionHandler&&await subscriptionHandler(req,res,url))return;
       if(req.method==='GET'&&files.has(url.pathname)){
         const [name,type]=files.get(url.pathname);return send(res,200,await readFile(join(assets,name)),{'Content-Type':type,
           'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"});}
@@ -115,7 +122,7 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
     close:()=>closing??=(async()=>{
       // Stop accepting browser operations before releasing any owned runtime.
       await new Promise(resolve=>server.close(resolve));
-      try{if(ownsLive&&live)await(await live).close();}
+      try{try{if(ownsLive&&live)await(await live).close();}finally{await subscriptions?.close();}}
       finally{if(closeWorkspace)await workspace.close();}
     })()};
   try{if(liveServiceId)service.liveRuntime=await(await getLive()).start({id:liveServiceId});return service;}

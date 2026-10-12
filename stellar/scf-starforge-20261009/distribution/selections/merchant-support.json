@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-support",
   "title": "Merchant Support",
-  "description": "Complete merchant cases, implementation, Service adjustments, buyer and accountant handover, original tariff pricing and recorded usage performance, commercial quotations and independent customer receiving.",
+  "description": "Original merchant cases, tariff and usage-informed quotations, accepted work, invoices, recurring service calendars, customer payments, Service adjustments, buyer/accountant handover and complete customer receiving.",
   "base": {
     "commands": [
       "installation",
@@ -21,7 +21,9 @@
       "merchant-accounting",
       "merchant-accounting-workspace",
       "merchant-accounting-adjustments",
-      "buyer-expenses"
+      "buyer-expenses",
+      "merchant-accounting-pricing",
+      "merchant-accounting-recovery"
     ],
     "exports": [
       "./runtime-profile",
@@ -57,7 +59,8 @@
       "./merchant/scenario-workspace",
       "./merchant/repricing",
       "./merchant/quote-prices",
-      "./merchant/repricing-source"
+      "./merchant/repricing-source",
+      "./merchant/accounting-pricing"
     ],
     "features": [
       "schema",
@@ -85,7 +88,12 @@
     "merchant-provider-pricing",
     "merchant-tariffs",
     "merchant-performance",
-    "merchant-economics-product"
+    "merchant-economics-product",
+    "merchant-receivables",
+    "merchant-payment-plans",
+    "receivables-agent",
+    "customer-closing",
+    "merchant-service-agreements"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -101,7 +109,10 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting",
     "stellar/scf-starforge-20261009/sf36-spend-governor",
     "stellar/scf-starforge-20261009/sf30-seller-sdk",
-    "stellar/scf-starforge-20261009/sf43-agent-commerce"
+    "stellar/scf-starforge-20261009/sf43-agent-commerce",
+    "products/merchant-receivables",
+    "products/merchant-payment-plans",
+    "products/merchant-service-agreements"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
@@ -110,14 +121,22 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
-    "products/merchant-workspace/OPERATING.md"
+    "products/merchant-workspace/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md",
+    "products/merchant-receivables/README.md",
+    "products/merchant-payment-plans/README.md",
+    "products/merchant-service-agreements/README.md",
+    "stellar-forge/mcp-paid-agent/package.json",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant Support: original cases, tariffs, usage performance and quotations, accepted implementation, Service adjustments, buyer and accountant handover, and complete customer receiving.",
+    "description": "Merchant Support: original cases, tariffs and usage performance, accepted quotations and work, invoices and recurring service calendars, customer payments, Service adjustments and complete receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

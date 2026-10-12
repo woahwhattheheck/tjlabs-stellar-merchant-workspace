@@ -1,12 +1,11 @@
 // MIT. Industrial local controls over the original configured subscription operator.
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
-import {once} from 'node:events';
 import {openSubscriptionOperator} from './operator.mjs';
+import {readBrowserAssets} from '../../../../distribution/browser-assets.mjs';
 import {need,plain,shape,parse} from './files.mjs';
-const assets=new Map([['',['index.html','text/html; charset=utf-8']],['app.mjs',['app.mjs','text/javascript; charset=utf-8']],['style.css',['style.css','text/css; charset=utf-8']]]);
+const assets=await readBrowserAssets(new URL('./browser-assets.json',import.meta.url));
 function send(res,status,value,type='application/json; charset=utf-8'){
  const raw=Buffer.isBuffer(value)?value:Buffer.from(JSON.stringify(value));
  res.writeHead(status,{'Content-Type':type,'Content-Length':raw.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
@@ -35,7 +34,8 @@ export function subscriptionHttpHandler({operator,basePath='/subscriptions'}){
   if(!url.pathname.startsWith(prefix))return false;
   const path=url.pathname.slice(prefix.length);
   try{
-   if(req.method==='GET'&&assets.has(path)){const [file,type]=assets.get(path);send(res,200,await readFile(fileURLToPath(new URL('./public/'+file,import.meta.url))),type);return true;}
+   const asset=assets.get('/subscriptions/'+path);
+   if(req.method==='GET'&&asset){send(res,200,await readFile(asset.url),asset.type);return true;}
    if(req.method==='GET'&&path==='api/status'){send(res,200,await operator.call('status'));return true;}
    if(req.method==='GET'&&path==='api/file'){await download(operator,req,res,url);return true;}
    if(req.method==='POST'&&path==='api/operate'){
