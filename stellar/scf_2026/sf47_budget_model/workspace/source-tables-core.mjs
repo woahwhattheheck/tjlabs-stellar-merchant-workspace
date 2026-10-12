@@ -59,6 +59,7 @@ function integer(value, label) {
   return Number(raw);
 }
 function identifier(value, label) {
+  need(typeof value === 'string' || typeof value === 'number', 'IDENTIFIER', label + ' needs an explicit source identity.');
   const raw = string(String(value), label, 100, true);
   need(/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(raw), 'IDENTIFIER', label + ' uses letters, numbers, dots, hyphens or underscores.');
   return raw;
