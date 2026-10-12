@@ -62,6 +62,9 @@ async function originalJson(path,maximum) {
     return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
   } finally { await file.close(); }
 }
+async function optionalOriginal(path,maximum) {
+  try { return await originalJson(path,maximum); } catch(error) { if(error.code === 'ENOENT') return null; throw error; }
+}
 async function describe(path,name) {
   const {file,info} = await fileHandle(path); const digest = createHash('sha256'); let bytes = 0;
   try { for await(const chunk of file.createReadStream({autoClose:false})) { digest.update(chunk); bytes += chunk.length; }
@@ -236,7 +239,7 @@ async function finish(directory,root,request,summary,progress) {
   need(report && report.id === summary.comparisonId && summary.projectId === request.projectId,
     'The completed programme belongs to this original project and current publication.', 'FRED_PUBLISHED_PROJECT_CHANGED',409);
   const expectedCaptureIds = (await createFredPublishedSourceCaptures({directory:request.workspace,manifest,batchSize:10})).map(item => item.captureSha256);
-  const bundle = await readPrivateJson(join(outputDirectory,'original-project-with-current-publications.json'),FRED_DDP_PROJECT_BUNDLE_MAX_BYTES);
+  const bundle = await originalJson(join(outputDirectory,'original-project-with-current-publications.json'),FRED_DDP_PROJECT_BUNDLE_MAX_BYTES);
   need(summary.schema === 'tjlabs.scf-fred-ddp-current-published-programme.v1' && bundle.state?.id === request.projectId &&
     bundle.bundleSha256 === summary.bundleSha256 && summary.captureCount === expectedCaptureIds.length &&
     summary.observations === manifest.observationCount &&
@@ -289,7 +292,7 @@ export async function runFredDdpPublicationOperation({directory,id,expectedRevis
       progress.save({state:'RUNNING',step:prepared.request.mode === 'retained' ? 'opening-original-programme' : 'collecting-original-publications'});
       await progress.flush(); onRetained?.(await readFredDdpPublicationOperation({directory,id}));
       signal?.throwIfAborted();
-      let summary = await optional(join(under(prepared.request.workspace,prepared.request.output),'programme-summary.json'),4 * 1024 * 1024);
+      let summary = await optionalOriginal(join(under(prepared.request.workspace,prepared.request.output),'programme-summary.json'),4 * 1024 * 1024);
       if(!summary) {
         need(prepared.request.mode === 'collect', 'Finish the original retained programme before attaching its completed customer edition.');
         summary = await runFredDdpPublishedProgramme({workspace:root,packagePath:'inputs/package.json',crosswalkPath:'inputs/crosswalk.json',

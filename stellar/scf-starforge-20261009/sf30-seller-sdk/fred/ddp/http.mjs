@@ -115,7 +115,9 @@ async function readUpload(req) {
 }
 
 /** Returns true only after this module has handled the authenticated workspace route. */
-export async function handleFredDdpHttp({ req, res, url, directory, body, send, execute, busy }) {
+export async function handleFredDdpHttp({ req, res, url, directory, body, send,
+  sendJsonFile = (res, status, value, filename) => send(res, status, value, 'application/json; charset=utf-8', filename),
+  execute, busy }) {
   if (req.method === 'POST' && url.pathname === '/api/ddp-import') {
     need(!busy(), 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
     return send(res, 200, await execute(await readUpload(req))), true;
@@ -128,8 +130,9 @@ export async function handleFredDdpHttp({ req, res, url, directory, body, send, 
       const file = originalFile(capture, 'ddp-fred-crosswalk.csv');
       return send(res, 200, file.body, file.contentType, file.path), true;
     }
-    if (url.searchParams.get('download') === '1')
-      return send(res, 200, capture, 'application/json; charset=utf-8', 'fred-ddp-crosswalk.json'), true;
+    if (url.searchParams.get('download') === '1') {
+      await sendJsonFile(res, 200, capture, 'fred-ddp-crosswalk.json'); return true;
+    }
     const project = await readFredProject(directory);
     return send(res, 200, { projectId: project.id, revision: project.revision,
       crosswalk: pageFredDdpCrosswalk(capture, { ...page(url), release: url.searchParams.get('release') || null,
@@ -141,8 +144,9 @@ export async function handleFredDdpHttp({ req, res, url, directory, body, send, 
       const file = originalFile(capture, 'ddp-original-package');
       return send(res, 200, file.body, file.contentType, file.path), true;
     }
-    if (url.searchParams.get('download') === '1')
-      return send(res, 200, capture, 'application/json; charset=utf-8', 'fred-ddp-package.json'), true;
+    if (url.searchParams.get('download') === '1') {
+      await sendJsonFile(res, 200, capture, 'fred-ddp-package.json'); return true;
+    }
     const project = await readFredProject(directory);
     return send(res, 200, { projectId: project.id, revision: project.revision,
       package: pageFredDdpPackage(capture, { ...page(url), section: url.searchParams.get('section') || 'series',

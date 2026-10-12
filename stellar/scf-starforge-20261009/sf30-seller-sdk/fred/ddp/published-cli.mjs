@@ -7,8 +7,6 @@ import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
 import { need,canonical } from '../model.mjs';
-import { readPrivateJson } from '../../routescan/quota.mjs';
-import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from './project-validation.mjs';
 import { hash,validateCapture } from '../source.mjs';
 import { initializeFredProject,readFredProject,importFredCapture,importFredDdpCrosswalk,importFredDdpPackage,
   previewFredDdpMigration,saveFredDdpMigration,exportFredProject,receiveFredProject } from '../project.mjs';
@@ -121,7 +119,7 @@ export async function runFredDdpPublishedProgramme({workspace,packagePath,crossw
   }
   const bundlePath=join(out,'original-project-with-current-publications.json');let bundle;
   if(await exists(bundlePath)){
-    bundle=await readPrivateJson(bundlePath,FRED_DDP_PROJECT_BUNDLE_MAX_BYTES);
+    bundle=await load(bundlePath);
     state=await readFredProject(directory);
     need(bundle.state?.id===state.id&&
       (bundle.ddpPackages??[]).some(source=>source.id===packageCapture.id&&source.captureSha256===packageCapture.captureSha256)&&

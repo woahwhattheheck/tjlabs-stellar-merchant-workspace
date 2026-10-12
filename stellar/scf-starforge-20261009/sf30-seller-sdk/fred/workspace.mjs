@@ -8,6 +8,7 @@ import { readPrivateJson } from '../routescan/quota.mjs';
 import { Buyer } from '../../sf88-operator-buyer-cli/node/index.mjs';
 import { need, inspectCapture, MAX_CAPTURE_BYTES, operationId } from './model.mjs';
 import { jsonBytes, hash } from './source.mjs';
+import { sendFredJsonFile } from './json-response.mjs';
 import { pageFredBriefing } from './briefing/model.mjs';
 import { inspectFredReleaseCapture } from './releases/model.mjs';
 import { FRED_DDP_ACTIONS, MAX_DDP_CAPTURE_BYTES, runFredDdpAction, handleFredDdpHttp } from './ddp/http.mjs';
@@ -35,6 +36,8 @@ function send(res, status, value, contentType = 'application/json; charset=utf-8
     ...(filename ? { 'content-disposition': 'attachment; filename="' + filename + '"' } : {}) });
   res.end(bytes);
 }
+const sendJsonFile = (res, status, value, filename) =>
+  sendFredJsonFile(res, status, value, { headers: securityHeaders, filename });
 async function body(req, max = MAX_CAPTURE_BYTES * 2) {
   need(/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] ?? ''), 'Use a JSON request.', 'FRED_JSON_REQUIRED', 415);
   const chunks = []; let size = 0;
@@ -290,7 +293,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
           changesOnly: changesOnlyQuery(url.searchParams.get('changesOnly')) }));
       }
       if (req.method === 'GET' && url.pathname === '/api/bundle')
-        return send(res, 200, await exportFredProject({ directory }), 'application/json', 'fred-economic-project.json');
+        return sendJsonFile(res, 200, await exportFredProject({ directory }), 'fred-economic-project.json');
       if (req.method === 'GET' && url.pathname === '/api/publication') {
         const selected = await selectFredPublication(directory, url.searchParams.get('publication'));
         const { edition, plan, offers } = await readFredMerchant(selected);
@@ -320,7 +323,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
       if (await publishedHttp.handle({ req, res, url, body, send })) return;
-      if (await handleFredDdpHttp({ req, res, url, directory, body, send, execute, busy: () => Boolean(pending) })) return;
+      if (await handleFredDdpHttp({ req, res, url, directory, body, send, sendJsonFile, execute, busy: () => Boolean(pending) })) return;
       if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
         const countyAction = url.pathname === '/api/qcew/action';
         const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : Math.max(MAX_DDP_CAPTURE_BYTES, MAX_CAPTURE_BYTES * 2));

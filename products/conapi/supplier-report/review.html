@@ -127,7 +127,8 @@
         <p>Create a comparison above, or open a saved workspace to continue reviewing its changes.</p>
       </div>
     </section>
-    <footer class="shell-footer">CSV and workspace files are read in this browser. Use the command-line export for a complete delivery folder.</footer>
+    <section id="shell-workbook" aria-label="Offline workbook review"></section>
+    <footer class="shell-footer">CSV and workspace files are read in this browser. XLSX conversion uses this original local server. Use the command-line export for a complete delivery folder.</footer>
   </main>
 
   <script type="module">
@@ -139,11 +140,12 @@
       request: byId('shell-request'), rules: byId('shell-rules'), baseline: byId('shell-baseline'),
       candidate: byId('shell-candidate'), baselineSource: byId('shell-baseline-source'),
       candidateSource: byId('shell-candidate-source'), baselineCaptured: byId('shell-baseline-captured'),
-      candidateCaptured: byId('shell-candidate-captured'), create: byId('shell-create'), review: byId('shell-review')
+      candidateCaptured: byId('shell-candidate-captured'), create: byId('shell-create'), review: byId('shell-review'), workbook: byId('shell-workbook')
     };
     let domain;
     let mountSupplierReview;
     let controller;
+    let workbookController;
     let report;
     let dirty = false;
     let busy = false;
@@ -153,6 +155,7 @@
     const safeFilename = value => String(value || 'supplier-review').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^[.-]+/, '').slice(0, 120) || 'supplier-review';
 
     function renderState() {
+      workbookController?.setExternalBusy(busy);
       elements.new.disabled = !ready || busy;
       elements.workspaceFile.disabled = !ready || busy;
       elements.uploadLabel.setAttribute('aria-disabled', String(!ready || busy));
@@ -189,10 +192,11 @@
         elements.review.replaceChildren();
         controller = mountSupplierReview(elements.review, {
           report,
-          onChange(next) { report = next; dirty = true; renderState(); },
+          onChange(next) { report = next; dirty = true; workbookController?.setReport(next); renderState(); },
           onExport(payload) { return download(payload); }
         });
       }
+      workbookController?.setReport(report);
       elements.details.open = false;
       renderState();
     }
@@ -289,10 +293,17 @@
     });
 
     try {
-      const modules = await Promise.all([import('./supplier-report.mjs'), import('./review-ui.mjs')]);
+      const modules = await Promise.all([import('./supplier-report.mjs'), import('./review-ui.mjs'), import('./review-workbook-ui.mjs')]);
       domain = modules[0];
       mountSupplierReview = modules[1].mountSupplierReview;
       if (typeof mountSupplierReview !== 'function') throw new Error('The review interface module is incomplete.');
+      workbookController = modules[2].mountWorkbookReview(elements.workbook, {
+        getReport: () => report,
+        onChange: next => setReport(next, true),
+        onBusy: value => { busy = value; elements.review.inert = value; elements.form.inert = value; renderState(); },
+        onError: showError,
+        mayReplace
+      });
       ready = true;
       renderState();
     } catch (failure) {
