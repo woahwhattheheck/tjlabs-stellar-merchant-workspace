@@ -44,12 +44,23 @@ export function readLabResult(bytes,{signal}={}){
     const prepared=readLabZip(archive.bytes,{maxBytes:268435456,maxMembers:128,signal});
     const actual=new Map(prepared.map(member=>[member.filename,member])),expectedNames=new Set();
     if(prepared.length!==expectedArchive.files.length)fail('The full native receiving file set changed.');
+    const legacySources=source.profile?.id==='geotech-dts8d'?(source.files??[]).filter(file=>/\.xls$/i.test(file.filename)):[];
+    if(legacySources.length){
+      const required=(source.files??[]).map(file=>/\.xls$/i.test(file.filename)?file.filename+'.xlsx':file.filename);
+      if(new Set(required).size!==required.length||required.length!==prepared.length||required.some(name=>!actual.has(name)))
+        fail('The native legacy receiving set must retain every original or explicitly converted source member.');
+      const declared=expectedArchive.files.filter(file=>file.formatConversion)
+        .map(file=>({filename:file.filename,sourceFile:file.sourceFile,...file.formatConversion}));
+      if(preparation.files!==prepared.length||declared.length!==legacySources.length||!same(preparation.conversions,declared))
+        fail('The complete native preparation state must retain every original XLS conversion.');
+    }
     for(const expected of expectedArchive.files){
       const member=actual.get(expected.filename);
       if(expectedNames.has(expected.filename)||!member||member.bytes.length!==expected.bytes||member.sha256!==expected.sha256)
         fail('A native receiving file changed: '+expected.filename);
       expectedNames.add(expected.filename);
-      if(expected.formatConversion!==undefined||expected.sourceFile!==undefined){
+      const legacySource=legacySources.find(file=>expected.filename===file.filename+'.xlsx');
+      if(legacySource||expected.formatConversion!==undefined||expected.sourceFile!==undefined){
         const original=source.files?.find(file=>file.filename===expected.sourceFile?.filename);
         if(source.profile?.id!=='geotech-dts8d'||!original||
           !same(expected.sourceFile,{filename:original.filename,bytes:original.bytes,sha256:original.sha256})||
