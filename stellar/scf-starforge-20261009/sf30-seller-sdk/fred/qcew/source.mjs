@@ -337,7 +337,7 @@ export async function readQcewCaptureWithContext(directory,captureSha256,{select
 }
 export async function readQcewOriginalMember(directory,captureSha256,name,{context=null}={}) {
   need(filename(name),'Choose a retained original source member.');
-  const {capture}=await readQcewCapture(directory,captureSha256,{context});
+  const {capture}=await readQcewCapture(directory,captureSha256,context?{context}:{select:()=>false});
   const file=capture.files.find(item=>item.name===name);
   need(file,'The original member is not part of this source edition.','QCEW_MEMBER_NOT_FOUND',404);
   return {name:name.replace(/\.gz$/,''),bytes:unpack(file,MAX_CSV_BYTES),sha256:file.sha256};
