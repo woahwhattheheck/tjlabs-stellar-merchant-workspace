@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { open, readFile, mkdir, lstat, realpath, rename, unlink } from 'node:fs/promises';
+import { open, readFile, mkdir, lstat, realpath, rename, unlink, readdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -276,15 +276,110 @@ export async function runDeliveryApplicationsPhase({
   receipt.attempts.push(attempt); receipt.state = 'RUNNING'; receipt.ownedProcessesClosed = false;
   receipt.sourceFiles = sourceFiles; await save();
 
+
+  async function inspectIncompleteControl(path) {
+    await privateDirectory(path);
+    const directories = new Set(['archives', 'entries', 'operations', 'observations', 'sources', 'incoming']);
+    const identity = info => ({ device: String(info.dev), inode: String(info.ino), mode: String(info.mode),
+      uid: String(info.uid), gid: String(info.gid) });
+    const rootInfo = await lstat(path, { bigint: true }), entries = [];
+    for (const name of (await readdir(path)).sort()) {
+      const file = join(path, name), info = await lstat(file, { bigint: true });
+      assert(!info.isSymbolicLink() && !(info.mode & 0o077n), 'Retain only the original private initialization');
+      assert.equal(info.uid, rootInfo.uid, 'Original initialization owner must match');
+      if (directories.has(name)) {
+        assert(info.isDirectory(), 'The original initialization child must be a directory');
+        assert.deepEqual(await readdir(file), [], 'Initialized control state must reopen through the original model');
+        entries.push({ name, kind: 'directory', ...identity(info) });
+      } else {
+        assert(/^workspace\.json\.pending-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(name),
+          'Preserve an unexpected original control entry for inspection: ' + name);
+        assert(info.isFile() && info.nlink === 1n && info.size <= 4n * 1024n * 1024n,
+          'The original initialization temporary must be a bounded private file');
+        const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW);
+        try {
+          const before = await handle.stat({ bigint: true }), bytes = await handle.readFile(), after = await handle.stat({ bigint: true });
+          for (const key of ['dev', 'ino', 'size', 'mtimeNs', 'ctimeNs']) assert.equal(before[key], after[key]);
+          assert.equal(BigInt(bytes.length), after.size);
+          entries.push({ name, kind: 'file', ...identity(after), bytes: bytes.length, sha256: hash(bytes) });
+        } finally { await handle.close(); }
+      }
+    }
+    return { root: identity(rootInfo), entries };
+  }
+  async function syncControlParent() {
+    const handle = await open(output, constants.O_RDONLY | constants.O_DIRECTORY);
+    try { await handle.sync(); } finally { await handle.close(); }
+  }
+  async function initializeControl() {
+    const path = receipt.runtimeWorkspace;
+    assert.equal(path, join(output, 'runtime-workspace'));
+    assert.equal(receipt.runtimeHome, join(output, 'runtime-home'));
+    const finalRecord = join(path, 'workspace.json');
+    // A completed native record always remains at its original path for normal reopen.
+    if (await exists(finalRecord)) return;
+    assert(!receipt.workspaceId && !receipt.runtimeId && receipt.requests.length === 0 &&
+      Object.keys(receipt.applications).length === 0, 'Initialized Applications state must reopen through its original identity');
+    receipt.initializationRecoveries ??= [];
+    let reserved = receipt.initializationRecoveries.find(row => row.phase === 'RESERVED');
+    if (reserved) {
+      assert.equal(reserved.directory, path);
+      assert.equal(reserved.retainedDirectory, join(output, 'runtime-workspace-incomplete-' + reserved.id));
+      if (await exists(reserved.retainedDirectory)) {
+        assert.deepEqual(await inspectIncompleteControl(reserved.retainedDirectory), reserved.inventory,
+          'Retained interrupted initialization must preserve its exact files and directory identities');
+        assert(!await exists(path), 'Reconcile both initialization paths before recreating the original control workspace');
+      } else {
+        assert.deepEqual(await inspectIncompleteControl(path), reserved.inventory,
+          'The original incomplete initialization changed after its retained inspection');
+        await rename(path, reserved.retainedDirectory);
+        await syncControlParent();
+      }
+      reserved.phase = 'RETAINED'; reserved.retainedAt = new Date().toISOString(); await save();
+    }
+    if (await exists(path)) {
+      const inventory = await inspectIncompleteControl(path), id = randomUUID();
+      reserved = { id, directory: path, retainedDirectory: join(output, 'runtime-workspace-incomplete-' + id),
+        inventory, phase: 'RESERVED', inspectedAt: new Date().toISOString() };
+      receipt.initializationRecoveries.push(reserved); await save();
+      assert.deepEqual(await inspectIncompleteControl(path), inventory, 'Keep the inspected original initialization');
+      assert(!await exists(reserved.retainedDirectory));
+      await rename(path, reserved.retainedDirectory); await syncControlParent();
+      reserved.phase = 'RETAINED'; reserved.retainedAt = new Date().toISOString(); await save();
+    }
+    receipt.initializationRequest ??= { directory: path, runtimeHome: receipt.runtimeHome };
+    assert.deepEqual(receipt.initializationRequest, { directory: path, runtimeHome: receipt.runtimeHome });
+    await save();
+    await createRuntimeWorkspace(receipt.initializationRequest);
+  }
+  async function rememberAdoption(kind, app) {
+    if (!app) return;
+    const saved = (await originalJSON(join(receipt.runtimeWorkspace, 'applications', app.id, 'application.json'))).value;
+    assert.equal(saved.id, app.id);
+    assert(receipt.requests.some(row => row.route === '/api/applications/save' && row.body.requestId === saved.saveRequestId),
+      'Retain only the application saved by this original phase');
+    if (!saved.adoption) return;
+    assert.equal(saved.adoption.operation, 'managed-adopt');
+    assert(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(saved.adoption.requestId));
+    const retained = receipt.applications[kind];
+    if (retained.adoptionRequest) assert.deepEqual(retained.adoptionRequest, saved.adoption, 'Keep the original managed-adopt request');
+    else { retained.adoptionRequest = structuredClone(saved.adoption); await save(); }
+  }
+
   const applications = async () => (await model.applicationsState({ historyLimit: 10 })).applications;
   const currentApp = async kind => {
     const rows = await applications(), known = receipt.applications[kind]?.id;
-    if (known) return rows.find(row => row.id === known) ?? null;
-    const saveIds = receipt.requests.filter(row => row.route === '/api/applications/save' && row.kind === kind).map(row => row.body.requestId);
-    const found = rows.filter(row => saveIds.includes(row.saveRequestId));
-    assert(found.length <= 1, 'Keep the original application save identity');
-    if (found[0]) { receipt.applications[kind] = { id: found[0].id, kind, label: found[0].label }; await save(); }
-    return found[0] ?? null;
+    let app;
+    if (known) app = rows.find(row => row.id === known) ?? null;
+    else {
+      const saveIds = receipt.requests.filter(row => row.route === '/api/applications/save' && row.kind === kind).map(row => row.body.requestId);
+      const found = rows.filter(row => saveIds.includes(row.saveRequestId));
+      assert(found.length <= 1, 'Keep the original application save identity');
+      app = found[0] ?? null;
+      if (app) { receipt.applications[kind] = { id: app.id, kind, label: app.label }; await save(); }
+    }
+    await rememberAdoption(kind, app);
+    return app;
   };
   function uniqueAction(label) { return label + '-' + (receipt.requests.filter(row => row.key.startsWith(label + '-')).length + 1); }
   function selectedKind(kind) { return kind === 'merchant-delivery' ? 'seller' : 'customer'; }
@@ -540,9 +635,7 @@ export async function runDeliveryApplicationsPhase({
   }
 
   try {
-    if (!await exists(receipt.runtimeWorkspace)) {
-      await createRuntimeWorkspace({ directory: receipt.runtimeWorkspace, runtimeHome: receipt.runtimeHome });
-    }
+    await initializeControl();
     model = await openRuntimeWorkspace({ directory: receipt.runtimeWorkspace });
     const runtimeState = await model.state();
     receipt.workspaceId ??= runtimeState.workspaceId;
@@ -640,6 +733,41 @@ export async function runDeliveryApplicationsPhase({
     attempt.error = { message: diagnostic(error.message), code: error.code ?? null, stack: diagnostic(error.stack ?? '') };
   } finally {
     const closed = attempt.cleanupErrors;
+    // Finish every already-issued native POST before discovering the workers it created.
+    while (responseWork.size) await Promise.allSettled([...responseWork]);
+    async function drainAdoption(kind) {
+      const retained = receipt.applications[kind], request = retained?.adoptionRequest;
+      if (!request) return;
+      const directory = join(receipt.runtimeWorkspace, 'operations', request.requestId);
+      if (!await exists(directory)) {
+        retained.adoptionClose = { requestId: request.requestId, phase: 'PENDING', workerActive: false,
+          checkedAt: new Date().toISOString() }; await save(); return;
+      }
+      const requestFile = join(directory, 'request.json');
+      if (await exists(requestFile)) {
+        const original = await originalJSON(requestFile);
+        assert.equal(original.value.operation, request.operation);
+        for (const key of ['homeId', 'reviewId']) assert.equal(original.value[key], request[key]);
+        if (retained.adoptionNativeRequestSha256) assert.equal(original.sha256, retained.adoptionNativeRequestSha256);
+        else { retained.adoptionNativeRequestSha256 = original.sha256; await save(); }
+      }
+      let lastProgress = 0;
+      for (;;) {
+        const active = await operationRunning(join(directory, 'worker.lock'));
+        if (!active || Date.now() - lastProgress >= 15000) {
+          const stateFile = join(directory, 'state.json');
+          const state = await exists(stateFile) ? (await originalJSON(stateFile)).value : null;
+          retained.adoptionClose = { requestId: request.requestId, phase: state?.phase ?? 'QUEUED',
+            workerActive: active, checkedAt: new Date().toISOString() };
+          await save(); lastProgress = Date.now();
+          process.stdout.write(JSON.stringify({ phase: 'DELIVERY_APPLICATIONS_ADOPTION_DRAIN',
+            kind, requestId: request.requestId, workerActive: active, nativePhase: retained.adoptionClose.phase }) + '\n');
+        }
+        if (!active) return;
+        // The original adoption worker owns its lease through completion.
+        await delay(500);
+      }
+    }
     async function closeOwned(kind) {
       if (!model) return;
       const app = await currentApp(kind); if (!app) return;
@@ -652,11 +780,13 @@ export async function runDeliveryApplicationsPhase({
       const deadline = Date.now() + 60000; let value;
       do {
         value = await currentApp(kind);
-        if (!value.current?.active && !value.adoption?.active &&
-          !['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(value.current?.phase)) return;
+        if (!value.current?.active &&
+          !['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(value.current?.phase)) break;
         await delay(250);
       } while (Date.now() < deadline);
-      throw new Error('The original ' + kind + ' still owns a live or interrupted operation; retain this receipt.');
+      const running = value.current?.active || ['PENDING', 'QUEUED', 'RUNNING', 'INTERRUPTED'].includes(value.current?.phase);
+      await drainAdoption(kind);
+      assert(!running, 'The original ' + kind + ' retains an unresolved application start; keep this receipt.');
     }
     for (const kind of ['delivery-receiving', 'merchant-delivery'])
       try { await closeOwned(kind); } catch (error) { closed.push(diagnostic(error.message)); }

@@ -97,11 +97,17 @@ Customer pause recovery is bound to the exact destination and expected revision.
 
 Keep the complete `output` directory and original receipts when a phase fails. Do not remove the original Applications journal or issue fresh request IDs to clear an uncertain state. The next invocation of the same phase uses its saved requests, application IDs, and milestones. A completed PASS receipt returns without replaying the UI.
 
+## Interrupted control initialization
+
+The receipt binds the phase-owned `runtime-workspace` and `runtime-home` paths before initialization. A completed `workspace.json` always reopens through the original model. When initialization stops before that record exists, recovery requires an unused control workspace: no workspace ID, runtime ID, saved application or dispatched request has been adopted.
+
+The phase inspects the original six empty initialization directories and bounded private `workspace.json.pending-UUID` files. It saves the complete file hashes and directory identities plus one reserved sibling retention path before atomically moving that partial directory. It then fsyncs the parent, records retention, and calls the original creator on the same selected control path. A later invocation reconciles a move that completed before its receipt write. Unexpected files or populated state stay available for inspection.
+
 ## Ownership and shutdown
 
 The phase owns one original Runtime Workspace control directory, its two saved application entries, and its browser/server handles. It does not own the seller's earlier managed/direct receipts or any other application.
 
-Applications workers can outlive their HTTP console. Cleanup therefore stops the exact owned application operation through the original model before closing the console. It waits for the original current/adoption operations to stop and then verifies the seller and customer application lock files through the native process identity helper. An unrelated current start ID is left untouched and reported as a cleanup failure.
+Applications workers can outlive their HTTP console. Cleanup first awaits every already-issued POST, discovers the exact saved applications and retains each original `managed-adopt` request. It stops owned application starts through the original model, then waits for each adoption worker's actual `worker.lock` to close. During a long adoption, the phase saves progress and keeps the same worker and request selected. A queued, failed or interrupted adoption with a released worker lease remains available through the original Applications Connect/Recover action. Seller and customer application leases are verified before completion.
 
 Cancellation is propagated through the selected phase. Failure to confirm owned application closure prevents PASS. The receipt retains the failure and original operation IDs for continuation.
 
