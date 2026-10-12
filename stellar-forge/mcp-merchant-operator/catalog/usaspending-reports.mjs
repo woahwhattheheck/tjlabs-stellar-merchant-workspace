@@ -20,7 +20,7 @@ export function usaSpendingReportTools(tool,{selected,nativeId,expectedRevision,
       ...selected,reportId:nativeId,
     },['workspace','reportId'],read),
     tool('merchant_usaspending_report_prepare','Prepare a complete public report from captureId plus the exact saved workshare assessment revision, optionally comparing beforeCaptureId; or revise a received/sourceReportId. Retain operationId when recovering the same input.',{
-      ...selected,operationId:nativeId,captureId:nativeId,beforeCaptureId:nativeId,sourceReportId:nativeId,expectedReviewRevision,content,
+      ...selected,operationId:nativeId,captureId:nativeId,beforeCaptureId:nativeId,sourceReportId:nativeId,expectedReviewRevision:expectedRevision,content,
     },['workspace','operationId','content'],{}),
     tool('merchant_usaspending_report_publish','Publish the exact reviewed report SHA256. Local source reports retain the saved assessment revision; a changed assessment requires preparing its new report edition.',{
       ...selected,reportId:nativeId,expectedSha256:digest,
