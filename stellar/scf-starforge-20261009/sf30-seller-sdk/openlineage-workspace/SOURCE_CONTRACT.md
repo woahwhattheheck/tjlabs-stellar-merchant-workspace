@@ -210,3 +210,13 @@ The schema-workflow.mjs module records selected changes, reviewer, decision, rea
 The schema-ui.js module participates in the original IndexedDB request journal. A review form binds to its opening revision. A background refresh cannot silently change that write base. The complete pending request remains available through original recovery and explicit reviewed-revision application.
 
 Portable application edition3 adds schema source and complete schema comparisons/reviews. Receiving reconstructs all original events first and then recomputes each retained comparison and validates each staff version and evidence selection. Original application editions1 and2 retain their exact earlier inventories.
+
+## Dataset quality operations
+
+Quality observations retain original metric and assertion facets, physical direction, scope, event paths, schema URLs and complete source positions. Current evaluation uses this application's original run/job projection, including COMPLETE_SNAPSHOT, OTHER and declared job boundary rules. An array position is provenance; a dataset's identity remains its namespace and name within the original run and direction.
+
+Pinned quality adapters follow OpenLineage commit 8ad5c14c63fbab63fedd8ff42f9a208d86ad07fe, plus the retained inline core 1-0-1 contract and published assertions 1-0-0 schema. The recognized modern definitions are DataQualityMetricsDatasetFacet 1-0-0, DataQualityMetricsInputDatasetFacet 1-0-3, DataQualityAssertionsDatasetFacet 1-1-0 and OutputStatisticsOutputDatasetFacet 1-0-2. Scope, field types and required fields follow the selected version. Unrecognized facets and extension values remain inspectable. Only static dataset facets use deletion semantics. SQL/expression text is displayed as original content.
+
+Operator rules use the original revision and operation journal. Saved evaluations retain exact source/event selections and immutable rule versions. Their findings are recomputed during receiving against the complete original sources and named edition. Dispositions retain decision history against the exact saved finding. Browser authoring binds to the displayed workspace, revision, edition and dataset/run selection; preview hashes bind evaluation saves.
+
+Application version 5 carries all ten quality source leaves and preserves exact legacy version 1, 2, both version 3 and version 4 receiving inventories. The portable application contains 76 files; the managed contribution also carries the original application provider. The complete operator workflow is documented in QUALITY_OPERATOR.md.

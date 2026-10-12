@@ -6,13 +6,13 @@ The original operation remains DATACTIVIST-PUBLISHER-OPERATING-018A-20261012-01.
 
 ## Complete source
 
-Keep these three files together:
+Keep the receiving driver, Python helper and this guide together:
 
 - CUSTOMER_RECEIVING.mjs — whole installation, serving, browser, export, independent receiving and final package.
 - installed_customer.py — uses the selected application's complete client.py and native_dataset.mjs for every original row, original CSV, field value, native cursor and customer CSV.
 - README.md — this guide.
 
-The required customer implementation is already delivered in F0C8RG77P0U and F0C8FN5NH4K and joined by E496 into the original PR334 source. The programme invokes that actual install.py and the embedded received application. It uses the full selected source JSON and native workspace archive; the source carrier itself must first be decoded.
+The complete customer implementation is maintained in the original Datactivist application: python_customer/install.py, python_customer/client.py, python_customer/native_dataset.mjs, examples/customer.py and CUSTOMER.md. Select the original owner's complete current source JSON, including its declared supporting modules and license. The application inventory and exact source identity come from that selected source. The programme invokes that actual install.py and the embedded received application. It uses the full selected source JSON and native workspace archive; the source carrier itself must first be decoded.
 
 ## Use the original completed case
 
@@ -54,10 +54,45 @@ The source and archive SHA-256 values are mandatory input identities. The driver
 2. Open the received application through its own server. Receive every original HTTP page, resume the saved query, compare every original cell, export CSV, inspect field profiles and classifications, download the byte-identical original CSV, and compare the complete native cursor stream to HTTP.
 3. Open Overview, Source editions, Local publications, Edition decisions, Portal delivery and Handover at 1440px and 390px. Open real source/publication details, query an actual leading-zero commune code, download the complete original CSV at both widths, and download the actual complete workspace from the desktop handover.
 4. Close the original server and export the whole continuing customer workspace with its complete application.
-5. Install that handover into a fresh second customer directory. Run its own application and the complete HTTP/native customer workflow again, then close and cold reopen the workspace.
+5. Install that handover into a fresh second customer directory using only the native archive and its SHA-256. The maintained installer derives the complete embedded application itself. Run that received application and the complete HTTP/native customer workflow again, then close and cold reopen the workspace.
 6. Export the final continuing customer handover, add the operating guide, complete native result and actual browser outputs, and produce Datactivist_Complete_Customer_Handover.zip.
 
 The workflow preserves the 2020 municipal reference and original string/blank/leading-zero meaning. It continues the selected edition and original decision history. Customer query outputs live under the received workspace's customer directory and travel in later native archives.
+
+## Run the original publisher and complete receiving in one process
+
+native_runner.py carries the whole original operation through its existing publisher programme and this installed customer continuation. It downloads or reuses the exact selected source, verifies every supplied file identity, restores the original captured ZIP, compiles the selected Python and JavaScript entry points, runs the original publisher, and then invokes CUSTOMER_RECEIVING.mjs against that completed archive.
+
+Stage CUSTOMER_RECEIVING.mjs, installed_customer.py and this guide under the selected root's controller directory. Stage the three current unchanged artifact-upload helpers under root/helpers: library_upload.py, library_hosted_apps.py and library_file_transfer.py. The complete original caller packet supplies these files together. The application itself is supplied by the complete source JSON.
+
+The runner accepts one configuration file. Every path is absolute, and the source values come from the actual selected source handoff.
+
+| Configuration field | Meaning |
+| --- | --- |
+| root | Owned original operation directory; retain it when continuing an interrupted operation. |
+| source_url | Current complete source JSON download URL; the runner first reuses a local complete-application.json whose size and SHA-256 match. |
+| source_sha256 | SHA-256 of the exact complete source JSON bytes. |
+| source_bytes | Exact UTF-8 byte count of that source JSON. |
+| source_files | Exact number of declared complete application files. |
+| source_commit | Original owner's selected immutable repository commit. |
+| capture_zip | Original Datactivist public-source ZIP whose SHA-256 is recorded below. |
+| node | Observed Node 24+ executable. |
+| playwright_module | Installed JavaScript Playwright module. |
+| browser_executable | Observed Chromium executable used for the original browser journey. |
+
+The original captured ZIP is 986,236 bytes and has SHA-256 29243826152473ea4c82455905f340b629f30760e7ad27bcf3cf5fd0600e9e6f. Its capture/capture.json has SHA-256 815ee03eb81019b9abc8fd7092c1bbcb8928363dbc6e86e6c926ae1ae22768e1. These identify the already captured original source.
+
+Run the complete entry point from the admitted Linux process:
+
+~~~sh
+python3 -B native_runner.py /ABSOLUTE_ORIGINAL_OPERATION/native-operation.json
+~~~
+
+The runner prints the actual process identifier, paths and newly completed programme phases while retaining full command output. Original programme inputs and generated operation IDs remain under original-operation/operations. The following customer continuation uses that exact completed original archive.
+
+After execution, the runner preserves Datactivist_Original_Operating_Workspace.zip and DATACTIVIST_NATIVE_RUN_RESULT.json together. A completed customer journey also yields Datactivist_Complete_Customer_Handover.zip. The original operating package contains the selected source, original capture, original saved operation, complete controller and native output. If a programme reports an error, its actual original workspace and output remain in the operating package for continuation.
+
+Artifact preservation runs before the foreground command returns. It passes the documented uploads-only request to the unchanged helper and supplies TMPDIR through that helper's subprocess environment. The returned native result carries the preserved file identities and exact package hashes.
 
 ## Completed outputs
 

@@ -13,6 +13,7 @@ from typing import Any, Iterator, Literal
 from ._review_transport import ReviewError, ReviewTransport, absolute
 from ._review_transfer import ReviewFile, ReviewTransferError, TransferProgress, copy_native_file
 from .review_collections import CollectionDelivery
+from .review_reading_exchange import ResearchDelivery
 from .errors import StateError
 from .storage import private_directory, read, write
 
@@ -48,7 +49,7 @@ def _iterate(fetch, *, page_size=100, **options) -> Iterator[dict[str, Any]]:
             raise StateError("REVIEW_PAGE_INCOMPLETE")
 
 
-class ResourceLibrary(CollectionDelivery):
+class ResourceLibrary(CollectionDelivery, ResearchDelivery):
     """Owns a native process, not a second resource store. Always close or use with."""
     def __init__(self, *, checkout, state, node="node", kind=None, source=None,
                  roots=None, max_file_bytes=None, index_bytes=None,

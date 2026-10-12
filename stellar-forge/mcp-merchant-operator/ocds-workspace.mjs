@@ -1,6 +1,6 @@
 // MIT. Original OCDS model, browser and merchant controls behind host-declared aliases.
 import { constants } from 'node:fs';
-import { mkdir, open, realpath } from 'node:fs/promises';
+import { mkdir, open, readdir, realpath } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { definitions } from './catalog/ocds-workspace.mjs';
@@ -17,7 +17,10 @@ const byName = new Map(definitions.map(definition => [definition[0], definition]
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const encoded = value => JSON.stringify(value, null, 2) + '\n';
 const mime = file => /\.html$/.test(file) ? 'text/html; charset=utf-8'
-  : /\.csv$/.test(file) ? 'text/csv; charset=utf-8' : 'application/json; charset=utf-8';
+  : /\.csv$/.test(file) ? 'text/csv; charset=utf-8'
+  : /\.json$/.test(file) ? 'application/json; charset=utf-8'
+  : /\.md$/.test(file) ? 'text/markdown; charset=utf-8'
+  : /\.txt$/.test(file) ? 'text/plain; charset=utf-8' : 'application/octet-stream';
 function pathFor(value, base) {
   if (typeof value !== 'string' || !value || value.includes('\0')) throw failure('CONFIGURATION_ERROR', 'Declare a nonempty original host path.');
   return isAbsolute(value) ? resolve(value) : resolve(base, value);
@@ -34,7 +37,7 @@ function parse(bytes) {
 function validate(value, schema, path) {
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];
   const actual = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
-  if (!types.some(type => type === actual || type === 'integer' && Number.isSafeInteger(value)))
+  if (schema.type !== undefined && !types.some(type => type === actual || type === 'integer' && Number.isSafeInteger(value)))
     throw failure('INVALID_PARAMS', path + ' has the wrong value type.');
   if (schema.enum && !schema.enum.includes(value)) throw failure('INVALID_PARAMS', path + ' must use one of the declared choices.');
   if (typeof value === 'number' && (!Number.isFinite(value) || value < (schema.minimum ?? -Infinity) || value > (schema.maximum ?? Infinity)))
@@ -48,8 +51,16 @@ function validate(value, schema, path) {
       throw failure('INVALID_PARAMS', path + ' must use a complete valid selection without duplicate members.');
     if (schema.items) for (let index = 0; index < value.length; index++) validate(value[index], schema.items, path + '[' + index + ']');
   }
-  if (plain(value) && plain(schema.additionalProperties))
-    for (const [key, item] of Object.entries(value)) validate(item, schema.additionalProperties, path + '.' + key);
+  if (plain(value)) {
+    const properties = schema.properties ?? {};
+    for (const key of schema.required ?? [])
+      if (!Object.hasOwn(value, key)) throw failure('INVALID_PARAMS', path + '.' + key + ' is required.');
+    for (const [key, item] of Object.entries(value)) {
+      if (Object.hasOwn(properties, key)) validate(item, properties[key], path + '.' + key);
+      else if (schema.additionalProperties === false) throw failure('INVALID_PARAMS', path + '.' + key + ' is not a declared field.');
+      else if (plain(schema.additionalProperties)) validate(item, schema.additionalProperties, path + '.' + key);
+    }
+  }
 }
 async function originalFile(path, { consume = false, maximum = INPUT_LIMIT } = {}) {
   let handle;
@@ -78,6 +89,29 @@ async function originalFile(path, { consume = false, maximum = INPUT_LIMIT } = {
   } finally { await handle?.close(); }
 }
 
+function retainedPath(value) {
+  return typeof value === 'string' && value.length > 0 && value.length <= 256
+    && !value.includes('\\') && !value.includes('\0')
+    && value.split('/').every(part => part && part !== '.' && part !== '..')
+    && !isAbsolute(value);
+}
+async function retainedDirectoryFiles(directory) {
+  const files = [];
+  async function visit(relative = '') {
+    const current = join(directory, relative);
+    if (await realpath(current) !== current) throw failure('OCDS_EXPORT_CHANGED', 'The native export directory changed.');
+    for (const item of (await readdir(current, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = relative ? relative + '/' + item.name : item.name;
+      if (!retainedPath(file)) throw failure('OCDS_EXPORT_INVALID', 'A native export returned an unsupported file path.');
+      if (item.isDirectory()) await visit(file);
+      else if (item.isFile()) files.push({ file, mime: mime(file), ...await originalFile(join(directory, file)) });
+      else throw failure('OCDS_EXPORT_CHANGED', 'The native handoff must contain original regular files.');
+    }
+  }
+  await visit();
+  return files;
+}
+
 /** Configuration reads declarations only. The original SQLite service opens explicitly. */
 export async function readOcdsWorkspaceConfiguration(path) {
   path = resolve(path);
@@ -89,15 +123,15 @@ export async function readOcdsWorkspaceConfiguration(path) {
   const base = dirname(path), directories = new Set(), workspaces = Object.create(null);
   for (const [alias, item] of Object.entries(raw.workspaces)) {
     identifier(alias, 'OCDS workspace alias');
-    exact(item, ['directory', 'label', 'operator', 'title', 'inputs', 'deliveries', 'merchant'], ['directory']);
+    exact(item, ['directory', 'label', 'operator', 'title', 'inputs', 'deliveries', 'sourceDeliveries', 'merchant'], ['directory']);
     const directory = pathFor(item.directory, base);
     await privateSupportDirectory(directory);
     const canonical = await realpath(directory);
     if (canonical !== directory || directories.has(canonical))
       throw failure('CONFIGURATION_ERROR', 'Bind each canonical original workspace through one host alias.');
     directories.add(canonical);
-    const inputs = Object.create(null), deliveries = Object.create(null);
-    for (const collection of ['inputs', 'deliveries'])
+    const inputs = Object.create(null), deliveries = Object.create(null), sourceDeliveries = Object.create(null);
+    for (const collection of ['inputs', 'deliveries', 'sourceDeliveries'])
       if (item[collection] !== undefined && (!plain(item[collection]) || Object.keys(item[collection]).length > 100))
         throw failure('CONFIGURATION_ERROR', 'Declare at most 100 named original ' + collection + '.');
     for (const [key, value] of Object.entries(item.inputs ?? {})) {
@@ -111,6 +145,10 @@ export async function readOcdsWorkspaceConfiguration(path) {
       identifier(key, 'OCDS delivery alias');
       deliveries[key] = pathFor(value, base);
     }
+    for (const [key, value] of Object.entries(item.sourceDeliveries ?? {})) {
+      identifier(key, 'OCDS source-handoff alias');
+      sourceDeliveries[key] = pathFor(value, base);
+    }
     let merchant = null;
     if (item.merchant !== undefined) {
       exact(item.merchant, ['payment', 'origin', 'path', 'defaultLimit', 'maxLimit', 'name',
@@ -121,7 +159,7 @@ export async function readOcdsWorkspaceConfiguration(path) {
       if (merchant.allowLocalFacilitator !== undefined && typeof merchant.allowLocalFacilitator !== 'boolean')
         throw failure('CONFIGURATION_ERROR', 'allowLocalFacilitator must be boolean.');
     }
-    workspaces[alias] = { directory, inputs, deliveries, merchant,
+    workspaces[alias] = { directory, inputs, deliveries, sourceDeliveries, merchant,
       label: line(item.label ?? alias, 'Workspace label'), operator: line(item.operator ?? 'merchant-operator', 'Operator'),
       title: line(item.title ?? item.label ?? alias, 'Workspace title') };
   }
@@ -158,6 +196,7 @@ export class MerchantOcdsWorkspaces {
         return { workspace, label: definition.label, open: Boolean(entry), opening: this.#opening.has(workspace),
           closing: Boolean(entry?.closing), instanceId: entry?.instanceId ?? null, browserUrl: entry?.service.url ?? null,
           inputAliases: Object.keys(definition.inputs), deliveryAliases: Object.keys(definition.deliveries),
+          sourceDeliveryAliases: Object.keys(definition.sourceDeliveries ?? {}),
           merchantConfigured: Boolean(definition.merchant), sellerInstanceId: entry?.seller?.id ?? null };
       }) };
   }
@@ -273,6 +312,15 @@ export class MerchantOcdsWorkspaces {
     } catch (issue) { if (entry.packages.get(key) === pending) entry.packages.delete(key); throw issue; }
   }
   async #files(entry, item) {
+    if (item.kind === 'ocds-source-handoff') {
+      if (!UUID.test(item.exportId ?? '') || item.directory !== join(entry.exportsDirectory, 'source-handoff-' + item.exportId)
+          || !HASH.test(item.handoffId ?? '') || !Array.isArray(item.files) || !item.files.length
+          || new Set(item.files.map(file => file.file)).size !== item.files.length
+          || item.files.some(file => !retainedPath(file.file) || !HASH.test(file.sha256 ?? '')
+            || !Number.isSafeInteger(file.bytes) || file.bytes < 0))
+        throw failure('OCDS_EXPORT_PUBLICATION_REQUIRED', 'Select an original retained source handoff.');
+      return { directory: item.directory, files: item.files };
+    }
     if (item.kind === 'ocds-merchant') {
       const merchant = await this.#package(entry, item);
       return { directory: merchant.directory, files: merchant.files.map(file => ({ ...file, mime: mime(file.file) })) };
@@ -323,6 +371,68 @@ export class MerchantOcdsWorkspaces {
     return { workspace: entry.alias, publication: publicationView(publication),
       files: [{ file, mime: contentType, bytes: bytes.length, sha256: publication.sha256 }] };
   }
+
+  #sourceDelivery(entry, alias) {
+    identifier(alias, 'OCDS source-handoff alias');
+    const directory = entry.definition.sourceDeliveries?.[alias];
+    if (!directory) throw failure('OCDS_SOURCE_DELIVERY_NOT_CONFIGURED', 'Choose a host-declared sourceDelivery alias from merchant_ocds_inputs.');
+    return directory;
+  }
+  async #sourceState(entry, args) {
+    const state = await entry.client.sourceState();
+    const collections = ['selections', 'windows', 'work', 'documents', 'receivings', 'documentBodies'];
+    const collection = args.collection ?? 'work';
+    return { workspace: entry.alias, native: state.workspace, schema: state.schema, providers: state.providers,
+      collection, ...page(state[collection] ?? [], args),
+      counts: Object.fromEntries(collections.map(key => [key, (state[key] ?? []).length])),
+      documentBytes: state.documentBytes };
+  }
+  async #sourceOriginal(entry, name, input) {
+    const { input: alias, expectedSha256, ...operation } = input;
+    const declared = this.#input(entry, alias);
+    const maximum = name === 'merchant_ocds_source_observation_adopt' ? 64 * 1024 * 1024 : 128 * 1024 * 1024;
+    const original = await originalFile(declared.file, { consume: true, maximum });
+    if (original.sha256 !== expectedSha256 || operation.observation.sha256 !== original.sha256
+        || operation.observation.bytes !== original.bytes)
+      throw failure('OCDS_INPUT_CHANGED', 'The selected original bytes differ from their inspected and acquired identity.');
+    const request = { ...operation, bodyBase64: original.content.toString('base64') };
+    const result = name === 'merchant_ocds_source_observation_adopt'
+      ? await entry.client.adoptSourceObservation(request) : await entry.client.importSourceOriginal(request);
+    return { workspace: entry.alias, native: result.workspace, input: alias, sha256: original.sha256,
+      bytes: original.bytes, window: result.window, ...(Object.hasOwn(result, 'repeated') ? { repeated: result.repeated } : {}),
+      ...(Object.hasOwn(result, 'bindingsAdded') ? { bindingsAdded: result.bindingsAdded } : {}) };
+  }
+  async #sourceDocumentExport(entry, input) {
+    const original = await entry.client.sourceDocument(input.documentId, { sha256: input.expectedSha256 });
+    const body = Buffer.from(original.body);
+    if (body.length !== original.bytes || digest(body) !== input.expectedSha256)
+      throw failure('OCDS_DOCUMENT_CHANGED', 'The native original document differs from the selected edition.');
+    const originalFilename = original.filename || 'original-document.bin';
+    const suffix = originalFilename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-128);
+    const file = 'ocds-document-' + randomUUID() + '-' + suffix;
+    await writePrivate(join(entry.exportsDirectory, file), body);
+    const publication = entry.model.recordPublication({ kind: 'ocds-export', format: 'original-document',
+      directory: entry.exportsDirectory, file, originalFilename, documentId: input.documentId,
+      mime: original.mime, bytes: body.length, sha256: input.expectedSha256 });
+    return { workspace: entry.alias, publication: publicationView(publication),
+      files: [{ file, mime: original.mime, bytes: body.length, sha256: input.expectedSha256 }] };
+  }
+  async #sourceHandoffExport(entry, input) {
+    const prepared = entry.model._snapshot(() => {
+      this.#revision(entry, input.expectedRevision);
+      return entry.service.sourceOperations.prepareHandoff({ ocids: input.ocids });
+    });
+    const exportId = randomUUID(), directory = join(entry.exportsDirectory, 'source-handoff-' + exportId);
+    const original = await entry.service.sourceOperations.exportDirectory(directory, { prepared });
+    const files = await retainedDirectoryFiles(directory);
+    const publication = entry.model.recordPublication({ kind: 'ocds-source-handoff', exportId, directory,
+      sourceRevision: input.expectedRevision, selectedOcids: [...original.selectedOcids],
+      handoffId: original.handoffId, nativePackageId: original.nativePackageId,
+      sourceOperationsPackageId: original.sourceOperationsPackageId, files });
+    const { directory: hostDirectory, ...handoff } = original;
+    return { workspace: entry.alias, publication: publicationView(publication), handoff, files };
+  }
+
   async #startSeller(entry, item) {
     if (entry.sellerOpening) {
       await entry.sellerOpening;
@@ -386,9 +496,22 @@ export class MerchantOcdsWorkspaces {
         return { workspace, receiving };
       }
       case 'merchant_ocds_inputs': {
+        if (input.input !== undefined && input.sourceDelivery !== undefined)
+          throw failure('INVALID_PARAMS', 'Inspect one original input or sourceDelivery alias at a time.');
+        if (input.sourceDelivery !== undefined) {
+          const directory = this.#sourceDelivery(entry, input.sourceDelivery);
+          const file = await originalFile(join(directory, 'handoff.json'), { consume: true, maximum: 1024 * 1024 });
+          const manifest = parse(file.content);
+          if (manifest.schema !== 'starforge.ocds.source-handoff.v1' || !HASH.test(manifest.handoffId ?? ''))
+            throw failure('OCDS_SOURCE_DELIVERY_INVALID', 'The selected source delivery needs its original complete handoff manifest.');
+          return { workspace, sourceDelivery: input.sourceDelivery, handoffId: manifest.handoffId,
+            selectedOcids: manifest.selectedOcids, nativePackageId: manifest.nativePackageId,
+            sourceOperationsPackageId: manifest.sourceOperationsPackageId,
+            file: { name: 'handoff.json', sha256: file.sha256, bytes: file.bytes } };
+        }
         if (input.input === undefined) return { workspace,
           inputs: Object.entries(entry.definition.inputs).map(([alias, value]) => ({ input: alias, label: value.label, url: value.url })),
-          deliveries: Object.keys(entry.definition.deliveries) };
+          deliveries: Object.keys(entry.definition.deliveries), sourceDeliveries: Object.keys(entry.definition.sourceDeliveries ?? {}) };
         const selected = this.#input(entry, input.input), original = await originalFile(selected.file);
         return { workspace, input: input.input, label: selected.label, url: selected.url, file: { name: basename(selected.file), ...original } };
       }
@@ -457,6 +580,43 @@ export class MerchantOcdsWorkspaces {
         const result = await adoptDelivery(model, directory, { expectedRevision: input.expectedRevision });
         return { workspace, publication: publicationView(result.publication), replay: Boolean(result.replay), ...this.#state(entry) };
       }
+
+      case 'merchant_ocds_source_state': return this.#sourceState(entry, input);
+      case 'merchant_ocds_source_selection_save': {
+        const result = await entry.client.saveSourceSelection(input.selection, input.expectedRevision);
+        return { workspace, native: result.workspace, selection: result.selection };
+      }
+      case 'merchant_ocds_source_window':
+        return { workspace, window: await entry.client.sourceWindow(input.windowId) };
+      case 'merchant_ocds_source_refresh': {
+        if (input.windowId && Object.keys(input).some(key => key !== 'windowId'))
+          throw failure('INVALID_PARAMS', 'Resume windowId alone; its saved selections and baseline already belong to that operation.');
+        if (!input.windowId && !input.name) throw failure('INVALID_PARAMS', 'Name the fresh source window, or select one saved windowId to resume.');
+        const result = await entry.client.refreshSources(input);
+        return { workspace, native: result.workspace, window: result.window, started: Boolean(result.started) };
+      }
+      case 'merchant_ocds_source_pause':
+        return { workspace, ...await entry.client.pauseSourceWindow(input.windowId) };
+      case 'merchant_ocds_source_review':
+        return { workspace, ...await entry.client.sourceReview(input.reviewId) };
+      case 'merchant_ocds_source_review_save': {
+        const { reviewId, ...patch } = input, result = await entry.client.updateSourceReview(reviewId, patch);
+        return { workspace, native: result.workspace, review: result.review };
+      }
+      case 'merchant_ocds_source_observation_adopt':
+      case 'merchant_ocds_source_original_import':
+        return this.#sourceOriginal(entry, name, input);
+      case 'merchant_ocds_source_document_export': return this.#sourceDocumentExport(entry, input);
+      case 'merchant_ocds_source_handoff_export': return this.#sourceHandoffExport(entry, input);
+      case 'merchant_ocds_source_handoff_receive': {
+        const directory = this.#sourceDelivery(entry, input.sourceDelivery);
+        const result = await entry.client.receiveSourceHandoff(directory, input.expectedRevision,
+          { expectedHandoffId: input.expectedHandoffId });
+        return { ...result, workspace, native: result.workspace, sourceDelivery: input.sourceDelivery };
+      }
+      case 'merchant_ocds_source_receiving':
+        return { workspace, receiving: await entry.client.sourceReceiving(input.packageId) };
+
       default: throw failure('TOOL_NOT_FOUND', 'Unknown OCDS workspace operation.');
     }
   }

@@ -57,6 +57,20 @@
         "service-levels.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/quality-ui.mjs",
+      [
+        "quality-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality.css",
+      [
+        "quality.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

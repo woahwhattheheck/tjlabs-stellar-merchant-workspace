@@ -13,6 +13,7 @@ from urllib.parse import parse_qs, quote, urlsplit
 from .reading_workspace import ReadingWorkspace, ReadingError
 from .reading_delivery import export_project, export_report
 from .reading_ui import HTML, CSS, JS
+from .reading_exchange import export_return, publish_return
 
 MAX_REQUEST = 16 * 1024 * 1024
 
@@ -138,12 +139,21 @@ def create_server(workspace: ReadingWorkspace, *, port=0, library=None, token=No
                 if route == "/download/source":
                     path, metadata = workspace.source_file(q["resource"])
                     name, mime = metadata.get("name", "original-file"), "application/octet-stream"
-                elif route in ("/download/project", "/download/report"):
+                elif route in ("/download/project", "/download/report", "/download/return", "/download/handover"):
                     temporary = tempfile.mkdtemp(prefix="reading-download-")
                     if route == "/download/project":
                         name, mime = "reading-project.zip", "application/zip"
                         path = Path(temporary) / name
                         export_project(workspace, path)
+                    elif route == "/download/return":
+                        name, mime = "reading-return.zip", "application/zip"
+                        path = Path(temporary) / name
+                        export_return(workspace, path, list_id=q["list"], list_revision=int(q["revision"]))
+                    elif route == "/download/handover":
+                        name, mime = "original-research-handover.json", "application/json"
+                        path = Path(temporary) / name
+                        record = workspace.head("handover", q["id"], revision=1)
+                        path.write_text(json.dumps(record, ensure_ascii=False, allow_nan=False), encoding="utf-8")
                     else:
                         fmt = q.get("format", "html")
                         if fmt not in ("html", "json", "csv"):
@@ -184,7 +194,13 @@ def create_server(workspace: ReadingWorkspace, *, port=0, library=None, token=No
                 body = json.loads(self.rfile.read(length).decode("utf-8", "strict"))
                 if not isinstance(body, dict):
                     raise ReadingError("JSON_OBJECT_REQUIRED")
-                if path == "/api/search/save":
+                if path == "/api/selection":
+                    result = workspace.selected_passage(body)
+                elif path == "/api/handover/return":
+                    if library is None:
+                        raise ReadingError("NOT_CONNECTED")
+                    result = publish_return(workspace, library, **body)
+                elif path == "/api/search/save":
                     result = workspace.save_search(**body)
                 elif path == "/api/list/save":
                     result = workspace.save_list(**body)

@@ -71,6 +71,20 @@
         "collections.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/cash-planning.mjs",
+      [
+        "cash-planning.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/cash-planning-display.mjs",
+      [
+        "cash-planning-display.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

@@ -18,12 +18,22 @@ function queryString(query = {}) {
   return search.size ? '?' + search : '';
 }
 export class ReceivablesClient {
-  constructor({baseUrl = '/api/receivables', fetch: fetcher = globalThis.fetch} = {}) {
+  constructor({baseUrl = '/api/receivables', fetch: fetcher = globalThis.fetch, expectedWorkspaceId, expectedSourcesSha256} = {}) {
     if (typeof fetcher !== 'function') throw new TypeError('A fetch implementation is required.');
     this.baseUrl = String(baseUrl).replace(/\/$/, ''); this.fetch = fetcher;
+    if (expectedWorkspaceId !== undefined || expectedSourcesSha256 !== undefined) {
+      if (!/^[a-f0-9]{64}$/.test(expectedWorkspaceId || '') || !/^[a-f0-9]{64}$/.test(expectedSourcesSha256 || '')) {
+        throw new TypeError('Both original accounting workspace and source identities are required.');
+      }
+      this.expectedWorkspaceId = expectedWorkspaceId; this.expectedSourcesSha256 = expectedSourcesSha256;
+    }
   }
   async request(path, {method = 'GET', body, signal, binary = false} = {}) {
     const headers = {Accept: binary ? '*/*' : 'application/json'};
+    if (this.expectedWorkspaceId) {
+      headers['X-Accounting-Workspace-Id'] = this.expectedWorkspaceId;
+      headers['X-Accounting-Sources-Sha256'] = this.expectedSourcesSha256;
+    }
     if (body !== undefined) {
       headers['Content-Type'] = 'application/json';
       headers['X-Workspace-Request'] = '1';
@@ -64,7 +74,18 @@ export class ReceivablesClient {
     }
     return payload;
   }
+  identity() { return this.request('/identity'); }
   state(query) { return this.request('/state' + queryString(query)); }
+  cashPlans(query, {signal} = {}) { return this.request('/cash-plans' + queryString(query), {signal}); }
+  previewCashPlan(value, {signal} = {}) { return this.request('/cash-plans/preview', {method:'POST', body:value, signal}); }
+  cashPlan(id, query, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + queryString(query), {signal}); }
+  saveCashPlan(value, {signal} = {}) { return this.request('/cash-plans', {method:'POST', body:value, signal}); }
+  archiveCashPlan(id, value, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + '/archive', {method:'POST', body:value, signal}); }
+  reopenCashPlan(id, value, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + '/reopen', {method:'POST', body:value, signal}); }
+  cashPlanFile(id, name, query, {signal} = {}) { return this.request('/cash-plans/' + segment(id) + '/files/' + segment(name) + queryString(query), {binary:true, signal}); }
+  compareCashPlans(query, {signal} = {}) { return this.request('/cash-plans/compare' + queryString(query), {signal}); }
+  cashPlanComparisonFile(name, query, {signal} = {}) { return this.request('/cash-plans/compare/export' + queryString({...query,name}), {binary:true, signal}); }
+  cashPlanOperation(requestId, {signal} = {}) { return this.request('/cash-plans/operations/' + segment(requestId), {signal}); }
   collectionCases(query, {signal} = {}) { return this.request('/collections' + queryString(query), {signal}); }
   collectionCase(id, query, {signal} = {}) { return this.request('/collections/' + segment(id) + queryString(query), {signal}); }
   saveCollectionCase(value, {signal} = {}) { return this.request('/collections', {method:'POST', body:value, signal}); }

@@ -10,6 +10,7 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_commercial_cli as commercial_cli
 import operations_ledger_intake as ledger_intake
 
 
@@ -44,6 +45,18 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("supplier-account", "Read the complete supplier account, original records and dated balances", case=True, output=True)
+    target.add_argument("--contributor", help="Original contributor or supplier record ID; defaults to the first supplier")
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int)
+    target = command("supplier-account-export", "Export the complete supplier account, original CSVs, offline HTML and original case", case=True)
+    target.add_argument("--contributor")
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--expected-report-sha256", required=True)
+    target.add_argument("--output", required=True)
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -220,6 +233,15 @@ def register(subparsers, common):
     target = command("completion-export", "Download the frozen form preparation and its exact selected sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    for verb in ("statement-preview", "statement-receive"):
+        target = command(verb, "Reconcile an original account CSV or receive its reviewed cash observations", case=True, output=True)
+        target.add_argument("--inputs", required=True, help="Complete statement input JSON, or mapping with original source metadata when --file is supplied")
+        target.add_argument("--file", help="Original UTF-8 statement CSV; exact bytes join the declared source metadata")
+        if verb == "statement-receive":
+            mutation(target, version=True)
+            target.add_argument("--expected-preview-sha256", required=True)
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
     target = command("forecast-preview", "Calculate a dated forecast from current original records", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Forecast input JSON file")
     target.add_argument("--expected-version", type=int, required=True)
@@ -236,6 +258,8 @@ def register(subparsers, common):
     target = command("portfolio-seed", "Prepare allocation inputs from one original saved forecast", case=True, output=True)
     target.add_argument("--forecast", required=True)
     target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--installation-selections", help="JSON array of exact saved installation editions for original commercial task IDs")
+    target.add_argument("--inputs", help="Complete existing Portfolio draft JSON to retain while selecting installation phases")
     for verb in ("portfolio-preview", "portfolio-save"):
         target = command(verb, "Calculate or retain source-bound delivery alternatives", case=True, output=True)
         target.add_argument("--inputs", required=True)
@@ -257,6 +281,7 @@ def register(subparsers, common):
     selection(target); mutation(target)
     target.add_argument("--file", required=True)
 
+    commercial_cli.register(command)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -337,10 +362,17 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if action.startswith("commercial-"):
+        return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "supplier-account":
+        result = ops.supplier_account(args.case, args.contributor, args.start_date, args.end_date, args.expected_version)
+    elif action == "supplier-account-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_supplier_account(
+            args.case, args.contributor, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":
@@ -372,6 +404,30 @@ def operate(workspace, args):
         result = ops.forecast(args.case, args.forecast)
     elif action == "forecast-export":
         return {"forecastId": args.forecast, "output": publish(args.output, ops.export_forecast(args.case, args.forecast))}
+    elif action in ("statement-preview", "statement-receive"):
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_BUNDLE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Statement inputs must be complete UTF-8 JSON.", 422, "INVALID_STATEMENT") from exc
+        if not isinstance(inputs, dict):
+            raise Problem("Use one complete statement input object.", 422, "INVALID_STATEMENT")
+        if args.file:
+            source = inputs.get("source")
+            if not isinstance(source, dict):
+                raise Problem("Retain source filename, observation time and optional URL in the mapping JSON.", 422, "INVALID_STATEMENT")
+            filename = Path(args.file).name
+            if source.get("filename", filename) != filename:
+                raise Problem("The selected CSV filename differs from the declared original source.", 409, "STATEMENT_SOURCE_CONFLICT")
+            encoded = base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")
+            if source.get("contentBase64", encoded) != encoded:
+                raise Problem("The selected CSV differs from the retained input bytes.", 409, "STATEMENT_SOURCE_CONFLICT")
+            inputs["source"] = {**source, "filename": filename, "contentBase64": encoded}
+        if action == "statement-preview":
+            result = ops.preview_statement(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "statement.receive",
+                "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action in ("buyer-preview", "buyer-receive"):
         original = {"filename": Path(args.file).name,
                     "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}
@@ -531,7 +587,22 @@ def operate(workspace, args):
                 "requestId": args.request_id, "note": args.note, "action": "forecast.save",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "portfolio-seed":
-        result = ops.seed_portfolio(args.case, {"expectedVersion": args.expected_version, "forecastId": args.forecast})
+        body = {"expectedVersion": args.expected_version, "forecastId": args.forecast}
+        for filename, field, expected_type in (
+            (args.installation_selections, "installationSelections", list),
+            (args.inputs, "inputs", dict),
+        ):
+            if filename is None:
+                continue
+            try:
+                value = json.loads(read_bytes(filename, MAX_SOURCE))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Portfolio " + field + " must be valid JSON.", 422, "INVALID_JSON") from exc
+            if not isinstance(value, expected_type):
+                kind = "array" if expected_type is list else "object"
+                raise Problem("Portfolio " + field + " must be a JSON " + kind + ".", 422, "INVALID_JSON")
+            body[field] = value
+        result = ops.seed_portfolio(args.case, body)
     elif action == "portfolios":
         result = {"portfolios": ops.list_portfolios(args.case)}
     elif action == "portfolio-show":
