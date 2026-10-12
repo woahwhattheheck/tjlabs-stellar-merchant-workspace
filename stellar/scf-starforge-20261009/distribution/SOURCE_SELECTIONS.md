@@ -49,6 +49,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `merchant-support` | Merchant cases and incidents, implementation and source editions, service commitments, quotations and complete customer packages | Merchant support; Runtime management; original merchant agent | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
 | `healthcare-interoperability` | Original FHIR exports and eLTSS CarePlans, full source/field review, native merchant/customer editions and complete editable receiving | FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete installed operation and receiving](../../../products/healthcare-interoperability/OPERATING.md) |
 | `matomo` | Complete Matomo report/subtable source, typed editions, original merchant/customer operation and independent editable workspace receiving | Matomo reports and delivery; Runtime management | [Complete operating guide](../../../products/matomo/OPERATING.md) |
 | `buyer-expenses` | Original governed purchase, shared-ledger source review, exact allocations, issued periods and accountant return | Buyer expenses; Accounting; Runtime management | [Complete installed operation and receiving](../../../products/buyer-expenses/OPERATING.md) |
