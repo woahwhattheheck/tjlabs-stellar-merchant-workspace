@@ -196,8 +196,8 @@ async function main(){
         inputs:{baseline:{label:'Baseline edition 1',directory:baseline.directory,kind:'transfer',sha256:baseline.sha256},
           second:{label:'Incremental edition 2',directory:incremental.directory,kind:'transfer',sha256:incremental.sha256},
           continuation:{label:'Continued edition 3',directory:continuation.directory,kind:'transfer',sha256:continuation.sha256},
-          publisherBackup:{label:'Full publisher edition 3',directory:finalPublisherBackup.directory,kind:'publisher-backup',sha256:finalPublisherBackup.sha256},
-          customerBackup:{label:'Full customer edition 3',directory:finalCustomerBackup.directory,kind:'customer-backup',sha256:finalCustomerBackup.sha256},
+          'publisher-backup':{label:'Full publisher edition 3',directory:finalPublisherBackup.directory,kind:'publisher-backup',sha256:finalPublisherBackup.sha256},
+          'customer-backup':{label:'Full customer edition 3',directory:finalCustomerBackup.directory,kind:'customer-backup',sha256:finalCustomerBackup.sha256},
           analysis:{label:'Complete Analysis source',directory:analysis.directory,kind:'analysis',sha256:analysis.source.sha256}},
         exportsDirectory};
       await write(connectionPath,connection,{immutable:true});

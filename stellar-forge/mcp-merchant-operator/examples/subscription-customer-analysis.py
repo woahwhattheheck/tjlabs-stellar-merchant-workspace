@@ -35,9 +35,21 @@ def main():
     def save():dump(path,journal)
     def publish(name,raw):
         target=out/name
-        if target.exists():need(target.read_bytes()==raw,"Preserve different original analytical output: "+name)
-        else:
-            with target.open("xb") as stream:stream.write(raw);stream.flush();os.fsync(stream.fileno())
+        if target.exists():
+            need(target.read_bytes()==raw,"Preserve different original analytical output: "+name)
+            return ident(target)
+        descriptor,temporary=tempfile.mkstemp(prefix="."+name+".",dir=out)
+        try:
+            with os.fdopen(descriptor,"wb") as stream:
+                stream.write(raw);stream.flush();os.fsync(stream.fileno())
+            try:os.link(temporary,target)
+            except FileExistsError:
+                need(target.read_bytes()==raw,"Preserve a concurrently published analytical output: "+name)
+            parent=os.open(out,os.O_RDONLY|os.O_DIRECTORY)
+            try:os.fsync(parent)
+            finally:os.close(parent)
+        finally:
+            if os.path.exists(temporary):os.unlink(temporary)
         return ident(target)
     def step_id(label,number=0):return sha((completed["operation_id"]+":"+label+":"+str(number)).encode())[:32]
     def job(ws,label,kind,request):
