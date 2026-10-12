@@ -1,5 +1,7 @@
 // MIT. Complete private SF93 snapshots and receiving through the original store and kernel leases.
 import {constants} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {open,mkdir,lstat,realpath,readdir,link,unlink} from 'node:fs/promises';
 import {resolve,dirname,join,basename,relative,sep} from 'node:path';
 import {acquireStateLease} from '../merchant-fleet-gateway/state-lease.mjs';
@@ -169,26 +171,87 @@ async function member(root,row,signal) {
   if(history)ensure(history[1]===row.sha256,'RECOVERY_HISTORY_DIGEST_MISMATCH');
   return bytes;
 }
+const absentPublisher=fileURLToPath(new URL('../sf88-operator-buyer-cli/dataset-session-portable.py',import.meta.url));
+const publishProgram=[
+  'import importlib.util,sys',
+  'from pathlib import Path',
+  'spec=importlib.util.spec_from_file_location("sf88_original_portable",sys.argv[1])',
+  'module=importlib.util.module_from_spec(spec)',
+  'spec.loader.exec_module(module)',
+  'module.publish_absent(Path(sys.argv[2]),Path(sys.argv[3]))'
+].join('\n');
+async function publishPreparedDirectory(prepared,destination,signal) {
+  cancelled(signal);await stillRoot(prepared);
+  // Reuse the maintained SF88 Linux renameat2(RENAME_NOREPLACE) primitive.
+  // Plain Node rename() could replace an unrelated empty destination.
+  const result=spawnSync('python3',['-I','-B','-c',publishProgram,absentPublisher,prepared.path,destination],
+    {encoding:'utf8',timeout:10_000,maxBuffer:8192,stdio:['ignore','pipe','pipe']});
+  let published=null;
+  try{published=await privateRoot(destination);}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(published) {
+    ensure(published.dev===prepared.dev&&published.ino===prepared.ino,'RECOVERY_DESTINATION_ALREADY_EXISTS');
+    let old=null;try{old=await lstat(prepared.path);}catch(error){if(error.code!=='ENOENT')throw error;}
+    ensure(old===null,'RECOVERY_PUBLICATION_CHANGED');
+    return published;
+  }
+  if(result.error?.code==='ENOENT')throw new Error('SF93_RECOVERY_PYTHON_RUNTIME_REQUIRED');
+  ensure(result.status===0&&!result.error,'RECOVERY_DIRECTORY_PUBLICATION_FAILED');
+  throw new Error('SF93_RECOVERY_DIRECTORY_PUBLICATION_MISSING');
+}
 async function operationDirectory(value,request,signal) {
-  const path=canonicalPath(value),parent=await privateRoot(dirname(path));
-  // The parent's existing original flock owns creation and same-operation continuation.
-  const lease=await acquireStateLease(parent.path);
+  const path=canonicalPath(value),parent=await privateRoot(dirname(path)),requestBytes=encoded(request);
+  const lease=await acquireStateLease(parent.path);let own=null;
   try {
-    await stillRoot(parent);
+    lease.assertHeld();await stillRoot(parent);cancelled(signal);
     let exists=false;
     try{await lstat(path);exists=true;}catch(error){if(error.code!=='ENOENT')throw error;}
+    let root;
     if(exists) {
+      root=await privateRoot(path);
       const prior=await readFile(join(path,'request.json'),SNAPSHOT_LIMITS.metadataBytes,signal);
-      ensure(prior.equals(encoded(request)),'RECOVERY_DESTINATION_ALREADY_EXISTS');
+      ensure(prior.equals(requestBytes),'RECOVERY_DESTINATION_ALREADY_EXISTS');
+    } else {
+      // The reserved, request-derived sibling belongs to this operation under
+      // the parent's original lease. It remains resumable after its first write
+      // fails; an ordinary caller-selected directory is never adopted.
+      const staged=join(parent.path,'.sf93-operation-'+hash(encoded({path,request})));
+      const prepared=await privateFolder(staged);
+      const allowed=new Set(['request.json','.sf93-copy-'+hash('request.json')+'.tmp']);
+      ensure((await readdir(staged)).every(name=>allowed.has(name)),'RECOVERY_PREPARATION_CHANGED');
+      await immutable(join(staged,'request.json'),requestBytes,signal);
+      await syncDirectory(staged);await syncDirectory(parent.path);
+      lease.assertHeld();await stillRoot(parent);
+      root=await publishPreparedDirectory(prepared,path,signal);
+      ensure((await readFile(join(path,'request.json'),SNAPSHOT_LIMITS.metadataBytes,signal)).equals(requestBytes),
+        'RECOVERY_RETAINED_BYTES_CHANGED');
     }
-    const root=await privateFolder(path);
-    await immutable(join(path,'request.json'),encoded(request),signal);
-    const own=await acquireStateLease(path);
-    lease.assertHeld();await stillRoot(parent);await lease.close();
+    own=await acquireStateLease(path);
+    lease.assertHeld();await stillRoot(parent);await stillRoot(root);await lease.close();
     return {root,lease:own};
-  } catch(error){await lease.close();throw error;}
+  } catch(error) {
+    await own?.close().catch(()=>{});
+    await lease.close().catch(()=>{});
+    throw error;
+  }
 }
 
+function pinBinding(pin,operationId,outputDirectory,manifest=null) {
+  ensure(pin&&pin.operationId===operationId&&pin.outputDirectory===outputDirectory&&SHA.test(pin.pinSha256??''),
+    'SNAPSHOT_PIN_BINDING_CHANGED');
+  if(manifest)ensure(pin.sourceRevision===manifest.stateRevision&&pin.stateSha256===manifest.stateSha256&&
+    pin.configHash===manifest.configHash,'SNAPSHOT_PIN_BINDING_CHANGED');
+  return pin;
+}
+async function releaseCompletePin(store,operationId,outputDirectory,inspected,signal) {
+  return store.transaction(async(_state,io)=>{
+    const pin=pinBinding(await io.snapshotPins.read({operationId,outputDirectory,signal}),
+      operationId,outputDirectory,inspected.manifest);
+    if(pin.released)ensure(pin.disposition==='COMPLETED'&&pin.manifestSha256===inspected.manifestSha256,
+      'SNAPSHOT_PIN_RELEASE_CONFLICT');
+    return io.snapshotPins.release({operationId,outputDirectory,expectedPinSha256:pin.pinSha256,
+      disposition:'COMPLETED',manifestSha256:inspected.manifestSha256,signal});
+  },{readonly:true});
+}
 export async function exportIncidentSnapshot({directory,outputDirectory,operationId,expectedRevision,signal}) {
   operationId=id(operationId);directory=canonicalPath(directory);outputDirectory=canonicalPath(outputDirectory);
   ensure(!inside(outputDirectory,directory)&&!inside(directory,outputDirectory),'RECOVERY_SEPARATE_DIRECTORY_REQUIRED');
@@ -196,53 +259,71 @@ export async function exportIncidentSnapshot({directory,outputDirectory,operatio
   const request={schema:SNAPSHOT_SCHEMA,action:'snapshot',operationId,directory,expectedRevision};
   const {root,lease}=await operationDirectory(outputDirectory,request,signal);
   try {
+    ensure(await optionalFile(join(root.path,'abandoned.json'),65_536,signal)===null,'RECOVERY_SNAPSHOT_ABANDONED');
+    const sourceRoot=await privateRoot(directory),store=await openIncidentStore(directory);
     const complete=await optionalFile(join(root.path,'manifest.json'),SNAPSHOT_LIMITS.metadataBytes,signal);
-    if(complete)return {...await inspectIncidentSnapshot({directory:root.path,expectedManifestSha256:hash(complete),signal}),reused:true};
+    if(complete) {
+      const inspected=await inspectIncidentSnapshot({directory:root.path,expectedManifestSha256:hash(complete),signal});
+      ensure(inspected.manifest.operationId===operationId&&inspected.manifest.stateRevision===expectedRevision,
+        'RECOVERY_SNAPSHOT_SELECTION_CHANGED');
+      const pinRelease=await releaseCompletePin(store,operationId,root.path,inspected,signal);
+      return {...inspected,pinRelease,reused:true};
+    }
     await privateFolder(join(root.path,'captures'));
     await privateFolder(join(root.path,'recovery'));
-    await privateRoot(directory);
-    const store=await openIncidentStore(directory);
-    let retained;
-    await store.transaction(async(state,io)=>{
-      let raw=await optionalFile(join(root.path,'state.json'),SNAPSHOT_LIMITS.stateBytes,signal);
-      if(raw===null) {
-        ensure(state.revision===expectedRevision,'RECOVERY_REVISION_CONFLICT');
-        raw=await io.readStateBytes();
-        await immutable(join(root.path,'state.json'),raw,signal);
+    // Freeze exact source bytes and protect their immutable capture references
+    // before releasing the source lease. Copying can then coexist with a watcher.
+    const pin=await store.transaction(async(state,io)=>{
+      const prior=await io.snapshotPins.read({operationId,outputDirectory:root.path,signal});
+      if(prior?.released)throw Object.assign(new Error('SF93_RECOVERY_SNAPSHOT_PIN_RELEASED'),{receipt:prior});
+      if(prior) {
+        ensure(prior.sourceRevision===expectedRevision,'RECOVERY_REVISION_CONFLICT');
+        return pinBinding(prior,operationId,root.path);
       }
-      const frozen=validateIncidentState(json(raw));
-      ensure(frozen.revision===expectedRevision,'RECOVERY_REVISION_CONFLICT');
-      const files=[descriptor('state.json',raw)];
-      for(const captureId of [...incidentCaptureReferences(frozen)].sort()) {
-        cancelled(signal);
-        const path='captures/capture-'+captureId+'.json';
-        let bytes=await optionalFile(join(root.path,path),SNAPSHOT_LIMITS.captureBytes,signal);
-        if(bytes===null) {
-          bytes=await io.readCaptureBytes({id:captureId});
-          await immutable(join(root.path,path),bytes,signal);
-        }
-        validateIncidentCapture(bytes,captureId);files.push(descriptor(path,bytes));
-      }
-      for(const row of historyFor(frozen)) {
-        let bytes=await optionalFile(join(root.path,row.path),SNAPSHOT_LIMITS.metadataBytes,signal);
-        if(bytes===null) {
-          bytes=await readFile(join(store.root,row.path),SNAPSHOT_LIMITS.metadataBytes,signal);
-          ensure(bytes.length===row.bytes&&hash(bytes)===row.sha256,'RECOVERY_HISTORY_DIGEST_MISMATCH');
-          await immutable(join(root.path,row.path),bytes,signal);
-        }
-        ensure(bytes.length===row.bytes&&hash(bytes)===row.sha256,'RECOVERY_HISTORY_DIGEST_MISMATCH');
-        files.push(row);
-      }
-      // ASCII inventory order is independent of the caller locale.
-      files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
-      inventory(files);
-      retained={schema:SNAPSHOT_SCHEMA,operationId,stateUpdatedAt:frozen.updatedAt,
-        stateRevision:frozen.revision,stateSha256:hash(raw),configHash:frozen.configHash,files};
-      lease.assertHeld();await stillRoot(root);
-      await immutable(join(root.path,'manifest.json'),encoded(retained),signal);
+      ensure(state.revision===expectedRevision,'RECOVERY_REVISION_CONFLICT');
+      const stateBytes=await io.readStateBytes();
+      return io.snapshotPins.register({operationId,outputDirectory:root.path,expectedRevision,stateBytes,signal});
     },{readonly:true});
-    return {...await inspectIncidentSnapshot({directory:root.path,
-      expectedManifestSha256:hash(encoded(retained)),signal}),reused:false};
+    pinBinding(pin,operationId,root.path);
+    const raw=pin.stateBytes,frozen=validateIncidentState(json(raw));
+    ensure(frozen.revision===expectedRevision&&hash(raw)===pin.stateSha256,'RECOVERY_STATE_BINDING_CHANGED');
+    const frozenPin={schema:'stellar-forge.incident-snapshot-pin-selection.v1',operationId,directory,
+      outputDirectory:root.path,pinSha256:pin.pinSha256,stateSha256:pin.stateSha256,
+      sourceRevision:pin.sourceRevision,configHash:pin.configHash};
+    await immutable(join(root.path,'snapshot-pin.json'),encoded(frozenPin),signal);
+    await immutable(join(root.path,'state.json'),raw,signal);
+    const files=[descriptor('state.json',raw)];
+    for(const captureId of [...incidentCaptureReferences(frozen)].sort()) {
+      cancelled(signal);lease.assertHeld();await stillRoot(root);
+      const path='captures/capture-'+captureId+'.json';
+      let bytes=await optionalFile(join(root.path,path),SNAPSHOT_LIMITS.captureBytes,signal);
+      if(bytes===null) {
+        await stillRoot(sourceRoot);await privateRoot(join(store.root,'captures'));
+        bytes=await readFile(join(store.root,path),SNAPSHOT_LIMITS.captureBytes,signal);
+        validateIncidentCapture(bytes,captureId);
+        await immutable(join(root.path,path),bytes,signal);
+      }
+      validateIncidentCapture(bytes,captureId);files.push(descriptor(path,bytes));
+    }
+    for(const row of historyFor(frozen)) {
+      let bytes=await optionalFile(join(root.path,row.path),SNAPSHOT_LIMITS.metadataBytes,signal);
+      if(bytes===null) {
+        await stillRoot(sourceRoot);await privateRoot(dirname(join(store.root,row.path)));
+        bytes=await readFile(join(store.root,row.path),SNAPSHOT_LIMITS.metadataBytes,signal);
+        ensure(bytes.length===row.bytes&&hash(bytes)===row.sha256,'RECOVERY_HISTORY_DIGEST_MISMATCH');
+        await immutable(join(root.path,row.path),bytes,signal);
+      }
+      ensure(bytes.length===row.bytes&&hash(bytes)===row.sha256,'RECOVERY_HISTORY_DIGEST_MISMATCH');
+      files.push(row);
+    }
+    files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);inventory(files);
+    const retained={schema:SNAPSHOT_SCHEMA,operationId,stateUpdatedAt:frozen.updatedAt,
+      stateRevision:frozen.revision,stateSha256:hash(raw),configHash:frozen.configHash,files};
+    lease.assertHeld();await stillRoot(root);
+    await immutable(join(root.path,'manifest.json'),encoded(retained),signal);
+    const inspected=await inspectIncidentSnapshot({directory:root.path,expectedManifestSha256:hash(encoded(retained)),signal});
+    const pinRelease=await releaseCompletePin(store,operationId,root.path,inspected,signal);
+    return {...inspected,pinRelease,reused:false};
   } finally {await lease.close();}
 }
 
@@ -316,6 +397,9 @@ export async function receiveIncidentSnapshot({snapshotDirectory,directory,opera
     const state=restoredIncidentState(original,{id:operationId,manifestSha256:expectedManifestSha256,
       sourceStateSha256:stateFile.sha256,receivedAt:begun.receivedAt});
     state.recovery.history=history;
+    const captures=manifest.files.filter(row=>CAPTURE.test(row.path));
+    state.captureStorage={bytes:captures.reduce((sum,row)=>sum+row.bytes,0),count:captures.length,
+      limit:state.config.retention.captureBytes};
     validateIncidentState(state);
     const restored=Buffer.from(JSON.stringify(state)+'\n');
     ensure(restored.length<=SNAPSHOT_LIMITS.stateBytes,'RECOVERY_STATE_SIZE_LIMIT');
@@ -343,11 +427,58 @@ export async function receiveIncidentSnapshot({snapshotDirectory,directory,opera
   } finally {await lease.close();}
 }
 
-export async function inspectIncidentRecovery({directory}) {
-  return recoveryView(await(await openIncidentStore(directory)).read());
+export async function inspectIncidentRecovery({directory,signal}) {
+  cancelled(signal);const value=recoveryView(await(await openIncidentStore(directory)).read());
+  cancelled(signal);return value;
 }
-
-export async function reconcileIncidentRecovery({directory,...input}) {
-  const store=await openIncidentStore(directory);
-  return store.transaction(state=>reconcileRecoveryState(state,input));
+export async function reconcileIncidentRecovery({directory,signal,...input}) {
+  cancelled(signal);const store=await openIncidentStore(directory);
+  return store.transaction(state=>{cancelled(signal);return reconcileRecoveryState(state,input);});
+}
+export async function listIncidentSnapshotPins({directory,signal}) {
+  cancelled(signal);const store=await openIncidentStore(directory);
+  return store.transaction(async(_state,io)=>{cancelled(signal);return io.snapshotPins.list();},{readonly:true});
+}
+export async function abandonIncidentSnapshot({directory,outputDirectory,operationId,expectedPinSha256=null,by,notes,signal}) {
+  directory=canonicalPath(directory);outputDirectory=canonicalPath(outputDirectory);operationId=id(operationId);
+  ensure(expectedPinSha256===null||typeof expectedPinSha256==='string'&&SHA.test(expectedPinSha256),'RECOVERY_DIGEST_REQUIRED');
+  ensure(typeof by==='string'&&by.trim()&&Buffer.byteLength(by)<=160&&!/[\u0000-\u001f\u007f]/.test(by)&&
+    typeof notes==='string'&&notes.trim()&&Buffer.byteLength(notes)<=2000&&
+    !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(notes),'RECOVERY_ABANDONMENT_DETAILS_REQUIRED');
+  const raw=await readFile(join(outputDirectory,'request.json'),65_536,signal),request=json(raw);
+  ensure(request.schema===SNAPSHOT_SCHEMA&&request.action==='snapshot'&&request.operationId===operationId&&
+    request.directory===directory&&Number.isSafeInteger(request.expectedRevision)&&request.expectedRevision>=1,
+    'RECOVERY_SNAPSHOT_SELECTION_CHANGED');
+  const {root,lease}=await operationDirectory(outputDirectory,request,signal);
+  try {
+    ensure(await optionalFile(join(root.path,'manifest.json'),SNAPSHOT_LIMITS.metadataBytes,signal)===null,
+      'RECOVERY_SNAPSHOT_ALREADY_COMPLETE');
+    const selected={schema:'stellar-forge.incident-snapshot-abandonment.v1',operationId,directory,
+      outputDirectory:root.path,expectedPinSha256,by,notes};
+    let retained=await optionalFile(join(root.path,'abandoned.json'),65_536,signal);
+    let receipt=retained?json(retained):null;
+    if(receipt)ensure(Object.entries(selected).every(([key,value])=>receipt[key]===value),
+      'RECOVERY_ABANDONMENT_SELECTION_CHANGED');
+    const store=await openIncidentStore(directory);
+    const pinRelease=await store.transaction(async(_state,io)=>{
+      const pin=await io.snapshotPins.read({operationId,outputDirectory:root.path,signal});
+      if(pin) {
+        pinBinding(pin,operationId,root.path);
+        ensure(pin.pinSha256===expectedPinSha256,'RECOVERY_SNAPSHOT_PIN_BINDING_CHANGED');
+        if(pin.released)ensure(pin.disposition==='ABANDONED'&&pin.by===by&&pin.notes===notes,
+          'RECOVERY_SNAPSHOT_PIN_RELEASE_CONFLICT');
+      } else {
+        ensure(expectedPinSha256===null&&await optionalFile(join(root.path,'state.json'),SNAPSHOT_LIMITS.stateBytes,signal)===null,
+          'RECOVERY_SNAPSHOT_PIN_REQUIRED');
+      }
+      if(!receipt) {
+        receipt={...selected,at:new Date().toISOString()};
+        await immutable(join(root.path,'abandoned.json'),encoded(receipt),signal);
+      }
+      if(!pin)return null;
+      return io.snapshotPins.release({operationId,outputDirectory:root.path,expectedPinSha256,
+        disposition:'ABANDONED',by,notes,signal});
+    },{readonly:true});
+    return {directory:root.path,abandoned:receipt,pinRelease,partialFilesRetained:true,reused:Boolean(retained)};
+  } finally{await lease.close();}
 }

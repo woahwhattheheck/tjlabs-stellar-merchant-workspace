@@ -136,3 +136,8 @@ export async function exportIncident({directory,id,expectedRevision,workspaceFil
   return {out:folder,incidentId:i.id,revision:i.revision,comparison:result.report.comparison.state,
     captures:result.report.summary.captures,handoff:'support-handoff.json'};
 }
+
+// The existing merchant/incidents/operator package export owns recovery too.
+export {SNAPSHOT_SCHEMA,SNAPSHOT_LIMITS,exportIncidentSnapshot,inspectIncidentSnapshot,
+  receiveIncidentSnapshot,inspectIncidentRecovery,reconcileIncidentRecovery,
+  listIncidentSnapshotPins,abandonIncidentSnapshot} from './incident-recovery.mjs';

@@ -10,6 +10,7 @@ import {checkPayload} from './notifications.mjs';
 import {slackTimestamp,validSlackReceipt,validSlackRequest} from './notifications-slack.mjs';
 import {OBJECT_FILES,readObjectObservationFiles} from './object-observation.mjs';
 import {validateRecoveryState,recoveryView} from './incident-recovery-model.mjs';
+import {createSnapshotPins} from './incident-snapshot-pins.mjs';
 
 export const STATE_SCHEMA='stellar-forge.seller-incidents.v1';
 const CAPTURE_SCHEMA='stellar-forge.seller-incident-capture.v1';
@@ -148,8 +149,9 @@ export async function openIncidentStore(directory) {
       if(changed)await syncDirectory(folder);
     }
   }
-  async function collect(state) {
-    const keep=references(state);let removed=0,bytes=0,count=0;
+  async function collect(state,pinReferences=new Set()) {
+    const keep=references(state);for(const id of pinReferences)keep.add(id);
+    let removed=0,bytes=0,count=0;
     for(const file of await filesOnDisk()) {
       if(!keep.has(file.id)) {
         // This private directory's reserved capture namespace is owned by the
@@ -170,9 +172,12 @@ export async function openIncidentStore(directory) {
     }
     try {
       lease.assertHeld();const state=await read();
+      const snapshotPins=createSnapshotPins({directory:root,assertHeld:()=>lease.assertHeld(),
+        validateState,captureReferences:references,stateBytesLimit:MAX_STATE});
       if(!readonly)await collectStaging();
-      let census=readonly?null:await collect(state);
+      let census=readonly?null:await collect(state,await snapshotPins.references());
       const io={
+        snapshotPins,
         async readStateBytes() {
           const bytes=await readPrivateFile(statePath,MAX_STATE);
           if(JSON.stringify(validateState(decode(bytes)))!==JSON.stringify(state))fail('SNAPSHOT_STATE_CHANGED');
@@ -215,7 +220,9 @@ export async function openIncidentStore(directory) {
         pruneRecords(state,Date.now());state.revision++;state.updatedAt=new Date().toISOString();
         // Commit references before collecting their predecessors. A crash may
         // leave an orphan, never a committed reference to a deleted capture.
-        const keep=references(state),retained=(await filesOnDisk()).filter(file=>keep.has(file.id));
+        const pinReferences=await snapshotPins.references(),keep=references(state);
+        for(const id of pinReferences)keep.add(id);
+        const retained=(await filesOnDisk()).filter(file=>keep.has(file.id));
         state.captureStorage={bytes:retained.reduce((sum,file)=>sum+file.bytes,0),count:retained.length,
           limit:state.config.retention.captureBytes};
         validateState(state);
@@ -223,7 +230,7 @@ export async function openIncidentStore(directory) {
         const temporary=join(root,'state-'+randomUUID()+'.tmp');
         try {await writePrivate(temporary,bytes);lease.assertHeld();await rename(temporary,statePath);await syncDirectory(root);}
         catch(error){await unlink(temporary).catch(()=>{});throw error;}
-        await collect(state);
+        await collect(state,pinReferences);
       }
       return result;
     } finally {await lease.close();}
