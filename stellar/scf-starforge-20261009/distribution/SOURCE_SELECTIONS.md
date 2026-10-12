@@ -52,8 +52,10 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `study-research` | Study source editions, Property field surveys and comparables, Census ACS, BLS labor and HUD releases with original publishing and complete customer receiving | Study Source Refresh; Buyer runbook; Merchant console; PostgreSQL publisher; PostgreSQL workspace | [Complete study operator and receiving guide](selections/STUDY_RESEARCH.md) |
 | `merchant-support` | Merchant cases and incidents, implementation and source editions, service commitments, quotations and complete customer packages | Merchant support; Runtime management; original merchant agent | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
 | `healthcare-interoperability` | Original FHIR exports and eLTSS CarePlans, full source/field review, native merchant/customer editions and complete editable receiving | FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete installed operation and receiving](../../../products/healthcare-interoperability/OPERATING.md) |
+| `gravity-referrals` | Original Gravity source, topology, complete requirement/field review, Task editions, conditional exchange, native merchant/customer delivery and editable receiving | Gravity Referrals; FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete programme and receiving](../../../products/gravity-referrals/OPERATING.md) |
 | `matomo` | Complete Matomo report/subtable source, typed editions, original merchant/customer operation and independent editable workspace receiving | Matomo reports and delivery; Runtime management | [Complete operating guide](../../../products/matomo/OPERATING.md) |
 | `buyer-expenses` | Original governed purchase, shared-ledger source review, exact allocations, issued periods and accountant return | Buyer expenses; Accounting; Runtime management | [Complete installed operation and receiving](../../../products/buyer-expenses/OPERATING.md) |
+| `fiscaldata-analyst` | Treasury source capture and review, exact native editions/comparison, saved refresh plans, named MCP/browser and complete customer receiving | Fiscal Data operations; Runtime management | [Complete analyst installation](selections/FISCALDATA_ANALYST.md) |
 | `dbnomics` | Exact economic series and source revisions, saved analyst reports, native publication, complete editable workspace and customer receiving | DBnomics economic workspace; Runtime management | [Operating guide](../../../products/dbnomics/OPERATING.md) |
 | `worldbank` | Official World Bank source editions, reviewed dataset service, reports, workbooks and complete customer receiving | World Bank agent; Runtime management | [Product and receiving guide](../../../products/worldbank/RECEIVING.md) |
 | `coingecko` | Original CoinGecko source editions, reviewed queries and reports, native merchant operation, complete customer files and independent receiving | CoinGecko workspace; Runtime management | [Operating and receiving guide](../../../products/coingecko/OPERATING.md) |
@@ -136,6 +138,7 @@ its dependency profile from the complete installed workflow linked above:
 | `grpc-merchant` | `--native --feature grpc --feature schema --feature openapi --feature mcp --operator` |
 | `mssql` | `--native --feature mssql --feature mcp --operator` |
 | `grant-reviewer` | `--native --feature mcp --operator` |
+| `fiscaldata-analyst` | `--operator` (original named HTTP transport; analyst operation needs no payer or MCP SDK) |
 | `publisher-360giving` | `--feature mcp --operator` |
 | `grant-portfolio` | `--feature mcp --operator` |
 

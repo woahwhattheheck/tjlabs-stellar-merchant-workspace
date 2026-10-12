@@ -6,7 +6,7 @@ The original accounting handoff, economic rows, native plan history, provider id
 
 ## Open the complete workflow
 
-Start or reopen the existing configured accounting application and open **Chart source changes** from the accounting, QuickBooks or Xero page. The direct route is `/source-changes.html`. A buyer-source workspace exposes the same workflow for its original Xero plans.
+Start or reopen the existing configured accounting application and open **Chart source changes** from the accounting, QuickBooks or Xero page. The direct route is `/source-changes.html`. A buyer-source workspace exposes the same workflow for its original QuickBooks and Xero plans.
 
 Use the original Connections page at `/connections.html` for approved QuickBooks company and chart captures. For Xero, retain the new organization/chart context through the existing page at `/xero.html`. Those existing workflows keep provider authorization, company or tenant selection, original source responses and saved source identity.
 
@@ -30,7 +30,7 @@ The interface retains pending command bodies before dispatch. Large snapshot dra
 
 | Provider | Required unused state | Preserved original restrictions |
 | --- | --- | --- |
-| QuickBooks | DRAFT or REVIEWED, no cancellation, no native posting attempt and no received response | Other reviewed or booked plans continue to reserve the same realm/environment event IDs. The new plan remains DRAFT until its original review. |
+| QuickBooks | DRAFT or REVIEWED, no cancellation, no native posting attempt and no received response | Other reviewed or booked plans continue to reserve the same realm/environment merchant event IDs or buyer source/economic identities. The new plan remains DRAFT until its original review. |
 | Xero | Active plan, all journals READY and unattempted, no native operation, capture, return intent or accountant return | All other active plans continue to reserve tenant/component identities and buyer workspace/economic IDs. The original cancellation also rejects a RUNNING operation. |
 
 An attempted or posted plan can be compared when its original sources remain available. It cannot be replaced through this workflow. Correct it through its existing provider and accountant-return process. Never use a new source-change UUID to bypass an attempted plan's native history.
@@ -131,7 +131,8 @@ The target is one of:
 
 A prepare request keeps its original `id` and successor identity. The successor contains `id`, canonical ISO `createdAt`, `name` and `actor`, plus:
 
-- QuickBooks: `txnDate`, optional `docNumber`, and every original row as `{rowId,amount,debitAccount:{value},creditAccount:{value},description}`.
+- QuickBooks merchant plans: `txnDate`, optional `docNumber`, and every original row as `{rowId,amount,debitAccount:{value},creditAccount:{value},description}`.
+- QuickBooks buyer plans: the same posting fields plus `valuationBasis`, included rows as `{rowId,decision:"include",amount,debitAccount:{value},creditAccount:{value},description,valuationNote}`, and every original exclusion as `{rowId,decision:"exclude",reason}`. The original inclusion/exclusion set and exclusion reasons remain fixed. The source kind comes from the original handoff.
 - Xero: `valuationBasis` and every included/excluded component. Included rows use `{componentId,decision:"include",date,amount,debitAccountCode,creditAccountCode,valuationNote,description}`. Original excluded rows remain `{componentId,decision:"exclude",reason}`.
 
 The apply confirmations are exactly `unusedConfirmed: true`, `noExternalImport: true` and `mappingConfirmed: true`. Values and mappings are validated again against the current original source and native preview before the cancellation intent is retained.
@@ -151,6 +152,25 @@ const changes = new SourceChangeWorkspace(workspace, {
 ```
 
 The existing accounting server constructs this once per active original workspace. Close the source-change controller before closing the native controllers and Store so its retained cancellation/create operation drains. It never closes a borrowed connection or starts a new provider engine.
+
+### Read-only native successor preview
+
+`SourceChangeWorkspace.preview(value)` accepts the same complete `SourceChangePrepareInput` as `prepare`. It runs the original source inspection, eligibility checks, economic-source comparison, original native compiler, conflict checks and successor UUID ownership checks. It creates no review, plan, cancellation or provider operation.
+
+The result includes `schema`, current `binding` and `revision`, review `id`, provider `kind`, predecessor `planId`, `predecessorSha256`, `comparisonSha256`, `inputSha256`, `successorId`, `previewSha256`, and complete `comparison`, `source`, `request` and `plan`.
+
+```js
+const preview = await changes.preview(originalInput);
+const saved = await changes.prepare(originalInput, {
+  previewSha256: preview.previewSha256
+});
+```
+
+The optional second argument pins the exact reviewed successor without adding fields to the original input or changing `inputSha256`. The check occurs before any review file/state write. A repeated prepare with an already-retained same-input ID checks the stored preview pin before returning that original record. A repeated native preview for the same retained input returns its exact saved preview without resolving mutable aliases again. A different input under that ID is rejected.
+
+These are native SDK methods. Existing HTTP/CLI `prepare` requests keep their original envelope and recovery semantics; agent adapters can compose the native preview and pinned prepare directly. The stopped original CLI now opens its existing QuickBooks controller in buyer mode as well as merchant mode, without starting a listener or provider.
+
+For buyer allocation details, fixed exclusions, valuations and complete return/reopen, see [BUYER_QUICKBOOKS.md](BUYER_QUICKBOOKS.md).
 
 ## Downloads, complete backup and reopen
 

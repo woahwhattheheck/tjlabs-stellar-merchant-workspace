@@ -254,10 +254,11 @@ function xeroReturnView(value, args = {}) {
 /** The caller supplies only the existing host-alias reader and owning accountant lifetime. */
 export class MerchantPlatforms {
   constructor(workspace, accountant, { readSource, definition = { qbo: null, xero: null },
-    environment = process.env, quickbooksOAuth = {} }) {
+    environment = process.env, quickbooksOAuth = {}, buyerOnly = false }) {
     this.workspace = workspace;
     this.accountant = accountant;
     this.readSource = readSource;
+    this.buyerOnly = buyerOnly;
     this.qbo = definition.qbo?.oauth ? null : new QboWorkspace(workspace, accountant, {
       client: new QboHttpClient(definition.qbo ?? { realmId: '', environment: 'sandbox', minorVersion: null }) });
     this.definition = definition;
