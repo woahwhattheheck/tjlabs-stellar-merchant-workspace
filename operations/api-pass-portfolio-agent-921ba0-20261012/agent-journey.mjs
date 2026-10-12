@@ -100,7 +100,7 @@ async function download(exportId,selection,{interrupt=false}={}){
  const captured=await client.capture({exportId,selection});
  assert.equal(captured.state,'MANIFEST_RETAINED');
  const directory=join(agentRoot,'downloads',exportId);
- const options={exportId,directory,expectedManifestSha256:captured.manifestFile.sha256,chunkSize:32};
+ const options={exportId,directory,expectedManifestSha256:captured.manifestFile.sha256,...(interrupt?{chunkSize:32}:{})};
  if(interrupt){
   let paused=false;
   try{await client.downloadExport({...options,onProgress:()=>{paused=true;throw Object.assign(new Error('RECEIVING_DOWNLOAD_PAUSE'),{code:'RECEIVING_DOWNLOAD_PAUSE'});}});}

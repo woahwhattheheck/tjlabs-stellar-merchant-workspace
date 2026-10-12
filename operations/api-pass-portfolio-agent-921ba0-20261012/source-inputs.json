@@ -63,7 +63,7 @@
   },
   "agentJourney": {
     "path": "agent-journey.mjs",
-    "bytes": 17860,
-    "sha256": "3c21f5514e7676929c3993f5b4a0e87d2813f424ddb874fbea28ef08b0f74102"
+    "bytes": 17880,
+    "sha256": "c95ae305fb89a2544f916a0f556fe025a4ae514cf9da2c877e0b74a860d36ff5"
   }
 }

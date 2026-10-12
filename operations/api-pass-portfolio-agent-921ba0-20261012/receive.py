@@ -101,7 +101,7 @@ upstream=ThreadingHTTPServer(('127.0.0.1',0),Upstream)
 thread=threading.Thread(target=upstream.serve_forever,daemon=True);thread.start()
 config_file=root/'gateway.json';config_file.write_text(json.dumps({'schema':gateway.CONFIG_SCHEMA,'state':str(state),'actor':'portfolio-native-921ba0',
  'routes':[{'id':'work','method':'GET','path':'/work','upstream':'http://127.0.0.1:'+str(upstream.server_port),'query':['q']}] }))
-session=None;result=None;child=None;native_exit=1
+session=None;result=None;child=None;native_exit=1;primary_error=None;cleanup_errors=[]
 previous_handlers={};received_signals=[]
 def interrupted(signum,frame):
  received_signals.append(signum)
@@ -135,6 +135,11 @@ def retire_child():
  child.communicate()
 for signum in (signal.SIGTERM,signal.SIGINT):
  previous_handlers[signum]=signal.signal(signum,interrupted)
+private_fixture=root/'fixture-private.json'
+private_value={'schema':'stellar-forge.sf101.api-pass-agent-fixture-private.v1','root':str(root),
+ 'gateway':None,'upstreamPort':upstream.server_port,'claimEnvironment':{'SF101_CLAIM_TOKEN':token},
+ 'nodeModules':str(node_modules),'nodePath':environment['NODE_PATH'],'node':node,'python':sys.executable}
+private_fixture.write_text(json.dumps(private_value,indent=2));private_fixture.chmod(0o600)
 try:
  session=gateway.start(gateway.load_config(config_file),api_port=0,console_port=0)
  replacement=orders[2]
@@ -145,10 +150,7 @@ try:
   'file':{'sha256':replacement['manifestSha256'],'bytes':replacement['manifestBytes']}}
  context={**meta,'source':str(source),'root':str(root),'gateway':session['apiUrl'],'orders':orders,'handoff':handoff}
  context_file=root/'journey-input.json';context_file.write_text(json.dumps(context))
- private_fixture=root/'fixture-private.json'
- private_fixture.write_text(json.dumps({'schema':'stellar-forge.sf101.api-pass-agent-fixture-private.v1','root':str(root),
-  'gateway':session['apiUrl'],'upstreamPort':upstream.server_port,'claimEnvironment':{'SF101_CLAIM_TOKEN':token},
-  'nodeModules':str(node_modules),'nodePath':environment['NODE_PATH'],'node':node,'python':sys.executable},indent=2));private_fixture.chmod(0o600)
+ private_value['gateway']=session['apiUrl'];private_fixture.write_text(json.dumps(private_value,indent=2));private_fixture.chmod(0o600)
  child=subprocess.Popen([node,str(agent_journey),str(context_file)],cwd=source,env=environment,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=(os.name=='posix'))
  deadline=time.monotonic()+180
  while True:
@@ -174,18 +176,38 @@ try:
   'customer':customer_result,'agent':agent_result}
  result['status']='PASS' if native_exit==0 and customer_result.get('status')=='PASS' and agent_result.get('status')=='PASS' and len(calls)==3 else 'FAILED'
  if result['status']!='PASS':native_exit=native_exit or 1
- result_file=root/'portfolio-agent-receiving-result.json'
- with result_file.open('xb') as stream:stream.write(json.dumps(result,indent=2).encode());stream.flush();os.fsync(stream.fileno())
- print(json.dumps({'stage':'NATIVE_COMPLETED','result':result}),flush=True)
-
+except BaseException as error:
+ primary_error={'type':type(error).__name__,'message':str(error),'errno':getattr(error,'errno',None)}
+ native_exit=1
 finally:
- try:retire_child()
- finally:
-  try:
-   if session:gateway.stop(session)
-  finally:
-   upstream.shutdown();upstream.server_close();thread.join()
-   for signum,handler in previous_handlers.items():signal.signal(signum,handler)
+ for label,cleanup in [
+  ('child-process-group',retire_child),
+  ('gateway',lambda:gateway.stop(session) if session else None),
+  ('upstream-server',upstream.shutdown),
+  ('upstream-socket',upstream.server_close),
+  ('upstream-thread',thread.join)]:
+  try:cleanup()
+  except BaseException as error:
+   cleanup_errors.append({'stage':label,'type':type(error).__name__,'message':str(error)})
+ for signum,handler in previous_handlers.items():
+  try:signal.signal(signum,handler)
+  except BaseException as error:cleanup_errors.append({'stage':'signal-handler','type':type(error).__name__,'message':str(error)})
+def retained_report(name):
+ path=root/name
+ if not path.exists():return {'status':'NO_NATIVE_RESULT','path':name}
+ try:return json.loads(path.read_text())
+ except (OSError,ValueError) as error:return {'status':'NATIVE_RESULT_UNREADABLE','path':name,'error':str(error)}
+if result is None:
+ result={'schema':'stellar-forge.sf101.api-pass-portfolio-agent-receiving.v1','operation':meta['agentOperation'],
+  'customerSourceCommit':meta['sourceCommit'],'agentSourceCommit':meta['agentCommit'],'nativeExitCode':child.returncode if child else None,
+  'upstreamExecutions':len(calls),'status':'FAILED',
+  'customer':retained_report('portfolio-journey-result.json'),'agent':retained_report('portfolio-agent-journey-result.json')}
+if primary_error:result['receivingError']=primary_error;result['status']='FAILED'
+if cleanup_errors:result['cleanupErrors']=cleanup_errors;result['status']='FAILED';native_exit=1
+result['writersRetired']=not cleanup_errors
+result_file=root/'portfolio-agent-receiving-result.json'
+with result_file.open('xb') as stream:stream.write(json.dumps(result,indent=2).encode());stream.flush();os.fsync(stream.fileno())
+print(json.dumps({'stage':'NATIVE_COMPLETED','result':result}),flush=True)
 
 # All original writers and both HTTP servers have retired before this complete checkpoint.
 manifest={'schema':'stellar-forge.sf101.api-pass-portfolio-agent-checkpoint.v1',
