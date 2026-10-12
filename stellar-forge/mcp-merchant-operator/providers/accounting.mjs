@@ -42,6 +42,11 @@ export default defineMerchantProvider({
       "order": 40
     },
     {
+      prefix: 'merchant_accounting_customer_',
+      text: 'For service-period customer statements, select two retained complete native API-pass imports: usageOpeningId is the earlier capture and usageId is the closing capture of that same purchased pass. Inspect usage_period balances and page its routes/calls; the complete report uses customer-usage-period-preview and usage-period.json. Carry both IDs through statement_preview, exact reviewed retention and corrections using the original replacesId. Purchase from/until remains separate from the actual service capture period. Statement summaries expose period counts; period-routes and period-calls page its complete activity. Retain the original requestId before submission, reconcile that same request after an uncertain reply, and export every original manifest file, including period.csv, period-summary.csv, usage-opening.json and usage-closing.json when present. Close MCP before opening that same workspace in the browser.',
+      order: 46
+    },
+    {
       "prefix": "merchant_accounting_",
       "text": "For accounting, list declared sources and explicitly open their original workspace. Review a recovery request before importing its retained preview, follow jobs and refresh the current revision, then capture and inspect the original report. File retrieval returns SHA-pinned chunks of the saved response or original report/archive; it never purchases again. Close the accounting workspace to release its original lease.",
       "order": 380

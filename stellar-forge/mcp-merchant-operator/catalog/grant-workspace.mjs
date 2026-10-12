@@ -18,6 +18,42 @@ const inputRef = {type:'object', additionalProperties:false,
   oneOf:[{required:['hostInput']}, {required:['snapshotId']}, {required:['transferId']}]};
 const originalInput = {input:inputRef, expectedInputSha256:digest};
 const modelInput = {inputs:object, ...originalInput, inputPointer:str(4000)};
+const currencyCode = {type:'string', pattern:'^[A-Z]{3}$'};
+const nativeMoney = {type:'object', additionalProperties:false,
+  properties:{
+    amount:{...nonempty(80), description:'Exact original decimal amount as text; up to eight native decimals, two for USD.'},
+    currency:currencyCode,
+    fxRateId:{type:['string','null'], description:'A retained rate directly relating this currency to USD. A missing foreign rate retains the original amount as unvalued.'}
+  }, required:['amount','currency']};
+const nativePriceCredit = {type:'object', additionalProperties:false,
+  properties:{cashId:id('cash'), amount:nonempty(80), note:nonempty(4000)},
+  required:['cashId','amount','note']};
+const nativeCostCredit = {type:'object', additionalProperties:false,
+  properties:{kind:{enum:['INVOICE','DIRECT_CASH']}, id:nonempty(100), amount:nonempty(80), note:nonempty(4000)},
+  required:['kind','id','amount','note']};
+const nativePricing = {type:'object', additionalProperties:false,
+  properties:{price:nativeMoney, deliveryCost:nativeMoney,
+    priceCredits:{type:'array', items:nativePriceCredit, maxItems:200},
+    costCredits:{type:'array', items:nativeCostCredit, maxItems:200}},
+  required:['price','deliveryCost']};
+const retainedFxRate = {type:'object', additionalProperties:false,
+  properties:{id:nonempty(100), baseCurrency:currencyCode, quoteCurrency:currencyCode,
+    rate:{...nonempty(80), description:'Exact positive decimal quote units per one base unit. Exactly one side must be USD.'},
+    observationDate:{type:'string', pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'},
+    publicationDate:{type:['string','null'], pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'},
+    basis:{enum:['REFERENCE_OBSERVATION','PLANNING_ASSUMPTION']},
+    rounding:{enum:['HALF_UP','HALF_EVEN']},
+    sourceUrl:str(4000), sourceIds:{type:'array', items:id('source'), uniqueItems:true, maxItems:200},
+    sourceReference:str(4000), note:str(4000)},
+  required:['id','baseCurrency','quoteCurrency','rate','observationDate','basis','rounding']};
+const forecastReceiptInput = {...object, properties:{amountNative:nonempty(80)}};
+const forecastCommercialInput = {...object, properties:{nativePricing,
+  receipts:{type:'array', items:forecastReceiptInput, maxItems:30}}};
+const forecastInput = {...object,
+  description:'Complete original forecast input. Native-priced rows retain nativePricing and amountNative milestones; legacy USD rows keep their original fields. Missing foreign valuation stays explicit.',
+  properties:{fxRates:{type:'array', items:retainedFxRate, maxItems:100},
+    commercial:{type:'array', items:forecastCommercialInput, maxItems:50}}};
+const forecastModelInput = {...modelInput, inputs:forecastInput};
 const createCase = {planId:id('plan'), selectedRevision:integer, expectedContentSha256:digest,
   name:nonempty(300), mode:{enum:['OPERATIONS', 'WALKTHROUGH']}, calendarStart:{type:['string','null']},
   actor:nonempty(300), requestId:requestIdentifier};
@@ -119,10 +155,10 @@ export const grantWorkspaceTools = [
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
   tool('forecast', 'Reopen the complete saved forecast, source snapshot and current source-change comparison.',
     {...ws, caseId:id('operation'), forecastId:id('forecast')}, ['workspace','caseId','forecastId'], true),
-  tool('forecast_preview', 'Run the original remaining-work/cash forecast against an exact current case version. Supply inputs inline or one verified input reference; inputPointer selects the original object inside a native response.',
-    {...ws, ...caseSelection, ...modelInput}, ['workspace','caseId','expectedVersion'], true),
-  tool('forecast_save', 'Save exactly the reviewed original forecast inputs and preview SHA256 with original case version and request ID.',
-    {...ws, ...caseSelection, ...modelInput, ...originalRequest, expectedPreviewSha256:digest},
+  tool('forecast_preview', 'Run the complete original remaining-work/cash forecast, including native quoted currencies, explicit sourced FX, native payment/cost credits and valuation coverage. Supply original inputs inline or a verified reference with inputPointer.',
+    {...ws, ...caseSelection, ...forecastModelInput}, ['workspace','caseId','expectedVersion'], true),
+  tool('forecast_save', 'Save the complete reviewed forecast, retaining original currencies, rates, credits, timing and source snapshot under its original case version, preview SHA256 and request ID.',
+    {...ws, ...caseSelection, ...forecastModelInput, ...originalRequest, expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','expectedPreviewSha256']),
   tool('portfolios', 'Read all original immutable resource and delivery portfolio summaries for a case.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
@@ -130,7 +166,7 @@ export const grantWorkspaceTools = [
     {...ws, caseId:id('operation'), portfolioId:id('portfolio')}, ['workspace','caseId','portfolioId'], true),
   tool('portfolio_seed', 'Create the native editable allocation input from a selected current saved forecast. Retain every remaining source task and its original hours; availability stays unentered until the operator supplies it.',
     {...ws, ...caseSelection, forecastId:id('forecast')}, ['workspace','caseId','expectedVersion','forecastId'], true),
-  tool('portfolio_preview', 'Preview original resource/date alternatives and their native cash outcomes against the current case. Supply inputs inline or a verified full-file reference with optional inputPointer.',
+  tool('portfolio_preview', 'Preview complete resource/date alternatives and original forecast cash outcomes. Retain native currencies and rates; operational readiness stays separate from complete financial comparison. Supply original inputs or a verified reference with inputPointer.',
     {...ws, ...caseSelection, ...modelInput}, ['workspace','caseId','expectedVersion'], true),
   tool('portfolio_save', 'Save the exact reviewed native allocation and its complete source snapshot with original case version, preview SHA256 and request replay.',
     {...ws, ...caseSelection, ...modelInput, ...originalRequest, expectedPreviewSha256:digest},
@@ -210,10 +246,10 @@ export const grantWorkspaceTools = [
       deployment:{anyOf:[supportDeployment,...emptyDeployment.anyOf]}},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','filename',
       'expectedPreviewSha256','requestId','actor'], false, supportSelection),
-  tool('buyer_preview', 'Review complete original SF88 buyer handoff bytes against the current Operations case. Retain original source and reader identities, every source job, native outcome/output observations, existing purchase matches, deployment choices and preview SHA. This invokes the original saved-source reader without a buyer or provider execution.',
+  tool('buyer_preview', 'Review original SF88 Inbox handoff or Node accounting-export bytes against the current Operations case. Retain exact source/reader identity, original jobs, native outcome/output coverage, current deployment/purchase matches and preview SHA. Unpaid Node observations have purchase:null and no embedded response body. This invokes only the original saved-source reader.',
     {...ws, ...caseSelection, ...originalInput, filename:nonempty(240)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','filename'], true),
-  tool('buyer_receive', 'Receive explicitly selected original buyer jobs through the existing case transaction. Retain matching jobs on their original purchase/deployment; select null purchaseId only for a new original purchase. Preserve exact source bytes, filename, preview SHA, current version, participant attribution and original request ID. The full handoff, native review and selected/unselected source links remain in complete case export.',
+  tool('buyer_receive', 'Receive explicitly selected original buyer source through the existing case transaction. Match the original deployment and any purchase; use null purchaseId for an unpaid Node observation or a new original paid purchase. Unpaid observations add no purchase or financial count. Preserve exact source bytes, filename, preview SHA, current version, participant attribution and request ID. Complete case export retains original source editions, native reviews and source bindings.',
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240),
       expectedPreviewSha256:digest, deploymentId:{anyOf:[id('deployment'),{type:'null'}]},
       deployment:{anyOf:[buyerDeployment,...emptyDeployment.anyOf]}, selections:buyerJobs},

@@ -366,6 +366,77 @@ export interface ParticipantReceiving {
  revisions:number;sources:number;evidenceFiles:number;packet:{bytes:number;sha256:Sha256};
 }
 
+
+/** Exact original native revision; this pointer never follows mutable latest state. */
+export type RefreshNativeSelection = Pick<Portfolio,'id'|'revision'|'definitionSha256'|'sources'|'selection'|'review'>;
+export type RefreshPlanState = 'ACTIVE'|'PAUSED'|'ARCHIVED';
+export type RefreshRunState = 'AWAITING_REVIEW'|'REVIEWED'|'NEEDS_CORRECTION'|'PROMOTED'|'CANCELLED';
+export interface RefreshPageOptions extends RequestOptions {offset?:number;limit?:number;snapshot?:Sha256}
+export interface RefreshPage<T> {snapshot:Sha256;offset:number;total:number;items:T[];nextOffset:number|null}
+export interface RefreshPlan {
+ schema:'stellar-forge.iati-refresh-plan.v1';id:Sha256;portfolioId:Sha256;revision:number;previousRevision:number|null;
+ name:string;owner:string;note:string;state:RefreshPlanState;baseline:RefreshNativeSelection;
+ created:number;updated:number;requestId:string;
+}
+export interface RefreshPreviewInput {
+ planId:Sha256;expectedPlanRevision:number;expectedPortfolioRevision:number;sources:Sha256[];
+ /** Only changed before/after editions. Unchanged source IDs are paired automatically. */
+ pairs:Array<{before:Sha256;after:Sha256}>;selection?:Selection;selectionNote?:string;sourceChangeNote?:string;
+}
+export interface RefreshPreview {
+ schema:'stellar-forge.iati-refresh-preview.v1';planId:Sha256;planRevision:number;portfolioId:Sha256;
+ expectedPortfolioRevision:number;baseline:RefreshNativeSelection;sources:Sha256[];
+ pairs:Array<{before:Sha256;after:Sha256}>;unchangedSources:Sha256[];addedSources:Sha256[];removedSources:Sha256[];
+ sourceChangeNote:string;selection:Selection;selectionChanged:boolean;selectionNote:string;
+ sourceFiles:Array<{id:Sha256;bytes:number;inventorySha256:Sha256}>;beforeCounts:PortfolioCounts;sha256:Sha256;
+}
+export interface RefreshCancellation {requestId:string;actor:string;note:string;created:number}
+export interface RefreshPromotion extends RefreshCancellation {
+ planRevision:number;baselineBefore:RefreshNativeSelection;baselineAfter:RefreshNativeSelection;
+}
+export interface RefreshRun {
+ schema:'stellar-forge.iati-refresh-run.v1';id:Sha256;planId:Sha256;portfolioId:Sha256;revision:number;previousRevision:number|null;
+ planRevision:number;label:string;actor:string;note:string;state:RefreshRunState;baseline:RefreshNativeSelection;preview:RefreshPreview;
+ candidate:RefreshNativeSelection|null;comparison:PortfolioComparison|null;afterCounts:PortfolioCounts|null;review:Review|null;
+ created:number;updated:number;requestId:string;promotion:RefreshPromotion|null;cancellation:RefreshCancellation|null;
+}
+export type RefreshPlanSave = {requestId:string;name:string;owner:string;note?:string;state?:RefreshPlanState} &
+ ({portfolioId:Sha256;baselineRevision:number;id?:never;expectedRevision?:never} |
+  {id:Sha256;expectedRevision:number;portfolioId?:never;baselineRevision?:never});
+export interface RefreshStart extends RefreshPreviewInput {requestId:string;previewSha256:Sha256;label:string;actor:string;note?:string}
+export interface RefreshRunSelection {requestId:string;planId:Sha256;runId:Sha256;expectedRevision:number}
+export interface RefreshReview extends RefreshRunSelection {
+ expectedPortfolioRevision:number;review:{status:'reviewed'|'needs-correction';reviewer:string;note:string};
+}
+export interface RefreshPromote extends RefreshRunSelection {expectedPlanRevision:number;actor:string;note:string}
+export interface RefreshCancel extends RefreshRunSelection {actor:string;note:string}
+export interface RefreshAbandon {requestId:string;planId:Sha256;pendingRequestId:string;actor:string;note:string}
+export interface RefreshInputs {
+ 'plan-save':RefreshPlanSave;start:RefreshStart;review:RefreshReview;promote:RefreshPromote;cancel:RefreshCancel;abandon:RefreshAbandon;
+}
+export type RefreshAction = keyof RefreshInputs;
+export interface RefreshCompleted {
+ requestId:string;action:RefreshAction;state:'COMPLETE';plan:RefreshPlan;run:RefreshRun|null;
+}
+export interface RefreshAbandoned {requestId:string;action:RefreshAction;state:'ABANDONED';cancellation:RefreshCancellation}
+export interface RefreshActionRecordBase<A extends RefreshAction = RefreshAction> {
+ schema:'stellar-forge.iati-refresh-action.v1';ordinal:number;requestId:string;kind:A;input:RefreshInputs[A];
+ inputSha256:Sha256;created:number;prepared:Record<string,unknown>;
+ native:null|{portfolio:RefreshNativeSelection;comparison?:PortfolioComparison};
+}
+export type RefreshPrepared = RefreshActionRecordBase & {state:'PREPARED'};
+export type RefreshActionRecord = RefreshPrepared |
+ (RefreshActionRecordBase & {state:'COMPLETE';completedAt:number;result:RefreshCompleted}) |
+ (RefreshActionRecordBase & {state:'ABANDONED';cancellation:RefreshCancellation});
+export interface RefreshStatus {
+ plan:RefreshPlan;portfolio:RefreshNativeSelection;snapshot:Sha256;pendingRequest:RefreshPrepared|null;runCount:number;actionCount:number;
+}
+export interface RefreshReceiving {
+ schema:'stellar-forge.iati-refresh-receiving.v1';plan:RefreshPlan;currentPlan:RefreshPlan;
+ snapshot:Sha256;currentSnapshot:Sha256;reconstructed:true;reused:boolean;sourceCount:number;runCount:number;actionCount:number;
+ historyCount:number;pendingRequest:RefreshPrepared|null;portfolio:RefreshNativeSelection;reportFiles:string[];
+}
+
 export declare class IatiWorkspaceClient {
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
@@ -420,6 +491,22 @@ export declare class IatiWorkspaceClient {
   publishingExport(id:Sha256,options?:RevisionOptions): Promise<Response>;
   publishingSource(id:Sha256,options?:RevisionOptions & {edition?:'baseline'|'candidate'}): Promise<Response>;
   publishingReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions): Promise<ParticipantReceiving>;
+
+
+  refreshContext(options?:RequestOptions):Promise<{schema:'stellar-forge.iati-refresh-context.v1';workspaceSha256:Sha256}>;
+  refreshStatus(plan:Sha256,options?:RequestOptions):Promise<RefreshStatus>;
+  refreshPlans(options?:RefreshPageOptions):Promise<RefreshPage<RefreshPlan>>;
+  refreshPlan(id:Sha256,options?:RevisionOptions):Promise<RefreshPlan>;
+  refreshHistory(plan:Sha256,options?:RefreshPageOptions):Promise<RefreshPage<RefreshPlan>>;
+  refreshRuns(plan:Sha256,options?:RefreshPageOptions):Promise<RefreshPage<RefreshRun>>;
+  refreshRun(plan:Sha256,id:Sha256,options?:RevisionOptions):Promise<RefreshRun>;
+  refreshRunHistory(plan:Sha256,id:Sha256,options?:RefreshPageOptions):Promise<RefreshPage<RefreshRun>>;
+  refreshRequest(requestId:string,options?:RequestOptions):Promise<RefreshActionRecord|{requestId:string;state:'NOT_RECORDED'}>;
+  refreshPreview(input:RefreshPreviewInput,options?:RequestOptions):Promise<RefreshPreview>;
+  refreshSave<A extends RefreshAction>(action:A,input:RefreshInputs[A],options?:RequestOptions):Promise<RefreshCompleted|RefreshAbandoned>;
+  refreshResume(requestId:string,options?:RequestOptions):Promise<RefreshCompleted|RefreshAbandoned>;
+  refreshExport(plan:Sha256,options?:RequestOptions&{snapshot?:Sha256}):Promise<Response>;
+  refreshReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<RefreshReceiving>;
 
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;

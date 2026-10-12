@@ -10,6 +10,7 @@ from urllib.parse import urlsplit, parse_qs
 from iati_workspace import IatiWorkspace, InputError, MAX_SOURCE, MAX_PACKET, load_json
 import dqa_http
 import publishing_http
+import refresh_http
 
 HERE = Path(__file__).resolve().parent
 SHARED = HERE.parent / "xml"
@@ -36,7 +37,7 @@ class Handler(_original.Handler):
 
     def _get(self):
         target = urlsplit(self.path)
-        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css"}:
+        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/refresh.js", "/refresh.css"}:
             self._gate(api=False)
             name = target.path[1:]
             media = "text/javascript; charset=utf-8" if name.endswith(".js") else "text/css; charset=utf-8"
@@ -52,6 +53,8 @@ class Handler(_original.Handler):
             raise InputError("Repeated IATI query parameters are not accepted")
         q = {key: items[0] for key, items in values.items()}
         ws = self.server.workspace
+        if refresh_http.get(self, target.path, q):
+            return
         if publishing_http.get(self, target.path, q):
             return
         if dqa_http.get(self, target.path, q):
@@ -107,6 +110,8 @@ class Handler(_original.Handler):
         if target.query:
             raise InputError("IATI actions take a body, not query parameters")
         ws = self.server.workspace
+        if refresh_http.post(self, target.path):
+            return
         if publishing_http.post(self, target.path):
             return
         if dqa_http.post(self, target.path):

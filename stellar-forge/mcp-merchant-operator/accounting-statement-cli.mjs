@@ -153,25 +153,45 @@ async function exactExisting(path,metadata){
   }catch(error){if(error.code==='ENOENT')return false;throw error;}
   finally{await handle?.close();}
 }
-/** Deliver all five exact original statement artifacts; a retry reuses verified files. */
+/** Deliver the complete original artifact set; a retry reuses verified files. */
 export async function exportAccountingStatement({client,statementId,directory,signal}={}){
   need(UUID.test(statementId??''),'Choose the original statement UUID.');directory=await privateDirectory(directory);
   const lease=await acquireStateLease(directory),files=[];
   try{
     const detail=await client.detail({statementId},{requestSignal:signal}),statement=detail.statement,identityPath=join(directory,'delivery.json');
+    const base=['statement.json','statement.csv','usage.csv','statement.html','manifest.json'];
+    const period=['period.csv','period-summary.csv','usage-opening.json','usage-closing.json'];
+    const retained=Object.keys(statement.files??{}),periodCount=period.filter(name=>retained.includes(name)).length;
+    need(base.every(name=>retained.includes(name))&&(periodCount===0||periodCount===period.length)&&
+      retained.every(name=>base.includes(name)||period.includes(name)),
+      'The original statement lacks its complete supported file manifest.','FILE_REPLY');
+    const names=[...base,...(periodCount?period:[])],expected=names.map(name=>{
+      const metadata=statement.files[name];need(plain(metadata)&&/^[a-f0-9]{64}$/.test(metadata.sha256)&&
+        Number.isSafeInteger(metadata.bytes)&&metadata.bytes>=0,'The original statement has invalid retained file metadata.','FILE_REPLY');
+      return {name,...metadata};
+    });
     let existing;try{existing=await readJson(identityPath,65536);}catch(error){if(error.code!=='ENOENT')throw error;}
-    need(!existing||existing.workspace===client.workspace&&existing.statementId===statementId,'This delivery directory belongs to another original statement.','DELIVERY_BINDING');
-    for(const name of ['statement.json','statement.csv','usage.csv','statement.html','manifest.json']){
-      const metadata=statement.files[name];need(metadata&&/^[a-f0-9]{64}$/.test(metadata.sha256)&&Number.isSafeInteger(metadata.bytes),
-        'The original statement lacks its complete file manifest.','FILE_REPLY');
+    need(!existing||existing.workspace===client.workspace&&existing.statementId===statementId&&existing.number===statement.number,
+      'This delivery directory belongs to another original statement.','DELIVERY_BINDING');
+    const extend=Boolean(existing&&periodCount&&JSON.stringify(existing.files)===JSON.stringify(expected.slice(0,base.length)));
+    need(!existing||JSON.stringify(existing.files)===JSON.stringify(expected)||extend,
+      'The original statement file identities changed.','DELIVERY_BINDING');
+    for(const {name,...metadata} of expected){
+      signal?.throwIfAborted();lease.assertHeld();
       const output=join(directory,name),reused=await exactExisting(output,metadata);
       if(!reused)await downloadAccountingStatementFile({client,selection:{kind:'customer-statement',statementId,file:name},expectedSha256:metadata.sha256,output,signal});
       files.push({name,...metadata,reused});
     }
     const result={schema:'stellar-forge.accounting-statement-delivery.v1',workspace:client.workspace,statementId,number:statement.number,
       observedStatus:statement.status,observedRevision:detail.revision,files:files.map(({reused,...file})=>file),complete:true};
+    lease.assertHeld();
     if(!existing){await writePrivate(identityPath,result);await syncDirectory(directory);}
-    else need(existing.number===result.number&&JSON.stringify(existing.files)===JSON.stringify(result.files),'The original statement file identities changed.','DELIVERY_BINDING');
+    else if(extend){
+      // Complete a delivery made by the earlier five-file client for this same retained period.
+      const temporary=join(directory,'delivery-'+randomUUID()+'.next');
+      try{await writePrivate(temporary,result);lease.assertHeld();await rename(temporary,identityPath);await syncDirectory(directory);}
+      finally{await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});}
+    }
     return {directory,...result,files};
   }finally{await lease.close();}
 }
@@ -190,7 +210,7 @@ export async function downloadAccountingStatementStatus({client,statementId,outp
   }catch(error){await handle.close().catch(()=>{});await unlink(temporary).catch(()=>{});throw error;}
 }
 
-const HELP="Starforge customer statement client\n\n  open|close|status --url MCP_URL --workspace ALIAS [--token-env NAME]\n  status|bindings|order|statements|detail|lookup|usage-source ...\n      [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --request PRIVATE_SELECTION_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action retain --preview PRIVATE_PREVIEW_JSON --actor NAME [--request-id ID]\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action save|assign|usage_import|withdraw --request PRIVATE_NATIVE_ARGUMENTS_JSON\n  execute|reconcile --dir PRIVATE_OPERATION\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE\n  export ... --statement-id UUID --dir PRIVATE_DELIVERY_DIRECTORY\n  status-snapshot ... --statement-id UUID --out NEW_PRIVATE_STATUS_JSON\n\nConnection commands accept --token-env NAME. Tokens remain in that process variable.\nstatus request: {\"view\":\"customers|runs|usage|history\",\"offset\":0,\"limit\":200}.\nbindings: {\"customerId\":\"UUID\",\"offset\":0,\"limit\":200}. order: {\"orderRef\":\"original\"}.\ndetail: {\"statementId\":\"UUID\",\"view\":\"summary|items|excluded|assets|calls|adjustments|history\"}.\nCalls and adjustments select orderRef; page all native items with offset and limit.\nlookup: {\"requestId\":\"original-retention-id\"}. usage-source: {\"source\":\"host-alias\"}.\nPreview selects customerId/runId, optional usageId/replacesId, and optional from/until.\nThe complete native preview is read through the original SHA-pinned file consumer.\nUsage import requires the source SHA returned by usage-source. Retention uses its\ncomplete reviewed preview and one durable requestId; corrections set replacesId.\nprepare retains exact normalized arguments in request.json. execute reconciles\ncurrent original records before sending; reconcile reads them. Lost replies\nrecover through the native request ID, source SHA, profile, bindings or withdrawal\nhistory. Exact retries keep the original revision guard and operation identity.\nexport delivers statement.json, statement.csv, usage.csv, statement.html and\nmanifest.json, verifies existing files on restart, and retains their native hashes.\nstatus-snapshot reads the current status.json once through the original pinned\nreader and saves its exact bytes and SHA. All five original files remain available\nthrough correction and withdrawal. Ordinary commands release this caller's reads.\nclose explicitly closes the original accounting workspace.\nExit 0: complete, prepared or read. Exit 3: prepared effect not observed. Exit 2: error.\n";
+const HELP="Starforge customer statement client\n\n  open|close|status --url MCP_URL --workspace ALIAS [--token-env NAME]\n  status|bindings|order|statements|detail|lookup|usage-source ...\n      [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --request PRIVATE_SELECTION_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  usage-period-summary ... --request PRIVATE_PERIOD_QUERY_JSON\n  usage-period ... --request PRIVATE_PERIOD_SELECTION_JSON --out NEW_PRIVATE_PERIOD_JSON\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action retain --preview PRIVATE_PREVIEW_JSON --actor NAME [--request-id ID]\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action save|assign|usage_import|withdraw --request PRIVATE_NATIVE_ARGUMENTS_JSON\n  execute|reconcile --dir PRIVATE_OPERATION\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE\n  export ... --statement-id UUID --dir PRIVATE_DELIVERY_DIRECTORY\n  status-snapshot ... --statement-id UUID --out NEW_PRIVATE_STATUS_JSON\n\nConnection commands accept --token-env NAME. Tokens remain in that process variable.\nstatus request: {\"view\":\"customers|runs|usage|history\",\"offset\":0,\"limit\":200}.\nbindings: {\"customerId\":\"UUID\",\"offset\":0,\"limit\":200}. order: {\"orderRef\":\"original\"}.\ndetail: {\"statementId\":\"UUID\",\"view\":\"summary|items|excluded|assets|calls|adjustments|period-routes|period-calls|history\"}.\nCalls and adjustments select orderRef; page all native items with offset and limit.\nlookup: {\"requestId\":\"original-retention-id\"}. usage-source: {\"source\":\"host-alias\"}.\nPreview selects customerId/runId, optional usageId/replacesId, and optional from/until.\nAdd usageOpeningId for the service period ending at usageId; from/until select purchases.\nusage-period selects {\"usageOpeningId\":\"UUID\",\"usageId\":\"UUID\"}; its summary\naccepts view:summary|routes|calls, offset and limit. It reads actual native captures.\nThe complete native preview is read through the original SHA-pinned file consumer.\nUsage import requires the source SHA returned by usage-source. Retention uses its\ncomplete reviewed preview and one durable requestId; corrections set replacesId.\nprepare retains exact normalized arguments in request.json. execute reconciles\ncurrent original records before sending; reconcile reads them. Lost replies\nrecover through the native request ID, source SHA, profile, bindings or withdrawal\nhistory. Exact retries keep the original revision guard and operation identity.\nexport delivers statement.json, statement.csv, usage.csv, statement.html and\nmanifest.json. Period statements also deliver period.csv, period-summary.csv,\nusage-opening.json and usage-closing.json. Restart verifies and reuses every file,\ncompletes an earlier five-file delivery of that same period, and retains native hashes.\nstatus-snapshot reads the current status.json once through the original pinned\nreader and saves its exact bytes and SHA. All original files remain available\nthrough correction and withdrawal. Ordinary commands release this caller's reads.\nclose explicitly closes the original accounting workspace.\nExit 0: complete, prepared or read. Exit 3: prepared effect not observed. Exit 2: error.\n";
 
 function options(args,allowed){
   const values=new Map();
@@ -216,7 +236,7 @@ export async function main(args=process.argv.slice(2)){
     const values=options(rest,['--dir']);result=await runAccountingStatementOperation({directory:required(values,'--dir'),execute:command==='execute'});
   }else{
     const extra={open:[],close:[],status:['--request'],bindings:['--request'],order:['--request'],statements:['--request'],detail:['--request'],
-      lookup:['--request'],'usage-source':['--request'],preview:['--request','--out'],download:['--selection','--sha256','--out'],
+      lookup:['--request'],'usage-source':['--request'],'usage-period-summary':['--request'],'usage-period':['--request','--out'],preview:['--request','--out'],download:['--selection','--sha256','--out'],
       export:['--statement-id','--dir'],'status-snapshot':['--statement-id','--out']}[command];
     need(extra,'Choose a documented customer statement command.');
     const values=options(rest,[...connectionFields,...extra]),client=await connectAccountingStatementClient({url:required(values,'--url'),
@@ -233,7 +253,14 @@ export async function main(args=process.argv.slice(2)){
       else if(command==='detail')result=await client.detail(input);
       else if(command==='lookup')result=await client.lookup(input.requestId);
       else if(command==='usage-source')result=await client.usageSource(input.source);
-      else if(command==='preview'){
+      else if(command==='usage-period-summary'){
+        required(values,'--request');result=await client.usagePeriodSummary(input);
+      }else if(command==='usage-period'){
+        required(values,'--request');const output=resolve(required(values,'--out'));await privateDirectory(dirname(output));
+        const report=await client.usagePeriod(input);await writePrivate(output,report);await syncDirectory(dirname(output));
+        const {routes,calls,...period}=report.period;
+        result={output,revision:report.revision,period:{...period,counts:{routes:routes.length,calls:calls.length}}};
+      }else if(command==='preview'){
         required(values,'--request');const output=resolve(required(values,'--out'));await privateDirectory(dirname(output));
         const preview=await client.preview(input);accountingStatementPreview(preview);await writePrivate(output,preview);await syncDirectory(dirname(output));
         result={output,intent:preview.intent,previewSha256:preview.previewSha256,revision:preview.revision,orders:preview.draft.items.length};
