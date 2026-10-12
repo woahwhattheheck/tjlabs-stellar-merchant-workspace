@@ -1,0 +1,19 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "facilitator-responses",
+  "description": "Complete public facilitator response receiving and original SDK interpretation.",
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/facilitator-supported.mjs",
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/facilitator-supported-worker.mjs",
+    "stellar/scf-starforge-20261009/sf82-seller-pilot/FACILITATOR_RESPONSES.md"
+  ],
+  "commands": {
+    "facilitator-response": "stellar/scf-starforge-20261009/sf82-seller-pilot/facilitator-supported.mjs"
+  },
+  "commandDescriptions": {
+    "facilitator-response": "Retain complete public supported-response bytes and interpret the saved document with the installed x402 SDK."
+  },
+  "exports": {
+    "./seller/facilitator-response": "./source/stellar/scf-starforge-20261009/sf82-seller-pilot/facilitator-supported.mjs"
+  }
+}
