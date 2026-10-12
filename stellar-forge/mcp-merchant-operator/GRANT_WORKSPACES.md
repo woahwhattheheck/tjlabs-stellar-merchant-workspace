@@ -291,6 +291,24 @@ The [Grant Operations guide](../../products/grant-operations/OPERATING.md) follo
 
 The native transaction retains the handoff, reader result, purchase/deployment associations and request receipt together. Replaying an older observation preserves its recorded time and any newer original observation. An order state independently entered in the case remains separate from what the Inbox export observes. Download retained source files with `kind:source`; the complete case export carries their original history and associations.
 
+### Commission and receive a customer installation
+
+| Tool | Original operation |
+| --- | --- |
+| `merchant_grant_installations` | Latest saved customer installation editions in the selected case. |
+| `merchant_grant_installation` | One complete saved edition, input, original selections, report and changes. |
+| `merchant_grant_installation_history` | Immutable edition pages with the original nextBefore cursor. |
+| `merchant_grant_installation_seed` | Complete document seeded from the pinned plan's work packages and measurable criteria. |
+| `merchant_grant_installation_preview` | Review the document, original case version, installation identity and expected revision. |
+| `merchant_grant_installation_save` | Append the exact reviewed edition, case event and original request result in the existing transaction. |
+| `merchant_grant_export` with `kind:installation` | Selected-edition readable handover plus the complete original operating case and all retained editions. |
+
+The document captures the complete commissioning and terms, useful customer task, source population, exact payment and aggregate task budget, receiving application, maintenance, funded work and original acceptance records. Preview and save take it as inputs or a verified original input reference; inputPointer selects /document from a native seed or /preview/document from a saved edition. Verify the complete file before selecting its pointer.
+
+A new installation uses installationId:null and expectedRevision:0. A revision uses the original installation ID and its current edition. Saving also requires the actual case version, original request ID, recording operator, save reason and expectedPreviewSha256. Read the updated case version after the save and recover an uncertain response with the same original request and payload.
+
+The export requires the selected installation ID and saved revision. The original receiver preserves every edition and source, and returns selectedInstallation for reopening the selected edition. See the complete [Installation operator and API guide](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md).
+
 ### Freeze the measured cohort
 
 | Tool | Saved case workflow |
@@ -325,7 +343,7 @@ Preparation retains the exact `receiptId`, calendar date, summary, preview SHA a
 
 ## Export, transfer and receive the complete work
 
-merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios and cohort/completion history.
+merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, customer installation ZIP, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios, all immutable customer installation editions and cohort/completion history.
 
 For exact bytes, call merchant_grant_file_read with the snapshot ID and expectedSha256. Repeat the returned readId, same SHA and nextOffset; keep each base64 chunk's decoded bytes in order. Each chunk is at most 65,536 bytes. The shared original reader keeps a verified snapshot, returns an exact total size and hash, and releases its temporary descriptor at EOF. merchant_grant_file_release closes a reader early; the retained original file stays available.
 

@@ -1,6 +1,6 @@
 # Grant Operations — installed operating and receiving guide
 
-Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
+Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, complete customer installations, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
 
 The maintained source selection is **grant-operations**. Open **Applications → Grant planning and delivery**, or use **starforge grant-workspace**. The selection includes the complete SF47 model and operator, the original Node and Python buyer receiving sources, merchant-support readers, the Grant Application, its Merchant MCP provider, and the existing installation and transfer controls. It uses the canonical [Stellar merchant workspace repository](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace).
 
@@ -14,6 +14,7 @@ This guide is also retained at `package/source/products/grant-operations/OPERATI
 | Delivery and cash | The exact selected plan revision; contributors, submitted and accepted work, invoices, disputes, actual payment observations, allocations, deployments, source attachments and original history. |
 | Forecast and Portfolio | Complete input, case version and source snapshot; dated cash assumptions, every remaining task, capacity calendars, alternatives, selected work dates and the original reviewed event release. |
 | Buyer and Support receiving | Exact exported files, original job/purchase/deployment identities, selected associations, reader results, native previews and same-request receipts. |
+| Customer installations | Complete commissioning and commercial source, useful task and priced unit, source population, exact payment and aggregate task budget, receiving application and maintainer, original funded assignments and acceptance records; immutable editions and complete selected-edition handover. |
 | Cohort and Completion | Explicit measurement populations and cutoff, original observations, immutable frozen evidence, payment-derived completion clocks, assignments, prepared forms and actual issuer receipts when supplied. |
 | Receiving | A complete planning or operating-case export with its manifest, source bytes, history, forecasts, portfolios and reviews, reopened through the original importer. |
 
@@ -206,6 +207,36 @@ A preview binds the case version, original filename and bytes, installed reader 
 
 Both handoff inputs retain their native 8 MiB file bound. The case's aggregate source limit is 24 MiB and 200 attachments. Choose an appropriate original capture period or original product split when necessary; preserve full selected files.
 
+
+### Commission and hand over the complete customer installation
+
+Open **Customer installations** in the same operating case. Choose **New installation** to start from its pinned plan's original funded work packages and measurable criteria. The desk carries the whole customer assignment: commissioning payer and original terms, useful request and complete output, source population and change procedure, selected merchant and buyer deployments, payment design, aggregate spending, receiving application and ongoing maintenance.
+
+Select the original commissioning attachment and retained source files. State whether the source is a snapshot, live or mixed; describe its keys, types, units, time meaning and rights. Enter the exact network, asset, recipient, atomic unit price and expected priced units. The review computes the aggregate task amount in the entered asset. Retain the buyer's actual spending authority and facilitator choices with that same assignment.
+
+Name the receiving application, host and accountable operator. Complete the output acceptance rule, second-operator change or withdrawal procedure, recovery and maintenance destination. Assign the original funded work packages and the separate commercial reference. Each acceptance step can select the original work, purchase, outcome and source records; an accepted step records its actual observing operator, time and result.
+
+Choose **Review complete installation**, read the configuration decisions, work/funding report, source references and purchase amounts, then enter a save reason and **Save reviewed edition**. The original case transaction appends one immutable installation edition, case event and request receipt. Planning and commissioning editions may retain open decisions; their stage and accepted-step count remain separately visible.
+
+Use the original CLI against the same retained workspace:
+
+~~~sh
+grant operations --workspace "$GRANT_DATA" installation-seed --case CASE_ID --expected-version CASE_VERSION --output /absolute/working/installation-seed.json
+grant operations --workspace "$GRANT_DATA" installation-preview --case CASE_ID --expected-version CASE_VERSION --expected-revision 0 --document /absolute/working/installation-input.json --output /absolute/working/installation-preview.json
+grant operations --workspace "$GRANT_DATA" installation-save --case CASE_ID --expected-version CASE_VERSION --expected-revision 0 --document /absolute/working/installation-input.json --expected-preview-sha256 PREVIEW_SHA256 --actor "Recording operator" --request-id ORIGINAL_INSTALLATION_SAVE --note "Complete commissioning and receiving assignment"
+grant operations --workspace "$GRANT_DATA" installation-show --case CASE_ID --installation INSTALLATION_ID --revision SAVED_REVISION
+grant operations --workspace "$GRANT_DATA" installation-history --case CASE_ID --installation INSTALLATION_ID --limit 25
+grant operations --workspace "$GRANT_DATA" installation-export --case CASE_ID --installation INSTALLATION_ID --revision SAVED_REVISION --output /absolute/delivery/complete-installation.zip
+~~~
+
+The seed response wraps the complete **document** object. Save and edit that object as installation-input.json. A new installation uses expected revision zero and omits its ID. To revise an existing installation, supply its original --installation ID and current --expected-revision to both preview and save. Retain the current case version and exact reviewed document. The [Installation guide](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md) supplies the complete fields and receiving command.
+
+A later edition keeps earlier editions readable. **Export complete handover** includes the selected original edition, readable installation.html, installation-selection.json and the complete operating case with all editions, original attachments, planner history and case history. Import that ZIP through **Import complete case** or the original operations import command; the receiver opens the selected installation edition. The receiving case gets its own native destination ID while retaining the original installation, source and review lineage.
+
+The six typed Merchant calls—merchant_grant_installations, merchant_grant_installation, merchant_grant_installation_history, merchant_grant_installation_seed, merchant_grant_installation_preview and merchant_grant_installation_save—operate this same service. Use merchant_grant_export with kind installation and the saved revision for the complete selected handover. Continue large responses through the existing exact snapshot, byte and row paging operations.
+
+The selected product includes both matching managed-launch readers and all 43 original runtime files they bind. After adopting a new source edition, review and reopen the managed application, then continue its original case and saved request identities.
+
 ## 7. Measure a cohort and prepare completion
 
 ### Freeze the actual measurement population
@@ -307,7 +338,8 @@ Choose the native export matching the intended scope:
 | Planning collection ZIP | All native planning packages; it is not the operating-case export. |
 | Forecast or Portfolio ZIP | Exact selected input, source, calculation and readable/CSV result. |
 | Cohort or Completion ZIP | The selected frozen review/preparation and all included original evidence. |
-| Complete operating-case ZIP | Pinned planning package, case records and sources, full history, forecasts, portfolios, cohort/completion work and reviews. |
+| Customer installation ZIP | The exact selected immutable edition and readable handover, plus the whole operating case, all installation editions, sources and history. |
+| Complete operating-case ZIP | Pinned planning package, case records and sources, full history, forecasts, portfolios, installation editions, cohort/completion work and reviews. |
 
 For a whole delivery, export the complete operating case after reading its current version. Preserve the exact output bytes and import them through the original receiving workspace:
 
@@ -356,7 +388,7 @@ One completed installed handover should establish:
 4. Contributor/invoice/cash work and its source-linked report; actual and conditional values remain distinguishable.
 5. A saved forecast, full Portfolio allocation and selected forecast with the original commercial release clock preserved.
 6. Original buyer and support handoff preview/receive/readback, including an exact same-request recovery and preserved peer records.
-7. A frozen actual cohort result, including unmet/unknown findings, and its deliberate Completion evidence selection.
+7. A complete customer installation through original source/commissioning, payment and aggregate budget, funded assignment, receiving/maintenance, reviewed immutable editions and selected-edition receiving; then the actual cohort result and deliberate Completion evidence selection.
 8. Full CLI and Merchant client reads, original row/byte pages and exact downloaded source identities.
 9. Complete case export, original import into the receiving workspace, reopened history/source/review checks and closed owned services.
 
@@ -373,6 +405,7 @@ The delivered set consists of the selected TGZ and manifest, installation/profil
 | Planning | [workspace](../../stellar/scf_2026/sf47_budget_model/workspace/README.md), [CLI](../../stellar/scf_2026/sf47_budget_model/workspace/CLI.md) |
 | Delivery, API and intake | [Operations](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS.md), [API](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-API.md), [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) |
 | Resource and cash assumptions | [Forecast](../../stellar/scf_2026/sf47_budget_model/workspace/FORECAST.md), [Portfolio](../../stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md) |
+| Customer installation | [Commissioning, editions and complete handover](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md) |
 | Native evidence | [Buyer](../../stellar/scf_2026/sf47_budget_model/workspace/BUYER_OPERATIONS.md), [Support](../../stellar/scf_2026/sf47_budget_model/workspace/SUPPORT_DELIVERY.md), [Cohort](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md), [Completion](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) |
 | Agent and installed lifecycle | [Grant client](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md), [Merchant MCP](../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md), [Applications](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md) |
 
