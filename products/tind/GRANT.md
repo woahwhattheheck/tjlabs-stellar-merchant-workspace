@@ -63,6 +63,8 @@ The OAI and TIND applications use the same workspace lease. Close one before ope
 
 The original MSU driver receives either `--edition-mode staff-cases` for the 11-record collection or the default complete 15-record Endeavors edition. Use distinct output directories with the same original workspace. Its saved source, build, mapped decisions, MARCXML, operator capture and handover remain part of that receiving operation; append the native operator's actual execution and receiving result to the same case.
 
+For a commissioning task that also needs cross-source identity review, select the maintained [record-mastering contribution](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/f8f27083267ca88af81bc7fe0b8a9414cc8b0e8f/stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/README.md) alongside the repository product. Import the agreed flat CSV fields with stable original record keys, review suggested matches, explicitly merge or split records, and choose original or custom field values. Its immutable CSV, schema and field-provenance edition can feed the original dataset merchant; its complete private project reopens independently for later review. Keep this reviewed derivative linked to the original OAI edition and retain ordered MARC fields, article/issue distinctions and access decisions in the repository workspace.
+
 ## A recurring service with a useful purchased result
 
 The commissioning work establishes the institution's source, mapping and receiving workflow. Recurring service then supports real new work: a newly published journal edition, changed access or contributor metadata, a requested metadata query, or a comparison between agreed source periods.

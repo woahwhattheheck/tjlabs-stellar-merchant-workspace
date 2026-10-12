@@ -10,6 +10,7 @@ const CUSTOMER_WORKSHARES = '## External buyer onboarding and study-operations c
 const AIR_QUALITY = '## Air-quality reporting and complete customer receiving';
 const MUNICIPAL = '## Municipal source operations, service reporting and reviewed GIS delivery';
 const IATI = '## IATI publishing, programme finance and complete customer receiving';
+const INSTITUTIONAL_REPOSITORY = '## Institutional repository services and complete scholarly receiving';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
@@ -26,6 +27,7 @@ function need(value, message) { if (!value) throw new Error(message); }
 // the public reader opens the complete accompanying workflow for these cases.
 const PRIVATE_SOURCE_REPOSITORIES = new Set(['woahwhattheheck/commons']);
 const PRIVATE_SOURCE_WORKFLOWS = [
+  [/\/opportunities\/discoverygarden_msu2026112_\d{8}\/tind-operator(?:\/|$)/, 'institutional-repository-services-and-complete-scholarly-receiving'],
   [/\/opportunities\/openfn-commissioning-\d{8}(?:\/|$)/, 'openfn-paid-workflow-commissioning-and-complete-receiving'],
   [/\/case_assets\/elimu-gravity-referral-implementation-\d{8}-450e(?:\/|$)/, 'referral-implementation-source-changes-returned-outcomes-and-complete-receiving'],
   [/\/case_assets\/risingwave-subscription-delivery-pilot-\d{8}(?:\/|$)/, 'recurring-subscription-delivery-and-streaming-data-commissioning'],
@@ -336,6 +338,15 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/reconciliation_receiving\.py)/, iati);
   receive('iati-fcdo-wadi-original-source', 'Original FCDO organisation and WADI activity publication',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-wadi-2026\/SOURCE\.md)/, iati);
+  const institutionalRepository = section(companion, INSTITUTIONAL_REPOSITORY)?.text || '';
+  receive('tind-institutional-migration', 'Institutional repository migration and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/OPERATING\.md)/, institutionalRepository);
+  receive('oai-original-record-collections', 'Original scholarly response intake and complete record selections',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/oai-pmh\/README\.md)/, institutionalRepository);
+  receive('tind-msu-original-source-receiving', 'Original MSU source cases and complete institutional receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/discoverygarden_msu2026112_\d{8}\/tind-operator\/OPERATOR_CASES\.md)/, institutionalRepository);
+  receive('tind-institutional-repository-contribution', 'Repository commissioning, recurring service and funded contribution',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/GRANT\.md)/, institutionalRepository);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),
