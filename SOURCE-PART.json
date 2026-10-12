@@ -1,0 +1,441 @@
+{
+  "schema": "stellar-forge.git-source-part.v1",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "d1868cba6fd5f3b57e0445a094da8a3d4002b00e",
+    "tree": "9e4112bc3da8a93aaa1eab045330ff96ae23c7d6",
+    "fileCount": 4940,
+    "sourceBytes": 65179698
+  },
+  "part": 18,
+  "parts": 18,
+  "kind": "source-files",
+  "members": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/restore-writers.mjs",
+      "mode": "100644",
+      "gitBlob": "297a58f3889c98b97d3fdc1a1c1ad2d98c30580e",
+      "bytes": 19936
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/retained-release.mjs",
+      "mode": "100644",
+      "gitBlob": "b38dadc51111570ba650ce9ad04e4ba65db3e4bd",
+      "bytes": 8343
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/retained-runbook.mjs",
+      "mode": "100644",
+      "gitBlob": "5e52adc36790ef2dc47951d8b5715a71d3b1cdaa",
+      "bytes": 4934
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/runbook.mjs",
+      "mode": "100644",
+      "gitBlob": "7ea450e2cd155577b608cebe38efb4097501c105",
+      "bytes": 13905
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/RECEIVING.md",
+      "mode": "100644",
+      "gitBlob": "fe79d27a8fd964e7b528c62ef888f7629a5aae9e",
+      "bytes": 13815
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/WORKBENCH.md",
+      "mode": "100644",
+      "gitBlob": "f8af86b3f5fccb099bddc1f773fa7a182cc98f62",
+      "bytes": 8890
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/WORKBENCH_MANAGED_RECEIVING.mjs",
+      "mode": "100644",
+      "gitBlob": "80cf2d8ac8a686c47a3c98d8c8193961c185e044",
+      "bytes": 17741
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/WORKBENCH_RECEIVING.mjs",
+      "mode": "100644",
+      "gitBlob": "da75a0ef29e5a782e084d7ecd0befc7ae8e510a2",
+      "bytes": 30000
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/application-provider.mjs",
+      "mode": "100644",
+      "gitBlob": "d996f596aca0abdd81309a9f213a90748a728d92",
+      "bytes": 5323
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/capture.mjs",
+      "mode": "100644",
+      "gitBlob": "f238d26dce241969ab715e6ecdcd38c3b012c0da",
+      "bytes": 8994
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/cli.mjs",
+      "mode": "100644",
+      "gitBlob": "14dca195d1be6bcf818f3c1e7b0dac0c589d81c4",
+      "bytes": 6148
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/hpd-purchase.json",
+      "mode": "100644",
+      "gitBlob": "ab1981f497043633eceb6326d82c554265d5bf2e",
+      "bytes": 140587
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workbench-model.mjs",
+      "mode": "100644",
+      "gitBlob": "9573196a73b4ae04a955bad0c50a5cb0526ad921",
+      "bytes": 16241
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workbench-ui/app.mjs",
+      "mode": "100644",
+      "gitBlob": "edb4a41dfc0c72b8e640b4a975c31382b2a1f8f4",
+      "bytes": 26589
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workbench-ui/index.html",
+      "mode": "100644",
+      "gitBlob": "6f781748c272e641429b8505c6dea6aedb9ac90d",
+      "bytes": 1642
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workbench-ui/style.css",
+      "mode": "100644",
+      "gitBlob": "c220b9122e6a42e63fd59cafe2fb35dbee53f0e9",
+      "bytes": 5327
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workbench.d.mts",
+      "mode": "100644",
+      "gitBlob": "b47838ac9664ce2f0d77faf0d06ffe824306a335",
+      "bytes": 2759
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workbench.mjs",
+      "mode": "100644",
+      "gitBlob": "e7a37d0ee404a876498af44fe8aca9ff82703bde",
+      "bytes": 11243
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workspace.d.mts",
+      "mode": "100644",
+      "gitBlob": "83a110c526ba5c5b0dc9b9c737467e95e277c864",
+      "bytes": 2907
+    },
+    {
+      "path": "stellar/scf_2026/presentation/reviewer/workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "ec86b509d0c1999f923f69cdb7116925cdc9e9b5",
+      "bytes": 29134
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/README.md",
+      "mode": "100644",
+      "gitBlob": "cdac196e97cc9c9052952b61f0b01f4c0eef9082",
+      "bytes": 6740
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/alternatives/README_60DAY_REPHASE.md",
+      "mode": "100644",
+      "gitBlob": "d86cc61bc2dd9a7e9112458f90d05c96694bd1bd",
+      "bytes": 6098
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/alternatives/sf10_70000_60day_review_rephased.json",
+      "mode": "100644",
+      "gitBlob": "530f2b05506886feb82ec6348df0872f822a4dc0",
+      "bytes": 8830
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/budget.py",
+      "mode": "100644",
+      "gitBlob": "c6bf3edd8ca54452de30b83735b4f30c35591107",
+      "bytes": 10047
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/example_scenario.json",
+      "mode": "100644",
+      "gitBlob": "2a7e0703a242faf61c296a2dc0faf477650c5077",
+      "bytes": 4962
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/remaining-work.md",
+      "mode": "100644",
+      "gitBlob": "d364f12f12f500ead40df8ac5d7661ced49d424b",
+      "bytes": 13585
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/sf10_70000_candidate.json",
+      "mode": "100644",
+      "gitBlob": "62033319b12b6aa62b107c529c43739cdf4c3df4",
+      "bytes": 8440
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/sf10_current_candidate.json",
+      "mode": "100644",
+      "gitBlob": "999f01bc9df0563c94a221c1fad1fbc91ccdcdd4",
+      "bytes": 24023
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/AGENT.md",
+      "mode": "100644",
+      "gitBlob": "5faa50daf31821865ba2554707e19a746723dfe7",
+      "bytes": 8874
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/CLI.md",
+      "mode": "100644",
+      "gitBlob": "02428aaf3eb1c04512d22b70d31b65d5c8c1755f",
+      "bytes": 16830
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md",
+      "mode": "100644",
+      "gitBlob": "b0cd5d88032e93bfe3427595672b0b6afd5875f1",
+      "bytes": 14186
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/FORECAST.md",
+      "mode": "100644",
+      "gitBlob": "2e76b3a49cd616b90ce6cd801697f0e6c96734b7",
+      "bytes": 13973
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-API.md",
+      "mode": "100644",
+      "gitBlob": "cc8c0a0dcbf4d8478d6e754e0c97e37a22afbc92",
+      "bytes": 10053
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS.md",
+      "mode": "100644",
+      "gitBlob": "cfe741e21eb3b7551a273e2013e7b187125090ca",
+      "bytes": 10613
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md",
+      "mode": "100644",
+      "gitBlob": "2613686a0779036feaf9be1c9acc2a4482f5f50d",
+      "bytes": 12017
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/README.md",
+      "mode": "100644",
+      "gitBlob": "da4b9101b42271ed500006d61e22d2441ec6254a",
+      "bytes": 17594
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/SUPPORT_DELIVERY.md",
+      "mode": "100644",
+      "gitBlob": "c6501b39c5a893f536d225ca817ef3644f58940b",
+      "bytes": 8339
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md",
+      "mode": "100644",
+      "gitBlob": "2f07714dcb463136892206e8e5d8562fc84a6335",
+      "bytes": 7864
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs",
+      "mode": "100644",
+      "gitBlob": "55109e8d0d35d129fd1b9663088155dabe37c59e",
+      "bytes": 30615
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs",
+      "mode": "100644",
+      "gitBlob": "961e7d6c8241f34871004c3a59b56e09c963a923",
+      "bytes": 711
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/app.mjs",
+      "mode": "100644",
+      "gitBlob": "c6b86ada67616b89594f6a128dd460d7944a0c76",
+      "bytes": 37855
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/cli.py",
+      "mode": "100644",
+      "gitBlob": "a1670199ea622852edf41e5fff356d8d76ca2072",
+      "bytes": 23209
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/forecast.css",
+      "mode": "100644",
+      "gitBlob": "1b4df44a32e0273649e994e5f0897e2c1c699c21",
+      "bytes": 4904
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/forecast.mjs",
+      "mode": "100644",
+      "gitBlob": "46def885cabc12a24bd9b9b829fe8f49978d53d7",
+      "bytes": 31861
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/forecast.py",
+      "mode": "100644",
+      "gitBlob": "1bea2beea4d5db66f7de11ee09523a1585ca2397",
+      "bytes": 42126
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/index.html",
+      "mode": "100644",
+      "gitBlob": "0816666ed33e01c5c45017ccb71f9be045a51ee5",
+      "bytes": 2784
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/launch.mjs",
+      "mode": "100644",
+      "gitBlob": "3f6bf070f4aa27c24421f684c8eefee446cb47c9",
+      "bytes": 8453
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/launcher.mjs",
+      "mode": "100644",
+      "gitBlob": "fe09c42a496552a5b505297674e0376ae535c641",
+      "bytes": 1635
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/managed_launch.py",
+      "mode": "100644",
+      "gitBlob": "09b13e7b1674567130c3a945c641c8aec5368800",
+      "bytes": 5196
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/model.py",
+      "mode": "100644",
+      "gitBlob": "8c4de3cf5b21a60f4c75361cf883997b866af6f0",
+      "bytes": 40456
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations.css",
+      "mode": "100644",
+      "gitBlob": "62415e0b14e973a00e4e93e342ea219b291101c0",
+      "bytes": 5501
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations.mjs",
+      "mode": "100644",
+      "gitBlob": "682e5a49e4832451f65cca8f24dbace8ec54c663",
+      "bytes": 46650
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations.py",
+      "mode": "100644",
+      "gitBlob": "b5f560879372713c28a337ecb686a18a8ac9d597",
+      "bytes": 55410
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_cli.py",
+      "mode": "100644",
+      "gitBlob": "76b1a560244f5c8ce45f0c2c463690ba4316cbab",
+      "bytes": 18614
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_completion.css",
+      "mode": "100644",
+      "gitBlob": "2b58a6ca616b3174593e24a2b735e2f38d9cf39d",
+      "bytes": 2936
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_completion.mjs",
+      "mode": "100644",
+      "gitBlob": "9f2b35fd7357a11716755449675b532529addd50",
+      "bytes": 31342
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_completion.py",
+      "mode": "100644",
+      "gitBlob": "d6d450747eafaf0ef17b4c8b75d28f7b1375308c",
+      "bytes": 40343
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_domain.py",
+      "mode": "100644",
+      "gitBlob": "c0f5bd36a6a49a7636832bee2607657b75ef8dea",
+      "bytes": 33860
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_http.py",
+      "mode": "100644",
+      "gitBlob": "aecd10a777213791ca4f54c47e64454a804ea985",
+      "bytes": 5722
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_intake.py",
+      "mode": "100644",
+      "gitBlob": "8917d687e128b805c05beca18235a0242a091bb3",
+      "bytes": 9718
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_support.mjs",
+      "mode": "100644",
+      "gitBlob": "54592272924e215950a88d04324607682f98963f",
+      "bytes": 21347
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_support.py",
+      "mode": "100644",
+      "gitBlob": "4b2e354a866d172a2f9351ac435cb45e4cc616a3",
+      "bytes": 12607
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_walkthrough.py",
+      "mode": "100644",
+      "gitBlob": "08abe5e38ae44118b5b140e3b4cb96995a1e8bf1",
+      "bytes": 22957
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/portfolio.css",
+      "mode": "100644",
+      "gitBlob": "f18191a898066806c73f1119f4a6da48ad83002c",
+      "bytes": 5565
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/portfolio.mjs",
+      "mode": "100644",
+      "gitBlob": "26d0df39f8b45782ae0a8fa646ae4bd92ce5bbc7",
+      "bytes": 47901
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/portfolio.py",
+      "mode": "100644",
+      "gitBlob": "2c10875be4c8030df6e5378ae378538b40f1c6c7",
+      "bytes": 35850
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/portfolio_schedule.py",
+      "mode": "100644",
+      "gitBlob": "e3aac6d8a4cba8317e0bf03cdc7cd57045f2e575",
+      "bytes": 20776
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/server.py",
+      "mode": "100644",
+      "gitBlob": "297d0b0c5e66073f3ab2c58a29b0f85b51fdaa61",
+      "bytes": 16140
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/style.css",
+      "mode": "100644",
+      "gitBlob": "f6144d7d9cfb96363103bff2ea824cade895354b",
+      "bytes": 10379
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/support_handoff.mjs",
+      "mode": "100644",
+      "gitBlob": "3975aa67ae44b463ac6a4f75a4c66f61edcbf115",
+      "bytes": 4451
+    },
+    {
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/workshare_intake.py",
+      "mode": "100644",
+      "gitBlob": "9cc5b3d97d01a8d6c9425e1ffd29d746c8cba169",
+      "bytes": 43357
+    }
+  ]
+}
