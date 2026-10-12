@@ -1,0 +1,172 @@
+# TokenJunkieLabs Stellar merchant workspace
+
+Build and operate a data service with Stellar payment access, native customer
+clients, retained source results, deployment releases, and an operator workspace.
+
+The product brings together GraphQL service authoring, satellite imagery and
+processing history, searchable material catalogs, merchant incident work, and
+QuickBooks or Xero accounting operations. Each workflow keeps its original saved
+records from source selection through delivery and reopening.
+
+## Choose a workflow
+
+| Work to complete | Entry point | Result |
+| --- | --- | --- |
+| Turn an existing GraphQL query service into a merchant | `starforge graphql-workspace` or the merchant MCP tools | Reviewed operations, actual source previews, buyer clients, versioned merchant packages and deployment releases |
+| Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
+| Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
+| Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
+| Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
+
+The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
+connects these entry points to installation, source configuration, saved work,
+deployment, receiving, and recovery. The
+[material catalog guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/material-catalog/README.md)
+covers its own complete catalog workflow.
+
+## Open the source product
+
+Use Linux, Node.js 22.16 or later, Git, and util-linux `flock`.
+Retained workspaces need a local filesystem that supports file locks, atomic
+rename, and fsync.
+
+~~~sh
+git clone https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.git
+cd tjlabs-stellar-merchant-workspace
+
+node stellar/scf-starforge-20261009/distribution/cli.mjs --help
+~~~
+
+The source paths are preserved. Before installation, replace `starforge` in
+the commands below with:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/cli.mjs
+~~~
+
+For example, start a private imagery workspace against an actual public catalog:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/cli.mjs stac init \
+  --workspace /absolute/private/imagery \
+  --title 'Imagery operations' \
+  --endpoint https://earth-search.aws.element84.com/v1
+
+node stellar/scf-starforge-20261009/distribution/cli.mjs stac serve \
+  --workspace /absolute/private/imagery --port 0
+~~~
+
+Open the local URL printed by the server. Discover the catalog, save an area and
+time selection, review the source request, and acquire its scene pages. The
+workspace retains the original provider responses, scene identities, geometry,
+and selected image files. Reopening saved work uses those retained files.
+
+## Create and install a source archive
+
+The maintained builder packages one selected Git revision and its complete
+declared source. Run it from the product checkout:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo . --ref HEAD --out /absolute/private/packages/merchant
+~~~
+
+Keep the returned archive, its SHA-256, and its manifest together. The package
+contains the original source, browser assets, command registrations, API exports,
+selected README, and licenses.
+
+For a source-only installation in a new application directory:
+
+~~~sh
+npm install --ignore-scripts --offline --omit=optional /absolute/path/to/package.tgz
+npx --no-install starforge doctor
+~~~
+
+Source-only installation supports the features that use Node's built-in modules.
+The runtime installer adds the declared dependencies for selected database,
+GraphQL, MCP, payment, and other adapters. Choose the feature set for the actual
+merchant; the installed package supplies the exact dependency declarations.
+
+A GraphQL merchant operated through MCP normally selects the GraphQL, schema,
+OpenAPI, and MCP features, plus the native Stellar packages:
+
+~~~sh
+starforge runtime-install prepare \
+  --dir /srv/starforge/runtimes/query-merchant \
+  --archive /srv/starforge/downloads/merchant.tgz \
+  --sha256 ORIGINAL_ARCHIVE_SHA256 \
+  --native --feature graphql --feature schema --feature openapi --feature mcp \
+  --operator
+
+starforge runtime-install install \
+  --dir /srv/starforge/runtimes/query-merchant
+
+starforge runtime-install run \
+  --dir /srv/starforge/runtimes/query-merchant -- source
+~~~
+
+Use the actual archive path and hash returned by the builder. The original
+installer retains its lock, dependency selection, installation progress and
+recovery state. Its
+[installation guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)
+covers interruption, native prerequisites, upgrades, and reopening. The
+[runtime workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md)
+provides the corresponding browser workflow.
+
+## Operate one saved merchant
+
+For an existing query service:
+
+1. Open the GraphQL workspace and capture the actual served schema.
+2. Select query fields and buyer-variable bounds, then preview the approved
+   operation against its configured source.
+3. Save the merchant plan with the intended public routes and payment choices.
+4. Review and export the saved project. The export includes the original query,
+   source binding, seller files, generated buyer client, and request examples.
+5. Prepare the deployment, stage its release, select it, and start the original
+   merchant. Keep the release and host records with the workspace.
+6. Reopen the same project when the source schema or service changes. Compare
+   against its retained export before preparing a revised release.
+
+The browser and merchant MCP tools operate the same saved project, revisions,
+preview UUIDs, exports, and deployment records. A completed source preview can be
+opened again without making another provider request. The
+[GraphQL guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
+and
+[MCP operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/mcp-merchant-operator/GRAPHQL_WORKSPACES.md)
+give the exact configuration and action contracts.
+
+## Keep the operating state
+
+Keep workspace directories, configuration files, original request records, and
+completed delivery files outside the source checkout. Supply credential values
+through the host's environment or existing secret manager; configuration files
+retain their reference names.
+
+Use the product's original export and receiving commands for a handover. Imagery
+deliveries include a local scene explorer and retained selected assets. GraphQL
+exports include the generated client and exact deployment files. Support
+handoffs carry the original captures and saved case. Accounting operations keep
+their original request and response identities through reconciliation.
+
+Use a fresh runtime directory for an upgrade, select its original source
+archive, then attach the existing operating state through that workflow's
+supported configuration. Retain the previous runtime and selected release until
+the replacement is operating as intended.
+
+## Product source and guides
+
+- [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
+- [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
+- [Imagery operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/README.md)
+- [Cirrus and FilmDrop processing](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/processing/PROCESSING.md)
+- [Portable GIS receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/receiving/PORTABLE_GIS.md)
+- [Merchant incident desk](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf74-merchant-support-console/INCIDENT_SOURCES.md)
+- [QuickBooks and Xero operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md)
+
+Installed archives retain these guides under `source/` with the same relative
+paths. The package manifest records the selected source revision and original
+file identities.
+
+Copyright TokenJunkieLabs. The product retains its MIT license and the applicable
+third-party license files.
