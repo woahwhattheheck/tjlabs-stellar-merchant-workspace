@@ -96,12 +96,15 @@ def persist_outputs(code):
  archive=OUT.parent/'merchant-delivery-continuation.zip'
  excluded={'tmp','browser-profile','chromium-profile','playwright-profile','node_modules','__pycache__'}
  entries=[]
- for path in sorted(OUT.rglob('*')):
-  relative=path.relative_to(OUT)
-  if not path.is_file() or path.is_symlink() or any(part in excluded for part in relative.parts):
-   continue
-  if path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.pyc'}: continue
-  entries.append((path,relative))
+ for current,directories,files in os.walk(OUT,topdown=True,followlinks=False):
+  directories[:]=sorted(name for name in directories
+   if name not in excluded and not (Path(current)/name).is_symlink())
+  for name in sorted(files):
+   path=Path(current)/name
+   if path.is_symlink() or not stat.S_ISREG(path.lstat().st_mode): continue
+   if path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.pyc'}: continue
+   entries.append((path,path.relative_to(OUT)))
+ entries.sort(key=lambda item:str(item[1]))
  continuation={'operation':OPERATION,'originalOutput':str(OUT),'originalSourceRoot':str(ROOT),
   'managedSource':summary['managedSource'],'directSource':summary['directSource'],
   'applicationsSource':summary['applicationsSource'],'applicationsProduct':summary['applicationsProduct'],
@@ -152,6 +155,56 @@ def persist_outputs(code):
   raise RuntimeError('The original ordered artifact save needs its retained result reconciled.')
  return items
 
+
+def require_installation(managed,direct,direct_output):
+ donor=ENV.get('DELIVERY_CAMPAIGN_DONOR')
+ dependencies=ENV.get('DELIVERY_CAMPAIGN_DEPENDENCIES')
+ cache=ENV.get('DELIVERY_INSTALLATION_NPM_CACHE')
+ if not donor or not dependencies or not cache:
+  raise ValueError('Supply the existing original Git donor, dependency root and populated offline npm cache.')
+ source_directory=OUT.parent/'installation-source'
+ source_context={'operation':OPERATION,'sourcePin':summary['applicationsProduct'],
+  'directory':str(source_directory),'repository':donor,'node':NODE,
+  'bootstrapDependencies':dependencies,'offlineSource':False,
+  'reuseSources':[str(ROOT/'direct-source'),str(ROOT)]}
+ source_context_file=OUT/'installation-source-context.json';exact_context(source_context_file,source_context)
+ source_code=subprocess.run([PYTHON,'-B',
+  str(ROOT/'experiments/managed-settlement-delivery-acceptance/installation-source.py'),
+  str(source_context_file)],cwd=ROOT,env=ENV).returncode
+ if source_code: raise RuntimeError('The original selected installation source remains incomplete.')
+ source_record=document(source_directory/'source-result.json')
+ require_binding(source_record and source_record['value'].get('sourceCommit')==summary['applicationsProduct']
+  and source_record['value'].get('status')=='MATERIALIZED',
+  'Verify the actual selected source before its original workspace builds the installation.')
+ repository=source_record['value'].get('sourceRepository')
+ require_binding(isinstance(repository,str) and Path(repository).is_absolute(),
+                 'The original source build must use its actual private Git repository.')
+ write_json(OUT/'installation-source-result.json',source_record['value'])
+ installation_output=OUT/'installation-receiving'
+ context={'sourceRoot':str(source_directory/'bootstrap'),'repository':repository,
+  'managedOutput':str(OUT),'directOutput':str(direct_output),'output':str(installation_output),
+  'operation':OPERATION,'sourcePin':summary['applicationsProduct'],
+  'installedRoot':ENV.get('DELIVERY_APPLICATIONS_INSTALLED_ROOT'),'node':NODE,'python':PYTHON,
+  'npmCache':cache,'nodeHeaders':ENV.get('DELIVERY_INSTALLATION_NODE_HEADERS'),'offlineSource':False}
+ context_file=OUT/'installation-context.json';exact_context(context_file,context)
+ result_code=subprocess.run([NODE,
+  str(ROOT/'experiments/merchant-delivery-installation-receiving/phase.mjs'),
+  '--context',str(context_file)],cwd=ROOT,env=ENV).returncode
+ record=document(installation_output/'receipt.json')
+ row={'exitCode':result_code,'receipt':compact(record)}
+ summary['installation']=row;emit({'phase':'original-installation-finished',**row})
+ if result_code or not valid(record,'scratch.merchant-delivery-installation-receiving.v1',
+                             ['ownedProcessesClosed']):
+  raise RuntimeError('The original merchant-delivery installation remains incomplete.')
+ value=record['value'];binding=value.get('binding')
+ require_binding(isinstance(binding,dict) and binding.get('sourceCommit')==summary['applicationsProduct'],
+                 'Preserve the actual selected installed source binding.')
+ installed=binding.get('installedRoot')
+ require_binding(isinstance(installed,str) and Path(installed).is_absolute()
+  and Path(installed).is_dir(),'The original installation must return its actual READY runtime directory.')
+ row['binding']=binding
+ return installed
+
 code=0
 try:
  managed=run_phase('managed',OUT/'receipt.json','scratch.managed-settlement-delivery.v1',
@@ -169,7 +222,9 @@ try:
  prior_apps=document(applications_output/'receipt.json')
  apps_complete=valid(prior_apps,'scratch.merchant-delivery-applications-receiving.v1',
                      ['browserComplete','customerReopenComplete','ownedProcessesClosed'])
- installed=ENV.get('DELIVERY_APPLICATIONS_INSTALLED_ROOT')
+ installed=None
+ if not apps_complete:
+  installed=require_installation(managed,direct,direct_output)
  if apps_complete:
   apps=run_phase('applications',applications_output/'receipt.json',
    'scratch.merchant-delivery-applications-receiving.v1',
@@ -186,10 +241,7 @@ try:
    [NODE,str(ROOT/'experiments/merchant-delivery-applications-receiving/journey.mjs'),
     '--context',str(context_file)],ROOT)
  else:
-  summary['phases'].append({'name':'applications','state':'AWAITING_READY_INSTALLATION',
-   'source':summary['applicationsSource'],'requiredEnvironment':'DELIVERY_APPLICATIONS_INSTALLED_ROOT'})
-  emit({'phase':'applications-awaiting-ready-installation','source':summary['applicationsSource']})
-  raise RuntimeError('The original Applications phase requires its selected READY installation.')
+  raise RuntimeError('The original installation did not return a selected READY runtime.')
  require_binding(apps['value'].get('product')==summary['applicationsProduct']
   and apps['value'].get('managedReceiptSha256')==managed['sha256']
   and apps['value'].get('directReceiptSha256')==direct['sha256']
