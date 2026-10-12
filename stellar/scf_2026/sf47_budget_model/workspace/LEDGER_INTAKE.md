@@ -299,4 +299,4 @@ Both managed launch readers include the intake engine and its mounted browser fi
 - [Ledger engine](operations_ledger_intake.py), [operator desk](operations_ledger_intake.mjs) and [styles](operations_ledger_intake.css).
 - [Original operations owner](operations.py), [native business rules](operations_domain.py), [HTTP adapter](operations_http.py) and [CLI](operations_cli.py).
 - [Typed client](agent-client.mjs), [declarations](agent-client.d.mts), [managed Python source](managed_launch.py) and [managed Node source](launch.mjs).
-- [Grant Operations installed guide](../../../../../products/grant-operations/OPERATING.md).
+- [Grant Operations installed guide](../../../../products/grant-operations/OPERATING.md).
