@@ -111,7 +111,7 @@ export async function operateCanadaBuysTools({ sourceDirectory, caseDirectory, o
     const provider = (await moduleAt(providerContribution.merchantProviders['canadabuys-workspaces'])).default;
     const toolCatalog = provider.tools((name, description, properties, required, annotations) =>
       ({ name, description, inputSchema: { type: 'object', properties, required }, annotations }));
-    need(toolCatalog.length === 29 && new Set(toolCatalog.map(tool => tool.name)).size === 29,
+    need(toolCatalog.length === 37 && new Set(toolCatalog.map(tool => tool.name)).size === 37,
       'The registered native tool catalog changed.');
     const exportsDirectory = join(directory, 'exports');
     await mkdir(exportsDirectory, { mode: 0o700 });
