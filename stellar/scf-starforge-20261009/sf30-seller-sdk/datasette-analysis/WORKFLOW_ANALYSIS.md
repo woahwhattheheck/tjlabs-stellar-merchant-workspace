@@ -182,6 +182,269 @@ A configured projection uses the publisher's original schema. Without one, the i
 
 No page limit is supplied by this adapter. A source capture follows the original source's complete continuation. On an interrupted transport, the same native input and capture UUID continue the saved acquisition.
 
+## Named sources and complete reconciliation
+
+A profile can acquire several original feeds into the same existing Analysis workspace. Set sourceAlias to the name of the primary feed and relatedSources to a map of additional source configurations. Each related configuration supports the same handover, native-edition and datasette acquisition modes. Its optional analysisPrefix selects its native Analysis collection prefix; the default is its alias truncated to sixteen characters.
+
+~~~json
+{
+  "sourceAlias": "prices",
+  "source": {
+    "kind": "native-edition",
+    "edition": "/absolute/private/prices/edition.json",
+    "sha256": "ORIGINAL_REVIEWED_PRICES_EDITION_SHA256"
+  },
+  "relatedSources": {
+    "catalog": {
+      "kind": "native-edition",
+      "edition": "/absolute/private/catalog/edition.json",
+      "sha256": "ORIGINAL_REVIEWED_CATALOG_EDITION_SHA256",
+      "analysisPrefix": "catalog"
+    }
+  }
+}
+~~~
+
+Aliases start with a letter and use up to forty-eight letters, digits or underscores. The primary alias and related aliases must be distinct, including case. Each alias retains its own source acquisition identity, reviewed source edition, full handover and original source package. Related feeds are prepared first, followed by the primary source; the native archive retains that primary edition and all the prepared source collections in the same Analysis database.
+
+Installed SQL identifies original feeds and columns explicitly:
+
+| SQL token | Native value |
+| --- | --- |
+| {{source:prices}} | The primary price edition's complete original row collection |
+| {{source:catalog}} | The related catalog edition's complete original row collection |
+| {{column:prices:name}} | The reviewed price column mapped from its original name field |
+| {{column:catalog:url}} | The reviewed catalog column mapped from its original url field |
+| {{collection:catalog:quality}} | The named catalog collection, when produced by the original Analysis component |
+
+For example, a configured join can use FROM {{source:prices}} AS p LEFT JOIN {{source:catalog}} AS c and refer to p.{{column:prices:name}} or c.{{column:catalog:url}}. The installed report supplies the actual key, canonicalization, missing-value and currency rules for those original source schemas. Native Analysis performs the configured SQL against the saved actual views.
+
+The adapter records analysis.sources with every source alias, prepared edition ID, original source metadata and review, row count and complete native collection bindings. Each query and report pins the same actual view state after all selected sources have been prepared. The complete original source files and baseline products for catalog use filenames beginning catalog_; primary filenames remain those of the original single-source delivery.
+
+To compare both feeds with their retained earlier editions, add analysis.comparisons:
+
+~~~json
+{
+  "comparisons": {
+    "prices": {
+      "before": "EARLIER_PREPARED_PRICES_EDITION_SHA256",
+      "keys": ["name"]
+    },
+    "catalog": {
+      "before": "EARLIER_PREPARED_CATALOG_EDITION_SHA256",
+      "keys": ["url"]
+    }
+  }
+}
+~~~
+
+These names and keys describe the configuration positions. Use the actual reviewed source key for each feed. Each native comparison retains its own original results and complete JSON/CSV export, named by source alias. analysis.comparison continues to select the primary comparison in an existing single-source profile; select each alias once across comparison and comparisons.
+
+## Native preparation for the receiving profile
+
+Build a new complete installed release from the selected source commit when needed using the existing product builder:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/checkout \
+  --ref ORIGINAL_SOURCE_COMMIT \
+  --selection datasette \
+  --out /absolute/private/datasette-release
+~~~
+
+The original [product receiving guide](../../../../products/datasette/RECEIVING.md) receives that release. In the existing runtime's Python & workbooks installation, select Python 3.11 or newer and the workbooks extra. Its exact installation ID is returned by the original inventory command:
+
+~~~sh
+starforge runtime-workspace python-status \
+  --workspace /absolute/private/runtime-operator \
+  --runtime-id ORIGINAL_RUNTIME_ID
+~~~
+
+Use that installation's executable for the Python commands below. For an existing running Analysis application, obtain the actual original operation ID through its maintained client. Run from this datasette-analysis component directory:
+
+~~~sh
+analysis_workspace="/absolute/private/customer-analysis"
+task_python="/absolute/installed/workbooks/bin/python"
+analysis_operation="$("$task_python" - "$analysis_workspace" <<'PY'
+import sys
+from operator_client import DatasetteOperatorClient
+original = DatasetteOperatorClient.from_workspace(sys.argv[1]).status()
+print(original["operation_id"])
+PY
+)"
+~~~
+
+For a new customer Analysis operation, retain its ID once in the private project directory before starting the original application:
+
+~~~sh
+analysis_operation="$("$task_python" - /absolute/private/project/analysis-operation.json <<'PY'
+import json
+from pathlib import Path
+import re
+import sys
+import uuid
+path = Path(sys.argv[1])
+path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+try:
+    with path.open("x", encoding="utf-8") as output:
+        json.dump({"operation_id": uuid.uuid4().hex}, output)
+        output.write("\n")
+except FileExistsError:
+    pass
+value = json.loads(path.read_text(encoding="utf-8"))
+operation_id = value["operation_id"]
+if not isinstance(operation_id, str) or re.fullmatch(r"[a-f0-9]{32}", operation_id) is None:
+    raise ValueError("Select the original saved Analysis operation.")
+print(operation_id)
+PY
+)"
+~~~
+
+Start the maintained Analysis server on its original owner, using the retained ID. The existing Applications pane can manage the same process; the direct source command is:
+
+~~~sh
+"$task_python" cli.py serve \
+  --workspace "$analysis_workspace" \
+  --operation-id "$analysis_operation" \
+  --checkout /absolute/installed-source \
+  --node /absolute/installed/node \
+  --port 0
+~~~
+
+Keep that original listener open while the request worker runs. After a restart or native archive receiving, reuse the original Analysis operation ID from the retained project. The running client command above reads it back with the source workspace identity.
+
+Open the source workspace through its original command:
+
+~~~sh
+starforge datasette serve \
+  --directory /absolute/private/datasette-source --create \
+  --connection-file /absolute/private/datasette-source/connection.json \
+  --port 0
+~~~
+
+The WRI package belongs to that installed source. Save the actual absolute path in a private receive-wri.json:
+
+~~~json
+{
+  "archiveFile": "/absolute/installed-source/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette/sources/wri-geothermal-20261012/wri-geothermal.sfds.gz",
+  "sha256": "53f2486406d61f18c9e1c9ceaac659c265bbad7afe2fe54b1a17f43307cb0ca0",
+  "id": "wri-geothermal"
+}
+~~~
+
+Then use the existing source receiver and retain its complete original result:
+
+~~~sh
+starforge datasette \
+  --url-file /absolute/private/datasette-source/connection.json \
+  --operation source.receive \
+  --input-file /absolute/private/project/receive-wri.json \
+  --out /absolute/private/project/receive-wri-result.json
+~~~
+
+A continued native receive returns that same source edition. Keep the completed receipt for the next step. Form the customer handover from its actual returned path and hash:
+
+~~~sh
+"$task_python" - /absolute/private/project/receive-wri-result.json /absolute/private/project/wri-handover.json <<'PY'
+import json
+from pathlib import Path
+import sys
+original = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+if original["editionSha256"] != "ee34942e0c4c090d4e5cab66eeb51dda49c5cf8852f86d9dfa299913b4115616":
+    raise ValueError("Select the retained original WRI edition.")
+handover = {
+    "schema": "stellar-forge.datasette-analysis-handover.v1",
+    "delivery": {"kind": "native-edition",
+                 "edition": original["editionFile"],
+                 "sha256": original["editionSha256"]},
+}
+target = Path(sys.argv[2])
+try:
+    with target.open("x", encoding="utf-8") as output:
+        json.dump(handover, output, ensure_ascii=False, indent=2)
+        output.write("\n")
+except FileExistsError:
+    if json.loads(target.read_text(encoding="utf-8")) != handover:
+        raise ValueError("The saved handover selects a different original edition.")
+print(str(target))
+PY
+~~~
+
+The resulting handover, original running Analysis directory/ID and complete software archive are the concrete configure inputs in the WRI profile below. The source.receive operation verifies the entire native package before returning its edition; the adapter and original Analysis importer reopen that complete source closure.
+
+
+## Original WRI receiving profile
+
+The retained WRI geothermal edition provides a complete source for running this workflow on the existing native receiving installation. Its original source package contains all four response pages, 189 records and 26 ordered columns. The native review records 189 distinct, nonblank gppd_idnr values, 22 countries and 65 USA records.
+
+The package is wri-geothermal.sfds.gz, 59,792 bytes, SHA-256 53f2486406d61f18c9e1c9ceaac659c265bbad7afe2fe54b1a17f43307cb0ca0. Its reviewed edition SHA-256 is ee34942e0c4c090d4e5cab66eeb51dda49c5cf8852f86d9dfa299913b4115616. The complete original source, metadata and native result are retained under [datasette/sources/wri-geothermal-20261012](../datasette/sources/wri-geothermal-20261012/).
+
+Receive the package through the original source.receive operation and select the returned absolute editionFile as source.edition with kind native-edition and the reviewed edition hash above. The original source and Analysis launch records supply the installed workspace and operation fields. [WORKFLOW_EXAMPLE.json](WORKFLOW_EXAMPLE.json) contains the complete installed-profile template for this receiving. Use the original local handover, complete installed source archive and running Analysis workspace/operation with configure:
+
+~~~sh
+python3 workflow_cli.py configure \
+  --template WORKFLOW_EXAMPLE.json \
+  --source-handover /absolute/private/wri/handover.json \
+  --source-archive /absolute/private/releases/complete-source.zip \
+  --analysis-workspace /absolute/private/customer-analysis \
+  --operation-id ORIGINAL_32_CHARACTER_LOWERCASE_HEXADECIMAL_ID \
+  --output /absolute/private/wri/workflow-configuration.json
+~~~
+
+These flags replace SOURCE_HANDOVER, SOURCE_ARCHIVE, ANALYSIS_WORKSPACE and ANALYSIS_OPERATION_ID before configure retains the complete original paths and hashes. Add --flow-delivery with the actual selected native flow delivery file when connecting the result to its installed broker or callback. A paired-source profile also accepts --related-handover catalog=/absolute/private/catalog/handover.json, repeated for each selected original feed.
+
+The profile uses these complete Analysis query and report settings:
+
+~~~json
+{
+  "queries": [
+    {
+      "name": "original_records",
+      "title": "Complete original geothermal records",
+      "sql": "SELECT * FROM {{plants}} ORDER BY {{column:gppd_idnr}}",
+      "parameterNames": [],
+      "maxRows": 100000,
+      "note": "Every original source row and column, including explicit nulls, source URLs and original attribution."
+    },
+    {
+      "name": "selected_country",
+      "title": "Selected country and capacity threshold",
+      "sql": "SELECT * FROM {{plants}} WHERE {{column:country}} = ? AND {{column:capacity_mw}} >= ? ORDER BY {{column:capacity_mw}} DESC, {{column:gppd_idnr}}",
+      "parameterNames": ["country", "minimumCapacityMw"],
+      "maxRows": 100000,
+      "note": "Country is the original three-letter code. The capacity threshold uses the published capacity_mw field in MW."
+    },
+    {
+      "name": "country_inventory",
+      "title": "Country capacity and 2017 generation coverage",
+      "sql": "SELECT {{column:country}} AS country, {{column:country_long}} AS country_name, COUNT(*) AS plants, SUM({{column:capacity_mw}}) AS published_capacity_mw, COUNT({{column:year_of_capacity_data}}) AS plants_with_capacity_year, COUNT({{column:generation_gwh_2017}}) AS plants_with_observed_generation_2017, SUM({{column:generation_gwh_2017}}) AS observed_generation_2017_gwh FROM {{plants}} GROUP BY {{column:country}}, {{column:country_long}} ORDER BY {{column:country}}",
+      "parameterNames": [],
+      "maxRows": 100000,
+      "note": "Capacity MW and observed generation GWh retain separate units. SUM ignores missing observations and remains NULL when every observation is missing; the coverage count accompanies the total."
+    },
+    {
+      "name": "source_quality",
+      "title": "Reviewed source coverage",
+      "sql": "SELECT COUNT(*) AS source_rows, COUNT(DISTINCT {{column:gppd_idnr}}) AS distinct_plant_keys, SUM(CASE WHEN {{column:gppd_idnr}} IS NULL OR TRIM({{column:gppd_idnr}}) = '' THEN 1 ELSE 0 END) AS missing_or_blank_keys, SUM(CASE WHEN {{column:owner}} IS NULL THEN 1 ELSE 0 END) AS missing_owner, SUM(CASE WHEN {{column:year_of_capacity_data}} IS NULL THEN 1 ELSE 0 END) AS missing_capacity_year, SUM(CASE WHEN {{column:generation_gwh_2017}} IS NULL THEN 1 ELSE 0 END) AS missing_observed_generation_2017, SUM(CASE WHEN {{column:latitude}} IS NULL OR {{column:longitude}} IS NULL OR {{column:latitude}} < -90 OR {{column:latitude}} > 90 OR {{column:longitude}} < -180 OR {{column:longitude}} > 180 THEN 1 ELSE 0 END) AS missing_or_out_of_range_coordinates FROM {{plants}}",
+      "parameterNames": [],
+      "maxRows": 100000,
+      "note": "Source-quality counts retain each underlying record in the complete original-records output."
+    }
+  ],
+  "report": {
+    "title": "WRI geothermal source inventory and selected-country review",
+    "introduction": "World Resources Institute, Global Power Plant Database, CC BY 4.0. Source pages were observed on 12 October 2026; capacity, commissioning and generation values retain their original historical source years. This report separates published capacity in MW, observed 2017 generation in GWh, estimated generation and missing observations.",
+    "note": "Complete original edition, customer SQL, parameters, report and editable workspace delivered together."
+  }
+}
+~~~
+
+Use profile wri-geothermal-review with the original request parameters {"country":"USA","minimumCapacityMw":0}. The full-record section selects 189 rows; the original country section selects the 65 retained USA records. These counts describe the retained source, and the native query result records its actual output.
+
+For the receiving successor, keep the original business request in the received project and send a new requestId with parentRequestId set to that original request. Changing minimumCapacityMw to 10 makes a concrete report change using the same edition and country. The successor retains its exact parameter values, native jobs, report publication, complete exports and its relation to the original delivery.
+
+For a fresh-source successor, use the received edition's own capture.selection, review.key.columns and review.projection in the installed source configuration. That keeps the exact ordered schema, original source URL, continuation and representation policy. Set analysis.comparison.before to the earlier prepared Analysis edition and keys to ["gppd_idnr"]. The native comparison returns actual added, removed and changed source records, while the original rowid stays a locator within its source edition.
+
 ## Complete customer output
 
 Each configured customer query is saved under its configured name plus the retained run identifier. Its original revision, SQL, parameters and native view bindings remain with the customer project. Native query jobs and streaming query-export jobs retain separate identities.
