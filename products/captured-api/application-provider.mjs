@@ -22,6 +22,8 @@ const sourceFiles = [
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/browser.mjs',
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/index.html',
   'stellar-forge/mcp-merchant-operator/serve.mjs',
+  'stellar-forge/mcp-merchant-operator/operator.mjs',
+  'stellar-forge/mcp-merchant-operator/host-profile.mjs',
   'stellar-forge/mcp-merchant-operator/console/service.mjs',
   'stellar-forge/mcp-merchant-operator/console/store.mjs',
   'stellar-forge/mcp-merchant-operator/console/customers.mjs',
@@ -34,6 +36,7 @@ const sourceFiles = [
   'stellar-forge/mcp-merchant-operator/console/public/workflows.mjs',
   'stellar-forge/mcp-merchant-operator/console/public/workflow-recipes.mjs',
   'stellar-forge/mcp-merchant-operator/console/public/index.html',
+  'stellar-forge/mcp-merchant-operator/console/public/style.css',
 ]);
 
 function options(settings) {

@@ -13,6 +13,19 @@ import {prepareProductOperation,saveProductOperation,connectProductOperation,sta
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const original=result=>{need(result?.ok===true,'INSTALLED_ORIGINAL_TOOL_REJECTED');return result.native;};
 const errorView=error=>({code:error.code??'INSTALLED_RECEIVING_FAILED',message:String(error.message??error).slice(0,2000)});
+async function closeClient(client){if(typeof client?.close==='function')await client.close();}
+async function operatorReady(page,kind,workspaceId,section){
+ return page.waitForFunction(({kind,workspaceId,section})=>{
+  const one=selector=>document.querySelector(selector),nws=kind==='nws';
+  const identity=one(nws?'#workspace-id':'#workspace-summary'),content=one(nws?'#content':'#view'),notice=one('#notice');
+  const error=nws?notice?.textContent.trim():notice?.classList.contains('error')?notice.textContent.trim():'';
+  if(error)throw new Error('Original operator reported: '+error);
+  return !!identity?.textContent.includes('Workspace '+workspaceId.slice(0,12))&&!!content?.childElementCount&&
+   content.getAttribute('aria-busy')!=='true'&&one('#refresh')?.disabled===false&&
+   !content.textContent.includes('Loading original source rows')&&
+   (!section||one('nav [aria-current="page"]')?.dataset.view===section);
+ },{kind,workspaceId,section},{timeout:60000});
+}
 async function folder(path){try{await makePrivate(path);}catch(error){if(error.code!=='EEXIST')throw error;await privateDirectory(path);}}
 async function waitFor(read,predicate,label,seconds=180){
  const deadline=Date.now()+seconds*1000;let current;
@@ -23,6 +36,9 @@ export async function receiveInstalledProducts(input){
  need(input?.schema==='stellar-forge.two-product-installed-receiving.v1'&&
   typeof input.operationId==='string'&&/^[a-z0-9][a-z0-9-]{7,100}$/.test(input.operationId)&&
   Array.isArray(input.products)&&input.products.length>0&&input.products.length<=2,'INSTALLED_RECEIVING_INPUT_REQUIRED');
+ need(typeof process.env.MCP_ACCESS_TOKEN==='string'&&process.env.MCP_ACCESS_TOKEN.length>=24&&
+  !/[^\x21-\x7e]/.test(process.env.MCP_ACCESS_TOKEN),'INSTALLED_MCP_BEARER_REQUIRED',
+  'Supply the original merchant bearer token through MCP_ACCESS_TOKEN in the equipped process environment.');
  const kinds=new Set();
  for(const item of input.products){
   need(!kinds.has(item.request?.product),'INSTALLED_PRODUCT_REPEATED');kinds.add(item.request.product);
@@ -33,13 +49,13 @@ export async function receiveInstalledProducts(input){
  }
  const root=resolve(input.directory);await folder(root);const lease=await operationLease(join(root,'receiving.lock'));
  const inputSha256=hash(json(canonical(input))),journalFile=join(root,'journal.json'),resultFile=join(root,'result.json');
- let journal,browser,context,merchant,client,currentOwnedRun,failure,result;const cleanupErrors=[];
+ let journal,browser,context,merchant,client,currentOwnedRun,failure,result,journalBound=false;const cleanupErrors=[];
  const save=async()=>{journal.updatedAt=now();await saveJSON(journalFile,journal,true);};
  const close=async(name,fn)=>{try{await fn();}catch(error){cleanupErrors.push({resource:name,...errorView(error)});}};
  try{
   journal=await readJSON(journalFile,true)??{schema:'stellar-forge.two-product-installed-receiving-journal.v1',
    operationId:input.operationId,inputSha256,createdAt:now(),products:{}};
-  need(journal.inputSha256===inputSha256,'INSTALLED_RECEIVING_SELECTION_CHANGED');
+  need(journal.inputSha256===inputSha256,'INSTALLED_RECEIVING_SELECTION_CHANGED');journalBound=true;
   const previous=await readJSON(resultFile,true);
   if(previous?.state==='COMPLETE'){need(previous.inputSha256===inputSha256,'INSTALLED_COMPLETED_SELECTION_CHANGED');result={...previous,reused:true};}
   else{
@@ -111,12 +127,12 @@ export async function receiveInstalledProducts(input){
     context=await browser.newContext({viewport:{width:1280,height:900},acceptDownloads:true});
     const page=await context.newPage(),pageErrors=[];page.on('pageerror',error=>pageErrors.push(error.message));
     await page.goto(opened.url);
-    await page.waitForFunction(kind=>kind==='nws'?typeof S!=='undefined'&&S.schema&&S.view&&!S.refreshing:
-     typeof ui!=='undefined'&&ui.schema&&ui.view&&!ui.busy,item.request.product,{timeout:60000});
+    await operatorReady(page,item.request.product,item.request.workspaceId);
     for(const width of [1280,390]){
      await page.setViewportSize({width,height:width===390?844:900});
      for(const section of product.sections){
       await page.locator('nav [data-view="'+section+'"]').click();
+      await operatorReady(page,item.request.product,item.request.workspaceId,section);
       const shape=await page.evaluate(()=>({width:innerWidth,actual:document.documentElement.scrollWidth}));
       need(shape.actual<=shape.width+1,'INSTALLED_OPERATOR_LAYOUT_OVERFLOW');
       const file=join(artifacts,'run-'+pass+'-'+width+'-'+section+'.png');await page.screenshot({path:file,fullPage:true});
@@ -144,7 +160,7 @@ export async function receiveInstalledProducts(input){
     }
     run.steps.push({kind:'original-tools-source-and-customer-files',tools:tools.length,files:Object.keys(record.downloads).length});
     run.operatingWorkComplete=true;await save();
-    await client.close();client=null;await merchant.close();merchant=null;
+    await closeClient(client);client=null;await merchant.close();merchant=null;
     run.stopRequestedAt=now();await save();
     await controlProductOperation({directory,runId,action:'stop'});
     await waitFor(()=>inspectProductOperation({directory,runId}),v=>!v.selectedRun?.active,'original application stop');
@@ -158,30 +174,46 @@ export async function receiveInstalledProducts(input){
   }
  }catch(error){failure=error;}
  finally{
-  await close('MCP client',()=>client?.close());await close('MCP merchant',()=>merchant?.close());
+  await close('MCP client',()=>closeClient(client));await close('MCP merchant',()=>merchant?.close());
   await close('browser context',()=>context?.close());await close('browser',()=>browser?.close());
   if(currentOwnedRun)await close('original Applications run',async()=>{
    currentOwnedRun.record.stopRequestedAt??=now();await save();
    await controlProductOperation({...currentOwnedRun,action:'stop'});
    await waitFor(()=>inspectProductOperation(currentOwnedRun),v=>!v.selectedRun?.active,'original application cleanup',60);
   });
-  if(failure||cleanupErrors.length){
-   journal??={schema:'stellar-forge.two-product-installed-receiving-journal.v1',operationId:input.operationId,inputSha256};
-   journal.state='CONTINUATION_REQUIRED';journal.error={...(failure?errorView(failure):{code:'INSTALLED_CLEANUP_FAILED'}),cleanupErrors};
-   try{await save();}catch(error){(failure??=error).journalError=errorView(error);}
+  // Terminal shared state is written while this invocation still owns its original lease.
+  // A mismatched incoming request never changes the retained operation's journal.
+  if(journalBound){
+   try{
+    if(failure||cleanupErrors.length){
+     journal.state='CONTINUATION_REQUIRED';
+     journal.error={...(failure?errorView(failure):{code:'INSTALLED_CLEANUP_FAILED'}),cleanupErrors};
+     await save();
+    }else if(!result.reused){
+     journal.state='COMPLETE';journal.completedAt=now();delete journal.error;
+     await save();await saveJSON(resultFile,result,true);
+    }
+   }catch(error){
+    if(!failure)failure=error;else(failure.persistenceErrors??=[]).push(errorView(error));
+   }
   }
-  try{await lease.close();}catch(error){cleanupErrors.push({resource:'receiving lease',...errorView(error)});}
+  try{await lease.close();}catch(error){
+   cleanupErrors.push({resource:'receiving lease',...errorView(error)});
+   // The descriptor may already have released its lock. Preserve this failure in
+   // one unique record; never rewrite another invocation's shared terminal files.
+   const path=join(root,'lease-close-'+randomUUID()+'.json');
+   try{
+    await saveJSON(path,{schema:'stellar-forge.receiving-lease-close-failure.v1',
+     operationId:input.operationId,inputSha256,recordedAt:now(),error:errorView(error),cleanupErrors});
+   }catch(persistError){cleanupErrors.push({resource:'lease failure record',...errorView(persistError)});}
+   if(!failure)failure=error;
+  }
  }
- if(failure||cleanupErrors.length){
-  journal.state='CONTINUATION_REQUIRED';journal.error={...(failure?errorView(failure):{code:'INSTALLED_CLEANUP_FAILED'}),cleanupErrors};
-  try{await save();}catch(error){failure??=error;}
+ if(failure||cleanupErrors.length)
   throw Object.assign(failure??new Error('Original receiving cleanup remains incomplete.'),{cleanupErrors});
- }
- if(result.reused)return result;
- // A COMPLETE record follows actual closure of every owned process and its original run.
- journal.state='COMPLETE';journal.completedAt=now();await save();await saveJSON(resultFile,result,true);
  return result;
 }
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const path=process.argv[2];
  if(!path||process.argv.length!==3)throw new Error('Use node receive-installed.mjs PRIVATE_INPUTS_JSON');

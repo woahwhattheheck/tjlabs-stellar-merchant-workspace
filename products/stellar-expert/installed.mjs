@@ -252,7 +252,7 @@ export async function connectProductMerchant({directory,runId}){
  });
 }
 export async function productClient({directory,...options}){
- // Caller owns and closes the returned original client.
+ // The original client is a stateless request facade; retain its native lifetime contract.
  return withOperation(directory,async({record,runtime,product})=>{
   need(record.workspaceId,'PRODUCT_OPEN_REQUIRED');
   const module=await import(pathToFileURL(join(runtime.sourceRoot,product.client)));
@@ -273,12 +273,14 @@ export async function productFiles({directory,action,selection,signal,onProgress
   let reviewed;
   if(action!=='reopen'){
    reviewed=await client[product.methods[1]](options);
-   need(reviewed.manifest.workspaceId===record.workspaceId,'PRODUCT_FILE_WORKSPACE_CHANGED');
+   need(reviewed.manifest.workspaceId===record.workspaceId&&reviewed.manifest.workspace===record.request.alias,'PRODUCT_FILE_WORKSPACE_CHANGED');
    if(selection.expectedManifestSha256)need(reviewed.manifestSha256===selection.expectedManifestSha256,'PRODUCT_FILE_SELECTION_CHANGED');
   }
   if(action==='inspect')return reviewed;
   const result=action==='receive'?await client[product.methods[2]]({...options,expectedManifestSha256:reviewed.manifestSha256}):
    await client[product.methods[3]](options);
+  need(result.workspaceId===record.workspaceId&&result.workspace===record.request.alias,'PRODUCT_FILE_WORKSPACE_CHANGED',
+   'Reopen the original files belonging to this operation\'s authenticated workspace and selected alias.');
   const receipt={action,selection:{kind:selection.kind??null,id:selection.id??null,page:selection.page??null,wire:selection.wire??false,
    directory:selection.directory,expectedManifestSha256:reviewed?.manifestSha256??selection.expectedManifestSha256??null},
    observedAt:now(),result};

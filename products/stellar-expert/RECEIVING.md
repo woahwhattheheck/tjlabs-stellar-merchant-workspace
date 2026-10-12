@@ -59,6 +59,8 @@ Run through the existing equipped native worker with the same private input file
 node products/stellar-expert/receive-installed.mjs /absolute/private/receiving-inputs.json
 ```
 
+The equipped process must receive its original merchant bearer token through `MCP_ACCESS_TOKEN` (at least 24 printable ASCII characters). The programme uses that same environment for the original MCP host and request clients; token values stay out of the input, journal and output.
+
 Retain the operation ID, input hash, journal and original Applications state if the carrier disconnects. Reconcile the existing process before resuming the same programme. It reuses saved reviews, application IDs, original start requests, file manifests and verified download prefixes. A successfully completed result returns its original completion without another operating run.
 
 ## Complete operating path
@@ -73,7 +75,7 @@ For each selected product, the programme:
 6. Receives every original source page, every supplied complete export and all five original customer files through the original retained-file client. For NWS revalidation, a differing retained wire representation is received separately.
 7. Verifies each received manifest and payload offline.
 8. Closes the merchant and stops the original Applications run, then repeats the installed open/file path on the same workspace after reopening. The existing source/customer manifests remain identical.
-9. Closes every owned browser, MCP and original application lifetime before writing COMPLETE.
+9. Closes every owned browser, MCP and original application lifetime before writing COMPLETE. The original request clients are stateless. The shared terminal journal and result remain under the receiving lease; an exceptional lease-close failure is retained in a separate unique failure record.
 
 A source/layout/tool/file error preserves the original error and every cleanup failure. The journal identifies the exact receiving selection and completed stages. A wait for the original managed attachment or application startup returns continuation state while retaining the original operation.
 
