@@ -18,7 +18,12 @@ const object=(properties,required=Object.keys(properties))=>({type:'object',prop
 const sourceSelection=object({kind:{type:'string',enum:['capture','refresh']},id:sha,revision:sha},['kind','id']);
 const names={type:'object',propertyNames:name,additionalProperties:name,maxProperties:1000};
 const packageSelection=object({name,manifestSha256:sha});
+const baselines={type:'object',propertyNames:name,additionalProperties:{oneOf:[name,{type:'null'}]},maxProperties:1000};
+const receivingForm=object({label,bundle:{type:'string',maxLength:4096},manifestSha256:sha,names});
+const decision={id:uuid,expectedRevision:sha,comparisonId:uuid,comparisonSha256:sha,form:receivingForm};
+const editionFile={id:uuid,name,side:{type:'string',enum:['current','incoming','comparison']},expectedComparisonSha256:sha,expectedSha256:sha};
 const jobRequest={oneOf:[
+  object({id:uuid,command:{type:'string',enum:['COMPARE']},draftId:uuid,revision:sha,baselines}),
   ...['PREPARE','INSPECT','REVIEW'].map(command=>object({
     id:uuid,command:{type:'string',enum:[command]},draftId:uuid,revision:sha,
   })),
@@ -70,9 +75,22 @@ export function capturedHandoverTools(tool) {
     tool('merchant_handover_working_import','Read the exact complete portable working edit JSON content and optional SHA. The original host verifies product, draft and immutable base before returning its complete working form for merge_review; keep the returned source SHA and base revision.',{
       ...scope,content:{type:'string',minLength:1,maxLength:4*1024*1024},expectedSha256:sha},
     [...requiredScope,'content'],read),
+    tool('merchant_handover_editions','Page the original completed COMPARE job: installed/incoming package identities, exact selected route prices and settings, all source/facade declarations, compiled configuration and file changes. Pin expectedComparisonSha256 across sections. Choose name for a merchant section.',{
+      ...scope,id:uuid,name,view:{type:'string',enum:['summary','packages','routes','settings','source','contract','configuration','files']},
+      ...page,expectedComparisonSha256:sha},[...requiredScope,'id'],read),
+    tool('merchant_handover_edition_review','Review complete receiving names against their original compared installed/incoming editions and exact current draft. The native source and baselines must still match; choose a new name where another immutable package exists.',{
+      ...scope,...decision},[...requiredScope,...Object.keys(decision)],read),
+    tool('merchant_handover_edition_save','Save the exact READY incoming-edition decision through the original draft writer. Keep the comparison/review SHA and original requestId for lost-reply replay, then run the original REVIEW, RECEIVE and REOPEN jobs.',{
+      ...scope,...decision,requestId:uuid,reviewSha256:sha},
+      [...requiredScope,...Object.keys(decision),'requestId','reviewSha256'],write),
+    tool('merchant_handover_edition_file','Read exact complete current/incoming snapshot or comparison file bytes from the original retained reader. Repeat its file SHA, comparison SHA, readId and nextOffset. Native snapshots are acquired once; terminal edition-export retains all complete files.',{
+      ...scope,...editionFile,readId:uuid,offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:196608}},
+      [...requiredScope,...Object.keys(editionFile)],read),
+    tool('merchant_handover_edition_file_release','Release this original comparison file read after a partial read. Complete reads release automatically; reopening repeats the same file/comparison hashes.',{
+      ...scope,id:uuid,comparisonSha256:sha,readId:uuid},[...requiredScope,'id','comparisonSha256','readId'],write),
     tool('merchant_handover_jobs','Page retained original handover jobs, exact request hashes and current native completion after restart.',{...scope,...page},requiredScope,read),
     tool('merchant_handover_job','Read the original job request/status or page native receiving package/source/name results. Selection shows its complete retained draft form; document pages show the published collection.',{...scope,id:uuid,view:{type:'string',enum:['summary','selection','packages','sources','names']},...snapshot},[...requiredScope,'id'],read),
-    tool('merchant_handover_job_start','Start or replay the exact native PREPARE, INSPECT, REVIEW, PUBLISH, IMPORT, RECEIVE or REOPEN request. Review before PUBLISH/RECEIVE and carry the returned exact review SHA; poll the saved ID.',{...scope,request:jobRequest},[...requiredScope,'request'],write),
+    tool('merchant_handover_job_start','Start or replay the exact native PREPARE, COMPARE, INSPECT, REVIEW, PUBLISH, IMPORT, RECEIVE or REOPEN request. Review before PUBLISH/RECEIVE and carry the returned exact review SHA; poll the saved ID.',{...scope,request:jobRequest},[...requiredScope,'request'],write),
     tool('merchant_handover_job_resume','Continue the same retained interrupted native job using its original UUID and request SHA. Completed original jobs return their original result.',{...scope,id:uuid,requestSha256:sha},[...requiredScope,'id','requestSha256'],write),
     tool('merchant_handover_document','Page complete original collection review/manifest packages, source histories and member files from a finished job. The native reader verifies its retained whole document SHA.',{...scope,id:uuid,view:{type:'string',enum:['summary','packages','sources','files']},...page},[...requiredScope,'id'],read),
     tool('merchant_handover_uploads','Page original receiving uploads, durable offsets and any interrupted exact chunk.',{...scope,...page},requiredScope,read),

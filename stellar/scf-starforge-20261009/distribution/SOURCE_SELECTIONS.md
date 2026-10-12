@@ -42,6 +42,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 | --- | --- | --- | --- |
 | `coastal-operations` | Original NOAA source study, reviewed receiving conventions, complete coastal workbooks, native merchant and customer files | Coastal source operations; Runtime management | [Operating guide](../../../products/coops/OPERATING.md) |
 | `research-workspace` | Research questions, original Documents and managed Pipelines, source review, merchant operation and complete customer files | Research dossiers; Runtime management | [Operating and receiving guide](../../../products/research/RECEIVING.md) |
+| `webdav-operator` | WebDAV or Nextcloud file editions, native merchant and customer, complete remote operator and source receiving | WebDAV source and merchant workspace; Runtime management | [Operating guide](../../../products/webdav/OPERATING.md) |
 | `eurostat` | Eurostat official source editions, exact economic reports, native publication and complete customer receiving | Eurostat economic editions; Runtime management | [Operating guide](../../../products/eurostat/OPERATING.md) |
 | `openapi-merchant` | Captured API, OpenAPI/Postman authoring, reusable policies, persistent workflows, native releases and complete customer receiving | Captured API, OpenAPI, merchant console | [Operating guide](../../../products/captured-api/OPERATING.md) |
 | `huwise` | Huwise source review, tenant ingestion and native publication, merchant and complete customer receiving | Runtime management; original Huwise browser and merchant agent | [Operating guide](../../../products/huwise/OPERATING.md) |
@@ -62,6 +63,8 @@ For Huwise, use `--selection huwise` and the [complete operating guide](../../..
 For Eurostat, use `--selection eurostat` and the [complete operating guide](../../../products/eurostat/OPERATING.md). Its selected source includes the original economic workspace, retained official responses and reviewed queries, full reports, browser and typed client, all 26 Eurostat MCP tools, native publication, merchant releases and complete customer receiving.
 
 For Research, use `--selection research-workspace` and the [complete receiving guide](../../../products/research/RECEIVING.md). The selected source keeps the original Documents and managed Pipelines operations, source-linked dossier review, complete file exports, authenticated client and merchant tools, and the existing Research Applications entry.
+
+For WebDAV, use `--selection webdav-operator` and the [complete operating guide](../../../products/webdav/OPERATING.md). The selected source includes the original source browser and managed Applications, full typed client and reviewed operations, complete export/source-packet transfers, native publisher, release and buyer, and the installed `merchant-webdav-edition` workflow.
 
 For Coastal source operations, use `--selection coastal-operations` and the [complete operating guide](../../../products/coops/OPERATING.md). The selected source includes original station and archive operations, receiving-mapping intake and history, full offline analysis/workbooks, native query and releases, all 39 coastal merchant tools and complete customer receiving.
 
@@ -93,6 +96,7 @@ its dependency profile from the complete installed workflow linked above:
 
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
+| `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `coastal-operations` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `redis-applications` | `--native --feature redis --feature schema --feature openapi --feature mcp --operator` |
 | `grant-reviewer` | `--native --feature mcp --operator` |

@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "captured-api-product",
-  "description": "Captured API source authoring, exact route prices and policies, persistent merchant workflows, managed browser/agent launch, seller releases, collaborative saved handover drafts and complete browser, agent, terminal and file receiving.",
+  "description": "Captured API source authoring, exact route prices and policies, persistent merchant workflows, managed browser/agent launch, seller releases, collaborative saved handover drafts, installed/incoming edition comparison and complete reviewed browser, agent, terminal and file receiving.",
   "components": [
     "products/captured-api"
   ],
@@ -20,7 +20,8 @@
     "./products/captured-api/handover-upload": "./source/products/captured-api/handover-upload.mjs",
     "./products/captured-api/handover-client": "./source/products/captured-api/handover-client.mjs",
     "./products/captured-api/handover-agent": "./source/products/captured-api/handover-agent.mjs",
-    "./products/captured-api/draft-reconciliation": "./source/products/captured-api/draft-reconciliation.mjs"
+    "./products/captured-api/draft-reconciliation": "./source/products/captured-api/draft-reconciliation.mjs",
+    "./products/captured-api/edition-comparison": "./source/products/captured-api/edition-comparison.mjs"
   },
   "applicationProviders": {
     "captured-api": "products/captured-api/application-provider.mjs"

@@ -210,6 +210,65 @@ their own retained file identities. The guide covers both that result delivery
 and the complete operating-state handover, including interrupted replies,
 original operation UUIDs, explicit recovery and orderly listener shutdown.
 
+## 3B. Operate a managed merchant fleet
+
+Choose **Applications → Merchant fleet** to open an existing original fleet
+release plan, private manager directory and SF82 seller stores. The
+[complete fleet operating guide](../merchant-fleet/OPERATING.md) supplies the
+source configuration, native setup, browser, CLI and merchant MCP workflow.
+Its installed `starforge merchant-fleet-configure` command reads the selected
+saved fleet and installed source, prepares the application-review and supported
+MCP configuration files, and carries returned reviews into explicit save and
+start requests.
+
+### Start and return to the same fleet
+
+Retain the original plan path, manager directory, gateway state directory and
+seller store paths. Review and Save the application against the selected
+installed runtime, then Review start, Start and Open. The managed entry checks
+the original plan and store identities, the selected and executed source, and
+the live console instance before presenting its URL. Stop uses that application's
+original operation and lets its native gateway and seller sessions close.
+Reopening retains the fleet's saved history; it does not initialize another
+fleet alongside the selected one.
+
+The direct `starforge merchant-fleet-workspace` and merchant MCP entry remain
+available over those same native files. Select one owner for the live fleet.
+Stop its current owner before handing those stores to another process.
+
+### Review releases and preserve in-flight work
+
+The fleet console retains each tenant's package/source choices and original
+SF82 releases. Stage the selected source, inspect its comparison, review the
+exact candidate, prepare it and activate against the current gateway revision.
+Keep draining sessions until the original fleet reports that the specific child
+can retire. Retire that exact instance. A rollback uses a fresh review of the
+retained release and current revision.
+
+Client generation, adoption and file receiving remain linked to the selected
+tenant and release. The console also retains discovery enrollment, source
+review, application and history through the existing discovery operator.
+
+### Deliver settlements and receive a complete fleet
+
+The native delivery workspace keeps accounting and fulfillment destinations
+separate, with their original source-bound outbox entries, cursors, retry state
+and history. Inspect actual delivery results and prepare the original retained
+transfer when a customer or accountant needs its files. Receipt of a prepared
+transfer and acknowledgement by an external destination remain their own
+observed outcomes.
+
+For full recovery, stop and quiesce the original fleet as the native recovery
+guide requires. Capture and authenticate its original encrypted bundle; review
+the restored plan, source, host declarations, absolute paths and UID/GID before
+preparing a receiving target. The original SF101 and fleet recovery commands
+own that preparation and its interruption recovery. Keep their returned IDs,
+reviews and manifests, then select the completed receiving plan and native
+directories when opening the fleet again. Follow the
+[original recovery guide](../../stellar/scf-starforge-20261009/merchant-fleet-gateway/RECOVERY.md)
+and the complete operating guide for the exact capture, verify, restore,
+receiving and host commands.
+
 ## 4. Author a GraphQL data product
 
 Choose **Applications → GraphQL merchant workspace** for the installed product,
