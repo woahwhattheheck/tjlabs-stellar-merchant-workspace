@@ -16,6 +16,8 @@ node stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mj
 
 The shared profile loader discovers **georobotix-csapi.json** from the existing installation-workorders component. Both the source preparer and the native Installation receiver read that complete profile and retain its bytes and SHA-256. This addition uses the existing catalogue, source intake and receiver.
 
+Use a Grant Operations source edition that contains this profile and guide for the catalogue and Customer Installation commands. The Connected Systems archive described below is the separate observation product runtime; that already built archive predates this programme addition. Keep the original Operations workspace and its current source/plan with the catalogue edition, and use the selected Connected Systems runtime for the data workflow. The two source editions and their receiving records remain explicit.
+
 The full technical contracts are in the selected application's [README](../../../scf-starforge-20261009/sf30-seller-sdk/connected-systems/README.md), [provider client guide](../../../scf-starforge-20261009/sf30-seller-sdk/connected-systems/PROVIDER_CLIENT.md), [HTTP API](../../../scf-starforge-20261009/sf30-seller-sdk/connected-systems/HTTP_API.md), [original sources](../../../scf-starforge-20261009/sf30-seller-sdk/connected-systems/SOURCES.md) and [selected installation guide](../../../scf-starforge-20261009/distribution/selections/CONNECTED_SYSTEMS.md). Resolve those paths inside the exact installed source edition.
 
 ### Retained implementation and illustrative reference
