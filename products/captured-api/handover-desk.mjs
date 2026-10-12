@@ -47,6 +47,8 @@ function jobInput(value) {
   need(plain(value) && Object.hasOwn(fields,value.command),'CAPTURED_DESK_COMMAND','Select an existing handover action.');
   exact(value,fields[value.command],fields[value.command]);
   id(value.id);
+  need(value.sourceJob===undefined||value.sourceJob!==value.id,'CAPTURED_DESK_COMMAND',
+    'Choose a different completed original review as the source of this operation.');
   for(const name of ['draftId','sourceJob','uploadId'])if(value[name] !== undefined)id(value[name]);
   for(const name of ['revision','reviewSha256','operationId'])if(value[name] !== undefined)hash(value[name]);
   return copy(value);
