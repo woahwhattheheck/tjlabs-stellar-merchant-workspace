@@ -45,7 +45,11 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/managed.mjs', 'managed.mjs', 'text/javascript; charset=utf-8'],
     ['/applications.mjs', 'applications.mjs', 'text/javascript; charset=utf-8'],
     ['/application-library.mjs', 'application-library.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-groups.mjs', 'application-groups.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-groups.css', 'application-groups.css', 'text/css; charset=utf-8'],
     ['/application-drafts.mjs', 'application-drafts.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-setup.mjs', 'application-setup.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-setup-library.mjs', 'application-setup-library.mjs', 'text/javascript; charset=utf-8'],
     ['/application-review.mjs', 'application-review.mjs', 'text/javascript; charset=utf-8'],
     ['/openapi-application.mjs', 'openapi-application.mjs', 'text/javascript; charset=utf-8'],
     ['/accounting-application.mjs', 'accounting-application.mjs', 'text/javascript; charset=utf-8'],
@@ -56,6 +60,14 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/python.mjs', 'python.mjs', 'text/javascript; charset=utf-8'],
     ['/source-build.mjs', 'source-build.mjs', 'text/javascript; charset=utf-8'],
   ].map(async ([path, name, type]) => [path, { bytes: await readFile(new URL('./public/' + name, import.meta.url)), type }])));
+  assets.set('/product-catalog/catalog.mjs', {
+    bytes: await readFile(new URL('../product-catalog/catalog.mjs', import.meta.url)),
+    type: 'text/javascript; charset=utf-8',
+  });
+  assets.set('/source-catalog.css', {
+    bytes: await readFile(new URL('./public/source-catalog.css', import.meta.url)),
+    type: 'text/css; charset=utf-8',
+  });
   let origin, host, closing = false;
   const sockets = new Set(), imageDownloads = new Map(), transferDownloads = new Map(), pythonDownloads = new Map(), sourceBuildDownloads = new Map();
   const server = createServer(async (req, res) => {
@@ -149,6 +161,14 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       if (req.method === 'GET' && url.pathname === '/api/handoff') {
         const value = params(url, ['runtimeId']); return send(200, await model.handoff(value.runtimeId));
       }
+      if (req.method === 'GET' && url.pathname === '/api/application-groups/state') {
+        const value = params(url, ['groupId', 'runId', 'limit', 'cursor']);
+        if (value.limit !== undefined) {
+          need(/^[1-9][0-9]?$/.test(value.limit), 'APPLICATION_GROUP_PAGE_INVALID');
+          value.limit = Number(value.limit);
+        }
+        return send(200, await model.applicationGroupsState(value));
+      }
       if (req.method === 'GET' && url.pathname === '/api/applications/state') {
         const value = params(url, ['historyLimit']);
         if (value.historyLimit !== undefined) {
@@ -176,6 +196,8 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       need(req.method === 'POST' && req.headers.origin === origin, 'RUNTIME_WORKSPACE_ORIGIN_REQUIRED', undefined, 403);
       if (url.pathname === '/api/source-builds/catalog')
         return send(200, await model.sourceBuildsCatalog(await body(req, ['repository', 'ref', 'offline'])));
+      if (url.pathname === '/api/source-builds/product')
+        return send(200, await model.sourceBuildsProduct(await body(req, ['repository', 'ref', 'selection', 'offline', 'python'])));
       if (url.pathname === '/api/source-builds/review')
         return send(201, await model.sourceBuildsReview(await body(req, ['repository', 'ref', 'selection', 'offline', 'python'])));
       if (url.pathname === '/api/source-builds/recover') {
@@ -276,6 +298,20 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
         const value = await body(req, ['runtimeId', 'context', 'input'], openApiSetupBodyLimit(action));
         return send(200, await model.applicationsOpenApiSetup({ ...value, action }));
       }
+      if (url.pathname === '/api/application-groups/save')
+        return send(201, await model.applicationGroupsSave(await body(req, ['requestId', 'groupId', 'expectedRevision', 'label', 'applicationIds'])));
+      if (url.pathname === '/api/application-groups/review')
+        return send(200, await model.applicationGroupsReview({ ...await body(req, ['groupId', 'runId']), navigationOrigin: origin }));
+      if (url.pathname === '/api/application-groups/start')
+        return send(202, await model.applicationGroupsStart(await body(req, ['groupId', 'requestId', 'reviewId'])));
+      if (url.pathname === '/api/application-groups/continue')
+        return send(202, await model.applicationGroupsContinue(await body(req, ['groupId', 'runId', 'applicationId', 'expectedVersion'])));
+      if (url.pathname === '/api/application-groups/apply-review')
+        return send(200, await model.applicationGroupsApplyReview(await body(req, ['groupId', 'runId', 'reviewId', 'expectedVersion'])));
+      if (url.pathname === '/api/application-groups/member')
+        return send(202, await model.applicationGroupsMember(await body(req, ['groupId', 'runId', 'applicationId', 'action', 'expectedVersion'])));
+      if (url.pathname === '/api/application-groups/stop')
+        return send(202, await model.applicationGroupsStop(await body(req, ['groupId', 'runId'])));
       if (url.pathname === '/api/applications/review')
         return send(200, await model.applicationsReview(await body(req, ['runtimeId', 'kind', 'settings', 'label', 'applicationId', 'expectedRevision', 'homeId'])));
       if (url.pathname === '/api/applications/save')
