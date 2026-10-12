@@ -1,4 +1,4 @@
-import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv} from './cohort_planning.mjs';
+import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, COHORT_PLAN_COMPARISON_SCHEMA, seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv, compareCohortPlans, reopenCohortPlanComparison, exportCohortPlanComparisonCsv} from './cohort_planning.mjs';
 
 const EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 const SESSION_SCHEMA='stellar-forge.sf47-cohort-planning-session.v1';
@@ -16,7 +16,7 @@ const classes=[['UNKNOWN','Unassigned'],['INDEPENDENT_OPERATOR','Independent ope
 const environments=[['UNKNOWN','Unassigned'],['LOCAL','Local'],['TESTNET','Testnet'],['MAINNET','Mainnet'],['OTHER','Other']];
 const collections=['buyers','merchants','facilitators','operations','schedules','workshares','capacityPools'];
 const metrics=['scheduledTasks','scheduledRequests','plannedPaymentRequests','plannedPaidPurchases','plannedCompleteTasks','plannedCompletePurchases','independentPurchaseOpportunities','allowanceUnits'];
-const tabNames=[['setup','Plan & calendar'],['participants','Participants'],['operations','Useful operations'],['schedules','Schedules & prepaid'],['workshares','Workshares & sensitivity'],['capacity','Capacity & pricing'],['report','Day & target report'],['editions','Saved editions']];
+const tabNames=[['setup','Plan & calendar'],['participants','Participants'],['operations','Useful operations'],['schedules','Schedules & prepaid'],['workshares','Workshares & sensitivity'],['capacity','Capacity & pricing'],['report','Day & target report'],['compare','Compare plans'],['editions','Saved editions']];
 const note=text=>'<p class="cp-note">'+esc(text)+'</p>';
 const empty=text=>'<p class="cp-empty">'+esc(text)+'</p>';
 const badge=text=>'<span class="cp-badge">'+esc(text)+'</span>';
@@ -26,7 +26,8 @@ const valueHtml=value=>esc(Array.isArray(value)?value.join(', '):fmt(value));
 const section=(title,body,actions='')=>'<section class="cp-panel"><div class="cp-heading"><h3>'+esc(title)+'</h3>'+actions+'</div>'+body+'</section>';
 const jsonDetail=(title,value)=>'<details class="cp-source-detail"><summary>'+esc(title)+'</summary><pre>'+esc(JSON.stringify(value,null,2))+'</pre></details>';
 const cleanName=value=>String(value||'cohort-plan').normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,100)||'cohort-plan';
-const definitive=error=>[400,401,403,404,409,413,422].includes(error?.status)&&typeof error?.code==='string';
+// Access/route failures on a retry do not settle an earlier native write.
+const definitive=error=>[400,409,413,422].includes(error?.status)&&typeof error?.code==='string';
 function toBase64(raw){let result='';const bytes=new TextEncoder().encode(raw);for(let i=0;i<bytes.length;i+=8192)result+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(result);}
 function download(raw,filename,mediaType='application/json'){const blob=raw instanceof Blob?raw:new Blob([raw],{type:mediaType+';charset=utf-8'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 function field(title,key,value='',options={}){
@@ -67,7 +68,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const sourceOptions=()=>{const values=new Map();for(const item of [...(state.latestSeed?.sources||[]),...(caseValue.sources||[])])values.set(item.id,item);return [...values.values()].map(item=>[item.id,item.filename+' · '+String(item.sha256||'').slice(0,12)]);};
   const inputMatchesReport=()=>Boolean(state.report&&plan()&&state.reportInput===JSON.stringify(plan()));
   function persist(critical=false){
-    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText'])retained[key]=state[key];
+    const retained={};for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric'])retained[key]=state[key];
     try{sessionStorage.setItem(storageKey,JSON.stringify(retained));state.storageWarning='';}catch(error){state.storageWarning='This browser could not retain the latest local draft. Download its JSON before closing this tab.';if(critical)throw new Error('The browser could not retain the exact source request before dispatch. Download the draft or free this site’s session storage, then save again. '+error.message);}
   }
   function controls(){
@@ -141,7 +142,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       (accepted?'<aside class="cp-recovery"><h3>Edition accepted</h3><p>Read back the original source file to finish this save.</p>'+btn('Read back saved source','readback','data-cp-recovery="true"')+'</aside>':'')+
       (p&&p.source.programId!==caseId?'<p class="cp-alert">This imported plan belongs to '+esc(p.source.programId)+'. Its original source and report are available here. Open that original case to attach an edition.</p>':'');
   }
-  function navigation(){return '<nav class="cp-tabs" aria-label="Cohort planning sections">'+tabNames.map(([key,title])=>btn(title,'tab','data-tab="'+key+'" data-cp-view="true" aria-current="'+(key===state.tab?'page':'false')+'"',!plan()&&!['setup','editions'].includes(key))).join('')+'</nav>';}
+  function navigation(){return '<nav class="cp-tabs" aria-label="Cohort planning sections">'+tabNames.map(([key,title])=>btn(title,'tab','data-tab="'+key+'" data-cp-view="true" aria-current="'+(key===state.tab?'page':'false')+'"',!plan()&&!['setup','editions','compare'].includes(key))).join('')+'</nav>';}
   function sourceComparison(report=state.report){
     const comparison=report?.sourceComparison;
     if(!comparison)return note('Update the report to compare this retained plan with the current native cohort source.');
@@ -447,10 +448,14 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const raw=await readSource(source);
     if(raw!==accepted.raw||source.filename!==accepted.payload.data.filename)throw new Error('The reopened source differs from the exact retained edition request.');
     const envelope=JSON.parse(raw);
-    caseValue=next;state.savedSourceId=source.id;state.parentSourceId=source.id;state.savedEnvelope=envelope;
+    const isComparison=accepted.documentKind==='comparison'||envelope.schema===COHORT_PLAN_COMPARISON_SCHEMA;
+    caseValue=next;
+    if(isComparison)state.comparisonSavedSourceId=source.id;
+    else{state.savedSourceId=source.id;state.parentSourceId=source.id;state.savedEnvelope=envelope;}
     state.viewedSource={meta:copy(source),raw,envelope};state.accepted=null;state.caseRefreshReceipt=result;
-    state.notice='Saved and reopened '+source.filename+' as a new source edition in this case.';persist(true);
-    if(available()){state.caseRefreshReceipt=null;persist();await onCaseUpdated(next,result);if(available())inform('Saved the complete cohort plan and report as an original case source.');}
+    state.notice='Saved and reopened '+source.filename+' as a new source edition in this case.';
+    try{persist(true);}catch(error){state.accepted=accepted;throw error;}
+    if(available()){state.caseRefreshReceipt=null;persist();await onCaseUpdated(next,result);if(available())inform(isComparison?'Saved the complete comparison and both original plan documents in this case.':'Saved the complete cohort plan and report as an original case source.');}
   }
   async function sendPending(){
     if(state.inflight){await state.inflight;if(state.accepted)await finishAccepted();return;}
@@ -488,6 +493,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     state.pending={payload,raw,editionId};persist(true);await sendPending();
   }
   async function openDocument(document,{meta=null,raw=null}={}){
+    if(document?.schema===COHORT_PLAN_COMPARISON_SCHEMA){adoptComparison(document,{meta,raw});return;}
     const envelope=document?.schema===EDITION_SCHEMA?document:null;
     const supplied=envelope?.plan||(document?.schema===COHORT_PLAN_REPORT_SCHEMA&&document.kind==='PLAN'?document.input:document);
     if(!supplied||supplied.schema!==COHORT_PLAN_SCHEMA){
@@ -605,12 +611,269 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   }
 
 
+
+  // Comparison snapshots stay separate from the editable plan and the one native source writer.
+  let comparisonCache=null,comparisonCacheKey='',comparisonReadSequence=0;
+  function comparisonState(){
+    if(!state.comparison)state.comparison={before:null,after:null,title:'',note:'',section:'summary'};
+    if(!state.comparisonSelections)state.comparisonSelections={before:'current',after:'current'};
+    if(!state.comparisonHistory)state.comparisonHistory=[];
+    if(!state.comparisonIncoming)state.comparisonIncoming=[];
+    return state.comparison;
+  }
+  function comparisonDocumentPlan(document){
+    const candidate=document?.schema===EDITION_SCHEMA?document.plan:document?.schema===COHORT_PLAN_REPORT_SCHEMA&&document.kind==='PLAN'?document.input:document;
+    if(candidate?.schema!==COHORT_PLAN_SCHEMA)throw new Error('Choose a complete plan, saved edition, or plan report for this side.');
+    return candidate;
+  }
+  function comparisonOptions(value){
+    return {...(value.title?{title:value.title}:{}),note:value.note||'',origins:{before:value.before?.origin||null,after:value.after?.origin||null}};
+  }
+  function comparisonReport(){
+    const value=comparisonState();if(!value.before||!value.after)return null;
+    const key=JSON.stringify([value.before.document,value.after.document,comparisonOptions(value)]);
+    if(key!==comparisonCacheKey){
+      comparisonCache=compareCohortPlans(value.before.document,value.after.document,comparisonOptions(value));comparisonCacheKey=key;
+    }
+    return comparisonCache;
+  }
+  function retainComparison(reason){
+    const value=comparisonState();if(!value.before&&!value.after&&!value.note&&!value.title)return;
+    state.comparisonHistory.push({id:uid('comparison-prior'),retainedAt:now(),reason,value:copy(value)});
+  }
+  function replaceComparisonSide(side,document,origin){
+    if(!['before','after'].includes(side))throw new Error('Select the baseline or candidate.');
+    comparisonDocumentPlan(document);
+    const next={...copy(comparisonState()),[side]:{document:copy(document),origin:copy(origin||{})}};
+    if(next.before&&next.after)compareCohortPlans(next.before.document,next.after.document,comparisonOptions(next));
+    else evaluateCohortPlan(comparisonDocumentPlan(document));
+    retainComparison('Replaced the '+(side==='before'?'baseline':'candidate')+' source');
+    state.comparison=next;state.comparisonSavedSourceId=null;comparisonCacheKey='';state.pages={};state.tab='compare';
+    state.notice='Captured the complete '+(side==='before'?'baseline':'candidate')+' source. The working plan remains available in its existing editor.';
+    persist();
+  }
+  function comparisonFingerprint(){return JSON.stringify(state.comparison||null);}
+  function receiveComparisonSide(side,document,origin,expected,sequence){
+    // A disposed or superseded file/source read is retained for explicit adoption.
+    comparisonDocumentPlan(document);evaluateCohortPlan(comparisonDocumentPlan(document));
+    if(!available()||sequence!==comparisonReadSequence||comparisonFingerprint()!==expected){
+      comparisonState();state.comparisonIncoming.push({id:uid('comparison-incoming'),side,document:copy(document),origin:copy(origin||{}),receivedAt:now()});
+      state.notice='A later source read is retained in Compare plans for explicit adoption; the current selection is preserved.';persist();return;
+    }
+    replaceComparisonSide(side,document,origin);
+  }
+  async function selectComparisonSide(side){
+    comparisonState();const chosen=state.comparisonSelections[side]||'current';
+    const expected=comparisonFingerprint(),sequence=++comparisonReadSequence;
+    if(chosen==='current'){
+      if(!plan())throw new Error('Open a working plan first.');
+      replaceComparisonSide(side,copy(plan()),{label:'Current draft',caseId:plan().source.programId,capturedAt:now()});return;
+    }
+    if(chosen.startsWith('prior:')){
+      const previous=state.priorDrafts.find(row=>row.id===chosen.slice(6));if(!previous)throw new Error('Choose a retained local draft.');
+      replaceComparisonSide(side,copy(previous.plan),{label:'Prior draft: '+previous.reason,caseId:previous.plan.source.programId,capturedAt:previous.retainedAt});return;
+    }
+    if(!chosen.startsWith('source:'))throw new Error('Choose a source for this comparison side.');
+    const meta=caseValue.sources.find(row=>row.id===chosen.slice(7));if(!meta)throw new Error('Refresh the case to choose its saved source.');
+    const raw=await readSource(meta);let document;try{document=JSON.parse(raw);}catch{throw new Error('The selected source is not complete JSON.');}
+    receiveComparisonSide(side,document,{label:meta.filename,caseId,sourceId:meta.id,filename:meta.filename,sha256:meta.sha256,bytes:meta.bytes,capturedAt:now()},expected,sequence);
+  }
+  async function importComparisonSide(side){
+    const expected=comparisonFingerprint(),sequence=++comparisonReadSequence;
+    const file=await chooseFile('.json,application/json');if(!file)return;
+    if(file.size>64*1024*1024)throw new Error('Choose a complete JSON source no larger than 64 MiB.');
+    const raw=await file.text();let document;try{document=JSON.parse(raw.replace(/^\uFEFF/,''));}catch{throw new Error('The selected file is not complete JSON.');}
+    receiveComparisonSide(side,document,{label:file.name,filename:file.name,capturedAt:now()},expected,sequence);
+  }
+  function adoptComparison(document,{meta=null,raw=null}={}){
+    const report=reopenCohortPlanComparison(document);
+    const next={before:{document:copy(report.documents.before),origin:copy(report.review.origins.before||{})},
+      after:{document:copy(report.documents.after),origin:copy(report.review.origins.after||{})},
+      title:report.review.title,note:report.review.note,section:'summary'};
+    retainComparison(meta?'Opened saved comparison '+meta.id:'Imported a complete comparison');
+    state.comparison=next;state.comparisonSavedSourceId=meta?.id||null;comparisonCache=report;comparisonCacheKey='';
+    if(meta)state.viewedSource={meta:copy(meta),raw,envelope:copy(document)};
+    state.tab='compare';state.pages={};state.notice='Opened both complete comparison sources and recalculated their reports using each original rule. The working plan remains available.';
+    persist();
+  }
+  async function importComparison(){
+    const expected=comparisonFingerprint(),sequence=++comparisonReadSequence;
+    const file=await chooseFile('.json,application/json');if(!file)return;
+    if(file.size>64*1024*1024)throw new Error('Choose a complete comparison no larger than 64 MiB.');
+    const raw=await file.text();let document;try{document=JSON.parse(raw.replace(/^\uFEFF/,''));}catch{throw new Error('The selected file is not complete JSON.');}
+    reopenCohortPlanComparison(document);
+    if(!available()||sequence!==comparisonReadSequence||comparisonFingerprint()!==expected){
+      comparisonState();state.comparisonIncoming.push({id:uid('comparison-incoming'),document:copy(document),origin:{filename:file.name},receivedAt:now(),comparison:true});
+      state.notice='The incoming comparison is retained for explicit adoption; newer edits remain selected.';persist();return;
+    }
+    adoptComparison(document,{raw});
+  }
+  async function saveComparison(){
+    if(isPending())return sendPending();
+    const report=comparisonReport();if(!report)throw new Error('Choose both comparison sources before saving.');
+    const actor=String((await getActor())??'').trim();if(!actor)throw new Error('Enter the recording operator in Operations before saving.');
+    const next=await saveApi(prefix);
+    if(next?.program?.id!==caseId||next.program.state!=='OPEN')throw new Error('Open this original Operations case before saving the comparison.');
+    caseValue=next;
+    const createdAt=now(),editionId=uid('cohort-comparison'),raw=JSON.stringify(report,null,2)+'\n';
+    if(new TextEncoder().encode(raw).length>8*1024*1024)throw new Error('The complete comparison exceeds one original 8 MiB source attachment. Download its complete JSON to retain both plans.');
+    const filename='sf47-cohort-plan-comparison-'+editionId+'.json';
+    const payload={expectedVersion:caseValue.program.version,actor,action:'source.add',data:{kind:'other',filename,contentBase64:toBase64(raw),mediaType:'application/json',sourceUrl:'',observedAt:createdAt},note:'Cohort plan comparison: '+report.review.title};
+    payload.requestId=await mutationId('operations:'+caseId,payload);
+    state.pending={payload,raw,editionId,documentKind:'comparison'};persist(true);await sendPending();
+  }
+  async function openComparisonSide(side){
+    const item=comparisonState()[side];if(!item)throw new Error('Capture this comparison side first.');
+    const origin=item.origin||{},meta=origin.caseId===caseId&&origin.sourceId?caseValue.sources.find(row=>row.id===origin.sourceId):null;
+    if(meta){
+      if(origin.sha256&&meta.sha256!==origin.sha256)throw new Error('The saved source identity differs from this comparison. Keep the retained comparison and inspect the original source.');
+      await openSaved(meta.id);
+    }else await openDocument(copy(item.document));
+  }
+  function comparisonValue(value){return value===null||value===undefined?'<span class="cp-note">Unvalued / absent</span>':typeof value==='object'?'<pre>'+esc(JSON.stringify(value,null,2))+'</pre>':esc(decimal(value));}
+  function comparisonDelta(value){return value===null||value===undefined?'<span class="cp-note">—</span>':esc(typeof value==='number'&&value>0?'+'+value:typeof value==='string'&&value!=='0'&&!value.startsWith('-')?'+'+decimal(value):decimal(value));}
+  function comparisonMetricTable(rows){
+    return table(['Measure','Baseline','Candidate','Candidate − baseline'],rows.map(row=>[esc(label(row.key)),comparisonValue(row.before),comparisonValue(row.after),comparisonDelta(row.delta)]));
+  }
+  function comparisonPage(key,rows,interactive){
+    if(!interactive)return {rows,controls:''};
+    const page=Math.min(Math.max(0,state.pages[key]||0),Math.max(0,Math.ceil(rows.length/25)-1));
+    state.pages[key]=page;
+    return {rows:rows.slice(page*25,page*25+25),controls:rows.length>25?'<div class="cp-pager">'+
+      btn('Previous','comparison-page','data-key="'+esc(key)+'" data-page="'+(page-1)+'" data-cp-view="true"',page===0)+
+      '<span>'+((page*25)+1)+'–'+Math.min((page+1)*25,rows.length)+' of '+rows.length+'</span>'+
+      btn('Next','comparison-page','data-key="'+esc(key)+'" data-page="'+(page+1)+'" data-cp-view="true"',(page+1)*25>=rows.length)+'</div>':''};
+  }
+  function comparisonRowsTable(title,key,rows,interactive=true){
+    const selected=comparisonPage(key,rows,interactive);
+    return section(title,rows.length?table(['Original row','Change','Baseline / candidate position','Changed fields'],selected.rows.map(row=>{
+      const name=row.after?.label||row.before?.label||row.id;
+      return [esc(name)+'<small>'+esc(row.id)+'</small>',esc(label(row.status)),esc(row.beforeIndex===null?'Absent':String(row.beforeIndex+1))+' / '+esc(row.afterIndex===null?'Absent':String(row.afterIndex+1)),
+        row.changes.length?'<details><summary>'+row.changes.length+' changed fields</summary>'+table(['Field','Baseline','Candidate'],row.changes.map(change=>[esc(label(change.key)),change.beforePresent?comparisonValue(change.before):esc('Absent'),change.afterPresent?comparisonValue(change.after):esc('Absent')]))+'</details>':esc('Order changed; row content retained')];
+    }))+selected.controls:note('No changes in this section.'));
+  }
+  function comparisonBasis(report){
+    const changed=report.basis.filter(row=>!row.match);
+    return section('Comparison basis',note('All changes are candidate minus baseline. Each plan keeps its own original rule, calendar window and observation time. These are planned quantities and estimates.')+
+      (changed.length?'<div class="cp-source-change"><h4>The selected bases differ</h4>'+table(['Basis','Baseline','Candidate'],changed.map(row=>[esc(label(row.key)),comparisonValue(row.before),comparisonValue(row.after)]))+'</div>':note('Both alternatives use the same programme, rule, window and observation time.'))+
+      table(['Plan','Case / source','UTC window','Original tranche'],[['Baseline: '+report.before.input.name,report.before.source.programId+' · v'+report.before.source.version,report.before.window.start+'–'+report.before.window.end,String(report.before.window.tranche)],['Candidate: '+report.after.input.name,report.after.source.programId+' · v'+report.after.source.version,report.after.window.start+'–'+report.after.window.end,String(report.after.window.tranche)]].map(row=>row.map(esc))));
+  }
+  function comparisonTargets(report){
+    return section('Original targets',table(['Target','Baseline planned / required','Candidate planned / required','Planned change','Shortfall change'],report.targets.map(row=>[
+      esc(label(row.key)),comparisonValue(row.before?.planned)+' / '+comparisonValue(row.before?.expected)+(row.before?'<small>'+esc(label(row.before.status))+'</small>':''),
+      comparisonValue(row.after?.planned)+' / '+comparisonValue(row.after?.expected)+(row.after?'<small>'+esc(label(row.after.status))+'</small>':''),
+      comparisonDelta(row.planned.delta),comparisonDelta(row.gap.delta)])));
+  }
+  function comparisonEconomics(report){
+    const costs=(title,groups)=>section(title,groups.length?groups.map(group=>{
+      const coverage={baseline:group.before?.unknownRecordCounts??null,candidate:group.after?.unknownRecordCounts??null};
+      return '<h4>'+esc(group.currency)+'</h4>'+comparisonMetricTable(Object.entries(group.amounts).map(([key,value])=>({key,...value})))+
+        note('Amounts use '+group.currency+'; hours remain hours and margin changes are percentage points. A currency absent from one plan has no comparative amount.')+
+        jsonDetail('Cost coverage and unknown record counts',coverage);
+    }).join(''):note('No amounts are entered in either plan for this section.'));
+    return section('Economic coverage',table(['Coverage','Baseline','Candidate'],['occurrences','withEconomics','withoutEconomics'].map(key=>[esc(label(key)),esc(report.economicsCoverage.before[key]),esc(report.economicsCoverage.after[key])]))+
+      note('Schedule-date rows without economic assumptions are excluded from currency totals. Unknown entered costs remain unvalued. One-time commissioning is separate from the selected schedule window.'))+
+      costs('Recurring schedule economics',report.currencies)+costs('One-time commissioning workshares',report.workshareTotals)+
+      section('Original network and asset amounts',report.assets.length?table(['Network / asset','Baseline atomic amount','Candidate atomic amount','Atomic change'],report.assets.map(row=>[esc(row.network+' / '+row.asset),comparisonValue(row.atomicAmount.before),comparisonValue(row.atomicAmount.after),comparisonDelta(row.atomicAmount.delta)])):note('No priced network/asset rows appear in these plans.'));
+  }
+  function comparisonTiming(report,interactive=true){
+    const selectedMetric=state.comparisonMetric||'scheduledTasks',page=comparisonPage('comparison-days',report.days,interactive);
+    const controls=interactive?'<label class="cp-comparison-metric">Calendar measure<select data-cp-comparison-metric>'+metrics.map(key=>'<option value="'+key+'"'+(key===selectedMetric?' selected':'')+'>'+esc(label(key))+'</option>').join('')+'</select></label>':'';
+    const measures=interactive?[selectedMetric]:metrics;
+    return section('UTC calendar comparison',note('Dates outside one selected window remain absent; they are not counted as zero use for that plan.')+controls+
+      measures.map(key=>table(['UTC date','Baseline','Candidate','Change'],page.rows.map(row=>[esc(row.date),row.before?comparisonValue(row.metrics[key].before):esc('Outside window'),row.after?comparisonValue(row.metrics[key].after):esc('Outside window'),comparisonDelta(row.metrics[key].delta)]),label(key))).join('')+page.controls)+
+      comparisonRowsTable('Schedule and completion changes','comparison-occurrences',report.occurrences,interactive);
+  }
+  function comparisonCapacity(report,interactive=true){
+    const capacity=report.capacity;
+    const pools=capacity.pools.length?capacity.pools.map(row=>'<h4>'+esc(row.after?.label||row.before?.label||row.id)+'</h4>'+
+      table(['Assessment','Baseline','Candidate'],[['Capacity',esc(label(row.before?.status||'Absent')),esc(label(row.after?.status||'Absent'))],
+        ['Unknown availability dates',comparisonValue(row.before?.unknownAvailabilityDates),comparisonValue(row.after?.unknownAvailabilityDates)],
+        ['Unknown effort occurrences',comparisonValue(row.before?.unknownEffortOccurrences),comparisonValue(row.after?.unknownEffortOccurrences)]])+
+      comparisonMetricTable(Object.entries(row.amounts).map(([key,value])=>({key,...value})))+
+      jsonDetail('Dates with staffing shortfalls',{baseline:row.before?.overloadedDates??null,candidate:row.after?.overloadedDates??null})).join(''):note('Neither plan has entered a shared delivery pool.');
+    const pricePage=comparisonPage('comparison-prices',report.servicePricing,interactive);
+    const prices=report.servicePricing.length?pricePage.rows.map(row=>'<h4>'+esc(row.after?.label||row.before?.label||row.id)+'</h4>'+
+      table(['Basis','Baseline','Candidate'],[['Currency',comparisonValue(row.before?.currency),comparisonValue(row.after?.currency)],
+        ['Assessment',esc(label(row.before?.status||'Absent')),esc(label(row.after?.status||'Absent'))]])+
+      comparisonMetricTable(Object.entries(row.counts).map(([key,value])=>({key,...value})))+
+      comparisonMetricTable(Object.entries(row.amounts).map(([key,value])=>({key,...value})))+
+      comparisonMetricTable([{key:'minimumMarginPct',...row.minimumMarginPct}])+
+      jsonDetail('Complete service groups, schedules and unknown cost counts',{baseline:row.before,candidate:row.after})).join('')+pricePage.controls:note('Neither plan has a recurring service price group.');
+    return section('Shared delivery capacity',table(['Assessment','Baseline','Candidate'],[['Overall',esc(label(capacity.status.before)),esc(label(capacity.status.after))]])+
+      note('Capacity differences use active hours; each plan retains its exact calendar window. Known minimum extra hours sum daily shortages, so unused time on another day cannot cancel an overloaded date. Unknown availability and task effort remain unvalued.')+pools)+
+      comparisonRowsTable('Delivery day changes','comparison-capacity-days',capacity.dayChanges,interactive)+
+      comparisonRowsTable('Delivery week changes','comparison-capacity-weeks',capacity.weekChanges,interactive)+
+      comparisonRowsTable('Unassigned effort changes','comparison-capacity-unassigned',capacity.unassigned,interactive)+
+      comparisonRowsTable('Capacity sensitivity changes','comparison-capacity-sensitivity',capacity.sensitivity,interactive)+
+      section('Complete service price groups',note('Monetary price differences require the same known currency on both sides. Margin changes are percentage points. New-charge units retain each selected service group, including shared prepaid allowances.')+prices);
+  }
+  function comparisonInputs(report,interactive=true){
+    return section('Plan settings and original rule changes',report.inputChanges.settings.length?table(['Field','Baseline','Candidate'],report.inputChanges.settings.map(row=>[esc(label(row.key)),row.beforePresent?comparisonValue(row.before):esc('Absent'),row.afterPresent?comparisonValue(row.after):esc('Absent')])):note('Plan settings are unchanged.'))+
+      report.inputChanges.collections.map(group=>comparisonRowsTable(label(group.kind),'comparison-input-'+group.kind,group.rows,interactive)).join('');
+  }
+  function comparisonOperators(report,interactive=true){
+    return report.participants.map(group=>comparisonRowsTable(label(group.kind)+' results','comparison-result-'+group.kind,group.rows,interactive)).join('')+
+      comparisonRowsTable('Prepaid groups','comparison-prepaid',report.passGroups,interactive)+
+      comparisonRowsTable('Commissioning sensitivity','comparison-workshares',report.workshares,interactive)+
+      comparisonRowsTable('Completion sensitivity','comparison-completion-sensitivity',report.sensitivity.completion,interactive)+
+      comparisonRowsTable('Schedule effort sensitivity','comparison-effort-sensitivity',report.sensitivity.effort,interactive);
+  }
+  function comparisonFindings(report){
+    return section('Changed planning findings',table(['Change','Finding','Scope','Detail'],[['Added',report.findings.added],['Resolved',report.findings.removed]].flatMap(([change,rows])=>rows.map(row=>[esc(change),esc(label(row.code)),esc(row.scope)+(row.id?'<small>'+esc(row.id)+'</small>':''),esc(row.message)]))));
+  }
+  function comparisonSources(report){
+    return section('Complete source documents',note('The comparison JSON contains both complete original plan/report/edition documents and both freshly calculated reports. Each source keeps its original identity, notes and rule.')+
+      '<div class="cp-actions">'+btn('Download baseline source JSON','comparison-source-json','data-side="before" data-cp-view="true"')+btn('Download candidate source JSON','comparison-source-json','data-side="after" data-cp-view="true"')+'</div>'+
+      jsonDetail('Original source references',report.review.origins)+
+      note('The native case ZIP carries saved comparisons alongside the original source editions and complete case history.'));
+  }
+  function comparisonSide(side){
+    const value=comparisonState(),item=value[side],title=side==='before'?'Baseline':'Candidate';
+    const options=[...(plan()?[['current','Current working draft']]:[]),
+      ...(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-plan-tranche-')).map(row=>['source:'+row.id,row.filename]),
+      ...state.priorDrafts.slice().reverse().map(row=>['prior:'+row.id,'Prior: '+row.plan.name+' · '+row.retainedAt])];
+    const chosen=state.comparisonSelections[side];if(chosen&&!options.some(row=>row[0]===chosen))options.push([chosen,'Previously selected source · '+chosen]);
+    const source=item?comparisonDocumentPlan(item.document):null;
+    const changedDraft=item?.origin?.label==='Current draft'&&plan()&&JSON.stringify(source)!==JSON.stringify(plan());
+    return '<section class="cp-panel"><h3>'+title+'</h3><label>Source<select data-cp-comparison-select="'+side+'">'+options.map(([id,text])=>'<option value="'+esc(id)+'"'+(id===chosen?' selected':'')+'>'+esc(text)+'</option>').join('')+'</select></label>'+
+      '<div class="cp-actions">'+btn('Use selected source','comparison-select','data-side="'+side+'"',!options.length)+btn('Import source JSON','comparison-import-side','data-side="'+side+'"')+'</div>'+
+      (source?'<p><strong>'+esc(source.name)+'</strong><br><small>'+esc(item.origin?.label||'Retained document')+' · '+esc(item.origin?.capturedAt||'')+'</small></p><p class="cp-identity">'+esc(source.source.programId)+' · source v'+esc(source.source.version)+'</p><p>'+esc(source.windowStart)+' · tranche '+esc(source.rule.target.tranche)+'</p>'+
+        (changedDraft?note('The working draft changed after this capture. Use selected source again to compare the latest draft.'):'')+
+        btn('Open '+title.toLowerCase()+' for editing','comparison-edit-side','data-side="'+side+'"'):empty('Choose a complete source for this side.'))+'</section>';
+  }
+  function comparisonView(){
+    const value=comparisonState();let report=null,error='';
+    try{report=comparisonReport();}catch(problem){error=problem.message;}
+    const sections=[['summary','Summary & targets'],['timing','Calendar & completions'],['economics','Revenue & costs'],['capacity','Capacity & pricing'],['inputs','Input changes'],['operators','Operators & prepaid'],['sources','Source documents']];
+    const selected=value.section||'summary';
+    let body=report?(selected==='timing'?comparisonTiming(report):selected==='economics'?comparisonEconomics(report):selected==='capacity'?comparisonCapacity(report):selected==='inputs'?comparisonInputs(report):selected==='operators'?comparisonOperators(report):selected==='sources'?comparisonSources(report):comparisonBasis(report)+section('Planned workload',comparisonMetricTable(report.summary))+comparisonTargets(report)+comparisonFindings(report)):'';
+    const history=state.comparisonHistory.length?'<details><summary>Prior local comparisons ('+state.comparisonHistory.length+')</summary>'+table(['Retained','Reason',''],state.comparisonHistory.slice().reverse().map(row=>[esc(row.retainedAt),esc(row.reason),btn('Restore comparison','comparison-restore','data-id="'+esc(row.id)+'"')]))+'</details>':'';
+    const incoming=state.comparisonIncoming.length?section('Received sources awaiting adoption',table(['Received','Source',''],state.comparisonIncoming.map(row=>[esc(row.receivedAt),esc(row.origin?.filename||row.origin?.label||'Complete comparison'),btn('Adopt received source','comparison-adopt','data-id="'+esc(row.id)+'"')]))):'';
+    return '<div class="cp-heading"><div><h3>Compare complete cohort plans</h3><p class="cp-note">Capture a baseline and candidate, review their differences, then continue the chosen plan in its original editor.</p></div><div class="cp-actions">'+btn('Import complete comparison','comparison-import')+btn('Swap baseline and candidate','comparison-swap','',!value.before||!value.after)+'</div></div>'+
+      '<div class="cp-comparison-sides">'+comparisonSide('before')+comparisonSide('after')+'</div>'+
+      section('Comparison notes','<div class="cp-fields"><label class="cp-wide">Comparison title<input data-cp-comparison-field="title" maxlength="1100" value="'+esc(value.title)+'" placeholder="'+esc(report?.review.title||'Name the alternatives being compared')+'"></label><label class="cp-wide">Review notes<textarea data-cp-comparison-field="note" maxlength="20000" rows="4">'+esc(value.note)+'</textarea></label></div>'+
+        '<div class="cp-actions">'+btn('Save comparison in this case','comparison-save','data-cp-save="true"',!report)+btn('Download complete comparison JSON','comparison-json','data-cp-view="true"',!report)+btn('Download comparison CSV','comparison-csv','data-cp-view="true"',!report)+btn('Download readable comparison','comparison-html','data-cp-view="true"',!report)+'</div>'+
+        (state.comparisonSavedSourceId?note('Saved comparison source: '+state.comparisonSavedSourceId):''))+
+      (error?'<p class="cp-alert" role="alert">'+esc(error)+'</p>':'')+
+      (report?'<nav class="cp-subtabs" aria-label="Plan comparison sections">'+sections.map(([id,title])=>btn(title,'comparison-section','data-section="'+id+'" data-cp-view="true" aria-current="'+(selected===id?'page':'false')+'"')).join('')+'</nav>'+body:empty('Select both complete sources to calculate their comparison.'))+incoming+history;
+  }
+  function readableComparisonHtml(report){
+    const style='body{font:14px/1.5 system-ui,sans-serif;color:#242628;margin:32px;max-width:1500px}h1{font-size:26px}h2,h3{margin-top:24px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccd0d2;padding:7px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#f2f3f3}small{display:block;color:#555}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}.cp-table{overflow-x:auto}.cp-note{color:#555}.cp-panel{border:1px solid #ccd0d2;padding:14px;margin:16px 0}.cp-actions,button{display:none}@media(max-width:600px){body{margin:14px}.cp-panel{padding:10px}}@media print{body{margin:12mm}tr{break-inside:avoid}.cp-table{overflow:visible}}';
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(report.review.title)+'</title><style>'+style+'</style></head><body><header><p>SF47 Operations · cohort planning alternatives</p><h1>'+esc(report.review.title)+'</h1><p style="white-space:pre-wrap">'+esc(report.review.note)+'</p></header>'+
+      comparisonBasis(report)+section('Planned workload',comparisonMetricTable(report.summary))+comparisonTargets(report)+comparisonEconomics(report)+comparisonCapacity(report,false)+comparisonTiming(report,false)+comparisonInputs(report,false)+comparisonOperators(report,false)+comparisonFindings(report)+
+      section('Original source references',jsonDetail('Source references',report.review.origins))+
+      section('Complete original baseline document',jsonDetail('Baseline JSON',report.documents.before))+
+      section('Complete original candidate document',jsonDetail('Candidate JSON',report.documents.after))+
+      '<p>Exported '+esc(now())+'. The complete comparison JSON preserves both source documents and full recalculated reports for reopening.</p></body></html>';
+  }
+
   function editions(){
     const selected=state.viewedSource,sources=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-plan-'));
     const other=(caseValue.sources||[]).filter(row=>!sources.some(value=>value.id===row.id)&&(row.mediaType==='application/json'||/\.json$/i.test(row.filename||'')));
     const actions='<div class="cp-actions">'+btn('Import plan or report JSON','import-json')+btn('Download plan JSON','export-json','data-cp-view="true"',!plan())+btn('Download editable rows CSV','rows-csv','data-cp-view="true"',!plan())+btn('Import editable rows CSV','rows-import','',!plan())+btn('Download complete case ZIP','case-export','data-cp-view="true"')+'</div>';
     return section('Saved source editions',note('Each edition contains the complete entered plan and its calculated report. Saving adds a new original source record. The complete case ZIP includes those native sources and their existing case history.')+actions+
-      (sources.length?table(['Edition source','Captured','Bytes / identity',''],sources.map(row=>['<strong>'+esc(row.filename)+'</strong><small>'+esc(row.id)+'</small>',esc(row.createdAt||row.observedAt),esc(row.bytes)+'<small>'+esc(row.sha256)+'</small>',btn('Open original plan','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')])):empty('No cohort planning source edition is attached to this case yet.'))+
+      (sources.length?table(['Edition source','Captured','Bytes / identity',''],sources.map(row=>['<strong>'+esc(row.filename)+'</strong><small>'+esc(row.id)+'</small>',esc(row.createdAt||row.observedAt),esc(row.bytes)+'<small>'+esc(row.sha256)+'</small>',btn(row.filename.includes('-comparison-')?'Open comparison':'Open original plan','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')+' '+btn('Use as baseline','comparison-source-baseline','data-id="'+esc(row.id)+'"',row.filename.includes('-comparison-'))])):empty('No cohort planning source edition is attached to this case yet.'))+
       (other.length?'<details><summary>Open another retained JSON source</summary>'+table(['Original source',''],other.map(row=>[esc(row.filename)+'<small>'+esc(row.id)+'</small>',btn('Open JSON source','open-source','data-id="'+esc(row.id)+'" data-cp-view="true"')]))+'</details>':''))+
       (selected?section('Opened original source','<p><strong>'+esc(selected.meta.filename)+'</strong><br><span class="cp-identity">'+esc(selected.meta.id)+' · '+esc(selected.meta.sha256)+'</span></p>'+
         btn('Download original source JSON','source-json','data-cp-view="true"')+
@@ -623,7 +886,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     if(!available())return;
     const dialog=$('dialog.cp-dialog'),scroll=dialog?.scrollTop||0,focus=document.activeElement?.dataset?.cpField;
     if(dialog?.open)dialog.close();
-    const body=state.tab==='setup'?setup():state.tab==='editions'?editions():!plan()?setup():state.tab==='participants'?participants():state.tab==='operations'?operations():state.tab==='schedules'?schedules():state.tab==='workshares'?workshares():state.tab==='capacity'?capacitySetup():reportView();
+    const body=state.tab==='setup'?setup():state.tab==='editions'?editions():state.tab==='compare'?comparisonView():!plan()?setup():state.tab==='participants'?participants():state.tab==='operations'?operations():state.tab==='schedules'?schedules():state.tab==='workshares'?workshares():state.tab==='capacity'?capacitySetup():reportView();
     root.innerHTML=header()+navigation()+body+editor();
     const resumed=$('dialog.cp-dialog');if(resumed){resumed.showModal();resumed.scrollTop=scroll;if(focus){const target=[...resumed.querySelectorAll('[data-cp-field]')].find(el=>el.dataset.cpField===focus);target?.focus({preventScroll:true});}}
     controls();
@@ -632,6 +895,11 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   root.addEventListener('input',event=>{
     const el=event.target;if(!editable())return;
     if(el.hasAttribute('data-cp-filter')){state.filter=el.value;return;}
+    if(el.dataset.cpComparisonSelect){comparisonState();state.comparisonSelections[el.dataset.cpComparisonSelect]=el.value;persist();return;}
+    if(el.dataset.cpComparisonField){
+      const key=el.dataset.cpComparisonField;if(!['title','note'].includes(key))return;
+      comparisonState()[key]=el.value;state.comparisonSavedSourceId=null;comparisonCacheKey='';persist();return;
+    }
     if(el.dataset.cpControl)return;
     if(el.dataset.cpField==='newTranche'){state.tranche=Number(el.value);persist();return;}
     const target=el.closest('[data-cp-editor]')?state.editorDraft:el.closest('[data-cp-plan]')?plan():null;
@@ -642,7 +910,12 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     }else if(el.dataset.cpField)setPath(target,el.dataset.cpField,readInput(el));else return;
     if(state.editor&&el.closest('[data-cp-editor]')){state.rowDrafts[state.editor.key]={editor:copy(state.editor),data:copy(state.editorDraft)};state.lastEditorKey=state.editor.key;persist();}else changed();
   });
-  root.addEventListener('change',event=>{const el=event.target;if(editable()&&el.dataset.cpControl&&state.editor){switchControl(el);}});
+  root.addEventListener('change',event=>{
+    const el=event.target;if(!editable())return;
+    if(el.hasAttribute('data-cp-comparison-metric')){if(metrics.includes(el.value)){state.comparisonMetric=el.value;persist();render();}return;}
+    if(el.dataset.cpComparisonSelect){comparisonState();state.comparisonSelections[el.dataset.cpComparisonSelect]=el.value;persist();return;}
+    if(el.dataset.cpControl&&state.editor)switchControl(el);
+  });
   root.addEventListener('submit',event=>{
     if(!event.target.matches('[data-cp-plan],[data-cp-editor]'))return;
     event.preventDefault();
@@ -656,6 +929,43 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const action=target.dataset.cpAction;
     run(async()=>{
       if(action==='tab'){state.tab=target.dataset.tab;return;}
+      if(action==='comparison-section'){comparisonState().section=target.dataset.section;return;}
+      if(action==='comparison-page'){state.pages[target.dataset.key]=Number(target.dataset.page);return;}
+      if(action==='comparison-select'){await selectComparisonSide(target.dataset.side);return;}
+      if(action==='comparison-import-side'){await importComparisonSide(target.dataset.side);return;}
+      if(action==='comparison-import'){await importComparison();return;}
+      if(action==='comparison-edit-side'){await openComparisonSide(target.dataset.side);return;}
+      if(action==='comparison-save'){await saveComparison();return;}
+      if(action==='comparison-swap'){
+        const value=comparisonState();if(!value.before||!value.after)return;
+        retainComparison('Swapped baseline and candidate');[value.before,value.after]=[value.after,value.before];
+        [state.comparisonSelections.before,state.comparisonSelections.after]=[state.comparisonSelections.after,state.comparisonSelections.before];
+        state.comparisonSavedSourceId=null;comparisonCacheKey='';state.pages={};state.notice='Swapped the two complete sources. Changes now use the new candidate minus baseline.';return;
+      }
+      if(action==='comparison-json'||action==='comparison-csv'||action==='comparison-html'){
+        const report=comparisonReport();if(!report)throw new Error('Choose both comparison sources first.');
+        const name=cleanName(report.review.title);
+        if(action==='comparison-json')download(JSON.stringify(report,null,2)+'\n',name+'-comparison.json');
+        if(action==='comparison-csv')download(exportCohortPlanComparisonCsv(report),name+'-comparison.csv','text/csv');
+        if(action==='comparison-html')download(readableComparisonHtml(report),name+'-comparison.html','text/html');
+        return;
+      }
+      if(action==='comparison-source-json'){
+        const item=comparisonState()[target.dataset.side];if(item)download(JSON.stringify(item.document,null,2)+'\n',cleanName(comparisonDocumentPlan(item.document).name)+'-'+target.dataset.side+'.json');return;
+      }
+      if(action==='comparison-restore'){
+        const previous=state.comparisonHistory?.find(row=>row.id===target.dataset.id);if(!previous)return;
+        const next=copy(previous.value);
+        if(next.before&&next.after)compareCohortPlans(next.before.document,next.after.document,comparisonOptions(next));
+        else for(const side of ['before','after'])if(next[side])evaluateCohortPlan(comparisonDocumentPlan(next[side].document));
+        retainComparison('Restored prior comparison '+previous.id);state.comparison=next;state.comparisonSavedSourceId=null;comparisonCacheKey='';state.pages={};state.tab='compare';return;
+      }
+      if(action==='comparison-adopt'){
+        const entry=state.comparisonIncoming?.find(row=>row.id===target.dataset.id);if(!entry)return;
+        if(entry.comparison)adoptComparison(entry.document);
+        else replaceComparisonSide(entry.side,entry.document,entry.origin);
+        state.comparisonIncoming=state.comparisonIncoming.filter(row=>row.id!==entry.id);return;
+      }
       if(action==='report-section'){state.reportSection=target.dataset.section;return;}
       if(action==='day'){state.selectedDate=target.dataset.date;state.pages.occurrences=0;return;}
       if(action==='occurrence-page'){state.pages.occurrences=Number(target.dataset.page);return;}
@@ -694,6 +1004,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
       if(action==='report-csv'){const report=evaluate();download(exportCohortPlanCsv(report),cleanName(plan().name)+'-report.csv','text/csv');return;}
       if(action==='report-html'){const report=evaluate();download(readableHtml(report),cleanName(plan().name)+'-report.html','text/html');return;}
       if(action==='open-source'){await openSaved(target.dataset.id);return;}
+      if(action==='comparison-source-baseline'){comparisonState();state.comparisonSelections.before='source:'+target.dataset.id;await selectComparisonSide('before');return;}
       if(action==='source-json'){if(state.viewedSource)download(state.viewedSource.raw,state.viewedSource.meta.filename);return;}
       if(action==='case-export'){const response=await saveApi(prefix+'/export.zip',undefined,{download:true});download(await response.blob(),caseId+'.zip','application/zip');return;}
       if(action==='restore-prior'){

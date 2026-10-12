@@ -911,3 +911,284 @@ export function exportCohortPlanCsv(report) {
   for (const row of report.findings) add("FINDING", row.id, "", row.code, row.severity, row.message);
   return output.map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
+
+
+/** Complete alternatives retain both source documents and use the same original-rule evaluator. */
+export const COHORT_PLAN_COMPARISON_SCHEMA = "stellar-forge.sf47-cohort-plan-comparison.v1";
+const COMPARISON_COLLECTIONS = ["buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools"];
+const COMPARISON_MONEY_FIELDS = ["revenue", "supplierCost", "paymentFees", "activeHours", "laborCost", "totalCost", "contribution", "marginPercent"];
+const COMPARISON_WORKSHARE_FIELDS = ["fee", "hours", "otherCosts", "laborCost", "totalCost", "contribution"];
+
+function comparisonPlan(document, label) {
+  object(document, label);
+  if (document.schema === COHORT_PLAN_SCHEMA) return document;
+  if (document.schema === COHORT_PLAN_REPORT_SCHEMA && document.kind === "PLAN") return document.input;
+  if (document.schema === "stellar-forge.sf47-cohort-plan-edition.v1") return document.plan;
+  fail("INVALID_COMPARISON_SOURCE", label + " must be a complete plan, planning report or saved edition.", label);
+}
+function comparisonNumber(before, after) {
+  return { before: before ?? null, after: after ?? null,
+    delta: before === null || before === undefined || after === null || after === undefined ? null : after - before };
+}
+function comparisonDecimal(before, after, comparable = true) {
+  return { before: before ?? null, after: after ?? null,
+    delta: !comparable || before === null || before === undefined || after === null || after === undefined ? null :
+      decimalText(decimalSubtract(computedDecimal(after, "Candidate amount", true), computedDecimal(before, "Baseline amount", true))) };
+}
+function comparisonFields(before, after) {
+  const left = before ?? {}, right = after ?? {};
+  return [...new Set([...Object.keys(left), ...Object.keys(right)])].sort().flatMap(key => {
+    const beforePresent = Object.prototype.hasOwnProperty.call(left, key), afterPresent = Object.prototype.hasOwnProperty.call(right, key);
+    return beforePresent === afterPresent && canonical(left[key]) === canonical(right[key]) ? [] :
+      [{ key, beforePresent, afterPresent, before: beforePresent ? clone(left[key]) : null, after: afterPresent ? clone(right[key]) : null }];
+  });
+}
+function comparisonRows(before, after, keyOf = row => row.id) {
+  const left = new Map(before.map((row, index) => [keyOf(row), { row, index }]));
+  const right = new Map(after.map((row, index) => [keyOf(row), { row, index }]));
+  return [...new Set([...left.keys(), ...right.keys()])].flatMap(id => {
+    const a = left.get(id), b = right.get(id);
+    const changes = comparisonFields(a?.row, b?.row);
+    const status = !a ? "ADDED" : !b ? "REMOVED" : changes.length ? "CHANGED" : a.index !== b.index ? "MOVED" : "UNCHANGED";
+    return status === "UNCHANGED" ? [] : [{ id, status, beforeIndex: a?.index ?? null, afterIndex: b?.index ?? null,
+      before: a ? clone(a.row) : null, after: b ? clone(b.row) : null, changes }];
+  });
+}
+function comparisonAmounts(before, after, keys) {
+  return Object.fromEntries(keys.map(key => [key, comparisonDecimal(before?.[key], after?.[key])]));
+}
+function comparisonWorkshareTotals(input) {
+  const totals = new Map();
+  for (const workshare of input.workshares) {
+    const calculated = workshareResult(workshare, ["0"]), base = calculated.cases[0];
+    const amounts = { fee: workshare.fee, hours: workshare.hours, otherCosts: workshare.otherCosts,
+      laborCost: base.laborCost, totalCost: base.totalCost, contribution: base.contribution };
+    if (!totals.has(workshare.currency)) totals.set(workshare.currency, { currency: workshare.currency, records: 0,
+      known: Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, ZERO])),
+      unknownRecordCounts: Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, 0])) });
+    const group = totals.get(workshare.currency); group.records++;
+    for (const key of COMPARISON_WORKSHARE_FIELDS) {
+      if (amounts[key] === null) group.unknownRecordCounts[key]++;
+      else group.known[key] = decimalAdd(group.known[key], computedDecimal(amounts[key], key, true));
+    }
+  }
+  return [...totals.values()].map(({ known, ...group }) => {
+    const knownSubtotals = Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, decimalText(known[key])]));
+    return { ...group, knownSubtotals, complete: !Object.values(group.unknownRecordCounts).some(Boolean),
+      ...Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, group.unknownRecordCounts[key] ? null : knownSubtotals[key]])) };
+  }).sort((a, b) => a.currency.localeCompare(b.currency));
+}
+function comparisonCurrencyRows(before, after, keys) {
+  const left = new Map(before.map(row => [row.currency, row])), right = new Map(after.map(row => [row.currency, row]));
+  return [...new Set([...left.keys(), ...right.keys()])].sort().map(currency => {
+    const a = left.get(currency) ?? null, b = right.get(currency) ?? null;
+    return { currency, before: a, after: b, amounts: comparisonAmounts(a, b, keys) };
+  });
+}
+
+const COMPARISON_CAPACITY_FIELDS = ["availableHours", "knownAvailableHours", "requiredHours", "knownRequiredHours", "headroomHours", "additionalHoursKnownMinimum"];
+const COMPARISON_PRICE_FIELDS = ["unitRevenue", "totalCost", "revenue", "uncoveredCost", "breakEvenUnitRevenue", "targetUnitRevenue", "unitRevenueIncrease"];
+function comparisonNamedAmounts(before, after, keys, keyOf = row => row.id, comparable = () => true) {
+  const left = new Map(before.map(row => [keyOf(row), row])), right = new Map(after.map(row => [keyOf(row), row]));
+  return [...new Set([...left.keys(), ...right.keys()])].map(id => {
+    const a = left.get(id) ?? null, b = right.get(id) ?? null;
+    return { id, before: a, after: b, amounts: Object.fromEntries(keys.map(key => [key, comparisonDecimal(a?.[key], b?.[key], comparable(a, b))])) };
+  });
+}
+function comparisonDelivery(before, after) {
+  const a = before.capacity, b = after.capacity, dayKey = row => canonical([row.poolId, row.date]), weekKey = row => canonical([row.poolId, row.weekStart]);
+  const leftDays = a.pools.flatMap(pool => pool.days), rightDays = b.pools.flatMap(pool => pool.days);
+  const leftWeeks = a.pools.flatMap(pool => pool.weeks), rightWeeks = b.pools.flatMap(pool => pool.weeks);
+  return {
+    status: { before: a.status, after: b.status },
+    pools: comparisonNamedAmounts(a.pools, b.pools, COMPARISON_CAPACITY_FIELDS),
+    days: comparisonNamedAmounts(leftDays, rightDays, ["availableHours", "requiredHours", "knownRequiredHours", "headroomHours", "additionalHoursKnownMinimum", "utilizationPercent"], dayKey),
+    weeks: comparisonNamedAmounts(leftWeeks, rightWeeks, COMPARISON_CAPACITY_FIELDS, weekKey),
+    dayChanges: comparisonRows(leftDays, rightDays, dayKey),
+    weekChanges: comparisonRows(leftWeeks, rightWeeks, weekKey),
+    unassigned: comparisonRows(a.unassigned, b.unassigned, row => canonical([row.scheduleId, row.date])),
+    sensitivity: comparisonRows(a.sensitivity, b.sensitivity, row => canonical([row.poolId, row.effortIncreasePct]))
+  };
+}
+function comparisonPrices(before, after) {
+  return comparisonNamedAmounts(before.servicePricing, after.servicePricing, COMPARISON_PRICE_FIELDS, row => row.id,
+    (a, b) => !!a?.currency && a.currency === b?.currency).map(row => ({
+      ...row, counts: Object.fromEntries(["chargeUnits", "scheduledTasks"].map(key => [key, comparisonNumber(row.before?.[key], row.after?.[key])])),
+      minimumMarginPct: comparisonDecimal(row.before?.minimumMarginPct, row.after?.minimumMarginPct)
+    }));
+}
+
+function comparisonReview(raw, before, after) {
+  const value = fields(object(raw, "comparison review"), ["title", "note", "origins"], "comparison review");
+  const origins = fields(object(value.origins ?? {}, "comparison origins"), ["before", "after"], "comparison origins");
+  const origin = (entry, label) => {
+    if (entry === null || entry === undefined) return null;
+    fields(object(entry, label), ["label", "caseId", "sourceId", "filename", "sha256", "bytes", "capturedAt"], label);
+    const result = {};
+    for (const key of ["label", "filename"]) if (entry[key] !== undefined) result[key] = textValue(entry[key], label + "." + key, false, 500);
+    for (const key of ["caseId", "sourceId"]) if (entry[key] !== undefined && entry[key] !== null) result[key] = id(entry[key], label + "." + key);
+    if (entry.sha256 !== undefined) {
+      if (typeof entry.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(entry.sha256)) fail("INVALID_COMPARISON_SOURCE", "Retain the original source SHA-256.", label + ".sha256");
+      result.sha256 = entry.sha256;
+    }
+    if (entry.bytes !== undefined) result.bytes = integer(entry.bytes, label + ".bytes");
+    if (entry.capturedAt !== undefined) result.capturedAt = stamp(entry.capturedAt, label + ".capturedAt");
+    return result;
+  };
+  return {
+    title: textValue(value.title ?? (after.input.name + " compared with " + before.input.name), "comparison title", true, 1100),
+    note: optionalText(value.note, "comparison note"),
+    origins: { before: origin(origins.before, "baseline origin"), after: origin(origins.after, "candidate origin") }
+  };
+}
+
+/**
+ * Compare complete alternatives without changing either input or selecting a winner.
+ * Deltas mean candidate minus baseline; unvalued amounts and absent currency/window
+ * groups have null deltas. Schedule costs and one-time workshares remain separate.
+ */
+export function compareCohortPlans(beforeDocument, afterDocument, options = {}) {
+  const before = evaluateCohortPlan(comparisonPlan(beforeDocument, "baseline"));
+  const after = evaluateCohortPlan(comparisonPlan(afterDocument, "candidate"));
+  const basis = [
+    ["programId", before.source.programId, after.source.programId],
+    ["planId", before.source.planId ?? null, after.source.planId ?? null],
+    ["sourceVersion", before.source.version, after.source.version],
+    ["planContentSha256", before.source.planContentSha256, after.source.planContentSha256],
+    ["tranche", before.window.tranche, after.window.tranche],
+    ["environment", before.window.expectedEnvironment, after.window.expectedEnvironment],
+    ["windowStart", before.window.start, after.window.start],
+    ["windowEnd", before.window.end, after.window.end],
+    ["calendarDays", before.window.calendarDays, after.window.calendarDays],
+    ["asOfAt", before.window.asOfAt, after.window.asOfAt],
+    ["rule", before.rule, after.rule]
+  ].map(([key, a, b]) => ({ key, before: clone(a), after: clone(b), match: canonical(a) === canonical(b) }));
+  const leftTargets = new Map(before.targets.map(row => [row.key, row])), rightTargets = new Map(after.targets.map(row => [row.key, row]));
+  const targets = [...new Set([...leftTargets.keys(), ...rightTargets.keys()])].map(key => {
+    const a = leftTargets.get(key) ?? null, b = rightTargets.get(key) ?? null;
+    return { key, before: a, after: b, expected: comparisonNumber(a?.expected, b?.expected),
+      planned: comparisonNumber(a?.planned, b?.planned), gap: comparisonNumber(a?.gap, b?.gap) };
+  });
+  const leftDays = new Map(before.days.map(row => [row.date, row])), rightDays = new Map(after.days.map(row => [row.date, row]));
+  const days = [...new Set([...leftDays.keys(), ...rightDays.keys()])].sort().map(date => {
+    const a = leftDays.get(date) ?? null, b = rightDays.get(date) ?? null;
+    return { date, before: a, after: b, metrics: Object.fromEntries(Object.keys(makeMetrics()).map(key => [key, comparisonNumber(a?.[key], b?.[key])])) };
+  });
+  const settings = input => Object.fromEntries(Object.entries(input).filter(([key]) => !COMPARISON_COLLECTIONS.includes(key)));
+  const inputChanges = {
+    settings: comparisonFields(settings(before.input), settings(after.input)),
+    collections: COMPARISON_COLLECTIONS.map(kind => ({ kind,
+      beforeOrder: before.input[kind].map(row => row.id), afterOrder: after.input[kind].map(row => row.id),
+      rows: comparisonRows(before.input[kind], after.input[kind]) }))
+  };
+  const currencies = comparisonCurrencyRows(before.currencies, after.currencies, COMPARISON_MONEY_FIELDS);
+  const workshareTotals = comparisonCurrencyRows(comparisonWorkshareTotals(before.input), comparisonWorkshareTotals(after.input), COMPARISON_WORKSHARE_FIELDS);
+  const assetKey = row => canonical([row.network, row.asset]), leftAssets = new Map(before.assets.map(row => [assetKey(row), row])), rightAssets = new Map(after.assets.map(row => [assetKey(row), row]));
+  const assets = [...new Set([...leftAssets.keys(), ...rightAssets.keys()])].map(key => {
+    const a = leftAssets.get(key) ?? null, b = rightAssets.get(key) ?? null, row = a || b;
+    return { network: row.network, asset: row.asset, before: a, after: b,
+      atomicAmount: comparisonDecimal(a?.atomicAmount, b?.atomicAmount),
+      plannedPaymentRequests: comparisonNumber(a?.plannedPaymentRequests, b?.plannedPaymentRequests),
+      plannedPaidPurchases: comparisonNumber(a?.plannedPaidPurchases, b?.plannedPaidPurchases) };
+  });
+  const reportGroups = ["buyers", "merchants", "operations", "facilitators"].map(kind => ({
+    kind, rows: comparisonRows(before[kind], after[kind], row => row.id || row.operatorId || canonical(row.buyerIds || row.merchantIds || row.serviceIds))
+  }));
+  const findingKey = row => canonical([row.code, row.scope, row.id, row.message]);
+  const leftFindings = new Set(before.findings.map(findingKey)), rightFindings = new Set(after.findings.map(findingKey));
+  return {
+    schema: COHORT_PLAN_COMPARISON_SCHEMA, kind: "PLAN_COMPARISON",
+    documents: { before: clone(beforeDocument), after: clone(afterDocument) }, before, after, basis,
+    review: comparisonReview(options, before, after),
+    summary: Object.keys(before.summary).map(key => ({ key, ...comparisonNumber(before.summary[key], after.summary[key]) })),
+    targets, currencies, workshareTotals, assets, days, inputChanges,
+    capacity: comparisonDelivery(before, after), servicePricing: comparisonPrices(before, after),
+    economicsCoverage: Object.fromEntries([["before", before], ["after", after]].map(([side, report]) => [side, {
+      occurrences: report.occurrences.length,
+      withEconomics: report.occurrences.filter(row => row.economics !== null).length,
+      withoutEconomics: report.occurrences.filter(row => row.economics === null).length,
+      schedulesWithoutEconomics: report.input.schedules.filter(row => row.economics === null).map(row => row.id)
+    }])),
+    occurrences: comparisonRows(before.occurrences, after.occurrences),
+    participants: reportGroups,
+    passGroups: comparisonRows(before.passGroups, after.passGroups),
+    workshares: comparisonRows(before.workshares, after.workshares),
+    sensitivity: {
+      completion: comparisonRows(before.sensitivity.completion, after.sensitivity.completion, row => row.completionSharePct),
+      effort: comparisonRows(before.sensitivity.effort, after.sensitivity.effort, row => canonical([row.currency, row.effortIncreasePct]))
+    },
+    findings: {
+      added: after.findings.filter(row => !leftFindings.has(findingKey(row))),
+      removed: before.findings.filter(row => !rightFindings.has(findingKey(row)))
+    }
+  };
+}
+
+/** Recalculate carried sources before displaying or exporting an imported comparison. */
+export function reopenCohortPlanComparison(document) {
+  fields(object(document, "comparison"), ["schema", "kind", "documents", "before", "after", "basis", "review",
+    "summary", "targets", "currencies", "workshareTotals", "assets", "days", "inputChanges", "economicsCoverage",
+    "occurrences", "participants", "passGroups", "workshares", "sensitivity", "findings", "capacity", "servicePricing"], "comparison");
+  if (document.schema !== COHORT_PLAN_COMPARISON_SCHEMA || document.kind !== "PLAN_COMPARISON" || !document.documents)
+    fail("INVALID_PLAN_COMPARISON", "Open a complete cohort plan comparison with both original documents.", "comparison");
+  fields(object(document.documents, "comparison documents"), ["before", "after"], "comparison documents");
+  return compareCohortPlans(document.documents.before, document.documents.after, document.review ?? {});
+}
+
+/** Complete comparison rows; full editable source documents travel in comparison JSON. */
+export function exportCohortPlanComparisonCsv(comparison) {
+  const report = reopenCohortPlanComparison(comparison);
+  const rows = [["section", "identity", "field", "baseline", "candidate", "change", "units", "detail"]];
+  const cell = value => value && typeof value === "object" ? JSON.stringify(value) : value;
+  const add = (section, identity, field, value, units = "", detail = "") =>
+    rows.push([section, identity, field, cell(value.before), cell(value.after), value.delta ?? "", units, cell(detail)]);
+  add("REVIEW", "", "title", { before: null, after: report.review.title });
+  add("REVIEW", "", "note", { before: null, after: report.review.note });
+  add("REVIEW", "", "origins", report.review.origins);
+  for (const row of report.basis) add("BASIS", "", row.key, row, "", row.match ? "Same" : "Changed");
+  for (const row of report.summary) add("SUMMARY", "", row.key, row, "count");
+  for (const key of ["occurrences", "withEconomics", "withoutEconomics"]) add("ECONOMICS_COVERAGE", "", key, comparisonNumber(report.economicsCoverage.before[key], report.economicsCoverage.after[key]), "schedule-date rows");
+  for (const row of report.targets) for (const key of ["expected", "planned", "gap"])
+    add("TARGET", row.key, key, row[key], "count", { baselineStatus: row.before?.status ?? null, candidateStatus: row.after?.status ?? null });
+  for (const [section, groups] of [["SCHEDULE_ECONOMICS", report.currencies], ["ONE_TIME_WORKSHARES", report.workshareTotals]])
+    for (const group of groups) for (const [key, amounts] of Object.entries(group.amounts))
+      add(section, group.currency, key, amounts, key === "hours" || key === "activeHours" ? "hours" : key === "marginPercent" ? "percentage points" : group.currency,
+        { baselineUnknown: group.before?.unknownRecordCounts ?? null, candidateUnknown: group.after?.unknownRecordCounts ?? null });
+  for (const row of report.assets) for (const key of ["atomicAmount", "plannedPaymentRequests", "plannedPaidPurchases"])
+    add("ASSET", row.network + " / " + row.asset, key, row[key], key === "atomicAmount" ? "atomic units" : "count");
+  for (const day of report.days) for (const [key, values] of Object.entries(day.metrics))
+    add("DAY", day.date, key, values, "count", { baselineInWindow: !!day.before, candidateInWindow: !!day.after });
+
+  add("CAPACITY_STATUS", "", "status", report.capacity.status);
+  for (const [section, groups] of [["CAPACITY_POOL", report.capacity.pools], ["CAPACITY_DAY", report.capacity.days], ["CAPACITY_WEEK", report.capacity.weeks]])
+    for (const group of groups) for (const [key, values] of Object.entries(group.amounts))
+      add(section, group.id, key, values, key === "utilizationPercent" ? "percentage points" : "hours",
+        { baselineStatus: group.before?.status ?? null, candidateStatus: group.after?.status ?? null,
+          baselineUnknownEffort: group.before?.unknownEffortOccurrences ?? null, candidateUnknownEffort: group.after?.unknownEffortOccurrences ?? null });
+  for (const group of report.servicePricing) {
+    const detail = { baselineCurrency: group.before?.currency ?? null, candidateCurrency: group.after?.currency ?? null,
+      baselineStatus: group.before?.status ?? null, candidateStatus: group.after?.status ?? null,
+      baseline: group.before, candidate: group.after };
+    for (const [key, values] of Object.entries(group.amounts)) add("SERVICE_PRICING", group.id, key, values, group.before?.currency === group.after?.currency ? group.before?.currency || "" : "different currencies", detail);
+    for (const [key, values] of Object.entries(group.counts)) add("SERVICE_PRICING", group.id, key, values, "count", detail);
+    add("SERVICE_PRICING", group.id, "minimumMarginPct", group.minimumMarginPct, "percentage points", detail);
+  }
+
+  for (const row of report.inputChanges.settings) add("PLAN_INPUT", "", row.key, row, "", { beforePresent: row.beforePresent, afterPresent: row.afterPresent });
+  const changes = (section, values) => {
+    for (const row of values) {
+      add(section, row.id, "position", comparisonNumber(row.beforeIndex, row.afterIndex), "zero-based index", row.status);
+      for (const change of row.changes) add(section, row.id, change.key, change, "", row.status);
+    }
+  };
+  for (const group of report.inputChanges.collections) changes("INPUT_" + group.kind.toUpperCase(), group.rows);
+  changes("SCHEDULE_OCCURRENCE", report.occurrences);
+  for (const group of report.participants) changes("RESULT_" + group.kind.toUpperCase(), group.rows);
+  changes("PREPAID", report.passGroups); changes("WORKSHARE", report.workshares);
+  changes("CAPACITY_DAY_CHANGE", report.capacity.dayChanges); changes("CAPACITY_WEEK_CHANGE", report.capacity.weekChanges);
+  changes("CAPACITY_UNASSIGNED", report.capacity.unassigned); changes("CAPACITY_SENSITIVITY", report.capacity.sensitivity);
+  changes("COMPLETION_SENSITIVITY", report.sensitivity.completion); changes("EFFORT_SENSITIVITY", report.sensitivity.effort);
+  for (const [kind, findings] of Object.entries(report.findings)) for (const row of findings)
+    add("FINDING_" + kind.toUpperCase(), row.id ?? "", row.code, { before: kind === "removed" ? row.message : null, after: kind === "added" ? row.message : null }, "", row.scope);
+  return rows.map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+}
