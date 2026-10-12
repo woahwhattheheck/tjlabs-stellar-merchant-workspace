@@ -46,6 +46,25 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    command("task-outcomes", "List saved customer task comparisons and their current editions", case=True, output=True)
+    target = command("task-outcomes-seed", "Prepare a new complete customer task comparison input", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target = command("task-outcomes-show", "Read the complete selected comparison, source and revision history", case=True, output=True)
+    target.add_argument("--comparison", required=True)
+    target.add_argument("--revision", type=int)
+    target.add_argument("--inputs-only", action="store_true", help="Emit complete editable inputs based on this selected revision")
+    target = command("task-outcomes-preview", "Compare both complete methods using exact effort and costs", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--inputs", required=True, help="Complete task comparison inputs JSON")
+    target = command("task-outcomes-save", "Save a reviewed immutable edition in the original case transaction", case=True, output=True)
+    mutation(target, version=True)
+    target.add_argument("--inputs", required=True)
+    target.add_argument("--expected-preview-sha256", required=True)
+    target = command("task-outcomes-export", "Export the selected customer report, complete source case and all revisions", case=True)
+    target.add_argument("--comparison", required=True)
+    target.add_argument("--revision", type=int, required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--output", required=True)
     target = command("supplier-account", "Read the complete supplier account, original records and dated balances", case=True, output=True)
     target.add_argument("--contributor", help="Original contributor or supplier record ID; defaults to the first supplier")
     target.add_argument("--start-date")
@@ -613,6 +632,29 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "task-outcomes":
+        result = {"comparisons": ops.list_task_outcomes(args.case)}
+    elif action == "task-outcomes-seed":
+        result = ops.seed_task_outcomes(args.case, {"expectedVersion": args.expected_version})["inputs"]
+    elif action == "task-outcomes-show":
+        result = ops.task_outcomes(args.case, args.comparison, args.revision)
+        if args.inputs_only:
+            result = {"id": result["edition"]["id"], "expectedRevision": result["history"][0]["revision"],
+                      "document": result["edition"]["document"]}
+    elif action in ("task-outcomes-preview", "task-outcomes-save"):
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use the complete UTF-8 customer comparison inputs.", 422, "INVALID_TASK_OUTCOMES") from exc
+        if action == "task-outcomes-preview":
+            result = ops.preview_task_outcomes(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+        else:
+            result = ops.command(args.case, {"action": "task-outcomes.save", "expectedVersion": args.expected_version,
+                "actor": args.actor, "note": args.note, "requestId": args.request_id,
+                "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "task-outcomes-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_task_outcomes(
+            args.case, args.comparison, args.revision, args.expected_version))}
     elif action == "supplier-account":
         result = ops.supplier_account(args.case, args.contributor, args.start_date, args.end_date, args.expected_version)
     elif action == "supplier-account-export":
