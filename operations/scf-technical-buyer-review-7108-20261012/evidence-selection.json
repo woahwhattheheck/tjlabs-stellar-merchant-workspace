@@ -1,0 +1,175 @@
+{
+  "schema": "commons.scf-technical-review-evidence-selection.v1",
+  "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "checkedDate": "2026-10-12",
+  "originalApplication": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "32fe7d732741ba10900c28800e4efb6b8944192d",
+    "application": {
+      "bytes": 39167,
+      "sha256": "0072100fe6edf1ea1b5e5cca74efc20423b24792eca5ab194327eb736a62616c",
+      "gitBlob": "cd05c693938a0adcbfa1358a12bcddf061d6eaed"
+    },
+    "companion": {
+      "bytes": 184552,
+      "sha256": "2f8f9fe20f7b98093c3dfc046d3400854ac298686b9ce46fecb3b3385ca86e1b",
+      "gitBlob": "d242a2f652d434daec1838421fddec80fdb68928"
+    },
+    "index": {
+      "bytes": 51585,
+      "sha256": "23ced942643dd62f5d40a7a211f2efc37c7cf0be79f042b36b0231db78055a09",
+      "gitBlob": "842aaf923124226fb4b697e82e7f5dcbea39cffb"
+    }
+  },
+  "official": [
+    {
+      "id": "criteria",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria",
+      "meaning": "Self-contained review, meaningful integration, prospective priced tranches and T2 response; no issuer approval claimed."
+    },
+    {
+      "id": "budget",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines",
+      "meaning": "Three prospective delivery tranches and separate10/20/30/40 payment schedule."
+    },
+    {
+      "id": "rules",
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/official-rules-for-submissions",
+      "sections": [
+        "5.3",
+        "5.6",
+        "5.8"
+      ],
+      "meaning": "Governing paid-day CF price and actual tranche-form deadline/acknowledged extension."
+    },
+    {
+      "id": "x402",
+      "url": "https://developers.stellar.org/docs/build/agentic-payments/x402",
+      "meaning": "Native authorization entry and provider-dependent supported profile."
+    },
+    {
+      "id": "mpp",
+      "url": "https://developers.stellar.org/docs/build/agentic-payments/mpp",
+      "meaning": "Charge and Session remain distinct original protocol operations."
+    },
+    {
+      "id": "monitoring",
+      "url": "https://developers.stellar.org/docs/build/security-docs/monitoring/monitoring-template-builders",
+      "meaning": "Threat IDs, observed deviations, actual rule state and named responders; populated plans remain private."
+    },
+    {
+      "id": "round",
+      "url": "https://communityfund.stellar.org/awards/recxrSMYwAl8vcglg",
+      "meaning": "Current round information; interest acknowledgment does not establish an invitation."
+    }
+  ],
+  "sourceReads": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/buyer.mjs",
+      "commit": "32fe7d732741ba10900c28800e4efb6b8944192d",
+      "bytes": 18681,
+      "sha256": "b1578b806a2729d5a790d338ce9ef781252500e1fdaba09455b003f50334b38f",
+      "gitBlob": "04de96e3445a4928d213b036bbb6c2b1c5e92077"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf103-native-buyer-signer/adapter.mjs",
+      "commit": "32fe7d732741ba10900c28800e4efb6b8944192d",
+      "bytes": 7954,
+      "sha256": "c5b786d8bb4ab34b26a3c48e6136fdf0fca8417be18dbc55427024b083b46279",
+      "gitBlob": "b2a9e3161273eecf047f05e9fa94db8ecb351896"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/INCIDENT_SOURCES.md",
+      "commit": "03a93f7c59a703ebc63416ae0e914f07099fef37",
+      "bytes": 10722,
+      "sha256": "49c4e78bd9041958c4ed9ef387f3b18a2f0c655c616ea4e7f899a5d379e28512",
+      "gitBlob": "551518546f06e886d79b342e1ad2623c46f93bff"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/README.md",
+      "commit": "03a93f7c59a703ebc63416ae0e914f07099fef37",
+      "bytes": 6508,
+      "sha256": "d0492ad2cb9beffa078b279b27e3aebf2edb3bfe58ff072152eed06e01483d26",
+      "gitBlob": "f87f74a3b35f273a0b73e3c4fa1c3558d9bfb868"
+    }
+  ],
+  "claims": [
+    {
+      "id": "development-purchases",
+      "status": "RETAINED_ORIGINAL_OBSERVATION",
+      "count": 18,
+      "atomicAmount": 411000,
+      "asset": "native testnet XLM stroops",
+      "feesSeparate": true,
+      "independentFundedCohort": false
+    },
+    {
+      "id": "queens-selected-task",
+      "status": "RETAINED_ORIGINAL_COMPLETION",
+      "rows": 144,
+      "childPages": [
+        100,
+        44
+      ],
+      "purchases": 2,
+      "atomicAmounts": [
+        10000,
+        10000
+      ],
+      "parentTasks": 1
+    },
+    {
+      "id": "mariadb-query",
+      "status": "RETAINED_ORIGINAL_COMPLETION",
+      "rows": 100,
+      "columns": 14,
+      "bytes": 53468,
+      "truncationDeclared": true,
+      "purchases": 1,
+      "atomicAmount": 50000
+    },
+    {
+      "id": "fiscal",
+      "status": "RETAINED_ORIGINAL_SOURCE_BROWSER_COMPLETION",
+      "paidDriver": "FACILITATOR_RPC_NOT_READY",
+      "paidExchangeCount": 0,
+      "paidCompletion": false
+    },
+    {
+      "id": "iati-cumulative-carriers",
+      "status": "SOURCE_DELIVERED_RECEIVING_PENDING",
+      "meaning": "Source and syntax observations are retained separately from the original installed customer receiving outcome."
+    },
+    {
+      "id": "this-review",
+      "status": "ACTUAL_ORIGINAL_SOURCE_MODEL_COMPLETE",
+      "actions": 47,
+      "independentByteIdenticalExport": true,
+      "reopenedActions": 48,
+      "customerOrIssuerAction": false
+    }
+  ],
+  "reviews": {
+    "reviewer": "actions_zero",
+    "state": "ACCEPTED",
+    "appendixGitBlob": "5e6b6a6697ff8cd23f46ae0b2ec38d60e3351227",
+    "editsGitBlob": "bd16c1e9283ebd0cfb247959c8e9ac3574cd137e",
+    "scope": "Full appendix, all five answer edits and companion replacement, full PR383 application/companion, original buyer/signer, accepted 05C7 source, current official authorization/monitoring/rules."
+  },
+  "preservedScope": {
+    "hours": 400,
+    "budgetUsd": 38000,
+    "durationDays": 150,
+    "sixPackages": true,
+    "sourceBackedOperatorDeclarations": true,
+    "agentWalletDeduplication": true,
+    "teamDevelopmentExclusion": true,
+    "returningBuyerUtcDays": 2,
+    "facilitatorOperatorDeduplication": true,
+    "developmentPurchases": 18,
+    "developmentStroops": 411000,
+    "openingCashUnentered": true,
+    "cashBridgeUncommitted": true,
+    "invitationAwaited": true
+  }
+}
