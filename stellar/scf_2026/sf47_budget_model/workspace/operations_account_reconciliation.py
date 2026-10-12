@@ -36,7 +36,7 @@ DOCUMENT_KEYS = {"name", "statementSourceId", "periodStart", "periodEnd",
                  "links", "exclusions", "outstanding", "note"}
 SOURCE_ROW_FIELDS = ("rowNumber", "original", "reference", "date", "description", "direction",
                      "amount", "currency", "usdValue", "category", "tranche", "allocations",
-                     "action", "reason")
+                     "action", "reason", "sourceLine", "identityBasis", "providerReference", "nativeIdentity")
 MAX_SOURCE = 8 * 1024 * 1024
 MAX_SOURCES = 24 * 1024 * 1024
 
@@ -94,7 +94,7 @@ def needed_sources(context):
         marker = row.get("statement")
         if isinstance(marker, dict) and marker.get("schema") == statements.SCHEMA:
             ids.add(row["id"])
-            if marker.get("role") == "CSV":
+            if marker.get("role") in ("CSV", "ORIGINAL"):
                 ids.add(marker.get("reviewSourceId"))
     return ids
 
@@ -129,7 +129,7 @@ def load_statements(context, events, files):
     for metadata in context["sources"].values():
         marker = metadata.get("statement")
         if (not isinstance(marker, dict) or marker.get("schema") != statements.SCHEMA
-                or marker.get("role") != "CSV"):
+                or marker.get("role") not in ("CSV", "ORIGINAL")):
             continue
         review_metadata = context["sources"].get(marker.get("reviewSourceId"))
         if not review_metadata:
@@ -160,7 +160,7 @@ def load_statements(context, events, files):
                 or projected["headers"] != original.get("headers")
                 or projected["balance"] != original.get("balance")
                 or len(projected["rows"]) != len(original["rows"])):
-            fail("The retained statement interpretation differs from its original CSV.", "RECONCILIATION_SOURCE")
+            fail("The retained statement interpretation differs from its original file.", "RECONCILIATION_SOURCE")
         for actual, retained in zip(projected["rows"], original["rows"]):
             if any(actual.get(key) != retained.get(key) for key in SOURCE_ROW_FIELDS):
                 fail("A statement row differs from its original mapped source.", "RECONCILIATION_SOURCE")
@@ -1038,6 +1038,16 @@ def render_html(report):
     return "\n".join(content).encode()
 
 
+def statement_member(metadata):
+    marker = metadata.get("statement", {})
+    source_format = marker.get("sourceFormat") if isinstance(marker, dict) else None
+    if source_format == "OFX":
+        extension = "qfx" if metadata.get("filename", "").lower().endswith(".qfx") else "ofx"
+    else:
+        extension = "mt940" if source_format == "MT940" else "csv"
+    return "original-statement." + extension
+
+
 def export_bundle(report, original_case):
     if not isinstance(report, dict) or report.get("schema") != SCHEMA:
         fail("Export the complete original account reconciliation report.")
@@ -1091,7 +1101,10 @@ def export_bundle(report, original_case):
     if current is not None:
         try:
             with zipfile.ZipFile(io.BytesIO(original_case)) as archive:
-                for key, name in (("source", "original-statement.csv"), ("reviewSource", "original-statement-review.json")):
+                original_name = statement_member(current["statement"]["source"])
+                if original_name != "original-statement.csv":
+                    files["README.txt"] = files["README.txt"].replace(b"its original CSV.", b"its original bank statement file.")
+                for key, name in (("source", original_name), ("reviewSource", "original-statement-review.json")):
                     metadata = current["statement"][key]
                     raw = archive.read("sources/" + metadata["id"])
                     if len(raw) != metadata["bytes"] or hashlib.sha256(raw).hexdigest() != metadata["sha256"]:
@@ -1136,9 +1149,10 @@ def unwrap_bundle(raw):
             base = {"operations-case.zip", "reconciliation.json", "selection.json", "reconciliation.html",
                     "reconciliations.csv", "statements.csv", "source-rows.csv", "native-movements.csv",
                     "match-groups.csv", "outstanding.csv", "reconciliation-history.json", "README.txt"}
-            originals = {"original-statement.csv", "original-statement-review.json"}
-            if (len(names) != len(set(names))
-                    or set(names) not in (base | {"MANIFEST.json"}, base | originals | {"MANIFEST.json"})):
+            complete_sets = [base | {"MANIFEST.json"}] + [
+                base | {name, "original-statement-review.json", "MANIFEST.json"}
+                for name in ("original-statement.csv", "original-statement.ofx", "original-statement.qfx", "original-statement.mt940")]
+            if (len(names) != len(set(names)) or set(names) not in complete_sets):
                 fail("Retain the complete original reconciliation file set.", "INVALID_RECONCILIATION_BUNDLE")
             descriptors = manifest.get("files")
             if not isinstance(descriptors, list) or len(descriptors) != len(names) - 1:

@@ -47,7 +47,7 @@ async function sink(path){
 
 function sourceContext({packageCapture,crosswalk,plan,manifest,directory}={}){
   const source=inspectFredDdpPackage(packageCapture),mapping=inspectFredDdpCrosswalk(crosswalk);
-  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk});
+  validateFredDdpMigrationPlan(plan,{packageCapture,crosswalk,copy:false});
   validateFredPublishedManifest(manifest);
   need(plan.summary.ready&&manifest.planId===plan.id&&manifest.packageId===source.id&&manifest.crosswalkId===mapping.id&&manifest.errors.length===0,'Receive this same complete source population and current target collection.');
   const targets=new Map(manifest.captures.map(capture=>[capture.seriesId,capture])),original=new Map(source.series.map(series=>[series.id,series]));
@@ -169,8 +169,9 @@ async function buildComparison({packageCapture,plan,manifest,directory,outputDir
     const byPeriod=new Map();for(const row of targetRows){need(!byPeriod.has(row.key),'The native target period population must remain unique.');byPeriod.set(row.key,row);}
     const local=counts(),sourceMissingCodes={},matched=new Set(),sourcePeriods=new Set();
     const context={source_series_id:series.id,board_series_id:series.boardSeriesId,fred_series_id:selected.fredSeriesId};
+    const sourceObservations=series.observations;
     for(const sourceIndex of selected.sourceIndices){
-      const observation=series.observations[sourceIndex],periodKey=normalizeFredDdpPeriod(observation.period,selected.binding.periodRule).key,after=byPeriod.get(periodKey);
+      const observation=sourceObservations[sourceIndex],periodKey=normalizeFredDdpPeriod(observation.period,selected.binding.periodRule).key,after=byPeriod.get(periodKey);
       need(!sourcePeriods.has(periodKey),'The native source period population must remain unique after its reviewed calendar rule.');sourcePeriods.add(periodKey);
       const beforeMissing=fredDdpObservationMissing(observation.value,observation.status);if(beforeMissing)sourceMissingCodes[observation.status??'UNSPECIFIED']=(sourceMissingCodes[observation.status??'UNSPECIFIED']??0)+1;
       let status,difference=null;

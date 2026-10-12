@@ -1,0 +1,151 @@
+{
+  "schema": "stellar-forge.a2a-grant-catalogue-receiving.v1",
+  "operation_id": "SCF-A2A-GRANT-SOURCE-CATALOGUE-0C7A-20261012",
+  "kind": "original source projector receiving; no native A2A application invocation",
+  "input": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "6af69d04fcf138a2649ce7c38b44c65704855c26",
+    "mapper_git_blob": "575243bf73cf745129818ac27f7c4bb448a556d4",
+    "index_git_blob": "7f61ccb6a418c4b2e8a99a05211896a9c30bd455",
+    "companion_git_blob": "e74c170bde1ad87d274a0eb533a41be5fd5a9977"
+  },
+  "candidate": {
+    "helper": {
+      "bytes": 17845,
+      "sha256": "b4cf6c5734086498e3e0158d7863643187d9d58b9701034af66a1572281441bc"
+    },
+    "mapper": {
+      "bytes": 21578,
+      "sha256": "056f0604f7a50b53c001c41ca0ef9f15142d73ea36d00f8d0e31b9c109f28ae9"
+    }
+  },
+  "observed": {
+    "a2a_sources": 14,
+    "verified_files": 12,
+    "unrelated_sources": 64,
+    "protected_top_level_keys": [
+      "schema",
+      "evidence_date",
+      "project",
+      "applicant",
+      "application",
+      "request",
+      "baseline",
+      "milestones",
+      "capacity",
+      "cash",
+      "submission",
+      "product_and_finance",
+      "submission_workspace",
+      "financial_operations",
+      "submission_review_round"
+    ],
+    "same_source_replay": true,
+    "changed_url_discards_prior_byte_witness": true,
+    "later_observation_preserved": true,
+    "ambiguous_source_rejected": true
+  },
+  "unchanged_grant": {
+    "request": {
+      "basis": "prospective",
+      "currency": "USD-equivalent award paid in XLM",
+      "amount": 38000,
+      "hours": 400,
+      "planning_rate_usd_per_hour": 95,
+      "delivery_days_from_actual_award_acceptance": 150,
+      "packages": [
+        {
+          "id": "T1-resource",
+          "tranche": 1,
+          "start_day": 1,
+          "end_day": 30,
+          "title": "Merchant-resource integration",
+          "hours": 80,
+          "cost_usd": 7600
+        },
+        {
+          "id": "T1-handover",
+          "tranche": 1,
+          "start_day": 1,
+          "end_day": 30,
+          "title": "Authority and handover",
+          "hours": 40,
+          "cost_usd": 3800
+        },
+        {
+          "id": "T2-provider",
+          "tranche": 2,
+          "start_day": 31,
+          "end_day": 90,
+          "title": "Provider and ledger deployment",
+          "hours": 70,
+          "cost_usd": 6650
+        },
+        {
+          "id": "T2-threat",
+          "tranche": 2,
+          "start_day": 31,
+          "end_day": 90,
+          "title": "Deployed threat response",
+          "hours": 50,
+          "cost_usd": 4750
+        },
+        {
+          "id": "T3-mainnet",
+          "tranche": 3,
+          "start_day": 91,
+          "end_day": 150,
+          "title": "Mainnet merchant rollout",
+          "hours": 90,
+          "cost_usd": 8550
+        },
+        {
+          "id": "T3-recovery",
+          "tranche": 3,
+          "start_day": 91,
+          "end_day": 150,
+          "title": "Production recovery and handover",
+          "hours": 70,
+          "cost_usd": 6650
+        }
+      ]
+    },
+    "baseline": {
+      "basis": "completed team-operated development purchases",
+      "network": "Stellar testnet",
+      "distinct_purchases": 18,
+      "native_stroops": "411000",
+      "native_xlm": "0.0411",
+      "fees": "separately recorded",
+      "independent_customer_adoption": "prospective funded milestone"
+    },
+    "milestones": {
+      "day30": {
+        "independent_merchants": 2,
+        "second_operator_handover": true
+      },
+      "day90": {
+        "independent_buyers": 2,
+        "minimum_useful_testnet_purchases": 10,
+        "consecutive_calendar_days": 7,
+        "independent_facilitators": 2,
+        "installed_response_cases": 2,
+        "purchase_count_scope": "total across the two independent buyers"
+      },
+      "day150": {
+        "mainnet_merchants": 2,
+        "independent_buyers": 2,
+        "minimum_useful_purchases": 30,
+        "consecutive_calendar_days": 14,
+        "both_buyers_return_on_another_day": true,
+        "receiving_engineer_restore_and_reconcile": true,
+        "purchase_count_scope": "total across the two independent buyers"
+      }
+    }
+  },
+  "outputs": {
+    "source_index_bytes": 79150,
+    "source_index_sha256": "2236cb406f4b8c9ba55cbf6776c33d1dfaa7fcf54f5aed118ec8bcc5ca1168bb"
+  },
+  "application_started": false
+}

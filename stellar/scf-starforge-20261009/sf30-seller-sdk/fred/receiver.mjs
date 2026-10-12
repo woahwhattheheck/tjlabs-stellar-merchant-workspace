@@ -1,3 +1,4 @@
+import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from './ddp/project-validation.mjs';
 // MIT. One retained receiving operation over the original FRED project and SF88 Buyer.
 import { join, resolve, dirname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -259,7 +260,7 @@ export async function runFredReceiver({ directory, configFile, phase = 'run', si
           return { ...(await retainReceiverFile(root, 'project-bundle.json', jsonBytes(bundle))), bundleSha256: bundle.bundleSha256 };
         });
         await step('received', async () => {
-          const bundle = await readPrivateJson(join(root, 'project-bundle.json'), 256 * 1024 * 1024);
+          const bundle = await readPrivateJson(join(root, 'project-bundle.json'), FRED_DDP_PROJECT_BUNDLE_MAX_BYTES);
           const receivedDirectory = join(root, 'received-project');
           const received = await receiveFredProject({ directory: receivedDirectory, bundle });
           const original = await readFredProject(directory), reopened = await readFredProject(receivedDirectory);

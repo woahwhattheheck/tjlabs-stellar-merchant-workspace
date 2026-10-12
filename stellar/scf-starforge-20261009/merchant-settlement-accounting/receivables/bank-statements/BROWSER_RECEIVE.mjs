@@ -241,7 +241,7 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
    assert.equal(afterLink.receipts.length,before.receipts.length,'Source adoption does not create another receipt');
    assert.equal(cents(linkedReceipt.amount),5000n);
    assert.deepEqual([...new Set((linkedReceipt.bankSources||[]).map(value=>value.coverageKey).filter(Boolean))].sort(),originalCoverage,'Source alias retains the original payment coverage group');
-   assert.equal((await cashGet('/invoices/'+invoice.id+'?asOf=2026-12-31')).summary.paymentStatus,'PAID');
+   assert.equal((await cashGet('/invoices/'+invoice.id+'?asOf=2026-12-31')).invoice.paymentStatus,'PAID');
    intakeRows=await readRows();assert.equal(intakeRows.find(value=>value.id===candidate.id).status,'LINKED');
    await page.locator('[data-action="bank-detail-view"][data-view="rows"]').click();await page.waitForLoadState('networkidle');
    const otherIncome=intakeRows.find(value=>value.transactionId==='BROWSER-INCOME10');
@@ -414,9 +414,9 @@ export async function receiveBankBrowser({baseUrl,workspaceId,caseDirectory,sour
   const repeated=mutations.filter(x=>x.requestId===receiptRequest.requestId);assert.equal(repeated.length,1);
   recoveredReceipt=recovered.receipt;
   const paidResponse=await fetch(origin+'/api/receivables/invoices/'+invoice.id+'?asOf=2026-12-31');
-  assert.equal(paidResponse.status,200);const paid=await paidResponse.json();assert.equal(paid.summary.paymentStatus,'PAID');assert.equal(paid.summary.amountDue,'0.00');
+  assert.equal(paidResponse.status,200);const paid=await paidResponse.json();assert.equal(paid.invoice.paymentStatus,'PAID');assert.equal(paid.invoice.amountDue,'0.00');
   assert.equal((await get('/transactions/'+deposit.id)).transaction.match.parts.length,2);
-  phase('visible gross receipt, fee, full invoice allocation and durable original request recovery',{invoiceId:invoice.id,receiptId:recovered.receipt.id,allocationId:recovered.allocation.id,requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,originalRecovery:recoveryFile,asOf:'2026-12-31',paymentStatus:paid.summary.paymentStatus});
+  phase('visible gross receipt, fee, full invoice allocation and durable original request recovery',{invoiceId:invoice.id,receiptId:recovered.receipt.id,allocationId:recovered.allocation.id,requestId:receiptRequest.requestId,actualReceiptPosts:receiptPosts,originalRecovery:recoveryFile,asOf:'2026-12-31',paymentStatus:paid.invoice.paymentStatus});
 
   await classify(income.id,'INCOME','10.00','Original November other income classification');
   await classify(fee.id,'FEE','-2.00','Original November account fee');
