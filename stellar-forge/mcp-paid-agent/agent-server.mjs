@@ -8,7 +8,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mcpAgentCommerceTool } from '../../stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs';
 import { explainFailure } from '../../stellar/scf-starforge-20261009/sf33-failure-contract/contract.mjs';
 import { describeDiscoveredResource } from './descriptor.mjs';
-import { requiredQueryKeys } from './query-requirements.mjs';
+import { prepareHttpQuery } from './query-requirements.mjs';
+import { BAZAAR_DISCOVERY_TOOLS, normalizeDiscoveryArguments, discoveryRequestUrl,
+  eligibleDiscoveryOptions, discoveryContinuation } from './discovery.mjs';
 import { historyPage } from './quote-history.mjs';
 import {paymentResponseSummary} from './payment-receipt.mjs';
 import {retainPaymentObservation} from './result-store.mjs';
@@ -52,9 +54,7 @@ const statOf=q=>({quoteId:q.quoteId,status:q.status,resource:q.resource,requestU
       network:q.result?.paymentResponse?.network??null},traceId:q.quoteId})}:{})});
 const defaultFetch=(...args)=>fetch(...args);
 const schemas={
-  bazaar_search:{
-    name:'bazaar_search',description:'Search the configured Bazaar discovery server. Read only. Does not charge. Use bazaar_describe with a returned handle to inspect declared inputs before preview.',
-    inputSchema:{type:'object',properties:{query:{type:'string',minLength:1,maxLength:1024},cursor:{type:'string'},limit:{type:'integer',minimum:1,maximum:100},network:{type:'string'},scheme:{type:'string'},asset:{type:'string'},maxAmount:{type:'string'}},required:['query'],additionalProperties:false}},
+  ...BAZAAR_DISCOVERY_TOOLS,
   bazaar_describe:{
     name:'bazaar_describe',description:'Inspect the cached original input examples, schema, output declaration and full payment alternatives for a discovered handle. No network request, quote, approval or payment.',
     annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false},
@@ -112,6 +112,8 @@ export class McpPaidToolBroker {
     if(reconcilePayment!==null&&typeof reconcilePayment!=='function')throw new TypeError('Invalid read-only reconciliation adapter');
     if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>300000)throw new TypeError('timeoutMs must be 1..300000');
     this.#approve=approve;this.#sign=signPayment;this.#fetch=fetchImpl;
+    if(!Number.isSafeInteger(maxRecords)||maxRecords<1||maxRecords>10000)
+      throw new TypeError('maxRecords must be 1..10000');
     this.#timeLimit=timeoutMs;this.#quoteTTL=quoteTTL;this.#maxRecords=maxRecords;
     this.#agentCommerce=agentCommerce;
     this.#reconcilePaymentAdapter=reconcilePayment;
@@ -161,56 +163,58 @@ export class McpPaidToolBroker {
     if(!resp.ok)fail('DISCOVERY_UNAVAILABLE','Bazaar returned HTTP '+resp.status);
     const data=await readData(resp,2*1024*1024);if(data.truncated)fail('DISCOVERY_TOO_LARGE','Bazaar response exceeds configured limit');
     let value;try{value=JSON.parse(data.body);}catch{fail('DISCOVERY_INVALID','Invalid Bazaar JSON');}
-    if(!plain(value)||!Array.isArray(value.resources))fail('DISCOVERY_INVALID','Invalid Bazaar result');
+    if(!plain(value)||!Array.isArray(value.resources)||
+      (value.partialResults!==undefined&&typeof value.partialResults!=='boolean')||
+      (value.pagination!==undefined&&value.pagination!==null&&!plain(value.pagination)))
+      fail('DISCOVERY_INVALID','Invalid Bazaar result');
     return value;
   }
-  async search(args){
+  async search(args){return this.#discover('search',args);}
+  async resources(args={}){return this.#discover('resources',args);}
+  async #discover(mode,args){
     this.#running();
-    if(!plain(args)||!maxText(args.query,1024)||!args.query.trim())fail('INVALID_PARAMS','Search query required');
-    const u=new URL(this.#catalogUrl);
-    if(!u.pathname.endsWith('/'))u.pathname+='/';
-    u.pathname+='discovery/search';
-    for(const k of ['query','cursor','limit','network','scheme','asset','maxAmount']){
-      const v=args[k];if(v===undefined)continue;
-      if(!['limit'].includes(k)&&!maxText(v,4096))fail('INVALID_PARAMS','Invalid '+k);
-      if(k==='limit'&&(!Number.isSafeInteger(v)||v<1||v>100))fail('INVALID_PARAMS','Invalid limit');
-      u.searchParams.set(k,String(v));
-    }
-    const body=await this.#get(u);
-    const observedAt=Date.now();
-    const listed=[];
-    for(const row of body.resources.slice(0,100)){
-      const input=row?.extensions?.bazaar?.info?.input;
-      // Native facilitators use a URL string; the original local catalog uses
-      // a resource object. Keep the original shape in observation metadata.
+    const request=normalizeDiscoveryArguments(mode,args);
+    const url=discoveryRequestUrl(this.#catalogUrl,mode,request);
+    const body=await this.#get(url);
+    this.#running();
+    const observedAt=Date.now(), source={url:url.href,observedAt:new Date(observedAt).toISOString(),
+      mode,request:structuredClone(request)};
+    const pending=[],listed=[];
+    let filtered=0,invalid=0;
+    for(let rowIndex=0;rowIndex<body.resources.length;rowIndex++){
+      const row=body.resources[rowIndex],input=row?.extensions?.bazaar?.info?.input;
+      // Native providers may publish a URL string. Keep that original source
+      // while using the same internal resource object for describe and preview.
       const resource=typeof row?.resource==='string'?{url:row.resource}:row?.resource;
-      const url=resource?.url;
-      if(typeof url!=='string'||!plain(input)||!['http','mcp'].includes(input.type)||!Array.isArray(row.accepts)||!row.accepts.length)continue;
-      let origin;try{origin=resourceOrigin(url);}catch{continue;}
-      const eligible=row.accepts.filter(a=>{
-        if(args.asset!==undefined&&a?.asset!==args.asset)return false;
-        if(args.network!==undefined&&a?.network!==args.network)return false;
-        if(args.scheme!==undefined&&a?.scheme!==args.scheme)return false;
-        if(args.maxAmount!==undefined){
-          if(!/^(0|[1-9]\d*)$/.test(args.maxAmount))fail('INVALID_PARAMS','maxAmount requires nonnegative integer base units');
-          if(!/^(0|[1-9]\d*)$/.test(a?.amount??''))return false;
-          if(BigInt(a.amount)>BigInt(args.maxAmount))return false;
-        }
-        return true;
-      });
-      if(!eligible.length)continue;
+      const resourceUrl=resource?.url;
+      if(!plain(row)||typeof resourceUrl!=='string'||!plain(input)||
+        !['http','mcp'].includes(input.type)||!Array.isArray(row.accepts)||!row.accepts.length){
+        invalid++;continue;
+      }
+      let origin;try{origin=resourceOrigin(resourceUrl);}catch{invalid++;continue;}
+      if(!eligibleDiscoveryOptions(row,{}).length){invalid++;continue;}
+      const eligible=eligibleDiscoveryOptions(row,request);
+      if(!eligible.length){filtered++;continue;}
+      if(pending.length>=this.#maxRecords)
+        fail('DISCOVERY_TOO_MANY_RESULTS','The complete provider page exceeds the configured resource-handle capacity. Use more selective discovery filters or a larger operator cache.');
       const bazaar=structuredClone(row.extensions.bazaar);
       const info={resource:structuredClone(resource),input:bazaar.info.input,bazaar,accepts:eligible,origin,
-        source:{url:u.href,observedAt:new Date(observedAt).toISOString(),resource:structuredClone(row.resource)},
-        fingerprint:hash([url,input,eligible]),type:input.type};
-      const handle=randomUUID();this.#records.set(handle,{...info,createdAt:observedAt});
-      // A caller-visible search result must not alias the private discovered URL.
+        source:{...source,resource:structuredClone(row.resource),rowIndex},
+        fingerprint:hash([resourceUrl,input,eligible]),type:input.type,createdAt:observedAt};
+      const handle=randomUUID();pending.push([handle,info]);
       listed.push({handle,resource:structuredClone(resource),resourceType:input.type,
         method:input.method??null,toolName:input.toolName??null,
         accepts:eligible.map(sanitizedPrice),allowedOrigin:this.#trustedOrigins.has(origin)});
     }
+    const continuation=discoveryContinuation(mode,request,body,body.resources.length);
+    // Retain the whole selected page together, then retire only older handles.
+    for(const [handle,info] of pending)this.#records.set(handle,info);
     while(this.#records.size>this.#maxRecords)this.#records.delete(this.#records.keys().next().value);
-    return {resources:listed,partialResults:body.partialResults??false,pagination:body.pagination??null};
+    return {resources:listed,partialResults:body.partialResults??false,
+      pagination:structuredClone(body.pagination??null),source:structuredClone(source),
+      page:{received:body.resources.length,returned:listed.length,filtered,invalid,
+        continuationError:continuation.continuationError},
+      continuation:continuation.continuation};
   }
   describe({handle}={}){
     const row=this.#records.get(handle);
@@ -232,24 +236,9 @@ export class McpPaidToolBroker {
       method=row.input.method;
       // Probing non-idempotent operations before payment could perform work twice.
       if(!['GET','HEAD'].includes(method))fail('UNSAFE_PROBE','Only safely probeable GET/HEAD paid routes can execute in this adapter');
-      if(!plain(input))fail('INVALID_PARAMS','Input must be an object');
-      const qs=input.query??{};if(!plain(qs)||Object.keys(input).some(k=>k!=='query'))fail('INVALID_PARAMS','Only query input supported for GET/HEAD');
-      if(Object.keys(qs).length>30)fail('INVALID_PARAMS','Too many query parameters');
-      const allowed=row.input.queryParams&&plain(row.input.queryParams)?Object.keys(row.input.queryParams):[];
-      if(Object.keys(qs).some(k=>!allowed.includes(k)))fail('INPUT_NOT_ADVERTISED','Query keys must be advertised by the seller');
-      u=new URL(row.resource.url);
-      // Check the actual URL as well as its cached discovery origin before quoting.
+      u=prepareHttpQuery(row,input);
       if(resourceOrigin(u.href)!==row.origin||!this.#trustedOrigins.has(u.origin))
         fail('ORIGIN_UNAPPROVED','Discovered resource origin changed; search again');
-      for(const [k,v] of Object.entries(qs)){
-        if(!maxText(k,100)||!maxText(v,1024))fail('INVALID_PARAMS','Invalid query value');
-        u.searchParams.set(k,v);
-      }
-      // Enforce only direct required-query presence, on the concrete request.
-      // Fixed query values already in the discovered URL count. Examples and
-      // schema defaults never become request values; no full schema validation.
-      const missing=requiredQueryKeys(row.bazaar.schema).filter(key=>!u.searchParams.has(key));
-      if(missing.length)fail('INPUT_REQUIRED','Supply required query inputs: '+JSON.stringify(missing)+'. Inspect bazaar_describe for the original declaration.');
     }
     const accepted=row.accepts[acceptIndex];
     if(!['exact','upto'].includes(accepted?.scheme)||!['stellar:testnet','stellar:pubnet'].includes(accepted?.network)||
@@ -569,6 +558,7 @@ export class McpPaidToolBroker {
   async call(name,args={}){
     switch(name){
       case 'bazaar_search':return this.search(args);
+      case 'bazaar_resources':return this.resources(args);
       case 'bazaar_describe':return this.describe(args);
       case 'bazaar_preview':return this.preview(args);
       case 'bazaar_execute_approved':return this.execute(args);
