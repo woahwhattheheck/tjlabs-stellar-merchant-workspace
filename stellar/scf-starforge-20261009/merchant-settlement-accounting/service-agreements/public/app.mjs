@@ -722,9 +722,16 @@ function previewContents(preview, agreement) {
       : 'This period already has an invoice. Continue the invoice workflow in receivables.';
   const lines = array(draft.lines);
   return '<div class="form-context"><strong>' + esc(agreementName(agreement)) + '</strong><span>' +
-    esc(agreement.customerName || customer.name || agreement.customerId) + ' · edition ' +
+    esc(customer.name || agreement.customerName || agreement.customerId) + ' · edition ' +
     esc(preview.agreementVersion) + ' · revision ' + esc(preview.revision) + '</span></div>' +
-    '<p>' + esc(description) + '</p><dl class="definition-grid">' +
+    '<p>' + esc(description) + '</p>' +
+    '<section class="panel"><div class="panel-head"><h3>Original billing customer</h3></div><div class="panel-body">' +
+    '<dl class="definition-grid"><div><dt>Customer</dt><dd>' + esc(customer.name || agreement.customerName || agreement.customerId) +
+    '</dd></div><div><dt>Customer reference</dt><dd>' + esc(customer.reference || customer.id || agreement.customerId) +
+    '</dd></div><div><dt>Billing contact</dt><dd>' + esc(customer.email || '—') + '</dd></div>' +
+    '<div><dt>Billing address</dt><dd>' + esc(customer.address || '—').replace(/\n/g, '<br>') +
+    '</dd></div><div><dt>Customer edition</dt><dd>' + esc(customer.version ?? '—') +
+    '</dd></div></dl></div></section><dl class="definition-grid">' +
     '<div><dt>Service interval</dt><dd>' + periodRange(period) + '</dd></div>' +
     '<div><dt>Invoice date</dt><dd>' + esc(day(draft.issueDate || period.issueDate)) + '</dd></div>' +
     '<div><dt>Payment due</dt><dd>' + esc(day(draft.dueDate || period.dueDate)) + '</dd></div>' +
