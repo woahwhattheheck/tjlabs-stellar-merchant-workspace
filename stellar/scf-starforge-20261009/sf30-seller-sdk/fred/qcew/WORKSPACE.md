@@ -158,6 +158,35 @@ Choose that received directory in Applications to continue its report work.
 The same original project ID, reports, source captures and source-family
 receiving histories remain available there.
 
+## Run the original-data browser programme
+
+After native-journey.mjs has completed the full source intake, both report
+editions and original receiving, run the browser programme in that same native
+case directory:
+
+```sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/workspace-journey.mjs \
+  --directory /absolute/path/to/native-case \
+  --chromium /absolute/path/to/installed/chromium \
+  --playwright-module /absolute/path/to/installed/playwright/index.mjs
+```
+
+This uses the installed Chromium and Playwright; it does not install browser
+packages. It opens the actual saved reports, downloads every report member,
+uses the regional history and original-source controls, and downloads the full
+economic project. The original receiver completes a real browser handover
+before that browser is closed without its HTTP return. A fresh browser context
+and a different local server address then recover the saved receiving result.
+Finally, the programme opens both reports in the received project and exports
+its complete original handover.
+
+The same browser-workspace directory retains the original selection, journal,
+downloads and result. If interrupted, rerun with that same native case. The
+host operation and original project history recover an already completed
+receiving without creating another receiving project. The programme exits
+successfully only after the complete workflow finishes; an interrupted run
+retains its original error and completed work there for continuation.
+
 ## Integration
 
 The HTTP adapter is qcew/workspace.mjs; the browser controller is ui/qcew.js.
