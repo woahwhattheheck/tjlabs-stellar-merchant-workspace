@@ -1,0 +1,85 @@
+{
+  "schema": "stellar-forge.grant-reader-adoption.v1",
+  "operation": "SCF-CUSTOMER-OPERATING-PROCEDURES-F2A6-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "input": {
+    "canonical": {
+      "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
+      "sha256": "e62dd0b4a8146237908be2303f470c93a3bb0840342d55b355157ad74713a2e9",
+      "bytes": 873082,
+      "sections": 932
+    },
+    "baseCommit": "5a176c5e8684eabe33af90aedc1bd17042ce072f",
+    "productMerge": "f8d1c020c9d5e5c5f5062f8800c94bfd33bb3ad3"
+  },
+  "composerSources": {
+    "grant-handover.mjs": {
+      "git_blob": "373beb1bba880102055ff86baccd1ae492fd6312",
+      "sha256": "1f32efd9f39268b05663cc59cbc216979b2790156247d32d554a53e3808fc071",
+      "bytes": 2422
+    },
+    "grant-entry.mjs": {
+      "git_blob": "b3a90814b409ee61299e020ee1c80cb67fc97243",
+      "sha256": "6e9f3aa4113b924ca444fbf4fef4d33f4ded2a4dd7b8424998c14f518d281c22",
+      "bytes": 15834
+    },
+    "grant-submission.mjs": {
+      "git_blob": "b6a37270eaf6ffac5156a18ac7aac9cf0c5371e1",
+      "sha256": "df3969bcf15fca8cf1da1eb9de0e768221b4131797b9f7da99329672578d7f5f",
+      "bytes": 3687
+    },
+    "grant-review-round.mjs": {
+      "git_blob": "d03efb131fa4a903bb71dc8ca52ae2ba693befc9",
+      "sha256": "2d4f66add9a9f522870c5e01d062a8acdb29d2e2ce1e540d7c0f514935dfbc6b",
+      "bytes": 3306
+    },
+    "grant-companion.mjs": {
+      "git_blob": "22e1415831310b22043efd40cab1e9119139c4b8",
+      "sha256": "d96b42e93f87021f0a62a89f4125ef82243a9ba906e435cc1830dd6ea7432e5b",
+      "bytes": 2052
+    },
+    "grant-financial-operations.mjs": {
+      "git_blob": "d3d777efd49cf19bb6bfcf0f7c2061c638845575",
+      "sha256": "595dead5e4b579a7cfe4a35ace1b4ab6e6f5e73b6e8fd22f2431b2650bb6c792",
+      "bytes": 7930
+    },
+    "grant-datasette.mjs": {
+      "git_blob": "5f1711069b99f93a111e6a70d73055990665b17f",
+      "sha256": "55ef2c5b8817ca45d20f876d8046fc7edc4e33b3d2f97c0a369c27c711d9dbb8",
+      "bytes": 10313
+    },
+    "grant-customers.mjs": {
+      "git_blob": "3907386b549ed7b8802581057d0a264356c18c39",
+      "sha256": "7fe76eff137cc4abe8e1a2b0074aeab2888c7ca1a730da62a0e8607371e09393",
+      "bytes": 36288
+    },
+    "grant-delivery-plan.mjs": {
+      "git_blob": "147bf91a14bec60148a1e98db6d78b80a79caa61",
+      "sha256": "2fa2bd6299718da4501f40b285dfbd9834cc598a891ac28816d2ebb69be1db58",
+      "bytes": 10309
+    },
+    "grant-compose.mjs": {
+      "git_blob": "62383fa80516b43e43857a0818f740f71a5f9dad",
+      "sha256": "8f1c8056cf5c4139fcfe7ca10b8c1c7538f4332ab70faf5f0689187f7f6cc56e",
+      "bytes": 24145
+    }
+  },
+  "sourcePins": {
+    "/grant.html": "c552517aa277ac3bda8010766e644445449ba28d",
+    "/grant-data/application.md": "96aca3ea3365d0037f659fe716d48f4ebd0aa90b",
+    "/grant-data/product-and-finance.md": "82b7162fc93018ca9201c1f8094f6d4ecccbf58b",
+    "/grant-data/source-index.json": "c11b7e140f38045131168c06844fc06a7720d4e5"
+  },
+  "receiving": {
+    "canonicalThread": "https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791733597745419",
+    "canonicalCanvas": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
+    "publisherOwners": [
+      "R24C",
+      "25FD",
+      "8910",
+      "DD7A"
+    ],
+    "destinationPrefix": "stellar-forge/developer-site/dist/",
+    "sourceOfTruth": "The original application manuscript and original publication operation."
+  }
+}
