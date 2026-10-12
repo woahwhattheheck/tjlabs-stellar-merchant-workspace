@@ -540,7 +540,7 @@ def _record_matches(events, final_records):
     return result
 
 
-def validate_import(context, rows, events, source_version, source_files=None):
+def validate_import(context, rows, events, source_version, source_files=None, *, plan_for_version=None):
     if not isinstance(rows, list) or len(rows) > MAX_EDITIONS:
         fail("The complete installation history is invalid.")
     by_id, seen = {}, set()
@@ -569,7 +569,8 @@ def validate_import(context, rows, events, source_version, source_files=None):
         snapshot = candidate.get("snapshot")
         if not isinstance(snapshot, dict) or set(snapshot) != {"program", "plan", "records", "sources"}:
             fail("The complete original installation snapshot is required.")
-        if (any(snapshot["plan"].get(key) != context["plan"].get(key) for key in
+        selected_plan = plan_for_version(row["version"] - 1) if plan_for_version else context["plan"]
+        if (any(snapshot["plan"].get(key) != selected_plan.get(key) for key in
                 ("scenario", "planning", "report", "source", "revision", "contentSha256"))
                 or snapshot["program"]["mode"] != context["program"]["mode"]
                 or snapshot["program"]["version"] != row["version"] - 1

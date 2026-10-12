@@ -9,7 +9,7 @@ import { request as httpRequest } from 'node:http';
 import { createHash } from 'node:crypto';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { inspectGrantWorkspaceSelection, readGrantWorkspaceLaunch, GRANT_LAUNCH_SCHEMA } from './launch.mjs';
+import { inspectGrantWorkspaceSelection, readGrantWorkspaceLaunch, GRANT_LAUNCH_SCHEMA, GRANT_MAX_LAUNCH_BYTES } from './launch.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -167,6 +167,27 @@ function supplierAccountQuery(args, exported = false) {
   if (args.contributorId !== undefined && args.contributorId !== null)
     values.set('contributorId', id(args.contributorId, 'person'));
   return values.size ? '?' + values.toString() : '';
+}
+function cashAccountQuery(args, exported = false) {
+  const values = new URLSearchParams(performanceQuery(args, exported));
+  for (const [key,maximum] of [['network',200],['currency',40],['asset',500]])
+    if (args[key] !== undefined && args[key] !== null)
+      values.set(key, text(args[key], 'Cash account ' + key, maximum, true));
+  return values.size ? '?' + values.toString() : '';
+}
+function cashCorrectionInput(body, applying = false) {
+  const keys = ['expectedVersion','selection','originalCashId','replacement','reason','attachments'];
+  const required = ['expectedVersion','originalCashId','replacement','reason'];
+  if (applying) { keys.push('expectedPreviewSha256','requestId','actor'); required.push('expectedPreviewSha256','requestId','actor'); }
+  exact(body, keys, required);
+  integer(body.expectedVersion, 'Current case version', 1, 10000000);
+  id(body.originalCashId, 'cash'); object(body.replacement, 'Complete replacement observation');
+  text(body.reason, 'Correction reason', 12000);
+  if (body.selection !== undefined) object(body.selection, 'Original cash account selection');
+  if (body.attachments !== undefined)
+    need(Array.isArray(body.attachments), 'GRANT_INVALID_INPUT', 'Use the complete original source attachments array.');
+  if (applying) { sha(body.expectedPreviewSha256); requestId(body.requestId); text(body.actor, 'Recording operator', 300); }
+  return body;
 }
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
@@ -377,7 +398,7 @@ export class GrantWorkspaceClient {
   async #readLaunch() {
     const input = this.#binding;
     const record = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(
-      await readGrantAgentFile(join(input.directory, 'managed-launch.json'), 32768, true)));
+      await readGrantAgentFile(join(input.directory, 'managed-launch.json'), GRANT_MAX_LAUNCH_BYTES, true)));
     need(record.schema === GRANT_LAUNCH_SCHEMA && record.state === 'LISTENING', 'GRANT_APPLICATION_NOT_RUNNING',
       'Start or recover the original Grant planning and delivery application, then open this alias.');
     need(record.selectionSha256 === input.selectionSha256, 'GRANT_SELECTION_CHANGED',
@@ -438,7 +459,7 @@ export class GrantWorkspaceClient {
           const timer = setTimeout(() => finish(error('GRANT_START_TIMEOUT', 'The original service did not announce its listener.')), 30000);
           child.stdout.on('data', chunk => {
             lineBuffer += chunk.toString('utf8');
-            if (lineBuffer.length > 65536) return finish(error('GRANT_START_OUTPUT_INVALID', 'The original startup output exceeded its bound.'));
+            if (Buffer.byteLength(lineBuffer) > GRANT_MAX_LAUNCH_BYTES) return finish(error('GRANT_START_OUTPUT_INVALID', 'The original startup output exceeded its bound.'));
             let cut;
             while ((cut = lineBuffer.indexOf('\n')) >= 0) {
               const line = lineBuffer.slice(0, cut); lineBuffer = lineBuffer.slice(cut + 1);
@@ -485,6 +506,10 @@ export class GrantWorkspaceClient {
       'case-report':() => '/api/operations/' + cid() + '/report',
       'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'cash-account':() => '/api/operations/' + cid() + '/cash-account' + cashAccountQuery(args),
+      amendments:() => '/api/operations/' + cid() + '/amendments',
+      amendment:() => '/api/operations/' + cid() + '/amendments/' + id(args.amendmentId, 'amendment') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Amendment edition', 1, 300)),
       'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
       'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
@@ -540,6 +565,14 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  cashCorrectionPreview(caseId, body) {
+    id(caseId, 'operation'); cashCorrectionInput(body);
+    return this.#request('/api/operations/' + caseId + '/cash-correction-preview', {body, mutation:false});
+  }
+  cashCorrectionApply(caseId, body) {
+    id(caseId, 'operation'); cashCorrectionInput(body, true);
+    return this.#request('/api/operations/' + caseId + '/cash-correction', {body, originalRequestId:body.requestId});
   }
   ledgerIntakeInspect(caseId, file) {
     id(caseId, 'operation'); object(file, 'Original intake file');
@@ -599,6 +632,11 @@ export class GrantWorkspaceClient {
     if (data.expectedPreviewSha256 !== undefined) sha(data.expectedPreviewSha256);
     return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
       action:'work-intake.' + action, data});
+  }
+  amendmentPreview(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Amendment inputs');
+    return this.#request('/api/operations/' + caseId + '/amendment-preview',
+      {body:{expectedVersion, inputs}, mutation:false});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
@@ -977,6 +1015,7 @@ export class GrantWorkspaceClient {
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
       'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
+      'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
       'delivery-queue':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-queue/export.zip' +

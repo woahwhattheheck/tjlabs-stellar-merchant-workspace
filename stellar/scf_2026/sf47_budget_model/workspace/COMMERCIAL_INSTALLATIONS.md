@@ -213,9 +213,17 @@ created.
 The product consists of the commercial Installation core, native SF74 source
 reader, browser panel, native CLI/client routes, and additive hooks in the
 original Installation save/export/import lifecycle. Both managed launch source
-selections include the same five new local product files. Install the complete
-maintained repository so the reader retains its original SF74, SF97 and service
-dependencies.
+selections include the same local product files and the complete native SF74
+reader dependency closure, including SF97, service and accounting modules and
+original network/package metadata. The Grant Operations distribution selection
+carries those same dependencies into the installed and independently received
+source. The original and frozen execution copies are checked against the same
+file hashes before the application opens.
+
+The private launch record and authenticated startup response retain both complete
+source maps. Their original launcher, Applications adapter and reconnecting agent
+client share a 256 KiB envelope so the full reviewed source fits without dropping
+its identity fields.
 
 The original case-commercial-implementation.mjs change adds one read-only
 accepted-definition export. Existing preview/adopt operations keep their native

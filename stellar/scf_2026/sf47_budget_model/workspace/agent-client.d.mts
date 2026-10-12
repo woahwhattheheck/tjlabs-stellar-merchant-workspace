@@ -21,6 +21,7 @@ export type GrantCaseAction =
   | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
+  | 'amendment.save' | 'amendment.review' | 'amendment.apply'
   | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision';
 
 
@@ -368,6 +369,40 @@ export interface GrantCommercialCommandResult {
   intent: GrantCommercialIntent;
   native: GrantObject;
   commercial: GrantCommercialPrepared;
+}
+
+export interface GrantAmendmentInputs {
+  selectedRevision: number;
+  expectedContentSha256: string;
+  asOfDate: GrantCivilDate;
+  reason: string;
+  basis: {
+    kind: 'INTERNAL_PLAN' | 'ISSUER_DECISION' | 'CUSTOMER_DECISION' | 'WALKTHROUGH';
+    reference?: string;
+    date?: GrantCivilDate | null;
+    sourceIds?: string[];
+    note?: string;
+  };
+}
+export interface GrantAmendmentEdition extends GrantObject {
+  id: string; revision: number; version: number; sha256: string;
+  state: 'PROPOSED' | 'REVIEWED' | 'CHANGES_REQUESTED' | 'APPLIED';
+  preview: GrantObject & { inputs: GrantAmendmentInputs; previewSha256: string };
+  review: GrantObject | null;
+  application: GrantObject | null;
+}
+export interface GrantAmendmentSaveData extends GrantObject {
+  amendmentId?: string | null; expectedRevision: number;
+  inputs: GrantAmendmentInputs; expectedPreviewSha256: string;
+}
+export interface GrantAmendmentReviewData extends GrantObject {
+  amendmentId: string; expectedRevision: number; expectedAmendmentSha256: string;
+  expectedPreviewSha256: string; decision: 'APPROVE' | 'RETURN_FOR_CHANGES';
+  statement: string; sourceIds?: string[];
+}
+export interface GrantAmendmentApplyData extends GrantObject {
+  amendmentId: string; expectedRevision: number; expectedAmendmentSha256: string;
+  acknowledgeBaselineChange: true;
 }
 
 export interface GrantBindingInput {
@@ -869,6 +904,93 @@ export interface GrantSupplierAccountDownloadSelection extends GrantSupplierAcco
   endDate: GrantCivilDate; expectedVersion: number; expectedReportSha256: string;
 }
 
+export interface GrantCashAccountSelection extends GrantPerformanceSelection {
+  network?: string | null; currency?: string | null; asset?: string | null;
+}
+export interface GrantCashAccountPeriod {
+  startDate: GrantCivilDate | null; endDate: GrantCivilDate;
+  network: string | null; currency: string | null; asset: string | null;
+  recordStateBasis: 'SELECTED_CASE_VERSION';
+}
+export type GrantCashAmounts = Pick<GrantPerformanceAmounts,
+  'inUsd' | 'outUsd' | 'netUsd' | 'grantReceiptsUsd' | 'customerReceiptsUsd' | 'paidUsd'>;
+export interface GrantCashReplacement {
+  date: GrantCivilDate; direction: 'IN' | 'OUT'; category: string; currency: string; network: string; asset: string;
+  amount: string; usdValue: string | null; externalRef: string; tranche: number | null;
+  allocations: {invoiceId: string; amountUsd: string}[];
+  sourceIds: string[]; sourceNote: string; valuationSourceIds: string[]; valuationNote: string;
+}
+export interface GrantCashObservation extends GrantCashReplacement, GrantObject {
+  id: string; state: 'OBSERVED' | 'VOID';
+}
+export interface GrantCashAccountTransaction extends GrantCashObservation {
+  inPeriod: boolean; includedInUsd: boolean; usdBasis: string;
+  allocatedUsd: string; unallocatedUsd: string | null;
+  allocations: {invoiceId: string; amountUsd: string; invoiceNumber: string;
+    contributorId: string; contributorName: string; sourceIds: string[]}[];
+  origins: GrantObject[]; predecessors: GrantObject[]; successors: GrantObject[];
+}
+export interface GrantCashForecastContinuation extends GrantObject {
+  forecastId: string; name: string; expectedVersion: number; originalSha256: string;
+  status: 'READY' | 'REVIEW'; message?: string; inputs: GrantObject;
+  originalCashIds: string[]; replacementCashIds: string[]; sourceCorrectionIds: string[];
+  report?: GrantObject;
+}
+export interface GrantCashDependencies extends GrantObject {
+  completion: {clocks: GrantObject[]; extensions: GrantObject[]; outcomes: GrantObject[]; reviews: GrantObject[]};
+  forecasts: {id: string; name: string; version: number; createdAt: string;
+    source: GrantObject; sha256: string; references: {path: (string | number)[]; cashId: string}[]; inputs: GrantObject}[];
+  replacementCompletion?: GrantObject[];
+}
+export interface GrantCashCorrectionRecord extends GrantObject {
+  schema: 'stellar-forge.sf47-cash-correction.v1';
+  caseId: string; fromVersion: number; voidVersion: number; recordVersion: number; version: number;
+  originalCashId: string; replacementCashId: string;
+  originalSha256: string; replacementSha256: string;
+  original: GrantCashObservation; voided: GrantCashObservation; replacement: GrantCashObservation;
+  attachments: GrantObject[]; reason: string; selection: GrantCashAccountPeriod;
+  previewSha256: string; inputSha256: string; requestId: string; actor: string; recordedAt: string;
+}
+export interface GrantCashAccountReport extends GrantObject {
+  schema: 'stellar-forge.sf47-cash-account.v1';
+  case: GrantPerformanceReport['case']; plan: GrantObject; selection: GrantCashAccountPeriod;
+  accounts: GrantObject[];
+  finances: Record<'opening' | 'period' | 'closing', GrantCashAmounts>;
+  caseFinances: Record<'opening' | 'period' | 'closing', GrantPerformanceAmounts>;
+  assets: GrantObject[]; transactions: GrantCashAccountTransaction[];
+  invoices: GrantObject[]; suppliers: GrantObject[]; sources: GrantObject[]; history: GrantObject[];
+  corrections: {source: GrantObject; record: GrantCashCorrectionRecord}[];
+  dependencies: GrantCashDependencies; forecastContinuations: GrantCashForecastContinuation[];
+  basis: string[]; reportSha256: string;
+}
+export interface GrantCashCorrectionInput {
+  expectedVersion: number; originalCashId: string; replacement: GrantCashReplacement; reason: string;
+  selection?: Partial<GrantCashAccountPeriod>; attachments?: GrantObject[];
+}
+export interface GrantCashCorrectionPreview extends GrantObject {
+  schema: 'stellar-forge.sf47-cash-correction.v1.preview';
+  case: GrantPerformanceReport['case']; selection: GrantCashAccountPeriod;
+  original: GrantCashObservation; replacement: GrantCashReplacement;
+  changes: {field: string; before: unknown; after: unknown}[]; attachments: GrantObject[];
+  impact: {before: GrantObject; after: GrantObject; deltas: GrantObject;
+    invoices: GrantObject[]; packages: GrantObject[]; assets: GrantObject[]};
+  dependencies: GrantCashDependencies; findings: GrantObject[]; canApply: boolean; previewSha256: string;
+}
+export interface GrantCashCorrectionApplyInput extends GrantCashCorrectionInput {
+  expectedPreviewSha256: string; actor: string; requestId: string;
+}
+export interface GrantCashCorrectionReceipt extends GrantObject {
+  id: string; version: number; action: 'cash.correction'; requestId: string;
+  originalCashId: string; replacementCashId: string; sourceId: string; previewSha256: string;
+  forecastContinuations: GrantCashForecastContinuation[]; completion: GrantCashDependencies['completion'];
+}
+export interface GrantCashAccountReceived extends GrantCashAccountPeriod {
+  reportSha256: string; sourceCaseId: string; sourceCaseVersion: number;
+}
+export interface GrantCashAccountDownloadSelection extends GrantCashAccountSelection {
+  endDate: GrantCivilDate; expectedVersion: number; expectedReportSha256: string;
+}
+
 export interface GrantDeliveryQueueSelection { caseId: string; asOfDate?: GrantCivilDate; }
 export interface GrantInstallationSelection {
   expectedVersion: number;
@@ -997,6 +1119,7 @@ export interface GrantCaseImportReceipt extends GrantObject {
   deliveryQueue?: { asOfDate: GrantCivilDate; sha256: string };
   performance?: GrantPerformanceReceived;
   supplierAccount?: GrantSupplierAccountReceived;
+  cashAccount?: GrantCashAccountReceived;
   selectedInstallation?: GrantInstallationRef;
   selectedInstallationReturn?: GrantInstallationReturnSummary;
 }
@@ -1584,6 +1707,7 @@ export interface GrantDownloadSelections {
   'delivery-calendar': GrantDeliveryCalendarDownloadSelection;
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
+  'cash-account': GrantCashAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
   'installation-return': { caseId: string; reviewId: string };
   commercial: { caseId: string; billingId: string };
@@ -1604,12 +1728,15 @@ export class GrantWorkspaceClient {
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
   read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
+  read(view: 'amendments', selection: { caseId: string }): Promise<GrantJsonResponse<GrantObject>>;
+  read(view: 'amendment', selection: { caseId: string; amendmentId: string; revision?: number }): Promise<GrantJsonResponse<{ amendment: GrantAmendmentEdition; current: GrantObject; history: GrantObject[] }>>;
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'work-intakes', selection: {caseId: string}): Promise<GrantJsonResponse<{intakes: GrantWorkIntakeSummary[]}>>;
   read(view: 'work-intake', selection: {caseId: string; intakeId: string; revision?: number}): Promise<GrantJsonResponse<GrantWorkIntakeView>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
   read(view: 'supplier-account', selection: GrantSupplierAccountSelection): Promise<GrantJsonResponse<GrantSupplierAccountReport>>;
+  read(view: 'cash-account', selection: GrantCashAccountSelection): Promise<GrantJsonResponse<GrantCashAccountReport>>;
   read(view: 'delivery-calendar', selection: GrantDeliveryCalendarSelection): Promise<GrantJsonResponse<GrantDeliveryCalendar>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
@@ -1628,9 +1755,12 @@ export class GrantWorkspaceClient {
   workIntakeApply(caseId: string, body: GrantWorkIntakeWrite & {expectedPreviewSha256: string}): Promise<GrantJsonResponse<GrantObject>>;
   statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
   statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
+  cashCorrectionPreview(caseId: string, body: GrantCashCorrectionInput): Promise<GrantJsonResponse<GrantCashCorrectionPreview>>;
+  cashCorrectionApply(caseId: string, body: GrantCashCorrectionApplyInput): Promise<GrantJsonResponse<GrantCashCorrectionReceipt>>;
   ledgerIntakeInspect(caseId: string, file: GrantLedgerFile): Promise<GrantJsonResponse<GrantLedgerInspection>>;
   ledgerIntakePreview(caseId: string, body: GrantLedgerPreviewInput): Promise<GrantJsonResponse<GrantLedgerPreview>>;
   ledgerIntakeApply(caseId: string, body: GrantLedgerApplyInput): Promise<GrantJsonResponse<GrantLedgerReceipt>>;
+  amendmentPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantAmendmentInputs): Promise<GrantJsonResponse<T>>;
   forecastPreview<T = GrantForecastPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   forecastSave<T = GrantForecastSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSeed<T = GrantPortfolioSeed>(caseId: string, expectedVersion: number, forecastId: string, options?: GrantPortfolioSeedOptions): Promise<GrantJsonResponse<T>>;
