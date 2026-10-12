@@ -177,12 +177,12 @@ export async function receiveAuthoring({ runtimeDirectory, directory, inputFile,
       // Compare the complete original four-field (or source-selected) CSV using
       // the unchanged source projector, scalar encoder and original CSV writer.
       const selected = await sourceModule.openSheetBestSourceFile(version.sourceFile);
-      const csv = [planModule.csvLine(Object.keys(edition.retained.plan.dataset.columns))];
+      const csv = [Buffer.from(planModule.csvLine(Object.keys(edition.retained.plan.dataset.columns)), 'utf8')];
       let report;
       try {
         report = await selected.source.exportDataset(edition.query, {}, {
           ...edition.retained.plan.extraction,
-          onRow(row) { csv.push(sourceModule.encodeSheetBestRow(row, edition.retained.plan.dataset)); },
+          onRow(row) { csv.push(Buffer.from(sourceModule.encodeSheetBestRow(row, edition.retained.plan.dataset), 'utf8')); },
         });
       } finally { await selected.source.close(); }
       const completeCSV = Buffer.concat(csv);
