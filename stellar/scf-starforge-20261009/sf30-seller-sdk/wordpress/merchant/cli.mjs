@@ -14,6 +14,10 @@ const help=[
   'starforge-merchant merchant-wordpress init --directory ABS --connection ABS [--name NAME]',
   'starforge-merchant merchant-wordpress call --url MCP_URL --token-env ENV --action TOOL --args ABS_JSON',
   'starforge-merchant merchant-wordpress act --url MCP_URL --token-env ENV --workspace ALIAS --action NATIVE_ACTION --operation-id UUID --expected-revision N --args ABS_JSON',
+  'starforge-merchant merchant-wordpress refresh-plan --url MCP_URL --token-env ENV --workspace ALIAS --id UUID',
+  'starforge-merchant merchant-wordpress refresh-run --url MCP_URL --token-env ENV --workspace ALIAS --id UUID',
+  'starforge-merchant merchant-wordpress refresh-changes --url MCP_URL --token-env ENV --workspace ALIAS --id UUID [--offset 0] [--limit 50] [--kind all]',
+  'starforge-merchant merchant-wordpress refresh-record --url MCP_URL --token-env ENV --workspace ALIAS --id UUID --key RECORD_KEY',
   'starforge-merchant merchant-wordpress value --url MCP_URL --token-env ENV --workspace ALIAS --export-id SHA [--manifest-sha256 SHA] [--file NAME]',
   'starforge-merchant merchant-wordpress inspect --url MCP_URL --token-env ENV --workspace ALIAS --export-id SHA [--manifest-sha256 SHA]',
   'starforge-merchant merchant-wordpress download --url MCP_URL --token-env ENV --workspace ALIAS --export-id SHA --directory ABS [--manifest-sha256 SHA] [--chunk-size BYTES]',
@@ -27,6 +31,9 @@ const help=[
   'value reads every original JSON byte; download resumes the same private directory.',
   'reopen verifies the complete local manifest and file without contacting the merchant endpoint.',
   'receive selects a configured source receiver alias; its tool arguments contain no local path.',
+  'Refresh read commands return the retained response plus its complete JSON value.',
+  'Use act for refresh.plan.save, refresh.run.start/advance/review/export; each new action retains a UUID.',
+  'Refresh changes use the exact returned nextOffset. Artifact kind refresh retains complete review and change files.',
   'Only environment-variable names appear in credential options.'
 ].join('\n');
 
@@ -34,6 +41,10 @@ const definitions={
   tools:[],
   init:['directory','connection','name'],
   call:['url','token-env','action','args'],
+  'refresh-plan':['url','token-env','workspace','id'],
+  'refresh-run':['url','token-env','workspace','id'],
+  'refresh-changes':['url','token-env','workspace','id','offset','limit','kind'],
+  'refresh-record':['url','token-env','workspace','id','key'],
   act:['url','token-env','workspace','action','operation-id','expected-revision','args'],
   value:['url','token-env','workspace','export-id','manifest-sha256','file'],
   inspect:['url','token-env','workspace','export-id','manifest-sha256'],
@@ -87,6 +98,13 @@ export async function main(argv=process.argv.slice(2),
   else if(command==='call'){
     const args=await input(),client=await openWordPressMerchantClient(remote());
     result=await client.call(required('action'),args);
+  }else if(['refresh-plan','refresh-run','refresh-changes','refresh-record'].includes(command)){
+    const action=command.replace(/-/g,'_'),args={workspace:required('workspace'),id:required('id')};
+    if(command==='refresh-changes')Object.assign(args,{
+      offset:flags['--offset']===undefined?0:integer('offset'),
+      limit:flags['--limit']===undefined?50:integer('limit',1),kind:flags['--kind']??'all'});
+    if(command==='refresh-record')args.key=required('key');
+    const client=await openWordPressMerchantClient(remote());result=await client.callValue(action,args);
   }else if(command==='act'){
     const args={workspace:required('workspace'),operationId:required('operation-id'),
       expectedRevision:integer('expected-revision'),action:required('action'),input:await input()},

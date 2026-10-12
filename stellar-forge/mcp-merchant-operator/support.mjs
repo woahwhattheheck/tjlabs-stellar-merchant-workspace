@@ -1,5 +1,6 @@
 import {merchantCommercial} from './support-commercial.mjs';
 import {merchantServiceAdjustments} from './support-service-adjustments.mjs';
+import {merchantServiceRenewals} from './support-service-renewals.mjs';
 import { supportTools, alias, digest, uuid, notificationStatuses, page, text, selected, metadataSchema, termsSchema, exportNames, object } from './catalog/support.mjs';
 import { MerchantSupportIncidentSources } from './support-incidents.mjs';
 import {readServiceCase,changeServiceCase,previewServiceCase,readServiceCaseReport} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/service-cases.mjs';
@@ -21,7 +22,7 @@ import { termsDraftFromDocument, termsDocumentFromDraft } from '../../stellar/sc
 import { workorderFromSources } from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/workorder-source.mjs';
 import {inspectCaseCommissioning,prepareCaseCommissioning,operateCaseCommissioning} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/case-commissioning.mjs';
 import {commissioningSummary,commissioningReport,commissioningTasksCsv} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commissioning.mjs';
-import { failure, exact, identifier, writePrivate, privateSupportDirectory } from './config.mjs';
+import { failure, exact, identifier, writePrivate, privateSupportDirectory } from './host-files.mjs';
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -151,12 +152,14 @@ function exportFileType(name) {
 }
 
 export class MerchantSupport {
-  #config; #store; #commercial; #casePackages; #serviceAdjustments; #watch = null; #lastWatchExit = null; #closing = false; #close; #incidentSources; #environment;
+  #config; #store; #commercial; #casePackages; #serviceAdjustments; #serviceRenewals; #watch = null; #lastWatchExit = null; #closing = false; #close; #incidentSources; #environment;
   #reads = new RetainedFileReads({ errorPrefix: 'SUPPORT' });
   constructor(config, { environment = process.env, accounting = null, buyer = null } = {}) {
     this.#config = config; this.#environment = environment;
     this.#serviceAdjustments=merchantServiceAdjustments({cases:()=>this.#cases(),casesDirectory:()=>this.#configured().casesDirectory,
       exportsDirectory:()=>this.#config.exportsDirectory,reads:this.#reads,accounting,buyer});
+    this.#serviceRenewals=merchantServiceRenewals({cases:()=>this.#cases(),casesDirectory:()=>this.#configured().casesDirectory,
+      exportsDirectory:()=>this.#config.exportsDirectory,reads:this.#reads});
     this.#commercial=merchantCommercial({cases:()=>this.#cases(),casesDirectory:()=>this.#configured().casesDirectory,
       exportsDirectory:()=>this.#config.exportsDirectory,reads:this.#reads,environment});
     this.#incidentSources = new MerchantSupportIncidentSources(config.support, {
@@ -457,6 +460,7 @@ export class MerchantSupport {
     if (this.#closing) throw failure('OPERATOR_CLOSING', 'Merchant support is closing.');
     try {
       return await (async () => {
+      if(this.#serviceRenewals.handles(name))return this.#serviceRenewals.call(name,args);
       if(this.#serviceAdjustments.handles(name))return this.#serviceAdjustments.call(name,args);
       if(name.startsWith('merchant_case_package_'))return (await this.#packages()).call(name,args);
       if(this.#commercial.handles(name))return this.#commercial.call(name,args);

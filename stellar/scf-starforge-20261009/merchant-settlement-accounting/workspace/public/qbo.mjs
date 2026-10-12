@@ -20,6 +20,366 @@ const identity=()=>({id:crypto.randomUUID(),createdAt:new Date().toISOString()})
 let createIdentity=identity();
 let buyerValuationBasis='';
 const buyerReviewOffsets={preview:0,plan:0};
+
+// Browser recovery belongs to the original workspace, source selection and entered operator.
+const RECOVERY_SCHEMA='stellar-forge.qbo-browser-recovery.v1',RECOVERY_DB='stellar-forge-qbo-recovery';
+const RECOVERY_REQUEST_LIMIT=32*1024*1024,RECOVERY_DRAFT_LIMIT=64*1024*1024;
+const RECOVERY_SHA=/^[a-f0-9]{64}$/;
+const clone=value=>structuredClone(value);
+const recovery={binding:null,db:null,key:null,actor:'',cache:null,gate:null,dirty:false,conflict:false,mismatch:false,hydrating:false,storageError:'',timer:null,queue:Promise.resolve(),channel:null,editVersion:0,restoredSourcePin:null};
+const defaultDraftFields=new Map();
+let planDrafts=new Map();
+const DRAFT_FIELDS=['qbo-name','qbo-realm','qbo-company-name','qbo-currency','qbo-environment','qbo-date','qbo-doc-number','qbo-company-realm','qbo-default-debit-id','qbo-default-debit-name','qbo-default-credit-id','qbo-default-credit-name','qbo-buyer-bulk-reason','qbo-review-note','qbo-cancel-note','qbo-response-name'];
+function requireLocal(ok,message){if(!ok)throw new Error(message);}
+function canonical(value){
+  if(value===null||typeof value==='string'||typeof value==='boolean')return JSON.stringify(value);
+  if(typeof value==='number'){requireLocal(Number.isFinite(value),'Use finite JSON values.');return JSON.stringify(value);}
+  if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
+  requireLocal(value&&typeof value==='object','Keep the complete JSON record.');
+  return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';
+}
+const same=(a,b)=>canonical(a)===canonical(b),utf8=value=>new TextEncoder().encode(value);
+async function sha256(value){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',typeof value==='string'?utf8(value):value))].map(n=>n.toString(16).padStart(2,'0')).join('');}
+function bindingValue(value){return value&&RECOVERY_SHA.test(value.workspaceId??'')&&RECOVERY_SHA.test(value.sourcesSha256??'')?{workspaceId:value.workspaceId,sourcesSha256:value.sourcesSha256}:null;}
+function scopeKey(binding=recovery.binding){requireLocal(bindingValue(binding),'Read the original workspace identity first.');return canonical([binding.workspaceId,binding.sourcesSha256]);}
+function contextKey(actor,binding=recovery.binding){return canonical([scopeKey(binding),actor]);}
+function blankContext(actor){return {schema:RECOVERY_SCHEMA,key:contextKey(actor),binding:clone(recovery.binding),actor,version:0,draft:null,pending:null,lastOutcome:null};}
+function assertScope(actual){
+  const value=bindingValue(actual);
+  if(!value||!recovery.binding||!same(value,recovery.binding)){
+    recovery.mismatch=true;renderRecovery();controls();
+    const error=new Error('The responding workspace or source configuration changed. The original browser record is frozen. Reopen the matching workspace, or download its preserved record.');error.outcomeUnknown=true;throw error;
+  }
+}
+function contextReady(){return Boolean(recovery.cache&&!recovery.conflict&&!recovery.mismatch&&!recovery.storageError&&recovery.actor===$('qbo-operator').value.trim());}
+function canEdit(){return contextReady()&&!metadata?.reopenRequired&&!busy&&!pending&&!recovery.gate?.pending;}
+function assertContext(){
+  requireLocal(recovery.db&&recovery.cache,'Enter the operator and open their saved drafts before continuing.');
+  requireLocal(contextReady(),'Open the matching saved operator record, or resolve its browser-storage conflict before continuing.');
+  requireLocal(!metadata?.reopenRequired,'Close and reopen the original accounting workspace through Recovery before continuing this request.');
+  requireLocal(!recovery.gate?.pending||recovery.gate.pending.contextKey===recovery.key,'Another operator has an unresolved request in this browser workspace. Open that operator’s record to read its original outcome.');
+}
+function openRecoveryDB(){return new Promise((resolve,reject)=>{
+  const r=indexedDB.open(RECOVERY_DB,1);
+  r.onupgradeneeded=()=>{const db=r.result;db.createObjectStore('contexts',{keyPath:'key'});const commands=db.createObjectStore('commands',{keyPath:'key'});commands.createIndex('contextKey','contextKey');commands.createIndex('identity','identity');db.createObjectStore('gates',{keyPath:'key'});};
+  r.onsuccess=()=>{const db=r.result;db.onversionchange=()=>{db.close();recovery.storageError='The browser store changed. Reload before continuing.';renderRecovery();controls();};resolve(db);};
+  r.onerror=()=>reject(r.error||new Error('This browser could not open durable draft storage.'));
+  r.onblocked=()=>reject(new Error('Close an older QuickBooks tab before opening its browser store.'));
+});}
+function localRead(store,key){return new Promise((resolve,reject)=>{
+  const tx=recovery.db.transaction(store,'readonly'),r=tx.objectStore(store).get(key);let value;
+  r.onsuccess=()=>{value=r.result??null;};tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error||r.error);tx.onabort=()=>reject(tx.error||new Error('The browser read was interrupted.'));
+});}
+function localCatalog(){return new Promise((resolve,reject)=>{
+  const tx=recovery.db.transaction('contexts','readonly'),r=tx.objectStore('contexts').openCursor(),rows=[];
+  r.onsuccess=()=>{const cursor=r.result;if(!cursor)return;const value=cursor.value;rows.push({key:value.key,binding:value.binding,actor:value.actor,version:value.version,updatedAt:value.updatedAt??null,pending:Boolean(value.pending),hasDraft:Boolean(value.draft)});cursor.continue();};
+  tx.oncomplete=()=>resolve(rows);tx.onerror=()=>reject(tx.error||r.error);tx.onabort=()=>reject(tx.error||new Error('The browser catalog could not be read.'));
+});}
+function localCommands(key){return new Promise((resolve,reject)=>{
+  const tx=recovery.db.transaction('commands','readonly'),r=tx.objectStore('commands').index('contextKey').getAll(key);let rows=[];
+  r.onsuccess=()=>{rows=r.result??[];};tx.oncomplete=()=>resolve(rows);tx.onerror=()=>reject(tx.error||r.error);tx.onabort=()=>reject(tx.error||new Error('The original browser requests could not be read.'));
+});}
+/** A draft, immutable request and workspace-wide pending marker commit together. */
+function writeLocal({draft,command=null,outcome=null}={}){
+  const key=recovery.key,binding=clone(recovery.binding),actor=recovery.actor,expected=recovery.cache?.version;
+  requireLocal(key&&recovery.cache,'Open the original operator record first.');
+  if(draft!==undefined)requireLocal(utf8(JSON.stringify(draft)).length<=RECOVERY_DRAFT_LIMIT,'This complete browser draft exceeds 64 MiB. Download it and use the original CLI or operating backup.');
+  return new Promise((resolve,reject)=>{
+    const tx=recovery.db.transaction(['contexts','commands','gates'],'readwrite'),contexts=tx.objectStore('contexts'),commands=tx.objectStore('commands'),gates=tx.objectStore('gates');
+    let next,nextGate,issue;
+    const fail=error=>{issue=error;try{tx.abort();}catch{}};
+    const c=contexts.get(key);c.onerror=()=>fail(c.error);c.onsuccess=()=>{try{
+      const old=c.result??blankContext(actor);
+      requireLocal(old.schema===RECOVERY_SCHEMA&&old.key===key&&old.actor===actor&&same(old.binding,binding),'The saved operator/workspace identity changed.');
+      requireLocal(old.version===expected,'Another tab changed this saved operator record. Download your unsaved draft, then reload the saved record.');
+      const g=gates.get(scopeKey(binding));g.onerror=()=>fail(g.error);g.onsuccess=()=>{try{
+        next=clone(old);next.version++;next.updatedAt=new Date().toISOString();if(draft!==undefined)next.draft=clone(draft);
+        nextGate=g.result??{key:scopeKey(binding),binding:clone(binding),pending:null};requireLocal(same(nextGate.binding,binding),'The browser workspace marker changed.');
+        const finish=()=>{contexts.put(next);gates.put(nextGate);};
+        if(command){
+          requireLocal(!old.pending||old.pending===command.key,'Reconcile the original pending request before submitting another.');
+          requireLocal(!nextGate.pending||nextGate.pending.contextKey===key&&nextGate.pending.commandKey===command.key,'Another operator or tab retains this workspace’s pending request.');
+          const identities=commands.index('identity').getAll(command.identity);identities.onerror=()=>fail(identities.error);identities.onsuccess=()=>{try{
+            if(!command.kind.endsWith('-resume'))requireLocal(identities.result.every(prior=>prior.bodyText===command.bodyText&&prior.bodySha256===command.bodySha256),'This original request ID is already retained with different bytes. Keep its original request.');
+            const r=commands.get(command.key);r.onerror=()=>fail(r.error);r.onsuccess=()=>{try{
+              if(r.result)requireLocal(r.result.bodyText===command.bodyText&&r.result.bodySha256===command.bodySha256&&r.result.path===command.path&&r.result.actor===actor&&same(r.result.binding,binding),'This request identity belongs to different original bytes.');
+              else commands.add(clone(command));
+              next.pending=command.key;nextGate.pending={contextKey:key,commandKey:command.key,actor};finish();
+            }catch(error){fail(error);}};
+          }catch(error){fail(error);}};
+        }else if(outcome){
+          requireLocal(old.pending===outcome.commandKey&&nextGate.pending?.contextKey===key&&nextGate.pending.commandKey===outcome.commandKey,'Only the original pending request may be reconciled.');
+          const r=commands.get(outcome.commandKey);r.onerror=()=>fail(r.error);r.onsuccess=()=>{try{
+            requireLocal(r.result&&r.result.bodySha256===outcome.bodySha256,'The original submitted request is missing or changed.');
+            const saved={...r.result,outcome:clone(outcome)};commands.put(saved);next.pending=null;next.lastOutcome=clone(outcome);nextGate.pending=null;finish();
+          }catch(error){fail(error);}};
+        }else finish();
+      }catch(error){fail(error);}};
+    }catch(error){fail(error);}};
+    tx.oncomplete=()=>{recovery.cache=next;recovery.gate=nextGate;recovery.storageError='';try{recovery.channel?.postMessage({key,version:next.version,scope:scopeKey(binding)});}catch{}resolve(next);};
+    const failed=()=>{const error=issue||tx.error||new Error('The browser could not retain this record. No new request was dispatched.');if(/Another tab|Another operator/.test(error.message))recovery.conflict=true;else recovery.storageError=error.message;renderRecovery();controls();reject(error);};
+    tx.onerror=failed;tx.onabort=failed;
+  });
+}
+function sourceIdentity(value=source){
+  if(!value?.record?.id)return null;
+  const record=value.record,file=record.files?.find(item=>item.name==='handoff.json');
+  requireLocal(file&&RECOVERY_SHA.test(file.sha256??'')&&Number.isSafeInteger(file.bytes),'The original handoff has no verified source-file identity. Reopen it through the accounting workspace.');
+  return {handoffId:record.id,handoffFileSha256:file.sha256,handoffFileBytes:file.bytes,sourceKind:value.sourceKind??'merchant'};
+}
+function draftSourceKey(value=source){const binding=sourceIdentity(value);return binding?canonical(binding):'';}
+function snapshotDraft(){
+  saveDraft();savePlanDraft();
+  return {schema:RECOVERY_SCHEMA,binding:clone(recovery.binding),actor:recovery.actor,fields:Object.fromEntries(DRAFT_FIELDS.map(id=>[id,$(id).value])),nameDirty:$('qbo-name').dataset.dirty==='true',
+    sourceChoice,sourceIdentity:sourceIdentity(),planDrafts:[...planDrafts].map(([key,value])=>[key,clone(value)]),sourceDrafts:[...sourceDrafts].map(([key,value])=>[key,{...value,rows:[...value.rows].map(([id,row])=>[id,clone(row)]),selected:[...value.selected]}]),
+    createIdentity:clone(createIdentity),selected,selectedResponse,loadedCompany:clone(loadedCompany),loadedCompanyOrigin:clone(loadedCompanyOrigin),loadedFile:loadedFile?{name:loadedFile.name,content:loadedFile.content}:null,
+    planPreview:clone(planPreview),responsePreview:clone(responsePreview),nativePreview:clone(nativePreview),view:document.querySelector('[data-qbo-view].active')?.dataset.qboView??'journal'};
+}
+function markRecoveryDirty(){
+  if(!recovery.cache||recovery.hydrating||pending||recovery.mismatch||recovery.conflict||recovery.actor!==$('qbo-operator').value.trim())return;
+  recovery.dirty=true;recovery.editVersion++;renderRecovery();clearTimeout(recovery.timer);recovery.timer=null;
+  if(!busy)recovery.timer=setTimeout(()=>{recovery.timer=null;void flushDraft().catch(error=>notify(error.message,true));},300);
+}
+async function flushDraft(){
+  clearTimeout(recovery.timer);recovery.timer=null;
+  if(!recovery.cache||recovery.hydrating||pending)return;
+  requireLocal(!recovery.mismatch&&!recovery.conflict&&recovery.actor===$('qbo-operator').value.trim(),'Keep this draft under its original operator and workspace.');
+  if(!recovery.dirty){await recovery.queue;return;}
+  const snapshot=snapshotDraft(),generation=recovery.editVersion,key=recovery.key;
+  recovery.queue=recovery.queue.catch(()=>{}).then(async()=>{
+    requireLocal(recovery.key===key,'Finish the original browser save before changing operator.');
+    await writeLocal({draft:snapshot});if(generation===recovery.editVersion)recovery.dirty=false;renderRecovery();
+  });
+  await recovery.queue;
+}
+function clearLiveDraft(){
+  for(const [id,value] of defaultDraftFields)$(id).value=value;
+  delete $('qbo-name').dataset.dirty;
+  source=null;sourceChoice='';recovery.restoredSourcePin=null;draftRows=new Map();draftSelected=new Set();sourceDrafts=new Map();planDrafts=new Map();buyerValuationBasis='';
+  selected='';selectedResponse='';detail=null;responseDetail=null;currentAccountant=null;loadedCompany=null;loadedCompanyOrigin=null;loadedFile=null;fileLoading=false;
+  planPreview=null;responsePreview=null;nativePreview=null;createIdentity=identity();draftOffset=0;lineOffset=0;lineIndex=-1;comparisonOffset=0;previewOffset=0;
+  ++fileToken;++sourceToken;++detailToken;++responseToken;++nativeToken;
+  for(const id of ['qbo-response-file','qbo-company-info-file','qbo-company-preferences-file','qbo-company-accounts-file'])$(id).value='';
+  $('qbo-native-confirm').checked=false;$('qbo-cancel-unused').checked=false;
+  $('qbo-plan-preview-panel').hidden=true;$('qbo-preview-panel').hidden=true;$('qbo-native-preview-panel').hidden=true;
+  if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl='';}$('qbo-preview-download').hidden=true;
+}
+function restoreDraft(value){
+  if(!value)return;
+  requireLocal(value.schema===RECOVERY_SCHEMA&&same(value.binding,recovery.binding)&&value.actor===recovery.actor,'The browser draft belongs to another original workspace or operator.');
+  for(const id of DRAFT_FIELDS)if(typeof value.fields?.[id]==='string')$(id).value=value.fields[id];
+  if(value.nameDirty)$('qbo-name').dataset.dirty='true';
+  planDrafts=new Map((value.planDrafts??[]).map(([key,row])=>[key,clone(row)]));
+  sourceDrafts=new Map((value.sourceDrafts??[]).map(([key,row])=>[key,{...row,rows:new Map(row.rows),selected:new Set(row.selected)}]));
+  sourceChoice=value.sourceChoice??'';recovery.restoredSourcePin=clone(value.sourceIdentity??null);createIdentity=clone(value.createIdentity??identity());selected=value.selected??'';selectedResponse=value.selectedResponse??'';
+  loadedCompany=clone(value.loadedCompany??null);loadedCompanyOrigin=clone(value.loadedCompanyOrigin??null);
+  loadedFile=value.loadedFile?{...clone(value.loadedFile),token:fileToken}:null;
+  planPreview=clone(value.planPreview??null);responsePreview=clone(value.responsePreview??null);nativePreview=clone(value.nativePreview??null);
+  if(loadedFile)$('qbo-file-status').textContent=loadedFile.name+' · complete JSON restored from this operator’s browser draft';
+  showView(value.view??'journal');
+}
+async function openOperator({reload=false}={}){
+  if(busy)return;
+  const actor=$('qbo-operator').value.trim();
+  busy=true;controls();
+  try{
+    await recovery.queue.catch(()=>{});
+    requireLocal(actor&&actor.length<=1000,'Enter the original operator name before opening saved drafts.');
+    requireLocal(recovery.binding&&recovery.db,'Read the original workspace and browser store first.');
+    requireLocal(!recovery.mismatch,'This tab belongs to its original workspace. Download the retained record and reopen the matching workspace.');
+    requireLocal(!pending||actor===recovery.actor,'Reconcile the current operator’s pending request before switching records.');
+    if(recovery.dirty&&(reload||recovery.conflict)&&!window.confirm('Reload the last saved browser draft? Download any unsaved edits first.'))return;
+    if(recovery.cache&&recovery.dirty&&!reload){
+      $('qbo-operator').value=recovery.actor;try{await flushDraft();}finally{$('qbo-operator').value=actor;}
+    }
+    recovery.hydrating=true;controls();
+    const key=contextKey(actor),saved=await localRead('contexts',key);
+    recovery.key=key;recovery.actor=actor;recovery.cache=saved??blankContext(actor);recovery.gate=await localRead('gates',scopeKey());recovery.conflict=false;recovery.storageError='';recovery.dirty=false;
+    requireLocal(recovery.cache.key===key&&recovery.cache.actor===actor&&same(recovery.cache.binding,recovery.binding),'The retained operator record changed.');
+    clearLiveDraft();restoreDraft(recovery.cache.draft);
+    if(!recovery.cache.draft){selected=query.get('plan')||'';selectedResponse=query.get('response')||'';}
+    pending=recovery.cache.pending?await localRead('commands',recovery.cache.pending):null;
+    if(recovery.cache.pending){requireLocal(pending,'The exact pending browser request is missing. Keep this record for recovery.');await validateStoredCommand(pending);}
+    await refresh();renderCompany();if(planPreview)renderPlanPreview();if(responsePreview)renderResponsePreview();if(nativePreview&&nativePreviewCurrent())renderNativePreview();
+    if(!saved)await writeLocal({draft:snapshotDraft()});
+    else if(!pending&&!recovery.mismatch)await writeLocal({draft:snapshotDraft()});
+    await refreshRecoveryCatalog();renderRecovery();notify(pending?'The original submitted request is restored. Read its saved outcome before retrying.':'Opened this operator’s saved draft. Every new request will be retained before dispatch.');
+  }catch(error){recovery.storageError='The saved operator record could not reopen: '+error.message;throw error;}
+  finally{recovery.hydrating=false;busy=false;renderRecovery();controls();}
+}
+function renderRecovery(){
+  if(!$('qbo-recovery-state'))return;
+  const active=recovery.cache,other=recovery.gate?.pending&&recovery.gate.pending.contextKey!==recovery.key;
+  $('qbo-recovery-scope').textContent=recovery.binding?'Workspace '+recovery.binding.workspaceId+' · Sources '+recovery.binding.sourcesSha256:'Reading original workspace identity…';
+  $('qbo-recovery-state').textContent=recovery.mismatch?'Workspace identity changed; original browser data frozen':recovery.conflict?'Another tab changed this record; reload saved state':recovery.storageError?'Browser save failed: '+recovery.storageError:other?'Unresolved request retained by '+recovery.gate.pending.actor:!active?'Enter an operator and open their saved drafts':recovery.dirty?'Browser edits awaiting save…':'Saved for '+recovery.actor+(active.updatedAt?' · '+date(active.updatedAt):'');
+  $('qbo-recovery-state').classList.toggle('error',Boolean(recovery.mismatch||recovery.conflict||recovery.storageError||other));
+  $('qbo-reopen-warning').hidden=!metadata?.reopenRequired;
+  $('qbo-retry-panel').hidden=!pending;
+  if(pending)$('qbo-retry-message').textContent=pending.description+' · Request '+pending.requestId+' · '+pending.bodySha256+'. The exact original values are saved in this browser. Read the original saved record; retry only this unchanged request if its outcome remains unresolved.';
+  $('qbo-recovery-outcome').textContent=active?.lastOutcome?'Last recovered request '+active.lastOutcome.requestId+' · '+active.lastOutcome.status+' · '+date(active.lastOutcome.at):'';
+}
+async function refreshRecoveryCatalog(){
+  if(!recovery.db||!recovery.binding)return;
+  const rows=await localCatalog(),own=rows.filter(row=>same(row.binding,recovery.binding));
+  options($('qbo-saved-operator'),[['','Choose a saved operator'],...own.map(row=>[row.actor,row.actor+(row.pending?' · request pending':'')])],$('qbo-saved-operator').value);
+  options($('qbo-other-record'),[['','Choose a saved browser record'],...rows.map(row=>[row.key,row.actor+' · '+short(row.binding.workspaceId)+' · '+short(row.binding.sourcesSha256)+(row.pending?' · pending':'')])],$('qbo-other-record').value);
+  recovery.gate=await localRead('gates',scopeKey());renderRecovery();controls();
+}
+function downloadJSON(name,value){
+  const text=JSON.stringify(value,null,2)+'\n',url=URL.createObjectURL(new Blob([text],{type:'application/json;charset=utf-8'})),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+async function downloadRecovery(key=recovery.key){
+  requireLocal(recovery.db&&key,'Choose the saved operator record to download.');
+  const [context,commands]=await Promise.all([localRead('contexts',key),localCommands(key)]);
+  requireLocal(context,'The saved browser record was not found.');
+  downloadJSON('quickbooks-browser-recovery.json',{schema:RECOVERY_SCHEMA,exportedAt:new Date().toISOString(),context,commands,...(key===recovery.key&&recovery.dirty?{unsavedDraft:snapshotDraft()}:{}),
+    instructions:'Private browser recovery record. Its original workspace/source/actor and command bytes are immutable. The original accounting workspace owns all posting outcomes; this export is not a posting receipt or an automatic import.'});
+}
+async function startRecovery(){
+  try{
+    recovery.db=await openRecoveryDB();
+    if(typeof BroadcastChannel==='function'){recovery.channel=new BroadcastChannel(RECOVERY_DB);recovery.channel.onmessage=event=>{
+      if(!recovery.binding||event.data?.scope!==scopeKey())return;
+      if(event.data.key===recovery.key&&event.data.version!==(recovery.cache?.version??0)){recovery.conflict=true;notify('Another tab updated this operator record. Download any unsaved draft and reload the saved record before continuing.',true);}
+      void refreshRecoveryCatalog().catch(error=>notify(error.message,true));controls();
+    };}
+    await refresh();await refreshRecoveryCatalog();
+    $('qbo-recovery-open').focus();
+  }catch(error){recovery.storageError=error.message;notify(error.message,true);}
+  finally{renderRecovery();controls();}
+}
+
+
+const INTENT_KINDS=new Set(['create','review','cancel','response','response-resume','post','post-resume']);
+function commandRoute(kind,planId,responseId){
+  if(kind==='create')return '/api/qbo/plans';
+  const root='/api/qbo/plans/'+encode(planId);
+  return root+(kind==='review'?'/review':kind==='cancel'?'/cancel':kind==='response'?'/responses':kind==='response-resume'?'/responses/'+encode(responseId)+'/resume':kind==='post'?'/post':kind==='post-resume'?'/post/resume':'');
+}
+async function originalRequestHash(kind,body){
+  let normalized;
+  if(kind==='create')normalized={id:body.id,name:body.name,actor:body.actor,createdAt:body.createdAt,handoffId:body.handoffId,expectedParentId:body.expectedParentId??null,realmId:body.realmId,companyName:body.companyName,
+    baseCurrency:body.baseCurrency,environment:body.environment??'sandbox',txnDate:body.txnDate,docNumber:body.docNumber??null,rows:body.rows,companySnapshot:body.companySnapshot??null,...(Object.hasOwn(body,'valuationBasis')?{valuationBasis:body.valuationBasis}:{})};
+  else if(kind==='review')normalized={id:body.id,actor:body.actor,note:body.note??'',planSha256:body.planSha256};
+  else if(kind==='cancel')normalized={id:body.id,actor:body.actor,note:body.note,planSha256:body.planSha256,unusedConfirmed:body.unusedConfirmed===true};
+  else if(kind==='response')normalized={id:body.id,createdAt:body.createdAt,name:body.name,actor:body.actor,realmId:body.realmId,expectedParentId:body.expectedParentId??null,responseSha256:await sha256(body.responseJson),previewSha256:body.previewSha256??null};
+  return normalized?sha256(canonical(normalized)):null;
+}
+function intentSource(kind,body,planId){
+  const handoffId=kind==='create'?body.handoffId:detail?.plan?.handoffId;
+  const record=metadata?.handoffs?.find(row=>row.id===handoffId);
+  const sourcePin=sourceIdentity({record,sourceKind:kind==='create'?(source?.sourceKind??'merchant'):(detail?.plan?.sourceKind??'merchant')});
+  requireLocal(sourcePin,'Reopen the original handoff before retaining a command.');
+  return {...sourcePin,planId,planSha256:kind==='create'?body.previewSha256:detail?.plan?.integrity?.sha256,
+    connection:['post','post-resume'].includes(kind)?connectionSignature():null};
+}
+async function makeStoredCommand(intent){
+  assertContext();requireLocal(INTENT_KINDS.has(intent.kind),'Choose an original QuickBooks operation.');
+  const body=clone(intent.body),bodyText=JSON.stringify(body),bodySha256=await sha256(bodyText),planId=intent.kind==='create'?body.id:selected;
+  const responseId=intent.kind==='response-resume'?intent.responseId:null,requestId=body.id??responseId;
+  requireLocal(typeof requestId==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(requestId),'Retain the original request or response ID.');
+  requireLocal(body.actor===recovery.actor,'The command actor differs from this saved operator record.');
+  requireLocal(utf8(bodyText).length<=RECOVERY_REQUEST_LIMIT,'The complete QuickBooks request exceeds 32 MiB.');
+  requireLocal(intent.path===commandRoute(intent.kind,planId,responseId),'Keep the original QuickBooks request route.');
+  const pin=intentSource(intent.kind,body,planId),key=canonical([recovery.key,intent.kind,intent.path,requestId,bodySha256]);
+  return {schema:RECOVERY_SCHEMA,key,contextKey:recovery.key,binding:clone(recovery.binding),actor:recovery.actor,kind:intent.kind,path:intent.path,body,bodyText,bodySha256,
+    identity:canonical([scopeKey(),intent.kind,intent.path,requestId]),requestId,planId,responseId,pin,requestSha256:await originalRequestHash(intent.kind,body),
+    description:intent.description,createdAt:new Date().toISOString()};
+}
+async function validateStoredCommand(command){
+  requireLocal(command?.schema===RECOVERY_SCHEMA&&INTENT_KINDS.has(command.kind),'The saved browser command is incomplete.');
+  requireLocal(command.contextKey===recovery.key&&command.actor===recovery.actor&&same(command.binding,recovery.binding),'This request belongs to a different workspace or operator.');
+  requireLocal(command.path===commandRoute(command.kind,command.planId,command.responseId),'The original request route changed.');
+  requireLocal(command.bodyText===JSON.stringify(command.body)&&await sha256(command.bodyText)===command.bodySha256,'The exact original request bytes changed.');
+  requireLocal(command.body.actor===command.actor&&(command.body.id??command.responseId)===command.requestId,'The original request identity changed.');
+  requireLocal(command.requestSha256===await originalRequestHash(command.kind,command.body),'The saved request does not match the original API’s receipt hash.');
+  requireLocal(command.key===canonical([command.contextKey,command.kind,command.path,command.requestId,command.bodySha256]),'The browser request key changed.');
+}
+async function verifyCommandResult(command,value){
+  requireLocal(!metadata?.reopenRequired&&!value.reopenRequired,'Reopen the original workspace before trusting an uncertain saved edition.');
+  const record=value.record,body=command.body;
+  const sourceRecord=metadata?.handoffs?.find(row=>row.id===command.pin.handoffId),sourceFile=sourceRecord?.files?.find(file=>file.name==='handoff.json');
+  requireLocal(sourceFile?.sha256===command.pin.handoffFileSha256&&sourceFile.bytes===command.pin.handoffFileBytes,'The retained original handoff file identity changed. Keep the pending request with its source.');
+  requireLocal(record?.id===command.planId&&record.handoffId===command.pin.handoffId,'The returned plan belongs to another original source.');
+  if(command.kind==='create')requireLocal(record.requestSha256===command.requestSha256&&record.integrity?.sha256===body.previewSha256,'The retained plan does not match the original request and preview.');
+  else{
+    requireLocal(record.integrity?.sha256===command.pin.planSha256,'The original retained plan identity changed.');
+    if(command.kind==='review'||command.kind==='cancel'){
+      const receipt=command.kind==='review'?record.review:record.cancellation;
+      requireLocal(receipt?.id===body.id&&receipt.actor===body.actor&&receipt.requestSha256===command.requestSha256,'The original review or cancellation receipt is not yet available.');
+    }else if(command.kind==='response'){
+      const receipt=(record.responses??[]).find(row=>row.id===body.id);
+      requireLocal(receipt&&receipt.requestSha256===command.requestSha256&&receipt.responseSha256===await sha256(body.responseJson),'The retained response does not match the complete original JSON and request.');
+      value={...value,response:receipt};
+    }else if(command.kind==='response-resume'){
+      const receipt=(record.responses??[]).find(row=>row.id===command.responseId);
+      requireLocal(receipt&&receipt.id===command.requestId,'The original saved response is not available.');
+      value={...value,response:receipt};
+    }else{
+      const native=record.nativePost;
+      requireLocal(native?.id===body.id&&native.requestId===body.id&&native.planSha256===command.pin.planSha256,'The original native posting identity is not available.');
+      if(command.kind==='post')requireLocal(native.previewSha256===body.previewSha256&&native.actor===body.actor&&native.createdAt===body.createdAt,'The saved native request differs from its original posting review.');
+      value={...value,nativePost:native};
+    }
+  }
+  return value;
+}
+function commandStatus(command,result){
+  if(['post','post-resume'].includes(command.kind))return result.nativePost?.status??result.record.nativePost?.status??'ADMITTED';
+  if(['response','response-resume'].includes(command.kind))return result.response?.status??'ADMITTED';
+  return command.kind==='review'?'REVIEWED':command.kind==='cancel'?'CANCELLED':result.record.status??'RETAINED';
+}
+function advancedDraft(command,result){
+  const draft=snapshotDraft();draft.selected=command.planId;
+  if(command.kind==='create'){draft.planPreview=null;draft.createIdentity=identity();draft.fields['qbo-review-note']='';draft.fields['qbo-cancel-note']='';}
+  if(command.kind==='cancel'){draft.responsePreview=null;draft.nativePreview=null;}
+  if(['response','response-resume','post','post-resume'].includes(command.kind)){
+    draft.responsePreview=null;draft.nativePreview=null;draft.selectedResponse=result.response?.id??result.nativePost?.responseId??draft.selectedResponse;
+    if(command.kind==='response'){draft.loadedFile=null;draft.fields['qbo-response-name']='';}
+  }
+  return draft;
+}
+async function finishPending(command,value){
+  const result=await verifyCommandResult(command,value);
+  const outcome={matched:command.kind.endsWith('-resume')?'original-operation':'original-request',commandKey:command.key,bodySha256:command.bodySha256,requestId:command.requestId,kind:command.kind,planId:command.planId,actor:command.actor,binding:clone(command.binding),
+    status:commandStatus(command,result),revision:result.revision,at:new Date().toISOString(),responseId:result.response?.id??result.nativePost?.responseId??null,planSha256:result.record.integrity?.sha256};
+  await writeLocal({draft:advancedDraft(command,result),outcome});pending=null;recovery.dirty=false;
+  await applyCommandView(command,result);markRecoveryDirty();renderRecovery();return result;
+}
+async function applyCommandView(command,result){
+  if(command.kind==='create'){invalidatePlan();await selectPlan(command.planId,{reset:true});$('qbo-review-note').value='';$('qbo-cancel-note').value='';$('qbo-cancel-unused').checked=false;}
+  else{
+    if(selected!==command.planId)await selectPlan(command.planId,{reset:true});
+    if(command.kind==='cancel'){invalidateResponse();invalidateNative();$('qbo-cancel-unused').checked=false;}
+    if(['post','post-resume'].includes(command.kind))await nativeSuccess(result);
+    if(['response','response-resume'].includes(command.kind)){
+      selectedResponse=result.response?.id??command.requestId;invalidateResponse();
+      if(command.kind==='response'){loadedFile=null;++fileToken;fileLoading=false;$('qbo-response-file').value='';$('qbo-response-name').value='';$('qbo-file-status').textContent='Choose the complete received JSON file.';}
+      showView(result.response?.kind==='FAULT'?'response':'return');
+    }
+  }
+}
+function commandMessage(command,result){
+  const status=commandStatus(command,result);
+  if(['post','post-resume'].includes(command.kind))return nativeResultMessage(result);
+  if(['response','response-resume'].includes(command.kind))return status==='SAVED'?'The exact saved response is linked to its original accountant return.':status==='FAULT'?'The exact received QuickBooks fault is retained.':'The original response is retained; continue its saved accountant return.';
+  if(command.kind==='review')return 'The exact review is saved with its original journal.';
+  if(command.kind==='cancel')return 'The original unused-plan cancellation is saved.';
+  return 'The exact journal plan is retained with its original source and mapping.';
+}
+async function reconcilePending(){
+  if(busy||!pending)return;busy=true;controls();
+  try{
+    assertContext();const command=pending;await validateStoredCommand(command);
+    const catalog=await api('/api/qbo');metadata=catalog;
+    requireLocal(!catalog.reopenRequired,'Close and reopen the original accounting workspace before reconciling this request.');
+    const value=await api('/api/qbo/plans/'+encode(command.planId));
+    const result=await finishPending(command,value);await refresh();notify((command.kind.endsWith('-resume')?'Observed the original saved operation. ':'Recovered the original saved request. ')+commandMessage(command,result));
+  }catch(error){notify('The original request remains retained. '+error.message,true);}
+  finally{busy=false;if(!pending)markRecoveryDirty();renderRecovery();controls();}
+}
+
 const base=()=>'/api/qbo/plans/'+encode(selected);
 const cancelled=()=>detail?.record?.status==='CANCELLED';
 const receivable=()=>detail?.record?.status==='REVIEWED'&&!nativeOwnsReturn();
@@ -97,27 +457,54 @@ const responses=()=>detail?.responses??[];
 const resultLabel=result=>result?.status==='PENDING'?'Accountant return pending':result?.status==='SAVED'?'Accountant return saved':result?.kind==='MATCHED'?'Journal matched':result?.kind==='FAULT'?'QuickBooks fault':result?.status??'Response retained';
 const summaryMetrics=plan=>[...(buyerPlan(plan)?[['Included allocations',planRows(plan).length],['Excluded allocations',plan?.excluded?.length??0]]:[['Source events',plan?.summary?.rowCount??planRows(plan).length]]),['Journal lines',plan?.summary?.lineCount??lines(plan).length],['Debits',plan?.summary?.totalDebit??'See journal'],['Credits',plan?.summary?.totalCredit??'See journal']];
 class RequestError extends Error{
-  constructor(response,value){super(value.message||value.error||'The workspace request could not be completed.');this.status=response.status;this.code=value.error;}
+  constructor(response,value){super(value.message||value.error||'The workspace request could not be completed.');this.status=response.status;this.code=value.error;this.outcomeUnknown=true;this.reopenRequired=value.reopenRequired===true;}
 }
-async function api(path,body){
-  const response=await fetch(path,body===undefined?{cache:'no-store'}:{method:'POST',headers:{'Content-Type':'application/json','X-Workspace-Request':'1'},body:JSON.stringify(body)});
-  const type=response.headers.get('content-type')??'';
+function unknownResponse(message,status){const error=new Error(message);error.status=status;error.outcomeUnknown=true;return error;}
+async function scopedFetch(path,{bodyText}={}){
+  requireLocal(recovery.binding||(path==='/api/qbo'&&bodyText===undefined),'Read the original workspace identity before continuing.');
+  const expected=recovery.binding?clone(recovery.binding):null,headers={};
+  if(expected){headers['X-Accounting-Workspace-Id']=expected.workspaceId;headers['X-Accounting-Sources-Sha256']=expected.sourcesSha256;}
+  if(bodyText!==undefined){headers['Content-Type']='application/json';headers['X-Workspace-Request']='1';}
+  let response;
+  try{response=await fetch(path,{cache:'no-store',headers,...(bodyText===undefined?{}:{method:'POST',body:bodyText})});}
+  catch(error){throw unknownResponse('No readable workspace response was received. Keep the original request and read its saved outcome. '+error.message);}
+  const observed=bindingValue({workspaceId:response.headers.get('X-Accounting-Workspace-Id'),sourcesSha256:response.headers.get('X-Accounting-Sources-Sha256')});
+  if(!observed)throw unknownResponse('The response did not identify its accounting workspace. The original request remains unresolved.',response.status);
+  if(expected)assertScope(observed);
+  const reopen=response.headers.get('X-Accounting-Reopen-Required');
+  if(reopen!=='0'&&reopen!=='1')throw unknownResponse('The response did not identify whether its saved workspace must reopen. Keep the original request.',response.status);
+  if(reopen==='1'&&metadata)metadata={...metadata,reopenRequired:true};
+  return {response,binding:observed,reopenRequired:reopen==='1'};
+}
+async function api(path,body,{bodyText}={}){
+  const wire=body===undefined?undefined:bodyText??JSON.stringify(body),result=await scopedFetch(path,{bodyText:wire}),{response}=result;
   let value;
   try{
-    if(!/^application\/json(?:\s*;|$)/i.test(type))throw new Error('Not an application/json response.');
+    if(!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')??''))throw new Error('Not an application/json response.');
     value=await response.json();
     if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Not a workspace response object.');
-  }catch{
-    const error=new Error('The workspace returned an unreadable response. Read or retry the same submitted operation.');error.status=response.status;error.outcomeUnknown=true;throw error;
-  }
+  }catch{throw unknownResponse('The workspace returned an unreadable response. Read or retry the same submitted operation.',response.status);}
+  if(!recovery.binding){
+    requireLocal(response.ok&&path==='/api/qbo'&&same(bindingValue(value.binding),result.binding),'Open the current QBO workspace with its original identity support.');
+    recovery.binding=clone(result.binding);
+  }else if(value.binding)assertScope(value.binding);
+  if(result.reopenRequired||value.reopenRequired===true){if(metadata)metadata={...metadata,reopenRequired:true};value={...value,reopenRequired:true};}
   if(!response.ok)throw new RequestError(response,value);
   const next=typeof value.revision==='number'?value.revision:value.state?.revision;
   if(typeof next==='number')revision=Math.max(revision,next);
   return value;
 }
+async function downloadBoundLink(anchor){
+  const url=new URL(anchor.href,location.href);requireLocal(url.origin===location.origin,'Download from this original workspace.');
+  const {response}=await scopedFetch(url.pathname+url.search);
+  if(!response.ok)throw unknownResponse('The original workspace could not return this file. Its source and request stay unchanged.',response.status);
+  const blob=await response.blob(),object=URL.createObjectURL(blob),link=document.createElement('a');
+  const header=response.headers.get('content-disposition')??'',name=/filename="([^"\r\n]+)"/.exec(header)?.[1]||anchor.download||url.pathname.split('/').at(-1)||'accounting-handoff';
+  link.href=object;link.download=name.replace(/[/\\\u0000-\u001f]/g,'_');document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(object),30000);
+}
 function notify(message,error=false){$('qbo-message').textContent=message;$('qbo-message').hidden=!message;$('qbo-message').classList.toggle('error',error);}
 function attempt(work){return Promise.resolve().then(work).catch(error=>notify(error.message||String(error),true));}
-function operator(){const value=$('qbo-operator').value.trim();if(!value){$('qbo-operator').focus();throw new Error('Enter the operator or reviewer name before saving.');}return value;}
+function operator(){assertContext();const value=$('qbo-operator').value.trim();if(!value||value.length>1000){$('qbo-operator').focus();throw new Error('Enter the operator or reviewer name before saving.');}return value;}
 function options(element,items,wanted=element.value){
   const html=items.map(([value,label])=>'<option value="'+esc(value)+'">'+esc(label)+'</option>').join('');
   if(element.innerHTML!==html)element.innerHTML=html;
@@ -133,17 +520,17 @@ function remember(){
   history.replaceState(null,'',url);document.title=(detail?.plan?.name?detail.plan.name+' · ':'')+'QuickBooks journal handoff';
 }
 function controls(){
-  const writable=Boolean(metadata)&&!busy&&!pending;
+  const writable=Boolean(metadata)&&canEdit();
   $('qbo-refresh').disabled=busy;
   $('qbo-connection-refresh').disabled=busy||Boolean(pending);$('qbo-company-fetch').disabled=!writable||!connection?.available;
   $('qbo-native-refresh').disabled=busy;
   $('qbo-native-preview').disabled=!writable||!nativeCanStart();$('qbo-native-post').disabled=!writable||!nativePreviewCurrent()||!$('qbo-native-confirm').checked;
-  $('qbo-native-confirm').disabled=!writable||!nativePreviewCurrent();$('qbo-native-clear-preview').disabled=busy;
+  $('qbo-native-confirm').disabled=!writable||!nativePreviewCurrent();$('qbo-native-clear-preview').disabled=!writable;
   $('qbo-native-resume').disabled=!writable||!nativeCanResume();
   const buyer=buyerSource(),counts=buyer?buyerCounts():null;
   $('qbo-create').disabled=!writable||!source||(buyer?(!counts.include||counts.pending>0||counts.include>MAX_ROWS):!draftSelected.size);
   $('qbo-retain-plan').disabled=!writable||!planPreview;
-  $('qbo-clear-plan-preview').disabled=busy;
+  $('qbo-clear-plan-preview').disabled=!writable;
   $('qbo-review').disabled=!writable||!detail||approved()||cancelled();
   $('qbo-cancel').disabled=!writable||!cancellable();
   $('qbo-company-load').disabled=!writable;$('qbo-company-manual').disabled=!writable||!loadedCompany;
@@ -151,8 +538,16 @@ function controls(){
   document.querySelectorAll('[data-qbo-resume]').forEach(button=>{button.disabled=!writable||cancelled();});
   $('qbo-import').disabled=!writable||!receivable()||fileLoading||!loadedFile;
   $('qbo-apply').disabled=!writable||!responsePreview||!receivable();
-  $('qbo-clear-preview').disabled=busy;
-  $('qbo-retry').disabled=busy||!pending;$('qbo-dismiss-retry').disabled=busy;
+  $('qbo-clear-preview').disabled=!writable;
+  $('qbo-retry').disabled=busy||!pending||!contextReady()||Boolean(metadata?.reopenRequired);
+  $('qbo-read-pending').disabled=busy||!pending||!contextReady();
+  $('qbo-download-pending').disabled=!pending;
+  $('qbo-recovery-open').disabled=busy||!recovery.binding||!recovery.db||recovery.mismatch;
+  $('qbo-recovery-reload').disabled=busy||!recovery.cache||recovery.mismatch;
+  $('qbo-recovery-save').disabled=busy||!contextReady()||Boolean(pending);
+  $('qbo-recovery-download').disabled=!recovery.cache;
+  $('qbo-saved-operator').disabled=busy||Boolean(pending);
+  $('qbo-other-download').disabled=!$('qbo-other-record').value||!recovery.db;
   $('qbo-fill-accounts').disabled=!writable||!draftSelected.size;
   $('qbo-draft-select-page').disabled=!writable||!source;$('qbo-draft-clear').disabled=!writable||(buyer?!(counts.include||counts.exclude):!draftSelected.size);
   $('qbo-buyer-exclude-pending').disabled=!writable||!buyer||!counts?.pending;
@@ -164,9 +559,10 @@ function controls(){
       input.disabled=!writable||(input.hasAttribute('data-qbo-decision')?false:input.dataset.qboField==='reason'?decision!=='exclude':decision!=='include');
     }else input.disabled=!writable||!eligible(sourceById.get(id))||(input.type!=='checkbox'&&!draftSelected.has(id));
   }
-  for(const button of $('qbo-plan-list').querySelectorAll('button'))button.disabled=busy;
-  for(const form of ['qbo-create-form','qbo-review-form','qbo-response-form','qbo-company-form','qbo-cancel-form'])for(const input of $(form).querySelectorAll('input,select,textarea'))if(!input.closest('#qbo-mappings'))input.disabled=busy||Boolean(pending)||((form==='qbo-response-form'&&!receivable())||(form==='qbo-review-form'&&cancelled()));
+  for(const button of $('qbo-plan-list').querySelectorAll('button'))button.disabled=busy||Boolean(pending);
+  for(const form of ['qbo-create-form','qbo-review-form','qbo-response-form','qbo-company-form','qbo-cancel-form'])for(const input of $(form).querySelectorAll('input,select,textarea'))if(!input.closest('#qbo-mappings'))input.disabled=!writable||((form==='qbo-response-form'&&!receivable())||(form==='qbo-review-form'&&cancelled()));
   $('qbo-operator').disabled=busy||Boolean(pending);
+  renderRecovery();
   document.body.classList.toggle('working',busy);
 }
 function invalidatePlan(){planPreview=null;createIdentity=identity();$('qbo-plan-preview-panel').hidden=true;controls();}
@@ -175,25 +571,39 @@ function invalidateResponse(){
   if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl='';}
   $('qbo-preview-download').hidden=true;$('qbo-preview-download').removeAttribute('href');controls();
 }
-async function reading(work){if(busy||pending)return;busy=true;controls();try{return await work();}finally{busy=false;controls();}}
+async function reading(work){
+  if(busy||pending)return;busy=true;controls();
+  try{return await work();}finally{busy=false;if(recovery.cache&&!recovery.hydrating)markRecoveryDirty();controls();}
+}
 async function perform(intent,retrying=false){
   if(busy)return;
-  if(pending&&!retrying){notify('Read or dismiss the submitted operation before another write. The form is retained.',true);return;}
-  busy=true;controls();let received=false;
+  if(pending&&!retrying){notify('Read the original pending request before submitting another operation.',true);return;}
+  busy=true;controls();let command=null;
   try{
-    const result=await api(intent.path,intent.body);received=true;pending=null;$('qbo-retry-panel').hidden=true;
-    if(intent.success)await intent.success(result);
-    await refresh();notify(typeof intent.message==='function'?intent.message(result):intent.message||'Saved to the original accounting workspace.');
+    assertContext();await flushDraft();await recovery.queue;
+    const catalog=await api('/api/qbo');metadata=catalog;
+    requireLocal(!catalog.reopenRequired,'Close and reopen the original accounting workspace before continuing this request.');
+    if(retrying){
+      requireLocal(pending,'Open the saved original request first.');command=pending;await validateStoredCommand(command);
+      const stored=await localRead('commands',command.key);requireLocal(stored&&stored.bodyText===command.bodyText&&stored.bodySha256===command.bodySha256,'The original submitted bytes are missing or changed.');
+    }else{
+      requireLocal(!recovery.gate?.pending,'Read the browser’s existing workspace request before submitting another.');
+      if(intent.body.revision!==catalog.revision){
+        invalidatePlan();invalidateResponse();invalidateNative();await refresh();markRecoveryDirty();
+        throw new Error('Saved state changed before dispatch. Your draft is retained; review it against the current state. No new request was sent.');
+      }
+      command=await makeStoredCommand(intent);
+      await writeLocal({draft:snapshotDraft(),command});pending=command;recovery.dirty=false;renderRecovery();controls();
+    }
+    const value=await api(command.path,command.body,{bodyText:command.bodyText});
+    const result=await finishPending(command,value);
+    await refresh();notify(commandMessage(command,result));
   }catch(error){
-    if(received)notify('The operation was saved, but its updated view could not be loaded. Refresh saved state to reopen it. '+error.message,true);
-    else if(!error.outcomeUnknown&&error.status===409){
-      pending=null;$('qbo-retry-panel').hidden=true;invalidatePlan();invalidateResponse();invalidateNative();
-      await refresh().catch(()=>{});notify(error.message+' Saved state has changed; the form is retained for a new preview.',true);
-    }else if(error.outcomeUnknown||!error.status||error.status>=500){
-      pending=intent;$('qbo-retry-panel').hidden=false;$('qbo-retry-message').textContent=error.message+' The exact operation ID and submitted values remain in this tab.';
-      notify('The submitted '+intent.description+' needs a response. Continue using the same operation.',true);
-    }else{pending=null;$('qbo-retry-panel').hidden=true;notify(error.message,true);}
-  }finally{busy=false;controls();}
+    if(command&&recovery.cache?.lastOutcome?.commandKey===command.key&&!pending)
+      notify('The original receipt is saved. Its updated view could not be loaded: '+error.message,true);
+    else if(pending)notify('The exact '+pending.description+' request remains saved for this operator. Read its original outcome or retry the unchanged request. '+error.message,true);
+    else notify(error.message||String(error),true);
+  }finally{busy=false;if(!pending&&contextReady())markRecoveryDirty();renderRecovery();controls();}
 }
 function pageLabel(prefix,offset,count,total){$(prefix+'-page').textContent=total?(offset+1)+'–'+(offset+count)+' of '+total:'No records';$(prefix+'-previous').disabled=offset===0;$(prefix+'-next').disabled=offset+count>=total;}
 function renderIssues(element,issues,title='Details requiring review'){
@@ -206,21 +616,29 @@ function renderHistory(){
   $('qbo-plan-list').innerHTML=plans.slice(0,planLimit).map(row=>'<button type="button" data-qbo-plan="'+esc(row.id)+'"'+(selected===row.id?' class="selected" aria-current="true"':'')+'><strong>'+esc(row.name)+'</strong><span>'+esc(row.companyName??row.realmId??'')+' · '+esc(row.environment??'')+'</span><span>'+esc(date(row.createdAt))+' · '+esc(row.nativePost?(nativeLabels[row.nativePost.status]??row.nativePost.status):row.status??'DRAFT')+'</span></button>').join('')||'<p class="hint">No retained plans match this search.</p>';
   $('qbo-plan-more').hidden=plans.length<=planLimit;$('qbo-state-version').textContent='Saved workspace revision '+revision+' · '+(metadata?.plans?.length??0)+' journal plans';
 }
-function saveDraft(){if(sourceChoice)sourceDrafts.set(sourceChoice,{rows:draftRows,selected:draftSelected,valuationBasis:buyerValuationBasis});}
+function saveDraft(){
+  const key=draftSourceKey();if(key)sourceDrafts.set(key,{source:sourceIdentity(),expectedParentId:source.expectedParentId??null,rows:draftRows,selected:draftSelected,valuationBasis:buyerValuationBasis});
+}
 async function loadSource({force=false}={}){
   const id=$('qbo-handoff').value;
-  if(!id){source=null;renderSource();return;}if(sourceChoice===id&&source&&!force)return;
-  if(sourceChoice!==id){saveDraft();const old=sourceDrafts.get(id);draftRows=old?.rows??new Map();draftSelected=old?.selected??new Set();buyerValuationBasis=old?.valuationBasis??'';sourceChoice=id;draftOffset=0;source=null;invalidatePlan();}
+  if(!id){saveDraft();source=null;sourceChoice='';renderSource();return;}
+  if(sourceChoice===id&&source&&!force)return;
+  const priorPin=source?sourceIdentity():recovery.restoredSourcePin,priorParent=source?.expectedParentId??null;
+  saveDraft();sourceChoice=id;
   const token=++sourceToken;$('qbo-source-description').textContent='Loading the original handoff…';controls();
-  const value=await api('/api/qbo/handoffs/'+encode(id));if(token!==sourceToken||id!==sourceChoice)return;
-  if(source&&source.expectedParentId!==value.expectedParentId)invalidatePlan();source=value;
+  const value=await api('/api/qbo/handoffs/'+encode(id));if(token!==sourceToken||id!==sourceChoice||id!==$('qbo-handoff').value)return;
+  const pin=sourceIdentity(value),key=canonical(pin),saved=sourceDrafts.get(key);
+  const changed=priorPin&&!same(priorPin,pin);
+  if(changed){invalidatePlan();draftOffset=0;notify('The selected handoff file changed. Its earlier mappings stay in the downloaded browser record; review this exact source separately.');}
+  if(source&&source.record.id===id&&priorParent!==(value.expectedParentId??null))invalidatePlan();
+  draftRows=saved?.rows??new Map();draftSelected=saved?.selected??new Set();buyerValuationBasis=saved?.valuationBasis??'';source=value;recovery.restoredSourcePin=null;
   for(const row of source.rows??[])if(!draftRows.has(row.rowId))draftRows.set(row.rowId,{amount:'',debitAccount:{value:'',name:''},creditAccount:{value:'',name:''},description:'',decision:'pending',reason:'',valuationNote:''});
   if(buyerSource()){
     syncBuyerSelected();const blocked=buyerCounts().blocked;
-    if(blocked)notify(blocked+' included allocations are now blocked by the current source or company environment. Their decisions and entered values remain; review and explicitly exclude them or select a supported company environment.',true);
+    if(blocked)notify(blocked+' included allocations are now blocked by the current source or company environment. Their decisions and entered values remain; review them explicitly.',true);
   }else{
     const valid=new Set((source.rows??[]).filter(eligible).map(row=>row.rowId)),prior=draftSelected.size;
-    draftSelected=new Set([...draftSelected].filter(id=>valid.has(id)));
+    draftSelected=new Set([...draftSelected].filter(rowId=>valid.has(rowId)));
     if(draftSelected.size<prior)notify('The current bookkeeping state removed '+(prior-draftSelected.size)+' events from this draft selection. Their entered mapping values are retained.');
   }
   if(!$('qbo-name').dataset.dirty)$('qbo-name').value=((source.record?.name??'Merchant settlement')+' · QuickBooks').slice(0,160);
@@ -351,16 +769,35 @@ function renderFiles(){
   const files=detail?.record?.files??[];
   $('qbo-files').innerHTML=files.length?'<dl class="record-values">'+files.map(file=>'<dt>'+esc(file.name)+'</dt><dd>'+esc(file.bytes)+' bytes<br><span class="mono">'+esc(file.sha256)+'</span></dd>').join('')+'</dl>':'<p class="hint">The complete plan and source-linked files are available in Journal review.</p>';
 }
+function savePlanDraft(){
+  if(!detail?.plan?.id)return;
+  const key=canonical([detail.plan.id,detail.plan.integrity.sha256]);
+  planDrafts.set(key,{planId:detail.plan.id,planSha256:detail.plan.integrity.sha256,selectedResponse,
+    responseName:$('qbo-response-name').value,reviewNote:$('qbo-review-note').value,cancelNote:$('qbo-cancel-note').value,
+    loadedFile:loadedFile?{name:loadedFile.name,content:loadedFile.content}:null,responsePreview:clone(responsePreview),nativePreview:clone(nativePreview)});
+}
+function restorePlanDraft(){
+  const saved=planDrafts.get(canonical([detail.plan.id,detail.plan.integrity.sha256]));if(!saved)return;
+  selectedResponse=saved.selectedResponse??'';$('qbo-response-name').value=saved.responseName??'';
+  $('qbo-review-note').value=saved.reviewNote??'';$('qbo-cancel-note').value=saved.cancelNote??'';
+  loadedFile=saved.loadedFile?{...clone(saved.loadedFile),token:fileToken}:null;
+  $('qbo-file-status').textContent=loadedFile?loadedFile.name+' · complete JSON restored for this original journal':'Choose the complete received JSON file.';
+  if(saved.responsePreview?.planId===selected&&saved.responsePreview.request.revision===revision&&receivable())
+    responsePreview=clone(saved.responsePreview);
+  if(saved.nativePreview?.planId===selected){nativePreview=clone(saved.nativePreview);if(!nativePreviewCurrent())invalidateNative();}
+  $('qbo-native-confirm').checked=false;$('qbo-cancel-unused').checked=false;
+}
 async function selectPlan(id,{reset=id!==selected}={}){
+  if(reset)savePlanDraft();
   const token=++detailToken;selected=id;
   if(reset){buyerReviewOffsets.plan=0;invalidateNative();nativeAttemptOffset=0;detail=null;currentAccountant=null;selectedResponse='';responseDetail=null;loadedFile=null;fileLoading=false;++fileToken;invalidateResponse();$('qbo-response-file').value='';$('qbo-response-name').value='';$('qbo-file-status').textContent='Choose the complete received JSON file.';lineOffset=0;lineIndex=-1;comparisonOffset=0;showView('journal');}
   renderHistory();if(!id){detail=null;renderPlan();remember();return;}
   const value=await api('/api/qbo/plans/'+encode(id));if(token!==detailToken||id!==selected)return;
-  detail=value;const accountant=await api('/api/accountant/handoffs/'+encode(value.plan.handoffId));if(token!==detailToken||id!==selected)return;
-  currentAccountant=accountant;renderPlan();renderAccountant();$('qbo-prepare-panel').open=false;remember();
+  detail=value;if(reset&&recovery.cache)restorePlanDraft();const accountant=await api('/api/accountant/handoffs/'+encode(value.plan.handoffId));if(token!==detailToken||id!==selected)return;
+  currentAccountant=accountant;renderPlan();renderAccountant();if(responsePreview)renderResponsePreview();if(nativePreview&&nativePreviewCurrent())renderNativePreview();$('qbo-prepare-panel').open=false;remember();
 }
 async function refresh(){
-  const token=++refreshToken,[value]=await Promise.all([api('/api/qbo'),loadConnection()]);if(token!==refreshToken)return;metadata=value;
+  const token=++refreshToken,value=await api('/api/qbo');if(token!==refreshToken)return;metadata=value;await loadConnection();if(token!==refreshToken)return;
   const wanted=sourceChoice||query.get('handoff')||$('qbo-handoff').value;
   options($('qbo-handoff'),value.handoffs?.length?value.handoffs.map(h=>[h.id,h.name+' · '+h.rowCount+' events']):[['','Prepare an accountant handoff first']],wanted);
   renderHistory();if(selected&&value.plans?.some(p=>p.id===selected))await selectPlan(selected,{reset:false});else if(selected){selected='';detail=null;renderPlan();remember();}
@@ -368,7 +805,7 @@ async function refresh(){
   if(planPreview&&planPreview.request.revision!==revision){invalidatePlan();notify('Saved state changed. Your mappings are retained; preview them against the current state.');}
   if(responsePreview&&(responsePreview.request.revision!==revision||responsePreview.request.expectedParentId!==(detail?.expectedParentId??null)||!receivable())){invalidateResponse();notify('The saved accountant state changed. Review the retained response and current posting state.');}
   if(nativePreview&&!nativePreviewCurrent()){invalidateNative();notify('Saved posting state changed. Review the current company and original journal again.');}
-  renderNative();controls();
+  renderNative();await refreshRecoveryCatalog();controls();
 }
 function renderResponses(){
   const items=responses();
@@ -483,7 +920,7 @@ async function loadCompany(){
 async function resumeResponse(id){
   const record=responses().map(responseRecord).find(item=>item.id===id);
   if(!record||!resumable(record))throw new Error('Choose a retained response with a pending accountant return.');
-  return perform({path:base()+'/responses/'+encode(id)+'/resume',body:{revision,actor:operator()},description:'saved accountant return',message:'The saved response has been reconciled with its original accountant return.',success:async()=>{selectedResponse=id;invalidateResponse();showView('return');}});
+  return perform({kind:'response-resume',responseId:id,path:base()+'/responses/'+encode(id)+'/resume',body:{revision,actor:operator()},description:'saved accountant return',message:'The saved response has been reconciled with its original accountant return.',success:async()=>{selectedResponse=id;invalidateResponse();showView('return');}});
 }
 
 
@@ -632,14 +1069,17 @@ async function previewNative(){
     const value=await api(base()+'/post/preview',request);
     if(token!==nativeToken||planId!==selected||signature!==connectionSignature())return;
     nativePreview={planId,request:{...request,revision:value.revision,previewSha256:value.previewSha256},connection:signature,value};
-    const p=value.preview;
     if(!nativePreviewCurrent()){invalidateNative();throw new Error('The saved journal changed during posting review. Refresh its state and review the current request.');}
+    renderNativePreview();$('qbo-native-preview-panel').scrollIntoView({block:'nearest',behavior:'smooth'});notify('The exact company and native journal request are ready for posting review.');
+  });
+}
+function renderNativePreview(){
+  const p=nativePreview?.value?.preview;if(!p||!detail)return;
     $('qbo-native-preview-panel').hidden=false;$('qbo-native-preview-description').textContent=detail.plan.companyName+' · '+p.environment+' company '+p.realmId+' · '+detail.plan.baseCurrency;
     $('qbo-native-preview-metrics').innerHTML=metrics(summaryMetrics({summary:p.summary}));
     $('qbo-native-preview-details').innerHTML=definitions({companyId:p.realmId,environment:p.environment,documentNumber:p.docNumber,journalDate:detail.plan.txnDate,operator:p.actor,requestId:p.requestId,preparedAt:p.createdAt,accountantVersion:p.expectedParentId??'Original handoff',requestUrl:p.requestUrl,requestSha256:p.requestSha256,planSha256:p.planSha256});
     $('qbo-native-confirm-label').textContent='I reviewed the company, journal date, accounts and amounts for posting to '+p.environment+' company '+p.realmId+'.';
-    $('qbo-native-preview-panel').scrollIntoView({block:'nearest',behavior:'smooth'});controls();notify('The exact company and native journal request are ready for posting review.');
-  });
+  controls();
 }
 function nativeResultMessage(result){
   const value=result.nativePost??result.record?.nativePost;
@@ -655,12 +1095,12 @@ async function nativeSuccess(result){
 async function postNative(){
   if(!nativePreviewCurrent()||!$('qbo-native-confirm').checked)throw new Error('Review and confirm this exact company and journal before posting.');
   const intent=nativePreview;
-  return perform({path:'/api/qbo/plans/'+encode(intent.planId)+'/post',body:intent.request,description:'native QuickBooks posting',message:nativeResultMessage,success:nativeSuccess});
+  return perform({kind:'post',path:'/api/qbo/plans/'+encode(intent.planId)+'/post',body:intent.request,description:'native QuickBooks posting',message:nativeResultMessage,success:nativeSuccess});
 }
 async function resumeNative(){
   const value=detail?.record?.nativePost;
   if(!value||!nativeCanResume())throw new Error(value?.retryAt&&Date.now()<Date.parse(value.retryAt)?'QuickBooks requested a pause until '+date(value.retryAt)+'.':'Refresh the retained operation and its original company configuration before resuming.');
-  return perform({path:base()+'/post/resume',body:{id:value.id,revision,actor:operator()},description:'original native QuickBooks posting',message:nativeResultMessage,success:nativeSuccess});
+  return perform({kind:'post-resume',path:base()+'/post/resume',body:{id:value.id,revision,actor:operator()},description:'original native QuickBooks posting',message:nativeResultMessage,success:nativeSuccess});
 }
 
 $('qbo-date').value=new Date().toISOString().slice(0,10);
@@ -673,7 +1113,7 @@ $('qbo-native-confirm').addEventListener('change',controls);
 $('qbo-native-post').addEventListener('click',()=>attempt(postNative));
 $('qbo-native-resume').addEventListener('click',()=>attempt(resumeNative));
 $('qbo-native-clear-preview').addEventListener('click',invalidateNative);
-$('qbo-native-refresh').addEventListener('click',()=>attempt(async()=>{if(busy)return;busy=true;controls();try{await refresh();}finally{busy=false;controls();}}));
+$('qbo-native-refresh').addEventListener('click',()=>attempt(async()=>{if(busy)return;busy=true;controls();try{await refresh();}finally{busy=false;if(!pending)markRecoveryDirty();controls();}}));
 $('qbo-native-open-response').addEventListener('click',()=>{const id=detail?.record?.nativePost?.responseId;if(id)chooseResponse(id);});
 $('qbo-native-attempt-previous').addEventListener('click',()=>{nativeAttemptOffset=Math.max(0,nativeAttemptOffset-NATIVE_PAGE);renderNativeAttempts();});
 $('qbo-native-attempt-next').addEventListener('click',()=>{nativeAttemptOffset+=NATIVE_PAGE;renderNativeAttempts();});
@@ -689,7 +1129,7 @@ $('qbo-create-form').addEventListener('submit',event=>{
 $('qbo-retain-plan').addEventListener('click',()=>attempt(async()=>{
   if(!planPreview)throw new Error('Preview the current source and mapping before retaining a journal plan.');
   const intent=planPreview;
-  await perform({path:'/api/qbo/plans',body:intent.request,description:'journal plan',message:'The journal plan is retained with its original source and explicit account mapping.',success:async result=>{
+  await perform({kind:'create',path:'/api/qbo/plans',body:intent.request,description:'journal plan',message:'The journal plan is retained with its original source and explicit account mapping.',success:async result=>{
     invalidatePlan();await selectPlan(result.record.id,{reset:true});$('qbo-review-note').value='';$('qbo-cancel-note').value='';$('qbo-cancel-unused').checked=false;
   }});
 }));
@@ -699,7 +1139,7 @@ $('qbo-review-form').addEventListener('submit',event=>{
     if(!detail||approved()||cancelled())return;
     const body={id:crypto.randomUUID(),revision,actor:operator(),note:$('qbo-review-note').value.trim(),planSha256:detail.plan.integrity.sha256};
     if(!body.note)throw new Error('Enter a review note for the retained journal.');
-    await perform({path:base()+'/review',body,description:'journal approval',message:'The reviewed journal is ready for native posting review and exact request download.'});
+    await perform({kind:'review',path:base()+'/review',body,description:'journal approval',message:'The reviewed journal is ready for native posting review and exact request download.'});
   });
 });
 $('qbo-cancel-form').addEventListener('submit',event=>{
@@ -707,11 +1147,11 @@ $('qbo-cancel-form').addEventListener('submit',event=>{
     if(!cancellable())throw new Error('This journal plan cannot be cancelled in its current saved state.');
     const body={id:crypto.randomUUID(),revision,actor:operator(),note:$('qbo-cancel-note').value.trim(),planSha256:detail.plan.integrity.sha256,unusedConfirmed:$('qbo-cancel-unused').checked};
     if(!body.note||!body.unusedConfirmed)throw new Error('Enter a cancellation note and confirm the journal has not been used.');
-    await perform({path:base()+'/cancel',body,description:'unused journal cancellation',message:'The unused journal plan is cancelled. Its source events are available for a new plan.',success:async()=>{invalidateResponse();invalidateNative();$('qbo-cancel-unused').checked=false;}});
+    await perform({kind:'cancel',path:base()+'/cancel',body,description:'unused journal cancellation',message:'The unused journal plan is cancelled. Its source events are available for a new plan.',success:async()=>{invalidateResponse();invalidateNative();$('qbo-cancel-unused').checked=false;}});
   });
 });
 $('qbo-handoff').addEventListener('change',()=>attempt(()=>reading(()=>loadSource())));
-$('qbo-operator').addEventListener('input',()=>{invalidatePlan();invalidateResponse();invalidateNative();});
+$('qbo-operator').addEventListener('input',()=>{renderRecovery();controls();});
 $('qbo-create-form').addEventListener('input',event=>{
   const input=event.target;
   if(input.id==='qbo-draft-search'||input.id==='qbo-buyer-bulk-reason'||input.id.startsWith('qbo-default-')||input.matches('[data-qbo-selected],[data-qbo-decision]'))return;
@@ -798,7 +1238,7 @@ $('qbo-plan-list').addEventListener('click',event=>{
   attempt(()=>reading(()=>selectPlan(button.dataset.qboPlan)));
 });
 $('qbo-refresh').addEventListener('click',()=>attempt(async()=>{
-  if(busy)return;busy=true;controls();try{await refresh();notify(pending?'Saved state refreshed. The submitted operation remains available to read or retry.':'Saved state refreshed. Entered mappings and response files remain in this tab.');}finally{busy=false;controls();}
+  if(busy)return;busy=true;controls();try{await refresh();notify(pending?'Saved state refreshed. The submitted operation remains available to read or retry.':'Saved state refreshed. Mappings and complete response files stay in the operator’s browser record.');}finally{busy=false;if(!pending)markRecoveryDirty();controls();}
 }));
 document.querySelectorAll('[data-qbo-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.qboView)));
 document.querySelectorAll('[data-qbo-open]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.qboOpen)));
@@ -818,12 +1258,12 @@ $('qbo-response-file').addEventListener('change',()=>attempt(async()=>{
     loadedFile={name:file.name,content,token};$('qbo-file-status').textContent=file.name+' · '+file.size.toLocaleString()+' bytes ready for comparison';
     if(!$('qbo-response-name').value.trim())$('qbo-response-name').value=file.name.replace(/\.json$/i,'').slice(0,160);
   }catch(error){if(token===fileToken){$('qbo-file-status').textContent=error.message;throw error;}}
-  finally{if(token===fileToken){fileLoading=false;controls();}}
+  finally{if(token===fileToken){fileLoading=false;markRecoveryDirty();controls();}}
 }));
 $('qbo-response-name').addEventListener('input',invalidateResponse);
 $('qbo-response-form').addEventListener('submit',event=>{event.preventDefault();attempt(previewResponse);});
 function chooseResponse(id){
-  selectedResponse=id;responseDetail=responses().find(item=>responseRecord(item).id===id)??null;comparisonOffset=0;invalidateResponse();renderResponses();showView('response');
+  selectedResponse=id;responseDetail=responses().find(item=>responseRecord(item).id===id)??null;comparisonOffset=0;invalidateResponse();renderResponses();showView('response');markRecoveryDirty();
 }
 $('qbo-response-select').addEventListener('change',()=>chooseResponse($('qbo-response-select').value));
 $('qbo-response-history').addEventListener('click',event=>{
@@ -839,14 +1279,11 @@ $('qbo-clear-preview').addEventListener('click',()=>{invalidateResponse();showVi
 $('qbo-apply').addEventListener('click',()=>attempt(async()=>{
   if(!responsePreview||responsePreview.planId!==selected||!receivable())throw new Error('Preview the received response against this reviewed journal before saving.');
   const intent=responsePreview;
-  await perform({path:base()+'/responses',body:intent.request,description:'QuickBooks response and accountant return',message:intent.value.result.kind==='FAULT'?'The received QuickBooks fault is retained for review.':'The saved QuickBooks journal is linked to the original accountant return.',success:async result=>{
+  await perform({kind:'response',path:base()+'/responses',body:intent.request,description:'QuickBooks response and accountant return',message:intent.value.result.kind==='FAULT'?'The received QuickBooks fault is retained for review.':'The saved QuickBooks journal is linked to the original accountant return.',success:async result=>{
     selectedResponse=result.response?.id??intent.request.id;invalidateResponse();loadedFile=null;++fileToken;fileLoading=false;$('qbo-response-file').value='';$('qbo-response-name').value='';$('qbo-file-status').textContent='Choose the complete received JSON file.';showView(intent.value.result.kind==='FAULT'?'response':'return');
   }});
 }));
 $('qbo-retry').addEventListener('click',()=>{if(pending)attempt(()=>perform(pending,true));});
-$('qbo-dismiss-retry').addEventListener('click',()=>{
-  pending=null;$('qbo-retry-panel').hidden=true;invalidatePlan();invalidateResponse();invalidateNative();notify('The form is retained. Refresh saved state before creating another operation.');controls();
-});
 for(const kind of ['preview','plan']){
   const prefix='qbo-buyer-'+kind,render=()=>renderBuyerReview(kind,kind==='preview'?planPreview?.value?.plan:detail?.plan);
   $(prefix+'-search').addEventListener('input',()=>{buyerReviewOffsets[kind]=0;render();});
@@ -854,5 +1291,29 @@ for(const kind of ['preview','plan']){
   $(prefix+'-previous').addEventListener('click',()=>{buyerReviewOffsets[kind]=Math.max(0,buyerReviewOffsets[kind]-PAGE);render();});
   $(prefix+'-next').addEventListener('click',()=>{buyerReviewOffsets[kind]+=PAGE;render();});
 }
-window.addEventListener('beforeunload',()=>{if(previewUrl)URL.revokeObjectURL(previewUrl);});
-renderCompany();renderConnection();controls();attempt(()=>reading(refresh));
+$('qbo-read-pending').addEventListener('click',()=>attempt(reconcilePending));
+$('qbo-download-pending').addEventListener('click',()=>{if(pending)downloadJSON('quickbooks-original-request.json',pending);});
+$('qbo-recovery-open').addEventListener('click',()=>attempt(()=>openOperator()));
+$('qbo-recovery-reload').addEventListener('click',()=>attempt(()=>{if(recovery.actor)$('qbo-operator').value=recovery.actor;return openOperator({reload:true});}));
+$('qbo-recovery-save').addEventListener('click',()=>attempt(async()=>{markRecoveryDirty();await flushDraft();notify('The complete browser draft is saved for '+recovery.actor+'.');}));
+$('qbo-recovery-download').addEventListener('click',()=>attempt(()=>downloadRecovery()));
+$('qbo-saved-operator').addEventListener('change',()=>{const actor=$('qbo-saved-operator').value;if(actor){$('qbo-operator').value=actor;renderRecovery();controls();}});
+$('qbo-other-record').addEventListener('change',controls);
+$('qbo-other-download').addEventListener('click',()=>attempt(()=>downloadRecovery($('qbo-other-record').value)));
+for(const type of ['input','change'])document.addEventListener(type,event=>{
+  const input=event.target;if(input?.matches('input,textarea,select')&&input.id!=='qbo-operator'&&!input.closest('#qbo-recovery-panel'))markRecoveryDirty();
+});
+document.addEventListener('click',event=>{
+  const anchor=event.target.closest('a[download]');
+  if(anchor){const url=new URL(anchor.href,location.href);if(url.origin===location.origin&&/^\/api\/(qbo|accountant)(?:\/|$)/.test(url.pathname)){event.preventDefault();attempt(()=>downloadBoundLink(anchor));return;}}
+  const button=event.target.closest('button');
+  if(button&&(button.hasAttribute('data-qbo-view')||button.hasAttribute('data-qbo-open')))markRecoveryDirty();
+  if(button&&['qbo-draft-select-page','qbo-draft-clear','qbo-buyer-exclude-pending','qbo-fill-accounts','qbo-company-manual','qbo-clear-plan-preview','qbo-clear-preview','qbo-native-clear-preview','qbo-native-open-response'].includes(button.id))markRecoveryDirty();
+});
+window.addEventListener('beforeunload',event=>{
+  if(previewUrl)URL.revokeObjectURL(previewUrl);
+  if(recovery.dirty){event.preventDefault();event.returnValue='';}
+});
+for(const id of DRAFT_FIELDS)defaultDraftFields.set(id,$(id).value);
+renderCompany();renderConnection();controls();attempt(startRecovery);
+

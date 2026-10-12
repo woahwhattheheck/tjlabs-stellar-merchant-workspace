@@ -2,6 +2,10 @@
 
 This is an extension of the original SF47 planning workspace. It preserves budget.py, the current candidate and all planning revisions. It uses the existing Workspace connection, mutex, process lease and idempotent `_transaction` method, and creates only `ops_*` tables.
 
+## Installation delivery queue
+
+`GET /api/operations/{case}/delivery-queue?asOfDate=YYYY-MM-DD` returns the complete current-head work queue. `GET /api/operations/{case}/delivery-queue/export.zip?asOfDate=YYYY-MM-DD` returns its report and complete native case. Omit the date for the current UTC date. Save optional installation coordination with the existing `installation.save` command; receive the full queue ZIP through the existing case import route. [Installation delivery queue](DELIVERY_QUEUE.md) documents the source fields, dated classifications, typed selections and receiving identity.
+
 ## Public interfaces
 
 `operations.py`: `Operations(workspace)` with `list(plan_id=None)`, `create(body)`, `read(id)`, `command(id,body)`, `history(id,after=0,limit=100)`, `source(id,source_id)`, `report(id)`, `export(id)`, `import_bundle(raw,name,request_id,actor)`.

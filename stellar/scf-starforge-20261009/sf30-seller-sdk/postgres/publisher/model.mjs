@@ -1,5 +1,6 @@
 // MIT. Durable extraction and review; publication delegates to original versions.
 import { DatabaseSync } from 'node:sqlite';
+import { publisherActionReceipts } from './requests.mjs';
 import { mkdir, lstat, chmod, open, rename } from 'node:fs/promises';
 import { randomUUID, createHash } from 'node:crypto';
 import { join, relative, resolve } from 'node:path';
@@ -72,8 +73,6 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, plan INTEGER NOT NULL REFERENCES plans(id), state TEXT NOT NULL,
         created TEXT NOT NULL, updated TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, run TEXT, created TEXT NOT NULL, kind TEXT NOT NULL, data TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS review_requests(request_id TEXT PRIMARY KEY, run TEXT NOT NULL REFERENCES runs(id),
-        input_sha256 TEXT NOT NULL, result TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS source_selections(sequence INTEGER PRIMARY KEY, request TEXT NOT NULL UNIQUE,
         created TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS source_plan_requests(request TEXT PRIMARY KEY, input_hash TEXT NOT NULL,
@@ -101,6 +100,10 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     absolute(settings.sourceFile, 'source file'); absolute(settings.targetDirectory, 'target state directory');
     sourceFile = settings.sourceFile; targetDirectory = settings.targetDirectory;
     await privateDirectory(join(directory, 'plans')); await privateDirectory(join(directory, 'runs'));
+    const actionReceipts = publisherActionReceipts({ db, directory });
+    // Earlier OpenAQ editions retained completed review results in this original database.
+    // New actions use the current publisher receipt owner; historical rows remain unchanged.
+    const legacyReviewReceipts = Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='review_requests'").get());
     let active = null, closing = null, closed = false;
     const event = (kind, run, data = {}) => db.prepare('INSERT INTO events(run,created,kind,data) VALUES(?,?,?,?)')
       .run(run ?? null, stamp(), kind, JSON.stringify(data));
@@ -121,11 +124,12 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       if (!row) throw fault('RUN_NOT_FOUND', 'Choose a retained extraction.', 404);
       return row;
     }
-    function change(id, state, patch, kind, retain = null) {
+    function change(id, state, patch, kind, request = null) {
       return transaction(() => {
         const current = run(id), data = { ...current.data, ...patch };
         db.prepare('UPDATE runs SET state=?,updated=?,data=? WHERE id=?').run(state, stamp(), JSON.stringify(data), id);
-        event(kind, id, { state, ...patch }); const result = run(id); if (retain) retain(result); return result;
+        event(kind, id, { state, ...patch });
+        return actionReceipts.remember(request, run(id));
       });
     }
     function available() {
@@ -349,23 +353,29 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     }
     async function review(id, input) {
       return mutate('review', id, async () => {
-      const reviewer = note(input.reviewer, 'the reviewer name', 128), text = note(input.note, 'the review note');
-      const requestId = input.requestId ?? null;
-      if (requestId !== null && (typeof requestId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(requestId)))
-        throw fault('REVIEW_REQUEST_ID_INVALID', 'Use a UUID for the original review request.');
-      const inputHash = requestId === null ? null : identity({ runId: id, reviewer, note: text,
-        initialize: input.initialize === true,
-        ...(input.initialize === true ? {} : { expectedSnapshot: input.expectedSnapshot, expectedRevision: input.expectedRevision }) });
-      if (requestId !== null) {
-        const retained = db.prepare('SELECT run,input_sha256,result FROM review_requests WHERE request_id=?').get(requestId);
+      const bound = actionReceipts.bind('publisher.review', id, input);
+      const previous = actionReceipts.existing(bound.request);
+      if (previous) return previous;
+      if (bound.request && legacyReviewReceipts) {
+        const retained = db.prepare('SELECT run,input_sha256,result FROM review_requests WHERE request_id=?').get(bound.request.requestId);
         if (retained) {
+          const original = bound.input;
+          const reviewer = note(original.reviewer, 'the reviewer name', 128), text = note(original.note, 'the review note');
+          const inputHash = identity({ runId: id, reviewer, note: text, initialize: original.initialize === true,
+            ...(original.initialize === true ? {} : { expectedSnapshot: original.expectedSnapshot, expectedRevision: original.expectedRevision }) });
           if (retained.run !== id || retained.input_sha256 !== inputHash)
-            throw fault('REVIEW_REQUEST_CHANGED', 'This review request ID already belongs to its original run and reviewed input.', 409);
-          // The original completed review remains readable after later reviews or publication.
-          return JSON.parse(retained.result);
+            throw fault('REVIEW_REQUEST_CHANGED', 'This review request ID belongs to its original run and reviewed input.', 409);
+          const result = JSON.parse(retained.result);
+          if (result.id !== id || result.data?.review?.id !== bound.request.requestId)
+            throw fault('PUBLISHER_ACTION_RECEIPT_INVALID');
+          // Adopt the exact completed historical result before observing a later target.
+          // Its original review, run, timestamps and legacy row are not rewritten.
+          return transaction(() => actionReceipts.remember(bound.request, result));
         }
       }
+      input = bound.input;
       const current = await candidate(id), observed = await target();
+      const reviewer = note(input.reviewer, 'the reviewer name', 128), text = note(input.note, 'the review note');
       let binding;
       if (input.initialize === true) {
         if (!observed.initializable) throw fault('TARGET_ALREADY_EXISTS', 'Review the running target before publishing.', 409);
@@ -380,13 +390,9 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
         binding = { mode: 'refresh', directory: targetDirectory,
           expectedSnapshot: observed.versions.current, expectedRevision: observed.versions.revision };
       }
-      const record = { id: requestId ?? randomUUID(), reviewer, note: text, recordedAt: stamp(),
-        candidateDigest: current.manifest.candidateDigest, target: binding,
-        ...(requestId === null ? {} : { requestId }) };
-      return change(id, 'REVIEWED', { review: record, error: null }, 'CANDIDATE_REVIEWED',
-        requestId === null ? null : result => db.prepare(
-          'INSERT INTO review_requests(request_id,run,input_sha256,result) VALUES(?,?,?,?)')
-          .run(requestId, id, inputHash, JSON.stringify(result)));
+      const record = { id: randomUUID(), reviewer, note: text, recordedAt: stamp(),
+        candidateDigest: current.manifest.candidateDigest, target: binding };
+      return change(id, 'REVIEWED', { review: record, error: null }, 'CANDIDATE_REVIEWED', bound.request);
       });
     }
     async function publish(id, reviewId) {
@@ -454,14 +460,28 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
     }
     async function prepareBuyer(id, input) {
       return mutate('buyer handoff', id, async () => {
-      const offer = await buyerOffer(id, input.query ?? '');
-      const prepared = prepareDatasetBuyer(offer, input);
-      const path = join(directory, 'runs', id, 'buyer-' + randomUUID() + '.json');
-      await createFile(path, Buffer.from(prepared.configText)); await syncDirectory(join(directory, 'runs', id));
-      event('BUYER_HANDOFF_PREPARED', id, { snapshot: prepared.snapshot, configSha256: prepared.configSha256,
-        offerSha256: prepared.offerSha256, intentId: input.intentId, path,
-        relativePath: relative(directory, path).split('\\').join('/') });
-      return { ...prepared, path };
+      const bound = actionReceipts.bind('publisher.prepare-buyer', id, input);
+      const previous = actionReceipts.existing(bound.request);
+      if (previous) return actionReceipts.validateBuyer(bound.request, previous);
+      input = bound.input;
+      let prepared = await actionReceipts.preparedBuyer(bound.request);
+      if (!prepared) {
+        const offer = await buyerOffer(id, input.query ?? '');
+        const value = prepareDatasetBuyer(offer, input);
+        if (bound.request) prepared = await actionReceipts.retainBuyer(bound.request, value);
+        else {
+          const path = join(directory, 'runs', id, 'buyer-' + randomUUID() + '.json');
+          await createFile(path, Buffer.from(value.configText)); await syncDirectory(join(directory, 'runs', id));
+          prepared = { ...value, path };
+        }
+      }
+      return transaction(() => {
+        event('BUYER_HANDOFF_PREPARED', id, { snapshot: prepared.snapshot, configSha256: prepared.configSha256,
+          offerSha256: prepared.offerSha256, intentId: input.intentId, path: prepared.path,
+          relativePath: relative(directory, prepared.path).split('\\').join('/'),
+          ...(bound.request ? { requestId: bound.request.requestId } : {}) });
+        return actionReceipts.remember(bound.request, prepared);
+      });
       });
     }
     async function close() {

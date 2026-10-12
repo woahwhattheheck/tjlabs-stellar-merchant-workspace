@@ -359,6 +359,27 @@ and request input. Later commissioning receiving adopts the updated product
 source against that completed retained project with explicit lineage. It does
 not rewrite the original run or repeat its native database operations.
 
+## Retain the operator's full working context
+
+The Commissioning desk now keeps complete forms and original selected files
+under their workspace, project and criterion identities. Switching projects,
+native editions or operation choices preserves the previous authored form and
+clears an unrelated loaded result. Reopen the complete retained form to recover
+its exact source identity and full file bytes.
+
+Use its **Retained original requests** panel to inspect or download the complete
+original command after completion, failure or a lost response. A closed local
+request keeps its original file and UUID in history. The completion of an older
+command cannot discard a newer draft or replace another selected project.
+When the saved source or review context advances, explicitly reconcile the
+retained form with the current project before submitting it.
+
+The commissioning browser's requests and downloads bind the original workspace
+UUID even when a listener URL is reused. These controls join the existing native
+journal, installed receiver and Applications lifecycle described above. The
+original native operation and its subsequent installed receiving keep their
+existing source and request identities.
+
 ## Source and operating references
 
 - [Native source, refresh, job, publication and portable project](../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/timescale/README.md)
@@ -379,3 +400,7 @@ worked example.
 The existing `timescale-remediation-receiving` command now accepts `--commissioning-source-commit` and `--commissioning-directory`. Run it with the original native result, merchant configuration, workspace and remediation receiving directory; supplied private inputs use both `--commissioning-intake-file` and `--commissioning-adoption-file`. The source argument is the final merged 40-character commissioning commit. A completed original receiving is reopened and its earlier phases are reused. The continuation keeps the same owner and source, retains the complete technical intake and native tables, maps every criterion, reopens the handover, resumes its frozen report after the original owner restarts, and receives the complete portable project.
 
 The complete invocation, supplied-input mapping, recovery behavior and file layout are documented in `stellar-forge/mcp-merchant-operator/TIMESCALE_COMMISSIONING_RECEIVING.md`. The original pinned native operation completes before this explicit source adoption. Company inputs and commercial decisions stay with the original private case.
+
+## Continue commissioning into customer reconciliation
+
+Use the [complete Timescale customer product](../timescale-customer/OPERATING.md) to retain the original complete commissioning report in the existing DuckDB customer. Review all native field types and meanings, import baseline and observed editions with duplicate observations preserved, and continue through complete paired accounting, engineer decisions, saved reports and portable warehouse receiving. The new intake uses the original report format and its exact source bytes; the native Timescale project keeps its original ownership and history.

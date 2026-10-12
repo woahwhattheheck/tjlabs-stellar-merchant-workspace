@@ -71,7 +71,9 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/browser.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/request.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/style.css",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/client-runtime.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer/client-runtime.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/FCDO-set-20.xml.gz",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema/IATI-LICENSE.rst"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",

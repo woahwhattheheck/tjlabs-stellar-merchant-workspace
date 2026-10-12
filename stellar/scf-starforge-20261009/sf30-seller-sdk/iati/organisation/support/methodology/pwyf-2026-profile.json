@@ -1,0 +1,268 @@
+{
+  "schema": "commons.iati_organisation_methodology_profile/v1",
+  "observed_at": "2026-10-12T16:33:26Z",
+  "authority": "Source-backed operator assessment profile; no PWYF accreditation or official Index score.",
+  "original_operation": "IATI-ORGANISATION-BUDGET-OPERATOR-20261012",
+  "id": "pwyf-ati-2026-organisation",
+  "title": "PWYF 2026 organisation planning and budgets",
+  "sources": [
+    {
+      "id": "technical-paper-2026-06-03",
+      "publisher": "Publish What You Fund",
+      "url": "https://www.publishwhatyoufund.org/download/2026-aid-transparency-index-technical-paper/",
+      "asset_url": "https://www.publishwhatyoufund.org/app/uploads/dlm_uploads/2026/06/2026-Aid-Transparency-Index-Technical-Paper_03_06_26.pdf",
+      "version_date": "2026-06-03",
+      "version_date_basis": "Actual PDF cover: Updated 3rd June 2026; matching published asset filename",
+      "pages": 65,
+      "observed_representation": "Full original HTTP PDF bytes, independently re-read/hash checked; all 65 pages extracted with pdftotext -layout and no empty pages",
+      "http": {
+        "observed_at": "2026-10-12T16:28:34.274301+00:00",
+        "status": 200,
+        "last_modified": "Thu, 04 Jun 2026 15:51:52 GMT",
+        "bytes": 847232,
+        "sha256": "0801ce830e5c23e8d08f651611c7f800b56d6cf9350de6285b9974111ee041da"
+      },
+      "extracted_text": {
+        "bytes": 171038,
+        "sha256": "49620d9530d736a83a24ad4bef50f8dece76c57dea58b4718a45959aae490785",
+        "page_count": 65,
+        "parser": "pdftotext -layout"
+      },
+      "copyright": "Retain publisher attribution. The separate PWYF PDF is research evidence, not licensed by the IATI Standard notices."
+    },
+    {
+      "id": "technical-paper-2026-02-16",
+      "publisher": "Publish What You Fund",
+      "url": "https://www.publishwhatyoufund.org/download/2026-aid-transparency-index-technical-paper/",
+      "asset_url": "https://www.publishwhatyoufund.org/app/uploads/dlm_uploads/2026/02/2026-Aid-Transparency-Index-Technical-Paper_16_02_26.pdf",
+      "version_date": "2026-02-16",
+      "version_date_basis": "Published asset filename",
+      "pages": 65,
+      "observed_representation": "Complete web PDF text; original HTTP bytes are a separate acquisition",
+      "copyright": "Retain publisher attribution; do not infer the IATI Standard licence applies to PWYF material.",
+      "state": "Historical previously observed version; superseded as the selected current profile by the actual June download."
+    },
+    {
+      "id": "indicator-issues-2026",
+      "publisher": "Publish What You Fund",
+      "url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues",
+      "observed_representation": "Complete original native GitHub issue collection",
+      "definition_dates": {
+        "created": "2025-12-01",
+        "closed": "2026-01-21"
+      },
+      "note": "Earlier dated definitions are corroboration, not an executable implementation or a substitute for later paper."
+    }
+  ],
+  "assessment_inputs": {
+    "assessment_date": null,
+    "operating_countries": [],
+    "operating_countries_source": null,
+    "exclusions": [],
+    "document_decisions": [],
+    "rule_interpretation": null
+  },
+  "budget_rules": {
+    "families": [
+      "total-budget",
+      "recipient-org-budget",
+      "recipient-country-budget",
+      "recipient-region-budget",
+      "total-expenditure"
+    ],
+    "accounting": "Keep each family, period and currency separate. No automatic addition across families or inference that line items are exhaustive.",
+    "forward_years": 3,
+    "annual_values_required": true,
+    "aggregate_multiyear_split": "Do not generate annual amounts from one multi-year figure.",
+    "timing": {
+      "source_id": "technical-paper-2026-06-03",
+      "pdf_page_index": 62,
+      "human_pdf_page": 63,
+      "first_year_minimum_end_days_after_last_test": 230,
+      "second_year_days_later": 365,
+      "third_year_days_later": 365,
+      "interpretation_state": "Operator decision required for interval/anchor semantics; the source does not publish an unambiguous complete algorithm.",
+      "assessment_date_is_today": false
+    },
+    "examples": [
+      {
+        "source_id": "technical-paper-2026-06-03",
+        "pdf_page_index": 62,
+        "assessment_date": "2014-06-01",
+        "periods": [
+          {
+            "start": "2014-01-01",
+            "end": "2014-12-31",
+            "currency": "USD",
+            "value": "250000000",
+            "value_date": "2014-01-01"
+          },
+          {
+            "start": "2015-01-01",
+            "end": "2015-12-31",
+            "currency": "USD",
+            "value": "300000000",
+            "value_date": "2014-01-01"
+          },
+          {
+            "start": "2016-01-01",
+            "end": "2016-12-31",
+            "currency": "USD",
+            "value": "350000000",
+            "value_date": "2014-01-01"
+          }
+        ],
+        "derived_observations": {
+          "first_end_days_after_assessment": 213,
+          "successive_end_day_gaps": [
+            365,
+            366
+          ]
+        },
+        "source_asserts_full_points": true,
+        "operator_note": "Retain this original example separately from the 230/365-day prose. Do not silently correct either source or certify a score.",
+        "human_pdf_page": 63
+      }
+    ],
+    "coverage": {
+      "source_id": "technical-paper-2026-06-03",
+      "pdf_page_index": 62,
+      "human_pdf_page": 63,
+      "denominator": "Explicit official-source operating-country baseline",
+      "earlier_issue_13": "Current-activity recipient countries",
+      "state": "Use the selected dated methodology; retain any divergence and actual baseline evidence.",
+      "no_baseline_result": "Not assessed"
+    },
+    "manual_survey": {
+      "source_id": "technical-paper-2026-06-03",
+      "human_pdf_page": 35,
+      "period_basis": "Organisation fiscal year for manual-survey forward-budget start and end dates",
+      "indicative_amounts_accepted": true,
+      "alternative_disaggregation": "The indicator definition accepts thematic/sectoral projected budgets where applicable; the automated country-budget evidence is retained separately."
+    },
+    "published_calendar_example": {
+      "source_id": "technical-paper-2026-06-03",
+      "human_pdf_pages": [
+        12,
+        13
+      ],
+      "years": [
+        2026,
+        2027,
+        2028
+      ],
+      "note": "Source calendar example is dated 2026. It does not replace the explicit saved assessment date or silently resolve the annex's timing algorithm."
+    }
+  },
+  "documents": [
+    {
+      "code": "B02",
+      "name": "Organisation strategy",
+      "direction": "Forward-looking development approach",
+      "issue": 6,
+      "source_url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues/6",
+      "manual_content_review": true,
+      "code_presence_is_approval": false,
+      "selected_definition_source_id": "technical-paper-2026-06-03",
+      "human_pdf_page": 30
+    },
+    {
+      "code": "B01",
+      "name": "Annual report",
+      "direction": "Backward-looking expenditure context",
+      "issue": 7,
+      "source_url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues/7",
+      "manual_content_review": true,
+      "code_presence_is_approval": false,
+      "selected_definition_source_id": "technical-paper-2026-06-03",
+      "human_pdf_page": 31
+    },
+    {
+      "code": "B04",
+      "name": "Allocation policy",
+      "direction": "Country/theme allocation criteria",
+      "issue": 8,
+      "source_url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues/8",
+      "manual_content_review": true,
+      "code_presence_is_approval": false,
+      "selected_definition_source_id": "technical-paper-2026-06-03",
+      "human_pdf_page": 31
+    },
+    {
+      "code": "B05",
+      "name": "Procurement policy",
+      "direction": "Tendering and contracting procedure",
+      "issue": 10,
+      "source_url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues/10",
+      "manual_content_review": true,
+      "code_presence_is_approval": false,
+      "selected_definition_source_id": "technical-paper-2026-06-03",
+      "human_pdf_page": 32
+    },
+    {
+      "code": "B06",
+      "name": "Audit",
+      "direction": "Official accounts/activity inspection",
+      "issue": 9,
+      "source_url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues/9",
+      "manual_content_review": true,
+      "code_presence_is_approval": false,
+      "selected_definition_source_id": "technical-paper-2026-06-03",
+      "human_pdf_page": 34
+    }
+  ],
+  "country_documents": {
+    "codes": [
+      "B03",
+      "B13"
+    ],
+    "activity_fallback_code": "A09",
+    "source_url": "https://github.com/pwyf/2026-Index-indicator-definitions/issues/11",
+    "operating_baseline_required": true,
+    "exclusions_require_source_and_reason": true,
+    "source_rule_page": {
+      "pdf_page_index": 61,
+      "human_pdf_page": 62
+    },
+    "accepted_documents_require_manual_content_and_currentness_review": true,
+    "source_id": "technical-paper-2026-06-03",
+    "definition_pages": [
+      32,
+      33,
+      34
+    ],
+    "baseline_scope": "Countries where the organisation worked and directly implemented projects within the last year, checked against an official annual report or organisation data portal; explicit allowed exclusions need evidence."
+  },
+  "provenance_notes": [
+    "Schema/codelist validation, document availability, content suitability, freshness and coverage are separate observations.",
+    "A saved operator decision is attributable to its actor and assessment date; it is not a change to PWYF's source.",
+    "Preserve budget status, original value text, currency and value-date. Do not convert currencies for an unsupported headline total.",
+    "Document fetch success or a valid URL is not a finding that its full content satisfies an indicator."
+  ],
+  "selected_source_id": "technical-paper-2026-06-03",
+  "previous_profile": {
+    "carrier": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C8LN9DTHQ",
+    "path": "pwyf-2026-profile.json",
+    "git_blob": "e002a309174adbca9640dfc37a22261748a4b4bd",
+    "sha256": "08544d6a536ae5ca792408d7d086dc286a5a1f25f30982706edd883528fb2978",
+    "state": "Historical February evidence; preserved unchanged in its original carrier"
+  },
+  "current_source_review": {
+    "all_pages_read": true,
+    "organisation_rules_reviewed_human_pages": [
+      8,
+      12,
+      13,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      62,
+      63
+    ],
+    "material_rule_change_observed_from_prior_profile": false,
+    "retained_discrepancy": "June paper still contains 230/365-day prose alongside the same original 213-day example and 366-day leap-year end gap."
+  }
+}

@@ -4,6 +4,10 @@ The command-line operator opens the same private planning workspace as the brows
 
 Use this interface to prepare a grant delivery plan on a Linux worker, revise the staffing and payment assumptions in a saved plan, retain the complete history for another operator, and reopen the result in the browser. The maintained Starforge distribution includes the original scenario, calculator, browser workspace and this operator under their repository paths.
 
+## Installation delivery queue
+
+Use `operations delivery-queue --case ID --as-of YYYY-MM-DD [--output FILE]` for the complete dated JSON view, and `operations delivery-queue-export --case ID --as-of YYYY-MM-DD --output FILE` for the full handover ZIP. Add `--workspace PATH` to the operations group. [Installation delivery queue](DELIVERY_QUEUE.md) provides complete commands, assignment editing and import/reopen instructions.
+
 ## Start from the installed release or original source
 
 Python 3.10 or newer on Linux is required. The model uses the Python standard library, including SQLite and `fcntl`; the installed command uses the existing Node launcher to start Python. Select another Python executable with `SF47_PYTHON=/absolute/path/to/python3`. No shell command is evaluated by the launcher.
@@ -173,6 +177,10 @@ The launcher supports `--help` without initializing a workspace. All commands al
 The current source is the original [SF47 budget model](https://github.com/woahwhattheheck/public-commons-sprint-2026/tree/main/stellar/scf_2026/sf47_budget_model). Its current candidate retains the original remaining-work and deployment acceptance inputs. Local contributors, hours, rates, capital and payment dates are saved operator assumptions, and grant inflows use the selected scenario's conditional timing. The command-line operator preserves those distinctions in the same computed report and complete handover.
 
 The earlier source integration [PR1167](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/1167) bound the deployment acceptance plan to the current scenario. Follow the current saved source digest and the workspace owner's current source release when comparing a received plan. The CLI calls the original model for every calculation and keeps the original imported scenario alongside subsequent edits.
+
+## Original-currency forecast inputs
+
+The existing forecast preview/save commands accept complete original-currency inputs through `--inputs`. See [Original currencies in operating forecasts](CURRENCY.md) and the [complete input example](examples/native-currency-forecast.json) for native prices and costs, retained rates, original payment credits, event timing and the conditional currency exports. Keep the whole normalized input from preview when saving or passing a selected Portfolio alternative back to Forecast.
 
 ## Operating forecasts
 

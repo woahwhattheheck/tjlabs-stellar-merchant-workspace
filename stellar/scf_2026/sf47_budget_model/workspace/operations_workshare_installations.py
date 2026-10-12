@@ -13,6 +13,7 @@ import json
 
 from model import Problem, canonical, digest
 import operations_domain as domain
+import operations_dispatch as dispatch
 from workshare_intake import load_workshares
 
 SCHEMA = "stellar-forge.sf47-workshare-installation.v1"
@@ -318,6 +319,7 @@ def seed(operations, context, body):
         document["source"]["authority"] = str(plan.get("rights", ""))
     if not document["source"]["changePolicy"] or (old_original and document["source"]["changePolicy"] == old_original["workshare"]["plan"].get("change_process", "")):
         document["source"]["changePolicy"] = str(plan.get("change_process", ""))
+    dispatch.reconcile_checks(document)
     document = installations.normalized(context, document)
     verify_document(operations, context, document)
     return {"schema": SCHEMA, "source": installations._source(context), "installationId": ident,

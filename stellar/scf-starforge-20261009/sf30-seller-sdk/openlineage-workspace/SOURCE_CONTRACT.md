@@ -53,9 +53,14 @@ Projection follows eventTime, including sub-millisecond fractional ordering,
 then original intake sequence for ties. The workspace retains original
 timestamps; it does not replace them with local receiving time.
 
-Each source has an SHA-256 over its exact original UTF-8 bytes. Array sources
-retain zero-based member indexes; NDJSON sources retain one-based physical
-line numbers. Blank NDJSON lines do not alter the remaining physical positions.
+Each source has a SHA-256 over its exact original wire bytes. Uncompressed
+sources retain their original UTF-8 document. Gzip sources retain the compressed
+request or file, contentEncoding, decodedBytes and decodedSha256. Their decoded
+JSON/NDJSON goes through the same versioned parser. Array sources retain
+zero-based member indexes; NDJSON sources retain one-based physical line
+numbers. Blank NDJSON lines do not alter the remaining physical positions.
+Original source downloads return the wire bytes. source.read with decode:true
+also returns verified decoded bytes for a gzip original.
 
 ## Run lifecycle and metadata supplements
 
@@ -135,10 +140,17 @@ original bytes. Each edition's event membership must match its original selected
 sources. Reviews and results must reference entities that exist in their selected
 edition.
 
-The export includes the entire portable application. Receiving verifies its
-declared files and installs them into application/; it preserves the original
-workspace history and records a new local installation identity. The application
-is started explicitly using its included CLI.
+The export includes the entire portable application. Current packages declare
+applicationVersion 2 and contain all 40 portable files, including the producer
+queue, encoding adapter, typed producer configuration and complete operating
+guides. Receiving still accepts the original 35-file application package without
+applicationVersion. A gzip source requires the current application.
+
+Receiving checks a compressed source's unchanged object hash, decoded length
+and decoded hash before reconstructing its original event positions. It verifies
+the complete declared application and installs it into application/; it preserves
+workspace history and records a new local installation identity. Start the
+application explicitly with its included CLI.
 
 Hashes establish complete-byte identity and internal consistency. Source
 origin is recorded through the supplied producer/source metadata and original
@@ -178,6 +190,23 @@ the complete editable workspace package and its received copy. An interrupted
 operation retains the state and its original error for direct continuation and
 correction.
 
+PRODUCER_RECEIVING.mjs continues this product's producer workflow with the same
+original examples. It exercises actual simultaneous HTTP arrivals, gzip wire
+retention and decoded identities, separate credentials, exact replay, writer
+backpressure, restart and complete independent receiving. Run it in its own
+owned directory; repeat that same directory to continue an interrupted stage.
+[PRODUCERS.md](PRODUCERS.md) describes the full operation and retained outputs.
+
 The OpenLineage originals are Apache-2.0 licensed. OPENLINEAGE_LICENSE contains
 the unchanged upstream license. The application and its own operating programme
 are MIT licensed under LICENSE.
+
+## Saved schema operations
+
+The schema-domain.mjs module compares original projected facets.schema records between two immutable named editions. Every field retains its producer path, original position and metadata; repeated identities and malformed records remain inspectable. A comparison records the original schema event and source location selected within each edition, plus existing explicit and column lineage edges. Original type strings and facet schema URLs remain source facts.
+
+The schema-workflow.mjs module records selected changes, reviewer, decision, reason, assignment, resolution and original evidence through LineageWorkspace.change. Existing operation IDs replay before revision admission. Review updates preserve the original selection and ordered previous versions. Event evidence can retain its original source-location subset when later imports supply another identical event.
+
+The schema-ui.js module participates in the original IndexedDB request journal. A review form binds to its opening revision. A background refresh cannot silently change that write base. The complete pending request remains available through original recovery and explicit reviewed-revision application.
+
+Portable application edition3 adds schema source and complete schema comparisons/reviews. Receiving reconstructs all original events first and then recomputes each retained comparison and validates each staff version and evidence selection. Original application editions1 and2 retain their exact earlier inventories.

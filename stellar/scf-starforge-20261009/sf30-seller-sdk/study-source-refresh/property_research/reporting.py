@@ -129,9 +129,9 @@ def report(service, selection):
             [r["name"], r["kind"], ", ".join(r["changed_paths"]), selection["review_snapshot"]["decisions"][r["key"]]["action"],
              selection["review_snapshot"]["decisions"][r["key"]]["operator"], selection["review_snapshot"]["decisions"][r["key"]]["note"]]
             for r in selection["review_snapshot"]["rows"]]),
-        ("Retained source documents", ["Document", "Publisher", "Publication date", "Observation label", "Original URL", "SHA-256"], [
+        ("Retained source documents", ["Document", "Publisher", "Publication date", "Observation label", "Original URL or source reference", "SHA-256"], [
             [d["label"], d["metadata"].get("publisher"), d["metadata"].get("published_date"), d["metadata"].get("observation_label"),
-             d["metadata"]["url"], d["files"][0]["sha256"]] for d in documents.values()]),
+             d["metadata"].get("url") or d["metadata"].get("source_reference"), d["files"][0]["sha256"]] for d in documents.values()]),
     ]
     intro = [
         ("Study", study["name"]), ("Purpose", selection["purpose"]), ("Subject", study.get("subject", {}).get("name")),

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -10,6 +12,8 @@ from urllib.parse import urlsplit, parse_qs
 from iati_workspace import IatiWorkspace, InputError, MAX_SOURCE, MAX_PACKET, load_json
 import dqa_http
 import publishing_http
+import organisation_http
+import refresh_http
 
 HERE = Path(__file__).resolve().parent
 SHARED = HERE.parent / "xml"
@@ -34,9 +38,50 @@ def revision(value):
 class Handler(_original.Handler):
     server_version = "SF30-IATI"
 
+    def end_headers(self):
+        original_digest = getattr(self, "_iati_download_sha256", None)
+        if original_digest is not None:
+            self.send_header("X-Content-SHA256", original_digest)
+        super().end_headers()
+
+    def _download_original(self, descriptor):
+        """Stream the exact selected descriptor through the original HTTP carrier."""
+        path = Path(descriptor["path"])
+        size, expected = descriptor["bytes"], descriptor["sha256"]
+        name, media = descriptor["name"], descriptor["media"]
+        if (type(size) is not int or not 0 <= size <= MAX_PACKET
+                or not isinstance(expected, str) or len(expected) != 64
+                or any(c not in "0123456789abcdef" for c in expected)
+                or not isinstance(name, str) or not name or Path(name).name != name
+                or any(c in name for c in '\r\n"\\')
+                or not isinstance(media, str) or any(c in media for c in "\r\n")):
+            raise InputError("The selected complete organisation file descriptor is invalid")
+        with path.open("rb") as stream:
+            before = os.fstat(stream.fileno())
+            checksum = hashlib.sha256()
+            total = 0
+            for block in iter(lambda: stream.read(65536), b""):
+                total += len(block)
+                if total > size:
+                    raise InputError("The selected organisation download changed")
+                checksum.update(block)
+            after = os.fstat(stream.fileno())
+            if (total != size or checksum.hexdigest() != expected
+                    or (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
+                    != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)):
+                raise InputError("The selected complete organisation download differs")
+            stream.seek(0)
+            self._iati_download_sha256 = expected
+            try:
+                self._headers(200, media, size, name)
+                shutil.copyfileobj(stream, self.wfile, 65536)
+            finally:
+                self._iati_download_sha256 = None
+
+
     def _get(self):
         target = urlsplit(self.path)
-        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css"}:
+        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/organisation.js", "/organisation.css", "/refresh.js", "/refresh.css"}:
             self._gate(api=False)
             name = target.path[1:]
             media = "text/javascript; charset=utf-8" if name.endswith(".js") else "text/css; charset=utf-8"
@@ -52,6 +97,10 @@ class Handler(_original.Handler):
             raise InputError("Repeated IATI query parameters are not accepted")
         q = {key: items[0] for key, items in values.items()}
         ws = self.server.workspace
+        if refresh_http.get(self, target.path, q):
+            return
+        if organisation_http.get(self, target.path, q):
+            return
         if publishing_http.get(self, target.path, q):
             return
         if dqa_http.get(self, target.path, q):
@@ -107,6 +156,10 @@ class Handler(_original.Handler):
         if target.query:
             raise InputError("IATI actions take a body, not query parameters")
         ws = self.server.workspace
+        if refresh_http.post(self, target.path):
+            return
+        if organisation_http.post(self, target.path):
+            return
         if publishing_http.post(self, target.path):
             return
         if dqa_http.post(self, target.path):

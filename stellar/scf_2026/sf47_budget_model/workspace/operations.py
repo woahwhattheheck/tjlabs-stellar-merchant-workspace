@@ -20,6 +20,7 @@ import operations_buyer as buyer
 import operations_completion as completion
 import operations_cohort as cohort
 import operations_installations as installations
+import operations_dispatch as dispatch
 import operations_implementation as implementation
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
@@ -122,7 +123,7 @@ class Operations:
             "SELECT metadata_json FROM ops_sources WHERE program_id=? ORDER BY id", (program_id,)))}
         result = {"program": program, "plan": plan, "records": records, "sources": sources,
                   "completionPlans": completion.load_plans(self, program_id)}
-        refs = installations.latest_refs(installations.load(self, program_id))
+        refs = installations.latest_refs(installations.load_heads(self, program_id))
         if refs:
             result["installationRefs"] = refs
         return result
@@ -145,7 +146,7 @@ class Operations:
                   "report": domain.report(**context)}
         result["completion"] = completion.dashboard(context)
         cohort_history = self._cohort_history(program_id)
-        result["installations"] = installations.latest_summaries(installations.load(self, program_id))
+        result["installations"] = installations.latest_summaries(installations.load_heads(self, program_id))
         result["reviews"] = [{**{key: row[key] for key in ("id", "version", "createdAt", "actor", "note", "businessSha256")},
                               "purpose": row.get("purpose"),
                               **({"completionTranche": row["completion"]["clock"]["tranche"],
@@ -625,6 +626,18 @@ class Operations:
             value.pop("current")
             return portfolios.select(context, value, short_id(body.get("alternativeId"), "Alternative ID"))
 
+    def installation_workflows(self, program_id, body):
+        from operations_installation_workflows import inventory
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return inventory(self, context, body)
+
+    def seed_workflow_installation(self, program_id, body):
+        from operations_installation_workflows import seed
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return seed(self, context, body)
+
     def installation_workshares(self, program_id, body):
         from operations_workshare_installations import case_inventory
         with self._snapshot():
@@ -649,10 +662,21 @@ class Operations:
             context = self._context(identifier(program_id, "operation"))
             return installations.preview(self, context, body)
 
+    def delivery_queue(self, program_id, as_of=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return dispatch.build(context, installations.load_heads(self, program_id), as_of)
+
+    def export_delivery_queue(self, program_id, as_of=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            queue = dispatch.build(context, installations.load_heads(self, program_id), as_of)
+            return dispatch.export_bundle(queue, self.export(program_id))
+
     def list_installations(self, program_id):
         with self._snapshot():
             self._program(identifier(program_id, "operation"))
-            return installations.latest_summaries(installations.load(self, program_id))
+            return installations.latest_summaries(installations.load_heads(self, program_id))
 
     def installation(self, program_id, installation_id, revision=None):
         with self._snapshot():
@@ -739,6 +763,10 @@ class Operations:
                          "Open through the existing workspace's operations import. This bundle preserves the original planner history, selected immutable plan, recorded source attachments, operations events, close reviews complete saved operating forecasts and delivery allocation portfolios.\n"
                          "Conditional planning amounts are separate from recorded cash. Testnet purchases are product operations. A work review or case close does not create an award, payment, customer agreement or external tranche acceptance.\n"
                          "Private access keys are not included.\n").encode()}
+            node_view = buyer.node_observations(context)
+            if node_view:
+                files["node-accounting-observations.json"] = (canonical(node_view) + "\n").encode()
+                files["node-accounting-observations.csv"] = csv_bytes(buyer.NODE_CSV_FIELDS, buyer.node_csv_rows(context))
             for metadata in context["sources"].values():
                 _, raw = self.source(program_id, metadata["id"])
                 files["sources/" + metadata["id"]] = raw
@@ -799,6 +827,10 @@ class Operations:
         # Original completion plans and source records retain their native validation below.
         if "completion-calendar.json" in files:
             expected.add("completion-calendar.json")
+        node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
+        if node_names.intersection(files) or any(isinstance(row.get("buyerHandoff"), dict)
+                and row["buyerHandoff"].get("sourceSchema") == buyer.NODE_SCHEMA for row in document["sources"]):
+            expected.update(node_names)
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
@@ -836,7 +868,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        document, files = self._unpack(raw)
+        native_raw, delivery_queue = dispatch.unwrap_bundle(raw)
+        document, files = self._unpack(native_raw)
         source_program, plan = document["program"], document["plan"]
         if not isinstance(source_program, dict) or not isinstance(plan, dict):
             domain.fail("The retained operations program and plan must be objects.")
@@ -896,10 +929,21 @@ class Operations:
                 domain.fail("The complete original review snapshot and report are required.")
             if digest(review["snapshot"]) != review["businessSha256"]:
                 domain.fail("A frozen review differs from its retained business snapshot.")
+        has_node = buyer.validate_node_import(context, events, reviews, files)
+        node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
+        node_view = buyer.node_observations(context)
+        if bool(node_view) != node_names.issubset(files):
+            domain.fail("The complete Node source report set is missing or unbound.", "BUYER_NODE_RECEIVING_SOURCE")
+        if node_view:
+            if (files["node-accounting-observations.json"] != (canonical(node_view) + "\n").encode()
+                    or files["node-accounting-observations.csv"] != csv_bytes(buyer.NODE_CSV_FIELDS, buyer.node_csv_rows(context))
+                    or json.loads(files["summary.json"]).get("delivery", {}).get("nodeAccounting") != buyer.node_report(context)):
+                domain.fail("A Node operating report differs from its original source associations.", "BUYER_NODE_RECEIVING_SOURCE")
         cohort.validate_import(reviews, events)
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files)
+        dispatch.validate_received(delivery_queue, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
@@ -1001,7 +1045,8 @@ class Operations:
             for value in saved_portfolios:
                 self.db.execute("INSERT INTO ops_portfolios VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
-                    **({"selectedInstallation": selected_installation} if selected_installation else {})}
+                    **({"selectedInstallation": selected_installation} if selected_installation else {}),
+                    **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {})}
         with self.workspace.mutex:
             # Reuse the original receipt table before the original plan import.
             # A rejected reuse or invalid request cannot create an extra plan.

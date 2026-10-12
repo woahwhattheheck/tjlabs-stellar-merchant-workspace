@@ -69,14 +69,14 @@ def register(subparsers, common):
     target.add_argument("--file", required=True)
     target.add_argument("--name", required=True)
     mutation(target)
-    target = command("buyer-preview", "Review selected original SF88 buyer jobs for this case", case=True, output=True)
-    target.add_argument("--file", required=True, help="Original private SF88 operations handoff")
+    target = command("buyer-preview", "Review original SF88 Inbox or Node accounting source for this case", case=True, output=True)
+    target.add_argument("--file", required=True, help="Original private SF88 Inbox handoff or Node Operation_Accounting.json")
     target.add_argument("--expected-version", type=int, required=True)
-    target = command("buyer-receive", "Receive exact buyer source and selected original purchase associations", case=True, output=True)
+    target = command("buyer-receive", "Receive exact buyer source with original operation/deployment and purchase associations", case=True, output=True)
     mutation(target, version=True)
     target.add_argument("--file", required=True, help="Same original handoff used for preview")
     target.add_argument("--expected-preview-sha256", required=True)
-    target.add_argument("--selections", required=True, help="JSON array of reviewed jobId/purchaseId selections")
+    target.add_argument("--selections", required=True, help="JSON file with reviewed jobId/purchaseId selections; purchaseId is null for unpaid Node observations or new original purchases")
     deployment = target.add_mutually_exclusive_group(required=True)
     deployment.add_argument("--deployment", help="Existing original buyer or combined deployment ID")
     deployment.add_argument("--deployment-file", help="Explicit JSON fields for a new buyer deployment")
@@ -123,6 +123,11 @@ def register(subparsers, common):
     target = command("cohort-export", "Export the complete frozen cohort and its original sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    target = command("delivery-queue", "Read current Installation work, assignments and civil-calendar due dates", case=True, output=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to the current UTC date")
+    target = command("delivery-queue-export", "Export the dated delivery report and complete original operating case", case=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to the current UTC date")
+    target.add_argument("--output", required=True)
     command("installations", "List current saved customer installation editions", case=True, output=True)
     target = command("installation-seed", "Prepare a complete installation from the original funded work packages", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -138,6 +143,16 @@ def register(subparsers, common):
             target.add_argument("--installation", help="Original installation ID; omit for a new installation")
             target.add_argument("--expected-revision", type=int, required=True)
             target.add_argument("--document", help="Optional complete current editable installation JSON")
+    for verb in ("installation-workflows", "installation-workflow-seed"):
+        target = command(verb, "Read or receive complete original customer operating periods", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--source", required=True, help="Original attached recurring-work source ZIP")
+        target.add_argument("--expected-source-sha256", required=True)
+        if verb == "installation-workflow-seed":
+            target.add_argument("--cycle", action="append", required=True, help="Original selected cycle ID; repeat for every selected period")
+            target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
+            target.add_argument("--expected-revision", type=int, required=True)
+            target.add_argument("--document", help="Optional complete current editable Installation JSON")
     target = command("installation-show", "Reopen one whole saved installation and its selected original records", case=True, output=True)
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, help="Exact saved edition; omission opens the latest")
@@ -329,6 +344,10 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "cohort.prepare",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "delivery-queue":
+        result = ops.delivery_queue(args.case, args.as_of)
+    elif action == "delivery-queue-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_delivery_queue(args.case, args.as_of))}
     elif action == "installations":
         result = {"installations": ops.list_installations(args.case)}
     elif action == "installation-seed":
@@ -350,6 +369,21 @@ def operate(workspace, args):
                     raise Problem("Installation input must be a complete UTF-8 JSON document.",
                                   422, "INVALID_JSON") from exc
             result = ops.seed_workshare_installation(args.case, selected)
+    elif action in ("installation-workflows", "installation-workflow-seed"):
+        selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
+                    "expectedSourceSha256": args.expected_source_sha256}
+        if action == "installation-workflows":
+            result = ops.installation_workflows(args.case, selected)
+        else:
+            selected.update({"cycleIds": args.cycle, "installationId": args.installation,
+                             "expectedRevision": args.expected_revision})
+            if args.document:
+                from operations_installations import MAX_DOCUMENT_BYTES
+                try:
+                    selected["document"] = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES))
+                except (UnicodeError, ValueError) as exc:
+                    raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
+            result = ops.seed_workflow_installation(args.case, selected)
     elif action == "installation-show":
         result = ops.installation(args.case, args.installation, args.revision)
     elif action == "installation-history":

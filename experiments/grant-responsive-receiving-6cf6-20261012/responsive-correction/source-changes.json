@@ -1,0 +1,44 @@
+[
+  {
+    "path": "stellar-forge/developer-site/dist/examples/fred-briefing-20261012/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/examples/briefing-20261012/briefing.html",
+    "previous_git_blob": "8627f43f3edac20f4b700d7bd6f51359f44df120",
+    "git_blob": "3ab74b306b29635d60d04bff493a5a2345f2bb31",
+    "bytes": 94407,
+    "sha256": "0a70ba3184c1ffed700295f85ae53162a74283cae9c8934983adff91140b98ae"
+  },
+  {
+    "path": "stellar-forge/developer-site/dist/examples/fred-briefing-20261012/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/examples/briefing-20261012/briefing-manifest.json",
+    "previous_git_blob": "e685dc1e30e0cd95718292a5c274a55617f48862",
+    "git_blob": "4ed9aa7369cd1edd8ee721e3f2b3b191ae8ac2e2",
+    "bytes": 1178,
+    "sha256": "b8aca28c6ef54ed8c6e50de7c669e4439783dce612372a3f9e61f8a60c9d6900"
+  },
+  {
+    "path": "stellar-forge/developer-site/dist/examples/fred-briefing-20261012/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/BRIEFINGS.md",
+    "previous_git_blob": "f000db40fc7702dd360c998f07ec230d842101ab",
+    "git_blob": "44a3230f78ae26cebc8a0f55570bada47f6fea0d",
+    "bytes": 15798,
+    "sha256": "572cb5413787f9ee3aa3079c66ed6af81a2e14e30879667ee927f15bc97c2abb"
+  },
+  {
+    "path": "stellar-forge/developer-site/dist/examples/fred-briefing-20261012/package-manifest.json",
+    "previous_git_blob": "9d8a5cf0c52dd4f291f3b936108483119c3fb9a8",
+    "git_blob": "51688f4432cc6328fd4d97802836d622b951f5bc",
+    "bytes": 4804,
+    "sha256": "5eb5922b9446a56316e9cafdb21a889d4a23fea49f4aa970d78d9c448e68b3b5"
+  },
+  {
+    "path": "stellar-forge/developer-site/dist/examples/fred-briefing-20261012/stellar-forge-economic-briefing-20261012.zip",
+    "previous_git_blob": "1afed5aef5210a761c6e700ab5eedfbe99271df2",
+    "git_blob": "dbaba401e36276c82fe76846550a888f15c5c44d",
+    "bytes": 328942,
+    "sha256": "2e464d64a66e370583dd97e1ba5c66f1679c7e3dc822090fe724d07e208ae75a"
+  },
+  {
+    "path": "stellar-forge/developer-site/GRANT_RECEIVING.mjs",
+    "previous_git_blob": "9d4a035deff737b828e91ee851b0ab2cac2b257a",
+    "git_blob": "a8340f45cae5f2e5da347746fd598fc3dbca70e8",
+    "bytes": 36953,
+    "sha256": "d71c2f50a2aba71e8434e1c01a542cb3f13d13963e5b3792d6fefb64a6d5537d"
+  }
+]

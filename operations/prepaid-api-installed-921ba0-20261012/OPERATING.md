@@ -23,7 +23,7 @@ The operating entry creates an isolated merchant setup and a new **unpaid** cust
 
 The selected commit is the actual feature head accepted by PR88. All eleven product leaves and the final nine customer workspace leaves are identical in that merged product. The operating entry requires a clean actual Git checkout at this commit: the existing builder reads the original Git objects and resolves the selected import, command, native worker and browser-asset closure itself.
 
-The entry and this guide may be received from their immutable operations carrier separately from that source checkout. Keep this directory's three files together. The manifest identifies the entry's Git blob and the original source inputs; it is not a substitute for the original source selection engine.
+The entry and this guide may be received from their immutable operations carrier separately from that source checkout. Keep the entry, original input/source manifest, Git receiver and this guide together. The manifest identifies the entry's Git blob and the original source inputs; it is not a substitute for the original source selection engine.
 
 ## 1. Keep a private operating directory and the original checkout
 
@@ -178,13 +178,13 @@ The operator's complete private configuration, claim and authority remain with t
 
 ## Actual completed foundation
 
-The original funded API merchant operation completed ten stages, including original paid-order adoption, the same 279-byte application result, encrypted application/merchant backup, downloaded restore-bundle receiving and cold reopen. It retains eight purchased units, two consumed, zero reserved and six available:
-https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791797426907289
+The original funded API merchant completed ten merchant stages and eight agent stages on the same purchased pass: original paid-order adoption, the exact 279-byte application result, encrypted capture and downloaded restore, cold reopen, all 33 merchant tools, saved operation replay, interrupted download receiving and complete exports after console shutdown. It retains eight purchased units, two consumed, zero reserved and six available. The complete private customer package is saved:
+https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791822283238739
 
-The separate original customer portfolio operation completed all nine reported phases at12:33:59UTC on12October2026 with two actual upstream executions, including saved-request/default independence, replay without another charge, original response recovery, replacement lineage, history, cold reopen and staged shutdown:
-https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791808699174559
+The separate customer portfolio and agent operation completed nine customer phases and six MCP/client phases, including the original saved-request/default independence, replacement lineage, actual HTTP MCP, typed client and CLI, interrupted response receiving, five exports and cold reopen:
+https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/136
 
-This entry owns the separate selected build/install/open operation. Its native completion is reported only when its original `result.json` is actually committed and read back. The funded workspace's existing33-tool receiving remains the separate original operation described in [the merchant continuation guide](../api-merchant-agent-receiving-921ba0-20261012/README.md).
+This entry owns the selected build/install/open operation. Its latest native attempt stopped with ENOSPC before Git repository creation. Continue that same entry and retained installation journal using the source-acquisition path below; its completed result is published from the original `result.json`.
 
 ## 6. Continue this original host directly from Git
 
@@ -197,26 +197,82 @@ python3 receive-from-git.py
 It creates or reopens the genuine private checkout at
 `/workspace/scratch/921ba0f574ac/prepaid-selected-source`, fetches the exact
 `6e4a2bebf22cf809587406087efbce9c11d4e449` commit from the maintained standalone
-repository, and verifies its origin, HEAD and unchanged tracked source. Sparse
-checkout reduces the initial working files; the original Git object selection
-remains available to the maintained distribution builder.
+repository, and verifies its origin, HEAD and unchanged tracked source.
 
-The entry reads only the original TESTNET checkout's public origin and payment
+The receiver uses Git's `blob:none` filter and the original sparse working
+tree. It configures the same origin as the promisor remote. The selected
+operating entry receives `--source-online`, which enables the maintained
+`distribution/git-source.mjs` reader's existing batched acquisition of missing
+original blobs. The reader chooses those object IDs from the immutable selected
+tree, reads them through Git, verifies every blob hash and builds the unchanged
+`prepaid-api` recipe. Already present objects and a completed build receipt
+are reused. The source cache remains an actual Git repository.
+
+To select another existing private source location with available capacity:
+
+~~~sh
+python3 receive-from-git.py \
+  --repository /srv/source/prepaid-api
+~~~
+
+Only the reproducible Git cache moves. The original input directory and installed
+operation below remain the same. The selected path must be absolute, canonical
+and owned by the current user; existing different origin, HEAD, filter or tracked
+source is rejected. A directory in `/dev` still consumes the host's shared
+memory budget, so its filesystem capacity alone does not establish usable room.
+
+Optional dependency inputs are forwarded to the original installed entry:
+
+~~~sh
+python3 receive-from-git.py \
+  --repository /srv/source/prepaid-api \
+  --dependencies /srv/original-complete-runtime
+~~~
+
+Use `--dependencies` only for a complete original graph and its matching
+`package-lock.json`. The existing installer validates the selected versions,
+source imports and native modules. Alternatively `--npm-cache ABSOLUTE_PATH`
+selects the original npm cache for normal installation. Omit both to use the
+original installer defaults.
+
+The entry reads the original TESTNET checkout's public origin and payment
 terms from `/dev/shm/921ba0-api-native-20261011/checkout.json`. It retains the
-starter request and exact original driver in
+starter request and exact source-enabled driver in
 `/dev/shm/921ba0-prepaid-installed-inputs-20261012`, then runs this same operation
-at `/dev/shm/921ba0-prepaid-installed-native-20261012`. An existing operation is
-continued with `--resume`. No purchase execution is requested.
+at `/dev/shm/921ba0-prepaid-installed-native-20261012`. An existing operation
+continues with `--resume`. The receiver requests no purchase execution.
 
-Both initial driver and request files use the selected original
-`sf88-operator-buyer-cli/node/store.mjs` writer and full byte comparison.
-An interrupted first write therefore preserves the original private temporary
-without leaving a partial named driver that a later continuation mistakes for
-complete source. Different existing named bytes are rejected.
+The source-enabled driver is retained as `operate-source-online.mjs`; an older
+`operate.mjs` remains intact. Both the selected driver and unchanged request use
+the original `sf88-operator-buyer-cli/node/store.mjs` writer and full byte
+comparison. Different existing named bytes are rejected.
 
-The original child is retained through real exit. SIGINT or SIGTERM received
-during dispatch is relayed to that same child. The selected driver then owns the
-documented installation-preparation recovery, source/receipt identity, native
-merchant/customer lifetime and complete result publication above. This entry
-does not change the already paid merchant's request or start a replacement
-purchase.
+Each command runs in its own process group. The Linux receiver adopts orphaned
+descendants and retains the original process handle, exit status and output pipes
+until the whole group retires. A signal received during dispatch is delivered
+after that handle is acquired. Setup or output-monitor failure follows the same
+cleanup, with an independent pipe-draining fallback. Node receives 180 seconds
+for graceful shutdown, preserving the original 135-second gateway drain, before
+any required forced retirement. An interrupted or failed cleanup does not start
+the next command.
+
+The selected driver owns installation preparation recovery, original receipt
+identity, merchant/customer lifetime and complete result publication.
+
+### Use the acquisition option with an existing selected operation
+
+A direct caller can enable the same original source reader:
+
+~~~sh
+node operate.mjs \
+  --repo /srv/source/prepaid-api \
+  --directory /srv/prepaid-installed-operation \
+  --request /srv/prepaid-inputs/request.json \
+  --python python3 \
+  --source-online \
+  --resume
+~~~
+
+Without `--source-online`, the entry retains its original offline build mode.
+This option changes source-object acquisition only. The selected commit,
+recipe, input bytes, saved operation ID and installation recovery are unchanged.

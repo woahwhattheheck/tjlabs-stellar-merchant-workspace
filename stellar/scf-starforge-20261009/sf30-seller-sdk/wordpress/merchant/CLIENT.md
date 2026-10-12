@@ -146,16 +146,146 @@ try {
 
 There is no automatic action retry, new UUID generation or expected-revision refresh inside the client. A revision conflict requires a newly reviewed action. The original publisher review, activation, payment and buyer recovery boundaries continue to decide which transitions are permitted.
 
-The 33 actions cover the full original workflow:
+The 38 actions cover the full original workflow:
 
 | Workflow | Original actions |
 | --- | --- |
 | Source and capture | `source.save`, `source.select`, `source.discover`, `capture.start`, `capture.resume`, `capture.pause` |
 | Mapping and edition | `mapping.save`, `edition.build`, `merchant.save`, `edition.export`, `product.select` |
 | Complete source | `source.packet`, `source.files` |
+| Recurring delivery | `refresh.plan.save`, `refresh.run.start`, `refresh.run.advance`, `refresh.run.review`, `refresh.run.export` |
 | Publisher preparation | `publisher.status`, `publisher.prepare`, `publisher.preview`, `publisher.reviewDraft`, `publisher.publish`, `publisher.activateSnapshot`, `publisher.collect` |
 | Release | `publisher.release.stage`, `publisher.release.inspect`, `publisher.release.activate`, `publisher.release.rollback`, `publisher.release.start`, `publisher.release.stop` |
 | Buyer | `publisher.buyer.review`, `publisher.buyer.prepare`, `publisher.buyer.session`, `publisher.buyer.run`, `publisher.buyer.recover`, `publisher.buyer.account`, `publisher.buyer.export` |
+
+
+## Refresh a reviewed WordPress delivery
+
+The refresh workflow uses the original workspace. A plan freezes a reviewed edition's source connection, collection selection, native filters, projection and dataset configuration. Every run captures that selection again and retains a complete comparison before a reviewer approves or rejects the candidate. The approved edition is then exported through the existing merchant terms and publisher product.
+
+### Browser workflow
+
+Open **Refresh & review** in the original WordPress browser.
+
+1. Select the reviewed baseline edition, enter a plan label and save the plan. Existing merchant terms and product can be retained now or selected at export. A capacity revision records its previous plan and explicit new limits while preserving the original queries.
+2. Open the retained plan and start a named run. Compare with the original baseline or one of the same plan's approved successors. Successor selection joins the saved approval event to the original edition; a reserved candidate edition ID does not make an edition eligible.
+3. Follow the original discovery and capture. **Continue this run** advances the same run after the current job completes. Read native findings and provider retry timing from that job. The browser polls its progress without dispatching another action. A record or byte ceiling remains visible and can be addressed by a reviewed plan revision.
+4. Inspect the saved added, changed and removed records. Each record opens its baseline and candidate native JSON, projected JSON and original response coordinates. Very large visible records retain full-response download buttons. The four report downloads contain the complete review, JSONL changes, CSV changes and change index.
+5. Record the reviewer, note and explicit approval or rejection. The request binds the complete review SHA-256 and exact candidate capture SHA-256. Approval creates the original successor edition. Rejection retains the named decision and the complete comparison.
+6. Export the approved edition, then open its original publisher. Preparation, release activation, seller payment and buyer delivery keep their existing workflow. The export list retains the actual product and original export UUID.
+
+The change filter does not renumber the retained comparison. Every next page follows its exact returned `nextOffset`; the browser keeps previous page offsets for that filter. Source and projection change counts may overlap, so they are not added together to calculate total changed records.
+
+### Native methods and retained merchant values
+
+The original workspace methods are `refreshPlan(id)`, `refreshRun(id)`, `refreshChanges(id,{offset,limit,kind})` and `refreshRecord(id,key)`. Their merchant counterparts use the configured alias and return the same complete native value inside the existing retained-result envelope.
+
+```js
+const {value: plan} = await client.callValue('refresh_plan', {
+  workspace: 'catalog', id: savedPlanId
+});
+const {result: runReceipt, value: run} = await client.callValue('refresh_run', {
+  workspace: 'catalog', id: savedRunId
+});
+const {value: page} = await client.callValue('refresh_changes', {
+  workspace: 'catalog', id: savedRunId, offset: 0, limit: 50, kind: 'changed'
+});
+// Continue with page.nextOffset until it is null; do not calculate a new cursor.
+const {value: versions} = await client.callValue('refresh_record', {
+  workspace: 'catalog', id: savedRunId, key: page.rows[0].key
+});
+```
+
+The named client methods `refreshPlan`, `refreshRun`, `refreshChanges` and `refreshRecord` accept these same tool argument objects. Use `callValue` or `readValue` when the full native JSON is required, because a retained response can be larger than its visible preview.
+
+A run returns its plan, stage, original jobs, complete review, decision, approved edition, exports and events. The stages are `discovering`, `capturing`, `review_ready`, `approved`, `rejected`, `exported` and `attention`. The compact edition in this response can be opened with the existing `edition` tool.
+
+### Five original actions
+
+All actions use the existing `act` tool and its saved `operationId`, `expectedRevision`, `action` and `input`.
+
+| Action | Required input | Optional retained selections |
+| --- | --- | --- |
+| `refresh.plan.save` | `editionId`, `expectedSnapshot`, `label` | `note`, `merchantId`, `productId`, `previousPlanId`, `limits:{maxPages,maxRecords,maxBytes}` |
+| `refresh.run.start` | `planId`, `label` | `baselineEditionId` from an approved successor of the same plan |
+| `refresh.run.advance` | `runId` | None |
+| `refresh.run.review` | `runId`, `expectedReviewSha256`, `expectedCaptureSha256`, `decision`, `reviewer` | `note` |
+| `refresh.run.export` | `runId`, `reviewer` | `note`, `merchantId`, `productId`; omitted choices use the plan |
+
+The review decision is `approve` or `reject`. Read its expected hashes from `run.review.reviewSha256` and `run.review.candidate.captureSha256`. Each newly requested advance has its own saved action UUID. Retrying an uncertain advance preserves that exact UUID, expected revision and input.
+
+When a review or export has retained its decision but the outer action reply was interrupted, `refresh_run` can return `recovery`. It is the original full envelope, including its expected revision. Reuse it unchanged:
+
+```js
+const {value: current} = await client.callValue('refresh_run', {
+  workspace: 'catalog', id: savedRunId
+});
+if (current.recovery) {
+  const exact = current.recovery;
+  const recovered = await client.callValue('act', {
+    workspace: 'catalog',
+    operationId: exact.operationId,
+    expectedRevision: exact.expectedRevision,
+    action: exact.action,
+    input: exact.input
+  });
+  // Save the returned original result beside the same retained action.
+}
+```
+
+A new action uses the latest reviewed workspace revision. The recovery above uses the revision already recorded in its original action; it is not rewritten to the latest value. The same operation inspection and recovery are available after complete source receiving.
+
+### Complete comparison files
+
+Request `artifact` with `kind:"refresh"`, the original run UUID and exactly one of `review.json`, `changes.jsonl`, `changes.csv` or `changes.index.json`. The existing retained downloader writes every original byte and verifies the manifest and file hashes.
+
+```js
+const report = await client.artifact({
+  workspace: 'catalog', kind: 'refresh', id: savedRunId, name: 'changes.csv'
+});
+await client.downloadExport({
+  workspace: 'catalog', result: report,
+  directory: '/private/deliveries/wordpress-refresh-changes'
+});
+```
+
+These report IDs are original run UUIDs. The returned merchant export ID is a SHA-256 identity, while `publisher.prepare` continues selecting the original workspace export UUID from `state.exports[]`.
+
+### Command-line operation
+
+The installed merchant read commands return both the retained response and its complete native JSON value:
+
+```sh
+starforge-merchant merchant-wordpress refresh-plan --url "$WORDPRESS_MERCHANT_URL" \
+  --token-env MCP_ACCESS_TOKEN --workspace catalog --id "$PLAN_ID"
+starforge-merchant merchant-wordpress refresh-run --url "$WORDPRESS_MERCHANT_URL" \
+  --token-env MCP_ACCESS_TOKEN --workspace catalog --id "$RUN_ID"
+starforge-merchant merchant-wordpress refresh-changes --url "$WORDPRESS_MERCHANT_URL" \
+  --token-env MCP_ACCESS_TOKEN --workspace catalog --id "$RUN_ID" --offset 0 --limit 50 --kind changed
+starforge-merchant merchant-wordpress refresh-record --url "$WORDPRESS_MERCHANT_URL" \
+  --token-env MCP_ACCESS_TOKEN --workspace catalog --id "$RUN_ID" --key "$ORIGINAL_RECORD_KEY"
+```
+
+Use the existing merchant `act` command for the five mutations, with an input JSON file and the saved original operation UUID/revision. There is no automatic review or advance loop.
+
+The original standalone CLI exposes the same four read commands:
+
+```sh
+node wordpress/cli.mjs refresh-run --dir /private/wordpress/catalog --id "$RUN_ID"
+node wordpress/cli.mjs refresh-changes --dir /private/wordpress/catalog \
+  --id "$RUN_ID" --offset 0 --limit 50 --kind all
+node wordpress/cli.mjs act --dir /private/wordpress/catalog \
+  --action refresh.run.advance --input /private/requests/refresh-advance.json \
+  --operation "$SAVED_OPERATION_UUID" --expected-revision "$REVIEWED_REVISION"
+```
+
+The standalone start and advance commands wait for the returned original discovery/capture job before closing their workspace owner. They perform one requested stage and report its result; the next advance remains an explicit action. Keep an existing merchant or browser owner available when using the remote tool path.
+
+### Reopen the whole refresh workspace
+
+The original `source.packet` and `source.files` workflows carry complete plans, runs, events, original refresh action intents/results and the saved comparison files alongside the source/captures/mappings/editions. Select that complete source packet for the existing receiver. After receiving, open the same installed browser or CLI and inspect the saved run before continuing any native capture or publication.
+
+Original source credentials remain environment references. A receiving host supplies its configured account access. Complete change reports, named decisions, accepted editions and original operation IDs are retained even when the listener address or host changes.
 
 ## Receive a complete source packet
 
@@ -221,6 +351,7 @@ The `tools` command prints the exact tool schemas plus all original action input
 | `open`, `release` | Original lifecycle and ownership response. |
 | `state`, `operation`, `source`, `job`, `records`, `response` | Complete retained state, capture records and native source responses. |
 | `mapping`, `edition`, `projection`, `compare`, `preview`, `dataset_preview` | Complete retained transformation and review results. |
+| `refresh_plan`, `refresh_run`, `refresh_changes`, `refresh_record` | Complete retained recurring-delivery plan, run, changes and original record versions. |
 | `act`, `cancel` | The original operation result. |
 | `artifact`, `publisher_artifact` | Complete original files through a retained merchant export. |
 | `manifest`, `file`, `file_release`, `json` | Bound complete-file metadata, byte ranges and JSON-pointer pages. |

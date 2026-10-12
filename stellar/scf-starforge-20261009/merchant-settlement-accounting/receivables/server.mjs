@@ -5,6 +5,8 @@ import {pathToFileURL} from 'node:url';
 import {openAccountingWorkspace} from '../workspace/store.mjs';
 import {ReceivablesWorkspace, RECEIVABLE_REQUEST_BYTES} from './store.mjs';
 import {renderCustomerTar} from './core.mjs';
+import {PaymentPlanWorkspace} from './payment-plans/store.mjs';
+import {paymentPlanAsset, handlePaymentPlansRequest, PAYMENT_PLAN_REQUEST_BYTES} from './payment-plans/server.mjs';
 import {readBrowserAssets} from '../../distribution/browser-assets.mjs';
 import {CustomerStatementWorkspace, STATEMENT_REQUEST_BYTES} from '../customer-statements/store.mjs';
 import {customerStatementAsset, handleCustomerStatementRequest} from '../customer-statements/server.mjs';
@@ -132,6 +134,32 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   let result;
   if (method === 'GET') {
     if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'funds') result = await receivables.customerFunds({
+      customerId: search.get('customerId') || undefined, asOf: search.get('asOf') || undefined,
+    });
+    else if (parts[0] === 'customers' && parts[2] === 'funds' && parts.length === 3)
+      result = await receivables.customerFunds({customerId: parts[1], asOf: search.get('asOf') || undefined});
+    else if (route === 'refunds') result = await receivables.refunds({
+      customerId: search.get('customerId') || undefined, receiptId: search.get('receiptId') || undefined,
+      status: search.get('status') || undefined, asOf: search.get('asOf') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'refunds' && parts.length === 2)
+      result = await receivables.refund(parts[1], {asOf: search.get('asOf') || undefined});
+    else if (parts[0] === 'refunds' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.refundFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
+    else if (route === 'payment-requests') result = await receivables.paymentRequests({
+      invoiceId: search.get('invoiceId') || undefined, customerId: search.get('customerId') || undefined,
+      status: search.get('status') || undefined, asOf: search.get('asOf') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'payment-requests' && parts.length === 2) result = await receivables.paymentRequest(parts[1], {asOf: search.get('asOf') || undefined});
+    else if (parts[0] === 'payment-requests' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.paymentRequestFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'ledger') result = await receivables.ledger({
       runId: search.get('runId') || '', customerId: search.get('customerId') || '',
       offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
@@ -160,11 +188,30 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'refunds/preview') result = await receivables.previewRefund(value);
+    else if (route === 'refunds') result = await receivables.commitRefund(value);
+    else if (route === 'credit-dispositions/preview') result = await receivables.previewCreditDisposition(value);
+    else if (route === 'credit-dispositions') result = await receivables.applyCreditDisposition(value);
+    else if (parts[0] === 'refunds' && parts.length === 3) {
+      if (parts[2] === 'cancel') result = await receivables.cancelRefund(parts[1], value);
+      else if (parts[2] === 'reverse') result = await receivables.reverseRefund(parts[1], value);
+      else if (parts[2] === 'returns') result = await receivables.reportRefundReturn(parts[1], value);
+      else if (parts[2] === 'receive') result = await receivables.receiveRefund(parts[1], value);
+      else throw problem('NOT_FOUND', 'This customer refund operation does not exist.', 404);
+    }
     else if (route === 'invoices') result = await receivables.saveDraft(value);
     else if (route === 'import-quote') result = await receivables.importQuote(value);
     else if (route === 'receipts') result = await receivables.receipt(value);
     else if (route === 'receipts/settlement') result = await receivables.importSettlement(value);
     else if (route === 'allocations') result = await receivables.allocate(value);
+    else if (parts[0] === 'invoices' && parts[2] === 'payment-requests' && parts.length === 4 && parts[3] === 'preview') result = await receivables.previewPaymentRequest(parts[1], value);
+    else if (parts[0] === 'invoices' && parts[2] === 'payment-requests' && parts.length === 3) result = await receivables.createPaymentRequest(parts[1], value);
+    else if (parts[0] === 'payment-requests' && parts.length === 3) {
+      if (parts[2] === 'cancel') result = await receivables.cancelPaymentRequest(parts[1], value);
+      else if (parts[2] === 'returns') result = await receivables.reportPaymentReturn(parts[1], value);
+      else if (parts[2] === 'receive') result = await receivables.receivePaymentRequest(parts[1], value);
+      else throw problem('NOT_FOUND', 'This payment request operation does not exist.', 404);
+    }
     else if (parts[0] === 'invoices' && parts.length === 3) {
       if (parts[2] === 'issue') result = await receivables.issue(parts[1], value);
       else if (parts[2] === 'void') result = await receivables.voidInvoice(parts[1], value);
@@ -178,9 +225,11 @@ export async function handleReceivablesRequest(receivables, {method, path, query
 }
 
 /** Compose with a provided accounting workspace; no additional lease is acquired. */
-export async function createReceivablesHandler(receivables, {apiPath = '/api/receivables', uiPath = '/receivables', port, statements} = {}) {
+export async function createReceivablesHandler(receivables, {apiPath = '/api/receivables', uiPath = '/receivables', port, statements, paymentPlans} = {}) {
   apiPath = basePath(apiPath, '/api/receivables'); uiPath = basePath(uiPath, '/receivables');
   await receivables.init();
+  if (paymentPlans) await paymentPlans.init();
+  const planApiPath = apiPath + '/payment-plans';
   return async function receivablesHandler(request, response) {
     let url;
     try { url = new URL(request.url || '/', 'http://localhost'); } catch { return false; }
@@ -188,23 +237,28 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
     const ui = url.pathname === uiPath || url.pathname.startsWith(uiPath + '/');
     const customer = statements && (url.pathname === '/customer-statements' || url.pathname.startsWith('/customer-statements/') ||
       url.pathname === '/api/customer-statements' || url.pathname.startsWith('/api/customer-statements/'));
-    if (!api && !ui && !customer) return false;
+    const planUi = url.pathname === '/payment-plans' || url.pathname.startsWith('/payment-plans/');
+    const planRequest = paymentPlans && (planUi || url.pathname === planApiPath || url.pathname.startsWith(planApiPath + '/'));
+    if (!api && !ui && !customer && !planRequest) return false;
     securityHeaders(response);
     try {
       const mutation = request.method === 'POST';
       localRequest(request, port, mutation);
       if (request.method === 'GET' || request.method === 'HEAD') {
         if (url.pathname === uiPath) { response.writeHead(302, {Location: uiPath + '/'}); response.end(); return true; }
-        const asset = ui ? await receivablesAsset(url.pathname, {apiPath, uiPath}) : customer ? await customerStatementAsset(url.pathname) : null;
+        if (planRequest && url.pathname === '/payment-plans') { response.writeHead(302, {Location: '/payment-plans/'}); response.end(); return true; }
+        const asset = planRequest ? await paymentPlanAsset(url.pathname, {apiPath: planApiPath}) :
+          ui ? await receivablesAsset(url.pathname, {apiPath, uiPath}) : customer ? await customerStatementAsset(url.pathname) : null;
         if (asset) {
           response.writeHead(200, {'Content-Type': asset.type, 'Content-Length': asset.bytes.length});
           response.end(request.method === 'HEAD' ? undefined : asset.bytes); return true;
         }
       }
       if (request.method !== 'GET' && request.method !== 'POST') throw problem('METHOD_NOT_ALLOWED', 'Use a supported workspace operation.', 405);
-      const value = mutation ? await body(request, customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
+      const value = mutation ? await body(request, planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
       const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath};
-      const result = customer ? await handleCustomerStatementRequest(statements, parameters) : await handleReceivablesRequest(receivables, parameters);
+      const result = planRequest ? await handlePaymentPlansRequest(paymentPlans, {...parameters, apiPath: planApiPath}) :
+        customer ? await handleCustomerStatementRequest(statements, parameters) : await handleReceivablesRequest(receivables, parameters);
       if (!result) throw problem('NOT_FOUND', 'This workspace route does not exist.', 404);
       if (result.file) file(response, result.file);
       else {
@@ -215,14 +269,15 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
     } catch (error) {
       if (response.headersSent) { response.end(); return true; }
       const responseError = publicError(error);
-      if (responseError.status === 405) response.setHeader('Allow', ui ? 'GET, HEAD' : 'GET, POST');
+      if (responseError.status === 405) response.setHeader('Allow', ui || planUi ? 'GET, HEAD' : 'GET, POST');
       json(response, responseError.status, responseError.value);
     }
     return true;
   };
 }
-export async function createReceivablesHttpHandler(workspace, options) {
-  return createReceivablesHandler(new ReceivablesWorkspace(workspace), options);
+export async function createReceivablesHttpHandler(workspace, options = {}) {
+  const paymentPlans = options.paymentPlans || new PaymentPlanWorkspace(workspace);
+  return createReceivablesHandler(new ReceivablesWorkspace(workspace), {...options, paymentPlans});
 }
 
 /** Open one accounting workspace and retain its lease until the caller closes this service. */
@@ -244,10 +299,12 @@ export async function prepareReceivablesServer(options = {}) {
   let handler;
   let receivables;
   let statements;
+  let paymentPlans;
   try {
     receivables = new ReceivablesWorkspace(workspace);
     if (options.includeCustomerStatements !== false) { statements = new CustomerStatementWorkspace(workspace); await statements.init(); }
-    handler = await createReceivablesHandler(receivables, {...options, port: port || undefined, statements});
+    if (options.includePaymentPlans !== false) paymentPlans = new PaymentPlanWorkspace(workspace);
+    handler = await createReceivablesHandler(receivables, {...options, port: port || undefined, statements, paymentPlans});
   } catch (error) { if (ownsWorkspace) await workspace.close(); throw error; }
   const server = createServer(async (request, response) => {
     try {
@@ -264,7 +321,7 @@ export async function prepareReceivablesServer(options = {}) {
     if (server.listening) await new Promise((accept, reject) => server.close(error => error ? reject(error) : accept()));
     if (ownsWorkspace) await workspace.close();
   }
-  return {server, workspace, receivables, statements, handler, port, close,
+  return {server, workspace, receivables, statements, paymentPlans, handler, port, close,
     async listen() {
       await new Promise((accept, reject) => { server.once('error', reject); server.listen(port, host, () => {server.off('error', reject); accept();}); });
       const actual = server.address();

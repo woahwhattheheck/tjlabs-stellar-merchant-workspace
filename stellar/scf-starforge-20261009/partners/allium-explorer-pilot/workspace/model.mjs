@@ -458,8 +458,10 @@ class AlliumWorkspace {
       return { ...result, url: this.publisher.url };
     });
   }
-  exportBundle() {
+  exportBundle({ expectedRevision } = {}) {
     return this._serial(async () => {
+      if (expectedRevision !== undefined && expectedRevision !== this.current.revision)
+        throw fault('REVISION_CHANGED', 'Reload the original workspace revision before exporting.', 409);
       await this._stop();
       let versions = null, publisherUnlock = null;
       try {
@@ -498,6 +500,8 @@ async function portableFiles(directory) {
         await walk(absolutePath, path + '/'); continue;
       }
       if (!portablePath(path)) {
+        // The managed listener record is ephemeral and contains the private operator token.
+        if (path === 'allium.connection.json') continue;
         if (['publisher.lock', 'writer.lock', 'control.json', 'control.sock'].includes(item.name) || item.name.startsWith('.pending-') || item.name.startsWith('.state-')) continue;
         throw fault('PORTABLE_FILE_UNKNOWN', 'A retained file has no portable mapping: ' + path);
       }

@@ -64,15 +64,40 @@ contains `retained-original-source-cache.zip`; its
 been received into a private directory. The new receiving owns its separate
 object database.
 
-The initial acquired object set includes the original eleven builder/installer
-modules and the three original VGI receiving files found missing by the previous
-native source reception. If the chosen worker's donors lack other selected
+The acquired object set includes the original eleven builder/installer modules,
+the three original VGI receiving files, the source-job resolution limit and OAuth
+browser, and the 97 runtime dependency files requested by the selected builder's
+actual receiving. It also carries the complete 814-body original reference cache
+acquired from that same signed tree. The packet retains 1,130 original required
+paths, adds 814 exact paths through the receiver's existing additional-path
+interface, and carries 950 acquired original source bodies. Every body retains
+its unchanged Git blob identity.
+
+This broader cache includes the maintained accounting-provider and merchant-host
+modules, original managed-workspace helpers, native seller dependencies, readers
+and their shared browser inputs. It supplies original objects before the full
+selected builder runs. The unchanged Node builder follows its actual static and
+runtime source declarations and produces the packaged file inventory; the
+reference cache does not choose or add product registrations.
+
+The original launcher verifies the packet's exact compressed and decoded
+identities with a bounded 64 MiB decoded-source ceiling, matching the maintained
+source-receiving capacity. Saved additional paths are kept when repeated
+`--additional-path` arguments are supplied. Existing packets without that optional
+list retain their original behavior.
+
+If the chosen worker's donors lack other selected
 objects, the receiver reports their exact IDs and paths in
 `missing-objects.json`, and preserves its full cache in the operation output.
 Supply those exact original blobs through `--incoming`, or use an existing
 complete donor. A selected builder dependency discovered later is retained in
 `build-source-issue.json` and can be supplied through the same original source
 path and object mechanism.
+
+The selected customer package explicitly includes its product README and
+operating guide. This repository receiving directory carries the complete frozen
+source input and execution entrypoint; it stays outside that customer package's
+component selection, so the packet does not become a nested source dependency.
 
 ## Run the complete operation
 

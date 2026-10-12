@@ -108,7 +108,15 @@ def export_package(workspace, comparison_id, *, expected_version, operator, labe
             manifest = verify_package(out)
             if manifest["operation_id"] != operation_id:
                 fail("DELIVERY_DESTINATION_CONFLICT")
-            return {"id": manifest["package_id"], "directory": str(out), "reopened": True, **manifest}
+            body = {"directory": str(out), **manifest}
+            # The complete rename may have survived a lost SQLite commit. Recover
+            # the original export index so archive/download can reopen that package.
+            if not workspace.connection.execute("SELECT 1 FROM exports WHERE id=?", (manifest["package_id"],)).fetchone():
+                workspace.connection.execute("INSERT INTO exports VALUES(?,?,?)",
+                    (manifest["package_id"], encoded(body).decode(), now()))
+                workspace.event("export.create", manifest["package_id"],
+                    {"comparison_id": comparison_id, "rows": manifest["rows"], "recovered": True})
+            return {"id": manifest["package_id"], "reopened": True, **body}
         stage = Path(tempfile.mkdtemp(prefix=".delivery-", dir=parent))
         try:
             for source in sources:

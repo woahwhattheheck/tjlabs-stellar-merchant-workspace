@@ -1,6 +1,6 @@
 // MIT. Private loopback host for the original Allium retained operator workspace.
 import { createServer } from 'node:http';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { openAlliumWorkspace } from './model.mjs';
 
@@ -30,7 +30,9 @@ async function json(request) {
 export async function startAlliumWorkspaceServer({ directory, port = 8447, env = process.env, allowLoopback = false } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw issue('PORT_INVALID', 'Use a port from 0 to 65535.');
   const workspace = await openAlliumWorkspace({ directory, env, allowLoopback });
-  const token = randomBytes(32).toString('hex'), active = new Set(); let origin, stopping = false;
+  const token = randomBytes(32).toString('hex'), instanceId = randomUUID(), startedAt = new Date().toISOString(), active = new Set(); let origin, stopping = false;
+  const identity = () => ({schema:'stellar-forge.allium-listener.v1',instanceId,startedAt,
+    workspaceId:workspace.current.id,directory:workspace.directory,pid:process.pid,origin});
   const operations = new Map([
     ['/api/product/save', body => workspace.saveProduct(body)],
     ['/api/product/restore', body => workspace.restoreProduct(body)],
@@ -63,7 +65,10 @@ export async function startAlliumWorkspaceServer({ directory, port = 8447, env =
       const supplied = request.headers['x-allium-workspace-token'];
       if (typeof supplied !== 'string' || !/^[a-f0-9]{64}$/.test(supplied) || !timingSafeEqual(Buffer.from(supplied), Buffer.from(token)))
         throw issue('OPERATOR_TOKEN_REQUIRED', 'Open the complete private operator URL printed by the CLI.', 403);
+      if (request.headers['x-allium-workspace-instance'] && request.headers['x-allium-workspace-instance'] !== instanceId)
+        throw issue('ALLIUM_INSTANCE_CHANGED', 'Reconnect to the current original Applications instance.', 409);
       if (request.method === 'GET') {
+        if (target.pathname === '/api/connection') return send(response, 200, identity());
         if (target.pathname === '/api/state') return send(response, 200, await workspace.state());
         if (target.pathname === '/api/revision') return send(response, 200, await workspace.revision(target.searchParams.get('id')));
         if (target.pathname === '/api/acquisition') return send(response, 200, await workspace.acquisition(target.searchParams.get('id')));
@@ -75,8 +80,10 @@ export async function startAlliumWorkspaceServer({ directory, port = 8447, env =
       if (request.method === 'POST') {
         const body = await json(request);
         if (target.pathname === '/api/export') {
-          if (Object.keys(body).length) throw issue('EXPORT_INPUT_INVALID', 'Export takes no filters; it retains the complete workspace.');
-          const bundle = await workspace.exportBundle();
+          if (Object.keys(body).some(key => key !== 'expectedRevision') ||
+              body.expectedRevision !== undefined && (!Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 0))
+            throw issue('EXPORT_INPUT_INVALID', 'Export retains the complete workspace with an optional expected revision.');
+          const bundle = await workspace.exportBundle(body);
           return send(response, 200, JSON.stringify(bundle, null, 2) + '\n', 'application/json',
             { 'content-disposition': 'attachment; filename="' + bundle.workspaceId + '.allium-workspace.json"', 'x-manifest-sha256': bundle.manifestSha256 });
         }
@@ -96,7 +103,7 @@ export async function startAlliumWorkspaceServer({ directory, port = 8447, env =
     origin = 'http://127.0.0.1:' + server.address().port;
   } catch (error) { await workspace.close(); throw error; }
   let closing;
-  return { origin, url: origin + '/#' + token, token, workspace, server,
+  return { ...identity(), origin, url: origin + '/#' + token, token, workspace, server,
     close() {
       if (closing) return closing; stopping = true;
       closing = (async () => {

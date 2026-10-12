@@ -11,7 +11,7 @@ export const WORDPRESS_SOURCE_FILES = Object.freeze([
   '__init__.py', 'application-provider.mjs', 'capture.mjs', 'cli.mjs', 'config.mjs',
   'edition.mjs', 'files.mjs', 'managed.mjs', 'packet.mjs', 'packet.py',
   'public/app.mjs', 'public/index.html', 'public/style.css', 'server.mjs',
-  'source_files.py', 'transport.mjs', 'workspace.mjs',
+  'source_files.py', 'transport.mjs', 'workspace.mjs', 'refresh.mjs',
 ]);
 const HASH = /^[a-f0-9]{64}$/;
 function absolute(directory) {
@@ -27,6 +27,8 @@ export async function readWordPressWorkspaceState(directory) {
       ['sources', 'mappings', 'editions', 'exports', 'merchants', 'products', 'operations', 'packets']
         .some(key => !Array.isArray(value[key])))
     fail('WORDPRESS_WORKSPACE_STATE', 'The saved source workspace is invalid.', 409);
+  for(const key of ['refreshPlans','refreshRuns','refreshEvents'])
+    if(value[key]!==undefined&&!Array.isArray(value[key]))fail('WORDPRESS_WORKSPACE_STATE','The saved refresh records are invalid.',409);
   return value;
 }
 export async function inspectWordPressWorkspaceBinding(directory, {

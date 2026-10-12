@@ -6,6 +6,10 @@ The original Workspace, Operations, forecast and portfolio implementations remai
 
 The complete Merchant setup, tools, input references, source-bound pages, downloads, same-ID recovery and receiving workflow are in [Grant workspaces through Merchant MCP](../../../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md).
 
+## Installation delivery queue
+
+Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
+
 ## Direct API
 
 First call inspectGrantAgentBinding with directory and optional scenarioFile, pythonExecutable, allowStart and label. It reads the original host selection without launching a process. Construct a GrantWorkspaceClient from that result.
@@ -44,6 +48,10 @@ The service accepts complete bundles up to 32 MiB and original source inputs up 
 Mutations retain their original requestId and current version/revision. After an interrupted response, recover the original request with the identical payload. The original database rejects a changed payload under that same ID. The client performs no automatic write retry.
 
 A borrowed Applications instance keeps its existing lifetime. A client-started service uses the same original managed startup and workspace lock; the client drains and closes that owned server on shutdown. Keep the access-fragment URL and private launch record with the original operator.
+
+## Original-currency forecasts and portfolio selection
+
+`forecastPreview` and `forecastSave`, and Merchant's corresponding original tools, accept `fxRates` plus per-project `nativePricing` and native receipt amounts within the same complete input object. Source references, inline inputs and `inputPointer` retain their existing routes. See [Original currencies in operating forecasts](CURRENCY.md) for exact decimals, rate direction, dated sources, original payment and cost credits, rounding and coverage. Portfolio selection preserves these complete inputs; assess both selected-scope and dated-cash coverage before using financial deltas or a frontier.
 
 ## Portfolio allocation and original cash handoff
 

@@ -71,6 +71,94 @@ export class ReceivablesClient {
   quoteFile(id, name) { return this.request('/invoices/' + segment(id) + '/source/' + segment(name), {binary: true}); }
   detail(id, query) { return this.request('/invoices/' + segment(id) + queryString(query)); }
   preview(id) { return this.request('/invoices/' + segment(id) + '/preview'); }
+
+  previewPaymentRequest(invoiceId, value, {signal} = {}) {
+    return this.request('/invoices/' + segment(invoiceId) + '/payment-requests/preview', {method: 'POST', body: value, signal});
+  }
+  createPaymentRequest(invoiceId, value, {signal} = {}) {
+    return this.request('/invoices/' + segment(invoiceId) + '/payment-requests', {method: 'POST', body: value, signal});
+  }
+  paymentRequests(query, {signal} = {}) {
+    return this.request('/payment-requests' + queryString(query), {signal});
+  }
+  paymentRequest(id, query, {signal} = {}) {
+    return this.request('/payment-requests/' + segment(id) + queryString(query), {signal});
+  }
+  cancelPaymentRequest(id, value, {signal} = {}) {
+    return this.request('/payment-requests/' + segment(id) + '/cancel', {method: 'POST', body: value, signal});
+  }
+  reportPaymentReturn(id, value, {signal} = {}) {
+    return this.request('/payment-requests/' + segment(id) + '/returns', {method: 'POST', body: value, signal});
+  }
+  receivePaymentRequest(id, value, {signal} = {}) {
+    return this.request('/payment-requests/' + segment(id) + '/receive', {method: 'POST', body: value, signal});
+  }
+  paymentRequestFile(id, name, {signal} = {}) {
+    return this.request('/payment-requests/' + segment(id) + '/files/' + segment(name), {binary: true, signal});
+  }
+  async paymentRequestBytes(id, name, options) {
+    const response = await this.paymentRequestFile(id, name, options);
+    try {
+      return {name, type: response.headers.get('content-type') || 'application/octet-stream',
+        bytes: new Uint8Array(await response.arrayBuffer())};
+    } catch (error) {
+      if (error?.name === 'AbortError') throw error;
+      throw new ReceivablesApiError('The payment request file could not be read. Download that same file again.', {
+        status: response.status, code: 'DOWNLOAD_FAILED',
+        details: {name, cause: String(error?.message || error), outcome: 'read_failed'},
+      });
+    }
+  }
+
+  customerFunds(query, {signal} = {}) {
+    return this.request('/funds' + queryString(query), {signal});
+  }
+  previewRefund(value, {signal} = {}) {
+    return this.request('/refunds/preview', {method: 'POST', body: value, signal});
+  }
+  commitRefund(value, {signal} = {}) {
+    return this.request('/refunds', {method: 'POST', body: value, signal});
+  }
+  refunds(query, {signal} = {}) {
+    return this.request('/refunds' + queryString(query), {signal});
+  }
+  refund(id, query, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + queryString(query), {signal});
+  }
+  cancelRefund(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/cancel', {method: 'POST', body: value, signal});
+  }
+  reverseRefund(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/reverse', {method: 'POST', body: value, signal});
+  }
+  reportRefundReturn(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/returns', {method: 'POST', body: value, signal});
+  }
+  receiveRefund(id, value, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/receive', {method: 'POST', body: value, signal});
+  }
+  refundFile(id, name, {signal} = {}) {
+    return this.request('/refunds/' + segment(id) + '/files/' + segment(name), {binary: true, signal});
+  }
+  async refundBytes(id, name, options) {
+    const response = await this.refundFile(id, name, options);
+    try {
+      return {name, type: response.headers.get('content-type') || 'application/octet-stream',
+        bytes: new Uint8Array(await response.arrayBuffer())};
+    } catch (error) {
+      if (error?.name === 'AbortError') throw error;
+      throw new ReceivablesApiError('The refund file could not be read. Download that same file again.', {
+        status: response.status, code: 'DOWNLOAD_FAILED',
+        details: {name, cause: String(error?.message || error), outcome: 'read_failed'},
+      });
+    }
+  }
+  previewCreditDisposition(value, {signal} = {}) {
+    return this.request('/credit-dispositions/preview', {method: 'POST', body: value, signal});
+  }
+  applyCreditDisposition(value, {signal} = {}) {
+    return this.request('/credit-dispositions', {method: 'POST', body: value, signal});
+  }
   issue(id, value) { return this.request('/invoices/' + segment(id) + '/issue', {method: 'POST', body: value}); }
   voidInvoice(id, value) { return this.request('/invoices/' + segment(id) + '/void', {method: 'POST', body: value}); }
   credit(id, value) { return this.request('/invoices/' + segment(id) + '/credits', {method: 'POST', body: value}); }

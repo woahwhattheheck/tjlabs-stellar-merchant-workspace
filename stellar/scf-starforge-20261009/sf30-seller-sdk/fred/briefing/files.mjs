@@ -32,7 +32,7 @@ function verifyManifest(manifest, { captureId, reviewId } = {}) {
     manifest.manifestSha256 === digest(manifestIdentity(manifest)), 'The retained briefing manifest changed.', 'FRED_BRIEFING_IDENTITY_CHANGED');
   need((captureId === undefined || captureId === manifest.captureId) && (reviewId === undefined || reviewId === manifest.reviewId),
     'Select the briefing from its original capture and review.', 'FRED_BRIEFING_IDENTITY_CHANGED');
-  need(manifest.calculationVersion === 'FRED_EXACT_PERIOD_V1' && manifest.rendererVersion === 'FRED_OFFLINE_REPORT_V1' &&
+  need(manifest.calculationVersion === 'FRED_EXACT_PERIOD_V1' && ['FRED_OFFLINE_REPORT_V1', 'FRED_OFFLINE_REPORT_V2'].includes(manifest.rendererVersion) &&
     Array.isArray(manifest.files) && manifest.files.length === BRIEFING_MEMBERS.length, 'Use the original complete briefing file inventory.');
   for (let index = 0; index < BRIEFING_MEMBERS.length; index++) {
     const actual = manifest.files[index], expected = BRIEFING_MEMBERS[index];
@@ -61,21 +61,27 @@ function reportJSON(bytes) {
   try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
   catch { need(false, 'Retain the complete original UTF-8 briefing JSON.'); }
 }
-export function createFredBriefingFiles({ capture, review } = {}) {
+function sourceFredBriefingReport({ capture, review }) {
   const model = validateCapture(capture); validateFredReview(review, model);
   need(review.briefing && review.captureId === capture.captureSha256, 'Select a saved analyst review for the original source.');
   const body = { ...buildFredBriefingModel({ model, captureId: capture.captureSha256, reviewId: review.id, selection: review.briefing }),
     sourceNotice: FRED_NOTICE, sourceTerms: FRED_TERMS };
-  const report = { ...body, reportId: 'fred-briefing-' + digest(body) };
-  const buffers = [Buffer.from(JSON.stringify(report) + '\n'), Buffer.from(fredBriefingCsv(report)), Buffer.from(renderFredBriefing(report))];
+  return { ...body, reportId: 'fred-briefing-' + digest(body) };
+}
+function filesForFredBriefingReport(report, rendererVersion, retainedHTML = null) {
+  const buffers = [Buffer.from(JSON.stringify(report) + '\n'), Buffer.from(fredBriefingCsv(report)),
+    retainedHTML ?? Buffer.from(renderFredBriefing(report, { rendererVersion }))];
   const files = BRIEFING_MEMBERS.map((definition, index) => ({ ...member(definition, buffers[index]), body: buffers[index] }));
   const manifest = { schema: BRIEFING_FILES, captureId: report.captureId, reviewId: report.reviewId, reportId: report.reportId,
-    calculationVersion: body.calculation.version, rendererVersion: 'FRED_OFFLINE_REPORT_V1',
+    calculationVersion: report.calculation.version, rendererVersion,
     files: files.map(({ body, ...descriptor }) => descriptor) };
   manifest.manifestSha256 = digest(manifestIdentity(manifest)); verifyManifest(manifest);
   const manifestBytes = jsonBytes(manifest);
   files.push({ ...member(BRIEFING_MANIFEST_MEMBER, manifestBytes), body: manifestBytes });
   return { manifest, report, files };
+}
+export function createFredBriefingFiles({ capture, review, rendererVersion = 'FRED_OFFLINE_REPORT_V2' } = {}) {
+  return filesForFredBriefingReport(sourceFredBriefingReport({ capture, review }), rendererVersion);
 }
 export function validateFredBriefingFiles(value, binding = {}) {
   const manifest = verifyManifest(value?.manifest, binding);
@@ -110,17 +116,57 @@ async function exactBytes(directory, name, bytes) {
     await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; });
   }
 }
+async function retainFredBriefingMembers(directory, checked) {
+  // Publish the full manifest last, after every immutable member has completed.
+  for (const file of checked.files) await exactBytes(directory, file.path, file.body);
+  return { directory, ...checked };
+}
 export async function retainFredBriefingFiles({ directory, value } = {}) {
   directory = await privateDirectory(resolve(directory));
   const checked = validateFredBriefingFiles(value);
-  return withPrivateLock(directory, 'briefing.lock', async () => {
-    // Publish the full manifest last, after every immutable member has completed.
-    for (const file of checked.files) await exactBytes(directory, file.path, file.body);
-    return { directory, ...checked };
-  });
+  return withPrivateLock(directory, 'briefing.lock', () => retainFredBriefingMembers(directory, checked));
 }
 export async function prepareFredBriefingFiles({ directory, capture, review } = {}) {
-  return retainFredBriefingFiles({ directory, value: createFredBriefingFiles({ capture, review }) });
+  directory = await privateDirectory(resolve(directory));
+  const report = sourceFredBriefingReport({ capture, review });
+  const binding = { captureId: report.captureId, reviewId: report.reviewId };
+  return withPrivateLock(directory, 'briefing.lock', async () => {
+    let manifest = null;
+    try { manifest = verifyManifest(await readPrivateJson(join(directory, BRIEFING_MANIFEST_MEMBER.path), 65536), binding); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (manifest) {
+      // Read complete V1 or V2 files before constructing any new rendering.
+      try {
+        const retained = await readFredBriefingFiles(directory, { ...binding, includeFiles: true });
+        need(canonical(retained.report) === canonical(report),
+          'The retained report differs from the original source and review.', 'FRED_BRIEFING_SOURCE_CHANGED');
+        return retained;
+      } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      // Recreate an absent member using the renderer named by the original manifest.
+      const value = filesForFredBriefingReport(report, manifest.rendererVersion);
+      need(canonical(value.manifest) === canonical(manifest),
+        'The original briefing manifest differs from its source and retained renderer.', 'FRED_BRIEFING_SOURCE_CHANGED');
+      return retainFredBriefingMembers(directory, validateFredBriefingFiles(value, binding));
+    }
+    let originalHTML = null;
+    try { originalHTML = await readBytes(join(directory, 'briefing.html'), MAX_ASSET_BYTES); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    let rendererVersion = 'FRED_OFFLINE_REPORT_V2', renderedHTML = null;
+    if (originalHTML !== null) {
+      // A previous process may have retained immutable V1 HTML before publishing its manifest.
+      rendererVersion = 'FRED_OFFLINE_REPORT_V1';
+      renderedHTML = Buffer.from(renderFredBriefing(report, { rendererVersion }));
+      if (!originalHTML.equals(renderedHTML)) {
+        rendererVersion = 'FRED_OFFLINE_REPORT_V2';
+        renderedHTML = Buffer.from(renderFredBriefing(report, { rendererVersion }));
+      }
+      need(originalHTML.equals(renderedHTML),
+        'The unfinished briefing HTML differs from its original reviewed source.',
+        'FRED_BRIEFING_FILE_CONFLICT', 409);
+    }
+    const value = filesForFredBriefingReport(report, rendererVersion, renderedHTML);
+    return retainFredBriefingMembers(directory, validateFredBriefingFiles(value, binding));
+  });
 }
 export async function readFredBriefingFiles(directory, { captureId, reviewId, includeFiles = false } = {}) {
   directory = resolve(directory);

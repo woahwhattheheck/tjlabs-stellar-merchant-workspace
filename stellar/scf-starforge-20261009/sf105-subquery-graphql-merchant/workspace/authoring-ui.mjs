@@ -286,6 +286,13 @@ export function createAuthoringWorkspace(ctx) {
       notice('Original handler returned HTTP ' + received.preview.status + '. The exact result and source context are retained.');
     } catch (error) { await refreshHistory().catch(() => {}); throw error; }
   }));
-  return { reset, buttons, operationChanged, applyPending, pending: () => dirty,
+  return { reset, buttons, operationChanged, applyPending,
+    async openRetained(id, project = ctx.saved()?.id) {
+      if (!project || ctx.saved()?.id !== project) throw new Error('Select the original preview project.');
+      const value = await api('/api/authoring/preview?id=' + encodeURIComponent(project) + '&previewId=' + encodeURIComponent(id));
+      if (ctx.saved()?.id !== project) throw new Error('The selected preview project changed.');
+      renderResult(value); notice('Original returned response opened without a provider request.');
+    },
+    pending: () => dirty,
     draftChanged: () => { if (result) $('preview-status').textContent = 'Retained preview. Review the changed draft before using it as the current result.'; } };
 }
