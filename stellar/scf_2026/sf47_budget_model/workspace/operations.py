@@ -22,9 +22,12 @@ import operations_completion as completion
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
+import operations_statements as statements
 import operations_performance as performance
 import operations_ledger_intake as ledger_intake
+import operations_payables as payables
 import operations_implementation as implementation
+import operations_commercial_receivables as commercial_receivables
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -104,6 +107,7 @@ class Operations:
             if row and row[0] != SCHEMA:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
             workspace.db.execute("INSERT OR IGNORE INTO ops_metadata VALUES('schema',?)", (SCHEMA,))
+            self.commercial = commercial_receivables.CommercialReceivables(self)
 
     @property
     def db(self):
@@ -267,6 +271,15 @@ class Operations:
             if command == "source.add":
                 after = self._source_add(program_id, data)
                 kind, record_id = "source", after["id"]
+            elif command == "statement.receive":
+                result = statements.receive(self, context, data, actor, next_version)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {key: value for key, value in result.items()
+                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
+                if result["unchanged"]:
+                    return {"id": program_id, "version": expected, "action": command, "kind": kind,
+                            "recordId": record_id, **extra_receipt}
             elif command == "support.receive":
                 result = support.receive(self, context, data, actor, next_version)
                 source_change = result["sourceChange"]
@@ -528,6 +541,11 @@ class Operations:
             context = deepcopy(self._context(identifier(program_id, "operation")))
         return buyer.preview(context, body)
 
+    def preview_statement(self, program_id, body):
+        with self.workspace.mutex:
+            context = deepcopy(self._completion_context(program_id, body, ("inputs",)))
+        return statements.preview(context, body.get("inputs"))
+
     def preview_support(self, program_id, body):
         with self.workspace.mutex:
             context = deepcopy(self._context(identifier(program_id, "operation")))
@@ -707,6 +725,22 @@ class Operations:
     def ledger_intake_original(self, program_id, source_id):
         return ledger_intake.original(self, identifier(program_id, "operation"), identifier(source_id, "source"))
 
+    def supplier_account(self, program_id, contributor_id=None, start_date=None, end_date=None, expected_version=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            if expected_version is not None and domain.integer(expected_version, "Reviewed case version", 1, 10000000) != context["program"]["version"]:
+                domain.fail("Refresh the original case before reading this supplier account.", "VERSION_CONFLICT", 409)
+            return payables.build(context, contributor_id, start_date, end_date)
+
+    def export_supplier_account(self, program_id, contributor_id, start_date, end_date, expected_version, expected_report_sha256):
+        with self._snapshot():
+            report = self.supplier_account(program_id, contributor_id, start_date, end_date,
+                domain.integer(expected_version, "Reviewed case version", 1, 10000000))
+            if domain.sha(expected_report_sha256, "Reviewed supplier account", False) != report["reportSha256"]:
+                domain.fail("Reopen the supplier and dates before exporting the complete account.",
+                            "SUPPLIER_ACCOUNT_SOURCE_CHANGED", 409)
+            return payables.export_bundle(report, self.export(program_id))
+
     def performance(self, program_id, start_date=None, end_date=None, expected_version=None):
         with self._snapshot():
             context = self._context(identifier(program_id, "operation"))
@@ -810,6 +844,9 @@ class Operations:
                         "reviews": reviews, "events": events, "forecasts": saved_forecasts, "portfolios": saved_portfolios}
             if saved_installations:
                 document["installations"] = saved_installations
+            commercial_rows = self.commercial.export_rows(program_id)
+            if commercial_rows["prepared"]:
+                document["commercialReceivables"] = commercial_rows
             report = domain.report(**context)
             files = {"planning.zip": original,
                      "operations.json": (canonical(document) + "\n").encode(),
@@ -928,7 +965,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, performance_report = performance.unwrap_bundle(raw)
+        native_raw, supplier_account = payables.unwrap_bundle(raw)
+        native_raw, performance_report = performance.unwrap_bundle(native_raw)
         native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
         document, files = self._unpack(native_raw)
         source_program, plan = document["program"], document["plan"]
@@ -990,6 +1028,7 @@ class Operations:
                 domain.fail("The complete original review snapshot and report are required.")
             if digest(review["snapshot"]) != review["businessSha256"]:
                 domain.fail("A frozen review differs from its retained business snapshot.")
+        statements.validate_import(context, events, files)
         has_node = buyer.validate_node_import(context, events, reviews, files)
         node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
         node_view = buyer.node_observations(context)
@@ -1004,8 +1043,13 @@ class Operations:
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files)
+        commercial_rows = document.get("commercialReceivables")
+        if commercial_rows is not None:
+            commercial_rows = commercial_receivables.validate_import(
+                commercial_rows, reader=lambda ident: files["sources/" + ident])
         dispatch.validate_received(delivery_queue, document)
         performance.validate_received(performance_report, document)
+        payables.validate_received(supplier_account, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
@@ -1086,6 +1130,8 @@ class Operations:
                       "archiveSha256": hashlib.sha256(raw).hexdigest(), "importedAt": stamp, "importedBy": actor}
             if performance_report:
                 origin["performance"] = performance.received_selection(performance_report)
+            if supplier_account:
+                origin["supplierAccount"] = payables.received_selection(supplier_account)
             self.db.execute("INSERT INTO ops_programs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (pid, imported["id"], plan["revision"], source_program["version"], source_program["state"],
                  name, source_program["mode"], source_program.get("calendarStart"), canonical(pinned),
@@ -1105,6 +1151,8 @@ class Operations:
             for value in saved_installations:
                 self.db.execute("INSERT INTO ops_installations VALUES(?,?,?,?)",
                                 (pid, value["id"], value["revision"], canonical(value)))
+            if commercial_rows is not None:
+                self.commercial.restore_rows(pid, commercial_rows)
             for value in saved_forecasts:
                 self.db.execute("INSERT INTO ops_forecasts VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             for value in saved_portfolios:
@@ -1112,7 +1160,8 @@ class Operations:
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
-                    **({"performance": performance.received_selection(performance_report)} if performance_report else {})}
+                    **({"performance": performance.received_selection(performance_report)} if performance_report else {}),
+                    **({"supplierAccount": payables.received_selection(supplier_account)} if supplier_account else {})}
         with self.workspace.mutex:
             # Reuse the original receipt table before the original plan import.
             # A rejected reuse or invalid request cannot create an extra plan.

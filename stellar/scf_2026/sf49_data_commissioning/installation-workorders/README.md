@@ -11,6 +11,7 @@ The maintained commercial importer remains the entry for an original customer Wo
 | File | Purpose |
 | --- | --- |
 | prepare.mjs | Node CLI; complete local JSON input, private create-only output and exact-byte receiving metadata |
+| receive.mjs | Complete native source intake, original Installation refresh/save and full-case receiving driver |
 | prepare-core.mjs | Pure preparation functions, selected-source checks and complete workorder rendering |
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
@@ -158,3 +159,29 @@ The two profile files name their exact observed Git blobs. The implementation is
 - The original Customer installations guide linked above and the complete current product operating guides.
 
 The tool uses the existing native schema. Its complete output continues through the original application, source delivery and native save/receiving operations.
+
+## Complete native receiving in one operation
+
+The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and both complete profiles.
+
+Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. The private CoCart/Zeeve commissioning package supplies the filled input and all four original files.
+
+~~~sh
+starforge grant-installation-receive \
+  --operations-cli "$SCF_MODEL_ROOT/workspace/cli.py" \
+  --workspace "$SCF_WORKSPACE" --case "$SCF_CASE" --plan "$SCF_PLAN" \
+  --inputs "$SCF_PAIR_FILES/PAIR_RECEIVING.json" \
+  --source-root "$SCF_PAIR_FILES" --out "$SCF_OUTPUT" \
+  --receiving-workspace "$SCF_RECEIVING_WORKSPACE" \
+  --actor "$SCF_ACTOR" --receiving-actor "$SCF_RECEIVING_ACTOR"
+~~~
+
+The selected original case and plan are required. The receiving workspace is a separate operator-selected workspace. Node 22 and the original Python Operations application execute the operation; the driver uses the same native preview, save and complete-case importer as the browser.
+
+The driver retains the four complete files privately, reuses matching original attached bytes, and reads the actual case version for each mutation. It receives the complete native Workshare seed, composes the customer workorder, obtains the original preview and saves that edition. An existing installation is found by its original Workshare case. Native source refresh preserves its current task, payment, deployment, receiving fields and observed checks; changed original phases follow the native source-refresh rules. If its complete native document already matches, the existing saved edition is reopened.
+
+The input's optional customer **bindings** object edits only **merchantDeploymentId**, **buyerDeploymentIds**, **task**, **source**, **payment** and **receiving**. A first PLANNED edition can retain pending customer selections. Existing operated installations retain their stage and native observations while the original preview resolves supplied edits and source changes.
+
+Once every customer is saved, one complete Installation ZIP carries the entire original operating case, all sources, records and saved editions. The native receiving importer opens that complete case once, and the driver reopens every selected original Installation identity and edition in that receiving case. The private output includes each original seed, editable bindings/input, complete human workorder, the complete case ZIP and one native receiving result identifying both original and receiving cases.
+
+Interrupted source attachment or save is recovered from the original case's retained source and Installation identities. Reusing the same complete exported ZIP keeps the original importer request identity. The same output directory retains its exact selected invocation. Choose a new output directory for an intentionally changed receiving input. Original case-version conflicts are reconciled from a fresh native case; the original application remains the writer and source authority.

@@ -1,3 +1,4 @@
+import {wireReadingHandover} from '/reading-exchange.js';
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fragment=location.hash.slice(1),isSession=/^[a-f0-9]{64}$/.test(fragment);
 let token=isSession?fragment:sessionStorage.getItem('resourceResearchToken')||'';
@@ -20,12 +21,12 @@ async function status(){const s=await api('/api/content-search/status');state.st
   $('build').disabled=s.running;$('refresh').disabled=s.running;$('cancel').hidden=!s.running;
   $('build').textContent=s.last&&['INTERRUPTED','CANCELLED','FAILED'].includes(s.last.state)?'Resume indexing':s.current?'Update content index':'Index full contents';
   const issues=b?.issues??[];$('coverageIssues').hidden=!issues.length;$('issueList').replaceChildren(...issues.map(x=>{const li=document.createElement('li');li.textContent=x.name+' — '+(x.state==='BINARY'?'Not UTF-8 text':'Could not read verified contents');return li;}));
-  renderSaved(s.savedQueries);if(state.result&&s.current?.id!==state.result.build)$('resultContext').textContent='These results use a retained index. Search again to use the current library.';return s;
+  renderSaved(s.savedQueries);handover.refreshContext();if(state.result&&s.current?.id!==state.result.build)$('resultContext').textContent='These results use a retained index. Search again to use the current library.';return s;
 }
 function renderSaved(items){$('savedList').innerHTML=items.length?items.map(x=>'<div class="savedItem"><button class="savedName" data-run="'+esc(x.id)+'">'+esc(x.name)+'</button><p class="savedQuery">'+esc(x.q)+'</p><div class="savedControls"><button data-edit="'+esc(x.id)+'">Edit</button><button data-delete="'+esc(x.id)+'">Delete</button></div></div>').join(''):'<p class="muted">No saved searches yet.</p>';}
 async function run(options={}){const sequence=++state.sequence;const query=options.continue?state.query:{q:$('query').value.trim(),mode:$('mode').value};if(!query?.q)return;
   const result=await api(queryUrl('search',{...query,offset:options.offset??0,limit:10}));if(sequence!==state.sequence)return;
-  state.query={q:result.q,mode:result.mode,build:result.build};state.result=result;$('export').disabled=!result.total;$('detail').hidden=true;state.selected=null;
+  state.query={q:result.q,mode:result.mode,build:result.build};state.result=result;$('export').disabled=!result.total;$('detail').hidden=true;state.selected=null;handover.refreshContext();
   $('resultTitle').textContent=result.total+' matching '+(result.total===1?'file':'files');$('resultContext').textContent=(result.mode==='all'?'Every word occurs somewhere in each file.':'At least one search word occurs in each file.')+' Open a file to review every matching passage.';
   $('results').innerHTML=result.items.length?result.items.map((x,i)=>'<article class="result"><div class="actions"><div><h3>'+esc(x.resource.name)+'</h3><div class="metadata">'+bytes(x.resource.bytes)+' · '+x.passageCount+' matching '+(x.passageCount===1?'passage':'passages')+(x.annotation?.starred?' · Starred':'')+'</div></div><button data-open="'+i+'">Review passages</button></div>'+excerpt(x.excerpt)+(x.annotation?.note?'<p class="muted">Review: '+esc(x.annotation.note.slice(0,200))+'</p>':'')+'</article>').join(''):'<div class="empty">No complete-word matches. Try fewer words or choose “Any word.”</div>';
   $('previous').disabled=result.offset===0;$('next').disabled=result.nextOffset===null;$('pageLabel').textContent=result.total?(result.offset+1)+'–'+(result.offset+result.items.length)+' of '+result.total:'0 results';message('');
@@ -59,4 +60,5 @@ $('savedList').onclick=handle(async e=>{const button=e.target.closest('button');
   $('query').value=item.q;$('mode').value=item.mode;
   if(button.dataset.edit){state.editing=item;$('searchName').value=item.name;$('saveForm').hidden=false;$('searchName').focus();}else await run();
 });
+const handover=wireReadingHandover({state,api,download,message,handle});
 status().catch(error);setInterval(()=>{if(document.visibilityState==='visible'&&state.status?.running)status().catch(error);},1500);

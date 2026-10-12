@@ -4,6 +4,10 @@ Run the actual SF47 funding calculator through a retained local planning workspa
 
 The application uses the original [budget.py](../budget.py) for every accepted scenario. Its current source is [sf10_current_candidate.json](../sf10_current_candidate.json); the accompanying [calculator guide](../README.md) explains the native funding model and source assumptions.
 
+## Compare saved revisions
+
+Open **Compare saved plans** to compare saved revisions within one plan or across named alternatives. Inspect complete source changes, exact funding and capacity deltas, and retained daily cash outcomes. The [comparison guide](COMPARISON.md) covers the browser, CLI, typed client, Merchant MCP and complete original-plan receiving package.
+
 ## Start and reopen
 
 Use Linux with Python 3.10 or newer and a current browser. The application uses Python's standard library, SQLite and a retained operating-system file lock. Its browser files are plain HTML, CSS and JavaScript.
@@ -243,3 +247,9 @@ The matching Python and Node managed launch readers identify the full installed 
 ## Original implementation evidence
 
 The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete SF74 commissioning source into the existing operating case. Operators select exact task, measurement and separate technical/customer receiving observations, link the original work/purchases/deployments and saved Installation editions, and freeze a source-verified review. The original Completion, typed client/MCP, CLI and full case export/reopen retain the same evidence and request identities. The [original receiving journey](BUYER_RECEIVING_JOURNEY.md) can include this phase on its explicitly selected original case.
+
+## Operate a complete supplier account
+
+**Delivery operations → Supplier accounts** brings the selected contributor or supplier, original work, invoice lines, review states, source documents and observed payments/refunds into one account. Operators can record and edit original supplier/work/invoice data, attach documents, retain actual cash allocations, and review opening/period/closing balances and invoice aging for selected dates.
+
+**Download complete account handover** includes the complete account JSON, all invoice/work/cash/activity CSVs, readable offline HTML and the original operating case with every retained attachment. Import that complete ZIP to reopen the same supplier and dates. The [Supplier accounts guide](PAYABLES.md) covers browser recovery, native commands, typed client, CLI, Merchant MCP and the source joins with Engagements, Statements, Ledger Intake and Budget Performance.
