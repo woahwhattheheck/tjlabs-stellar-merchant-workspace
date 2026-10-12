@@ -140,7 +140,7 @@ If the ZIP is elsewhere, supply its exact path. To restore and open:
 
 The original service uses its absolute accounting path in its workspace identity. This opener restores the original private root at {ORIGINAL}; the Linux user running it must be able to create that root. The opener creates missing files, reuses identical files, and preserves any different existing state. It keeps the original account and source identities and reconnects the existing probe-accounting endpoint to the current local service port.
 
-Open the private access HTML file printed by the command. Select Delivery operations, the retained case and Customer billing. Use the original pending-operation recovery control when the selected saved case has an unfinished invoice response. Refresh invoices and payments to read the retained account.
+Open the private access HTML file printed by the command. Select Delivery operations, the retained case and Customer billing. In the saved-schedule selector, choose Freeform Solutions. Use the original pending-operation recovery control when the selected saved case has an unfinished invoice response. Refresh invoices and payments to read the retained account.
 
 The default case is the original source planning workspace. The separately received case is available with:
 

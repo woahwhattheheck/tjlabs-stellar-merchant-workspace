@@ -23,7 +23,7 @@ python3 -B open-commercial-handover.py open /absolute/path/to/SCF_Customer_Billi
 
 `--sha256` accepts the recorded whole-archive digest. `--node` selects the Node executable. `--case receiving` opens the separately received planning case; the default is the original source case.
 
-The accounting workspace derives its identity from its original absolute directory. The launcher restores that private directory, checks the original account/source binding and reuses the original local API implementations. It reconnects the existing commercial endpoint to the current local service port. Open the private access HTML file printed by the launcher and use Delivery operations → Customer billing.
+The accounting workspace derives its identity from its original absolute directory. The launcher restores that private directory, checks the original account/source binding and reuses the original local API implementations. It reconnects the existing commercial endpoint to the current local service port. Open the private access HTML file printed by the launcher and use Delivery operations → Customer billing. Choose **Freeform Solutions** in the saved-schedule selector to open the retained billing example.
 
 Missing files are created exclusively. `restore` compares any existing file before receiving. Repeating `open`, including with a later complete edition of this same handover, verifies the original operation, source commit, account binding and all 241 installed source files before continuing the retained workspace. Later accounting and planning edits remain in that workspace. Ctrl+C closes both services.
 
