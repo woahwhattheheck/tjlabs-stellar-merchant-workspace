@@ -23,6 +23,10 @@ node odata/live/cli.mjs COMMAND [options]
   collection-rows --directory DIRECTORY [--offset 0 --limit 100]
   collection-analysis-mapping --directory DIRECTORY --source REGISTERED_NAME --revision NUMBER --out mapping.json
 
+  comparison-create / comparison-list / comparison-inspect / comparison-rows
+  comparison-review / comparison-publish / comparison-restore / comparison-files
+  comparison-analysis-mapping (use each command with --help for its complete workflow)
+
 Use original odata/cli.mjs to connect, inspect metadata, and save/review queries.
 A selection.json is {"operation":"Orders","request":{"pageSize":100,"top":830}}.
 Payment amount is per successful supplier page. pageSize is a provider preference;
@@ -41,6 +45,11 @@ export async function main(args=process.argv.slice(2)){
   if(Object.hasOwn(collectionCommands,args[0])){
     const {main:collectionMain}=await import('./collection-cli.mjs');
     return collectionMain([collectionCommands[args[0]],...args.slice(1)]);
+  }
+  const comparisonCommands=new Set(['create','inspect','list','rows','review','publish','restore','files','analysis-mapping']);
+  if(args[0].startsWith('comparison-')&&comparisonCommands.has(args[0].slice('comparison-'.length))){
+    const {main:comparisonMain}=await import('./collection-comparison-cli.mjs');
+    return comparisonMain([args[0].slice('comparison-'.length),...args.slice(1)]);
   }
   const {command,options:o}=parse(args),options={allowLoopback:o['allow-loopback']==='true'};
   let result;

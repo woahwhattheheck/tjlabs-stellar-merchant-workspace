@@ -28,7 +28,23 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
 ~~~
 
 Retain the returned archive path, SHA-256 and manifest. The package version binds
-both its original commit and the huwise selection. It carries this guide as its
+both its original commit and the huwise selection. The selection also retains
+the original job-intake-browser and paid-job-operations source contributions
+used by its shared buyer workspace. Their browser route manifests resolve the
+shared file-input and resolution-limit modules to the same source served by
+the native HTTP applications. The original SF66 JSON-RPC commerce and recovery
+modules travel with their existing commerce importers.
+
+When receiving a newer source edition from a retained Git object cache, keep
+the original donor cache and its source receipt. Receive the corrected target's
+exact commit, complete tree and required new blobs through the maintained Git
+object receiver. Build that explicit target commit in a new output directory:
+an earlier failed output remains bound to its earlier source commit. Reuse
+the original operating project and retained customer intent after installing
+the new package. Source receiving and installation do not require another
+provider query or purchase.
+
+It carries this guide as its
 README and includes the original source specification, selected contribution
 declarations, source file inventory and upstream license.
 

@@ -7,6 +7,7 @@ import { digest, projectName, validateVersion, plain } from './store.mjs';
 import { readExport, verifyExport, verifyFiles } from './merchant.mjs';
 import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
+import { readComparison, comparisonReference, comparisonRelativeFile, validateComparisonRecord, verifyComparisonSources } from './comparison.mjs';
 import { WORKSPACE_PATHS_SCHEMA, pathContext, readProjectPaths, referenceDirectory, usedPathRoots, workspaceOrigin } from './paths.mjs';
 
 export const PROJECT_HANDOVER_SCHEMA = 'stellar-forge.graphql-project-handover.v1';
@@ -94,12 +95,15 @@ function seenReference(seen, reference, kind) {
   if (!plain(reference) || !UUID.test(reference.id ?? '') || !SHA.test(reference.recordSha256 ?? ''))
     fail('A committed artifact reference has no original UUID or record hash.');
   const fields = kind === 'deployment' ? ['id', 'directory', 'exportId', 'generation', 'recordSha256']
+    : kind === 'comparison' ? ['id', 'project', 'generation', 'definitionSha256', 'recordSha256']
     : kind === 'preview' ? ['id', 'project', 'inputDigest', 'recordSha256']
     : ['id', 'directory', 'inputDigest', 'recordSha256'];
   if (kind === 'deployment' && (!UUID.test(reference.exportId ?? '') || !Number.isSafeInteger(reference.generation) || reference.generation < 1)
-      || kind !== 'deployment' && !SHA.test(reference.inputDigest ?? ''))
+      || kind === 'comparison' && (!Number.isSafeInteger(reference.generation) || reference.generation < 1
+        || !SHA.test(reference.definitionSha256 ?? ''))
+      || !['deployment', 'comparison'].includes(kind) && !SHA.test(reference.inputDigest ?? ''))
     fail('A committed artifact reference has an inconsistent native identity.');
-  const key = kind === 'deployment' ? reference.id + ':' + reference.generation : reference.id;
+  const key = ['deployment', 'comparison'].includes(kind) ? reference.id + ':' + reference.generation : reference.id;
   const identity = JSON.stringify(fields.map(field => reference[field]));
   if (seen.has(key)) {
     if (seen.get(key) !== identity) fail('Committed revisions disagree about the same original ' + kind + ' reference.', 409);
@@ -124,6 +128,8 @@ function allowedFile(filename, project, revision) {
     && (parts[2] === 'head.json' || /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= revision);
   if (parts[0] === 'packages' || parts[0] === 'deployments')
     return parts.length >= 3 && parts[1].startsWith(project + '-');
+  if (parts[0] === 'comparisons') return parts.length === 3 && UUID.test(parts[1])
+    && /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= 256;
   return parts[0] === 'previews' && parts.length === 2 && UUID.test(parts[1].slice(0, -5)) && parts[1].endsWith('.json');
 }
 function indexOf(bytes, expectedSha256) {
@@ -161,7 +167,7 @@ export async function describeProjectHandover(store, { project, revision } = {})
   const selectedName = 'projects/' + project + '/' + revision + '.json';
   const selectedSha256 = digest(await bytesAt(store.root, selectedName));
   const cache = await directory(join(store.root, 'handover-indexes'), true);
-  const cacheName = digest(json({ project, revision, selectedSha256, root: store.root })) + '.json';
+  const cacheName = digest(json({ project, revision, selectedSha256, root: store.root, closureVersion: 2 })) + '.json';
   try {
     const bytes = await bytesAt(cache, cacheName), sha256 = digest(bytes), index = indexOf(bytes, sha256);
     if (index.project.id !== project || index.project.revision !== revision || index.project.inputDigest !== selected.inputDigest
@@ -184,7 +190,7 @@ export async function describeProjectHandover(store, { project, revision } = {})
     loaders.set(filename, { file: info, load: () => bytesAt(store.root, filename, info) });
   };
   const addGroup = async (root, files) => { for (const file of files) await add(join(root, name(file.name)), file); };
-  const exports = new Map(), deployments = new Map(), previews = new Map();
+  const exports = new Map(), deployments = new Map(), previews = new Map(), comparisons = new Map(), comparisonCache = new Map();
   for (let number = 1; number <= revision; number++) {
     const saved = await store.read(project, number);
     usedPathRoots(saved, context, roots);
@@ -215,13 +221,27 @@ export async function describeProjectHandover(store, { project, revision } = {})
       const path = join(store.previews, reference.id + '.json'), raw = await bytesAt(store.root, logical(store.root, path));
       await add(path, { bytes: raw.length, sha256: reference.recordSha256 });
     }
+    for (const reference of saved.comparisons ?? []) {
+      if (seenReference(comparisons, reference, 'comparison')) continue;
+      if (!comparisonCache.has(reference.id)) {
+        const latest = (selected.comparisons ?? []).find(item => item.id === reference.id && item.generation >= reference.generation) ?? reference;
+        comparisonCache.set(reference.id, await readComparison(store, latest));
+      }
+      const retained = comparisonCache.get(reference.id).records[reference.generation - 1];
+      if (!retained || retained.sha256 !== reference.recordSha256 ||
+          json(comparisonReference(retained.record, retained.sha256)).toString() !== json(reference).toString())
+        fail('A comparison differs from its committed project reference.', 409);
+      await add(join(store.root, comparisonRelativeFile(reference.id, reference.generation)),
+        { bytes: retained.raw.length, sha256: retained.sha256 });
+    }
   }
   const head = json({ id: project, revision, inputDigest: selected.inputDigest }), headName = 'projects/' + project + '/head.json';
   loaders.set(headName, { file: entry(headName, head), load: async () => head });
   const index = { schema: PROJECT_HANDOVER_SCHEMA,
     project: { id: project, revision, inputDigest: selected.inputDigest, title: selected.input.title, updatedAt: selected.updatedAt },
     roots: [...roots].sort(), files: [...loaders.values()].map(item => item.file).sort((a, b) => a.name.localeCompare(b.name)),
-    counts: { revisions: revision, merchantRecords: exports.size, deploymentGenerations: deployments.size, completedPreviews: previews.size },
+    counts: { revisions: revision, merchantRecords: exports.size, deploymentGenerations: deployments.size, completedPreviews: previews.size,
+      comparisonGenerations: comparisons.size },
     deploymentBinding: 'Retained packets preserve their original installed adapter and host. Prepare a new local packet through the original deployment compiler.' };
   const bytes = json(index), sha256 = digest(bytes);
   indexOf(bytes, sha256);
@@ -253,7 +273,7 @@ async function verifyClosure(index, load) {
     if (!Array.isArray(entries)) fail('A retained artifact has no original file manifest.');
     for (const item of entries) requireFile(originalPath(index, join(root, name(item.name))), item);
   };
-  const exported = new Map(), deployed = new Map(), previewed = new Map();
+  const exported = new Map(), deployed = new Map(), previewed = new Map(), compared = new Map(), comparisonRecords = new Map();
   let last;
   for (let number = 1; number <= index.project.revision; number++) {
     const file = requireFile('projects/' + index.project.id + '/' + number + '.json');
@@ -292,7 +312,24 @@ async function verifyClosure(index, load) {
           || digest(Buffer.from(JSON.stringify(record.request))) !== record.requestSha256)
         fail('The retained preview request or response identity changed.');
     }
+    for (const reference of saved.comparisons ?? []) {
+      if (seenReference(compared, reference, 'comparison')) continue;
+      const filename = comparisonRelativeFile(reference.id, reference.generation);
+      const record = validateComparisonRecord(await recordJson(filename, reference.recordSha256), reference);
+      if (json(comparisonReference(record, reference.recordSha256)).toString() !== json(reference).toString())
+        fail('A committed response-review summary differs from its original generation.');
+      comparisonRecords.set(reference.id + ':' + reference.generation, { record, sha256: reference.recordSha256 });
+    }
   }
+  for (const { record } of comparisonRecords.values()) await verifyComparisonSources(record, {
+    loadPreview: reference => recordJson('previews/' + reference.id + '.json', reference.recordSha256),
+    loadDraft: async (revision, sha256) => decode(await load(requireFile('projects/' + index.project.id + '/' + revision + '.json', { sha256 }))),
+    loadPrior: async (id, generation, sha256) => {
+      const original = comparisonRecords.get(id + ':' + generation);
+      if (!original || original.sha256 !== sha256) fail('The handover omits the original preceding review generation.');
+      return original.record;
+    },
+  });
   const head = decode(await load(requireFile('projects/' + index.project.id + '/head.json')));
   if (head.id !== index.project.id || head.revision !== index.project.revision || head.inputDigest !== last.inputDigest
       || last.inputDigest !== index.project.inputDigest || last.input.title !== index.project.title
@@ -300,8 +337,8 @@ async function verifyClosure(index, load) {
     fail('The handover head does not match its selected original revision.');
   if (required.size !== files.size) fail('The handover includes files outside the selected committed project closure.');
   const counts = { revisions: index.project.revision, merchantRecords: exported.size,
-    deploymentGenerations: deployed.size, completedPreviews: previewed.size };
-  if (!plain(index.counts) || Object.entries(counts).some(([key, count]) => index.counts[key] !== count))
+    deploymentGenerations: deployed.size, completedPreviews: previewed.size, comparisonGenerations: compared.size };
+  if (!plain(index.counts) || Object.entries(counts).some(([key, count]) => (key === 'comparisonGenerations' ? index.counts[key] ?? 0 : index.counts[key]) !== count))
     fail('The handover totals do not match its original committed history.');
   return last;
 }

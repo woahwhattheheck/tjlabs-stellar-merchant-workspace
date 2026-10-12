@@ -85,3 +85,20 @@ starforge graphql-product inspect-received --dir /srv/private/received-merchant-
 Receiving uses the original resumable downloader and native manifest. It delivers selected draft, preview, merchant, evolution, deployment, host or complete project-handover files with their original byte identities and nested paths. Offline inspection reopens those files after the source process closes. For continued authoring on a receiving host, select kind handover and use the original browser's Project handover actions or inspect-handover / reopen-handover. The [complete handover guide](HANDOVER.md) covers original history, interrupted receiving, source rebinding and local deployment preparation.
 
 See [OPERATING.md](OPERATING.md) for the complete source-to-merchant workflow, stable request recovery, receiving selections and application ownership.
+
+## Compare returned responses and retain review decisions
+
+The same saved project now supports baseline/candidate response cohorts from
+its already completed previews. Compare exact numeric values, data, errors,
+HTTP status and original request/schema context; retain per-case decisions and
+versioned reviewer notes. The browser, six native comparison tools and dedicated
+CLI commands use the original writer and preserve uncertain request UUIDs.
+
+Prepare an offline reviewer packet with every selected response, original
+draft and review generation through kind comparison in the existing receiver.
+Complete project handover retains that history so the receiving operator can
+continue reviews and author the next merchant revision.
+
+The [retained response review guide](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/RESPONSE_REVIEW.md)
+covers actual browser operation, exact request templates, full-value inspection,
+original-result recovery, offline files and continued review after receiving.

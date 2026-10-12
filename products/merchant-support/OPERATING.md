@@ -79,7 +79,7 @@ starforge merchant-services --help
 starforge merchant-commercial --help
 ```
 
-The complete [commercial receiving programme](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/RECEIVING.md) captures the selected original pricing files and full pricing-workspace backup, attaches them through the original case writer, exports the complete case, and restores that exact pricing workspace at the receiver. Its native entry is `stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/receiving-cli.mjs`.
+The complete [commercial receiving programme](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/RECEIVING.md) captures the selected original pricing files and full pricing-workspace backup, attaches them through the original case writer, exports the complete case, and restores that exact pricing workspace at the receiver. Use `starforge merchant-commercial receiving --help` for its installed commands; the native entry remains `stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/receiving-cli.mjs`.
 
 ## Configure the installed agent
 

@@ -1,0 +1,96 @@
+{
+  "schema": "stellar-forge.distribution-source-selection.v1",
+  "id": "finage-market",
+  "title": "Finage market review and customer receiving",
+  "description": "Complete original market capture and review, exact customer mapping, managed Applications, streamed delivery, full native warehouse selection and portable recovery.",
+  "base": {
+    "commands": [
+      "installation",
+      "runtime-profile",
+      "runtime-install",
+      "runtime-workspace",
+      "runtime-transfer"
+    ],
+    "exports": [
+      "./installation",
+      "./installation/cli",
+      "./installation/product",
+      "./installation/runtime",
+      "./runtime-profile",
+      "./runtime-install",
+      "./runtime-transfer",
+      "./runtime-workspace",
+      "./runtime-workspace/server",
+      "./package.json",
+      "./manifest.json"
+    ],
+    "features": [
+      "schema"
+    ],
+    "applicationProviders": [],
+    "merchantProviders": [],
+    "browserAssets": []
+  },
+  "contributions": [
+    "python",
+    "finage"
+  ],
+  "components": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/finage",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
+    "stellar/scf-starforge-20261009/distribution/python-runtime",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/python",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/operations",
+    "stellar/scf-starforge-20261009/sf31-buyer-client",
+    "stellar/scf-starforge-20261009/sf46-release",
+    "stellar/scf-starforge-20261009/sf82-seller-pilot"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/build.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-object-receiving.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/worker.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-terminal.py",
+    "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+    "stellar/scf-starforge-20261009/distribution/GIT_OBJECT_RECEIVING.md",
+    "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md",
+    "stellar/scf-starforge-20261009/distribution/BROWSER_ASSETS.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/MANAGED_OPERATIONS.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md",
+    "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs",
+    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar-forge/payment-auto-catalog/schema-validation.mjs",
+    "stellar-forge/payment-auto-catalog/schema-pattern.mjs",
+    "stellar-forge/payment-auto-catalog/package.json",
+    "stellar-forge/payment-auto-catalog/package-lock.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "stellar/scf-starforge-20261009/distribution/selections/FINAGE_MARKET.md"
+  ],
+  "excludeFiles": [
+    "stellar/scf-starforge-20261009/distribution/index.mjs"
+  ],
+  "product": {
+    "schema": "stellar-forge.merchant-product-package.v1",
+    "description": "Complete original market capture and review, exact customer mapping, managed Applications, streamed delivery, full native warehouse selection and portable recovery.",
+    "repository": {
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "directory": ""
+    },
+    "readme": "stellar/scf-starforge-20261009/distribution/selections/FINAGE_MARKET.md",
+    "bin": {
+      "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
+    }
+  }
+}

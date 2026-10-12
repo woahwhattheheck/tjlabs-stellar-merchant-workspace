@@ -145,6 +145,51 @@ A missing binding retains the actual exposure and presents a source issue;
 repair the original buyer binding, then capture and review that same source.
 Other owners' ledger entries remain part of the complete statement.
 
+### Import an original Node accounting export
+
+Use the original producer's complete
+`stellar-forge.node-operation-accounting-export.v1` JSON and exact SHA-256.
+The carrier retains the producing attempt, evidence, operation/configuration
+identity and saved SF36 accounting result. Keep its original bytes and actual
+operational or controlled-development context.
+
+1. In **Sources → Import Node accounting export**, select that file and enter
+   the source name, accountable intake operator and provenance.
+2. Preview the intent, original accounting command, file identity, native
+   outcome and source dates. The preview identifies any earlier capture and
+   its relation to the current accepted parent.
+3. Confirm the preview with its stable request ID. Open the retained capture
+   and accept or reject it with the actual reviewer and reason.
+4. Continue a finalized expense through the allocation and period workflow
+   below. Review unpaid or unresolved outcomes in their original scope.
+
+| Retained original outcome | Buyer expense treatment |
+| --- | --- |
+| `NO_PAYMENT_REQUIRED` | An unpaid source row, with no payment asset, settled amount or reservation inferred. |
+| `FINALIZED` or `IDEMPOTENT_FINALIZED` | Exact original settled actual units, subject to the existing source, duplicate and coding checks. |
+| Other retained accounting outcomes | An unresolved source outcome requiring its original disposition; the intake performs no finalization. |
+
+A Node export is not a complete ledger statement. The original ledger remains
+the source for outstanding reservations and spending capacity. A second
+representation of the same purchase must not add another charge: the original
+request/proof and normalized transaction bindings join Node, ledger and MCP
+views, including charges already frozen in a closed period. Original unsent
+reservations remain distinct.
+
+The producing attempt's UTC day, observed response time, accounting completion
+and operator-selected recognition date remain separate. New source editions
+retain every earlier file and decision. A stale historical file can be
+explicitly previewed and imported against the current parent; a currently
+accepted or current-parent pending capture can be reopened without another
+capture.
+
+For a new preview or capture, use the existing Node 24 runtime selected above.
+Only the fixed included reader consumes the file on stdin. It does not open
+the producer's ledger or signer or call its worker, decoder or RPC. The full
+[Node operating contract](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/NODE_OPERATIONS.md)
+defines the 16 MiB source limit, exact request envelope, review recovery and
+complete receiving behavior.
+
 ## 4. Allocate and issue the original period
 
 Create the cost centers and accounting period in the original application.
@@ -297,6 +342,49 @@ as the financial operation. A same-ID replay recovers it before another
 capture, allocation or close. A changed payload requires a deliberate new
 operation after current state inspection.
 
+### Select a Node source through the same customer interface
+
+A configured workspace may additionally declare a `nodeSources` alias:
+
+~~~json
+{
+  "nodeSources": {
+    "original_node": {
+      "sourceFile": "/absolute/private/original-node-accounting-export.json",
+      "sourceSha256": "ORIGINAL_EXPORT_SHA256",
+      "name": "Original Node buyer accounting",
+      "provenance": "The actual producing operation and retained original attempt.",
+      "dataContext": "operational"
+    }
+  }
+}
+~~~
+
+This is a workspace configuration fragment. Use the actual source hash and
+context. Source paths and executable selection remain with the host; client
+arguments name the alias and accountable operator. The host checks the exact
+private original file before preview and capture.
+
+Explicitly open the existing configured expense workspace first. Call
+`node_preview` with `workspace`, `nodeSource` and `operator`. Save the
+returned `preview_sha256` as the capture argument `previewSha256`, then
+call `node_capture` with those same fields, the actual `expectedRevision`
+and a stable `requestId`. The named SDK
+methods are `nodePreview` and `nodeCapture`; the MCP tools are
+`merchant_buyer_expense_node_preview` and
+`merchant_buyer_expense_node_capture`. Continue with the original capture
+review, coding and period actions.
+
+The browser retains the same exact request before submission. Recover an
+uncertain response through the original request lookup before choosing another
+operation; the same-ID retry requires the original payload and file bytes.
+
+Export `kind: "node-operation"` with `recordId` equal to the capture ID to
+download `original-node-accounting-export.json`. This exact filename is part
+of the maintained export manifest and downloader contract. Project export
+below includes all Node source/capture editions and the original ten-file
+reader closure, alongside the other financial sources.
+
 ## 7. Export, download and receive the complete project
 
 Export `kind: "project"` at the reviewed current revision under one stable
@@ -335,8 +423,9 @@ and choose a new private destination for another receipt of the earlier ZIP.
 
 The project contains:
 
-- The original runnable Python application and browser, native statement and
-  MCP/governed binding readers, and original refund/accountant validation code.
+- The original runnable Python application and browser, native statement,
+  MCP/governed binding and Node accounting readers, and original
+  refund/accountant validation code.
 - A consistent native expense SQLite backup, complete source captures,
   allocation editions, period reviews, issued documents, accountant returns
   and successful request identities.
@@ -377,6 +466,22 @@ separate original source selection.
 
 ## Source and original receiving reference
 
+The Node export intake carries the exact 16-file source from upstream
+[PR2191](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2191),
+merged at `ed3de0e258446d0136b3f7509774e2e37bfee491`. All eleven
+pre-existing product files matched that change's reviewed preimages; all
+eight unchanged native reader dependencies also matched. The existing
+`buyer-expenses` selection includes the complete SF36/SF88 component roots
+and original SF52/SF43/SF86 support, so the same selected product carries the
+new reader and complete-project receiving code. Its existing SF103 diagnostic
+reader and browser asset mappings remain part of that selection.
+
+The original A39C OpenCage operation reported an HTTP 200 unpaid response.
+Its completed accounting-export locator remains with the original producer.
+This source adoption does not claim an import of that unavailable carrier;
+the separately owned paid profile is not a prerequisite. The completed
+governed case below retains its own original provenance and counts.
+
 The governed integration is the complete original upstream
 [PR2104](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2104),
 merged at `ee47e6141f9824bd7017f57b299df7bd4837debd`. Its maintained entrypoint
@@ -398,6 +503,7 @@ accountant destination through the same original applications.
 
 Read the full native source guides for their exact contracts:
 
+- [Node accounting export, source review and complete receiving](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/NODE_OPERATIONS.md).
 - [Governed MCP source and original restore continuity](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/GOVERNED_MCP.md).
 - [Buyer expense customer SDK/CLI/MCP](../../stellar-forge/mcp-merchant-operator/BUYER_EXPENSES.md).
 - [Bookkeeping and original accountant return](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/BOOKKEEPING.md).

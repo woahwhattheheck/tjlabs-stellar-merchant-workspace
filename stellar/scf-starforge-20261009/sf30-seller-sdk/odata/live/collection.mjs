@@ -654,3 +654,41 @@ export function collectionAnalysisMapping(collection,{source,sourceRevision}={})
     {name:field.name+'_state',pointer:pointer(field.name+'_state'),type:'text',missing:'error'}]);
   return {source,source_revision:sourceRevision,mapping:{collection:'',sse_data:'text',columns}};
 }
+
+
+/** Original declared key semantics shared by complete collection comparison. */
+export { keyIdentity as collectionKeyIdentity };
+/** Iterate a previously opened collection while exhausting its exact saved-file reader. */
+export async function* iterateCollectionRows(collection) {
+  manifestShape(collection);
+  const decoder=new TextDecoder('utf-8',{fatal:true});let pending='',count=0;
+  for await(const chunk of new RetainedResponse(outputPath(collection.directory,'rows.jsonl'),collection.files['rows.jsonl']).chunks()){
+    pending+=decoder.decode(chunk,{stream:true});let next;
+    while((next=pending.indexOf('\n'))>=0){
+      const line=pending.slice(0,next);pending=pending.slice(next+1);
+      need(line,'ROWS_FRAMING','An original collection contains an empty row record.');
+      count++;yield JSON.parse(line);
+    }
+    need(Buffer.byteLength(pending)<=MAX_PAGE_BYTES,'ROW_SIZE','An original collection row exceeds its response limit.');
+  }
+  pending+=decoder.decode();need(!pending&&count===collection.rows,'ROWS_COUNT','The original complete row stream changed.');
+}
+/** Exact original collection inventory, including the complete Analysis document. */
+export async function collectionRetainedFiles(collection) {
+  manifestShape(collection);
+  const root=resolve(collection.directory),manifestRaw=await readRequestFile(outputPath(root,'collection.json'),MAX_MANIFEST_BYTES);
+  need(digest(manifestRaw)===collection.manifestSha256,'MANIFEST_CHANGED','The selected complete collection manifest changed.');
+  const selectionRaw=await verifiedBytes(outputPath(root,'selection.json'),
+    {bytes:(await lstat(outputPath(root,'selection.json'))).size,sha256:collection.selectionSha256},MAX_MANIFEST_BYTES);
+  const sourceRaw=await verifiedBytes(outputPath(root,'analysis/source.json'),collection.analysis,1048576);
+  const document=parse(sourceRaw),files=new Map(Object.entries(collection.files));
+  files.set('collection.json',fileIdentity('',manifestRaw));files.set('selection.json',fileIdentity('',selectionRaw));
+  files.set('analysis/source.json',fileIdentity('',sourceRaw));
+  for(const file of [document.document,...document.originals]){
+    const path='analysis/'+file.path;need(OUTPUT.test(path),'DOCUMENT_FILE','The analytical source names an unsupported file.');
+    const identity={bytes:file.bytes,sha256:file.sha256},prior=files.get(path);
+    need(!prior||same({bytes:prior.bytes,sha256:prior.sha256},identity),'DOCUMENT_FILE','The analytical source repeats a conflicting file.');
+    files.set(path,identity);
+  }
+  return [...files].sort(([a],[b])=>a<b?-1:a>b?1:0).map(([path,file])=>({path,bytes:file.bytes,sha256:file.sha256}));
+}

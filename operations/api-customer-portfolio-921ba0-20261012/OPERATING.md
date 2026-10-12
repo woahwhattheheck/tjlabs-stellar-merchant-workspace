@@ -60,7 +60,7 @@ The process prints `RECEIVING_STARTED`, then `SOURCE_READY`, then the complete c
 
 The history bytes are checked against the report before preservation. Existing result files are never overwritten. If the selected result volume fills, the receiver still prints the complete report so the same operation's result can be retained through its existing source-owner thread.
 
-The original root claim is in the SCF coordination thread at https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791731375272819. Deliver the complete result there, including the exact product commit, actual execution host, process exit and the result/history files. The customer portfolio is PR84; the complete prepaid product is PR88.
+The original root claim is in the SCF coordination thread at https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791807540908059. Deliver the complete result there, including the exact product commit, actual execution host, process exit and the result/history files. The customer portfolio is PR84; the complete prepaid product is PR88.
 
 ## Current source review
 

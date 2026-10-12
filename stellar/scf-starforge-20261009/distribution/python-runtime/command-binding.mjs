@@ -16,6 +16,7 @@ const MODULES=Object.freeze({
   workbookDelivery:'stellar_forge_buyer.workbook_client',
 });
 export const PYTHON_APPLICATION_COMMANDS=Object.freeze([
+  {id:'stellar-forge-dbnomics-analysis',kind:'script',title:'DBnomics economic analysis and workbook receiving'},
   {id:'vgi',kind:'module',title:'Purchased-result VGI workspace',module:MODULES.vgi,
     description:'Review complete original exports, publish retained tables and operate the authenticated VGI listener.'},
   {id:'stellar-forge-vgi-results',kind:'script',title:'Native purchased-result VGI command'},
@@ -43,6 +44,7 @@ function argumentsList(args) {
   return [...args];
 }
 function requiredExtras(command,args) {
+  if(command==='stellar-forge-dbnomics-analysis')return ['workbooks'];
   if(['vgi','stellar-forge-vgi-results'].includes(command))return ['vgi'];
   if(['duckdb','stellar-forge-duckdb'].includes(command))return ['duckdb'];
   if(['postgres','stellar-forge-postgres'].includes(command))return ['postgres'];
@@ -76,6 +78,7 @@ export async function bindPythonApplicationCommand(root,{
   const extras=requiredExtras(command,originalArgs);
   need(extras.every(extra=>installation.extras.includes(extra)),'PYTHON_APPLICATION_EXTRA_REQUIRED',
     'Install the declared '+extras.join(', ')+' extra for this original command.');
+  if(command==='stellar-forge-dbnomics-analysis')exactOption(originalArgs,'--checkout',binding.sourceRoot);
   let argv,entrypoint=null,module=null;
   if(selected.kind==='module'){
     module=MODULES[command];

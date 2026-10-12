@@ -172,10 +172,10 @@ function previewView(row) {
 function projectView(value, args = {}) {
   const result = { id: value.id, title: value.input.title, revision: value.revision, currentRevision: value.currentRevision,
     createdAt: value.createdAt, updatedAt: value.updatedAt, inputDigest: value.inputDigest,
-    counts: { exports: value.exports.length, deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0 } };
+    counts: { exports: value.exports.length, deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0, comparisons: value.comparisons?.length ?? 0 } };
   if (args.includeInput === true) result.input = value.input;
   if (args.collection) {
-    const mapping = { exports: exportView, deployments: deploymentView, previews: previewView }[args.collection];
+    const mapping = { exports: exportView, deployments: deploymentView, previews: previewView, comparisons: value => value }[args.collection];
     if (!mapping) throw failure('INVALID_PARAMS', 'Choose an original project collection.');
     result.collection = args.collection; result.records = page((value[args.collection] ?? []).map(mapping), args);
   }
@@ -419,6 +419,31 @@ export class MerchantGraphqlWorkspaces {
     }
     const entry = this.#entry(args.workspace);
     switch (name) {
+      case 'merchant_graphql_comparison_prepare':
+      case 'merchant_graphql_comparison_review':
+      case 'merchant_graphql_comparison_recover': {
+        const action = name.slice('merchant_graphql_comparison_'.length);
+        const allowed = action === 'prepare' ? ['workspace', 'project', 'expectedRevision', 'id', 'title', 'pairs']
+          : action === 'review' ? ['workspace', 'project', 'expectedRevision', 'id', 'comparisonId',
+            'expectedGeneration', 'expectedRecordSha256', 'reviewer', 'notes', 'decisions']
+            : ['workspace', 'project', 'expectedRevision', 'comparisonId', 'generation', 'expectedRecordSha256'];
+        exact(args, allowed);
+        const { workspace, ...body } = args;
+        const value = await this.#request(entry, '/api/comparison/' + action, body);
+        return { ...value, project: projectView(value.project) };
+      }
+      case 'merchant_graphql_comparison':
+      case 'merchant_graphql_comparison_changes':
+      case 'merchant_graphql_comparison_pending': {
+        const pending = name.endsWith('_pending'), changes = name.endsWith('_changes');
+        const allowed = pending ? ['workspace', 'project', 'comparisonId', 'generation']
+          : ['workspace', 'project', 'revision', 'comparisonId', 'generation', 'expectedRecordSha256',
+            ...(changes ? ['pairId', 'offset', 'limit'] : [])];
+        exact(args, allowed, ['workspace', 'project', 'comparisonId']);
+        const query = new URLSearchParams();
+        for (const key of allowed) if (key !== 'workspace' && args[key] !== undefined) query.set(key, String(args[key]));
+        return this.#request(entry, '/api/comparison' + (pending ? '/pending' : changes ? '/changes' : '') + '?' + query);
+      }
       case 'merchant_graphql_handover_receivings': {
         exact(args, ['workspace', 'offset', 'limit', 'expectedSnapshotSha256'], ['workspace']);
         const query = new URLSearchParams();

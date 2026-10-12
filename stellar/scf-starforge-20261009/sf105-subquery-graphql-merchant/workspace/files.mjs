@@ -6,11 +6,12 @@ import { digest, projectName, plain, readWorkspaceRevision } from './store.mjs';
 import { readExport, verifyExport, verifyFiles } from './merchant.mjs';
 import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
+import { describeResponseComparisonFiles } from './comparison-report.mjs';
 import { describeProjectHandover, PROJECT_HANDOVER_FILE } from './handover.mjs';
 
 export const GRAPHQL_FILE_SET_SCHEMA = 'stellar-forge.graphql-workspace-files.v1';
 export const GRAPHQL_FILE_SET_MANIFEST = 'workspace-files.json';
-export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover'];
+export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover', 'comparison'];
 const json = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
@@ -24,15 +25,15 @@ function filename(value) {
   return value;
 }
 function selectionOf(input) {
-  if (!plain(input) || Object.keys(input).some(key => !['project', 'revision', 'kind', 'exportId', 'deploymentId', 'hostId', 'previewId'].includes(key)))
+  if (!plain(input) || Object.keys(input).some(key => !['project', 'revision', 'kind', 'exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId'].includes(key)))
     fail('Select original workspace identities, not filesystem paths.');
   const selection = { ...input };
   projectName(selection.project);
   if (!Number.isSafeInteger(selection.revision) || selection.revision < 1) fail('Select a saved project revision.');
   if (!GRAPHQL_FILE_KINDS.includes(selection.kind)) fail('Choose a supported retained file kind.');
-  const fields = { draft: [], handover: [], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
+  const fields = { draft: [], handover: [], comparison: ['comparisonId'], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
     deployment: ['deploymentId'], host: ['deploymentId', 'hostId'] }[selection.kind];
-  for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId']) {
+  for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId']) {
     if (fields.includes(key)) {
       if (key === 'hostId' ? typeof selection[key] !== 'string' || !/^host-[1-9]\d*-[a-f0-9]{8}$/.test(selection[key]) : !uuid(selection[key]))
         fail('Select the original ' + key + ' from this project.');
@@ -86,6 +87,11 @@ export function createWorkspaceFiles(store) {
         { file: { ...item.file, contentType: typeOf(name) }, load: item.load });
       source = { ...source, handoverSha256: handover.sha256, counts: handover.index.counts,
         deploymentBinding: handover.index.deploymentBinding };
+    } else if (selection.kind === 'comparison') {
+      const comparison = await describeResponseComparisonFiles(store, selection);
+      for (const [name, item] of comparison.loaders) loaders.set(name,
+        { file: { ...item.file, contentType: typeOf(name) }, load: item.load });
+      source = { ...source, ...comparison.source };
     } else if (selection.kind === 'draft') {
       addBytes(saved.input.schemaText.trimStart().startsWith('{') ? 'schema-source.json' : 'schema-source.graphql', Buffer.from(saved.input.schemaText));
       addBytes('queries.json', Buffer.from(saved.input.queriesText));
