@@ -17,13 +17,13 @@
   },
   "driver": {
     "path": "receive-installed.mjs",
-    "gitBlob": "0241433a2a3176d70530cd0ddd419ebe72e3d8b6",
-    "bytes": 9138
+    "gitBlob": "23d4e60503fef839817c64ed983ae9f1465c66e0",
+    "bytes": 15638
   },
   "receiver": {
     "path": "receive-installed.py",
-    "gitBlob": "a46a3c5a21384a02af6af601735d0f2eda34a5e6",
-    "bytes": 15662
+    "gitBlob": "8d98ba76ec7093982d35a18c4e904920e6991c18",
+    "bytes": 15637
   },
   "parts": [
     {

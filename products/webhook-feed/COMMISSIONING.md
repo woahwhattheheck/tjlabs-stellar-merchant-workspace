@@ -85,7 +85,7 @@ Record these values before the first paid window:
 | Empty-window behavior | An admitted request can still be a priced page when no selected events match. Choose cadence with that operating consequence in view. |
 | Recovery responsibility | Inspect and recover the original page operation before creating another paid request after an uncertain outcome. |
 
-Save actual terms through plan_save and prepare the named release. Start the merchant with the selected native facilitator and the reviewed release. A changed feed or payment plan needs the documented stop/start to bind its new selection.
+Save actual terms through plan_save and prepare the named release. Start the merchant with the selected native facilitator and saved reviewed plan/feed selection. The named release is a delivery artifact; the managed process launches from the store's saved plan and current feed revisions. A changed feed or payment plan needs the documented stop/start to bind its new selection.
 
 The event-store preview checks the data projection. The paid subscriber operation establishes the actual settlement and received-page result for that buyer. Use the customer's useful task to determine the operation and its spending allowance.
 
@@ -105,7 +105,7 @@ Export the original received events:
 
     starforge buyer-event-feed export --dir /private/customer/event-subscription --out /private/customer/deliveries/window-01.ndjson
 
-The export creates window-01.ndjson and window-01.ndjson.manifest.json. Preserve both. The manifest retains source/page references, file identity, count and sequence boundary. Repeating the same export destination completes or reopens that selected export; use a new destination for a later window.
+The export creates window-01.ndjson and window-01.ndjson.manifest.json. Preserve both. The manifest retains source/page references, file identity, count and sequence boundary. Repeating the same export destination completes or reopens that selected export; use a new destination for a later window. Each export contains the retained subscription snapshot. A later export can include previously delivered events, so the destination adapter must apply its agreed idempotency key using the preserved event identities.
 
 Implement the agreed database/API load with the destination's original transaction and idempotency behavior. Keep each source event's identity through transformation. Where the destination already implements idempotency, use its supported contract. Otherwise include a durable acceptance ledger or transactional key in the customer-specific adapter. Record the source window, accepted events, rejected or unresolved items and the actual destination acknowledgment in the original workorder.
 
@@ -151,7 +151,7 @@ A Mercury source uses its original joined source/feed snapshot and restore comma
 
 Have the receiving engineer, using the selected host, perform the actual stop/reopen, current source or terms change, buyer continuation and agreed recovery operation. Reconcile operations after the backup point using the original source, merchant and buyer journals. Record elapsed recovery time, remaining differences and the accepted correction in the existing Installation or Workshare.
 
-Capture a required customer window before applying body retention. The retention decision uses the original throughSequence and expectedHighWatermark. Accepted identities remain retained; raw bodies below the boundary are removed. The retention period must support the customer's actual subscriber lag and recovery commitment.
+Capture a required customer window before applying body retention. The retention decision uses the original throughSequence and expectedHighWatermark. Accepted identities remain retained; raw bodies at or below throughSequence are removed. The retention period must support the customer's actual subscriber lag and recovery commitment.
 
 ## A practical commissioning sequence
 

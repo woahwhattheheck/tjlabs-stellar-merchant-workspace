@@ -4,6 +4,27 @@ Continue **SCF-USASPENDING-AWARD-TRANSACTIONS-64B7-20261012** from the same comp
 
 This package retains the complete canonical source cache at **a8ebea9d6f08086db7ec7d2ee62dc26dadb273d8**, its original Git commit and complete tree, the maintained Git object receiver, and one installed continuation. The cache contains 1,836 original files (26,503,614 bytes). The original federal-awards recipe initially selects 760 files; the maintained native builder resolves the final static module and served browser asset closure.
 
+## Download the complete source on the receiving host
+
+From this operation directory, run:
+
+~~~sh
+python3 binary/receive-published-source.py --directory /ABSOLUTE/PRIVATE/CARRIER
+~~~
+
+The receiver downloads the immutable published manifest, original assembler and
+all nine binary parts. It verifies the original Git identities and digests, then
+uses the unchanged assembler to retain the complete 7,205,397-byte ZIP and
+extract every source-transfer member. Matching completed files are reused when
+continuing in the same carrier directory.
+
+The resulting installed source directory is
+`/ABSOLUTE/PRIVATE/CARRIER/source/federal-awards-installed/`. Run the workflow
+below from that directory. Its `receive-installed.py` receiver validates the
+original operating inputs and invokes the original `receive-installed.mjs`
+driver. The complete [binary carrier guide](binary/README.md) also describes
+receiving through Git file-content tools.
+
 ## Run the complete installed workflow
 
 Unpack this directory's complete source-transfer.json, source-metadata.json, both receiving programmes and source-parts/ together. Use the existing ROOT from the original three-stage operation:
@@ -42,3 +63,9 @@ An interrupted original programme retains its stdout, stderr, source and working
 ## Composition
 
 The canonical Applications registry preserves the original complete catalog API and adds the original source-bound single-provider loader required by USAspending. Merchant Console serves its existing ten static routes through the original shared browser asset manifest, including the gRPC operations module used by its customer browser. The federal-awards selection includes that same manifest contribution. Current console workflow-series source is retained.
+
+## Continue an interrupted installed run
+
+The Linux receiving programme retains selected runtime and managed-application paths in `installed-federal-awards/receiving-selection.json`. If original runtime preparation is incomplete, it uses the original `recoverRuntime` into a fresh private directory, preserving the earlier attempt and original archive. If a directory exists before its preparation record was written, the same original archive is prepared into a fresh directory. Existing complete runtime plans continue through the original installer.
+
+Each managed-application attempt retains its selected runtime, directory, process identity, logs and result. A still-running original child is received through its existing result. A completed unsuccessful attempt retains its workspaces and gets a fresh receiving directory under the same root operation. The final result names the selected runtime and application directories; the original root, merchant and source Applications stages remain its inputs. The completed handover includes the original customer ZIP exports.

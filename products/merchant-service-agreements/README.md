@@ -141,6 +141,8 @@ Start the existing merchant MCP transport through the packaged `merchant-mcp` or
 | `export_file` | Download a listed file or the complete `agreement.tar` |
 | `file_release` | Release an interrupted retained read |
 
+Native MCP errors retain machine-readable `details.agreementBillingPrepared`, `billingId` and `requestId` for a staged billing operation. Original durable commit errors retain `outcomeUnknown`, `reopenRequired` and the available original commit metadata. The HTTP and stdio transports use the same existing error projection, so these fields remain available to receiving agents.
+
 Tool mutations have the same original revision, actor, request ID and agreement version requirements as the HTTP API. Add the declared `workspace` alias, and use `agreementId` for an existing agreement. The complete native request has the same 2,000,000-byte UTF-8 limit.
 
 For an export, retain the returned `asOf`, selected file name and SHA256. Pass them to `export_file`. If `nextOffset` is present, continue with the same workspace, agreement, date, file, SHA256 and `readId`, using that next offset. Decode each base64 chunk and concatenate it in order. The original retained reader snapshots the complete selected file once and serves subsequent chunks from that same snapshot. Verify the final byte count and SHA256 against the inventory.

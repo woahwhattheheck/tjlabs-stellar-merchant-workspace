@@ -460,7 +460,8 @@ export class MerchantAccounting {
       cryptoworth: ['profileId', 'planId', 'captureId', 'returnId', 'rollbackId', 'scope', 'file'],
       runbooks: ['cycleId', 'fileId', 'file'],
       portfolio: ['captureId', 'receivedId', 'clientId', 'cycleId', 'planId', 'file'],
-      'customer-statement-preview': ['customerId', 'runId', 'usageId', 'replacesId', 'from', 'until', 'file'] }[kind];
+      'customer-statement-preview': ['customerId', 'runId', 'usageId', 'replacesId', 'from', 'until', 'usageOpeningId', 'file'],
+      'customer-usage-period-preview': ['usageOpeningId', 'usageId', 'file'] }[kind];
     if (fileSelections.some(key => args[key] !== undefined && !selectors.includes(key))) throw fail('ACCOUNTING_INVALID_ARGUMENTS', 'Use only the original source selectors for this file kind.');
     const session = this.#sessions.get(args.workspace);
     if (kind === 'buyer-source') return session.accountant.startupFile();
@@ -468,7 +469,7 @@ export class MerchantAccounting {
     if (kind === 'runbooks') return session.runbooks.file(args);
     if (kind === 'portfolio') return session.portfolio.file(args);
     if (['qbo', 'xero', 'qbo-source-change', 'xero-source-change'].includes(kind)) return session.platforms.file(args);
-    if (kind === 'customer-statement' || kind === 'customer-statement-preview') return session.statements.file(args);
+    if (['customer-statement', 'customer-statement-preview', 'customer-usage-period-preview'].includes(kind)) return session.statements.file(args);
     if (kind === 'response') {
       if (!recoveryId) throw fail('ACCOUNTING_INVALID_ARGUMENTS', 'Response retrieval requires recoveryId and optionally a captured runId.');
       return workspace.recoveredResponse(recoveryId, runId);

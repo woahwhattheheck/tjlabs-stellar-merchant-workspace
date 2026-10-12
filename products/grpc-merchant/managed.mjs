@@ -42,7 +42,7 @@ async function observation(value, options, environment) {
     source: await merchantConsoleSource(),
   };
   return { files, directories, nativeSelection, operatorConsole,
-    handles: { captures: Object.keys(selected.captures), reflections: Object.keys(selected.reflections), files: Object.keys(selected.files) },
+    handles: { captures: Object.keys(selected.captures), reflections: Object.keys(selected.reflections), files: Object.keys(selected.files), destinations: Object.keys(selected.destinations ?? {}) },
     authorization: { mode: options.browserOnly ? 'browser-only' : oauth ? 'oauth' : 'fixed-bearer',
       tokenEnv: options.tokenEnv, oauthConfig: oauth,
       clientOrigins: options.browserOnly ? [] : String(environment.MCP_CLIENT_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean) } };
@@ -63,5 +63,5 @@ export async function inspectGrpcProductLaunch(input = {}, { environment = proce
       ownership: 'ORIGINAL_GRPC_WORKSPACE',
       operatorConsole: observed.operatorConsole ? { directory: observed.operatorConsole.directory,
         workspaceId: observed.operatorConsole.workspaceId, sourceSha256: observed.operatorConsole.source.sha256 } : null,
-      receiving: 'Complete native customer, revision, attempt, stream, upgrade and health files' } };
+      receiving: 'Complete native customer, revision, attempt, stream, upgrade, health and incident files, plus complete original workspace migration' } };
 }

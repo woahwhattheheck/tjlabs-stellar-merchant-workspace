@@ -119,7 +119,7 @@ def bundle(root):
             relative = path.relative_to(root)
             if any(part in ("node_modules", ".npm", ".git") for part in relative.parts):
                 continue
-            if path.is_symlink() or not path.is_file() or path.suffix == ".zip":
+            if path.is_symlink() or not path.is_file():
                 continue
             archive.write(path, root.name + "/" + relative.as_posix())
     os.replace(temporary, destination)

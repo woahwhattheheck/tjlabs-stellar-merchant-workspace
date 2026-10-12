@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Operate a complete WQX study and receive paired scientific editions | **Applications → WQX water quality**, `starforge water-quality`, `starforge merchant-wqx` and [the complete operating guide](products/wqx-water-quality/OPERATING.md) | Original capture and receiving choices, full-population concentration/limit review, paired scientific summaries, 39 WQX tools, native paid jobs and complete editable customer receiving |
 | Review OpenSanctions source editions and deliver a complete customer monitoring workspace | **Applications → OpenSanctions source monitoring**, `starforge source-monitoring` and `starforge source-monitoring-client` | [Complete selected installation](products/source-monitoring/OPERATING.md), original FtM/statement/delta receiving, source-linked identity and relevance review, typed client operation and full saved-workspace export/reopen |
 | Operate pipeline producers and hand over an editable lineage workspace | **Applications → OpenLineage operations**, `starforge openlineage` and [the complete operating guide](products/openlineage/OPERATING.md) | Native Python/Java event intake, original gzip and decoded sources, job/run/dataset lineage, retained reviews and result files, merchant tools and complete application receiving |
 | Capture, edit and publish a Directus collection, then receive the complete customer project | **Applications → Directus collection data**, `starforge directus` and `starforge directus-workspace` | [Complete selected installation](products/directus-content-data/OPERATING.md), original native content versions and typed editions, reviewed merchant history, full customer acquisition and independently editable project receiving |
@@ -50,6 +51,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Operate a native gRPC service as a merchant | **Applications → gRPC merchant product** or `starforge grpc-product` | Original protobuf/reflection source, unary and bidirectional message calls, seller releases, contract upgrades, retained service health and all customer files |
 | Capture a complete CKAN resource, review a following edition and hand over the whole merchant | **Applications → CKAN data merchant**, `starforge ckan` and [the complete operating guide](products/ckan/OPERATING.md) | Original source meanings, full reviewed changes, preserved publication history, forty CKAN merchant tools and independently editable workspace receiving |
 | Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
+| Review geocoding and CSV rows, publish a merchant and receive complete customer files | **Applications → OpenCage geocoding**, `starforge opencage-workbench` and [the operating guide](products/opencage/OPERATING.md) | Retained original responses, independent candidate decisions, full CSV/GeoJSON delivery, 23 merchant tools, original host preparation and Buyer accounting |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate material catalogs and supplier delivery | `starforge-materials` | Complete source and edition review, customer matching, supplier corrections, BMEcat, ETIM xChange, 2BA upload packages, MCP/client operations and portable receiving |
@@ -57,12 +59,14 @@ roadmap, native acceptance and complete customer handover in one source.
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | [Operate complete Merchant Support](products/merchant-support/README.md) | **Applications → Merchant support**, `starforge support-console`, or the original merchant agent | Saved cases and incidents, implementation and source editions, service commitments, quotations, complete customer packages and independently continued receiving |
 | Operate recurring client closes and a firm portfolio | **Applications → Client runbooks / Client portfolio** or `starforge client-close` | [Complete selected installation](products/accountant-portfolio/README.md), exact client files, immutable procedures, preparation/review, named backup handovers, staff capacity, complete portfolio receiving and the next local period |
+| Set customer installments and run dated collections | **Applications → Customer payment plans** or `starforge payment-plans` | [Complete installed product](products/merchant-payment-plans/README.md), reviewed schedule editions, original payment and credit history, dated collection reports and retained customer files |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
 | Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Synthesize accepted Study results and receive the complete analytical workspace | **Analysis → Evidence synthesis** and [the complete operator guide](products/research/SYNTHESIS.md) | Full original publications, explicit cohort and result selection, immutable protocols, native calculations and figures, Python SDK/CLI receiving and whole-workspace reopening |
 | Review a Zotero library and hand over the original Research project | `starforge zotero` and [the complete operating guide](products/zotero/OPERATING.md) | Exact library pages, collection projects, original evidence and complete linked Research receiving across successive operators |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, complete customer installation commissioning and handover, original buyer and support observations, source-bound implementation evidence, cohort review, tranche completion and complete workspace receiving |
+| Operate a RisingWave subscription data product | **Applications → RisingWave source and dataset publishers** or `starforge risingwave-workspace` | Native relation and subscription authoring, complete retained snapshots and changes, full differences, versioned publication and complete customer receiving |
 | Operate a QuestDB time-series data product | **Applications → QuestDB source and dataset publishers** or `starforge questdb-workspace` | Native fixed-window, SAMPLE BY and keyed-ASOF reports, complete retained editions, versioned publication and full customer receiving |
 | Operate a SQL Server data product | **Applications → SQL Server data products** or `starforge mssql-agent` | Native catalog and typed-query review, retained sellers, 21 merchant tools, complete customer files and resumable merchant receiving; [selected installation and operating guide](products/mssql/README.md) |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
@@ -73,6 +77,8 @@ roadmap, native acceptance and complete customer handover in one source.
 | Reconcile IATI and 360Giving grant portfolios | **Applications → Grant portfolio reconciliation**, `starforge grant-portfolio-workspace` and [operating guide](products/grant-portfolio/OPERATING.md) | Complete original source editions, reviewed portfolio history, exact financial rows, native merchant/customer files and saved workspace recovery |
 | Onboard and hand over a complete data-package source | **Applications → Frictionless source workbench**, `starforge frictionless-agent` and `starforge frictionless-source` | [Complete selected installation](products/frictionless-source/OPERATING.md), original captures, immutable query editions, full native review, publisher source selection and complete resumable source receiving |
 | Receive a reviewed local dataset and hand over the customer workspace | **Applications → Local dataset customer workspace** or `starforge local-dataset-agent` | [Complete selected installation](products/local-dataset/OPERATING.md), original Frictionless capture, full native pages, DuckDB editions and SQL, complete reports and portable receiving |
+| Reconcile reviewed source and target editions and hand over the complete customer report | **DuckDB dataset workspace → Dataset reconciliation**, original `duckdb-agent` and Python `reconcile` CLI | [Complete selected installation](products/paired-reconciliation/OPERATING.md), exact mappings and full accounting, retained engineer decisions, immutable reports, original MCP clients and complete sparse customer receiving |
+| Author regional map editions, review native maps and receive the complete customer workspace | **Applications → PMTiles map releases**, `starforge pmtiles`, `starforge pmtiles-mcp` and [the complete operating guide](products/pmtiles-operations/OPERATING.md) | Original regional archives and style/resources, verified PMTiles and Martin releases, source/layer inspection, managed Stop and Start, thirty-one merchant operations and full editable customer receiving |
 
 The [Frictionless source workbench guide](products/frictionless-source/OPERATING.md)
 connects complete descriptor/archive intake, immutable source editions, native
@@ -196,6 +202,13 @@ source review, managed browser/MCP operation, native dataset delivery and the
 original analytical/customer workflow. Build its complete installed edition with
 `--selection worldbank`; [receiving](products/worldbank/RECEIVING.md) continues the
 same installed source through reports, workbook and a reopened customer application.
+
+The [RisingWave operating guide](products/risingwave/OPERATING.md) connects
+native relation and subscription authoring to complete retained editions,
+full difference receiving, merchant publication and installed Applications.
+Build its committed source selection with `--selection risingwave`; the product
+includes the original native and managed receiving operators and their full
+operating instructions.
 
 ## Open the source product
 
@@ -361,6 +374,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [RisingWave subscriptions, complete editions, publication and customer receiving](products/risingwave/OPERATING.md)
 
 - [DBnomics source revisions, saved economic reports and complete customer receiving](products/dbnomics/OPERATING.md)
 - [SEC EDGAR merchant](products/sec-edgar/README.md) and [complete operator guide](products/sec-edgar/OPERATING.md): retained company facts and filings, selected product installation, customer delivery, and whole-workspace export, receiving, and reopen.

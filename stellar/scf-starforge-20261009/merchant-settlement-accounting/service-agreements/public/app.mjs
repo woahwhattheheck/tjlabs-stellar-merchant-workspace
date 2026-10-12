@@ -142,10 +142,10 @@ function syncControls() {
     button.disabled = blocked || button.hasAttribute('data-fixed-disabled') ||
       (button.id === 'dialog-submit' && Boolean(state.modal?.fileLoads || state.modal?.foreignWorkspace));
   }
-  for (const control of $('#agreement-form input, #agreement-form select, #agreement-form textarea')) {
+  for (const control of $$('#agreement-form input, #agreement-form select, #agreement-form textarea')) {
     control.disabled = state.mutationRunning || Boolean(state.pending);
   }
-  for (const button of $('[data-action="refresh"]')) button.disabled = state.reading || state.mutationRunning;
+  for (const button of $$('[data-action="refresh"]')) button.disabled = state.reading || state.mutationRunning;
   const retry = $('[data-action="retry-pending"]');
   if (retry) retry.disabled = state.mutationRunning || state.reading ||
     state.pending?.workspaceId !== workspaceId();
