@@ -369,6 +369,16 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/reconciliation_receiving\.py)/, iati);
   receive('iati-fcdo-wadi-original-source', 'Original FCDO organisation and WADI activity publication',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-wadi-2026\/SOURCE\.md)/, iati);
+  receive("iati-document-evidence-workspace", "IATI published-document evidence and named source review",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/DOCUMENT_EVIDENCE\.md)/, iati);
+  receive("iati-document-evidence-receiving", "IATI document native, SDK, Merchant and browser receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/RECEIVING\.md)/, iati);
+  receive("iati-document-following-observation", "IATI following publisher observation and complete customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/document_evidence\/FOLLOWING\.md)/, iati);
+  receive("iati-fcdo-document-native-result", "FCDO document evidence original native receiving result",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-native-result\.json)/, iati);
+  receive("iati-fcdo-document-connected-result", "FCDO document evidence original SDK, Merchant and browser result",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-organisation-2026\/document-evidence-connected-result\.json)/, iati);
   const institutionalRepository = section(companion, INSTITUTIONAL_REPOSITORY)?.text || '';
   receive('tind-institutional-migration', 'Institutional repository migration and complete customer receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/tind\/OPERATING\.md)/, institutionalRepository);

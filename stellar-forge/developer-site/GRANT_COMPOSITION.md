@@ -163,6 +163,29 @@ original request, baseline, six funded packages, capacity, cash and submission
 fields. The reader distinguishes the completed organisation receiving and the
 recorded financial stages through the chapter's actual operating results.
 
+
+The same IATI chapter includes published-document evidence: exact source rows,
+dated capture, named review, publishing-link correction, edition comparison and
+complete receiving. Its full source and candidate views share the original
+organisation source. Receive that chapter through the ordinary manuscript path
+together with its customer task and financial coverage.
+
+The source receiver follows its selected immutable links into five further
+records:
+
+- `iati-document-evidence-workspace`: complete document-review operating guide.
+- `iati-document-evidence-receiving`: native, SDK, Merchant and browser programme.
+- `iati-document-following-observation`: an explicitly selected later publisher capture.
+- `iati-fcdo-document-native-result`: the operated FCDO native case.
+- `iati-fcdo-document-connected-result`: its operated connected and browser result.
+
+The worked case retains its recorded acquisition outcomes and reviewer decisions.
+A later observation continues from the selected saved recipient; its own returned
+result supplies the new capture outcome. Subsequent composition keeps earlier
+source selections until the chapter selects another immutable edition, using
+the existing source-identity refresh. All four reader files and both submission
+bindings continue through the original composer.
+
 ## Receive current delivery finance
 
 The ordinary `--manuscript` path receives the complete canonical **8. Delivery

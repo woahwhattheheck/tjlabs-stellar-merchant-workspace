@@ -1457,6 +1457,43 @@ The first reviewed scope contains all four whole quarters. A later scope deliber
 
 Both retained financial native attempts completed all five saved revisions, historical request replay, changed-selection comparison, complete nested export, CLI close/reopen and independent native receiving. The [original receiving programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/reconciliation_receiving.py) and complete native continuation record retain those results. The full receiving procedure continues from these completed stages into the typed client, Merchant and desktop/mobile browser using the corrected merged transport and receiving implementation. The independently completed organisation operation and the captured financial stages provide concrete starting material for the customer installation.
 
+### Published documents and source review
+
+An analyst reviewing an aid programme needs to trace a financial finding back to the publication that supports it. The [document-evidence workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3d86d3e30917aad9c34a27718b4bbbc540933334/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DOCUMENT_EVIDENCE.md) connects that task to the existing organisation and financial applications. It retains the publishing row, literal document URL, dated acquisition, response bytes and named assessment together.
+
+The operator starts from a selected organisation revision and its source or candidate view. Each register row retains the title, category, language, date, URL and correction target. A saved evidence plan identifies the rows, source snapshot and capture limits. The analyst can therefore relate the document to the reporting period and source edition used in the financial comparison.
+
+| Customer operation | Product behaviour |
+| --- | --- |
+| Select the published material | Choose an organisation edition and its document rows. Source and candidate views retain their respective snapshots and existing edits. |
+| Capture a document | Record the dated request, redirect chain, response status and retained bytes through the native fetcher. An explicitly requested later observation preserves the earlier capture. |
+| Review the evidence | Record a named decision for every selected row and the observation supporting it. The reviewer assesses the document's relevance and suitability. |
+| Correct a publishing link | Prepare the organisation planner's full correction request, retaining existing source edits and its revision check. Inspect and apply it through the organisation workflow. |
+| Compare editions | Inspect changes in document metadata, observations and decisions. Compatible complete bodies support a same-or-changed comparison; an incomplete earlier response keeps its recorded acquisition outcome. |
+| Hand over the analysis | Export the source, plan history, requests, observations, response assets, comparisons and reports. A receiving analyst opens that edition and continues it with their own notes. |
+
+Six browser views cover source and document selection, acquisition, review, comparison, handover and receiving. The CLI, typed JavaScript client and Merchant interface operate the same native records. HTML, CSV and JSON outputs support reading and further analysis outside the browser. Each captured body retains its byte representation and content-encoding descriptor.
+
+### Completed FCDO document operation
+
+The operated FCDO case selected two rows from the publication's eighty-row document register. The annual report and accounts for 2024–2025 returned a recorded DNS failure on the cloud worker before an HTTP response. The 2023–2024 URL contained a trailing literal space, which the URL validator refused. The named reviewer deferred assessment of the first document and prepared the whitespace correction for the second.
+
+The native programme exported and independently received the source, observations, decisions and correction. The sender reached revision 5; the receiving analyst added a local note at revision 6. Replaying the saved requests and receiving the earlier packet preserved that later note. The full native packet contains 1,688,605 bytes. The [saved native result](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3d86d3e30917aad9c34a27718b4bbbc540933334/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/document-evidence-native-result.json) identifies this exact case and its received edition.
+
+The connected operation then completed the SDK and Merchant journey over those workspaces. It read the selected rows and details, replayed six saved action requests, downloaded all eight report, register, plan and correction files across the two interfaces, and received the portable case. An interrupted export resumed from its retained 4,093-byte cursor to the full output. Closing and reopening Merchant preserved the export and recipient edition. The [saved connected result](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3d86d3e30917aad9c34a27718b4bbbc540933334/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/document-evidence-connected-result.json) retains those operated outputs.
+
+The browser journey opened all six desktop views, then acquisition and handover at a 390-pixel viewport. Both mobile pages fit that viewport; the operated pages reported zero page errors. The [receiving programme and guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3d86d3e30917aad9c34a27718b4bbbc540933334/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/RECEIVING.md) supplies the native, SDK, Merchant and browser procedure.
+
+The [following-observation command](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3d86d3e30917aad9c34a27718b4bbbc540933334/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/document_evidence/FOLLOWING.md) continues from the saved recipient revision. On an authorized worker it requests the same first publisher URL, retains the complete response, carries the prior decision set into the next review, saves the historical comparison and independently receives a new packet. The new evidence enters with a deferred substantive review, while the second row's correction remains available. Native, SDK and Merchant downloads must agree on the response's byte count and SHA-256. The earlier observations, original packet and receiving note remain in the case history.
+
+### Recurring customer work and the purchased output
+
+A commissioned document task identifies the organisation and reporting periods, selected publications, authorized source, output formats, reviewer and receiving application. The engineer connects those sources to the customer's reporting process. The analyst reviews the evidence, resolves publishing errors where appropriate, explains changes between editions and hands over the report with its supporting material.
+
+The merchant can define a reviewed evidence report as the useful resource for that task. Its advertised scope and price determine what the buyer receives and how it fits the customer's task budget. The existing buyer and Stellar settlement connect the selected resource to delivery; resuming its retained export keeps the original purchase. A new reporting period or explicitly requested publisher observation supplies the next distinct task.
+
+Organisation finance and document review share the same source and review foundations. The agreed installation selects the outputs and customer destination, carries the editable case into the receiving application and equips the maintainer to operate the next reporting edition. This work uses the existing two-installation grant allocation or a separately commissioned partner workshare, with the scope and acceptance set by that customer task.
+
 ### Recurring work, payment and receiving
 
 A suitable commissioned service supplies one agreed financial-review edition: the exact organisation revision, activity portfolios, period, coverage, reviewed report and complete receiving package. The customer workorder records the priced unit and aggregate spending limit. The proposed Stellar installation connects that resource to the maintained merchant terms, approved buyer request, selected network/asset/recipient and native settlement.
