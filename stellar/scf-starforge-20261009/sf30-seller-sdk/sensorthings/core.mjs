@@ -13,19 +13,21 @@ import {prepareSensorThingsDataset,queryNativeDataset,nativePublishers,prepareNa
 import {exportEdition,importEdition} from './portable.mjs';
 import {CAPTURE_READ_PARTS} from './schema.mjs';
 import {analysisContext,createAnalysisManager} from './analysis/core.mjs';
+import {commissioningContext,createCommissioningManager} from './commissioning/core.mjs';
 const find=(items,id,label)=>{const item=items.find(x=>x.id===id);if(!item)throw fault('SELECTION','Select an existing '+label+'.',404);return item;};
 const errorInfo=e=>({code:e.code??'SENSORTHINGS_OPERATION_FAILED',message:e.message??'The original operation failed.',
   status:e.status??503,details:e.details??{},retryable:e.code==='SENSORTHINGS_REQUEST_INTERRUPTED'||(e.status??503)>=500});
 const short=(label,op)=>label+'-'+identity({operationId:op.operationId,requestSha256:op.requestSha256}).slice(0,24);
-export async function openSensorThingsWorkspace({directory,inboxDirectory=null,sourceInboxDirectory=null,buyerWorkspaceDirectory=null,releaseRuntime={port:0},
+export async function openSensorThingsWorkspace({directory,inboxDirectory=null,sourceInboxDirectory=null,buyerWorkspaceDirectory=null,releaseRuntime={port:0},commissioningRuntime={},
   fetchImpl=fetch,environment=process.env,transport=null,onProgress=()=>{}}={}){
   const store=await openWorkspaceStore(directory,{schema:WORKSPACE_SCHEMA,initialState:{sources:[],catalogs:[],plans:[],reviews:[],comparisons:[],sourceReceipts:[]}}),
     publishers=nativePublishers(store),running=new Map(),controllers=new Map(),operations=new Map();
-  const analysis=createAnalysisManager({store,edition,inboxDirectory:sourceInboxDirectory});
+  const analysis=createAnalysisManager({store,edition,inboxDirectory:sourceInboxDirectory}),
+    commissioning=createCommissioningManager({store,edition,inboxDirectory:sourceInboxDirectory,environment,runtime:commissioningRuntime});
   let closing=false,closePromise=null;
   const schema=()=>workspaceSchema(store.read().workspaceId);
   async function view(){
-    const s=store.read();
+    await commissioning.reconcile();const s=store.read();
     return {schema:'stellar-forge.sensorthings-view.v1',workspaceId:s.workspaceId,revision:s.revision,sourceContract:SOURCE_CONTRACT,
       sources:s.sources.map(({authorizationEnv,...v})=>({...v,authorization:authorizationEnv?'HOST_ENVIRONMENT':'NONE'})),
       catalogs:s.catalogs.map(({service,...v})=>({...v,service:{entries:service.entries,snapshot:service.snapshot}})),
@@ -37,7 +39,7 @@ export async function openSensorThingsWorkspace({directory,inboxDirectory=null,s
         issues:c.issues.slice(0,100),issueCount:c.issues.length,issuesTruncated:c.issues.length>100,pauseReason:c.pauseReason??null,running:running.has(c.id)})),
       editions:s.editionIds,selectedEditionId:s.selectedEditionId,reviews:s.reviews,datasets:s.datasets,releases:s.releases,
       receipts:s.receipts,sourceReceipts:s.sourceReceipts??[],comparisons:s.comparisons,exports:s.exports,
-      operations:Object.values(s.operations).slice(-100).map(({payload,context,...v})=>v),running:[...running.keys()],analysis:analysis.overview()};
+      operations:Object.values(s.operations).slice(-100).map(({payload,context,...v})=>v),running:[...running.keys()],analysis:analysis.overview(),commissioning:commissioning.overview()};
   }
 
   function captureRead(id,options){
@@ -124,6 +126,7 @@ export async function openSensorThingsWorkspace({directory,inboxDirectory=null,s
       if(action==='release.prepare')op.context.releaseRuntime=structuredClone(releaseRuntime);
       if(action.startsWith('buyer.')||action.startsWith('publisher.buyer.'))op.context.buyerWorkspaceDirectory=buyerWorkspaceDirectory??inboxDirectory;
       if(action.startsWith('analysis.'))op.context.analysis=analysisContext(s,op,{inboxDirectory:sourceInboxDirectory});
+      if(action.startsWith('commissioning.'))op.context.commissioning=commissioningContext(s,op,{inboxDirectory:sourceInboxDirectory});
       s.operations[operationId]=structuredClone(op);
     });return op;
   }
@@ -317,6 +320,7 @@ export async function openSensorThingsWorkspace({directory,inboxDirectory=null,s
     return complete(op,report,s=>{if(!s.comparisons.some(c=>c.id===id))s.comparisons.push(report);});
   }
   async function execute(op){
+    if(op.action.startsWith('commissioning.'))return commissioning.execute(op,(result,change)=>complete(op,result,change));
     if(op.action.startsWith('analysis.'))return analysis.execute(op,(result,change)=>complete(op,result,change));
     const p=op.payload,s=store.read();
     if(op.action==='source.add'){
@@ -495,14 +499,14 @@ export async function openSensorThingsWorkspace({directory,inboxDirectory=null,s
   }
   // Holding the existing kernel lease establishes that no earlier workspace
   // writer is alive. Preserve every pending request for explicit reconciliation.
-  try{if(transport?.bindStore)await transport.bindStore(store);await store.mutate(s=>{s.sourceReceipts??=[];for(const c of s.captures)if(c.state==='RUNNING'){c.state='INTERRUPTED';c.pauseReason='Reopened after the original process ended; resume this same capture.';}});}
-  catch(error){await publishers.close().catch(()=>{});await store.close().catch(()=>{});throw error;}
+  try{if(transport?.bindStore)await transport.bindStore(store);await store.mutate(s=>{s.sourceReceipts??=[];for(const c of s.captures)if(c.state==='RUNNING'){c.state='INTERRUPTED';c.pauseReason='Reopened after the original process ended; resume this same capture.';}});await commissioning.reconcile();}
+  catch(error){await commissioning.close().catch(()=>{});await analysis.close().catch(()=>{});await publishers.close().catch(()=>{});await store.close().catch(()=>{});throw error;}
   function close(){
     if(closePromise)return closePromise;closing=true;for(const controller of controllers.values())controller.abort();
-    closePromise=(async()=>{await Promise.allSettled([...running.values(),...operations.values()]);await analysis.close();await publishers.close();await store.close();})();
+    closePromise=(async()=>{await Promise.allSettled([...running.values(),...operations.values()]);await commissioning.close();await analysis.close();await publishers.close();await store.close();})();
     void closePromise.catch(()=>{closePromise=null;});return closePromise;
   }
-  return {store,directory:store.root,schema,view,action,catalogRows,edition,analysis,
+  return {store,directory:store.root,schema,view,action,catalogRows,edition,analysis,commissioning,
     capture:captureRead,
     rows:async(id,options)=>rowsPage(store,await edition(id),options),
     summary:async id=>summarize(store,await edition(id)),
