@@ -266,12 +266,13 @@ export function createApplicationDrafts({
     const entries = [...(owner?.entries.values() ?? [])].sort((a, b) =>
       b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
     const selected = picker.value;
-    const signature = JSON.stringify(entries.map(value => [value.id, value.form.label, value.kind, value.applicationId]));
+    const signature = JSON.stringify(entries.map(value => [value.id, value.form.label, value.kind, value.applicationId, value.retainedReason]));
     if (picker.dataset.signature !== signature) {
       picker.dataset.signature = signature;
       picker.replaceChildren(new Option(entries.length ? 'Choose a retained draft' : 'No retained setup drafts', ''),
         ...entries.map(value => new Option((value.form.label || getCatalog().find(item => item.id === value.kind)?.title || value.kind) +
-          ' · ' + (value.applicationId ? 'saved application' : 'new application') + ' · ' + value.kind, value.id)));
+          ' · ' + (value.applicationId ? 'saved application' : 'new application') + ' · ' + value.kind +
+          (value.retainedReason ? ' · ' + value.retainedReason : ''), value.id)));
       picker.value = entries.some(value => value.id === selected) ? selected : entries.some(value => value.id === current?.id) ? current.id : '';
     }
     resume.disabled = !picker.value; discard.disabled = !current; download.disabled = !current;
@@ -415,6 +416,26 @@ export function createApplicationDrafts({
       reconciliations: copy(document.reconciliations), title: document.title ?? document.configuration.label };
     meta.sourceCatalog = copy(getCatalog().find(value => value.id === meta.kind) ?? meta.sourceCatalog ?? null);
     const form = rawConfiguration(document.configuration);
+    const owner = cache(current.workspaceId);
+    const retainedDestination = meta.id !== current.id ? owner?.entries.get(meta.id) : null;
+    if (retainedDestination) {
+      // Preserve original IDs for retained drafts and in-flight save tickets.
+      // The reconciled family gets its own context when another draft already
+      // occupies the destination type.
+      const retainedSource = copy(retainedDestination);
+      delete retainedSource.portableHistory;
+      const history = meta.portableHistory.reconciliations.at(-1);
+      if (history) history.retainedVariants = [...(history.retainedVariants ?? []), retainedSource];
+      const family = getFamily(), contextId = 'reconciled:' + crypto.randomUUID();
+      for (const entry of family.entries) {
+        const retained = { ...copy(entry), contextId, id: contextId + '/' + entry.kind };
+        owner.entries.set(retained.id, retained);
+      }
+      owner.entries.set(retainedDestination.id, { ...copy(retainedDestination), retainedReason: 'Before reconciliation' });
+      meta.contextId = contextId; meta.id = contextId + '/' + meta.kind;
+      persist(owner);
+    }
+    delete meta.retainedReason;
     if (meta.id !== current.id) {
       // Preserve the previous type as another retained variant before switching.
       cache(current.workspaceId)?.entries.set(current.id, copy(current));

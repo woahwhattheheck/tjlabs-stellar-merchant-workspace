@@ -2,16 +2,14 @@
 // MIT. Loopback browser transport for the original saved-simulation operator.
 import { createServer } from 'node:http';
 import { readFile, realpath } from 'node:fs/promises';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, timingSafeEqual, createHash } from 'node:crypto';
+import { claimTenderlyListener, TENDERLY_LISTENER_SCHEMA } from './connection.mjs';
+import { readBrowserAssets } from '../../../distribution/browser-assets.mjs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openTenderlyWorkspace } from './model.mjs';
 
-const ASSETS = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
-  ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
-  ['/style.css', ['style.css', 'text/css; charset=utf-8']],
-]);
+const ASSETS = await readBrowserAssets(new URL('./browser-assets.json', import.meta.url));
 const HELP = [
   'Tenderly merchant workspace — Node 22.16+, private local browser',
   '',
@@ -52,11 +50,15 @@ async function body(req) {
 
 export async function startTenderlyWorkspace({ port = 0, ...options } = {}) {
   need(Number.isInteger(port) && port >= 0 && port <= 65535, 'port must be 0–65535');
-  const model = await openTenderlyWorkspace(options);
+  const listener = await claimTenderlyListener(options.directory);
+  let model;
+  try { model = await openTenderlyWorkspace({ ...options, directory: listener.directory }); }
+  catch (error) { await listener.retire(); throw error; }
   const token = randomBytes(32).toString('base64url'), expected = Buffer.from('Bearer ' + token);
   let origin, closing = false, shutdown;
   const server = createServer((req, res) => {
     res.setHeader('cache-control', 'no-store');
+    res.setHeader('x-tenderly-workspace-instance', listener.instanceId);
     res.setHeader('x-content-type-options', 'nosniff');
     res.setHeader('referrer-policy', 'no-referrer');
     res.setHeader('content-security-policy',
@@ -67,14 +69,16 @@ export async function startTenderlyWorkspace({ port = 0, ...options } = {}) {
       const url = new URL(req.url, origin);
       need(url.origin === origin && !url.hash, 'Invalid request target');
       if (req.method === 'GET' && !url.search && ASSETS.has(url.pathname)) {
-        const [name, mime] = ASSETS.get(url.pathname);
-        const bytes = await readFile(new URL('./public/' + name, import.meta.url));
-        res.writeHead(200, { 'content-type': mime, 'content-length': bytes.length }); res.end(bytes); return;
+        const asset = ASSETS.get(url.pathname);
+        const bytes = await readFile(asset.url);
+        res.writeHead(200, { 'content-type': asset.type, 'content-length': bytes.length }); res.end(bytes); return;
       }
       need(url.pathname.startsWith('/api/'), 'Not found', 404);
       const supplied = Buffer.from(req.headers.authorization ?? '');
       need(supplied.length === expected.length && timingSafeEqual(supplied, expected),
         'Open the complete workspace URL from its launch terminal', 401);
+      if (req.headers['x-tenderly-workspace-instance'] && req.headers['x-tenderly-workspace-instance'] !== listener.instanceId)
+        throw Object.assign(new Error('Open the current original Tenderly listener.'), { code: 'TENDERLY_INSTANCE_CHANGED', status: 409 });
       need((!req.headers.origin || req.headers.origin === origin) &&
         (req.method === 'GET' || req.headers.origin === origin), 'Use the exact workspace origin', 403);
       need(['GET', 'POST'].includes(req.method), 'Use GET or POST', 405);
@@ -84,7 +88,10 @@ export async function startTenderlyWorkspace({ port = 0, ...options } = {}) {
       const limit = () => Number(query.get('limit') ?? 25);
       let result;
       if (req.method === 'GET') {
-        if (url.pathname === '/api/bootstrap') result = await model.bootstrap();
+        if (url.pathname === '/api/connection') result = { schema: TENDERLY_LISTENER_SCHEMA,
+          instanceId: listener.instanceId, startedAt: listener.startedAt, pid: listener.pid, origin,
+          directory: model.root, workspaceId: model.manifest.id, workspaceSha256: model.manifestSha256 };
+        else if (url.pathname === '/api/bootstrap') result = await model.bootstrap();
         else if (url.pathname === '/api/status') result = model.status();
         else if (url.pathname === '/api/profiles') result = await model.profiles({ before: query.get('before') ?? '', limit: limit() });
         else if (url.pathname === '/api/profile') result = await model.inspectProfile(query.get('profile'));
@@ -109,12 +116,13 @@ export async function startTenderlyWorkspace({ port = 0, ...options } = {}) {
         }
         else if (url.pathname === '/api/response') {
           const saved = await model.response(operation());
-          result = { status: saved.status, headers: saved.headers, summary: saved.summary,
+          result = { status: saved.status, headers: saved.headers, summary: saved.summary, name: saved.name,
             bytes: saved.bytes.length, sha256: saved.sha256,
             preview: saved.bytes.subarray(0, 65536).toString('utf8'), previewTruncated: saved.bytes.length > 65536 };
         } else if (url.pathname === '/api/download') {
           const saved = await model.download({ ...selected(), kind: query.get('kind'), id: query.get('id'), observationId: query.get('observationId') });
           res.writeHead(200, { 'content-type': saved.mime, 'content-length': saved.bytes.length,
+            'x-tenderly-content-sha256': createHash('sha256').update(saved.bytes).digest('hex'),
             'content-disposition': 'attachment; filename="' + saved.name + '"' });
           res.end(saved.bytes); return;
         } else throw Object.assign(new Error('Not found'), { status: 404 });
@@ -158,15 +166,25 @@ export async function startTenderlyWorkspace({ port = 0, ...options } = {}) {
   server.requestTimeout = 20000; server.headersTimeout = 10000; server.keepAliveTimeout = 5000;
   try {
     await new Promise((done, fail) => { server.once('error', fail); server.listen(port, '127.0.0.1', done); });
-  } catch (error) { await model.close(); throw error; }
+  } catch (error) { await model.close(); await listener.retire(); throw error; }
   origin = 'http://127.0.0.1:' + server.address().port;
+  let connection;
+  try {
+    connection = await listener.publish({ origin, token, workspaceId: model.manifest.id,
+      workspaceSha256: model.manifestSha256, planFile: options.planPath ?? null,
+      planSha256: model.initialPlanSha256, facilitator: options.merchantOptions?.facilitator ?? null });
+  } catch (error) {
+    closing = true; server.closeIdleConnections();
+    await new Promise(done => server.close(done)); await model.close(); await listener.retire(); throw error;
+  }
   const close = () => shutdown ??= (async () => {
     closing = true;
     const stopped = new Promise((done, fail) => server.close(error => error ? fail(error) : done()));
     server.closeIdleConnections();
-    await model.close(); await stopped;
+    await model.close(); await stopped; await listener.retire();
   })();
-  return { server, model, origin, url: origin + '/#' + token, close };
+  return { server, model, origin, url: origin + '/#' + token, close,
+    instanceId: listener.instanceId, startedAt: listener.startedAt, connection, ownership: 'owned' };
 }
 
 export async function main(args = process.argv.slice(2)) {
@@ -195,6 +213,7 @@ export async function main(args = process.argv.slice(2)) {
   console.log(JSON.stringify({
     schema: 'stellar-forge.tenderly-workspace-startup.v1', status: 'TENDERLY_WORKSPACE_READY',
     tenderlyWorkspace: workspace.url, directory: workspace.model.root, workspace: workspace.model.manifest.id,
+    instanceId: workspace.instanceId, connection: workspace.connection,
     workspaceSha256: workspace.model.manifestSha256, planFile: options.planPath ?? null,
     planSha256: workspace.model.initialPlanSha256, facilitator: merchantOptions.facilitator ?? null,
   }));

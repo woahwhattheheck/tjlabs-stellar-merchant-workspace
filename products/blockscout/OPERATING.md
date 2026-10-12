@@ -65,7 +65,18 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \
 
 The contribution exposes `blockscout`, `blockscout-connections`, ten SDK exports and Applications provider `blockscout`. That provider supplies both catalog entries listed above. See [Runtime installation](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) for original dependency adoption, resume and offline transfer.
 
-Commands below use `starforge`. When its executable is outside PATH, use the same `runtime-install-cli.mjs run --dir /absolute/blockscout-runtime --` prefix and pass the command after `starforge`.
+Inspection returns the READY installation's actual sourceRoot. Bind every following command to that private runtime:
+
+~~~sh
+BLOCKSCOUT_RUNTIME=/absolute/blockscout-runtime
+BLOCKSCOUT_SOURCE_ROOT=/ACTUAL_SOURCE_ROOT_RETURNED_BY_INSPECT
+starforge() {
+  node "$BLOCKSCOUT_SOURCE_ROOT/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs" \
+    run --dir "$BLOCKSCOUT_RUNTIME" -- "$@"
+}
+~~~
+
+The local function selects the same READY installation from any working directory.
 
 ## Attach the runtime and open the connection workspace
 

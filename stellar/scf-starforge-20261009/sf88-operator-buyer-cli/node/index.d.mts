@@ -530,6 +530,21 @@ export interface InboxReview {
   readonly reviewedAt: string;
   readonly native: JsonObject;
 }
+/** A safe reference to complete private native error details. */
+export type InboxDiagnostic = Readonly<{
+  schema: 'stellar-forge.node-inbox-diagnostic.v1';
+  phase: 'COMMAND' | 'WORKER';
+  errorClass: 'Error' | 'SyntaxError' | 'TypeError' | 'RangeError' | 'ReferenceError'
+    | 'URIError' | 'EvalError' | 'AggregateError' | 'BuyerError' | 'InputError';
+} & ({
+  status: 'SAVED';
+  file: 'native-error.json' | 'worker-error.json';
+  bytes: number;
+  sha256: string;
+} | {
+  status: 'UNAVAILABLE';
+  writeErrorCode: string;
+})>;
 export class InboxResult<T = JsonObject> {
   readonly native: T;
   /** Outcome of this command, separate from the historical buyer attempt. */
@@ -540,9 +555,14 @@ export class InboxResult<T = JsonObject> {
   };
   /** Failed/uncertain logs remain private here; also set if successful temporary cleanup failed. */
   readonly commandDirectory: string | null;
+  readonly diagnostic: InboxDiagnostic | null;
 }
 export class InboxError extends BuyerError {
   readonly result: InboxResult<JsonObject | null>;
+  readonly diagnostic?: InboxDiagnostic;
+  /** Direct private access; absent from toJSON() and ordinary error inspection. */
+  readonly diagnosticPath?: string;
+  toJSON(): ReturnType<BuyerError['toJSON']> & { diagnostic?: InboxDiagnostic };
   readonly inboxDirectory?: string;
   readonly intentId?: string;
   constructor(code: string, result: InboxResult<JsonObject | null>, details?: Record<string, unknown>);

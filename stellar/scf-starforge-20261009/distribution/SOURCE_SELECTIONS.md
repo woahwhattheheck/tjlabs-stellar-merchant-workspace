@@ -68,12 +68,15 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `haystack-turnover` | Native building grids, source-local equipment and points, typed tag review, saved editions and complete editable turnover receiving | Haystack building turnover; Runtime management | [Complete installed operator guide](../../../products/haystack/OPERATING.md) |
+| `groundwater-reports` | Original groundwater sources, scenarios and native results, frozen report publication, buyer receiving, Operations association and complete scientific/desk handover | Groundwater scientific and Report Desk browsers; Buyer runbook; Merchant console | [Complete installation and operation](../../../products/groundwater/OPERATING.md) |
 | `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |
 | `openlineage-operations` | Native Python and Java producer intake, original compressed/source bytes, job/run/dataset lineage, saved reviews and complete editable customer receiving | OpenLineage operations; Runtime management | [Complete installed operation and producer guide](../../../products/openlineage/OPERATING.md) |
 | `study-research` | Study source editions, Property field surveys and comparables, Census ACS, BLS labor and HUD releases with original publishing and complete customer receiving | Study Source Refresh; Buyer runbook; Merchant console; PostgreSQL publisher; PostgreSQL workspace | [Complete study operator and receiving guide](selections/STUDY_RESEARCH.md) |
 | `merchant-support` | Merchant cases, tariff and usage-informed quotations, accepted work, invoicing, recurring service calendars, payments, Service adjustments and complete customer receiving | Merchant support; Merchant pricing and scenario planning; Merchant receivables; Service agreements and billing; Customer payment plans; customer statement closing | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
 | `healthcare-interoperability` | Original FHIR exports and eLTSS CarePlans, full source/field review, native merchant/customer editions and complete editable receiving | FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete installed operation and receiving](../../../products/healthcare-interoperability/OPERATING.md) |
 | `gravity-referrals` | Original Gravity source, topology, complete requirement/field review, Task editions, conditional exchange, native merchant/customer delivery and editable receiving | Gravity Referrals; FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete programme and receiving](../../../products/gravity-referrals/OPERATING.md) |
+| `human-services-directory` | Original HSDS and FHIR directory sources, complete editions and comparisons, reviewed mapping and service selection, Gravity clinical joins and editable customer handoffs | Human Services Directory; Gravity Referrals; FHIR Bulk Data; eLTSS Care Plans; Runtime management | [Complete directory programme and receiving](../../../products/human-services-directory/OPERATING.md) |
 | `matomo` | Complete Matomo report/subtable source, typed editions, original merchant/customer operation and independent editable workspace receiving | Matomo reports and delivery; Runtime management | [Complete operating guide](../../../products/matomo/OPERATING.md) |
 | `buyer-expenses` | Original governed purchase, shared-ledger source review, exact allocations, issued periods and accountant return | Buyer expenses; Accounting; Runtime management | [Complete installed operation and receiving](../../../products/buyer-expenses/OPERATING.md) |
 | `fiscaldata-analyst` | Treasury source capture and review, exact native editions/comparison, saved refresh plans, named MCP/browser and complete customer receiving | Fiscal Data operations; Runtime management | [Complete analyst installation](selections/FISCALDATA_ANALYST.md) |
@@ -158,6 +161,7 @@ its dependency profile from the complete installed workflow linked above:
 
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
+| `haystack-turnover` | `--operator`; install the selected product with `--offline` |
 | `merchant-receivables`, `merchant-payment-plans` | `--native --feature schema --feature openapi --operator` |
 | `study-research` | `--native --feature schema --feature openapi --feature mcp --feature postgres --operator` |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
@@ -323,3 +327,24 @@ The original builder includes each financial server's declared browser manifest,
 - [Invoices, payments and refunds](../../../products/merchant-receivables/README.md)
 - [Service agreements and recurring billing](../../../products/merchant-service-agreements/README.md)
 
+## Haystack building turnover
+
+Build `--selection haystack-turnover` to retain the native grid codec, source-local
+equipment and point index, reviewed tag proposals, saved source editions, full
+reports and complete editable receiving application. The selected
+`haystack-workspace` contribution supplies the `haystack` and `haystack-mcp`
+commands, typed native exports, original browser route map, managed Applications
+entry and `haystack-workspaces` Merchant provider.
+
+The complete source component includes the original Charlie grid, its source
+metadata, the upstream license, operator guides and `RECEIVING.mjs`. The
+application, managed Applications lifecycle and registered Haystack Merchant
+provider use Node builtins and the maintained local helpers. Select `--operator`
+through the original runtime installer for this dependency-free product. The
+complete operator guide describes separately selected wider host integrations.
+
+Continue the [complete native operator and receiving workflow](../../../products/haystack/OPERATING.md)
+against the same saved building project. A customer package retains every
+source byte, proposal and review, saved edition, original request outcome and
+portable application file; the received application reopens that original
+workspace for continued work.

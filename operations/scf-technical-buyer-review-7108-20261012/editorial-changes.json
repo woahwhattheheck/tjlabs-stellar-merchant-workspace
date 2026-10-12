@@ -1,0 +1,75 @@
+{
+  "schema": "commons.grant-editorial-change-selection.v1",
+  "operationId": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+  "preparedAt": "2026-10-12T18:55:43.315Z",
+  "baseCommit": "32fe7d732741ba10900c28800e4efb6b8944192d",
+  "originalApplicationGitBlob": "cd05c693938a0adcbfa1358a12bcddf061d6eaed",
+  "originalCompanionGitBlob": "d242a2f652d434daec1838421fddec80fdb68928",
+  "commissioningContributionGitBlob": "e46f86d64e6d95ea22fbcf6bf417da87cd83cc0e",
+  "changes": [
+    {
+      "id": "phase-specific-provider-scope",
+      "before": "The funded outcome is **two independently operated merchants, two independent buyer operators, and the same useful service operating through two independently operated facilitators**.",
+      "after": "The funded outcome is **two independently operated merchants and two independent buyer operators**. T2 operates the same useful service through **two independently operated testnet facilitators**; T3 establishes **both merchant installations on mainnet**.",
+      "match": "exact-once",
+      "origin": "05C7 accepted commissioning contribution e46f86d6",
+      "answerId": "project"
+    },
+    {
+      "id": "native-payment-and-application-identity",
+      "before": "Stellar settles the operation the buyer approved. The approval binds the request to its network, asset, recipient and integer atomic amount. The native Stellar SDK and selected payment service verify and settle the authorization; the application connects that outcome to the original source, useful result and merchant fulfillment. Buyers retain signing and aggregate spending authority. Merchants retain control of their resources, terms and order actions.",
+      "after": "Stellar supplies native payment authorization and settlement for the customer’s reviewed operation. In the [x402 Exact Stellar flow](https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar), the buyer signs a Soroban authorization entry for a token transfer with its payer, recipient, atomic amount and expiration. The facilitator submits the authorization under the selected network and fee policy. Sponsored settlement lets the buyer pay in the selected supported token while the facilitator covers the transaction fee. Existing Stellar wallets, token contracts and payment services provide this native foundation.\n\nThe merchant and buyer workspaces retain the HTTP endpoint and method or MCP tool and arguments, request-body identity, selected source or query, and accepted payment option. Their approval and signer integration check the original operation before dispatch. The retained purchase then connects the native transfer to its complete received output and required fulfillment. Buyers keep wallet and aggregate spending authority; merchants keep control of resources, terms and order actions. The grant applies these native-payment and application responsibilities to the selected customers’ actual installations.",
+      "match": "exact-once",
+      "origin": "05C7 accepted commissioning contribution e46f86d6",
+      "answerId": "stellar"
+    },
+    {
+      "id": "purchase-task-allowance-and-current-operator-definitions",
+      "before": "A completed purchase joins a distinct approved intent, an independently observed native transfer and complete useful output. Native transactions are counted once within each network. The cohort counts distinct accountable operator IDs whose reviewed deployment identifies an independent operator or customer, its buyer or merchant role, source basis, required network and operating or handed-over state. An operator’s agents and wallets share that identity; they do not create additional independent buyers. These are source-supported operator declarations, not automatic verification of corporate independence. Team-operated development purchases do not qualify. A returning buyer completes distinct intent groups on at least two UTC days. Reopening an acquired result or resuming its download continues the original purchase. Facilitators are also deduplicated by accountable operator for the same useful operation. [Original cohort operator guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/fcea2b04a19d9c14bbd337124ecdc83f5e36425c/stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md).\n\nCohort reporting includes completed/attempted purchases, complete/started parent datasets or files, returning buyers, accepted handovers and partial, unresolved, canceled and refunded outcomes. Required fulfillment remains separately visible. This makes the funded targets assessable against the whole observation window.",
+      "after": "The funded purchase targets are ten in total across the two independent buyers during T2’s seven-day window and thirty in total across the two buyers during T3’s fourteen-day window. A completed purchase joins a distinct approved payment intent, an independently observed native transfer and its complete purchased output. Transactions count once within their network.\n\nThe cohort counts distinct accountable operator IDs whose reviewed deployment identifies an independent operator or customer, its buyer or merchant role, source basis, required network and operating or handed-over state. An operator’s agents and wallets share that identity; they do not create additional independent buyers. These are source-supported operator declarations, not automatic verification of corporate independence. Team-operated development purchases do not qualify. A returning buyer completes distinct intent groups on at least two UTC days. Facilitators are also deduplicated by accountable operator for the same useful operation. [Original cohort operator guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/fcea2b04a19d9c14bbd337124ecdc83f5e36425c/stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-COHORT.md).\n\nThe same report shows the complete customer work served by those purchases:\n\n| Measure | Original record and counting unit |\n| --- | --- |\n| Completed and attempted purchases | Distinct approved payment intents and their original native settlement and delivery outcomes. These supply the funded 10/30 counts. |\n| Complete and started customer tasks | The original acquisition, job or application run, joined to every selected page, file and required receiving result. Its paid requests remain attached as child operations. |\n| Prepaid service use | The original purchased order, application request and units consumed or remaining. Calls using an existing allowance contribute delivered tasks and usage; another paid purchase is recorded when another payment occurs. |\n| Native payment activity | Original transaction identities and exact settled amounts, refunds and network fees, grouped by network and asset. |\n| Returning independent buyers | The same accountable buyer completing a distinct later purchase and useful task; its original workorder records the fresh period, changed edition or new customer request. The funded returning-buyer measure uses distinct intent groups on at least two UTC days. |\n\nThe completed Queens HPD operation illustrates the units: two paid pages of 100 and 44 rows produced one complete 144-row customer task. Its two 10,000-stroop transfers remain two purchases and a total of 20,000 native testnet stroops, with fees separate. Reopening that edition or resuming its files continues the original task and purchases.\n\nThe existing cohort window uses original attempt and completion clocks and retains partial, unresolved, canceled and refunded outcomes alongside successful work. Required fulfillment, independent receiving and accepted handovers remain separately visible. Each report presents both the funded payment activity and the complete customer outcomes delivered over the same window.",
+      "origin": "Explicit merge of 05C7 purchase/task/prepaid definitions with PR383 accountable-operator, team exclusion and UTC-returning definitions",
+      "answerId": "outcomes",
+      "match": "exact-once"
+    },
+    {
+      "id": "selected-runtime-payment-compatibility",
+      "before": "Recovery keeps server confirmation, independently observed transfer, complete output, receiver acknowledgment and fulfillment separately visible.",
+      "after": "Each installation retains a compatibility profile identifying its complete source release, installed buyer and signer SDK versions, facilitator registration, network, supported asset, authorization flow and fee policy. The original approval and signer checks must accept that profile before dispatch. A provider or network change receives an explicit new selection and preserves earlier purchases and source editions. T2 receives the same useful service through both testnet facilitators; T3 receives both mainnet merchant installations under their actual selected profiles.\n\nRecovery keeps server confirmation, independently observed transfer, complete output, receiver acknowledgment and fulfillment separately visible.",
+      "origin": "Technical review of original buyer04de96e3 and native signer b2a9e316; selected installed compatibility before dispatch",
+      "answerId": "architecture",
+      "match": "exact-once"
+    },
+    {
+      "id": "complete-deployed-response-acceptance",
+      "before": "Acceptance operates two cases against the deployed service: an interrupted settled purchase and a merchant-delivery failure. Their records retain the actual notification and acknowledgment, financial and delivery outcomes, response and recovery times, material remediation or residual findings, and the receiving engineer’s same-case reopening after drain/restart. An uncertain payment is reconciled through its original intent. A coverage gap remains visible until observation resumes.",
+      "after": "Acceptance operates two cases against the deployed service. For an interrupted settled purchase, the operator retains the original dispatch, independently reconciles its native transfer and continues unfinished receiving under that same purchase. Completion requires the full selected result in the customer application and a record that delivery recovery caused no additional payment. An uncertain signed outcome remains attached to its original intent until reconciliation establishes the financial result.\n\nFor a merchant-delivery failure, the original incident identifies the affected purchase, unfinished output or fulfillment step and named responder. The responder acknowledges the displayed incident revision, performs the permitted correction and continues the same delivery. Acceptance compares the whole recovered output with the agreed source, coverage and hashes, retains the actual fulfillment result and records the receiving engineer’s acknowledgment.\n\nBoth cases retain the original notification and acknowledgment, separate financial and delivery states, response and recovery clocks, residual findings and the receiving engineer’s same-case reopening after drain/restart. Monitoring coverage gaps remain visible. Observed recovery times and customer acceptance are recorded against the selected installation; they do not create an unmeasured service-level promise.",
+      "origin": "Original support-console incident/revision and recovery contracts, within the same T2 response package",
+      "answerId": "outcomes",
+      "match": "exact-once"
+    }
+  ],
+  "companionChange": {
+    "id": "paid-purchases-customer-tasks-and-prepaid-use",
+    "before": "Count each independent organization or person once across agents and wallets. A completed purchase joins one distinct approved intent, an independently observed native transfer and complete useful output. Transactions are deduplicated within their network; amounts and fees retain their asset and atomic units. Required fulfillment remains separately visible.\n\nReport completed/attempted purchases, complete/started parent tasks, returning buyers and accepted handovers. Keep partial, unresolved, canceled and refunded outcomes in the same cohort. A result reopen, delivery retry or transport chunk continues the original result. Returning use follows a fresh period, input or customer request. Payment, full output and recovery retain separate actual clocks.",
+    "after": "Count each independent organization or person once across agents and wallets. The funded payment counts remain ten completed purchases in total across the two buyers in the T2 window and thirty in total in the T3 window. Each purchase joins its distinct approved payment intent, native transfer and complete purchased output. Transactions are deduplicated within their network; amounts, refunds and fees retain their own asset and atomic units.\n\nReport the associated customer tasks separately using their original acquisition, job or application-run identity. A paginated acquisition retains its parent and all child page intents. The Queens HPD example therefore contains two 10,000-stroop purchases and one complete 144-row task. Its 100-row and 44-row pages remain available inside the same receiving edition. Report every started parent alongside its completed result and required fulfillment.\n\nPrepaid operation retains the purchased order and each subsequent application request. The completed eight-unit plan example contains one 10,000-stroop purchase; its first useful request consumed two units and retained six. A later call using that order records another application outcome and its units. A new native payment records another purchase. Reopening a saved response, resuming a download or recovering the same execution retains the original identities.\n\nThese units are already present in the product. The dataset session carries its `sessionId`, page `intentId`, completed-page and acquired-row state. The prepaid application retains `orderRef`, `requestId`, `requestSha256` and `units` against the original reservation. Cohort reporting joins those records with actual native settlement and receiving outcomes. Use the original first-attempt and completion clocks for the selected observation window and include partial, unresolved, canceled and refunded outcomes. Returning use identifies the fresh period, changed edition or distinct customer request.",
+    "match": "exact-once"
+  },
+  "preservedDefinitions": [
+    "distinct accountable operator IDs",
+    "An operator’s agents and wallets share that identity",
+    "source-supported operator declarations",
+    "Team-operated development purchases do not qualify",
+    "at least two UTC days",
+    "Facilitators are also deduplicated by accountable operator",
+    "**18 distinct team-operated development purchases totaling 411,000 stroops, or 0.0411 native testnet XLM**",
+    "**USD 38,000 for 400 prospective delivery hours over 150 days",
+    "Opening cash is currently unentered",
+    "interest submitted and acknowledged, awaiting invitation"
+  ],
+  "sourceOwnership": {
+    "manuscript": "81CF",
+    "authorCriteria": "1B40",
+    "commissioning": "05C7",
+    "sharedComposition": "018A"
+  }
+}
