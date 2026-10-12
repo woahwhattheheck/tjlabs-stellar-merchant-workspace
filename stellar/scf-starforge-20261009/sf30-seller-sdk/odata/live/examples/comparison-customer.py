@@ -129,11 +129,15 @@ def options():
     parser.add_argument("--source-selection-sha256", required=True)
     parser.add_argument("--node", required=True)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--resume-source-from", help="Exact original selection SHA for the pre-Analysis concurrent-reader correction")
     return parser.parse_args()
 
 
 def main():
     args = options()
+    if args.resume_source_from is not None:
+        need(args.resume and re.fullmatch(r"[a-f0-9]{64}", args.resume_source_from),
+             "Use --resume and the exact original selection SHA for source continuation.")
     checkout = Path(args.checkout).absolute()
     need(checkout.resolve() == checkout and re.fullmatch(r"[a-f0-9]{40}", args.source_ref),
          "Choose the actual original source directory and immutable product commit.")
@@ -238,8 +242,53 @@ def main():
         if journal_path.exists():
             need(args.resume, "Use --resume to continue the retained customer comparison.")
             journal = json.loads(journal_path.read_bytes())
-            need(journal["schema"] == SCHEMA and journal["selection"] == selection and journal["selection_sha256"] == selection_sha,
-                 "The retained original comparison operation differs.")
+            need(journal["schema"] == SCHEMA, "The retained original comparison operation differs.")
+            if journal["selection"] != selection or journal["selection_sha256"] != selection_sha:
+                previous = journal["selection"]
+                need(args.resume_source_from == journal["selection_sha256"] == sha(canonical(previous).encode()),
+                     "Select the exact original failed preparation with --resume-source-from.")
+                need(journal["state"] == "NEEDS_ATTENTION" and journal["steps"] == {} and
+                     previous["operation_id"] == selection["operation_id"] and
+                     previous["input_sha256"] == selection["input_sha256"],
+                     "Continue the original input before any Analysis jobs have started.")
+                native = json.loads((out / "comparison-native.json").read_bytes())
+                need(native["state"] == "NEEDS_ATTENTION" and native["steps"] == {} and
+                     native["requests"] == {} and native.get("error", {}).get("code") == "RELEASE_BUSY" and
+                     not (out / "comparison-prepared.json").exists(),
+                     "This source correction belongs to the original concurrent-reader preparation.")
+                old_raw = (out / "runtime-source-selection.json").read_bytes()
+                need(sha(old_raw) == previous["source_selection_sha256"],
+                     "The original complete runtime selection changed.")
+                old_source = json.loads(old_raw)
+                old_files = {item["path"]: item for item in old_source["files"]}
+                new_files = {item["path"]: item for item in source_inventory["files"]}
+                core = str(SCF / "sf30-seller-sdk/odata/live/collection-comparison.mjs")
+                operator = str(EXAMPLES / "comparison-customer.py")
+                guide = str(EXAMPLES / "COMPARISON_CUSTOMER.md")
+                known_before = {core: "4b2d9b173f599b24240a8a4fbe505c3e83450886",
+                                operator: "920c43d3f1f2d2801ba2a440bc0533930f56e3eb",
+                                guide: "18c737a07a98de491676e00f3a54959686332026"}
+                changed = {name for name in old_files if old_files[name] != new_files.get(name)}
+                need(len(old_files) == len(old_source["files"]) and set(old_files) == set(new_files) and
+                     changed.issubset(known_before) and {core, operator}.issubset(changed) and
+                     all(old_files[name]["git_blob_sha"] == known_before[name] for name in changed) and
+                     new_files[core]["git_blob_sha"] == "4b85eafdc472559f742e44dc1d3c2a95417ed015" and
+                     old_source["runtime"] == source_inventory["runtime"] and
+                     old_source["node_modules"] == source_inventory["node_modules"],
+                     "Only the reviewed same-process reader queue and its original continuation may change.")
+                old_name = "runtime-source-history/" + sha(old_raw) + ".json"
+                immutable(out / old_name, old_raw)
+                journal.setdefault("source_upgrades", []).append({
+                    "selection": previous, "selection_sha256": journal["selection_sha256"],
+                    "state": journal["state"], "error": journal.get("error"),
+                    "source_file": {"name": old_name, "bytes": len(old_raw), "sha256": sha(old_raw)},
+                    "changed_paths": sorted(changed), "source_selection_sha256": sha(source_raw),
+                    "reason": "Serialize concurrent original comparison reads before the unchanged kernel lease",
+                    "adopted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+                journal.update(selection=selection, selection_sha256=selection_sha, state="RUNNING")
+                journal.pop("error", None)
+                save()
+                progress("original-comparison-source-continued", selection_sha256=selection_sha)
         else:
             journal = {"schema": SCHEMA, "selection": selection, "selection_sha256": selection_sha,
                        "state": "RUNNING", "steps": {}, "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
@@ -250,7 +299,17 @@ def main():
                  "The completed customer comparison archive changed.")
             progress("comparison-customer", status="COMPLETE", **result["archive"])
             return
-        immutable(out / "runtime-source-selection.json", source_raw)
+        source_file = out / "runtime-source-selection.json"
+        if source_file.exists() and source_file.read_bytes() != source_raw:
+            upgrade = journal.get("source_upgrades", [{}])[-1]
+            need(upgrade.get("source_selection_sha256") == sha(source_raw) and
+                 identity(source_file) == {key: upgrade["source_file"][key] for key in ("bytes", "sha256")} and
+                 identity(out / upgrade["source_file"]["name"]) == identity(source_file),
+                 "Preserve the exact original runtime while completing its selected source continuation.")
+            # The journal selects the successor before this atomic replacement.
+            # A stopped process reopens the same retained old inventory above.
+            dump(source_file, source_inventory)
+        immutable(source_file, source_raw)
         immutable(out / "customer-input.json", descriptor_raw)
         helper = checkout / EXAMPLES / "comparison-customer.mjs"
         subprocess.run([args.node, str(helper), "prepare", str(out / "customer-input.json")], check=True, pass_fds=(lock,))

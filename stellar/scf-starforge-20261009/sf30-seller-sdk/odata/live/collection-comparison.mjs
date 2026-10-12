@@ -337,9 +337,18 @@ function summary(root,core,reviews) {
     reviews:{revision:reviews.revision,current:[...current.values()],history:reviews.history},
     analysis:{path:'data/analysis/source.json',...identity(core.document.raw),reviewRevision:core.document.reviews.revision}};
 }
+// Browser reads and SDK calls can overlap in the same process. Queue them for
+// this canonical comparison directory before taking the original kernel lease.
+const directoryOperations=new Map();
 async function leased(directory,operation) {
-  const root=await privateDirectory(directory),lease=await acquireReleaseLease(root,'state.lock');
-  try{return await operation(root);}finally{await lease?.close();}
+  const root=await privateDirectory(directory),previous=directoryOperations.get(root)||Promise.resolve();
+  const task=previous.then(async()=>{
+    const lease=await acquireReleaseLease(root,'state.lock');
+    try{return await operation(root);}finally{await lease?.close();}
+  });
+  const tail=task.then(()=>undefined,()=>undefined);
+  directoryOperations.set(root,tail);
+  try{return await task;}finally{if(directoryOperations.get(root)===tail)directoryOperations.delete(root);}
 }
 /** Commit a complete source pair, native comparison and complete Analysis source together. */
 export async function createCollectionComparison({directory,beforeDirectory,afterDirectory,expectedBeforeSha256,expectedAfterSha256,title,fields,limits}={}) {
