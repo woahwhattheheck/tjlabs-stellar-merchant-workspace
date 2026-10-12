@@ -31,6 +31,11 @@ SOURCE_FILES = (
     "iati/publishing-schema/xml.xsd",
     "iati/publishing-schema/LICENSE",
     "iati/publishing-schema/IATI-LICENSE.rst",
+    "iati/results/__init__.py", "iati/results/model.py", "iati/results/workspace.py",
+    "iati/results/report.py", "iati/results/transfer.py", "iati/results/http.py",
+    "iati/results/cli.py", "iati/results/ui/app.js", "iati/results/ui/style.css",
+    "iati/RESULTS.md", "iati/results/receiving.py",
+    "iati/results/receiving_console.py", "iati/results/browser_receiving.mjs",
     "xml/xml_source.py", "xml/workspace.py", "xml/server.py", "xml/native.mjs",
     "dataset-handler.mjs",
 )

@@ -88,3 +88,10 @@ A portfolio can select up to 32 complete sources and one million distinct activi
 ## Native data quality engagements
 
 The same IATI application includes [native DQA assessments, named customer cases, finding review and complete receiving](DQA.md). Capture the original Zimmerman service's complete result and configuration observations, compare refreshed assessments, and carry full case history and selected original finance portfolios through the browser, CLI, typed client and source-workspace MCP. The full original provider and installed receiving workflow are under `receiving/dqa-source/` and `receiving/DQA.md`.
+
+
+## Results monitoring and editable receiving
+
+The Results workspace now uses the same original IATI reader, source custody, SQLite writer and private console. Inspect complete result/indicator/baseline/period coverage, preserve multilingual source meaning and dimensions, select explicit target/actual comparisons, save a named review, compare following reporting revisions and receive the full editable project. Original numeric values stay strings; source changes remain separate from reporting-filter changes. Existing finance, DQA and participant publishing remain available.
+
+See [RESULTS.md](RESULTS.md) for the full operator workflow, calculation meanings, source and revision contracts, seventeen typed JavaScript methods, twelve Merchant tools and the original CLI/HTTP routes. The complete [receiving programme](results/receiving.py) uses selected real publisher XML, the original workspace and one retained operation through review, request recovery, export, independent receiving, local-head preservation and cold reopen.
