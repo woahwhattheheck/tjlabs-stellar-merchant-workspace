@@ -10,7 +10,9 @@
   },
   "exports": {
     "./seller/ciim-desk": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/model.mjs",
-    "./seller/ciim-desk/client": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/client.mjs"
+    "./seller/ciim-desk/client": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/client.mjs",
+    "./seller/ciim-desk/connected": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/connected-client.mjs",
+    "./seller/ciim-desk/connected-cli": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/connected-cli.mjs"
   },
   "browserAssets": [
     {
@@ -22,6 +24,7 @@
     "ciim-desk": "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/application-provider.mjs"
   },
   "supportFiles": [
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/archive.py"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/archive.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/CONNECTED_OPERATOR_GUIDE.md"
   ]
 }

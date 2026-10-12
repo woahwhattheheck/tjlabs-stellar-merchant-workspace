@@ -110,3 +110,22 @@ Its **applications-receiving/result.json** retains the exact installation/releas
 A reviewed handback keeps the frozen receiving context, named authority decisions, selected edition/comparison scope, readable review report, accepted mapped output, exact original input archives and their complete coverage inventory. Its original archive may contain native editions beyond the handback’s selected review scope; both scopes are explicitly retained.
 
 Receive a correction as a new original native edition. Compare the selected earlier and later editions, inspect each changed original identifier and metadata field, and record the current named decisions before creating the following handback. Earlier handbacks remain available at their original revision. The full editable workspace and its complete source travel with the next receiver.
+
+## Connected terminal and application operators
+
+The running desk exposes the same original receiving operations to the browser and the connected client. Use the connected CLI when its server is open:
+
+~~~sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/cli.mjs \
+  connected status --connection ABS_DESK/desk-connection.json
+
+node stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/cli.mjs \
+  connected act --connection ABS_DESK/desk-connection.json \
+  --request ABS_ORIGINAL_REQUEST.json
+~~~
+
+The [connected operator guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/CONNECTED_OPERATOR_GUIDE.md) covers original candidate imports, every typed decision, complete population reads, exact streaming exports and the retained request journal. It includes terminal and JavaScript usage for the existing private server.
+
+Each write keeps its complete original request and operation ID before sending. The pending command reads that saved local request during a server restart; recover resends its original body and ID once the server is running. A completed restore retains the received workspace identity and original review history. Complete source ZIPs, XML/native/profile attachments and historical handbacks are streamed and checked against their original sizes and hashes.
+
+The installed package exports the client at ./seller/ciim-desk/connected and the connected CLI at ./seller/ciim-desk/connected-cli. The existing local commands and typed action catalogue remain available. Both connected interfaces use the live server's original writer and revision checks.

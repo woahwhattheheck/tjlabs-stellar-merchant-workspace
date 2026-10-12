@@ -14,6 +14,7 @@ export const HELP=String.raw`CIIM receiving desk
 
 Open and operate the same retained native metadata and named receiving reviews.
 
+  ciim-desk connected --help             Operate an already running receiving desk.
   ciim-desk init --workspace ABS [--python PYTHON]
   ciim-desk serve --workspace ABS [--python PYTHON] [--port PORT]
       [--expected-workspace-id ID --expected-marker-sha256 SHA256]
@@ -220,6 +221,7 @@ async function serve(options,emit) {
   }
 }
 export async function main(args=process.argv.slice(2),{stdout=process.stdout,stderr=process.stderr}={}) {
+  if(args[0]==='connected')return (await import('./connected-cli.mjs')).main(args.slice(1),{stdout,stderr});
   const emit=value=>stdout.write(JSON.stringify(value)+'\n');
   const parsed=parseArgs(args),{command,scope,options}=parsed;
   if(command==='help'){stdout.write(HELP);return;}
