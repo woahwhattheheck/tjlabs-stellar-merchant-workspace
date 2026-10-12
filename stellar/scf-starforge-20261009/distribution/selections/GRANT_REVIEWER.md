@@ -335,14 +335,18 @@ runtime declarations.
 | `stellar-forge/mcp-paid-agent` | Native Buyer, quote/result stores, computed console assets, browser client and declared MCP runtime inputs |
 | `stellar-forge/mcp-merchant-operator` | Original merchant host, provider registry, retained file readers/downloads and computed operator assets |
 | `stellar/scf-starforge-20261009/sf82-seller-pilot` | Original release-store setup, selection and native release lifecycle |
+| `stellar-forge/developer-site` | Complete reviewed application, budget and companion downloads, retained economic report and shared local source server |
 
 The selected command catalog contains `installation`, `runtime-profile`,
-`runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-demo`,
+`runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
+`grant-demo`,
 `merchant-mcp`, `merchant-grant-reviewer` and
 `merchant-console-application-receive`.
 Its Applications providers are `grant-reviewer` and `merchant-console`; its
 merchant provider is `grant-reviewer-workbenches`. Its public workbench import is
-`@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. Use
+`@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. The application
+reader is also available through
+`@tokenjunkielabs/starforge-merchant/grant/application-server`. Use
 `starforge --help` and `starforge registrations` for the actual installed
 declarations.
 
