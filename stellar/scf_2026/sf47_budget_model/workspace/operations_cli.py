@@ -58,6 +58,26 @@ def register(subparsers, common):
     target.add_argument("--expected-version", type=int, required=True)
     target.add_argument("--expected-report-sha256", required=True)
     target.add_argument("--output", required=True)
+    for verb in ("account-reconciliation", "account-reconciliation-export"):
+        target = command(verb, "Read or export the complete original statement reconciliation and saved period editions", case=True, output=verb == "account-reconciliation")
+        target.add_argument("--reconciliation", help="Retained reconciliation ID; omission lists the complete account")
+        target.add_argument("--revision", type=int, help="Original saved edition; omission opens its current head")
+        target.add_argument("--expected-version", type=int, required=verb == "account-reconciliation-export")
+        if verb == "account-reconciliation-export":
+            target.add_argument("--expected-report-sha256", required=True)
+            target.add_argument("--output", required=True)
+    target = command("account-reconciliation-statement-inputs", "Read the complete original statement bytes and retained mapping for its native writer", case=True, output=True)
+    target.add_argument("--source", required=True, help="Original statement source ID")
+    for verb in ("account-reconciliation-preview", "account-reconciliation-apply"):
+        target = command(verb, "Review or save the complete source, native cash matches and dated reconciliation edition", case=True, output=True)
+        target.add_argument("--input", required=True, help="Complete reconciliation JSON or downloaded browser desk")
+        target.add_argument("--expected-version", type=int, help="Original case version; must match if retained in the input")
+        if verb == "account-reconciliation-apply":
+            target.add_argument("--actor", help="Recording operator; must match if already retained")
+            target.add_argument("--request-id", help="Original request ID; must match if already retained")
+            target.add_argument("--expected-preview-sha256", help="Complete reviewed preview hash; must match if retained")
+    target = command("account-reconciliation-desk-resume", "Resume the exact original request retained in a complete browser reconciliation desk", case=True, output=True)
+    target.add_argument("--input", required=True)
     for verb in ("cash-account", "cash-account-export"):
         target = command(verb, "Read or export the complete dated cash account and original correction history", case=True, output=verb == "cash-account")
         target.add_argument("--start-date")
@@ -207,6 +227,23 @@ def register(subparsers, common):
     target.add_argument("--source", required=True)
     target.add_argument("--sha256", required=True)
     target.add_argument("--output", required=True)
+    for name in ("customer-use-calendar", "customer-use-calendar-export", "customer-use-calendar-cohort"):
+        target = command(name, "Read saved customer-use editions, export complete dated use or open the original Cohort input",
+                         case=True, output=name != "customer-use-calendar-export")
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--installation-refs", help="JSON array of exact saved id/revision/optional sha256 selections; omission selects current editions")
+        target.add_argument("--as-of", help="YYYY-MM-DD for the calendar; original ISO timestamp for the Cohort observation cutoff")
+        if name == "customer-use-calendar-export":
+            target.add_argument("--format", choices=("json", "csv", "ics"), default="json")
+            target.add_argument("--output", required=True)
+        if name == "customer-use-calendar-cohort":
+            target.add_argument("--group", required=True, help="Original window group ID returned by customer-use-calendar")
+            target.add_argument("--inputs-only", action="store_true", help="Output native inputs directly for original cohort-preview/prepare")
+    target = command("customer-use-calendar-expand", "Expand explicit working dates into an editable complete Installation document", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--document", required=True, help="Complete editable Installation JSON")
+    target.add_argument("--pattern", required=True, help="Explicit task/buyer/weekday/include/exclude date expansion JSON")
+    target.add_argument("--document-only", action="store_true", help="Output the complete Installation document directly for original preview/save")
     target = command("cohort-seed", "Open the original proposed 7/14-day acceptance rule and explicit input", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -396,6 +433,58 @@ def read_bytes(filename, maximum=MAX_BUNDLE):
     return raw
 
 
+def reconciliation_document(filename, case_id, mode):
+    """Receive the complete original input and preserve every pending request field."""
+    try:
+        document = json.loads(read_bytes(filename, 64 * 1024 * 1024))
+    except (UnicodeError, ValueError) as exc:
+        raise Problem("Use a complete UTF-8 reconciliation input or downloaded desk.", 422, "INVALID_RECONCILIATION_INPUT") from exc
+    if not isinstance(document, dict):
+        raise Problem("Use the complete reconciliation input object.", 422, "INVALID_RECONCILIATION_INPUT")
+    if document.get("schema") == "stellar-forge.sf47-account-reconciliation-desk.v1":
+        if document.get("caseId") != case_id:
+            raise Problem("Open this reconciliation desk in its original case.", 409, "RECONCILIATION_DESK_CASE_MISMATCH")
+        pending = document.get("pending")
+        if mode == "resume" or pending is not None:
+            if (not isinstance(pending, dict) or pending.get("caseId") != case_id
+                    or pending.get("kind") != "account-reconciliation"
+                    or not isinstance(pending.get("body"), dict)
+                    or not isinstance(pending["body"].get("requestId"), str)
+                    or not pending["body"]["requestId"]):
+                raise Problem("Retain the complete original pending reconciliation request.", 422, "INVALID_RECONCILIATION_INPUT")
+            document = dict(pending["body"])
+        else:
+            draft = document.get("draft")
+            if not isinstance(draft, dict) or not isinstance(draft.get("document"), dict):
+                raise Problem("The downloaded desk needs its complete editable reconciliation document.", 422, "INVALID_RECONCILIATION_INPUT")
+            document = {"expectedVersion": document.get("caseVersion"),
+                        "reconciliationId": draft.get("reconciliationId"),
+                        "expectedRevision": draft.get("expectedRevision"), "state": draft.get("state"),
+                        "document": draft["document"]}
+    elif mode == "resume":
+        raise Problem("Resume from the complete original downloaded reconciliation desk.", 422, "INVALID_RECONCILIATION_INPUT")
+    if mode == "preview":
+        document = {key: value for key, value in document.items()
+                    if key not in ("requestId", "actor", "expectedPreviewSha256")}
+    return document
+
+
+def reconciliation_fields(document, args, applying=False):
+    body = dict(document)
+    supplied = [("expectedVersion", args.expected_version)]
+    if applying:
+        supplied += [("actor", args.actor), ("requestId", args.request_id),
+                     ("expectedPreviewSha256", args.expected_preview_sha256)]
+    for key, value in supplied:
+        if value is None:
+            continue
+        if key in body and body[key] is not None and body[key] != value:
+            raise Problem("The supplied " + key + " differs from the retained original reconciliation request.",
+                          409, "RECONCILIATION_REQUEST_MISMATCH")
+        body[key] = value
+    return body
+
+
 def cash_document(filename, case_id, mode):
     """Keep complete original requests while allowing a downloaded desk to resume."""
     try:
@@ -529,6 +618,23 @@ def operate(workspace, args):
     elif action == "supplier-account-export":
         return {"caseId": args.case, "output": publish(args.output, ops.export_supplier_account(
             args.case, args.contributor, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
+    elif action in ("account-reconciliation", "account-reconciliation-export"):
+        selected = {"reconciliationId": args.reconciliation, "revision": args.revision}
+        if action == "account-reconciliation-export":
+            return {"caseId": args.case, "output": publish(args.output, ops.export_account_reconciliation(
+                args.case, selected, args.expected_version, args.expected_report_sha256))}
+        result = ops.account_reconciliation(args.case, selected, args.expected_version)
+    elif action == "account-reconciliation-statement-inputs":
+        result = ops.account_reconciliation_statement_inputs(args.case, args.source)
+    elif action in ("account-reconciliation-preview", "account-reconciliation-apply", "account-reconciliation-desk-resume"):
+        mode = "preview" if action.endswith("-preview") else "apply" if action.endswith("-apply") else "resume"
+        body = reconciliation_document(args.input, args.case, mode)
+        if mode == "preview":
+            result = ops.account_reconciliation_preview(args.case, reconciliation_fields(body, args))
+        elif mode == "apply":
+            result = ops.account_reconciliation_apply(args.case, reconciliation_fields(body, args, applying=True))
+        else:
+            result = ops.account_reconciliation_apply(args.case, body)
     elif action in ("cash-account", "cash-account-export"):
         selected = {"startDate": args.start_date, "endDate": args.end_date,
                     "network": args.network, "currency": args.currency, "asset": args.asset}
@@ -711,6 +817,34 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "implementation.prepare",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action.startswith("customer-use-calendar"):
+        def calendar_json(filename, maximum=MAX_SOURCE):
+            try:
+                return json.loads(read_bytes(filename, maximum))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Use complete UTF-8 customer-use selection, pattern or Installation JSON.",
+                              422, "INVALID_CUSTOMER_USE_CALENDAR") from exc
+        body = {"expectedVersion": args.expected_version}
+        if action == "customer-use-calendar-expand":
+            from operations_installations import MAX_DOCUMENT_BYTES
+            body.update(document=calendar_json(args.document, MAX_DOCUMENT_BYTES), pattern=calendar_json(args.pattern, 131072))
+            result = ops.expand_customer_use_calendar(args.case, body)
+            if args.document_only:
+                result = result["document"]
+        else:
+            if args.installation_refs:
+                body["installationRefs"] = calendar_json(args.installation_refs, 32768)
+            if action == "customer-use-calendar-cohort":
+                body.update(groupId=args.group, asOfAt=args.as_of)
+                result = ops.seed_customer_use_cohort(args.case, body)
+                if args.inputs_only:
+                    result = result["inputs"]
+            else:
+                body["asOfDate"] = args.as_of
+                if action == "customer-use-calendar-export":
+                    return {"caseId": args.case, "format": args.format,
+                            "output": publish(args.output, ops.export_customer_use_calendar(args.case, body, args.format))}
+                result = ops.customer_use_calendar(args.case, body)
     elif action == "cohort-seed":
         result = ops.seed_cohort(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "cohort-export":

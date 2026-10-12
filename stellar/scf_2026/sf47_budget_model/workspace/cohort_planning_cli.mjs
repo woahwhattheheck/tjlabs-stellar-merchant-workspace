@@ -34,6 +34,9 @@ const HELP = [
   "Use --input - to read JSON from stdin. A native seed must be a separate file.",
   "Files are created atomically and existing destinations are preserved.",
   "All amounts and hours in plan JSON use decimal text; atomic prices use integer text.",
+  "capacityPools and schedule capacityPoolId compare shared daily active hours with recurring demand.",
+  "sensitivity.minimumMarginPct optionally calculates complete-service price floors.",
+  "Complete reports and CSV retain capacity, shortages, price groups and original source assumptions.",
   "The planner retains its source and rule. A supplied current seed adds a drift comparison.",
   ""
 ].join("\n");
