@@ -161,6 +161,10 @@ export class MerchantGtfsWorkspaces {
       case 'merchant_gtfs_status':return this.#state(entry,input);
       case 'merchant_gtfs_inputs':return this.#inputs(workspace,input.input);
       case 'merchant_gtfs_import':value=await this.#import(entry,args);break;
+      case 'merchant_gtfs_source_save':value=await model.saveFeedSource(input);break;
+      case 'merchant_gtfs_source':{const {id,...page}=input;value=await model.feedSource(id,page);break;}
+      case 'merchant_gtfs_acquire':value=await model.acquireFeed(input);break;
+      case 'merchant_gtfs_acquisition':{const {id,...page}=input;value=await model.acquisition(id,page);break;}
       case 'merchant_gtfs_feed':value=await model.feed(input.id);break;
       case 'merchant_gtfs_source_rows':value=await model.sourceRows(input);break;
       case 'merchant_gtfs_edition_create':value=await model.createEdition(input);break;
