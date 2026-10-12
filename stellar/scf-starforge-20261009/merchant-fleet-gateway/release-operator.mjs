@@ -11,7 +11,8 @@ import { sqliteSnapshotOptions } from '../sf82-seller-pilot/release-sqlite.mjs';
 import { startMerchantFleet, loadMerchantFleet } from './gateway.mjs';
 import { fleetControl } from './control.mjs';
 import { acquireStateLease } from './state-lease.mjs';
-import { openRolloutState } from './rollout-state.mjs';
+import { openRolloutState, fleetSnapshotDigest } from './rollout-state.mjs';
+import { createFleetCampaignDesk } from './release-campaigns.mjs';
 import { describeFleetOperations, readFleetOperations, validateFleetNavigationOrigin } from './release-operations.mjs';
 import { createFleetClientDesk } from './release-clients.mjs';
 import { createFleetDiscoveryDesk } from './release-discovery.mjs';
@@ -459,7 +460,171 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
       lease.assertHeld(); const runtime = owned.get(slotKey(tenant, slot));
       return runtime && !runtime.ended ? runtime.session : null;
     } });
+  async function reviewTargets(targetInputs) {
+    if (!Array.isArray(targetInputs) || !targetInputs.length || targetInputs.length > plan.tenants.length)
+      throw fail('FLEET_RELEASE_TARGETS_INVALID', 400);
+    const native = await nativeStatus(), current = linked(native), targets = [], comparisons = [], seen = new Set();
+    for (const input of targetInputs) {
+      keys(input, ['tenant', 'slot', 'releaseId']);
+      if (seen.has(input.tenant)) throw fail('FLEET_RELEASE_TARGET_TENANT_REPEATED', 400);
+      seen.add(input.tenant);
+      const target = await descriptor(input.tenant, input.slot, input.releaseId);
+      const before = current.mapping.find(row => row.tenant === target.tenant);
+      if (before.slot === target.slot) throw fail('FLEET_RELEASE_REPLACEMENT_SLOT_REQUIRED');
+      const beforeSlot = locate(before.tenant, before.slot).slot, afterSlot = locate(target.tenant, target.slot).slot;
+      const comparison = await compareReleases(afterSlot.store, before.releaseId, target.releaseId, { beforeRoot: beforeSlot.store });
+      if (comparison.before.digest !== before.releaseDigest || comparison.after.digest !== target.releaseDigest)
+        throw fail('FLEET_RELEASE_SOURCE_CHANGED');
+      const held = owned.get(slotKey(target.tenant, target.slot));
+      if (held && !held.ended && !sameDescriptor(held.descriptor, target)) throw fail('FLEET_RELEASE_SLOT_IN_USE');
+      targets.push(target);
+      comparisons.push({ tenant: target.tenant, slot: target.slot, releaseId: target.releaseId,
+        comparison: publicComparison(comparison), limits: tenants.get(target.tenant).limits });
+    }
+    const mapping = current.mapping.map(row => targets.find(target => target.tenant === row.tenant) ?? row);
+    const review = { kind: 'replace', baseRevision: native.revision, baseDigest: native.digest,
+      target: targets[0], targets, mapping, generations: await generations([...current.mapping, ...targets]) };
+    return { ...retainReview(review), kind: review.kind, baseRevision: native.revision, baseDigest: native.digest,
+      before: structuredClone(current.mapping), after: structuredClone(mapping), comparisons };
+  }
+  const nativeActions = {
+    async review(input) {
+      keys(input, ['tenant', 'slot', 'releaseId']);
+      const value = await reviewTargets([input]), selected = value.comparisons[0];
+      return { reviewId: value.reviewId, expiresAt: value.expiresAt, kind: value.kind,
+        baseRevision: value.baseRevision, tenant: selected.tenant, slot: selected.slot,
+        releaseId: selected.releaseId, comparison: selected.comparison, limits: selected.limits };
+    },
+    async reviewWave(input) {
+      keys(input, ['targets']); return reviewTargets(input.targets);
+    },
+    async prepare({ reviewId }) {
+      const review = takeReview(reviewId, 'replace'); await checkReview(review);
+      for (const target of review.targets ?? [review.target]) {
+        assertOpen();
+        const targetKey = slotKey(target.tenant, target.slot);
+        const started = await ensureStarted(target, review.generations[targetKey]);
+        review.generations[targetKey] = started.selectionGeneration;
+      }
+      for (const row of review.mapping) await verifyDescriptor(row);
+      await checkReview(review);
+      saveJson(manifestPath, manifest(review.mapping));
+      const expectedDigest = fleetSnapshotDigest(await loadMerchantFleet(manifestPath));
+      journal.pending = { phase: 'PREPARING', baseRevision: review.baseRevision, mapping: review.mapping,
+        expectedDigest, generations: review.generations }; persist();
+      let native;
+      try { native = await fleetControl(stateDirectory, 'prepare', { manifestPath, expectedRevision: review.baseRevision }); }
+      catch (error) { throw outcomeUnknown(error); }
+      if (!native.candidate || native.candidate.baseRevision !== review.baseRevision || native.candidate.digest !== expectedDigest)
+        throw fail('FLEET_RELEASE_PREPARE_RESPONSE_INVALID', 502);
+      journal.pending = { ...journal.pending, phase: 'PREPARED', candidateId: native.candidate.id, digest: native.candidate.digest };
+      persist(); return { candidateId: native.candidate.id, expectedRevision: review.baseRevision,
+        expiresAt: native.candidate.expiresAt, native };
+    },
+    async activate({ candidateId, expectedRevision }) {
+      const native = await nativeStatus(); linked(native);
+      const pending = journal.pending;
+      if (!pending || pending.phase !== 'PREPARED' || candidateId !== pending.candidateId ||
+          expectedRevision !== pending.baseRevision || native.revision !== expectedRevision ||
+          native.candidate?.id !== candidateId || native.candidate.digest !== pending.digest)
+        throw fail('FLEET_RELEASE_CANDIDATE_CHANGED');
+      for (const row of pending.mapping) {
+        const held = owned.get(slotKey(row.tenant, row.slot));
+        if (!held || held.ended || !sameDescriptor(held.descriptor, row)) throw fail('FLEET_RELEASE_SESSION_UNAVAILABLE');
+        await verifyDescriptor(row);
+      }
+      for (const [key, generation] of Object.entries(pending.generations)) {
+        const [tenant, slot] = key.split('/');
+        if ((await readReleaseState(locate(tenant, slot).slot.store)).generation !== generation)
+          throw fail('FLEET_RELEASE_SELECTION_CHANGED');
+      }
+      pending.phase = 'ACTIVATING'; persist();
+      let result;
+      try { result = await fleetControl(stateDirectory, 'activate', { candidateId, expectedRevision }); }
+      catch (error) { throw outcomeUnknown(error); }
+      recordRevision(result, pending.mapping); return { native: result };
+    },
+    async reviewRollback({ targetRevision }) {
+      const native = await nativeStatus(), current = linked(native);
+      const target = journal.revisions.find(row => row.revision === targetRevision &&
+        native.history.some(saved => saved.revision === row.revision && saved.digest === row.digest && saved.snapshotId === row.snapshotId));
+      if (!target) throw fail('FLEET_RELEASE_ROLLBACK_NOT_LINKED', 404);
+      const comparisons = [];
+      for (const row of target.mapping) {
+        await verifyDescriptor(row);
+        const held = owned.get(slotKey(row.tenant, row.slot));
+        if (held && !held.ended && !sameDescriptor(held.descriptor, row)) throw fail('FLEET_RELEASE_SLOT_IN_USE');
+        const before = current.mapping.find(item => item.tenant === row.tenant);
+        const comparison = await compareReleases(locate(row.tenant, row.slot).slot.store, before.releaseId, row.releaseId,
+          { beforeRoot: locate(before.tenant, before.slot).slot.store });
+        if (comparison.before.digest !== before.releaseDigest || comparison.after.digest !== row.releaseDigest)
+          throw fail('FLEET_RELEASE_SOURCE_CHANGED');
+        comparisons.push({ tenant: row.tenant, comparison: publicComparison(comparison) });
+      }
+      const review = { kind: 'rollback', baseRevision: native.revision, baseDigest: native.digest,
+        targetRevision, digest: target.digest, mapping: structuredClone(target.mapping),
+        generations: await generations([...current.mapping, ...target.mapping]) };
+      return { ...retainReview(review), kind: review.kind, baseRevision: native.revision, targetRevision, comparisons };
+    },
+    async rollback({ reviewId }) {
+      const review = takeReview(reviewId, 'rollback'); await checkReview(review);
+      for (const row of review.mapping) {
+        const key = slotKey(row.tenant, row.slot), started = await ensureStarted(row, review.generations[key]);
+        review.generations[key] = started.selectionGeneration;
+      }
+      await checkReview(review);
+      journal.pending = { phase: 'ROLLING_BACK', baseRevision: review.baseRevision, targetRevision: review.targetRevision,
+        digest: review.digest, mapping: review.mapping }; persist();
+      let native;
+      try { native = await fleetControl(stateDirectory, 'rollback', {
+        expectedRevision: review.baseRevision, targetRevision: review.targetRevision }); }
+      catch (error) { throw outcomeUnknown(error); }
+      recordRevision(native, review.mapping); return { native };
+    },
+    async retire({ tenant, slot, instanceId, expectedRevision }) {
+      const { key } = locate(tenant, slot), held = owned.get(key);
+      if (!held || held.ended || held.session.observation.instanceId !== instanceId) throw fail('FLEET_RELEASE_SESSION_NOT_OWNED');
+      // The original routing mutex spans the original child close. Another
+      // control client cannot activate this port after checking its drain.
+      const result = await gateway.withRetiredPort(held.descriptor.port, expectedRevision, () => held.session.close());
+      held.ended = true;
+      return { tenant, slot, instanceId, stopped: true, native: result };
+    },
+    async recoverPrepared({ baseRevision, baseDigest, mapping }) {
+      const native = await nativeStatus(), current = linked(native), pending = journal.pending;
+      if (!pending || pending.baseRevision !== baseRevision || stable(pending.mapping) !== stable(mapping)) return null;
+      if (native.revision !== baseRevision || native.digest !== baseDigest || stable(current.mapping) === stable(mapping))
+        throw fail('FLEET_RELEASE_REVISION_CHANGED');
+      if (!native.candidate || native.candidate.expiresAt <= Date.now()) return null;
+      if (native.candidate.baseRevision !== baseRevision ||
+          native.candidate.digest !== (pending.expectedDigest ?? pending.digest))
+        throw fail('FLEET_RELEASE_CANDIDATE_CHANGED');
+      for (const row of mapping) await verifyDescriptor(row);
+      journal.pending = { ...pending, phase: 'PREPARED', candidateId: native.candidate.id, digest: native.candidate.digest };
+      persist();
+      return { candidateId: native.candidate.id, expectedRevision: baseRevision,
+        expiresAt: native.candidate.expiresAt, native };
+    },
+  };
+  const campaigns = createFleetCampaignDesk({ directory, planDigest: plan.digest, assertOpen,
+    describe: descriptor, actions: nativeActions, fleetStatus: status,
+    snapshot: async () => {
+      const native = await nativeStatus(), current = linked(native);
+      return { native, mapping: structuredClone(current.mapping), pending: structuredClone(journal.pending),
+        revisions: structuredClone(journal.revisions) };
+    } });
   const api = {
+    campaignList() { assertOpen(); return campaigns.list(); },
+    campaignInspect(input) { assertOpen(); return campaigns.inspect(input); },
+    campaignExport(input) { assertOpen(); return campaigns.export(input); },
+    campaignSave(input) { return exclusive('campaign-save', () => campaigns.save(input)); },
+    campaignReview(input) { return exclusive('campaign-review', () => campaigns.review(input)); },
+    campaignAdvance(input) { return exclusive('campaign-advance', () => campaigns.advance(input)); },
+    campaignPause(input) { assertOpen(); return campaigns.pause(input); },
+    campaignRollbackReview(input) { return exclusive('campaign-rollback-review', () => campaigns.reviewRollback(input)); },
+    campaignRollback(input) { return exclusive('campaign-rollback', () => campaigns.rollback(input)); },
+    campaignRetire(input) { return exclusive('campaign-retire', () => campaigns.retire(input)); },
+    cancelCampaigns() { campaigns.cancel(); },
     planDigest: plan.digest, stateDirectory, gatewayStateDirectory: stateDirectory, get publicURL() { return gateway?.publicURL; }, status,
     operations(input) {
       assertOpen(); keys(input, ['tenant', 'slot', 'instanceId']);
@@ -516,111 +681,12 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
         return { tenant: input.tenant, slot: input.slot, package: input.package, release: shortRelease(release) };
       } finally { if (stagingController === controller) stagingController = null; }
     }); },
-    review(input) { return exclusive('review', async () => {
-      keys(input, ['tenant', 'slot', 'releaseId']);
-      const native = await nativeStatus(), current = linked(native), target = await descriptor(input.tenant, input.slot, input.releaseId);
-      const before = current.mapping.find(row => row.tenant === input.tenant);
-      if (before.slot === target.slot) throw fail('FLEET_RELEASE_REPLACEMENT_SLOT_REQUIRED');
-      const beforeSlot = locate(before.tenant, before.slot).slot, afterSlot = locate(target.tenant, target.slot).slot;
-      const comparison = await compareReleases(afterSlot.store, before.releaseId, target.releaseId, { beforeRoot: beforeSlot.store });
-      if (comparison.before.digest !== before.releaseDigest || comparison.after.digest !== target.releaseDigest)
-        throw fail('FLEET_RELEASE_SOURCE_CHANGED');
-      const held = owned.get(slotKey(target.tenant, target.slot));
-      if (held && !held.ended && !sameDescriptor(held.descriptor, target)) throw fail('FLEET_RELEASE_SLOT_IN_USE');
-      const mapping = current.mapping.map(row => row.tenant === target.tenant ? target : row);
-      const review = { kind: 'replace', baseRevision: native.revision, baseDigest: native.digest,
-        target, mapping, generations: await generations([...current.mapping, target]) };
-      return { ...retainReview(review), kind: review.kind, baseRevision: native.revision,
-        tenant: target.tenant, slot: target.slot, releaseId: target.releaseId,
-        comparison: publicComparison(comparison), limits: tenants.get(target.tenant).limits };
-    }); },
-    prepare({ reviewId }) { return exclusive('prepare', async () => {
-      const review = takeReview(reviewId, 'replace'); await checkReview(review);
-      const targetKey = slotKey(review.target.tenant, review.target.slot);
-      const started = await ensureStarted(review.target, review.generations[targetKey]);
-      review.generations[targetKey] = started.selectionGeneration;
-      for (const row of review.mapping) await verifyDescriptor(row);
-      await checkReview(review);
-      saveJson(manifestPath, manifest(review.mapping));
-      journal.pending = { phase: 'PREPARING', baseRevision: review.baseRevision, mapping: review.mapping,
-        generations: review.generations }; persist();
-      let native;
-      try { native = await fleetControl(stateDirectory, 'prepare', { manifestPath, expectedRevision: review.baseRevision }); }
-      catch (error) { throw outcomeUnknown(error); }
-      if (!native.candidate || native.candidate.baseRevision !== review.baseRevision) throw fail('FLEET_RELEASE_PREPARE_RESPONSE_INVALID', 502);
-      journal.pending = { ...journal.pending, phase: 'PREPARED', candidateId: native.candidate.id, digest: native.candidate.digest };
-      persist(); return { candidateId: native.candidate.id, expectedRevision: review.baseRevision,
-        expiresAt: native.candidate.expiresAt, native };
-    }); },
-    activate({ candidateId, expectedRevision }) { return exclusive('activate', async () => {
-      const native = await nativeStatus(); linked(native);
-      const pending = journal.pending;
-      if (!pending || pending.phase !== 'PREPARED' || candidateId !== pending.candidateId ||
-          expectedRevision !== pending.baseRevision || native.revision !== expectedRevision ||
-          native.candidate?.id !== candidateId || native.candidate.digest !== pending.digest)
-        throw fail('FLEET_RELEASE_CANDIDATE_CHANGED');
-      for (const row of pending.mapping) {
-        const held = owned.get(slotKey(row.tenant, row.slot));
-        if (!held || held.ended || !sameDescriptor(held.descriptor, row)) throw fail('FLEET_RELEASE_SESSION_UNAVAILABLE');
-        await verifyDescriptor(row);
-      }
-      for (const [key, generation] of Object.entries(pending.generations)) {
-        const [tenant, slot] = key.split('/');
-        if ((await readReleaseState(locate(tenant, slot).slot.store)).generation !== generation)
-          throw fail('FLEET_RELEASE_SELECTION_CHANGED');
-      }
-      pending.phase = 'ACTIVATING'; persist();
-      let result;
-      try { result = await fleetControl(stateDirectory, 'activate', { candidateId, expectedRevision }); }
-      catch (error) { throw outcomeUnknown(error); }
-      recordRevision(result, pending.mapping); return { native: result };
-    }); },
-    reviewRollback({ targetRevision }) { return exclusive('review-rollback', async () => {
-      const native = await nativeStatus(), current = linked(native);
-      const target = journal.revisions.find(row => row.revision === targetRevision &&
-        native.history.some(saved => saved.revision === row.revision && saved.digest === row.digest && saved.snapshotId === row.snapshotId));
-      if (!target) throw fail('FLEET_RELEASE_ROLLBACK_NOT_LINKED', 404);
-      const comparisons = [];
-      for (const row of target.mapping) {
-        await verifyDescriptor(row);
-        const held = owned.get(slotKey(row.tenant, row.slot));
-        if (held && !held.ended && !sameDescriptor(held.descriptor, row)) throw fail('FLEET_RELEASE_SLOT_IN_USE');
-        const before = current.mapping.find(item => item.tenant === row.tenant);
-        const comparison = await compareReleases(locate(row.tenant, row.slot).slot.store, before.releaseId, row.releaseId,
-          { beforeRoot: locate(before.tenant, before.slot).slot.store });
-        if (comparison.before.digest !== before.releaseDigest || comparison.after.digest !== row.releaseDigest)
-          throw fail('FLEET_RELEASE_SOURCE_CHANGED');
-        comparisons.push({ tenant: row.tenant, comparison: publicComparison(comparison) });
-      }
-      const review = { kind: 'rollback', baseRevision: native.revision, baseDigest: native.digest,
-        targetRevision, digest: target.digest, mapping: structuredClone(target.mapping),
-        generations: await generations([...current.mapping, ...target.mapping]) };
-      return { ...retainReview(review), kind: review.kind, baseRevision: native.revision, targetRevision, comparisons };
-    }); },
-    rollback({ reviewId }) { return exclusive('rollback', async () => {
-      const review = takeReview(reviewId, 'rollback'); await checkReview(review);
-      for (const row of review.mapping) {
-        const key = slotKey(row.tenant, row.slot), started = await ensureStarted(row, review.generations[key]);
-        review.generations[key] = started.selectionGeneration;
-      }
-      await checkReview(review);
-      journal.pending = { phase: 'ROLLING_BACK', baseRevision: review.baseRevision, targetRevision: review.targetRevision,
-        digest: review.digest, mapping: review.mapping }; persist();
-      let native;
-      try { native = await fleetControl(stateDirectory, 'rollback', {
-        expectedRevision: review.baseRevision, targetRevision: review.targetRevision }); }
-      catch (error) { throw outcomeUnknown(error); }
-      recordRevision(native, review.mapping); return { native };
-    }); },
-    retire({ tenant, slot, instanceId, expectedRevision }) { return exclusive('retire', async () => {
-      const { key } = locate(tenant, slot), held = owned.get(key);
-      if (!held || held.ended || held.session.observation.instanceId !== instanceId) throw fail('FLEET_RELEASE_SESSION_NOT_OWNED');
-      // The original routing mutex spans the original child close. Another
-      // control client cannot activate this port after checking its drain.
-      const result = await gateway.withRetiredPort(held.descriptor.port, expectedRevision, () => held.session.close());
-      held.ended = true;
-      return { tenant, slot, instanceId, stopped: true, native: result };
-    }); },
+    review(input) { return exclusive('review', () => nativeActions.review(input)); },
+    prepare(input) { return exclusive('prepare', () => nativeActions.prepare(input)); },
+    activate(input) { return exclusive('activate', () => nativeActions.activate(input)); },
+    reviewRollback(input) { return exclusive('review-rollback', () => nativeActions.reviewRollback(input)); },
+    rollback(input) { return exclusive('rollback', () => nativeActions.rollback(input)); },
+    retire(input) { return exclusive('retire', () => nativeActions.retire(input)); },
     // Provider shutdown can cancel native source capture before awaiting its
     // serialized call. The original stage API removes its uncommitted output.
     cancelStaging() {
@@ -645,6 +711,7 @@ export async function openFleetReleaseOperator({ planFile, directory, gatewaySta
       if (closingPromise) return closingPromise;
       closing = true;
       api.cancelStaging();
+      api.cancelCampaigns();
       api.cancelClientTransfers();
       api.cancelDeliveryOperations();
       const attempt = (async () => {
