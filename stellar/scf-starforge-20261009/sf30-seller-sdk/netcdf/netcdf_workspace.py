@@ -453,7 +453,7 @@ class Workspace:
                     name = "project/objects/" + sha; archive.write(path, name); inventory.append({"path": name, "sha256": sha, "bytes": path.stat().st_size})
                 for path in sorted(SOURCE_ROOT.rglob("*")):
                     if not path.is_file() or path.is_symlink() or any(part.startswith(".") or part in ["__pycache__", "node_modules"] for part in path.relative_to(SOURCE_ROOT).parts): continue
-                    if path.suffix not in [".py", ".mjs", ".mts", ".ts", ".js", ".html", ".css", ".md", ".txt", ".json"]: continue
+                    if path.name != "LICENSE" and path.suffix not in [".py", ".mjs", ".mts", ".ts", ".js", ".html", ".css", ".md", ".txt", ".json"]: continue
                     name = "application/" + path.relative_to(SOURCE_ROOT).as_posix(); archive.write(path, name)
                     inventory.append({"path": name, "sha256": digest_file(path), "bytes": path.stat().st_size})
                 archive.writestr("transfer.json", canonical({"schema": "stellar-forge.netcdf-transfer.v1", "project_id": state["project"]["id"], "members": inventory}))

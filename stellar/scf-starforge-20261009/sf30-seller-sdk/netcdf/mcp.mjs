@@ -34,13 +34,14 @@ export class MerchantNetCDFWorkspaces{
   async #client(alias){
     const entry=this.#entry(alias);
     if(!this.#clients.has(alias)){
-      const client=new NetCDFWorkspaceClient(entry),promise=(async()=>{
+      const client=new NetCDFWorkspaceClient(entry);let promise;
+      promise=(async()=>{
         try{
           const binding=await client.binding();
           need(binding.directory===resolve(entry.directory)&&(!entry.project_id||binding.project_id===entry.project_id)&&(!entry.sha256||binding.sha256===entry.sha256),
             'NETCDF_WORKSPACE_CHANGED','The configured original project binding changed.');
           return client;
-        }catch(error){await client.close();throw error;}
+        }catch(error){await client.close();if(this.#clients.get(alias)===promise)this.#clients.delete(alias);throw error;}
       })();
       this.#clients.set(alias,promise);
     }
@@ -57,16 +58,19 @@ export class MerchantNetCDFWorkspaces{
       if(receipt){
         need(receipt.schema==='stellar-forge.netcdf-merchant-export.v1'&&receipt.id===id&&receipt.project_id===binding.project_id,
           'NETCDF_EXPORT_CONFLICT','The original export identity belongs to another project.');
+        if(receipt.state!=='complete')await client.copyObject(receipt.file.sha256,path);
         const completed=await digestFile(path);
         need(completed.sha256===receipt.file.sha256&&completed.bytes===receipt.file.bytes,'NETCDF_EXPORT_CHANGED');
+        if(receipt.state!=='complete')await saveJSON(receiptPath,{...receipt,state:'complete'});
         return {...receipt.file,export_id:id,project_id:binding.project_id};
       }
       try{await stat(path);need(false,'NETCDF_EXPORT_RECEIPT_MISSING','The original export file needs its retained receipt before another export.');}
       catch(error){if(error.code!=='ENOENT')throw error;}
       const file=await client.exportProject();
-      await client.copyObject(file.sha256,path);
       const selected={name:file.name,sha256:file.sha256,bytes:file.bytes,mime:file.mime};
-      await saveJSON(receiptPath,{schema:'stellar-forge.netcdf-merchant-export.v1',id,project_id:binding.project_id,file:selected});
+      const original={schema:'stellar-forge.netcdf-merchant-export.v1',state:'prepared',id,project_id:binding.project_id,file:selected};
+      await saveJSON(receiptPath,original);await client.copyObject(file.sha256,path);
+      await saveJSON(receiptPath,{...original,state:'complete'});
       return {...selected,export_id:id,project_id:binding.project_id};
     })();
     this.#exports.set(key,task);

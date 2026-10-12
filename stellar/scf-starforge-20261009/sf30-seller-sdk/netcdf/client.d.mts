@@ -4,11 +4,14 @@ export type NativeInteger = {kind:'integer';value:string};
 export type NativeFloat = {kind:'float';value:'NaN'|'Infinity'|'-Infinity'};
 export type NativeBytes = {kind:'bytes';base64:string};
 export type NativeCompound = {kind:'compound';fields:Record<string,NativeValue>};
+export type NativeMissing = {kind:'missing'};
+export type NativeComplex = {kind:'complex';real:NativeValue;imaginary:NativeValue};
 export interface WorkspaceBinding {schema:'stellar-forge.netcdf-binding.v1';project_id:string;directory:string;sha256:string}
 export interface Project {id:string;title:string;revision:number;created_at:string}
 export interface Dimension {name:string;path:string;size:number;unlimited:boolean}
-export interface Variable {path:string;name:string;group:string;dtype:string;shape:number[];dimensions:Dimension[];attributes:Record<string,NativeValue>;cf:Record<string,NativeValue>;selectable:boolean}
-export interface Source {id:string;name:string;sha256:string;bytes:number;mime:string;reference:string;imported_at:string;catalog:{format:string;attributes:Record<string,NativeValue>;groups:NativeValue[];dimensions:Dimension[];variables:Variable[]}}
+export interface Variable {path:string;name:string;group:string;dtype:string;type_kind:'primitive'|'enum'|'compound'|'vlen';enum?:Record<string,number>;dtype_description?:NativeValue;shape:number[];dimensions:Dimension[];attributes:Record<string,NativeValue>;cf:Record<string,NativeValue>;selectable:boolean}
+export interface Group {path:string;attributes:Record<string,NativeValue>}
+export interface Source {id:string;name:string;sha256:string;bytes:number;mime:string;reference:string;imported_at:string;catalog:{format:string;attributes:Record<string,NativeValue>;groups:Group[];dimensions:Dimension[];variables:Variable[]}}
 export interface Slice {start?:number;stop?:number;step?:number}
 export type Slices=Record<string,Slice>;
 export interface VariableChoice {path:string;slices?:Slices}
