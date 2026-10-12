@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing, service quotation import, payment allocation, credit notes, installment schedules and dated receivables",
+  "description": "Customer invoicing, original service quotations, reviewed Stellar wallet requests, native transfer receiving, payment allocation, credits, installment schedules and dated receivables",
   "commands": {
     "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs"
   },
   "commandDescriptions": {
-    "receivables": "Operate invoices, service quotation drafts, credit notes, customer payments and account balances"
+    "receivables": "Operate invoices, reviewed Stellar wallet requests, native receipts, credit notes and customer balances"
   },
   "exports": {
     "./merchant/receivables": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs",
@@ -16,10 +16,26 @@
       "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.mjs"
     },
-    "./merchant/receivables/quote-import": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/quote-import.mjs"
+    "./merchant/receivables/quote-import": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/quote-import.mjs",
+    "./merchant/receivables/payment-requests": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests.mjs"
+    },
+    "./merchant/receivables/payment-requests-workspace": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-workspace.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-workspace.mjs"
+    },
+    "./merchant/receivables/payment-requests-verifier": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.mjs"
+    }
   },
   "supportFiles": [
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-workspace.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-requests-verifier.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md"
   ],
   "browserAssets": [
     {

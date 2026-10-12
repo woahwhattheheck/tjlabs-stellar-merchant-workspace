@@ -5,7 +5,11 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { openWorkspaceStore, plain } from './store.mjs';
+import { openWorkspaceStore, plain, digest } from './store.mjs';
+import { requestJson, normalizeRunStart, normalizeRunContinuation, readRequestSet, verifyRequestSetSources,
+  prepareRequestSet, recoverRequestSet, requestSetReference, inspectRequestRun, recoverRequestRun,
+  prepareRunComparison } from './request-sets.mjs';
+import { admitRunAttempt, runRequestSet, runJobView, controlRequestRun } from './request-runs.mjs';
 import { prepareResponseComparison, inspectResponseComparison, comparisonChanges, reviewResponseComparison,
   recoverResponseComparison, inspectPendingResponseComparison } from './comparison.mjs';
 import { describeResponseComparisonFiles } from './comparison-report.mjs';
@@ -21,6 +25,7 @@ import { authoringCatalog, captureAuthoringSchema, describeAuthoredOperation, co
 
 const STATIC = new Map([['/', ['index.html', 'text/html']], ['/app.mjs', ['app.mjs', 'text/javascript']],
   ['/authoring-ui.mjs', ['authoring-ui.mjs', 'text/javascript']],
+  ['/request-sets-ui.mjs', ['request-sets-ui.mjs', 'text/javascript']],
   ['/comparison-values.mjs', ['comparison-values.mjs', 'text/javascript']],
   ['/comparison-ui.mjs', ['comparison-ui.mjs', 'text/javascript']],
   ['/handover-ui.mjs', ['handover-ui.mjs', 'text/javascript']],
@@ -55,6 +60,13 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
   const files = createWorkspaceFiles(store);
   const releaseConsoles = new Map();
   const connections = new Set();
+  const runJobs = new Map();
+  const runWorkers = new Set();
+  let runSequence = 0;
+  store.requestRunsVersion = ids => JSON.stringify(ids.map(id => {
+    const job = runJobs.get(id); return [id, job?.serial ?? 0, Boolean(job?.settled)];
+  }));
+  store.requestRunsActive = ids => ids.some(id => { const job = runJobs.get(id); return job && !job.settled; });
   let origin, active = null, stopping = false, busy = false, pending = Promise.resolve();
   const runtime = () => active ? { project: active.project, exportId: active.exportId,
     mode: active.session.mode, url: active.session.url,
@@ -93,12 +105,81 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
     finally { req.off('aborted', abort); res.off('close', abort); connections.delete(controller); }
   }
   async function mutate(operation) {
+    if (stopping) fail('Workspace is closing.', 503);
     if (busy) fail('A workspace operation is already in progress.', 409);
     busy = true;
     let finish;
     pending = new Promise(yes => { finish = yes; });
     try { return await operation(); } finally { busy = false; finish(); }
   }
+
+  async function withRunWriter(operation) {
+    while (busy) await pending;
+    if (stopping) fail('Workspace is closing.', 503);
+    return mutate(operation);
+  }
+  async function requestRunStatus(value) {
+    if (value.compact === true) {
+      const saved = await store.read(value.project), reference = (saved.requestRuns ?? []).find(item => item.id === value.runId);
+      if (!reference) fail('Choose a run retained in the original project.', 404);
+      return { project: saved.id, currentRevision: saved.revision, reference, job: runJobView(runJobs.get(value.runId)) };
+    }
+    const result = await inspectRequestRun(store, value);
+    return { ...result, project: await publicDraft(result.project), job: runJobView(runJobs.get(value.runId)) };
+  }
+  async function requestSetStatus(value) {
+    if (Object.keys(value).some(key => !['project', 'requestSetId', 'recordSha256'].includes(key)))
+      fail('Choose an original saved request set.');
+    const saved = await store.read(value.project), retained = await readRequestSet(store,
+      { id: value.requestSetId, project: saved.id, recordSha256: value.recordSha256 });
+    await verifyRequestSetSources(store, retained.record);
+    return { project: await publicDraft(saved), record: retained.record, recordSha256: retained.sha256,
+      reference: requestSetReference(retained.record, retained.sha256),
+      attached: (saved.requestSets ?? []).some(item => item.id === retained.record.id && item.recordSha256 === retained.sha256) };
+  }
+  async function beginRequestRun(kind, value) {
+    const request = kind === 'start' ? normalizeRunStart(value) : normalizeRunContinuation(value);
+    const runId = kind === 'start' ? request.id : request.runId;
+    const intent = digest(requestJson({ kind, request })), existing = runJobs.get(runId);
+    if (existing && !existing.settled) {
+      if (existing.id !== request.id || existing.intent !== intent)
+        fail('The original run already has an active attempt. Pause or cancel that attempt before continuing.', 409);
+      return existing.admission;
+    }
+    const job = { id: request.id, runId, project: request.project, intent, serial: ++runSequence,
+      controller: new AbortController(), pauseRequested: false, state: 'VALIDATING',
+      startedAt: new Date().toISOString(), promise: null, admission: null, settled: false, settlement: null };
+    // Reserve this exact attempt before any asynchronous source or store read.
+    runJobs.set(runId, job); runWorkers.add(job);
+    job.admission = (async () => {
+      try {
+        const admitted = await mutate(() => admitRunAttempt(store, kind, request));
+        const result = await requestRunStatus({ project: request.project, runId });
+        if (stopping) {
+          job.state = 'NOT_STARTED'; job.finishedAt = new Date().toISOString();
+          return { ...result, job: runJobView(job), dispatched: false };
+        }
+        if (admitted.dispatch) {
+          job.promise = runRequestSet(store, admitted, { withWriter: withRunWriter, job, isClosing: () => stopping });
+        } else {
+          job.state = 'FINISHED'; job.finishedAt = new Date().toISOString();
+        }
+        return { ...result, job: runJobView(job), dispatched: admitted.dispatch,
+          originalAttempt: admitted.attempt.completed?.result ?? null };
+      } catch (error) {
+        job.state = 'NOT_STARTED'; job.finishedAt = new Date().toISOString();
+        job.error = { code: error.code ?? 'RUN_NOT_STARTED', message: error.message };
+        throw error;
+      }
+    })();
+    job.settlement = (async () => {
+      try { await job.admission; } catch {}
+      try { if (job.promise) await job.promise; }
+      finally { job.settled = true; runWorkers.delete(job); }
+    })();
+    return job.admission;
+  }
+
   const server = createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -119,6 +200,36 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (!url.pathname.startsWith('/api/')) return send(404, { error: 'Not found.' });
       if (!equal(req.headers['x-workspace-token'], token)) return send(401, { error: 'Open the complete private URL printed by the launcher.' });
       if (req.method === 'GET') {
+        if (url.pathname === '/api/requests/file') {
+          const value = Object.fromEntries(url.searchParams);
+          if (Object.keys(value).some(key => !['project', 'revision', 'requestSetId', 'runId', 'generation', 'file', 'expectedManifestSha256'].includes(key)))
+            fail('Choose an original request packet file.');
+          for (const key of ['revision', 'generation']) if (value[key] !== undefined) {
+            if (!/^[1-9]\d*$/.test(value[key]) || !Number.isSafeInteger(Number(value[key]))) fail('Choose an original saved selection.');
+            value[key] = Number(value[key]);
+          }
+          const { file: name, expectedManifestSha256, ...selected } = value;
+          const file = await files.read({ ...selected, kind: 'requests' }, name, expectedManifestSha256);
+          res.writeHead(200, { 'Content-Type': file.type,
+            'Content-Disposition': "attachment; filename*=UTF-8''" + encodeURIComponent(file.name.split('/').at(-1)) });
+          res.end(file.bytes); return;
+        }
+        if (url.pathname === '/api/request-set') return send(200, await requestSetStatus(Object.fromEntries(url.searchParams)));
+        if (url.pathname === '/api/request-run') {
+          const value = Object.fromEntries(url.searchParams);
+          if (Object.keys(value).some(key => !['project', 'runId', 'generation', 'expectedRecordSha256', 'compact'].includes(key)))
+            fail('Choose an original run checkpoint.');
+          if (value.generation !== undefined) {
+            if (!/^[1-9]\d*$/.test(value.generation) || !Number.isSafeInteger(Number(value.generation))) fail('Choose an original run generation.');
+            value.generation = Number(value.generation);
+          }
+          if (value.compact !== undefined) {
+            if (!['true', 'false'].includes(value.compact) || value.generation !== undefined || value.expectedRecordSha256 !== undefined)
+              fail('Compact run status selects the current original checkpoint.');
+            value.compact = value.compact === 'true';
+          }
+          return send(200, await requestRunStatus(value));
+        }
         if (['/api/comparison', '/api/comparison/changes', '/api/comparison/pending', '/api/comparison/file'].includes(url.pathname)) {
           const value = Object.fromEntries(url.searchParams);
           for (const key of ['revision', 'generation', 'offset', 'limit']) if (value[key] !== undefined) {
@@ -171,6 +282,42 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (req.method !== 'POST') return send(405, { error: 'Use GET or POST.' });
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) return send(415, { error: 'Use application/json.' });
       const body = await bodyOf(req);
+
+      if (url.pathname === '/api/requests/packet') {
+        if (Object.keys(body).some(key => !['project', 'revision', 'requestSetId', 'runId', 'generation'].includes(key)))
+          fail('Choose the original saved request-set or run packet.');
+        return send(201, await mutate(async () => {
+          const selection = { ...body, kind: 'requests' };
+          const manifest = await files.manifest(selection), source = manifest.manifest.source;
+          return { state: 'PREPARED', selection, packetSha256: source.packetSha256,
+            directory: join(store.root, 'request-packets', source.packetSha256),
+            source, files: manifest.manifest.files, ...manifest };
+        }));
+      }
+      if (url.pathname === '/api/request-set/prepare' || url.pathname === '/api/request-set/recover') {
+        const result = await mutate(() => url.pathname.endsWith('/prepare')
+          ? prepareRequestSet(store, body) : recoverRequestSet(store, body));
+        return send(201, { project: await publicDraft(result.project), record: result.record,
+          recordSha256: result.sha256, reference: result.reference, replayed: result.replayed ?? false });
+      }
+      if (url.pathname === '/api/request-run/start' || url.pathname === '/api/request-run/continue')
+        return send(202, await beginRequestRun(url.pathname.endsWith('/start') ? 'start' : 'continue', body));
+      if (url.pathname === '/api/request-run/control') {
+        const selected = runJobs.get(body.runId);
+        if (selected?.id === body.attemptId && selected.state === 'VALIDATING') await selected.admission;
+        // The active case owns mutate through its source request. Controls persist
+        // their own immutable input and reach that original controller directly.
+        return send(200, await controlRequestRun(store, body, id => runJobs.get(id)));
+      }
+      if (url.pathname === '/api/request-run/recover') {
+        await mutate(() => recoverRequestRun(store, body));
+        return send(201, await requestRunStatus({ project: body.project, runId: body.runId }));
+      }
+      if (url.pathname === '/api/request-run/compare') {
+        const result = await mutate(() => prepareRunComparison(store, body));
+        return send(201, { ...result, project: await publicDraft(result.project) });
+      }
+
       if (['/api/comparison/prepare', '/api/comparison/review', '/api/comparison/recover'].includes(url.pathname)) {
         const operation = url.pathname.endsWith('/prepare') ? prepareResponseComparison
           : url.pathname.endsWith('/review') ? reviewResponseComparison : recoverResponseComparison;
@@ -292,9 +439,13 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
   const close = () => closing ??= (async () => {
     stopping = true;
     for (const connection of connections) connection.abort();
+    for (const job of runWorkers) { job.pauseRequested = true; job.controller.abort(); }
     for (const [name, handler] of signals) process.off(name, handler);
     const closed = new Promise((yes, no) => server.close(error => error ? no(error) : yes()));
     await pending;
+    // No new writer is admitted after stopping. Retain each in-flight native
+    // response/checkpoint and attempt result before releasing the original store.
+    await Promise.allSettled([...runWorkers].map(job => job.settlement));
     try {
       const sessions = [...releaseConsoles.values(), ...(active ? [active.session] : [])];
       const results = await Promise.allSettled(sessions.map(session => session.close()));

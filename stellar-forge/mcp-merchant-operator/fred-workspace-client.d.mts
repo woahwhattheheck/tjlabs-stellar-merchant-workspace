@@ -14,10 +14,44 @@ export type {
   FredBriefingSuccessorRecord,
 } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/templates.mjs';
 
+import type {
+  FredReleaseSelectionInput, FredReleaseSelection, FredReleaseCapture, FredReleaseSeries,
+  FredRelease, FredReleaseCalendarRow, FredReleaseVintageRow, FredReleaseSourceContext,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
+import type { FredReleasePlan, FredReleasePlanPage, FredReleasePlanSection } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/planner.mjs';
+import type {
+  FredReleaseProjectState, FredReleaseCaptureInventory, FredReleaseWatchInventory, FredReleaseCaptureResult,
+  FredReleaseWatchResult, FredReleasePlanResult, FredPlannedVintageResult, FredReleasePlanPreview,
+  FredReleasePlanView, FredReleasePlanPaging, FredReleaseWatchInput as NativeFredReleaseWatchInput,
+  FredReleasePlanInput as NativeFredReleasePlanInput,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/project-types.mjs';
+export { inspectFredReleaseCapture } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
+export type {
+  FredReleaseSelectionInput, FredReleaseSelection, FredReleaseCapture, FredReleaseModel, FredReleaseRequest,
+  FredReleaseReceipt, FredOriginalRelease, FredOriginalReleaseDate, FredReleaseCalendarRow, FredReleaseVintageRow,
+  FredReleaseSeries, FredRelease, FredReleaseFlowModel, FredReleaseSourceContext, FredReleaseSourcePage,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
+export type { FredReleaseWatch, FredReleaseWatchId, FredReleaseWatchInput, FredReleaseCatchUpPolicy
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/watch.mjs';
+export type {
+  FredReleasePlan, FredReleasePlanId, FredReleasePlanPage, FredReleasePlanSection, FredReleasePlanSummary,
+  FredReleaseInterval, FredReleaseCoverage, FredCalendarChangeKind, FredReleaseCalendarChange,
+  FredVintageChangeKind, FredReleaseVintageChange, FredReleaseAcquisitionReason, FredReleaseEvent,
+  FredReleaseObservationSelection, FredReleaseAcquisition, FredReleaseMeaningChange, FredReleaseSourceChange,
+  FredReleaseScheduleRow,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/planner.mjs';
+export type {
+  FredReleaseProjectState, FredReleaseSeriesSummary, FredReleaseCaptureSummary,
+  FredReleasePlanSummary as FredReleasePlanRecord, FredReleaseCatchUp,
+  FredReleaseCaptureInventory, FredReleaseWatchInventory, FredReleaseCaptureResult, FredReleaseWatchResult,
+  FredReleasePlanResult, FredPlannedVintageResult, FredReleasePlanPreview, FredReleasePlanView,
+  FredReleasePlanPaging, FredReleaseProjectBundleV4,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/project-types.mjs';
+
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
 export type NativeRecord = JsonObject & { id: string };
-export interface FredSourceInput { path: string; kind: 'public-table' | 'capture'; label?: string; sha256?: string }
+export interface FredSourceInput { path: string; kind: 'public-table' | 'capture' | 'release-capture'; label?: string; sha256?: string }
 export interface FredMerchantProfile { label?: string; origin: string; path?: string; payment: JsonObject }
 export interface FredWorkspaceOptions {
   label?: string; projectId?: string; expectedBindingSha256?: string;
@@ -43,7 +77,7 @@ export interface FredStartup {
   schema: 'stellar-forge.fred-workspace-startup.v1'; state: 'LISTENING';
   binding: FredBinding; instanceId: string; startedAt: string; buyerConfigured: boolean; url?: string;
 }
-export interface FredProject {
+export interface FredProject extends FredReleaseProjectState {
   schema: 'stellar-forge.fred-project.v1'; id: string; title: string; apiKeyEnv: string;
   selection: JsonObject; revision: number; createdAt: string; selectedCapture: string | null;
   captures: NativeRecord[]; reviews: NativeRecord[]; publications: NativeRecord[]; operations: NativeRecord[];
@@ -78,7 +112,7 @@ export interface FredReviewedResult extends FredSelectedResult { reviewId: strin
 export interface FredSavedBriefing { reportId: string; manifestSha256: string; files: FredFileMetadata[] }
 export interface FredBriefingManifest {
   schema: 'stellar-forge.fred-briefing-files.v1'; captureId: string; reviewId: string; reportId: string;
-  calculationVersion: 'FRED_EXACT_PERIOD_V1'; rendererVersion: 'FRED_OFFLINE_REPORT_V1';
+  calculationVersion: 'FRED_EXACT_PERIOD_V1'; rendererVersion: 'FRED_OFFLINE_REPORT_V1' | 'FRED_OFFLINE_REPORT_V2';
   files: FredFileMetadata[]; manifestSha256: string;
 }
 export interface FredSavedBriefingPage extends FredBriefingPage { reportId: string; reviewId: string; manifest: FredBriefingManifest; files: FredFileMetadata[] }
@@ -151,24 +185,60 @@ export interface FredBriefingSuccessorView {
   briefing: { reviewId: string; reportId: string; manifest: FredBriefingManifest };
 }
 
+export interface FredReleaseCaptureSections {
+  series: FredReleaseSeries; releases: FredRelease; calendar: FredReleaseCalendarRow; vintages: FredReleaseVintageRow;
+}
+export type FredReleaseCaptureSection = keyof FredReleaseCaptureSections;
+export interface FredReleaseCapturePage<S extends FredReleaseCaptureSection = FredReleaseCaptureSection> {
+  projectId: string; revision: number; releaseCaptureId: string; selection: FredReleaseSelection;
+  source: FredReleaseSourceContext; counts: Record<FredReleaseCaptureSection, number>;
+  section: S; total: number; offset: number; limit: number; nextOffset: number | null;
+  items: Array<FredReleaseCaptureSections[S]>;
+}
+export type FredReleaseImportInput = FredJournalInput & (
+  { capture: FredReleaseCapture; releaseCaptureId?: string } |
+  { capture?: null; releaseCaptureId: string }
+);
+export interface FredReleaseAcquireInput extends FredJournalInput {
+  /** Required for a new capture; omitted only to continue the same original pending operation. */
+  selection?: FredReleaseSelectionInput;
+}
+export type FredReleaseWatchSaveInput = Omit<NativeFredReleaseWatchInput, 'directory'>;
+export type FredReleasePlanSelection = Omit<NativeFredReleasePlanInput, 'directory'>;
+export type FredReleasePlanSaveInput = FredReleasePlanSelection & FredJournalInput & { previewId: string };
+export interface FredPlannedVintageInput extends FredJournalInput { planId: string; asOf: string }
+
+export type FredReleasePlanPageFor<S extends FredReleasePlanSection> =
+  Omit<FredReleasePlanPage, 'section' | 'rows'> & { section: S; rows: FredReleasePlan[S] };
+export type FredReleasePlanPreviewFor<S extends FredReleasePlanSection> =
+  Omit<FredReleasePlanPreview, 'plan'> & { plan: FredReleasePlanPageFor<S> };
+export type FredReleasePlanViewFor<S extends FredReleasePlanSection> =
+  Omit<FredReleasePlanView, 'plan'> & { plan: FredReleasePlanPageFor<S> };
+
+
 export interface FredRequestOptions { signal?: AbortSignal }
 export interface FredFileOptions extends FredRequestOptions { expectedSha256?: string }
 export type FredFileSelection =
   { kind: 'source'; captureId: string } |
+  { kind: 'release-source'; releaseCaptureId: string } |
+  { kind: 'release-plan'; planId: string } |
   { kind: 'comparison'; before: string; after: string } |
   { kind: 'project' } |
   { kind: 'briefing'; reviewId: string; format: 'html' | 'csv' | 'json' | 'manifest' } |
   { kind: 'briefing-successor'; successorId: string; format: 'html' | 'csv' | 'json' } |
   { kind: 'customer'; publicationId: string; intentId: string };
 export interface FredBundleIdentity {
-  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3'; projectId: string; revision: number;
+  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3' | 'stellar-forge.fred-project-bundle.v4'; projectId: string; revision: number;
   bundleSha256: string; captures: number; publications: number; briefings?: number; templates?: number; successors?: number;
+  releaseCaptures?: number; releaseWatches?: number; releasePlans?: number; releaseCatchUps?: number;
 }
 export interface FredDownloadedFile {
   name: string; type: string; bytes: Buffer; sha256: string; status: number; projectId: string; bundle?: FredBundleIdentity;
+  releaseCaptureId?: string; planId?: string;
 }
 export interface FredSavedFile {
   path: string; name: string; type: string; bytes: number; sha256: string; projectId: string; reused: boolean; bundle?: FredBundleIdentity;
+  releaseCaptureId?: string; planId?: string;
 }
 export interface FredClientRuntime { environment?: Record<string, string | undefined>; fetchImpl?: typeof fetch }
 
@@ -203,6 +273,20 @@ export declare class FredWorkspaceClient {
   saveBriefingSuccessor(input: FredBriefingSuccessorSaveInput, options?: FredRequestOptions): Promise<FredBriefingSuccessorSaveResult>;
   briefingSuccessor(input: { successorId: string } & FredBriefingSuccessorPageOptions,
     options?: FredRequestOptions): Promise<FredBriefingSuccessorView>;
+  releaseCaptures(options?: FredRequestOptions): Promise<FredReleaseCaptureInventory>;
+  releaseWatches(options?: FredRequestOptions): Promise<FredReleaseWatchInventory>;
+  releaseCapture<S extends FredReleaseCaptureSection = 'series'>(input: {
+    releaseCaptureId: string; section?: S; offset?: number; limit?: number;
+  }, options?: FredRequestOptions): Promise<FredReleaseCapturePage<S>>;
+  importReleaseCapture(input: FredReleaseImportInput, options?: FredRequestOptions): Promise<FredReleaseCaptureResult>;
+  acquireReleaseCapture(input: FredReleaseAcquireInput, options?: FredRequestOptions): Promise<FredReleaseCaptureResult>;
+  saveReleaseWatch(input: FredReleaseWatchSaveInput, options?: FredRequestOptions): Promise<FredReleaseWatchResult>;
+  previewReleasePlan<S extends FredReleasePlanSection = 'acquisitions'>(input: FredReleasePlanSelection &
+    Omit<FredReleasePlanPaging, 'section'> & { section?: S }, options?: FredRequestOptions): Promise<FredReleasePlanPreviewFor<S>>;
+  saveReleasePlan(input: FredReleasePlanSaveInput, options?: FredRequestOptions): Promise<FredReleasePlanResult>;
+  releasePlan<S extends FredReleasePlanSection = 'acquisitions'>(input: { planId: string; section?: S } &
+    Omit<FredReleasePlanPaging, 'section'>, options?: FredRequestOptions): Promise<FredReleasePlanViewFor<S>>;
+  acquirePlannedVintage(input: FredPlannedVintageInput, options?: FredRequestOptions): Promise<FredPlannedVintageResult>;
   publication(publicationId: string, options?: FredRequestOptions): Promise<FredPublication>;
   preview(input: { publicationId: string; query?: string }, options?: FredRequestOptions): Promise<JsonObject>;
   configure(input: FredSelectionInput, options?: FredRequestOptions): Promise<FredConfiguredResult>;

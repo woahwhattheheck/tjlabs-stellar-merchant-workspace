@@ -5,6 +5,22 @@ source to review its incidents, run or stop a watcher owned by this console,
 acknowledge the work, manage its original notification queue, and carry retained
 captures into the existing merchant case.
 
+## Saved Object buyers
+
+A private incident source may also list named `objectSessions`. In **Watcher
+registration and notification settings**, inspect one of those original sessions,
+review its identity and limits, add it to the configuration draft and apply the
+existing revision. Browser requests select an allowed source ID; they do not
+supply a filesystem path. Existing trusted Object registrations are available on
+the same console's next startup.
+
+The incident detail and Runtime support views show the current recorded request
+outcomes, complete output checks and original process observation separately.
+Prepare the existing case handoff to retain all three Object observation files;
+a fresh case can reopen those files without requiring the old buyer directory.
+See the [complete Object monitoring and receiving guide](../sf93-seller-support-bundle/OBJECT_MONITORING.md)
+for registration, conditions, limits and the original CLI/API.
+
 ## Connect existing stores
 
 Use Node 22 or newer on Linux with util-linux `flock`. Run the console as the

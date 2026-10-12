@@ -134,6 +134,16 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   let result;
   if (method === 'GET') {
     if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'payment-requests') result = await receivables.paymentRequests({
+      invoiceId: search.get('invoiceId') || undefined, customerId: search.get('customerId') || undefined,
+      status: search.get('status') || undefined, asOf: search.get('asOf') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'payment-requests' && parts.length === 2) result = await receivables.paymentRequest(parts[1], {asOf: search.get('asOf') || undefined});
+    else if (parts[0] === 'payment-requests' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.paymentRequestFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'ledger') result = await receivables.ledger({
       runId: search.get('runId') || '', customerId: search.get('customerId') || '',
       offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
@@ -167,6 +177,14 @@ export async function handleReceivablesRequest(receivables, {method, path, query
     else if (route === 'receipts') result = await receivables.receipt(value);
     else if (route === 'receipts/settlement') result = await receivables.importSettlement(value);
     else if (route === 'allocations') result = await receivables.allocate(value);
+    else if (parts[0] === 'invoices' && parts[2] === 'payment-requests' && parts.length === 4 && parts[3] === 'preview') result = await receivables.previewPaymentRequest(parts[1], value);
+    else if (parts[0] === 'invoices' && parts[2] === 'payment-requests' && parts.length === 3) result = await receivables.createPaymentRequest(parts[1], value);
+    else if (parts[0] === 'payment-requests' && parts.length === 3) {
+      if (parts[2] === 'cancel') result = await receivables.cancelPaymentRequest(parts[1], value);
+      else if (parts[2] === 'returns') result = await receivables.reportPaymentReturn(parts[1], value);
+      else if (parts[2] === 'receive') result = await receivables.receivePaymentRequest(parts[1], value);
+      else throw problem('NOT_FOUND', 'This payment request operation does not exist.', 404);
+    }
     else if (parts[0] === 'invoices' && parts.length === 3) {
       if (parts[2] === 'issue') result = await receivables.issue(parts[1], value);
       else if (parts[2] === 'void') result = await receivables.voidInvoice(parts[1], value);

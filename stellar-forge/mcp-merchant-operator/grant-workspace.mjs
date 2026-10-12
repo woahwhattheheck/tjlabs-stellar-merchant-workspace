@@ -405,7 +405,7 @@ export class MerchantGrantWorkspaces {
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', cases:'cases', case:'case',
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
-      installations:'installations',installation:'installation',installation_history:'installation-history'};
+      delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {

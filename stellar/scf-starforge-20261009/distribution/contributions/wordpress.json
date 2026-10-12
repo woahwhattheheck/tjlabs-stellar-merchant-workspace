@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "wordpress",
-  "description": "Native WordPress content and complete-source data products",
+  "description": "Native WordPress content, reviewed refresh plans and complete-source data products",
   "commands": {
     "wordpress": "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/cli.mjs"
   },
   "commandDescriptions": {
-    "wordpress": "Discover original WordPress collections, retain resumable captures, review editions, and operate the original publisher and customer delivery."
+    "wordpress": "Discover native WordPress collections, retain source captures and reviewed refresh plans, and publish original merchant editions."
   },
   "exports": {
     "./seller/wordpress/config": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/config.mjs",
@@ -16,9 +16,13 @@
     "./seller/wordpress/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/server.mjs",
     "./seller/wordpress/packet": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/packet.mjs",
     "./seller/wordpress/managed": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/managed.mjs",
-    "./seller/wordpress/application-provider": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/application-provider.mjs"
+    "./seller/wordpress/application-provider": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/application-provider.mjs",
+    "./seller/wordpress/refresh": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/refresh.mjs"
   },
   "applicationProviders": {
     "wordpress": "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/application-provider.mjs"
-  }
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/REFRESH.md"
+  ]
 }

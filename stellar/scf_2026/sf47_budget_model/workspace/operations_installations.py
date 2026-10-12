@@ -17,6 +17,7 @@ from model import Problem, canonical, digest, now, text
 import operations_domain as domain
 import operations_workshare_installations as workshares
 import operations_installation_workflows as workflows
+import operations_dispatch as dispatch
 
 SCHEMA = "stellar-forge.sf47-installation.v1"
 SELECTION_SCHEMA = SCHEMA + ".selection"
@@ -75,6 +76,17 @@ def load(operations, program_id):
         (program_id,))]
 
 
+def load_heads(operations, program_id):
+    """Read only current editions for lists and coordination; exports use load."""
+    return [json.loads(row[0]) for row in operations.db.execute(
+        "SELECT saved.body_json FROM ops_installations AS saved "
+        "JOIN (SELECT installation_id,MAX(revision) AS revision FROM ops_installations "
+        "WHERE program_id=? GROUP BY installation_id) AS heads "
+        "ON saved.installation_id=heads.installation_id AND saved.revision=heads.revision "
+        "WHERE saved.program_id=? ORDER BY saved.installation_id",
+        (program_id, program_id))]
+
+
 def summary(row):
     value = row["preview"]
     report = value["report"]
@@ -124,7 +136,7 @@ def get(operations, program_id, installation_id, selected_revision=None):
 
 def normalized(context, raw):
     raw = object_value(deepcopy(raw), ("name", "stage", "merchantDeploymentId", "buyerDeploymentIds",
-        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods"), "installation")
+        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination"), "installation")
     records, sources, plan = context["records"], context["sources"], context["plan"]
     maps = {kind: {row["id"]: row for row in records[kind]} for kind in COLLECTIONS}
     retained = lambda value, label: domain.reference_list(value if value is not None else [], sources, label)
@@ -246,6 +258,8 @@ def normalized(context, raw):
         result["workshare"] = workshares.normalize_binding(context, raw["workshare"])
     if "workflowPeriods" in raw:
         result["workflowPeriods"] = workflows.normalize_binding(context, raw["workflowPeriods"])
+    if "coordination" in raw:
+        result["coordination"] = dispatch.normalize(raw["coordination"], check_ids)
     if len(canonical(result).encode("utf-8")) > MAX_DOCUMENT_BYTES:
         fail("The complete installation input exceeds 128 KiB.", status=413)
     return result
@@ -622,6 +636,7 @@ def html_document(row, original_workshare=None):
                        ("assignments", "Original funded and commercial assignments")):
         body += "<h2>" + label + "</h2>" + table(["Field", "Selected value"],
             [[e(name), pretty(item)] for name, item in document[key].items()])
+    body += dispatch.installation_section(document)
     body += workshares.html_section(original_workshare)
     body += workflows.html_section(document)
     body += "<h2>Acceptance and corrections</h2>" + table(

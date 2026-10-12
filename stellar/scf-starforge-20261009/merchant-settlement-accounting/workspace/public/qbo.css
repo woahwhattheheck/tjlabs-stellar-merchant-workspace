@@ -108,3 +108,15 @@
 #qbo-buyer-bulk textarea{max-width:850px}
 #qbo-buyer-bulk>summary{cursor:pointer;font-size:12px;font-weight:600}
 @media(max-width:760px){.qbo-allocation-review .filters{flex-wrap:wrap}.qbo-allocation-review .filters input,.qbo-allocation-review .filters select{max-width:100%}.qbo-allocation-facts{max-width:300px}}
+
+/* Existing QBO page: local draft and original-request recovery. */
+.qbo-recovery { margin-block: 1rem; }
+.qbo-recovery .actions { margin-block: .8rem; gap: .55rem; flex-wrap: wrap; }
+.qbo-recovery p { overflow-wrap: anywhere; }
+.qbo-recovery details { margin-block-start: 1rem; border-top: 1px solid #b8b8b8; padding-top: .8rem; }
+.qbo-recovery details > select { display: block; width: min(100%, 48rem); margin-block: .5rem; }
+.qbo-recovery .error { border-left: 4px solid #333; padding-left: .75rem; font-weight: 650; }
+.qbo-recovery .mono { font-size: .78rem; line-height: 1.55; white-space: normal; }
+.qbo-recovery button:focus-visible,.qbo-recovery select:focus-visible,#qbo-recovery-open:focus-visible { outline: 3px solid #555; outline-offset: 3px; }
+.qbo-recovery button:disabled { opacity: .55; cursor: not-allowed; }
+.sidebar #qbo-saved-operator { width: 100%; margin-block: .45rem .9rem; }

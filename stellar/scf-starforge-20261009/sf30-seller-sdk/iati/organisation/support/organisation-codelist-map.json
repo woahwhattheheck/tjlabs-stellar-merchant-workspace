@@ -1,0 +1,33 @@
+{
+  "source": "codelists/core/mapping.xml",
+  "kind": "selection-of-original-mapping-elements",
+  "mappings": [
+    "<mapping>\n        <path>//@xml:lang</path>\n        <codelist ref=\"Language\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/@default-currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisations/@version</path>\n        <codelist ref=\"Version\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/document-link/@format</path>\n        <codelist ref=\"FileFormat\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/document-link/category/@code</path>\n        <codelist ref=\"DocumentCategory\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/document-link/language/@code</path>\n        <codelist ref=\"Language\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/document-link/recipient-country/@code</path>\n        <codelist ref=\"Country\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-country-budget/@status</path>\n        <codelist ref=\"BudgetStatus\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-country-budget/recipient-country/@code</path>\n        <codelist ref=\"Country\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-country-budget/budget-line/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-country-budget/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-org-budget/@status</path>\n        <codelist ref=\"BudgetStatus\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-org-budget/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-org-budget/budget-line/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-region-budget/@status</path>\n        <codelist ref=\"BudgetStatus\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-region-budget/recipient-region/@code</path>\n        <codelist ref=\"Region\" />\n        <condition>@vocabulary = '1' or not(@vocabulary)</condition>\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-region-budget/recipient-region/@vocabulary</path>\n        <codelist ref=\"RegionVocabulary\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-region-budget/budget-line/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/recipient-region-budget/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/reporting-org/@type</path>\n        <codelist ref=\"OrganisationType\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/total-budget/@status</path>\n        <codelist ref=\"BudgetStatus\" />\n    </mapping>",
+    "<mapping>\n        <path>//iati-organisation/total-budget/value/@currency</path>\n        <codelist ref=\"Currency\" />\n    </mapping>"
+  ],
+  "notes": [
+    "The complete upstream mapping remains unchanged. Monetary values in total-expenditure and line items use the common value definition; the core owner retains its full currency handling.",
+    "Region codes use the Region codelist only for default/OECD DAC vocabulary1. Other vocabularies retain their supplied URI and original code.",
+    "Country and Language are explicitly incomplete upstream codelists; absence from them is not proof of invalidity."
+  ]
+}

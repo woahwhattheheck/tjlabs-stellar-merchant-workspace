@@ -8,6 +8,7 @@ const bytes=value=>Number.isFinite(Number(value))?Number(value).toLocaleString('
 const token=document.querySelector('meta[name="workspace-token"]').content;
 let state=null,busy=false,refreshing=false,section='source',currentJob=null,recordsPage=null,recordsOffset=0,comparePage=null,compareOffset=0;
 let projectionPreview=null,pending=[],storageKey='',lastQuery=null,discovery=null;
+let refreshPlanView=null,refreshRunView=null,refreshRecordView=null,refreshChangesPage=null,refreshChangesOffset=0,refreshChangeHistory=[],refreshReadEpoch=0;
 function node(tag,value,className){const item=document.createElement(tag);if(value!==undefined)item.textContent=readable(value);if(className)item.className=className;return item;}
 function facts(target,entries){const list=node('dl');for(const [label,value]of entries)list.append(node('dt',label),node('dd',value));$(target).replaceChildren(list);}
 function options(target,entries,preferred,force=false){const control=$(target),old=control.value;control.replaceChildren();
@@ -67,7 +68,7 @@ async function refresh({silent=false}={}){
   if(refreshing)return;refreshing=true;
   try{
     const value=await request('/api/state');
-    if(state&&value.id!==state.id){pending=[];currentJob=null;projectionPreview=null;lastQuery=null;}
+    if(state&&value.id!==state.id){pending=[];currentJob=null;projectionPreview=null;lastQuery=null;clearRefreshView();}
     state=value;
     const nextKey='stellar-forge-wordpress:'+state.id;
     if(storageKey!==nextKey){storageKey=nextKey;try{const saved=JSON.parse(sessionStorage.getItem(storageKey)||'[]');
@@ -83,7 +84,7 @@ async function handle(action){if(busy)return;busy=true;controls();
   catch(error){notice((error.code?error.code+': ':'')+error.message,'error');}
   finally{busy=false;controls();}
 }
-function selectSection(name){if(!['source','captures','projection','editions','publisher','exports'].includes(name))name='source';section=name;document.querySelectorAll('main>[data-panel]').forEach(panel=>{panel.hidden=panel.dataset.panel!==name;});
+function selectSection(name){if(!['source','captures','projection','editions','refresh','publisher','exports'].includes(name))name='source';section=name;document.querySelectorAll('main>[data-panel]').forEach(panel=>{panel.hidden=panel.dataset.panel!==name;});
   document.querySelectorAll('[data-section]').forEach(control=>{if(control.dataset.section===name)control.setAttribute('aria-current','page');else control.removeAttribute('aria-current');});
 }
 const publisher=createPublisherPanel({getState:publisherState,perform,download:(kind,id)=>downloadPublisher(kind,id),handle,notice,selectSection});
@@ -105,7 +106,7 @@ function controls(){
   $('records-prev').disabled=busy||recordsOffset===0;$('records-next').disabled=busy||recordsPage?.nextOffset===null||!recordsPage;
   $('compare-prev').disabled=busy||compareOffset===0;$('compare-next').disabled=busy||comparePage?.nextOffset===null||!comparePage;
   for(const id of ['pending-inspect','pending-retry'])$(id).disabled=busy;
-  publisher.controls(busy||!state?.activeProductId);
+  publisher.controls(busy||!state?.activeProductId);refreshControls();
 }
 function render(){
   if(!state)return;
@@ -144,7 +145,7 @@ function renderSelections(){
   for(const id of ['export-merchant','source-files-merchant'])options(id,merchants);
   options('export-product',[['','Create new product'],...state.products.map(row=>[row.id,row.label])]);
   options('source-files-packet',[...state.packets].reverse().map(row=>[row.id,row.createdAt+' · '+bytes(row.bytes)+' · '+short(row.manifestSha256)]));
-  renderProjectionCapture();renderMappingPins();renderEditionSummary();
+  renderProjectionCapture();renderMappingPins();renderEditionSummary();renderRefreshSelections();
 }
 function renderProjectionCapture(){
   const selected=state.jobs.find(row=>jobValue(row)===$('projection-capture').value);
@@ -157,6 +158,215 @@ function renderEditionSummary(){const edition=state.editions.find(row=>row.id===
   facts('edition-summary',edition?[['Edition',edition.id],['Dataset',edition.name],['Rows',count(edition.rowCount)],['CSV bytes',bytes(edition.csvBytes)],
     ['Dataset snapshot',edition.snapshot],['Original capture',edition.captureId],['Capture SHA-256',edition.captureSha256]]:[['Selection','Build a reviewed native edition.']]);
 }
+
+const refreshStageLabels={discovering:'Discovering source',capturing:'Capturing selected content',review_ready:'Ready for review',
+  approved:'Successor approved',rejected:'Candidate rejected',exported:'Approved edition exported',attention:'Needs operator attention'};
+const refreshSelectedPlan=()=>state?.refreshPlans?.find(row=>row.id===$('refresh-plan-select').value);
+const refreshSelectedRun=()=>state?.refreshRuns?.find(row=>row.id===$('refresh-run-select').value);
+function refreshCurrentView(){return refreshRunView?.run?.id===$('refresh-run-select').value?refreshRunView:null;}
+function clearRefreshView(){refreshReadEpoch++;refreshPlanView=null;refreshRunView=null;refreshRecordView=null;refreshChangesPage=null;
+  refreshChangesOffset=0;refreshChangeHistory=[];}
+function resetRefreshChanges(){refreshChangesPage=null;refreshChangesOffset=0;refreshChangeHistory=[];renderRefreshChanges();}
+function renderRefreshBaseline(){
+  const edition=state?.editions?.find(row=>row.id===$('refresh-plan-edition').value);
+  facts('refresh-plan-baseline',edition?[['Dataset',edition.name],['Records',count(edition.rowCount)],
+    ['Snapshot',edition.snapshot],['Original capture',edition.captureId]]:[['Selection','Choose the reviewed edition to retain its original selection.']]);
+}
+function renderRefreshSelections(){
+  const plans=[...(state.refreshPlans??[])].reverse(),runs=state.refreshRuns??[];
+  options('refresh-plan-edition',[...state.editions].reverse().map(row=>[row.id,row.name+' · '+count(row.rowCount)+' rows · '+short(row.snapshot)]));
+  options('refresh-plan-select',plans.map(row=>[row.id,row.label+' · '+short(row.id)]),refreshPlanView?.id);
+  options('refresh-plan-previous',[['','New independent plan'],...plans.map(row=>[row.id,row.label+' · '+short(row.id)])]);
+  const merchants=[...state.merchants].reverse().map(row=>[row.id,row.origin+row.path+' · '+short(row.id)]),
+    products=state.products.map(row=>[row.id,row.label]);
+  options('refresh-plan-merchant',[['','Select merchant terms when exporting'],...merchants]);
+  options('refresh-plan-product',[['','Select publisher product when exporting'],...products]);
+  options('refresh-export-merchant',[['','Use the plan’s retained merchant terms'],...merchants]);
+  options('refresh-export-product',[['','Use the plan’s retained publisher product'],...products]);
+  const selectedPlan=refreshSelectedPlan(),planRuns=runs.filter(row=>row.planId===selectedPlan?.id);
+  options('refresh-run-select',[...planRuns].reverse().map(row=>[row.id,row.label+' · '+row.createdAt+' · '+short(row.id)]),refreshRunView?.run?.id);
+  const approved=new Map();
+  for(const event of state.refreshEvents??[]){
+    if(event.kind!=='approved')continue;
+    const run=planRuns.find(row=>row.id===event.runId&&row.editionId===event.editionId);
+    const edition=run&&state.editions.find(row=>row.id===event.editionId);
+    if(edition&&edition.id!==selectedPlan?.baselineEditionId)approved.set(edition.id,edition);
+  }
+  options('refresh-baseline-select',[['','Original plan baseline'+(selectedPlan?' · '+short(selectedPlan.baselineSnapshot):'')],
+    ...[...approved.values()].reverse().map(row=>[row.id,'Approved · '+row.name+' · '+short(row.snapshot)])]);
+  renderRefreshBaseline();renderRefreshPlan();renderRefreshRun();
+}
+function renderRefreshPlan(){
+  const selected=refreshSelectedPlan(),plan=refreshPlanView?.id===selected?.id?refreshPlanView:null;
+  if(!plan){facts('refresh-plan-summary',selected?[['Plan',selected.label],['Original edition',selected.baselineEditionId],
+    ['Saved',selected.createdAt],['Read', 'Open the retained plan for its complete source and selection.']]:[['Plan','Save or select a refresh plan.']]);
+    $('refresh-plan-details').textContent='Open a retained plan.';return;}
+  facts('refresh-plan-summary',[['Plan',plan.label],['Original source',plan.sourceId],['Baseline edition',plan.baseline.editionId],
+    ['Baseline snapshot',plan.baseline.snapshot],['Saved',plan.createdAt],['Previous plan',plan.previousPlanId],
+    ['Merchant terms',plan.merchantId],['Publisher product',plan.productId]]);
+  $('refresh-plan-details').textContent=json(plan);
+}
+function renderRefreshRun(){
+  const value=refreshCurrentView(),selected=refreshSelectedRun();
+  $('refresh-run-stage').textContent=value?(refreshStageLabels[value.stage]??value.stage):selected?'Open retained run':'Select a run';
+  $('refresh-run-recover').hidden=!value?.recovery;
+  $('refresh-run-advance').textContent=value?.comparisonPending?'Build complete comparison':'Continue this run';
+  $('refresh-review-area').hidden=!value?.review;
+  $('refresh-export-area').hidden=!value?.edition||!['approved','exported'].includes(value.stage);
+  $('refresh-native-jobs').replaceChildren();$('refresh-run-findings').replaceChildren();$('refresh-events').replaceChildren();
+  $('refresh-saved-exports').replaceChildren();
+  if(!value){
+    facts('refresh-run-summary',selected?[['Run',selected.label],['Run ID',selected.id],['Saved',selected.createdAt]]:
+      [['Selection','Start or select a retained refresh run.']]);
+    $('refresh-run-details').textContent='Open the retained run to read its original jobs, comparison and decision.';
+    $('refresh-run-help').textContent='Choose a retained run. Active discovery and capture are observed without starting another operation.';
+    renderRefreshChanges();return;
+  }
+  facts('refresh-run-summary',[['Run',value.run.label],['Run ID',value.run.id],['Plan',value.plan.label],
+    ['Baseline edition',value.run.baseline.editionId],['Source',value.run.sourceId],['Saved',value.run.createdAt]]);
+  const sourceId=value.run.sourceId??value.plan.sourceId,active=Object.values(value.jobs??{}).some(job=>job?.active);
+  for(const [kind,job]of Object.entries(value.jobs??{})){
+    if(!job)continue;const card=node('article',undefined,'record-card');
+    card.append(node('strong',(kind==='discovery'?'Native discovery':'Selected content capture')+' · '+job.status));
+    card.append(node('p',count(job.recordCount??0)+' records · '+count(job.responseCount??0)+' responses · '+bytes(job.responseBytes??0),'help'));
+    if(job.nextRetryAt)card.append(node('p','Next provider retry: '+job.nextRetryAt,'help'));
+    if(job.error)card.append(node('p',readable(job.error),'error-detail'));
+    card.append(button('Open original '+kind,async()=>{$('job-select').value=sourceId+'|'+job.id;await loadJob();selectSection('captures');}));
+    for(const finding of job.findings??[])card.append(detail('Native finding',finding));
+    $('refresh-native-jobs').append(card);
+  }
+  const guidance=value.recovery?'This run has a saved original action to recover. Its operation ID, revision and input are retained.':
+    active?'The original native job is active. Its latest progress is read here.':
+    value.stage==='review_ready'?'The full comparison is saved. Inspect the records and record one decision for the complete candidate.':
+    value.stage==='approved'?'The successor is approved. Export it using the retained merchant terms and publisher product.':
+    value.stage==='exported'?'The approved edition has a retained export. Continue its existing publisher and buyer workflow below.':
+    value.stage==='rejected'?'The named rejection is retained. A later comparison starts as a new run from the chosen plan.':
+    value.stage==='attention'?'Read the native finding and saved cursor. Continue supported recovery here, or revise the plan when a larger capture declaration is needed.':
+    'Continue this saved run after its current native step has completed.';
+  $('refresh-run-help').textContent=guidance;
+  for(const finding of value.review?.candidate?.findings??[])$('refresh-run-findings').append(detail('Candidate finding',finding));
+  const attention=value.attention??value.run.attention??value.run.error;
+  if(attention)$('refresh-run-findings').append(detail('Retained run finding',attention));
+  $('refresh-run-details').textContent=json(value);
+  if(value.review){
+    const review=value.review,summary=review.summary??{};
+    $('refresh-change-count').textContent=count(summary.changeCount)+' retained changes';
+    facts('refresh-comparison-summary',[['Baseline records',count(summary.beforeRows)],['Candidate records',count(summary.afterRows)],
+      ['Added',count(summary.added)],['Changed',count(summary.changed)],['Removed',count(summary.removed)],
+      ['Unchanged',count(summary.unchanged)],['Native source changed',count(summary.sourceChanged)],['Projected value changed',count(summary.projectionChanged)]]);
+    $('refresh-comparison-pins').textContent='Review SHA-256 '+review.reviewSha256+'\nCandidate capture SHA-256 '+review.candidate.captureSha256;
+    facts('refresh-decision-summary',value.decision?[['Decision',value.decision.decision],['Reviewer',value.decision.reviewer],
+      ['Saved',value.decision.createdAt],['Note',value.decision.note],['Original operation',value.decision.operationId]]:[]);
+  }
+  if(value.edition)facts('refresh-edition-summary',[['Approved edition',value.edition.id],['Dataset',value.edition.name],
+    ['Rows',count(value.edition.rowCount)],['Snapshot',value.edition.snapshot],['CSV bytes',bytes(value.edition.csvBytes)]]);
+  for(const item of value.exports??[]){
+    const row=state.exports.find(row=>row.id===item.id)??item,card=node('article',undefined,'record-card');
+    card.append(node('strong','Retained export '+row.id),node('p',row.createdAt??'','help'));
+    if(row.productId)card.append(button('Open original publisher',async()=>{await perform('product.select',{productId:row.productId});selectSection('publisher');},{primary:true,write:true}));
+    card.append(detail('Original export and files',row));$('refresh-saved-exports').append(card);
+  }
+  for(const event of value.events??[]){
+    const card=node('article',undefined,'record-card');
+    card.append(node('strong',event.kind+' · '+event.createdAt));
+    if(event.reviewer)card.append(node('p','Reviewer: '+event.reviewer,'help'));
+    card.append(detail('Retained event',event));$('refresh-events').append(card);
+  }
+  if(!(value.events??[]).length)$('refresh-events').append(node('p','This run has no recorded review or export event yet.','empty'));
+  renderRefreshChanges();
+}
+function renderRefreshChanges(){
+  const value=refreshCurrentView(),page=refreshChangesPage;
+  if(!page||!value?.review||page.runId!==value.run.id||page.reviewSha256!==value.review.reviewSha256){
+    $('refresh-changes-table').replaceChildren(node('p','Read the saved comparison to inspect its complete change list.','empty'));
+    $('refresh-changes-page').textContent='';return;
+  }
+  table('refresh-changes-table',[
+    {label:'Native record',value:row=>{const area=node('div');area.append(node('div',row.key,'cell-long'));
+      area.append(button('Compare original versions',()=>openRefreshRecord(row.key)));return area;}},
+    {label:'Change',value:row=>row.kind},
+    {label:'Native source',value:row=>row.kind==='added'?'Added':row.kind==='removed'?'Removed':row.sourceChanged?'Changed':'Unchanged'},
+    {label:'Projected value',value:row=>row.kind==='added'?'Added':row.kind==='removed'?'Removed':row.projectionChanged?'Changed':'Unchanged'},
+    {label:'Original versions',value:row=>{const area=node('div');
+      for(const [label,record]of [['Baseline',row.before],['Candidate',row.after]])area.append(node('div',label+': '+(record?
+        record.collection+' / '+record.nativeId+' · response '+record.responseSequence+' · '+short(record.nativeSha256):'Absent'),'native-meta'));
+      return area;}}],page.rows??[]);
+  $('refresh-changes-page').textContent=count(page.rows?.length??0)+' shown · '+$('refresh-change-kind').selectedOptions[0].textContent+
+    ' · original change positions '+count(page.offset)+'–'+count(page.nextOffset??page.summary.changeCount)+' of '+count(page.summary.changeCount);
+}
+function refreshControls(){
+  const value=refreshCurrentView(),reviewReady=value?.stage==='review_ready'&&!!value.review,
+    active=Object.values(value?.jobs??{}).some(job=>job?.active);
+  for(const id of ['refresh-plan-open','refresh-plan-copy','refresh-run-start'])$(id).disabled=busy||!refreshSelectedPlan();
+  $('refresh-plan-copy').disabled||=!refreshPlanView||refreshPlanView.id!==refreshSelectedPlan()?.id;
+  $('refresh-plan-save').disabled=busy||!state?.editions?.some(row=>row.id===$('refresh-plan-edition').value);
+  $('refresh-run-open').disabled=busy||!refreshSelectedRun();
+  $('refresh-run-advance').disabled=busy||!value||active||!!value.recovery||!['discovering','capturing','attention'].includes(value.stage);
+  $('refresh-run-recover').disabled=busy||!value?.recovery;
+  $('refresh-review-save').disabled=busy||!reviewReady||!!value?.recovery;
+  $('refresh-export-save').disabled=busy||!value?.edition||!['approved','exported'].includes(value.stage)||!!value?.recovery;
+  for(const id of ['refresh-changes-reload','refresh-change-kind','refresh-report-json','refresh-report-csv','refresh-report-jsonl','refresh-report-index'])$(id).disabled=busy||!value?.review;
+  $('refresh-changes-prev').disabled=busy||!refreshChangeHistory.length;
+  $('refresh-changes-next').disabled=busy||!refreshChangesPage||refreshChangesPage.nextOffset===null||refreshChangesPage.nextOffset===undefined;
+  for(const id of ['refresh-plan-select','refresh-run-select','refresh-baseline-select','refresh-plan-edition'])$(id).disabled=busy||!state;
+}
+async function loadRefreshPlan(){
+  const id=required($('refresh-plan-select').value,'Select a retained refresh plan.'),workspaceId=state.id,epoch=++refreshReadEpoch;
+  const value=await request('/api/refresh-plan?'+params({id}));
+  required(value.id===id,'The original plan response has a different identity.');
+  if(state.id!==workspaceId||epoch!==refreshReadEpoch||$('refresh-plan-select').value!==id)return;
+  refreshPlanView=value;renderRefreshPlan();refreshControls();return value;
+}
+async function loadRefreshRun({resetChanges=true}={}){
+  const id=required($('refresh-run-select').value,'Select a retained refresh run.'),workspaceId=state.id,epoch=++refreshReadEpoch;
+  const value=await request('/api/refresh-run?'+params({id}));
+  required(value.run?.id===id,'The original run response has a different identity.');
+  if(state.id!==workspaceId||epoch!==refreshReadEpoch||$('refresh-run-select').value!==id)return;
+  const prior=refreshRunView?.review?.reviewSha256;
+  if(refreshRunView?.run?.id!==value.run.id){$('refresh-decision').value='';$('refresh-review-note').value='';}
+  refreshRunView=value;refreshPlanView=value.plan;
+  if(resetChanges||prior!==value.review?.reviewSha256){refreshChangesPage=null;refreshChangesOffset=0;refreshChangeHistory=[];}
+  renderRefreshPlan();renderRefreshRun();
+  if(value.review&&(!refreshChangesPage||resetChanges))await loadRefreshChanges(0);
+  refreshControls();return value;
+}
+async function loadRefreshChanges(offset=refreshChangesOffset){
+  const value=refreshCurrentView();required(value?.review,'Open a run with a complete saved comparison.');
+  const runId=value.run.id,reviewSha256=value.review.reviewSha256,workspaceId=state.id,kind=$('refresh-change-kind').value;
+  const page=await request('/api/refresh-changes?'+params({id:runId,offset,limit:50,kind}));
+  required(page.runId===runId&&page.reviewSha256===reviewSha256,'The comparison identity changed. Reopen the retained run before reviewing.');
+  if(state.id!==workspaceId||refreshCurrentView()?.run.id!==runId||$('refresh-change-kind').value!==kind)return;
+  refreshChangesPage=page;refreshChangesOffset=page.offset;renderRefreshChanges();refreshControls();return page;
+}
+async function openRefreshRecord(key){
+  const view=refreshCurrentView();required(view?.review,'Open the complete saved comparison.');
+  const value=await request('/api/refresh-record?'+params({id:view.run.id,key}));
+  required(value.runId===view.run.id&&value.reviewSha256===view.review.reviewSha256&&value.key===key,'The selected record is not bound to this saved comparison.');
+  refreshRecordView=value;$('refresh-record-title').textContent=key;
+  $('refresh-record-note').textContent=(value.clipped?'Large visible JSON is clipped. Complete original responses are available below. ':'')+
+    'Retained review '+value.reviewSha256;
+  for(const side of ['before','after']){
+    const record=value[side],source=record?.source;
+    facts('refresh-record-'+side+'-meta',record?[['Capture',source?.captureId],['Response',source?.sequence],['Record ordinal',source?.ordinal],
+      ['Response SHA-256',source?.sha256],['Native record bytes',bytes(record.nativeBytes)],['Projected record bytes',bytes(record.projectedBytes)]]:[['Version',side==='before'?'This record was absent from the baseline.':'This record is absent from the candidate.']]);
+    $('refresh-record-'+side+'-native').textContent=record?(record.nativeOmitted?'Visible record omitted because of its size. Download its complete original response.':readable(record.nativeJson)):'Absent';
+    $('refresh-record-'+side+'-projected').textContent=record?(record.nativeOmitted?'Visible projection omitted because of its size. The original source and saved projection remain retained.':readable(record.projectedJson)):'Absent';
+    $('refresh-record-'+side+'-download').disabled=!source?.sourceId||!source.captureId||source.sequence===null||source.sequence===undefined;
+  }
+  $('refresh-record-dialog').showModal();
+}
+function refreshCapacity(){
+  const value={};for(const [id,key]of [['refresh-limit-pages','maxPages'],['refresh-limit-records','maxRecords'],['refresh-limit-bytes','maxBytes']]){
+    if(!$(id).value.trim())continue;const number=Number($(id).value);
+    required(Number.isSafeInteger(number)&&$(id).checkValidity(),'Use the displayed supported range for the capture capacity.');value[key]=number;}
+  return Object.keys(value).length?value:undefined;
+}
+async function openSavedRefreshRun(runId){
+  required(state.refreshRuns?.some(row=>row.id===runId),'Select the saved original run from the workspace.');
+  const run=state.refreshRuns.find(row=>row.id===runId);$('refresh-plan-select').value=run.planId;
+  renderRefreshSelections();$('refresh-run-select').value=runId;resetRefreshChanges();await loadRefreshRun();selectSection('refresh');
+}
+
 function renderExports(){
   $('exports-count').textContent=state.exports.length+' exports';$('exports-list').replaceChildren();
   for(const row of [...state.exports].reverse()){
@@ -281,10 +491,85 @@ async function compareEditions(reset=false){
 function form(id,action){$(id).addEventListener('submit',event=>{event.preventDefault();handle(action);});}
 document.querySelectorAll('[data-section]').forEach(control=>control.addEventListener('click',()=>selectSection(control.dataset.section)));
 $('detail-close').addEventListener('click',()=>$('detail-dialog').close());
-$('refresh').addEventListener('click',()=>handle(()=>refresh()));
+$('refresh').addEventListener('click',()=>handle(async()=>{await refresh();if(section==='refresh'&&$('refresh-run-select').value)await loadRefreshRun({resetChanges:false});}));
 $('handbook').addEventListener('click',()=>handle(async()=>showDetails('WordPress source operator guide',await request('/api/handbook',{text:true}))));
 $('source-auth').addEventListener('change',()=>{const active=$('source-auth').value==='application-password';$('source-user-label').hidden=!active;$('source-password-label').hidden=!active;
   $('source-user-env').required=active;$('source-password-env').required=active;});
+
+$('refresh-plan-edition').addEventListener('change',renderRefreshBaseline);
+$('refresh-plan-open').addEventListener('click',()=>handle(loadRefreshPlan));
+$('refresh-plan-select').addEventListener('change',()=>handle(async()=>{
+  refreshReadEpoch++;refreshPlanView=null;refreshRunView=null;resetRefreshChanges();renderRefreshSelections();await loadRefreshPlan();
+  if($('refresh-run-select').value)await loadRefreshRun();
+}));
+$('refresh-plan-copy').addEventListener('click',()=>handle(async()=>{
+  const plan=await loadRefreshPlan();if(!plan)return;
+  $('refresh-plan-edition').value=plan.baseline.editionId;$('refresh-plan-label').value=plan.label+' · revised';
+  $('refresh-plan-note').value=plan.note??'';$('refresh-plan-previous').value=plan.id;
+  $('refresh-plan-merchant').value=plan.merchantId??'';$('refresh-plan-product').value=plan.productId??'';
+  for(const [id,key]of [['refresh-limit-pages','maxPages'],['refresh-limit-records','maxRecords'],['refresh-limit-bytes','maxBytes']])$(id).value=plan.selection?.[key]??'';
+  renderRefreshBaseline();$('refresh-plan-label').focus();
+}));
+form('refresh-plan-form',async()=>{
+  const edition=state.editions.find(row=>row.id===$('refresh-plan-edition').value);required(edition,'Select the reviewed baseline edition.');
+  const old=new Set((state.refreshPlans??[]).map(row=>row.id)),limits=refreshCapacity(),
+    merchantId=$('refresh-plan-merchant').value,productId=$('refresh-plan-product').value,previousPlanId=$('refresh-plan-previous').value;
+  const result=await perform('refresh.plan.save',{editionId:edition.id,expectedSnapshot:edition.snapshot,label:$('refresh-plan-label').value,
+    note:$('refresh-plan-note').value,...(merchantId?{merchantId}:{}),...(productId?{productId}:{}),...(previousPlanId?{previousPlanId}:{}),...(limits?{limits}:{})});
+  const id=result?.planId??result?.id??(state.refreshPlans??[]).find(row=>!old.has(row.id))?.id;
+  required(state.refreshPlans?.some(row=>row.id===id),'The plan is saved. Select its retained row to continue.');
+  $('refresh-plan-select').value=id;refreshRunView=null;renderRefreshSelections();await loadRefreshPlan();
+});
+form('refresh-start-form',async()=>{
+  const planId=required($('refresh-plan-select').value,'Select the saved refresh plan.'),baselineEditionId=$('refresh-baseline-select').value;
+  const result=await perform('refresh.run.start',{planId,label:$('refresh-run-label').value,...(baselineEditionId?{baselineEditionId}:{})});
+  await openSavedRefreshRun(result.runId);
+});
+$('refresh-run-select').addEventListener('change',()=>handle(async()=>{refreshReadEpoch++;refreshRunView=null;resetRefreshChanges();await loadRefreshRun();}));
+$('refresh-run-open').addEventListener('click',()=>handle(()=>loadRefreshRun()));
+$('refresh-run-advance').addEventListener('click',()=>handle(async()=>{
+  const runId=required(refreshCurrentView()?.run.id,'Open the saved refresh run.');
+  await perform('refresh.run.advance',{runId});await openSavedRefreshRun(runId);
+}));
+$('refresh-run-recover').addEventListener('click',()=>handle(async()=>{
+  const value=refreshCurrentView(),recovery=required(value?.recovery,'Read the original saved action to recover.');
+  const exact={action:recovery.action,operationId:recovery.operationId,expectedRevision:recovery.expectedRevision,input:recovery.input};
+  await perform(exact.action,exact.input,exact);await openSavedRefreshRun(value.run.id);
+}));
+$('refresh-change-kind').addEventListener('change',()=>handle(async()=>{refreshChangeHistory=[];await loadRefreshChanges(0);}));
+$('refresh-changes-reload').addEventListener('click',()=>handle(()=>loadRefreshChanges()));
+$('refresh-changes-next').addEventListener('click',()=>handle(async()=>{
+  const next=refreshChangesPage?.nextOffset;if(next===null||next===undefined)return;
+  const previous=refreshChangesOffset;if(await loadRefreshChanges(next)){refreshChangeHistory.push(previous);refreshControls();}
+}));
+$('refresh-changes-prev').addEventListener('click',()=>handle(async()=>{
+  if(!refreshChangeHistory.length)return;const offset=refreshChangeHistory.at(-1);
+  if(await loadRefreshChanges(offset)){refreshChangeHistory.pop();refreshControls();}
+}));
+for(const [id,name]of [['refresh-report-json','review.json'],['refresh-report-csv','changes.csv'],
+  ['refresh-report-jsonl','changes.jsonl'],['refresh-report-index','changes.index.json']])
+  $(id).addEventListener('click',()=>handle(()=>downloadFile('refresh',required(refreshCurrentView()?.run.id,'Open a retained comparison.'),name)));
+form('refresh-review-form',async()=>{
+  const value=refreshCurrentView();required(value?.stage==='review_ready'&&value.review,'Open the candidate that is ready for review.');
+  await perform('refresh.run.review',{runId:value.run.id,expectedReviewSha256:value.review.reviewSha256,
+    expectedCaptureSha256:value.review.candidate.captureSha256,decision:$('refresh-decision').value,
+    reviewer:$('refresh-reviewer').value,note:$('refresh-review-note').value});
+  $('refresh-decision').value='';await openSavedRefreshRun(value.run.id);
+});
+form('refresh-export-form',async()=>{
+  const value=refreshCurrentView();required(value?.edition,'Open the approved successor edition.');
+  const merchantId=$('refresh-export-merchant').value,productId=$('refresh-export-product').value;
+  await perform('refresh.run.export',{runId:value.run.id,reviewer:$('refresh-export-reviewer').value,note:$('refresh-export-note').value,
+    ...(merchantId?{merchantId}:{}),...(productId?{productId}:{})});
+  await openSavedRefreshRun(value.run.id);notice('Saved the approved edition export. Open its original publisher below to continue delivery.');
+});
+$('refresh-record-close').addEventListener('click',()=>$('refresh-record-dialog').close());
+for(const side of ['before','after'])$('refresh-record-'+side+'-download').addEventListener('click',()=>handle(()=>{
+  const source=required(refreshRecordView?.[side]?.source,'This version has no native response.');
+  return downloadFile('response',source.captureId,String(source.sequence),source.sourceId);
+}));
+$('refresh-go-receiving').addEventListener('click',()=>selectSection('exports'));
+
 form('source-form',async()=>{
   const mode=$('source-auth').value,source={schema:'stellar-forge.wordpress-source.v1',label:$('source-label').value,apiRoot:$('source-root').value,
     context:$('source-context').value,authentication:{mode,...(mode==='application-password'?{usernameEnv:$('source-user-env').value,passwordEnv:$('source-password-env').value}:{})},
@@ -388,8 +673,9 @@ setInterval(async()=>{
   if(document.hidden||busy||refreshing||!state)return;
   const running=state.jobs.some(row=>row.active)||state.running?.length;
   if(!running)return;
-  try{await refresh({silent:true});if(section==='captures'&&$('job-select').value)await loadJob({silent:true});}catch{}
+  try{await refresh({silent:true});if(section==='captures'&&$('job-select').value)await loadJob({silent:true});if(section==='refresh'&&$('refresh-run-select').value)await loadRefreshRun({resetChanges:false});}catch{}
 },2500);
 handle(async()=>{await refresh();selectSection(location.hash.slice(1)||'source');
+  if(section==='refresh'&&$('refresh-plan-select').value){await loadRefreshPlan();if($('refresh-run-select').value)await loadRefreshRun();}
   try{const saved=JSON.parse(sessionStorage.getItem(storageKey+':receive')||'null');if(saved){$('receive-input').value=saved.input;$('receive-directory').value=saved.directory;}}catch{}
 });

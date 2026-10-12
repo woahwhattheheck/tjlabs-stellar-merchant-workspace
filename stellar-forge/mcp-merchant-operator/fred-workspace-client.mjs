@@ -3,6 +3,10 @@ import { constants } from 'node:fs';
 import { open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { inspectFredReleaseCapture, normalizeFredReleaseSelection } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
+import { validateFredReleaseWatch } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/watch.mjs';
+import { validateFredReleasePlan } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/planner.mjs';
+export { inspectFredReleaseCapture } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
 
 export const FRED_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.fred-workspace-connection.v1';
 export const FRED_CLIENT_MAX_BYTES = 256 * 1024 * 1024;
@@ -124,6 +128,80 @@ function successorFile(value, successorId) {
   return value;
 }
 
+const RELEASE_CAPTURE_SECTIONS = ['series', 'releases', 'calendar', 'vintages'];
+const RELEASE_PLAN_SECTIONS = ['acquisitions', 'calendarChanges', 'vintageChanges', 'events', 'schedule'];
+function releaseId(value, kind) {
+  const prefix = kind === 'watch' ? 'fred-release-watch-' : 'fred-release-plan-';
+  if (typeof value !== 'string' || !value.startsWith(prefix) || !SHA.test(value.slice(prefix.length)))
+    fail('FRED_CLIENT_INPUT_INVALID', 'Select the retained release ' + kind + ' ID.');
+  return value;
+}
+function releaseDate(value, label) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+      !Number.isFinite(Date.parse(value + 'T00:00:00Z')) ||
+      new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) !== value)
+    fail('FRED_CLIENT_INPUT_INVALID', 'Supply a complete YYYY-MM-DD ' + label + '.');
+  return value;
+}
+function releasePaging(input, sections, defaultSection) {
+  const section = input.section ?? defaultSection;
+  if (!sections.includes(section)) fail('FRED_CLIENT_INPUT_INVALID', 'Choose a declared release source or plan section.');
+  return { section, offset: integer(input.offset ?? 0, 0, 1000000, 'release row offset'),
+    limit: integer(input.limit ?? 100, 1, 500, 'release page size') };
+}
+function releaseRows(value, paging, rowKey, countKey) {
+  const count = value?.[countKey], rows = value?.[rowKey];
+  if (!Number.isSafeInteger(count) || count < 0 || !Array.isArray(rows) ||
+      value.section !== paging.section || value.offset !== paging.offset || value.limit !== paging.limit ||
+      rows.length !== Math.min(paging.limit, Math.max(0, count - paging.offset)) ||
+      value.nextOffset !== (paging.offset + rows.length < count ? paging.offset + rows.length : null))
+    fail('FRED_CLIENT_RELEASE_CHANGED', 'The original release page is incomplete or belongs to another selected section.');
+  return value;
+}
+function releaseEnvelope(value, projectId) {
+  if (value?.projectId !== projectId || !Number.isSafeInteger(value.revision) || value.revision < 1)
+    fail('FRED_CLIENT_PROJECT_CHANGED', 'The release response belongs to another original project or revision.');
+  return value;
+}
+function releaseCaptureSummary(capture, model = inspectFredReleaseCapture(capture)) {
+  return { id: model.captureSha256, selection: model.selection, rowCount: model.rowCount,
+    series: model.series.map(({ vintageDates, originalMetadata, ...item }) => ({ ...item,
+      vintageCount: vintageDates.length, latestVintageDate: vintageDates.at(-1) ?? null })),
+    releaseCount: model.releases.length, calendarRows: model.calendar.length, vintageRows: model.vintages.length,
+    recordCount: capture.records.length };
+}
+function releasePlanSummary(plan) {
+  const { id, watchId, beforeCaptureSha256, afterCaptureSha256, metadataAsOf, completedAsOf, summary, coverage } = plan;
+  return { id, watchId, beforeCaptureSha256, afterCaptureSha256, metadataAsOf, completedAsOf, summary, coverage };
+}
+function releasePlanSelection(input, saved = false) {
+  fields(input, ['watchId', 'beforeCaptureId', 'afterCaptureId',
+    ...(saved ? ['id', 'expectedRevision', 'previewId'] : ['section', 'offset', 'limit'])], 'Release plan selection');
+  releaseId(input.watchId, 'watch'); digest(input.afterCaptureId, 'selected release capture ID');
+  if (input.beforeCaptureId != null) digest(input.beforeCaptureId, 'preceding release capture ID');
+  const value = { ...input, beforeCaptureId: input.beforeCaptureId ?? null };
+  if (saved) { operation(value.id); revision(value.expectedRevision); digest(value.previewId, 'reviewed release preview ID'); }
+  else Object.assign(value, releasePaging(value, RELEASE_PLAN_SECTIONS, 'acquisitions'));
+  return value;
+}
+function releasePlanPage(value, { planId, watchId, beforeCaptureId, afterCaptureId, ...paging }) {
+  releaseId(value?.id, 'plan'); releaseId(value?.watchId, 'watch');
+  digest(value.afterCaptureSha256, 'selected release capture ID');
+  if (value.beforeCaptureSha256 !== null) digest(value.beforeCaptureSha256, 'preceding release capture ID');
+  if (planId !== undefined && value.id !== planId || watchId !== undefined && value.watchId !== watchId ||
+      beforeCaptureId !== undefined && value.beforeCaptureSha256 !== beforeCaptureId ||
+      afterCaptureId !== undefined && value.afterCaptureSha256 !== afterCaptureId ||
+      !plain(value.summary) || !plain(value.coverage))
+    fail('FRED_CLIENT_RELEASE_CHANGED', 'The release plan page differs from the selected watch or complete source pair.');
+  return releaseRows(value, paging, 'rows', 'count');
+}
+function releaseSavedResponse(value, input, valid) {
+  if (!valid || !Number.isSafeInteger(value?.revision) || value.revision < 1)
+    fail('FRED_CLIENT_RELEASE_CHANGED', 'The saved release response differs from the original operation selection.',
+      { operationId: input.id, ambiguous: true, inspectOriginalOperation: true });
+  return value;
+}
+
 function fields(value, allowed, label) {
   object(value, label);
   if (Object.keys(value).some(key => !allowed.includes(key)))
@@ -198,8 +276,8 @@ export async function readFredWorkspaceConfiguration(path) {
       for (const [name, input] of Object.entries(value.inputs)) {
         if (!ALIAS.test(name)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase input alias.');
         fields(input, ['path', 'kind', 'label', 'sha256'], 'Host input');
-        if (!['public-table', 'capture'].includes(input.kind))
-          fail('FRED_CONNECTION_INVALID', 'Select an original public-table wrapper or retained capture.');
+        if (!['public-table', 'capture', 'release-capture'].includes(input.kind))
+          fail('FRED_CONNECTION_INVALID', 'Select an original public-table wrapper, observation capture or complete release capture.');
         entry.inputs[name] = { path: resolve(base, text(input.path, 'original source path', 8192)),
           kind: input.kind, label: text(input.label ?? name, 'input label', 240),
           ...(input.sha256 === undefined ? {} : { sha256: digest(input.sha256, 'complete input file SHA256') }) };
@@ -496,8 +574,145 @@ export class FredWorkspaceClient {
     recurringId(successorId, 'successor');
     integer(offset, 0, 60000, 'change offset'); integer(limit, 1, 500, 'change page size');
     if (typeof changesOnly !== 'boolean') fail('FRED_CLIENT_INPUT_INVALID', 'Choose a boolean changesOnly value.');
-    const query = new URLSearchParams({ successor: successorId, offset: String(offset), limit: String(limit), changesOnly: String(changesOnly) });
+    const query = new URLSearchParams({ successor: successorId, offset: String(offset), limit: String(limit), changesOnly: changesOnly ? '1' : '0' });
     return successorView(await this.#json('/api/briefing-successor?' + query, options), successorId, { offset, limit, changesOnly });
+  }
+
+  async releaseCaptures(options = {}) {
+    const value = releaseEnvelope(await this.#json('/api/release-captures', options), this.#boundId);
+    if (!Array.isArray(value.captures)) fail('FRED_CLIENT_RELEASE_CHANGED', 'The complete release capture inventory is missing.');
+    const seen = new Set();
+    for (const item of value.captures) {
+      digest(item?.id, 'release capture ID');
+      if (seen.has(item.id) || !plain(item.selection) || !Array.isArray(item.series) ||
+          ['rowCount', 'releaseCount', 'calendarRows', 'vintageRows', 'recordCount'].some(key =>
+            !Number.isSafeInteger(item[key]) || item[key] < 0))
+        fail('FRED_CLIENT_RELEASE_CHANGED', 'The release source inventory repeats or loses an original source descriptor.');
+      seen.add(item.id);
+    }
+    return value;
+  }
+  async releaseWatches(options = {}) {
+    const value = releaseEnvelope(await this.#json('/api/release-watches', options), this.#boundId);
+    if (!Array.isArray(value.watches) || !Array.isArray(value.plans) || !Array.isArray(value.catchUps))
+      fail('FRED_CLIENT_RELEASE_CHANGED', 'The complete release watch, plan or catch-up inventory is missing.');
+    const watches = new Set(), plans = new Set(), completed = new Set();
+    for (const item of value.watches) {
+      validateFredReleaseWatch(item);
+      if (watches.has(item.id)) fail('FRED_CLIENT_RELEASE_CHANGED', 'The original release inventory repeats a watch.');
+      watches.add(item.id);
+    }
+    for (const item of value.plans) {
+      releaseId(item?.id, 'plan');
+      if (plans.has(item.id) || !watches.has(item.watchId))
+        fail('FRED_CLIENT_RELEASE_CHANGED', 'The original release plan lost its watch binding.');
+      plans.add(item.id);
+    }
+    for (const item of value.catchUps) {
+      const key = item?.planId + '|' + item?.asOf;
+      if (!plans.has(item?.planId) || !watches.has(item.watchId) || completed.has(key) ||
+          item.selection?.asOf !== item.asOf || !SHA.test(item.captureId ?? ''))
+        fail('FRED_CLIENT_RELEASE_CHANGED', 'The saved catch-up inventory lost its plan, source or date binding.');
+      completed.add(key);
+    }
+    return value;
+  }
+  async releaseCapture({ releaseCaptureId, section = 'series', offset = 0, limit = 100 }, options) {
+    digest(releaseCaptureId, 'release capture ID');
+    const paging = releasePaging({ section, offset, limit }, RELEASE_CAPTURE_SECTIONS, 'series');
+    const query = new URLSearchParams({ capture: releaseCaptureId, section: paging.section,
+      offset: String(paging.offset), limit: String(paging.limit) });
+    const value = releaseEnvelope(await this.#json('/api/release-capture?' + query, options), this.#boundId);
+    if (value.releaseCaptureId !== releaseCaptureId || !plain(value.selection) || !plain(value.source) || !plain(value.counts) ||
+        RELEASE_CAPTURE_SECTIONS.some(key => !Number.isSafeInteger(value.counts[key]) || value.counts[key] < 0) ||
+        value.total !== value.counts[paging.section])
+      fail('FRED_CLIENT_RELEASE_CHANGED', 'The release source page differs from its selected complete capture.');
+    return releaseRows(value, paging, 'items', 'total');
+  }
+  async importReleaseCapture(input, options) {
+    fields(input, ['id', 'expectedRevision', 'capture', 'releaseCaptureId'], 'Release source import');
+    const body = JSON.parse(canonicalFredJSON(input));
+    if (input.capture !== undefined && input.capture !== null) {
+      const model = inspectFredReleaseCapture(input.capture);
+      if (input.releaseCaptureId !== undefined && input.releaseCaptureId !== model.captureSha256)
+        fail('FRED_CLIENT_INPUT_INVALID', 'The complete release input and selected capture ID must agree.');
+      body.releaseCaptureId = model.captureSha256;
+    } else digest(input.releaseCaptureId, 'staged original release capture ID');
+    const value = await this.#action('release-import', body, options);
+    return releaseSavedResponse(value, body, value?.releaseCaptureId === body.releaseCaptureId &&
+      value.capture?.id === body.releaseCaptureId);
+  }
+  async acquireReleaseCapture(input, options) {
+    fields(input, ['id', 'expectedRevision', 'selection'], 'Release source acquisition');
+    const body = input.selection === undefined ? { ...input } : { ...input, selection: normalizeFredReleaseSelection(input.selection) };
+    const value = await this.#action('release-capture', body, options);
+    return releaseSavedResponse(value, body, SHA.test(value?.releaseCaptureId ?? '') &&
+      value.capture?.id === value.releaseCaptureId &&
+      (body.selection === undefined || canonicalFredJSON(value.capture?.selection ?? null) === canonicalFredJSON(body.selection)));
+  }
+  async saveReleaseWatch(input, options) {
+    fields(input, ['id', 'expectedRevision', 'name', 'series', 'templateId', 'observationStart',
+      'observationEnd', 'baselineAsOf', 'catchUp', 'pageSize', 'maxRows'], 'Release watch');
+    input = JSON.parse(canonicalFredJSON(input));
+    text(input.name, 'release watch name', 200);
+    if (input.series !== undefined && (!Array.isArray(input.series) || input.series.length < 1 || input.series.length > 50 ||
+        new Set(input.series).size !== input.series.length || input.series.some(id => typeof id !== 'string' || id.length < 1 || id.length > 120)))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Watch every original series in a distinct complete series list.');
+    if (input.templateId != null) recurringId(input.templateId, 'template');
+    if (input.series === undefined && input.templateId == null)
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose an original series list or a retained briefing template.');
+    releaseDate(input.observationStart, 'observation start'); releaseDate(input.baselineAsOf, 'baseline as-of date');
+    if (input.observationEnd !== undefined && input.observationEnd !== 'as_of') releaseDate(input.observationEnd, 'observation end');
+    if (input.catchUp !== undefined && !['all_vintages', 'latest_vintage'].includes(input.catchUp))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose all_vintages or latest_vintage for catch-up.');
+    if (input.pageSize !== undefined) integer(input.pageSize, 1, 100000, 'observation page size');
+    if (input.maxRows !== undefined) integer(input.maxRows, 1, 1000000, 'observation row capacity');
+    const value = await this.#action('release-watch-save', input, options);
+    let valid = false;
+    try {
+      const watch = validateFredReleaseWatch(value?.watch);
+      valid = value.watchId === watch.id && watch.name === input.name.trim() &&
+        watch.observationStart === input.observationStart && watch.baselineAsOf === input.baselineAsOf &&
+        watch.observationEnd === (input.observationEnd ?? 'as_of') && watch.catchUp === (input.catchUp ?? 'all_vintages') &&
+        watch.pageSize === (input.pageSize ?? 1000) && watch.maxRows === (input.maxRows ?? 1000000) &&
+        (watch.template?.id ?? null) === (input.templateId ?? null) &&
+        (input.series === undefined || canonicalFredJSON(watch.series) === canonicalFredJSON([...input.series].sort()));
+    } catch { /* The original operation still owns any uncertain saved response. */ }
+    return releaseSavedResponse(value, input, valid);
+  }
+  async previewReleasePlan(input, options) {
+    const body = releasePlanSelection(input);
+    const value = releaseEnvelope(await this.#json('/api/release-plan-preview',
+      { ...options, method: 'POST', readOnly: true, body }), this.#boundId);
+    digest(value.previewId, 'release preview ID');
+    releasePlanPage(value.plan, body);
+    return value;
+  }
+  async saveReleasePlan(input, options) {
+    const body = releasePlanSelection(input, true), value = await this.#action('release-plan-save', body, options);
+    return releaseSavedResponse(value, body, /^fred-release-plan-[a-f0-9]{64}$/.test(value?.planId ?? '') &&
+      value.plan?.id === value.planId && value.plan.watchId === body.watchId &&
+      value.plan.beforeCaptureSha256 === body.beforeCaptureId && value.plan.afterCaptureSha256 === body.afterCaptureId);
+  }
+  async releasePlan({ planId, section = 'acquisitions', offset = 0, limit = 100 }, options) {
+    releaseId(planId, 'plan');
+    const paging = releasePaging({ section, offset, limit }, RELEASE_PLAN_SECTIONS, 'acquisitions');
+    const query = new URLSearchParams({ plan: planId, section: paging.section, offset: String(paging.offset), limit: String(paging.limit) });
+    const value = releaseEnvelope(await this.#json('/api/release-plan?' + query, options), this.#boundId);
+    releasePlanPage(value.plan, { planId, ...paging });
+    if (!Array.isArray(value.catchUps) || value.catchUps.some(item => item.planId !== planId ||
+        item.watchId !== value.plan.watchId || item.selection?.asOf !== item.asOf || !SHA.test(item.captureId ?? '')) ||
+        new Set(value.catchUps.map(item => item.asOf)).size !== value.catchUps.length)
+      fail('FRED_CLIENT_RELEASE_CHANGED', 'The saved release plan lost its original completed capture bindings.');
+    return value;
+  }
+  async acquirePlannedVintage(input, options) {
+    fields(input, ['id', 'expectedRevision', 'planId', 'asOf'], 'Planned vintage acquisition');
+    releaseId(input.planId, 'plan'); releaseDate(input.asOf, 'planned vintage as-of date');
+    const value = await this.#action('release-vintage-capture', input, options);
+    return releaseSavedResponse(value, input, value?.planId === input.planId && value.asOf === input.asOf &&
+      value.selection?.asOf === input.asOf && SHA.test(value.captureId ?? '') &&
+      /^fred-release-watch-[a-f0-9]{64}$/.test(value.watchId ?? ''));
   }
 
   publication(publicationId, options) {
@@ -583,7 +798,15 @@ export class FredWorkspaceClient {
         fail('FRED_CLIENT_INPUT_INVALID', 'Choose the complete successor JSON, CSV or HTML comparison.');
       path = '/api/briefing-successor?' + new URLSearchParams({ successor: selection.successorId, format: selection.format });
       fallback = selection.successorId + '.' + selection.format;
-    } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose an original source, comparison, briefing, successor, project or customer file.');
+    } else if (selection.kind === 'release-source') {
+      fields(selection, ['kind', 'releaseCaptureId'], 'Complete release source file');
+      path = '/api/release-capture?' + new URLSearchParams({ capture: digest(selection.releaseCaptureId, 'release capture ID'), download: '1' });
+      fallback = 'fred-release-' + selection.releaseCaptureId + '.json';
+    } else if (selection.kind === 'release-plan') {
+      fields(selection, ['kind', 'planId'], 'Complete release plan file');
+      path = '/api/release-plan?' + new URLSearchParams({ plan: releaseId(selection.planId, 'plan'), download: '1' });
+      fallback = selection.planId + '.json';
+    } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose an original source, release source or plan, comparison, briefing, successor, project or customer file.');
     const { response, bytes } = await this.#request(path, options);
     const sha256 = fredDigest(bytes);
     if (expectedMember && (sha256 !== expectedMember.sha256 || bytes.length !== expectedMember.bytes))
@@ -596,10 +819,22 @@ export class FredWorkspaceClient {
       catch { fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The original successor file is not complete JSON.'); }
       successorFile(value, selection.successorId);
     }
+    if (selection.kind === 'release-source' || selection.kind === 'release-plan') {
+      let value;
+      try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+      catch { fail('FRED_CLIENT_RELEASE_CHANGED', 'The complete release source or saved plan file is not original JSON.'); }
+      if (selection.kind === 'release-source') {
+        if (inspectFredReleaseCapture(value).captureSha256 !== selection.releaseCaptureId)
+          fail('FRED_CLIENT_RELEASE_CHANGED', 'The complete release source differs from the selected capture.');
+      } else if (validateFredReleasePlan(value).id !== selection.planId)
+        fail('FRED_CLIENT_RELEASE_CHANGED', 'The complete release plan differs from the selected saved descriptor.');
+    }
     const proposed = (response.headers.get('content-disposition') ?? '').match(/filename="([^"]*)"/)?.[1] ?? fallback;
     const name = basename(proposed).replace(/[\x00-\x1f\x7f"\\/]/g, '_').slice(0, 180) || fallback;
     const result = { name, type: response.headers.get('content-type') ?? 'application/octet-stream', bytes, sha256,
-      status: response.status, projectId: this.#boundId };
+      status: response.status, projectId: this.#boundId,
+      ...(selection.kind === 'release-source' ? { releaseCaptureId: selection.releaseCaptureId } : {}),
+      ...(selection.kind === 'release-plan' ? { planId: selection.planId } : {}) };
     if (selection.kind === 'project') {
       let bundle;
       try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export is not JSON.'); }
@@ -625,21 +860,98 @@ function briefingPage(value, binding) {
     fail('FRED_CLIENT_BRIEFING_CHANGED', 'The saved analyst page lost its complete original file inventory.');
   return value;
 }
+
+function inspectFredReleaseBundle(bundle) {
+  const state = bundle.state, summaries = state.releaseCaptures ?? [], watches = state.releaseWatches ?? [],
+    plans = state.releasePlans ?? [], catchUps = state.releaseCatchUps ?? [];
+  if (![summaries, watches, plans, catchUps].every(Array.isArray) ||
+      summaries.length + watches.length + plans.length + catchUps.length === 0 ||
+      summaries.length !== bundle.releaseCaptures.length || plans.length !== bundle.releasePlans.length ||
+      !Array.isArray(state.operations) || !Array.isArray(state.captures))
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'The release project export lost its complete source and plan inventories.');
+  const captures = new Map(), watchMap = new Map(), planMap = new Map(), planOperations = new Map();
+  for (const capture of bundle.releaseCaptures) {
+    const model = inspectFredReleaseCapture(capture);
+    if (captures.has(model.captureSha256) || !summaries.some(item =>
+        item.id === model.captureSha256 && canonicalFredJSON(item) === canonicalFredJSON(releaseCaptureSummary(capture, model))))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The release source index differs from its complete original responses.');
+    captures.set(model.captureSha256, capture);
+  }
+  if (new Set(summaries.map(item => item.id)).size !== summaries.length)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'The release source index repeats a saved capture.');
+  for (const watch of watches) {
+    validateFredReleaseWatch(watch);
+    if (watchMap.has(watch.id) || watch.template !== null &&
+        !(state.briefingTemplates ?? []).some(template => canonicalFredJSON(template) === canonicalFredJSON(watch.template)))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The release watch lost its complete original recurring template.');
+    watchMap.set(watch.id, watch);
+  }
+  for (const plan of bundle.releasePlans) {
+    if (!plain(plan) || planMap.has(plan.id) || !watchMap.has(plan.watchId) ||
+        canonicalFredJSON(plan.watch) !== canonicalFredJSON(watchMap.get(plan.watchId)) ||
+        !captures.has(plan.afterCaptureSha256) || plan.beforeCaptureSha256 !== null && !captures.has(plan.beforeCaptureSha256))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The release plan lost its original watch or complete before/after source.');
+    validateFredReleasePlan(plan, { before: plan.beforeCaptureSha256 === null ? null : captures.get(plan.beforeCaptureSha256),
+      after: captures.get(plan.afterCaptureSha256) });
+    if (!plans.some(item => item.id === plan.id && canonicalFredJSON(item) === canonicalFredJSON(releasePlanSummary(plan))))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The saved release plan summary differs from its complete descriptor.');
+    const position = state.operations.findIndex(item => item.kind === 'release-plan-save' && item.result?.planId === plan.id);
+    if (position < 0 || canonicalFredJSON(state.operations[position].result?.plan ?? null) !== canonicalFredJSON(releasePlanSummary(plan)))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The saved release plan lost its original project operation.');
+    planMap.set(plan.id, plan); planOperations.set(plan.id, position);
+  }
+  if (new Set(plans.map(item => item.id)).size !== plans.length)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'The release plan index repeats a saved plan.');
+  const completed = new Set();
+  for (const item of catchUps) {
+    const plan = planMap.get(item?.planId), key = item?.planId + '|' + item?.asOf;
+    if (!plan || completed.has(key) || item.watchId !== plan.watchId ||
+        Object.keys(item).sort().join('|') !== 'asOf|captureId|planId|selection|watchId' ||
+        !plan.acquisitions.some(row => row.asOf === item.asOf && canonicalFredJSON(row.selection) === canonicalFredJSON(item.selection)) ||
+        !state.captures.some(row => row.id === item.captureId) ||
+        !bundle.captures.some(capture => capture.captureSha256 === item.captureId &&
+          canonicalFredJSON(capture.selection) === canonicalFredJSON(item.selection)) ||
+        !state.operations.some((operation, index) => index > planOperations.get(plan.id) &&
+          operation.kind === 'release-vintage-capture' && operation.result?.catchUp &&
+          canonicalFredJSON(operation.result.catchUp) === canonicalFredJSON(item)))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The completed release acquisition lost its exact plan, operation or original observation capture.');
+    completed.add(key);
+  }
+  for (const plan of planMap.values()) {
+    const dates = new Set();
+    for (const item of catchUps) {
+      const sourcePlan = planMap.get(item.planId);
+      const position = state.operations.findIndex(operation => operation.kind === 'release-vintage-capture' &&
+        operation.result?.catchUp?.planId === item.planId && operation.result.catchUp.asOf === item.asOf);
+      if (item.watchId === plan.watchId && sourcePlan?.afterCaptureSha256 === plan.afterCaptureSha256 &&
+          position >= 0 && position < planOperations.get(plan.id)) dates.add(item.asOf);
+    }
+    if (canonicalFredJSON([...dates].sort()) !== canonicalFredJSON(plan.completedAsOf))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The saved release plan completion snapshot differs from its original operation history.');
+  }
+  return { releaseCaptures: captures.size, releaseWatches: watchMap.size, releasePlans: planMap.size, releaseCatchUps: catchUps.length };
+}
+
 export function inspectFredProjectBundle(bundle) {
-  const recurring = bundle?.schema === 'stellar-forge.fred-project-bundle.v3';
+  const releases = bundle?.schema === 'stellar-forge.fred-project-bundle.v4';
+  const recurring = releases || bundle?.schema === 'stellar-forge.fred-project-bundle.v3';
   const briefing = recurring || bundle?.schema === 'stellar-forge.fred-project-bundle.v2';
   if ((!briefing && bundle?.schema !== 'stellar-forge.fred-project-bundle.v1') || !plain(bundle.state) ||
       !Array.isArray(bundle.captures) || !Array.isArray(bundle.publicationPlans) || !SHA.test(bundle.bundleSha256 ?? '') ||
-      (briefing ? !Array.isArray(bundle.briefings) || bundle.briefings.length < 1 : bundle.briefings !== undefined))
+      (briefing ? !Array.isArray(bundle.briefings) || !releases && bundle.briefings.length < 1 : bundle.briefings !== undefined) ||
+      (releases ? !Array.isArray(bundle.releaseCaptures) || !Array.isArray(bundle.releasePlans) :
+        bundle.releaseCaptures !== undefined || bundle.releasePlans !== undefined ||
+        ['releaseCaptures', 'releaseWatches', 'releasePlans', 'releaseCatchUps'].some(key => (bundle.state[key]?.length ?? 0) > 0)))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the complete original versioned FRED project bundle.');
   const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans,
-    ...(briefing ? { briefings: bundle.briefings } : {}) };
+    ...(briefing ? { briefings: bundle.briefings } : {}),
+    ...(releases ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}) };
   if (fredDigest(Buffer.from(canonicalFredJSON(identity))) !== bundle.bundleSha256 ||
       bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending ||
       !Array.isArray(bundle.state.reviews))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original completed project bundle identity changed.');
   const templates = bundle.state.briefingTemplates ?? [], successors = bundle.state.briefingSuccessors ?? [];
-  if (!Array.isArray(templates) || !Array.isArray(successors) || recurring && templates.length === 0 ||
+  if (!Array.isArray(templates) || !Array.isArray(successors) || recurring && !releases && templates.length === 0 ||
       !recurring && (templates.length > 0 || successors.length > 0))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the project bundle version retaining its complete recurring briefing records.');
   if (recurring) {
@@ -669,7 +981,8 @@ export function inspectFredProjectBundle(bundle) {
   return { schema: bundle.schema, projectId: bundle.state.id, revision: bundle.state.revision,
     bundleSha256: bundle.bundleSha256, captures: bundle.captures.length, publications: bundle.publicationPlans.length,
     ...(briefing ? { briefings: bundle.briefings.length } : {}),
-    ...(recurring ? { templates: templates.length, successors: successors.length } : {}) };
+    ...(recurring ? { templates: templates.length, successors: successors.length } : {}),
+    ...(releases ? inspectFredReleaseBundle(bundle) : {}) };
 }
 
 /** Publishes the complete original bytes without replacing an existing file. */
@@ -687,10 +1000,12 @@ export async function saveFredFile(client, selection, destination, options = {})
       const existing = await readFredHostFile(destination, FRED_CLIENT_MAX_BYTES, { expectedSha256: result.sha256 });
       if (existing.length !== result.bytes.length) fail('FRED_CLIENT_FILE_CHANGED', 'The existing download has a different original byte count.');
       return { path: destination, name: result.name, type: result.type, bytes: result.bytes.length, sha256: result.sha256,
-        projectId: result.projectId, reused: true, ...(result.bundle ? { bundle: result.bundle } : {}) };
+        projectId: result.projectId, reused: true, ...(result.bundle ? { bundle: result.bundle } : {}),
+        ...(result.releaseCaptureId ? { releaseCaptureId: result.releaseCaptureId } : {}), ...(result.planId ? { planId: result.planId } : {}) };
     }
     return { path: destination, name: result.name, type: result.type, bytes: result.bytes.length, sha256: result.sha256,
-      projectId: result.projectId, reused: false, ...(result.bundle ? { bundle: result.bundle } : {}) };
+      projectId: result.projectId, reused: false, ...(result.bundle ? { bundle: result.bundle } : {}),
+        ...(result.releaseCaptureId ? { releaseCaptureId: result.releaseCaptureId } : {}), ...(result.planId ? { planId: result.planId } : {}) };
   } finally { await handle?.close(); await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
 }
 

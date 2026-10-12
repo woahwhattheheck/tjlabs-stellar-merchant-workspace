@@ -13,6 +13,8 @@ import { initializeFredProject, fredProjectView, configureFredProject, importFre
   previewFredBriefing, getFredBriefing, downloadFredBriefing } from './project.mjs';
 import { pageFredBriefing } from './briefing/model.mjs';
 import { FRED_TEMPLATE_COMMANDS, FRED_TEMPLATE_USAGE, runFredTemplateCommand } from './briefing/template-cli.mjs';
+import { FRED_RELEASE_PROJECT_COMMANDS, FRED_RELEASE_PROJECT_USAGE, runFredReleaseProjectCommand } from './releases/project-cli.mjs';
+import { runFredReleaseAcquisitionCli } from './releases/acquisition-cli.mjs';
 import { startFredMerchant, prepareFredPurchase, executeFredPurchase, recoverFredPurchase, exportFredPurchase } from './merchant.mjs';
 import { startFredWorkspace } from './workspace.mjs';
 import { retainFredWorkspaceConnection } from './connection-record.mjs';
@@ -82,10 +84,18 @@ async function foreground(session, connectionFile) {
   return { state: 'CLOSED' };
 }
 export async function main(args = process.argv.slice(2)) {
-  if (!args.length || args.includes('--help') || ['help','-h'].includes(args[0])) { console.log(USAGE + '\n\n' + FRED_TEMPLATE_USAGE); return; }
+  if (args[0] === 'releases') return runFredReleaseAcquisitionCli(args.slice(1));
+  if (!args.length || args.includes('--help') || ['help','-h'].includes(args[0])) {
+    console.log(USAGE + '\n\n' + FRED_TEMPLATE_USAGE + '\n\n' + FRED_RELEASE_PROJECT_USAGE +
+      '\n\nStandalone release source acquisition, inspection and planning:\nstarforge fred releases --help'); return;
+  }
   const [command, ...rest] = args;
   if (FRED_TEMPLATE_COMMANDS.includes(command)) {
     const result = await runFredTemplateCommand(args);
+    console.log(JSON.stringify(result, null, 2)); return result;
+  }
+  if (FRED_RELEASE_PROJECT_COMMANDS.includes(command)) {
+    const result = await runFredReleaseProjectCommand(args);
     console.log(JSON.stringify(result, null, 2)); return result;
   }
   const flags = options(command, rest), directory = resolve(flags.project);
