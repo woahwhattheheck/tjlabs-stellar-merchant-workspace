@@ -40,10 +40,13 @@ export default {
       field('receiveRoot','Project receiving directory','path',false,'Private parent for independently editable received projects.'),
       field('pythonCommand','NetCDF Python runtime','path',false,'Existing Python with the delivered pinned netCDF4, numpy and cftime requirements.'),...common],
   }];},
-  async prepare(_type,settings,{inputPath}){
+  async prepare(_type,settings,{inputPath,selectedExecutable}){
     const original=applicationPreparation(settings,inputPath),workspace=await original.path('workspaceDirectory','directory',false,true);
     need(workspace,'NETCDF_DIRECTORY_REQUIRED');const binding=await readWorkspaceBinding(workspace.path);
-    const python=await original.path('pythonCommand','file');if(python)original.option('--python',python.path);
+    if(settings.pythonCommand){
+      const python=await selectedExecutable(settings.pythonCommand);
+      original.inputs.push(...python.inputs);original.option('--python',python.executable);
+    }
     original.option('--workspace',binding.directory);original.args.push('serve');original.option('--expected-binding-sha256',binding.sha256);
     const receive=await original.path('receiveRoot','directory',true,true);
     if(receive){original.option('--receive-root',receive.path);if(!receive.exists)original.createDirectories.push(receive.path);}
