@@ -278,13 +278,23 @@ function invocationFields(value) {
 }
 async function describe(handle) {
   const serial = state.serial, request = ++state.describing;
+  const target = $('resource-detail');
+  state.description = null; target.hidden = false; target.setAttribute('aria-busy', 'true');
+  target.replaceChildren(empty('Loading the selected resource declaration…'));
   let value;
   try { value = await client.call('bazaar_describe', {handle}); }
   catch (error) {
-    if (serial === state.serial && request === state.describing) throw error;
+    if (serial === state.serial && request === state.describing) {
+      target.removeAttribute('aria-busy');
+      target.replaceChildren(node('h3', {text:'Resource inspection failed'}),
+        node('p', {className:'notice error', text:errorText(error)}),
+        button('Retry inspection', () => describe(handle)));
+      throw error;
+    }
     return;
   }
   if (serial !== state.serial || request !== state.describing) return;
+  target.removeAttribute('aria-busy');
   state.description = value;
   const preview = value.preview, container = preview.input.container;
   const declarationErrors = [preview.input.inputError, preview.input.requiredKeysError, preview.remoteMcpError]
@@ -341,7 +351,6 @@ async function describe(handle) {
       notice('Quote created. Review the exact invocation and terms before requesting host approval.');
     }, create);
   });
-  const target = $('resource-detail'); target.hidden = false;
   target.replaceChildren(node('div', {className:'detail-heading'}, [node('div', {}, [
     node('h3', {text:value.resource.description || value.resource.url}), node('p', {className:'mono', text:value.resource.url}),
   ]), badge(preview.resourceType.toUpperCase())]),
