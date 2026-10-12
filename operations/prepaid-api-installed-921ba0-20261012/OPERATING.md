@@ -72,6 +72,25 @@ node /received/prepaid-api-installed-921ba0-20261012/operate.mjs \
 
 The cache option is forwarded to the original installer. That installer owns dependency selection, downloads, native preparation, lock identity and readiness.
 
+### Place the selected package and runtime on a private volume
+
+The canonical operation directory stores the request identity, phase journal, merchant/customer state and completed handoff. The optional `--bulk-directory` places the selected build, archive, unpacked runtime and ordinary `node_modules` on another private filesystem:
+
+~~~sh
+node /received/prepaid-api-installed-921ba0-20261012/operate.mjs \
+  --repo /srv/source/prepaid-api \
+  --directory /srv/prepaid-installed-operation \
+  --request /srv/prepaid-inputs/request.json \
+  --bulk-directory /dev/prepaid-api-bulk \
+  --python python3
+~~~
+
+Select an absolute canonical path whose parent already exists. A new or empty directory must be owned by the current user and mode0700. It must be separate from the source checkout, canonical journal, input directory and any adopted dependency graph. The original operation records the path before creation, then binds its device/inode and private `bulk-workspace.json` to the same operation UUID, request SHA, source commit and recipe. Its original kernel lease remains held until the application owners drain.
+
+Normal installation writes its own complete dependency graph in this bulk runtime. Unless an explicit `--npm-cache` is supplied, bulk mode also places the npm cache at `BULK/npm-cache`. It does not adopt or change another application's dependency directory. Omitting `--bulk-directory` on an existing operation reuses its retained placement; older journals without placement metadata retain their original layout.
+
+`/dev` capacity and cgroup memory are distinct measurements. A private tmpfs directory still consumes the host's shared memory budget. Check actual available memory for the selected build and native installation; choosing a less constrained filesystem does not increase that budget.
+
 A complete already installed dependency graph can instead be received through the original adoption path:
 
 ~~~sh
@@ -104,14 +123,15 @@ The original operation has one UUID, one request SHA and the following eight ret
 
 The order reference is derived once from the operation UUID. It remains unchanged across continuation. The saved offer, order, customer bootstrap, profile and export IDs are reused, and each already completed phase must reopen with the same result.
 
-After completion, the operating directory includes:
+After completion, the canonical operating directory and any recorded bulk workspace contain:
 
 | Path | Complete retained content |
 | --- | --- |
-| `operation.json` | Original source/request identity, phase results, status and every selected runtime preparation attempt |
+| `operation.json` | Original source/request identity, phase results, status, bulk-root ownership and every selected runtime preparation attempt |
 | `result.json` | Exact complete eight-phase result, archive/runtime/setup/workspace/profile/order/export identities |
-| `selected-release/` | Maintained builder journal, exact selected package and original source-selection metadata |
-| `runtime/` or its recorded recovery successor | Original source package, installation plan/profile/state, dependency graph and lock |
+| `selected-release/` under the recorded placement | Maintained builder journal, exact selected package and original source-selection metadata |
+| `runtime/` or its recorded recovery successor under that placement | Original source package, installation plan/profile/state, dependency graph and lock |
+| `BULK/selected-product.tgz` and `BULK/bulk-workspace.json` in bulk mode | Exact immutable selected archive plus its original operation/source/filesystem binding |
 | `merchant/` | Original prepaid setup, merchant application/state, retained publication/order operations and merchant launch |
 | `customer-files/` | Complete original exported customer handoff and receiving identity |
 | `customer/` | Original customer setup, profile/workspace, saved bootstrap and launch |
@@ -139,7 +159,7 @@ If the initial operation-record write was interrupted, the entry adopts an exact
 
 ### Runtime preparation interrupted before installation
 
-Every runtime destination is recorded before the original installer may create it. The first is `runtime`; later destinations are `runtime-recovery-001`, `runtime-recovery-002` and so on, all inside the same original operation directory.
+Every runtime destination is recorded before the original installer may create it. The first is `runtime`; later destinations are `runtime-recovery-001`, `runtime-recovery-002` and so on under the placement retained for that attempt. Older attempts retain their original directory even when a later attempt selects a bulk workspace.
 
 On explicit resume, an existing runtime without a complete named installation plan/state remains intact:
 
@@ -149,7 +169,27 @@ On explicit resume, an existing runtime without a complete named installation pl
 4. A valid but incompatible preparation fails. Its terms, archive or source selection are not rewritten.
 5. A crash after recording the next destination resumes that same attempt. Before dispatch, the observed predecessor state and exact bytes must still match. A further partial preparation gets its own recorded successor only on a subsequent explicit resume.
 
-No preparation file is manufactured inside the failed runtime. A previously completed ORIGINAL_RUNTIME_INSTALLED phase cannot be silently moved to another source path. Later dependency installation uses the original plan and normal installer continuation at the recorded current runtime.
+No preparation file is manufactured inside the failed runtime. A previously completed ORIGINAL_RUNTIME_INSTALLED phase cannot be moved to another source path. Later dependency installation uses the original plan and normal installer continuation at the recorded current runtime.
+
+### Continue a partial installation on another private bulk volume
+
+Before ORIGINAL_RUNTIME_INSTALLED completes, explicit resume may add a new `--bulk-directory`. The original operation UUID and request bytes remain the same:
+
+~~~sh
+node /received/prepaid-api-installed-921ba0-20261012/operate.mjs \
+  --repo /srv/source/prepaid-api \
+  --directory /srv/prepaid-installed-operation \
+  --request /srv/prepaid-inputs/request.json \
+  --bulk-directory /dev/prepaid-api-bulk \
+  --python python3 \
+  --resume
+~~~
+
+The entry records the selected directory before creating it, preserves the original partial runtime and stores the next preparation attempt with its exact predecessor observation. It takes the predecessor's original `install.lock` before reading its retained preparation, so a surviving original npm process still prevents relocation. Readable compatible preparation uses the maintained `recoverRuntime`; absent, empty or invalid JSON uses the already retained archive and original `prepareRuntimeInstall` at the new path. An absent predecessor directory is recorded explicitly as ABSENT_DIRECTORY.
+
+A completed build phase keeps its original archive path and SHA as history. Bulk mode receives that exact archive at `selected-product.tgz`, recording its location and bytes in the same journal. Same-filesystem publication uses an exclusive hard link; cross-filesystem publication uses the original private atomic writer. Every reopened copy must match the saved SHA. If all original archive locations are absent, only the original pinned builder may rebuild, and its resulting SHA and source-file count must still match the completed phase.
+
+A retained bulk directory is identified by its actual device/inode and owner marker. A missing directory can be replaced only by explicitly selecting a different private path before installation completion. A different existing owner or changed directory is preserved and rejected. Once installation is recorded complete, its runtime stays fixed. Keep that volume while operating the installed workspace, and preserve the complete archive at the result's recorded path for later delivery or installation through the original runtime installer.
 
 ### Original workspace admission interrupted or rejected
 
@@ -161,7 +201,7 @@ The customer setup uses one saved original bootstrap operation. The original pro
 
 Ctrl-C or SIGTERM cancels the current original child/action and follows its actual exit/drain. Native child retirement remains TERM then bounded KILL when required, followed by actual close. Customer and merchant cleanup use their returned original owner handles in reverse order.
 
-A failed retryable workspace close retains that same owner and its signal handlers. A later explicit signal resumes that owner's unfinished drain. The raw original kernel-lease close is one-shot; an ambiguous failure is retained and never retried through a possibly reused descriptor. STOPPED launch publication is owned by the original staged workspace lifetime before its lease retires.
+A failed retryable workspace close retains that same owner and its signal handlers. A later explicit signal resumes that owner's unfinished drain. Application owners drain before predecessor and bulk locks close, and the canonical journal lease retires last. Each raw descriptor close is retained once; an ambiguous failure is retained and never retried through a possibly reused descriptor. STOPPED launch publication is owned by the original staged workspace lifetime before its lease retires.
 
 ## 5. Operate the completed installation
 
@@ -184,7 +224,7 @@ https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791822283238739
 The separate customer portfolio and agent operation completed nine customer phases and six MCP/client phases, including the original saved-request/default independence, replacement lineage, actual HTTP MCP, typed client and CLI, interrupted response receiving, five exports and cold reopen:
 https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/136
 
-This entry owns the selected build/install/open operation. Its latest native attempt stopped with ENOSPC before Git repository creation. Continue that same entry and retained installation journal using the source-acquisition path below; its completed result is published from the original `result.json`.
+This entry owns the selected build/install/open operation. After the earlier ENOSPC stop before Git creation, a source-enabled receiver was admitted as native session95080. Transport was lost before its terminal result, and the subsequent process/journal reconciliation was rejected before execution. That receiver's physical outcome remains unconfirmed. Reconcile its original process and journal before another installation writer. The bulk-placement correction below retains the same operation, inputs and selected product; completion is reported only from its original `result.json`.
 
 ## 6. Continue this original host directly from Git
 
@@ -215,8 +255,9 @@ python3 receive-from-git.py \
   --repository /srv/source/prepaid-api
 ~~~
 
-Only the reproducible Git cache moves. The original input directory and installed
-operation below remain the same. The selected path must be absolute, canonical
+This option moves the reproducible Git cache. `--bulk-directory` separately selects
+where the package and runtime are stored. The original input directory and installed
+operation journal below remain the same. The selected path must be absolute, canonical
 and owned by the current user; existing different origin, HEAD, filter or tracked
 source is rejected. A directory in `/dev` still consumes the host's shared
 memory budget, so its filesystem capacity alone does not establish usable room.
@@ -232,8 +273,23 @@ python3 receive-from-git.py \
 Use `--dependencies` only for a complete original graph and its matching
 `package-lock.json`. The existing installer validates the selected versions,
 source imports and native modules. Alternatively `--npm-cache ABSOLUTE_PATH`
-selects the original npm cache for normal installation. Omit both to use the
-original installer defaults.
+selects the original npm cache for normal installation. In bulk mode, omitting it
+uses the private bulk cache; without bulk mode, the original installer defaults apply.
+
+For this original host's separate filesystem limits, receive the selected source
+and normal installation into separate private directories while preserving the
+canonical journal:
+
+~~~sh
+python3 receive-from-git.py \
+  --repository /dev/921ba0-prepaid-selected-source-20261012 \
+  --bulk-directory /dev/921ba0-prepaid-selected-bulk-20261012
+~~~
+
+The receiver forwards the selected bulk path to the maintained driver. It leaves
+the original request and operation directories at their existing `/dev/shm`
+locations. Its owned child-group lifetime covers the entire selected build,
+normal installation, customer opening and original owner drain.
 
 The entry reads the original TESTNET checkout's public origin and payment
 terms from `/dev/shm/921ba0-api-native-20261011/checkout.json`. It retains the
@@ -242,8 +298,8 @@ starter request and exact source-enabled driver in
 at `/dev/shm/921ba0-prepaid-installed-native-20261012`. An existing operation
 continues with `--resume`. The receiver requests no purchase execution.
 
-The source-enabled driver is retained as `operate-source-online.mjs`; an older
-`operate.mjs` remains intact. Both the selected driver and unchanged request use
+The bulk-enabled driver is retained as `operate-bulk-workspace.mjs`; the older
+`operate.mjs` and `operate-source-online.mjs` remain intact. Both the selected driver and unchanged request use
 the original `sf88-operator-buyer-cli/node/store.mjs` writer and full byte
 comparison. Different existing named bytes are rejected.
 

@@ -188,6 +188,19 @@ def _historical_specification(obligation, prepared, milestone):
                   409, "COMMERCIAL_SOURCE_CHANGED")
 
 
+def _external_command_reference(obligation, intent, missing_sources=None):
+    """Keep a foreign prepared case's command identity without importing its authority."""
+    return {
+        "requestId": intent["id"], "obligationKey": intent["obligationKey"],
+        "action": intent["action"],
+        "programId": intent.get("programId", obligation["programId"]),
+        "preparedId": intent.get("preparedId") or (intent.get("review") or {}).get("id")
+                      or obligation["preparedId"],
+        "specificationSha256": obligation["specificationSha256"],
+        "specificationRevision": obligation.get("specificationRevision", 1),
+        "missingSourceIds": sorted(missing_sources or [])}
+
+
 def validate_import(value, reader=None):
     """Validate the retained source/command graph before the original case import."""
     value = _object(value, "Commercial export")
@@ -197,6 +210,16 @@ def validate_import(value, reader=None):
     for key in ("prepared", "obligations", "intents"):
         if not isinstance(value.get(key), list):
             raise Problem("Commercial export rows must be arrays.")
+    external_rows = value.setdefault("externalCommands", [])
+    if not isinstance(external_rows, list):
+        raise Problem("Outside-case command references must be an array.")
+    external_commands = {}
+    for reference in external_rows:
+        _object(reference, "Outside-case command reference")
+        request_id = _required(reference.get("requestId"), "Native request identity", 100)
+        if request_id in external_commands:
+            raise Problem("Commercial export repeats an outside-case command.")
+        external_commands[request_id] = reference
     obligations = {}
     for row in value["obligations"]:
         _object(row, "Commercial obligation")
@@ -261,7 +284,7 @@ def validate_import(value, reader=None):
                 raise Problem("Commercial milestone no longer matches its retained billing terms.")
     if set(obligations) != linked_keys:
         raise Problem("Commercial export has unrelated obligation rows.")
-    seen_intents = set()
+    seen_intents, observed_external = set(), set()
     for intent in value["intents"]:
         _object(intent, "Retained native command")
         key = intent.get("obligationKey")
@@ -287,29 +310,83 @@ def validate_import(value, reader=None):
                 or intent.get("specificationRevision", 1)
                 != obligations[key].get("specificationRevision", 1)):
             raise Problem("A retained native command belongs to superseded billing terms.")
+        candidates = [(prepared, milestone)
+                      for prepared in value["prepared"]
+                      for milestone in prepared["milestones"]
+                      if milestone["obligationKey"] == key
+                      and _same_preparation(obligations[key], prepared, milestone)]
+        external_reference = external_commands.get(intent["id"])
+        missing_sources = []
+        if external_reference is not None:
+            missing_sources = _ids(external_reference.get("missingSourceIds", []),
+                                   "Outside-case source references")
+            expected_reference = _external_command_reference(
+                obligations[key], intent, missing_sources)
+            if external_reference != expected_reference or (candidates and not missing_sources):
+                raise Problem("The outside-case command reference differs from its original scope.")
+            observed_external.add(intent["id"])
+        elif not candidates:
+            # A received copy can correct unused terms and later bill. An older
+            # case keeps that exact native journal so reopening cannot clear its
+            # command lock, but does not acquire the other case's billing authority.
+            raise Problem("This native command belongs to a preparation outside the "
+                          "exported case. Retain its outside-case reference or include "
+                          "its complete original preparation and sources.",
+                          422, "COMMERCIAL_EXPORT_SOURCE_GRAPH")
         if action == "issue":
             review = _object(intent.get("review"), "Original issue review")
             edition = review.get("installationEdition")
             if edition is not None:
-                candidates = [(prepared, milestone)
-                              for prepared in value["prepared"]
-                              for milestone in prepared["milestones"]
-                              if milestone["obligationKey"] == key
-                              and _same_preparation(obligations[key], prepared, milestone)]
-                prepared, milestone = next(
-                    (pair for pair in candidates if pair[0]["id"] == review.get("id")),
-                    candidates[0])
+                if candidates:
+                    prepared, milestone = next(
+                        (pair for pair in candidates if pair[0]["id"] == review.get("id")),
+                        candidates[0])
+                else:
+                    # Validate the frozen edition and its selected evidence against
+                    # the exact shared specification. Source bytes remain with the
+                    # originating case named above and are not part of this case.
+                    specification = obligations[key]["specification"]
+                    authorization = review["eligibility"].get("authorizationSources", [])
+                    prepared = {
+                        "schedule": {"source": {
+                            "caseId": specification["caseId"],
+                            "planSha256": specification["planSha256"]}},
+                        "sourceSnapshot": {"installation": {"preview": {"snapshot": {
+                            "sources": {row["id"]: row for row in authorization}}}}}}
+                    milestone = {name: specification[name] for name in (
+                        "requiredCheckIds", "authorizationSourceIds",
+                        "authorizationNote", "billingBasis")}
                 snapshot = _review_edition(prepared, milestone, review, edition)
+                if not set(missing_sources) <= set(snapshot["sources"]):
+                    raise Problem("The outside-case command references unrelated source files.")
                 if reader is not None:
-                    workshares.verify_document(
-                        None, snapshot, edition["preview"]["document"], reader)
+                    available = {}
                     for source_id, metadata in snapshot["sources"].items():
-                        content = reader(source_id)
+                        try:
+                            content = reader(source_id)
+                        except (KeyError, Problem) as error:
+                            absent = isinstance(error, KeyError) or error.status == 404
+                            if source_id in missing_sources and absent:
+                                continue
+                            raise
                         if (not isinstance(content, bytes)
                                 or len(content) != metadata["bytes"]
                                 or hashlib.sha256(content).hexdigest() != metadata["sha256"]):
                             raise Problem("A reviewed acceptance source differs from its original file.",
                                           422, "COMMERCIAL_SOURCE_CHANGED")
+                        available[source_id] = content
+                    binding = edition["preview"]["document"].get("workshare", {})
+                    binding_ids = {binding.get(name) for name in ("sourceId", "packetSourceId")}
+                    if binding_ids - {None, ""} <= set(available):
+                        workshares.verify_document(
+                            None, snapshot, edition["preview"]["document"],
+                            lambda ident: available[ident])
+            elif missing_sources:
+                raise Problem("Outside-case evidence requires its frozen installation edition.")
+        elif missing_sources:
+            raise Problem("A draft command cannot declare issue evidence outside this case.")
+    if set(external_commands) != observed_external:
+        raise Problem("Commercial export has unrelated outside-case command references.")
     return value
 
 
@@ -718,17 +795,18 @@ class CommercialReceivables:
             for milestone in result["milestones"]:
                 obligation = self._obligation(milestone["obligationKey"])
                 milestone["superseded"] = not _same_preparation(obligation, prepared, milestone)
-                milestone["invoiceId"] = obligation["invoiceId"]
-                milestone["native"] = obligation.get("native")
-                milestone["lastRefreshAt"] = obligation.get("lastRefreshAt")
+                current = not milestone["superseded"]
+                milestone["invoiceId"] = obligation["invoiceId"] if current else None
+                milestone["native"] = obligation.get("native") if current else None
+                milestone["lastRefreshAt"] = obligation.get("lastRefreshAt") if current else None
                 milestone["origin"] = {
                     "programId": obligation["programId"],
                     "preparedId": obligation["preparedId"],
                     "milestoneId": obligation["milestoneId"]}
                 milestone["draftIntent"] = self._public_intent(
-                    self._intent(milestone["obligationKey"], "draft"))
+                    self._intent(milestone["obligationKey"], "draft")) if current else None
                 milestone["issueIntent"] = self._public_intent(
-                    self._intent(milestone["obligationKey"], "issue"))
+                    self._intent(milestone["obligationKey"], "issue")) if current else None
                 milestone["eligibility"] = self._eligibility(prepared, milestone, program_id)
             return result
 
@@ -797,6 +875,7 @@ class CommercialReceivables:
                 retained_review["installationEdition"] = copy.deepcopy(edition)
             result = {
                 "id": request_id, "obligationKey": key, "action": action,
+                "programId": program_id or prepared["programId"], "preparedId": prepared["id"],
                 "specificationSha256": obligation["specificationSha256"],
                 "specificationRevision": obligation.get("specificationRevision", 1),
                 "endpointId": prepared["endpointId"],
@@ -1041,7 +1120,8 @@ class CommercialReceivables:
         for milestone in prepared["milestones"]:
             with self.workspace.mutex:
                 obligation = self._obligation(milestone["obligationKey"])
-            if not obligation["invoiceId"]:
+            if (not _same_preparation(obligation, prepared, milestone)
+                    or not obligation["invoiceId"]):
                 continue
             native = self._native("detail", {
                 "endpointId": prepared["endpointId"], "invoiceId": obligation["invoiceId"]})
@@ -1067,8 +1147,30 @@ class CommercialReceivables:
             obligations = [self._obligation(key) for key in keys]
             intents = [intent for key in keys for action in ("draft", "issue")
                        for intent in [self._intent(key, action)] if intent]
+            by_key = {row["obligationKey"]: row for row in obligations}
+            current_keys = {row["obligationKey"] for item in prepared
+                            for row in item["milestones"]
+                            if _same_preparation(by_key[row["obligationKey"]], item, row)}
+            local_sources = self.operations._context(program_id)["sources"]
+            external = []
+            for intent in intents:
+                edition = (intent.get("review") or {}).get("installationEdition")
+                evidence_sources = (edition["preview"]["snapshot"]["sources"]
+                                    if edition is not None else {})
+                missing = []
+                for source_id, metadata in evidence_sources.items():
+                    local = local_sources.get(source_id)
+                    if local is None:
+                        missing.append(source_id)
+                    elif any(local[name] != metadata[name] for name in ("sha256", "bytes")):
+                        raise Problem("An original source identity describes different files.",
+                                      409, "COMMERCIAL_SOURCE_CHANGED")
+                if intent["obligationKey"] not in current_keys or missing:
+                    external.append(_external_command_reference(
+                        by_key[intent["obligationKey"]], intent, missing))
         return {"schema": SCHEMA, "programId": program_id,
-                "prepared": prepared, "obligations": obligations, "intents": intents}
+                "prepared": prepared, "obligations": obligations, "intents": intents,
+                "externalCommands": external}
 
     def restore_rows(self, program_id, value):
         """Restore inside the original Operations import transaction.
@@ -1188,6 +1290,8 @@ class CommercialReceivables:
                                        if row["obligationKey"] in keys]
             retained["intents"] = [row for row in retained["intents"]
                                    if row["obligationKey"] in keys]
+            # All selected milestones passed current-preparation selection above.
+            retained["externalCommands"] = []
             source_metadata = {}
             def select_sources(snapshot):
                 # Native snapshots already close check, work, purchase, outcome
@@ -1250,6 +1354,53 @@ class CommercialReceivables:
         if native.get("mediaType") != "application/x-tar":
             raise Problem("The native customer export must be the original account archive.",
                           502, "RECEIVABLES_RESPONSE")
+        invoice_files, linked_invoices = {}, []
+        invoice_ids = sorted({row["invoiceId"] for row in retained["obligations"]
+                              if row.get("invoiceId")})
+        for invoice_id in invoice_ids:
+            detail = self._native("detail", {
+                "endpointId": prepared["endpointId"], "invoiceId": invoice_id})
+            invoice = detail.get("invoice", {})
+            if invoice.get("id") != invoice_id:
+                raise Problem("The accounting detail identified another invoice.",
+                              502, "RECEIVABLES_RESPONSE")
+            if invoice.get("customerId") != prepared["customerId"]:
+                raise Problem("A linked invoice now belongs to another customer. "
+                              "Reconcile the original milestone in accounting.",
+                              409, "COMMERCIAL_NATIVE_CHANGED")
+            document = detail.get("document")
+            if document is None:
+                continue
+            # The account archive retains its original as-of date. Include each
+            # linked immutable issued document separately, including postdated
+            # invoices that do not yet appear in that account's dated balances.
+            retained_files = _object(detail.get("files"), "Native invoice files")
+            descriptors = []
+            for name in ("invoice.json", "invoice.csv", "invoice.html", "manifest.json"):
+                metadata = _object(retained_files.get(name), "Retained invoice document")
+                item = self._native("document", {
+                    "endpointId": prepared["endpointId"],
+                    "invoiceId": invoice_id, "name": name})
+                try:
+                    content = base64.b64decode(item["contentBase64"], validate=True)
+                except (ValueError, KeyError, TypeError) as error:
+                    raise Problem("An original invoice document could not be read.",
+                                  502, "RECEIVABLES_RESPONSE") from error
+                sha256 = hashlib.sha256(content).hexdigest()
+                if len(content) != metadata.get("bytes") or sha256 != metadata.get("sha256"):
+                    raise Problem("The invoice document differs from its original retained file.",
+                                  502, "RECEIVABLES_RESPONSE")
+                path = "native/invoices/" + hashlib.sha256(
+                    invoice_id.encode("utf-8")).hexdigest() + "/" + name
+                invoice_files[path] = content
+                descriptors.append({
+                    "path": path, "filename": item.get("filename", name),
+                    "mediaType": item.get("mediaType", "application/octet-stream"),
+                    "bytes": len(content), "sha256": sha256})
+            linked_invoices.append({
+                "invoiceId": invoice_id, "number": document["number"],
+                "issueDate": document["issueDate"], "issuedAt": document["issuedAt"],
+                "files": descriptors})
         files = {
             "commercial.json": (canonical(retained) + "\n").encode("utf-8"),
             "native/customer-account.tar": account_bytes,
@@ -1257,6 +1408,9 @@ class CommercialReceivables:
                 {"sourceId": source_id, "metadata": metadata,
                  "file": "sources/" + hashlib.sha256(source_id.encode("utf-8")).hexdigest() + ".bin"}
                 for source_id, metadata, content in sources]) + "\n").encode("utf-8")}
+        files.update(invoice_files)
+        if linked_invoices:
+            files["native/linked-invoices.json"] = (canonical(linked_invoices) + "\n").encode("utf-8")
         files.update(evidence_files)
         if acceptance:
             files["acceptance/index.json"] = (canonical(acceptance) + "\n").encode("utf-8")

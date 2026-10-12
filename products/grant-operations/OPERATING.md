@@ -144,6 +144,10 @@ grant operations --workspace "$GRANT_DATA" command --case CASE_ID --expected-ver
 
 Source-intake packets use the original [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) and native source-intake workflow. Inspect their full actual scope before import; a quoted workshare does not become paid cash through intake.
 
+## Review the operating period against the pinned budget
+
+Open **Delivery operations → Budget performance** for opening, period and closing cash/invoice positions, complete package and category budget comparisons, contributor activity, invoice aging and source-linked work/payment rows. Select the actual reporting dates; the report keeps the current case version and original recognition dates together. **Export complete handover** carries the full report, every CSV row, offline HTML and complete original case. Importing that ZIP reopens the case at its selected dates. The [Budget performance guide](../../stellar/scf_2026/sf47_budget_model/workspace/PERFORMANCE.md) covers the exact business arithmetic, source basis, browser, CLI and Merchant client.
+
 ## 5. Forecast cash and allocate the whole remaining workload
 
 Open the same case's Forecast view. Select the actual opening-cash basis and review existing obligations, paid invoice allocations, grant conditions and customer commercial assumptions. The original forecast keeps planning costs, committed obligations and conditional commercial receipts distinguishable.
@@ -246,6 +250,33 @@ The six typed Merchant calls—merchant_grant_installations, merchant_grant_inst
 
 The selected product includes both matching managed-launch readers and the complete original runtime files they bind, including the Installation and implementation-evidence modules. After adopting a new source edition, review and reopen the managed application, then continue its original case and saved request identities.
 
+
+
+### Complete CoCart and Blockscout workorders
+
+The installed `starforge grant-installation-workorder` command prepares complete
+customer task, source, payment and receiving inputs for the existing Installation
+desk. Start with the original `installation-workshare-seed` result so that the
+customer's complete commercial scope, phase criteria and source binding remain
+in the same operating case. Select the maintained `cocart` or `blockscout`
+profile, receive the actual customer/host/operator/payment bindings, and load
+the returned complete input into the existing preview/save workflow.
+
+```sh
+starforge grant-installation-workorder template --profile cocart \
+  --seed /absolute/private/original-seed.json --out /absolute/private/bindings
+
+starforge grant-installation-workorder prepare --profile cocart \
+  --seed /absolute/private/original-seed.json \
+  --bindings /absolute/private/bindings/bindings.json \
+  --out /absolute/private/installation
+```
+
+The [complete workorder guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/README.md)
+covers the original case selection, full source/receiving contract, exact native
+preview and save, whole export/reopen and later installation editions. The
+installed Grant Operations source includes both profiles and their preparation
+module, alongside the existing native Installation implementation.
 
 ### Review original implementation evidence
 
@@ -440,7 +471,6 @@ One completed installed handover should establish:
 Retain the actual case and plan IDs, versions, original operation/request IDs, source/preview/measurement hashes, export paths and digests, reviewed findings and final receiving outputs. Record any unfinished step explicitly. Preserve prior attempts and their actual outcomes beside the successful continuation.
 
 The delivered set consists of the selected TGZ and manifest, installation/profile receipts, this guide and original source/API guides, the complete authorized case export, any separately requested frozen evidence, and the actual installed receiving report. Its report distinguishes prepared source, executed native work, buyer payment observations, issuer submission and customer acceptance.
-
 
 ## Customer milestone billing
 

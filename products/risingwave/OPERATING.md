@@ -115,6 +115,14 @@ its explicit local/TLS options. Closing the native workbench writer hands
 that workspace to Applications; the database continues serving the same
 source while the managed workbench opens, closes and reopens.
 
+The maintained `risingwave-runtime` command completes the local bootstrap above.
+It resumes the pinned archive, verifies the executable, preserves the original
+private state/environment and keeps one foreground instance through receiving.
+`prepare`, `inspect` and `serve` retain the original configuration and process;
+`inspect --connect` checks the actual database through the selected pg driver.
+The [complete local runtime guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/risingwave/LOCAL_RUNTIME.md)
+contains the exact preparation, host resource selection and interruption workflow.
+
 ## Connect to the actual source
 
 Create a private source file containing environment reference names:

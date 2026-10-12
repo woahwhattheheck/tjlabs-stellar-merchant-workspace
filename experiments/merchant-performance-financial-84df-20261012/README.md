@@ -4,11 +4,11 @@ This complete native operation consumes the original Merchant Performance custom
 
 ## Source and existing input
 
-Use the current source from Merchant PR318, merged at f6e5fddadaba6e16f3fd2e16dcac68178d110fa6. Its complete dual-source JSON capsule is Git blob49087909eb6a009339cbc16c15330322126f6eba in woahwhattheheck/tjlabs-stellar-merchant-workspace: 7,879,139 UTF-8 bytes, SHA256 daefed085b0f355e82a1715b82a06483af90b0b2ba6b73915db909be9f6d560d.
+The complete current Pricing/Commercial source is retained in canonical Git blob598a222c3ca2fa480359e33dca02955e9f22f00e in woahwhattheheck/tjlabs-stellar-merchant-workspace: 8,072,936 UTF-8 bytes, SHA256 31e20a31de004333d72d8fc3161ed7a0b82681b22f5b5c9703a9d9c819cb5723. It carries the complete411-file current source and the frozen181-file original tariff source separately, including the twelve original workspace browser assets needed by the integrated listener. Preserve both original source roots and the saved operation paths.
 
-The capsule's foundationFiles are the frozen181-file original tariff programme; files are the complete399-file current product, including the385-path runtime graph. Preserve those two source roots. Materialize the current files under the source-root passed below.
+The original Commercial continuation is commercial/performance-native.mjs cc213fc484dca1ac5f57a090ac481ceb11778fc7, 23,030 bytes, with Pricing performance/interfaces-native.mjs 5188d933e9add96c79694e5b493fee320f013a65, 25,134 bytes. These PR349 successors retain the complete outer result, original receiving receipt and downloader endpoint through restart. They operate on the same native04 case and its retained requests.
 
-Use final commercial/performance-native.mjs f62fc39fa90163a679e796c3d91be112f8bb0994, 22,149 bytes. It uses the actual report/report.json download name and composes original Pricing HTTP/CLI/MCP16, backup/restore and cold receiving. This supersedes the earlier6d70b277 source.
+Materialize the full financial dependency capsule delivered with this programme over the selected current source. Its original Accounting, Receivables, service calendar, payment request, refund and installment source paths are supplied as complete files. Each declared browser manifest travels with every served asset. The frozen tariff foundation remains the original completed input.
 
 The current source root also needs the complete existing Service agreements / Receivables / Accounting product and the final four-file accepted-tariff importer/UI/documentation join delivered with this helper. Keep the original C12 financial adapter and its declared source dependencies when composing the same installed product. The helper dynamically imports only the maintained original modules listed in its source; it introduces no pricing model or settlement engine.
 
@@ -20,7 +20,7 @@ Restore the original operation and its source paths consistently with operation.
 
 Node22.16+ and Python3 are required. All application logic comes from the original source; Python's standard tarfile library writes the final private archive.
 
-    node /ABS/performance-financial.mjs \
+    node /ABS/source/experiments/merchant-performance-financial-84df-20261012/performance-financial.mjs \
       --source-root /ABS/source \
       --native-run /ABS/native \
       --performance-run /ABS/performance \
@@ -43,13 +43,19 @@ A preexisting accepted response to the chosen revised quote is reused. Otherwise
 
 The complete native performance SOURCE, ATTACHMENT and readable REPORT are retained. The original Commercial CLI exports the complete accepted case at its actual revision. That same complete recipient CaseStore remains in the retained Performance operation.
 
-The actual original saved proposal report is downloaded from Pricing as report/report.json. The maintained preparePricingReportImport adapter produces accounting terms with the original payment options and source identities. Those bytes initialize the original Accounting workspace; the original customer writer creates its linked customer profile.
+The actual original saved proposal report is downloaded from Pricing as report/report.json and retained unchanged. For compatible native payment options, the maintained preparePricingReportImport adapter supplies the accounting terms directly.
+
+The existing repository Pricing fixture deliberately contains UNVERIFIED_DEMO_ASSET and UNVERIFIED_DEMO_RECIPIENT. Its completed quote and performance source preserve those exact original values. The financial continuation identifies this precise original fixture through all three original fixture Git identities and the saved report's route and payment fields. It initializes the original empty Accounting workspace with the exact463-byte terms emitted by the existing receivables/EXERCISE.mjs (Git033ae261caf720f1de950fb3273b35a8dd05598e; terms SHA256 bc186f2afeb60acca3989b214acaa1d6d2d2d73c7c8b21fe0872ed0ae1afe298). The original outbox and proof directories remain empty. pricing-source/source.json records that fixture role, its complete producer identity, the actual original report hash and the original import outcome.
+
+The selected Commercial quote remains the invoice's price authority. Its complete original payment and performance bindings travel through the source files; the original customer writer creates the linked accounting profile.
 
 Both original quotations go through compileQuoteInvoice for a one-month price comparison. The original programme's earlier1500-request quotation yields17.10 USD for its route at0.0114 per request; the chosen native revision yields16.50 USD at0.011. These values are checked against the actual returned original route values. The observed source period, usage quantity and costs remain separate from that explicit proposed monthly volume.
 
 ServiceAgreementWorkspace creates the selected calendar from the chosen exact quote and response. Its original bill method imports the first due period into the existing Receivables owner; the original invoice review and issue methods produce the issued customer document. Every invoice source, review and period retains the complete original tariff/performance binding.
 
-The helper closes and reopens the same Accounting workspace through its original HTTP listener, uses the typed Agreement client, downloads the same complete agreement TAR and reads the exact served invoice/agreement browser assets. The full native result records those actual responses.
+The helper closes and reopens the same Accounting workspace through its original HTTP listener, uses the typed Agreement client and downloads a complete agreement TAR. It checks every immutable invoice, quotation and calendar file against the first retained export. Each capture's original files.json is verified against all of that capture's own bytes.
+
+The original status.json writer records an actual observation time and computes invoice status at its own UTC date. The later HTTP status is validated through the original invoiceSummary function at that recorded date, retaining its complete current fields. Both full captures remain available as agreement.tar and agreement-http.tar. The served invoice/agreement browser assets are checked against their complete selected source.
 
 ## Finished delivery
 
@@ -58,14 +64,16 @@ The private financial output includes:
 - index.html with the observed source,17.10/16.50 comparison, selected response, invoice and calendar links.
 - commercial/ with exact measured/earlier/revised quote envelopes and payloads, chosen response, complete performance source/report, full current case record and workspace.
 - accepted-case-package/ from the original Commercial exporter.
-- pricing-source/ with the actual saved pricing report and the original adapter's accounting terms.
+- pricing-source/ with the actual saved pricing report, original accounting input and its complete source-role description.
 - accounting/, outbox/ and proofs/ containing the closed original financial operation.
 - invoice/ with the complete issued JSON/HTML/CSV, original manifest/status and retained quote/response/source/review.
-- agreement/ and agreement.tar with calendar JSON/HTML/CSV and complete original sources/documents.
+- agreement/ and agreement.tar with the first complete calendar JSON/HTML/CSV and source documents; agreement-http.tar preserves the separate original HTTP capture.
 - customer-account/ and customer-account.tar from the existing account exporter.
 - originals/tariff-operation/ and originals/performance-operation/ with complete saved source-operation state; the operated recipient CaseStore is originals/performance-operation/recipient-cases/.
-- requests/, operation.json, flow-result.json and files.json retaining the complete operation inputs and returned identities.
+- requests/, captures/, operation.json, flow-result.json and files.json retaining the complete operation inputs, original full file sets and returned identities.
 
 The finished archive is OUTPUT.tar.gz, with its original path, byte length and SHA256 in OUTPUT.archive.json and the returned result. It is created privately with no external upload. Interrupted archive generation retains its previous artifact and completes a new temporary archive before selecting it.
 
-For an actual failure, the helper retains its phase, original exception and request files under failures/. Continue that same operation with the source correction; the original response, agreement, invoice and source ownership stay with their retained IDs.
+Operation inputs, original requests and captured outputs are retained through the existing atomic CaseStore artifact writer. Each complete export file set is saved before its member files are materialized, so a restart preserves one coherent original manifest. Existing quote, response, agreement, invoice, preview and request IDs are reused by their original models. The first invoice status and both completed export captures remain the retained originals.
+
+For an actual failure, the helper retains its phase, original exception and request files under failures/. Continue that same operation with the source correction; the original response, agreement, invoice and source ownership stay with their retained IDs. The COMPLETE result is checked against its original operation, case, selected quote and native/performance result hashes before it is returned on replay.

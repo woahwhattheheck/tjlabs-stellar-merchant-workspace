@@ -129,6 +129,19 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function performanceQuery(args, exported = false) {
+  const values = new URLSearchParams();
+  if (args.startDate !== undefined && args.startDate !== null && args.startDate !== '')
+    values.set('startDate', completionDate(args.startDate));
+  if (args.endDate !== undefined) values.set('endDate', completionDate(args.endDate));
+  if (args.expectedVersion !== undefined || exported)
+    values.set('expectedVersion', String(integer(args.expectedVersion, 'Reviewed case version')));
+  if (exported) {
+    completionDate(args.endDate);
+    values.set('expectedReportSha256', sha(args.expectedReportSha256));
+  }
+  return values.size ? '?' + values.toString() : '';
+}
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
     'GRANT_INVALID_INPUT', 'Select at most 20 distinct original frozen cohort reviews.');
@@ -444,6 +457,7 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
@@ -786,6 +800,7 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
       'delivery-queue':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-queue/export.zip' +

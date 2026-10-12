@@ -44,6 +44,16 @@ def register(subparsers, common):
     target.add_argument("--mode", choices=("OPERATIONS", "WALKTHROUGH"), required=True)
     for name in ("show", "report"):
         command(name, "Read the complete retained " + name, case=True, output=True)
+    target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
+    target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
+    target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
+    target.add_argument("--expected-version", type=int)
+    target = command("performance-export", "Export the reviewed report, all CSVs, offline HTML and complete operating case", case=True)
+    target.add_argument("--start-date")
+    target.add_argument("--end-date", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--expected-report-sha256", required=True)
+    target.add_argument("--output", required=True)
     target = command("history", "Page the original operations event history", case=True, output=True)
     target.add_argument("--after", type=int, default=0)
     target.add_argument("--limit", type=int, default=100)
@@ -275,6 +285,11 @@ def operate(workspace, args):
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
         result = ops.read(args.case) if action == "show" else ops.report(args.case)
+    elif action == "performance":
+        result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
+    elif action == "performance-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_performance(
+            args.case, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
     elif action == "history":
         result = ops.history(args.case, args.after, args.limit)
     elif action == "forecasts":

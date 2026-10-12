@@ -1,0 +1,113 @@
+## OpenLineage service operations and complete customer receiving
+
+The [OpenLineage operations product](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/products/openlineage/OPERATING.md) supplies a working source, review and service-level application for a commissioned pipeline operation. Its complete service-level successor is merged in [PR339](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/339), source `1b1f756587619d21cab44f627f5d4e9b4fa6ad72`: 67 maintained application files, including the provider, and 66 files in the portable application. The browser desk, CLI, typed client, direct MCP tools and managed merchant tools share the same workspace and recorded decisions. This is an existing product foundation for a selected installation within the common six funded packages.
+
+### The customer task and commercial roles
+
+A data platform, specialist agency or internal analytics team needs to know whether the pipelines supplying a recurring business output completed within the agreed interval, which original observations support that conclusion, and who resolved an exception. Its receiving analyst also needs the useful report and enough retained source to explain or correct it later. The commissioned installation joins that task to the customer's actual pipeline, operating team and buyer application.
+
+The workorder names the commissioning payer, merchant controlling the authorized source, buyer acquiring the selected useful output, receiving analyst and maintaining engineer. One organization may commission the integration while another operates the source. TokenJunkieLabs' implementation fee belongs to that workorder; the merchant's paid service has its own reviewed output and payment terms.
+
+A suitable paid unit is a complete service review for an agreed pipeline population, source edition and observation time: the saved service-level assessment, selected dataset-quality evaluations, reasoned findings, relevant original records and the agreed report or editable handover. A new reporting period, changed source edition or fresh analysis request creates a reason for the buyer to return. The output definition includes all selected jobs and datasets, service targets, metric or assertion rules, reporting cadence and treatment of late, missing and invalid observations. It names the exception owner and the response commitment, so the merchant and buyer can decide whether the complete task was delivered. A change in dataset population, producer integration or response service becomes a reviewed change to that commercial scope.
+
+T1 connects that selected output to the maintained merchant resource and buyer workflow. It implements the exact HTTP or MCP request, public output mapping, approved network, asset, recipient, atomic amount, entitlement and receiving destination. The buyer reviews the saved request and complete output scope before settlement. The existing Stellar payment and fulfillment components carry that commissioned operation through payment, full result and customer receiving.
+
+### Operate the entire source-to-decision task
+
+1. **Receive the original producer observations.** Select the authorized pipeline population and retain the actual OpenLineage JSON, event array, NDJSON or gzip body. The product includes Python and Java producer entry points and settings generated from the current workspace connection. Operator and producer credentials have distinct roles. The intake retains the original body, source identity and namespaced jobs, runs, datasets and facets; continuation preserves the original operation after an interrupted reply.
+
+2. **Save the service policy and its responsibility.** In **Service levels → Policies**, select the exact namespace and job name, including a job whose first observation is still expected. Record the operational title, owner, effective instant and optional runbook. Choose completion freshness, observed execution duration or failure observations and their time window. Every edit creates a policy version with its prior values and explanation. The operator can inspect the complete history before applying a later target.
+
+3. **Assess a defined observation.** Choose an explicit observation time and the current source selection or a saved edition, then preview. The evaluator uses the original lineage projection. It excludes observations after the selected time, retains invalid-time diagnostics and exposes missing original START timestamps as unavailable duration. It shows each policy's findings, due and observed times, original source/event references and coverage. Saving retains that exact source selection and policy snapshots. Historical editions and older observation times stay in the assessment history.
+
+4. **Work the exception through its outcome.** An applied current assessment updates the incident desk. The operator assigns an owner, acknowledges the incident and retains the reason. A newly retained original event can establish the missing completion; reassessment records that the condition has cleared, and the operator resolves the incident. Acceptance of an active condition is a separate recorded decision. Policy changes and later observations retain the earlier findings, decisions and assessments.
+
+5. **Deliver the useful report and selected originals.** The application exports JSON, CSV and printable HTML with policy versions, original references and incident history. A saved assessment download contains its exact selected record and snapshots. A report combines that selected assessment with the current policy records and incident history; this scope is visible beside the report controls. The commissioned output mapping chooses the required records and formats, binds them to the reviewed paid unit, and carries every agreed file to the buyer's actual destination.
+
+6. **Hand over an editable installation.** A complete workspace export carries its original objects, editions, policy history, assessments, incidents, operation journal and the portable application. The receiving engineer opens that same workspace, inspects the prior decision and continues its work. The application keeps the workspace identity across server instances and preserves the original request body and operation ID when recovering an interrupted save. A later source or policy change becomes a new reviewed action.
+
+The [service-level operating contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS.md) describes the evaluator, versioned decisions, reports and full receiving behavior. The [operator desk guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS_OPERATOR.md) gives the complete browser workflow, connection recovery, conflict review and source downloads. The [original source contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SOURCE_CONTRACT.md) identifies the upstream producer semantics and retained examples.
+
+### Dataset quality commissioning and recurring customer review
+
+The Quality desk extends the same operating workspace to rules over producer-reported measurements and assertions. Its complete source, operator guide and original receiving programme are supplied for the cumulative application. The commissioned review combines these decisions with the service policies and incident history under the same agreed pipeline edition and receiving destination.
+
+#### Establish the customer's operating selection
+
+Commissioning starts with the pipeline engineer's complete original event files or the configured producer endpoint. The operator identifies the exact dataset namespaces and names, original job and run keys, accepted producer configuration, and the workspace in which the customer will operate. The commissioning record also names who may send producer events, who may save staff decisions, who receives the customer package and where that receiving installation is kept. The existing application supports separate producer and operator credentials and preserves the original workspace identity across ordinary server restarts.
+
+The first saved edition establishes the customer's source selection. The operator inspects the supplied facet history and the original source locations, agrees the useful dataset rules, and records the selected rule versions. A dataset in a different namespace remains a distinct dataset. Dataset-level observations and observations attached to a particular run's input or output retain their separate scopes. The review can therefore explain precisely which producer observation supports a finding and which source selection the customer accepted.
+
+The customer-facing desk provides four connected screens: Observations, Rules, Evaluation and Decisions. It also uses the application's original source inspector and saved-request recovery panel. An engineer can open the source behind a finding, review its full original facet, and continue an interrupted action using the original request identity. The same actions are available through the maintained CLI, typed client, direct MCP and managed merchant connection.
+
+#### Turn reported observations into a retained decision
+
+The observation review preserves the producer's reported values and source context. A completed run, a failed assertion and that assertion's warning severity remain separate facts in the review. An omitted measurement stays unreported; a reported zero keeps its original meaning. The original containing record remains available when the producer uses a source contract that the adapter cannot interpret.
+
+An operator can save a metric rule for an exact reported field, or a named assertion rule for the exact assertion and optional column. Each rule identifies the dataset, facet scope, severity, enabled state and treatment of missing observations. Metric comparisons use finite thresholds or an inclusive range. A revised or disabled rule retains its earlier versions, and an existing evaluation retains the versions used to produce it.
+
+Evaluation previews bind to the currently selected workspace revision, edition, dataset and run. Saving from the browser also binds the exact source-selection and rule-set hashes returned with the displayed preview. If another action changes the selection or revision, the operator reviews the current state before saving the retained intent. A saved evaluation preserves its full findings, expected and actual values, original event and observation identities, source locations and selected rules.
+
+The operator then records a reasoned disposition against a specific finding in that saved evaluation: open, investigating, accepted or resolved. Each update preserves earlier decisions and the original finding. A subsequent producer event supports a subsequent evaluation, so the receiving engineer can inspect both the earlier result and the later correction. Supporting files can accompany that history through the application's existing complete result-attachment workflow.
+
+The recurring deliverable includes the complete selected originals, applicable dataset-rule versions, saved evaluations, reasoned findings and reports alongside the service-level assessment. JSON retains the structured evaluation; CSV carries its findings into ordinary spreadsheet work; HTML presents the review in a readable report. The editable handover retains the earlier source editions, rules, findings and decisions so the receiving engineer can inspect a correction and continue the next review.
+
+### Completed service-level operating example
+
+The original development operation uses the unchanged upstream `fixture-event-simple.json` and `fixture-event-full.json` examples, together with a retained `null` diagnostic source. Its actual saved workspace is `74c371a0-9689-41d4-bcf2-3f0f57f5bebe`, revision 13. It contains three original source objects and three retained event records, one edition, one policy with two versions, four assessments, one resolved incident and all thirteen original operations.
+
+| Step in the retained operation | Original observation or saved decision |
+| --- | --- |
+| Parent captured; child completion not yet captured | The one-hour child policy at the explicit observation time reports completion unobserved and retains the diagnostic source. |
+| Responsibility assigned | The original incident is assigned to Pipeline operations and acknowledged with its explanation. |
+| Original child received | The child COMPLETE observation is `2020-12-28T19:51:01.641Z` for namespace `my-scheduler-namespace`, job `myjob.mytask`. |
+| Correction reviewed | Reassessment at `2020-12-28T20:00:00.000Z` clears the finding; the same incident is resolved with its earlier decisions intact. |
+| Earlier edition revisited | A historical assessment retains the earlier missing-child observation and its original source selection. |
+| Operating interval revised | The same policy receives its two-hour version and the fourth saved assessment, retaining the original version and request history. |
+
+The complete original checkpoint contains all nine retained workspace, object, connection and report files. The merged [service receiving programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/.swarm-delivery/openlineage-service-levels-bbbd-20261012/SERVICE_LEVELS_RECEIVING.mjs) completed against that original workspace on 12 October 2026. It operated the six service-level MCP actions, generated the complete JSON, CSV and HTML reports, received the editable application in a separate directory, cold-reopened it, replayed the thirteen original operation identities and re-exported the same package. The original workspace identity, revision 13, four assessments and resolved incident remained intact.
+
+The completed export contains all 66 portable application files and the complete retained workspace in 1,143,719 bytes. Its SHA-256 is `049b290aada4e36c507d54813d51af814d495a7aa8bf12aa1e53e4e38984d911`. A second native continuation of the same original checkpoint produced that identical export. The report bodies contain 8,702 bytes of JSON, 8,281 bytes of CSV and 12,253 bytes of HTML. These outputs preserve the original findings, policy versions and incident decisions through receiving and continued operation.
+
+This development example makes the correction understandable to a reviewer: the original parent capture, missing child, later COMPLETE event, cleared condition, operator resolution and historical view remain inspectable together. The customer installation substitutes its own authorized originals, service definitions, accountable operators and agreed reporting period through the same workflow.
+
+### Install and open the maintained product
+
+Select `openlineage-operations` from the existing source builder at the merged commit. Retain the returned archive and exact source manifest, then use the maintained runtime installer's prepare, install and inspect operations with the product's declared profile. The [product operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b1f756587619d21cab44f627f5d4e9b4fa6ad72/products/openlineage/OPERATING.md) gives the full selected-source build, installation, native producer configuration and Applications lifecycle.
+
+The portable application uses Node 22 and its standard library. The installed product opens through **Applications → OpenLineage operations** or `starforge openlineage serve`. Open **Service levels** in the workspace header. The same original workspace is available through the CLI:
+
+~~~sh
+starforge openlineage service-levels status \
+  --workspace /absolute/private/lineage
+
+starforge openlineage service-levels evaluate \
+  --workspace /absolute/private/lineage \
+  --at ORIGINAL_OBSERVATION_TIME
+
+starforge openlineage service-levels report \
+  --workspace /absolute/private/lineage \
+  --assessment ORIGINAL_ASSESSMENT_ID \
+  --format html --out /absolute/private/customer-report.html
+~~~
+
+The HTTP client uses the running workspace and instance connection. The typed `./seller/openlineage/service-levels` export and six direct or merchant tools provide the same policy, assessment, incident and report actions. The customer's source and receiving configuration remain attached to its selected installation.
+
+### Apply the existing six funded packages
+
+A selected OpenLineage installation uses the original USD 38,000, 400-hour, 150-day plan. The following work belongs within its existing packages and common independent-operator acceptance.
+
+| Existing funded package | Window and existing allocation | Work for the selected customer installation | Useful completion |
+| --- | --- | --- | --- |
+| T1-resource · Merchant-resource integration | Days 1–30; 80 hours; USD 7,600 | Connect the customer's authorized producers, exact job and dataset population, original intake, service policies, quality rules, selected report or editable output, merchant route and buyer destination. | The independent buyer opens the whole agreed review with its original source meaning and selected payment terms. |
+| T1-handover · Authority and handover | Days 1–30; 40 hours; USD 3,800 | Assign producer, operator, rule, incident and receiving responsibility; agree exception ownership; complete a source or terms change and the receiving engineer's installation. | A second accountable operator performs the change, inspects the original findings and reopens earlier delivered output under its original terms. |
+| T2-provider · Provider and ledger deployment | Days 31–90; 70 hours; USD 6,650 | Deploy the commissioned producer and merchant connection through the existing runtime; integrate the report or workspace resource with both selected facilitators, buyer access and the customer's ledger owner. | The common day-90 cohort completes at least ten useful testnet purchases across two independent buyers over seven consecutive calendar days, retaining original intent, observed transfer and complete output. |
+| T2-threat · Deployed threat response | Days 31–90; 50 hours; USD 4,750 | Operate the configured producer and staff roles; review actual source-coverage, quality and delivery exceptions; recover an interrupted settled purchase and merchant-delivery failure using the original request. | The responder acknowledges the incident, recovers the useful output and retains the original financial, source, finding and decision history. |
+| T3-mainnet · Mainnet merchant rollout | Days 91–150; 90 hours; USD 8,550 | Install the actual production producer and payment configuration, recurring pipeline review, selected report or workspace resource, controlled release and rollback. | Both selected merchants operate on mainnet; the common cohort completes at least thirty useful purchases over fourteen consecutive days, with both buyers returning for a distinct purchase on another day. |
+| T3-recovery · Production recovery and handover | Days 91–150; 70 hours; USD 6,650 | Restore original sources, reports, rule versions, assessments, finding decisions and purchase history on the receiving host; reconcile work after the backup point and rotate authorized secret references. | The receiving engineer opens the complete result, measures recovery, continues the next source edition and completes the independent maintainer's support case. |
+
+### Commission and accept a useful recurring service
+
+The completed workorder specifies the pipeline, job and dataset population, source rights and retention, actual host, reporting time semantics, service targets and dataset rules, output formats, priced unit, payment owner, independent receiver and repeat-use trigger. It assigns the integration work once to the selected grant package or a separate commercial implementation.
+
+Acceptance follows the customer's entire task: the selected original source can be inspected; the service policies and dataset rules explain the saved assessments and evaluations; incident and finding responsibility, decisions and corrections are recorded; the buyer receives every agreed report and original; and the receiving engineer can reopen and continue the same installation. Actual implementation effort, elapsed recovery, coverage and accepted output are recorded against that definition. This gives the merchant an operable recurring service and gives the commissioning customer a maintained result it can use.
