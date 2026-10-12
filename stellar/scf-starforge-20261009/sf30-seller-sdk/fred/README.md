@@ -311,3 +311,7 @@ The [DDP source guide](ddp/README.md) covers original acquisition and source for
 The same economic project also supports the [QCEW county report product](qcew/README.md). It retains original BLS source files, a reviewed production profile, regional and CPI calculations, complete grayscale reports and original/calculated exports. The native command is `starforge fred qcew --help`.
 
 QCEW and DDP extensions compose into the same portable project and operation history. A handover carries the complete source and saved edition families present in that project; opening an existing recurring briefing retains its original report identity.
+
+### Complete current publications
+
+The **Current publications** workspace joins a saved DDP migration to the complete retained native programme, original public-source intake, indexed full observation comparison, same-project continuation and complete portable customer edition. See [the complete publication workspace guide](ddp/PUBLISHED-WORKSPACE.md). The installed host commands begin with `starforge fred ddp-publication`; existing completed programmes attach through their original project and source directory.

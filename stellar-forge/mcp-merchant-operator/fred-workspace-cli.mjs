@@ -91,6 +91,17 @@ export const FRED_WORKSPACE_HELP = [
   "  ddp-receiving --receiving RECEIVING_ID [--package-series ORIGINAL_SERIES_ID]",
   "      [--changes-only true|false --offset 0 --limit 100]",
   "",
+  'Complete current-publication editions:',
+  '  published-operations [--offset 0 --limit 100]',
+  '  published-operation --id ORIGINAL_PUBLICATION',
+  '  published-start --id ORIGINAL_PUBLICATION --migration ORIGINAL_PLAN --revision ORIGINAL_REVISION',
+  '  published-report --id ORIGINAL_PUBLICATION [--query TEXT --offset 0 --limit 100]',
+  '  published-rows --id ORIGINAL_PUBLICATION --comparison ORIGINAL_COMPARISON',
+  '      [--series-id ORIGINAL_SERIES --result-status DIFFERENT --offset 0 --limit 100]',
+  '  published-file-read --id ORIGINAL_PUBLICATION --name EXACT_LISTED_PATH --sha256 EXACT_SHA',
+  '      [--offset 0 --limit 196608]',
+  '  published-download --id ORIGINAL_PUBLICATION --name edition-package.tar.gz --sha256 EXACT_SHA --out NEW_FILE',
+  '',
   'Run the configured merchant and original customer:',
   '  merchant-start --publication SHA | merchant-stop --publication SHA',
   '  publication --publication SHA',
@@ -134,7 +145,8 @@ const remote = new Set(['workspaces','status','inputs','input-inspect','records'
   'release-captures','release-capture','release-import','release-acquire','release-watches','release-watch-save',
   'release-plan-preview','release-plan-save','release-plan','release-vintage-capture',
   'ddp-sources','ddp-crosswalk','ddp-crosswalk-import','ddp-crosswalk-acquire','ddp-package','ddp-package-import',
-  'ddp-migration-preview','ddp-migration-save','ddp-migration','ddp-migration-acquire','ddp-receiving']);
+  'ddp-migration-preview','ddp-migration-save','ddp-migration','ddp-migration-acquire','ddp-receiving',
+  'published-operations','published-operation','published-start','published-report','published-rows','published-file-read']);
 const allowed = new Set(['connection','workspace','args-file','out','console-url-file','project-id','binding-sha','label',
   'inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','kind','id','capture','series','offset','limit','revision','before','after','input','sha256',
   'captures','review','profile','pending','publication','intent','query','file','accept','view-sha','selection-file',
@@ -142,7 +154,8 @@ const allowed = new Set(['connection','workspace','args-file','out','console-url
   'template','successor','name','window-file','previous-template','anchor-date','baseline-review','previous-successor','preview-id','changes-only',
   'release-capture','watch','plan','before-release','after-release','section','as-of','watch-series',
   'observation-start','observation-end','baseline-as-of','catch-up','page-size','max-rows',
-  'crosswalk','package','migration','receiving','package-series','release','frequency','bookmark','url','decisions-file','bindings-file']);
+  'crosswalk','package','migration','receiving','package-series','release','frequency','bookmark','url','decisions-file','bindings-file',
+  'comparison','result-status','series-id']);
 function parse(values) {
   const argv = [...values], command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'help', flags = {};
   while (argv.length) {
@@ -232,7 +245,8 @@ async function toolArgs(flags, workspace) {
     'after-release':'afterCaptureId', section:'section', 'as-of':'asOf', 'observation-start':'observationStart',
     'observation-end':'observationEnd', 'baseline-as-of':'baselineAsOf', 'catch-up':'catchUp',
     crosswalk:'crosswalkId', package:'packageId', migration:'migrationId', receiving:'receivingId',
-    'package-series':'seriesId', release:'release', frequency:'frequency', bookmark:'bookmark', url:'url' };
+    'package-series':'seriesId', release:'release', frequency:'frequency', bookmark:'bookmark', url:'url',
+    comparison:'comparisonId', 'result-status':'status', 'series-id':'seriesId' };
   for (const [flag, key] of Object.entries(strings)) if (flags[flag] !== undefined) put(key, flags[flag]);
   for (const [flag, key] of Object.entries({ offset:'offset', limit:'limit', revision:'expectedRevision', accept:'acceptIndex', 'page-size':'pageSize', 'max-rows':'maxRows' }))
     if (flags[flag] !== undefined) put(key, number(flags[flag], flag));
@@ -262,18 +276,24 @@ export async function runFredWorkspaceCLI(argv, { write = value => process.stdou
     only(flags, ['source','project','sha256']);
     return done(await receiveFredWorkspaceFile(required(flags, 'source'), required(flags, 'project'), { expectedSha256: flags.sha256 }));
   }
-  if (!remote.has(command) && !['download', 'wait'].includes(command)) fail('Choose an economic-workspace command from --help.');
+  if (!remote.has(command) && !['download', 'published-download', 'wait'].includes(command)) fail('Choose an economic-workspace command from --help.');
   const config = await readFredWorkspaceConfiguration(required(flags, 'connection'));
   const aliases = Object.keys(config.workspaces);
   const workspace = flags.workspace ?? (aliases.length === 1 ? aliases[0] : undefined);
   if (command !== 'workspaces' && (!workspace || !config.workspaces[workspace])) fail('Choose --workspace from this original connection.');
   const args = await toolArgs(flags, command === 'workspaces' ? undefined : workspace);
   const setupFlags = ['out','console-url-file','project-id','binding-sha','label','inputs-file','profiles-file','payment-file','merchant-origin','merchant-path','source','project'];
-  if (command !== 'download' && setupFlags.some(key => flags[key] !== undefined)) fail('A setup or download option was supplied to a remote operation.');
+  if (!['download', 'published-download'].includes(command) && setupFlags.some(key => flags[key] !== undefined)) fail('A setup or download option was supplied to a remote operation.');
   if (flags['wait-ms'] !== undefined && command !== 'wait') fail('Use wait with the same original project operation ID.');
-  if (command === 'download' || command === 'wait') {
+  if (command === 'download' || command === 'published-download' || command === 'wait') {
     const client = new FredWorkspaceClient(config.workspaces[workspace]);
     try {
+      if (command === 'published-download') {
+        if (Object.keys(args).some(key => !['workspace', 'id', 'name', 'expectedSha256'].includes(key)) ||
+            setupFlags.filter(key => key !== 'out').some(key => flags[key] !== undefined))
+          fail('Download the exact listed original publication member into a new file.');
+        return done(await client.downloadPublishedFile({ id: args.id, name: args.name, expectedSha256: args.expectedSha256 }, required(flags, 'out')));
+      }
       if (command === 'wait') {
         if (Object.keys(args).some(key => !['workspace', 'id'].includes(key))) fail('Wait selects only the original operation ID.');
         return done(await client.wait(args.id, { timeoutMs: flags['wait-ms'] ? number(flags['wait-ms'], 'wait-ms') : 60000 }));

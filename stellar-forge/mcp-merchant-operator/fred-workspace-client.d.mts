@@ -1,4 +1,10 @@
 /// <reference types="node" />
+import type { FredDdpPublicationOperation, FredDdpPublicationInventory, FredDdpPublicationReportPage,
+  FredDdpPublicationRowsPage, FredDdpPublicationRowSelection, FredDdpPublicationFileChunk, FredDdpPublicationFileSelection,
+  FredDdpPublicationStart, FredDdpPublicationPage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs';
+export type { FredDdpPublicationOperation, FredDdpPublicationInventory, FredDdpPublicationReportPage,
+  FredDdpPublicationRowsPage, FredDdpPublicationRow, FredDdpPublicationFile, FredDdpPublicationFileChunk }
+  from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs';
 import type { Buffer } from 'node:buffer';
 import type { FredBriefingSelection, FredBriefingPage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/model.mjs';
 export type { FredBriefingSelection, FredBriefingPage, FredBriefingComparison, FredBriefingModel, FredBriefingReport, FredBriefingExpandedMeasure } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/model.mjs';
@@ -365,6 +371,16 @@ export declare class FredWorkspaceClient {
   releasePlan<S extends FredReleasePlanSection = 'acquisitions'>(input: { planId: string; section?: S } &
     Omit<FredReleasePlanPaging, 'section'>, options?: FredRequestOptions): Promise<FredReleasePlanViewFor<S>>;
   acquirePlannedVintage(input: FredPlannedVintageInput, options?: FredRequestOptions): Promise<FredPlannedVintageResult>;
+  publishedOperations(input?: FredDdpPublicationPage, options?: FredRequestOptions): Promise<FredDdpPublicationInventory>;
+  publishedOperation(input: { id: string }, options?: FredRequestOptions): Promise<FredDdpPublicationOperation>;
+  startPublishedOperation(input: Pick<FredDdpPublicationStart, 'id' | 'expectedRevision' | 'migrationId'>,
+    options?: FredRequestOptions): Promise<FredDdpPublicationOperation>;
+  publishedReport(input: { id: string; query?: string } & FredDdpPublicationPage, options?: FredRequestOptions): Promise<FredDdpPublicationReportPage>;
+  publishedRows(input: Omit<FredDdpPublicationRowSelection, 'directory'>, options?: FredRequestOptions): Promise<FredDdpPublicationRowsPage>;
+  publishedFileChunk(input: Omit<FredDdpPublicationFileSelection, 'directory'> & FredDdpPublicationPage,
+    options?: FredRequestOptions): Promise<FredDdpPublicationFileChunk>;
+  downloadPublishedFile(input: Omit<FredDdpPublicationFileSelection, 'directory'>, destination: string,
+    options?: FredRequestOptions): Promise<{ projectId: string; operationId: string; destination: string; name: string; bytes: number; sha256: string; contentType: string }>;
   ddpSources(options?: FredRequestOptions): Promise<FredDdpProjectInventory>;
   ddpCrosswalk(input: FredDdpPageInput & { crosswalkId: string; release?: string | null; query?: string },
     options?: FredRequestOptions): Promise<FredDdpCrosswalkView>;

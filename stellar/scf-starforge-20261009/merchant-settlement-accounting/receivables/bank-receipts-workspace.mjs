@@ -6,12 +6,12 @@ import {join} from 'node:path';
 import {json,sha,need,plain,field,identifier,dateValue,today,currencyKey,receiptSummary,invoiceSummary} from './core.mjs';
 import {BANK_SOURCE_BYTES,BANK_SOURCE_ROWS,BANK_DERIVED_BYTES,BANK_IMPORT_SCHEMA,BANK_POSTING_SCHEMA,BANK_FILE_NAMES,
   bankAccountRows,bankImportRows,bankPage,bankHash,normalizeBankAccount,bankAccountSummary,
-  inspectBankInput,normalizedBankSourceFiles,bankMatchIndex,bankSourceMatches,bankCurrentReceipts,bankRowDecision,bankRowStatus,
-  bankImportSummary,bankRowView,compileBankPosting,bankPostingInput,applyBankPostingChanges,bankPostingDocuments} from './bank-receipts.mjs';
+  inspectBankInput,normalizedBankSourceFiles,bankMatchIndex,bankSourceMatches,bankRowDecision,bankRowStatus,
+  bankImportSummary,bankRowView,bankCurrentReceipts,compileBankPosting,bankPostingInput,applyBankPostingChanges,bankPostingDocuments} from './bank-receipts.mjs';
 const FILE=/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
 const clone=value=>structuredClone(value),at=()=>new Date().toISOString();
 const sourceIndex=row=>Object.fromEntries(['id','transactionKey','replacesTransactionKeys','economicKey','amount','bookedDate','kind',
-  'cashSource','sourceEligible','requiresSourceResolution','transactionIdentity','sourceIdentity'].filter(key=>row[key]!==undefined).map(key=>[key,clone(row[key])]));
+  'cashSource','sourceEligible','requiresSourceResolution','transactionIdentity','sourceIdentity','sourceOccurrenceKey'].filter(key=>row[key]!==undefined).map(key=>[key,clone(row[key])]));
 async function syncDirectory(path) {
   const handle=await open(path,constants.O_RDONLY|(constants.O_DIRECTORY??0)|(constants.O_NOFOLLOW??0));
   try {await handle.sync();}finally{await handle.close();}

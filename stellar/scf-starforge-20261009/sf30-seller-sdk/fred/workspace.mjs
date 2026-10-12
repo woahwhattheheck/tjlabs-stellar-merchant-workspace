@@ -11,6 +11,8 @@ import { jsonBytes, hash } from './source.mjs';
 import { pageFredBriefing } from './briefing/model.mjs';
 import { inspectFredReleaseCapture } from './releases/model.mjs';
 import { FRED_DDP_ACTIONS, MAX_DDP_CAPTURE_BYTES, runFredDdpAction, handleFredDdpHttp } from './ddp/http.mjs';
+import { createFredDdpPublicationHttp } from './ddp/published-http.mjs';
+import { runFredDdpPublicationOperation } from './ddp/published-workspace.mjs';
 import { readFredWorkspaceLaunch, FRED_WORKSPACE_STARTUP } from './launch.mjs';
 import { QCEW_WORKSPACE_REQUEST_BYTES, QCEW_WORKSPACE_ACTIONS,
   readQcewWorkspace, runQcewWorkspaceAction } from './qcew/workspace.mjs';
@@ -82,9 +84,12 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/releases.js', ['releases.js', 'text/javascript; charset=utf-8']],
     ['/ddp.js', ['ddp.js', 'text/javascript; charset=utf-8']],
     ['/ddp-guide', ['../ddp/PROJECT.md', 'text/plain; charset=utf-8']],
+    ['/ddp-published.js', ['ddp-published.js', 'text/javascript; charset=utf-8']],
+    ['/ddp-published-guide', ['../ddp/PUBLISHED-WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
     ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
+  const publishedHttp = createFredDdpPublicationHttp({ directory });
   const assets = new Map();
   for (const [route, [file, type]] of assetMap) assets.set(route, [await readFile(new URL('./ui/' + file, import.meta.url)), type]);
   const buyer = launch.buyerSettings ? await new Buyer(launch.buyerSettings).ready() : null;
@@ -160,6 +165,15 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     need(request && typeof request === 'object' && !Array.isArray(request) && typeof request.action === 'string',
       'Select a workspace action.');
     need(!pending, 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
+    if (request.action === 'ddp-published-run') {
+      let retained, rejected;
+      const ready = new Promise((accept, reject) => { retained = accept; rejected = reject; });
+      const task = runFredDdpPublicationOperation({ directory, id: request.id, expectedRevision: request.expectedRevision,
+        migrationId: request.migrationId, signal: abort.signal, onRetained: retained });
+      const owned = { action: request.action, task }; pending = owned;
+      task.catch(rejected).finally(() => { if (pending === owned) pending = null; });
+      return ready;
+    }
     const task = run(request); pending = { action: request.action, task };
     try { return await task; } finally { pending = null; }
   };
@@ -170,6 +184,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       const url = new URL(req.url, origin);
       const asset = assets.get(url.pathname);
       if (req.method === 'GET' && asset && !url.search) return send(res, 200, asset[0], asset[1]);
+      if (!closing && await publishedHttp.ticket(req, res, url)) return;
       const supplied = req.headers.authorization, expected = 'Bearer ' + token;
       need(typeof supplied === 'string' && supplied.length === expected.length &&
         timingSafeEqual(Buffer.from(supplied), Buffer.from(expected)), 'Use the original workspace session.', 'FRED_SESSION_REQUIRED', 403);
@@ -304,6 +319,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const result = await exportFredPurchase({ directory: selected, buyer, intentId: url.searchParams.get('intent') });
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
+      if (await publishedHttp.handle({ req, res, url, body, send })) return;
       if (await handleFredDdpHttp({ req, res, url, directory, body, send, execute, busy: () => Boolean(pending) })) return;
       if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
         const countyAction = url.pathname === '/api/qcew/action';
@@ -316,6 +332,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       return send(res, 404, { code: 'FRED_ROUTE_NOT_FOUND', message: 'Workspace route not found.' });
     };
     handler().catch(error => {
+      if (res.headersSent) { res.destroy(error); return; }
       if (!res.writableEnded && !res.destroyed) send(res, Number.isInteger(error.status) && error.status >= 400 && error.status <= 599 ? error.status : 400,
         { code: typeof error.code === 'string' ? error.code : 'FRED_OPERATION_FAILED', message: error.message,
           ...(error.retryAt ? { retryAt: error.retryAt } : {}) });
@@ -327,7 +344,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   let closePromise;
   return { server, directory, url: origin + '/#' + token, origin,
     startup: { ...launchView(), url: origin + '/#' + token }, close: () => closePromise ??= (async () => {
-    closing = true; abort.abort();
+    closing = true; publishedHttp.close(); abort.abort();
     await pending?.task.catch(() => {});
     try { if (merchant) await merchant.close(); }
     finally { merchant = null; runningPublication = null;

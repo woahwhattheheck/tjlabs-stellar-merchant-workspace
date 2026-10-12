@@ -168,3 +168,37 @@ node /dev/scf-performance-25fd-20261012-native04/work/financial-source/experimen
 ```
 
 The existing financial programme continues the original recipient case, accepted response, revised quotation, pricing/performance source and native IDs. Its operation and complete output retain the exact source descriptors it actually loads. The original native04 Performance source and frozen foundation remain attached to their own completed records. The existing 84DF receiver owns this same customer operation and reconciles the latest saved native04 archive before continuing it.
+
+## Explicit disk directory for receiving and saved exports
+
+On a host whose `/dev` tmpfs is too small for complete result archives, the
+original continuation accepts an optional `receivingDirectory` in the private
+input:
+
+```json
+{
+  "receivingDirectory": "/mnt/data/native04-private-receiving"
+}
+```
+
+Select an absolute normalized directory owned by the receiver, with mode
+`0700`, outside
+`/dev/scf-performance-25fd-20261012-native04`. The caller creates a new
+private child there for the original file helpers, downloads, temporary
+files, complete ZIP and result reports. Every selected ancestor must be a
+real directory. Omitting the field preserves the original `/dev` placement.
+The source, case, requests, quotation material, financial paths and final
+private-save operation keep their existing behavior.
+
+This placement is separate from the saved native04 work tree. The existing
+archive and programmes retain the canonical absolute work path
+`/dev/scf-performance-25fd-20261012-native04/work`, and their original
+receiving/accounting checks require real paths. Use an existing authorized
+filesystem mapping, such as an owned bind mount, when that canonical tree
+must physically use another filesystem. A symbolic link does not satisfy
+those original contracts. Retain the backing directory and completed output
+through the original receiver's final save.
+
+The complete original archive is 10,843,745 bytes and expands to 52,658,994
+bytes before additional source, operating files and exports. Reserve space
+for the whole continuation when selecting its physical work location.

@@ -267,6 +267,29 @@ export function fredWorkspaceTools(tool) {
       ['workspace', 'publicationId', 'intentId'], { openWorld: true }),
     tool('merchant_fred_recover', 'Recover the original intent, native receipt and retained response without preparing another payment. Use file_read for the complete delivered bytes.', purchase,
       ['workspace', 'publicationId', 'intentId'], { idempotent: true, openWorld: true }),
+    tool('merchant_fred_published_operations', 'Page retained complete current-publication editions in the original project. Continue nextOffset through the full operation history.', {
+      ...workspace, offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 500 }
+    }, ['workspace'], read),
+    tool('merchant_fred_published_operation', 'Reopen the original retained publication request, progress, complete native result and exact original file inventory. Continue the same original request after interruption.', {
+      ...workspace, id: operation
+    }, ['workspace', 'id'], read),
+    tool('merchant_fred_published_start', 'Retain and run one complete current-publication edition from the original saved migration. Acknowledge only after retaining the request; inspect published_operation for completion. Resume with the same ID, migration and original expectedRevision. A new edition acquires every mapped original series.', {
+      ...recorded, migrationId: { type: 'string', pattern: '^fred-ddp-migration-plan-[a-f0-9]{64}$' }
+    }, ['workspace', 'id', 'expectedRevision', 'migrationId'], { idempotent: true, openWorld: true }),
+    tool('merchant_fred_published_report', 'Open and page the original native current-publication comparison. Keep complete source meaning, current retrieval dates, all six comparison statuses and exact original file inventory.', {
+      ...workspace, id: operation, query: { type: 'string', maxLength: 500 },
+      offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 500 }
+    }, ['workspace', 'id'], read),
+    tool('merchant_fred_published_rows', 'Page complete original observation rows through the native sparse file index. Pin comparisonId and follow nextOffset in original row positions; retain numeric strings, unavailable codes and exact original source byte ranges.', {
+      ...workspace, id: operation, comparisonId: { type: 'string', pattern: '^fred-current-publication-comparison-[a-f0-9]{64}$' },
+      seriesId: { type: 'string', minLength: 1, maxLength: 500 },
+      status: { type: 'string', enum: ['EQUAL','DIFFERENT','BOTH_MISSING','MISSING_CHANGED','SOURCE_ONLY','TARGET_ONLY'] },
+      offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 500 }
+    }, ['workspace', 'id', 'comparisonId'], read),
+    tool('merchant_fred_published_file_read', 'Read a listed complete original publication member or complete edition-package.tar.gz in verified byte chunks. Pin expectedSha256, preserve the original name/ID, follow nextOffset, and verify the whole file after assembly.', {
+      ...workspace, id: operation, name: { type: 'string', minLength: 1, maxLength: 240 }, expectedSha256: digest,
+      offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 196608 }
+    }, ['workspace', 'id', 'name', 'expectedSha256'], read),
     tool('merchant_fred_file_read', 'Read complete original source, release source or saved plan, comparison, analyst briefing, recurring successor, project export or saved customer-delivery bytes in retained chunks. Continue the returned readId/offset; verify the complete file SHA256.', {
       ...workspace, ...fredFileSelection, expectedSha256: digest,
       readId: { type: 'string', minLength: 1, maxLength: 96 }, offset: { type: 'integer', minimum: 0, maximum: 268435456 },

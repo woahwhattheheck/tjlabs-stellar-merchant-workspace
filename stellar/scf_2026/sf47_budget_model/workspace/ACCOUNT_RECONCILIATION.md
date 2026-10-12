@@ -442,6 +442,8 @@ The wrapper validates every original member and regenerates the readable members
 
 For each saved edition, receiving reconstructs its original cash population from the native record and void history at the reviewed case version. Sources added after that version are removed from that original view. The original source interpretation, explicit decisions, correction selection, exact amounts, findings and preview are rebuilt and must match the saved edition.
 
+A later Merchant settlements correction can void its original cash and record a replacement in one native command. Receiving restores the earlier observation from that command's exact cash changes and retained source review, then applies the saved reconciliation's original version cutoff. The complete original source, review identity, event, actor, request and cash fields stay joined. The replacement remains in the later current account, while the earlier saved edition retains the cash state it reviewed. This also preserves an earlier reconciliation when the later merchant correction belongs to another account in the same operating case.
+
 These checks run before the receiving case changes its case identity, name or selected plan identity. The received account selection retains the source case ID, source case version and report hash. The native records, original documents, source edition IDs and full saved history travel with the complete case.
 
 ## Original capacity and compatibility

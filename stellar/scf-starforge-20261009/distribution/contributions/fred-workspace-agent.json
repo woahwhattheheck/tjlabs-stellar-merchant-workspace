@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "fred-workspace-agent",
-  "description": "Complete economic-workspace typed client, recurring briefings, release/vintage catch-up and original DDP package migration receiving",
+  "description": "Complete economic-workspace typed client, recurring briefings, release/vintage catch-up and original DDP package migration receiving and complete current-publication customer editions",
   "commands": {
     "fred-workspace": "stellar-forge/mcp-merchant-operator/fred-workspace-cli.mjs"
   },
@@ -122,7 +122,11 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-cli.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-comparison.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-source.d.mts"
   ],
   "merchantProviders": {
     "fred-workspaces": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs"

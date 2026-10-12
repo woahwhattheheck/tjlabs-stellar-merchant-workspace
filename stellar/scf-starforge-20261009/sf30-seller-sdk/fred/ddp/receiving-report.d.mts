@@ -25,3 +25,10 @@ export declare function createFredDdpReceivingFiles(receiving: FredDdpReceiving,
 export declare function fredDdpReceivingFileManifest(prepared: FredDdpPreparedReceivingFiles): FredDdpReceivingFileManifest;
 export declare function verifyFredDdpReceivingFiles(receiving: FredDdpReceiving,
   retained: FredDdpReceivingFileManifest): FredDdpPreparedReceivingFiles;
+
+/** Produces each complete original member in order, retaining one buffer at a time. */
+export declare function generateFredDdpReceivingFiles(receiving: FredDdpReceiving,
+  options?: { rendererVersion?: FredDdpReceivingRenderer }): Generator<FredDdpReceivingFile & { body: Buffer }, void, unknown>;
+/** Verifies the original complete members and returns their small descriptors. */
+export declare function verifyFredDdpReceivingManifest(receiving: FredDdpReceiving,
+  retained: FredDdpReceivingFileManifest): FredDdpReceivingFileManifest;

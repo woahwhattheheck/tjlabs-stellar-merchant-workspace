@@ -4,7 +4,7 @@
 <body>
 <header><div><p class="eyebrow">STELLAR FORGE</p><h1>Economic editions</h1><p id="project-title">Opening project…</p></div><button id="refresh" type="button">Refresh state</button></header>
 <p class="source-notice">This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. By using this application, users agree to the <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use</a>.</p>
-<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
+<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="published">Current publications</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
 <main>
 <div id="message" role="status" aria-live="polite"></div>
 <section id="summary" class="metrics" aria-label="Project summary"></section>
@@ -379,6 +379,33 @@
 </div>
 </section>
 
+<section data-panel="published" hidden>
+<h2>Current publications</h2>
+<p>Compare every mapped Board period with the complete current FRED publication. Each edition retains its original files, collection dates, saved calendar rules, native project and complete customer report.</p>
+<div class="box"><h3>Complete publication edition</h3>
+<label>Saved migration<select id="published-migration"></select></label>
+<div class="buttons"><button id="published-start" type="button">Collect complete publication edition</button><button id="published-resume" type="button">Continue original operation</button><button id="published-refresh" type="button">Refresh editions</button></div>
+<p>A new edition collects the complete mapped population into its own retained intake. Continue an interrupted operation to use its original request and completed source files.</p>
+<p><a href="/ddp-published-guide" target="_blank" rel="noopener">Complete guide and existing-programme attachment</a></p>
+</div>
+<label>Retained publication edition<select id="published-operation"></select></label>
+<div class="buttons"><button id="published-open" type="button">Open original edition</button><button id="published-inventory-prev" type="button">Previous editions</button><span id="published-inventory-page"></span><button id="published-inventory-next" type="button">Next editions</button></div>
+<pre id="published-operation-state" aria-live="polite">Select a retained edition or its saved migration.</pre>
+<details><summary>Complete edition history</summary><div id="published-operation-history" class="table-wrap"></div></details>
+<div class="box"><h3>Complete customer files</h3><p>The edition archive includes every original Board and FRED source, the saved migration, native project bundle, complete comparison rows, report and source inventory.</p>
+<label>Original edition file<select id="published-file"></select></label><code id="published-file-details" class="published-digest"></code>
+<button id="published-download" type="button">Download complete original file</button></div>
+<h3>Published-data comparison</h3><p id="published-report-context"></p><div id="published-summary" class="table-wrap"></div>
+<label>Find an original series<input id="published-series-query" type="search" maxlength="500" placeholder="Board series, FRED series or title"></label>
+<div class="buttons"><button id="published-report-open" type="button">Find series</button><button id="published-series-prev" type="button">Previous series</button><span id="published-series-page"></span><button id="published-series-next" type="button">Next series</button></div>
+<div id="published-series-table" class="table-wrap"></div>
+<h3>Original observation rows</h3>
+<div class="form-grid"><label>Original series on this page<select id="published-row-series"><option value="">All original series</option></select></label>
+<label>Comparison result<select id="published-row-status"><option value="">Every original result</option><option value="EQUAL">Equal figures</option><option value="DIFFERENT">Different figures</option><option value="MISSING_CHANGED">Availability differs</option><option value="BOTH_MISSING">Unavailable in both</option><option value="SOURCE_ONLY">Board periods only</option><option value="TARGET_ONLY">FRED periods only</option></select></label></div>
+<div class="buttons"><button id="published-rows-open" type="button">Open original rows</button><button id="published-rows-prev" type="button">Previous rows</button><span id="published-row-page"></span><button id="published-rows-next" type="button">Next rows</button></div>
+<p>Values retain their original numeric strings and unavailable codes. Differences use FRED minus Board after the saved scale factors. Byte ranges locate each row in its original source file.</p>
+<div id="published-row-meaning" class="table-wrap"></div><div id="published-row-table" class="table-wrap"></div>
+</section>
 <section data-panel="publication" hidden>
 <h2>Operate a reviewed merchant edition</h2><p>Publish a saved review with the merchant’s original public payment terms. Each edition keeps a stable snapshot and its own public resource path.</p>
 <form id="publication-form" class="form-grid"><label class="wide">Saved review<select id="review-select"></select></label><label>Public HTTPS origin<input id="public-origin" type="url" placeholder="https://your-merchant.example" required></label><label>Resource path<input id="public-path" value="/economic-data" required></label>

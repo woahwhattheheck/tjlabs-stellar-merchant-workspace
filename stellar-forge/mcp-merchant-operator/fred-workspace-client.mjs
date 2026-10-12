@@ -812,6 +812,105 @@ export class FredWorkspaceClient {
       /^fred-release-watch-[a-f0-9]{64}$/.test(value.watchId ?? ''));
   }
 
+  async publishedOperations({ offset = 0, limit = 100 } = {}, options) {
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'publication offset'); integer(limit,1,500,'publication page size');
+    const value = await this.#json('/api/ddp-publications?' + new URLSearchParams({offset:String(offset),limit:String(limit)}),options);
+    if(value?.projectId !== this.#boundId || value.offset !== offset || value.limit !== limit || !Array.isArray(value.items))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original publication inventory changed.');
+    return value;
+  }
+  async publishedOperation({ id }, options) {
+    operation(id);
+    const value = await this.#json('/api/ddp-publication?' + new URLSearchParams({operation:id}),options);
+    if(value?.projectId !== this.#boundId || value.id !== id || value.schema !== 'stellar-forge.fred-ddp-publication-operation.v1' ||
+      !['RUNNING','INTERRUPTED','FAILED','COMPLETE'].includes(value.state) || !Array.isArray(value.files))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original publication operation changed.');
+    return value;
+  }
+  async startPublishedOperation(input, options) {
+    fields(input,['id','expectedRevision','migrationId'],'complete current-publication operation');
+    operation(input.id); revision(input.expectedRevision); ddpId(input.migrationId,'migration');
+    const value = await this.#json('/api/action',{...options,method:'POST',operationId:input.id,body:{action:'ddp-published-run',...input}});
+    if(value?.projectId !== this.#boundId || value.id !== input.id || value.migrationId !== input.migrationId ||
+      value.expectedRevision !== input.expectedRevision || !SHA.test(value.requestSha256))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The retained publication acknowledgement differs from its original request.',
+        {operationId:input.id,ambiguous:true});
+    return value;
+  }
+  async publishedReport({ id, offset = 0, limit = 100, query = '' }, options) {
+    operation(id); integer(offset,0,Number.MAX_SAFE_INTEGER,'series offset'); integer(limit,1,500,'series page size');
+    if(typeof query !== 'string' || query.length > 500) fail('FRED_CLIENT_INPUT_INVALID','Choose a source series query of at most 500 characters.');
+    const value = await this.#json('/api/ddp-publication-report?' + new URLSearchParams({operation:id,offset:String(offset),limit:String(limit),query}),options);
+    if(value?.projectId !== this.#boundId || value.operationId !== id || value.basis !== 'CURRENT_PUBLICATION_RETRIEVAL' ||
+      value.offset !== offset || value.limit !== limit || value.query !== query || !Array.isArray(value.rows))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original publication report changed.');
+    return value;
+  }
+  async publishedRows({ id, comparisonId, offset = 0, limit = 100, seriesId = null, status = null }, options) {
+    operation(id); text(comparisonId,'original comparison identity',120);
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'original row offset'); integer(limit,1,500,'original row page size');
+    if(seriesId !== null) text(seriesId,'original source series ID',500);
+    if(status !== null && !['EQUAL','DIFFERENT','BOTH_MISSING','MISSING_CHANGED','SOURCE_ONLY','TARGET_ONLY'].includes(status))
+      fail('FRED_CLIENT_INPUT_INVALID','Choose an original publication comparison status.');
+    const value = await this.#json('/api/ddp-publication-rows?' + new URLSearchParams({operation:id,comparison:comparisonId,
+      offset:String(offset),limit:String(limit),...(seriesId === null ? {} : {series:seriesId}),...(status === null ? {} : {status})}),options);
+    if(value?.projectId !== this.#boundId || value.operationId !== id || value.comparisonId !== comparisonId ||
+      value.offset !== offset || value.limit !== limit || value.seriesId !== seriesId || value.status !== status || !Array.isArray(value.rows))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original observation cursor or comparison selection changed.');
+    return value;
+  }
+  async publishedFileChunk({ id, name, expectedSha256, offset = 0, limit = 192 * 1024 }, options) {
+    operation(id); text(name,'listed edition file',240); digest(expectedSha256);
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'original file offset'); integer(limit,1,192 * 1024,'file chunk size');
+    const value = await this.#json('/api/ddp-publication-file-chunk?' + new URLSearchParams({operation:id,name,sha256:expectedSha256,
+      offset:String(offset),limit:String(limit)}),options);
+    if(value?.projectId !== this.#boundId || value.operationId !== id || value.file?.name !== name || value.file.sha256 !== expectedSha256 ||
+      value.offset !== offset || value.encoding !== 'base64' || typeof value.base64 !== 'string')
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original publication file selection changed.');
+    const bytes = Buffer.from(value.base64,'base64');
+    if(bytes.length !== value.bytes || bytes.toString('base64') !== value.base64 || fredDigest(bytes) !== value.chunkSha256 ||
+      value.bytes > limit || offset + value.bytes > value.file.bytes ||
+      value.nextOffset !== (offset + value.bytes < value.file.bytes ? offset + value.bytes : null))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original file chunk changed.');
+    return value;
+  }
+  async downloadPublishedFile({ id, name, expectedSha256 }, destination, options = {}) {
+    operation(id); text(name,'listed edition file',240); digest(expectedSha256); text(destination,'new download destination',4096);
+    const original = await this.publishedOperation({id},options), descriptor = original.files.find(file => file.name === name);
+    if(original.state !== 'COMPLETE' || !descriptor || descriptor.sha256 !== expectedSha256)
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','Select the exact complete file listed in the original publication.');
+    const selected = await this.#connect(options.signal), path = '/api/ddp-publication-file?' + new URLSearchParams({operation:id,name,sha256:expectedSha256});
+    const signal = AbortSignal.any([this.#lifetime.signal,AbortSignal.timeout(30 * 60 * 1000),...(options.signal ? [options.signal] : [])]);
+    const response = await this.#fetch(selected.origin + path,{headers:{authorization:'Bearer ' + selected.token,origin:selected.origin},
+      redirect:'error',signal});
+    if(!response.ok) {
+      let error; try { error = JSON.parse((await responseBytes(response,65536)).toString('utf8')); } catch { error = {}; }
+      fail(error.code ?? 'FRED_CLIENT_DOWNLOAD_FAILED',error.message ?? 'The original publication download did not open.',{status:response.status});
+    }
+    if(response.headers.get('x-content-sha256') !== expectedSha256 ||
+      Number(response.headers.get('content-length')) !== descriptor.bytes) {
+      await response.body?.cancel(); fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original file response changed.');
+    }
+    const output = resolve(destination), temporary = output + '.' + randomUUID() + '.part';
+    let handle, bytes = 0; const hash = createHash('sha256');
+    try {
+      handle = await open(temporary,constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,0o600);
+      for await(const chunk of response.body) {
+        const part = Buffer.from(chunk); bytes += part.length;
+        if(bytes > descriptor.bytes) fail('FRED_CLIENT_PUBLISHED_CHANGED','The original download exceeds its listed length.');
+        hash.update(part); let cursor = 0;
+        while(cursor < part.length) { const result = await handle.write(part,cursor,part.length - cursor);
+          if(result.bytesWritten < 1) fail('FRED_CLIENT_DOWNLOAD_FAILED','The original destination stopped accepting bytes.');
+          cursor += result.bytesWritten; }
+      }
+      const actual = hash.digest('hex');
+      if(bytes !== descriptor.bytes || actual !== expectedSha256) fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original download identity changed.');
+      await handle.sync(); await handle.close(); handle = null; await link(temporary,output);
+      const parent = await open(dirname(output),constants.O_RDONLY); try { await parent.sync(); } finally { await parent.close(); }
+      return {projectId:original.projectId,operationId:id,destination:output,name,bytes,sha256:actual,contentType:descriptor.contentType};
+    } finally { await response.body?.cancel().catch(() => {}); await handle?.close();
+      await unlink(temporary).catch(error => { if(error.code !== 'ENOENT') throw error; }); }
+  }
   async ddpSources(options = {}) {
     const value = ddpEnvelope(await this.#json('/api/ddp-sources', options), this.#boundId);
     for (const [index, kind] of DDP_KINDS.entries()) {

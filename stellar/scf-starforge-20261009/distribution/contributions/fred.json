@@ -171,6 +171,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp.js",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/http.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-workspace.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/published-http.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/publication-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PUBLISHED-WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp-published.js"
   ]
 }

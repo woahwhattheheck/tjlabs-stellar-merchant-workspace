@@ -735,3 +735,15 @@ Reopen the received directory through the original fred serve command and the sa
 | ddpReceiving | ddp-receiving / ddp_receiving | Inspect original meaning, status counts and every comparison row |
 
 The typed client returns complete inventory envelopes; the CLI and MCP provide revision-pinned inventory pages. Public declarations reference the original DDP crosswalk, package, migration, receiving and project DTOs. The [native project guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PROJECT.md) covers the same durable source, plan, acquisition and receiving history.
+
+## Complete current-publication customer editions
+
+The original workspace now carries complete publication operations through six additional methods: `published_operations`, `published_operation`, `published_start`, `published_report`, `published_rows` and `published_file_read`. The same methods are declared in the typed client and installed workspace CLI.
+
+Start with a saved migration and stable operation ID/original expectedRevision. The host retains the request before acknowledging it, collects the whole mapped publication, runs the original source-native comparison, retains public captures in the same project and packages all original sources, full report rows and the native project for independent receiving. Poll `published_operation`; continue the identical request after interruption.
+
+Completed operations expose exact file names, complete sizes and SHA256. `published-download` streams one complete listed file directly to a create-only host destination and validates its full identity. The full `edition-package.tar.gz` carries original programme inputs, source manifest, every target transport, native project, complete comparison JSON/CSV/JSONL and HTML. `published_file_read` supplies verified chunks for hosts that require a tool-carried transfer; follow its returned byte offset to completion. Each report row retains exact numeric strings, unavailable codes and original byte locations.
+
+Page `published_report` for source meaning and series context, then `published_rows` with the exact comparison ID and original source-series/status selection. Its `nextOffset` is an original-row cursor. The sparse native JSONL index avoids loading complete multi-hundred-megabyte observations into each operator response.
+
+Existing completed native source programmes attach through the local `starforge fred ddp-publication attach` command using their original project and directory. The browser and remote methods use saved project IDs and allowlisted original files.

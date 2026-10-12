@@ -295,6 +295,14 @@ export class MerchantFredWorkspaces {
         load: () => client.file(selection, { expectedSha256: args.expectedSha256 }), expectedSha256: args.expectedSha256,
         readId: args.readId, offset: args.offset, limit: args.limit });
     }
+    const publicationMethods = {
+      merchant_fred_published_operations: 'publishedOperations', merchant_fred_published_operation: 'publishedOperation',
+      merchant_fred_published_start: 'startPublishedOperation', merchant_fred_published_report: 'publishedReport',
+      merchant_fred_published_rows: 'publishedRows', merchant_fred_published_file_read: 'publishedFileChunk'
+    };
+    if (Object.hasOwn(publicationMethods, name)) {
+      const { workspace: _, ...input } = args; return client[publicationMethods[name]](input);
+    }
     if (actionMethods.has(name)) {
       const { workspace: _, ...input } = args;
       return client[actionMethods.get(name)](input);

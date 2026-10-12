@@ -6,7 +6,9 @@ import { fileURLToPath,pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
-import { need } from '../model.mjs';
+import { need,canonical } from '../model.mjs';
+import { readPrivateJson } from '../../routescan/quota.mjs';
+import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from './project-validation.mjs';
 import { hash,validateCapture } from '../source.mjs';
 import { initializeFredProject,readFredProject,importFredCapture,importFredDdpCrosswalk,importFredDdpPackage,
   previewFredDdpMigration,saveFredDdpMigration,exportFredProject,receiveFredProject } from '../project.mjs';
@@ -61,10 +63,19 @@ export async function collectFredDdpCurrentPublications({workspace,planPath,inta
 
 export async function materializeFredPublishedOriginals({bundle,directory}={}){
   let publicFiles=0,publicBytes=0,boardFiles=0,boardBytes=0;
+  const seriesOwners=new Map();
+  for(const capture of bundle.captures??[])for(const source of originalFredPublishedTransports(capture)){
+    const owners=seriesOwners.get(source.seriesId)??new Set();owners.add(capture.captureSha256);seriesOwners.set(source.seriesId,owners);
+  }
   for(const capture of bundle.captures??[])for(const source of originalFredPublishedTransports(capture)){
     need(/^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/.test(source.seriesId),'Use the original retained public series ID.');
     const name=basename(source.path);need(['metadata.html','observations.csv'].includes(name),'Materialize an original metadata or observation member.');
-    await exactFile(join(resolve(directory),'fred',source.seriesId,name),source.body);publicFiles++;publicBytes+=source.body.length;
+    const parts=['fred',source.seriesId];
+    if(seriesOwners.get(source.seriesId).size>1){
+      need(/^[a-f0-9]{64}$/.test(capture.captureSha256),'Retain every original publication capture identity.');
+      parts.push(capture.captureSha256);
+    }
+    await exactFile(join(resolve(directory),...parts,name),source.body);publicFiles++;publicBytes+=source.body.length;
   }
   for(const capture of [...bundle.ddpCrosswalks??[],...bundle.ddpPackages??[]]){
     need(/^fred-ddp-(?:package|crosswalk)-[a-f0-9]{64}$/.test(capture.id),'Materialize the original Board capture identity.');
@@ -108,7 +119,19 @@ export async function runFredDdpPublishedProgramme({workspace,packagePath,crossw
       id:'current-published-'+capture.captureSha256,expectedRevision:state.revision,capture});
     stdout.write(JSON.stringify({step:'original-public-capture-retained',captureSha256:capture.captureSha256,rows:model.rowCount,timeBasis:model.timeBasis})+'\n');
   }
-  const bundle=await exportFredProject({directory});await exactFile(join(out,'original-project-with-current-publications.json'),JSON.stringify(bundle));
+  const bundlePath=join(out,'original-project-with-current-publications.json');let bundle;
+  if(await exists(bundlePath)){
+    bundle=await readPrivateJson(bundlePath,FRED_DDP_PROJECT_BUNDLE_MAX_BYTES);
+    state=await readFredProject(directory);
+    need(bundle.state?.id===state.id&&
+      (bundle.ddpPackages??[]).some(source=>source.id===packageCapture.id&&source.captureSha256===packageCapture.captureSha256)&&
+      (bundle.ddpCrosswalks??[]).some(source=>source.id===crosswalk.id&&source.captureSha256===crosswalk.captureSha256)&&
+      (bundle.ddpMigrations??[]).some(saved=>saved.id===plan.id)&&
+      captures.every(capture=>(bundle.captures??[]).some(source=>source.captureSha256===capture.captureSha256)),
+      'Resume the complete original publication snapshot and its exact source population.','FRED_PUBLISHED_OUTPUT_CONFLICT',409);
+  }else{
+    bundle=await exportFredProject({directory});await exactFile(bundlePath,JSON.stringify(bundle));
+  }
   const received=await receiveFredProject({directory:destination,bundle}),reopened=await exportFredProject({directory:destination});
   need(reopened.bundleSha256===bundle.bundleSha256,'The complete customer export identity changed during receiving.');
   const originals=await materializeFredPublishedOriginals({bundle:reopened,directory:join(destination,'original-sources')});
@@ -118,8 +141,12 @@ export async function runFredDdpPublishedProgramme({workspace,packagePath,crossw
     exactOriginalFiles:originals.publicFiles,exactOriginalBytes:originals.publicBytes,originals,elapsedMs:performance.now()-started,memory:process.memoryUsage()};
   const summaryPath=join(out,'programme-summary.json');
   if(await exists(summaryPath)){
-    const retained=await load(summaryPath);need(retained.comparisonId===summary.comparisonId&&retained.bundleSha256===summary.bundleSha256,
+    const retained=await load(summaryPath);need(retained.schema===summary.schema&&retained.projectId===summary.projectId&&
+      retained.comparisonId===summary.comparisonId&&retained.bundleSha256===summary.bundleSha256&&
+      retained.captureCount===summary.captureCount&&retained.observations===summary.observations&&
+      retained.sourceMode===summary.sourceMode&&retained.timeBasis===summary.timeBasis&&canonical(retained.summary)===canonical(summary.summary),
       'This complete output belongs to another source edition; choose its own output directory.','FRED_PUBLISHED_OUTPUT_CONFLICT',409);
+    return retained;
   }else await exactFile(summaryPath,JSON.stringify(summary,null,2)+'\n');
   return summary;
 }

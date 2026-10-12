@@ -127,7 +127,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...bankUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods,...bankUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -197,7 +197,7 @@ function render() {
   $('#customer-filter').closest('.filters').hidden=ui.view==='bank';
   if(!ui.state)return;
   $('#revision').textContent='Revision '+ui.state.revision+(ui.view==='bank'?'':' · As of '+ui.asOf);
-  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='bank'?bankUi.render():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():renderActivity();
+  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():ui.view==='bank'?bankUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
 function renderInvoices() {
@@ -683,8 +683,8 @@ document.addEventListener('input',event=>{
   refundUi.input(event.target);
   collectionsUi.input(event.target);
   cashPlanningUi.input(event.target);
-  bankUi.input(event.target);
   creditControlUi.input(event.target);
+  bankUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
   else if(event.target.id==='search'){
@@ -699,10 +699,10 @@ document.addEventListener('change',event=>{
   const target=event.target;
   paymentUi.change(target);
   refundUi.change(target);
-  bankUi.change(target);
   collectionsUi.change(target);
   cashPlanningUi.change(target).catch(showError);
   creditControlUi.change(target);
+  bankUi.change(target);
   if(target.closest('#draft-form'))updateDraft(target);
   else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});collectionsUi.loadList().then(()=>{if(ui.view==='collections')render();});creditControlUi.loadList().then(()=>{if(ui.view==='credit-control')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
   else if(target.id==='status-filter'){ui.status=target.value;render();}
@@ -767,7 +767,7 @@ document.addEventListener('click',async event=>{
     if(await cashPlanningUi.click(button))return;
     if(await creditControlUi.click(button))return;
     if(await bankUi.click(button))return;
-    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();else if(ui.view==='credit-control'){await creditControlUi.loadList();render();}else if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
+    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();if(ui.view==='credit-control'){await creditControlUi.loadList();render();}if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');
     else if(action==='new-invoice'){
