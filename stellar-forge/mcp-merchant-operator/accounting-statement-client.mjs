@@ -34,6 +34,8 @@ function selection(value){
   }
   return result;
 }
+/** The original native selection normalization shared by durable customer cycles. */
+export const accountingStatementSelection=selection;
 function periodSelection(value){
   exact(value,PERIOD_SELECTION);
   return {usageOpeningId:id(value.usageOpeningId,UUID,'opening usage import UUID'),usageId:id(value.usageId,UUID,'closing usage import UUID')};
