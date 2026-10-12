@@ -1,6 +1,7 @@
 // MIT. Request declarations and the original seller's form/explode query codec.
 import { encodeQueryParameters, decodeQueryParameters, validateQuerySerialization,
   queryParameterShape } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs';
+import { prepareHttpPath } from '../route-identity/http-path.mjs';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const unsupported = () => Object.assign(new Error(
   'Required query names must be a direct list of up to 30 unique, nonempty names of at most 100 characters without control characters.'
@@ -92,8 +93,8 @@ export function describeHttpQuery(recorded) {
 
 /** Build only the explicit selected query; the caller still owns origin checks. */
 export function prepareHttpQuery(recorded, input = {}) {
-  if (!record(input) || Object.keys(input).some(key => key !== 'query'))
-    throw inputError('INVALID_PARAMS', 'Only query input is supported for GET/HEAD.');
+  if (!record(input) || Object.keys(input).some(key => !['path','query'].includes(key)))
+    throw inputError('INVALID_PARAMS', 'Only path and query input are supported for GET/HEAD.');
   const query = input.query === undefined ? {} : input.query;
   if (!record(query) || Object.keys(query).length > QUERY_KEYS)
     throw inputError('INVALID_PARAMS', 'Query values must be an object with at most 30 fields.');
@@ -132,7 +133,7 @@ export function prepareHttpQuery(recorded, input = {}) {
       encoded = new URLSearchParams(encodeQueryParameters(selected, schema, serialization));
     } catch (error) { throw inputError('INPUT_SERIALIZATION', error.message, {keys:supplied}); }
   }
-  const url = new URL(recorded.resource.url);
+  const url = prepareHttpPath(recorded, input.path);
   // Delete each selected key once so repeated encoded pairs survive intact.
   for (const name of supplied) url.searchParams.delete(name);
   for (const [name, value] of encoded) url.searchParams.append(name, value);

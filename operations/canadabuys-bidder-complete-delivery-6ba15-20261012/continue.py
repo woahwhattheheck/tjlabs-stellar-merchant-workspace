@@ -13,12 +13,12 @@ import sys
 HERE = Path(__file__).resolve().parent
 PINS = {
   "input.json": {
-    "sha256": "51d6e681705ad4816789c9fdfb928e1cf357b4b466e1c0e469855ea091ffab8e",
-    "bytes": 2748876
+    "sha256": "60de2486a2db1d2f7fe702d2d6e6feb2dd25338805f4111d77a33f34cffd47cf",
+    "bytes": 2815260
   },
   "complete_canadabuys_delivery.py": {
-    "sha256": "fcb8555e35b7c260547c013c0525bc2782e2ec734284c0cc8ced48c8a18035ad",
-    "bytes": 23370
+    "sha256": "699e3e4b1cb69675b3f69c4fa9e7d1af207a85b8188988a761c5ac9620f11c64",
+    "bytes": 28307
   },
   "run-canadabuys-bidder-receiving.mjs": {
     "bytes": 89006,
@@ -39,6 +39,10 @@ PINS = {
   "official_library_save_bridge.py": {
     "bytes": 6048,
     "sha256": "e9715e42eea200b04489da61f05e5058bd21dc5c817f3830a379b7c541afe21d"
+  },
+  "runtime-attempt-history.json": {
+    "sha256": "70050b45a6e2671c9658e96921793d34af60ab2a49b7c0ec24cca2d484187a53",
+    "bytes": 16535
   }
 }
 
@@ -124,6 +128,11 @@ def main():
                    if item["path"] == "integrated-12385-receiving-history.json")
     if history["content"].encode("utf-8") != selected["integrated-attempt-history.json"]:
         raise RuntimeError("The retained integrated receiving history differs")
+    runtime_history = next(item for item in payload["historyFiles"]
+                           if item["path"] == "integrated-61367-runtime-history.json")
+    if runtime_history["content"].encode("utf-8") != selected["runtime-attempt-history.json"]:
+        raise RuntimeError("The original runtime attempt history differs")
+    del runtime_history
     selected.clear()
     del fixture, original, runner, transition, history, bridge, raw, selection
     gc.collect()

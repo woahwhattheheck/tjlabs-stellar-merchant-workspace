@@ -1,0 +1,268 @@
+{
+  "schema": "commons.canadabuys.original-runtime-attempt.v1",
+  "operationId": "CANADABUYS-BIDDER-DESK-6BA15-20261012",
+  "originalController": {
+    "schema": "commons.canadabuys.native-controller.v1",
+    "operation": "CANADABUYS-BIDDER-DESK-6BA15-20261012",
+    "sourceCommit": "d66cc966e5ac339a6b63690b2f5191d17c38facd",
+    "sourceMerge": "19e7fea5a4ec8813bae78ccf9a4df1378297d5ba",
+    "input": {
+      "sha256": "27fd533661a24e075dfa476593914e169cef3f469f4e4b1b4738a6f2298b49f9",
+      "bytes": 3135862
+    },
+    "wire": {
+      "sha256": "33e0c68d94c0407f3af37c0b2927afd93234b6957da4d095a35289b1a7fcf721",
+      "bytes": 941237
+    },
+    "startedAt": "2026-10-12T22:20:35.191Z",
+    "calls": [
+      {
+        "kind": "admission",
+        "at": "2026-10-12T22:20:39.083Z",
+        "chunk_id": "6d2871",
+        "wall_time_seconds": 1.000989474,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "source-ready-poll",
+        "at": "2026-10-12T22:20:44.088Z",
+        "chunk_id": "f9ecdd",
+        "wall_time_seconds": 5.001501911,
+        "session_id": 61367,
+        "original_token_count": 39,
+        "output": "{\"event\": \"CANADABUYS_INPUT_READY\", \"namespacePid\": 2, \"hostPid\": 165224, \"hostStartTicks\": \"771351\", \"bootId\": \"bcc80c23-bcac-4c6b-8daa-1f97825fc4ae\"}\r\n"
+      },
+      {
+        "kind": "one-compressed-complete-input",
+        "at": "2026-10-12T22:20:47.334Z",
+        "chunk_id": "fc11d4",
+        "wall_time_seconds": 1.000521242,
+        "session_id": 61367,
+        "original_token_count": 370,
+        "output": "{\"event\": \"CANADABUYS_COMPLETE_SOURCE_STAGED\", \"directory\": \"/dev/shm/canadabuys-source-6ba15-vnj8p2hn\", \"files\": 9, \"decodedBytes\": 3135862, \"decodedSha256\": \"27fd533661a24e075dfa476593914e169cef3f469f4e4b1b4738a6f2298b49f9\", \"sourceCommit\": \"d66cc966e5ac339a6b63690b2f5191d17c38facd\"}\r\n{\"phase\": \"COMPLETE_CANADABUYS_INPUT_VERIFIED\", \"sourceCommit\": \"67d6978cb4b5b8be5137e71c290ec8929fedfc4e\", \"publishedInput\": {\"sha256\": \"51d6e681705ad4816789c9fdfb928e1cf357b4b466e1c0e469855ea091ffab8e\", \"bytes\": 2748876}, \"runtime\": {\"node\": \"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node\", \"playwright\": \"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs\", \"chromium\": \"/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell\"}, \"keepAlive\": true}\r\n{\"event\": \"CANADABUYS_DIRECTORY_READY\", \"at\": \"2026-10-12T22:20:46Z\", \"directory\": \"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v\", \"directoryAttempts\": []}\r\n{\"event\": \"CANADABUYS_RUNTIME_RESOURCES\", \"at\": \"2026-10-12T22:20:46Z\", \"stage\": \"directory-ready\", \"namespacePid\": 2, \"childNamespacePid\": null, \"bootId\": \"bcc80c23-bcac-4c6b-8daa-1f97825fc4ae\", \"processCgroup\": \"0::/\", \"memoryCurrent\": \"8578473984\", \"memoryMax\": \"8589934592\", \"memoryPeak\": \"8605245440\", \"memoryEvents\": \"low 0\\nhigh 0\\nmax 2217011\\noom 1781\\noom_kill 31\\noom_group_kill 0\", \"python\": {\"error\": \"[Errno 2] No such file or directory: '/proc/2/status'\"}}\r\n"
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:20:52.338Z",
+        "chunk_id": "aa2d94",
+        "wall_time_seconds": 5.001667589,
+        "session_id": 61367,
+        "original_token_count": 507,
+        "output": "{\"event\": \"CANADABUYS_RUNTIME_RESOURCES\", \"at\": \"2026-10-12T22:20:48Z\", \"stage\": \"source-buffers-released\", \"namespacePid\": 2, \"childNamespacePid\": null, \"bootId\": \"bcc80c23-bcac-4c6b-8daa-1f97825fc4ae\", \"processCgroup\": \"0::/\", \"memoryCurrent\": \"8587702272\", \"memoryMax\": \"8589934592\", \"memoryPeak\": \"8605245440\", \"memoryEvents\": \"low 0\\nhigh 0\\nmax 2220203\\noom 1781\\noom_kill 31\\noom_group_kill 0\", \"python\": {\"error\": \"[Errno 2] No such file or directory: '/proc/2/status'\"}}\r\n{\"event\": \"CANADABUYS_NATIVE_STARTED\", \"at\": \"2026-10-12T22:20:49Z\", \"namespacePid\": 4, \"command\": [\"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node\", \"--no-warnings\", \"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/programme/receiving/run-canadabuys-bidder-receiving.mjs\", \"--application\", \"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/application-source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys\", \"--legacy-application\", \"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/original-v1\", \"--fixture\", \"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/programme/receiving/canadabuys-bidder-receiving-input.json\", \"--output\", \"/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery\", \"--playwright\", \"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs\", \"--chromium\", \"/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell\"]}\r\n{\"event\": \"CANADABUYS_RUNTIME_RESOURCES\", \"at\": \"2026-10-12T22:20:49Z\", \"stage\": \"native-started\", \"namespacePid\": 2, \"childNamespacePid\": 4, \"bootId\": \"bcc80c23-bcac-4c6b-8daa-1f97825fc4ae\", \"processCgroup\": \"0::/\", \"memoryCurrent\": \"8589012992\", \"memoryMax\": \"8589934592\", \"memoryPeak\": \"8605245440\", \"memoryEvents\": \"low 0\\nhigh 0\\nmax 2220203\\noom 1781\\noom_kill 31\\noom_group_kill 0\", \"python\": {\"error\": \"[Errno 2] No such file or directory: '/proc/2/status'\"}, \"node\": {\"Name\": \"sync_share.sh\", \"State\": \"S (sleeping)\", \"VmPeak\": \"7880 kB\", \"VmSize\": \"7880 kB\", \"VmHWM\": \"2096 kB\", \"VmRSS\": \"2096 kB\"}}\r\n"
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:20:57.341Z",
+        "chunk_id": "29a1fb",
+        "wall_time_seconds": 5.000734675,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:02.345Z",
+        "chunk_id": "c4b099",
+        "wall_time_seconds": 5.001746469,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:07.348Z",
+        "chunk_id": "276d54",
+        "wall_time_seconds": 5.00085962,
+        "session_id": 61367,
+        "original_token_count": 29,
+        "output": "{\"operationId\":\"CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012\",\"phase\":\"01-original-v1-intake\",\"status\":\"PASS\"}\r\n"
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:12.351Z",
+        "chunk_id": "995b41",
+        "wall_time_seconds": 5.000938669,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:17.356Z",
+        "chunk_id": "030420",
+        "wall_time_seconds": 5.001214765,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:22.360Z",
+        "chunk_id": "0daeed",
+        "wall_time_seconds": 5.001672339,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:27.362Z",
+        "chunk_id": "573ef7",
+        "wall_time_seconds": 5.000957145,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      },
+      {
+        "kind": "native-poll",
+        "at": "2026-10-12T22:21:32.368Z",
+        "chunk_id": "851e1c",
+        "wall_time_seconds": 5.001557741,
+        "session_id": 61367,
+        "original_token_count": 0,
+        "output": ""
+      }
+    ],
+    "events": [
+      {
+        "event": "CANADABUYS_INPUT_READY",
+        "namespacePid": 2,
+        "hostPid": 165224,
+        "hostStartTicks": "771351",
+        "bootId": "bcc80c23-bcac-4c6b-8daa-1f97825fc4ae"
+      },
+      {
+        "event": "CANADABUYS_COMPLETE_SOURCE_STAGED",
+        "directory": "/dev/shm/canadabuys-source-6ba15-vnj8p2hn",
+        "files": 9,
+        "decodedBytes": 3135862,
+        "decodedSha256": "27fd533661a24e075dfa476593914e169cef3f469f4e4b1b4738a6f2298b49f9",
+        "sourceCommit": "d66cc966e5ac339a6b63690b2f5191d17c38facd"
+      },
+      {
+        "phase": "COMPLETE_CANADABUYS_INPUT_VERIFIED",
+        "sourceCommit": "67d6978cb4b5b8be5137e71c290ec8929fedfc4e",
+        "publishedInput": {
+          "sha256": "51d6e681705ad4816789c9fdfb928e1cf357b4b466e1c0e469855ea091ffab8e",
+          "bytes": 2748876
+        },
+        "runtime": {
+          "node": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "playwright": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs",
+          "chromium": "/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell"
+        },
+        "keepAlive": true
+      },
+      {
+        "event": "CANADABUYS_DIRECTORY_READY",
+        "at": "2026-10-12T22:20:46Z",
+        "directory": "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v",
+        "directoryAttempts": []
+      },
+      {
+        "event": "CANADABUYS_RUNTIME_RESOURCES",
+        "at": "2026-10-12T22:20:46Z",
+        "stage": "directory-ready",
+        "namespacePid": 2,
+        "childNamespacePid": null,
+        "bootId": "bcc80c23-bcac-4c6b-8daa-1f97825fc4ae",
+        "processCgroup": "0::/",
+        "memoryCurrent": "8578473984",
+        "memoryMax": "8589934592",
+        "memoryPeak": "8605245440",
+        "memoryEvents": "low 0\nhigh 0\nmax 2217011\noom 1781\noom_kill 31\noom_group_kill 0",
+        "python": {
+          "error": "[Errno 2] No such file or directory: '/proc/2/status'"
+        }
+      },
+      {
+        "event": "CANADABUYS_RUNTIME_RESOURCES",
+        "at": "2026-10-12T22:20:48Z",
+        "stage": "source-buffers-released",
+        "namespacePid": 2,
+        "childNamespacePid": null,
+        "bootId": "bcc80c23-bcac-4c6b-8daa-1f97825fc4ae",
+        "processCgroup": "0::/",
+        "memoryCurrent": "8587702272",
+        "memoryMax": "8589934592",
+        "memoryPeak": "8605245440",
+        "memoryEvents": "low 0\nhigh 0\nmax 2220203\noom 1781\noom_kill 31\noom_group_kill 0",
+        "python": {
+          "error": "[Errno 2] No such file or directory: '/proc/2/status'"
+        }
+      },
+      {
+        "event": "CANADABUYS_NATIVE_STARTED",
+        "at": "2026-10-12T22:20:49Z",
+        "namespacePid": 4,
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--no-warnings",
+          "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/programme/receiving/run-canadabuys-bidder-receiving.mjs",
+          "--application",
+          "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/application-source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys",
+          "--legacy-application",
+          "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/original-v1",
+          "--fixture",
+          "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/programme/receiving/canadabuys-bidder-receiving-input.json",
+          "--output",
+          "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v/working-delivery",
+          "--playwright",
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs",
+          "--chromium",
+          "/workspace/scratch/705ebf077387/browser-runtime/chrome-headless-shell-linux64/chrome-headless-shell"
+        ]
+      },
+      {
+        "event": "CANADABUYS_RUNTIME_RESOURCES",
+        "at": "2026-10-12T22:20:49Z",
+        "stage": "native-started",
+        "namespacePid": 2,
+        "childNamespacePid": 4,
+        "bootId": "bcc80c23-bcac-4c6b-8daa-1f97825fc4ae",
+        "processCgroup": "0::/",
+        "memoryCurrent": "8589012992",
+        "memoryMax": "8589934592",
+        "memoryPeak": "8605245440",
+        "memoryEvents": "low 0\nhigh 0\nmax 2220203\noom 1781\noom_kill 31\noom_group_kill 0",
+        "python": {
+          "error": "[Errno 2] No such file or directory: '/proc/2/status'"
+        },
+        "node": {
+          "Name": "sync_share.sh",
+          "State": "S (sleeping)",
+          "VmPeak": "7880 kB",
+          "VmSize": "7880 kB",
+          "VmHWM": "2096 kB",
+          "VmRSS": "2096 kB"
+        }
+      },
+      {
+        "operationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
+        "phase": "01-original-v1-intake",
+        "status": "PASS"
+      }
+    ],
+    "session": 61367,
+    "controllerError": "write_stdin failed: Unified exec process failed: exec-server transport disconnected; failed to resume exec-server session: recovery timed out after 25s",
+    "boundaryAt": "2026-10-12T22:21:33.344Z",
+    "partialOutput": ""
+  },
+  "sessionReconciliation": {
+    "session": 61367,
+    "error": "write_stdin failed: Unknown process id 61367"
+  },
+  "subsequentCapacityObservation": {
+    "tool": "exec_command",
+    "program": "import json,os,stat\nfrom pathlib import Path\nresult={}\nfor name in (\"memory.current\",\"memory.max\",\"memory.events\",\"memory.stat\"):\n    try: result[name]=Path(\"/sys/fs/cgroup/\"+name).read_text().strip()\n    except OSError as e: result[name]=str(e)\nresult[\"boot\"]=Path(\"/proc/sys/kernel/random/boot_id\").read_text().strip()\nresult[\"filesystems\"]=[]\nfor name in (\"/dev/shm\",\"/dev\",\"/workspace\",\"/workspace/scratch/6ba15c52ace4\",\"/tmp\"):\n    try:\n        info=os.statvfs(name)\n        result[\"filesystems\"].append({\"path\":name,\"freeBytes\":info.f_bavail*info.f_frsize,\"totalBytes\":info.f_blocks*info.f_frsize,\"freeInodes\":info.f_favail})\n    except OSError as e:result[\"filesystems\"].append({\"path\":name,\"error\":str(e)})\nresult[\"originalProcess\"]={}\nfor pid,start in ((165224,\"771351\"),(132093,\"693581\")):\n    try:\n        raw=Path(\"/proc/\"+str(pid)+\"/stat\").read_text();fields=raw[raw.rfind(\")\")+2:].split()\n        result[\"originalProcess\"][str(pid)]={\"present\":True,\"start\":fields[19],\"sameOriginal\":fields[19]==start,\"state\":fields[0],\"parent\":fields[1]}\n    except OSError as e:result[\"originalProcess\"][str(pid)]={\"present\":False,\"error\":str(e)}\nrows=[]\nfor item in Path(\"/proc\").iterdir():\n    if not item.name.isdigit():continue\n    try:\n        body=item.joinpath(\"status\").read_text();fields={}\n        for line in body.splitlines():\n            key,sep,value=line.partition(\":\")\n            if sep and key in (\"Name\",\"PPid\",\"VmRSS\",\"VmSwap\"):fields[key]=value.strip()\n        rss=int(fields.get(\"VmRSS\",\"0 kB\").split()[0])\n        rows.append({\"pid\":int(item.name),\"rssKiB\":rss,**fields})\n    except (OSError,ValueError):pass\nresult[\"topProcesses\"]=sorted(rows,key=lambda row:row[\"rssKiB\"],reverse=True)[:18]\nresult[\"knownRoots\"]=[]\nfor parent in (\"/dev/shm\",\"/dev\",\"/workspace/scratch/6ba15c52ace4\"):\n    try:\n        for item in Path(parent).iterdir():\n            if any(x in item.name.lower() for x in (\"6ba15\",\"aviary\",\"canadabuys\",\"headless\")):\n                i=item.lstat();result[\"knownRoots\"].append({\"path\":str(item),\"bytes\":i.st_size,\"blocks\":i.st_blocks,\"directory\":stat.S_ISDIR(i.st_mode),\"link\":stat.S_ISLNK(i.st_mode)})\n    except OSError as e:result[\"knownRoots\"].append({\"path\":parent,\"error\":str(e)})\nprint(json.dumps(result),flush=True)\n",
+    "error": "exec_command failed: CreateProcess { message: \"Io(Custom { kind: Other, error: \\\"failed to query exec-server capabilities: exec-server connection attempt failed: environment registry request failed (409 Conflict, environment_offline): Environment is not connected.\\\" })\" }",
+    "processCreated": false
+  },
+  "retainedDirectory": "/dev/shm/canadabuys-bidder-6ba15-ueyhx43v",
+  "retainedSourceDirectory": "/dev/shm/canadabuys-source-6ba15-vnj8p2hn",
+  "originalSourceMerge": "19e7fea5a4ec8813bae78ccf9a4df1378297d5ba",
+  "originalSourceHead": "d66cc966e5ac339a6b63690b2f5191d17c38facd",
+  "resourceReadingCorrection": "The original cgroup readings are retained unchanged. Original Python /proc/2/status was absent and original Node /proc/4/status identified sync_share.sh. Those two namespace-indexed process readings do not describe the selected Python/Node processes. The successor reads /proc/self/status and resolves only its acquired Node child from the original parent's actual procfs children."
+}

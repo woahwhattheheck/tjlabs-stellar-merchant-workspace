@@ -6,11 +6,19 @@ change. Browser, CLI and merchant MCP use the same Publisher directory and
 original SF82 release operations. The selected source edition, complete query
 contract, public resource and customer acquisitions stay in their original stores.
 
-The provider review uses the actual installed x402 SDK and the provider's current
-supported response. It retains every ordered native payment alternative, its
+The provider review uses the actual installed x402 SDK with a current direct
+supported-response read or a complete received public response document. It retains every ordered native payment alternative, its
 difference from the stored offer, the original service digest, the selection
 generation and the complete provider response. A compatible review can stage a
 new release. The existing release controls select it and own its seller process.
+
+A complete public response received by another host can be imported through
+Capability source in the existing browser, the Publisher CLI's
+--supported-response FILE flag, or payload.response in the merchant MCP action.
+The [received-response guide](../../sf82-seller-pilot/FACILITATOR_RESPONSES.md)
+covers the capture command, original SDK interpretation, exact raw response
+download and staging lifecycle. Direct and received reviews share this same
+retained history.
 
 ## Open the original workspace with host profiles
 
@@ -100,9 +108,10 @@ intersection for the original service's native payment requirements. See the
 The public Vellar and Periplo supported bodies captured on 2026-10-12 at 16:59 UTC
 both advertised x402 v2, exact payments on stellar:testnet, sponsored fees and
 Bazaar. Vellar also advertised upto on testnet. Its pubnet asset appeared in
-catalogAssets; that alone is not a matching advertised payment kind. The
-operator reads the current response for each new review and checks the actual
-retained service through the native SDK.
+catalogAssets; that alone is not a matching advertised payment kind. A direct
+review reads the current response. A received review uses its complete captured
+body and recorded retrieval time. Both check the actual retained service through
+the native SDK.
 
 Source endpoints:
 [Vellar supported](https://vellar-facilitator-testnet-production.up.railway.app/supported)
@@ -115,9 +124,10 @@ are not the same representation.
 
 Stage reviewed release uses only the retained reviewId. The original engine
 checks its complete content hash and the host's current provider definition. For
-a new release, it repeats the native provider review and compares the original
-source, selection generation, complete native alternatives and supported-body
-identity before staging.
+a new release, it repeats the native review and compares the original source,
+selection generation, complete native alternatives and supported-body identity
+before staging. A received review reinterprets its same complete captured
+response; a direct review reads the provider again.
 
 Staging creates a retained release with its derived-from review binding. It does
 not change which release is selected. In the existing Releases controls:
@@ -194,7 +204,7 @@ inspection and export of already retained reviews.
 
 | Action | Exact payload |
 | --- | --- |
-| publisher.facilitators.review | provider, releaseId, id, optional label |
+| publisher.facilitators.review | provider, releaseId, id, optional label and complete response |
 | publisher.facilitators.stage | reviewId |
 | publisher.facilitators.inspect | reviewId |
 | publisher.facilitators.history | optional after and limit |
@@ -271,7 +281,10 @@ Read the complete JSON file through the existing retained-file transport:
 Use merchant_socrata_file. Continue with the returned readId, expectedSha256 and
 nextOffset until EOF. The download is the whole retained review, including its
 supported body and native alternatives. The browser's Download complete review
-button reads that same file through its authenticated export route.
+button reads that same file through its authenticated export route. For a
+received review, kind facilitator-response and Download received response return
+the exact original response bytes; their hash is distinct from the canonical
+SDK-normalized supported hash.
 
 The [merchant MCP guide](../../../../stellar-forge/mcp-merchant-operator/SOCRATA_WORKSPACES.md)
 describes original operator ownership, source capture, package restore, release

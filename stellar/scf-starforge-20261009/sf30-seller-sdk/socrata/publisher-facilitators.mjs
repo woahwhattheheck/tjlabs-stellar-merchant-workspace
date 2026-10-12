@@ -3,6 +3,7 @@ import {constants} from 'node:fs';
 import {open, mkdir, realpath, lstat, readdir, link, unlink} from 'node:fs/promises';
 import {resolve, join} from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
+import {supportedResponseSummary, supportedResponseBytes} from '../../sf82-seller-pilot/facilitator-supported.mjs';
 import {
   FACILITATOR_REVIEW_SCHEMA, normalizeFacilitatorProfiles,
   reviewReleaseFacilitator, stageReleaseFacilitator
@@ -114,7 +115,8 @@ export async function openPublisherFacilitators({directory, releaseDirectory, pr
         releaseId:value.source.releaseId, proposedReleaseId:value.proposed.id,
         label:value.proposed.label, provider:value.proposed.provider,
         generation:value.generation, nativeSdk:value.nativeSdk,
-        supportedSha256:value.supportedSha256, error:value.error};
+        supportedSha256:value.supportedSha256, error:value.error,
+        ...(value.receivedResponse ? {receivedResponse:supportedResponseSummary(value.receivedResponse)} : {})};
     }));
     return {items, total:ids.length, nextCursor:remaining.length > page.length ? page.at(-1) : null};
   }
@@ -129,7 +131,7 @@ export async function openPublisherFacilitators({directory, releaseDirectory, pr
       exact(input, ['reviewId']); return (await read(input.reviewId)).value;
     }
     if (action === 'publisher.facilitators.review') {
-      exact(input, ['provider', 'releaseId', 'id', 'label']);
+      exact(input, ['provider', 'releaseId', 'id', 'label', 'response']);
       if (!selected) throw fail('FACILITATOR_NOT_CONFIGURED', 'Open this Publisher with the host facilitator profiles.');
       const review = await reviewReleaseFacilitator(releaseDirectory, {profiles:selected, ...input});
       return save(review);
@@ -146,5 +148,13 @@ export async function openPublisherFacilitators({directory, releaseDirectory, pr
     const {bytes} = await read(id);
     return {bytes, filename:'facilitator-review-' + id + '.json', contentType:'application/json'};
   }
-  return {state, act, history, readExport};
+  async function readResponseExport(id) {
+    const {value} = await read(id);
+    if (!value.receivedResponse)
+      throw fail('PUBLISHER_FACILITATOR_RESPONSE_MISSING', 'This review used a direct provider read. Choose a review with a received response.', 404);
+    return {bytes:supportedResponseBytes(value.receivedResponse),
+      filename:'facilitator-supported-' + value.receivedResponse.id + '.json',
+      contentType:value.receivedResponse.body.contentType};
+  }
+  return {state, act, history, readExport, readResponseExport};
 }

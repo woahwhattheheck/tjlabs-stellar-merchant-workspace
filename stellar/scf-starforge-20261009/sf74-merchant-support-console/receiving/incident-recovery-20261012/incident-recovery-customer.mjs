@@ -180,22 +180,45 @@ async function main(){
     const chunks=[];let bytes=0;
     for await(const chunk of response.body){bytes+=chunk.length;assert(bytes<=16*1024*1024);chunks.push(chunk);}
     const body=JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    assert(accepted.includes(response.status),route+' returned '+response.status+': '+JSON.stringify(body));
+    if(!accepted.includes(response.status)){
+      const error=new Error(route+' returned '+response.status+': '+JSON.stringify(body));
+      error.response={status:response.status,body};throw error;
+    }
     return {status:response.status,body};
   }
   const get=async(host,route,accepted)=>http(host,route,undefined,accepted);
-  async function mutate(host,label,route,makeInput,{ephemeral=false}={}){
-    const request=ephemeral?{route,input:await makeInput()}:
-      await retained(path.join(root,'requests',label+'.json'),async()=>({route,input:await makeInput()}));
+  async function mutate(host,label,route,makeInput,{ephemeral=false,recoveryWorkspaceId=null}={}){
+    let requestFile=path.join(root,'requests',label+'.json');
+    let request=ephemeral?{route,input:await makeInput()}:
+      await retained(requestFile,async()=>({route,input:await makeInput()}));
     assert.equal(request.route,route);
+    if(recoveryWorkspaceId!==null){
+      assert.match(route,/^\/api\/incidents\/[a-z0-9_-]+\/recovery\/[a-z-]+$/);
+      assert.match(recoveryWorkspaceId,/^[a-f0-9]{64}$/);
+      assert.deepEqual(Object.keys(request.input).sort(),['input','workspaceId']);
+      if(request.input.workspaceId!==recoveryWorkspaceId){
+        // Native access binds current directory inodes. Keep the original domain input.
+        request={route,input:{...request.input,workspaceId:recoveryWorkspaceId}};
+        if(!ephemeral){
+          requestFile=path.join(root,'requests',label+'-access-'+sha(jsonBytes(request)).slice(0,20)+'.json');
+          await write(requestFile,request);
+        }
+      }
+    }
     const invocation=crypto.randomUUID();
     await event({phase:'HTTP_DISPATCHING',label,invocation,host:host.label,requestSha256:sha(jsonBytes(request)),
-      ...(ephemeral?{request}:{requestFile:path.join(root,'requests',label+'.json')})});
+      ...(ephemeral?{request}:{requestFile})});
     try{
       const response=await http(host,route,request.input);
       await write(path.join(root,'responses',label+'-'+invocation+'.json'),response);
       await event({phase:'HTTP_RESPONSE',label,invocation,status:response.status});return response.body;
-    }catch(error){await event({phase:'HTTP_OUTCOME_UNCERTAIN',label,invocation,error:String(error)});throw error;}
+    }catch(error){
+      if(error.response){
+        await write(path.join(root,'responses',label+'-'+invocation+'.json'),error.response);
+        await event({phase:'HTTP_ERROR_RESPONSE',label,invocation,status:error.response.status,error:String(error)});
+      }else await event({phase:'HTTP_OUTCOME_UNCERTAIN',label,invocation,error:String(error)});
+      throw error;
+    }
   }
   async function saveCase(host,label,makeInput){
     const request=await retained(path.join(root,'requests',label+'.json'),async()=>({route:'/api/cases',input:await makeInput()}));
@@ -244,8 +267,11 @@ async function main(){
     const view=(await get(operator,'/api/incidents/operations/recovery')).body;assert.equal(view.enabled,true);
     const operationIds={snapshot:'object-support-snapshot-20261012-33e6',receive:'object-support-receive-20261012-33e6',reconcile:'object-support-reconcile-20261012-33e6'};
     const originalAction=(action,label,input,options)=>mutate(operator,label,'/api/incidents/operations/recovery/'+action,
-      ()=>({workspaceId:view.workspaceId,input}),options);
-    const snapshot=await originalAction('snapshot','snapshot',{operationId:operationIds.snapshot,expectedRevision:view.sourceRevision});
+      ()=>({workspaceId:view.workspaceId,input}),{recoveryWorkspaceId:view.workspaceId,...options});
+    const savedSnapshot=view.items.find(item=>item.kind==='snapshot'&&item.name===operationIds.snapshot&&item.status==='SAVED');
+    const snapshot=savedSnapshot??await originalAction('snapshot','snapshot',{operationId:operationIds.snapshot,expectedRevision:view.sourceRevision});
+    if(savedSnapshot)await event({phase:'ORIGINAL_SNAPSHOT_REOPENED',operationId:operationIds.snapshot,
+      directory:savedSnapshot.directory,manifestSha256:savedSnapshot.manifestSha256});
     const inspected=await originalAction('inspect-snapshot','inspect-snapshot',
       {snapshotName:operationIds.snapshot,expectedManifestSha256:snapshot.manifestSha256});
     assert.equal(inspected.manifestSha256,snapshot.manifestSha256);assert(inspected.files>1);
@@ -253,7 +279,12 @@ async function main(){
     const snapshotState=await readJson(path.join(inspected.directory,'state.json'));
     assert.equal(snapshotState.config.notification,null);assert.equal(snapshotState.notifications.length,0);
     await write(path.join(root,'snapshot-inspection.json'),inspected);
-    await originalAction('receive','receive',{operationId:operationIds.receive,snapshotName:operationIds.snapshot,
+    const savedReceive=view.items.find(item=>item.kind==='received'&&item.name===operationIds.receive&&item.status==='RECEIVED');
+    if(savedReceive){
+      assert.equal(savedReceive.manifestSha256,inspected.manifestSha256);
+      await event({phase:'ORIGINAL_RECEIVED_STORE_REOPENED',operationId:operationIds.receive,
+        directory:savedReceive.directory,manifestSha256:savedReceive.manifestSha256});
+    }else await originalAction('receive','receive',{operationId:operationIds.receive,snapshotName:operationIds.snapshot,
       expectedManifestSha256:inspected.manifestSha256});
     const opened=await originalAction('open','open',{receiveName:operationIds.receive,expectedManifestSha256:inspected.manifestSha256},{ephemeral:true});
     assert.equal(opened.watcherStarted,false);assert.equal(opened.recovery.notificationCounts.total,0);
@@ -267,8 +298,12 @@ async function main(){
     const originalCase=(await get(operator,'/api/cases/'+baseline.case.caseId)).body;
     assert.equal(sha(originalCase.workspaceText),baseline.case.workspaceSha256);
     assert.equal(sha(originalCase.supportText),baseline.case.supportSha256);
-    const caseCapture=await retained(path.join(root,'recovered-incident-case.json'),()=>mutate(operator,'recovered-incident-case','/api/incidents/'+recoveredId+'/'+baseline.incidentId+'/case',
-      ()=>({expectedRevision:detail.revision,workspaceText:originalCase.workspaceText,routeId:before.incident.merchantId})));
+    const caseRoute='/api/incidents/'+recoveredId+'/'+baseline.incidentId+'/case';
+    const caseInput={expectedRevision:detail.incident.revision,workspaceText:originalCase.workspaceText,routeId:before.incident.merchantId};
+    assert(Number.isSafeInteger(caseInput.expectedRevision)&&caseInput.expectedRevision>=1);
+    // A fresh reviewed preparation preserves an earlier rejected request unchanged.
+    const caseLabel='recovered-incident-case-'+sha(jsonBytes({route:caseRoute,input:caseInput})).slice(0,20);
+    const caseCapture=await retained(path.join(root,'recovered-incident-case.json'),()=>mutate(operator,caseLabel,caseRoute,()=>caseInput));
     await write(path.join(root,'deliverables','recovered-incident.support-handoff.json'),caseCapture.handoff);
     await write(path.join(root,'deliverables','recovered-incident.html'),caseCapture.html);
     await write(path.join(root,'deliverables','recovered-incident.report.json'),caseCapture.report);
@@ -281,7 +316,8 @@ async function main(){
       workspaceId:recoverView.workspaceId,input:{operationId:operationIds.reconcile,expectedRecoveryId:recovered.id,
         expectedManifestSha256:recovered.manifestSha256,expectedQueueSha256:recovered.queueSha256,expectedConfigHash:recovered.configHash,
         originalWriterStopped:true,by:'Commons SCF receiving engineer',
-        notes:'The completed original customer closed its writer. Reopened original and received sources have no running worker or notification entries.'}}));
+        notes:'The completed original customer closed its writer. Reopened original and received sources have no running worker or notification entries.'}}),
+      {recoveryWorkspaceId:recoverView.workspaceId});
     const reconciled=(await get(operator,'/api/incidents/'+recoveredId+'/recovery')).body.recovery;
     assert.equal(reconciled.deliveryPaused,false);assert.equal(reconciled.notificationCounts.delivered,0);
     const continued=await saveCase(operator,'continue-original-case',()=>({

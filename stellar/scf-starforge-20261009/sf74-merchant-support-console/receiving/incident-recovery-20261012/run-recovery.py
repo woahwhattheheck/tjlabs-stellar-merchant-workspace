@@ -9,7 +9,7 @@ INPUT_SHA = "e5ac88b0132e5e457ca9a4ceae888befc7334391cf575bde2a3a2320373a08f1"
 ORIGINAL_RUNNER_GIT = "ee7a28366f38960e101b27c589cd6401c2f13068"
 SOURCE_RECEIVER_GIT = "3d402bc7e20e0da26193d099ad9429d0b47feef2"
 CUSTOMER_GIT = "3cff80371b90d14cff31d8b5dcdfca1ef65e08dc"
-DRIVER_GIT = "52dc2748e712e080332e8c6850b1ff10d8b35a61"
+DRIVER_GIT = "1e8d46d63e6c777a09619a981cbfff62dc6f6b9b"
 
 def require(value, message):
     if not value:
@@ -49,7 +49,9 @@ class Programme:
         self.save(self.project / "configuration.private.json", raw)
         self.base = Path(self.cfg["baselineProject"])
         self.base_config = self.json(self.base / "configuration.private.json")
-        self.delivery = self.json(self.base / "delivery-result.json")
+        self.baseline_delivery = Path(self.cfg.get("baselineDelivery", str(self.base / "delivery-result.json")))
+        require(self.baseline_delivery.is_absolute(), "Use an absolute baseline delivery path.")
+        self.delivery = self.json(self.baseline_delivery)
         require(self.delivery.get("state") == "COMPLETE" and self.delivery.get("nativeState") == "COMPLETE",
                 "Continue the completed original customer and its saved full package.")
         self.baseline_package = Path(self.delivery["package"]["path"])
@@ -178,6 +180,8 @@ class Programme:
             files.append(("object-session/" + row["path"], file,
                           {"bytes":row["bytes"], "sha256":row["sha256"], "mode":row["mode"]}))
         files += [("baseline/" + self.baseline_package.name, self.baseline_package, None),
+                  ("baseline/delivery-result.json", self.baseline_delivery, None),
+                  ("baseline/configuration.private.json", self.base / "configuration.private.json", None),
                   ("source-metadata.json", metadata_file, None),
                   ("source-input" + (".json.gz" if str(self.cfg["sourceInput"]).endswith(".gz") else ".json"), Path(self.cfg["sourceInput"]), None),
                   ("native/incident-recovery-customer.mjs", self.driver, None),
@@ -186,6 +190,10 @@ class Programme:
                   ("native/original-runner.py", Path(self.cfg["originalRunner"]), None),
                   ("native/run-recovery.py", Path(__file__).resolve(), None),
                   ("RECEIVING.md", Path(self.cfg["guide"]), None)]
+        if self.cfg.get("deliveryContinuation"):
+            continuation = Path(self.cfg["deliveryContinuation"])
+            require(continuation.is_absolute(), "Use an absolute retained delivery continuation.")
+            files.append(("native/complete-support-recovery.py", continuation, None))
         manifest_schema = "stellar-forge.incident-recovery-receiving-package.v1"
         if output.exists():
             raw = self.read(output, 128 * 1024 * 1024)
@@ -283,7 +291,7 @@ class Programme:
         driver_config = {"schema":"stellar-forge.incident-recovery-receiving.v1", "sourceCommit":APP_COMMIT,
                          "sourceDirectory":str(self.source), "directory":str(self.customer),
                          "baselineDirectory":self.base_config["customer_directory"],
-                         "baselineDelivery":str(self.base / "delivery-result.json"), "originalCustomer":str(self.original_customer),
+                         "baselineDelivery":str(self.baseline_delivery), "originalCustomer":str(self.original_customer),
                          "sourceInput":self.cfg["sourceInput"], "python":self.base_config["python"]}
         selected = self.project / "customer-configuration.private.json"
         self.save_json(selected, driver_config)

@@ -1170,8 +1170,26 @@ def receive_compact_source(payload, receiving):
     return {"packets":{"performance":base,"financial-following":successor},"receipt":result}
 
 
+def native_receiving_parent(payload):
+    value = payload.get("receivingDirectory")
+    if value is None:
+        return pathlib.Path("/dev")
+    if not isinstance(value, str) or not value or "\0" in value:
+        raise RuntimeError("receivingDirectory must be an absolute private directory")
+    parent = pathlib.Path(value)
+    if not parent.is_absolute() or pathlib.Path(os.path.abspath(parent)) != parent:
+        raise RuntimeError("receivingDirectory must be an absolute normalized private directory")
+    if parent == ORIGINAL_ROOT or ORIGINAL_ROOT in parent.parents:
+        raise RuntimeError("Retain receiving and complete archives outside the original native04 work tree")
+    native_directory(parent)
+    info = parent.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode)
+        or info.st_uid != os.getuid() or info.st_mode & 0o077):
+        raise RuntimeError("receivingDirectory must be owned by the original receiver with mode0700")
+    return parent
+
 def main(payload):
-    receiving = pathlib.Path(tempfile.mkdtemp(prefix="scf-performance-financial-84df-",dir="/dev"))
+    receiving = pathlib.Path(tempfile.mkdtemp(prefix="scf-performance-financial-84df-",dir=native_receiving_parent(payload)))
     helpers = receiving/"library-helpers"
     helpers.mkdir(mode=0o700)
     for name, body in payload["helpers"].items():

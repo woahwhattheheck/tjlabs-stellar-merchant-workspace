@@ -1,0 +1,15 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "open-meteo-receiving",
+  "description": "Complete editable receiving of retained weather reports, source bytes and decision history",
+  "exports": {
+    "./partners/open-meteo/receiving": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/portable.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/portable.mjs"
+    },
+    "./partners/open-meteo/legacy": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/legacy.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/open-meteo-operations/legacy.mjs"
+    }
+  }
+}

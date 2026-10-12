@@ -1,8 +1,9 @@
 """Reviewed baseline amendments in the existing SF47 operations transaction.
 
 The native planner remains the calculation and revision authority. This module
-selects its saved revisions, retains complete amendment decisions, and never
-creates or changes a cash, work, invoice, award or delivery observation.
+selects its saved revisions and retains complete amendment decisions. Explicit
+package mappings change only budget attribution on existing work, invoice and
+deployment records; original observations remain in the complete case history.
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ ACTIONS = ("amendment.save", "amendment.review", "amendment.apply")
 PLAN_FIELDS = ("source", "revision", "scenario", "planning", "report",
                "savedAt", "note", "contentSha256")
 INPUT_FIELDS = ("selectedRevision", "expectedContentSha256", "asOfDate",
-                "reason", "basis")
+                "reason", "basis", "packageMappings")
 BASIS_FIELDS = ("kind", "reference", "date", "sourceIds", "note")
 DECISIONS = ("APPROVE", "RETURN_FOR_CHANGES")
 STATES = ("PROPOSED", "REVIEWED", "CHANGES_REQUESTED", "APPLIED")
@@ -161,13 +162,33 @@ def normalize_inputs(context, value):
     if kind in ("ISSUER_DECISION", "CUSTOMER_DECISION") and (not source_ids or not reference or not decision_date):
         fail("Select the retained decision document, its original reference and decision date.",
              "AMENDMENT_DECISION_SOURCE")
-    return {
+    result = {
         "selectedRevision": domain.integer(value.get("selectedRevision"), "Selected native revision", 1, 1000000),
         "expectedContentSha256": domain.sha(value.get("expectedContentSha256"), "Reviewed native planning content", False),
         "asOfDate": domain.calendar(value.get("asOfDate"), "Amendment comparison date"),
         "reason": text(value.get("reason"), "Reason for this planning amendment", 12000, True),
         "basis": {"kind": kind, "reference": reference, "date": decision_date,
                   "sourceIds": source_ids, "note": text(basis.get("note", ""), "Decision source note", 12000)}}
+    # Omission preserves the exact original proposal contract and saved hashes.
+    # An explicit collection selects the reviewed attribution/reconciliation flow.
+    if "packageMappings" in value:
+        mappings = value["packageMappings"]
+        costs = {row["id"] for row in context["plan"]["scenario"]["future_costs"]}
+        if not isinstance(mappings, list) or len(mappings) > len(costs):
+            fail("Map each original package at most once.", "INVALID_AMENDMENT_MAPPING")
+        prepared, seen = [], set()
+        for mapping in mappings:
+            obj(mapping, ("fromCostId", "toCostId", "note"), "package attribution")
+            old, new = mapping.get("fromCostId"), mapping.get("toCostId")
+            if (not isinstance(old, str) or old not in costs or old in seen
+                    or "toCostId" not in mapping or not (new is None or isinstance(new, str))):
+                fail("Choose a distinct original package and an explicit target or null for unassigned attribution.",
+                     "INVALID_AMENDMENT_MAPPING")
+            seen.add(old)
+            prepared.append({"fromCostId": old, "toCostId": new,
+                             "note": text(mapping.get("note"), "Package attribution reason", 4000, True)})
+        result["packageMappings"] = sorted(prepared, key=lambda row: row["fromCostId"])
+    return result
 
 
 def changes(before, after):
@@ -222,7 +243,7 @@ def compatibility(context, target):
             reference(item["costId"], "completion", row["id"])
             if item["state"] == "COMPLETE" and item["costId"] in after:
                 fields = ("remaining_work", "measurable_proof")
-                if any(before[item["costId"]].get(key) != after[item["costId"]].get(key) for key in fields):
+                if any(before.get(item["costId"], {}).get(key) != after[item["costId"]].get(key) for key in fields):
                     blockers.append({"code": "COMPLETED_SCOPE", "id": item["costId"],
                         "message": "The new scope would reinterpret an already completed deliverable.",
                         "references": [{"kind": "completion", "id": row["id"]}]})
@@ -265,6 +286,103 @@ def compatibility(context, target):
             "recordsSha256": digest(context["records"]),
             "caseCalendarStart": context["program"].get("calendarStart"),
             "selectedPlanningCalendarStart": target["planning"].get("calendarStart")}
+
+
+def mapped_records(context, target, mappings):
+    """Project only explicitly reviewed attribution; retain all observation fields."""
+    costs = {row["id"] for row in target["scenario"]["future_costs"]}
+    mapping = {row["fromCostId"]: row["toCostId"] for row in mappings}
+    if any(ident is not None and ident not in costs for ident in mapping.values()):
+        fail("Every mapped destination must exist in the selected native revision.", "INVALID_AMENDMENT_MAPPING")
+    records = deepcopy(context["records"])
+    changes = []
+    for kind in ("work", "invoices", "deployments"):
+        for index, before in enumerate(context["records"][kind]):
+            after = deepcopy(before)
+            if kind == "work" and after.get("costId") in mapping:
+                after["costId"] = mapping[after["costId"]]
+            elif kind == "invoices":
+                for line in after["lines"]:
+                    if line.get("costId") in mapping:
+                        line["costId"] = mapping[line["costId"]]
+            elif kind == "deployments":
+                after["costIds"] = list(dict.fromkeys(mapping.get(ident, ident)
+                    for ident in after["costIds"] if mapping.get(ident, ident) is not None))
+            if after != before:
+                records[kind][index] = after
+                changes.append({"kind": kind, "recordId": before["id"],
+                                "before": deepcopy(before), "after": after})
+    return records, changes
+
+
+def mapped_compatibility(context, target, mappings, records, record_changes):
+    before = {row["id"]: row for row in context["plan"]["scenario"]["future_costs"]}
+    after = {row["id"]: row for row in target["scenario"]["future_costs"]}
+    mapping = {row["fromCostId"]: row["toCostId"] for row in mappings}
+    # Keep the original complete references and submitted/accepted scope rules.
+    # Saved completion assignments remain historical and receive a new draft.
+    original = compatibility(context, target)
+    replaced = {"COMPLETION_PACKAGE_SET", "COMPLETED_SCOPE", "REFERENCED_PACKAGE_REMOVED",
+                "REFERENCED_PACKAGE_TRANCHE", "RECORD_BINDING_CHANGED", "RECORD_BINDING_UNRESOLVED"}
+    blockers = [item for item in original["blockers"] if item["code"] not in replaced]
+    for reference in original["references"]:
+        ident = reference["costId"]
+        actual = [row for row in reference["records"] if row["kind"] != "completion"]
+        if not actual or ident in mapping:
+            continue
+        if ident not in after:
+            blockers.append({"code": "PACKAGE_MAPPING_REQUIRED", "id": ident, "references": actual,
+                             "message": "Map this retired package to a selected package or explicitly choose unassigned attribution."})
+        elif ident not in before or after[ident]["tranche"] != before[ident]["tranche"]:
+            blockers.append({"code": "PACKAGE_TRANCHE_MAPPING_REQUIRED", "id": ident, "references": actual,
+                             "message": "Record an explicit mapping for this tranche change; select the same package to retain its identity."})
+    revised = {**context, "plan": target, "records": records, "restoring": True}
+    for kind, values in records.items():
+        for row in values:
+            try:
+                prepared = domain.prepare(kind, row, revised, row)
+                if any(key != "state" and row.get(key) != value for key, value in prepared.items()):
+                    blockers.append({"code": "RECORD_BINDING_CHANGED", "kind": kind, "id": row["id"],
+                                     "message": "The selected attribution would change another original record field."})
+            except Problem as exc:
+                blockers.append({"code": "RECORD_BINDING_UNRESOLVED", "kind": kind, "id": row["id"],
+                                 "message": str(exc)})
+    return {**original, "compatible": not blockers, "blockers": blockers,
+            "projectedRecordsSha256": digest(records),
+            "attributionRecordCount": len(record_changes)}
+
+
+def retained_selection_reviews(context, target, mappings):
+    after = {row["id"]: row for row in target["scenario"]["future_costs"]}
+    before = {row["id"]: row for row in context["plan"]["scenario"]["future_costs"]}
+    mapping = {row["fromCostId"]: row["toCostId"] for row in mappings}
+    result = []
+    for row in context.get("completionPlans", []):
+        ids = [item["costId"] for item in row["inputs"]["items"]]
+        result.append({"kind": "completion", "id": row["id"], "version": row["version"],
+            "tranche": row["tranche"], "originalCostIds": ids,
+            "currentCostIds": [item["id"] for item in target["scenario"]["future_costs"]
+                               if item["tranche"] == row["tranche"]],
+            "retiredCostIds": [ident for ident in ids if ident not in after],
+            "changedCostIds": [ident for ident in ids if ident in after and before.get(ident) != after[ident]],
+            "message": "The saved assignments retain their original plan. Open Completion to review and save the draft for this revision."})
+    for row in context.get("installationRefs", []):
+        result.append({"kind": "installation", "id": row["id"], "revision": row["revision"],
+            "message": "This exact saved installation edition retains its original plan. Review its package and phase assignments when preparing a subsequent edition."})
+    return result
+
+
+def applied_record_changes(candidate, version, stamp):
+    return [{**deepcopy(change), "after": {**deepcopy(change["after"]), "version": version, "updatedAt": stamp}}
+            for change in candidate.get("recordChanges", [])]
+
+
+def event_summary(row):
+    result = summary(row)
+    application = row.get("application") or {}
+    if application.get("recordChanges"):
+        result["recordChanges"] = deepcopy(application["recordChanges"])
+    return result
 
 
 def exposure(report):
@@ -312,6 +430,9 @@ def _preview(ops, context, inputs, target):
         fail("Select a different saved planning revision.", "AMENDMENT_UNCHANGED", 409)
     amended_context = {**deepcopy(context), "plan": target,
                        "program": {**deepcopy(context["program"]), "planRevision": target["revision"]}}
+    record_changes = []
+    if "packageMappings" in original:
+        amended_context["records"], record_changes = mapped_records(context, target, original["packageMappings"])
     native_before = domain.report(**context)
     native_after = domain.report(**amended_context)
     clocks_before = completion.dashboard(context, original["asOfDate"])["clocks"]
@@ -329,15 +450,23 @@ def _preview(ops, context, inputs, target):
               "changes": changes(
                   {"scenario": context["plan"]["scenario"], "planning": context["plan"]["planning"]},
                   {"scenario": target["scenario"], "planning": target["planning"]}),
-              "compatibility": compatibility(context, target),
+              "compatibility": (mapped_compatibility(context, target, original["packageMappings"],
+                    amended_context["records"], record_changes) if "packageMappings" in original
+                    else compatibility(context, target)),
               "reports": {"before": native_before, "selected": native_after},
               "exposure": {"before": exposure(native_before), "selected": exposure(native_after)},
               "paymentClocks": deepcopy(clocks_before)}
+    if "packageMappings" in original:
+        result["recordChanges"] = record_changes
+        result["retainedSelectionReviews"] = retained_selection_reviews(context, target, original["packageMappings"])
     # Saving and reviewing an amendment advances the case version without changing
     # its business data. Such own workflow events must not implicitly rebase a
     # changed case, or invalidate an otherwise identical reviewed selection.
     fingerprint = {key: deepcopy(result[key]) for key in
                    ("schema", "inputs", "source", "changes", "compatibility", "paymentClocks", "exposure")}
+    if "packageMappings" in original:
+        fingerprint["recordChanges"] = deepcopy(result["recordChanges"])
+        fingerprint["retainedSelectionReviews"] = deepcopy(result["retainedSelectionReviews"])
     fingerprint["selectedPlan"] = plan_core(target)
     fingerprint["reports"] = {key: _without_version(value) for key, value in result["reports"].items()}
     result["previewSha256"] = digest(fingerprint)
@@ -451,13 +580,25 @@ def command(ops, context, action, data, actor, next_version, note):
                 "preservedRecordsSha256": digest(context["records"]),
                 "preservedSourcesSha256": digest(context["sources"]),
                 "caseCalendarStart": context["program"].get("calendarStart")}
+            changed_records = applied_record_changes(fresh, next_version, row["updatedAt"])
+            if changed_records:
+                projected = deepcopy(context["records"])
+                for change in changed_records:
+                    ops._save(program_id, change["kind"], change["after"])
+                    for index, original in enumerate(projected[change["kind"]]):
+                        if original["id"] == change["recordId"]:
+                            projected[change["kind"]][index] = change["after"]
+                            break
+                del row["application"]["preservedRecordsSha256"]
+                row["application"].update({"previousRecordsSha256": digest(context["records"]),
+                    "appliedRecordsSha256": digest(projected), "recordChanges": changed_records})
             ops.db.execute("UPDATE ops_programs SET plan_revision=?,plan_json=? WHERE id=?",
                            (target["revision"], canonical(target), program_id))
         else:
             fail("Unknown amendment action.")
     row = seal(row)
     _save_row(ops, program_id, row)
-    return {"before": summary(old) if old else None, "after": summary(row),
+    return {"before": event_summary(old) if old else None, "after": event_summary(row),
             "kind": "amendment", "recordId": row["id"], "amendmentRevision": row["revision"],
             "amendmentSha256": row["sha256"], "previewSha256": row["preview"]["previewSha256"],
             **({"planRevision": row["application"]["selectedPlan"]["revision"]} if row["state"] == "APPLIED" else {})}
@@ -473,6 +614,21 @@ def plan_at(rows, current_plan, version):
             break
         chosen = row["preview"]["selectedPlan"]
     return chosen
+
+
+def completion_basis(plan, rows, events, completion_row):
+    versions = [event["version"] for event in events if event["version"] <= completion_row["version"]
+                and event.get("action") == "completion.save" and event.get("recordId") == completion_row["id"]]
+    return plan_at(rows, plan, (max(versions) if versions else completion_row["version"]) - 1)
+
+
+def last_applied_version(ops, program_id):
+    for version, raw in ops.db.execute(
+            "SELECT version,body_json FROM ops_plan_amendments WHERE program_id=? ORDER BY version DESC",
+            (program_id,)):
+        if json.loads(raw).get("state") == "APPLIED":
+            return version
+    return 0
 
 
 def native_plan_rows(raw):
@@ -524,6 +680,22 @@ def _records_at(events, version, work_intakes=()):
                     result[linked_kind][ident] = snapshot
                 elif link.get("operation") != "REUSED" or result[linked_kind].get(ident) != snapshot:
                     fail("The intake reuse differs from the actual prior native record.", "AMENDMENT_HISTORY")
+            continue
+        if event.get("action") == "amendment.apply" and isinstance(after, dict) and "recordChanges" in after:
+            changes = after["recordChanges"]
+            if not isinstance(changes, list):
+                fail("Retain the complete applied package attribution changes.", "AMENDMENT_HISTORY")
+            for change in changes:
+                obj(change, ("kind", "recordId", "before", "after"), "retained record attribution")
+                linked_kind, ident = change.get("kind"), change.get("recordId")
+                original, revised = change.get("before"), change.get("after")
+                if (linked_kind not in ("work", "invoices", "deployments") or not isinstance(ident, str)
+                        or not isinstance(original, dict) or not isinstance(revised, dict)
+                        or result[linked_kind].get(ident) != original
+                        or original.get("id") != ident or revised.get("id") != ident
+                        or revised.get("version") != event["version"]):
+                    fail("The applied attribution differs from its original case record.", "AMENDMENT_HISTORY")
+                result[linked_kind][ident] = revised
             continue
         if kind not in result:
             continue
@@ -577,8 +749,8 @@ def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=()
             fail("The original amendment edition sequence is incomplete.", "AMENDMENT_HISTORY")
         event = events[version - 1]
         if (event.get("action") not in ACTIONS or event.get("recordId") != ident
-                or event.get("kind") != "amendment" or event.get("after") != summary(row)
-                or event.get("before") != (summary(previous) if previous else None)
+                or event.get("kind") != "amendment" or event.get("after") != event_summary(row)
+                or event.get("before") != (event_summary(previous) if previous else None)
                 or event.get("actor") != row["actor"] or event.get("note") != row["note"]):
             fail("The amendment does not match its original native event.", "AMENDMENT_HISTORY")
         candidate = row["preview"]
@@ -625,7 +797,8 @@ def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=()
             else:
                 application = obj(row.get("application"), ("recordedAt", "actor", "version", "previousCaseVersion",
                     "previousPlan", "selectedPlan", "reviewedAmendmentRevision", "reviewedAmendmentSha256",
-                    "previewSha256", "preservedRecordsSha256", "preservedSourcesSha256", "caseCalendarStart"),
+                    "previewSha256", "preservedRecordsSha256", "previousRecordsSha256", "appliedRecordsSha256",
+                    "recordChanges", "preservedSourcesSha256", "caseCalendarStart"),
                     "retained baseline application")
                 if (row["state"] != "APPLIED" or previous["state"] != "REVIEWED"
                         or row["review"] != previous["review"]
@@ -636,10 +809,25 @@ def validate_import(ops, context, rows, events, planning_raw, *, work_intakes=()
                         or application.get("previewSha256") != candidate["previewSha256"]
                         or application.get("previousPlan") != plan_pin(snapshot["plan"])
                         or application.get("selectedPlan") != plan_pin(candidate["selectedPlan"])
-                        or application.get("preservedRecordsSha256") != digest(snapshot["records"])
+                        or (not candidate.get("recordChanges") and application.get("preservedRecordsSha256") != digest(snapshot["records"]))
                         or application.get("preservedSourcesSha256") != digest(snapshot["sources"])
                         or application.get("caseCalendarStart") != snapshot["program"].get("calendarStart")):
                     fail("The applied baseline differs from its original review.", "AMENDMENT_HISTORY")
+                expected_changes = applied_record_changes(candidate, version, row["updatedAt"])
+                if expected_changes:
+                    projected = deepcopy(snapshot["records"])
+                    for change in expected_changes:
+                        for index, original in enumerate(projected[change["kind"]]):
+                            if original["id"] == change["recordId"]:
+                                projected[change["kind"]][index] = change["after"]
+                                break
+                    if (application.get("recordChanges") != expected_changes
+                            or application.get("previousRecordsSha256") != digest(snapshot["records"])
+                            or application.get("appliedRecordsSha256") != digest(projected)
+                            or "preservedRecordsSha256" in application):
+                        fail("The applied package attribution changed another retained observation.", "AMENDMENT_HISTORY")
+                elif any(key in application for key in ("recordChanges", "previousRecordsSha256", "appliedRecordsSha256")):
+                    fail("The baseline receipt contains unreviewed package attribution.", "AMENDMENT_HISTORY")
                 if _records_at(events, version - 1, work_intakes) != _record_set(snapshot["records"]):
                     fail("Recorded work changed between review and baseline application.", "AMENDMENT_HISTORY")
                 if applied and not same_plan(applied[-1]["preview"]["selectedPlan"], snapshot["plan"]):

@@ -33,6 +33,8 @@ function workspaceView(value) {
       .every(key => Number.isSafeInteger(value.limits[key]) && value.limits[key] > 0) &&
     actionList(value.actions),
   'NATIVE_REQUEST_WORKSPACE_INVALID', 'The running endpoint lacks its native request workspace description.');
+  if (value.route.routeTemplate !== undefined)
+    need(text(value.route.routeTemplate), 'NATIVE_REQUEST_WORKSPACE_INVALID', 'The configured route template must be explicit text.');
   if (value.workspaceId !== undefined) workspaceId(value.workspaceId);
   if (value.workspaceLabel !== undefined)
     need(text(value.workspaceLabel), 'NATIVE_REQUEST_WORKSPACE_INVALID', 'The configured service label is missing.');
@@ -67,6 +69,14 @@ function prepared(value, intentId) {
       Number.isSafeInteger(selected.body.bytes) && selected.body.bytes >= 0 && digest(selected.body.sha256)) &&
     actionList(value.availableActions),
   'NATIVE_REQUEST_PREPARATION_INVALID', 'The native review lacks its original page, selected offer or retained body.');
+  if (selected.pathBinding !== undefined) {
+    const binding = selected.pathBinding;
+    need(plain(binding) && (binding.routeTemplate === null || text(binding.routeTemplate)) &&
+      plain(binding.values) && [Object.prototype, null].includes(Object.getPrototypeOf(binding.values)) &&
+      Object.values(binding.values).every(item => typeof item === 'string') &&
+      text(binding.advertisedUrl) && binding.requestUrl === value.request.url,
+    'NATIVE_REQUEST_PREPARATION_INVALID', 'The retained path binding must identify this original concrete request.');
+  }
   return value;
 }
 function rangeRequest(request = {}) {
@@ -185,7 +195,11 @@ export async function openNativeRequestClient({
     need(plain(request), 'NATIVE_REQUEST_INPUT_INVALID', 'Supply a selected catalog handle and explicit request input.');
     intent(request.intentId);
     need(text(request.handle) && plain(request.input),
-      'NATIVE_REQUEST_INPUT_INVALID', 'Select a catalog resource and supply its query or exact UTF-8 body.');
+      'NATIVE_REQUEST_INPUT_INVALID', 'Select a catalog resource and supply its path, query or exact UTF-8 body.');
+    if (request.input.path !== undefined)
+      need(plain(request.input.path) && [Object.prototype, null].includes(Object.getPrototypeOf(request.input.path)) &&
+        Object.values(request.input.path).every(value => typeof value === 'string'),
+      'NATIVE_REQUEST_INPUT_INVALID', 'Supply explicit HTTP path parameter values as a string map.');
     const selected = copy(request), intentId = selected.intentId;
     return prepared(await invoke('request-prepare', selected, options), intentId);
   }
