@@ -23,7 +23,8 @@
       "types": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.d.mts",
       "import": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.mjs"
     },
-    "./merchant/console/report-files": "./source/stellar-forge/mcp-merchant-operator/console/workflow-report-files.mjs"
+    "./merchant/console/report-files": "./source/stellar-forge/mcp-merchant-operator/console/workflow-report-files.mjs",
+    "./merchant/console/series-agent": "./source/stellar-forge/mcp-merchant-operator/workflow-series-agent.mjs"
   },
   "applicationProviders": {
     "merchant-console": "stellar-forge/mcp-merchant-operator/console/application-provider.mjs"
@@ -40,12 +41,16 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_workflow_source.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_workflows.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_workflows.mjs",
-    "stellar-forge/mcp-merchant-operator/console/workflow-report-files.d.mts"
+    "stellar-forge/mcp-merchant-operator/console/workflow-report-files.d.mts",
+    "stellar-forge/mcp-merchant-operator/console/WORKFLOW_SERIES_AGENT.md"
   ],
   "browserAssets": [
     {
       "server": "stellar-forge/mcp-merchant-operator/console/service.mjs",
       "manifest": "stellar-forge/mcp-merchant-operator/console/browser-assets.json"
     }
-  ]
+  ],
+  "merchantProviders": {
+    "workflow-series": "stellar-forge/mcp-merchant-operator/providers/workflow-series.mjs"
+  }
 }
