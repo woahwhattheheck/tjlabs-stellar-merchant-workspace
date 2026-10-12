@@ -50,16 +50,19 @@ def object_id(kind, data):
 def canonical(value):
     return (json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode("utf-8")
 
-def regular(path, maximum=FILE_LIMIT):
+def regular(path, maximum=FILE_LIMIT, executable=None):
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
     try:
         before = os.fstat(fd)
         need(stat.S_ISREG(before.st_mode) and before.st_size <= maximum, "Expected a bounded regular source file")
+        if executable is not None:
+            need(bool(before.st_mode & stat.S_IXUSR) == executable,
+                 "Existing materialized source executable mode differs: " + str(path))
         with os.fdopen(fd, "rb", closefd=False) as handle:
             data = handle.read(maximum + 1)
         after = os.fstat(fd)
-        need(len(data) == before.st_size and (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) ==
-             (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns), "Source file changed during reading")
+        need(len(data) == before.st_size and (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_mode) ==
+             (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_mode), "Source file changed during reading")
         return data
     finally:
         os.close(fd)
@@ -680,12 +683,14 @@ def materialize(directory, selected, cache):
         path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         need(path.parent.resolve() == path.parent, "Materialized source directory was redirected")
         if path.exists():
-            need(regular(path) == data, "Existing source postimage differs: " + row["path"])
+            need(regular(path, executable=row["mode"] == "100755") == data,
+                 "Existing source postimage differs: " + row["path"])
             continue
         temporary = path.with_name(".receiving-" + uuid.uuid4().hex)
         fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                      0o755 if row["mode"] == "100755" else 0o644)
         try:
+            os.fchmod(fd, 0o755 if row["mode"] == "100755" else 0o644)
             with os.fdopen(fd, "wb", closefd=False) as handle:
                 handle.write(data)
                 handle.flush()
@@ -693,7 +698,8 @@ def materialize(directory, selected, cache):
             try:
                 os.link(temporary, path, follow_symlinks=False)
             except FileExistsError:
-                need(regular(path) == data, "Concurrent original source postimage differs")
+                need(regular(path, executable=row["mode"] == "100755") == data,
+                     "Concurrent original source postimage differs")
         finally:
             os.close(fd)
             temporary.unlink(missing_ok=True)

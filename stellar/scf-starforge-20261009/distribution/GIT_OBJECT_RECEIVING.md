@@ -299,8 +299,9 @@ actual parent IDs while allowing this one selected snapshot to stand alone.
 A second original consumer can read this completed cache as its own Git donor.
 It can materialize its required source closure with `--materialize` in that
 consumer's private directory. Existing files must match the same original
-bytes; the receiver preserves the original executable modes for new source
-members. A complete native source materialization does not require another
+bytes and Git executable class. New source members receive their original
+0644 or 0755 mode explicitly before being synced and linked, independently of
+the caller's umask. A complete native source materialization does not require another
 package build or dependency install.
 
 Keep the cache and its metadata for the active receiving operations. Publish
