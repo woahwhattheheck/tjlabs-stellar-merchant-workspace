@@ -77,3 +77,37 @@ The finished archive is OUTPUT.tar.gz, with its original path, byte length and S
 Operation inputs, original requests and captured outputs are retained through the existing atomic CaseStore artifact writer. Each complete export file set is saved before its member files are materialized, so a restart preserves one coherent original manifest. Existing quote, response, agreement, invoice, preview and request IDs are reused by their original models. The first invoice status and both completed export captures remain the retained originals.
 
 For an actual failure, the helper retains its phase, original exception and request files under failures/. Continue that same operation with the source correction; the original response, agreement, invoice and source ownership stay with their retained IDs. The COMPLETE result is checked against its original operation, case, selected quote and native/performance result hashes before it is returned on replay.
+
+## Following financial source on the same saved customer case
+
+The complete original native04 source is retained in `source-transfer.json` and its seven `source-parts/` files. Each ordered part contains raw UTF-8 text in `content`. The index records every complete part and whole-source byte length, SHA-256 and Git blob.
+
+The complete `financial-source-successor.json` carries nine current original financial dependencies, this guide and the source receiver. The dependencies retain the accepted Service renewal checks and original Service validators, together with the maintained calendar-month payment-plan implementation. The source receiver verifies all 471 original current files and 181 frozen files, checks every successor's captured preimage, then publishes the complete following tree. Its two added original renewal modules and receiving utility produce 474 source files.
+
+The original Performance operation remains bound to `/dev/scf-performance-25fd-20261012-native04/work/source`, with its existing `work/original-native` and `work/performance` directories. Finish that original operation before running the following financial step: `work/performance/flow-result.json` must have its original schema and `state: "COMPLETE"`. This preserves the actual recipient case, quote history, source documents and request IDs. The original helper can call the Performance producer when that result is missing, so this continuation requires the completed result first.
+
+The following financial operation is bound to the separate `/dev/scf-performance-25fd-20261012-native04/work/financial-source` tree. If `work/performance-financial/operation.json` already exists, preserve its exact recorded `sourceRoot` and existing request identities. The receiving utility checks that binding before writing; an existing operation bound to another tree continues from its own recorded tree.
+
+From a checkout containing this complete maintained experiment directory, materialize the following source with the literal command:
+
+```sh
+python3 experiments/merchant-performance-financial-84df-20261012/receive-financial-source.py \
+  --index experiments/merchant-performance-financial-84df-20261012/source-transfer.json \
+  --successor experiments/merchant-performance-financial-84df-20261012/financial-source-successor.json \
+  --output /dev/scf-performance-25fd-20261012-native04/work/financial-source
+```
+
+It reads the saved COMPLETE Performance result and existing financial operation binding, validates the full source before writing, and materializes only the separate source directory. An interrupted source receive resumes from exact existing preimages or postimages; source files are published atomically. `SOURCE_READY` reports the full source count and actual successor digest.
+
+Then invoke the existing original financial programme from that source tree:
+
+```sh
+node /dev/scf-performance-25fd-20261012-native04/work/financial-source/experiments/merchant-performance-financial-84df-20261012/performance-financial.mjs \
+  --source-root /dev/scf-performance-25fd-20261012-native04/work/financial-source \
+  --native-run /dev/scf-performance-25fd-20261012-native04/work/original-native \
+  --performance-run /dev/scf-performance-25fd-20261012-native04/work/performance \
+  --output /dev/scf-performance-25fd-20261012-native04/work/performance-financial \
+  --python python3
+```
+
+The existing financial programme continues the original recipient case, accepted response, revised quotation, pricing/performance source and native IDs. Its operation and complete output retain the exact source descriptors it actually loads. The original native04 Performance source and frozen foundation remain attached to their own completed records. The existing 84DF receiver owns this same customer operation and reconciles the latest saved native04 archive before continuing it.
