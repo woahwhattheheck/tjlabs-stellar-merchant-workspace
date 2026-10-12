@@ -242,7 +242,10 @@ def receive_plan(planner, filename):
         for ident, capture in captures.items():
             if ident != fingerprint({k: v for k, v in capture.items() if k != "id"}):
                 raise InputError("Original native capture identity differs")
-            domain.capture_input({k: v for k, v in capture.items() if k not in {"id", "schema", "createdAt", "actor"}})
+            verified_capture = domain.capture_input({k: v for k, v in capture.items()
+                if k not in {"id", "schema", "createdAt", "actor", "destinationAnalysis"}})
+            if fingerprint(verified_capture["destinationAnalysis"]) != fingerprint(capture["destinationAnalysis"]):
+                raise InputError("Original installed field analysis differs from its retained complete capture")
         plans = {}
         for plan in body["plans"]:
             verified = planner._decode(dumps(plan))
@@ -293,6 +296,8 @@ def receive_plan(planner, filename):
             original = plans[(run["plan"], run["revision"])]
             if not original.get("prepared") or original["prepared"]["sha256"] != run["preparedSha256"]:
                 raise InputError("Original native run differs from its complete prepared request")
+            if run["captureId"] != original["definition"]["captureId"]:
+                raise InputError("Original native run selects a different original capture")
             request_set = domain.native_request_set(run["connection"], run["steps"])
             if domain.native_request_set(captures[original["definition"]["captureId"]]["connection"],
                                          asset_json(original["prepared"])) != request_set:
@@ -309,6 +314,23 @@ def receive_plan(planner, filename):
                 linked_capture = captures[selected_plan["definition"]["captureId"]]
                 if domain.native_request_set(linked_capture["connection"], asset_json(selected_plan["prepared"])) != request_set:
                     raise InputError("A linked preparation has different native mutations")
+            allowed_captures = {run["captureId"]} | {
+                plans[(link["plan"], link["revision"])]["definition"]["captureId"]
+                for link in run.get("linkedPreparations", [])
+            }
+            for step in run["steps"]:
+                capture_id = step.get("configurationCaptureId", run["captureId"])
+                if capture_id not in captures or capture_id not in allowed_captures:
+                    raise InputError("An original native step lost its reviewed configuration capture")
+                if step.get("actual") or step.get("result"):
+                    if not step.get("actual") or not step.get("result"):
+                        raise InputError("Retain both the complete actual native body and its receiving result")
+                    actual_raw = (temporary / "assets" / (step["actual"]["sha256"] + ".bin")).read_bytes()
+                    result = domain.receiving(step, actual_raw, captures[capture_id])
+                    if step.get("afterId") is not None and result["nativeId"] != step["afterId"]:
+                        raise InputError("Original receiving does not match the returned native project ID")
+                    if fingerprint(result) != fingerprint(asset_json(step["result"])):
+                        raise InputError("The complete original native receiving result does not reproduce")
         for event in body["events"]:
             if event["run"] not in run_ids or type(event["sequence"]) is not int or event["sequence"] < 1:
                 raise InputError("A native event refers to a missing original operation or sequence")

@@ -197,18 +197,19 @@ async function receiveIntent(task, directory) {
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
-function report(plan) {
+function report(plan, { legacy = false } = {}) {
   const task = plan.task.manifest.task;
+  const cell = label => legacy ? '<td>' : '<td data-label="' + label + '">';
   const rows = plan.files.map((file, index) => {
     const entry = plan.task.manifest.entries[index], job = plan.jobs[index];
     const outcome = nativeOutcome(job);
     const errors = Object.fromEntries(Object.entries(outcome).filter(([key, value]) =>
       ['nativeError', 'lastError', 'evidenceError', 'responseCleanupError'].includes(key) && value !== null));
-    return '<tr><td data-label="Result">' + escapeHtml(entry.selection.role) + '</td><td data-label="Original intent">' +
-      escapeHtml(entry.selection.intentId) + '</td><td data-label="Full output">' +
-      '<a href="' + file.path + '" download>Complete result</a> (' + file.bytes + ' bytes)</td><td data-label="Source edition">' +
-      escapeHtml(entry.selection.sourceEdition ?? 'Recorded in original request') + '</td><td data-label="Facilitator selection">' +
-      escapeHtml(entry.selection.facilitator ?? 'Original merchant configuration') + '</td><td data-label="Native outcome">' +
+    return '<tr>' + cell('Result') + escapeHtml(entry.selection.role) + '</td>' + cell('Original intent') +
+      escapeHtml(entry.selection.intentId) + '</td>' + cell('Full output') +
+      '<a href="' + file.path + '"' + (legacy ? '' : ' download') + '>Complete result</a> (' + file.bytes + ' bytes)</td>' + cell('Source edition') +
+      escapeHtml(entry.selection.sourceEdition ?? 'Recorded in original request') + '</td>' + cell('Facilitator selection') +
+      escapeHtml(entry.selection.facilitator ?? 'Original merchant configuration') + '</td>' + cell('Native outcome') +
       escapeHtml(outcome.state) + '<br>HTTP ' + escapeHtml(outcome.httpStatus ?? 'not recorded') +
       '<br>Native status: ' + escapeHtml(outcome.nativeStatus ?? 'not recorded') +
       (Object.keys(errors).length ? '<pre>' + escapeHtml(JSON.stringify(errors, null, 2)) + '</pre>' : '') +
@@ -225,12 +226,13 @@ function report(plan) {
     'table{border-collapse:collapse;width:100%;margin:24px 0}th,td{border:1px solid #bbb;padding:10px;text-align:left;' +
     'vertical-align:top;overflow-wrap:anywhere}th{background:#eee}a{color:#111;text-decoration:underline}' +
     'pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f5f5;border:1px solid #ccc;padding:16px}' +
-    'details{border-top:1px solid #ccc;padding:12px 0}summary{overflow-wrap:anywhere}small{display:block;overflow-wrap:anywhere}' +
+    (legacy ? 'details{border-top:1px solid #ccc;padding:12px 0}small{display:block;overflow-wrap:anywhere}</style>'
+      : 'details{border-top:1px solid #ccc;padding:12px 0}summary{overflow-wrap:anywhere}small{display:block;overflow-wrap:anywhere}' +
     '@media(max-width:720px){body{margin:24px auto;padding:0 16px}h1{font-size:23px}' +
     'table,tbody,tr,td{display:block}thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}' +
     'tr{border:1px solid #bbb;margin:0 0 16px}td{border:0;border-bottom:1px solid #ddd;padding:9px 12px}' +
     'td:last-child{border-bottom:0}td::before{content:attr(data-label);display:block;font-size:12px;font-weight:650;color:#555}' +
-    'pre{padding:12px;max-width:100%;box-sizing:border-box}}@media print{body{margin:0;max-width:none}details{break-inside:avoid}}</style>' +
+    'pre{padding:12px;max-width:100%;box-sizing:border-box}}@media print{body{margin:0;max-width:none}details{break-inside:avoid}}</style>') +
     '<h1>' + escapeHtml(task.title) + '</h1><p>' + escapeHtml(task.purpose) + '</p>' +
     '<p><strong>All selected response files received</strong> · ' + plan.files.length + ' complete files</p>' +
     '<p>' + escapeHtml(task.system) + ' / ' + escapeHtml(task.id) + ' / ' + escapeHtml(task.revision) + '</p>' +
@@ -251,6 +253,18 @@ async function publishExact(path, bytes) {
     need(digest(await readBytes(path, bytes.length)) === digest(bytes), 'TASK_PACKET_EXISTING_FILE_CHANGED');
   }
 }
+// Existing receivings retain either official v1 report byte sequence across a layout upgrade.
+async function publishReport(path, plan) {
+  let html = Buffer.from(report(plan));
+  try { await publishExact(path, html); }
+  catch (error) {
+    if (error.code !== 'TASK_PACKET_EXISTING_FILE_CHANGED') throw error;
+    html = Buffer.from(report(plan, { legacy: true }));
+    await publishExact(path, html);
+  }
+  return html;
+}
+
 async function completedPacket(directory, expectedTaskSha256, signal) {
   if (!await exists(join(directory, 'manifest.json'))) return null;
   return openInboxTaskPacket({ directory, expectedTaskSha256, signal });
@@ -431,9 +445,9 @@ export class InboxTask {
         await localFile(directory, file).verify({ signal });
       }
     }
-    const taskBytes = jsonBytes(plan.task), html = Buffer.from(report(plan));
+    const taskBytes = jsonBytes(plan.task);
     await publishExact(join(directory, 'task.json'), taskBytes);
-    await publishExact(join(directory, 'review.html'), html);
+    const html = await publishReport(join(directory, 'review.html'), plan);
     const packet = { schema: PACKET, taskSha256: this.taskSha256, planSha256: sha(plan),
       receivedAt: now(), files: [...plan.files,
         { path: 'task.json', bytes: taskBytes.length, sha256: digest(taskBytes) },
@@ -454,9 +468,13 @@ export async function openInboxTaskPacket({ directory, expectedTaskSha256, signa
     packet.planSha256 === sha(plan) && Array.isArray(packet.files) &&
     packet.files.length === plan.files.length + 2, 'TASK_PACKET_MANIFEST_INVALID');
   if (expectedTaskSha256 !== undefined) need(packet.taskSha256 === expectedTaskSha256, 'TASK_BINDING_MISMATCH');
-  const taskBytes = jsonBytes(plan.task), html = Buffer.from(report(plan));
-  const expected = [...plan.files, { path: 'task.json', bytes: taskBytes.length, sha256: digest(taskBytes) },
+  const taskBytes = jsonBytes(plan.task);
+  const expectedFor = html => [...plan.files,
+    { path: 'task.json', bytes: taskBytes.length, sha256: digest(taskBytes) },
     { path: 'review.html', bytes: html.length, sha256: digest(html) }];
+  let expected = expectedFor(Buffer.from(report(plan)));
+  if (sha(packet.files) !== sha(expected))
+    expected = expectedFor(Buffer.from(report(plan, { legacy: true })));
   need(sha(packet.files) === sha(expected), 'TASK_PACKET_MANIFEST_INVALID');
   for (const file of expected) {
     need(Number.isSafeInteger(file.bytes) && file.bytes >= 0 && HEX.test(file.sha256), 'TASK_PACKET_FILE_INVALID');

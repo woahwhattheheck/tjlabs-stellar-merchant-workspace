@@ -298,3 +298,27 @@ includes the exact recipe inputs, response recovery, full-file controls and
 original native receiving continuation. The
 [Merchant operator Applications guide](../../stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md)
 covers saved launch, current private Open, drained Stop and cold reopen.
+
+## Read the scientific report-product architecture
+
+The [development guide](../merchant-workspace/DEVELOPMENT.md#frozen-scientific-reports-as-merchant-resources)
+now connects the complete Groundwater report product to the same native seller,
+buyer and Operations boundaries. The upstream
+[operator guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/9b6b92c2c290b73ca6e263d28603fdcad3a19bf6/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/OPERATOR.md)
+covers exact frozen report assets and terms, original buyer preparation,
+full-package verification, an attributed file decision, optional selected-case
+association and complete report-desk receiving.
+
+Review this as a distinct delivered software capability. Its exact source,
+Linux request recovery and complete control-desk restore have been verified;
+its scientific report/portal operation is still being continued from the
+original generated-package reference finding. A successful source check is
+not a completed report sale or customer receiving decision.
+
+The NYC HPD reviewer packet, both quote outcomes, original result bytes and
+existing purchase/receiving operation above remain unchanged. Read the new
+report workflow from its own actual frozen report and explicitly authorized
+buyer evidence when those records are available. The
+[Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
+describes the precise case/deployment/purchase selection. Neither this
+architecture addition nor opening its source creates another purchase.

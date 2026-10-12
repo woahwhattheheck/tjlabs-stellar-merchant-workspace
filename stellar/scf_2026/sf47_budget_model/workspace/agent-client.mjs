@@ -483,10 +483,24 @@ export class GrantWorkspaceClient {
     return this.#request('/api/operations/' + caseId + '/command',
       {body:{...original, action:'forecast.save', data:{inputs, expectedPreviewSha256}}, originalRequestId:body.requestId});
   }
-  portfolioSeed(caseId, expectedVersion, forecastId) {
+  portfolioSeed(caseId, expectedVersion, forecastId, options = {}) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); id(forecastId, 'forecast');
+    exact(options, ['installationSelections', 'inputs']);
+    if (Object.hasOwn(options, 'installationSelections')) {
+      need(Array.isArray(options.installationSelections) && options.installationSelections.length <= 100,
+        'GRANT_INVALID_INPUT', 'Select at most 100 original Installation editions.');
+      for (const selected of options.installationSelections) {
+        exact(selected, ['taskId', 'installationId', 'installationRevision', 'installationSha256'],
+          ['taskId', 'installationId', 'installationRevision', 'installationSha256']);
+        text(selected.taskId, 'Original Portfolio task ID', 150);
+        id(selected.installationId, 'installation');
+        integer(selected.installationRevision, 'Saved installation edition', 1, 500);
+        sha(selected.installationSha256);
+      }
+    }
+    if (Object.hasOwn(options, 'inputs')) object(options.inputs, 'Complete Portfolio draft');
     return this.#request('/api/operations/' + caseId + '/portfolio-seed',
-      {body:{expectedVersion, forecastId}, mutation:false});
+      {body:{expectedVersion, forecastId, ...options}, mutation:false});
   }
   portfolioPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Portfolio inputs');

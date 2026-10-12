@@ -142,6 +142,9 @@ SOURCE_FILES = (
     "dataset-handler.mjs",
     "iati/examples/amp-haiti/PROGRAMME.md",
     "iati/examples/amp-haiti/selection.json",
+    "iati/amp/destination.py",
+    "iati/amp/DESTINATION.md",
+    "iati/amp/DESTINATION_UPSTREAM.json",
 )
 
 

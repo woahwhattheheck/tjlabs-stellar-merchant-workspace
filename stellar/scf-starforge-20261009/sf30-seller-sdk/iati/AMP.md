@@ -10,7 +10,7 @@ Open **AMP commissioning** in the existing IATI browser. The same saved work is 
 2. Capture the selected installed AMP programme. Use the installed REST base, workspace ID, version and existing login, and the complete project IDs selected in its original export or programme view. The operation receives the actual user, layout, field tree, all destination possible values and every full selected project.
 3. Create a commissioning plan from the saved portfolio revision and native capture. Map each publisher/activity to its existing native project or a complete new project draft. Select installed currency IDs and the actual financial category for outgoing commitment, disbursement and expenditure.
 4. Review the full programme scope. Financial review provides exact original amounts, dates, financial families, source identifiers and complete records. Open the native funding register to select existing funding/transaction IDs. Use explicit donor and funding configuration for new records. A common decision can be applied to the complete previewed programme or financial group.
-5. Save the named financial review and prepare the complete native project requests. The original source capture, full preimages, original project versions, complete new request bodies and every financial change remain retained.
+5. Open **Complete native project field review**. Resolve known field errors in the saved mappings or complete native drafts, then save the named review and prepare the complete native project requests. The original source capture, full preimages, original project versions, complete new request bodies and every financial change remain retained.
 6. Run the prepared native operation with the existing AMP login. The worker retains its run before the first native request, checks the original account/workspace/version and configuration, rereads the current project before update, and receives the actual resulting project after each request.
 7. Download the complete application handover. Receive it into a second existing IATI workspace, open AMP commissioning and continue the same original records and native history.
 8. For the following publisher edition, retain its actual XML, save its portfolio and capture the current AMP projects. **Following publisher edition** carries actual confirmed native IDs into unchanged records. Changed or newly identified rows retain their complete comparison and explicit decisions.
@@ -23,7 +23,9 @@ Each amount group retains reporting organisation, hierarchy, currency, valuation
 
 The row identity combines publisher, collection, IATI activity and the original native row_id. Duplicate source identities require a corrected portfolio selection. Changed source content invalidates an earlier row decision. Full before-and-after correspondence is available when the publisher changes a record identifier.
 
-Existing native funding and transaction IDs select the original correction target. New funding configuration is shared only when the complete explicit funding JSON is identical. Every complete native project retains its original unrelated fields and nested financial records. Destination findings cover configured country, programme, organisation, funding, transaction and required-field semantics.
+Existing native funding and transaction IDs select the original correction target. New funding configuration is shared only when the complete explicit funding JSON is identical. Every complete native project retains its original unrelated fields and nested financial records. Destination findings cover the complete installed field tree: country, programme, organisation, funding, transaction, requiredness, draft status, native types, date forms, length, hierarchical possible values and original update identity/version. The saved capture and each prepared whole project retain every finding. The actual native importer evaluates its configured Java predicates and permissions; complete local findings remain available in the operator and report.
+
+All importable scalar and primitive-list paths are requested from the installed possible-value service because its public metadata does not expose the Java provider class. An explicit empty response is retained separately from an unreceived field. Before an unsent project, the worker compares the actual configured fields and the complete records for values selected by that request. An unrelated catalogue addition leaves the selected mappings intact. A changed selected meaning remains in the original run's configuration review.
 
 ## Existing native API
 
@@ -50,11 +52,11 @@ Native updates retain the original activity_group version and the full request b
 
 Every authored change has a caller requestId and immutable full input. Read the original request result before continuing after an interrupted reply. Reusing identical input returns the saved result; another input needs another request.
 
-Native receiving persists each step before submission. A step with a complete returned project continues from read-only receiving. A step with an uncertain write is reconciled against the actual returned project ID. Completed steps retain their original result. An earlier prepared plan cannot be submitted through a second independent run.
+Native receiving persists each step before submission. A step with a complete returned project continues from read-only receiving. A step with an uncertain write is reconciled against the actual returned project ID. Completed steps retain their original result. Repeated preparation of unchanged whole request bytes reuses the same native operation, including a later explicitly reviewed capture for the same complete request set. An earlier prepared plan cannot be submitted through a second independent run. If a POST already returned a native ID, receiving remains bound to that exact returned ID; it does not assume a versioned update preserves the old internal_id.
 
 The browser stores an unsubmitted mapping draft and the current operation reference in session storage. **Receive original operation** consults the existing workspace. Native continuation uses a freshly entered login with the original saved operation.
 
-Following-edition carry uses confirmed funding and transaction identities, not an amount-only heuristic. Removed source rows remain in the complete comparison and prior history. The analyst can review the actual native correction in the next saved plan.
+Following-edition carry joins each original request position to the full returned funding and transaction collection. It uses retained native identity or an unambiguous complete-record counterpart. Several completely identical new records retain their exact multiplicity and a row-lineage review; the next edition requires the operator to select the actual native IDs for those source rows. The complete accepted native body is retained while that mapping is reviewed. Removed source rows remain in the complete comparison and prior history. The analyst can review the actual native correction in the next saved plan.
 
 ## CLI on the same original workspace
 
@@ -134,3 +136,9 @@ An interrupted request retains its original local request ID for recovery. A com
 ## Original Haiti programme
 
 `examples/amp-haiti/PROGRAMME.md` and `selection.json` contain a complete original-source commissioning case from FCDO-set-20: the explicit parent and subordinate Haiti activities, four financial transactions and five budget periods. The full publisher XML stays unchanged in the existing source store. The brief retains separate commitment/disbursement families, each original transaction reference, actual period coverage and the GBP 4 difference between the listed budget amounts and commitments. Use its source selections with `receiving/amp.py` and the selected installed AMP configuration.
+
+## Destination source and reopening
+
+The full field/importer/exporter contract is [amp/DESTINATION.md](amp/DESTINATION.md), with exact original source identities in [amp/DESTINATION_UPSTREAM.json](amp/DESTINATION_UPSTREAM.json). The application carries that module, guide and source record in its managed source binding and complete portable archive. Independent receiving recomputes saved capture findings, complete project validation and the original full native return comparison from the unchanged retained response bytes.
+
+The actual selected Haiti programme is documented in [examples/amp-haiti/PROGRAMME.md](examples/amp-haiti/PROGRAMME.md). Its complete original publication contains 1,332 activities; the retained programme filter selects the two identified Haiti parent/child activities with their four transactions and five budget periods.

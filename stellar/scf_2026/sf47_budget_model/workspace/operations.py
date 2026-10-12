@@ -15,6 +15,7 @@ from model import Problem, canonical, digest, now, text, short_id, csv_bytes, MA
 import operations_domain as domain
 import forecast as forecasts
 import portfolio as portfolios
+import portfolio_installations as portfolio_installations
 import operations_support as support
 import operations_buyer as buyer
 import operations_completion as completion
@@ -327,6 +328,7 @@ class Operations:
                 if not isinstance(data.get("inputs"), dict):
                     domain.fail("Use a portfolio input object.", "INVALID_PORTFOLIO")
                 saved_forecast = self._portfolio_forecast(program_id, data.get("inputs", {}).get("forecastId"))
+                context = portfolio_installations.capture(self, context, data["inputs"])
                 candidate = portfolios.preview(context, saved_forecast, data.get("inputs"))
                 if candidate["previewSha256"] != domain.sha(data.get("expectedPreviewSha256"), "Reviewed portfolio", False):
                     domain.fail("The portfolio inputs or source differ from the reviewed preview.", "PORTFOLIO_PREVIEW_CONFLICT", 409)
@@ -583,18 +585,25 @@ class Operations:
         return context
 
     def seed_portfolio(self, program_id, body):
-        if not isinstance(body, dict) or set(body) - {"expectedVersion", "forecastId"}:
+        if not isinstance(body, dict) or set(body) - {"expectedVersion", "forecastId", "installationSelections", "inputs"}:
             domain.fail("Use the declared portfolio seed object.", "INVALID_PORTFOLIO")
-        with self.workspace.mutex:
+        if "inputs" in body and not isinstance(body["inputs"], dict):
+            domain.fail("Retain the existing Portfolio draft as a complete input object.", "INVALID_PORTFOLIO")
+        with self._snapshot():
             context = self._portfolio_context(program_id, body.get("expectedVersion"))
-            return portfolios.seed(context, self._portfolio_forecast(program_id, body.get("forecastId")))
+            saved = self._portfolio_forecast(program_id, body.get("forecastId"))
+            context = portfolio_installations.capture(self, context, body.get("inputs"),
+                body.get("installationSelections"), inventory=True, allow_old=True)
+            return portfolios.seed(context, saved, body.get("installationSelections"), body.get("inputs"),
+                                   include_inventory=True)
 
     def preview_portfolio(self, program_id, body):
         if not isinstance(body, dict) or set(body) - {"expectedVersion", "inputs"} or not isinstance(body.get("inputs"), dict):
             domain.fail("Use the declared portfolio preview object.", "INVALID_PORTFOLIO")
-        with self.workspace.mutex:
+        with self._snapshot():
             context = self._portfolio_context(program_id, body.get("expectedVersion"))
             saved = self._portfolio_forecast(program_id, body["inputs"].get("forecastId"))
+            context = portfolio_installations.capture(self, context, body["inputs"])
             return portfolios.preview(context, saved, body["inputs"])
 
     def list_portfolios(self, program_id):
@@ -614,9 +623,16 @@ class Operations:
             if digest({key: item for key, item in value.items() if key != "sha256"}) != value.get("sha256"):
                 domain.fail("The saved portfolio differs from its retained identity.", "PORTFOLIO_CHANGED", 409)
             current = forecasts.source_identity(context)
+            installation_current = {}
+            if portfolio_installations.has_plans_field(value["inputs"]):
+                heads = {row["id"]: row for row in installations.load_heads(self, program_id)}
+                installation_current["installationSourceChanged"] = any(
+                    selected["installationId"] not in heads
+                    or portfolio_installations.row_ref(heads[selected["installationId"]]) != selected
+                    for selected in portfolio_installations.raw_references(value["inputs"]))
             return {**value, "current": {"programId": program_id, "version": current["version"],
                     "sourceChanged": current["factsSha256"] != value["source"]["factsSha256"],
-                    "retainedOriginalProgramId": value["source"]["programId"]}}
+                    "retainedOriginalProgramId": value["source"]["programId"], **installation_current}}
 
     def export_portfolio(self, program_id, portfolio_id):
         value = self.portfolio(program_id, portfolio_id)
@@ -626,11 +642,15 @@ class Operations:
     def select_portfolio(self, program_id, body):
         if not isinstance(body, dict) or set(body) - {"expectedVersion", "portfolioId", "alternativeId"}:
             domain.fail("Use the declared portfolio selection object.", "INVALID_PORTFOLIO")
-        with self.workspace.mutex:
+        with self._snapshot():
             context = self._portfolio_context(program_id, body.get("expectedVersion"))
             value = self.portfolio(program_id, body.get("portfolioId"))
             value.pop("current")
-            return portfolios.select(context, value, short_id(body.get("alternativeId"), "Alternative ID"))
+            alternative_id = short_id(body.get("alternativeId"), "Alternative ID")
+            selected = next((row for row in value["inputs"]["alternatives"] if row["id"] == alternative_id), {})
+            fields = portfolios.allocation_fields(selected, value["inputs"])
+            context = portfolio_installations.capture(self, context, fields)
+            return portfolios.select(context, value, alternative_id)
 
     def installation_workflows(self, program_id, body):
         from operations_installation_workflows import inventory
@@ -1015,6 +1035,7 @@ class Operations:
         portfolio_ids, original_forecasts = set(), {row["id"]: row for row in saved_forecasts}
         for value in saved_portfolios:
             portfolios.validate_saved(value, plan)
+            portfolio_installations.validate_import(value, context, saved_installations, files)
             ident = identifier(value["id"], "portfolio")
             if ident in portfolio_ids:
                 domain.fail("The operations bundle repeats a saved portfolio.", "INVALID_PORTFOLIO")

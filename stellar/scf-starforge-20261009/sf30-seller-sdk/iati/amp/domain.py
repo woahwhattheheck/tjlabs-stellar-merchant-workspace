@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 from iati_source import InputError, financial_dimensions
 from .codec import (loads, dumps, normal, decimal, decimal_text, fingerprint, identity,
                     integer, text, fields)
+from . import destination
 
 SCHEMA = "stellar-forge.iati-amp-plan.v1"
 CAPTURE = "stellar-forge.amp-native-capture.v1"
@@ -165,6 +166,7 @@ def capture_input(raw):
     if layout.get("workspaceId") is not None and layout["workspaceId"] != bound["workspaceId"]:
         raise InputError("Captured native workspace differs from the selected AMP workspace")
     result["schema"] = CAPTURE
+    result["destinationAnalysis"] = normal(destination.analyse_capture(result))
     return result
 
 
@@ -453,14 +455,29 @@ def analyse(rows, definition, capture):
             totals[key]["count"] += 1
             totals[key]["amount"] += decimal(row["value_decimal"])
     counts = dict(Counter(item["state"] for item in views))
-    return {"rows": views, "counts": counts,
-            "financialGroups": [{**value, "amount": decimal_text(value["amount"])} for value in totals.values()],
-            "sourceCount": len({row["source"] for row in rows}), "completeRowCount": len(rows),
-            "ready": bool(counts.get("included")) and not counts.get("review", 0)}
+    analysis = {"rows": views, "counts": counts,
+                "financialGroups": [{**value, "amount": decimal_text(value["amount"])} for value in totals.values()],
+                "sourceCount": len({row["source"] for row in rows}), "completeRowCount": len(rows),
+                "ready": bool(counts.get("included")) and not counts.get("review", 0),
+                "destinationReview": []}
+    if analysis["ready"]:
+        prepared = project_requests(analysis, definition, capture)
+        analysis["destinationReview"] = [
+            {"key": step["key"], "mode": step["mode"], "originalId": step["originalId"],
+             "validation": step["destinationValidation"]} for step in prepared
+        ]
+        analysis["ready"] = all(step["destinationValidation"]["ready"] for step in prepared)
+    return analysis
 
-def prepare(analysis, definition, capture):
-    if not analysis["ready"]:
-        raise InputError("Complete the source-row decisions and mappings before preparing native receiving")
+
+def project_validation(project_json, capture):
+    result = destination.validate_project(project_json, capture)
+    if not isinstance(result, dict) or type(result.get("ready")) is not bool:
+        raise InputError("The complete destination validator did not return its declared validity result")
+    return normal(result)
+
+
+def project_requests(analysis, definition, capture):
     projects, changes, existing = {}, defaultdict(list), project_index(capture)
     new_fundings = {}
     for item in analysis["rows"]:
@@ -485,12 +502,14 @@ def prepare(analysis, definition, capture):
         transactions = funding.setdefault(p["family"], [])
         transaction = loads(p["transactionJson"])
         if p["transactionId"] is None:
+            position = len(transactions)
             transactions.append(transaction)
         else:
             position = next(i for i, t in enumerate(transactions) if t.get("transaction_id") == p["transactionId"])
             transactions[position] = transaction
         changes[key].append({"rowKey": item["key"], "sourceRowSha256": item["sourceRowSha256"],
-                             **p})
+                             **p, "requestFundingIndex": next(i for i, item in enumerate(funds) if item is funding),
+                             "requestTransactionIndex": position})
     result = []
     for key, project in projects.items():
         original_id = project.get("internal_id")
@@ -501,8 +520,76 @@ def prepare(analysis, definition, capture):
                        "preimageSha256": fingerprint(before) if before else None,
                        "preimageJson": dumps(before) if before else None,
                        "requestJson": dumps(project), "requestSha256": fingerprint(project),
+                       "destinationValidation": project_validation(dumps(project), capture),
                        "changes": changes[key]})
     return result
+
+
+def prepare(analysis, definition, capture):
+    if not analysis["ready"]:
+        raise InputError("Complete the source-row decisions, mappings and native project field review before preparing")
+    result = project_requests(analysis, definition, capture)
+    if any(not step["destinationValidation"]["ready"] for step in result):
+        raise InputError("Open the complete native project field findings in the saved analysis before preparing")
+    return result
+
+
+def _native_path_values(value, path):
+    if not path:
+        return value if isinstance(value, list) else [value]
+    if isinstance(value, list):
+        return [item for child in value for item in _native_path_values(child, path)]
+    if isinstance(value, dict) and path[0] in value:
+        return _native_path_values(value[path[0]], path[1:])
+    return []
+
+
+def _possible_value_records(value):
+    """Retain the full original selected provider records, including hierarchy."""
+    result = {}
+    def visit(item):
+        if isinstance(item, dict):
+            ident = item.get("id")
+            if type(ident) in {str, int}:
+                result[fingerprint(ident)] = item
+            for key in ("children", "values", "possible_values", "items"):
+                if key in item:
+                    visit(item[key])
+        elif isinstance(item, list):
+            for child in item:
+                if type(child) in {str, int}:
+                    result[fingerprint(child)] = child
+                else:
+                    visit(child)
+    visit(value)
+    return result
+
+
+def selected_value_changes(request_json, original_capture, current_values_json):
+    """Catalog additions are harmless; changes to selected native meanings need review."""
+    project = loads(request_json)
+    original = loads(original_capture["valuesJson"])
+    current = loads(current_values_json)
+    metadata = field_index(loads(original_capture["fieldsJson"]))
+    differences = []
+    for path, field in metadata.items():
+        source_path = path if path in original else field.get("common-possible-values")
+        if not source_path or source_path not in original:
+            continue
+        before = _possible_value_records(original[source_path])
+        if not before:
+            continue
+        current_path = path if path in current else source_path
+        after = _possible_value_records(current.get(current_path, []))
+        for selected in _native_path_values(project, path.split("~")):
+            if type(selected) not in {str, int}:
+                continue
+            key = fingerprint(selected)
+            if key in before and (key not in after or fingerprint(before[key]) != fingerprint(after[key])):
+                differences.append({"path": path, "selected": normal(selected),
+                                    "before": normal(before[key]), "after": normal(after.get(key)),
+                                    "state": "missing" if key not in after else "changed"})
+    return differences
 
 
 def native_request_identity(step):
@@ -537,10 +624,11 @@ def _native_day(raw):
 
 def _financial_rows(project):
     result = []
-    for funding in project.get("fundings", []):
+    for funding_index, funding in enumerate(project.get("fundings", [])):
         for family in FAMILIES:
-            for transaction in funding.get(family, []):
-                result.append({"fundingId": funding.get("funding_id"), "donorId": funding.get("donor_organization_id"),
+            for transaction_index, transaction in enumerate(funding.get(family, [])):
+                result.append({"fundingIndex": funding_index, "transactionIndex": transaction_index,
+                    "fundingId": funding.get("funding_id"), "donorId": funding.get("donor_organization_id"),
                     "family": family, "transactionId": transaction.get("transaction_id"),
                     "currencyId": transaction.get("currency"), "adjustmentId": transaction.get("adjustment_type"),
                     "date": _native_day(transaction.get("transaction_date")),
@@ -549,58 +637,100 @@ def _financial_rows(project):
     return result
 
 
-def receiving(step, actual_json):
+def _received_collection_item(expected, actual, path, position, comparison):
+    """Use the complete destination pairing and retain every original ordinal."""
+    if (not isinstance(expected, list) or not isinstance(actual, list)
+            or type(position) is not int or not 0 <= position < len(expected)):
+        raise InputError("Prepared financial change must select its original full request position")
+    pairs = [pair for pair in comparison["pairings"]
+             if pair["path"] == path and pair["requestIndex"] == position]
+    if len(pairs) > 1:
+        raise InputError("The full destination comparison supplied conflicting collection pairings")
+    if pairs:
+        pair = pairs[0]
+        index = pair["receivedIndex"]
+        if type(index) is not int or not 0 <= index < len(actual):
+            raise InputError("The full destination pairing selects an absent received record")
+        return pair
+    # A fully unchanged collection without configured pairings preserves its
+    # exact original ordinals. Configured collections retain explicit pairings.
+    if fingerprint(expected) == fingerprint(actual):
+        return {"path": path, "requestIndex": position, "receivedIndex": position,
+                "basis": "complete-unchanged-native-collection",
+                "uniqueNativeLineage": False, "equivalentMultiplicity": False}
+    return None
+
+
+def _matches_financial_change(row, expected):
+    return (row["family"] == expected["family"] and row["donorId"] == expected["donorId"]
+            and row["currencyId"] == expected["nativeCurrencyId"]
+            and row["adjustmentId"] == expected["adjustmentId"]
+            and row["date"] == expected["nativeDate"] and row["amount"] == expected["amount"])
+
+
+def receiving(step, actual_json, capture):
     actual = native_project(loads(actual_json))
     if step.get("iatiIdentifier") and actual.get("iati_identifier") != step["iatiIdentifier"]:
         raise InputError("Received native project identifies a different IATI activity")
+    expected_project = loads(step["requestJson"])
+    complete_fields = destination.compare_project(step["requestJson"], actual_json, capture)
+    if not isinstance(complete_fields, dict) or type(complete_fields.get("matched")) is not bool:
+        raise InputError("The complete destination comparison did not return its declared matching result")
     candidates = _financial_rows(actual)
+    candidate_index = {(row["fundingIndex"], row["family"], row["transactionIndex"]): row for row in candidates}
     rows, used = [], set()
     for expected in step["changes"]:
-        matches = []
-        for index, row in enumerate(candidates):
-            if index in used:
-                continue
-            if (row["family"] == expected["family"] and row["donorId"] == expected["donorId"]
-                    and row["currencyId"] == expected["nativeCurrencyId"]
-                    and row["adjustmentId"] == expected["adjustmentId"]
-                    and row["date"] == expected["nativeDate"] and row["amount"] == expected["amount"]):
-                matches.append((index, row))
-        # Multiple identical values are legal source records; consume them one-to-one.
-        match = next((x for x in matches if x[1]["transactionId"] == expected.get("transactionId")), None)
-        if match is None and matches:
-            match = matches[0]
-        if match is None:
-            rows.append({"rowKey": expected["rowKey"], "state": "different", "expected": expected,
-                         "candidateRecords": [normal(r) for r in candidates if r["family"] == expected["family"]]})
+        funding_index = expected.get("requestFundingIndex")
+        transaction_index = expected.get("requestTransactionIndex")
+        funding_pair = _received_collection_item(
+            expected_project.get("fundings", []), actual.get("fundings", []),
+            "/fundings", funding_index, complete_fields)
+        transaction_pair = None
+        if funding_pair is not None:
+            requested_funding = expected_project["fundings"][funding_index]
+            returned_funding = actual["fundings"][funding_pair["receivedIndex"]]
+            transaction_pair = _received_collection_item(
+                requested_funding.get(expected["family"], []), returned_funding.get(expected["family"], []),
+                "/fundings/" + str(funding_index) + "/" + expected["family"],
+                transaction_index, complete_fields)
+        selected_key = ((funding_pair["receivedIndex"], expected["family"], transaction_pair["receivedIndex"])
+                        if funding_pair is not None and transaction_pair is not None else None)
+        selected = candidate_index.get(selected_key)
+        correspondence = {"requestFundingIndex": funding_index, "requestTransactionIndex": transaction_index,
+                          "fundingPairing": funding_pair, "transactionPairing": transaction_pair}
+        shared = {"rowKey": expected["rowKey"], "expected": expected, "correspondence": correspondence}
+        if selected is None or selected_key in used or not _matches_financial_change(selected, expected):
+            rows.append({**shared, "state": "lineage-review" if complete_fields["matched"] else "different",
+                         "candidateRecords": [normal(row) for row in candidates if _matches_financial_change(row, expected)]})
+            continue
+        used.add(selected_key)
+        ambiguous = (funding_pair.get("equivalentMultiplicity") is True
+                     or transaction_pair.get("equivalentMultiplicity") is True)
+        has_native_ids = (type(selected["fundingId"]) is int and selected["fundingId"] > 0
+                          and type(selected["transactionId"]) is int and selected["transactionId"] > 0)
+        if ambiguous or not has_native_ids:
+            rows.append({**shared, "state": "lineage-review",
+                         "candidateRecords": [normal(row) for row in candidates if _matches_financial_change(row, expected)],
+                         "note": "The complete received contents are retained. Select the actual source-row/native identity before the next edition."})
         else:
-            used.add(match[0])
-            rows.append({"rowKey": expected["rowKey"], "state": "received", "expected": expected,
-                         "native": normal(match[1])})
-    expected_project = loads(step["requestJson"])
-    intended_rows = Counter(fingerprint({k: r[k] for k in ("donorId", "family", "currencyId", "adjustmentId", "date", "amount")})
-                            for r in _financial_rows(expected_project))
-    actual_rows = Counter(fingerprint({k: r[k] for k in ("donorId", "family", "currencyId", "adjustmentId", "date", "amount")})
-                          for r in candidates)
+            rows.append({**shared, "state": "received", "native": normal(selected)})
+    intended_rows = Counter(fingerprint({k: row[k] for k in ("donorId", "family", "currencyId", "adjustmentId", "date", "amount")})
+                            for row in _financial_rows(expected_project))
+    actual_rows = Counter(fingerprint({k: row[k] for k in ("donorId", "family", "currencyId", "adjustmentId", "date", "amount")})
+                          for row in candidates)
     complete_financial_match = intended_rows == actual_rows
     differences = {"missing": list((intended_rows - actual_rows).elements()),
                    "additional": list((actual_rows - intended_rows).elements())}
-    # Retain all complete before/request/after JSON. Other configured fields are read below,
-    # with only native identity/version/permissions/audit metadata treated as generated.
-    generated = {"internal_id", "amp_id", "activity_group", "creation_date", "update_date",
-                 "created_by", "modified_by", "created_on", "modified_on", "edit", "view", "workspaces_edit"}
-    other_differences = []
-    for key, expected in expected_project.items():
-        if key == "fundings" or key in generated:
-            continue
-        if actual.get(key) != expected:
-            other_differences.append({"field": key, "expected": normal(expected), "actual": normal(actual.get(key))})
     return {"nativeId": actual["internal_id"], "ampId": actual.get("amp_id"),
             "activityGroup": normal(actual.get("activity_group")),
             "actualSha256": fingerprint(actual), "rows": rows,
+            "rowLineageReviewCount": sum(row["state"] == "lineage-review" for row in rows),
             "completeFinancialMatch": complete_financial_match,
-            "financialDifferences": differences, "otherFieldDifferences": other_differences,
-            "state": "received" if all(r["state"] == "received" for r in rows)
-                     and complete_financial_match and not other_differences else "different"}
+            "financialDifferences": differences,
+            "destinationComparison": normal(complete_fields),
+            "otherFieldDifferences": normal(complete_fields.get("differences", [])),
+            "state": "received" if all(row["state"] in {"received", "lineage-review"} for row in rows)
+                     and complete_financial_match and complete_fields["matched"] else "different"}
 
 
 def compare(before_rows, after_rows, correspondence=()):

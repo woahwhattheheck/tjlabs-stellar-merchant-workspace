@@ -15,7 +15,8 @@ from urllib.parse import urlsplit, quote
 from urllib.request import Request, build_opener, HTTPCookieProcessor, HTTPSHandler, HTTPRedirectHandler
 from iati_source import InputError
 from .codec import loads, dumps, encode, digest, integer, text, fields
-from .domain import connection, native_project, DEFAULT_VALUE_FIELDS
+from .domain import connection, native_project
+from .destination import required_value_fields
 
 MAX_RESPONSE = 64 * 1024 * 1024
 SAFE_HEADERS = {"content-type", "content-length", "etag", "last-modified", "date", "retry-after"}
@@ -174,7 +175,8 @@ class AmpSession:
             raise InputError("Choose the complete explicit native project selection")
         session_json, layout_json = self.authenticate(credentials)
         field_data, field_raw, _ = self.request("GET", "activity/fields")
-        values_data, values_raw, _ = self.request("POST", "activity/field/values", DEFAULT_VALUE_FIELDS)
+        values_data, values_raw, _ = self.request("POST", "activity/field/values",
+                                                required_value_fields(field_raw.decode("utf-8")))
         if not isinstance(values_data, dict):
             raise NativeFailure("The original field-values read did not return a complete object")
         # The pinned GET /activity/projects endpoint excludes its last row. Read exactly

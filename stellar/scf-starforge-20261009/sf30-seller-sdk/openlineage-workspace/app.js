@@ -1,4 +1,6 @@
 import { createSchemaUI } from "./schema-ui.js";
+import { installQualityDesk } from "./quality-ui.mjs";
+
 const $ = id => document.getElementById(id);
 const KINDS = { runs: "run", jobs: "job", datasets: "dataset" };
 const LABELS = { runs: "Runs", jobs: "Jobs", datasets: "Datasets", sources: "Sources", editions: "Saved editions", reviews: "Reviews", results: "Attached results", schema: "Schema changes", diagnostics: "Events requiring attention" };
@@ -13,6 +15,8 @@ const DESCRIPTIONS = {
   schema: "Compare saved schemas, inspect declared downstream effects, and resolve staff decisions.",
   diagnostics: "Original events with details to resolve before projection."
 };
+LABELS.quality = "Data quality";
+DESCRIPTIONS.quality = "Original dataset measurements, assertion results, saved rules and review decisions.";
 const state = {
   view: null, section: "runs", edition: "", search: "", runState: "", attention: false,
   selection: null, detail: null, detailLoading: false, detailTab: "overview",
@@ -346,6 +350,7 @@ function selectEntityLink(key, label = null) {
 
 function renderCatalog() {
   if (!state.view) return;
+  if (qualityDesk.render()) return;
   if (state.section === "schema") { schemaUI.render($("catalog"), $("inspector")); return; }
   const host = $("catalog"), view = state.view;
   let records = (view[state.section] ?? []).filter(matching);
@@ -998,6 +1003,20 @@ document.querySelectorAll("[data-view]").forEach(control => control.addEventList
 $("search-input").addEventListener("input", () => { state.search = $("search-input").value; renderCatalog(); });
 $("state-filter").addEventListener("change", () => { state.runState = $("state-filter").value; renderCatalog(); });
 $("attention-filter").addEventListener("change", () => { state.attention = $("attention-filter").checked; renderCatalog(); });
+const qualityDesk = installQualityDesk({
+  getState: () => state, action, mutate, refresh, notify: notice, download: downloaded,
+  navigate(section) {
+    if (!state.view) return;
+    state.section = section; state.selection = null; state.detail = null; state.detailVersion++;
+    renderShell(); renderCatalog(); renderInspector();
+  },
+  openSource(id) {
+    state.section = "sources"; state.selection = null; state.detail = null; state.detailVersion++;
+    renderShell(); renderCatalog();
+    loadSelection({ kind: "source", id }).catch(error => notice(error.message, true));
+  }
+});
+
 async function start() {
   try {
     const saved = await journal("read");

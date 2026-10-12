@@ -59,7 +59,7 @@ window.IatiAmpUi=function(api){
   if(!id)throw new Error('Choose a retained native AMP capture.');
   capture=await call('capture?'+q({id}));nativeProjects=exactView(capture.projectsJson);nativeValues=exactView(capture.valuesJson);
   $('capture-select').value=id;
-  out('capture-summary',{name:capture.name,connection:capture.connection,coverage:capture.coverage,acquisition:capture.acquisition,createdAt:capture.createdAt});
+  out('capture-summary',{name:capture.name,connection:capture.connection,coverage:capture.coverage,acquisition:capture.acquisition,createdAt:capture.createdAt,destination:capture.destinationAnalysis});
   $('capture-json').value=capture.projectsJson;fillCaptureSource();mapping();buttons();
  }
  function fillCaptureSource(){if(capture){const field=$('source-kind').value;$('capture-json').value=capture[field]??'';}}
@@ -76,7 +76,8 @@ window.IatiAmpUi=function(api){
  async function loadRows(){
   if(!plan)return;
   rowsPage=await call('rows?'+q({id:plan.id,revision:plan.revision,offset,limit:50,state:$('row-state').value||undefined}));
-  rowTable();api.table($('financial-groups'),['dimensions','count','amount'],rowsPage.financialGroups);buttons();
+  rowTable();api.table($('financial-groups'),['dimensions','count','amount'],rowsPage.financialGroups);
+  out('destination-review',{ready:rowsPage.ready,projects:rowsPage.destinationReview??[]});buttons();
  }
  function rowTable(){
   const holder=$('rows');holder.replaceChildren();const table=document.createElement('table'),head=document.createElement('tr');

@@ -35,6 +35,14 @@
     "./agents/inbox-task": {
       "types": "./agents/inbox-task.d.mts",
       "import": "./agents/inbox-task.mjs"
+    },
+    "./agents/task-desk": {
+      "types": "./agents/task-desk/client.d.mts",
+      "import": "./agents/task-desk/client.mjs"
+    },
+    "./agents/task-desk/server": {
+      "types": "./agents/task-desk/server.d.mts",
+      "import": "./agents/task-desk/server.mjs"
     }
   },
   "files": [
@@ -82,6 +90,7 @@
     }
   },
   "bin": {
-    "starforge-inbox-task": "./agents/inbox-task-cli.mjs"
+    "starforge-inbox-task": "./agents/inbox-task-cli.mjs",
+    "starforge-task-desk": "./agents/task-desk/cli.mjs"
   }
 }

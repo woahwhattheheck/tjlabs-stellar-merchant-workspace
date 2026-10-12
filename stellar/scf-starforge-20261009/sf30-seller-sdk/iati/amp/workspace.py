@@ -13,7 +13,7 @@ from iati_source import InputError
 from workspace import private_write, regular, file_digest, sync_dir
 from .codec import (loads, dumps, encode, normal, digest, fingerprint, identity, request_id,
                     integer, text, fields, MAX_JSON)
-from . import domain
+from . import domain, destination
 from .native import AmpSession, NativeFailure, now
 
 RUN_SCHEMA = "stellar-forge.iati-amp-native-run.v1"
@@ -39,6 +39,8 @@ def report(plan, analysis, capture, comparison=None):
            "<h2>Selected native programme</h2><pre>" + _html(dumps(normal({
                "connection": capture["connection"], "coverage": capture["coverage"],
                "acquisition": capture["acquisition"], "portfolio": plan["definition"]["portfolio"]}))) + "</pre>",
+           "<h2>Installed native field and project coverage</h2><pre>" +
+           _html(dumps(capture.get("destinationAnalysis", {}))) + "</pre>",
            "<h2>Review coverage</h2><pre>" + _html(dumps(normal({
                "counts": analysis["counts"], "completeRowCount": analysis["completeRowCount"],
                "sourceCount": analysis["sourceCount"], "review": plan.get("review"),
@@ -62,6 +64,9 @@ def report(plan, analysis, capture, comparison=None):
                                "proposal": item["proposal"]}))) + "</pre></td><td><details><summary>Complete source row</summary><pre>" +
             _html(dumps(row)) + "</pre></details></td></tr>")
     out += ["</tbody></table></div>"]
+    out += ["<h2>Complete native project field review</h2><pre>" +
+            _html(dumps(normal({"ready": analysis["ready"],
+                               "projects": analysis.get("destinationReview", [])}))) + "</pre>"]
     if comparison:
         out += ["<h2>Following-edition comparison</h2><pre>" + _html(dumps(normal(comparison))) + "</pre>"]
     out += ["<h2>Original native source</h2><p>" + _html(domain.CONTRACT) +
@@ -177,7 +182,8 @@ class AmpWorkspace:
             value["id"] = fingerprint(value)
             with self.ws.db:
                 self.ws.db.execute("INSERT OR IGNORE INTO iati_amp_captures VALUES(?,?)", (value["id"], dumps(value)))
-                result = {"captureId": value["id"], "connection": value["connection"], "coverage": value["coverage"]}
+                result = {"captureId": value["id"], "connection": value["connection"], "coverage": value["coverage"],
+                      "destinationAnalysis": value["destinationAnalysis"]}
                 self._remember("capture", raw, result)
             return result
 
@@ -206,7 +212,8 @@ class AmpWorkspace:
             if prior:
                 return prior
             self.ws.db.execute("INSERT OR IGNORE INTO iati_amp_captures VALUES(?,?)", (value["id"], dumps(value)))
-            result = {"captureId": value["id"], "connection": value["connection"], "coverage": value["coverage"]}
+            result = {"captureId": value["id"], "connection": value["connection"], "coverage": value["coverage"],
+                      "destinationAnalysis": value["destinationAnalysis"]}
             self._remember("native-capture", raw, result)
         return result
 
@@ -330,7 +337,8 @@ class AmpWorkspace:
             return {"id": ident, "revision": plan["revision"], "analysisSha256": plan["analysis"]["sha256"],
                     "offset": offset, "limit": limit, "total": len(rows), "rows": selected,
                     "nextOffset": offset + len(selected) if offset + len(selected) < len(rows) else None,
-                    "counts": analysis["counts"], "financialGroups": analysis["financialGroups"]}
+                    "counts": analysis["counts"], "financialGroups": analysis["financialGroups"],
+                    "ready": analysis["ready"], "destinationReview": analysis.get("destinationReview", [])}
 
 
     def decision_preview(self, raw):
@@ -397,7 +405,7 @@ class AmpWorkspace:
             changes = domain.compare(before_rows, current_rows, pairs)
             before_by_after = {item["after"]["key"]: item for item in changes["rows"] if item["after"]}
             projects = domain.project_index(capture)
-            native_rows, native_links = {}, {}
+            native_rows, native_links, native_unresolved = {}, {}, set()
             previous_steps = self._json(previous["prepared"]) if previous.get("prepared") else None
             for summary in reversed(self.runs(previous["id"])):
                 run = self.run(summary["id"])
@@ -415,11 +423,14 @@ class AmpWorkspace:
                         continue
                     # A linked preparation can carry newer source row keys. Reconcile those
                     # exact current rows against the original complete received native body.
-                    received_result = (domain.receiving(current_step, self._bytes(step["actual"]))
+                    received_result = (domain.receiving(current_step, self._bytes(step["actual"]),
+                                                        self.capture(step.get("configurationCaptureId", run["captureId"])))
                                        if step.get("actual") else self._json(step["result"]))
                     for received in received_result.get("rows", []):
                         if received.get("state") == "received":
                             native_rows[received["rowKey"]] = received["native"]
+                        else:
+                            native_unresolved.add(received["rowKey"])
             definition = deepcopy(previous["definition"])
             definition.update({"name": raw["name"], "notes": raw["notes"], "portfolio": raw["portfolio"],
                                "captureId": raw["captureId"], "previousPlan": {"id": previous["id"], "revision": previous["revision"]},
@@ -464,7 +475,12 @@ class AmpWorkspace:
                     decision["donorId"] = received["donorId"]
                     decision["transactionId"] = received["transactionId"]
                     decision.pop("fundingJson", None)
-                if change["state"] != "unchanged":
+                if old["key"] in native_unresolved:
+                    decision.pop("fundingId", None)
+                    decision.pop("transactionId", None)
+                    decision["action"] = "review"
+                    decision["note"] = "Review the complete received record lineage and select actual native IDs. Previous decision: " + old_decision["note"]
+                elif change["state"] != "unchanged":
                     decision["action"] = "review"
                     decision["note"] = "Following edition changed this original record. Previous decision: " + old_decision["note"]
                 elif old_decision["action"] == "include" and not decision.get("transactionId"):
@@ -489,7 +505,7 @@ class AmpWorkspace:
                 raise InputError("Choose approve or changes for this complete review")
             analysis = self._json(plan["analysis"])
             if raw["decision"] == "approve" and not analysis["ready"]:
-                raise InputError("Complete the original row decisions and installed mappings before approval")
+                raise InputError("Complete the original row decisions, installed mappings and native project field review before approval")
             decision = {"actor": text(raw["actor"], "Named reviewer", 160),
                         "decision": raw["decision"], "note": text(raw["note"], "Review note", 16000),
                         "analysisSha256": raw["analysisSha256"], "at": now()}
@@ -657,6 +673,18 @@ class AmpWorkspace:
             worker.start()
             return {"runId": ident, "active": True, "state": self.run(ident)["state"]}
 
+    def _execution_capture(self, run):
+        """Use the latest explicitly reviewed equal request set for unsent native work."""
+        capture = self.capture(run["captureId"])
+        request_set = domain.native_request_set(run["connection"], run["steps"])
+        for link in sorted(run.get("linkedPreparations", []), key=lambda value: value["revision"], reverse=True):
+            plan = self.plan(link["plan"], link["revision"])
+            if plan.get("prepared") and plan["prepared"]["sha256"] == link["preparedSha256"]:
+                selected = self.capture(plan["definition"]["captureId"])
+                if domain.native_request_set(selected["connection"], self._json(plan["prepared"])) == request_set:
+                    return selected
+        return capture
+
     def execute(self, ident, credentials):
         """Continue the one original prepared operation. Ambiguous writes are read back."""
         import fcntl
@@ -670,18 +698,12 @@ class AmpWorkspace:
             value = self.run(ident)
             if value["state"] == "complete":
                 return value
-            capture = self.capture(value["captureId"])
+            capture = self._execution_capture(value)
             sink = self._sink(ident)
             try:
-                with AmpSession(value["connection"], sink) as session:
+                with AmpSession(capture["connection"], sink) as session:
                     session.authenticate(credentials)
-                    current_fields, _, _ = session.request("GET", "activity/fields")
-                    current_values, _, _ = session.request("POST", "activity/field/values", domain.DEFAULT_VALUE_FIELDS)
-                    if (fingerprint(current_fields) != fingerprint(loads(capture["fieldsJson"]))
-                            or fingerprint(current_values) != fingerprint(loads(capture["valuesJson"]))):
-                        value["state"] = "configuration-changed"
-                        self._event(ident, "configuration-changed", {"captureId": capture["id"]})
-                        return self._update_run(value)
+                    current_capture = None
                     value["state"] = "running"
                     self._update_run(value)
                     for step in value["steps"]:
@@ -691,6 +713,30 @@ class AmpWorkspace:
                             value["state"] = "needs-reconciliation"
                             return self._update_run(value)
                         if step["state"] == "prepared":
+                            if current_capture is None:
+                                current_fields, current_fields_raw, _ = session.request("GET", "activity/fields")
+                                current_values, current_values_raw, _ = session.request(
+                                    "POST", "activity/field/values",
+                                    destination.required_value_fields(current_fields_raw.decode("utf-8")))
+                                current_capture = {**capture, "fieldsJson": current_fields_raw.decode("utf-8"),
+                                                   "valuesJson": current_values_raw.decode("utf-8")}
+                                fields_changed = fingerprint(current_fields) != fingerprint(loads(capture["fieldsJson"]))
+                            validation = domain.project_validation(step["requestJson"], current_capture)
+                            meaning_changes = domain.selected_value_changes(
+                                step["requestJson"], capture, current_values_raw)
+                            if fields_changed or not validation["ready"] or meaning_changes:
+                                review = {"captureId": capture["id"], "fieldsChanged": fields_changed,
+                                          "validation": validation, "selectedValueChanges": meaning_changes,
+                                          "currentFieldsSha256": fingerprint(current_fields),
+                                          "currentValuesSha256": fingerprint(current_values)}
+                                with self.ws.mutex:
+                                    step["configurationReview"] = self._retain(
+                                        encode(review), "native-configuration-review.json")
+                                value["state"] = "configuration-changed"
+                                self._event(ident, "configuration-changed",
+                                            {"key": step["key"], "review": step["configurationReview"]})
+                                return self._update_run(value)
+                            step["configurationCaptureId"] = capture["id"]
                             if step["mode"] == "update":
                                 actual, _, _ = session.project(step["originalId"])
                                 if fingerprint(actual) != step["preimageSha256"]:
@@ -721,7 +767,8 @@ class AmpWorkspace:
                             self._update_run(value)
                         # Both a fresh write and a resumed post-response state use read-only receiving.
                         actual, actual_raw, _ = session.project(step["afterId"])
-                        result = domain.receiving(step, actual_raw)
+                        result = domain.receiving(step, actual_raw,
+                                                  self.capture(step.get("configurationCaptureId", value["captureId"])))
                         with self.ws.mutex:
                             step["actual"] = self._retain(actual_raw, "received-native-project.json")
                             step["result"] = self._retain(encode(result), "native-financial-receiving.json")
@@ -774,10 +821,12 @@ class AmpWorkspace:
                 raise InputError("The original send already returned a different native project ID")
             if step["state"] == "complete":
                 return {"runId": value["id"], "stepKey": step["key"], "state": "complete"}
-            with AmpSession(value["connection"], self._sink(value["id"])) as session:
+            selected_capture = self._execution_capture(value)
+            with AmpSession(selected_capture["connection"], self._sink(value["id"])) as session:
                 session.authenticate(credentials)
                 _, actual_raw, _ = session.project(raw["nativeId"])
-            result = domain.receiving(step, actual_raw)
+            result = domain.receiving(step, actual_raw,
+                                      self.capture(step.get("configurationCaptureId", value["captureId"])))
             with self.ws.mutex, self.ws.db:
                 step["actual"] = self._retain(actual_raw, "reconciled-native-project.json")
                 step["result"] = self._retain(encode(result), "reconciled-financial-receiving.json")

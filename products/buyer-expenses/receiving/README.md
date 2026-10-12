@@ -42,8 +42,15 @@ Use one actual receiving worker for this original operation. Retain its
 `accepted-original-financial-operation` record, directory and PID before moving
 execution to another host; reconcile any existing active receiving first.
 
-The worker needs Linux, Python 3.11 or newer, Node 24, Git and the dependencies
-required by the original selected runtime profile. The runtime installer uses
+The worker needs Linux, Python 3.11 or newer, Node 22.16 or newer, Git, npm,
+`flock` and the dependencies required by the original selected runtime profile.
+The pinned `runtime-profile.mjs` sets the base minimum to `22.16.0`; the selected
+schema manifest requires `>=22` and the MCP manifest requires `>=22.13.0`, so
+this exact `--native --feature schema --feature mcp --operator` selection keeps
+the original `>=22.16.0` minimum. The maintained installer validates the actual
+host and selected imports before returning `READY`. Node 22.16 includes the
+[`node:sqlite` backup API](https://nodejs.org/download/release/v22.16.0/docs/api/sqlite.html#sqlitebackupsourceDb-destination-options);
+SQLite has been [available without an enabling flag since Node 22.13](https://nodejs.org/download/release/v22.16.0/docs/api/cli.html#--no-experimental-sqlite). The runtime installer uses
 the existing npm installation route. A complete operator-owned npm cache and
 matching Node headers can supply its original offline mode.
 
