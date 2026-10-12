@@ -283,5 +283,5 @@ recovery condition remains attached to that exact run for its original recovery
 controls.
 
 The selected commit identifies the source base. The native checkpoint also retains
-the complete eight-file agent source selection with actual byte counts and hashes,
+the complete nine-file agent and transport source selection with actual byte counts and hashes,
 so locally prepared source and a later published edition remain distinguishable.

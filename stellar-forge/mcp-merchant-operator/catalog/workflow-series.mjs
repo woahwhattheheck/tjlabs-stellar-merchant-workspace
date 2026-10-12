@@ -3,6 +3,8 @@ import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 
 export const WORKFLOW_SERIES_AGENT_PREFIX = 'merchant_workflow_series_';
 export const WORKFLOW_SERIES_AGENT_REQUEST_BYTES = 128 * 1024 * 1024;
+// Keep the original complete profile capacity plus the JSON-RPC envelope.
+export const WORKFLOW_SERIES_AGENT_HTTP_BYTES = WORKFLOW_SERIES_AGENT_REQUEST_BYTES + 1024 * 1024;
 export const WORKFLOW_SERIES_ALIAS = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const alias = { type: 'string', pattern: WORKFLOW_SERIES_ALIAS.source };
 const id = { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$' };

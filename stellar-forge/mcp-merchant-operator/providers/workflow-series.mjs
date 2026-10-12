@@ -1,11 +1,11 @@
 // MIT. Source-owned recurring-work tools; the original Console owns execution.
 import { defineMerchantProvider, MERCHANT_PROVIDER_SCHEMA } from '../provider-contract.mjs';
-import { workflowSeriesAgentTools, WORKFLOW_SERIES_AGENT_REQUEST_BYTES } from '../catalog/workflow-series.mjs';
+import { workflowSeriesAgentTools, WORKFLOW_SERIES_AGENT_HTTP_BYTES } from '../catalog/workflow-series.mjs';
 export default defineMerchantProvider({
   schema: MERCHANT_PROVIDER_SCHEMA, id: 'workflow-series', family: 'workflowSeries',
   title: 'Recurring customer work', order: 710, catalogOrder: 710, configKey: 'workflowSeries',
   summary: true, dependencies: [], concurrency: 'provider', shutdown: 'provider',
-  maxRequestBytes: WORKFLOW_SERIES_AGENT_REQUEST_BYTES,
+  maxRequestBytes: WORKFLOW_SERIES_AGENT_HTTP_BYTES,
   configuration: { input: 'workflowSeriesConnection', privateExports: true,
     read: async (value, { hostPath, base }) =>
       (await import('../workflow-series-connection.mjs')).readWorkflowSeriesConfiguration(hostPath(value, base)) },

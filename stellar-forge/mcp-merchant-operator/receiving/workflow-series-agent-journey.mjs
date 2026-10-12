@@ -204,6 +204,7 @@ export async function receiveMerchantWorkflowSeriesAgent({
   };
   const root = fileURLToPath(new URL('../../../', import.meta.url)), sourceFiles = [];
   for (const path of [
+    'stellar-forge/mcp-paid-agent/http-tools.mjs',
     'stellar-forge/mcp-merchant-operator/catalog/workflow-series.mjs',
     'stellar-forge/mcp-merchant-operator/workflow-series-connection.mjs',
     'stellar-forge/mcp-merchant-operator/workflow-series-agent.mjs',
