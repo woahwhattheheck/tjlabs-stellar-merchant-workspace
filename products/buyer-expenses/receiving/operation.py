@@ -1,4 +1,4 @@
-import os,pathlib,json,subprocess,datetime,hashlib,tempfile,shutil,sys,zipfile,traceback,gzip,signal
+import os,pathlib,json,subprocess,datetime,hashlib,tempfile,shutil,sys,zipfile,traceback,gzip,signal,time
 os.umask(0o077)
 def interrupt_original_operation(signum,frame):
  raise InterruptedError("Original financial receiving interrupted by signal "+str(signum))
@@ -19,6 +19,7 @@ def digest(path):
  return h.hexdigest()
 def stop_owned_group(process):
  record={"pid":process.pid,"processGroup":process.pid,"signals":[]}
+ operation["active"]["ownedChildCleanup"]=record
  try:
   os.killpg(process.pid,signal.SIGTERM);record["signals"].append("SIGTERM")
  except ProcessLookupError:record["groupAlreadyExited"]=True
@@ -34,6 +35,13 @@ def stop_owned_group(process):
   os.killpg(process.pid,signal.SIGKILL);record["signals"].append("SIGKILL_REMAINING_GROUP")
  except ProcessLookupError:pass
  record["exit"]=process.wait(timeout=8);record["leaderReaped"]=True
+ deadline=time.monotonic()+8
+ while True:
+  try:os.killpg(process.pid,0)
+  except ProcessLookupError:break
+  if time.monotonic()>=deadline:raise RuntimeError("Original owned child group has not ended: "+str(process.pid))
+  time.sleep(0.05)
+ record["groupExited"]=True
  return record
 def run(label,args,cwd=None):
  operation["phase"]=label;save();show({"phase":label,"directory":str(root),"sourceCommit":source})
