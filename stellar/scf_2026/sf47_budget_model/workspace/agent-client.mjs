@@ -400,6 +400,8 @@ export class GrantWorkspaceClient {
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
+      'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
@@ -448,6 +450,25 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  ledgerIntakeInspect(caseId, file) {
+    id(caseId, 'operation'); object(file, 'Original intake file');
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-inspect', {body:{file}, mutation:false});
+  }
+  ledgerIntakePreview(caseId, body) {
+    id(caseId, 'operation'); exact(body, ['document', 'expectedVersion'], ['document']);
+    object(body.document, 'Complete ledger intake');
+    if (body.expectedVersion !== undefined) integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-preview', {body, mutation:false});
+  }
+  ledgerIntakeApply(caseId, body) {
+    id(caseId, 'operation');
+    exact(body, ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor', 'note'],
+      ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor']);
+    object(body.document, 'Complete ledger intake');
+    integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    sha(body.expectedPreviewSha256); requestId(body.requestId);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');

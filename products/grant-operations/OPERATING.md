@@ -472,6 +472,14 @@ Retain the actual case and plan IDs, versions, original operation/request IDs, s
 
 The delivered set consists of the selected TGZ and manifest, installation/profile receipts, this guide and original source/API guides, the complete authorized case export, any separately requested frozen evidence, and the actual installed receiving report. Its report distinguishes prepared source, executed native work, buyer payment observations, issuer submission and customer acceptance.
 
+## Complete source-file intake into the actual ledger
+
+Open **Delivery operations → Bulk ledger intake** to receive original contributor, work, supplier-invoice and observed-cash tables. The operator can map CSV/TSV columns, load native JSON, group invoice lines and payment allocations, link records across files, attach original supporting documents and review every full before-and-after record.
+
+The complete intake uses one native workspace transaction. It retains each original file, every resulting record ID and version, the original input recipe, recording operator and request identity. Browser drafts retain the original pending request for recovery; recorded intakes reopen from the case's native sources and travel in the complete case export. Budget performance reads the resulting original ledger through its normal period report.
+
+The same workflow is available in the CLI, typed Grant client and Merchant MCP. The full [Bulk ledger intake guide](../../stellar/scf_2026/sf47_budget_model/workspace/LEDGER_INTAKE.md) covers original file formats, source references, templates, complete-record replacement, financial handling, capacity and receiving.
+
 ## Original source references
 
 | Area | Maintained source |
