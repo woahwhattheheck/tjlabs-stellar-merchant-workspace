@@ -15,6 +15,7 @@ import { DATASET_BINDING_SCHEMA, datasetContractSha256, prepareDatasetRelease,
 import { initReleaseStore, stageRelease, inspectRelease, activateRelease,
   rollbackRelease, releaseStatus, runActiveRelease } from '../../sf82-seller-pilot/releases.mjs';
 import { readFacilitatorProfiles } from '../../sf82-seller-pilot/release-facilitator.mjs';
+import { readSupportedResponse } from '../../sf82-seller-pilot/facilitator-supported.mjs';
 import { openPublisherFacilitators } from './publisher-facilitators.mjs';
 
 const SCHEMA = 'stellar-forge.socrata-publisher.v1';
@@ -459,6 +460,7 @@ export async function openSocrataPublisher({ directory, facilitators } = {}) {
   }
   async function readExport(kind, id) {
     if (kind === 'facilitator-review') return facilitatorControl.readExport(id);
+    if (kind === 'facilitator-response') return facilitatorControl.readResponseExport(id);
     if (!UUID.test(id ?? '')) throw fault('SOCRATA_EXPORT_ID', 'Choose a retained export.', 400);
     if (kind === 'draft-csv') return { bytes: await drafts.csv(id), filename: 'dataset.csv', contentType: 'text/csv; charset=utf-8' };
     if (kind === 'draft-review') return { bytes: json(await drafts.export(id)), filename: 'dataset-review.json', contentType: 'application/json' };
@@ -505,6 +507,7 @@ const USAGE = [
   '  node publisher.mjs --dir ABSOLUTE_DIRECTORY ACTION --input JSON_FILE',
   '',
   '--facilitators FILE selects the host provider profiles for this invocation.',
+  '--supported-response FILE joins a complete received document to publisher.facilitators.review.',
   'publisher.facilitators.review/stage/inspect/history use retained original SF82 reviews.',
   'Actions use the original publisher, release and buyer engines. See PUBLISHING.md.',
   'Starting a release keeps this process alive; Ctrl+C drains its original seller.'
@@ -516,16 +519,23 @@ export async function main(args = process.argv.slice(2)) {
   const options = new Map();
   for (let index = 3; index < args.length; index += 2) {
     const name = args[index], value = args[index + 1];
-    if (!['--input', '--facilitators'].includes(name) || options.has(name) || !value || value.startsWith('--'))
+    if (!['--input', '--facilitators', '--supported-response'].includes(name) || options.has(name) || !value || value.startsWith('--'))
       throw new TypeError(USAGE);
     options.set(name, value);
   }
+  if (options.has('--supported-response') && args[2] !== 'publisher.facilitators.review')
+    throw new TypeError('--supported-response belongs to publisher.facilitators.review.');
   const facilitators = options.has('--facilitators')
     ? await readFacilitatorProfiles(resolve(options.get('--facilitators'))) : undefined;
   const publisher = await openSocrataPublisher({ directory: resolve(args[1]), facilitators });
   let retained = false;
   try {
     const action = args[2], payload = options.has('--input') ? await readJson(resolve(options.get('--input')), 65536) : {};
+    if (options.has('--supported-response')) {
+      if (!object(payload) || Object.hasOwn(payload, 'response'))
+        throw new TypeError('Choose --supported-response or payload.response once.');
+      payload.response = await readSupportedResponse(resolve(options.get('--supported-response')));
+    }
     const result = action === 'status' ? await publisher.state() : await publisher.act(action, payload);
     console.log(JSON.stringify(result, null, 2));
     if (action === 'publisher.release.start') {

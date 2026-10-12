@@ -19,6 +19,7 @@ import operations_workshare_installations as workshares
 import operations_commercial_installations as commercial
 import operations_installation_workflows as workflows
 import operations_dispatch as dispatch
+import operations_use_calendar as use_calendar
 
 SCHEMA = "stellar-forge.sf47-installation.v1"
 SELECTION_SCHEMA = SCHEMA + ".selection"
@@ -99,7 +100,10 @@ def summary(row):
             "sourceVersion": value["source"]["version"],
             "configurationComplete": report["configurationComplete"],
             "acceptedChecks": report["acceptedChecks"], "totalChecks": report["totalChecks"],
-            "openFindings": len(report["findings"])}
+            "openFindings": len(report["findings"]),
+            **({"useCalendar": {key: value["document"]["useCalendar"][key]
+                                for key in ("name", "startDate", "endDate", "tranche")}}
+               if value["document"].get("useCalendar") else {})}
 
 
 def latest_refs(rows):
@@ -137,7 +141,7 @@ def get(operations, program_id, installation_id, selected_revision=None):
 
 def normalized(context, raw):
     raw = object_value(deepcopy(raw), ("name", "stage", "merchantDeploymentId", "buyerDeploymentIds",
-        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "commercial"), "installation")
+        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "commercial", "useCalendar"), "installation")
     records, sources, plan = context["records"], context["sources"], context["plan"]
     maps = {kind: {row["id"]: row for row in records[kind]} for kind in COLLECTIONS}
     retained = lambda value, label: domain.reference_list(value if value is not None else [], sources, label)
@@ -263,6 +267,8 @@ def normalized(context, raw):
         result["workflowPeriods"] = workflows.normalize_binding(context, raw["workflowPeriods"])
     if "coordination" in raw:
         result["coordination"] = dispatch.normalize(raw["coordination"], check_ids)
+    if "useCalendar" in raw:
+        result["useCalendar"] = use_calendar.normalize(context, raw["useCalendar"], result) if raw["useCalendar"] is not None else None
     if len(canonical(result).encode("utf-8")) > MAX_DOCUMENT_BYTES:
         fail("The complete installation input exceeds 128 KiB.", status=413)
     return result
@@ -276,6 +282,9 @@ def capture(context, document):
         selected["deployments"].add(document["merchantDeploymentId"])
     source_ids = set(document["source"]["sourceIds"] + document["payment"]["termsSourceIds"]
                      + document["receiving"]["sourceIds"])
+    calendar_refs = use_calendar.references(document)
+    source_ids.update(calendar_refs["sourceIds"])
+    selected["purchases"].update(calendar_refs["purchaseIds"])
     if document["workorder"]["sourceId"]:
         source_ids.add(document["workorder"]["sourceId"])
     if document.get("commercial"):
@@ -395,7 +404,8 @@ def report(snapshot, document):
                                                 for row in purchases).items())),
             "purchaseAmounts": sorted(groups.values(), key=lambda row: (row["network"], row["asset"])),
             "sourceFiles": len(snapshot["sources"]), "sourceBytes": sum(row["bytes"] for row in snapshot["sources"].values()),
-            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {})}
+            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {}),
+            **({"useCalendar": use_calendar.report(snapshot, document)} if document.get("useCalendar") else {})}
 
 
 def differences(before, after, path=""):
@@ -655,6 +665,7 @@ def html_document(row, original_workshare=None, original_commercial=None):
     body += commercial.html_section(original_commercial)
     body += workshares.html_section(original_workshare)
     body += workflows.html_section(document)
+    body += use_calendar.installation_section(document)
     body += "<h2>Acceptance and corrections</h2>" + table(
         ["Step", "Original criterion", "State", "Operator / observed", "Result / source"],
         [[e(item["title"]), e(item["criterion"]), e(item["state"]),

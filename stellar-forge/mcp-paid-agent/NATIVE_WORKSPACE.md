@@ -27,8 +27,11 @@ SQLite ledger. The MCP adapter uses those same files. Keep them at their origina
 absolute paths and run from the operator's controlling terminal so the original
 SF62 approval can open /dev/tty.
 
-A workspace supports one operator-selected merchant origin, pathname and HTTP
-method. Query values and an explicit UTF-8 body can vary between requests.
+A workspace supports one operator-selected merchant origin, route and HTTP
+method. The default route is the exact configured pathname. An explicit trusted
+**--route-template** permits declared path values within that original route.
+The host validates the template against the original configured concrete URL.
+Query values and an explicit UTF-8 body can vary between requests.
 GET, HEAD, POST, PUT, PATCH and DELETE use their original SF88/SF31 behavior.
 For a body-bearing route, set its trusted Content-Type in the original workspace
 configuration and pass each request body explicitly in the tool call.
@@ -65,6 +68,21 @@ node stellar-forge/mcp-paid-agent/native-workspace-cli.mjs init \
   --max-response-bytes 67108864 \
   --response-timeout-ms 30000
 ~~~
+
+For an original service that publishes a variable route, add **--route-template**
+with that service's actual template, for example **'/inspect/:address'**, during
+initialization. Its existing operator workspace must already identify a matching
+concrete operation URL. The template becomes trusted host configuration and is
+reported by **request-workspace** as **route.routeTemplate**. Each catalog-selected
+request still resolves to a concrete URL before original SF88 preparation and
+execution. Keep the same explicit service/template binding when creating its
+registry entry.
+
+The catalog-selected **request-prepare** action accepts **input.path** beside
+**input.query** and **input.body**. Values are raw strings keyed by the original
+published path parameter names; the original route identity codec handles their
+segment encoding. The retained **preparation.pathBinding** records the declared
+template, resolved values, advertised URL and exact queued URL.
 
 The parent must exist with private permissions. The command refuses an existing
 destination. It creates private request/download directories, the original empty
@@ -141,8 +159,9 @@ these tools/call parameters with a stable intent:
 The actual URL, search term and atomic-unit ceiling must match the chosen
 operator workspace and original offer. Preparation reads the current original
 workspace without reading its wallet key, then uses the original SF88 unsigned
-catalog reader. It requires one matching resource pathname/method and one
-compatible original option within the caller's ceiling and current workspace caps.
+catalog reader. It requires one concrete resource URL matching the configured
+route and method, plus one compatible original option within the caller's ceiling
+and current workspace caps.
 Fixed query values from the advertised URL must remain present and unchanged.
 
 The original prepareReview preserves the complete selected listing, option index,

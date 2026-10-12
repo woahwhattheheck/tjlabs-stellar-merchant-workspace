@@ -353,3 +353,139 @@ This planner builds on [sf10_current_candidate.json](../sf10_current_candidate.j
 The pinned proposal spans the existing six packages: merchant integration, authority/handover, provider/ledger deployment, deployed threat response, mainnet rollout, and recovery/handover. Those packages total 400 hours and $38,000 in the application model. Customer workload and commissioning economics can now be compared with that scope in the same original case.
 
 Carry actual purchases, transfers, complete output and deployed support outcomes into their maintained records as operations proceed. Revisit the same plan with the customer's observed cadence, effort and terms, then retain the next complete edition in the original case.
+
+## Shared delivery capacity and service prices
+
+Use **Capacity & pricing** after defining the customer's recurring schedules.
+Name each shared delivery pool once, retain its source and availability basis,
+and assign schedules to that pool. A pool is a set of active staff hours available
+for the work; the same person's hours must not be entered again in another pool.
+
+Enter the total available hours for Monday through Sunday. Date overrides
+replace the selected weekday amount. A closure uses `"0"`; a blank value is
+unknown. Overrides can add capacity on a normally closed day or record reduced
+availability without changing the customer's original task calendar.
+
+~~~json
+{
+  "id": "customer-delivery-team",
+  "label": "Selected customer delivery team",
+  "hoursByWeekday": {
+    "1": "2", "2": "2", "3": "2", "4": "2", "5": "2",
+    "6": "0", "7": "0"
+  },
+  "dateOverrides": [
+    {
+      "date": "2026-10-26",
+      "availableHours": "1",
+      "label": "Explicit reduced-availability planning assumption"
+    }
+  ],
+  "sourceIds": [],
+  "sourceNote": "Replace this illustration with the selected team's sourced availability."
+}
+~~~
+
+Place the row in **capacityPools**. Set each selected schedule's
+**capacityPoolId** to its ID and enter **economics.activeHoursPerTask**.
+Effort is measured per complete useful task, independently of the number of
+paid routes, pages or allowance calls needed to produce it.
+
+### Daily allocation and the actual window
+
+The engine combines every assigned schedule's active hours on the same UTC
+date. Two simultaneous schedules drawing on one pool therefore share its
+available hours. A date with three required hours and two available hours has
+one additional hour needed.
+
+All dates in the original seven- or fourteen-day window remain visible.
+Weekly rows include only dates inside that window and state their exact
+start/end and number of included days. They never extrapolate a partial week.
+The report provides both net headroom and the sum of individual daily deficits.
+Spare hours on Tuesday cannot cancel a Monday shortage.
+
+For an illustrative fourteen-day Monday–Sunday window with ten business days,
+two customers each doing two daily tasks provide forty tasks. At 0.25 and
+0.75 active hours per task, their combined requirement is two hours per business
+day, or twenty hours. The pool above supplies nineteen hours because one Monday
+has only one hour available; the report identifies that date and its one-hour
+shortfall. With a 25% effort increase, demand rises to twenty-five hours, and
+the sum of daily shortfalls is six hours.
+
+The global task calendar determines which customer occurrences exist. Pool
+weekday hours and overrides define staff availability separately. Active work
+is assigned to the scheduled task date. The original explicit completion delay
+continues to describe when the useful output completes. Operators can change
+a cadence, quantity, effort estimate, pool assignment or date availability and
+recalculate the complete plan.
+
+### Unknown and unassigned effort
+
+A missing task-effort estimate remains unknown even when the price is entered.
+A pool with missing availability or assigned unknown effort reports
+**INCOMPLETE**. Its known effort and known minimum shortage remain visible.
+Positive known demand above available hours reports **OVERALLOCATED** even
+when additional effort is still unknown.
+
+Positive or unknown effort without a pool appears under **Unassigned delivery
+effort**. Explicit zero-effort tasks can remain unassigned. Once capacity is
+configured, unassigned positive/unknown work keeps the overall assessment
+incomplete. A plan with no pools reports **NOT_CONFIGURED**.
+
+The complete report retains **capacity.pools**, every daily and weekly row,
+unassigned work, and each selected effort-increase sensitivity. Original
+customer tasks, payment quantities, source rule and recorded acceptance remain
+in their existing records. Staffing deficits are displayed with the original
+target report so an operator can plan the work needed to support those targets.
+
+### Price the full recurring service
+
+The **Service price floors** report totals the selected-window supplier cost,
+payment fees and active labor cost for each schedule. Schedules sharing a
+prepaid pass group are valued together, so the costs of later allowance usage
+remain with the group's newly acquired passes.
+
+**breakEvenUnitRevenue** is the group's total cost divided by its count of
+newly charged requests or acquired passes. **targetUnitRevenue** applies the
+optional **sensitivity.minimumMarginPct**:
+
+~~~text
+target unit revenue = total cost / (new charge units × (1 − target margin / 100))
+~~~
+
+The selected margin must be below 100%. All arithmetic uses the original
+integer-backed decimals; price floors round upward to twelve fractional places.
+The estimate currency remains separate from the native atomic payment terms.
+Changing a displayed price floor changes no merchant price or payment record.
+
+For example, a group's four new charges, USD 12 supplier cost, USD 2 fees and
+USD 6 active labor have USD 20 total cost. Break-even is USD 5 per new charge.
+At a selected 20% margin, the required value is USD 6.25. An entered USD 4 unit
+revenue produces USD 16 revenue, USD 4 uncovered cost, and a USD 2.25 increase
+per charge to reach the selected margin.
+
+A prepaid group supported entirely by its opening allowance can have service
+cost and zero new charge units. The report returns **NO_NEW_CHARGES**, retains
+the cost, and leaves a unit price undetermined. Its earlier acquisition and
+deferred revenue belong in the original commercial accounting period.
+Missing cost inputs retain **INCOMPLETE**, while complete costs with an
+unknown revenue estimate still provide the cost-based price floor.
+
+### Edit, export and continue
+
+The same fields travel through the original plan JSON, complete saved edition,
+case source attachment and complete case ZIP. Earlier plans open with an empty
+capacity selection and no chosen margin; earlier report editions remain
+readable.
+
+Editable rows CSV adds **capacityPools** rows with complete JSON
+**hoursByWeekday** and **dateOverrides** cells, and schedules add
+**capacityPoolId**. Existing row IDs and source bindings remain the import
+keys. Full plan JSON carries the selected minimum margin.
+
+The installed **starforge grant-cohort-plan evaluate** command calculates the
+same capacity and service prices from the same plan. Its report CSV includes
+**CAPACITY_DAY**, **CAPACITY_WEEK**, **CAPACITY_UNASSIGNED**,
+**CAPACITY_SENSITIVITY** and **SERVICE_PRICING** rows. The readable HTML export
+includes the complete capacity, effort and price reports with the retained
+original plan.
