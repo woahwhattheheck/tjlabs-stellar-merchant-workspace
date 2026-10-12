@@ -724,7 +724,7 @@ def html_report(row, exported_case):
         " · " + esc(metadata["sha256"]) + ".</p><p>The accompanying operations-case.zip retains every original source, " \
         "work/invoice record, funding edition and native case event for continued editing.</p>"
     return ("<!doctype html><html lang='en'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
-        "<title>" + esc(document["title"]) + "</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#17191c;background:#fff;" +
+        "<title>" + esc(document["title"]) + "</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#191919;background:#fff;" +
         "max-width:1200px;margin:28px auto;padding:0 20px}h1,h2,h3{line-height:1.2}p,td{white-space:pre-wrap;overflow-wrap:anywhere}" +
         ".scroll{overflow:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}" +
         "th{background:#eee}@media print{body{max-width:none;margin:0}.scroll{overflow:visible}h2,h3{break-after:avoid}tr{break-inside:avoid}}</style>" +

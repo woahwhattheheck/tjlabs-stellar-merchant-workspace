@@ -178,7 +178,48 @@ The optional field is `document.useCalendar`, with schema `stellar-forge.sf47-cu
 
 Use the existing editor's complete document and pattern output. This guide does not substitute an invented reduced schema for the maintained task, buyer, source, funding or reference validators. A missing calendar leaves the original Installation behavior intact.
 
-The Case UI tab is **Customer use**. Open the actual saved Installation revision, edit its draft, then use the original preview/save commands. Expanding a calendar stages a document; it does not publish an edition automatically. Staging a Cohort input opens the original Cohort draft and preserves any prior edited draft rather than overwriting it.
+The Case UI tab is **Customer use**. Open the actual saved Installation revision, edit its draft, then use the original preview/save commands. Expanding a calendar stages the complete editable Installation document. Save the reviewed document through the existing Installation writer.
+
+### Select and continue an exact saved edition
+
+The checkboxes, entered revision numbers and observation date remain available while changing filters, paging, reading another window or reopening the tab. **Read selected calendars** applies those choices to the native report. Until that read succeeds, the displayed report, Cohort handoff and report downloads retain their last successful source selection; the desk identifies a changed selection.
+
+**Edit customer use** opens the revision entered beside that Installation, including a historical revision. **Open original edition** from a dated row opens the exact saved edition that supplied that row. A historical source becomes a draft whose next save appends after the current Installation head.
+
+An existing edited Installation stays in **Retained drafts**. The selected calendar edition opens in its own named draft, with its source Installation ID, revision and SHA retained. Reopening that same source resumes its existing draft and later edits. Review the current saved history when another edition has been appended since that draft began. The original case version and current Installation revision still govern preview and save.
+
+### Prepare a selected buyer schedule
+
+Choose the useful tasks, original buyers, working weekdays and exceptions in **Expand ordinary working dates**. Prepaid funding controls show the selected buyers, and the expansion request carries funding associations for those buyers only. The generator keeps its open panel while buyer or use-mode choices change.
+
+For an allowance-use schedule, choose the original prepaid groups for each selected buyer. For a newly enabled calendar, the initial pattern offers the Installation's buyers, its first useful task and Monday through Friday; each selection remains editable. **Prepare dated uses** returns the complete original document for review and save.
+
+### Retain the original save through access failures
+
+An uncertain Installation save stays available under **Recover original save**. An uncertain Cohort freeze stays available under **Continue original freeze**. Access failures, route failures and interrupted responses retain the exact original request ID and body for recovery after access returns. An accepted save uses the existing exact-result readback. A queued Calendar or Installation handoff remains available through **Open selected edition**, including after reloading the browser or resolving the earlier save.
+
+A native validation, version-conflict or unsupported-input rejection clears the pending dispatch and keeps the edited draft. Refresh the original source, review the entered changes and prepare the corrected request through the normal writer.
+
+### Import, export and resume the complete Cohort draft
+
+From a saved customer-use selection, choose **Open as review draft** or **Export complete draft**. The ordinary Cohort **Export draft** and retained-draft exports carry the same complete source fields:
+
+| Field | Retained meaning |
+| --- | --- |
+| `originalCaseId` | The original case identified by the incoming draft. |
+| `sourceVersion` | That draft's original case source version, retained through import and later source refresh. |
+| `reviewCaseId` / `reviewVersion` | The active case and native version used as the exported draft's current preview basis. |
+| `inputs` | All entered Cohort scope, operation, purchase association, product, coverage and outcome inputs. |
+| `customerUse` | The complete original calendar group and exact Installation ID/revision/SHA selection, when present. |
+| `editorState` | Unfinished dialog entries and the selected entry available through **Resume unfinished entry**. |
+
+**Import draft** preserves these original source fields and opens the received inputs against the receiving case's current native Cohort rule. Its current review basis is shown separately from the draft origin. **Refresh source** advances that current review basis while retaining the original source identity, customer-use selection and entered observations.
+
+When a different draft is already present for that tranche, the complete earlier draft and unfinished entries move into **Retained edited drafts** before the imported input opens. **Open retained draft** restores those entries to their own draft. **Export draft** from that row carries the retained source metadata and unfinished entries together. Switching tranches keeps each draft's unfinished entries with that tranche.
+
+Use **Resume unfinished entry**, finish the entry and choose **Keep in review draft** before evaluating it. Then review the current native result and freeze through the original request lifecycle. An already pending or accepted freeze keeps its original recovery controls throughout this workflow.
+
+For another workspace, receive the complete case or selected Installation ZIP to obtain the original source files and native purchase records, then open the portable Cohort draft. The browser's existing 2 MB draft-file limit and twenty retained alternate drafts apply; export a retained draft before removing a local copy.
 
 The pattern selects explicit weekdays, included dates and excluded dates. It never infers the user's holiday calendar. Confirm those dates in the preview before saving.
 

@@ -36,6 +36,8 @@ The status REVIEWED means the operator reviewed this internal allocation. It is 
 
 The browser retains editable drafts separately from saved editions. Editing an input invalidates its calculated preview. Refreshing current source does not discard assignments that have become invalid: absent original rows remain visible until the operator explicitly resolves them.
 
+Use **Remove this local draft** to free one of the 50 local draft slots. Download the complete input or editor recovery first if you need that local copy. Removal is unavailable while an original save remains pending and checks pending requests again before changing the editor. It removes only the selected local draft; saved editions and original request/returned-response history stay retained. The editor selects the most recently created remaining draft and names it in the status, or clears the selection when none remains. A storage failure keeps the complete draft available in the current view for download and recovery.
+
 ### Corrected invoices and later work
 
 Keep the original cost correction in the existing invoice or work workflow. Then refresh Cost funding and prepare a successor from the intended prior edition. **Use current source and save base** selects the current case and latest book revision while preserving every draft assignment.
@@ -330,7 +332,7 @@ The browser shows original targets in pages of 50 and report balances, observati
 
 ## Source and validation status
 
-The mathematical, original Store/history, CLI and archive joins were independently source-reviewed. The retained CLI receipt-byte identity correction is included. Browser, SDK, MCP and complete product integration are delivered in the same cumulative source edition and are subject to its final source review.
+The mathematical, original Store/history, CLI, archive, browser, SDK, MCP and complete product integration were independently source-reviewed. The retained CLI receipt-byte identity correction, explicit local-draft removal and neutral desk/report styling are included. A source-level recovery exercise covered a retained returned body followed by failed acceptance-marker storage: an older missing journal was refused and the original commitment was recovered when restored, with one simulated dispatch and no live service call.
 
 This guide does not claim an installed native run, a browser walkthrough, actual grant approval, incurred cost, an accepted customer contract or a received payment. Those outcomes must be recorded through the original operations and original owner when observed.
 

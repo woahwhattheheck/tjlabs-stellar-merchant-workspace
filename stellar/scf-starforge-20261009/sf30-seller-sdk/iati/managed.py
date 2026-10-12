@@ -198,6 +198,9 @@ SOURCE_FILES = (
     "iati/document_evidence_http.py",
     "iati/public/document_evidence.css",
     "iati/public/document_evidence.js",
+    "iati/document_evidence/FOLLOWING.md",
+    "iati/document_evidence/following_observation.py",
+    "iati/examples/fcdo-organisation-2026/document-following-input.example.json",
 )
 
 

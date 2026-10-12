@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore the delivered native calendar backup into a new private workspace."""
+"""Restore a delivered native SCF backup into a new private workspace."""
 from __future__ import annotations
 
 import argparse
@@ -14,6 +14,8 @@ import sys
 
 SCHEMA = "stellar-forge.scf-calendar-customer-manifest.v1"
 BACKUP = "native/calendar-workspace.sqlite3"
+BACKUPS = {SCHEMA: BACKUP,
+           "stellar-forge.scf-planning-customer-manifest.v1": "native/planning-workspace.sqlite3"}
 
 
 def file_sha(path: Path) -> str:
@@ -26,8 +28,9 @@ def file_sha(path: Path) -> str:
 
 def verify_package(root: Path) -> tuple[Path, dict, int]:
     manifest = json.loads((root / "MANIFEST.json").read_text(encoding="utf-8"))
-    if manifest.get("schema") != SCHEMA:
-        raise ValueError("Choose the complete grant-calendar customer handover.")
+    backup_name = BACKUPS.get(manifest.get("schema"))
+    if backup_name is None:
+        raise ValueError("Choose the complete grant-calendar or planning customer handover.")
     rows = manifest.get("files")
     if not isinstance(rows, list) or not rows:
         raise ValueError("The customer manifest contains no files.")
@@ -46,11 +49,11 @@ def verify_package(root: Path) -> tuple[Path, dict, int]:
             raise ValueError("A delivered file is missing or replaced: " + relative)
         if path.stat().st_size != row.get("bytes") or file_sha(path) != row.get("sha256"):
             raise ValueError("A delivered file differs from its manifest: " + relative)
-        if relative == BACKUP:
+        if relative == backup_name:
             backup_row = row
     if backup_row is None:
         raise ValueError("The original native SQLite backup is missing from the manifest.")
-    backup = root / BACKUP
+    backup = root / backup_name
     with sqlite3.connect(backup.as_uri() + "?mode=ro&immutable=1", uri=True) as connection:
         check = connection.execute("PRAGMA integrity_check").fetchall()
     if check != [("ok",)]:

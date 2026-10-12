@@ -94,6 +94,7 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
     const save=$('[data-funding-action="save"]');
     if(save)save.disabled=locked||!draft()?.preview||!editable()||pending.length>0||Boolean(storageError);
     const preview=$('[data-funding-action="preview"]');if(preview)preview.disabled=locked||!draft()||pending.length>0;
+    const remove=$('[data-funding-action="remove-draft"]');if(remove)remove.disabled=locked||!draft()||pending.length>0;
   }
   async function work(action){
     if(busy||hostBusy||!available())return;busy=true;controls();
@@ -218,7 +219,8 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
       Object.entries(session.drafts).map(([id,row])=>'<option value="'+esc(id)+'"'+(session.mode==='draft'&&session.draftId===id?' selected':'')+'>'+esc(row.inputs?.document?.title||'Funding draft')+' · '+esc(row.createdAt)+'</option>').join('')+'</select></label></section>';
     let body='';
     if(d){
-      body='<section class="funding-card"><div class="funding-section-title"><h3>Editable allocation</h3><div class="funding-actions">'+button('Download complete input','input-export')+button('Import complete input','input-import')+'</div></div>'+
+      body='<section class="funding-card"><div class="funding-section-title"><h3>Editable allocation</h3><div class="funding-actions">'+button('Download complete input','input-export')+button('Import complete input','input-import')+button('Remove this local draft','remove-draft')+'</div></div>'+
+        '<p class="funding-binding">Download this input or the complete editor recovery before removing a local draft. Saved editions and original request history remain available.</p>'+
         '<p>Draft based on case v'+d.caseVersion+' and funding edition '+d.inputs.expectedRevision+'. Current case v'+currentCase.program.version+
         ', latest funding edition '+(history[0]?.revision||0)+'.</p>'+
         ((d.caseVersion!==currentCase.program.version||d.inputs.expectedRevision!==(history[0]?.revision||0))?'<p class="funding-warning">The case or funding book changed. Review the current source and keep all draft assignments while selecting its new save base.</p>'+button('Use current source and save base','rebind','data-editor="true"'):'')+
@@ -399,6 +401,22 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
       if(action==='recovery-export'){await recoveryExport();return;}
       if(action==='recovery-import'||action==='input-import'){session.fileMode=action==='input-import'?'input':'recovery';$('[data-funding-file]').click();return;}
       if(action==='input-export'){check(draft(),'Select an editable draft.');download(JSON.stringify(draft().inputs,null,2)+'\n',caseId+'-funding-inputs.json');return;}
+      if(action==='remove-draft'){
+        const id=session.draftId,original=draft();check(original,'Select the local draft to remove.');
+        pending=await requests.pending();
+        check(available()&&session.draftId===id&&draft()===original,'The selected local draft changed. Open it again before removing it.');
+        check(!pending.length,'Reconcile the retained original save before removing a local draft.');
+        const previous=Object.fromEntries(['drafts','draftId','mode','revision','targetKey','page','reportPage','notice'].map(key=>[key,session[key]]));
+        session.drafts={...session.drafts};delete session.drafts[id];
+        const next=Object.entries(session.drafts).sort((a,b)=>String(b[1].createdAt).localeCompare(String(a[1].createdAt))||a[0].localeCompare(b[0]))[0];
+        session.draftId=next?.[0]||null;session.mode=next?'draft':'empty';session.revision=null;
+        session.targetKey=null;session.page=0;session.reportPage=0;
+        session.notice=next?'Local draft removed. Selected '+(next[1].inputs.document.title||'Funding draft')+' · '+next[1].createdAt+'.':
+          'Local draft removed. No local draft is selected. Open a saved edition or prepare a new draft.';
+        persist();
+        if(storageError){Object.assign(session,previous);render();throw new Error('The local removal could not be retained. The original draft remains available here for download and recovery.');}
+        selected=null;render();return;
+      }
       if(action==='edition-json'){check(selected,'Select a saved edition.');download(JSON.stringify(selected.edition,null,2)+'\n',caseId+'-funding-r'+selected.edition.revision+'.json');return;}
       if(action==='report-json'){const value=draft()?.preview;check(value,'Calculate the complete draft first.');download(JSON.stringify(value,null,2)+'\n',caseId+'-funding-preview.json');return;}
       if(action==='export'){
