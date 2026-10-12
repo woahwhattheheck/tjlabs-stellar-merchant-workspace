@@ -251,6 +251,18 @@ def register(subparsers, common):
             target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
             target.add_argument("--expected-revision", type=int, required=True)
             target.add_argument("--document", help="Optional complete current editable Installation JSON")
+    target = command("installation-effort-seed", "Prepare original phase effort, recorded Work and support allowances", case=True, output=True)
+    target.add_argument("--installation", required=True, help="Original current saved Installation ID")
+    target.add_argument("--expected-revision", type=int, required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--as-of", required=True, help="Selected effort review date, YYYY-MM-DD")
+    target.add_argument("--document", help="Optional complete editable Installation JSON")
+    target = command("installation-effort-selection", "Open original Forecast inputs from saved reviewed phase remainders", case=True, output=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--forecast", required=True)
+    target.add_argument("--installation-selections", required=True, help="JSON array of exact saved Installation editions and matching original task IDs")
+    target.add_argument("--name")
+    target.add_argument("--note")
     target = command("installation-show", "Reopen one whole saved installation and its selected original records", case=True, output=True)
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, help="Exact saved edition; omission opens the latest")
@@ -752,6 +764,29 @@ def operate(workspace, args):
                 except (UnicodeError, ValueError) as exc:
                     raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
             result = ops.seed_workflow_installation(args.case, selected)
+    elif action == "installation-effort-seed":
+        selected = {"expectedVersion": args.expected_version, "installationId": args.installation,
+                    "expectedRevision": args.expected_revision, "asOfDate": args.as_of}
+        if args.document:
+            from operations_installations import MAX_DOCUMENT_BYTES
+            try:
+                selected["document"] = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
+        result = ops.seed_installation_effort(args.case, selected)
+    elif action == "installation-effort-selection":
+        try:
+            choices = json.loads(read_bytes(args.installation_selections, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Installation selections must be a UTF-8 JSON array.", 422, "INVALID_JSON") from exc
+        if not isinstance(choices, list):
+            raise Problem("Installation selections must be a JSON array.", 422, "INVALID_JSON")
+        body = {"expectedVersion": args.expected_version, "forecastId": args.forecast,
+                "installationSelections": choices}
+        for key in ("name", "note"):
+            if getattr(args, key) is not None:
+                body[key] = getattr(args, key)
+        result = ops.select_installation_effort(args.case, body)
     elif action == "installation-show":
         result = ops.installation(args.case, args.installation, args.revision)
     elif action == "installation-history":

@@ -22,6 +22,7 @@ import operations_completion as completion
 import operations_calendar as calendar_model
 import operations_cohort as cohort
 import operations_installations as installations
+import operations_installation_effort as installation_effort
 import operations_installation_returns as installation_returns
 import operations_dispatch as dispatch
 import operations_statements as statements
@@ -882,6 +883,16 @@ class Operations:
             context = self._context(identifier(program_id, "operation"))
             return seed(self, context, body)
 
+    def seed_installation_effort(self, program_id, body):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return installation_effort.seed(self, context, body)
+
+    def select_installation_effort(self, program_id, body):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return installation_effort.selection(self, context, body)
+
     def seed_installation(self, program_id, body):
         installations.object_value(body, ("expectedVersion",), "installation seed")
         with self._snapshot():
@@ -1170,6 +1181,8 @@ class Operations:
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
+            if "installation-effort.json" in files:
+                expected.add("installation-effort.json")
         engagement_names = {"engagement-selection.json", "engagement.html"}
         if engagement_names.intersection(files):
             expected.update(engagement_names)

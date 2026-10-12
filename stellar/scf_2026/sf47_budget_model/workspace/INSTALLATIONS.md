@@ -10,6 +10,10 @@ Each save appends an immutable edition. A later source observation or installati
 
 Each saved installation may carry `document.coordination`: its delivery assignee, target date, priority and note, plus per-check overrides and prerequisites. This metadata travels with the complete installation document through the existing preview/save and receiving workflow. [Installation delivery queue](DELIVERY_QUEUE.md) explains the fields, current-edition work view, typed client, CLI, MCP and complete dated handover.
 
+## Review phase effort and support
+
+Prepare an effort review for the current saved Installation and an explicit as-of date. The complete `document.effort` retains original Work allocations, reviewed remaining hours and source-referenced support windows. The existing Installation preview/save appends the reviewed edition; its complete source and earlier editions travel in the same handover. [Installation effort and support](INSTALLATION_EFFORT.md) covers original work intake, typed SDK and CLI editing, support terms, saved-hour selection for Forecast and complete receiving.
+
 ## Allocate installation phases in Portfolio
 
 Open **Delivery and cash operations → Portfolio**, choose the original saved Forecast and select **Use installation phases**. Select the exact saved Installation edition for its matching commercial task. The original phase owners, dependencies, quoted effort, delivery terms and support terms remain visible with their source.

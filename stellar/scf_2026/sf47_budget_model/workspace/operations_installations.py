@@ -18,6 +18,7 @@ import operations_domain as domain
 import operations_workshare_installations as workshares
 import operations_installation_workflows as workflows
 import operations_dispatch as dispatch
+import operations_installation_effort as effort
 
 SCHEMA = "stellar-forge.sf47-installation.v1"
 SELECTION_SCHEMA = SCHEMA + ".selection"
@@ -136,7 +137,7 @@ def get(operations, program_id, installation_id, selected_revision=None):
 
 def normalized(context, raw):
     raw = object_value(deepcopy(raw), ("name", "stage", "merchantDeploymentId", "buyerDeploymentIds",
-        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination"), "installation")
+        "workorder", "task", "source", "payment", "receiving", "assignments", "checks", "workshare", "workflowPeriods", "coordination", "effort"), "installation")
     records, sources, plan = context["records"], context["sources"], context["plan"]
     maps = {kind: {row["id"]: row for row in records[kind]} for kind in COLLECTIONS}
     retained = lambda value, label: domain.reference_list(value if value is not None else [], sources, label)
@@ -260,12 +261,14 @@ def normalized(context, raw):
         result["workflowPeriods"] = workflows.normalize_binding(context, raw["workflowPeriods"])
     if "coordination" in raw:
         result["coordination"] = dispatch.normalize(raw["coordination"], check_ids)
+    if "effort" in raw:
+        result["effort"] = effort.normalize(context, raw["effort"], result)
     if len(canonical(result).encode("utf-8")) > MAX_DOCUMENT_BYTES:
         fail("The complete installation input exceeds 128 KiB.", status=413)
     return result
 
 
-def capture(context, document):
+def capture(context, document, effort_context=None):
     """Select complete original rows, then close their source/contributor links."""
     selected = {kind: set() for kind in domain.KINDS}
     selected["deployments"].update(document["buyerDeploymentIds"])
@@ -287,6 +290,19 @@ def capture(context, document):
         source_ids.update(row["sourceIds"])
         for field, kind in (("workIds", "work"), ("purchaseIds", "purchases"), ("outcomeIds", "outcomes")):
             selected[kind].update(row[field])
+    if "effort" in document:
+        selected["work"].update(row["workId"] for row in document["effort"]["allocations"])
+        for review in document["effort"]["reviews"]:
+            source_ids.update(review["sourceIds"])
+        effort_context = effort_context if effort_context is not None else context.get(effort.SNAPSHOT_KEY)
+        if not isinstance(effort_context, dict):
+            fail("Capture the complete original effort source and current peer attribution.")
+        for original in effort_context["supportSources"]:
+            source_ids.add(original["sourceId"])
+            if original.get("packetSourceId"):
+                source_ids.add(original["packetSourceId"])
+        for original in effort_context["retiredPhases"]:
+            source_ids.add(original["sourceId"])
     originals = {kind: {row["id"]: row for row in context["records"][kind]} for kind in domain.KINDS}
     for kind in ("work", "outcomes"):
         for key in selected[kind]:
@@ -299,7 +315,8 @@ def capture(context, document):
         for row in values:
             source_ids.update(row.get("sourceIds", []))
     return {"program": deepcopy(context["program"]), "plan": deepcopy(context["plan"]), "records": records,
-            "sources": {key: deepcopy(context["sources"][key]) for key in sorted(source_ids)}}
+            "sources": {key: deepcopy(context["sources"][key]) for key in sorted(source_ids)},
+            **({effort.SNAPSHOT_KEY: deepcopy(effort_context)} if "effort" in document else {})}
 
 
 def report(snapshot, document):
@@ -389,7 +406,8 @@ def report(snapshot, document):
                                                 for row in purchases).items())),
             "purchaseAmounts": sorted(groups.values(), key=lambda row: (row["network"], row["asset"])),
             "sourceFiles": len(snapshot["sources"]), "sourceBytes": sum(row["bytes"] for row in snapshot["sources"].values()),
-            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {})}
+            **({"workflowPeriods": workflows.report(document)} if document.get("workflowPeriods") else {}),
+            **({"effort": effort.report(snapshot, document)} if "effort" in document else {})}
 
 
 def differences(before, after, path=""):
@@ -452,7 +470,11 @@ def preview(operations, context, body):
     workshares.verify_transition(operations, context, previous, document, original=original_workshare)
     original_workflow = workflows.verify_document(operations, context, document)
     workflows.verify_transition(operations, context, previous, document, original=original_workflow)
-    snapshot = capture(context, document)
+    effort_context = None
+    if "effort" in document:
+        effort_context = effort.capture_context(operations, context, document, ident, original_workshare, previous=previous)
+        effort.check_quantities(context, document, effort_context, previous)
+    snapshot = capture(context, document, effort_context)
     value = {"schema": SCHEMA, "installationId": ident, "expectedRevision": expected_revision,
              "source": _source(context), "document": document, "snapshot": snapshot, "report": report(snapshot, document),
              "previous": None if previous is None else {"id": previous["id"], "revision": previous["revision"], "sha256": previous["sha256"]},
@@ -486,10 +508,20 @@ def save(operations, context, data, actor, version, note):
 def show(operations, context, installation_id, selected_revision=None):
     row = get(operations, context["program"]["id"], installation_id, selected_revision)
     try:
-        current = capture(context, normalized(context, row["preview"]["document"]))
+        document = normalized(context, row["preview"]["document"])
+        effort_context = None
+        if "effort" in document:
+            original = workshares.verify_document(operations, context, document)
+            effort_context = effort.capture_context(operations, context, document, row["id"], original, previous=row)
+        current = capture(context, document, effort_context)
         before = row["preview"]["snapshot"]
+        if effort.SNAPSHOT_KEY in current and effort.SNAPSHOT_KEY in before:
+            # A first save assigns its stable identity after the preview. Peer
+            # selection uses that identity; comparison retains the original marker.
+            current[effort.SNAPSHOT_KEY]["installationId"] = before[effort.SNAPSHOT_KEY]["installationId"]
         changed = current["records"] != before["records"] or current["sources"] != before["sources"] or \
-            current["plan"]["contentSha256"] != before["plan"]["contentSha256"]
+            current["plan"]["contentSha256"] != before["plan"]["contentSha256"] or \
+            current.get(effort.SNAPSHOT_KEY) != before.get(effort.SNAPSHOT_KEY)
         current_state = {"available": True, "selectedRecordsChanged": changed,
                          "caseVersion": context["program"]["version"]}
     except (Problem, KeyError):
@@ -559,7 +591,10 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
         if digest({key: value for key, value in candidate.items() if key != "previewSha256"}) != candidate.get("previewSha256"):
             fail("A retained installation preview differs from its selected input.")
         snapshot = candidate.get("snapshot")
-        if not isinstance(snapshot, dict) or set(snapshot) != {"program", "plan", "records", "sources"}:
+        required_snapshot = {"program", "plan", "records", "sources"}
+        if candidate.get("document", {}).get("effort") is not None:
+            required_snapshot.add(effort.SNAPSHOT_KEY)
+        if not isinstance(snapshot, dict) or set(snapshot) != required_snapshot:
             fail("The complete original installation snapshot is required.")
         selected_plan = plan_for_version(row["version"] - 1) if plan_for_version else context["plan"]
         if (any(snapshot["plan"].get(key) != selected_plan.get(key) for key in
@@ -569,14 +604,16 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
                 or candidate["source"] != _source(snapshot)):
             fail("The installation must retain its original selected case and funding plan.")
         document = normalized(snapshot, candidate.get("document"))
+        original_workshare = None
         if document.get("workshare"):
             if source_files is None:
                 fail("Receive the complete original Workshare attachments with this installation.")
-            workshares.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
+            original_workshare = workshares.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
         if document.get("workflowPeriods"):
             if source_files is None:
                 fail("Receive the complete original recurring-work source with this Installation.")
             workflows.verify_document(None, snapshot, document, lambda source_id: source_files.get("sources/" + source_id))
+        effort.validate_frozen(context, row, rows, events, original_workshare)
         if document != candidate["document"] or capture(snapshot, document) != snapshot:
             fail("The installation's selected records or sources are incomplete.")
         for source_id, metadata in snapshot["sources"].items():
@@ -640,6 +677,7 @@ def html_document(row, original_workshare=None):
     body += dispatch.installation_section(document)
     body += workshares.html_section(original_workshare)
     body += workflows.html_section(document)
+    body += effort.html_section(value["snapshot"], document)
     body += "<h2>Acceptance and corrections</h2>" + table(
         ["Step", "Original criterion", "State", "Operator / observed", "Result / source"],
         [[e(item["title"]), e(item["criterion"]), e(item["state"]),
@@ -697,7 +735,7 @@ def selected_files(context, rows, installation_id, selected_revision, source_fil
                  "document": {"path": "installation.html", "bytes": len(document),
                               "sha256": hashlib.sha256(document).hexdigest()}}
     return {"installation-selection.json": (canonical(selection) + "\n").encode("utf-8"),
-            "installation.html": document}
+            "installation.html": document, **effort.selected_files(row)}
 
 
 def selection_from_files(document, files):
@@ -723,6 +761,11 @@ def selection_from_files(document, files):
         # Only the normalized saved edition drives the native operator; this HTML
         # remains a complete downloaded document under the archive's file manifest.
         raw.decode("utf-8")
+        expected_effort = effort.selected_files(row)
+        if "installation-effort.json" in files and not expected_effort:
+            fail("The effort report does not belong to the selected Installation.")
+        if any(files.get(name) != content for name, content in expected_effort.items()):
+            fail("The complete selected effort report differs from its original Installation edition.")
     except (ValueError, TypeError, KeyError, AttributeError, UnicodeError) as exc:
         if isinstance(exc, Problem):
             raise
