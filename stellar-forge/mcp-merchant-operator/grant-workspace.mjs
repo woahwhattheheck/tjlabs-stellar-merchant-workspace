@@ -1,4 +1,5 @@
 import {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
+import {retainGrantFundingSave} from './grant-funding-recovery.mjs';
 export {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
 import {GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 // MIT. Merchant MCP tools for the original SF47 grant planning and delivery service.
@@ -407,6 +408,7 @@ export class MerchantGrantWorkspaces {
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
+      cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
       account_reconciliation:'account-reconciliation',account_reconciliation_statement_inputs:'account-reconciliation-statement-inputs',
       cash_account:'cash-account',supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
@@ -475,6 +477,15 @@ export class MerchantGrantWorkspaces {
         body.document=await this.#modelInputs(alias,args,'Work intake',GRANT_MAX_BUNDLE_BYTES);
       const method={work_intake_preview:'workIntakePreview',work_intake_save:'workIntakeSave',work_intake_apply:'workIntakeApply'}[verb];
       original=await client[method](caseId,body);
+    }
+    else if (verb === 'funding_seed') {
+      const {caseId,...body}=rest; original=await client.fundingSeed(caseId,body);
+    }
+    else if (verb === 'funding_preview'||verb === 'funding_save') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const complete=await this.#modelInputs(alias,args,'Complete cost funding allocation');
+      original=verb==='funding_preview'?await client.fundingPreview(caseId,{...body,inputs:complete}):
+        await retainGrantFundingSave({directory:await this.#root(alias),client,caseId,body:{...body,inputs:complete}});
     }
     else if (verb === 'task_outcomes_seed') original=await client.taskOutcomesSeed(args.caseId,args.expectedVersion);
     else if (verb === 'task_outcomes_preview'||verb === 'task_outcomes_save') {

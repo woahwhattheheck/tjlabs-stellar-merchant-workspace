@@ -635,6 +635,10 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      'cost-funding':() => '/api/operations/' + cid() + '/cost-funding',
+      'funding-edition':() => '/api/operations/' + cid() + '/cost-funding/edition' +
+        (args.revision===undefined?'':'?revision='+integer(args.revision,'Funding edition',1,1000000)),
+      'funding-request':() => '/api/operations/' + cid() + '/cost-funding/request?requestId=' + encodeURIComponent(requestId(args.requestId)),
       'task-outcomes':() => '/api/operations/' + cid() + '/task-outcomes',
       'task-outcome':() => '/api/operations/' + cid() + '/task-outcomes/' + id(args.comparisonId,'task-outcomes') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Task comparison revision',1,1000000)),
@@ -898,6 +902,40 @@ export class GrantWorkspaceClient {
       'GRANT_INVALID_INPUT', 'Use the original saved alternative ID, including base for the base allocation.');
     return this.#request('/api/operations/' + caseId + '/portfolio-selection',
       {body:{expectedVersion, portfolioId, alternativeId}, mutation:false});
+  }
+  fundingSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','revision'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.revision!==undefined)integer(body.revision,'Selected funding edition',1,1000000);
+    return this.#request('/api/operations/'+caseId+'/funding-seed',{body,mutation:false});
+  }
+  fundingPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current case version'); object(body.inputs,'Complete funding inputs');
+    return this.#request('/api/operations/'+caseId+'/funding-preview',{body,mutation:false});
+  }
+  async fundingSave(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256','acceptedResult'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete funding inputs'); requestId(body.requestId);
+    const {inputs,expectedPreviewSha256,acceptedResult,...original}=body;
+    const command={...original,action:'funding.save',data:{inputs,expectedPreviewSha256}};
+    const ordered=value=>Array.isArray(value)?value.map(ordered):plain(value)
+      ?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+    const canonical=value=>JSON.stringify(ordered(value));
+    const fingerprint=digest(Buffer.from(canonical({domain:'stellar-forge.sf47-operations.v1',programId:caseId,body:command})));
+    const read=await this.read('funding-request',{caseId,requestId:body.requestId}), native=read.value;
+    need(native?.caseId===caseId&&native.requestId===body.requestId&&typeof native.found==='boolean',
+      'GRANT_FUNDING_REQUEST_CHANGED','The original funding request journal changed.');
+    if(native.found) {
+      need(native.fingerprint===fingerprint&&native.resultSha256===digest(Buffer.from(canonical(native.result))),
+        'GRANT_FUNDING_REQUEST_CHANGED','The original request identifies another complete funding input.');
+      if(acceptedResult!==undefined)need(canonical(native.result)===canonical(acceptedResult),
+        'GRANT_FUNDING_ACCEPTANCE_CHANGED','The retained accepted response differs from the original commitment.');
+    }else need(acceptedResult===undefined,'GRANT_FUNDING_COMMITMENT_MISSING',
+      'The restored workspace lacks this accepted original funding save. Restore matching state before continuing.');
+    // The unchanged native command recovers its original result before its case CAS.
+    return this.command(caseId,command);
   }
   taskOutcomesSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
@@ -1258,6 +1296,9 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
+        integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
+        integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
       'task-outcomes':() => '/api/operations/' + id(args.caseId,'operation') + '/task-outcomes/' +
         id(args.comparisonId,'task-outcomes') + '/export.zip?revision=' + integer(args.revision,'Task comparison revision',1,1000000) +
         '&expectedVersion=' + integer(args.expectedVersion,'Reviewed export case version'),
