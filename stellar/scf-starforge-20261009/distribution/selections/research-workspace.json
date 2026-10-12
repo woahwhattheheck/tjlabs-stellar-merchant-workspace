@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "research-workspace",
   "title": "Research workspace",
-  "description": "Original research questions, retained source editions, citation update review, complete Documents and managed Pipelines, Python Analysis/workbooks, merchant operation and customer receiving",
+  "description": "Original research questions, citation update review and complete Python analyst handovers, retained Documents/Pipelines, full Analysis/workbooks, merchant operation and customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -144,14 +144,17 @@
     "stellar-forge/mcp-merchant-operator/catalog/research-citation-updates.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION_REVIEW.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_CITATIONS.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_citation_analyst.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_citation_analyst.py"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Source-linked research, explicit citation review, original Documents and managed Pipelines, full analytical workbooks, retained exports and editable customer receiving",
+    "description": "Source-linked research, complete citation and Python review workflows, original Documents/Pipelines, analytical workbooks, retained exports and editable customer receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
