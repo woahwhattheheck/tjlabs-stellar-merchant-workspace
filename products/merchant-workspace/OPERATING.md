@@ -17,13 +17,16 @@ They retain its original dependency manifests and lock.
 | Captured API authoring and native merchant compiler | `schema`, `openapi`; add `mcp` for the agent and native Stellar packages for the selected payment runtime |
 | GraphQL authoring and generated merchant | `graphql`, `schema`, `openapi`; add native Stellar packages for the merchant's configured payment runtime |
 | Purchased API customer and original payment lifecycle | Native Stellar packages, `mcp`, Python 3.11 or later, and the original selected Buyer/Inbox directories |
+| Native MPP merchant, governed customer and private agent | The original `mpp-workspace runtime-template` and `runtime-receive` selection (`@stellar/mpp` 0.7.1, `mppx` 0.6.29, Stellar SDK 15.1.0), Python 3 and the original SF36 controlling terminal |
 | Merchant MCP interface | Add `mcp` and the features used by the selected workspace |
 | STAC catalog and local retained explorer | Original Node source and local file-lock support |
 | STAC merchant/customer receiving | Native Stellar packages, `schema`, and `openapi`, as specified by the original GIS receiving guide |
 | Incident watcher and case desk | Original Node source and local file-lock support; configured Slack/webhook credentials when notifications are selected |
+| Supplier costs and native pricing browser | Original Node source and local file-lock support; add the original merchant MCP runtime for agent operation |
 | Accounting provider operations | The existing merchant MCP runtime and original selected QuickBooks/Xero workspace configuration |
 | Merchant pricing, supplier costs and scenario planning | The same installed merchant runtime, original seller configuration and selected operations source or retained exports |
 | Material catalog | The catalog guide's original runtime feature and provider configuration |
+| Retained grant purchase review and native Buyer results | Native Stellar packages, `mcp`, operator support and the original private workbench; receiving makes no new payment |
 | Kafka event datasets and complete customer clients | Python 3.11 or later; `confluent-kafka==2.16.0` in that Python environment for broker work; Node 22.16 or later for browser/client and the merchant's selected runtime features |
 
 Use `starforge registrations` to inspect the selected package's actual command
@@ -425,6 +428,11 @@ financial operation.
 
 ## 8A. Operate supplier costs, pricing and full workspace receiving
 
+The [complete merchant economics guide](../merchant-economics/OPERATING.md)
+connects original source intake, exact period and route coverage, allocation,
+pricing decisions, host-declared agent inputs and complete receiving. The
+following steps keep this workflow in the same installed Applications product.
+
 Open **Applications → New application → Merchant pricing and scenario
 planning** in the same installed product. Select the merchant's original seller
 configuration, one private pricing directory and its operations listener or
@@ -714,3 +722,30 @@ members and recovery commands. The
 [customer download guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MERCHANT-DOWNLOAD.md)
 covers SDK receiving, cancellation, remote restart, complete-file reopening and
 the same retained file transfer.
+
+## 11. Review a retained grant purchase and hand it over
+
+Choose **Grant purchase reviewer** in Applications, select the reviewed runtime
+and a private workbench, then Review, Save, Connect and Start. Review the bundled
+original packet or an exact receiving export before restoring its native Buyer
+records. Source and query retain the original selection and document downloads;
+Buyer results reads both complete original result files through the native
+client.
+
+**Close Buyer and export packet** drains the complete original Buyer before
+exporting its full quote transitions and saved results. A second operator
+reviews that exact packet and digest in a new private workbench, receives the
+original records, and opens the complete result. Stop and subsequent Start use
+the same saved Applications record and private workbench. Response recovery
+retains original action IDs and accepted export bytes.
+
+The [complete grant reviewer guide](../grant-reviewer/OPERATING.md) connects
+installation, private access, source review, full result reading, closed export,
+independent receiving and managed recovery. These operations reuse the retained
+purchase and do not add a transaction or provider data acquisition.
+
+## Native MPP merchant and customer
+
+Use `starforge mpp-workspace` or **Applications → Native MPP merchant and customer** to create or attach one original native workspace. Its retained product opens the original merchant/customer browser and merchant agent together. Configure the merchant’s exact resources and prices, receive its customer contract, review the payer limits and governor settings, prepare one stable purchase ID, and continue the original consent, payment and recovery workflow.
+
+The [native MPP operating guide](../mpp-workspace/OPERATING.md) gives the exact runtime selection, private setup, browser and typed client commands, managed terminal and original purchase recovery. Its [receiving guide](../mpp-workspace/RECEIVING.md) carries all twelve generated customer files and the original response bytes, including interrupted transfer and reopen. Existing purchases retain their accepted profile and request while current customer inputs move to a later revision.

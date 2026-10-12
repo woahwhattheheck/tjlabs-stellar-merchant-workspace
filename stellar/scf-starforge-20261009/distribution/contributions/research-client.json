@@ -14,5 +14,8 @@
     "./buyer/research-dossiers/protocol": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-protocol.mjs",
     "./merchant/mcp/research": "./source/stellar-forge/mcp-merchant-operator/research-workspace.mjs",
     "./buyer/research-dossiers/contracts": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-contracts.mjs"
-  }
+  },
+  "components": [
+    "products/research"
+  ]
 }

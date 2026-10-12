@@ -11,7 +11,7 @@ import { createConfiguredAdmission, validateInputOption } from './configured-adm
 import { compileServicePath } from './route-path.mjs';
 import { readJsonResponseFile, validateResponseFile } from './response-file.mjs';
 import { createSellerDeveloperPortal } from './developer-portal.mjs';
-import { createSellerLifecycle } from './lifecycle.mjs';
+import { createSellerLifecycle, bindSellerSignals } from './lifecycle.mjs';
 import { createSellerAvailability } from './availability/gate.mjs';
 import { validateMaxStreamBytes } from './stream-response.mjs';
 import { validateAvailabilityDirectory } from './availability/store.mjs';
@@ -164,14 +164,28 @@ export async function startSellerService({ config, port = 8423, handlers = {},
   server.headersTimeout = 10000;
   server.keepAliveTimeout = 5000;
   const lifecycle = createSellerLifecycle(server, { maxInFlight, drainGraceMs });
-  let availability, closing;
-  const close = () => closing ??= (async () => {
-    const result = await lifecycle.close();
-    // Keep the private writer lease while original native work drains. A forced
-    // drain failure retains it until process exit.
-    await availability?.close();
-    return result;
-  })();
+  let availability, closing, startupCleanup, availabilityClosed = false, startupCleaned = false;
+  const close = () => {
+    if (closing) return closing;
+    closing = (async () => {
+      const result = await lifecycle.close();
+      // Original dispatch drains before its policy or partial-start owner.
+      // Failed cleanup retains the exact resource for the next close attempt.
+      const failures = [];
+      if (!availabilityClosed) {
+        try { await availability?.close(); availabilityClosed = true; }
+        catch (error) { failures.push(error); }
+      }
+      if (!startupCleaned) {
+        try { await startupCleanup?.(); startupCleaned = true; }
+        catch (error) { failures.push(error); }
+      }
+      if (failures.length) throw new AggregateError(failures, 'Original seller resources did not fully close',
+        { cause: failures[0] });
+      return result;
+    })().catch(error => { closing = null; throw error; });
+    return closing;
+  };
   try {
     await new Promise((done, fail) => { server.once('error', fail); server.listen(port, HOST, done); });
     const url = `http://${HOST}:${server.address().port}`;
@@ -237,13 +251,15 @@ export async function startSellerService({ config, port = 8423, handlers = {},
     };
     return { server, url, mode, compiled, lifecycle, close, ...(availability ? { availability } : {}) };
   } catch (error) {
-    if (server.listening) await close();
-    else await availability?.close();
+    if (typeof error.close === 'function' && error.close !== close) startupCleanup = error.close.bind(error);
+    try { await close(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = close; }
     throw error;
   }
 }
 
-export async function main(args = process.argv.slice(2)) {
+export async function main(args = process.argv.slice(2), { noSignals = false } = {}) {
+  if (typeof noSignals !== 'boolean') throw new TypeError('noSignals must be a boolean');
   if (args.length === 1 && args[0] === '--help') { process.stdout.write(USAGE + '\n'); return null; }
   const options = new Map();
   for (let i = 0; i < args.length; i++) {
@@ -277,17 +293,39 @@ export async function main(args = process.argv.slice(2)) {
     ...(options.has('--request-timeout-ms') ? { requestTimeoutMs: validateRequestTimeout(Number(options.get('--request-timeout-ms'))) } : {}),
     maxInFlight: Number(options.get('--max-in-flight') ?? 64),
     drainGraceMs: Number(options.get('--drain-grace-ms') ?? 60000) });
-  process.stdout.write(JSON.stringify({ url: session.url, mode: session.mode,
-    health: session.url + '/_seller/health', ready: session.url + '/_seller/ready',
-    offers: session.url + '/_seller/offers',
-    docs: session.url + '/_seller/docs', openapi: session.url + '/_seller/openapi.json' }) + '\n');
-  for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => {
-    session.close().then(() => { process.exitCode = 0; }, () => { process.exitCode = 1; });
-  });
-  return session;
+  try {
+    if (!noSignals) bindSellerSignals(session);
+    process.stdout.write(JSON.stringify({ url: session.url, mode: session.mode,
+      health: session.url + '/_seller/health', ready: session.url + '/_seller/ready',
+      offers: session.url + '/_seller/offers',
+      docs: session.url + '/_seller/docs', openapi: session.url + '/_seller/openapi.json' }) + '\n');
+    return session;
+  } catch (error) {
+    const close = session.close.bind(session);
+    try { await close(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = close; }
+    throw error;
+  }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch(error => { process.stderr.write(String(error?.message ?? error) + '\n'); process.exitCode = 1; });
+  main().catch(async error => {
+    process.exitCode = 1;
+    try { process.stderr.write(String(error?.message ?? error) + '\n'); } catch { /* Reporting must not release the original cleanup owner. */ }
+    if (typeof error?.close !== 'function') return;
+    const close = error.close.bind(error);
+    const preserveFailure = () => { process.exitCode = 1; };
+    process.on('SIGINT', preserveFailure); process.on('SIGTERM', preserveFailure);
+    try {
+      for (;;) {
+        try { await close(); return; }
+        catch { await new Promise(resolve => setTimeout(resolve, 1000)); }
+      }
+    } finally {
+      process.removeListener('SIGINT', preserveFailure);
+      process.removeListener('SIGTERM', preserveFailure);
+      process.exitCode = 1;
+    }
+  });
 }
 

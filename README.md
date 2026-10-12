@@ -15,6 +15,7 @@ original saved records from source selection through delivery and reopening.
 | --- | --- | --- |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
+| Operate native MPP merchant and customer | **Applications → Native MPP merchant and customer** or `starforge mpp-workspace` | One retained native workspace, original 402 purchase and consent/recovery flow, browser/agent operation, twelve-file customer delivery and exact paid-response receiving |
 | Turn an existing GraphQL query service into a merchant | `starforge graphql-workspace` or the merchant MCP tools | Reviewed operations, actual source previews, buyer clients, versioned merchant packages and deployment releases |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
@@ -22,6 +23,8 @@ original saved records from source selection through delivery and reopening.
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
+| Review research sources and deliver cited analysis | `starforge research-workspace`, `starforge research-client` and the merchant Research tools | One saved question, original source editions, reviewed Crossref operations, analyst findings and complete report/portable receiving |
+| Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -34,6 +37,9 @@ compilation, agent operation and receiving in one retained product. The
 [purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 opens existing access or a saved purchase through the browser, generated agent
 settings and exact request client. The
+[merchant economics guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-economics/OPERATING.md)
+follows original seller observations, supplier-source review, route allocation,
+pricing decisions and complete workspace receiving. The
 [pricing and supplier-cost guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 connects original supplier sources, allocation, saved pricing reviews, scenario
 planning and complete backup receiving through that same Applications lifecycle.
@@ -197,7 +203,11 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Native MPP merchant, customer and managed receiving](products/mpp-workspace/README.md)
+
 - [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
+- [Grant purchase review and complete receiving](products/grant-reviewer/OPERATING.md)
+- [Research questions, source review and complete delivery](products/research/OPERATING.md)
 - [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
 - [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 - [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
@@ -207,6 +217,7 @@ the replacement is operating as intended.
 - [Portable GIS receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/receiving/PORTABLE_GIS.md)
 - [Supplier costs, pricing and complete workspace receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 - [Merchant incident desk](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf74-merchant-support-console/INCIDENT_SOURCES.md)
+- [Supplier costs, pricing decisions and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-economics/OPERATING.md)
 - [QuickBooks and Xero operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md)
 
 Installed archives retain these guides under `source/` with the same relative

@@ -526,6 +526,40 @@ Reuse the same receiving input and directory after interruption; its journal
 reconciles the original stages. Omit `sourceProcessingWorkspace` for imagery
 alone. The example does not change the completed source directories.
 
+### Receive through the Node, command-line and MCP clients
+
+The installed source contains two complete client workflows for retained native
+cases. They use the original host, source and working data, and retain their
+completed stages in the selected private operation directory.
+
+| Existing case | Packaged workflow | Received result |
+| --- | --- | --- |
+| Austin imagery and Cirrus processing | [Imagery and processing receiving](../../stellar-forge/mcp-merchant-operator/STAC_RECEIVING.md) | Full scene and processing editions, selected asset, analyst decisions, reports, portable handovers and independent receiving |
+| Configured Prescient sender and receiver | [Prescient client continuation](../../stellar-forge/mcp-merchant-operator/PRESCIENT_CONTINUATION.md) | Original saved profile review across a lost response, complete portable-profile download, same-client reconnection and the receiver's local binding |
+
+The imagery workflow takes the receiving directory, complete source root, native
+source root, actual source commit and original processing handover as explicit
+arguments. It checks the selected input before import, carries every retained
+scene and processing record through the original client interfaces, and saves
+the complete outputs on the receiving host. The guide identifies the exact
+Austin/Cirrus case used by this maintained example. The current product source
+contains the original forwarded-edition correction, so this source can use its
+normal native workspace module.
+
+The Prescient workflow takes the original configured case's input JSON. It
+retains the reviewed actor, operation ID, revision and request body before
+dispatch. An ambiguous response is reconciled through that same native operation;
+the original MCP and command-line interfaces consume the saved result. The
+client reconnects to the same workspace after its host rotates the private
+startup record, then checks the independently configured receiver.
+
+Both programs are included by the original `stac-workspace-agent` distribution
+contribution. In an installed archive, their paths begin with
+`source/stellar-forge/mcp-merchant-operator/examples/`. Their operating guides
+are beside the client. Keep the original private input and completed receiving
+directory together when continuing an interrupted operation; the programs
+reopen those saved stages.
+
 ## 9. Continue an operating delivery
 
 | Observed state | Continue through |
@@ -536,6 +570,8 @@ alone. The example does not change the completed source directories.
 | A managed worker was interrupted | Applications Recover with the original application and operation IDs |
 | The application completed Stop | A fresh start review/request for that saved application |
 | A native customer request needs reconciliation | The same customer's original recover and inspect commands |
+| A Prescient action lost its response | Read the original operation; replay only its unchanged retained command when needed |
+| The client sees a restarted original host | Reuse its configured startup file and verify the same workspace identity |
 | A file transfer was interrupted | The original receiving/export command against the same destination |
 | A reviewed configuration changed | Review the current files and save the intended selection |
 | The runtime needs an upgrade | The original new-directory upgrade/recovery flow, retaining the working data |
