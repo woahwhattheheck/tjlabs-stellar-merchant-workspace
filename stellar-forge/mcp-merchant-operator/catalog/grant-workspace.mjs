@@ -14,6 +14,7 @@ const originalRequest = {requestId:requestIdentifier, actor:nonempty(300), note:
 const planSelection = {planId:id('plan'), expectedRevision:{type:'integer', minimum:1, maximum:1000000}};
 const planComparisonRevision = {type:'integer',minimum:1,maximum:1000000};
 const caseSelection = {caseId:id('operation'), expectedVersion:integer};
+const installationReviewRef={type:'object',additionalProperties:false,properties:{id:id('review'),sha256:digest},required:['id','sha256']};
 const inputRef = {type:'object', additionalProperties:false,
   properties:{hostInput:alias, snapshotId:{type:'string'}, transferId:{type:'string'}, sourceWorkspace:alias},
   oneOf:[{required:['hostInput']}, {required:['snapshotId']}, {required:['transferId']}]};
@@ -487,9 +488,11 @@ export const grantWorkspaceTools = [
   tool('installation_return', 'Freeze the exact reviewed receiving report under the existing case request journal. Retain the original request, named operator, note and full preview SHA; this records observations and preserves every source file.',
     {...ws,...caseSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
+  tool('installation_return_review_seed', 'Reopen an exact owner review retained in this same case, including its original returned evidence after cold receiving. Compare staged/current plan and records; new choices start KEEP. Existing original decisions and saved Installation editions are returned separately.',
+    {...ws,...caseSelection,retainedReview:installationReviewRef},['workspace','caseId','expectedVersion','retainedReview'],true),
   tool('installation_return_review_preview', 'Compare an imported complete receiving case with the owner current Installation. Inputs explicitly KEEP or APPLY every returned check; changed criteria or acceptance basis require fresh receiving. Work and purchases remain original evidence.',
     {...ws,...caseSelection,...modelInput},['workspace','caseId','expectedVersion'],true),
-  tool('installation_return_stage', 'Retain the exact owner review and full original evidence files, returning a complete proposed Installation document at /document. It does not save an Installation: pass that document to the original installation_preview and installation_save after owner confirmation.',
+  tool('installation_return_stage', 'Retain the exact owner review and full original evidence files, returning a complete proposed Installation document at /document. Pass that document and returnReview {id:recordId,sha256:reviewSha256} to the original installation_preview and installation_save. The selected staged review must still match the current plan, sources and original Installation edition.',
     {...ws,...caseSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
   tool('customer_use_calendar', 'Read complete saved Installation customer-use calendars, their pinned proposal rules, dated useful requests, separately planned direct/prepaid settlements and linked original receipt states. Supply exact editions to reopen historical choices. Planned counts do not qualify as actual cohort results.',
@@ -516,10 +519,10 @@ export const grantWorkspaceTools = [
       cycleIds:{type:'array',items:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$'},minItems:1,maxItems:100,uniqueItems:true}},
     ['workspace','caseId','expectedVersion','sourceId','expectedSourceSha256','cycleIds','installationId','expectedRevision'],true),
   tool('installation_preview', 'Review the complete selected customer installation against the original case version and current saved edition. Supply the document as inputs or one exact retained input with inputPointer /document from the seed.',
-    {...ws,...caseSelection,...installationSelection,...modelInput},
+    {...ws,...caseSelection,...installationSelection,...modelInput,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision'],true),
   tool('installation_save', 'Append the exact reviewed customer installation edition in the original case journal. Retain the original request ID, operator, save reason, case version, installation selection and reviewed preview SHA.',
-    {...ws,...caseSelection,...installationSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest},
+    {...ws,...caseSelection,...installationSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision','requestId','actor','note','expectedPreviewSha256']),
   tool('commercial_connections', 'Read the configured original receivables endpoints and their retained workspace/source identities.',
     {...ws}, ['workspace'], true),
