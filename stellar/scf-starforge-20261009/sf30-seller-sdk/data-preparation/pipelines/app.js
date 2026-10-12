@@ -236,10 +236,12 @@ python3 cli.py --workspace ./received serve --port 8777</pre><p>The receiver rec
     link.click();
     if(!current)link.remove();
   }
+  let receivedListGeneration=0;
   async function receivedList() {
     if(!receivedProjects.isConnected)return;
+    const generation=++receivedListGeneration;
     const data=await request('/api/received');
-    if(!receivedProjects.isConnected)return;
+    if(!receivedProjects.isConnected||generation!==receivedListGeneration)return;
     receivedProjects.innerHTML=data.items.length?data.items.map(p=>`<div class="run-card"><div><strong>${esc(p.label)}</strong><p class="hint">${count(p.executions)} executions · ${count(p.sources)} retained source editions</p></div><button data-open-received="${esc(p.id)}">Open independent workspace</button></div>`).join(''):'<p class="hint">No projects have been received here.</p>';
     receivedProjects.querySelectorAll('[data-open-received]').forEach(b=>b.onclick=()=>action(async()=>{const value=await request('/api/open-received',{id:b.dataset.openReceived});if(receiveInfo.isConnected)receiveInfo.innerHTML=`<a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;}));
   }

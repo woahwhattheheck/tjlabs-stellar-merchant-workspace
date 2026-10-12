@@ -28,12 +28,23 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 def write(path, data):
+    """Publish a complete new file without exposing an interrupted partial write."""
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    with path.open('xb') as stream:
-        os.chmod(path, 0o600)
-        stream.write(data)
-        stream.flush()
-        os.fsync(stream.fileno())
+    temporary = path.with_name('.'+path.name+'-'+uuid.uuid4().hex+'.partial')
+    try:
+        with temporary.open('xb') as stream:
+            os.chmod(temporary, 0o600)
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, path, follow_symlinks=False)
+        parent = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(parent)
+        finally:
+            os.close(parent)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 def retain_file(path, data):
     """Reuse only the exact original file; never replace a received case."""
@@ -337,228 +348,247 @@ def main():
         'sourceBytes': sum(item['bytes'] for item in source_manifest['files'].values()),
         'originalInputRows': 120012, 'originalPackageSha256': PACKAGE_SHA,
         'directory': str(directory), 'attempt': str(attempt), 'continuingOriginal': args.continue_original}), flush=True)
-    started = time.monotonic()
-    child = None
-    process_result = {'before': before, 'timedOut': False}
-    error = None
+    stopping = {'signal': None, 'native': False}
+    previous_handlers = {number: signal.getsignal(number) for number in (signal.SIGINT, signal.SIGTERM)}
+    def request_stop(number, _frame):
+        if stopping['signal'] is None:
+            stopping['signal'] = number
+        if stopping['native']:
+            stopping['native'] = False
+            raise KeyboardInterrupt('Receiving stop requested by signal '+str(number))
+    for number in previous_handlers:
+        signal.signal(number, request_stop)
     try:
-        child = subprocess.Popen([
-            args.node, str(attempt/'native-entry.mjs'), str(source), str(directory),
-            str(attempt/'receiving-options.json')
-        ], env=environment, start_new_session=True)
+        started = time.monotonic()
+        child = None
+        process_result = {'before': before, 'timedOut': False}
+        error = None
         try:
-            returncode = child.wait(timeout=args.timeout_seconds)
-        except subprocess.TimeoutExpired:
-            process_result['timedOut'] = True
-            with contextlib.suppress(ProcessLookupError):
-                os.killpg(child.pid, signal.SIGTERM)
+            stopping['native'] = True
+            if stopping['signal'] is not None:
+                raise KeyboardInterrupt('Receiving stop requested before native startup')
+            child = subprocess.Popen([
+                args.node, str(attempt/'native-entry.mjs'), str(source), str(directory),
+                str(attempt/'receiving-options.json')
+            ], env=environment, start_new_session=True)
             try:
-                returncode = child.wait(timeout=15)
+                returncode = child.wait(timeout=args.timeout_seconds)
             except subprocess.TimeoutExpired:
+                process_result['timedOut'] = True
                 with contextlib.suppress(ProcessLookupError):
-                    os.killpg(child.pid, signal.SIGKILL)
-                returncode = child.wait()
-        process_result.update({'pid': child.pid, 'returncode': returncode,
-            'signal': -returncode if returncode < 0 else None})
-    except Exception as failure:
-        error = {'type': type(failure).__name__, 'message': str(failure)}
-        process_result['returncode'] = None
-    finally:
-        if child:
-            identity = None
-            try:
-                identity = child_identity(identity_path, child.pid)
-            except Exception as failure:
-                process_result['identityError'] = {'type': type(failure).__name__, 'message': str(failure)}
-                error = error or process_result['identityError']
-            try:
-                if identity is None:
-                    process_result.update(retire_unrecorded_group(child))
-                else:
-                    process_result.update(retire_group(child.pid, identity))
-            except Exception as failure:
-                process_result['drainError'] = {'type': type(failure).__name__, 'message': str(failure)}
-                process_result['namespaceRecorded'] = False
-                error = error or process_result['drainError']
+                    os.killpg(child.pid, signal.SIGTERM)
                 try:
-                    process_result.update(retire_unrecorded_group(child))
-                except Exception as cleanup_failure:
-                    process_result['fallbackDrainError'] = {
-                        'type': type(cleanup_failure).__name__, 'message': str(cleanup_failure)}
-            if child.poll() is None:
-                try:
-                    child.wait(timeout=5)
+                    returncode = child.wait(timeout=15)
                 except subprocess.TimeoutExpired:
-                    child.kill()
-                    child.wait()
-        process_result['seconds'] = round(time.monotonic()-started, 3)
-        process_result['after'] = resources()
-        write(attempt/'native-process.json', (json.dumps(process_result, indent=2)+'\n').encode())
-        print(json.dumps({'stage': 'MANAGED_RECEIVING_PROCESS_EXIT', **process_result}), flush=True)
-    result_path = attempt/'receiving-result.json'
-    saved_result = None
-    if result_path.is_file():
-        try:
-            saved_result = json.loads(result_path.read_text())
-        except Exception as failure:
-            process_result['resultReadError'] = {'type': type(failure).__name__, 'message': str(failure)}
-            error = error or process_result['resultReadError']
-    completed = (process_result.get('returncode') == 0 and isinstance(saved_result, dict)
-        and process_result.get('timedOut') is False and error is None
-        and process_result.get('namespaceRecorded') is True and not process_result.get('activeAfterDrain'))
-    description = None
-    received = {'schema': 'stellar-forge.data-preparation-managed-receiving-checkpoint.v1',
-        'sourceCommit': source_manifest['sourceCommit'], 'originalPackageSha256': PACKAGE_SHA,
-        'originalProjectSha256': PROJECT_SHA, 'originalInputRows': 120012}
-    if completed:
-        try:
-            received, description = verify_customer_output(
-                directory, attempt, original, source, environment, args.node, source_manifest)
-        except Exception as failure:
-            completed = False
+                    with contextlib.suppress(ProcessLookupError):
+                        os.killpg(child.pid, signal.SIGKILL)
+                    returncode = child.wait()
+            process_result.update({'pid': child.pid, 'returncode': returncode,
+                'signal': -returncode if returncode < 0 else None})
+        except (Exception, KeyboardInterrupt) as failure:
             error = {'type': type(failure).__name__, 'message': str(failure)}
-            if saved_result is not None:
-                received['completedPhases'] = saved_result
-    elif saved_result is not None:
-        received['completedPhases'] = saved_result
-    received.update({'completed': completed, 'nativeProcess': process_result, 'error': error,
-        'sourceFiles': len(source_manifest['files']), 'receivingDriverSha256': digest(driver)})
-    title = 'Starforge_Data_Preparation_Pipelines_2026-10-12'
-    report = attempt/(title+('_Receiving.json' if completed else '_Checkpoint.json'))
-    write(report, (json.dumps(received, indent=2, ensure_ascii=False)+'\n').encode())
-    guide = (
-        '# Data preparation and pipelines: complete customer operation\n\n'
-        'This complete operation retains the original 120,012-row PREP12 project, its source files, '
-        'SQL editions and review histories, the managed preparation work, and the independently edited '
-        'pipeline customer project. Read this invocation’s receiving JSON for its actual completed stages, '
-        'complete file identities and process outcome.\n\n'
-        '## Open the prepared work\n\n'
-        'The receiving JSON gives each full project archive path and its identity. Paths under the original '
-        'operation directory correspond to the same relative path in this ZIP. The pipeline project '
-        'contains preparation.zip and pipelines.json together. Receive it into a new private directory:\n\n'
-        '    python3 SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/cli.py '
-        '--workspace /ABSOLUTE/PRIVATE/customer receive FULL_PIPELINE_PROJECT.zip\n'
-        '    node SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.mjs '
-        '--workspace /ABSOLUTE/PRIVATE/customer --port 0\n\n'
-        'Open the private link printed by that listener. Its source preparation and pipeline editor use '
-        'the same saved state through Applications, the typed clients and all 40 merchant tools. '
-        'The independent customer pipeline retains edition 1, adds edition 2 with the original open-order '
-        'parameters, and keeps both complete executions and their native result histories.\n\n'
-        '## Continue this exact operation\n\n'
-        'Each receiving-attempts/ directory contains its exact selected source, receiver, options, '
-        'actual process outcome, complete downloads and browser views. To resume after interruption, '
-        'run the current receiver against the original operation directory with --continue. '
-        'managed-receiving-progress.json retains the operation ID and saved recipe, result, pipeline '
-        'and export identities. The unchanged original-package.zip and original-project.zip remain '
-        'beside the closed operator/ and customer/ directories. The operator also retains its '
-        'independently received pipeline customer tree. Keep these complete directories together.\n\n'
-        'The included RECEIVING.md gives the exact invocation. receiving-source.json binds every full '
-        'selected source file and the JavaScript receiving driver. files.json covers every file and '
-        'empty directory in this delivery. Private listener connection files are removed when their '
-        'own Applications process stops; reopen the work to obtain a new private connection.\n\n'
-        '## Maintained product\n\n'
-        'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/'
-        +source_manifest['sourceCommit']+'/products/data-preparation\n'
-    )
-    write(attempt/'START_HERE.md', guide.encode())
-    output = attempt/(title+('_Customer.zip' if completed else '_Checkpoint.zip'))
-    selected = []
-    def select(path):
-        if not path.exists():
-            return
-        selected.append(path)
-        if path.is_dir():
-            selected.extend(sorted(path.rglob('*')))
-    for name in ['original-package.zip', 'original-project.zip', 'original-manifest.json',
-                 'managed-receiving-progress.json']:
-        select(directory/name)
-    for folder in ['operator', 'customer', 'inputs', 'downloads']:
-        select(directory/folder)
-    for previous in sorted(attempts.iterdir()):
-        if not previous.is_dir() or previous.is_symlink():
-            raise ValueError('Use the original private receiving-attempt directories')
-        selected.append(previous)
-        for name in ['source', 'downloads', 'browser', 'merchant-dataset-preparation', 'merchant-dataset-pipeline']:
-            select(previous/name)
-        for name in ['START_HERE.md', 'RECEIVING.md', 'receiving.py', 'receiving.mjs', 'receiving-source.json',
-                     'receiving-options.json', 'native-entry.mjs', 'native-process-identity.json',
-                     'native-process.json', 'receiving-result.json',
-                     title+'_Receiving.json', title+'_Checkpoint.json']:
-            select(previous/name)
-    selected = sorted(set(selected))
-    members = {}
-    directories = []
-    with zipfile.ZipFile(output, 'x', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        for path in selected:
-            info = path.lstat()
-            name = str(path.relative_to(directory))
-            if stat.S_ISLNK(info.st_mode):
-                raise ValueError('The original closed customer operation contains a linked file')
-            if stat.S_ISDIR(info.st_mode):
-                name += '/'
-                entry = zipfile.ZipInfo(name)
-                entry.create_system = 3
-                entry.external_attr = ((stat.S_IFDIR | 0o700) << 16) | 0x10
-                archive.writestr(entry, b'')
-                directories.append(name)
-            elif stat.S_ISREG(info.st_mode):
-                data = path.read_bytes()
-                members[name] = {'bytes': len(data), 'sha256': digest(data)}
-                entry = zipfile.ZipInfo(name)
-                entry.create_system = 3
-                entry.external_attr = (stat.S_IFREG | 0o600) << 16
-                entry.compress_type = zipfile.ZIP_DEFLATED
-                archive.writestr(entry, data)
-            else:
-                raise ValueError('The original closed customer operation contains a non-regular entry')
-        archive.writestr('files.json', json.dumps({
-            'schema': 'stellar-forge.data-preparation-managed-customer-files.v1',
-            'members': members, 'directories': directories}, indent=2)+'\n')
-    output.chmod(0o600)
-    final = {'completed': completed, 'directory': str(directory), 'report': str(report),
-        'attempt': str(attempt), 'archive': str(output), 'archiveBytes': output.stat().st_size,
-        'archiveSha256': digest(output.read_bytes()), 'files': len(members),
-        'originalInputRows': 120012, 'managedCounts': received.get('managedCounts'),
-        'customerCounts': received.get('customerCounts'),
-        'merchantRows': description['rowCount'] if description else None}
-    print(json.dumps({'stage': 'COMPLETE_MANAGED_CUSTOMER_DELIVERY' if completed else 'ORIGINAL_MANAGED_CHECKPOINT',
-        **final}), flush=True)
-    if args.save_helper:
-        helpers = args.save_helper.resolve().parent
-        for name in ['library_upload.py', 'library_hosted_apps.py', 'library_file_transfer.py',
-                     'native_library_delivery.py', 'native_library_requests.py']:
-            if not (helpers/name).is_file():
-                raise ValueError('Keep the five current delivery helpers together: '+name)
-        request = {'uploads': [
-            {'local_path': str(report), 'purpose': 'create_library_file', 'library_artifact_type': 'other'},
-            {'local_path': str(output), 'purpose': 'create_library_file', 'library_artifact_type': 'other'}]}
-        request_path = attempt/'library-save-request.json'
-        saved_path = attempt/'library-save-result.json'
-        receipt_path = attempt/'library-save-receipts.jsonl'
-        provider_requests = attempt/'library-provider-requests'
-        write(request_path, (json.dumps(request)+'\n').encode())
-        worker = """import sys
-from pathlib import Path
-helpers=Path(sys.argv[1]).resolve()
-sys.path.insert(0,str(helpers))
-from native_library_delivery import _worker
-sys.exit(_worker(helpers,Path(sys.argv[2]),Path(sys.argv[3]),Path(sys.argv[4]),
-    Path(sys.argv[5]),Path(sys.argv[6]),upload_mode="returned-put"))
-"""
-        saved = subprocess.run([sys.executable, '-c', worker, str(helpers), str(request_path),
-            str(saved_path), str(receipt_path), str(attempt), str(provider_requests)],
-            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300)
-        write(attempt/'library-save-stdout.txt', saved.stdout.encode())
-        write(attempt/'library-save-stderr.txt', saved.stderr.encode())
-        for stream in [saved.stdout, saved.stderr]:
-            for line in stream.splitlines():
-                if line.startswith('__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__='):
-                    print(line, file=sys.stderr, flush=True)
-        if saved_path.is_file():
-            print(saved_path.read_text(), end='', flush=True)
-        if saved.returncode:
-            raise RuntimeError('The complete closed customer files remain in their receiving directory; saving did not finish')
-    return 0 if completed else 1
+            process_result['returncode'] = child.poll() if child else None
+        finally:
+            stopping['native'] = False
+            process_result['requestedSignal'] = stopping['signal']
+            if child:
+                identity = None
+                try:
+                    identity = child_identity(identity_path, child.pid)
+                except Exception as failure:
+                    process_result['identityError'] = {'type': type(failure).__name__, 'message': str(failure)}
+                    error = error or process_result['identityError']
+                try:
+                    if identity is None:
+                        process_result.update(retire_unrecorded_group(child))
+                    else:
+                        process_result.update(retire_group(child.pid, identity))
+                except Exception as failure:
+                    process_result['drainError'] = {'type': type(failure).__name__, 'message': str(failure)}
+                    process_result['namespaceRecorded'] = False
+                    error = error or process_result['drainError']
+                    try:
+                        process_result.update(retire_unrecorded_group(child))
+                    except Exception as cleanup_failure:
+                        process_result['fallbackDrainError'] = {
+                            'type': type(cleanup_failure).__name__, 'message': str(cleanup_failure)}
+                if child.poll() is None:
+                    try:
+                        child.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        child.kill()
+                        child.wait()
+            process_result['seconds'] = round(time.monotonic()-started, 3)
+            process_result['after'] = resources()
+            write(attempt/'native-process.json', (json.dumps(process_result, indent=2)+'\n').encode())
+            print(json.dumps({'stage': 'MANAGED_RECEIVING_PROCESS_EXIT', **process_result}), flush=True)
+        result_path = attempt/'receiving-result.json'
+        saved_result = None
+        if result_path.is_file():
+            try:
+                saved_result = json.loads(result_path.read_text())
+            except Exception as failure:
+                process_result['resultReadError'] = {'type': type(failure).__name__, 'message': str(failure)}
+                error = error or process_result['resultReadError']
+        completed = (process_result.get('returncode') == 0 and isinstance(saved_result, dict)
+            and process_result.get('timedOut') is False and error is None
+            and process_result.get('namespaceRecorded') is True and not process_result.get('activeAfterDrain'))
+        description = None
+        received = {'schema': 'stellar-forge.data-preparation-managed-receiving-checkpoint.v1',
+            'sourceCommit': source_manifest['sourceCommit'], 'originalPackageSha256': PACKAGE_SHA,
+            'originalProjectSha256': PROJECT_SHA, 'originalInputRows': 120012}
+        if completed:
+            try:
+                received, description = verify_customer_output(
+                    directory, attempt, original, source, environment, args.node, source_manifest)
+            except Exception as failure:
+                completed = False
+                error = {'type': type(failure).__name__, 'message': str(failure)}
+                if saved_result is not None:
+                    received['completedPhases'] = saved_result
+        elif saved_result is not None:
+            received['completedPhases'] = saved_result
+        received.update({'completed': completed, 'nativeProcess': process_result, 'error': error,
+            'sourceFiles': len(source_manifest['files']), 'receivingDriverSha256': digest(driver)})
+        title = 'Starforge_Data_Preparation_Pipelines_2026-10-12'
+        report = attempt/(title+('_Receiving.json' if completed else '_Checkpoint.json'))
+        write(report, (json.dumps(received, indent=2, ensure_ascii=False)+'\n').encode())
+        guide = (
+            '# Data preparation and pipelines: complete customer operation\n\n'
+            'This complete operation retains the original 120,012-row PREP12 project, its source files, '
+            'SQL editions and review histories, the managed preparation work, and the independently edited '
+            'pipeline customer project. Read this invocation’s receiving JSON for its actual completed stages, '
+            'complete file identities and process outcome.\n\n'
+            '## Open the prepared work\n\n'
+            'The receiving JSON gives each full project archive path and its identity. Paths under the original '
+            'operation directory correspond to the same relative path in this ZIP. The pipeline project '
+            'contains preparation.zip and pipelines.json together. Receive it into a new private directory:\n\n'
+            '    python3 SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/cli.py '
+            '--workspace /ABSOLUTE/PRIVATE/customer receive FULL_PIPELINE_PROJECT.zip\n'
+            '    node SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.mjs '
+            '--workspace /ABSOLUTE/PRIVATE/customer --port 0\n\n'
+            'Open the private link printed by that listener. Its source preparation and pipeline editor use '
+            'the same saved state through Applications, the typed clients and all 40 merchant tools. '
+            'The independent customer pipeline retains edition 1, adds edition 2 with the original open-order '
+            'parameters, and keeps both complete executions and their native result histories.\n\n'
+            '## Continue this exact operation\n\n'
+            'Each receiving-attempts/ directory contains its exact selected source, receiver, options, '
+            'actual process outcome, complete downloads and browser views. To resume after interruption, '
+            'run the current receiver against the original operation directory with --continue. '
+            'managed-receiving-progress.json retains the operation ID and saved recipe, result, pipeline '
+            'and export identities. The unchanged original-package.zip and original-project.zip remain '
+            'beside the closed operator/ and customer/ directories. The operator also retains its '
+            'independently received pipeline customer tree. Keep these complete directories together.\n\n'
+            'The included RECEIVING.md gives the exact invocation. receiving-source.json binds every full '
+            'selected source file and the JavaScript receiving driver. files.json covers every file and '
+            'empty directory in this delivery. Private listener connection files are removed when their '
+            'own Applications process stops; reopen the work to obtain a new private connection.\n\n'
+            '## Maintained product\n\n'
+            'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/'
+            +source_manifest['sourceCommit']+'/products/data-preparation\n'
+        )
+        write(attempt/'START_HERE.md', guide.encode())
+        output = attempt/(title+('_Customer.zip' if completed else '_Checkpoint.zip'))
+        selected = []
+        def select(path):
+            if not path.exists():
+                return
+            selected.append(path)
+            if path.is_dir():
+                selected.extend(sorted(path.rglob('*')))
+        for name in ['original-package.zip', 'original-project.zip', 'original-manifest.json',
+                     'managed-receiving-progress.json']:
+            select(directory/name)
+        for folder in ['operator', 'customer', 'inputs', 'downloads']:
+            select(directory/folder)
+        for previous in sorted(attempts.iterdir()):
+            if not previous.is_dir() or previous.is_symlink():
+                raise ValueError('Use the original private receiving-attempt directories')
+            selected.append(previous)
+            for name in ['source', 'downloads', 'browser', 'merchant-dataset-preparation', 'merchant-dataset-pipeline']:
+                select(previous/name)
+            for name in ['START_HERE.md', 'RECEIVING.md', 'receiving.py', 'receiving.mjs', 'receiving-source.json',
+                         'receiving-options.json', 'native-entry.mjs', 'native-process-identity.json',
+                         'native-process.json', 'receiving-result.json',
+                         title+'_Receiving.json', title+'_Checkpoint.json']:
+                select(previous/name)
+        selected = sorted(set(selected))
+        members = {}
+        directories = []
+        with zipfile.ZipFile(output, 'x', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+            for path in selected:
+                info = path.lstat()
+                name = str(path.relative_to(directory))
+                if stat.S_ISLNK(info.st_mode):
+                    raise ValueError('The original closed customer operation contains a linked file')
+                if stat.S_ISDIR(info.st_mode):
+                    name += '/'
+                    entry = zipfile.ZipInfo(name)
+                    entry.create_system = 3
+                    entry.external_attr = ((stat.S_IFDIR | 0o700) << 16) | 0x10
+                    archive.writestr(entry, b'')
+                    directories.append(name)
+                elif stat.S_ISREG(info.st_mode):
+                    data = path.read_bytes()
+                    members[name] = {'bytes': len(data), 'sha256': digest(data)}
+                    entry = zipfile.ZipInfo(name)
+                    entry.create_system = 3
+                    entry.external_attr = (stat.S_IFREG | 0o600) << 16
+                    entry.compress_type = zipfile.ZIP_DEFLATED
+                    archive.writestr(entry, data)
+                else:
+                    raise ValueError('The original closed customer operation contains a non-regular entry')
+            archive.writestr('files.json', json.dumps({
+                'schema': 'stellar-forge.data-preparation-managed-customer-files.v1',
+                'members': members, 'directories': directories}, indent=2)+'\n')
+        output.chmod(0o600)
+        final = {'completed': completed, 'directory': str(directory), 'report': str(report),
+            'attempt': str(attempt), 'archive': str(output), 'archiveBytes': output.stat().st_size,
+            'archiveSha256': digest(output.read_bytes()), 'files': len(members),
+            'originalInputRows': 120012, 'managedCounts': received.get('managedCounts'),
+            'customerCounts': received.get('customerCounts'),
+            'merchantRows': description['rowCount'] if description else None}
+        print(json.dumps({'stage': 'COMPLETE_MANAGED_CUSTOMER_DELIVERY' if completed else 'ORIGINAL_MANAGED_CHECKPOINT',
+            **final}), flush=True)
+        if args.save_helper:
+            helpers = args.save_helper.resolve().parent
+            for name in ['library_upload.py', 'library_hosted_apps.py', 'library_file_transfer.py',
+                         'native_library_delivery.py', 'native_library_requests.py']:
+                if not (helpers/name).is_file():
+                    raise ValueError('Keep the five current delivery helpers together: '+name)
+            request = {'uploads': [
+                {'local_path': str(report), 'purpose': 'create_library_file', 'library_artifact_type': 'other'},
+                {'local_path': str(output), 'purpose': 'create_library_file', 'library_artifact_type': 'other'}]}
+            request_path = attempt/'library-save-request.json'
+            saved_path = attempt/'library-save-result.json'
+            receipt_path = attempt/'library-save-receipts.jsonl'
+            provider_requests = attempt/'library-provider-requests'
+            write(request_path, (json.dumps(request)+'\n').encode())
+            worker = """import sys
+    from pathlib import Path
+    helpers=Path(sys.argv[1]).resolve()
+    sys.path.insert(0,str(helpers))
+    from native_library_delivery import _worker
+    sys.exit(_worker(helpers,Path(sys.argv[2]),Path(sys.argv[3]),Path(sys.argv[4]),
+        Path(sys.argv[5]),Path(sys.argv[6]),upload_mode="returned-put"))
+    """
+            saved = subprocess.run([sys.executable, '-c', worker, str(helpers), str(request_path),
+                str(saved_path), str(receipt_path), str(attempt), str(provider_requests)],
+                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300)
+            write(attempt/'library-save-stdout.txt', saved.stdout.encode())
+            write(attempt/'library-save-stderr.txt', saved.stderr.encode())
+            for stream in [saved.stdout, saved.stderr]:
+                for line in stream.splitlines():
+                    if line.startswith('__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__='):
+                        print(line, file=sys.stderr, flush=True)
+            if saved_path.is_file():
+                print(saved_path.read_text(), end='', flush=True)
+            if saved.returncode:
+                raise RuntimeError('The complete closed customer files remain in their receiving directory; saving did not finish')
+        return 0 if completed else 1
+    finally:
+        for number, handler in previous_handlers.items():
+            signal.signal(number, handler)
 
 if __name__ == '__main__':
     sys.exit(main())

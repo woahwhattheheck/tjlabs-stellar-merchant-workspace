@@ -94,6 +94,8 @@ Open the private link printed by that managed listener. Source preparation and t
 
 The native entry records its inner process identity and the actual outer process group/session before loading the operation. The Python controller retires only the process group it created. If the identity record is interrupted, the fallback drains that same inner group. Result reading and process cleanup are retained in the invocation’s outcome.
 
+New retained files are published only after their complete bytes are flushed, so an interrupted write cannot leave a partial original input at its final path. SIGINT and SIGTERM during receiving enter the same closed-checkpoint path; repeated stop signals are coalesced while the original owned group drains and its complete files are saved.
+
 A completed result requires the actual receiving process to exit successfully, a recorded namespace, a drained owned process group, and the complete customer output checks. The default overall receiving lifetime is 600 seconds and can be set with --timeout-seconds. An interruption preserves the actual completed phases and closed native workspaces in that invocation’s checkpoint.
 
 For completed work, the receiver checks all four preparation project archives and all four pipeline project archives, all original file identities in the three customer/operator workspaces, every selected pipeline result file, and both complete seller datasets using the existing native seller dataset loader. files.json records each delivered regular file and every preserved empty directory. All browser views are retained for visual review.

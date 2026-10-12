@@ -484,22 +484,35 @@ This managed contribution adds Applications, instance-bound attachment, source-o
 
 ## Continue the retained original customer project
 
-The full original receiving program is products/data-preparation/receiving.py with its adjacent receiving.mjs, receiving-source.json and RECEIVING.md. It opens the exact original PREP12 package, preserves all 120,012 input rows and original recipe/result/review history, and continues through Applications provider preparation, the managed listener, typed merchant tools, the original browser, complete retained downloads, stop/reopen and independent customer editing. It also loads the whole six-row merchant dataset through the original SF30 command.
+Use the [complete managed preparation and pipeline receiving guide](RECEIVING.md) and keep receiving.py, receiving.mjs and receiving-source.json beside it. The original receiving program preserves all 120,012 input rows, saved source and recipe editions, complete result files and review history. It continues that project through Applications, the original preparation and pipeline browsers, both typed clients, all 40 merchant tools, complete downloads, independent customer edits and cold reopening.
 
-Use the complete native source selected by receiving-source.json, currently commit 88feb91bc5089dced81813642aca24dc24ca713b. PREP12_SOURCE_ROOT below is the selected source from that exact commit; current maintained receiver files can reside separately. The receiver freezes and verifies all 35 original native source files before opening the project.
+The adjacent receiving-source.json selects the exact immutable source commit and records every complete source file's byte length, SHA-256 and Git blob. Read the commit from that manifest. Select those original files in PREP12_SOURCE_ROOT; the current receiver and manifest can live in a separate maintained checkout.
+
+For the already-started operation, use its same original package and canonical private directory:
 
 ~~~sh
-PREP12_SOURCE_ROOT=/absolute/selected-source-at-88feb91b
-python3 products/data-preparation/receiving.py \
+PREP12_RECEIVER_ROOT=/absolute/current-receiver-source
+PREP12_SOURCE_ROOT=/absolute/source-selected-by-receiving-manifest
+PREP12_SOURCE_COMMIT=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["sourceCommit"])' \
+  "$PREP12_RECEIVER_ROOT/products/data-preparation/receiving-source.json")
+
+python3 "$PREP12_RECEIVER_ROOT/products/data-preparation/receiving.py" \
   --source-root "$PREP12_SOURCE_ROOT" \
-  --source-commit 88feb91bc5089dced81813642aca24dc24ca713b \
+  --source-commit "$PREP12_SOURCE_COMMIT" \
   --package /absolute/private/Starforge_Data_Preparation_2026-10-12.zip \
-  --directory /absolute/private/new-managed-receiving \
+  --directory /absolute/private/existing-managed-receiving \
+  --continue \
   --node /absolute/existing/node \
   --playwright-module /absolute/existing/node_modules/playwright \
   --chromium /absolute/existing/chromium
 ~~~
 
-The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577; its existing original attachment is F0C8Q7QV5G9. Use a new receiving directory beneath an owned private parent.
+For a first receiving operation, choose a new directory and omit --continue. The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577; its original preparation-case attachment is F0C8Q7QV5G9. The receiver checks that package and its complete inner project before opening the workspace.
 
-The program captures the original child's process identity across Linux PID namespaces and drains that exact owned group. Its complete delivery contains the original package, both closed editable workspaces, all complete downloads, preserved native directories and the actual operating result. An interrupted operation retains a complete closed checkpoint through the same packaging and save path. RECEIVING.md documents the whole journey, exact source/input identities and the optional supported five-helper save.
+The saved continuation ledger retains the original operation, managed and customer recipes and results, pipeline ID and editions, execution request keys and complete export selections. A resumed invocation reads those saved records and continues the same operation. Completed preparation remains available while the pipeline phase proceeds; the pipeline uses the original six-row closed-order result and compares the independently edited open-order result to the original preparation customer's complete six rows.
+
+The data-preparation-workspace recipe selects the complete data-preparation source directory and products/data-preparation guides, together with the original data-preparation, data-preparation-pipelines and managed workspace contributions. Its installed source includes the native pipeline command/client, both browser applications, private received-project listeners and the 40-tool catalog. Build and install that complete selected commit through the original workflow above; a previously built archive retains its own original selection.
+
+Each invocation freezes its complete selected source and records its original process identity. The controller drains its owned process group and preserves the complete customer workspaces, including received pipeline projects and empty native directories. A completed delivery contains the original package, all source selections and complete project/results/report/merchant files, desktop and phone views, independent customer editions and the actual operating result.
+
+Use --save-helper with the existing library_upload.py and its four unchanged sibling helpers when that receiving host supplies the supported delivery runtime. The [receiving guide](RECEIVING.md) documents the full first-run and continuation commands, complete customer workflow, per-invocation source and outcome paths, and final archive reopening.
