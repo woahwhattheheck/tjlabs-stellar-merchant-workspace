@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Customer closing</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><div class="eyebrow">Merchant accounting</div><strong>Customer closing</strong></div>
+    <div class="workspace"><span id="workspace-name">Connecting</span><span id="operator-name"></span></div>
+    <button id="refresh" type="button">Refresh workspace</button>
+  </header>
+  <nav aria-label="Closing workbench">
+    <button type="button" data-view="compose" aria-current="page">Prepare a cycle</button>
+    <button type="button" data-view="cycles">Saved cycles</button>
+  </nav>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <div id="error" class="error" role="alert" hidden></div>
+  <main>
+    <section id="compose-view" aria-labelledby="compose-title">
+      <div class="page-heading"><div><h1 id="compose-title">Prepare customer statements</h1><p>Choose the original accounting run and service captures for each customer. Review the complete statements before issuing the cycle.</p></div></div>
+      <section class="panel" aria-labelledby="source-title">
+        <div class="section-heading"><h2 id="source-title">Cycle and default sources</h2><span id="inventory-state" class="muted">Loading customer records</span></div>
+        <label class="wide">Cycle name<input id="cycle-label" maxlength="200" placeholder="October service close" autocomplete="off"></label>
+        <div class="form-grid">
+          <label>Completed accounting run<select id="default-run"></select></label>
+          <label>Closing service capture<select id="default-closing"></select></label>
+          <label>Opening service capture<select id="default-opening"></select></label>
+        </div>
+        <p class="hint">Choose an opening and closing capture to compare service use over a period. A closing capture alone produces the original cumulative statement. You can change sources on individual customer rows.</p>
+      </section>
+      <section class="panel" aria-labelledby="customers-title">
+        <div class="section-heading"><h2 id="customers-title">Customers</h2><label class="search-label"><span class="sr-only">Find customers</span><input id="customer-search" type="search" placeholder="Find a customer"></label></div>
+        <div class="table-wrap"><table><thead><tr><th class="check"><input id="select-all" type="checkbox" aria-label="Select all displayed customers"></th><th>Customer</th><th>Reference</th><th>Assigned orders</th></tr></thead><tbody id="customer-rows"></tbody></table></div>
+        <div class="panel-footer"><span id="selected-count">No customers selected</span><button id="add-customers" type="button">Add selected customers</button></div>
+      </section>
+      <section class="panel" aria-labelledby="selections-title">
+        <div class="section-heading"><h2 id="selections-title">Statements in this cycle</h2><span id="selection-count" class="muted">No statements added</span></div>
+        <div id="selections"></div>
+        <div class="panel-footer"><p class="hint">Each row is a separate customer statement. Add another row when the same customer has a different service period.</p><button id="prepare" class="primary" type="button" disabled>Prepare all reviews</button></div>
+      </section>
+    </section>
+    <section id="cycles-view" aria-labelledby="cycles-title" hidden>
+      <div class="page-heading"><div><h1 id="cycles-title">Saved closing cycles</h1><p>Open a prepared cycle, continue an interrupted close, or retrieve its complete customer packets.</p></div><button id="reload-cycles" type="button">Refresh cycles</button></div>
+      <div class="cycle-layout">
+        <aside class="cycle-list panel" aria-label="Saved cycles"><div id="cycle-list"></div></aside>
+        <section id="cycle-detail" class="cycle-detail panel" aria-live="polite"><div class="empty">Choose a saved cycle.</div></section>
+      </div>
+    </section>
+  </main>
+  <footer><span id="storage-location"></span><span>Customer source records remain in the selected accounting workspace.</span></footer>
+  <dialog id="review-dialog">
+    <div class="dialog-heading"><div><div class="eyebrow">Statement review</div><h2 id="review-title">Customer statement</h2></div><button id="close-review" type="button">Close</button></div>
+    <div id="review-content"></div>
+  </dialog>
+</body>
+</html>
