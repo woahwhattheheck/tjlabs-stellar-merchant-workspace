@@ -84,7 +84,7 @@ Attach the selected installation to the existing runtime workspace:
 ~~~sh
 starforge runtime-workspace attach \
   --workspace /absolute/private/runtime-workspace \
-  --installation /absolute/private/preparation-runtime
+  --runtime /absolute/private/preparation-runtime
 ~~~
 
 Open that runtime workspace's **Applications** section. Choose **Data preparation**, select the existing private operator directory, choose local port 0, then **Review**, **Save** and **Start**. Open the returned browser link.
@@ -344,3 +344,20 @@ The managed layer preserves the original SQL-preparation files. Declarative clea
 The original SQL engine, browser, typed client and transfer workflow are the 13-file PREP12 contribution from maintained PR415, merge 08caff5379d3111260b72738d481c0625abedb5b. Its original exercise and operating results are retained in the preparation case, including the 120,012-input-row, three-source project and independently editable receiving.
 
 This managed contribution adds Applications, instance-bound attachment, source-owned registrations, 21 typed tools and durable delivery around that engine. Its selection adopts the original data-preparation contribution and keeps the native Python/SQLite source in the installed product. The original guide remains at sf30-seller-sdk/data-preparation/README.md.
+
+
+## Continue the retained original customer project
+
+The complete native receiving programme is products/data-preparation/receiving.py with its adjacent receiving.mjs. It opens the exact original PREP12 demonstration package, preserves all 120,012 input rows and original recipe/result/review history, and continues it through Applications provider preparation, the managed listener, typed merchant tools, native browser downloads, complete retained files, stop/reopen and independent customer editing. It also loads the delivered six-row merchant dataset through the original SF30 command and assembles the complete runnable delivery.
+
+~~~sh
+python3 "$PREPARATION_SOURCE_ROOT/products/data-preparation/receiving.py" \
+  --source-root "$PREPARATION_SOURCE_ROOT" \
+  --package /absolute/private/Starforge_Data_Preparation_2026-10-12.zip \
+  --directory /absolute/private/new-managed-receiving \
+  --node /absolute/existing/node \
+  --playwright-module /absolute/existing/node_modules/playwright \
+  --chromium /absolute/existing/chromium
+~~~
+
+The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577. Its existing attachment is F0C8Q7QV5G9 in the original preparation Slack case. Use the existing full package and an empty receiving directory under an owned private parent. The programme retains its original operation directory on failure so the same customer state can be inspected. Its complete output includes source, the original project, complete delivered files, independently editable customer project and the actual operating result.
