@@ -130,6 +130,40 @@ After receiving, source details expose each original file. Text can be read in f
 
 The installed SDK exports `createSourceBundleFromDirectory`, `createSourceBundle` and `inspectSourceBundle` through the Research dossier module and its `source-bundles` export. The existing `ResearchWorkspaceClient` supplies byte and host-file preview/receive methods, so a service can use the same reviewed input and revision controls.
 
+## Inspect and download an original source
+
+Source pages and revision comparisons keep titles, descriptive fields, selections and typed previews small enough to read through the installed client and merchant tools. Search still matches the complete original records. A retained file is read from its selected edition when the analyst opens or downloads it.
+
+In the browser, choose the source and its retained variant. **Read text** opens the complete original text; **Download** keeps the original bytes. The selected citation also offers its original result record. The saved edition and member digest identify a file even when later editions use the same DOI or filename.
+
+Use the same authenticated installed listener to inspect a retained occurrence:
+
+~~~sh
+starforge research-client source \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research \
+  --id DOSSIER_ID --edition RETAINED_EDITION_ID \
+  --key ORIGINAL_OCCURRENCE_KEY --revision SAVED_REVISION
+~~~
+
+Choose the actual source-bundle citation when a DOI group also contains OpenAlex or other provider editions. The inspection returns each original file's relative name, byte length, media type and SHA-256. Download the selected member with that returned name and digest:
+
+~~~sh
+starforge research-client export-source-file \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research \
+  --id DOSSIER_ID --edition RETAINED_EDITION_ID \
+  --key ORIGINAL_OCCURRENCE_KEY --revision SAVED_REVISION \
+  --name "papers/original-study.pdf" --sha256 ORIGINAL_FILE_SHA256 \
+  --out /srv/starforge/delivery/original-study.pdf
+~~~
+
+The client retains the complete stream and publishes a new output path exclusively. The server checks that the original edition belongs to the requested saved revision, that the member belongs to that occurrence, and that its bytes match the selected digest. Binary files and a UTF-8 byte-order mark keep their original bytes.
+
+The same attachment exposes **merchant_research_source** and **merchant_research_export** kinds **source-file**, **source-content** and **source-record**. Its existing export receipts and resumable file reader carry the selected file through detach or restart. Complete content and parsed-record exports declare their own serialization and digest; the retained-edition export keeps the original response bytes and formatting.
+
+The [complete source inspection contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_CLIENT.md#inspect-and-download-large-original-sources) includes SDK, CLI, merchant and HTTP selections. Full portable delivery carries the original files and saved history.
+
 ## Work with a retained ClinicalTrials cohort
 
 The same Research attachment operates the original ClinicalTrials receiving workspace. Configure a `clinicaltrials-packet` source handle with the actual retained ZIP and its SHA-256, then import that packet, select its captured cohort and prepare receiving under the original question.
