@@ -1,0 +1,11 @@
+{
+  "runtimeId": "RETURNED_RUNTIME_ID",
+  "kind": "stac-imagery",
+  "label": "Imagery and processing",
+  "settings": {
+    "workspaceDirectory": "/srv/starforge/imagery",
+    "processingWorkspaceDirectory": "/srv/starforge/processing",
+    "processingConfigurationFile": "/srv/starforge/private/processing.json",
+    "port": 0
+  }
+}
