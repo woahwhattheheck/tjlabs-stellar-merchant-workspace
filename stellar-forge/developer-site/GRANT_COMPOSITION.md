@@ -261,3 +261,11 @@ network charges retain their separate commercial assignments. The county
 product contributes to the same six funded delivery packages within the
 existing allocation. Completed native results enter the chapter from the
 original operated project and its full receiving programme.
+
+## Receive original provider changes and complete customer work
+
+The canonical §9A chapter “Retained services, facilitator choice and complete receiving” travels through the existing whole-chapter `--manuscript` receiver. Receive the full current chapter together with the original customer demonstrations, financing and other accepted product sections.
+
+Its two immutable operating sources register as `facilitator-public-response-receiving` and `publisher-facilitator-operations`. The first carries complete public-response capture, the installed SDK interpretation and original review/stage workflow; the second carries the configured provider, retained service, seller release controls and complete receiving. The existing source receiver retains the actual repository, commit and path and clears a preceding blob pin when that source selection changes.
+
+Preserve the original case identities when incorporating its native result. Provider review and staged release outcomes describe those release operations; the purchase and customer-task records retain their own approved intent, settlement and complete useful output. The full original customer package and its independently received edition supply the actual receiving outcome. New runtime or display corrections compose into the same operation and selected source.
