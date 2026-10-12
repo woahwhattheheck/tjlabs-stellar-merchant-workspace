@@ -41,5 +41,11 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_workflows.py",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_workflows.mjs",
     "stellar-forge/mcp-merchant-operator/console/workflow-report-files.d.mts"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar-forge/mcp-merchant-operator/console/service.mjs",
+      "manifest": "stellar-forge/mcp-merchant-operator/console/browser-assets.json"
+    }
   ]
 }

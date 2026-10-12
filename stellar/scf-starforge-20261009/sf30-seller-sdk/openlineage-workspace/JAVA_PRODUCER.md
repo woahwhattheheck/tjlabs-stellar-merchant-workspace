@@ -14,16 +14,18 @@ to the original workspace, operation ID, wire SHA-256 and decoded event SHA-256.
 
 ## Prepare an existing Java runtime
 
-Use Java 17 or later and an existing Maven installation. Dependency preparation
-uses the pinned Maven dependency plugin to resolve the native SDK and its
-runtime dependencies through Maven's existing settings and cache.
+Use Java 17 or later, an existing Maven installation and the host's util-linux
+flock command. The accepted Linux runtime supplies all three. Dependency
+preparation uses the pinned Maven dependency plugin to resolve the native SDK
+and its runtime dependencies through Maven's existing settings and cache.
 
 ```sh
 node JAVA_PRODUCER.mjs prepare --runtime /absolute/java-producer-runtime
 ```
 
 For an existing complete Maven cache, add `--offline`. Select a particular
-executable with `--maven /absolute/mvn`. Preparation creates the runtime
+executable with `--maven /absolute/mvn` and the existing lock executable with
+`--flock /absolute/flock`. Preparation creates the runtime
 source, POM, complete classpath and hashes for every resolved dependency.
 A completed matching runtime with its successful original Maven command is reused.
 The native Java class runs with the JDK's source launcher.
@@ -56,8 +58,21 @@ is retained under an .interrupted-<SHA256> name before the complete selected fil
 replaces its name. A complete different source is preserved and rejected. An
 unverified old Maven classpath is likewise retained before its verified replacement.
 
-If the owning Node process ended while holding writer.lock, inspect its
-actual saved lock ID and use the existing application's recovery command:
+When the owning Node process ends while holding writer.lock, reconcile the
+original supervising operation and its child before recovering an older command
+that did not use the process lock. The existing recover-lock command checks only
+the Node PID; it does not itself establish that an orphan Maven child ended.
+Preserve an active or unresolved older native command in its original operation.
+
+Current preparations wrap Maven in the host's nonblocking kernel file lock.
+The permanent .maven-process.lock inode is held through the actual command.
+Even after Node writer recovery, another Maven command cannot enter while that
+original lock remains held. A lock conflict returns exit 75 without dispatching
+a second Maven command; its original preparation and logs remain retained.
+Keep this lock file with the runtime; do not remove it to force a retry.
+
+After the original source boundary is resolved, inspect the actual saved
+writer lock ID and use the existing application's recovery command:
 
     node /absolute/application/cli.mjs recover-lock \
       --workspace /absolute/java-producer-runtime \
@@ -141,6 +156,7 @@ and received through the product's normal workflow.
 await prepareJavaProducer({
   directory: "/absolute/java-producer-runtime",
   maven: "mvn",
+  flock: "flock",
   offline: false
 });
 
@@ -158,6 +174,8 @@ await emitJavaProducer({
 
 Both functions accept an optional `AbortSignal` as `signal`. They retain
 native command stdout, stderr and the operation identity after interruption.
+The retained preparation records the actual flock command, its child exit status,
+the selected Maven executable/arguments and the permanent process lock path.
 `javaProducerCommand(args)` provides the same command entry for the existing
 product CLI.
 
@@ -169,7 +187,12 @@ The released SDK is documented in the official
 The upstream `1.53.0` tag resolves to
 `8ad5c14c63fbab63fedd8ff42f9a208d86ad07fe`.
 
-The implementation follows these original release files:
+The native lock command uses the existing
+[util-linux flock interface](https://github.com/util-linux/util-linux/blob/master/sys-utils/flock.1.adoc):
+the command inherits the lock and returns its actual child exit status. It does
+not create another queue or producer operation.
+
+The SDK implementation follows these original release files:
 
 - [HttpTransport.java](https://github.com/OpenLineage/OpenLineage/blob/8ad5c14c63fbab63fedd8ff42f9a208d86ad07fe/client/java/src/main/java/io/openlineage/client/transports/HttpTransport.java),
   Git blob `e8fd4f766dcd256d015d5f7ce9e1d6e7039a0a3b`.

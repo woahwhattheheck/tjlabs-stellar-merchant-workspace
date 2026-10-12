@@ -10,6 +10,9 @@ import {canonical,sha256,jsonBytes,commercialError,inspectCommercialPricingSourc
 import {commercialContext,commercialView,normalizeCommercialDraft,reviewCommercialQuote,makeCommercialDocument,
   COMMERCIAL_MATERIAL_KINDS,sealCommercialQuote,compareCommercialQuotes} from './commercial-quote.mjs';
 
+import {captureCommercialPerformanceSource,commercialPerformanceSummary,prepareCommercialPerformanceRevision,
+  renderCommercialPerformanceReport} from './commercial/tariff-performance.mjs';
+
 const HASH=/^[a-f0-9]{64}$/;
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const copy=value=>JSON.parse(JSON.stringify(value));
@@ -85,7 +88,8 @@ export function openCaseCommercial({store,workspaceId}={}) {
     return {state:'COMPLETE',requestId:args.requestId,replayed:Boolean(prior)||original.replayed,
       document:{id:document.id,kind,sha256:sha256(jsonBytes(document))},case:recordRef(next.record),
       view:view(next.context),...(kind==='QUOTE'?{quote:quoteById(next.context,document.id)}:{}),
-      ...(kind==='PRICING'?{pricingSourceId:document.payload.id}:{})};
+      ...(kind==='PRICING'?{pricingSourceId:document.payload.id}:{}),
+      ...(kind==='PERFORMANCE'?{performanceSourceId:document.payload.id}:{})};
   }
   function view(context) {
     const original= commercialView(context),transfers=readCommercialImplementationTransfers(context);
@@ -152,6 +156,50 @@ export function openCaseCommercial({store,workspaceId}={}) {
       const source=JSON.parse(args.sourceText);inspectCommercialPricingSource(source);return source;
     });
   }
+
+  async function previewPerformance(args) {
+    fields(args,['id','scope','expectedRevision','sourceText','sourceSha256','quoteId','quoteSha256','tariffSourceId']);scope(args);
+    const {record,context}=await readContext(args.id);revision(args,record);
+    const source=await captureCommercialPerformanceSource(context,args);
+    return {scope:context.scope,revision:record.revision,source:commercialPerformanceSummary(source),
+      reviewSha256:source.id};
+  }
+  async function receivePerformance(args) {
+    fields(args,['id','scope','expectedRevision','requestId','actor','sourceText','sourceSha256',
+      'quoteId','quoteSha256','tariffSourceId','reviewSha256']);
+    if(!HASH.test(args.reviewSha256??''))
+      throw commercialError('COMMERCIAL_PERFORMANCE_REVIEW_REQUIRED','Review the complete recorded performance file against its original customer quote.');
+    return apply('receivePerformance','PERFORMANCE',args,async context=>{
+      const source=await captureCommercialPerformanceSource(context,args);
+      if(source.id!==args.reviewSha256)
+        throw commercialError('COMMERCIAL_PERFORMANCE_REVIEW_CHANGED','The recorded source or selected customer quote changed. Review the complete source again.',409);
+      return source.source;
+    });
+  }
+  async function preparePerformanceRevision(args) {
+    fields(args,['id','scope','expectedRevision','sourceId','quoteId','quoteSha256',
+      'proposedMonthlyRequests','targetTariffSourceId']);scope(args);
+    const {record,context}=await readContext(args.id);revision(args,record);
+    return {scope:context.scope,revision:record.revision,...prepareCommercialPerformanceRevision(context,args)};
+  }
+  async function downloadPerformance(args) {
+    fields(args,['id','scope','revision','expectedRevision','sourceId','kind']);scope(args);
+    const {record,context}=await readContext(args.id,args.revision??null);
+    if(args.expectedRevision!==undefined)revision(args,record);
+    const source=context.performanceSources.find(row=>row.id===args.sourceId);
+    if(!source)throw commercialError('COMMERCIAL_PERFORMANCE_NOT_FOUND','Choose a retained original recorded performance source.',404);
+    let body,filename,mediaType;
+    if(args.kind==='SOURCE') {
+      body=Buffer.from(source.source.file.text);filename='merchant-tariff-performance-'+source.nativeSourceId+'.json';mediaType='application/json';
+    } else if(args.kind==='ATTACHMENT') {
+      body=jsonBytes(source.source);filename='merchant-commercial-performance-'+source.id+'.json';mediaType='application/json';
+    } else if(args.kind==='REPORT') {
+      body=Buffer.from(renderCommercialPerformanceReport(source));filename='merchant-tariff-performance-'+source.id+'.md';mediaType='text/markdown; charset=utf-8';
+    } else throw commercialError('COMMERCIAL_PERFORMANCE_DOWNLOAD_INVALID','Choose the full native source, case attachment, or readable performance report.');
+    return {scope:context.scope,case:recordRef(record),sourceId:source.id,nativeSourceId:source.nativeSourceId,
+      descriptor:{filename,bytes:body.length,sha256:sha256(body),mediaType},body};
+  }
+
   async function compare(args) {
     fields(args,['id','scope','expectedRevision','beforeId','afterId']);scope(args);
     const {record,context}=await readContext(args.id);if(args.expectedRevision!==undefined)revision(args,record);
@@ -180,5 +228,6 @@ export function openCaseCommercial({store,workspaceId}={}) {
     return {scope:context.scope,case:recordRef(record),quoteId:quote.id,quoteSha256:quote.sha256,
       descriptor:{filename,bytes:body.length,sha256:sha256(body),mediaType},body};
   }
-  return {read,preview,saveDraft,publish,receive,receivePricing,compare,download,previewImplementation,adoptImplementation};
+  return {read,preview,saveDraft,publish,receive,receivePricing,compare,download,previewImplementation,adoptImplementation,
+    previewPerformance,receivePerformance,preparePerformanceRevision,downloadPerformance};
 }
