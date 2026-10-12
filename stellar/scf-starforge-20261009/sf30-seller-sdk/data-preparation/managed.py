@@ -234,6 +234,8 @@ class ManagedServer(OperatorServer):
         shutil.rmtree(self.downloads, ignore_errors=True)
 
 class ManagedHandler(OperatorHandler):
+    # StreamRequestHandler applies this before reading any request line/header.
+    timeout = 60
     def authorized(self):
         supplied = self.headers.get('Authorization', '')
         instance = self.headers.get('X-Preparation-Instance-ID')
