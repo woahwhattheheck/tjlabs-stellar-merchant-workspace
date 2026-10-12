@@ -28,9 +28,15 @@ export function createDeskClient(token) {
     if(body!==undefined&&!(body instanceof Blob)&&!(body instanceof ArrayBuffer)&&!ArrayBuffer.isView(body)){body=JSON.stringify(body);selected['Content-Type']='application/json';}
     let response;try{response=await fetch(u,{method,body,headers:selected,credentials:'same-origin',cache:'no-store',redirect:'error'});}
     catch(e){throw new ApiError('The original request has no readable response. Keep its saved identity and reconcile it after reopening. '+e.message);}
+    if(workspaceId&&response.headers.get('X-SensorThings-Workspace')!==workspaceId){await response.body?.cancel().catch(()=>{});throw new ApiError('The responding workspace UUID changed.',{status:response.status,code:'WORKSPACE'});}
     if(raw&&response.ok)return response;
     let result;try{result=await response.json();}catch{throw new ApiError('The selected API returned an unreadable response.',{status:response.status,code:'RESPONSE'});}
-    if(!response.ok){const e=result?.error&&typeof result.error==='object'?result.error:null;throw new ApiError(e?.message??result?.message??'The original operation could not complete.',{status:response.status,code:e?.code??(typeof result?.error==='string'?result.error:result?.code??'API'),details:e?.details??result?.details??null,currentRevision:e?.currentRevision??result?.currentRevision});}
+    if(!response.ok){
+      const nested=result?.error&&typeof result.error==='object'?result.error:null;
+      const message=typeof nested?.message==='string'?nested.message:typeof result?.message==='string'?result.message:'The original operation could not complete.';
+      const code=typeof result?.error==='string'?result.error:nested?.code??result?.code??'API';
+      throw new ApiError(message,{status:response.status,code,details:nested?.details??result,currentRevision:nested?.currentRevision??result?.currentRevision});
+    }
     return result;
   }
   async function refresh(){view=await request('/api/view');if(view.workspaceId!==workspaceId)throw new ApiError('The workspace UUID changed.',{code:'WORKSPACE'});notify();return view;}
@@ -95,46 +101,109 @@ export function createDeskClient(token) {
     }
     return status;
   }
-  async function readText(file,{maximum=1024*1024}={}) {
+  async function readComplete(file,{maximum=1024*1024}={}) {
     if(!file.selection)throw new ApiError('Select one original file.',{code:'FILE_SELECTION'});
-    let readId,expectedSha256=file.sha256??undefined,offset=0,metadata=null;const chunks=[];
+    const selection={...file.selection};
+    let readId=null,expectedSha256=file.sha256??undefined,offset=0,metadata=null;const chunks=[];
     try{
       for(;;){
-        const input={selection:file.selection,offset,limit:196608,...(readId?{readId}:{}),...(expectedSha256?{expectedSha256}:{})};
+        const input={selection,offset,limit:Math.min(196608,Math.max(1,maximum)),...(readId?{readId}:{}),...(expectedSha256?{expectedSha256}:{})};
         const result=await request('/api/files/read',{method:'POST',body:input});
-        readId=result.readId;metadata??=result.file;
-        if(!metadata||!Number.isSafeInteger(metadata.bytes)||metadata.bytes>maximum||result.offset!==offset||result.encoding!=='base64'||typeof result.data!=='string')throw new ApiError('Use the complete file download for this selected source.',{code:'FILE_PREVIEW_SIZE'});
-        if(result.file.sha256!==metadata.sha256||result.file.bytes!==metadata.bytes)throw new ApiError('The original held-file identity changed.',{code:'FILE_CHANGED'});
+        if(readId&&result.readId!==readId)throw new ApiError('The original held-file read identity changed.',{code:'FILE_CHANGED'});
+        readId=result.readId;metadata??={...result.file};
+        if(!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(readId??'')||
+            !Number.isSafeInteger(metadata.bytes)||metadata.bytes<0||metadata.bytes>maximum||
+            !/^[a-f0-9]{64}$/.test(metadata.sha256??'')||result.offset!==offset||
+            result.encoding!=='base64'||typeof result.data!=='string')
+          throw new ApiError('Use the complete installed file receiver for this selected source.',{code:'FILE_PREVIEW_SIZE'});
+        if(expectedSha256&&metadata.sha256!==expectedSha256||
+            file.bytes!==null&&file.bytes!==undefined&&metadata.bytes!==file.bytes||
+            result.file?.sha256!==metadata.sha256||result.file?.bytes!==metadata.bytes)
+          throw new ApiError('The original held-file identity changed.',{code:'FILE_CHANGED'});
         expectedSha256=metadata.sha256;const chunk=Uint8Array.from(atob(result.data),c=>c.charCodeAt(0));
-        if(chunk.length!==result.bytesRead)throw new ApiError('The original file chunk length changed.',{code:'FILE_LENGTH'});
+        if(chunk.length!==result.bytesRead||chunk.length>input.limit||offset+chunk.length>metadata.bytes)
+          throw new ApiError('The original file chunk length changed.',{code:'FILE_LENGTH'});
         chunks.push(chunk);offset+=chunk.length;
-        if(result.nextOffset===null)break;
-        if(result.nextOffset!==offset||!chunk.length)throw new ApiError('The original file continuation changed.',{code:'FILE_RANGE'});
+        const next=offset<metadata.bytes?offset:null;
+        if(result.nextOffset!==next||next!==null&&!chunk.length)
+          throw new ApiError('The original file continuation changed.',{code:'FILE_RANGE'});
+        if(next===null)break;
       }
-      if(offset!==metadata.bytes)throw new ApiError('The complete original file length differs.',{code:'FILE_LENGTH'});
       const data=new Uint8Array(offset);let cursor=0;for(const chunk of chunks){data.set(chunk,cursor);cursor+=chunk.length;}
       if(await sha256(data)!==metadata.sha256)throw new ApiError('The complete original file SHA-256 differs.',{code:'FILE_CHANGED'});
-      return{selection:file.selection,...metadata,text:new TextDecoder('utf-8',{fatal:true}).decode(data)};
+      return{selection,metadata,data};
     }finally{if(readId)await request('/api/files/release',{method:'POST',body:{readId}}).catch(()=>{});}
+  }
+  async function readText(file,options) {
+    const {selection,metadata,data}=await readComplete(file,options);
+    return{selection,...metadata,text:new TextDecoder('utf-8',{fatal:true}).decode(data)};
+  }
+  function browserFile(data,file,verification) {
+    const name=file.name??file.selection?.file??'sensorthings-source.bin';
+    if(typeof name!=='string'||!name||name.length>255||/[\\/\u0000-\u001f\u007f]/.test(name))
+      throw new ApiError('The original download filename is invalid.',{code:'FILE_NAME'});
+    const blob=new Blob([data],{type:file.type??file.contentType??'application/octet-stream'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    return{filename:name,bytes:data.byteLength,sha256:file.sha256,verification};
   }
   async function download(file) {
     const selection=file.selection;if(!selection)throw new ApiError('The file list must return its original complete selection.',{code:'FILE_SELECTION'});
-    const q=new URLSearchParams({selection:JSON.stringify(selection)});
-    if(file.sha256)q.set('expectedSha256',file.sha256);
-    const response=await request('/api/files/download?'+q,{raw:true});
-    const digest=response.headers.get('X-Content-SHA256')??response.headers.get('X-File-SHA256')??file.sha256;
-    if(file.bytes!==null&&file.bytes!==undefined&&file.bytes>256*1024*1024) {
-      if(!window.showSaveFilePicker){await response.body?.cancel();throw new ApiError('Use the installed retained-file receiver for this large file; it keeps a resumable byte/hash-bound directory.',{code:'FILE_MEMORY'});}
-      const destination=await window.showSaveFilePicker({suggestedName:file.name??'sensorthings-source.bin'}),writer=await destination.createWritable();
-      let count=0;try{const reader=response.body.getReader();for(;;){const{done,value}=await reader.read();if(done)break;count+=value.byteLength;await writer.write(value);}if(count!==file.bytes)throw new ApiError('The received file length differs from its original manifest.',{code:'FILE_LENGTH'});await writer.close();}catch(e){await writer.abort().catch(()=>{});throw e;}
-      return{filename:file.name,bytes:count,sha256:digest,verification:'Original server-held descriptor SHA and complete received byte count.'};
+    const generated=selection.kind==='publisher'&&selection.file==='draft-review'&&
+      file.retention==='ORIGINAL_GENERATED_READ_SESSION'&&file.verification==='SNAPSHOT_SHA_RETURNED_BY_FIRST_READ';
+    if(generated&&file.sha256===null&&file.bytes===null){
+      // List has no physical identity for this generated view. The first native
+      // read fixes one snapshot; every chunk and the final hash use that read.
+      const held=await readComplete(file,{maximum:16*1024*1024});
+      return browserFile(held.data,{...held.metadata,selection},'Complete browser SHA-256 and the original generated held-read snapshot.');
     }
-    const data=await response.arrayBuffer(),hash=await sha256(data);
-    if(file.bytes!==null&&file.bytes!==undefined&&data.byteLength!==file.bytes||digest&&hash!==digest)throw new ApiError('The downloaded bytes differ from their original manifest.',{code:'FILE_CHANGED'});
-    const blob=new Blob([data],{type:file.type??'application/octet-stream'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name??selection.file??'sensorthings-source.bin';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
-    return{filename:a.download,bytes:data.byteLength,sha256:hash,verification:'Complete browser SHA-256 and original manifest.'};
+    if(!/^[a-f0-9]{64}$/.test(file.sha256??'')||!Number.isSafeInteger(file.bytes)||file.bytes<0)
+      throw new ApiError('Retain the original file byte count and SHA-256 before downloading.',{code:'FILE_IDENTITY'});
+    const large=file.bytes>256*1024*1024;
+    let destination=null;
+    if(large){
+      if(!window.showSaveFilePicker)throw new ApiError('Use the installed retained-file receiver for this large file; it keeps a resumable byte/hash-bound directory.',{code:'FILE_MEMORY'});
+      // Ask while the original download gesture is still active, before a
+      // network round-trip. The selected file is committed only after EOF.
+      destination=await window.showSaveFilePicker({suggestedName:file.name??'sensorthings-source.bin'});
+    }
+    const q=new URLSearchParams({selection:JSON.stringify(selection),expectedSha256:file.sha256});
+    const response=await request('/api/files/download?'+q,{raw:true});
+    const digest=response.headers.get('X-Source-SHA256'),length=response.headers.get('Content-Length');
+    if(digest!==file.sha256||length!==null&&length!==String(file.bytes)){
+      await response.body?.cancel().catch(()=>{});
+      throw new ApiError('The response does not match the selected original file identity.',{code:'FILE_CHANGED'});
+    }
+    const reader=response.body?.getReader();
+    if(!reader)throw new ApiError('The original download has no readable byte stream.',{code:'FILE_LENGTH'});
+    let writer=null,count=0,complete=false;
+    try{
+      if(large)writer=await destination.createWritable();
+      const data=large?null:new Uint8Array(file.bytes);
+      for(;;){
+        const {done,value}=await reader.read();if(done)break;
+        if(count+value.byteLength>file.bytes)throw new ApiError('The received stream exceeds its original manifest.',{code:'FILE_LENGTH'});
+        if(writer)await writer.write(value);else data.set(value,count);count+=value.byteLength;
+      }
+      if(count!==file.bytes)throw new ApiError('The received file length differs from its original manifest.',{code:'FILE_LENGTH'});
+      if(writer){
+        await writer.close();complete=true;
+        return{filename:file.name,bytes:count,sha256:digest,verification:'Original server-held descriptor SHA and complete received byte count.'};
+      }
+      if(await sha256(data)!==file.sha256)throw new ApiError('The downloaded bytes differ from their original manifest.',{code:'FILE_CHANGED'});
+      const result=browserFile(data,file,'Complete browser SHA-256 and original manifest.');complete=true;return result;
+    }finally{
+      if(!complete){await reader.cancel().catch(()=>{});if(writer)await writer.abort().catch(()=>{});}
+      reader.releaseLock();
+    }
   }
-  return{open,refresh,request,act,reconcile,replay,dismissFailed,upload,download,readText,
+  function openAnalysis(){
+    if(pending)throw new ApiError('Reconcile this Desk’s saved request before opening analysis.',{code:'PENDING'});
+    if(!workspaceId)throw new ApiError('Open the original workspace first.',{code:'WORKSPACE'});
+    const target=new URL('/analysis/',location.origin);target.hash=token;
+    // Same original listener and private session. No new workspace or process.
+    window.open(target.href,'_blank','noopener,noreferrer');
+  }
+  return{open,refresh,request,act,reconcile,replay,dismissFailed,upload,download,readText,openAnalysis,
     get view(){return view;},get pending(){return pending;},get info(){return info;},
     subscribe(f){listeners.add(f);return()=>listeners.delete(f);}};
 }

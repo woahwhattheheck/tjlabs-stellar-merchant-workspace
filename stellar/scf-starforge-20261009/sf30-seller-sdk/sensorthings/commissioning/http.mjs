@@ -19,6 +19,9 @@ function selectedRange(header,bytes){if(!header)return null;const match=/^bytes=
 export async function createCommissioningHttp({workspace,origin}){
   if(!workspace?.commissioning)throw fault('COMMISSIONING_MANAGER','Mount the original workspace commissioning manager.',503);
   const manager=workspace.commissioning,assetSource=new URL('./browser-assets.json',import.meta.url),manifest=JSON.parse(await readFile(assetSource,'utf8'));
+  const styleHashes=manifest.cspStyleHashes??[];
+  if(!Array.isArray(styleHashes)||styleHashes.some(value=>typeof value!=='string'||!/^'sha256-[A-Za-z0-9+/]{43}='$/.test(value)))throw fault('COMMISSIONING_ASSET_POLICY','Use exact retained style hashes for the original built map.');
+  const staticHeaders={...common,'Content-Security-Policy':csp.replace("style-src 'self'","style-src 'self'"+(styleHashes.length?' '+[...new Set(styleHashes)].join(' '):''))};
   const map=await readBrowserAssets(assetSource),assets=new Map();
   for(const[path,item]of map)assets.set(path,{type:item.type,bytes:await readFile(item.url)});
   const facade=createCommissioningSTAFacade({manager,basePath:prefix+'/map'});
@@ -27,7 +30,7 @@ export async function createCommissioningHttp({workspace,origin}){
   async function staticHandler(req,res,{url}){
     const asset=assets.get(url.pathname);if(!asset)return false;
     if(req.method!=='GET'&&req.method!=='HEAD')return false;
-    res.writeHead(200,{...common,'Content-Type':asset.type,'Content-Length':asset.bytes.length});res.end(req.method==='HEAD'?undefined:asset.bytes);return true;
+    res.writeHead(200,{...staticHeaders,'Content-Type':asset.type,'Content-Length':asset.bytes.length});res.end(req.method==='HEAD'?undefined:asset.bytes);return true;
   }
   async function download(req,res,url,id){
     const original=await manager.fileRecord(id),file=publicFile(original);
@@ -62,6 +65,7 @@ export async function createCommissioningHttp({workspace,origin}){
     }
     if(tail==='view'){json(res,200,await manager.overview(),head);return true;}
     if(parts[0]==='projects'&&parts.length===2){json(res,200,await manager.project(segment(parts[1])),head);return true;}
+    if(parts[0]==='projects'&&parts.length===3&&parts[2]==='history'){json(res,200,await manager.history(segment(parts[1]),{offset:integer(url,'offset',0),limit:integer(url,'limit',100,{minimum:1,maximum:500})}),head);return true;}
     if(parts[0]==='sources'&&(parts.length===2||parts.length===3&&parts[2]==='rows')){
       const id=segment(parts[1]);const result=parts.length===2?await manager.source(id):await manager.rows(id,{offset:integer(url,'offset',0),limit:integer(url,'limit',100,{minimum:1,maximum:500}),mappingId:url.searchParams.has('mappingId')?segment(url.searchParams.get('mappingId')):null});json(res,200,result,head);return true;
     }

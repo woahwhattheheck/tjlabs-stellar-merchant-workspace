@@ -34,7 +34,7 @@ async function loadAssets(assets){
  if(!assetLoads.has(key))assetLoads.set(key,(async()=>{
   if(![...document.querySelectorAll('link[rel="stylesheet"]')].some(e=>e.href===style.href)){
    await new Promise((resolve,reject)=>{const link=document.createElement('link');link.rel='stylesheet';link.href=style.href;
-    link.onload=resolve;link.onerror=()=>reject(Error('The original Leaflet style could not be loaded.'));document.head.append(link);});
+    link.onload=resolve;link.onerror=()=>{link.remove();reject(Error('The original Leaflet style could not be loaded.'));};document.head.append(link);});
   }
   if(!globalThis.L)await new Promise((resolve,reject)=>{
    const script=document.createElement('script');script.src=leaflet.href;script.async=true;
@@ -67,7 +67,7 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
  need(typeof sessionToken==='string'&&/^[A-Za-z0-9_-]{32,200}$/.test(sessionToken),'Use this Desk’s existing private session.');
  need(typeof jobId==='string'&&/^[A-Za-z0-9_-]{1,200}$/.test(jobId),'Select one original native job.');
  const workspaceId=client.info.workspaceId,base='/api/commissioning/map/'+encodeURIComponent(jobId);
- let closed=false,generation=0,manifestValue=null,map=null,layer=null,mapAbort=null,resizeObserver=null,entityKind=null;
+ let closed=false,generation=0,mapGeneration=0,manifestValue=null,map=null,layer=null,mapAbort=null,resizeObserver=null,entityKind=null;
  const root=element('section','','commissioning-map'),notice=element('div','','commissioning-map-notice');
  container.replaceChildren(root);root.append(notice);
  function error(error){
@@ -76,6 +76,7 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
  }
  function current(token){return!closed&&token===generation&&root.isConnected;}
  function stopMap(){
+  mapGeneration++;
   mapAbort?.abort();mapAbort=null;resizeObserver?.disconnect();resizeObserver=null;
   if(layer&&map){map.removeLayer(layer);layer=null;}if(map){map.remove();map=null;}
   if(activeMap?.owner===root)activeMap=null;
@@ -94,12 +95,13 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
   }
   host.append(element('p',native.kind+' · native ID '+native.idJson),element('p','View '+native.viewId+' is a map display identity only.','muted'));
   host.append(button('Inspect original native result',()=>inspect(native),error));
-  const rows=element('div');host.append(rows);const token=generation;
+  const rows=element('div');host.append(rows);const token=generation;let popupRead=0;
   async function load(offset=0){
+   const read=++popupRead;
    rows.replaceChildren(element('p','Reading retained observations…'));
    try{
-    const value=checked(await client.request(base+'/entities/'+native.viewId+'?'+selectionQuery(native.snapshotSha256,{offset,limit:10})));
-    if(!current(token)||!host.isConnected)return;
+    const response=await client.request(base+'/entities/'+native.viewId+'?'+selectionQuery(native.snapshotSha256,{offset,limit:10}));
+    if(!current(token)||!host.isConnected||read!==popupRead)return;const value=checked(response);
     rows.replaceChildren(element('p',value.observations.total+' retained observations. Results and original units are shown without conversion.'));
     if(!value.observations.rows.length){rows.append(element('p','No observation read is retained for this feature. This does not establish target availability or a zero result.'));return;}
     const table=element('table'),head=element('thead'),tr=element('tr');
@@ -116,20 +118,20 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
     pager.append(button('Previous observations',()=>load(Math.max(0,page.offset-page.limit)),error,page.offset===0),
      element('span',(page.offset+1)+'–'+(page.offset+page.rows.length)+' of '+page.total),
      button('Next observations',()=>load(page.nextOffset),error,page.nextOffset===null));rows.append(pager);
-   }catch(e){if(current(token)&&host.isConnected)rows.replaceChildren(element('p',(e.code?e.code+': ':'')+e.message,'error'));}
+   }catch(e){if(current(token)&&host.isConnected&&read===popupRead)rows.replaceChildren(element('p',(e.code?e.code+': ':'')+e.message,'error'));}
   }
   // STAM opens the returned HTMLElement after this callback. The microtask starts
   // reading only the original local sidecar; provider names never enter innerHTML.
   queueMicrotask(()=>load());return host;
  }
  async function drawMap(host,status,token){
-  stopMap();host.replaceChildren();
+  stopMap();const drawing=mapGeneration;host.replaceChildren();
   if(!manifestValue.bounds){status.textContent='No unambiguous retained geometry is currently available. Review the native entities and missing-read report below.';return;}
   const eligible=entityKind==='Things'?manifestValue.counts.mappedThings:manifestValue.counts.mappedFeaturesOfInterest;
   if(!eligible){status.textContent='This retained entity family has no supported map geometry. Select another family or inspect its original source.';return;}
   status.textContent='Loading original STAM and Leaflet assets…';
-  let vendor;try{vendor=await loadAssets(assets);}catch(e){if(current(token))status.textContent=e.message;return;}
-  if(!current(token))return;
+  let vendor;try{vendor=await loadAssets(assets);}catch(e){if(current(token)&&drawing===mapGeneration)status.textContent=e.message;return;}
+  if(!current(token)||drawing!==mapGeneration)return;
   // The pinned Leaflet adapter uses module-level layer references. Keep one actual
   // STAM map active, and close its original layers/listeners before switching jobs.
   if(activeMap&&activeMap.owner!==root)activeMap.close();
@@ -179,10 +181,12 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
   kindSelect.setAttribute('aria-label','Retained entity kind');const all=element('option','All native entity kinds');all.value='';kindSelect.append(all);
   for(const item of value.families){const o=element('option',item.kind+' ('+item.total+')');o.value=item.kind;kindSelect.append(o);}
   kindLabel.append(kindSelect);entityControls.append(kindLabel);sourceSection.append(sourceTitle,entityControls,entities);root.append(sourceSection);
+  let entityRead=0;
   async function loadEntities(offset=0){
+   const read=++entityRead;
    entities.replaceChildren(element('p','Reading original native identities…'));
-   const page=checked(await client.request(base+'/entities?'+selectionQuery(value.snapshotSha256,{offset,limit:25,kind:kindSelect.value||undefined})));
-   if(!current(token))return;entities.replaceChildren();
+   const response=await client.request(base+'/entities?'+selectionQuery(value.snapshotSha256,{offset,limit:25,kind:kindSelect.value||undefined}));
+   if(!current(token)||read!==entityRead)return;const page=checked(response);entities.replaceChildren();
    const table=element('table'),head=element('thead'),line=element('tr');
    for(const title of ['Kind','Exact native ID','Name','Map state','Original result'])line.append(element('th',title));head.append(line);table.append(head);
    const tbody=element('tbody');for(const row of page.rows){
@@ -199,9 +203,10 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
   kindSelect.addEventListener('change',()=>loadEntities().catch(error));
   const issueSection=element('section'),issueTitle=element('h3','Missing reads and map limitations'),issues=element('div');
   issueSection.append(issueTitle,issues);root.append(issueSection);
+  let issueRead=0;
   async function loadIssues(offset=0){
-   const page=checked(await client.request(base+'/issues?'+selectionQuery(value.snapshotSha256,{offset,limit:25})));
-   if(!current(token))return;issues.replaceChildren();
+   const read=++issueRead,response=await client.request(base+'/issues?'+selectionQuery(value.snapshotSha256,{offset,limit:25}));
+   if(!current(token)||read!==issueRead)return;const page=checked(response);issues.replaceChildren();
    if(!page.total){issues.append(element('p','No additional map issue is recorded for these retained reads. The original native verification scope still applies.'));return;}
    for(const item of page.rows){const detail=element('details');detail.append(element('summary',item.code+(item.kind?' · '+item.kind+' '+item.idJson:'')),element('pre',JSON.stringify(item,null,2)));issues.append(detail);}
    const pager=element('div','','commissioning-map-pager');pager.append(

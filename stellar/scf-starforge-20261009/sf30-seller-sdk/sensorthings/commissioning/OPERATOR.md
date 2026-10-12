@@ -14,11 +14,11 @@ The header identifies the original workspace and its actual revision. Choose the
 
 Create a project with a descriptive label and intended operating outcome. Select one existing project to keep all of its subsequent work together.
 
-For an original SensorThings edition, choose it from the existing workspace's edition list. The original source review and complete raw page/entity closure govern its use. Commissioning does not create a second source capture or substitute a constructed observation set.
+For an original SensorThings edition, choose it from the existing workspace's currently accepted edition list. The original source review and complete raw page/entity closure govern its use. Commissioning does not create a second source capture or substitute a constructed observation set.
 
-For a private file, use the same configured source inbox as the Operations Desk. The upload retains the original filename, total bytes and SHA256, and resumes its same partial upload. The browser supports complete inputs up to128MiB; the installed retained-file receiver can place larger supported files into that exact inbox. Select **Verify and select** to inspect an existing received file.
+For a private file, use the same configured source inbox as the Operations Desk. The upload retains the original filename, total bytes and SHA256, and resumes its same partial upload. The browser supports complete inputs up to 128 MiB; the installed retained-file receiver can place larger supported files into that exact inbox. Select **Verify and select** to inspect an existing received file.
 
-Choose the actual CSV, SensorThings JSON or data-array format, the native collection when the source requires it, the original source URL and its real license/attribution. The source importer verifies the complete declared file before retaining the source. Its configured limits remain authoritative.
+Choose the actual CSV, SensorThings JSON or data-array format, the native collection when the source requires it, the original source URL and its real license/attribution when declared. A source without an observed license declaration records null explicitly; the interface does not create a license on its behalf. The source importer verifies the complete declared file before retaining the source. Its configured limits remain authoritative.
 
 Use **Inspect source** to open the complete source metadata, file references and source-row pages. Inspect original source references when a repeated entity or observation has conflicting occurrences. A page is a view over the retained source; it does not silently discard the rest of the source.
 
@@ -34,7 +34,7 @@ Keep source meaning intact:
 
 Save a versioned target profile with its actual service URL. Production targets use HTTPS. The deliberately selected loopback reference installation may use HTTP when explicitly enabled. Enter only the existing host environment variable name for authorization; the browser does not receive its secret value.
 
-Target timeout and complete-response limits are explicit profile values. **Inspect the selected native target** creates a retained read-only FROST job. Optional selected entities use the native collection name and an exact identifier encoded as JSON text in idJson. Review the actual returned service/entity result in Native operation.
+Target timeout and complete-response limits are explicit profile values (1,000–120,000 milliseconds and 1 KiB–64 MiB). Profiles display their canonical service root and host authorization reference. **Inspect the selected native target** creates a retained read-only FROST job. Optional selected entities use the native collection name and an exact identifier encoded as JSON text in idJson. Review the actual returned service/entity result in Native operation.
 
 Create a mapping version from an original source and a selected target profile. The complete editor includes:
 
@@ -42,16 +42,16 @@ Create a mapping version from an original source and a selected target profile. 
 | --- | --- |
 | Namespace | Reviewed project namespace for the selected target additions |
 | Stream keys and occurrence IDs | Exact retained source selection; empty arrays select all original records |
-| CSV encoding, delimiter and header row | The actual original file representation |
+| CSV encoding, delimiter and header row | The actual UTF-8, UTF-16LE or Windows-1252 representation, literal delimiter and selected header record |
 | CSV column map | Native property name to original CSV column name |
 | CSV result type and null token | Explicit result interpretation; an empty-string null token requires the explicit checkbox |
 | CSV relationships | Native relation to an original source key or an exact targetIdJson |
 | Native entity definitions | Complete authored target definitions in the original mapper schema |
 | Source-to-target bindings | create, bind or update; original source key, exact target identifier, overrides, relations and explicit conflicting occurrence selection |
 | Provenance property | Reviewed metadata addition displayed in the eventual plan |
-| Native batch size | Selected original native processing size within the host's limits |
+| Native batch size | Original receipt page size, from 1 to 1,000 |
 
-Edition sources ignore CSV configuration. Source numeric/time/body representations remain retained by the original mapper. For authored JSON, the browser rejects numeric literals it would change during the ordinary JSON request. Keep native identifiers as exact JSON text in targetIdJson and import precise original results through their source file. Do not derive a native write selection from the map's display identifier.
+Edition sources ignore CSV configuration. Source numeric/time/body representations remain retained by the original mapper. For authored JSON, the browser rejects numeric literals it would change during the ordinary JSON request. Keep native identifiers as exact JSON text in targetIdJson and import precise original results through their source file. For an authored definition, supply sourceKey, entityKind, either body or exact bodyText, and optional native relations. Use bodyText when precise authored numeric JSON must remain inside its original JSON string until plan preparation. The editor includes the complete required-field and relationship reference for all nine native entity collections. Do not derive a native write selection from the map's display identifier.
 
 **Load editable configuration** opens an existing mapping as the basis for a new version. It does not change the prior version. **Prepare plan** materializes the explicit source-to-target graph and the corresponding exact payloads.
 
@@ -63,11 +63,11 @@ Record the actual reviewer's acceptance or return-for-revision decision and note
 
 To execute, choose the actual accepted review for that exact plan, enter the exact target service URL shown in the plan and confirm the displayed target writes. The original manager commits the job immediately and owns the background native work. It retains graph order: Locations; Things/Sensors/ObservedProperties/FeaturesOfInterest; Datastreams/MultiDatastreams; HistoricalLocations/Observations, resolving links through original source bindings and actual preceding native results.
 
-The native package is the unchanged FROST-Python-Client1.1.53 at9f41f7794725fced63fcb07e6b33dbc1f897f2bc. Its SensorThingsService.execute transport receives the exact original JSON body through data, preserving explicit null and source timestamp/decimal text that its entity serializer would otherwise transform.
+The native package is the unchanged FROST-Python-Client 1.1.53 at 9f41f7794725fced63fcb07e6b33dbc1f897f2bc. Its SensorThingsService.execute transport receives the exact original JSON body through data, preserving explicit null and source timestamp/decimal text that its entity serializer would otherwise transform.
 
 ## 4. Operate, reconcile and verify the original native job
 
-Select the job to see its retained state, progress, exact plan/target identities and paged step history. The progress display polls only the original read facade, pauses while the document is hidden and stops at terminal states. Reading the job never creates another native worker.
+Select the job to see its retained state, progress, exact plan/target identities and paged step history. The progress display polls only the original read facade, pauses while the document is hidden and stops when the saved job is no longer queued, starting, running, draining, cancelling or deferred. It reads the original progress.complete count and refreshes the full selected job when the active phase ends. Reading the job never creates another native worker.
 
 | Control | Effect |
 | --- | --- |
@@ -84,13 +84,13 @@ Open **Request, response and provenance** to inspect the complete attempt histor
 
 For **Adopt**, supply the actual native target identifier as JSON text and the observed finding. For **Retry**, retain the explicit reason for retrying this same step. A map display ID is never a native identifier.
 
-When a pending job arrived in a portable package and has no local binding, use **Resume a received pending job on this host**. Confirm its original target service and the selected host execution. The extra confirmation is needed for that received, unbound job; ordinary same-host resume retains its existing binding.
+When a pending job arrived in a portable package and has no local binding, use **Resume a received pending job on this host**. Confirm its original target service and the selected host execution. This form appears only for an actual received, unbound pending job. Ordinary same-host resume retains its existing binding. Resolve controls appear for an actual uncertain step after the received host binding is established.
 
 Review every compensating plan before execution. The native manager compares the selected managed target set and before-images; it does not delete bind-only entities or silently overwrite unrelated later changes.
 
 ## Retained target map and exact native inspection
 
-The map uses the original DataCove STAM source pinned to0e414f3441a8773619f242c797fe75e9af3fc04d and the host's actual built Leaflet/STAM assets. Assets and data are served from the same authenticated host; no external basemap or provider call is made by this viewer.
+The map uses the original DataCove STAM source pinned to 0e414f3441a8773619f242c797fe75e9af3fc04d and the host's actual built Leaflet/STAM assets. Assets and data are served from the same authenticated host; no external basemap or provider call is made by this viewer.
 
 The map is a read-only projection of actual retained successful target read bodies, scoped to the selected job, plan, verification and immutable snapshot SHA. Positive view IDs are display-only identifiers. The sidecar retains the original native kind/idJson, source identity, response SHA, source pointers, relations, fields and observation pages.
 
@@ -119,7 +119,7 @@ To receive a project, upload its complete package into the original inbox, revie
 - Divergent history requires its own receiving workspace.
 - Pending native jobs keep their original history and require explicit host/target binding before execution.
 
-Reopen the selected project and inspect sources, mappings, plans, native results, reviews and handoff history. Continue edits from the retained current version. Preparing or downloading a package does not assert that another recipient has imported it.
+Reopen the selected project and inspect sources, mappings, plans, native results, reviews and handoff history. Every exported package has a direct complete-file download; complete project history is paged through the original manager, beyond its compact last-100-event summary. Continue edits from the retained current version. Preparing or downloading a package does not assert that another recipient has imported it.
 
 ## Complete browser receiving phase
 
@@ -140,8 +140,8 @@ Keep the real native request and project IDs. The complete source can be reviewe
 
 Await createCommissioningHttp({workspace,origin}) once for the existing workspace manager. Mount staticHandler before the original Desk static handler; mount handleApi only after the original Bearer, Host, Origin and X-SensorThings-Workspace checks. All writes remain the original /api/action path. Closing the HTTP facade drains only its own active reads; the original workspace owns manager/worker closure.
 
-The host exposes its same manager at workspace.commissioning. Its existing workspace.schema() advertises the eighteen commissioning actions and current pure schema. The static source inventory is commissioning/browser-assets.json. Complete STAM vendor assets and their source/license identity must be included in the selected source closure before native map receiving.
+The host exposes its same manager at workspace.commissioning. Its existing workspace.schema() advertises the eighteen commissioning actions and current pure schema. The static source inventory is commissioning/browser-assets.json. Complete STAM vendor assets and their source/license identity must be included in the selected source closure before native map receiving. The manifest's cspStyleHashes allow only the exact original STAM-injected constant stylesheet bytes; the document policy otherwise keeps scripts, styles and connections on the selected host.
 
-Core routes are /api/commissioning/schema, view, projects/:id, sources/:id, sources/:id/rows, plans/:id, jobs/:id and files/:id. Files use ?metadata=1 for a path-free descriptor and ?expectedSha256=HASH for its complete bytes. The map uses /api/commissioning/map/:jobId/manifest, entities, issues and v1.1 under the same original auth and snapshot scope.
+Core routes are /api/commissioning/schema, view, projects/:id, projects/:id/history, sources/:id, sources/:id/rows, plans/:id, jobs/:id and files/:id. Files use ?metadata=1 for a path-free descriptor and ?expectedSha256=HASH for its complete bytes. The map uses /api/commissioning/map/:jobId/manifest, entities, issues and v1.1 under the same original auth and snapshot scope.
 
 The existing Desk error adapter preserves the actual source error code, message, details and currentRevision, including the server's {error:CODE,message,...} response form. It retains the original saved request after a failed response so the operator can reconcile that same outcome.

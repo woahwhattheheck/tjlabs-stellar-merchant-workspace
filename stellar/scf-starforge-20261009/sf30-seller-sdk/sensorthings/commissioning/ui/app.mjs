@@ -4,19 +4,19 @@ import {h,button,detail,note,field,form,busy,sections,choices,recordId,label,lis
 import {renderView} from './views.mjs';
 import {mountCommissioningMap} from './stam-map.mjs';
 const main=document.querySelector('#main'),notice=document.querySelector('#notice'),pendingHost=document.querySelector('#pending'),nav=document.querySelector('#navigation'),identity=document.querySelector('#identity'),session=document.querySelector('#session'),refreshButton=document.querySelector('#refresh'),deskButton=document.querySelector('#open-desk'),dialog=document.querySelector('#record-dialog'),dialogBody=document.querySelector('#record-body');
-const endedStates=new Set(['complete','failed','cancelled']);
+const pollingStates=new Set(['queued','starting','running','draining','cancelling','deferred']);
 let current=null;
 document.querySelector('#record-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}});
 function errorNode(error){return note((error.code?error.code+': ':'')+error.message+(error.currentRevision!==undefined?' · current revision '+error.currentRevision:''),'error');}
-function initialState(){return{tab:'sources',projectId:null,sourceId:null,targetId:null,mappingId:null,planId:null,jobId:null,reviewId:null,sourceOffset:0,planOffset:0,jobOffset:0,actor:'',drafts:{},inboxFile:null};}
+function initialState(){return{tab:'sources',projectId:null,sourceId:null,targetId:null,mappingId:null,planId:null,jobId:null,reviewId:null,sourceOffset:0,planOffset:0,jobOffset:0,historyOffset:0,stepId:null,actor:'',drafts:{},inboxFile:null};}
 function recoverState(key){try{const saved=JSON.parse(sessionStorage.getItem(key)??'null');if(!saved||typeof saved!=='object')return initialState();const result=initialState();for(const name of Object.keys(result)){if(name in saved)result[name]=saved[name];}if(!sections.some(([name])=>name===result.tab))result.tab='sources';if(!result.drafts||typeof result.drafts!=='object'||Array.isArray(result.drafts))result.drafts={};return result;}catch{return initialState();}}
 function describeAction(action){return action.split('.').slice(1).join(' ');}
 async function connect(token){
   session.replaceChildren();notice.replaceChildren(note('Opening the original commissioning workspace…'));
   try{
     const client=createDeskClient(token),opened=await client.open(),stateKey='sensorthings-commissioning|'+location.origin+'|'+opened.view.workspaceId;
-    let generation=0,detailEpoch=0,closed=false,saveWarning=false,refreshing=null,pollTimer=null,pollBusy=false;
+    let generation=0,detailEpoch=0,closed=false,saveWarning=false,refreshing=null,refreshAgain=false,pollTimer=null,pollBusy=false;
     const maps=new Set();
     const ctx={client,state:recoverState(stateKey),overview:null,project:null,schema:null,selectedMapping:null};
     current?.close();
@@ -39,20 +39,31 @@ async function connect(token){
     };
     ctx.readInto=(host,load,title)=>{const selectedGeneration=generation;Promise.resolve().then(load).then(value=>{if(!closed&&generation===selectedGeneration&&host.isConnected)host.replaceChildren(h('h2',{},title),value);}).catch(error=>{if(!closed&&generation===selectedGeneration&&host.isConnected)host.replaceChildren(h('h2',{},title),errorNode(error),button('Retry original read',()=>ctx.render()));});};
     ctx.navigate=tab=>{ctx.state.tab=tab;ctx.save();ctx.render();};
-    ctx.select=async(key,id,tab=ctx.state.tab)=>{
-      if(key==='projectId'&&id!==ctx.state.projectId){for(const k of['sourceId','targetId','mappingId','planId','reviewId','jobId'])ctx.state[k]=null;ctx.selectedMapping=null;}
-      ctx.state[key]=id;ctx.state.tab=tab;for(const k of['sourceOffset','planOffset','jobOffset'])ctx.state[k]=0;ctx.save();await ctx.refresh();
-    };
+    function setSelection(key,id){
+      if(ctx.state[key]===id)return;
+      if(key==='projectId'){for(const k of['sourceId','targetId','mappingId','planId','reviewId','jobId','stepId'])ctx.state[k]=null;ctx.selectedMapping=null;ctx.state.historyOffset=0;}
+      if(key==='sourceId'&&ctx.selectedMapping?.sourceId!==id){ctx.state.mappingId=null;ctx.state.planId=null;ctx.state.reviewId=null;ctx.selectedMapping=null;}
+      if(key==='planId')ctx.state.reviewId=null;
+      if(key==='jobId')ctx.state.stepId=null;
+      ctx.state[key]=id;
+      for(const k of['sourceOffset','planOffset','jobOffset'])ctx.state[k]=0;
+    }
+    ctx.select=async(key,id,tab=ctx.state.tab)=>{setSelection(key,id);ctx.state.tab=tab;ctx.save();await ctx.refresh();};
     ctx.useMapping=async record=>{
+      if(ctx.state.mappingId!==recordId(record)){ctx.state.planId=null;ctx.state.reviewId=null;}
       ctx.selectedMapping=record;ctx.state.mappingId=recordId(record);ctx.state.sourceId=record.sourceId;ctx.state.targetId=record.targetId;
       delete ctx.state.drafts[(ctx.state.projectId??'workspace')+'|mapping-editor'];ctx.save();ctx.render();
     };
     ctx.refresh=async()=>{
-      if(refreshing)return refreshing;
-      refreshing=(async()=>{await client.refresh();ctx.overview=await ctx.api('view');ctx.project=ctx.state.projectId?await ctx.api('projects/'+encodeURIComponent(ctx.state.projectId)):null;
-        if(ctx.state.mappingId&&ctx.project){ctx.selectedMapping=list(ctx.project.mappings).find(r=>recordId(r)===ctx.state.mappingId)??ctx.selectedMapping;}
-        ctx.render();return ctx.overview;
-      })();try{return await refreshing;}finally{refreshing=null;}
+      if(refreshing){refreshAgain=true;return refreshing;}
+      refreshing=(async()=>{do{
+        refreshAgain=false;await client.refresh();const overview=await ctx.api('view'),projectId=ctx.state.projectId,project=projectId?await ctx.api('projects/'+encodeURIComponent(projectId)):null;
+        if(closed)return;
+        if(projectId!==ctx.state.projectId){refreshAgain=true;continue;}
+        ctx.overview=overview;ctx.project=project;
+        ctx.selectedMapping=ctx.state.mappingId&&project?list(project.mappings).find(r=>recordId(r)===ctx.state.mappingId)??null:null;
+      }while(refreshAgain&&!closed);ctx.render();return ctx.overview;})();
+      try{return await refreshing;}finally{refreshing=null;}
     };
     ctx.act=async(action,payload,{selectResult=null,tab=null}={})=>{
       const allowed=opened.schema.actions??{};
@@ -60,7 +71,7 @@ async function connect(token){
       const result=await client.act(action,payload),output=result.result;
       if(selectResult&&output&&typeof output==='object'){
         const id=output[selectResult]??output.id;
-        if(typeof id==='string'){if(selectResult==='projectId'&&ctx.state.projectId!==id){for(const key of['sourceId','targetId','mappingId','planId','reviewId','jobId'])ctx.state[key]=null;}ctx.state[selectResult]=id;}
+        if(typeof id==='string')setSelection(selectResult,id);
       }
       if(tab)ctx.state.tab=tab;ctx.save();
       notice.replaceChildren(note('Saved '+describeAction(action)+' · '+result.operationId,'success'),button('Open original result',()=>ctx.show(action,result)));
@@ -68,16 +79,16 @@ async function connect(token){
     };
     ctx.watchJob=(jobId,host,original)=>{
       const selectedGeneration=generation;
-      const paint=page=>{const status=page.state??page.status??'Retained';host.replaceChildren(...stats([['State',status],['Completed',page.progress?.completed??page.completedSteps??'See job'],['Total',page.progress?.total??page.total??'See job']]).childNodes);host.setAttribute('aria-label','Retained job progress');};
+      const paint=page=>{const status=page.state??page.status??'Retained';host.replaceChildren(...stats([['State',status],['Completed',page.progress?.complete??page.progress?.completed??0],['Total',page.progress?.total??page.total??'See job']]).childNodes);host.setAttribute('aria-label','Retained job progress');};
       const poll=async()=>{
         if(closed||selectedGeneration!==generation||!host.isConnected)return;
         if(document.hidden||pollBusy){pollTimer=setTimeout(poll,5000);return;}
         pollBusy=true;
-        try{const page=await ctx.api('jobs/'+encodeURIComponent(jobId),{offset:0,limit:1});if(closed||selectedGeneration!==generation)return;paint(page);const state=String(page.state??page.status??'').toLowerCase();if(!endedStates.has(state))pollTimer=setTimeout(poll,5000);}
-        catch(error){if(host.isConnected&&selectedGeneration===generation)host.setAttribute('aria-label','Progress read unavailable; refresh the saved job. '+error.message);pollTimer=setTimeout(poll,10000);}
+        try{const page=await ctx.api('jobs/'+encodeURIComponent(jobId),{offset:0,limit:1});if(closed||selectedGeneration!==generation)return;paint(page);const state=String(page.state??page.status??'').toLowerCase();if(pollingStates.has(state))pollTimer=setTimeout(poll,5000);else await ctx.refresh();}
+        catch(error){if(!closed&&host.isConnected&&selectedGeneration===generation){host.setAttribute('aria-label','Progress read unavailable; refresh the saved job. '+error.message);pollTimer=setTimeout(poll,10000);}}
         finally{pollBusy=false;}
       };
-      if(!endedStates.has(String(original.state??original.status??'').toLowerCase()))pollTimer=setTimeout(poll,5000);
+      if(pollingStates.has(String(original.state??original.status??'').toLowerCase()))pollTimer=setTimeout(poll,5000);
     };
     ctx.inspectMapSelection=async(selection,{offset=0}={})=>{
       const title='Native '+selection.kind+' · '+selection.idJson;
@@ -118,7 +129,7 @@ async function connect(token){
     ctx.schema=await ctx.api('schema');
     nav.replaceChildren(...sections.map(([id,text])=>{const b=button(text,()=>ctx.navigate(id));b.dataset.tab=id;return b;}));
     const openDestination=path=>{const url=new URL(path,location.origin);url.hash=token;window.open(url.href,'_blank','noopener,noreferrer');};
-    if(opened.schema.analysis)nav.append(button('Observation analysis',()=>openDestination('/analysis/')));
+    if(opened.schema.analysis&&opened.schema.actions?.['analysis.create'])nav.append(button('Analysis & reports',busy(()=>client.openAnalysis(),ctx.error)));
     deskButton.disabled=false;deskButton.onclick=()=>openDestination('/desk/');
     refreshButton.disabled=false;refreshButton.onclick=busy(async()=>{await ctx.refresh();notice.replaceChildren(note('Original commissioning workspace refreshed.','success'));},ctx.error);
     identity.textContent='Workspace '+opened.view.workspaceId+' · revision '+opened.view.revision;

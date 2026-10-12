@@ -25,7 +25,7 @@ const string=(v,max=4096)=>typeof v==='string'&&v.length<=max;
 const escapePointer=v=>String(v).replaceAll('~','~0').replaceAll('/','~1');
 const key=(kind,id)=>kind+'/'+entityId(id).key;
 const idValue=text=>{
- ensure(string(text,8192),'ID','Retain a typed JSON identifier.');
+ ensure(string(text,16384),'ID','Retain a typed JSON identifier.');
  const v=sourceDocument(Buffer.from(text));entityId(v);return v;
 };
 const clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));

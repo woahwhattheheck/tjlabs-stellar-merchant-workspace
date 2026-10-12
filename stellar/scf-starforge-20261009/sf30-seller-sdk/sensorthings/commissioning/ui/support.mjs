@@ -4,9 +4,9 @@ import {sha256,ApiError} from '/desk/api.mjs';
 export {h,button,detail,note,field,form,table,row,busy,number,json,optional};
 export const entityKinds=['Things','Locations','HistoricalLocations','Datastreams','MultiDatastreams','Sensors','ObservedProperties','Observations','FeaturesOfInterest'];
 export const sections=[['sources','Sources'],['mapping','Mapping and target'],['plans','Plan review'],['jobs','Native operation'],['receiving','Receiving and history']];
-export const recordId=r=>typeof r==='string'?r:r?.id??null;
+export const recordId=r=>typeof r==='string'?r:r?.id??r?.project?.id??null;
 export const list=value=>Array.isArray(value)?value:[];
-export const label=r=>r?.label??r?.name??recordId(r)??'Record';
+export const label=r=>r?.label??r?.profile?.label??r?.project?.label??r?.name??recordId(r)??'Record';
 export const enc=encodeURIComponent;
 export function choices(items,{empty='Select a record'}={}) {return[{value:'',label:empty},...list(items).map(r=>({value:recordId(r),label:label(r)}))];}
 export function select(labelText,name,items,value='',options={}) {return field(labelText,name,{type:'select',options:choices(items),value,...options});}
@@ -24,7 +24,7 @@ export function scopedForm(ctx,key,title,controls,submit,options={}) {
   const scope=ctx.state.projectId??'workspace',draftKey=scope+'|'+key;
   const node=form(title,controls,async(values,element)=>{
     const result=await submit(values,element);
-    if(options.clearOnSuccess){delete ctx.state.drafts[draftKey];ctx.save();}
+    if(options.clearOnSuccess){delete ctx.state.drafts[draftKey];ctx.save();ctx.render();}
     return result;
   },options);
   const element=node.matches('form')?node:node.querySelector('form');
@@ -38,11 +38,16 @@ export function scopedForm(ctx,key,title,controls,submit,options={}) {
 export function sourceDescription(source) {return exact('Source identity and provenance',source);}
 export function fileReferences(value) {
   const found=new Map(),seen=new Set();
-  function walk(x,depth){if(!x||typeof x!=='object'||depth>9||seen.has(x))return;seen.add(x);
-    if(typeof x.id==='string'&&typeof x.sha256==='string'&&/^[a-f0-9]{64}$/.test(x.sha256)&&Number.isSafeInteger(x.bytes)&&(x.name||x.filename||x.type))found.set(x.id,{...x,name:x.name??x.filename??x.id});
-    if(Array.isArray(x)){for(const item of x)walk(item,depth+1);}else for(const[k,item]of Object.entries(x)){if(k!=='bodyText'&&k!=='configuration')walk(item,depth+1);}
+  function walk(x,depth,name='Retained file'){if(!x||typeof x!=='object'||depth>12||seen.has(x))return;seen.add(x);
+    if(typeof x.sha256==='string'&&/^[a-f0-9]{64}$/.test(x.sha256)&&Number.isSafeInteger(x.bytes)&&x.bytes>=0){
+      const id=typeof x.fileId==='string'?x.fileId:x.sha256;
+      const item={...x,id,name:x.name??x.filename??x.path??name};
+      if(!found.has(id)||x.name||x.filename)found.set(id,item);
+    }
+    if(Array.isArray(x)){for(const item of x)walk(item,depth+1,name);}else for(const[k,item]of Object.entries(x)){if(k!=='bodyText'&&k!=='sourceJson'&&k!=='configuration')walk(item,depth+1,k);}
   }walk(value,0);return[...found.values()];
 }
+
 export function files(ctx,value) {
   const items=fileReferences(value);if(!items.length)return note('Open the selected record to inspect its retained file references.');
   return table([{label:'File',render:r=>r.name},{label:'Bytes',key:'bytes'},{label:'SHA-256',render:r=>h('code',{},r.sha256)},{label:'Open',render:r=>actionButtons(ctx,['Download',()=>ctx.download(r.id)],...((r.bytes<=1024*1024)?[['Preview text',()=>ctx.preview(r.id)]]:[]))}],items);
@@ -83,3 +88,5 @@ export function exactInputJSON(text,name='JSON') {
     if(input[i]==='-'||/[0-9]/.test(input[i])){numberToken.lastIndex=i;const m=numberToken.exec(input);if(m){const n=Number(m[0]);if(!Number.isFinite(n)||Number.isInteger(n)&&!Number.isSafeInteger(n)||decimal(m[0])!==decimal(JSON.stringify(n)))throw new Error(name+' contains a numeric literal that the browser would change. Keep native identifiers as exact targetIdJson strings and import precise source results from their original file.');i=numberToken.lastIndex;continue;}}i++;}
   try{return JSON.parse(input);}catch{throw new Error('Use complete valid '+name+'.');}
 }
+
+export function parseNullableObject(value,name){const r=exactInputJSON(value,name);if(r!==null&&(!r||Array.isArray(r)||typeof r!=='object'))throw new Error(name+' must be a JSON object or null.');return r;}

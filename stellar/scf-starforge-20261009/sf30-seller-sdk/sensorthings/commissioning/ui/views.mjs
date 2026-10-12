@@ -1,5 +1,5 @@
 // MIT. Complete commissioning screens; all mutations remain original Desk actions.
-import {h,button,detail,note,field,table,row,number,optional,panel,exact,textBody,badge,stats,actionButtons,pager,scopedForm,files,parseObject,parseArray,parseLines,optionalText,requireProject,choices,select,list,label,recordId,entityKinds,enc} from './support.mjs';
+import {h,button,detail,note,field,table,row,number,optional,panel,exact,textBody,badge,stats,actionButtons,pager,scopedForm,files,parseObject,parseNullableObject,parseArray,parseLines,optionalText,requireProject,choices,select,list,label,recordId,entityKinds,enc} from './support.mjs';
 const pId=ctx=>requireProject(ctx),pick=(ctx,key,id,tab=ctx.state.tab)=>ctx.select(key,id,tab);
 function projectRecords(ctx,key){return list(ctx.project?.[key]);}
 function stateOf(r){return r?.state??r?.status??'Retained';}
@@ -14,7 +14,7 @@ function uploadPanel(ctx,{title='Receive a private source file',kind='source'}={
     const file=form.elements.file.files[0];if(!file)throw new Error('Choose the complete original file.');
     const received=await ctx.client.upload(file,p=>progress.replaceChildren(note(String(p.offset)+' / '+p.bytes+' bytes'),h('progress',{value:p.offset,max:p.bytes})));
     ctx.state.inboxFile={filename:received.filename,bytes:received.bytes,sha256:received.sha256};ctx.save();await ctx.refresh();return received;
-  },{label:'Upload complete file',description:'Uses the original configured inbox and resumes its byte/hash-bound upload. For files above128MiB, use the installed retained-file receiver into that same inbox.'});
+  },{label:'Upload complete file',description:'Uses the original configured inbox and resumes its byte/hash-bound upload. For files above 128 MiB, use the installed retained-file receiver into that same inbox.'});
   upload.append(progress);
   const inbox=panel('Original private inbox',note('Loading the configured inbox…'));
   ctx.readInto(inbox,async()=>{const response=await ctx.client.request('/api/desk/inbox');return h('div',{},table([{label:'File',key:'filename'},{label:'Bytes',key:'bytes'},{label:'Modified',key:'modifiedAt'},{label:'Selection',render:r=>button('Verify and select',()=>ctx.run(async()=>{const original=await ctx.client.request('/api/desk/inbox?'+new URLSearchParams({filename:r.filename}));ctx.state.inboxFile={filename:original.filename,bytes:original.bytes,sha256:original.sha256};ctx.save();await ctx.refresh();}))}],list(response.files)),exact('Inbox identity',response));},'Original private inbox');
@@ -25,16 +25,17 @@ export function sources(ctx){
   root.append(scopedForm(ctx,'create-project','Create commissioning project',[field('Project label','label',{required:true}),field('Description and intended outcome','description',{type:'textarea',required:true})],x=>ctx.act('commissioning.project.create',x,{selectResult:'projectId'}),{label:'Create project',clearOnSuccess:true}));
   if(!ctx.project){root.append(recordTable(ctx,list(ctx.overview.projects),[{label:'Open',render:r=>button('Select project',()=>pick(ctx,'projectId',recordId(r)))}]));return root;}
   root.append(panel('Project sources',recordTable(ctx,projectRecords(ctx,'sources'),[{label:'Kind',render:r=>r.kind??r.format?.kind??r.format},{label:'Selection',render:r=>button('Inspect source',()=>pick(ctx,'sourceId',recordId(r)))}])));
-  const editions=list(ctx.client.view.editions);
+  const editions=list(ctx.client.view.editions).filter(id=>list(ctx.client.view.reviews).filter(r=>r.editionId===id).at(-1)?.decision==='accept');
+  if(!editions.length)root.append(note('Accept the chosen original edition in the Operations Desk to select it here. Its current source review remains attached to the source.'));
   root.append(scopedForm(ctx,'retain-edition','Use an original accepted edition',[select('Original source edition','editionId',editions,ctx.state.editionId,{required:true}),field('Source label','label',{required:true})],x=>ctx.act('commissioning.source.edition',{projectId:pId(ctx),editionId:x.editionId,label:x.label},{selectResult:'sourceId'}),{label:'Retain complete edition',description:'Uses the original edition and its source review, raw response pages, entity graph, licenses and provenance.'}));
   if(ctx.client.info.sourceInboxConfigured){
     root.append(uploadPanel(ctx),selectedFile(ctx,'source'));
     if(ctx.state.inboxFile)root.append(scopedForm(ctx,'retain-file','Retain the selected source file',[
-      field('Source label','label',{required:true}),field('Original source URL','sourceUrl',{type:'url',required:true}),
-      field('Source license and attribution','license',{type:'json',required:true,value:'{\n  "name": "",\n  "url": "",\n  "attribution": "",\n  "sourceUrl": ""\n}',help:'Retain the actual source declaration, not an inferred license.'}),
+      field('Source label','label',{required:true}),field('Original source URL','sourceUrl',{type:'url',help:'Retain the actual source URL when one is declared.'}),
+      field('Source license and attribution','license',{type:'json',required:true,value:'null',help:'Use the actual declared license/attribution object, or null when no source declaration has been observed.'}),
       field('File format','format',{type:'select',options:[{value:'csv',label:'CSV'},{value:'json',label:'SensorThings JSON'},{value:'data-array',label:'SensorThings data array'}]}),
       field('Native entity collection when required','entityKind',{type:'select',options:[{value:'',label:'Use the source definition'},...entityKinds]})
-    ],x=>{const f=ctx.state.inboxFile;return ctx.act('commissioning.source.file',{projectId:pId(ctx),filename:f.filename,expectedSha256:f.sha256,expectedBytes:f.bytes,label:x.label,sourceUrl:x.sourceUrl,license:parseObject(x.license,'License'),format:{kind:x.format,...(x.entityKind?{entityKind:x.entityKind}:{})}},{selectResult:'sourceId'});},{label:'Retain source and provenance'}));
+    ],x=>{const f=ctx.state.inboxFile;return ctx.act('commissioning.source.file',{projectId:pId(ctx),filename:f.filename,expectedSha256:f.sha256,expectedBytes:f.bytes,label:x.label,sourceUrl:x.sourceUrl,license:parseNullableObject(x.license,'License'),format:{kind:x.format,...(x.entityKind?{entityKind:x.entityKind}:{})}},{selectResult:'sourceId'});},{label:'Retain source and provenance'}));
   }else root.append(note('The host must bind its original source inbox to receive private CSV, JSON or complete handoff files.'));
   if(ctx.state.sourceId){
     const sourceHost=panel('Selected source',note('Reading original source…'));
@@ -56,7 +57,7 @@ function mappingEditor(ctx){
     field('Mapping label','label',{required:true,value:ctx.selectedMapping?.label??''}),field('Reviewed namespace','namespace',{required:true,value:m.namespace}),
     field('Selected stream keys','streamKeys',{type:'textarea',value:list(m.sourceSelection?.streamKeys).join('\n'),help:'One exact source key per line. Empty selects all original streams.'}),
     field('Selected occurrence IDs','occurrenceIds',{type:'textarea',value:list(m.sourceSelection?.occurrenceIds).join('\n'),help:'Empty selects all retained occurrences. Explicit choices resolve conflicting retained identities.'}),
-    field('CSV encoding','encoding',{type:'select',options:['utf-8'],value:csv.encoding??'utf-8'}),
+    field('CSV encoding','encoding',{type:'select',options:['utf-8','utf-16le','windows-1252'],value:csv.encoding??'utf-8'}),
     field('CSV delimiter','delimiter',{value:csv.delimiter??',',required:true,help:'Enter the actual delimiter. Use a literal tab for tab-separated data.'}),
     field('CSV header row','headerRow',{type:'number',min:1,value:csv.headerRow??1,required:true}),
     field('CSV result interpretation','resultType',{type:'select',value:csv.resultType??'string',options:['string','number','boolean','json'],help:'The explicit type applies to the original result field. Categorical Hamburg values remain strings.'}),
@@ -64,22 +65,44 @@ function mappingEditor(ctx){
     field('Explicit CSV null token','nullToken',{value:csv.nullToken??'',help:'Leave empty when no null token is selected. The companion checkbox chooses an explicit empty-string null token.'}),
     field('Use the entered value as an explicit null token','useNullToken',{type:'checkbox',value:csv.nullToken!==null&&csv.nullToken!==undefined}),
     field('CSV native relationships','csvRelations',{type:'json',value:JSON.stringify(csv.relations??{},null,2),required:true,help:'Native relation → sourceKey or {targetIdJson}. Quoted JSON text preserves the native identifier type.'}),
-    field('Native entity definitions','entities',{type:'json',rows:10,value:JSON.stringify(m.entities??[],null,2),required:true,help:'Complete authored native definitions in the original mapper schema. Their changes appear in the exact plan.'}),
+    field('Native entity definitions','entities',{type:'json',rows:10,value:JSON.stringify(m.entities??[],null,2),required:true,help:'Each definition has sourceKey, entityKind, body (object) or bodyText (exact JSON string), and optional relations. See the complete mapping field reference below.'}),
     field('Source-to-target bindings','bindings',{type:'json',rows:10,value:JSON.stringify(m.bindings??[],null,2),required:true,help:'Each binding selects sourceKey, create/bind/update, exact targetIdJson, optional overrides/relations and sourceOccurrenceId.'}),
     field('Reviewed provenance property','markerProperty',{value:m.markerProperty??'tjlabsCommissioning',required:true,help:'This target metadata addition is shown in the prepared payload.'}),
-    field('Native batch size','batchSize',{type:'number',min:1,max:500,value:m.batchSize??100,required:true})
+    field('Native batch size','batchSize',{type:'number',min:1,max:1000,value:m.batchSize??100,required:true})
   ],x=>{const configuration={version:1,namespace:x.namespace,sourceSelection:{streamKeys:parseLines(x.streamKeys),occurrenceIds:parseLines(x.occurrenceIds)},csv:{encoding:x.encoding,delimiter:x.delimiter,headerRow:number(x.headerRow),columns:parseObject(x.columns,'CSV columns'),resultType:x.resultType,nullToken:x.useNullToken?x.nullToken:null,relations:parseObject(x.csvRelations,'CSV relations')},entities:parseArray(x.entities,'Native definitions'),bindings:parseArray(x.bindings,'Bindings'),markerProperty:x.markerProperty,batchSize:number(x.batchSize)};
     return ctx.act('commissioning.mapping.save',{projectId:pId(ctx),sourceId:x.sourceId,targetId:x.targetId,label:x.label,configuration},{selectResult:'mappingId'});},{label:'Save mapping version',description:'Retains a new immutable mapping. Edition sources ignore CSV settings. Native identifiers remain exact JSON strings; the editor rejects authored numeric literals that the browser would change.'});
-  root.classList.add('comm-mapping-editor');return root;
+  root.classList.add('comm-mapping-editor');root.append(mappingReference());return root;
+}
+function mappingReference(){
+  const definition={sourceKey:'<stable authored source key>',entityKind:'Sensors',body:{name:'<actual selected name>',description:'<actual description>',encodingType:'<actual metadata encoding>',metadata:'<actual metadata URL>'},relations:{}};
+  const binding={sourceKey:'<exact retained source key>',mode:'bind',targetIdJson:'"<actual native string ID>"'};
+  return h('details',{},h('summary',{},'Complete mapping field reference'),
+    note('These are editable schema examples, not source observations. Replace bracketed text with the selected source and target values. Authored definitions enter the reviewed plan explicitly.'),
+    exact('Authored native definition',definition,{open:true}),
+    note('Use bodyText instead of body when an authored body contains exact numeric JSON that the browser would otherwise change. The complete JSON text stays inside that string until the original native plan is prepared.'),
+    exact('Bind an original source identity to an actual native target',binding,{open:true}),
+    table([{label:'Collection',key:'kind'},{label:'Required native body fields',key:'fields'},{label:'Relationships',key:'relations'}],[
+      {kind:'Locations',fields:'name, description, encodingType, location',relations:'None'},
+      {kind:'Things',fields:'name, description',relations:'Locations (array)'},
+      {kind:'Sensors',fields:'name, description, encodingType, metadata',relations:'None'},
+      {kind:'ObservedProperties',fields:'name, description, definition',relations:'None'},
+      {kind:'FeaturesOfInterest',fields:'name, description, encodingType, feature',relations:'None'},
+      {kind:'Datastreams',fields:'name, description, observationType, unitOfMeasurement',relations:'Thing, Sensor, ObservedProperty'},
+      {kind:'MultiDatastreams',fields:'name, description, multiObservationDataTypes, unitOfMeasurements',relations:'Thing, Sensor, ObservedProperties (array)'},
+      {kind:'HistoricalLocations',fields:'time',relations:'Thing, Locations (array)'},
+      {kind:'Observations',fields:'phenomenonTime, result',relations:'Exactly one Datastream or MultiDatastream, plus FeatureOfInterest'}
+    ]),
+    exact('Relationship value shapes',{singleSource:{Thing:'<exact source key>'},singleTarget:{Sensor:{targetIdJson:'"<actual native string ID>"'}},many:{Locations:['<source key A>','<source key B>']}},{open:true}),
+    note('CSV columns may select id, phenomenonTime, resultTime, validTime, result, resultQuality and parameters. Map phenomenonTime and result explicitly. An input CSV id remains an original string identifier. Empty selection arrays retain all original rows; one occurrence ID can select a reviewed conflicting occurrence.'));
 }
 export function mapping(ctx){
   const root=projectIntro(ctx,'Mapping and target','Choose the original target profile, field interpretation and native relationships. Inspect actual target entities before preparing the source-to-target plan.');if(!ctx.project){root.append(emptyProject(ctx));return root;}
-  root.append(panel('Target profiles',recordTable(ctx,projectRecords(ctx,'targets'),[{label:'Service',key:'serviceUrl'},{label:'Credential reference',key:'authorizationEnv'},{label:'Selection',render:r=>button('Select target',()=>pick(ctx,'targetId',recordId(r)))}])));
+  root.append(panel('Target profiles',recordTable(ctx,projectRecords(ctx,'targets'),[{label:'Service',render:r=>r.profile?.serviceUrl},{label:'Credential reference',render:r=>r.profile?.authorizationReference??'None'},{label:'Selection',render:r=>button('Select target',()=>pick(ctx,'targetId',recordId(r)))}])));
   root.append(scopedForm(ctx,'target-profile','Save a target profile',[
     field('Target label','label',{required:true}),field('SensorThings service URL','serviceUrl',{type:'url',required:true,help:'Use the actual HTTPS service root, or explicitly selected loopback HTTP reference installation.'}),
     field('Host authorization environment name','authorizationEnv',{help:'Only the variable name is retained here. Its value stays on the selected host.'}),
     field('Allow the selected loopback HTTP service','allowLoopback',{type:'checkbox'}),
-    field('Request timeout (milliseconds)','requestTimeoutMs',{type:'number',min:1000,max:180000,value:45000,required:true}),
+    field('Request timeout (milliseconds)','requestTimeoutMs',{type:'number',min:1000,max:120000,value:45000,required:true}),
     field('Maximum complete response bytes','maxResponseBytes',{type:'number',min:1024,max:67108864,value:4194304,required:true})
   ],x=>ctx.act('commissioning.target.save',optional({projectId:pId(ctx),label:x.label,serviceUrl:x.serviceUrl,authorizationEnv:optionalText(x.authorizationEnv),allowLoopback:x.allowLoopback,requestTimeoutMs:number(x.requestTimeoutMs),maxResponseBytes:number(x.maxResponseBytes)}),{selectResult:'targetId'}),{label:'Save target version'}));
   if(projectRecords(ctx,'targets').length)root.append(scopedForm(ctx,'inspect-target','Inspect the selected native target',[
@@ -100,7 +123,7 @@ export function plans(ctx){
   const host=panel('Selected plan',note('Reading the exact retained plan…'));
   ctx.readInto(host,async()=>{
     const page=await ctx.api('plans/'+enc(ctx.state.planId),{offset:ctx.state.planOffset??0,limit:100}),planId=ctx.state.planId;
-    const content=h('div',{},exact('Plan identity and totals',Object.fromEntries(Object.entries(page).filter(([k])=>k!=='steps')),{open:true}),issuePanel(page.issues),planSteps(ctx,page),files(ctx,page));
+    const content=h('div',{},exact('Plan identity and totals',Object.fromEntries(Object.entries(page).filter(([k])=>!['steps','rows'].includes(k))),{open:true}),issuePanel(page.issues),planSteps(ctx,page),files(ctx,page));
     content.append(scopedForm(ctx,'plan-review-'+planId,'Record plan review',[
       field('Decision','decision',{type:'select',options:[{value:'accept',label:'Accept the displayed plan'},{value:'revise',label:'Return for revision'}]}),field('Reviewer','actor',{required:true,value:ctx.state.actor??''}),field('Review note','note',{type:'textarea',required:true}),
       field('I reviewed the displayed issues, source selection and metadata additions','acknowledgeIssues',{type:'checkbox'})
@@ -116,39 +139,54 @@ export function plans(ctx){
   },'Selected plan');root.append(host);return root;
 }
 function nativeSteps(ctx,page){
-  return h('div',{},table([{label:'Step',render:r=>h('code',{},r.stepId)},{label:'State',render:r=>badge(stateOf(r))},{label:'Native target',render:r=>h('code',{},r.targetIdJson??r.target?.idJson??'—')},{label:'Attempts',render:r=>list(r.attempts??r.attemptIds).length},{label:'Inspect',render:r=>actionButtons(ctx,['Request, response and provenance',()=>ctx.showNode('Native step '+r.stepId,h('div',{},exact('Original step and complete attempt history',r,{open:true}),typeof r.bodyText==='string'?textBody('Exact request body',r.bodyText):null,files(ctx,r)))],['Resolve this step',()=>{ctx.state.stepId=r.stepId;ctx.save();ctx.render();}])}],list(page.steps)),pager({...page,rows:page.steps},n=>{ctx.state.jobOffset=n;ctx.render();}));
+  return h('div',{},table([{label:'Step',render:r=>h('code',{},r.stepId)},{label:'State',render:r=>badge(stateOf(r))},{label:'Native target',render:r=>h('code',{},r.targetIdJson??'—')},{label:'Attempts',render:r=>list(r.attempts).length},{label:'Inspect',render:r=>actionButtons(ctx,
+    ['Request, response and provenance',()=>ctx.showNode('Native step '+r.stepId,h('div',{},exact('Original step and complete attempt history',r,{open:true}),typeof r.bodyText==='string'?textBody('Exact request body',r.bodyText):null,files(ctx,r)))],
+    ...((r.state==='AWAITING_RECONCILIATION'&&(!page.received||page.localBinding))?[['Resolve this step',()=>{ctx.state.stepId=r.stepId;ctx.save();ctx.render();}]]:[])
+  )}],list(page.steps)),pager({...page,rows:page.steps},n=>{ctx.state.jobOffset=n;ctx.render();}));
+}
+function receivedBinding(ctx,page){
+  const jobId=page.id,profile=projectRecords(ctx,'targets').find(x=>x.id===page.targetId)?.profile;
+  return scopedForm(ctx,'received-job-binding-'+jobId,'Resume a received pending job on this host',[
+    field('Confirm the original target service URL','confirmServiceUrl',{type:'url',required:true,help:'Retained target: '+(profile?.serviceUrl??'Open the original job input below. Match its exact target root.')}),
+    field('Continue the original retained job and its target writes on this host','acknowledgeWrite',{type:'checkbox',required:true})
+  ],x=>ctx.act('commissioning.run.resume',{projectId:pId(ctx),jobId,confirmServiceUrl:x.confirmServiceUrl,acknowledgeWrite:x.acknowledgeWrite}),{label:'Bind this host and resume original job',description:'This received job has no local binding. Its original plan, completed steps and uncertain outcomes stay together when the selected host continues it.'});
+}
+function resolutionForm(ctx,page){
+  const jobId=page.id;
+  return scopedForm(ctx,'resolve-step-'+jobId,'Resolve an uncertain native write',[
+    field('Original step ID','stepId',{required:true,value:ctx.state.stepId??''}),field('Decision','decision',{type:'select',options:[{value:'adopt',label:'Adopt an actual existing target result'},{value:'retry',label:'Explicitly retry this same retained step'}]}),
+    field('Exact native target identifier JSON','targetIdJson',{value:'',help:'Keep JSON type and digits verbatim. A numeric ID is unquoted; a string ID includes its JSON quotes. Use the actual target result, not a map view ID.'}),
+    field('Operator','actor',{required:true,value:ctx.state.actor??''}),field('Actual target finding and reason','note',{type:'textarea',required:true})
+  ],x=>{ctx.state.actor=x.actor;ctx.save();return ctx.act('commissioning.run.resolve',optional({projectId:pId(ctx),jobId,stepId:x.stepId,decision:x.decision,targetIdJson:optionalText(x.targetIdJson),actor:x.actor,note:x.note}));},{label:'Retain same-step resolution',description:'Read the original request/response and actual target result first. An unobserved HTTP result is not silently repeated.'});
 }
 export function jobs(ctx){
   const root=projectIntro(ctx,'Native operation','Operate the original FROST job and its saved step history. Keep confirmed writes, uncertain results, target verification and any compensating plan attached to that same job.');if(!ctx.project){root.append(emptyProject(ctx));return root;}
-  root.append(panel('Native jobs',recordTable(ctx,projectRecords(ctx,'jobs'),[{label:'State',render:r=>badge(stateOf(r))},{label:'Plan',key:'planId'},{label:'Open',render:r=>button('Select job',()=>pick(ctx,'jobId',recordId(r)))}])));
+  root.append(panel('Native jobs',recordTable(ctx,projectRecords(ctx,'jobs'),[{label:'Kind',key:'kind'},{label:'State',render:r=>badge(stateOf(r))},{label:'Plan',key:'planId'},{label:'Open',render:r=>button('Select job',()=>pick(ctx,'jobId',recordId(r)))}])));
   if(!ctx.state.jobId)return root;
   const jobId=ctx.state.jobId;
   const live=panel('Selected native job',note('Reading its retained native result…'));root.append(live);
   ctx.readInto(live,async()=>{
-    const page=await ctx.api('jobs/'+enc(jobId),{offset:ctx.state.jobOffset??0,limit:100});
-    const current=h('div',{},stats([['State',stateOf(page)],['Completed',page.progress?.completed??page.completedSteps??'See job'],['Total',page.progress?.total??page.total??'See job']]),exact('Job, source and target identity',Object.fromEntries(Object.entries(page).filter(([k])=>k!=='steps')),{open:true}));
+    const page=await ctx.api('jobs/'+enc(jobId),{offset:ctx.state.jobOffset??0,limit:100}),state=page.state,needsBinding=page.received===true&&!page.localBinding&&state!=='COMPLETE';
+    const complete=page.progress?.complete??0,total=page.progress?.total??page.stepCount??page.total??0;
+    const current=h('div',{},stats([['State',state],['Completed',complete],['Total',total]]),exact('Job, source and target identity',Object.fromEntries(Object.entries(page).filter(([k])=>!['steps','rows','files'].includes(k))),{open:true}));
+    if(page.error)current.append(note((page.error.code?page.error.code+': ':'')+(page.error.message??String(page.error)),'error'));
+    if(page.notBefore)current.append(note('Retained provider retry time: '+page.notBefore));
     current.append(actionButtons(ctx,
       ['Refresh saved progress',()=>ctx.refresh()],
-      ['Resume original job',()=>ctx.act('commissioning.run.resume',{projectId:pId(ctx),jobId})],
-      ['Cancel original job',()=>ctx.act('commissioning.run.cancel',{projectId:pId(ctx),jobId})],
+      ['Resume original job',()=>ctx.act('commissioning.run.resume',{projectId:pId(ctx),jobId}),{disabled:needsBinding||['COMPLETE','RUNNING','STARTING','DRAINING','CANCELLING'].includes(state)}],
+      ['Cancel original job',()=>ctx.act('commissioning.run.cancel',{projectId:pId(ctx),jobId}),{disabled:['COMPLETE','CANCELLED','CANCELLING'].includes(state)}],
       ['Reconcile original outcomes',()=>ctx.act('commissioning.run.reconcile',{projectId:pId(ctx),jobId})],
-      ['Verify actual target',()=>ctx.act('commissioning.run.verify',{projectId:pId(ctx),jobId})],
-      ['Prepare compensating plan',()=>ctx.act('commissioning.rollback.prepare',{projectId:pId(ctx),jobId},{selectResult:'planId',tab:'plans'})]
-    ),note('Cancellation retains completed and uncertain steps. Resume/reconcile continue this original job. A compensating plan is separately prepared and reviewed against actual target state; bind-only entities are not deleted.'),nativeSteps(ctx,page),files(ctx,page));
+      ['Verify actual target',()=>ctx.act('commissioning.run.verify',{projectId:pId(ctx),jobId},{selectResult:'jobId'}),{disabled:page.latest?.closed!==true||complete===0}],
+      ['Prepare compensating plan',()=>ctx.act('commissioning.rollback.prepare',{projectId:pId(ctx),jobId},{selectResult:'planId',tab:'plans'}),{disabled:page.kind!=='commission'||page.latest?.closed!==true}]
+    ),note('Cancellation retains completed and uncertain steps. Resume and reconcile continue this original job. A compensating plan is separately prepared and reviewed against actual target state; bind-only entities are not deleted.'),nativeSteps(ctx,page),files(ctx,page));
+    if(needsBinding)current.append(receivedBinding(ctx,page));
+    if(!needsBinding&&(state==='AWAITING_RECONCILIATION'||list(page.steps).some(x=>x.state==='AWAITING_RECONCILIATION')))current.append(resolutionForm(ctx,page));
+    current.append(scopedForm(ctx,'delivery-review-'+jobId,'Record commissioning outcome',[
+      field('Decision','decision',{type:'select',options:[{value:'accept',label:'Accept the completed result'},{value:'revise',label:'Return for revision'},{value:'reject',label:'Reject the result'}]}),field('Reviewer','actor',{required:true,value:ctx.state.actor??''}),field('Result and remaining work','note',{type:'textarea',required:true})
+    ],x=>{ctx.state.actor=x.actor;ctx.save();return ctx.act('commissioning.review.record',{projectId:pId(ctx),jobId,decision:x.decision,actor:x.actor,note:x.note});},{label:'Retain outcome review',description:'Acceptance selects an actual complete, closed native result. Revision and rejection retain the original reviewer’s decision.'}));
+    current.append(panel('Verification results',recordTable(ctx,list(page.verifications),[{label:'State',render:r=>badge(stateOf(r))},{label:'Open',render:r=>button('Inspect verification job',()=>pick(ctx,'jobId',r.id))}])),panel('Operating reviews',recordTable(ctx,list(page.reviews),[{label:'Decision',key:'decision'},{label:'Reviewer',key:'actor'}])));
     ctx.watchJob(jobId,current.querySelector('.metrics'),page);return current;
   },'Selected native job');
-  root.append(scopedForm(ctx,'received-job-binding-'+jobId,'Resume a received pending job on this host',[
-    field('Confirm the original target service URL','confirmServiceUrl',{type:'url',required:true,help:'For a received job without a local binding, match the original retained target service and bind the selected local host explicitly.'}),
-    field('Continue the original retained job and its target writes on this host','acknowledgeWrite',{type:'checkbox',required:true})
-  ],x=>ctx.act('commissioning.run.resume',{projectId:pId(ctx),jobId,confirmServiceUrl:x.confirmServiceUrl,acknowledgeWrite:x.acknowledgeWrite}),{label:'Bind this host and resume original job',description:'The native manager requires this confirmation only for a received job without a local binding. It preserves the same plan, steps and uncertain outcomes.'}));
-  root.append(scopedForm(ctx,'resolve-step-'+jobId,'Resolve an uncertain native write',[
-    field('Original step ID','stepId',{required:true,value:ctx.state.stepId??''}),field('Decision','decision',{type:'select',options:[{value:'adopt',label:'Adopt an actual existing target result'},{value:'retry',label:'Explicitly retry this same retained step'}]}),
-    field('Exact native target identifier JSON','targetIdJson',{value:'',help:'Preserve JSON type and digits verbatim, for example12345678901234567890 or "station-a". Do not use the map’s display-only identifier.'}),
-    field('Operator','actor',{required:true,value:ctx.state.actor??''}),field('Actual target finding and reason','note',{type:'textarea',required:true})
-  ],x=>{ctx.state.actor=x.actor;ctx.save();return ctx.act('commissioning.run.resolve',optional({projectId:pId(ctx),jobId,stepId:x.stepId,decision:x.decision,targetIdJson:optionalText(x.targetIdJson),actor:x.actor,note:x.note}));},{label:'Retain same-step resolution',description:'Read the original request/response and actual target result first. An unobserved HTTP result is not silently repeated.'}));
-  root.append(scopedForm(ctx,'delivery-review-'+jobId,'Record commissioning outcome',[
-    field('Decision','decision',{required:true,value:'accept',help:'Use the decision declared by the current host schema, shown in its contract.'}),field('Reviewer','actor',{required:true,value:ctx.state.actor??''}),field('Result and remaining work','note',{type:'textarea',required:true})
-  ],x=>ctx.act('commissioning.review.record',{projectId:pId(ctx),jobId,decision:x.decision,actor:x.actor,note:x.note}),{label:'Retain outcome review'}));
   const mapHost=panel('Retained target map and observation view',h('div',{class:'comm-map-container'},note('Opening the selected native result with the original STAM viewer…')));root.append(mapHost);
   ctx.mountMap(mapHost,jobId);
   return root;
@@ -157,7 +195,10 @@ export function receiving(ctx){
   const root=projectIntro(ctx,'Receiving and history','Prepare or receive the complete editable project: sources, mappings, exact plans, native journals, typed target bindings, verification and earlier editions.');
   if(ctx.project){
     root.append(scopedForm(ctx,'prepare-handoff','Prepare a complete handoff',[field('Handoff label','label',{required:true,value:label(ctx.project)+' — complete handoff'})],x=>ctx.act('commissioning.handoff.prepare',{projectId:pId(ctx),label:x.label}),{label:'Prepare complete package',description:'The original exporter includes complete selected source archives, project history, native journals and editable source closure. Host credential values and private session tokens are omitted.'}));
-    root.append(panel('Project packages and receiving history',recordTable(ctx,projectRecords(ctx,'exports'),[{label:'Files',render:r=>files(ctx,r)}]),files(ctx,ctx.project)),panel('Retained project history',exact('Complete project editions and history',ctx.project,{open:true})));
+    const handoffs=projectRecords(ctx,'handoffs'),exports=projectRecords(ctx,'exports');
+    root.append(panel('Project packages and receiving history',recordTable(ctx,handoffs,[{label:'Direction',key:'direction'},{label:'Disposition',key:'disposition'},{label:'Edition',key:'sequence'},{label:'Created',key:'createdAt'},{label:'Package',render:r=>r.fileId?actionButtons(ctx,['Download complete package',()=>ctx.download(r.fileId)]):files(ctx,r)}]),exports.length?files(ctx,exports):null),panel('Project identity',exact('Selected project and history head',ctx.project.project,{open:true})));
+    const historyHost=panel('Complete retained project history',note('Reading the original project history…'));
+    ctx.readInto(historyHost,async()=>{const page=await ctx.api('projects/'+enc(ctx.state.projectId)+'/history',{offset:ctx.state.historyOffset??0,limit:100});return h('div',{},recordTable(ctx,list(page.rows),[{label:'Action',key:'action'},{label:'Created',key:'createdAt'},{label:'Sequence',key:'sequence'}]),pager(page,n=>{ctx.state.historyOffset=n;ctx.save();ctx.render();}),exact('Complete history page',{offset:page.offset,total:page.total,nextOffset:page.nextOffset}));},'Complete retained project history');root.append(historyHost);
   }
   if(ctx.client.info.sourceInboxConfigured){
     root.append(uploadPanel(ctx,{title:'Receive a complete commissioning handoff',kind:'handoff'}),selectedFile(ctx,'handoff'));
