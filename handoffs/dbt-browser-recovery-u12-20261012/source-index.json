@@ -1,0 +1,21 @@
+{
+  "schema": "stellar-forge.source-transport.v1",
+  "operation": "SCF-DBT-BROWSER-RECOVERY-U12-20261012",
+  "original_operation": "SCF-DBT-PROJECT-OPERATIONS-814B-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "encoding": "xz-base64",
+  "decoded_bytes": 105163,
+  "decoded_sha256": "45061ab2d8ec4acf2aeb0bc478f009e4b6d3d7cb6b7ee16d65117113dfc26de8",
+  "files": 9,
+  "source_bytes": 97625,
+  "owner": "ASTRA-U12",
+  "cumulative_publisher": "ASTRA-DBT-FINISH12",
+  "read": "Fetch each Git blob as UTF-8 text in position order, concatenate, base64-decode, then lzma.decompress. The result is the complete JSON files[].content capsule with exact preimages and postimages; verify decoded_bytes and decoded_sha256 before materializing. All four returned Git object IDs match the local bytes.",
+  "composition": "Four modified original files: dbt_http.py, ui/app.js, ui/index.html, ui/style.css. Five new files: browser_state.py, ui/recovery.js, BROWSER_RECOVERY_EXERCISE.py, browser-recovery-journey.mjs, BROWSER_RECOVERY.md. Preserve newer publisher, client, Apps and installer work. Compose additive dbt_http hunks with the managed HTTP owner rather than overwrite its newer postimage.",
+  "chunks": [
+    {"position": 0, "characters": 10000, "git_blob": "5d9c7f6abdbf632f5b1967ae56c35b3830b287e7"},
+    {"position": 1, "characters": 10000, "git_blob": "e60082edbac418578d9c11d710e6cd0e3eb70864"},
+    {"position": 2, "characters": 10000, "git_blob": "3a3b9348c95027301506d4c01851dac931a7c705"},
+    {"position": 3, "characters": 7984, "git_blob": "99547951b9ca5b62b14831391a2b5e145352a98d"}
+  ]
+}
