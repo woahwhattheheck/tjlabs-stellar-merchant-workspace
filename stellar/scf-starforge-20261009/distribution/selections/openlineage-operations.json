@@ -49,26 +49,9 @@
     "merchant-provider-tools"
   ],
   "components": [
-    "stellar/scf-starforge-20261009/distribution",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/operations",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/developer",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-refresh",
-    "stellar/scf-starforge-20261009/sf36-spend-governor",
     "stellar/scf-starforge-20261009/sf46-release",
-    "stellar/scf-starforge-20261009/sf61-openapi-seller-import",
-    "stellar/scf-starforge-20261009/sf82-seller-pilot",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli",
-    "stellar/scf-starforge-20261009/sf101-merchant-receiver",
-    "stellar/scf-starforge-20261009/sf103-native-buyer-signer",
-    "stellar/scf-starforge-20261009/native-facilitator",
-    "stellar/scf-starforge-20261009/sf81-buyer-operator-bridge",
-    "stellar/scf-starforge-20261009/sf62-human-approval-cli",
-    "stellar/scf-starforge-20261009/sf54-buyer-governor-intent",
-    "stellar/scf-starforge-20261009/sf59-operator-reservation-gate",
-    "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery",
-    "stellar-forge/mcp-paid-agent",
-    "stellar/scf-starforge-20261009/sf43-agent-commerce",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
     "products/openlineage",
     "stellar-forge/mcp-merchant-operator/console"
   ],
@@ -118,7 +101,19 @@
     "stellar/scf_2026/presentation/reviewer/merchant/contracts.mjs",
     "stellar/scf_2026/presentation/reviewer/workbench-model.mjs",
     "stellar/scf_2026/presentation/reviewer/workbench.mjs",
-    "stellar/scf_2026/presentation/reviewer/workspace.mjs"
+    "stellar/scf_2026/presentation/reviewer/workspace.mjs",
+    "stellar/scf-starforge-20261009/distribution/build.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-source.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-object-receiving.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-profile.mjs",
+    "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+    "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
+    "stellar/scf-starforge-20261009/distribution/GIT_OBJECT_RECEIVING.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
