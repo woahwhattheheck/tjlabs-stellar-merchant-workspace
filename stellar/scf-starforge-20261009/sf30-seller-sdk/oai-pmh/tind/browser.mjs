@@ -217,7 +217,7 @@ function renderState(preserve=false) {
   if (data.project) {
     $('#file-root-state').textContent=data.project.fileRoot?'Original file tree: '+data.project.fileRoot:'Choose the original file directory when receiving the file manifest.';
     if (!preserve) {
-      $('#destination-form').elements.url.value=data.project.profile.instance.replace(/\/$/,'')+'/search?of=xm';
+      $('#destination-form').elements.url.value=data.project.profile.instance?data.project.profile.instance.replace(/\/$/,'')+'/search?of=xm':'';
       $('#receipt-form').elements.url.value=data.project.profile.instance;
       $('#file-root-form').elements.path.value=data.project.fileRoot||'';
     }

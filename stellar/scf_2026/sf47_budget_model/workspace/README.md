@@ -252,6 +252,12 @@ The matching Python and Node managed launch readers identify the full installed 
 
 The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete SF74 commissioning source into the existing operating case. Operators select exact task, measurement and separate technical/customer receiving observations, link the original work/purchases/deployments and saved Installation editions, and freeze a source-verified review. The original Completion, typed client/MCP, CLI and full case export/reopen retain the same evidence and request identities. The [original receiving journey](BUYER_RECEIVING_JOURNEY.md) can include this phase on its explicitly selected original case.
 
+## Reconcile an original account and save its dated close
+
+**Delivery operations → Account reconciliation** compares a retained original account statement with the complete native cash account and period. Review source rows, original and corrected cash movements, whole-record matching groups and explicitly outstanding items. Retain an unresolved draft or close the reviewed period when the complete source and cash comparison balances.
+
+Every saved edition reopens its original decisions and comparison alongside the current account. The exact original Statements and Cash writers open from the reconciliation desk while complete drafts and pending requests remain retained. **Download complete account** carries the original native case, source files, saved editions, readable HTML and CSV reports; importing it reopens the same reconciliation selection. The [Account reconciliation guide](ACCOUNT_RECONCILIATION.md) covers the complete browser, command line, typed client, Merchant MCP, original request recovery and receiving workflow.
+
 ## Operate complete cash accounts and corrections
 
 **Delivery operations → Cash / issuer** now joins exact dated cash accounts, full original payment/refund allocations, native quantities, source documents and complete correction history. Review an observation's financial effect before recording its original void and replacement in one native case transaction. Current forecast inputs follow the recorded successor chain; original completion receipts and submitted reviews remain attached.

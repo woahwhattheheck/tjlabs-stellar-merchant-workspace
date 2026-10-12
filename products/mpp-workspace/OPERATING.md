@@ -287,3 +287,18 @@ The typed `connectMppChannel` client attaches to this same product. It exposes s
 | `merchant_mpp_channel_file` | Receive an exact paid response or complete operating handover |
 
 Read a returned operation job through the existing `merchant_mpp_job`. The whole-channel transfer and recovery flow is in [RECEIVING.md](RECEIVING.md#6-receive-a-complete-operating-channel).
+
+### Python work lists and paid files
+
+The [Python customer guide](../../stellar/scf-starforge-20261009/mpp-channel/python/README.md) supplies a typed standard-library client over this original product, plus complete work-list and operating-channel receiving commands. Its persistent Node bridge uses the maintained `connectMppChannel` client and the same native jobs.
+
+```sh
+python3 -B "$MPP_CHANNEL_SOURCE/python/run_work.py" \
+  --product "$MPP_PRODUCT" --work "$ACTUAL_CHANNEL_WORK_LIST" \
+  --out "$PRIVATE_CUSTOMER_OUTPUT"
+```
+
+The selected output directory receives immutable work-result editions and each original paid response, with its actual byte digest and source identity. Run the same actual work file again to continue its retained purchases. A pending operation exposes its original job; the client can be closed and reattached without changing that operation.
+
+The same six-file Python source directory includes `receive_channel.py` for complete source-and-operation receiving. It attaches to both real product identities before exporting, retains the original handover file, and reopens that channel in the selected receiving product. The [receiving instructions](../../stellar/scf-starforge-20261009/mpp-channel/python/README.md#carry-the-complete-operating-channel) cover same-host use and the exact-file transfer between hosts.
+

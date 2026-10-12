@@ -73,3 +73,24 @@ Independent canonical archive-part downloads use four workers, while assembly re
 ## Existing browser selected on the receiving host
 
 The 21:43 UTC continuation restores the complete 226,343,282-byte archive with SHA-256 `dce93f305f636c9266f8a768382ce840daf1a1308d66885ff86050baa67c6c45`, using all 22 saved parts and the exact manifest `libfile_6384df28cb18819191dc60e2e80080a6`. The previous receiver exited after that save. The current host has Playwright 1.62.1 and a working Chrome for Testing 151.0.7922.34 at `/workspace/scratch/64b7f381b23e/browser-runtime/chrome-151.0.7922.34/chrome-linux64/chrome`. The complete receiver considers that actual existing executable before invoking a browser installer. `DATASETTE_CHROMIUM` remains the explicit host override. The selected executable and its actual version are recorded in the original programme result.
+
+
+## First installed build and retained receiving process
+
+The actual installed invocation reached the original browser runtime at 21:45:55 UTC, then returned `ENOENT` for `installed/build`. Its maintained caller had requested `resume: true` on the first build, while the original build API requires an existing private output for resume. The complete corrected runner selects `resume` from the actual existence of the original build directory. It creates the first output through `buildDistribution` itself, and retains native resume for partial or complete outputs. The original source commit, application inputs and installed journal identity remain unchanged. The runner repair records both complete source hashes and retains the original runner alongside the changed executable.
+
+The complete 227,281,857-byte saved workspace (`260c3b71361aeda2561f1d486933703ae921dc7dd8fdad359f9c2d87015a9962`; manifest `libfile_e726231170f48191841c57f404e8ed17`) is the receiving input. This invocation retains its private producing process after the complete save, allowing reviewed original-source corrections and the already joined Conapi continuation to use the same workspace. It accepts a complete source body with operation, original root and SHA-256 over its existing private stdin, saves that exact source before execution, and reports the actual result. Closing checks the saved installed result for `COMPLETE`; a saved incomplete programme exits 1.
+
+## Continue on a host with changing disk capacity
+
+The complete entrypoint now streams each original ZIP member in 256 KiB blocks, including the retained Git packs. It retains the archive's directory metadata as well as every regular file and symbolic link. The original source, request, publisher input and installed journal keep their existing identities.
+
+Transfer placement is explicit in the embedded original operation. This continuation selects its private /dev directory after the shared disk returned ENOSPC. A host with adequate disk can select transfer_parent or DATASETTE_TRANSFER_DIRECTORY for the same complete transfer. Temporary helper state, npm cache and delivery archives use that selected directory. /dev is memory-backed; its filesystem free space shares the host's cgroup memory budget.
+
+The receiver reuses a complete local checkpoint only after checking all bytes and its full SHA-256. It can also recover exact original parts from the prior owned transfer directory or its partially assembled prefix. Every reused part is checked against its original manifest. After the new whole archive is verified, the previous partial transfer is removed only if it is a regular single-link file, all its bytes match that complete archive's prefix, and its device, inode, size and modification time are unchanged.
+
+Canonical read-only preparation and byte downloads retry the same pinned file selection on HTTP 429, 502, 503 or 504, up to four attempts. Version, part and whole-archive checks still apply. The unchanged canonical helpers own the service calls, transfer bytes and metadata.
+
+The producer retains its private input stream after the native programme and complete save. If saving itself fails, the same receiver remains available for source correction and the original archive continuation. An actual saved result is reported only after its canonical file rows contain both persistent IDs. Send complete reviewed Python source using the existing operation/root/source/SHA-256 protocol described above; the input source is retained before execution.
+
+The 22:11 continuation restored the full 227,281,857-byte original checkpoint (SHA-256 260c3b71361aeda2561f1d486933703ae921dc7dd8fdad359f9c2d87015a9962), reused the complete publisher state, and entered the original installed build. It released 46,137,344 bytes from its own failed disk transfer after full-prefix comparison. The independent completed publisher package remains the same 12,919,416-byte, 783-member delivery.

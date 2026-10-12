@@ -50,6 +50,20 @@
         "recovery.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/composer.mjs",
+      [
+        "composer.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/composer.css",
+      [
+        "composer.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

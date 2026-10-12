@@ -144,6 +144,14 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       result = {schema, workspaceId, sourcesSha256};
     }
     else if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'remittances') result = await receivables.remittances();
+    else if (parts[0] === 'remittances' && parts[1] === 'operations' && parts.length === 3)
+      result = await receivables.remittanceOperation(parts[2]);
+    else if (parts[0] === 'remittances' && parts.length === 2) result = await receivables.remittance(parts[1]);
+    else if (parts[0] === 'remittances' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.remittanceFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'credit-control') result = await receivables.creditControl({
       customerId:search.get('customerId')||undefined,search:search.get('search')||undefined,
     });
@@ -258,6 +266,8 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'remittances/preview') result = await receivables.previewRemittance(value);
+    else if (route === 'remittances') result = await receivables.applyRemittance(value);
     else if (route === 'credit-control/policies') result = await receivables.saveCreditPolicy(value);
     else if (parts[0] === 'credit-control' && parts[1] === 'invoices' && parts[3] === 'assessment' && parts.length === 4)
       result = await receivables.previewCreditAssessment(parts[2],value);

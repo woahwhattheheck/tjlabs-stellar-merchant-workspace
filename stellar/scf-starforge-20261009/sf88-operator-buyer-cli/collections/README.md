@@ -330,3 +330,9 @@ preparation-only signer. Use your actual private operator configurations with
 ## Complete operating recovery
 
 Use **Backup and receiving** to retain the original collection, inbox, operator state and saved files as one native encrypted backup. The complete [recovery guide](RECOVERY.md) covers reviewed capture, progress, cancellation, exact-root receiving, retained operation recovery, CLI and browser reopen.
+
+## Author requests from saved offers and repeat a reporting period
+
+Open **Request plans** in the existing Collections sidebar to choose actual saved catalog offers and payment terms, configure several requests, and save an immutable plan revision. Prepare each reporting period from its real source files and parameter values, review the original grouped spending limits, and create its collection through the existing controller.
+
+The complete [request authoring guide](AUTHORING.md) covers the browser editor, saved revisions, period preparation and continuation, source retention, complete recovery, private API and `buyer-collection-plans` CLI. The resulting collection uses this guide's original queue, payment approval, response downloads and customer delivery workflow.
