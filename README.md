@@ -35,6 +35,9 @@ compilation, agent operation and receiving in one retained product. The
 [purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 opens existing access or a saved purchase through the browser, generated agent
 settings and exact request client. The
+[merchant economics guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-economics/OPERATING.md)
+follows original seller observations, supplier-source review, route allocation,
+pricing decisions and complete workspace receiving. The
 [pricing and supplier-cost guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 connects original supplier sources, allocation, saved pricing reviews, scenario
 planning and complete backup receiving through that same Applications lifecycle.
@@ -209,6 +212,7 @@ the replacement is operating as intended.
 - [Portable GIS receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/receiving/PORTABLE_GIS.md)
 - [Supplier costs, pricing and complete workspace receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 - [Merchant incident desk](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf74-merchant-support-console/INCIDENT_SOURCES.md)
+- [Supplier costs, pricing decisions and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-economics/OPERATING.md)
 - [QuickBooks and Xero operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md)
 
 Installed archives retain these guides under `source/` with the same relative
