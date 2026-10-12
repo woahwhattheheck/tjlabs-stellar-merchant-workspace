@@ -215,15 +215,18 @@ window.IatiResultsUi = function IatiResultsUi(api) {
       if(!chosen){chosen=original?structuredClone(original):{periodKey:period.key,targetKey:candidate?.targetKey??'',actualKey:candidate?.actualKey??'',
         baselineKey:null,operation:'inspect',note:''};periodChoices.set(period.key,chosen);}
       const valueLabel=v=>(v.rawValue===null?'Value not supplied':v.rawValue)+' · '+JSON.stringify(v.dimensions)+' · '+short(v.key);
-      p.append(row(field('Exact target',select([['','Choose original target'],...period.targets.map(v=>[v.key,valueLabel(v)])],chosen.targetKey,v=>{chosen.targetKey=v;})),
+      const targetChoice=select([['',chosen.operation==='baseline-change'?'No target selected':'Choose original target'],...period.targets.map(v=>[v.key,valueLabel(v)])],
+        chosen.targetKey??'',v=>{chosen.targetKey=v||null;});targetChoice.disabled=chosen.operation==='baseline-change';
+      p.append(row(field('Exact target',targetChoice),
         field('Exact actual',select([['','Choose original actual'],...period.actuals.map(v=>[v.key,valueLabel(v)])],chosen.actualKey,v=>{chosen.actualKey=v;}))));
       p.append(row(field('Optional original baseline',select([['','No baseline'],...i.baselines.map(v=>[v.key,(v.year||'Undated')+' · '+valueLabel(v)])],
         chosen.baselineKey||'',v=>{chosen.baselineKey=v||null;})),
-        field('Selected calculation',select([['inspect','Inspect original observations'],['difference','Actual minus target'],['target-ratio','Actual / target × 100'],['baseline-progress','Progress from baseline to target']],
-        chosen.operation,v=>{chosen.operation=v;}))));
+        field('Selected calculation',select([['inspect','Inspect original observations'],['difference','Actual minus target'],['target-ratio','Actual / target × 100'],['baseline-progress','Progress from baseline to target'],['baseline-change','Actual minus baseline (no target)']],
+        chosen.operation,v=>{chosen.operation=v;if(v==='baseline-change')chosen.targetKey=null;render();}))));
       p.append(field('Pair selection / formula basis',textarea(chosen.note,v=>{chosen.note=v;},2)),
         button('Retain this pair in the project draft',()=>{
-          if(!chosen.targetKey||!chosen.actualKey){status('Choose the exact original target and actual first.',true);return;}
+          if(!chosen.actualKey||(!chosen.targetKey&&chosen.operation!=='baseline-change')){status('Choose the exact original actual and, for target comparisons, its original target.',true);return;}
+          if(['baseline-change','baseline-progress'].includes(chosen.operation)&&!chosen.baselineKey){status('Choose the exact original baseline for this operation.',true);return;}
           selectIndicator(i);update(()=>{draft.bindings=draft.bindings.filter(v=>!(v.periodKey===chosen.periodKey&&v.targetKey===chosen.targetKey&&v.actualKey===chosen.actualKey));
             draft.bindings.push(structuredClone(chosen));});status('Exact original pair retained. Preview the project to read its calculation or concrete comparability findings.');render();
         }));
@@ -295,7 +298,8 @@ window.IatiResultsUi = function IatiResultsUi(api) {
     const s=section('Complete selected report'),m=el('div');metrics(m,Object.entries(value.counts).map(([k,v])=>[k,v]));s.append(m,identity(value.reportSha256));
     const comparisons=el('div');table(comparisons,['indicator','period','operation','status','actualMinusTarget','differenceMeaning','ratioPercent','ratioFormula','reasons'],
       value.comparisons.map(v=>({indicator:v.indicatorKey,period:v.periodKey,operation:v.binding.operation,status:v.status,
-        actualMinusTarget:v.calculation?.actualMinusTarget,differenceMeaning:v.calculation?.differenceMeaning,
+        actualMinusTarget:v.calculation?.actualMinusTarget,actualMinusBaseline:v.calculation?.actualMinusBaseline,differenceMeaning:v.calculation?.differenceMeaning,
+        directionalBaselineRelation:v.calculation?.directionalBaselineRelation,
         ratioPercent:v.calculation?.ratioPercent,ratioFormula:v.calculation?.ratioFormula,reasons:v.reasons})));s.append(comparisons);
     const coverage=el('div');table(coverage,['source','projectionSha256','sourceCounts'],value.coverage);s.append(el('h3',{textContent:'Exact publisher coverage'}),coverage);
     details(s,'Original activity, result and location context',{activities:value.activities,results:value.results});

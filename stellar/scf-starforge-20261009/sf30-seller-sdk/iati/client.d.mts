@@ -375,10 +375,11 @@ export interface ResultsSelection {
 export interface ResultsInterpretation {
  indicatorKey:Sha256; unitLabel:string; direction:'reported'|'higher'|'lower'|'none'; note:string;
 }
-export interface ResultsPair {
- periodKey:Sha256; targetKey:Sha256; actualKey:Sha256; baselineKey:Sha256|null;
- operation:'inspect'|'difference'|'target-ratio'|'baseline-progress'; note:string;
-}
+export type ResultsPair = {periodKey:Sha256;actualKey:Sha256;note:string} & (
+ {targetKey:Sha256;baselineKey:Sha256|null;operation:'inspect'|'difference'|'target-ratio'} |
+ {targetKey:Sha256;baselineKey:Sha256;operation:'baseline-progress'} |
+ {targetKey:null;baselineKey:Sha256;operation:'baseline-change'}
+);
 export interface ResultsDefinition {
  name:string; sources:Sha256[]; notes?:string; selection?:ResultsSelection; review?:Review;
  interpretations?:ResultsInterpretation[]; bindings?:ResultsPair[];

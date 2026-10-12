@@ -108,7 +108,7 @@ def tables(report):
     for value in report["comparisons"]:
         calculation = value["calculation"] or {}
         comparisons.append({"indicator_key": value["indicatorKey"], "period_key": value["periodKey"],
-            "target_key": value["target"]["key"], "actual_key": value["actual"]["key"],
+            "target_key": value["target"]["key"] if value["target"] else None, "actual_key": value["actual"]["key"],
             "baseline_key": value["baseline"]["key"] if value["baseline"] else None,
             "operation": value["binding"]["operation"], "status": value["status"],
             "source_interpretation": value["interpretation"]["note"], "pair_basis": value["binding"]["note"],
@@ -119,6 +119,7 @@ def tables(report):
             "ratio_percent": calculation.get("ratioPercent"), "ratio_formula": calculation.get("ratioFormula"),
             "ratio_decimal_places": calculation.get("roundingDecimalPlaces"),
             "selected_target_relation": calculation.get("directionalTargetRelation"),
+            "selected_baseline_relation": calculation.get("directionalBaselineRelation"),
             "reasons_json": value["reasons"]})
     return {"activities": [{"activity_key": a["key"], "source_sha256": a["source"], "source_locator": a["locator"],
             "activity_id": a["activityId"], "reporting_org_ref": a["reportingOrgRef"], "title": a["title"],
@@ -233,7 +234,7 @@ def html_report(edition, report, saved_comparisons=()):
         for value in compared.get(item["key"], []):
             out.append('<div class="notice"><strong>' + h(value["status"]) + "</strong>" +
                        properties({"Operation": value["binding"]["operation"], "Basis": value["binding"]["note"],
-                       "Target key": value["target"]["key"], "Actual key": value["actual"]["key"],
+                       "Target key": value["target"]["key"] if value["target"] else None, "Actual key": value["actual"]["key"],
                        "Baseline key": value["baseline"]["key"] if value["baseline"] else None,
                        "Effective direction": value["effectiveDirection"]}))
             out.append(properties(value["calculation"]) if value["calculation"] else

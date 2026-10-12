@@ -45,12 +45,12 @@ try{
  assert.equal(baseline.sha256,original.receivingEditionSha256);
  const inventory=await client.resultsInventory();assert.ok(inventory.workspaceId);
  const projection=await client.resultsSource(original.sources[0].sha256);
- const page=await client.resultsIndicators(projection.id,{limit:10});
- if(page.rows.length){const record=await client.resultsIndicator(projection.id,page.rows[0].key);assert.equal(record.key,page.rows[0].key);}
+ const page=await client.resultsIndicators(projection.projection.id,{limit:10});
+ if(page.rows.length){const record=await client.resultsIndicator(projection.projection.id,page.rows[0].key);assert.equal(record.key,page.rows[0].key);}
  const raw=await client.resultsOriginalSource(original.sources[0].sha256);
  const h=createHash('sha256');let rawBytes=0;for await(const piece of raw.body){h.update(piece);rawBytes+=piece.length;}
  assert.equal(h.digest('hex'),original.sources[0].sha256);assert.equal(rawBytes,original.sources[0].bytes);
- await checkpoint('original-client-source',{workspaceId:inventory.workspaceId,projection:projection.id,source:original.sources[0].sha256,bytes:rawBytes,indicatorPage:page.rows.length,totalIndicators:page.total});
+ await checkpoint('original-client-source',{workspaceId:inventory.workspaceId,projection:projection.projection.id,source:original.sources[0].sha256,bytes:rawBytes,indicatorPage:page.rows.length,totalIndicators:page.total});
 
  const {chromium}=await import(pathToFileURL(config.playwright));
  const profile=join(config.output,'browser-profile');

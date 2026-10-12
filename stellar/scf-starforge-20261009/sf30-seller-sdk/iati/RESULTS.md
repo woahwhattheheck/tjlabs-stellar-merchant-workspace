@@ -57,14 +57,15 @@ The application shows possible unique pairs as suggestions. A suggestion does no
 
 A unit interpretation contains indicatorKey, unitLabel, direction and note. Direction can use the publisher's reported ascending attribute, or an explicitly documented higher/lower selection. "None" preserves inspection without a direction claim.
 
-A comparison binding contains periodKey, targetKey, actualKey, an optional baselineKey, operation and note. Keys must name the exact retained source records.
+A comparison binding contains periodKey, targetKey, actualKey, baselineKey, operation and note. Keys name exact retained source records. Target-based operations require an original target; baseline-change requires targetKey: null and an explicit original baselineKey. A missing target is never synthesized.
 
 | Selected operation | Calculation and conditions |
 | --- | --- |
 | inspect | Keep target, actual and any chosen baseline together without calculating performance |
 | difference | actual minus target, with exact Decimal arithmetic; percentage measures produce percentage points |
 | target-ratio | actual divided by target, multiplied by 100; requires a positive target and an explicit higher-is-better direction |
-| baseline-progress | (actual minus baseline) divided by (target minus baseline), multiplied by 100; requires a nonzero target change consistent with the selected direction and a valid earlier baseline |
+| baseline-progress | (actual minus baseline) divided by (target minus baseline), multiplied by 100; requires a nonzero target change consistent with the selected direction and a valid original baseline year/date |
+| baseline-change | actual minus the explicitly selected baseline, using exact Decimal arithmetic and identical original dimensions/locations; targetKey is null, and no target ratio or progress percentage is emitted |
 
 Numeric operations require Unit or Percentage, finite supported XML decimals, a valid original period, an interpretation note and a pair-selection note. A Unit also requires the stated unit label. Baseline comparison retains its original year/date and refuses an invalid or later baseline.
 
@@ -298,10 +299,20 @@ endpoint. Interrupted continuation reconciles that exact request and input.
 Completed review actions are not replayed as new revisions. The selected
 Merchant export is also pinned before reading or publishing its handover alias.
 
-The private console URL and runtime selection remain under \`console-private/\`;
+The private console URL and runtime selection remain under `console-private/`;
 they are excluded from exported Results projects. Outputs are under
-\`console-receiving/\`: complete-results-project.zip, report and browser project
+`console-receiving/`: complete-results-project.zip, report and browser project
 ZIPs, three page images, browser-result.json, and console-result.json. The final
 console result is written only after the browser and all client/file handles close
 and the same original workspace is cold-reopened. A completed rerun checks its
 retained artifacts and exact saved review before returning the original result.
+
+### A source representation with actuals and no targets
+
+The full receiving can use an identified D-Portal activity export, retained with its published JSON, original exporter source, reproducible transformation and representation provenance. Its SHA256 identifies those exact export bytes. It does not establish byte identity with a whole publisher XML download.
+
+The published SNV activity NL-KVK-41152786-SP2194 illustrates why target-free baseline change is a separate selection. The indicator titled “Number of people trained in sustainable livelihoods” has a 2025 baseline value 0 and a 2025-04-01 through2026-02-01 period. Its undimensioned actual is 2348.00, alongside distinct Gender/Female 882.00 and Gender/Male 1466.00 actuals. No target is supplied. Select only the undimensioned actual with the undimensioned baseline for a change of 2348.00 people; do not assign that baseline to either gender or sum all three original actuals. The baseline supplies a year and no ISO date. The source description refers instead to improved awareness of land and natural-resource rights; both the original title and description remain visible and the reviewer records that discrepancy.
+
+This is a source-record difference, not a target-attainment percentage or a causal impact conclusion. A reviewer can retain another context for inspection without turning absent target or baseline values into zero.
+
+Published activity source: https://d-portal.org/q.json?aid=NL-KVK-41152786-SP2194 . The retained activity-export XML is 21,249 bytes, SHA256 2bbc8f8a367f304c186a69e7e9b3a399118a472dcfd093a35dad1672a2347539; the complete 17,001-byte provenance package has SHA256 1ef7186ef080158ab15c0815ae1c18107cea7d981d0567a069912a7fa5935b9d.

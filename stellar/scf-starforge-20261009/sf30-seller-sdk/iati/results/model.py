@@ -28,6 +28,8 @@ CONTRACT = {
     "measures": {"1": "Unit", "2": "Percentage", "3": "Nominal",
                  "4": "Ordinal", "5": "Qualitative"},
     "pairing": "Explicit original indicator and period, identical dimension/location context",
+    "operations": ["inspect", "difference", "target-ratio", "baseline-progress", "baseline-change"],
+    "baselineChange": "Explicit actual minus baseline in identical original context; no target or percentage is supplied",
     "aggregation": "No automatic sum across indicators, periods, dimensions or activities",
     "dates": "Original IATI day() retains the reported calendar date and its original text",
     "precision": "Source decimal strings; exact differences; ratios rounded to 12 decimal places",
@@ -369,21 +371,27 @@ def bindings(raw, indicators):
         if value["periodKey"] not in periods:
             raise InputError("The comparison period is outside the selected original records")
         indicator, period = periods[value["periodKey"]]
-        if value["targetKey"] not in {r["key"] for r in period["targets"]} or value["actualKey"] not in {r["key"] for r in period["actuals"]}:
-            raise InputError("Target and actual must belong to that exact original period")
+        baseline_change = value["operation"] == "baseline-change"
+        if value["actualKey"] not in {r["key"] for r in period["actuals"]}:
+            raise InputError("Actual must belong to that exact original period")
+        if baseline_change:
+            if value["targetKey"] is not None:
+                raise InputError("Baseline change retains no selected target; use targetKey null")
+        elif value["targetKey"] not in {r["key"] for r in period["targets"]}:
+            raise InputError("Target must belong to that exact original period")
         if value["baselineKey"] is not None and value["baselineKey"] not in {r["key"] for r in indicator["baselines"]}:
             raise InputError("Baseline must belong to that exact original indicator")
-        if value["operation"] not in ("inspect", "difference", "target-ratio", "baseline-progress"):
-            raise InputError("Choose inspect, difference, target-ratio or baseline-progress")
-        if value["operation"] == "baseline-progress" and value["baselineKey"] is None:
-            raise InputError("Baseline progress requires an explicitly selected original baseline")
+        if value["operation"] not in ("inspect", "difference", "target-ratio", "baseline-progress", "baseline-change"):
+            raise InputError("Choose inspect, difference, target-ratio, baseline-progress or baseline-change")
+        if value["operation"] in ("baseline-progress", "baseline-change") and value["baselineKey"] is None:
+            raise InputError("This baseline operation requires an explicitly selected original baseline")
         identity = (value["periodKey"], value["targetKey"], value["actualKey"])
         if identity in seen:
             raise InputError("Select each original target/actual pair once")
         seen.add(identity)
         out.append({**deepcopy(value), "note": _small(value["note"], "Comparison basis", 4000,
                                                     value["operation"] == "inspect")})
-    return sorted(out, key=lambda x: (x["periodKey"], x["targetKey"], x["actualKey"]))
+    return sorted(out, key=lambda x: (x["periodKey"], x["targetKey"] or "", x["actualKey"]))
 
 
 def _number(value):
@@ -397,7 +405,7 @@ def _ratio(a, b):
 
 
 def comparison_value(indicator, period, binding, interpretation):
-    target = next(v for v in period["targets"] if v["key"] == binding["targetKey"])
+    target = next((v for v in period["targets"] if v["key"] == binding["targetKey"]), None)
     actual = next(v for v in period["actuals"] if v["key"] == binding["actualKey"])
     baseline = next((v for v in indicator["baselines"] if v["key"] == binding["baselineKey"]), None)
     direction = interpretation["direction"]
@@ -416,7 +424,7 @@ def comparison_value(indicator, period, binding, interpretation):
     for value in (target, actual, baseline):
         if value is not None and (not value["contextComparable"] or value["decimal"] is None):
             reasons.append("A selected original value or dimension/location context is unresolved.")
-    if target["contextKey"] != actual["contextKey"] or (baseline and baseline["contextKey"] != target["contextKey"]):
+    if (target and target["contextKey"] != actual["contextKey"]) or (baseline and baseline["contextKey"] != actual["contextKey"]):
         reasons.append("The selected records have different original dimensions or locations.")
     if indicator["measure"] == "1" and not interpretation["unitLabel"].strip():
         reasons.append("Name the original indicator's unit meaning before arithmetic.")
@@ -436,18 +444,22 @@ def comparison_value(indicator, period, binding, interpretation):
             reasons.append("The selected baseline's original year/date needs review.")
     if reasons:
         return {**result, "status": "not-comparable", "reasons": sorted(set(reasons))}
-    a, t, b = _number(actual), _number(target), _number(baseline) if baseline else None
+    a, t, b = _number(actual), _number(target) if target else None, _number(baseline) if baseline else None
     with localcontext() as context:
         context.prec = 1024
-        calculation = {"actualMinusTarget": format(a - t, "f"),
+        calculation = {"actualMinusTarget": format(a - t, "f") if t is not None else None,
             "differenceMeaning": "percentage points" if indicator["measure"] == "2" else interpretation["unitLabel"],
-            "reportedTargetRelation": "equal" if a == t else ("above" if a > t else "below"),
+            "reportedTargetRelation": ("equal" if a == t else ("above" if a > t else "below")) if t is not None else None,
             "directionalTargetRelation": None,
             "actualMinusBaseline": format(a - b, "f") if b is not None else None,
+            "directionalBaselineRelation": None,
             "ratioPercent": None, "ratioFormula": None, "roundingDecimalPlaces": None}
-        if effective:
+        if effective and t is not None:
             calculation["directionalTargetRelation"] = "meets-selected-target" if (
                 a >= t if effective == "higher" else a <= t) else "does-not-meet-selected-target"
+        if binding["operation"] == "baseline-change" and effective:
+            calculation["directionalBaselineRelation"] = ("unchanged" if a == b else
+                ("in-selected-direction" if (a > b) == (effective == "higher") else "opposite-selected-direction"))
         if binding["operation"] == "target-ratio":
             if t <= 0 or effective != "higher":
                 reasons.append("Actual/target percentage requires a positive target and an explicit higher-is-better basis.")
