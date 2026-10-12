@@ -6,6 +6,7 @@
   <title>Request collections · Starforge</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/approval.css">
+  <link rel="stylesheet" href="/composer.css">
   <script type="module" src="/app.mjs"></script>
 </head>
 <body>
@@ -32,6 +33,7 @@
       <input id="filter" type="search" placeholder="Find a collection">
       <div id="collection-list" class="collection-list" aria-label="Saved collections"></div>
       <button id="new-collection" class="wide primary" type="button">New collection</button>
+      <button id="open-composer" class="wide" type="button">Request plans</button>
       <button id="open-recovery" class="wide" type="button">Backup and receiving</button>
       <details class="workspace-paths"><summary>Workspace locations</summary><dl id="locations"></dl></details>
     </aside>
@@ -45,9 +47,9 @@
       </section>
       <section id="empty" class="panel empty">
         <span class="eyebrow">BUYER OPERATIONS</span>
-        <h2>A clear view of work in progress</h2>
-        <p>Group your prepared requests into a named collection. Review the total limits, keep the inputs together, and export a single results index.</p>
-        <button id="empty-create" class="primary" type="button">Create a collection</button>
+        <h2>Create a request collection</h2>
+        <p>Choose saved offers and build a reusable request plan, or group existing request configuration files. Review the limits and manage each request from its saved collection.</p>
+        <div class="form-actions"><button id="empty-compose" class="primary" type="button">Build a request plan</button><button id="empty-create" type="button">Use prepared configurations</button></div>
       </section>
       <section id="create-panel" class="panel" hidden>
         <div class="section-heading"><div><span class="eyebrow">NEW COLLECTION</span><h2>Choose the requests</h2></div><button id="close-create" type="button">Close</button></div>
@@ -70,6 +72,7 @@
           <div class="form-actions"><button id="save-collection" class="primary" type="button">Save reviewed collection</button><p class="muted">Request inputs are retained with the collection.</p></div>
         </section>
       </section>
+      <section id="composer-panel" class="panel" hidden aria-label="Request plans"></section>
       <section id="recovery-panel" hidden aria-label="Backup and receiving"></section>
       <section id="detail-panel" hidden>
         <div class="panel">
