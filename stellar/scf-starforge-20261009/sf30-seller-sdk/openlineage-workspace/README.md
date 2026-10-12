@@ -1,5 +1,7 @@
 # OpenLineage operations workspace
 
+The [async Python producer](ASYNC_PYTHON_PRODUCER.md) operates the released 1.53.0 queue, ordering and retry worker through `cli.mjs native-python-async`. It retains each first native request and actual acknowledgement, resumes the same delivery after interruption, and exports the complete producer operation with the original workspace. The guide includes the full native customer receiving command.
+
 Native Python and Java OpenLineage 1.53.0 producers are included in the complete application. Use `cli.mjs native-python` or `cli.mjs native-java` to send retained original pipeline events and continue interrupted deliveries through the same workspace. The [producer guide](PRODUCERS.md), [Python guide](PYTHON_PRODUCER.md) and [Java guide](JAVA_PRODUCER.md) cover preparation, configuration, saved progress and customer receiving.
 
 The managed merchant producer desk prepares private Python or Java settings,
