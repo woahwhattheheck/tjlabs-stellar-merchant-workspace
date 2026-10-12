@@ -42,7 +42,11 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
   releaseAllocation: 'release', customerExport: 'customer_export', previewPaymentRequest: 'payment_preview',
   createPaymentRequest: 'payment_create', paymentRequests: 'payment_list', paymentRequest: 'payment_detail',
   cancelPaymentRequest: 'payment_cancel', reportPaymentReturn: 'payment_return',
-  receivePaymentRequest: 'payment_receive', lookupOperation: 'request_lookup'
+  receivePaymentRequest: 'payment_receive', lookupOperation: 'request_lookup',
+  customerFunds: 'customer_funds', previewRefund: 'refund_preview', commitRefund: 'refund_commit',
+  refunds: 'refund_list', refund: 'refund_detail', cancelRefund: 'refund_cancel', reverseRefund: 'refund_reverse',
+  reportRefundReturn: 'refund_return', receiveRefund: 'refund_receive',
+  previewCreditDisposition: 'credit_disposition_preview', applyCreditDisposition: 'credit_disposition_apply'
 });
 const OPERATIONS = new Set(Object.values(ACCOUNTING_RECEIVABLES_METHODS));
 const ACTIONS = Object.freeze({
@@ -51,10 +55,12 @@ const ACTIONS = Object.freeze({
   receipt_record: 'payment_recorded', receipt_void: 'payment_voided', settlement_import: 'settlement_recorded',
   allocate: 'payment_allocated', release: 'allocation_released', payment_create: 'payment_request_issued',
   payment_cancel: 'payment_request_cancelled', payment_return: 'payment_return_reported',
-  payment_receive: 'invoice_payment_received'
+  payment_receive: 'invoice_payment_received', refund_commit: 'refund_committed', refund_cancel: 'refund_cancelled',
+  refund_reverse: 'refund_reversed', refund_return: 'refund_return_reported', refund_receive: 'refund_received',
+  credit_disposition_apply: 'credit_disposition_applied'
 });
 export const ACCOUNTING_RECEIVABLES_MUTATIONS = Object.freeze(Object.keys(ACTIONS));
-const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail']);
+const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail', 'refund_list']);
 
 /** Validate transport identity while preserving every original JSON field and string. */
 export function accountingReceivablesArguments(kind, value) {
@@ -90,6 +96,31 @@ export function accountingPaymentRequestArguments(preview, value) {
   return {invoiceId: preview.proposal.invoice.id, ...identity(value), revision: preview.revision,
     proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
 }
+function reviewedCustomerAdjustment(preview, schema, label) {
+  need(plain(preview) && plain(preview.proposal) && preview.proposal.schema === schema &&
+    UUID.test(preview.proposal.id ?? '') && UUID.test(preview.proposal.receiptId ?? '') &&
+    UUID.test(preview.proposal.customerId ?? '') && SHA.test(preview.reviewSha256 ?? '') &&
+    plain(preview.balanceEffects) &&
+    digest({proposal: preview.proposal, balanceEffects: preview.balanceEffects}) === preview.reviewSha256,
+    'Keep the complete original ' + label + ', its balance effects and exact review SHA-256.', 'PREVIEW');
+  version(preview.revision); return preview;
+}
+export function accountingRefundPreview(preview) {
+  return reviewedCustomerAdjustment(preview, 'stellar-forge.merchant-receivables-refund-proposal.v1', 'refund proposal');
+}
+export function accountingCreditDispositionPreview(preview) {
+  return reviewedCustomerAdjustment(preview, 'stellar-forge.merchant-receivables-credit-disposition.v1', 'credit disposition proposal');
+}
+export function accountingRefundArguments(preview, value) {
+  accountingRefundPreview(preview);
+  return {...identity(value), revision: preview.revision,
+    proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
+}
+export function accountingCreditDispositionArguments(preview, value) {
+  accountingCreditDispositionPreview(preview);
+  return {...identity(value), revision: preview.revision,
+    proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
+}
 function nativeIntent(kind, input) {
   const value = wire(input);
   delete value.revision;
@@ -98,7 +129,8 @@ function nativeIntent(kind, input) {
   }
   const selector = ['invoice_issue', 'invoice_void', 'credit', 'payment_create'].includes(kind) ? 'invoiceId' :
     kind === 'receipt_void' ? 'receiptId' : kind === 'release' ? 'allocationId' :
-    ['payment_cancel', 'payment_return', 'payment_receive'].includes(kind) ? 'paymentRequestId' : null;
+    ['payment_cancel', 'payment_return', 'payment_receive'].includes(kind) ? 'paymentRequestId' :
+    ['refund_cancel', 'refund_reverse', 'refund_return', 'refund_receive'].includes(kind) ? 'refundId' : null;
   if (selector) { const id = value[selector]; delete value[selector]; value[selector] = id; }
   return digest({action: ACTIONS[kind], value});
 }
@@ -155,22 +187,24 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
     async listAll(kind, args = {}, options) {
       need(PAGED.has(kind) && args.offset === undefined && args.limit === undefined,
         'Choose an original paged read and let this reader advance its offsets.');
+      const rowKey = kind === 'refund_list' ? 'refunds' : 'items';
       const items = [], ids = new Set(); let offset = 0, total, revision, date, metadata;
       for (;;) {
         const result = await client.callOperation(kind, {...args, offset, limit: 200}, options);
-        need(Array.isArray(result.items) && result.offset === offset &&
-          Number.isSafeInteger(result.total) && result.total >= offset + result.items.length &&
-          result.items.length <= 200, 'The original inventory page is inconsistent.', 'PAGE');
+        const rows = result[rowKey];
+        need(Array.isArray(rows) && result.offset === offset &&
+          Number.isSafeInteger(result.total) && result.total >= offset + rows.length &&
+          rows.length <= 200, 'The original inventory page is inconsistent.', 'PAGE');
         version(result.revision);
         total ??= result.total; revision ??= result.revision;
-        const observedDate = result.asOf ?? result.invoice?.asOf ?? result.paymentRequest?.asOf ?? result.items[0]?.asOf ?? null;
+        const observedDate = result.asOf ?? result.invoice?.asOf ?? result.paymentRequest?.asOf ?? rows[0]?.asOf ?? null;
         if (metadata === undefined) {
-          const {items: omitted, offset: ignoredOffset, limit: ignoredLimit, total: ignoredTotal, ...rest} = result;
+          const {[rowKey]: omitted, offset: ignoredOffset, limit: ignoredLimit, total: ignoredTotal, ...rest} = result;
           metadata = rest; date = observedDate;
         }
         need(result.total === total && result.revision === revision && observedDate === date,
           'The original inventory changed between pages. Read the current inventory again.', 'OBSERVATION_CHANGED');
-        for (const row of result.items) {
+        for (const row of rows) {
           need(row.asOf === undefined || observedDate === row.asOf,
             'The original inventory page combines different accounting dates.', 'OBSERVATION_CHANGED');
           if (typeof row.id === 'string') {
@@ -179,9 +213,9 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
           }
           items.push(row);
         }
-        offset += result.items.length;
-        if (offset === total) return {...metadata, items, total, revision};
-        need(result.items.length > 0, 'The original inventory page did not advance.', 'PAGE');
+        offset += rows.length;
+        if (offset === total) return {...metadata, [rowKey]: items, total, revision};
+        need(rows.length > 0, 'The original inventory page did not advance.', 'PAGE');
       }
     },
     async fileBytes(selection, {maximumBytes = 128_000_000, ...options} = {}) {
@@ -197,6 +231,10 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       }
       need(metadata && length === metadata.bytes, 'The original complete file ended early.', 'FILE_REPLY');
       return {bytes: Buffer.concat(parts, length), file: metadata};
+    },
+    refundFile({refundId, file}, options) {
+      identifier(refundId, UUID, 'original refund UUID');
+      return client.fileBytes({kind: 'receivables-refund', refundId, file}, options);
     },
     async previewInvoice(args, options) {
       need(plain(args) && UUID.test(args.invoiceId ?? '') &&
@@ -270,6 +308,18 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
     need(result.proposal.invoice.id === args.invoiceId, 'The wallet proposal belongs to another invoice.', 'PREVIEW');
     return result;
   };
+  for (const [method, review] of [
+    ['previewRefund', accountingRefundPreview],
+    ['previewCreditDisposition', accountingCreditDispositionPreview]
+  ]) {
+    const nativePreview = client[method];
+    client[method] = async (args, options) => {
+      const result = review(await nativePreview(args, options));
+      need(result.proposal.receiptId === args.receiptId,
+        'The reviewed customer adjustment belongs to another receipt.', 'PREVIEW');
+      return result;
+    };
+  }
   return Object.freeze(client);
 }
 export async function connectAccountingReceivablesClient({workspace, ...options} = {}) {

@@ -1,3 +1,27 @@
+import type {
+  CustomerFundsQuery, CustomerFunds, RefundPreviewInput, RefundPreview,
+  CommitRefundInput, RefundQuery, RefundPage, RefundDetail,
+  CancelRefundInput, ReverseRefundInput, ReportRefundReturnInput, ReceiveRefundInput,
+  RefundMutationResult, RefundReturnMutationResult, RefundFileName, RefundDownload,
+  CreditDispositionPreviewInput, CreditDispositionPreview, ApplyCreditDispositionInput, CreditDispositionMutationResult
+} from './refund-client-types.d.ts';
+export type {
+  RefundReceiptSnapshot,
+  RefundStatus, RefundEffectiveStatus, RefundAccountingScope, CustomerFundsQuery,
+  RefundFundingInput, RefundFundingProposal, RefundOperatorPayoutInput, RefundStellarPayoutInput,
+  RefundAdoptedStellarPayoutInput, RefundAdjustmentPayoutInput, RefundPayoutInput, RefundPreviewInput,
+  CreditDispositionAllocationInput, CreditDispositionPreviewInput, RefundBalanceEffects, CustomerAdjustmentProposal,
+  RefundOperatorPayout, RefundStellarPayout, RefundAdjustmentPayout, RefundPayout,
+  RefundProposal, CreditDispositionAllocation, CreditDispositionProposal, RefundPreview,
+  CreditDispositionPreview, CommitRefundInput, ApplyCreditDispositionInput, CancelRefundInput,
+  ReverseRefundInput, ReportRefundReturnInput, ReceiveRefundInput, RefundSummary,
+  RefundQuery, RefundPage, RefundInventory, RefundObservationStatus,
+  RefundObservation, RefundReturn, RefundFileName, RefundFileMetadata,
+  RefundDownload, RefundDetail, RefundMutationResult, RefundReturnMutationResult,
+  CreditDispositionRecord, CreditDispositionMutationResult, CustomerFundsCurrency, CustomerFundsReceipt,
+  CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
+} from './refund-client-types.d.ts';
+
 export type Money = string;
 export type DateOnly = string;
 export type Revision = number;
@@ -57,6 +81,8 @@ export interface Receipt {
   id: string; customerId: string; customer: Customer; currency: Currency; amount: Money; allocated: Money; available: Money;
   receivedDate: DateOnly; method: string; reference: string; note: string; status: 'RECORDED' | 'VOID';
   voidDate?: DateOnly | null; sourceKey: string; source: {kind: string; runId?: string; eventId?: string; [key: string]: unknown};
+  refunded: Money; reserved: Money; netAmount: Money; availableBeforeUnreconciledRefunds: Money;
+  unreconciledRefunds: Array<Record<string, unknown>>; unreconciledRefundAmount: Money; refundDeficit: Money;
   createdAt: string; actor: string; history: HistoryEntry[]; asOf?: DateOnly; [key: string]: unknown;
 }
 export interface Allocation {
@@ -93,7 +119,8 @@ export type QuoteImportInput = MutationContext & {
 } & ({scope: 'IMPLEMENTATION'; periodCount?: 1; periodLabel?: string} | {scope: 'RECURRING'; periodCount: number; periodLabel: string});
 export interface Operation {
   id: string; action: string; actor: string; at: string; intentSha256: string; replayed: boolean;
-  result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; settings?: boolean};
+  result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; refundId?: string; refundReturnId?: string; creditDispositionId?: string;
+    invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
 export interface Preview { document: InvoiceDocument; previewSha256: string; expectedVersion: number; revision: Revision }
@@ -256,6 +283,20 @@ export class ReceivablesClient {
   receivePaymentRequest(id: string, value: ReceivePaymentRequestInput, options?: RequestOptions): Promise<PaymentRequestMutationResult & {paymentReturn: PaymentReturn}>;
   paymentRequestFile(id: string, name: PaymentRequestFileName, options?: RequestOptions): Promise<Response>;
   paymentRequestBytes(id: string, name: PaymentRequestFileName, options?: RequestOptions): Promise<PaymentRequestDownload>;
+
+  customerFunds(query?: CustomerFundsQuery, options?: RequestOptions): Promise<CustomerFunds>;
+  previewRefund(value: RefundPreviewInput, options?: RequestOptions): Promise<RefundPreview>;
+  commitRefund(value: CommitRefundInput, options?: RequestOptions): Promise<RefundMutationResult>;
+  refunds(query?: RefundQuery, options?: RequestOptions): Promise<RefundPage>;
+  refund(id: string, query?: {asOf?: DateOnly}, options?: RequestOptions): Promise<RefundDetail>;
+  cancelRefund(id: string, value: CancelRefundInput, options?: RequestOptions): Promise<RefundMutationResult>;
+  reverseRefund(id: string, value: ReverseRefundInput, options?: RequestOptions): Promise<RefundMutationResult>;
+  reportRefundReturn(id: string, value: ReportRefundReturnInput, options?: RequestOptions): Promise<RefundReturnMutationResult>;
+  receiveRefund(id: string, value: ReceiveRefundInput, options?: RequestOptions): Promise<RefundReturnMutationResult>;
+  refundFile(id: string, name: RefundFileName, options?: RequestOptions): Promise<Response>;
+  refundBytes(id: string, name: RefundFileName, options?: RequestOptions): Promise<RefundDownload>;
+  previewCreditDisposition(value: CreditDispositionPreviewInput, options?: RequestOptions): Promise<CreditDispositionPreview>;
+  applyCreditDisposition(value: ApplyCreditDispositionInput, options?: RequestOptions): Promise<CreditDispositionMutationResult>;
   issue(id: string, value: MutationContext & {expectedVersion: number; previewSha256: string}): Promise<MutationResult & {invoice: InvoiceSummary}>;
   voidInvoice(id: string, value: MutationContext & {voidDate: DateOnly; reason: string}): Promise<MutationResult & {invoice: InvoiceSummary}>;
   credit(id: string, value: CreditInput): Promise<MutationResult & {credit: CreditRecord; invoice: InvoiceSummary}>;

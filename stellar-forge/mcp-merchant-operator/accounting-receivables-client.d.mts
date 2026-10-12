@@ -1,3 +1,35 @@
+import type {
+  RefundStatus, RefundEffectiveStatus, RefundAccountingScope, CustomerFundsQuery,
+  RefundFundingInput, RefundFundingProposal, RefundOperatorPayoutInput, RefundStellarPayoutInput,
+  RefundAdoptedStellarPayoutInput, RefundAdjustmentPayoutInput, RefundPayoutInput, RefundPreviewInput,
+  CreditDispositionAllocationInput, CreditDispositionPreviewInput, RefundBalanceEffects, CustomerAdjustmentProposal,
+  RefundOperatorPayout, RefundStellarPayout, RefundAdjustmentPayout, RefundPayout,
+  RefundProposal, CreditDispositionAllocation, CreditDispositionProposal, RefundPreview,
+  CreditDispositionPreview, CommitRefundInput, ApplyCreditDispositionInput, CancelRefundInput,
+  ReverseRefundInput, ReportRefundReturnInput, ReceiveRefundInput, RefundSummary,
+  RefundQuery, RefundPage, RefundInventory, RefundObservationStatus,
+  RefundObservation, RefundReturn, RefundFileName, RefundFileMetadata,
+  RefundDownload, RefundDetail, RefundMutationResult, RefundReturnMutationResult,
+  CreditDispositionRecord, CreditDispositionMutationResult, CustomerFundsCurrency, CustomerFundsReceipt,
+  CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
+} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refund-client-types.d.ts';
+export type {
+  RefundReceiptSnapshot,
+  RefundStatus, RefundEffectiveStatus, RefundAccountingScope, CustomerFundsQuery,
+  RefundFundingInput, RefundFundingProposal, RefundOperatorPayoutInput, RefundStellarPayoutInput,
+  RefundAdoptedStellarPayoutInput, RefundAdjustmentPayoutInput, RefundPayoutInput, RefundPreviewInput,
+  CreditDispositionAllocationInput, CreditDispositionPreviewInput, RefundBalanceEffects, CustomerAdjustmentProposal,
+  RefundOperatorPayout, RefundStellarPayout, RefundAdjustmentPayout, RefundPayout,
+  RefundProposal, CreditDispositionAllocation, CreditDispositionProposal, RefundPreview,
+  CreditDispositionPreview, CommitRefundInput, ApplyCreditDispositionInput, CancelRefundInput,
+  ReverseRefundInput, ReportRefundReturnInput, ReceiveRefundInput, RefundSummary,
+  RefundQuery, RefundPage, RefundInventory, RefundObservationStatus,
+  RefundObservation, RefundReturn, RefundFileName, RefundFileMetadata,
+  RefundDownload, RefundDetail, RefundMutationResult, RefundReturnMutationResult,
+  CreditDispositionRecord, CreditDispositionMutationResult, CustomerFundsCurrency, CustomerFundsReceipt,
+  CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
+} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refund-client-types.d.ts';
+
 // MIT. Typed original receivables, reviewed invoices and Stellar collection over merchant MCP.
 export type Money = string;
 export type DateOnly = string;
@@ -58,6 +90,8 @@ export interface Receipt {
   id: string; customerId: string; customer: Customer; currency: Currency; amount: Money; allocated: Money; available: Money;
   receivedDate: DateOnly; method: string; reference: string; note: string; status: 'RECORDED' | 'VOID';
   voidDate?: DateOnly | null; sourceKey: string; source: {kind: string; runId?: string; eventId?: string; [key: string]: unknown};
+  refunded: Money; reserved: Money; netAmount: Money; availableBeforeUnreconciledRefunds: Money;
+  unreconciledRefunds: Array<Record<string, unknown>>; unreconciledRefundAmount: Money; refundDeficit: Money;
   createdAt: string; actor: string; history: HistoryEntry[]; asOf?: DateOnly; [key: string]: unknown;
 }
 export interface Allocation {
@@ -94,7 +128,8 @@ export type QuoteImportInput = MutationContext & {
 } & ({scope: 'IMPLEMENTATION'; periodCount?: 1; periodLabel?: string} | {scope: 'RECURRING'; periodCount: number; periodLabel: string});
 export interface Operation {
   id: string; action: string; actor: string; at: string; intentSha256: string; replayed?: boolean;
-  result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; settings?: boolean};
+  result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; refundId?: string; refundReturnId?: string; creditDispositionId?: string;
+    invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
 export interface Preview { document: InvoiceDocument; previewSha256: string; expectedVersion: number; revision: Revision }
@@ -334,8 +369,16 @@ export interface CustomerFileSelection {
   kind: 'receivables-customer'; customerId: string; asOf?: DateOnly;
   file: 'account.json' | 'invoices.csv' | 'account.html' | 'manifest.json' | 'account.tar' | `documents/${string}`;
 }
+
+export interface RefundDetailArguments { refundId: string; asOf?: DateOnly }
+export interface RefundCancelArguments extends CancelRefundInput { refundId: string }
+export interface RefundReverseArguments extends ReverseRefundInput { refundId: string }
+export interface RefundReturnArguments extends ReportRefundReturnInput { refundId: string }
+export interface RefundReceiveArguments extends ReceiveRefundInput { refundId: string }
+export interface RefundFileSelection { kind: 'receivables-refund'; refundId: string; file: RefundFileName }
+
 export type ReceivablesFileSelection = DocumentFileSelection | QuoteFileSelection | PreviewFileSelection |
-  PaymentFileSelection | CustomerFileSelection;
+  PaymentFileSelection | CustomerFileSelection | RefundFileSelection;
 export interface ReceivablesFileMetadata extends FileMetadata {name: string; type?: string}
 export interface ReceivablesFileIdentity<S extends ReceivablesFileSelection = ReceivablesFileSelection>
   extends ReceivablesFileMetadata {selection: S}
@@ -349,6 +392,8 @@ export interface ReceivablesFileDrain {workspace: string; released: true; active
 export interface ReceivablesMutationResult extends MutationResult {
   invoice?: InvoiceSummary; receipt?: Receipt; credit?: CreditRecord; allocation?: Allocation; issuer?: Issuer;
   paymentRequest?: PaymentRequestSummary; paymentReturn?: PaymentReturnReference;
+  refund?: RefundSummary; refundReturn?: RefundReturn; creditDisposition?: CreditDispositionRecord;
+  invoices?: InvoiceSummary[]; allocations?: Allocation[];
 }
 export type PaymentRequestMutationResult = ReceivablesMutationResult & {
   invoice: InvoiceSummary; paymentRequest: PaymentRequestSummary;
@@ -367,6 +412,10 @@ export interface ReceivablesArgumentsMap {
   customer_export: CustomerExportArguments; payment_preview: PaymentPreviewArguments; payment_create: PaymentCreateArguments;
   payment_list: PaymentListArguments; payment_detail: PaymentDetailArguments; payment_cancel: PaymentCancelArguments;
   payment_return: PaymentReturnArguments; payment_receive: PaymentReceiveArguments; request_lookup: RequestLookupArguments;
+  customer_funds: CustomerFundsQuery; refund_preview: RefundPreviewInput; refund_commit: CommitRefundInput;
+  refund_list: RefundQuery; refund_detail: RefundDetailArguments; refund_cancel: RefundCancelArguments;
+  refund_reverse: RefundReverseArguments; refund_return: RefundReturnArguments; refund_receive: RefundReceiveArguments;
+  credit_disposition_preview: CreditDispositionPreviewInput; credit_disposition_apply: ApplyCreditDispositionInput;
 }
 export interface ReceivablesResultsMap {
   status: StatusResult; settings: ReceivablesMutationResult & {issuer: Issuer};
@@ -382,16 +431,23 @@ export interface ReceivablesResultsMap {
   payment_list: PaymentList; payment_detail: PaymentDetailSummary | PaymentDetailPage;
   payment_cancel: PaymentRequestMutationResult; payment_return: PaymentReturnMutationResult; payment_receive: PaymentReturnMutationResult;
   request_lookup: RequestLookupResult;
+  customer_funds: CustomerFunds; refund_preview: RefundPreview; refund_commit: RefundMutationResult;
+  refund_list: RefundPage; refund_detail: RefundDetail; refund_cancel: RefundMutationResult;
+  refund_reverse: RefundMutationResult; refund_return: RefundReturnMutationResult; refund_receive: RefundReturnMutationResult;
+  credit_disposition_preview: CreditDispositionPreview; credit_disposition_apply: CreditDispositionMutationResult;
 }
 export type ReceivablesOperation = keyof ReceivablesArgumentsMap;
 export type ReceivablesMutation = 'settings' | 'draft_save' | 'quote_import' | 'invoice_issue' | 'invoice_void' | 'credit' |
   'receipt_record' | 'receipt_void' | 'settlement_import' | 'allocate' | 'release' |
-  'payment_create' | 'payment_cancel' | 'payment_return' | 'payment_receive';
-export type ReceivablesPagedOperation = 'status' | 'invoice_preview' | 'invoice_detail' | 'settlement_ledger' | 'payment_list' | 'payment_detail';
+  'payment_create' | 'payment_cancel' | 'payment_return' | 'payment_receive' |
+  'refund_commit' | 'refund_cancel' | 'refund_reverse' | 'refund_return' | 'refund_receive' | 'credit_disposition_apply';
+export type ReceivablesPagedOperation = 'status' | 'invoice_preview' | 'invoice_detail' | 'settlement_ledger' | 'payment_list' | 'payment_detail' | 'refund_list';
 export type ReceivablesAllRows<K extends ReceivablesPagedOperation> =
   K extends 'status' ? StatusRows[keyof StatusRows] : K extends 'invoice_preview' ? InvoiceLine :
   K extends 'invoice_detail' ? InvoiceDetailRows[keyof InvoiceDetailRows] : K extends 'settlement_ledger' ? LedgerItem :
-  K extends 'payment_list' ? PaymentRequestSummary : PaymentDetailRows[keyof PaymentDetailRows];
+  K extends 'payment_list' ? PaymentRequestSummary : K extends 'payment_detail' ? PaymentDetailRows[keyof PaymentDetailRows] : RefundSummary;
+export type ReceivablesAllResult<K extends ReceivablesPagedOperation> =
+  (K extends 'refund_list' ? RefundInventory : ReceivablesInventory<ReceivablesAllRows<K>>) & NativeRecord;
 export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<{
   status: 'status'; saveSettings: 'settings'; saveDraft: 'draft_save'; importQuote: 'quote_import';
   invoicePreviewSummary: 'invoice_preview'; issueInvoice: 'invoice_issue'; invoice: 'invoice_detail';
@@ -400,7 +456,10 @@ export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<{
   releaseAllocation: 'release'; customerExport: 'customer_export'; previewPaymentRequest: 'payment_preview';
   createPaymentRequest: 'payment_create'; paymentRequests: 'payment_list'; paymentRequest: 'payment_detail';
   cancelPaymentRequest: 'payment_cancel'; reportPaymentReturn: 'payment_return'; receivePaymentRequest: 'payment_receive';
-  lookupOperation: 'request_lookup';
+  lookupOperation: 'request_lookup'; customerFunds: 'customer_funds'; previewRefund: 'refund_preview';
+  commitRefund: 'refund_commit'; refunds: 'refund_list'; refund: 'refund_detail'; cancelRefund: 'refund_cancel';
+  reverseRefund: 'refund_reverse'; reportRefundReturn: 'refund_return'; receiveRefund: 'refund_receive';
+  previewCreditDisposition: 'credit_disposition_preview'; applyCreditDisposition: 'credit_disposition_apply';
 }>;
 export const ACCOUNTING_RECEIVABLES_MUTATIONS: readonly ReceivablesMutation[];
 export function accountingReceivablesArguments<K extends ReceivablesMutation>(
@@ -414,6 +473,16 @@ export function accountingPaymentRequestPreview(preview: PaymentRequestPreview):
 export function accountingPaymentRequestArguments(
   preview: PaymentRequestPreview, identity: {actor: string; requestId: string},
 ): PaymentCreateArguments;
+
+
+export function accountingRefundPreview(preview: RefundPreview): RefundPreview;
+export function accountingRefundArguments(
+  preview: RefundPreview, identity: {actor: string; requestId: string},
+): CommitRefundInput;
+export function accountingCreditDispositionPreview(preview: CreditDispositionPreview): CreditDispositionPreview;
+export function accountingCreditDispositionArguments(
+  preview: CreditDispositionPreview, identity: {actor: string; requestId: string},
+): ApplyCreditDispositionInput;
 
 /** One caller connection; disconnect drains its reads, closeWorkspace explicitly closes the original owner. */
 export interface AccountingReceivablesClient {
@@ -453,11 +522,25 @@ export interface AccountingReceivablesClient {
   cancelPaymentRequest(args: PaymentCancelArguments, options?: ReceivablesCallOptions): Promise<PaymentRequestMutationResult>;
   reportPaymentReturn(args: PaymentReturnArguments, options?: ReceivablesCallOptions): Promise<PaymentReturnMutationResult>;
   receivePaymentRequest(args: PaymentReceiveArguments, options?: ReceivablesCallOptions): Promise<PaymentReturnMutationResult>;
+
+  customerFunds(args?: CustomerFundsQuery, options?: ReceivablesCallOptions): Promise<CustomerFunds>;
+  previewRefund(args: RefundPreviewInput, options?: ReceivablesCallOptions): Promise<RefundPreview>;
+  commitRefund(args: CommitRefundInput, options?: ReceivablesCallOptions): Promise<RefundMutationResult>;
+  refunds(args?: RefundQuery, options?: ReceivablesCallOptions): Promise<RefundPage>;
+  refund(args: RefundDetailArguments, options?: ReceivablesCallOptions): Promise<RefundDetail>;
+  cancelRefund(args: RefundCancelArguments, options?: ReceivablesCallOptions): Promise<RefundMutationResult>;
+  reverseRefund(args: RefundReverseArguments, options?: ReceivablesCallOptions): Promise<RefundMutationResult>;
+  reportRefundReturn(args: RefundReturnArguments, options?: ReceivablesCallOptions): Promise<RefundReturnMutationResult>;
+  receiveRefund(args: RefundReceiveArguments, options?: ReceivablesCallOptions): Promise<RefundReturnMutationResult>;
+  refundFile(args: {refundId: string; file: RefundFileName}, options?: ReceivablesFileOptions & {maximumBytes?: number}):
+    Promise<{bytes: Uint8Array; file: ReceivablesFileMetadata}>;
+  previewCreditDisposition(args: CreditDispositionPreviewInput, options?: ReceivablesCallOptions): Promise<CreditDispositionPreview>;
+  applyCreditDisposition(args: ApplyCreditDispositionInput, options?: ReceivablesCallOptions): Promise<CreditDispositionMutationResult>;
   lookupOperation(args: RequestLookupArguments, options?: ReceivablesCallOptions): Promise<RequestLookupResult>;
   /** Every page must retain the original revision, total and accounting date. */
   listAll<K extends ReceivablesPagedOperation>(
     kind: K, args: Omit<ReceivablesArgumentsMap[K], 'offset' | 'limit'>, options?: ReceivablesCallOptions,
-  ): Promise<ReceivablesInventory<ReceivablesAllRows<K>> & NativeRecord>;
+  ): Promise<ReceivablesAllResult<K>>;
   /** Read the original journal; configured quote aliases reconcile against archived exact source bytes. */
   reconcileOperation<K extends ReceivablesMutation>(
     kind: K, args: ReceivablesArgumentsMap[K], options?: ReceivablesCallOptions,

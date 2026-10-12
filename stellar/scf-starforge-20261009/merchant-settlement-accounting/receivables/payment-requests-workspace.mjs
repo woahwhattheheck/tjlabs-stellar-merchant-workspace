@@ -5,6 +5,7 @@ import {open, mkdir, lstat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {json, sha, need, plain, field, identifier, dateValue, currencyKey, minor, money,
   today, invoiceSummary, receiptSummary} from './core.mjs';
+import {refundRows, refundTransferFingerprints} from './refunds.mjs';
 import {PAYMENT_REQUEST_SCHEMA, compilePaymentProposal, paymentDocument, requestRows,
   paymentRequestSummary, paymentRequestHtml, paymentReturnInput, validatePaymentVerification,
   requestTransactionFingerprints, timestamp} from './payment-requests.mjs';
@@ -40,6 +41,9 @@ function sameTransfer(source, network, fingerprints) {
 function requireUniqueTransfer(data, request, returned, fingerprints) {
   need(!data.receipts.some(row => sameTransfer(row.source, request.proposal.network, fingerprints)),
     'STELLAR_PAYMENT_ALREADY_RECORDED', 'This original Stellar transaction already has a payment receipt. Open that receipt instead of importing it again.', 409);
+  need(!refundRows(data).some(row => row.proposal.payout.network === request.proposal.network &&
+    refundTransferFingerprints(row).some(value => fingerprints.has(value))), 'STELLAR_PAYMENT_ASSIGNED_AS_REFUND',
+  'This original transaction already belongs to a customer refund. Recover that refund record.', 409);
   for (const row of requestRows(data)) for (const item of row.returns ?? []) {
     if (row.id === request.id && item.id === returned.id) continue;
     if (row.proposal.network !== request.proposal.network) continue;
