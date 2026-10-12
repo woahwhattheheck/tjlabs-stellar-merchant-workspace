@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Operate WebDAV or Nextcloud files as a merchant | **Applications → WebDAV source and merchant workspace**, `starforge merchant-webdav` and `starforge merchant-webdav-edition` | Complete retained file versions, reviewed dataset editions, native publication and customer work, full resumable handover and original source reopening |
 | Review and publish an economic data edition | **Applications → Eurostat economic editions** or `starforge eurostat` | Exact official source captures, reviewed dimensions, complete economic briefings, native merchant publication and original customer receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` or **Applications → Captured API merchant** | Original source review, exact route prices and policies, persistent workflows, native merchant packages, releases and complete customer receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
@@ -94,6 +95,14 @@ questions, completed documents and managed processing jobs, reviewed source
 editions and findings, and complete report, original-file and portable delivery
 through the same browser, CLI and merchant attachment. Build its complete
 selected product with `--selection research-workspace`.
+
+The [WebDAV operating and receiving guide](products/webdav/OPERATING.md) connects
+original file capture, public field review, native publication and customer
+work through the browser, managed Applications and complete merchant client.
+Build its complete installed workflow with `--selection webdav-operator`.
+The installed `merchant-webdav-edition` command continues an original reviewed
+mapping and merchant through the next edition, native publisher preparation,
+and complete export/source-packet receiving.
 
 ## Open the source product
 
@@ -248,6 +257,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [WebDAV source, merchant operator and complete receiving](products/webdav/OPERATING.md)
 
 - [GTFS Schedule merchant: selected installation, exact editions and complete receiving](products/gtfs-schedule/README.md)
 - [GTFS complete operating and handover guide](products/gtfs-schedule/OPERATING.md)
