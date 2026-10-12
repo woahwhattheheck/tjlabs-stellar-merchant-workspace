@@ -1,0 +1,61 @@
+{
+  "schema": "commons.iati.dqa.complete-upstream.v1",
+  "operation_id": "dqa-zimmerman-gb-gov-1-complete",
+  "directory": "/ABS/PRIVATE/dqa-complete",
+  "python_executable": "/ABS/INSTALLED/python3",
+  "uv_executable": "/ABS/INSTALLED/uv",
+  "git_executable": "/ABS/INSTALLED/git",
+  "redis_executable": "/ABS/INSTALLED/redis-server",
+  "redis_library_directory": "/ABS/INSTALLED/redis-libraries",
+  "authorization_env": "IATI_DQA_LOCAL_KEY",
+  "api_port": 18766,
+  "redis_port": 18767,
+  "transport": {
+    "schema": "commons.iati.dqa.public-solr.v1",
+    "listen_host": "127.0.0.1",
+    "listen_port": 18765,
+    "upstream_url": "https://datastore.iati.cloud/api/v2/activity/",
+    "timeout_seconds": 8,
+    "request_limit_bytes": 4194304,
+    "response_limit_bytes": 67108864
+  },
+  "runtime_prepare": {
+    "argv": [
+      "/ABS/INSTALLED/node",
+      "/ABS/SELECTED-SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/runtime.mjs",
+      "/ABS/runtime-input.json"
+    ],
+    "cwd": "/ABS/SELECTED-SOURCE",
+    "required_outputs": [
+      "preparation/runtime-ready.json"
+    ]
+  },
+  "callback": {
+    "argv": [
+      "/ABS/INSTALLED/node",
+      "/ABS/SELECTED-SOURCE/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa.mjs",
+      "--input",
+      "/ABS/dqa-input.json",
+      "--runtime-ready",
+      "/ABS/PRIVATE/dqa-complete/preparation/runtime-ready.json",
+      "--upstream-ready",
+      "{ready_file}",
+      "--provider-file",
+      "{provider_file}",
+      "--assessments-file",
+      "{assessments_file}"
+    ],
+    "cwd": "/ABS/SELECTED-SOURCE",
+    "operation_id": "dqa-zimmerman-gb-gov-1-customer",
+    "result_file": "customer/result.json",
+    "required_outputs": [
+      "customer/result.json",
+      "customer/completed-workflow.json",
+      "customer/DQA_Complete_Customer_Receiving.zip",
+      "customer/source-evidence/capture-1/manifest.json",
+      "customer/source-evidence/capture-2/manifest.json"
+    ]
+  },
+  "setup_timeout_seconds": 1200,
+  "callback_timeout_seconds": 1800
+}

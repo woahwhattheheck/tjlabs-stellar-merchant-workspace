@@ -1,0 +1,23 @@
+{
+  "responseHeader":{
+    "status":0,
+    "QTime":0,
+    "params":{
+      "q":"reporting-org.ref:\"GB-GOV-1\"",
+      "fl":"iati-identifier,reporting-org.ref,hierarchy,activity-status.code",
+      "rows":"1",
+      "wt":"json"
+    }
+  },
+  "response":{
+    "numFound":3239,
+    "start":0,
+    "numFoundExact":true,
+    "docs":[{
+      "hierarchy":2,
+      "iati-identifier":"GB-GOV-3-CSSF-05-000004",
+      "reporting-org.ref":"GB-GOV-1",
+      "activity-status.code":"2"
+    }]
+  }
+}

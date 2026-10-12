@@ -514,6 +514,11 @@ Use its actual values:
 The recovery operator does not start the received fleet. Use the returned
 deployment's existing launch/runbook and inspect its actual native health.
 
+The installed `merchant-recovery-workspace` command exposes the same workspace
+arguments shown above. The installed `merchant-fleet-operator-receive` command
+exposes the original receiving continuation's arguments; select its completed
+case and existing runtimes exactly as described in the receiving guide.
+
 The original source owner's
 [receiving continuation](../../stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/README.md)
 can then open the complete operator over its already completed, closed native
