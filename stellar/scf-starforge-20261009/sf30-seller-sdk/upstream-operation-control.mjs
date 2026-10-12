@@ -4,7 +4,8 @@ export function createUpstreamOperationControl(compiled, handlers, {closeHandler
   const operations = new Map();
   const bindings = [];
   const pending = new Set();
-  let closed = false, closing;
+  let closed = false, closing, closeOptions, closeSelected = false;
+  const retired = new Set();
   for (const [name,binding] of Object.entries(compiled)) {
     const original = handlers[name]?.idempotency;
     if (!binding.idempotency || !original) continue;
@@ -37,8 +38,19 @@ export function createUpstreamOperationControl(compiled, handlers, {closeHandler
     close(options) {
       if (closing) return closing;
       closed = true;
-      closing = Promise.allSettled([...pending]).then(() => closeHandlers ? closeHandlers(options) :
-        Promise.all([...operations.values()].map(controller => controller.close())));
+      if (!closeSelected) { closeOptions = options; closeSelected = true; }
+      closing = Promise.allSettled([...pending]).then(async () => {
+        if (closeHandlers) return closeHandlers(closeOptions);
+        const failures = [];
+        const results = await Promise.all([...new Set(operations.values())].map(async controller => {
+          if (retired.has(controller)) return;
+          try { const result = await controller.close(); retired.add(controller); return result; }
+          catch (error) { failures.push(error); }
+        }));
+        if (failures.length) throw new AggregateError(failures, 'Original operation controllers did not fully close',
+          { cause: failures[0] });
+        return results;
+      }).catch(error => { closing = null; throw error; });
       return closing;
     },
   });

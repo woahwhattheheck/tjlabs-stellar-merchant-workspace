@@ -80,9 +80,63 @@ clear saved loopback permission with `--disallow-loopback-upstream`. Production
 payment still uses the original SF30 facilitator and packages. All existing
 support capture commands work with this same upstream-backed session.
 
+## Ordered shutdown and embedding
+
+SF96 owns one shutdown sequence for its original seller and operations listener.
+Ctrl-C or SIGTERM stops new operations, drains accepted console requests, closes
+the original operations and history resources, then closes the seller and its
+upstream resources. Requests remain owned until their asynchronous work finishes,
+including a browser that disconnects before its operation returns.
+
+A failed close retains the same unfinished owner. The CLI keeps its signal
+handlers and retries that owner's close with a one-second pause; it does not start
+another listener or reopen the workspace. Successful owners are released once.
+An ordinary completed SIGINT/SIGTERM shutdown exits with 130/143; a shutdown that
+encountered a cleanup failure retains exit status 1 after its final drain.
+
+The original seller drain deadline still reports
+`SELLER_DRAIN_DEADLINE_EXCEEDED` when native work outlives the configured grace.
+Admission remains closed. A later close completes against the same stopped
+listener and original dispatch when that work finishes. A failed final usage
+checkpoint keeps its private history writer; retry writes the same selected
+final counters before releasing the lock. A failed release resumes only its
+unfinished descriptor, owned-name and directory-flush steps.
+
+Embedded callers can use the same source with explicit signal ownership:
+
+```js
+import { start } from './pilot-ops.mjs';
+
+const pilot = await start(nativeArguments, { noSignals: true });
+// Use pilot.session, pilot.operations and the existing capture flow.
+await pilot.close();
+```
+
+Keep the returned `pilot` if `close()` rejects and call that same `close()` again
+after resolving its reported failure. If startup fails while cleanup remains,
+the thrown error exposes `error.close()` for the original partial-start owners;
+the original startup exception remains available with its cleanup failure.
+The embedding owner must finish this cleanup before opening a replacement.
+
+The original SF82 `launch(args, { noSignals: true })`, SF30
+`main(args, { noSignals: true })`, and upstream
+`main(args, { env, noSignals: true })` expose the same optional composition
+setting. SF96 forwards it through the original launchers and handles the paired
+listeners itself. The direct SF30 launchers retain their original session under
+both signal handlers until cleanup succeeds; a failed close retries that same
+session once per second. Their existing success/failure exit codes and runtime
+arguments remain unchanged. A failed readiness or output publication also
+retains the acquired session through the original error's cleanup.
+
+Cached upstream shutdown follows the original source lifetime. The inner
+response cache still returns its bounded close result, and its additive
+`whenIdle()` waits for the original source tasks and admitted consumers. The
+upstream cache retains every credential generation through that drain before
+the application releases credentials, idempotency state or supplier quotas.
+
 ## Scope and interpretation
 
-All start arguments after `--` go unchanged into SF82's original CLI. SF82 remains responsible for seller readiness, manifest verification, trusted handler invocation, and payment mode. SF30 remains responsible for live route attribution and latency. SF93 remains responsible for private support output, source hashes and safe capture limits. This module composes their native calls and closes listeners if attaching operations fails. No remote service, persistent daemon, customer-facing dashboard deployment, wallet, settlement adapter, retries or new backend exists here.
+All start arguments after `--` go unchanged into SF82's original CLI. SF82 remains responsible for seller readiness, manifest verification, trusted handler invocation, and payment mode. SF30 remains responsible for live route attribution and latency. SF93 remains responsible for private support output, source hashes and safe capture limits. This module composes their native calls and closes listeners if attaching operations fails. The returned runtime owns the original paired listeners and their retryable shutdown; it preserves the same compiled seller and support-capture API.
 
 The operations dashboard's HTTP 2xx/402 counts **do not** establish customer receipt, unique buyers, on-chain settlement or revenue. For a paid pilot, use the original SF36/SF82/SF86 independent buyer/chain evidence before making payment claims. The existing SF49 commercial owner retains customer contact, support case release and scope decisions. This source is an integration tool, not a declaration that a merchant was onboarded or that the SCF #46 interest form was submitted.
 

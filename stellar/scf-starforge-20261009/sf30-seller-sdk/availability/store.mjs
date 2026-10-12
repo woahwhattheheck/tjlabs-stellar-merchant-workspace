@@ -57,7 +57,16 @@ export async function openAvailabilityPolicy({ directory, origin, routeIds }) {
       await realpath(directory) !== directory) fail('AVAILABILITY_PRIVATE_DIRECTORY_REQUIRED');
   const lockPath = join(directory, 'availability.lock');
   const lock = await open(lockPath, constants.O_CREAT | constants.O_RDWR | constants.O_NOFOLLOW, 0o600);
-  let closed = false, closing = false, state, storageError = false, pending = Promise.resolve();
+  let closed = false, closing = false, closePromise, state, storageError = false, pending = Promise.resolve();
+  function close() {
+    if (closePromise) return closePromise;
+    closing = true;
+    closePromise = (async () => {
+      await pending;
+      if (!closed) { await lock.close(); closed = true; }
+    })().catch(error => { closePromise = null; throw error; });
+    return closePromise;
+  }
   async function assertLease() {
     if (closed) fail('AVAILABILITY_CLOSED', 503);
     const [opened, named] = await Promise.all([lock.stat(), lstat(lockPath)]);
@@ -109,7 +118,11 @@ export async function openAvailabilityPolicy({ directory, origin, routeIds }) {
       if (error.code !== 'ENOENT') throw availabilityError('AVAILABILITY_POLICY_INVALID', 503);
       await save({ schema: SCHEMA, serviceOrigin: origin, revision: 0, savedAt: new Date().toISOString(), paused: [], changes: [] });
     } finally { await file?.close(); }
-  } catch (error) { closed = true; await lock.close(); throw error; }
+  } catch (error) {
+    try { await close(); }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = close; }
+    throw error;
+  }
 
   function update(input) {
     const operation = pending.then(async () => {
@@ -143,6 +156,6 @@ export async function openAvailabilityPolicy({ directory, origin, routeIds }) {
   function snapshot() { return { ...structuredClone(state), storageState: storageError ? 'unavailable' : 'ready' }; }
   return Object.freeze({ snapshot, update,
     paused: id => storageError || closing || closed || state.paused.some(row => row.id === id),
-    async close() { closing = true; await pending; if (!closed) { closed = true; await lock.close(); } },
+    close,
   });
 }

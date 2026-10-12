@@ -93,38 +93,49 @@ export function createSellerLifecycle(server, {
     };
   }
 
+  let listenerStop;
+  function stopListener() {
+    if (listenerStop) return listenerStop;
+    listenerStop = new Promise((resolve, reject) => {
+      server.close(error => error && error.code !== 'ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve());
+    }).catch(error => { listenerStop = null; throw error; });
+    server.closeIdleConnections?.();
+    return listenerStop;
+  }
   function close() {
     if (closePromise) return closePromise;
     state = 'DRAINING';
     closePromise = new Promise((resolve, reject) => {
-      let finished = false, serverClosed = false, serverError, timer;
+      let finished = false, serverClosed = false, timer;
       const complete = error => {
         if (finished) return;
         finished = true;
         clearTimeout(timer);
-        state = 'CLOSED';
+        if (closeProgress === progress) closeProgress = null;
+        state = error ? 'DRAINING' : 'CLOSED';
         if (error) reject(error);
         else resolve(snapshot());
       };
-      closeProgress = () => {
-        if (serverError) complete(serverError);
-        else if (serverClosed && active === 0) complete();
+      const progress = () => {
+        if (serverClosed && active === 0) complete();
       };
+      closeProgress = progress;
       try {
-        server.close(error => { serverClosed = true; serverError = error; closeProgress(); });
-        server.closeIdleConnections?.();
-        if (!finished) timer = setTimeout(() => {
+        // A failed attempt retains the same listener callback and native work.
+        // A later close can finish after the original dispatch becomes idle.
+        stopListener().then(() => { serverClosed = true; progress(); }, complete);
+        timer = setTimeout(() => {
           if (finished) return;
           forced = true;
-          // Socket closure is not proof that native work stopped. Surface a
-          // deadline failure even if all clients disconnected before draining.
+          // Keep the original bounded drain error while the actual native
+          // dispatch remains owned. A retry never reopens admission.
           try { server.closeAllConnections(); }
-          finally { complete(Object.assign(new Error('SELLER_DRAIN_DEADLINE_EXCEEDED'),
-            { code: 'SELLER_DRAIN_DEADLINE_EXCEEDED' })); }
+          catch (error) { complete(error); return; }
+          complete(Object.assign(new Error('SELLER_DRAIN_DEADLINE_EXCEEDED'),
+            { code: 'SELLER_DRAIN_DEADLINE_EXCEEDED' }));
         }, drainGraceMs);
-        // Retain the timer even when only an unresolved native promise remains.
       } catch (error) { complete(error); }
-    });
+    }).catch(error => { closePromise = null; throw error; });
     return closePromise;
   }
 
@@ -132,4 +143,50 @@ export function createSellerLifecycle(server, {
   // Resource owners may await actual quiescence without changing that deadline.
   const whenIdle = () => active === 0 ? Promise.resolve() : new Promise(resolve => idleWaiters.add(resolve));
   return Object.freeze({ handle, snapshot, close, whenIdle });
+}
+
+
+/** Keep the original CLI session and both signal handlers until its real drain.
+ * The embedded owner can disable CLI signals and retain the same close method. */
+export function bindSellerSignals(session) {
+  if (!session || typeof session.close !== 'function') throw new TypeError('Original seller session required');
+  const originalClose = session.close.bind(session);
+  let closing, closed = false, result, stopping;
+  const removeSignals = () => {
+    process.removeListener('SIGINT', stop);
+    process.removeListener('SIGTERM', stop);
+  };
+  function close() {
+    if (closed) return Promise.resolve(result);
+    if (closing) return closing;
+    closing = Promise.resolve().then(originalClose).then(value => {
+      result = value; closed = true; removeSignals(); return result;
+    }).catch(error => { closing = null; throw error; });
+    return closing;
+  }
+  function stop() {
+    if (stopping) return;
+    stopping = (async () => {
+      let failed = false;
+      for (;;) {
+        try {
+          await close();
+          process.exitCode = failed || process.exitCode === 1 ? 1 : 0;
+          return;
+        } catch {
+          failed = true; process.exitCode = 1;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    })();
+  }
+  // Expose the retained owner before installing signals or publishing output.
+  session.close = close;
+  try {
+    process.on('SIGINT', stop); process.on('SIGTERM', stop);
+  } catch (error) {
+    error.close = close;
+    throw error;
+  }
+  return session;
 }

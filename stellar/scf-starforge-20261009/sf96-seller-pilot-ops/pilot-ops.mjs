@@ -25,7 +25,7 @@ CAPTURE (separate shell, while the original seller is still live):
 START forwards every option after -- unchanged to ORIGINAL SF82. Seller and
 operations use one SF30 session, two loopback-only listeners. CAPTURE invokes
 ORIGINAL SF93, creates a private, non-overwriting case directory, and sends
-NO request to a payable route. Ctrl-C closes the seller and operations.\n`;
+NO request to a payable route. Ctrl-C drains operations, then closes the original seller.\n`;
 const validPort = s => /^(0|[1-9]\d{0,4})$/.test(s) && Number(s) <= 65535;
 
 function keyValues(args, allowed) {
@@ -57,58 +57,104 @@ export async function start(args, dependencies = {}) {
     throw new TypeError('START requires -- followed by native SF82 arguments\n' + HELP);
   const opts = keyValues(args.slice(0, separator), ['--ops-port', '--support-parent']);
   if (!opts['--support-parent']) throw new TypeError('START requires --support-parent');
+  if (dependencies.noSignals !== undefined && typeof dependencies.noSignals !== 'boolean')
+    throw new TypeError('noSignals must be a boolean');
   const support = await privateParent(opts['--support-parent']);
   const port = opts['--ops-port'] ?? '0';
   if (!validPort(port)) throw new TypeError('--ops-port must be 0–65535');
   const originalLaunch = dependencies.launchSeller ?? launchSeller;
   const originalOps = dependencies.startSellerOperations ?? startSellerOperations;
-  const session = await originalLaunch(args.slice(separator + 1));
-  if (!session || typeof session.url !== 'string' || typeof session.close !== 'function')
-    throw new Error('Original SF82 did not start a live seller session');
-  const owners = new Map([['seller', session]]);
-  let operations, closing = null;
-  // Remove only owners whose original close completed. A retry continues the
-  // same remaining listeners without closing an already-finished owner again.
+  const owners = new Map();
+  let session, operations, closing, phase = 'seller', finishStartup;
+  let stopSignal, signalClose, removeSignals = () => {};
+  const startup = new Promise(resolve => { finishStartup = resolve; });
   function close() {
     if (closing) return closing;
-    closing = Promise.allSettled([...owners].map(async ([name, owner]) => {
-      await owner.close();
-      owners.delete(name);
-    })).then(results => {
-      if (results.some(result => result.status === 'rejected'))
-        throw new Error('Operator listeners did not fully close');
-    }).catch(error => { closing = null; throw error; });
+    closing = (async () => {
+      // A signal during startup waits for that original acquisition to return
+      // its session or retained cleanup, then closes the exact resulting owner.
+      await startup;
+      for (const name of ['operations-startup', 'operations', 'seller-startup', 'seller']) {
+        const owner = owners.get(name);
+        if (!owner) continue;
+        await owner.close();
+        owners.delete(name);
+      }
+      // Operations use the seller's control, quotas and outbox. A failed
+      // operations close keeps that seller alive until the retry drains it.
+      removeSignals();
+    })().catch(error => { closing = null; throw error; });
     return closing;
   }
+  function stopRequested() {
+    if (stopSignal) throw Object.assign(new Error('Seller pilot stop requested'),
+      {code:'SELLER_PILOT_STOP_REQUESTED'});
+  }
+  if (!dependencies.noSignals) {
+    const stop = signal => {
+      stopSignal ??= signal;
+      if (signalClose) return;
+      signalClose = (async () => {
+        let failed = false;
+        for (;;) {
+          try {
+            await close();
+            process.exitCode = failed ? 1 : stopSignal === 'SIGINT' ? 130 : 143;
+            return;
+          } catch {
+            if (!failed) try { process.stderr.write('Seller shutdown is draining; retrying its retained owners.\n'); } catch {}
+            failed = true; process.exitCode = 1;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      })();
+      signalClose.catch(() => { process.exitCode = 1; });
+    };
+    const onInterrupt = () => stop('SIGINT'), onTerminate = () => stop('SIGTERM');
+    process.on('SIGINT', onInterrupt); process.on('SIGTERM', onTerminate);
+    removeSignals = () => {
+      process.removeListener('SIGINT', onInterrupt);
+      process.removeListener('SIGTERM', onTerminate);
+    };
+  }
   try {
+    // The composed owner handles signals once for both native listeners.
+    // Original SF82 forwards this setting into its unchanged SF30 CLI options.
+    session = await originalLaunch(args.slice(separator + 1), {noSignals:true});
+    if (typeof session?.close === 'function') owners.set('seller', session);
+    if (!session || typeof session.url !== 'string' || typeof session.close !== 'function')
+      throw new Error('Original SF82 did not start a live seller session');
+    stopRequested();
+    phase = 'operations';
     operations = await originalOps(session, { port: Number(port) });
     if (typeof operations?.close === 'function') owners.set('operations', operations);
     if (!operations || typeof operations.url !== 'string' ||
         typeof operations.close !== 'function') throw new TypeError('Original SF30 operations did not start');
+    stopRequested();
+    phase = 'ready';
+    const capture = `node ${JSON.stringify(fileURLToPath(import.meta.url))} capture --seller ${session.url} --ops ${operations.url} --support-parent ${JSON.stringify(support)}`;
+    const result = {
+      schema: 'stellar-forge.seller-pilot-ops.v1', state: 'RUNNING',
+      seller: session.url, operations: operations.url, mode: session.mode,
+      routes: session.compiled?.routes?.length ?? null,
+      sellerHealth: session.url + '/_seller/health',
+      sellerOffers: session.url + '/_seller/offers',
+      operationsDashboard: operations.url + '/',
+      captureCommand: capture,
+      note: 'HTTP success and challenge counters are not proof of on-chain payment or revenue.'
+    };
+    process.stdout.write(JSON.stringify(result) + '\n');
+    finishStartup();
+    return { ...result, session, operations, close };
   } catch (error) {
+    if (typeof error.close === 'function' && error.close !== close && phase !== 'ready')
+      owners.set(phase + '-startup', {close:error.close.bind(error)});
+    finishStartup();
     try { await close(); }
-    catch (closeError) { closeError.cause ??= error; closeError.close = close; throw closeError; }
+    catch (cleanupError) { error.cleanupError = cleanupError; error.close = close; throw error; }
+    if (error.code === 'SELLER_PILOT_STOP_REQUESTED') return null;
     throw error;
   }
-  const capture = `node ${JSON.stringify(fileURLToPath(import.meta.url))} capture --seller ${session.url} --ops ${operations.url} --support-parent ${JSON.stringify(support)}`;
-  const result = {
-    schema: 'stellar-forge.seller-pilot-ops.v1', state: 'RUNNING',
-    seller: session.url, operations: operations.url, mode: session.mode,
-    routes: session.compiled?.routes?.length ?? null,
-    sellerHealth: session.url + '/_seller/health',
-    sellerOffers: session.url + '/_seller/offers',
-    operationsDashboard: operations.url + '/',
-    captureCommand: capture,
-    note: 'HTTP success and challenge counters are not proof of on-chain payment or revenue.'
-  };
-  process.stdout.write(JSON.stringify(result) + '\n');
-  if (!dependencies.noSignals) {
-    // The ORIGINAL seller also handles signals. Our callback closes only the
-    // separate operations listener; reentrant close() is reserved for callers.
-    for (const signal of ['SIGINT', 'SIGTERM'])
-      process.once(signal, () => { operations.close().catch(() => { process.exitCode = 1; }); });
-  }
-  return { ...result, session, operations, close };
 }
 
 export async function capture(args, dependencies = {}) {
@@ -136,4 +182,21 @@ export async function main(argv = process.argv.slice(2), dependencies = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  main().catch(error => { console.error(error.message); process.exitCode = 1; });
+  main().catch(async error => {
+    process.exitCode = 1;
+    try { console.error(error.message); } catch { /* Reporting must not release the original cleanup owner. */ }
+    if (typeof error?.close !== 'function') return;
+    const close = error.close.bind(error);
+    const preserveFailure = () => { process.exitCode = 1; };
+    process.on('SIGINT', preserveFailure); process.on('SIGTERM', preserveFailure);
+    try {
+      for (;;) {
+        try { await close(); return; }
+        catch { await new Promise(resolve => setTimeout(resolve, 1000)); }
+      }
+    } finally {
+      process.removeListener('SIGINT', preserveFailure);
+      process.removeListener('SIGTERM', preserveFailure);
+      process.exitCode = 1;
+    }
+  });
