@@ -20,7 +20,8 @@
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/service-agreements/client.d.ts",
-    "products/merchant-service-agreements/README.md"
+    "products/merchant-service-agreements/README.md",
+    "stellar-forge/mcp-merchant-operator/accounting.mjs"
   ],
   "browserAssets": [
     {
