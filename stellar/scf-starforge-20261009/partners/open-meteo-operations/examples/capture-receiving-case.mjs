@@ -4,6 +4,7 @@ import {readFile,writeFile,mkdir,rename,chmod,stat} from 'node:fs/promises';
 import {resolve,join,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {randomUUID} from 'node:crypto';
+import {publish,readPrivate} from '../files.mjs';
 
 const HISTORICAL_ARCHIVE={bytes:33416,sha256:'28d56f92cdf35756773a40eb5a0125d03b5b0f86d5ebf63485d2c79365643f53'};
 const fail=(code,details)=>{throw Object.assign(new Error(code),{code,details});};
@@ -17,10 +18,15 @@ async function saveJson(path,value){
  const temp=path+'.'+randomUUID()+'.pending';
  await writeFile(temp,JSON.stringify(value,null,2)+'\n',{mode:0o600,flag:'wx'});await rename(temp,path);
 }
-async function keep(path,bytes){
+async function keep(path,input){
  await mkdir(dirname(path),{recursive:true,mode:0o700});
- if(await exists(path)){if(!(await readFile(path)).equals(Buffer.from(bytes)))fail('RETAINED_PROVIDER_FILE_CHANGED',{path});}
- else await writeFile(path,bytes,{mode:0o600,flag:'wx'});
+ const bytes=Buffer.isBuffer(input)?input:Buffer.from(input);
+ try{return await publish(path,bytes);}
+ catch(error){
+  if(error.code!=='EEXIST')throw error;
+  if(!(await readPrivate(path,bytes.length)).equals(bytes))fail('RETAINED_PROVIDER_FILE_CHANGED',{path});
+  return {path,bytes:bytes.length,status:'RETAINED'};
+ }
 }
 const dayAfter=value=>new Date(Date.parse(value+'T00:00:00Z')+86400000).toISOString().slice(0,10);
 const utc=seconds=>new Date(seconds*1000).toISOString();
@@ -153,7 +159,7 @@ export async function captureWeatherReceivingCase({runtime,output,forecastStart,
    const path=join(output,'delivery',filename);await keep(path,bytes);
    files[format]={path,bytes:bytes.length,sha256:sha(bytes)};
   }
-  result={schema:'stellar-forge.weather-provider-receiving-result.v1',complete:true,startedAt:progress.startedAt,finishedAt:new Date().toISOString(),selection,
+  result={schema:'stellar-forge.weather-provider-receiving-result.v1',complete:false,phase:'exported',startedAt:progress.startedAt,exportedAt:new Date().toISOString(),selection,
    store:{directory:store.directory,originId:store.originId()},report,files,captures:captures.map(({raw,view,...capture})=>capture),decisions,
    selectedArchive:files.zip};
   await saveJson(join(output,'result.json'),result);
@@ -163,7 +169,7 @@ export async function captureWeatherReceivingCase({runtime,output,forecastStart,
   if(!equal(reopened.report(result.report.id),result.report)||reopened.captures().length!==3)fail('PROVIDER_SOURCE_STORE_REOPEN_CHANGED');
   for(const capture of result.captures)if(reopened.capture(capture.id).sha256!==capture.sha256)fail('PROVIDER_SOURCE_STORE_REOPEN_CHANGED');
  }finally{await reopened.close();}
- result.coldReopenedAt=new Date().toISOString();await saveJson(join(output,'result.json'),result);
+ result.complete=true;result.phase='completed';result.finishedAt=new Date().toISOString();result.coldReopenedAt=result.finishedAt;await saveJson(join(output,'result.json'),result);
  process.stdout.write(JSON.stringify({complete:true,sourceCase:join(output,'result.json'),selectedArchive:result.selectedArchive,reportId:result.report.id})+'\n');
  return result;
 }
