@@ -18,6 +18,8 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](../baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
+| Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Operate and hand over buyer request collections | **Applications → Request collections** or `starforge buyer-collections-workspace` | Reviewed original requests, exact spending caps and outcomes, complete encrypted backup, receiving and reopening |
@@ -82,6 +84,19 @@ The [complete publisher workflow](https://github.com/woahwhattheheck/tjlabs-stel
 uses the same runtime and Applications to operate both included original
 AidData Nigeria and Transparency International editions and deliver each
 complete customer archive.
+
+The [CoCart merchant and customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/cocart/OPERATING.md)
+connects the local saved-file setup page, pinned native SDK, original Woo checkout,
+merchant agent connection, managed Applications and complete customer receiving.
+Build its complete installed product with `--selection cocart-merchant`; open
+`starforge cocart-setup --port 8787` to prepare the customer's original files.
+
+The [Baserow to Rails operating guide](../baserow-rails/OPERATING.md) connects the
+original source workspace, retained publication, complete customer rows and
+attachments, exact mapping and transactional Rails editions. Its [installation
+and receiving guide](../baserow-rails/RECEIVING.md) carries the complete original
+client and configured operator through independent application receiving.
+Build that product with `--selection baserow-rails`.
 
 ## Open the source product
 
