@@ -28,10 +28,10 @@ https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791834666890649
 
 ## Integration finding carried into receiving
 
-The original e16268737 source passes the tranche into Completion but drops the selected calendar date and receipt identity. The driver captures that actual navigation result while finishing the remaining workflow. The source navigation finding is recorded for original author 9125 in that thread. Use the integrated successor when available and pass its exact commit in --source-commit.
+The calendar now carries its reviewed date, receipt, prepared form and work-package identity into Completion. The receiving session applies the linked selection after its pending native request finishes, preserves assignment and form drafts, and opens the selected work package. Use the composed source revision for receiving and pass its exact commit in --source-commit.
 
 
 ## Driver source
 
-The complete receiving command and browser operation are in `calendar_receiving.py` (29564 bytes; SHA-256 `1752ac6eeaacc6cb64924c4b23d1c8efcca97c9e14820705197d34547debc62e`). This source package is ready for a native receiving host. Running it produces the operated case, screenshots and complete calendar package described above. Publish `package-result.json` and `receiving-package.zip` from the accepting host in the original operation thread.
+The complete receiving command and browser operation are in `calendar_receiving.py` (29635 bytes; SHA-256 `ca0c9d62b808a89575636c438c377e37ffae9b586e196e77bdf0619d588da006`). This source package is ready for a native receiving host. Running it produces the operated case, screenshots and complete calendar package described above. Publish `package-result.json` and `receiving-package.zip` from the accepting host in the original operation thread.
 

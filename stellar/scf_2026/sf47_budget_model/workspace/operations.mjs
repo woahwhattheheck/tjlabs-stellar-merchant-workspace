@@ -359,11 +359,15 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       if(!retainedCalendarSessions.has(c.program.id))retainedCalendarSessions.set(c.program.id,{});
       calendarView=mountDeliveryCalendar({container:$('[data-ops-calendar]'),current:c,api,
         session:retainedCalendarSessions.get(c.program.id),
-        onOpen:(tab,tranche)=>{
+        onOpen:(tab,tranche,selection={})=>{
           if(!available()||view.current?.program.id!==c.program.id)return;
-          if(tab==='completion'&&[1,2,3].includes(tranche)){
+          if(tab==='completion'){
             const retained=retainedCompletionSessions.get(c.program.id)||{};
-            retained.requestTranche=tranche;
+            retained.requestCalendar={
+              tranche:[1,2,3].includes(tranche)?tranche:null,
+              asOfDate:selection.asOfDate,receiptId:selection.receiptId,
+              costId:selection.costId,reviewId:selection.reviewId,
+            };
             retainedCompletionSessions.set(c.program.id,retained);
           }
           view.tab=tab;render();
