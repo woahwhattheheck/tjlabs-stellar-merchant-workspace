@@ -7,7 +7,7 @@ const pretty=v=>JSON.stringify(v,null,2);
 const uid=()=>crypto.randomUUID();
 const short=v=>String(v??'').slice(0,8);
 const S={view:'overview',identity:null,status:null,collections:{captures:new Map(),studies:new Map(),reviews:new Map(),reports:new Map(),operations:new Map()},
- offsets:new Set(),capture:null,review:null,report:null,publication:null,study:null,plan:null,context:null,previewOffset:0,pubRun:'',pubReview:'',releasePreparation:'',merchantStage:'',merchant:null,deliveryId:'',busy:false,processed:new Set(),completedExample:null};
+ offsets:new Set(),capture:null,review:null,report:null,publication:null,study:null,plan:null,context:null,previewOffset:0,pubRun:'',pubReview:'',releasePreparation:'',merchantStage:'',merchantEpoch:0,merchant:null,deliveryId:'',busy:false,processed:new Set(),completedExample:null};
 const storageKey='openaq-study:'+location.origin;
 let token=new URLSearchParams(location.hash.slice(1)).get('token');
 if(token){sessionStorage.setItem(storageKey+':token',token);history.replaceState(null,'',location.pathname+location.search);}
@@ -50,7 +50,7 @@ function observe(op){
  if(op.action==='publication.prepare'){S.pubRun=r?.publication?.id??op.id;if($('#pub-run'))$('#pub-run').value=S.pubRun;if($('#customer-run'))$('#customer-run').value=S.pubRun;}
  if(op.action==='publication.review'){S.pubReview=r?.data?.review?.id??r?.review?.id??'';if($('#pub-review'))$('#pub-review').value=S.pubReview;}
  if(op.action==='release.prepare'){S.releasePreparation=op.id;if($('#release-preparation'))$('#release-preparation').value=op.id;}
- if(op.action==='release.stage'){S.merchantStage=op.id;S.merchant=null;renderMerchantPanel();}
+ if(op.action==='release.stage'){S.merchantStage=op.id;S.merchantEpoch++;S.merchant=null;renderMerchantPanel();}
  if(op.action==='customer.start'&&r){const native=r.operation;if(native?.state==='COMPLETE'&&native.result?.id)S.deliveryId=native.result.id;}
 }
 async function refresh(render=true,offset=0){
@@ -266,11 +266,21 @@ function merchantPanel(){
 }
 function renderMerchantPanel(){const panel=$('#merchant-panel');if(panel){panel.innerHTML=merchantPanel();bindMerchantPanel();}}
 function merchantInput(required=false){
- const stageRequestId=get('merchant-stage');S.merchantStage=stageRequestId;
+ const stageRequestId=get('merchant-stage');
+ if(stageRequestId!==S.merchantStage){S.merchantStage=stageRequestId;S.merchantEpoch++;S.merchant=null;}
  if(required&&!stageRequestId)throw Error('Choose the completed original staging request.');
  return stageRequestId?{stageRequestId}:{};
 }
-function acceptMerchant(value){
+function merchantSelection(){
+ return{epoch:S.merchantEpoch,stageRequestId:S.merchantStage,identity:S.identity};
+}
+function merchantSelectionCurrent(selection){
+ return selection.identity===S.identity&&selection.epoch===S.merchantEpoch&&
+  selection.stageRequestId===S.merchantStage&&
+  (!$('#merchant-stage')||get('merchant-stage')===selection.stageRequestId);
+}
+function acceptMerchant(value,selection){
+ if(!merchantSelectionCurrent(selection))return false;
  const previous=S.merchant;
  if(value.operatorUrl){
   const url=new URL(value.operatorUrl);
@@ -279,29 +289,30 @@ function acceptMerchant(value){
  }else if(previous?.operatorUrl&&previous.consoleId===value.consoleId&&value.state==='OPEN'){
   value={...value,operatorUrl:previous.operatorUrl};
  }
- S.merchant=value;renderMerchantPanel();
+ S.merchant=value;renderMerchantPanel();return true;
 }
 function bindMerchantPanel(){
- const change=()=>{S.merchantStage=get('merchant-stage');S.merchant=null;renderMerchantPanel();};
+ const change=()=>{S.merchantStage=get('merchant-stage');S.merchantEpoch++;S.merchant=null;renderMerchantPanel();};
  $('#merchant-stage')?.addEventListener('change',change);
- $('#merchant-known-stage')?.addEventListener('change',()=>{S.merchantStage=get('merchant-known-stage');S.merchant=null;renderMerchantPanel();});
+ $('#merchant-known-stage')?.addEventListener('change',()=>{S.merchantStage=get('merchant-known-stage');S.merchantEpoch++;S.merchant=null;renderMerchantPanel();});
  $('#merchant-inspect')?.addEventListener('click',()=>guarded(async()=>{
-  const input=merchantInput(true);S.merchant=null;acceptMerchant(await read('merchant.release',input));
-  note('The exact original release, dataset and preparation are selected.');
+  const input=merchantInput(true),selection=merchantSelection();S.merchant=null;
+  if(acceptMerchant(await read('merchant.release',input),selection))note('The exact original release, dataset and preparation are selected.');
  }));
  $('#merchant-status')?.addEventListener('click',()=>guarded(async()=>{
-  const input=merchantInput();acceptMerchant(await read('merchant.status',input));
-  note('Current original merchant and release-store status loaded.');
+  const input=merchantInput(),selection=merchantSelection();
+  if(acceptMerchant(await read('merchant.status',input),selection))note('Current original merchant and release-store status loaded.');
  }));
  $('#merchant-open')?.addEventListener('click',()=>guarded(async()=>{
-  const input=merchantInput(true);acceptMerchant(await read('merchant.open',input));
-  note('The original merchant console is ready. Open its private link to operate the reviewed release.');
+  const input=merchantInput(true),selection=merchantSelection();
+  if(acceptMerchant(await read('merchant.open',input),selection))note('The original merchant console is ready. Open its private link to operate the reviewed release.');
  }));
  $('#merchant-close')?.addEventListener('click',()=>guarded(async()=>{
   const consoleId=S.merchant?.consoleId;if(!consoleId)throw Error('Refresh the current owned console identity.');
-  const result=await read('merchant.close',{consoleId});S.merchant=result;renderMerchantPanel();
-  acceptMerchant(await read('merchant.status',merchantInput()));
-  note('The original owned merchant and console are closed; retained release and study history remain available.');
+  const input=merchantInput(),selection=merchantSelection();
+  const result=await read('merchant.close',{consoleId});
+  if(!acceptMerchant(result,selection))return;
+  if(acceptMerchant(await read('merchant.status',input),selection))note('The original owned merchant and console are closed; retained release and study history remain available.');
  }));
 }
 
