@@ -1138,6 +1138,42 @@ starforge research-protocol-review receive \
 
 The original typed attachment exposes `ResearchWorkspaceClient.studyProtocol()` for inspect, prepare, reconcile and receive. It shares the existing workspace identity and request lifecycle. The [complete operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md) gives all client inputs, source-file choices, request recovery and revision-specific HTML, Markdown and editable-dossier downloads.
 
+## Review original RIS source editions
+
+Open a dossier in the running Research listener and choose **RIS sources**. Select the question, retain each complete source file with its filename, encoding and source/query provenance, and prepare the edition. The review exposes the original occurrences, repeated and unknown tags, parser diagnostics and duplicate groups. Record the selection, evidence classification, full note and duplicate decision before receiving the edition.
+
+The browser saves the complete draft in its own storage and can download or reopen that complete draft as a recovery file. Wait for its saved status before closing a working tab. Receiving first freezes the full request, original source, reviewed plan and base dossier revision. A changed dossier revision requires review of the actual new revision. A lost response is recovered through the original saved request; retain its ID and complete body.
+
+The installed commands use the same listener and dossier:
+
+~~~sh
+starforge research-ris ris-list \\
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER"
+
+starforge research-ris ris-prepare \\
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+  --input "$RIS_PRIVATE/files-and-review.json"
+
+starforge research-ris ris-request \\
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+  --request "$RIS_ORIGINAL_REQUEST"
+
+starforge research-ris ris-export \\
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+  --edition "$RIS_EDITION" --format source --out "$RIS_PRIVATE/original-source.json"
+
+starforge research-ris ris-export-comparison \\
+  --connection-file "$RIS_CONNECTION" --directory "$RIS_STORE" --id "$RIS_DOSSIER" \\
+  --before "$RIS_EARLIER_EDITION" --after "$RIS_LATER_EDITION" \\
+  --format html --out "$RIS_PRIVATE/edition-comparison.html"
+~~~
+
+Use the actual connection file and owned store directory from the original listener. Set each placeholder to the selected dossier, original request, edition or new private output. The same verbs are available through `starforge research-client`. `ris-prepare-source` operates a retained complete source declaration; `ris-preview` and `ris-receive` accept the full reviewed request file. The [full RIS operations guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/OPERATING_GUIDE.md) gives the source/review input fields, limits, receipt recovery and export commands.
+
+For application code, use `ResearchWorkspaceClient.risSources()`; its methods retain the original connection identity and source/revision bindings. The installed `./buyer/research-dossiers/ris/client` entry exports the original client factory. The Merchant Research attachment provides seven RIS tools and eleven export forms through its existing retained-file API. It preserves the original Research Commerce, extraction, appraisal, citation and eligibility tools.
+
+A later review may retain or deselect earlier selections according to its explicit reviewed choice. Compare the two received editions and save JSON, HTML or Markdown comparison exports. Original document and record downloads retain their exact bytes; selected RIS is a declared derived UTF-8 representation. Export a specific dossier revision when a report must retain its before, reviewed or later state. The complete portable dossier carries these editions and review histories.
+
 ## Operating source
 
 - [Citation update review, complete browser drafts and selected reports](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)

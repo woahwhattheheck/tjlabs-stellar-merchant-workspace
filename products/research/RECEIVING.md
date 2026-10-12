@@ -905,6 +905,36 @@ The complete handover contains `ENGINE_SOURCE.json`, every selected engine file,
 
 For the existing customer's receiving continuation, retain the original inspection, `REVIEW.json`, reconciled import state, `RECEIVED.json`, selected report downloads and full handover beside the original operation's outputs. Reopen the editable dossier through the existing Research workspace and verify that the same source edition, methods findings and original history are present. A repeated save uses the original source/request identity; a genuinely changed source or question begins an explicit new review directory.
 
+## 17. Receive the complete RIS source review
+
+The RIS handover contains the complete selected engine source, original provider response carrier, both source editions and their decisions, full browser recovery artifacts, retained Merchant exports and a separately reopened editable dossier. Start with `RIS_NATIVE_COMPLETE.json` and `DELIVERY_MANIFEST.json` for this operation's actual files and revisions. The [full RIS receiving guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/RECEIVING_GUIDE.md) describes every package directory, original input, receiving example and verification command.
+
+For a new receiving operation, use the supplied `RECEIVING_SELECTION.example.json`. Select the actual Node 24+, Python, Playwright and Chromium paths, the complete source root and exact engine-manifest hash, the unchanged original input carrier, and a new owned private run directory. Preserve the original selection and IDs when continuing the existing operation.
+
+~~~sh
+starforge research-ris-receiving \\
+  --selection /ABSOLUTE/PRIVATE/RIS_SELECTION.json
+~~~
+
+This is the original complete programme: it receives the baseline, operates the actual browser draft/reload/recovery/revision-conflict workflow, recovers a committed request after its response is lost, reads and exports through the same Merchant attachment, and closes the listener before fresh-process portable receiving. Its final file inventory selects the complete customer result. It uses the exact retained provider carrier and explicitly labelled local duplicate in that selected example; a later review does not reacquire those sources.
+
+After that original result is complete, package and independently inspect it using the full source supplied by the selection:
+
+~~~sh
+python3 "$RIS_ROOT/ris-source/package.py" \\
+  --selection /ABSOLUTE/PRIVATE/RIS_SELECTION.json \\
+  --output /ABSOLUTE/PRIVATE/Research_RIS_Operations_20261012.zip
+
+python3 "$RIS_ROOT/ris-source/package.py" \\
+  --verify /ABSOLUTE/PRIVATE/Research_RIS_Operations_20261012.zip
+~~~
+
+Set `RIS_ROOT` to the actual selected `research-dossiers` source directory. The archive includes the original source manifest, all engine members and original modes, complete native result, response carrier, selection, guides and each explicit customer output. An identical existing archive is verified and reused. The original private working stores and connection material stay with their operation; editable portable outputs are selected explicitly for the delivery.
+
+To reopen an exported dossier, start the delivered original Research listener in a new private receiving directory and run `starforge research-client reopen` with that listener's connection file and directory, the selected complete JSON/gzip portable and its SHA256. Inspect **RIS sources**, original records, review decisions and edition comparison in the reopened browser. The [operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/OPERATING_GUIDE.md) includes the full listener and CLI commands. A new receiving edit can be exported through the original revision-selected dossier export route.
+
+The current installed Research source and its full engine manifest are selected explicitly for this workflow. Earlier frozen protocol, Citation and Europe PMC programmes retain their own source and request identities. The preceding chapters remain the operating paths for those original products.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
