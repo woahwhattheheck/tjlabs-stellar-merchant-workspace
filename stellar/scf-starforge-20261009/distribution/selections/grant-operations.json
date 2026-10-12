@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning and delivery calendars with complete source-table authoring, contributor delivery and cash, complete timesheet and supplier invoice source intake, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases.",
+  "description": "Original grant planning and delivery calendars with complete source-table authoring, contributor delivery and cash, complete timesheet and supplier invoice source intake, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, merchant settlement and period-close cash attribution with reviewed corrections, customer installation commissioning, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases.",
   "base": {
     "commands": [
       "installation",
@@ -56,7 +56,8 @@
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
     "stellar/scf-starforge-20261009/distribution/python-runtime",
     "stellar/scf-starforge-20261009/sf46-release",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting"
   ],
   "supportFiles": [
     "stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md",
@@ -184,14 +185,16 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace-recovery.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace.mjs",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/native-reconcile.mjs",
-    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs"
+    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs",
+    "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/route-path.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grant Operations: retained plans, payment-derived delivery calendars, native currencies and sourced FX, statement receiving, delivery/cash forecasting and resource portfolios, buyer/support sources, customer installations, implementation evidence and receiving, cohort reviews and tranche completion.",
+    "description": "Grant Operations: retained plans, payment-derived delivery calendars, native currencies and sourced FX, statement receiving, delivery/cash forecasting and resource portfolios, buyer/support sources, original merchant settlements and cash corrections, customer installations, implementation evidence and receiving, cohort reviews and tranche completion.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

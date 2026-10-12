@@ -11,6 +11,8 @@ from operations_commercial_http import handle as commercial_http
 
 
 def register_static(static):
+    static.update({"/operations_settlements.mjs": ("operations_settlements.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_settlements.css": ("operations_settlements.css", "text/css; charset=utf-8")})
     static.update({"/operations_work_intake.mjs": ("operations_work_intake.mjs", "text/javascript; charset=utf-8"),
                    "/operations_work_intake.css": ("operations_work_intake.css", "text/css; charset=utf-8")})
     static.update({"/operations_commercial.mjs": ("operations_commercial.mjs", "text/javascript; charset=utf-8"),
@@ -65,6 +67,17 @@ def read(handler, parsed):
     path = parsed.path
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
+        return True
+    settlement_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/settlements(?:/(settlement-[a-f0-9]{32})(/export)?)?", path)
+    if settlement_match:
+        ident, review_id, export = settlement_match.groups()
+        if review_id is None:
+            handler.send(200, ops.settlements(ident))
+        elif export:
+            handler.send(200, ops.export_settlement(ident, review_id), "application/zip", review_id + "-settlement.zip")
+        else:
+            handler.send(200, ops.settlement(ident, review_id))
         return True
     match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
@@ -215,11 +228,12 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
-        methods = {"command": ops.command, "work-intake-preview": ops.preview_work_intake, "ledger-intake-inspect": ops.inspect_ledger_intake,
+        methods = {"command": ops.command, "settlement/preview": ops.preview_settlement,
+                   "settlement/correction-preview": ops.preview_settlement_correction, "work-intake-preview": ops.preview_work_intake, "ledger-intake-inspect": ops.inspect_ledger_intake,
                    "ledger-intake-preview": ops.preview_ledger_intake, "ledger-intake-apply": ops.apply_ledger_intake,
                    "statement-preview": ops.preview_statement, "implementation-source": ops.seed_implementation,
                    "implementation-preview": ops.preview_implementation, "cohort-seed": ops.seed_cohort, "cohort-preview": ops.preview_cohort, "installation-seed": ops.seed_installation,

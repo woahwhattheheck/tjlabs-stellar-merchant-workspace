@@ -10,6 +10,12 @@ The complete Merchant setup, tools, input references, source-bound pages, downlo
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
 
+## Original merchant settlements
+
+The browser, CLI and typed client now receive original merchant accounting, period-close and accountant sources into the same case. Use settlementPreview for source inspection and a full selected cash preview, settlementReceive for the original atomic save, and settlementCorrectionPreview/settlementCorrect for reviewed corrections. Read saved editions with read('settlements') and read('settlement'); download('settlement') returns their complete source handover. Adjacent TypeScript declarations retain exact decimal strings, settlement IDs, original cash records and both preview shapes.
+
+[Merchant settlements](SETTLEMENTS.md) covers the complete row decisions, original asset units, separate USD valuation, existing-cash links, correction lifecycle, native routes, CLI, MCP and full-case receiving.
+
 ## Direct API
 
 First call inspectGrantAgentBinding with directory and optional scenarioFile, pythonExecutable, allowStart and label. It reads the original host selection without launching a process. Construct a GrantWorkspaceClient from that result.

@@ -53,6 +53,7 @@ BOOT_FILES = (
     "operations_intake.py",
     "operations_support.py",
     "operations_buyer.py",
+    "operations_settlement.py",
     "operations_commercial_receivables.py",
     "operations_commercial_adapter.py",
     "operations_commercial_http.py",
@@ -86,6 +87,8 @@ BOOT_FILES = (
     "operations_support.mjs",
     "operations_buyer.mjs",
     "operations_buyer.css",
+    "operations_settlements.mjs",
+    "operations_settlements.css",
     "operations_completion.mjs",
     "operations_completion.css",
     "operations_calendar.mjs",
@@ -111,6 +114,7 @@ BOOT_FILES = (
     "support_handoff.mjs","implementation_handoff.mjs",
     "buyer_handoff.mjs",
     "node_buyer_handoff.mjs",
+    "merchant_settlement_handoff.mjs",
     "agent-client.mjs",
     "agent-contracts.mjs"
 )

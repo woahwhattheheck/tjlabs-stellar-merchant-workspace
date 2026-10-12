@@ -375,6 +375,23 @@ Use `merchant_grant_export` with `kind: "delivery-calendar"` and `format: "ics"`
 
 The typed client exposes `read('delivery-calendar', selection)` and `download('delivery-calendar', {...selection, format})`. See [Calendar operation and date meanings](../../stellar/scf_2026/sf47_budget_model/workspace/CALENDAR.md).
 
+## Receive merchant settlements and continue their corrections
+
+The settlement tools operate the existing merchant accounting and SF47 cash engines. Select the complete original plain TAR through the same declared input/whole-file SHA mechanism as other source receiving:
+
+| Tool | Native operation |
+| --- | --- |
+| merchant_grant_settlement_preview | Inspect the complete original source; supply both name and selections for its exact pre-save cash and delivery preview. |
+| merchant_grant_settlement_receive | Save the same source, name, selections, expectedPreviewSha256, case version and original request. |
+| merchant_grant_settlements / merchant_grant_settlement | Read source review editions, complete original rows, current cash and correction history. |
+| merchant_grant_settlement_correction_preview | Review the latest saved source row, expectedCashId and explicit correction. |
+| merchant_grant_settlement_correct | Save the exact reviewed correction under its original request and preview SHA. |
+| merchant_grant_export, kind settlement | Retain the complete selected review, original source and native inspection for existing download/byte paging. |
+
+Saved review IDs use settlement- followed by 32 lowercase hexadecimal characters. Receiving choices are RECORD_CASH, LINK_CASH, OBSERVE and OMIT. Cash dates, native units, asset precision, USD valuation and deployment/work associations are explicit native inputs. LINK_CASH retains the original cash values. CORRECT_CASH, VOID_CASH and RELINK create successor reviews in the existing source/event history.
+
+The complete case export retains every settlement source, correction and cash/event history. Use the original case importer to continue it in another declared workspace. [Merchant settlements](../../stellar/scf_2026/sf47_budget_model/workspace/SETTLEMENTS.md) contains all exact bodies, limits, browser operations, CLI commands, typed interfaces and recovery behavior.
+
 ## Export, transfer and receive the complete work
 
 merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, customer installation ZIP, implementation-evidence ZIP or exact original member, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios, all immutable customer installation editions, implementation reviews and cohort/completion history.
