@@ -4,6 +4,10 @@ The **Customer installations** desk completes the commissioning-to-receiving wor
 
 Each save appends an immutable edition. A later source observation or installation edit leaves earlier editions readable. The complete original Operations ZIP carries every saved edition, the native planner history, the case event history and all retained attachments. **Export complete handover** also includes a selected-edition marker and a readable offline installation document. Importing that ZIP opens the selected edition in the receiving case.
 
+## Delivery assignments and queue
+
+Each saved installation may carry `document.coordination`: its delivery assignee, target date, priority and note, plus per-check overrides and prerequisites. This metadata travels with the complete installation document through the existing preview/save and receiving workflow. [Installation delivery queue](DELIVERY_QUEUE.md) explains the fields, current-edition work view, typed client, CLI, MCP and complete dated handover.
+
 ## Operate the complete workflow
 
 1. Open the existing **Grant planning and delivery** application and select its retained operating case. Use the existing Merchant support, Native buyer receiving and Sources controls to receive original files and records. The native source owner keeps the original workorder and commercial terms.
