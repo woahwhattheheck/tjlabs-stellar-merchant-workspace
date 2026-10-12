@@ -188,7 +188,10 @@ export async function receiveOriginalGrpcProduct({ runtimeDirectory, nativeWorkD
       await save(); await onProgress({ operation: OPERATION, originalRunId: identity.runId, phase: name, state: 'COMPLETE' });
       return value;
     };
-    const before = await callObservation(identity); session.before = before; await save();
+    const observedCalls = await callObservation(identity);
+    if (result.originalCallObservation === undefined) { result.originalCallObservation = observedCalls; await save(); }
+    equal(observedCalls, result.originalCallObservation, 'Continue the original endpoint journal retained before installed receiving.');
+    const before = result.originalCallObservation; session.before = observedCalls; await save();
     const env = await nativeEnvironment(nativeWorkDirectory, environment);
     try {
       await step('installed-product-on-original-workspace', async () => {
