@@ -15,10 +15,32 @@ const same=(a,b)=>canonicalJson(a)===canonicalJson(b);
 const fail=(message,code='LAB_RESULT_RECEIVING')=>{throw Object.assign(new Error(message),{code});};
 const need=(condition,message)=>{if(!condition)fail(message);};
 const SOURCE_FILES=[
-  'received-result-receiving.mjs','received-result.mjs','received-result-page.mjs','cli.mjs',
-  'result.mjs','model.mjs','table.mjs','zip.mjs','reconciliation.mjs','reconciliation-profile.mjs',
-  '../../sf88-operator-buyer-cli/node/store.mjs',
-  '../../sf88-operator-buyer-cli/resource-library/files.mjs',
+  "../../sf88-operator-buyer-cli/node/store.mjs",
+  "../../sf88-operator-buyer-cli/resource-library/files.mjs",
+  "../wqx-water-quality/jobs/archive.mjs",
+  "application.mjs",
+  "cli.mjs",
+  "decisions.mjs",
+  "local.mjs",
+  "model.mjs",
+  "profiles.mjs",
+  "profiles/dts8.mjs",
+  "profiles/equis.mjs",
+  "received-result-page.mjs",
+  "received-result-receiving.mjs",
+  "received-result.mjs",
+  "reconciliation-application.mjs",
+  "reconciliation-editor.mjs",
+  "reconciliation-profile.mjs",
+  "reconciliation-report.mjs",
+  "reconciliation-table.mjs",
+  "reconciliation.mjs",
+  "report-client.mjs",
+  "report.mjs",
+  "result.mjs",
+  "table.mjs",
+  "workbook.mjs",
+  "zip.mjs"
 ];
 async function directory(path,{create=true}={}){
   path=await privateDirectory(absolute(path),{create});
