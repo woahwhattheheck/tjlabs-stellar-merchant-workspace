@@ -12,6 +12,11 @@ export default defineMerchantProvider({
   tools: accountingTools,
   instructions: [
     {
+      prefix: 'merchant_accounting_buyer_',
+      text: 'For a declared sourceMode buyer alias, preview the exact original buyer source and keep its SHA256 before explicit initialization. Initialization and first-handoff recovery reuse the original retained source and handoff UUID. Use buyer_startup and buyer_prepare after reopening, retain the complete first-handoff request before submission, and use the existing accountant and Xero operations for returned bookkeeping references. Read original source bytes with file kind buyer-source. Close MCP before opening the same directory in the original browser or managed Applications; the native maintenance workflow retains its original complete operating state.',
+      order: 35
+    },
+    {
       prefix: 'merchant_accounting_portfolio_',
       text: 'For a client portfolio, open the original coordinator and its configured client aliases. Commission exact client procedure editions and real source revisions, preview named staff capacity, then retain the complete prepared coordinator request before execute. A command save retains a separate original child UUID; read the complete saved command before execute_command and reconcile that same client operation after an uncertain reply. Responsibility changes use the original assignment digest and a complete handover note. Capture full selected client periods, receive their separate packets into their original destination workspaces, and adopt explicit local aliases before creating the next period. Close the coordinator and all explicitly opened client sessions before starting the same complete selection in Applications.',
       order: 43
