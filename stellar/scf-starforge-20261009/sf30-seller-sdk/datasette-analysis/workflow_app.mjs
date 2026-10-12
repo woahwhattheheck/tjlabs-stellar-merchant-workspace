@@ -3,7 +3,7 @@ const tokenKey = 'source-workflow-connection:' + location.origin;
 let token = location.hash.slice(1);
 try { if (token) sessionStorage.setItem(tokenKey, token); else token = sessionStorage.getItem(tokenKey) || ''; } catch {}
 history.replaceState(null, '', location.pathname);
-const state = {configuration: null, requests: [], selected: null, detail: null, tab: 'request', generation: 0, loading: false};
+const state = {configuration: null, requests: [], selected: null, detail: null, tab: 'request', generation: 0, loading: false, actions: new Set()};
 const draftKey = 'source-workflow-draft:' + location.origin;
 const labels = {RECEIVED: 'Received', RUNNING: 'Processing', FAILED: 'Continue required', RESULT_READY: 'Result ready', PUBLISHED: 'Published', DELIVERED: 'Customer received'};
 function message(text, error = false) { $('notice').textContent = text; $('notice').className = 'visible' + (error ? ' error' : ''); }
@@ -13,6 +13,8 @@ function size(bytes) { return bytes < 1024 ? bytes + ' B' : bytes < 1048576 ? (b
 function button(text, action, className = 'secondary') { const e = document.createElement('button'); e.type = 'button'; e.textContent = text; e.className = className; e.addEventListener('click', action); return e; }
 function textNode(tag, text, className) { const e = document.createElement(tag); e.textContent = text; if (className) e.className = className; return e; }
 function route(id, action = '') { return '/api/requests/' + encodeURIComponent(id) + (action ? '/' + action : ''); }
+function actionKey(id, name) { return JSON.stringify([id, name === 'export-supplier' ? 'export' : name]); }
+function busy(id, name) { return state.actions.has(actionKey(id, name)); }
 async function api(path, body) {
   const response = await fetch(path, {method: body === undefined ? 'GET' : 'POST', headers: {'X-Workflow-Capability': token, ...(body === undefined ? {} : {'Content-Type': 'application/json'})}, body: body === undefined ? undefined : JSON.stringify(body)});
   const value = await response.json();
@@ -73,6 +75,15 @@ function renderDetail(detail) {
   const result = detail.result;
   $('result-summary').textContent = result ? (result.analysis?.status === 'PARTIAL' ? 'The native report returned a partial outcome. Review its query limits and report details below.' : 'Complete native files from this original source and report operation.') : 'Run or continue the request to acquire its source and reports.';
   $('edition').textContent = pretty(result?.edition); $('analysis').textContent = pretty(result?.analysis); $('native-ids').textContent = pretty(result?.nativeIds);
+  const supplier = result?.supplier;
+  $('supplier-review').hidden = !supplier;
+  $('supplier-comparison').replaceChildren();
+  if (supplier) $('supplier-comparison').append(table(
+    ['Supplier request', 'Comparison', 'Revision', 'Review status'],
+    [[supplier.requestId, supplier.comparisonId, supplier.revision, supplier.status]]
+  ));
+  $('export-supplier').disabled = !result;
+
   filesView($('result-files'), detail.requestId, result ? [...(result.files || []), ...(result.archive ? [result.archive] : [])] : []);
   filesView($('exports'), detail.requestId, detail.exports || []);
   $('export').disabled = !result; $('prepare-jms').disabled = !result || !state.configuration?.jms;
@@ -87,6 +98,10 @@ function renderDetail(detail) {
     const summary = document.createElement('summary'); summary.append(textNode('strong', event.kind.replaceAll('_', ' ')), textNode('time', timestamp(event.at)));
     line.append(summary, textNode('pre', pretty(event.value))); $('history').append(line);
   }
+  for (const name of ['run', 'export', 'export-supplier', 'prepare-jms', 'callback']) {
+    if (busy(detail.requestId, name)) $(name).disabled = true;
+  }
+  $('record-return').disabled = busy(detail.requestId, 'record-return');
   selectTab(state.tab);
 }
 async function select(id) {
@@ -117,10 +132,15 @@ function intake(open = true) { $('intake').hidden = !open; if (open) $('request-
 function readDraft() { try { return JSON.parse(localStorage.getItem(draftKey) || '{}'); } catch { return {}; } }
 function storeDraft() { try { localStorage.setItem(draftKey, JSON.stringify({id: $('request-id').value, correlation: $('correlation-id').value, parameters: $('parameters').value, parent: $('parent-request-id').value})); } catch {} }
 async function act(name, action) {
-  const control = $(name), id = state.selected; if (!id) return;
-  control.disabled = true;
+  const control = $(name), id = state.selected; if (!id || busy(id, name)) return;
+  const key = actionKey(id, name);
+  state.actions.add(key); control.disabled = true;
+  if (state.detail?.requestId === id) renderDetail(state.detail);
   try { await action(id); await refresh(); } catch (error) { message(error.message, true); }
-  finally { control.disabled = false; if (state.detail && state.selected === state.detail.requestId) renderDetail(state.detail); }
+  finally {
+    state.actions.delete(key); control.disabled = false;
+    if (state.detail && state.selected === state.detail.requestId) renderDetail(state.detail);
+  }
 }
 $('search').addEventListener('input', renderList);
 $('refresh').addEventListener('click', () => refresh());
@@ -147,7 +167,11 @@ $('successor').addEventListener('click', () => {
   $('parent-request-id').value = request.requestId; storeDraft(); intake();
 });
 $('run').addEventListener('click', () => act('run', async id => { await api(route(id, 'run'), {}); message('The original native operation is running. Source and report progress remains in its history.'); }));
-$('export').addEventListener('click', () => act('export', async id => { message('Preparing the complete editable project…'); const value = await api(route(id, 'export'), {}); await download(id, {...value.archive, contentType: 'application/zip'}); }));
+for (const control of ['export', 'export-supplier']) $(control).addEventListener('click', () => act(control, async id => {
+  message('Preparing the complete editable project…');
+  const value = await api(route(id, 'export'), {});
+  await download(id, {...value.archive, contentType: 'application/zip'});
+}));
 $('prepare-jms').addEventListener('click', () => act('prepare-jms', async id => {
   const existing = state.detail.publications.find(p => p.kind === 'JMS' && p.status === 'PREPARED');
   const attemptId = existing?.attemptId || 'jms-' + crypto.randomUUID();
