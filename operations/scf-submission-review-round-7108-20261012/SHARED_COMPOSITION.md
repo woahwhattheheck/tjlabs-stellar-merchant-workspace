@@ -4,7 +4,7 @@ This packet gives the original serial integration owner complete source bodies f
 
 ## Selected source and ownership
 
-The review source is the unchanged final PR352 edition. The original submission handover is the complete eleven-file source map 5b57e9f66be70a860377855822538a9798efd3df from SCF-SUBMISSION-HANDOVER-1B40-20261012. The current funding-report front, companion and mapper are the original complete source map c0399986f092603008dcf96de2de644345d198b5 from SCF-FEDERAL-FUNDING-REPORT-DELIVERY-64B7-20261012.
+The review source is the unchanged final PR352 edition. The original submission handover is the complete eleven-file source map d719c33f7210d457b62e309b0e0878dde68e1b7c from SCF-SUBMISSION-HANDOVER-1B40-20261012. The current funding-report front, companion and mapper are the original complete source map c0399986f092603008dcf96de2de644345d198b5 from SCF-FEDERAL-FUNDING-REPORT-DELIVERY-64B7-20261012.
 
 The whole shared composer is based on 703e1052c8ee894f879dea2472ab48638bf6cb1b. Its original financial, economic, coastal, Datasette, customer projection and guided opening remain intact. The browser manifest starts from all 81 routes in 35956aeaa825f4ecb189e0fa7a83460c264d65e6. The original native editor starts from the complete handover HTML fac3ec5a17c0ef8ed02bbce2d47cfa3bd56ad5f6, which carries the current planning and handover controls.
 
@@ -54,3 +54,7 @@ At 18:27:07 UTC the actual original source-selection and distribution compositio
 Earlier complete model receiving performed 33 retained actions and independently received the exact full review. The current planning and handover native models accepted all three original full draft fixtures unchanged. The two independent source reviews accepted the corrected browser continuation.
 
 These are actual source-function results. The selected original Page owner records its full browser, installed runtime and deployment observations through the existing operating callbacks. Keep those results separate from the source and model completion already retained here.
+
+## Retained final handover receiving callback
+
+This complete successor preserves 1B40's final original-Page handover callback, Git blob bbc55b0462167b9430cd40ee7fe424b141cf1929. Its completed download returns the published destination, and a completed retry checks the caller's expected draft identity. All ten other original handover bodies and all six shared reviewer postimages are unchanged. The original source-function results above remain their actual earlier observations; the final callback was independently read back, hashed and parsed, without a browser run. The earlier complete source packet remains retained at commit b44de09b89f5312b8b38b1b200c9dd230cda762a.
