@@ -1,0 +1,78 @@
+{
+  "name": "@tokenjunkielabs/starforge-merchant",
+  "version": "0.1.0-source.gc9cf3464cf73.selection.resource-reading",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Resource research, editable reading and complete source handover",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "bin": {
+    "starforge": "./source/stellar/scf-starforge-20261009/distribution/cli.mjs"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./manifest.json": "./manifest.json",
+    "./buyer/research": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/engine.mjs"
+    },
+    "./buyer/research/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/client.mjs"
+    },
+    "./buyer/research/reports": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/reports.mjs"
+    },
+    "./buyer/research/server": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/server.mjs"
+    },
+    "./buyer/reading-exchange": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/exchange.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/exchange.mjs"
+    },
+    "./buyer/reading-exchange/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/client.mjs"
+    },
+    "./buyer/reading-exchange/server": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/server.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/server.mjs"
+    }
+  },
+  "files": [
+    "source/",
+    "manifest.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@x402/core": "2.28.0",
+    "@x402/stellar": "2.28.0",
+    "@x402/extensions": "2.28.0",
+    "@stellar/stellar-sdk": "^16.3.0"
+  },
+  "peerDependenciesMeta": {
+    "@x402/core": {
+      "optional": true
+    },
+    "@x402/stellar": {
+      "optional": true
+    },
+    "@x402/extensions": {
+      "optional": true
+    },
+    "@stellar/stellar-sdk": {
+      "optional": true
+    }
+  },
+  "optionalDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.git",
+    "directory": ""
+  }
+}

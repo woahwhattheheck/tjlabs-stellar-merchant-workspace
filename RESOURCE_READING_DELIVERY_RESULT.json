@@ -1,0 +1,422 @@
+{
+  "schema": "stellar-forge.resource-reading-delivery.v1",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "c9cf3464cf73e3713163022a1bc51a186619374f",
+    "tree": "f6250b684fb751bb19f37faf9a47b5549904919f"
+  },
+  "operation_id": "DFF77_RESOURCE_READING_PRODUCT_20261012",
+  "python": "3.12.14",
+  "steps": [
+    {
+      "operation": "Receive the exact original Git objects",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/dev/dff77-resource-reading-f_pwo3kk/git-object-receiving.py",
+        "--metadata",
+        "/dev/dff77-resource-reading-f_pwo3kk/metadata.json",
+        "--commit",
+        "c9cf3464cf73e3713163022a1bc51a186619374f",
+        "--directory",
+        "/dev/dff77-resource-reading-f_pwo3kk/receiving",
+        "--incoming",
+        "/dev/dff77-resource-reading-f_pwo3kk/incoming",
+        "--materialize",
+        "/dev/dff77-resource-reading-f_pwo3kk/source"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema\":\"stellar-forge.git-object-cache.v1\",\"directory\":\"/dev/dff77-resource-reading-f_pwo3kk/receiving\",\"source\":{\"repository\":\"woahwhattheheck/tjlabs-stellar-merchant-workspace\",\"commit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"tree\":\"f6250b684fb751bb19f37faf9a47b5549904919f\"},\"metadataSha256\":\"00fbffe2b90d3c05bf62e055b8b15ee1b9efc4edb744662a51cc5e22d9ce3ec0\",\"createdAt\":\"2026-10-12T21:15:35.505226+00:00\",\"phase\":\"OBJECTS_AVAILABLE\",\"updatedAt\":\"2026-10-12T21:15:36.227607+00:00\",\"repository\":\"/dev/dff77-resource-reading-f_pwo3kk/receiving/repository.git\",\"gitTreeEntries\":10323,\"verifiedTreeObjects\":1166,\"requiredPaths\":100,\"requiredBytes\":1068276,\"additionalPaths\":[],\"writtenObjects\":1267,\"writtenRawBytes\":1565918,\"donors\":[{\"kind\":\"received-blobs\",\"directory\":\"/dev/dff77-resource-reading-f_pwo3kk/incoming\",\"objects\":100}],\"missingObjects\":0,\"missingBytes\":0,\"materializedFiles\":100,\"sourceDirectory\":\"/dev/dff77-resource-reading-f_pwo3kk/source\"}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Original Node runtime",
+      "command": [
+        "node",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "v24.19.0\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Build the original selected product",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/source/stellar/scf-starforge-20261009/distribution/build.mjs",
+        "--repo",
+        "/dev/dff77-resource-reading-f_pwo3kk/receiving/repository.git",
+        "--ref",
+        "c9cf3464cf73e3713163022a1bc51a186619374f",
+        "--selection",
+        "resource-reading",
+        "--out",
+        "/dev/dff77-resource-reading-f_pwo3kk/build",
+        "--offline",
+        "--python",
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"status\": \"PACKAGED\",\n  \"packageName\": \"@tokenjunkielabs/starforge-merchant\",\n  \"packageVersion\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading\",\n  \"sourceCommit\": \"c9cf3464cf73e3713163022a1bc51a186619374f\",\n  \"sourceSelection\": {\n    \"id\": \"resource-reading\",\n    \"title\": \"Resource reading and handover\",\n    \"path\": \"stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n    \"gitBlob\": \"40189b616d53136c69878434f46451f98e83c8ce\",\n    \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\",\n    \"bytes\": 4645\n  },\n  \"archive\": \"/dev/dff77-resource-reading-f_pwo3kk/build/tokenjunkielabs-starforge-merchant-0.1.0-source.gc9cf3464cf73.selection.resource-reading.tgz\",\n  \"sha256\": \"d5d2f93d3f715eadbee056f5d92b8d4abca7619927088e5eda67e1a942e550af\",\n  \"integrity\": \"sha512-g3is6SXpfvh/yIYZ5HZSzjJLDsnP3waO2oPvv9A54NcM19gWqr6wzNyqJCC9i1Cp9YwmhfKmlDXwlSAVD/bHWw==\",\n  \"archiveBytes\": 253274,\n  \"installedBytes\": 1005812,\n  \"reusedArchive\": false,\n  \"sourceFiles\": 93,\n  \"sourceBytes\": 943319,\n  \"sourceAcquisition\": {\n    \"gitCommands\": 12,\n    \"gitMilliseconds\": 245.15,\n    \"metadataBatches\": 5,\n    \"contentBatches\": 5,\n    \"fetchBatches\": 0,\n    \"requestedObjects\": 94,\n    \"cachedObjects\": 94,\n    \"fetchedObjects\": 0,\n    \"uniqueBytes\": 944410,\n    \"elapsedMilliseconds\": 2147.06,\n    \"offline\": true\n  },\n  \"materialization\": {\n    \"copiedFiles\": 97,\n    \"resumedFiles\": 0,\n    \"reusedFiles\": 0,\n    \"writtenBytes\": 1005812\n  }\n}\n",
+      "stderr": "[starforge build] {\"phase\":\"resolve\",\"elapsedMilliseconds\":0.04}\n[starforge build] {\"phase\":\"resolved\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":126.6,\"treeFiles\":10323}\n[starforge build] {\"phase\":\"inspect\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":131.59,\"files\":1,\"objects\":1}\n[starforge build] {\"phase\":\"loaded\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":157.67,\"files\":1,\"objects\":1,\"bytes\":4645}\n[starforge build] {\"phase\":\"inspect\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":172.36,\"files\":6,\"objects\":5}\n[starforge build] {\"phase\":\"loaded\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":230.5,\"files\":6,\"objects\":5,\"bytes\":87012}\n[starforge build] {\"phase\":\"selected\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":325.07,\"files\":83,\"components\":2,\"contributions\":3,\"sourceSelection\":\"resource-reading\"}\n[starforge build] {\"phase\":\"inspect\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":325.68,\"files\":83,\"objects\":78}\n[starforge build] {\"phase\":\"loaded\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":363.96,\"files\":83,\"objects\":78,\"bytes\":695165}\n[starforge build] {\"phase\":\"inspect\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":494.8,\"files\":7,\"objects\":7}\n[starforge build] {\"phase\":\"loaded\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":519.96,\"files\":7,\"objects\":7,\"bytes\":138959}\n[starforge build] {\"phase\":\"inspect\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":614.42,\"files\":3,\"objects\":3}\n[starforge build] {\"phase\":\"loaded\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":630.44,\"files\":3,\"objects\":3,\"bytes\":18629}\n[starforge build] {\"phase\":\"materializing\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":801.34,\"files\":93,\"bytes\":943319,\"resume\":false}\n[starforge build] {\"phase\":\"materialized\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":1089.76,\"files\":64,\"totalFiles\":97,\"copiedFiles\":64,\"resumedFiles\":0,\"reusedFiles\":0,\"writtenBytes\":681754}\n[starforge build] {\"phase\":\"materialized\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":1156.26,\"files\":97,\"totalFiles\":97,\"copiedFiles\":97,\"resumedFiles\":0,\"reusedFiles\":0,\"writtenBytes\":1005812}\n[starforge build] {\"phase\":\"packing\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":1157.48,\"files\":97}\n[starforge build] {\"phase\":\"packaged\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"elapsedMilliseconds\":2150.09,\"files\":93,\"archiveBytes\":253274,\"sha256\":\"d5d2f93d3f715eadbee056f5d92b8d4abca7619927088e5eda67e1a942e550af\"}\n"
+    },
+    {
+      "operation": "Reopen the same completed package",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/source/stellar/scf-starforge-20261009/distribution/build.mjs",
+        "--repo",
+        "/dev/dff77-resource-reading-f_pwo3kk/receiving/repository.git",
+        "--ref",
+        "c9cf3464cf73e3713163022a1bc51a186619374f",
+        "--selection",
+        "resource-reading",
+        "--out",
+        "/dev/dff77-resource-reading-f_pwo3kk/build",
+        "--offline",
+        "--resume",
+        "--python",
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"status\": \"PACKAGED\",\n  \"packageName\": \"@tokenjunkielabs/starforge-merchant\",\n  \"packageVersion\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading\",\n  \"sourceCommit\": \"c9cf3464cf73e3713163022a1bc51a186619374f\",\n  \"sourceSelection\": {\n    \"id\": \"resource-reading\",\n    \"title\": \"Resource reading and handover\",\n    \"path\": \"stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n    \"gitBlob\": \"40189b616d53136c69878434f46451f98e83c8ce\",\n    \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\",\n    \"bytes\": 4645\n  },\n  \"archive\": \"/dev/dff77-resource-reading-f_pwo3kk/build/tokenjunkielabs-starforge-merchant-0.1.0-source.gc9cf3464cf73.selection.resource-reading.tgz\",\n  \"sha256\": \"d5d2f93d3f715eadbee056f5d92b8d4abca7619927088e5eda67e1a942e550af\",\n  \"integrity\": \"sha512-g3is6SXpfvh/yIYZ5HZSzjJLDsnP3waO2oPvv9A54NcM19gWqr6wzNyqJCC9i1Cp9YwmhfKmlDXwlSAVD/bHWw==\",\n  \"archiveBytes\": 253274,\n  \"installedBytes\": 1005812,\n  \"reusedArchive\": false,\n  \"sourceFiles\": 93,\n  \"sourceBytes\": 943319,\n  \"sourceAcquisition\": {\n    \"gitCommands\": 12,\n    \"gitMilliseconds\": 245.15,\n    \"metadataBatches\": 5,\n    \"contentBatches\": 5,\n    \"fetchBatches\": 0,\n    \"requestedObjects\": 94,\n    \"cachedObjects\": 94,\n    \"fetchedObjects\": 0,\n    \"uniqueBytes\": 944410,\n    \"elapsedMilliseconds\": 2147.06,\n    \"offline\": true\n  },\n  \"materialization\": {\n    \"copiedFiles\": 97,\n    \"resumedFiles\": 0,\n    \"reusedFiles\": 0,\n    \"writtenBytes\": 1005812\n  },\n  \"reused\": true\n}\n",
+      "stderr": "[starforge build] {\"phase\":\"reused\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"archive\":\"/dev/dff77-resource-reading-f_pwo3kk/build/tokenjunkielabs-starforge-merchant-0.1.0-source.gc9cf3464cf73.selection.resource-reading.tgz\",\"sha256\":\"d5d2f93d3f715eadbee056f5d92b8d4abca7619927088e5eda67e1a942e550af\"}\n"
+    },
+    {
+      "operation": "Receive the original complete package",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/dev/dff77-resource-reading-f_pwo3kk/source/stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+        "--archive",
+        "/dev/dff77-resource-reading-f_pwo3kk/build/tokenjunkielabs-starforge-merchant-0.1.0-source.gc9cf3464cf73.selection.resource-reading.tgz",
+        "--sha256",
+        "d5d2f93d3f715eadbee056f5d92b8d4abca7619927088e5eda67e1a942e550af",
+        "--out",
+        "/dev/dff77-resource-reading-f_pwo3kk/unpacked"
+      ],
+      "exit": 0,
+      "stdout": "{\"status\":\"SOURCE_UNPACKED\",\"packageDirectory\":\"/dev/dff77-resource-reading-f_pwo3kk/unpacked\",\"sourceRoot\":\"/dev/dff77-resource-reading-f_pwo3kk/unpacked/source\",\"packageName\":\"@tokenjunkielabs/starforge-merchant\",\"packageVersion\":\"0.1.0-source.gc9cf3464cf73.selection.resource-reading\",\"sourceCommit\":\"c9cf3464cf73e3713163022a1bc51a186619374f\",\"sourceFiles\":93,\"manifestSha256\":\"dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506\"}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Inspect the complete package through the original manager",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/unpacked/source/stellar/scf-starforge-20261009/distribution/cli.mjs",
+        "installation",
+        "inspect",
+        "/dev/dff77-resource-reading-f_pwo3kk/unpacked",
+        "--expect-manifest",
+        "dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"packageDirectory\": \"/dev/dff77-resource-reading-f_pwo3kk/unpacked\",\n  \"packageName\": \"@tokenjunkielabs/starforge-merchant\",\n  \"packageVersion\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading\",\n  \"sourceCommit\": \"c9cf3464cf73e3713163022a1bc51a186619374f\",\n  \"sourceRepository\": \"https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace\",\n  \"sourceManifestSha256\": \"dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506\",\n  \"sourceSelection\": {\n    \"id\": \"resource-reading\",\n    \"title\": \"Resource reading and handover\",\n    \"path\": \"stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n    \"gitBlob\": \"40189b616d53136c69878434f46451f98e83c8ce\",\n    \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\",\n    \"bytes\": 4645\n  },\n  \"sourceFiles\": 93,\n  \"sourceBytes\": 943319,\n  \"packageFiles\": 97,\n  \"packageBytes\": 1005812,\n  \"commands\": {\n    \"installation\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf46-release/package-cli.mjs\",\n      \"summary\": \"Original native installation command\"\n    },\n    \"buyer-research\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/cli.mjs\",\n      \"summary\": \"Search complete saved files, review passages, retain queries and export findings\"\n    },\n    \"reading-exchange\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/reading-exchange-command.mjs\",\n      \"summary\": \"Prepare original research selections, receive an editable reading project and return all source files and reports\"\n    },\n    \"reading\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/reading-command.mjs\",\n      \"summary\": \"Receive complete library files, search passages, edit reading lists, export and reopen offline\"\n    },\n    \"starforge\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/distribution/cli.mjs\",\n      \"summary\": \"Original toolkit initialization, workspace launch and source commands\"\n    }\n  },\n  \"commandCatalog\": {\n    \"path\": \"source/stellar/scf-starforge-20261009/distribution/distribution.json\",\n    \"sha256\": \"6cbe404b1da8714700d1142dd39796f368b7f28361f59b38476143c48c4ef015\",\n    \"inputs\": [\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/distribution.json\",\n        \"bytes\": 78706,\n        \"sha256\": \"6cbe404b1da8714700d1142dd39796f368b7f28361f59b38476143c48c4ef015\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/contributions/buyer-content-research.json\",\n        \"bytes\": 2629,\n        \"sha256\": \"27413f4cf354457a65294f4f17796e1b67f85e4ad3308793ce6976d835f2ea29\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/contributions/reading-exchange.json\",\n        \"bytes\": 3390,\n        \"sha256\": \"c72227adf2129773394a510db0883d1e03c212724360662f6c7bedffb6b8fbce\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/contributions/resource-reading.json\",\n        \"bytes\": 1196,\n        \"sha256\": \"e8676d79335c4dfb8122608ee459b3b68883788e63ea92ffe7400826e9b75067\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n        \"bytes\": 4645,\n        \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\"\n      }\n    ],\n    \"sourceSelection\": {\n      \"id\": \"resource-reading\",\n      \"title\": \"Resource reading and handover\",\n      \"path\": \"stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n      \"gitBlob\": \"40189b616d53136c69878434f46451f98e83c8ce\",\n      \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\",\n      \"bytes\": 4645\n    },\n    \"commands\": 4,\n    \"aliases\": [\n      \"starforge\"\n    ],\n    \"preservedMappings\": []\n  },\n  \"runtime\": {\n    \"minimumNodeMajor\": 22,\n    \"minimumNodeMinor\": 16,\n    \"nativePackages\": {\n      \"@x402/core\": \"2.28.0\",\n      \"@x402/stellar\": \"2.28.0\",\n      \"@x402/extensions\": \"2.28.0\"\n    },\n    \"nativePeers\": {\n      \"@x402/core\": {\n        \"version\": \"2.28.0\",\n        \"probe\": \"@x402/core/server\"\n      },\n      \"@x402/stellar\": {\n        \"version\": \"2.28.0\",\n        \"probe\": \"@x402/stellar/exact/server\"\n      },\n      \"@x402/extensions\": {\n        \"version\": \"2.28.0\",\n        \"probe\": \"@x402/extensions/bazaar\"\n      },\n      \"@stellar/stellar-sdk\": {\n        \"version\": \"^16.3.0\",\n        \"probe\": \"@stellar/stellar-sdk\"\n      }\n    },\n    \"adapterPackages\": {},\n    \"adapterPackageSources\": {},\n    \"adapterPackageHashes\": {},\n    \"featurePeers\": {},\n    \"optionalDependencies\": {},\n    \"doctorPath\": \"source/stellar/scf-starforge-20261009/distribution/cli.mjs\"\n  },\n  \"separateDependencyEntries\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Install the full selected customer edition",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/unpacked/source/stellar/scf-starforge-20261009/distribution/cli.mjs",
+        "installation",
+        "install",
+        "/dev/dff77-resource-reading-f_pwo3kk/unpacked",
+        "--home",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home",
+        "--expect-manifest",
+        "dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"state\": \"INSTALLED\",\n  \"home\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home\",\n  \"releaseId\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8\",\n  \"digest\": \"e66de852fbc80c8fc042dcda734d40e9b9ac7c99fe90202f14adf0eaa774c9a1\",\n  \"activeReleaseId\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8\",\n  \"staged\": false,\n  \"config\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home/config\",\n  \"merchantState\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home/state\",\n  \"releaseDirectory\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home/releases/0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8\",\n  \"packageName\": \"@tokenjunkielabs/starforge-merchant\",\n  \"packageVersion\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading\",\n  \"sourceCommit\": \"c9cf3464cf73e3713163022a1bc51a186619374f\",\n  \"sourceManifestSha256\": \"dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Reopen the installed command catalog",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "status"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"product\": \"Stellar Forge\",\n  \"activeReleaseId\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8\",\n  \"releaseDirectory\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home/releases/0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8\",\n  \"digest\": \"e66de852fbc80c8fc042dcda734d40e9b9ac7c99fe90202f14adf0eaa774c9a1\",\n  \"sourceCommit\": \"c9cf3464cf73e3713163022a1bc51a186619374f\",\n  \"files\": 99,\n  \"bytes\": 1040254,\n  \"commands\": {\n    \"installation\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf46-release/package-cli.mjs\",\n      \"summary\": \"Original native installation command\"\n    },\n    \"buyer-research\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/cli.mjs\",\n      \"summary\": \"Search complete saved files, review passages, retain queries and export findings\"\n    },\n    \"reading-exchange\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/reading-exchange-command.mjs\",\n      \"summary\": \"Prepare original research selections, receive an editable reading project and return all source files and reports\"\n    },\n    \"reading\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/reading-command.mjs\",\n      \"summary\": \"Receive complete library files, search passages, edit reading lists, export and reopen offline\"\n    },\n    \"starforge\": {\n      \"path\": \"source/stellar/scf-starforge-20261009/distribution/cli.mjs\",\n      \"summary\": \"Original toolkit initialization, workspace launch and source commands\"\n    }\n  },\n  \"commandCatalog\": {\n    \"path\": \"source/stellar/scf-starforge-20261009/distribution/distribution.json\",\n    \"sha256\": \"6cbe404b1da8714700d1142dd39796f368b7f28361f59b38476143c48c4ef015\",\n    \"inputs\": [\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/distribution.json\",\n        \"bytes\": 78706,\n        \"sha256\": \"6cbe404b1da8714700d1142dd39796f368b7f28361f59b38476143c48c4ef015\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/contributions/buyer-content-research.json\",\n        \"bytes\": 2629,\n        \"sha256\": \"27413f4cf354457a65294f4f17796e1b67f85e4ad3308793ce6976d835f2ea29\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/contributions/reading-exchange.json\",\n        \"bytes\": 3390,\n        \"sha256\": \"c72227adf2129773394a510db0883d1e03c212724360662f6c7bedffb6b8fbce\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/contributions/resource-reading.json\",\n        \"bytes\": 1196,\n        \"sha256\": \"e8676d79335c4dfb8122608ee459b3b68883788e63ea92ffe7400826e9b75067\"\n      },\n      {\n        \"path\": \"source/stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n        \"bytes\": 4645,\n        \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\"\n      }\n    ],\n    \"sourceSelection\": {\n      \"id\": \"resource-reading\",\n      \"title\": \"Resource reading and handover\",\n      \"path\": \"stellar/scf-starforge-20261009/distribution/selections/resource-reading.json\",\n      \"gitBlob\": \"40189b616d53136c69878434f46451f98e83c8ce\",\n      \"sha256\": \"b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20\",\n      \"bytes\": 4645\n    },\n    \"commands\": 4,\n    \"aliases\": [\n      \"starforge\"\n    ],\n    \"preservedMappings\": []\n  },\n  \"home\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home\",\n  \"config\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home/config\",\n  \"state\": \"/dev/dff77-resource-reading-f_pwo3kk/reading-home/state\",\n  \"previousReleaseId\": null,\n  \"releases\": [\n    {\n      \"id\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8\",\n      \"version\": \"0.1.0-source.gc9cf3464cf73.selection.resource-reading\",\n      \"sourceCommit\": \"c9cf3464cf73e3713163022a1bc51a186619374f\",\n      \"active\": true\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Launch installed buyer-research",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "buyer-research",
+        "--",
+        "help"
+      ],
+      "exit": 0,
+      "stdout": "Resource research \u2014 Node 22.16 or newer\n  node content-search/cli.mjs serve --state /private/library [--port 0]\n  node content-search/cli.mjs index --state /private/library\n  node content-search/cli.mjs search --state /private/library --q \"annual revenue\" [--mode all|any] [--all]\n  node content-search/cli.mjs passages --state /private/library --q revenue --resourceId ID [--all]\n  node content-search/cli.mjs export --state /private/library --q revenue --format html --out findings.html\n  node content-search/cli.mjs status --state /private/library\n  node content-search/cli.mjs saved --state /private/library\n  node content-search/cli.mjs save --state /private/library --q revenue --name \"Revenue review\" --operationId OP\n  node content-search/cli.mjs delete --state /private/library --id ID --expectedRevision N --operationId OP\nUse the original resource-library CLI to initialize and scan a library first.\nSaved-query edits require --id and --expectedRevision. --all emits complete newline-delimited results.\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Launch installed reading",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading",
+        "--",
+        "--help"
+      ],
+      "exit": 0,
+      "stdout": "usage: reading_cli.py [-h]\n                      {status,sources,search,read,read-selection,save-search,run-search,save-list,history,report,export,sync,publish-collection,serve,receive}\n                      ...\n\nSearch complete retained files and manage portable reading projects.\n\npositional arguments:\n  {status,sources,search,read,read-selection,save-search,run-search,save-list,history,report,export,sync,publish-collection,serve,receive}\n\noptions:\n  -h, --help            show this help message and exit\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Launch installed reading-exchange",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading-exchange",
+        "--",
+        "--help"
+      ],
+      "exit": 0,
+      "stdout": "usage: reading_exchange_cli.py [-h]\n                               {index,saved,capture,prepare,download,operations,export,inspect,receive,pack,return,publish-return,receive-return}\n                               ...\n\nResearch desk -> original collection -> editable reading project -> complete\nreturn.\n\npositional arguments:\n  {index,saved,capture,prepare,download,operations,export,inspect,receive,pack,return,publish-return,receive-return}\n    pack                ==SUPPRESS==\n\noptions:\n  -h, --help            show this help message and exit\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Receive the actual completed reading return",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading-exchange",
+        "--",
+        "receive-return",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-return.zip",
+        "/dev/dff77-resource-reading-f_pwo3kk/customer-reading"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"schema\": \"stellar-forge.sf88.reading-return.v1\",\n  \"directory\": \"/dev/dff77-resource-reading-f_pwo3kk/customer-reading\",\n  \"project\": {\n    \"directory\": \"/dev/dff77-resource-reading-f_pwo3kk/customer-reading/project\",\n    \"archive_sha256\": \"3305e51dea7745d7138febe1ac48d74b41db6846bbf1095d30d1ddba373bc718\",\n    \"archive_bytes\": 33293,\n    \"originals\": 4,\n    \"source_bytes\": 74283,\n    \"workspace\": {\n      \"schema\": \"stellar-forge.sf88.reading-workspace.v1\",\n      \"id\": \"67584d44-9ce7-42f9-b216-3375eb1968bb\",\n      \"created\": \"2026-10-12T20:00:50+00:00\",\n      \"source_identity\": \"a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2\",\n      \"current_snapshot\": \"receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n      \"snapshots\": [\n        {\n          \"id\": \"receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n          \"label\": \"Original resource collection operating material\",\n          \"created\": \"2026-10-12T20:00:50+00:00\",\n          \"source_identity\": \"a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2\",\n          \"native_generation\": \"8c62234d-bcd2-422a-aafc-e2179faaad3b\",\n          \"counts\": {\n            \"bytes\": 74283,\n            \"download_only\": 0,\n            \"indexed\": 4,\n            \"passages\": 5,\n            \"resources\": 4,\n            \"unavailable\": 0\n          }\n        }\n      ],\n      \"assets\": {\n        \"files\": 4,\n        \"bytes\": 74283,\n        \"passages\": 5\n      },\n      \"syncs\": [\n        {\n          \"id\": \"receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n          \"state\": \"complete\",\n          \"completed\": 4,\n          \"total\": 4,\n          \"error\": null\n        }\n      ],\n      \"saved_searches\": [],\n      \"reading_lists\": [\n        {\n          \"created\": \"2026-10-12T20:00:50+00:00\",\n          \"id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n          \"items\": [\n            {\n              \"citation\": {\n                \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n                \"selection_id\": \"4441583d80952f05be92ddd5fe31657e8f1cdc4602d45dbbe2efaf5834a0a23d\"\n              },\n              \"digest\": \"3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642\",\n              \"end_byte\": 129,\n              \"end_line\": 4,\n              \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n              \"name\": \"COLLECTIONS.md\",\n              \"note\": \"Operator review: keep this exact source passage first and preserve the question that selected it.\",\n              \"ordinal\": null,\n              \"resource_id\": \"3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd\",\n              \"selection_kind\": \"source-range\",\n              \"sha\": \"7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d\",\n              \"start_byte\": 0,\n              \"start_line\": 1\n            },\n            {\n              \"citation\": {\n                \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n                \"selection_id\": \"333c0549e116468ab9b2f370e415a1f2eb436138d7038c53b00659651859aa85\"\n              },\n              \"digest\": \"d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9\",\n              \"end_byte\": 104,\n              \"end_line\": 4,\n              \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n              \"name\": \"README.md\",\n              \"note\": \"\",\n              \"ordinal\": null,\n              \"resource_id\": \"defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344\",\n              \"selection_kind\": \"source-range\",\n              \"sha\": \"dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd\",\n              \"start_byte\": 0,\n              \"start_line\": 1\n            },\n            {\n              \"citation\": {\n                \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n                \"selection_id\": \"d3b2ded86956449f5cbdd61801c161d3d1b524f4692630f912d4b35790d0022b\"\n              },\n              \"digest\": \"e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd\",\n              \"end_byte\": 37463,\n              \"end_line\": 627,\n              \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n              \"name\": \"README.md\",\n              \"note\": \"\",\n              \"ordinal\": null,\n              \"resource_id\": \"52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795\",\n              \"selection_kind\": \"source-range\",\n              \"sha\": \"d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b\",\n              \"start_byte\": 37210,\n              \"start_line\": 624\n            },\n            {\n              \"citation\": {\n                \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n                \"selection_id\": \"b47f06206d729eced1448b7f79efb78b3eb904720d76da52b49093d5be7e39df\"\n              },\n              \"digest\": \"ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7\",\n              \"end_byte\": 2097,\n              \"end_line\": 45,\n              \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n              \"name\": \"READING.md\",\n              \"note\": \"\",\n              \"ordinal\": null,\n              \"resource_id\": \"a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378\",\n              \"selection_kind\": \"source-range\",\n              \"sha\": \"49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53\",\n              \"start_byte\": 1973,\n              \"start_line\": 41\n            },\n            {\n              \"digest\": \"7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d\",\n              \"end_byte\": 8141,\n              \"end_line\": 160,\n              \"name\": \"COLLECTIONS.md\",\n              \"note\": \"Reader-added native passage for adjacent source context.\",\n              \"ordinal\": 0,\n              \"resource_id\": \"3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd\",\n              \"sha\": \"7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d\",\n              \"start_byte\": 0,\n              \"start_line\": 1\n            }\n          ],\n          \"kind\": \"list\",\n          \"name\": \"Reviewed source collection reading\",\n          \"note\": \"The reviewed order retains the original question and each exact source range.\",\n          \"revision\": 2\n        }\n      ],\n      \"handovers\": [\n        {\n          \"id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n          \"revision\": 1,\n          \"created\": \"2026-10-12T20:00:50+00:00\",\n          \"name\": \"Original resource collection operating material\",\n          \"capture_sha256\": \"39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n          \"query\": {\n            \"build\": \"c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853\",\n            \"engine\": \"stellar-forge.resource-content-search.v1\",\n            \"mode\": \"all\",\n            \"q\": \"resource collection\",\n            \"resourceId\": null,\n            \"savedQuery\": {\n              \"id\": \"a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644\",\n              \"mode\": \"all\",\n              \"name\": \"Resource collection reading\",\n              \"q\": \"resource collection\",\n              \"revision\": 1,\n              \"updatedAt\": \"2026-10-12T20:00:49.806Z\"\n            },\n            \"semantics\": {\n              \"combine\": \"AND\",\n              \"quotes\": \"punctuation\",\n              \"scope\": \"whole-file\",\n              \"words\": \"Unicode NFC case-insensitive; accents retained\"\n            },\n            \"terms\": [\n              \"resource\",\n              \"collection\"\n            ]\n          },\n          \"selected_passages\": 4,\n          \"source_files\": 4,\n          \"collection\": {\n            \"id\": \"reading-handover-source\",\n            \"memberCount\": 4,\n            \"revision\": 1,\n            \"sha256\": \"573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c\"\n          },\n          \"archive\": {\n            \"bytes\": 91136,\n            \"manifestSha256\": \"edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736\",\n            \"name\": \"sources.tar\",\n            \"sha256\": \"b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9\"\n          },\n          \"reading_list_id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\"\n        }\n      ]\n    }\n  },\n  \"list\": {\n    \"id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n    \"name\": \"Reviewed source collection reading\",\n    \"passages\": 5,\n    \"revision\": 2\n  },\n  \"archive_sha256\": \"f0285286e6298e06fe3057ec8d85854c36658f858214bdd530742ec515e8c82d\",\n  \"archive_bytes\": 49164,\n  \"files\": [\n    {\n      \"bytes\": 33293,\n      \"name\": \"project.zip\",\n      \"sha256\": \"3305e51dea7745d7138febe1ac48d74b41db6846bbf1095d30d1ddba373bc718\"\n    },\n    {\n      \"bytes\": 12193,\n      \"name\": \"reading-list.html\",\n      \"sha256\": \"eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d\"\n    },\n    {\n      \"bytes\": 15225,\n      \"name\": \"reading-list.json\",\n      \"sha256\": \"1adbc444af78b4090b142ccfeb04100b5ffdf51ec06cb502f07a35a6a304cd35\"\n    },\n    {\n      \"bytes\": 11196,\n      \"name\": \"reading-list.csv\",\n      \"sha256\": \"a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Cold reopen the installed reader against its complete project",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading",
+        "--",
+        "status",
+        "/dev/dff77-resource-reading-f_pwo3kk/customer-reading/project"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"schema\": \"stellar-forge.sf88.reading-workspace.v1\",\n  \"id\": \"67584d44-9ce7-42f9-b216-3375eb1968bb\",\n  \"created\": \"2026-10-12T20:00:50+00:00\",\n  \"source_identity\": \"a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2\",\n  \"current_snapshot\": \"receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n  \"snapshots\": [\n    {\n      \"id\": \"receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n      \"label\": \"Original resource collection operating material\",\n      \"created\": \"2026-10-12T20:00:50+00:00\",\n      \"source_identity\": \"a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2\",\n      \"native_generation\": \"8c62234d-bcd2-422a-aafc-e2179faaad3b\",\n      \"counts\": {\n        \"bytes\": 74283,\n        \"download_only\": 0,\n        \"indexed\": 4,\n        \"passages\": 5,\n        \"resources\": 4,\n        \"unavailable\": 0\n      }\n    }\n  ],\n  \"assets\": {\n    \"files\": 4,\n    \"bytes\": 74283,\n    \"passages\": 5\n  },\n  \"syncs\": [\n    {\n      \"id\": \"receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n      \"state\": \"complete\",\n      \"completed\": 4,\n      \"total\": 4,\n      \"error\": null\n    }\n  ],\n  \"saved_searches\": [],\n  \"reading_lists\": [\n    {\n      \"created\": \"2026-10-12T20:00:50+00:00\",\n      \"id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n      \"items\": [\n        {\n          \"citation\": {\n            \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n            \"selection_id\": \"4441583d80952f05be92ddd5fe31657e8f1cdc4602d45dbbe2efaf5834a0a23d\"\n          },\n          \"digest\": \"3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642\",\n          \"end_byte\": 129,\n          \"end_line\": 4,\n          \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n          \"name\": \"COLLECTIONS.md\",\n          \"note\": \"Operator review: keep this exact source passage first and preserve the question that selected it.\",\n          \"ordinal\": null,\n          \"resource_id\": \"3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd\",\n          \"selection_kind\": \"source-range\",\n          \"sha\": \"7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d\",\n          \"start_byte\": 0,\n          \"start_line\": 1\n        },\n        {\n          \"citation\": {\n            \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n            \"selection_id\": \"333c0549e116468ab9b2f370e415a1f2eb436138d7038c53b00659651859aa85\"\n          },\n          \"digest\": \"d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9\",\n          \"end_byte\": 104,\n          \"end_line\": 4,\n          \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n          \"name\": \"README.md\",\n          \"note\": \"\",\n          \"ordinal\": null,\n          \"resource_id\": \"defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344\",\n          \"selection_kind\": \"source-range\",\n          \"sha\": \"dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd\",\n          \"start_byte\": 0,\n          \"start_line\": 1\n        },\n        {\n          \"citation\": {\n            \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n            \"selection_id\": \"d3b2ded86956449f5cbdd61801c161d3d1b524f4692630f912d4b35790d0022b\"\n          },\n          \"digest\": \"e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd\",\n          \"end_byte\": 37463,\n          \"end_line\": 627,\n          \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n          \"name\": \"README.md\",\n          \"note\": \"\",\n          \"ordinal\": null,\n          \"resource_id\": \"52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795\",\n          \"selection_kind\": \"source-range\",\n          \"sha\": \"d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b\",\n          \"start_byte\": 37210,\n          \"start_line\": 624\n        },\n        {\n          \"citation\": {\n            \"handover_id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n            \"selection_id\": \"b47f06206d729eced1448b7f79efb78b3eb904720d76da52b49093d5be7e39df\"\n          },\n          \"digest\": \"ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7\",\n          \"end_byte\": 2097,\n          \"end_line\": 45,\n          \"line_convention\": \"CRLF_OR_CR_OR_LF\",\n          \"name\": \"READING.md\",\n          \"note\": \"\",\n          \"ordinal\": null,\n          \"resource_id\": \"a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378\",\n          \"selection_kind\": \"source-range\",\n          \"sha\": \"49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53\",\n          \"start_byte\": 1973,\n          \"start_line\": 41\n        },\n        {\n          \"digest\": \"7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d\",\n          \"end_byte\": 8141,\n          \"end_line\": 160,\n          \"name\": \"COLLECTIONS.md\",\n          \"note\": \"Reader-added native passage for adjacent source context.\",\n          \"ordinal\": 0,\n          \"resource_id\": \"3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd\",\n          \"sha\": \"7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d\",\n          \"start_byte\": 0,\n          \"start_line\": 1\n        }\n      ],\n      \"kind\": \"list\",\n      \"name\": \"Reviewed source collection reading\",\n      \"note\": \"The reviewed order retains the original question and each exact source range.\",\n      \"revision\": 2\n    }\n  ],\n  \"handovers\": [\n    {\n      \"id\": \"handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n      \"revision\": 1,\n      \"created\": \"2026-10-12T20:00:50+00:00\",\n      \"name\": \"Original resource collection operating material\",\n      \"capture_sha256\": \"39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n      \"query\": {\n        \"build\": \"c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853\",\n        \"engine\": \"stellar-forge.resource-content-search.v1\",\n        \"mode\": \"all\",\n        \"q\": \"resource collection\",\n        \"resourceId\": null,\n        \"savedQuery\": {\n          \"id\": \"a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644\",\n          \"mode\": \"all\",\n          \"name\": \"Resource collection reading\",\n          \"q\": \"resource collection\",\n          \"revision\": 1,\n          \"updatedAt\": \"2026-10-12T20:00:49.806Z\"\n        },\n        \"semantics\": {\n          \"combine\": \"AND\",\n          \"quotes\": \"punctuation\",\n          \"scope\": \"whole-file\",\n          \"words\": \"Unicode NFC case-insensitive; accents retained\"\n        },\n        \"terms\": [\n          \"resource\",\n          \"collection\"\n        ]\n      },\n      \"selected_passages\": 4,\n      \"source_files\": 4,\n      \"collection\": {\n        \"id\": \"reading-handover-source\",\n        \"memberCount\": 4,\n        \"revision\": 1,\n        \"sha256\": \"573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c\"\n      },\n      \"archive\": {\n        \"bytes\": 91136,\n        \"manifestSha256\": \"edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736\",\n        \"name\": \"sources.tar\",\n        \"sha256\": \"b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9\"\n      },\n      \"reading_list_id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Render the original HTML through the installed reader",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading",
+        "--",
+        "report",
+        "/dev/dff77-resource-reading-f_pwo3kk/customer-reading/project",
+        "--list-id",
+        "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "--revision",
+        "2",
+        "--format",
+        "html",
+        "--out",
+        "/dev/dff77-resource-reading-f_pwo3kk/installed-reading.html"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"path\": \"/dev/dff77-resource-reading-f_pwo3kk/installed-reading.html\",\n  \"format\": \"html\",\n  \"passages\": 5,\n  \"sha256\": \"eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d\",\n  \"bytes\": 12193,\n  \"selection\": {\n    \"list_id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n    \"list_revision\": 2,\n    \"query\": null,\n    \"snapshot\": null,\n    \"resource_id\": null\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Render the original JSON through the installed reader",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading",
+        "--",
+        "report",
+        "/dev/dff77-resource-reading-f_pwo3kk/customer-reading/project",
+        "--list-id",
+        "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "--revision",
+        "2",
+        "--format",
+        "json",
+        "--out",
+        "/dev/dff77-resource-reading-f_pwo3kk/installed-reading.json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"path\": \"/dev/dff77-resource-reading-f_pwo3kk/installed-reading.json\",\n  \"format\": \"json\",\n  \"passages\": 5,\n  \"sha256\": \"1adbc444af78b4090b142ccfeb04100b5ffdf51ec06cb502f07a35a6a304cd35\",\n  \"bytes\": 15225,\n  \"selection\": {\n    \"list_id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n    \"list_revision\": 2,\n    \"query\": null,\n    \"snapshot\": null,\n    \"resource_id\": null\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "Render the original CSV through the installed reader",
+      "command": [
+        "node",
+        "/dev/dff77-resource-reading-f_pwo3kk/reading-home/forge.mjs",
+        "run",
+        "reading",
+        "--",
+        "report",
+        "/dev/dff77-resource-reading-f_pwo3kk/customer-reading/project",
+        "--list-id",
+        "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "--revision",
+        "2",
+        "--format",
+        "csv",
+        "--out",
+        "/dev/dff77-resource-reading-f_pwo3kk/installed-reading.csv"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"path\": \"/dev/dff77-resource-reading-f_pwo3kk/installed-reading.csv\",\n  \"format\": \"csv\",\n  \"passages\": 5,\n  \"sha256\": \"a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c\",\n  \"bytes\": 11196,\n  \"selection\": {\n    \"list_id\": \"reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca\",\n    \"list_revision\": 2,\n    \"query\": null,\n    \"snapshot\": null,\n    \"resource_id\": null\n  }\n}\n",
+      "stderr": ""
+    }
+  ],
+  "node": "v24.19.0",
+  "result": "PASS",
+  "completed_at": "2026-10-12T21:15:45Z",
+  "receiving": {
+    "schema": "stellar-forge.git-object-cache.v1",
+    "directory": "/dev/dff77-resource-reading-f_pwo3kk/receiving",
+    "source": {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "c9cf3464cf73e3713163022a1bc51a186619374f",
+      "tree": "f6250b684fb751bb19f37faf9a47b5549904919f"
+    },
+    "metadataSha256": "00fbffe2b90d3c05bf62e055b8b15ee1b9efc4edb744662a51cc5e22d9ce3ec0",
+    "createdAt": "2026-10-12T21:15:35.505226+00:00",
+    "phase": "OBJECTS_AVAILABLE",
+    "updatedAt": "2026-10-12T21:15:36.227607+00:00",
+    "repository": "/dev/dff77-resource-reading-f_pwo3kk/receiving/repository.git",
+    "gitTreeEntries": 10323,
+    "verifiedTreeObjects": 1166,
+    "requiredPaths": 100,
+    "requiredBytes": 1068276,
+    "additionalPaths": [],
+    "writtenObjects": 1267,
+    "writtenRawBytes": 1565918,
+    "donors": [
+      {
+        "kind": "received-blobs",
+        "directory": "/dev/dff77-resource-reading-f_pwo3kk/incoming",
+        "objects": 100
+      }
+    ],
+    "missingObjects": 0,
+    "missingBytes": 0,
+    "materializedFiles": 100,
+    "sourceDirectory": "/dev/dff77-resource-reading-f_pwo3kk/source"
+  },
+  "release": {
+    "status": "PACKAGED",
+    "packageName": "@tokenjunkielabs/starforge-merchant",
+    "packageVersion": "0.1.0-source.gc9cf3464cf73.selection.resource-reading",
+    "sourceCommit": "c9cf3464cf73e3713163022a1bc51a186619374f",
+    "sourceSelection": {
+      "id": "resource-reading",
+      "title": "Resource reading and handover",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/resource-reading.json",
+      "gitBlob": "40189b616d53136c69878434f46451f98e83c8ce",
+      "sha256": "b828c67d999fd3c8e3ac586226a9f06c36f93686c08cac91633a8b80905a1a20",
+      "bytes": 4645
+    },
+    "archive": "/dev/dff77-resource-reading-f_pwo3kk/build/tokenjunkielabs-starforge-merchant-0.1.0-source.gc9cf3464cf73.selection.resource-reading.tgz",
+    "sha256": "d5d2f93d3f715eadbee056f5d92b8d4abca7619927088e5eda67e1a942e550af",
+    "integrity": "sha512-g3is6SXpfvh/yIYZ5HZSzjJLDsnP3waO2oPvv9A54NcM19gWqr6wzNyqJCC9i1Cp9YwmhfKmlDXwlSAVD/bHWw==",
+    "archiveBytes": 253274,
+    "installedBytes": 1005812,
+    "reusedArchive": false,
+    "sourceFiles": 93,
+    "sourceBytes": 943319,
+    "sourceAcquisition": {
+      "gitCommands": 12,
+      "gitMilliseconds": 245.15,
+      "metadataBatches": 5,
+      "contentBatches": 5,
+      "fetchBatches": 0,
+      "requestedObjects": 94,
+      "cachedObjects": 94,
+      "fetchedObjects": 0,
+      "uniqueBytes": 944410,
+      "elapsedMilliseconds": 2147.06,
+      "offline": true
+    },
+    "materialization": {
+      "copiedFiles": 97,
+      "resumedFiles": 0,
+      "reusedFiles": 0,
+      "writtenBytes": 1005812
+    }
+  },
+  "unpacked": {
+    "status": "SOURCE_UNPACKED",
+    "packageDirectory": "/dev/dff77-resource-reading-f_pwo3kk/unpacked",
+    "sourceRoot": "/dev/dff77-resource-reading-f_pwo3kk/unpacked/source",
+    "packageName": "@tokenjunkielabs/starforge-merchant",
+    "packageVersion": "0.1.0-source.gc9cf3464cf73.selection.resource-reading",
+    "sourceCommit": "c9cf3464cf73e3713163022a1bc51a186619374f",
+    "sourceFiles": 93,
+    "manifestSha256": "dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506"
+  },
+  "installed": {
+    "state": "INSTALLED",
+    "home": "/dev/dff77-resource-reading-f_pwo3kk/reading-home",
+    "releaseId": "0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8",
+    "digest": "e66de852fbc80c8fc042dcda734d40e9b9ac7c99fe90202f14adf0eaa774c9a1",
+    "activeReleaseId": "0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8",
+    "staged": false,
+    "config": "/dev/dff77-resource-reading-f_pwo3kk/reading-home/config",
+    "merchantState": "/dev/dff77-resource-reading-f_pwo3kk/reading-home/state",
+    "releaseDirectory": "/dev/dff77-resource-reading-f_pwo3kk/reading-home/releases/0.1.0-source.gc9cf3464cf73.selection.resource-reading-c9cf3464cf73-e66de852fbc8",
+    "packageName": "@tokenjunkielabs/starforge-merchant",
+    "packageVersion": "0.1.0-source.gc9cf3464cf73.selection.resource-reading",
+    "sourceCommit": "c9cf3464cf73e3713163022a1bc51a186619374f",
+    "sourceManifestSha256": "dd73fa706b855d97998bf8252712e5c42cce4613131d6382d0b95f5b56240506"
+  },
+  "original_return": {
+    "path": "reading-return.zip",
+    "bytes": 49164,
+    "sha256": "f0285286e6298e06fe3057ec8d85854c36658f858214bdd530742ec515e8c82d",
+    "git_blob_sha1": "1fc26e1343ad3659ee492ea1efc2a958e52d7acf",
+    "encoding": "base64",
+    "source": "Actual original research and reading operation output",
+    "installed_preimage": null
+  },
+  "reading": {
+    "list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+    "revision": 2,
+    "items": 5,
+    "resources": 4,
+    "source_bytes": 74283
+  },
+  "package_files": 93,
+  "package_source_bytes": 943319,
+  "reports": [
+    {
+      "path": "installed-reading.html",
+      "bytes": 12193,
+      "sha256": "eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d"
+    },
+    {
+      "path": "installed-reading.json",
+      "bytes": 15225,
+      "sha256": "1adbc444af78b4090b142ccfeb04100b5ffdf51ec06cb502f07a35a6a304cd35"
+    },
+    {
+      "path": "installed-reading.csv",
+      "bytes": 11196,
+      "sha256": "a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c"
+    }
+  ]
+}
