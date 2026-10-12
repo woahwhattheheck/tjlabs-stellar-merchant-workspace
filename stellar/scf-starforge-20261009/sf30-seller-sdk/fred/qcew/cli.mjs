@@ -175,8 +175,8 @@ export async function runQcewCli(args=process.argv.slice(2)) {
     case 'publish':result=await publishQcewEdition({...common(),editionId:flags.edition,origin:flags.origin,
       path:flags.path??'/county-reports',payment:await jsonFile(flags.payment,65536)});break;
     case 'publication':{
-      const root=await selected(),{edition,plan,offers}=await readQcewMerchant(root);
-      result={edition,plan,offers,requests:await listQcewPurchases(root)};break;
+      const root=await selected(),merchant=await readQcewMerchant(root),{edition,plan,offers}=merchant;
+      result={edition,plan,offers,requests:await listQcewPurchases(root,{merchant})};break;
     }
     case 'merchant':result=await foreground(await startQcewMerchant({directory:await selected(),
       port:integer(flags.port,'local port',0,65535),facilitator:flags.facilitator,
