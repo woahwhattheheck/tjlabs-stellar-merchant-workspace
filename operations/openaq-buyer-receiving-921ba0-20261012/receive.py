@@ -451,11 +451,20 @@ def main(journey,stream_source=False,assets=None,repairs=None):
    # The exact original SF88 profile supplies all original buyer SDK versions.
    original=source/"stellar/scf-starforge-20261009/sf88-operator-buyer-cli"
    for name in ("package.json","package-lock.json"):exact(deps/name,(original/name).read_bytes())
-   if not (deps/"node_modules/@x402/stellar/package.json").exists():
+   dependency_ready=deps/"dependency-ready.json"
+   dependency_selection=encoded({"schema":"stellar-forge.openaq-original-dependencies.v1","commit":COMMIT,
+    "packageSha256":digest((deps/"package.json").read_bytes()),
+    "lockSha256":digest((deps/"package-lock.json").read_bytes())})
+   if dependency_ready.exists():
+    exact(dependency_ready,dependency_selection)
+    if not (deps/"node_modules/@x402/stellar/package.json").is_file():raise RuntimeError("ORIGINAL_DEPENDENCY_READY_TREE_CHANGED")
+   else:
     npm=shutil.which("npm")
     if not npm:raise RuntimeError("ORIGINAL_NPM_REQUIRED")
     env=dict(os.environ);env["npm_config_cache"]=str(CONTROL/"npm-cache");env["npm_config_prefer_offline"]="true"
+    env["NODE_OPTIONS"]=env.get("NODE_OPTIONS","")+" --max-old-space-size=192"
     run([npm,"ci","--ignore-scripts","--no-audit","--no-fund"],str(deps),env,guard_fd=fd)
+    exact(dependency_ready,dependency_selection)
    link=source/"node_modules"
    if link.is_symlink():
     if link.resolve()!=(deps/"node_modules").resolve():raise RuntimeError("ORIGINAL_DEPENDENCY_SELECTION_CHANGED")
