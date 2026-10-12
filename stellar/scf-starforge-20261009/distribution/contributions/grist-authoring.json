@@ -1,0 +1,24 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "grist-authoring",
+  "description": "Complete Grist source authoring, explicit typed public projections, original publisher/SF82 and shared browser/MCP/Applications lifetime.",
+  "commands": {
+    "grist-workspace": {
+      "component": "sf30-seller-sdk",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/cli.mjs"
+    }
+  },
+  "exports": {
+    "./seller/grist/workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/model.mjs",
+    "./seller/grist/workspace/server": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/server.mjs",
+    "./seller/grist/workspace/launch": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/launch.mjs",
+    "./seller/grist/workspace/packet": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/packet.mjs",
+    "./seller/grist/workspace/mcp": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/mcp.mjs"
+  },
+  "applicationProviders": {
+    "grist-authoring": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "grist-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/grist/workspace/merchant-provider.mjs"
+  }
+}
