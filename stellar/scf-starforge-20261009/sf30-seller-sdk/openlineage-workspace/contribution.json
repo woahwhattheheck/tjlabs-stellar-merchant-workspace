@@ -36,7 +36,8 @@
     "./seller/openlineage/google": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/dataplex.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/dataplex.mjs"
-    }
+    },
+    "./seller/openlineage/async-producer": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/async-producer.mjs"
   },
   "applicationProviders": {
     "openlineage-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs"
