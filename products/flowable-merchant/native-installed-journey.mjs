@@ -374,7 +374,13 @@ export async function runInstalledFlowableJourney({
       }
       throw fail('Continue an actual successful native decision evaluation from the complete original handover.');
     });
-    async function decisionOutcome(record,surface) {
+    async function decisionOutcome(record,surface,reconcile) {
+      record=await sender.getRecord({kind:'decisionEvaluation',id:record.id});
+      if(record.value.dispatchedAt && ['UNKNOWN','DISPATCHED','READBACK'].includes(record.value.state)) {
+        // Continue the saved native dispatch through this surface's stable readback request.
+        record=await reconcile(record);
+        record=await sender.getRecord({kind:'decisionEvaluation',id:record.id});
+      }
       need(['CONFIRMED','ACCEPTED','OBSERVED'].includes(record.value.state) && record.value.response,
         surface+' must retain an accepted native decision evaluation.');
       const response=(await sender.readSource({reference:record.value.response})).value;
@@ -392,7 +398,8 @@ export async function runInstalledFlowableJourney({
       label:'Installed SDK native decision continuation',selection:decisionSeed.selection}));
     const decisionSdk=await sender.dispatchDecisionEvaluation({requestId:request('sdk-decision-dispatch'),
       id:decisionPrepared.id,expectedRevision:decisionPrepared.revision,planSha256:decisionPrepared.value.planSha256});
-    const decisionSdkResult=await decisionOutcome(decisionSdk,'Installed SDK');
+    const decisionSdkResult=await decisionOutcome(decisionSdk,'Installed SDK',record=>sender.reconcileOperation({
+      requestId:request('sdk-decision-reconcile'),kind:'decisionEvaluation',id:record.id}));
     const decisionSelectionPath=join(directory,'original-native-decision-selection.json');
     await common.publish(decisionSelectionPath,decisionSeed.selection,{replace:true,lease});
     const decisionCliPrepared=await memo('cli-decision-prepared',{source:decisionSeed.record},()=>runCLI(sourceRoot,[
@@ -405,7 +412,11 @@ export async function runInstalledFlowableJourney({
       '--request',request('cli-decision-dispatch'),'--id',cliPrepared.id,'--revision',String(cliPrepared.revision),
       '--plan-sha256',cliPrepared.value.planSha256],signal);
     report.cli.push(decisionCli.receipt);
-    const decisionCliResult=await decisionOutcome(decisionCli.value,'Installed CLI');
+    const decisionCliResult=await decisionOutcome(decisionCli.value,'Installed CLI',async record=>{
+      const continued=await runCLI(sourceRoot,['reconcile','--dir',senderDirectory,'--kind','decisionEvaluation',
+        '--request',request('cli-decision-reconcile'),'--id',record.id],signal);
+      report.cli.push(continued.receipt);return continued.value;
+    });
     const decisionPortfolio=await sender.captureDecisionPortfolio({requestId:request('installed-decision-portfolio'),
       connectionId:decisionConnectionId,label:'Complete installed native decision history'});
     need(decisionPortfolio.value.state==='CAPTURED','The installed SDK captures the whole native decision portfolio.');
@@ -589,7 +600,8 @@ export async function runInstalledFlowableJourney({
     const mcpDecision=await mcp.tool('merchant_flowable_dispatch_decision_evaluation',{workspace:'sender',
       requestId:request('mcp-decision-dispatch'),id:mcpDecisionPrepared.id,expectedRevision:mcpDecisionPrepared.revision,
       planSha256:mcpDecisionPrepared.value.planSha256});
-    const mcpDecisionResult=await decisionOutcome(mcpDecision,'Installed MCP');
+    const mcpDecisionResult=await decisionOutcome(mcpDecision,'Installed MCP',record=>mcp.tool('merchant_flowable_reconcile',{
+      workspace:'sender',requestId:request('mcp-decision-reconcile'),kind:'decisionEvaluation',id:record.id}));
     const mcpDecisionPortfolio=await mcp.tool('merchant_flowable_capture_decisions',{workspace:'sender',
       requestId:request('mcp-decision-portfolio'),connectionId:decisionConnectionId,label:'Complete MCP decision continuation'});
     need(mcpDecisionPortfolio.value.state==='CAPTURED','MCP captures the original completed native decision continuation.');

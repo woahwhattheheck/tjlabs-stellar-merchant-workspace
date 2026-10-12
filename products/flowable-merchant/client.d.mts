@@ -217,7 +217,7 @@ export interface ActionResults {
   listRecords: RecordPage;
   getRecord: FlowableRecord;
   readPortfolio: PortfolioPage;
-  readDefinition: { portfolio: RecordReference; definition: NativeEntity; resources: NativeResource[] };
+  readDefinition: { portfolio: RecordReference; definition: NativeEntity; deployment: NativeEntity | null; resources: NativeResource[] };
   readSource: { reference: SourceReference; value: Json } | { reference: SourceReference; contentBase64: string; text?: string };
   readReview: OperationReview;
   saveConnection: FlowableRecord<{ label: string; connection: FlowableConnection; configurationSha256: string; state: 'SAVED' }>;
@@ -231,7 +231,7 @@ export interface ActionResults {
   prepareMigration: FlowableRecord<OperationValue>;
   dispatchMigration: FlowableRecord<OperationValue>;
   readDecisionPortfolio: PortfolioPage;
-  readDecisionDefinition: { portfolio: RecordReference; definition: NativeEntity; resources: NativeResource[] };
+  readDecisionDefinition: { portfolio: RecordReference; definition: NativeEntity; deployment: NativeEntity | null; resources: NativeResource[] };
   readDecisionExecution: { portfolio: RecordReference; execution: NativeEntity; resources: NativeResource[] };
   captureDecisionPortfolio: FlowableRecord;
   prepareDecisionRelease: FlowableRecord<OperationValue>;

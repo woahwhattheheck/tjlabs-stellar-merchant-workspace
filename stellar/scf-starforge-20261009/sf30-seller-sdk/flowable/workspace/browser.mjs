@@ -309,11 +309,11 @@ async function openDecisionDefinition(definition){
   const result=await api('readDecisionDefinition',{portfolioId:state.decisionPortfolio,definitionId:definition.id});
   const container=detail(definition.name??definition.key??definition.id);
   container.append(keyValues([['Definition ID',definition.id],['Decision key',definition.key],['Captured version',definition.version],
-    ['Deployment',definition.deploymentId],['Tenant',definition.tenantId]]));
+    ['Deployment',definition.deploymentId],['Parent deployment',result.deployment?.parentDeploymentId],['Tenant',definition.tenantId]]));
   container.append(button('Prepare evaluation for this key',()=>{
     const form=$('#decisionEvaluation-form'),body={decisionKey:definition.key,inputVariables:[],disableHistory:false};
     if(definition.tenantId)body.tenantId=definition.tenantId;
-    if(definition.parentDeploymentId)body.parentDeploymentId=definition.parentDeploymentId;
+    if(result.deployment?.parentDeploymentId)body.parentDeploymentId=result.deployment.parentDeploymentId;
     form.elements.label.value='Evaluate '+(definition.name??definition.key);
     form.elements.mode.value='auto';form.elements.singleResult.checked=false;
     form.elements.bodyText.value=JSON.stringify(body,null,2);
@@ -321,7 +321,9 @@ async function openDecisionDefinition(definition){
   },{primary:true}));
   container.append(node('p','Evaluation resolves the current native definition for this key and scope. The saved review retains the actual selection before dispatch.'));
   renderOriginalResources(container,result.resources,{label:definition.name??definition.key??definition.id,sourceLabel:'Original decision source'});
-  jsonSection(container,'Original decision definition',result.definition);revealDetail();
+  jsonSection(container,'Original decision definition',result.definition);
+  if(result.deployment)jsonSection(container,'Original decision deployment',result.deployment);
+  revealDetail();
 }
 async function openDecisionExecution(execution){
   const result=await api('readDecisionExecution',{portfolioId:state.decisionPortfolio,executionId:execution.id});

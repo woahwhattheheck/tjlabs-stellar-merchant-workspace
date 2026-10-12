@@ -102,8 +102,9 @@ version, deployment, resource and exact source bytes.
 
 ## Evaluate the native rules
 
-Select a decision definition and choose **Evaluate** to seed its native key
-and observed scope. Add the original typed input variables. The evaluation
+Select **Source and evaluate**, then **Prepare evaluation for this key** to seed
+the native key, tenant and parent deployment from the saved capture. The parent
+deployment comes from the matching original deployment record. Add the original typed input variables. The evaluation
 body accepts the native fields `decisionKey`, `tenantId`,
 `parentDeploymentId`, `inputVariables` and `disableHistory`.
 
@@ -187,7 +188,7 @@ different result shapes.
 The evaluation response does not return an execution audit ID. Historic
 execution records are captured separately with their actual native ID,
 definition/deployment identity, version and timestamps. Open **Native
-execution history → Audit** to read the selected execution's full native
+execution history → Execution and audit** to read the selected execution's full native
 audit resource. Where the engine exposes no direct correlation, a matching
 history record remains an observed candidate; the exact evaluation response
 continues to identify the actual returned result.
@@ -223,8 +224,9 @@ const execution = await client.readDecisionExecution({
 ~~~
 
 Read all returned `nextOffset` pages when consuming a collection.
-`readDecisionDefinition` and `readDecisionExecution` return the complete
-retained resources for that selected original record. Source references are
+`readDecisionDefinition` returns the definition, its matching captured deployment
+and complete retained source resources. `readDecisionExecution` returns the
+selected native execution and its complete retained audit resources. Source references are
 also available to the existing full-file download methods.
 
 ## Installed CLI and agent operations

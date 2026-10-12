@@ -223,7 +223,8 @@ export async function openFlowableWorkspace({directory,connections=[],environmen
         item.definitionIds?.includes(definition.id)||nativeLinks.has(item.native?.url)||nativeLinks.has(item.filename)))
         resources.push(await hydrateResource(item));
     }
-    return{portfolio:recordRef(record),definition,resources};
+    const deployment=inventory.collections.deployments?.items?.find(item=>item.id===definition.deploymentId)??null;
+    return{portfolio:recordRef(record),definition,deployment,resources};
   }
   const readDefinition=input=>readCapturedDefinition('portfolio',input);
   const readDecisionDefinition=input=>readCapturedDefinition('decisionPortfolio',input);
