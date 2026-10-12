@@ -166,6 +166,8 @@ export interface PlanningEconomics {
 }
 
 export interface PlanningSchedule {
+  /** Shared active-hours pool; omission keeps delivery effort unassigned. */
+  capacityPoolId?: string | null;
   id: string;
   label: string;
   operationId: string;
@@ -193,6 +195,8 @@ export interface PlanningWorkshare extends PlanningEvidence {
 }
 
 export interface PlanningSensitivity {
+  /** Optional target gross contribution margin; ordinary decimal percentage below 100. */
+  minimumMarginPct?: DecimalText | null;
   effortIncreasesPct: DecimalText[];
   completionSharesPct: DecimalText[];
 }
@@ -213,6 +217,7 @@ export interface CohortPlan {
   operations: PlanningOperation[];
   schedules: PlanningSchedule[];
   workshares: PlanningWorkshare[];
+  capacityPools?: PlanningCapacityPool[];
   sensitivity: PlanningSensitivity;
   note: string;
 }
@@ -435,7 +440,94 @@ export interface PlanningFinding {
   message: string;
 }
 
+export interface PlanningCapacityOverride {
+  date: DateText;
+  availableHours: DecimalText | null;
+  label: string;
+}
+export interface PlanningCapacityPool extends PlanningEvidence {
+  id: string;
+  label: string;
+  /** Aggregate active staff hours, Monday 1 through Sunday 7; blank/null is unknown. */
+  hoursByWeekday: Partial<Record<Weekday, DecimalText | null>>;
+  dateOverrides: PlanningCapacityOverride[];
+}
+export type PlanningCapacityStatus = "WITHIN_CAPACITY" | "OVERALLOCATED" | "INCOMPLETE";
+export interface PlanningCapacityDay {
+  poolId: string;
+  date: DateText;
+  weekday: Weekday;
+  weekStart: DateText;
+  availableHours: DecimalText | null;
+  availabilityBasis: "DATE_OVERRIDE" | "WEEKDAY";
+  availabilityNote: string;
+  scheduledTasks: number;
+  scheduleIds: string[];
+  requiredHours: DecimalText | null;
+  knownRequiredHours: DecimalText;
+  headroomHours: DecimalText | null;
+  additionalHoursKnownMinimum: DecimalText;
+  utilizationPercent: DecimalText | null;
+  unknownEffortOccurrences: number;
+  status: PlanningCapacityStatus;
+}
+export interface PlanningCapacitySummary {
+  availableHours: DecimalText | null;
+  knownAvailableHours: DecimalText;
+  requiredHours: DecimalText | null;
+  knownRequiredHours: DecimalText;
+  headroomHours: DecimalText | null;
+  /** Sum of positive daily shortages; spare capacity on another day is not netted. */
+  additionalHoursKnownMinimum: DecimalText;
+  overloadedDates: DateText[];
+  unknownAvailabilityDates: number;
+  unknownEffortOccurrences: number;
+  status: PlanningCapacityStatus;
+}
+export interface PlanningCapacityWeek extends PlanningCapacitySummary {
+  poolId: string;
+  weekStart: DateText;
+  start: DateText;
+  end: DateText;
+  includedCalendarDays: number;
+}
+export interface PlanningCapacityPoolReport extends PlanningCapacityPool, PlanningCapacitySummary {
+  days: PlanningCapacityDay[];
+  weeks: PlanningCapacityWeek[];
+}
+export interface PlanningCapacityReport {
+  status: PlanningCapacityStatus | "NOT_CONFIGURED";
+  basis: string;
+  pools: PlanningCapacityPoolReport[];
+  unassigned: Array<{ scheduleId: string; date: DateText; scheduledTasks: number; requiredHours: DecimalText | null }>;
+  sensitivity: Array<PlanningCapacitySummary & { poolId: string; label: string; effortIncreasePct: DecimalText }>;
+}
+export interface PlanningServicePricing {
+  id: string;
+  label: string;
+  scheduleIds: string[];
+  currency: string | null;
+  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID";
+  scheduledTasks: number;
+  chargeUnits: number;
+  unitRevenue: DecimalText | null;
+  totalCost: DecimalText | null;
+  revenue: DecimalText | null;
+  uncoveredCost: DecimalText | null;
+  minimumMarginPct: DecimalText | null;
+  breakEvenUnitRevenue: DecimalText | null;
+  targetUnitRevenue: DecimalText | null;
+  unitRevenueIncrease: DecimalText | null;
+  unknownRecordCounts: Record<"revenue" | "supplierCost" | "paymentFees" | "laborCost", number>;
+  status: "INCOMPLETE" | "NO_NEW_CHARGES" | "NO_COST" | "BELOW_COST" | "UNVALUED_REVENUE" | "COVERS_COST";
+  priceBasis: string;
+}
+
 export interface CohortPlanReport {
+  /** Complete newer reports retain these extensions; earlier saved editions can omit them. */
+  capacity?: PlanningCapacityReport;
+  servicePricing?: PlanningServicePricing[];
+
   schema: typeof COHORT_PLAN_REPORT_SCHEMA;
   kind: "PLAN";
   source: PlanSource;
