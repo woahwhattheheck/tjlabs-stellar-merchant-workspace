@@ -117,6 +117,17 @@ export function createPaymentRequestUi(host) {
     const proof = row.observation || row.verification || row.observations?.at(-1) || row.proofs?.at(-1);
     return proof?.result || proof?.verification || proof || {};
   }
+  function canCorrectPayer(row) {
+    return !row.receiptId && !(row.observations || []).some(item => item.verification?.status === 'VERIFIED');
+  }
+  function historyDescription(item) {
+    if (item.action === 'transaction_payer_corrected') {
+      return '<span class="subline payment-wrap">From ' + escape(item.previousPayer || 'Use the payment sender') +
+        ' to ' + escape(item.payer || 'Use the payment sender') + '</span>' +
+        '<span class="subline preline">' + escape(item.note) + '</span>';
+    }
+    return item.reason ? '<span class="subline">' + escape(item.reason) + '</span>' : '';
+  }
   function returnRows(detail) {
     const returns = detail.returns || [];
     if (!returns.length) return '<p class="muted">No transaction reference has been recorded.</p>';
@@ -124,8 +135,10 @@ export function createPaymentRequestUi(host) {
       const seen = observation(row), latest = row.observations?.at(-1) || row.observation;
       const code = latest?.status || seen.status || row.status || 'REFERENCE_RECORDED';
       return '<section class="section"><div class="row between"><strong>' + escape(label(code)) +
-        '</strong>' + button('Inspect and receive', 'receive', detail.paymentRequest.id,
-          'data-return="' + escape(row.id) + '" data-write') + '</div>' +
+        '</strong><div class="row">' + button('Inspect and receive', 'receive', detail.paymentRequest.id,
+          'data-return="' + escape(row.id) + '" data-write') +
+        (canCorrectPayer(row) ? button('Correct sending account', 'correct-payer', detail.paymentRequest.id,
+          'data-return="' + escape(row.id) + '" data-write') : '') + '</div></div>' +
         '<dl class="definition"><dt>Transaction</dt><dd class="mono payment-wrap">' + escape(row.transaction) +
         '</dd><dt>Payer</dt><dd class="mono payment-wrap">' + escape(row.payer || seen.payer || 'Derived during verification') +
         '</dd>' + (seen.closedAt ? '<dt>Ledger close</dt><dd>' + escape(seen.closedAt) + '</dd>' : '') +
@@ -157,7 +170,8 @@ export function createPaymentRequestUi(host) {
         button('Record transaction reference', 'return', row.id, 'data-write') + '</div>' + returnRows(detail) + '</section>' +
       '<section class="section"><h3>Request history</h3><div class="table-wrap"><table><thead><tr><th>Time / operator</th><th>Action</th></tr></thead><tbody>' +
       (detail.history || []).map(item => '<tr><td>' + escape(item.at || item.createdAt) + '<span class="subline">' + escape(item.actor) +
-        '</span></td><td>' + escape(label(item.action)) + (item.reason ? '<span class="subline">' + escape(item.reason) + '</span>' : '') + '</td></tr>').join('') +
+        '</span></td><td>' + escape(item.action === 'transaction_payer_corrected' ? 'Sending account corrected' : label(item.action)) +
+        historyDescription(item) + '</td></tr>').join('') +
       '</tbody></table></div></section>' +
       (!row.cancelledAt ? '<div class="dialog-actions">' + button('Withdraw request', 'cancel', row.id, 'data-write') + '</div>' : ''));
   }
@@ -168,6 +182,20 @@ export function createPaymentRequestUi(host) {
       field('Paying account (optional G account)', 'payer', '', 'minlength="56" maxlength="56" spellcheck="false" autocomplete="off"') +
       '<label class="wide">Internal note<textarea name="note" rows="3" maxlength="4000"></textarea></label></div>' +
       actions('Retain transaction reference') + '</form>');
+  }
+  function correctPayerDialog(id, returnId) {
+    const row = selected?.paymentRequest?.id === id && selected.returns?.find(item => item.id === returnId);
+    if (!row) throw new Error('Reopen this payment request before correcting the sending account.');
+    if (!canCorrectPayer(row)) throw new Error('The sending account is fixed after this transaction has been verified.');
+    openDialog('Correct the sending account', '<form id="payment-payer-form" data-id="' + escape(id) +
+      '"><p>Correct the account used to match this transaction. Leave it blank to use the account that sent the matching payment.</p>' +
+      '<div class="form-grid">' +
+      field('Saved transaction hash', 'transaction', row.transaction, 'readonly spellcheck="false"') +
+      field('Sending account (optional G account)', 'payer', row.payer || '',
+        'minlength="56" maxlength="56" spellcheck="false" autocomplete="off"') +
+      '<label class="wide">Reason for correction<textarea name="note" required rows="3" maxlength="4000"></textarea></label></div>' +
+      '<p class="hint">The transaction reference and previous observations stay in the history. Save the correction, then inspect and receive this reference again.</p>' +
+      actions('Save sending account correction') + '</form>');
   }
   function receiveDialog(id, returnId) {
     const row = selected?.paymentRequest;
@@ -185,6 +213,11 @@ export function createPaymentRequestUi(host) {
     if (form.id === 'payment-return-form') {
       await mutate('reportPaymentReturn', [form.dataset.id, {transaction: values.transaction.toLowerCase(), note: values.note, ...(values.payer ? {payer: values.payer} : {})}], 'Record Stellar transaction reference'); return true;
     }
+    if (form.id === 'payment-payer-form') {
+      await mutate('reportPaymentReturn', [form.dataset.id, {
+        transaction: values.transaction.toLowerCase(), payer: values.payer.trim() || null, note: values.note,
+      }], 'Correct Stellar sending account'); return true;
+    }
     if (form.id === 'payment-receive-form') {
       await mutate('receivePaymentRequest', [form.dataset.id, {returnId: form.dataset.return,
         allocate: values.allocate === 'true', allocatedDate: values.allocatedDate}], 'Inspect and receive Stellar payment'); return true;
@@ -197,7 +230,7 @@ export function createPaymentRequestUi(host) {
   async function click(control) {
     const action = control.dataset.action, id = control.dataset.id;
     if (!action?.startsWith('payment-')) return false;
-    if (host.isLocked() && ['payment-new','payment-edit','payment-issue','payment-return','payment-receive','payment-cancel'].includes(action)) {
+    if (host.isLocked() && ['payment-new','payment-edit','payment-issue','payment-return','payment-correct-payer','payment-receive','payment-cancel'].includes(action)) {
       throw new Error('Finish the retained operation before starting another change.');
     }
     if (action === 'payment-new' || action === 'payment-edit') createDialog(id);
@@ -206,6 +239,7 @@ export function createPaymentRequestUi(host) {
       if (!reviewed || reviewed.proposal.invoice.id !== id) throw new Error('Review the exact request before issuing.');
       await mutate('createPaymentRequest', [id, {proposal: reviewed.proposal, reviewSha256: reviewed.reviewSha256}], 'Issue Stellar payment request');
     } else if (action === 'payment-return') recordReturn(id);
+    else if (action === 'payment-correct-payer') correctPayerDialog(id, control.dataset.return);
     else if (action === 'payment-receive') receiveDialog(id, control.dataset.return);
     else if (action === 'payment-cancel') {
       openDialog('Withdraw payment request', '<form id="payment-cancel-form" data-id="' + escape(id) +
