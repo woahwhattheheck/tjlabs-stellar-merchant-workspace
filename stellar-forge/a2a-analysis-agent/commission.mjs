@@ -103,8 +103,19 @@ export async function commission({directory,recordingFile,datasetPackage,sourceR
     need(prior.operationId===OPERATION&&prior.status==='ORIGINAL_SOURCE_A2A_RECEIVING_COMPLETE','COMMISSION_ORIGINAL_RESULT_CHANGED');
     return {...prior,output:join(directory,'commission-result.json')};
   }catch(error){if(error.code!=='ENOENT')throw error;}
-  const startedAt=new Date().toISOString(),token=randomBytes(32).toString('base64url'),
-    otherToken=randomBytes(32).toString('base64url');
+  const startedAt=new Date().toISOString(),credentialPath=join(directory,'commission-credentials.json');
+  let credentials;
+  try{credentials=await readPrivateJSON(credentialPath);}
+  catch(error){
+    if(error.code!=='ENOENT')throw error;
+    credentials={schema:'stellar-forge.a2a-analysis-commission-credentials.v1',
+      token:randomBytes(32).toString('base64url'),otherToken:randomBytes(32).toString('base64url')};
+    await saveNew(credentialPath,credentials);
+  }
+  need(credentials.schema==='stellar-forge.a2a-analysis-commission-credentials.v1'&&
+    [credentials.token,credentials.otherToken].every(v=>typeof v==='string'&&v.length>=32&&!/\s/.test(v))&&
+    credentials.token!==credentials.otherToken,'COMMISSION_ORIGINAL_CREDENTIALS_CHANGED');
+  const {token,otherToken}=credentials;
   const environment={...process.env,A2A_ANALYSIS_TOKEN:token,A2A_ANALYSIS_SECOND_TOKEN:otherToken};
   let native,service,config,connection;
   const result={schema:'stellar-forge.a2a-analysis-commission.v1',operationId:OPERATION,
@@ -223,11 +234,14 @@ export async function commission({directory,recordingFile,datasetPackage,sourceR
 
     const cancel=await send('cancel_after_reopen','run',{procedureId:'query_observations_complete'});
     const selectedTask=await until(connection.client,cancel.task.id,t=>!!t.metadata?.analysis?.plan?.calls?.queryExport);
-    need(!terminal(selectedTask),'COMMISSION_CANCELLATION_TASK_ALREADY_FINISHED');
+    need(!terminal(selectedTask)||selectedTask.status.state===TaskState.TASK_STATE_CANCELED,
+      'COMMISSION_CANCELLATION_TASK_ALREADY_FINISHED');
     const selectedExport=selectedTask.metadata.analysis.plan.ids.export;
-    await service.close();service=undefined;
-    service=await openAnalysisServer(config,{environment});
-    connection=await connectAnalysis({url:publicUrl,token,card:connection.card});
+    if(selectedTask.status.state!==TaskState.TASK_STATE_CANCELED){
+      await service.close();service=undefined;
+      service=await openAnalysisServer(config,{environment});
+      connection=await connectAnalysis({url:publicUrl,token,card:connection.card});
+    }
     const cancelled=await connection.client.cancelTask({id:cancel.task.id,tenant:''});
     need(cancelled.status.state===TaskState.TASK_STATE_CANCELED&&cancelled.metadata.analysis.cancelRequested===true&&
       cancelled.metadata.analysis.plan.ids.export===selectedExport,'COMMISSION_REOPENED_CANCELLATION_CHANGED');
@@ -238,6 +252,10 @@ export async function commission({directory,recordingFile,datasetPackage,sourceR
     stage({stage:'original_export_cancellation_after_reopen',taskId:reconciled.id,
       originalExportId:selectedExport,originalCancellation:reconciled.metadata.analysis.originalCancellation});
 
+    result.status='ORIGINAL_SOURCE_A2A_RECEIVING_CLOSING';
+    await saveNew(join(directory,'commission-candidate-'+digest(result)+'.json'),result);
+    await service.close();service=undefined;
+    await native.close();native=undefined;
     result.completedAt=new Date().toISOString();
     result.status='ORIGINAL_SOURCE_A2A_RECEIVING_COMPLETE';
     const output=join(directory,'commission-result.json');await saveNew(output,result);
