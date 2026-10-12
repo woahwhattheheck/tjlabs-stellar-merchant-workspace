@@ -17,6 +17,15 @@ A release source capture preserves the exact request, full response text, byte d
 
 The ES modules reuse the existing FRED model, provider, briefing template and private file helpers. The direct source path needs Node with the same fetch/AbortSignal support as the existing provider and the original Linux flock helper. It introduces no additional HTTP client or credential store.
 
+The installed command forwards the same complete source operations through the existing FRED CLI:
+
+~~~sh
+starforge fred releases --help
+starforge fred releases capture --directory /absolute/private/ppiaco-release-20261012 --selection /absolute/private/ppiaco-release-selection.json
+~~~
+
+Use starforge fred releases followed by capture, status, inspect, receive, export, watch, plan or page with the options shown below. Project mutations remain the companion release-* commands. The original module entrypoint is also available:
+
 ~~~sh
 node stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/acquisition-cli.mjs help
 ~~~
