@@ -5,7 +5,7 @@ import { inspectFredDdpPackage } from './package.mjs';
 import { inspectFredDdpCrosswalk,resolveFredDdpMappings,fredDdpSourceSeries,fredDdpTargetSeries } from './crosswalk.mjs';
 import { FRED_DDP_PERIOD_RULES,normalizeFredDdpPeriod,inferredFredDdpPeriodRule,normalizeFredDdpScale,fredDdpFrequencyKind } from './periods.mjs';
 const SCHEMA='stellar-forge.fred-ddp-migration-plan.v1';
-const same=(a,b)=>canonical(a)===canonical(b),sourceKey=item=>item.release+'\u0000'+item.boardSeriesId;
+const same=(a,b)=>ddpDigest(a)===ddpDigest(b),sourceKey=item=>item.release+'\u0000'+item.boardSeriesId;
 function note(value,limit=8000){need(typeof value==='string'&&value.length<=limit,'Retain a supported analyst note.');return value;}
 function reviewedNote(value){const result=note(value,4000);need(result.trim().length>0,'Retain the reason for a reviewed mapping or meaning.');return result;}
 export function normalizeFredDdpMigrationInput(input){
@@ -70,27 +70,43 @@ export function buildFredDdpMigrationPlan({packageCapture,crosswalk,...rawInput}
   const bindingMap=new Map(input.bindings.map(value=>[value.seriesId,value])),originalIds=new Set(source.series.map(series=>series.id));
   need(input.bindings.every(value=>originalIds.has(value.seriesId)),'A reviewed meaning refers to another original package.');
   const series=source.series.map(item=>{
-    const binding=normalizedBinding(item,bindingMap.get(item.id)),mapping=mapped.get(sourceKey(item)),periods=[],invalid=[];
+    const binding=normalizedBinding(item,bindingMap.get(item.id)),mapping=mapped.get(sourceKey(item)),invalid=[],sourceIndices=[];
+    let windowStart=null,windowEnd=null,originalStart=null,originalEnd=null;
+    const include=period=>{
+      sourceIndices.push(period.index);
+      if(windowStart===null||period.key<windowStart)windowStart=period.key;
+      if(windowEnd===null||period.key>windowEnd)windowEnd=period.key;
+      if(originalStart===null||period.originalStart<originalStart)originalStart=period.originalStart;
+      if(originalEnd===null||period.originalEnd>originalEnd)originalEnd=period.originalEnd;
+    };
+    // A min-heap retains only the requested last observations, including missing
+    // values and exact ties. Fixed/source windows need no temporary period list.
+    const latest=[],compare=(left,right)=>left.key.localeCompare(right.key)||left.index-right.index;
+    const retainLatest=period=>{
+      if(latest.length<input.window.count){
+        latest.push(period);let at=latest.length-1;
+        while(at>0){const parent=(at-1)>>1;if(compare(latest[parent],latest[at])<=0)break;[latest[parent],latest[at]]=[latest[at],latest[parent]];at=parent;}
+      }else if(compare(period,latest[0])>0){
+        latest[0]=period;let at=0;
+        for(;;){const left=at*2+1,right=left+1;if(left>=latest.length)break;
+          const child=right<latest.length&&compare(latest[right],latest[left])<0?right:left;
+          if(compare(latest[at],latest[child])<=0)break;[latest[at],latest[child]]=[latest[child],latest[at]];at=child;}
+      }
+    };
     for(const observation of item.observations){
-      try{periods.push({index:observation.index,...normalizeFredDdpPeriod(observation.period,binding.periodRule)});}
-      catch{invalid.push(observation.index);}
+      let period;try{period={index:observation.index,...normalizeFredDdpPeriod(observation.period,binding.periodRule)};}
+      catch{invalid.push(observation.index);continue;}
+      if(input.window.kind==='last'){if(period.key<=input.asOf)retainLatest(period);}
+      else if(input.window.kind!=='fixed'||period.key>=input.window.start&&period.key<=input.window.end)include(period);
     }
-    let selected=periods;
-    if(input.window.kind==='fixed')selected=periods.filter(period=>period.key>=input.window.start&&period.key<=input.window.end);
-    if(input.window.kind==='last')selected=periods.filter(period=>period.key<=input.asOf).sort((a,b)=>a.key.localeCompare(b.key)||a.index-b.index).slice(-input.window.count);
-    const selectedIndices=new Set(selected.map(period=>period.index));
-    // Keep source order even if the original file orders its periods differently.
-    const sourceIndices=item.observations.filter(observation=>selectedIndices.has(observation.index)).map(observation=>observation.index);
-    const rawStarts=selected.map(period=>period.originalStart).sort(),rawEnds=selected.map(period=>period.originalEnd).sort();
-    const keys=selected.map(period=>period.key).sort();
+    if(input.window.kind==='last')for(const period of latest.sort((left,right)=>left.index-right.index))include(period);
     const issues=[];
     if(invalid.length)issues.push({code:'UNSUPPORTED_PERIOD',sourceIndices:invalid,message:'Choose a supported original period representation.'});
     if(mapping.status==='MAPPED'&&sourceIndices.length===0&&input.window.kind!=='fixed'&&input.window.kind!=='last')
       issues.push({code:'EMPTY_SOURCE_WINDOW',sourceIndices:[],message:'The original selected series has no observation periods.'});
     return {id:item.id,index:item.index,release:item.release,boardSeriesId:item.boardSeriesId,datasetId:item.datasetId,title:item.title,
       fredSeriesId:mapping.fredSeriesId,mappingStatus:mapping.status,binding,sourceIndices,selectedObservationCount:sourceIndices.length,
-      window:{kind:input.window.kind,start:keys[0]??null,end:keys.at(-1)??null,
-        originalStart:rawStarts[0]??null,originalEnd:rawEnds.at(-1)??null},issues};
+      window:{kind:input.window.kind,start:windowStart,end:windowEnd,originalStart,originalEnd},issues};
   });
   const summary={ready:false,seriesCount:series.length,mappedCount:0,excludedCount:0,unmappedCount:0,ambiguousCount:0,targetSeriesCount:mappings.targets.length,
     acquisitionCount:0,selectedObservationCount:series.reduce((sum,item)=>sum+item.selectedObservationCount,0),unresolvedPeriodCount:0,emptyWindowSeriesCount:0};
@@ -131,7 +147,8 @@ export function buildFredDdpMigrationPlan({packageCapture,crosswalk,...rawInput}
     input,mappings,series,acquisitions,summary};
   return {...core,id:'fred-ddp-migration-plan-'+ddpDigest(core)};
 }
-export function validateFredDdpMigrationPlan(value,{packageCapture=null,crosswalk=null}={}){
+export function validateFredDdpMigrationPlan(value,{packageCapture=null,crosswalk=null,copy=true}={}){
+  need(typeof copy==='boolean','Choose whether to copy the validated migration plan.');
   need(plain(value)&&value.schema===SCHEMA&&Array.isArray(value.series)&&Array.isArray(value.acquisitions)&&plain(value.summary)&&plain(value.mappings),'A complete immutable DDP migration plan is required.');
   const {id,...core}=value;
   need(id==='fred-ddp-migration-plan-'+ddpDigest(core)&&same(value.input,normalizeFredDdpMigrationInput(value.input)),'The saved migration plan identity or selected inputs changed.');
@@ -141,13 +158,13 @@ export function validateFredDdpMigrationPlan(value,{packageCapture=null,crosswal
   for(const item of value.acquisitions)need(plain(item)&&same(item.selection,normalizeSelection(item.selection))&&same(item.series,item.selection.series)&&
     item.id==='fred-ddp-acquisition-'+ddpDigest({packageId:value.packageId,crosswalkId:value.crosswalkId,series:item.series,selection:item.selection}),'A saved original acquisition changed.');
   need((packageCapture===null)===(crosswalk===null),'Provide both original package and crosswalk context for complete plan validation.');
-  if(packageCapture!==null)need(same(value,buildFredDdpMigrationPlan({packageCapture,crosswalk,...value.input})),'The migration plan no longer derives from its complete original sources.');
-  return clone(value);
+  if(packageCapture!==null)need(value.id===buildFredDdpMigrationPlan({packageCapture,crosswalk,...value.input}).id,'The migration plan no longer derives from its complete original sources.');
+  return copy?clone(value):value;
 }
 export function pageFredDdpMigrationPlan(value,{section='series',offset=0,limit=100}={}){
-  const plan=validateFredDdpMigrationPlan(value);
+  const plan=validateFredDdpMigrationPlan(value,{copy:false});
   need(['series','acquisitions','mappings'].includes(section)&&Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=1000,'Choose a valid migration-plan page.');
   const source=section==='mappings'?plan.mappings.rows:plan[section];
   return {schema:plan.schema,id:plan.id,packageId:plan.packageId,packageSha256:plan.packageSha256,crosswalkId:plan.crosswalkId,crosswalkSha256:plan.crosswalkSha256,
-    input:plan.input,summary:plan.summary,section,offset,limit,total:source.length,nextOffset:offset+limit<source.length?offset+limit:null,rows:source.slice(offset,offset+limit)};
+    input:clone(plan.input),summary:clone(plan.summary),section,offset,limit,total:source.length,nextOffset:offset+limit<source.length?offset+limit:null,rows:clone(source.slice(offset,offset+limit))};
 }

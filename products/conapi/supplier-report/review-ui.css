@@ -161,6 +161,7 @@
   background: #f0f0f0;
   overflow-wrap: anywhere;
 }
+.supplier-review .sr-alert { white-space: pre-wrap; }
 .supplier-review .sr-alert h3 { margin-bottom: 6px; }
 .supplier-review .sr-alert ul { margin: 4px 0 0; padding-left: 20px; }
 .supplier-review .sr-notice { border-left-width: 1px; background: #fafafa; }

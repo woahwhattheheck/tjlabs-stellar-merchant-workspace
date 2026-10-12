@@ -19,8 +19,9 @@ FINANCE_COMMANDS = {
 REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
                    "implementation.prepare", "cohort.prepare", "completion.prepare"}
 READ_POSTS = {
-    "installation-return-seed", "installation-return-preview", "installation-return-review-preview",
-    "work-intake-preview", "ledger-intake-inspect", "ledger-intake-preview", "statement-preview",
+    "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
+    "installation-return-review-preview",
+    "work-intake-preview", "ledger-intake-inspect", "ledger-intake-preview", "statement-inspect", "statement-preview",
     "implementation-source", "implementation-preview", "cohort-seed", "cohort-preview",
     "installation-workflows", "installation-workflow-seed", "installation-workshares",
     "installation-workshare-seed", "installation-seed", "installation-preview",

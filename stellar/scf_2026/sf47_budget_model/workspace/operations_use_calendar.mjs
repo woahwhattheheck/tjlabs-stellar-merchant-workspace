@@ -221,7 +221,7 @@ export function useCalendarReport(value){
       row.receipts.map(item=>esc((item.intentId||item.id)+' · '+item.settlementStatus+'/'+item.outputStatus)).join('<br>')||'No receipt linked']))+'</section>';
 }
 
-export function mountCustomerUseCalendar({container,current,api,session,onOpenInstallation,onOpenCohort}){
+export function mountCustomerUseCalendar({container,current,api,session,onOpenInstallation,onOpenCohort,onOpenPlanning}){
   stylesheet();const root=document.createElement('section');root.className='customer-use-calendar';root.setAttribute('aria-label','Customer-use calendar');container.replaceChildren(root);
   const caseId=current.program.id,prefix='/api/operations/'+caseId,storageKey='sf47.customer-use.'+caseId;
   let active=true,busy=false,hostBusy=false,generation=0,view=null,error='',notice='';
@@ -288,6 +288,7 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
     const group=choice();
     html+='<div class="use-toolbar"><label>Saved window <select data-use-view-field="groupId">'+options(view.groups.map(row=>[row.id,row.startDate+' through '+row.endDate+' · '+(row.tranche?'tranche '+row.tranche:'ordinary use')]),session.groupId)+'</select></label>'+
       viewButton('Open original Cohort draft','cohort','',!group||group.tranche===null||group.planChanged)+
+      viewButton('Plan staffing and pricing','adoption','',!group||group.tranche===null||group.planChanged||!onOpenPlanning)+
       viewButton('JSON','export','data-format="json"')+viewButton('CSV','export','data-format="csv"')+viewButton('Calendar ICS','export','data-format="ics"')+
       viewButton('Complete editable case ZIP','case-export')+'</div>';
     if(group){
@@ -348,13 +349,14 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
       if(actionName==='date'){session.date=target.dataset.date;session.page=0;persist();return;}
       if(actionName==='clear-date'){session.date='';session.page=0;persist();return;}
       if(!view)throw new Error('Read the complete selected calendars first.');
-      if(actionName==='cohort'){
+      if(actionName==='cohort'||actionName==='adoption'){
         const group=choice();if(!group)throw new Error('Select the original window.');
         const response=await api(prefix+'/customer-use-calendar-cohort',{expectedVersion:current.program.version,
           installationRefs:copy(view.selection),groupId:group.id,asOfAt:new Date().toISOString()});
         if(!available())return;
         if(response.source?.programId!==caseId||response.source.version!==current.program.version||response.customerUse?.groupId!==group.id)
           throw new Error('The returned Cohort draft belongs to a different source selection.');
+        if(actionName==='adoption'){onOpenPlanning({calendarSelection:copy(view),nativeSeed:copy(response)});return;}
         if(onOpenCohort)onOpenCohort(response);else download(JSON.stringify(response.inputs,null,2)+'\n',caseId+'-customer-use-cohort-input.json');
         return;
       }

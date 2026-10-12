@@ -491,6 +491,133 @@ includes the complete capacity, effort and price reports with the retained
 original plan.
 
 
+## Receive a saved Customer-use Calendar
+
+Open the actual case's **Customer use** tab, choose the exact saved Installation
+editions and original dated window, then select **Plan staffing and pricing**.
+The workspace reads the complete native Customer-use Cohort seed for that
+selection and opens a new editable adoption plan.
+
+The receiver compares the case ID/version, plan content SHA-256, original rule,
+dated window, and every selected Installation ID/revision/SHA-256. The saved
+window must span the original tranche's consecutive-calendar-day rule. Its
+native useful-operation identities are retained in the planner.
+
+Earlier local planning drafts remain in **Saved editions**. An outstanding
+original edition save is completed through its existing recovery control; the
+received calendar remains available to open after that save. The new plan uses
+the existing edition writer, source attachment, complete case export and
+independent receiving workflows.
+
+### Dated tasks and explicit funding
+
+The plan contains one schedule per native dated use and one **fundingGroups**
+row per original DIRECT or PREPAID settlement group. The full original calendar
+selection and matching Cohort seed remain in **calendarSource**, including the
+selected immutable editions, useful task definitions, native receipt references
+and their retained states.
+
+| Native source | Editable planning representation |
+|---|---|
+| Original useful task | The native Cohort operation ID, merchant, complete request, useful output and source references. |
+| PURCHASE or ALLOWANCE_USE | An explicit-date schedule with payment.kind FUNDED and the original fundingGroupIds. |
+| REOPEN or FREE_USE | An explicit-date UNPAID schedule. |
+| CANCELLED entry | The original dated schedule retained with zero useful tasks. |
+| DIRECT settlement group | One named explicit funding group, even when several useful results refer to it. |
+| PREPAID settlement group | One named explicit funding group covering all its selected allowance-use results. |
+| Original purchase references | Retained in the original calendar source and group source note. |
+| Absent numeric commercial terms | Null atomic price and unvalued currency estimates, ready for explicit entry. |
+
+The native calendar carries UTC civil dates. Imported schedules use 12:00 UTC
+as an editable planning placement within each source date, recorded in their
+notes. Exact dates are retained, with all weekdays enabled so the entered date
+rows determine the workload. The native calendar already selected its actual
+included and excluded dates. Original native purchase and completion timestamps
+remain in the retained source.
+
+Each funding group contributes at most one planned settlement, on its first
+whole useful-result date. A funding date before the window supplies existing
+funding and creates zero new settlements in this window. An unused or wholly
+cancelled group creates zero new settlements. A result shared by multiple
+funding groups keeps all of those group identities.
+
+Funding belongs to its original purchased operation. Later allowance uses can
+select a different useful task from the same buyer and merchant. The report
+retains that distinction and applies facilitator planning to the original
+funding operation and explicitly entered settlement facilitator.
+
+### Enter commercial terms and delivery effort
+
+Use **Funding groups** to enter the native network, asset, atomic price, selected
+facilitator, currency revenue and payment fee for each settlement. A blank
+atomic price stays **UNPRICED**; an entered zero is a known zero price. The
+report shows priced and unpriced groups separately. A target which could be
+reached only after pricing those groups shows **PRICE_UNSPECIFIED** and its
+additional unpriced opportunities.
+
+Use **Schedules** for supplier cost, active hours per useful task, hourly labor
+cost and shared capacity assignment. A FUNDED schedule obtains revenue and
+payment fees from its funding groups. Use the existing **Capacity & pricing**
+tab for daily staff hours, date overrides, minimum margin and effort sensitivity.
+
+Explicit funding preserves the source grouping. It does not infer a numerical
+pass capacity or invent additional pass acquisitions from a named calendar
+group. Recurring per-request and quantified prepaid schedules remain available
+for separately authored workflows with those actual terms.
+
+The service-cost report joins funding groups connected through shared useful
+results. Each task's cost enters that complete component once. Each new
+funding group's revenue and payment fee also enter once. A component's price
+floor is its average required currency value per new funding group; individual
+DIRECT/PREPAID group prices remain editable. Different or unspecified estimate
+currencies keep the combined price floor incomplete until an explicit common
+pricing basis is entered. The currency report continues to show each entered
+currency separately.
+
+### Receive through the maintained CLI or module
+
+Retain the full JSON responses from the original **customer-use-calendar** read
+and **customer-use-calendar-cohort** seed, selected at the same current case
+version. Use their actual window ID:
+
+~~~sh
+node cohort_planning_cli.mjs calendar \
+  --native-seed customer-use-cohort-seed.json \
+  --calendar customer-use-calendar.json \
+  --group "$GROUP_ID" \
+  --output customer-adoption-plan.json
+
+node cohort_planning_cli.mjs evaluate \
+  --input customer-adoption-plan.json \
+  --output customer-adoption-report.json
+~~~
+
+The installed launcher forwards the same **calendar** operation through
+**starforge grant-cohort-plan**. Output files retain the existing atomic
+create-new-file behavior. The default group ID comes from the native seed;
+**--group** selects that same explicit original window.
+
+The pure module supports the same receiving operation:
+
+~~~js
+import { seedCohortPlanFromCalendar } from './cohort_planning_calendar.mjs';
+
+const plan = seedCohortPlanFromCalendar(nativeSeed, calendarSelection, {
+  groupId: nativeSeed.customerUse.groupId,
+  draftId: 'cohort-plan-received-calendar',
+  name: 'Received customer-use delivery plan',
+});
+~~~
+
+Editable rows CSV includes **fundingGroups**, **fundingKind**, **date**,
+**fundingGroupIds** and complete **origin** JSON. It supports filling commercial
+terms and schedule effort across the original named rows in one import. The
+complete plan JSON retains the full original calendar and seed. Report CSV
+adds **EXPLICIT_FUNDING** and **FUNDING_ECONOMICS** rows; readable HTML includes
+the funding report. The Funding tab also downloads both original JSON inputs
+directly for another operator.
+
+
 ## Compare complete alternatives
 
 Use **Compare plans** to answer a practical delivery question: how does a

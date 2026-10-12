@@ -92,8 +92,9 @@ Use the current revision from the actual native task record. A task correction r
 |---|---|
 | `identity()`, `state()` | Current native product identity and channel state |
 | `task(id)`, `purchase(id)`, `contract(id)` | Complete selected original record |
+| `record(kind, id)` | Original funder profile, funding operation, settlement or coherent observation |
 | `job(id)` | Original native background job |
-| `invoke(action, arguments)` | Existing task, merchant, purchase, delivery, close or receiving action |
+| `invoke(action, arguments)` | Existing task, merchant, purchase, delivery, funding, collection, refund, close or receiving action |
 | `prepare_purchase`, `execute_purchase`, `resume_purchase` | Original purchase identity and retained request |
 | `run_purchases(document)` | Complete supplied work-list object |
 | `run_file(file, result_path=…)` | Complete supplied work-list file with immutable result editions |
@@ -104,6 +105,41 @@ Use the current revision from the actual native task record. A task correction r
 All `invoke` actions come from the existing channel client. Read the action list and full input shapes in the [channel guide](../README.md) and installed `channel help`. Its return is the original native job/result envelope.
 
 The connection validates the original private product session on each operation. Calls on one Python client are serial. Closing the Python context drains and stops its own bridge attachment; the native product and its accepted jobs remain available.
+
+## Funding, merchant collection and refunds
+
+Python uses the same maintained financial operations as the browser and installed command. Select the actual stream from `state()`, save the complete original funder profile, and keep one stable ID for each funding operation.
+
+```python
+with ChannelClient(actual_product_directory) as channel:
+    prepared = channel.invoke(
+        "funding-prepare",
+        {
+            "stream": selected_stream_key,
+            "fundingId": original_funding_id,
+            "action": "top_up",
+            "amountAtomic": selected_token_amount_atomic,
+        },
+    )
+    if prepared["state"] == "COMPLETE":
+        authorization = channel.invoke(
+            "funding-execute",
+            {"fundingId": original_funding_id},
+            wait_ms=0,
+        )
+        # The original funder terminal reviews the amount and maximum fee.
+        # Read the returned native job, then reopen the same funding record.
+    else:
+        pending_preparation = channel.job(prepared["id"])
+```
+
+Use `record("funding", original_funding_id)` to reopen its durable native state. `funding-resume` continues a saved transaction. `funding-reconcile` accepts the same funding ID and an optional selected archival `rpcUrl`. A signed action keeps its original envelope across Python disconnection and native product restart.
+
+Prepare ongoing merchant collection with `collection-prepare` and `{stream, settlementId}`, then invoke `collection-execute` for that same ID. **COLLECTED** keeps the channel available for later work. A final `close-prepare` / `close-execute` uses its own ID and ends the channel. Read either through `record("settlements", original_settlement_id)`.
+
+For the funder's remaining-balance return, `funding-prepare` accepts `action:"close_start"` and later `action:"refund"`, each with its own stable funding ID and no amount field. The application observes the actual refund ledger before preparing a refund. Its original terminal selects each action and fee.
+
+`channel-observe` takes `{stream}` and returns one coherent selected-network observation. `record("observations", selected_stream_key)` reads the saved observation. Funding profiles, every original financial operation and their complete transaction recovery move through the existing `receive_channel.py` handover.
 
 ## Continue an interrupted operation
 

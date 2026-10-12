@@ -148,6 +148,52 @@ async function openReceivedProcess(directory,root,environment) {
   }
 }
 
+/** Read the original private execution files, including a failed native command. */
+export async function readNativeReceiving(directory) {
+  const root=resolve(directory), checkpoint=join(root,"airflow-native-operation.json");
+  const operation=await readJSON(checkpoint);
+  need(operation.schema===SCHEMA&&operation.operationId===OPERATION_ID&&operation.directory===root,
+    "Read the original Airflow receiving operation");
+  const files=[],executionReports=[],readErrors=[];
+  async function receiveFile(path) {
+    const relative=path.slice(root.length+1),stat=await fs.lstat(path);
+    if(stat.isSymbolicLink()||!stat.isFile()){
+      readErrors.push({path:relative,name:"UnsupportedOriginalEntry"});return;
+    }
+    const bytes=await readFile(path);
+    files.push({path:relative,bytes:bytes.length,sha256:sha256(bytes),
+      encoding:"base64",content:bytes.toString("base64")});
+    if(relative.match(/^native-execution-(first|corrected)\/execution\.json$/)){
+      try { executionReports.push({path:relative,bytes:bytes.length,sha256:sha256(bytes),
+        execution:JSON.parse(bytes.toString("utf8"))}); }
+      catch(error){readErrors.push({path:relative,name:error.name,code:error.code??null});}
+    }
+  }
+  async function receiveDirectory(path) {
+    for(const name of (await fs.readdir(path)).sort()){
+      const entry=join(path,name);
+      try {
+        const stat=await fs.lstat(entry);
+        if(stat.isDirectory()&&!stat.isSymbolicLink())await receiveDirectory(entry);
+        else await receiveFile(entry);
+      }catch(error){readErrors.push({path:entry.slice(root.length+1),name:error.name,code:error.code??null});}
+    }
+  }
+  for(const name of (await fs.readdir(root)).sort()){
+    if(!/^native-/.test(name))continue;
+    const path=join(root,name);
+    try {
+      const stat=await fs.lstat(path);
+      if(stat.isDirectory()&&!stat.isSymbolicLink())await receiveDirectory(path);
+      else readErrors.push({path:name,name:"UnsupportedOriginalEntry"});
+    }catch(error){readErrors.push({path:name,name:error.name,code:error.code??null});}
+  }
+  return {...operation,phase:operation.interruption?"RECEIVING":operation.completedAt?"COMPLETE":"RUNNING",
+    observedAt:new Date().toISOString(),executionReports,
+    privateNativeFiles:{schema:"commons.openlineage.airflow-private-native-files.v1",
+      fileCount:files.length,bytes:files.reduce((sum,file)=>sum+file.bytes,0),files,readErrors}};
+}
+
 /** Continue this original private native operation; each completed phase is reused. */
 export async function receiveOriginalAirflow(directory,{python="python3"}={}) {
   const root=resolve(directory), checkpoint=join(root,"airflow-native-operation.json");
@@ -168,10 +214,21 @@ export async function receiveOriginalAirflow(directory,{python="python3"}={}) {
   const sourceKey=sha256(jsonBytes(sourceFiles));
   if(!operation.sourceEditions.some(item=>item.sha256===sourceKey))
     operation.sourceEditions.push({sha256:sourceKey,files:sourceFiles,receivedAt:new Date().toISOString()});
+  if(operation.interruption){
+    operation.interruptions??=[];operation.interruptions.push(operation.interruption);
+    delete operation.interruption;
+  }
   await atomicJSON(checkpoint,operation);
+  const resultPath=join(root,"airflow-native-receiving.json");
+  const progress=async()=>{
+    await atomicJSON(checkpoint,operation);
+    await atomicJSON(resultPath,{...operation,phase:"RUNNING",observedAt:new Date().toISOString()});
+  };
+  await progress();
   const phase=async(name,run)=>{
     if(Object.hasOwn(operation.completed,name))return operation.completed[name];
-    const value=await run();operation.completed[name]=value;await atomicJSON(checkpoint,operation);return value;
+    operation.currentPhase=name;await progress();
+    const value=await run();operation.completed[name]=value;await progress();return value;
   };
   for(const name of ["inputs","working","artifacts","airflow-home","commissioning"])
     await fs.mkdir(join(root,name),{recursive:true,mode:0o700});
@@ -355,14 +412,22 @@ export async function receiveOriginalAirflow(directory,{python="python3"}={}) {
         eventCount:state.events.length,sourceCount:state.sources.length,editionIds:state.editions.map(row=>row.id)};
     });
     operation.completedAt??=new Date().toISOString();
+    operation.currentPhase="complete";
     delete operation.interruption;
     await atomicJSON(checkpoint,operation);
-    const result={...operation,customerHandover:exported};
-    await atomicJSON(join(root,"airflow-native-receiving.json"),result);
+    const result={...await readNativeReceiving(root),customerHandover:exported};
+    await atomicJSON(resultPath,result);
     return result;
   }catch(error){
-    operation.interruption={at:new Date().toISOString(),name:error.name,message:error.message};
-    await atomicJSON(checkpoint,operation);throw error;
+    operation.interruption={at:new Date().toISOString(),phase:operation.currentPhase,
+      name:error.name,message:error.message};
+    await atomicJSON(checkpoint,operation);
+    try { await atomicJSON(resultPath,await readNativeReceiving(root)); }
+    catch(receivingError){
+      await atomicJSON(resultPath,{...operation,phase:"RECEIVING",
+        receivingError:{name:receivingError.name,code:receivingError.code??null}});
+    }
+    throw error;
   }finally{
     if(received)await received.close();
     if(host)await host.close();
@@ -373,8 +438,10 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   else {
     const directory=process.argv[2],index=process.argv.indexOf("--python");
     need(directory,"Provide the original private Airflow receiving directory");
-    receiveOriginalAirflow(directory,{python:index<0?"python3":process.argv[index+1]})
-      .then(result=>console.log(JSON.stringify(result,null,2)))
-      .catch(error=>{console.error(JSON.stringify({error:error.message}));process.exitCode=1;});
+    const action=process.argv.includes("--report")?readNativeReceiving(directory):
+      receiveOriginalAirflow(directory,{python:index<0?"python3":process.argv[index+1]});
+    action.then(result=>console.log(JSON.stringify(result,null,2)))
+      .catch(error=>{console.error(JSON.stringify({operationId:OPERATION_ID,error:error.message,
+        receivingReport:join(resolve(directory),"airflow-native-receiving.json")}));process.exitCode=1;});
   }
 }

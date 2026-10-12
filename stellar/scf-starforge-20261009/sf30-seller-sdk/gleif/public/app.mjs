@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { escapeHtml as e, plan } from '/core.mjs';
+import { escapeHtml as e, plan, COMPANY_FACT_LABELS, sourceFact, sourceReferenceDetails } from '/core.mjs';
 const $=id=>document.getElementById(id),forms=['capture-form','review-form','batch-form','report-form','compare-form','query-form'];
 let token=new URLSearchParams(location.hash.slice(1)).get('token')??sessionStorage.getItem('gleif-token')??'';
 if(token){sessionStorage.setItem('gleif-token',token);history.replaceState(null,'',location.pathname);}
@@ -127,8 +127,7 @@ async function loadEntityRows() {
 }
 function showDetail(item) {
   detail=item;detailBinding=reviewSnapshot(item);$('detail').hidden=false;$('detail-title').textContent=item.row.legalName;
-  const labels={lei:'Legal entity identifier',entityStatus:'Entity status',registrationStatus:'LEI registration',legalJurisdiction:'Legal jurisdiction',legalAddress:'Legal address',headquartersAddress:'Headquarters address',nextRenewalDate:'Next renewal',registrationAuthorityId:'Registration authority',registrationAuthorityEntityId:'Registered entity number',relationshipReferences:'Relationship references'};
-  $('source-fields').innerHTML=Object.entries(labels).map(([key,label])=>'<div><strong>'+e(label)+'</strong>'+e(item.row[key])+'</div>').join('');
+  $('source-fields').innerHTML=Object.entries(COMPANY_FACT_LABELS).map(([key,label])=>'<div><strong>'+e(label)+'</strong>'+sourceFact(key,item.row[key])+'</div>').join('')+'<div>'+sourceReferenceDetails(item.row)+'</div>';
   $('resource').textContent=JSON.stringify(item.resource,null,2);
   const form=$('review-form');fillReviewFields(form,item.review??currentReview(item.row.lei)??{});
   let draft;try{draft=JSON.parse(localStorage.getItem(reviewDraftSlot(detailBinding))??'null');}catch{}

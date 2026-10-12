@@ -13,6 +13,7 @@ import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapsho
 export const OPERATING_PLAN_HELP = [
   'Customer operating plans',
   '',
+  'starforge discover plan catalog [--source-root DIRECTORY] [--selection PRODUCT] [--out NEW.json]',
   'starforge discover plan create --title TITLE --out NEW.json [--step command:NAME ...]',
   'starforge discover plan show --file PLAN.json [--revision N] [--format json|markdown|html] [--out NEW]',
   'starforge discover plan draft --file PLAN.json [--revision N] [--out NEW.json]',
@@ -28,9 +29,10 @@ export const OPERATING_PLAN_HELP = [
   'Create, edit, add, receive and copy require a new output filename. Existing files are preserved.',
   'The browser is available at /operating-plan.html when starforge discover serve is running.',
 ].join('\n');
-const ACTIONS = ['create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy'];
+const ACTIONS = ['catalog', 'create', 'show', 'draft', 'edit', 'add', 'compare', 'receive', 'copy'];
 const COMMON = ['file', 'out'];
 const FLAGS = {
+  catalog: ['source-root', 'selection', 'out'],
   create: ['id', 'title', 'customer', 'purpose', 'period', 'owner', 'receiving', 'notes', 'step', 'source-root', 'selection', 'out'],
   show: [...COMMON, 'revision', 'format'],
   draft: [...COMMON, 'revision'],
@@ -60,7 +62,7 @@ export function parseOperatingPlanArguments(args) {
     }
   }
   if (steps.length) options.steps = steps;
-  if (action !== 'create' && !options.file) throw new TypeError('--file is required.');
+  if (!['create', 'catalog'].includes(action) && !options.file) throw new TypeError('--file is required.');
   if (['create', 'edit', 'add', 'receive', 'copy'].includes(action) && !options.out)
     throw new TypeError('--out must name a new output file.');
   if (action === 'create' && !options.title) throw new TypeError('--title is required.');
@@ -91,7 +93,8 @@ export async function mainOperatingPlan(args = process.argv.slice(2), { log = co
   const original = options.file ? inspectOperatingPlan(await readJSON(options.file)) : null;
   const reportOptions = { revision: options.revision };
   let value, plainText = null;
-  if (action === 'create') {
+  if (action === 'catalog') value = await currentCatalog(options);
+  else if (action === 'create') {
     const source = options.steps?.length ? await currentCatalog(options) : null;
     const steps = (options.steps ?? []).map(itemId => createOperatingStep({
       id: randomUUID(), selection: snapshotRegistration(source, itemId),

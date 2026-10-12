@@ -30,6 +30,7 @@ const retainedCompletionSessions=new Map();
 const retainedEngagementSessions=new Map();
 const retainedCalendarSessions=new Map();
 const retainedCustomerUseSessions=new Map();
+const retainedCalendarPlanningRequests=new Map();
 const retainedCohortSessions=new Map();
 const retainedInstallationSessions=new Map();
 const retainedInstallationReturnSessions=new Map();
@@ -558,6 +559,11 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
           retained.requestOpen=request;retainedInstallationSessions.set(c.program.id,retained);
           view.tab='installations';render();
         },
+        onOpenPlanning:visibleTab('cohort-planning')?request=>{
+          if(!available()||view.current?.program.id!==c.program.id)return;
+          retainedCalendarPlanningRequests.set(c.program.id,{...structuredClone(request),requestId:crypto.randomUUID()});
+          view.tab='cohort-planning';render();
+        }:null,
         onOpenCohort:result=>{
           if(!available()||view.current?.program.id!==c.program.id)return;
           const retained=retainedCohortSessions.get(c.program.id)||{};
@@ -569,6 +575,8 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     }
     if(c&&view.tab==='cohort-planning'){
       cohortPlanningView=mountCohortPlanning({container:$('[data-ops-cohort-planning]'),current:c,saveApi:transport,
+        incomingCalendar:retainedCalendarPlanningRequests.get(c.program.id)||null,
+        onCalendarReceived:requestId=>{if(retainedCalendarPlanningRequests.get(c.program.id)?.requestId===requestId)retainedCalendarPlanningRequests.delete(c.program.id);},
         getActor:recordingActor,mutationId,inform,
         onCaseUpdated:async(next,result)=>{
           if(!available()||view.current?.program.id!==next.program.id)return;

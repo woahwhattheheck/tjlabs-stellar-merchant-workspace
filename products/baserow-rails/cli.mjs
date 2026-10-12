@@ -19,6 +19,8 @@ const ruby = Object.freeze({
   dataset: SDK + 'developer/ruby-client/examples/native_dataset_customer.rb',
   commission: SDK + 'baserow/customer/lifecycle.rb',
   operator: SDK + 'developer/ruby-client/examples/rails_dataset/operator/install.rb',
+  'dataset-source': SDK + 'developer/ruby-client/examples/rails_dataset/operator/source_cli.rb',
+  'dataset-mapping-lifecycle': SDK + 'developer/ruby-client/examples/rails_dataset/operator/mapping_example.rb',
 });
 const customerRequire = SDK + 'baserow/customer/baserow_customer_receiving.rb';
 const HELP = [
@@ -36,6 +38,8 @@ const HELP = [
   'starforge baserow-rails dataset --ruby /absolute/ruby -- COMMAND ...',
   'starforge baserow-rails commission --ruby /absolute/ruby -- run|resume|reopen|status ...',
   'starforge baserow-rails operator --ruby /absolute/ruby -- --directory PRIVATE_APPLICATION ...',
+  'starforge baserow-rails dataset-source --ruby /absolute/ruby -- COMMAND ...',
+  'starforge baserow-rails dataset-mapping-lifecycle --ruby /absolute/ruby -- run|reopen ...',
   '',
   'source/workspace/publisher/deployment/customer use the original Node entrypoints.',
   'client exports or receives the complete Ruby, Rails and Baserow client package.',
@@ -43,6 +47,8 @@ const HELP = [
   'dataset receives an existing finalized SF100 room into the original Ruby client.',
   'commission continues an original Baserow run through full independent application receiving.',
   'operator opens the original received Rails application on a loopback address.',
+  'dataset-source receives all source rows, authors mappings and operates the original import.',
+  'dataset-mapping-lifecycle continues the installed application through real forms and full receiving.',
   '',
   'Use --help immediately after a Node group for its complete command contract.',
   'For a Ruby command, select --ruby first and append --help after --.',
