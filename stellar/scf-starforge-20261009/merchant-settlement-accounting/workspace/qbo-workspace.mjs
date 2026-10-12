@@ -10,6 +10,7 @@ import {normalizeQboCompany} from '../accountant/qbo-company.mjs';
 import {isBuyerHandoff} from '../accountant/buyer-source.mjs';
 import {qboBuyerRows,isQboBuyerPlan,qboBuyerReservation,qboBuyerReservationOverlap} from '../accountant/qbo-buyer.mjs';
 import {QboHttpClient,qboRetryAt} from '../accountant/qbo-http.mjs';
+import {accountingWorkspaceBinding} from './binding.mjs';
 
 export const QBO_REQUEST_BYTES=32*1024*1024;
 const copy=value=>structuredClone(value),now=()=>new Date().toISOString();
@@ -73,7 +74,7 @@ export class QboWorkspace{
     const record=this.row(planId),plan=JSON.parse((await readExact(this.directory(planId),record.files.find(file=>file.name==='plan.json'))).toString('utf8'));
     validateQboPlan(plan);check(plan.id===record.id&&plan.integrity.sha256===record.integrity.sha256,'QBO_PLAN_CHANGED','The journal identity changed.',409);return plan;
   }
-  view(){return {revision:this.workspace.state.revision,handoffs:copy(this.workspace.state.accountantHandoffs??[]),plans:copy(records(this.workspace)),currencies:QBO_CURRENCIES,docs:QBO_DOCS,connection:this.connection()};}
+  view(){const {workspaceId,sourcesSha256}=accountingWorkspaceBinding(this.workspace.directory,this.workspace.state);return {binding:{workspaceId,sourcesSha256},reopenRequired:Boolean(this.workspace.commitUncertainty),revision:this.workspace.state.revision,handoffs:copy(this.workspace.state.accountantHandoffs??[]),plans:copy(records(this.workspace)),currencies:QBO_CURRENCIES,docs:QBO_DOCS,connection:this.connection()};}
   async current(handoffId){
     const record=this.accountant.row(handoffId),handoff=await this.accountant.readHandoff(handoffId),parent=await this.accountant.readRevision(record,handoff);
     return {record,handoff,parent};

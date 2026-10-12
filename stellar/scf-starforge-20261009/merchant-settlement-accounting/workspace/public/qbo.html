@@ -15,7 +15,10 @@
   <aside class="sidebar" aria-label="Operator and saved journal plans">
     <label for="qbo-operator">Operator / reviewer</label>
     <input id="qbo-operator" maxlength="1000" autocomplete="name" placeholder="Your name or reference">
-    <p class="hint">Saved with each journal plan, received response and accountant return.</p>
+    <p class="hint">Choose the same operator reference when reopening drafts and pending requests. This is the name recorded with commands.</p>
+    <button id="qbo-recovery-open" type="button">Open operator drafts</button>
+    <label for="qbo-saved-operator" class="side-title">Saved in this workspace</label>
+    <select id="qbo-saved-operator"><option value="">Choose a saved operator</option></select>
     <button id="qbo-refresh" type="button">Refresh saved state</button>
     <label class="side-title" for="qbo-plan-search">Saved journal plans</label>
     <input id="qbo-plan-search" type="search" placeholder="Name, company or source">
@@ -29,9 +32,25 @@
       <span class="badge">Retained merchant workspace</span>
     </div>
     <div id="qbo-message" class="message" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-    <section id="qbo-retry-panel" class="conflict" hidden>
-      <div><strong>The submitted operation needs a response</strong><p id="qbo-retry-message"></p></div>
-      <div class="actions"><button id="qbo-retry" class="primary" type="button">Read or retry the same operation</button><button id="qbo-dismiss-retry" type="button">Keep form; dismiss retry</button></div>
+    <section id="qbo-recovery-panel" class="panel qbo-recovery" aria-labelledby="qbo-recovery-title">
+      <div class="panel-heading"><div><h2 id="qbo-recovery-title">Draft and request recovery</h2><p id="qbo-recovery-state" role="status" aria-live="polite">Reading this workspace…</p></div></div>
+      <div class="padded">
+        <p>Drafts, company exports and complete response JSON stay with the selected operator in this browser. Every submitted request is saved before dispatch. Reloading keeps its original ID and values.</p>
+        <div class="actions"><button id="qbo-recovery-save" type="button">Save browser draft</button><button id="qbo-recovery-reload" type="button">Reload saved operator record</button><button id="qbo-recovery-download" type="button">Download browser record</button></div>
+        <p id="qbo-recovery-outcome" class="hint"></p>
+        <div id="qbo-reopen-warning" class="conflict" hidden><strong>The saved accounting state must reopen</strong><p>Keep the original request. Use <a href="/recovery.html">Workspace recovery</a> to close and reopen this workspace, then read its retained outcome.</p></div>
+        <details><summary>Workspace identity and other saved browser records</summary>
+          <p id="qbo-recovery-scope" class="mono"></p>
+          <p class="hint">Records from another workspace or source selection are available for download. They are never adopted into this workspace automatically. Browser drafts are separate from the complete accounting backup.</p>
+          <label for="qbo-other-record">Saved browser record</label><select id="qbo-other-record"><option value="">Choose a saved browser record</option></select>
+          <button id="qbo-other-download" type="button">Download selected record</button>
+        </details>
+      </div>
+    </section>
+    <section id="qbo-retry-panel" class="conflict qbo-recovery" role="region" aria-labelledby="qbo-pending-title" hidden>
+      <div><strong id="qbo-pending-title">Original request awaiting reconciliation</strong><p id="qbo-retry-message"></p></div>
+      <div class="actions"><button id="qbo-read-pending" class="primary" type="button">Read original saved outcome</button><button id="qbo-retry" type="button">Retry unchanged request</button><button id="qbo-download-pending" type="button">Download exact request</button></div>
+      <p class="hint">An unreadable response, timeout or unverified rejection does not clear this request. A saved native operation keeps its actual status and its own continuation controls.</p>
     </section>
     <section id="qbo-connection-panel" class="panel qbo-connection-panel" aria-labelledby="qbo-connection-title">
       <div class="panel-heading"><div><h2 id="qbo-connection-title">Connected QuickBooks company</h2><p id="qbo-connection-description">Reading the accounting server connection…</p></div><span id="qbo-connection-status" class="badge">Loading</span></div>
