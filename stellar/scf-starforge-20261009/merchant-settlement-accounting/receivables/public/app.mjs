@@ -2,6 +2,7 @@ import {createReceivablesClient} from './client.mjs';
 import {createPaymentRequestUi} from './payment-requests.mjs';
 import {createRefundUi} from './refunds.mjs';
 import {createCollectionsUi} from './collections.mjs';
+import {createCashPlanningUi} from './cash-planning.mjs';
 
 const $ = selector => document.querySelector(selector);
 const e = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -24,6 +25,9 @@ const refundUi = createRefundUi({api, openDialog, mutate, getState:()=>ui.state,
 const collectionsUi = createCollectionsUi({api,openDialog,mutate,getState:()=>ui.state,getAsOf:()=>ui.asOf,
   getCustomer:()=>ui.customer,getSearch:()=>ui.search,units,amount,saveBlob,setBusy,showError,readSession,saveSession,setMessage,render,
   isLocked:()=>ui.busy || Boolean(ui.pending)});
+const cashPlanningUi = createCashPlanningUi({api,openDialog,closeDialog,mutate,getState:()=>ui.state,
+  getAsOf:()=>ui.asOf,getCustomer:()=>ui.customer,getSearch:()=>ui.search,saveBlob,setBusy,showError,
+  readSession,saveSession,setMessage,render,isLocked:()=>ui.busy || Boolean(ui.pending)});
 $('#operator').value = readSession('actor','merchant-operator');
 $('#as-of').value = ui.asOf;
 function customerName(customerId) {
@@ -114,7 +118,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods,...cashPlanningUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -129,6 +133,7 @@ async function runPending() {
     await paymentUi.afterMutation(result,current);
     await refundUi.afterMutation(result,current);
     await collectionsUi.afterMutation(result,current);
+    await cashPlanningUi.afterMutation(result,current);
   } catch(error) {
     if (ui.pending?.requestId === current.requestId) {
       ui.pending.error=errorMessage(error);
@@ -151,6 +156,7 @@ async function refresh({quiet=false}={}) {
     $('#customer-filter').value=ui.customer;
     await refundUi.loadList({customerId:ui.customer,date:asOf});
     await collectionsUi.loadList();
+    await cashPlanningUi.loadList();
     if(ui.refreshVersion!==version||ui.asOf!==asOf)return;
     render();
     if (ui.selected && !ui.editor) await selectInvoice(ui.selected);
@@ -173,7 +179,7 @@ function render() {
   });
   $('#status-filter').disabled=ui.view!=='invoices';
   if(!ui.state)return;
-  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():renderActivity();
+  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
 function renderInvoices() {
@@ -655,6 +661,7 @@ document.addEventListener('input',event=>{
   paymentUi.input(event.target);
   refundUi.input(event.target);
   collectionsUi.input(event.target);
+  cashPlanningUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
   else if(event.target.id==='search'){ui.search=event.target.value;render();}
@@ -664,6 +671,7 @@ document.addEventListener('change',event=>{
   paymentUi.change(target);
   refundUi.change(target);
   collectionsUi.change(target);
+  cashPlanningUi.change(target).catch(showError);
   if(target.closest('#draft-form'))updateDraft(target);
   else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});collectionsUi.loadList().then(()=>{if(ui.view==='collections')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
   else if(target.id==='status-filter'){ui.status=target.value;render();}
@@ -686,6 +694,7 @@ document.addEventListener('submit',async event=>{
     if(await paymentUi.submit(form,values))return;
     if(await refundUi.submit(form,values))return;
     if(await collectionsUi.submit(form,values))return;
+    if(await cashPlanningUi.submit(form,values))return;
     if(form.id==='draft-form'){
       if(!ui.editor.lines.length)throw new Error('Add an invoice line.');
       await mutate('saveDraft',[draftPayload()],'Save invoice draft');
@@ -722,6 +731,7 @@ document.addEventListener('click',async event=>{
     if(await paymentUi.click(button))return;
     if(await refundUi.click(button))return;
     if(await collectionsUi.click(button))return;
+    if(await cashPlanningUi.click(button))return;
     if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');

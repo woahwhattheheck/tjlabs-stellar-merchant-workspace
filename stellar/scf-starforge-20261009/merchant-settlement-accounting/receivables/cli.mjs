@@ -28,6 +28,16 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables payment-receive --directory /private/accounting --id UUID --input /private/receive-payment.json\n' +
   'starforge receivables payment-cancel --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
   'starforge receivables payment-file --directory /private/accounting --id UUID --name payment-request.html --out /private/new-request.html\n\n' +
+  'Cash receipt planning:\n' +
+  'starforge receivables cash-plans --directory /private/accounting [--status ACTIVE] [--search TEXT]\n' +
+  'starforge receivables cash-plan --directory /private/accounting --id UUID [--edition UUID]\n' +
+  'starforge receivables cash-plan-preview --directory /private/accounting --input /private/assumptions.json [--out /private/review.json]\n' +
+  'starforge receivables cash-plan-save --directory /private/accounting --input /private/reviewed-plan.json\n' +
+  'starforge receivables cash-plan-archive|cash-plan-reopen --directory /private/accounting --id UUID --input /private/status.json\n' +
+  'starforge receivables cash-plan-file --directory /private/accounting --id UUID [--edition UUID] --name plan.html --out /private/new-plan.html\n' +
+  'starforge receivables cash-plan-compare --directory /private/accounting --input /private/compare.json\n' +
+  'starforge receivables cash-plan-comparison-file --directory /private/accounting --input /private/compare.json --name comparison.csv --out /private/new-comparison.csv\n' +
+  'starforge receivables cash-plan-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n\n' +
   'Collections casework:\n' +
   'starforge receivables collections --directory /private/accounting [--as-of YYYY-MM-DD] [--customer UUID] [--owner NAME] [--status OPEN]\n' +
   'starforge receivables collection --directory /private/accounting --id UUID [--as-of YYYY-MM-DD]\n' +
@@ -59,7 +69,7 @@ const HELP = 'Merchant receivables\n\n' +
 
 export function parseReceivablesArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
-  const known = new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','as-of','id','run','invoice','customer','receipt','status','offset','limit','action','input','name','out','expected-workspace-id','expected-sources-sha256','owner','search','request']);
+  const known = new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','as-of','id','run','invoice','customer','receipt','status','offset','limit','action','input','name','out','expected-workspace-id','expected-sources-sha256','owner','search','request','edition']);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) && rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
       'INVALID_RECEIVABLES_ARGUMENT', 'Use a documented option followed by its value.');
@@ -115,6 +125,23 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     const receivables = await new ReceivablesWorkspace(workspace).init();
     let result;
     if (command === 'state') result = await receivables.state({asOf});
+    else if (command === 'cash-plans') result=await receivables.cashPlans({status:flags.status,search:flags.search});
+    else if (command === 'cash-plan') result=await receivables.cashPlan(flags.id,{editionId:flags.edition});
+    else if (command === 'cash-plan-preview') {
+      result=await receivables.previewCashPlan(await input(flags.input));
+      if(flags.out)await newFile(flags.out,Buffer.from(json(result)));
+    }
+    else if (command === 'cash-plan-save') result=await receivables.saveCashPlan(await input(flags.input));
+    else if (command === 'cash-plan-archive') result=await receivables.archiveCashPlan(flags.id,await input(flags.input));
+    else if (command === 'cash-plan-reopen') result=await receivables.reopenCashPlan(flags.id,await input(flags.input));
+    else if (command === 'cash-plan-compare') result=await receivables.compareCashPlans(await input(flags.input));
+    else if (command === 'cash-plan-operation') result=await receivables.cashPlanOperation(flags.request);
+    else if (command === 'cash-plan-file' || command === 'cash-plan-comparison-file') {
+      const file=command==='cash-plan-file'?await receivables.cashPlanFile(flags.id,flags.name,{editionId:flags.edition}):
+        await receivables.cashPlanComparisonFile(flags.name,await input(flags.input));
+      await newFile(flags.out,file.bytes);
+      result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
+    }
     else if (command === 'collections') result = await receivables.collectionCases({asOf,customerId:flags.customer,owner:flags.owner,status:flags.status,search:flags.search});
     else if (command === 'collection') result = await receivables.collectionCase(flags.id,{asOf});
     else if (command === 'collection-save') result = await receivables.saveCollectionCase(await input(flags.input));
