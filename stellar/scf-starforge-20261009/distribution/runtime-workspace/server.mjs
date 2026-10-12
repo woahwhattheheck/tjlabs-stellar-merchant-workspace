@@ -50,6 +50,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/application-drafts.mjs', 'application-drafts.mjs', 'text/javascript; charset=utf-8'],
     ['/application-setup.mjs', 'application-setup.mjs', 'text/javascript; charset=utf-8'],
     ['/application-setup-library.mjs', 'application-setup-library.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-setup-codec.mjs', 'application-setup-codec.mjs', 'text/javascript; charset=utf-8'],
     ['/application-review.mjs', 'application-review.mjs', 'text/javascript; charset=utf-8'],
     ['/openapi-application.mjs', 'openapi-application.mjs', 'text/javascript; charset=utf-8'],
     ['/accounting-application.mjs', 'accounting-application.mjs', 'text/javascript; charset=utf-8'],

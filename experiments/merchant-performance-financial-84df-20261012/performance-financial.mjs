@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // MIT. Continue the original 25FD native performance customer case into original merchant accounting.
 import assert from 'node:assert/strict';
-import {mkdir, readFile, open, lstat, readdir, link, unlink} from 'node:fs/promises';
+import {mkdir, readFile, lstat, readdir} from 'node:fs/promises';
 import {resolve, join, dirname, basename, isAbsolute, relative, sep} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import {createHash, randomUUID} from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {parseArgs} from 'node:util';
+import {retainCaseArtifact} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/case-store.mjs';
 
 const SCF = 'stellar/scf-starforge-20261009/';
 const SCHEMA = 'stellar-forge.merchant-performance-financial-operation.v1';
@@ -15,6 +16,7 @@ const ACTOR = 'Repository fixture financial operator';
 const MICRO = {code:'USD', scale:6};
 const json = value => JSON.stringify(value,null,2)+'\n';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const git = bytes => createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 const utf8 = bytes => new TextDecoder('utf-8',{fatal:true}).decode(bytes);
 const absolute = value => {
   assert.ok(typeof value==='string' && isAbsolute(value) && resolve(value)===value && value!=='/' && !value.includes('\0'),
@@ -32,31 +34,106 @@ async function directory(path) {
 }
 async function retain(path,value) {
   const bytes=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:json(value));
-  const parent=dirname(path);
-  await directory(parent);
-  const descriptor={name:basename(path),path,bytes:bytes.length,sha256:sha(bytes)};
-  try { assert.deepEqual(await readFile(path),bytes,'Retain original bytes: '+path); return descriptor; }
-  catch(error) { if(error.code!=='ENOENT') throw error; }
-  const temporary=join(parent,'.'+basename(path)+'.'+randomUUID()+'.partial');
-  let handle;
-  try {
-    handle=await open(temporary,'wx',0o600);
-    await handle.writeFile(bytes); await handle.sync(); await handle.close(); handle=null;
-    try { await link(temporary,path); }
-    catch(error) { if(error.code!=='EEXIST') throw error; assert.deepEqual(await readFile(path),bytes,'Retain original bytes: '+path); }
-    const owner=await open(parent,'r');
-    try { await owner.sync(); } finally { await owner.close(); }
-  } finally {
-    await handle?.close();
-    await unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});
-  }
-  return descriptor;
+  await directory(dirname(path));
+  await retainCaseArtifact(path,bytes);
+  return {name:basename(path),path,bytes:bytes.length,sha256:sha(bytes)};
 }
 async function keep(path,create) {
   const prior=await maybeJSON(path);
   if(prior) return prior;
   const value=await create(); await retain(path,value); return value;
 }
+
+async function captureBytes(path,create) {
+  try { return await readFile(path); }
+  catch(error) { if(error.code!=='ENOENT')throw error; }
+  const bytes=Buffer.from(await create());
+  await retain(path,bytes);return bytes;
+}
+async function captureFiles(path,create) {
+  const captured=await keep(path,async()=>{
+    const result=await create();
+    return {schema:'stellar-forge.merchant-financial-file-capture.v1',
+      value:{...result,files:result.files.map(file=>{
+        const bytes=Buffer.from(file.bytes);
+        return {name:file.name,type:file.type,encoding:'base64',bytes:bytes.length,
+          sha256:sha(bytes),content:bytes.toString('base64')};
+      })}};
+  });
+  assert.equal(captured.schema,'stellar-forge.merchant-financial-file-capture.v1');
+  const names=new Set();
+  return {...captured.value,files:captured.value.files.map(file=>{
+    assert.ok(typeof file.name==='string'&&/^(?:documents\/)?[A-Za-z0-9._-]+$/.test(file.name));
+    assert.ok(!names.has(file.name));names.add(file.name);
+    assert.equal(file.encoding,'base64');
+    const bytes=Buffer.from(file.content,'base64');
+    assert.equal(bytes.toString('base64'),file.content);
+    assert.equal(bytes.length,file.bytes);assert.equal(sha(bytes),file.sha256);
+    return {name:file.name,type:file.type,bytes};
+  })};
+}
+function verifyAgreementFiles(files) {
+  const rows=new Map(files.map(file=>[file.name,file]));
+  assert.equal(rows.size,files.length);
+  const manifest=JSON.parse(utf8(rows.get('files.json').bytes));
+  assert.ok(Array.isArray(manifest.files));assert.equal(manifest.files.length,files.length-1);
+  const names=new Set();
+  for(const row of manifest.files) {
+    assert.ok(row.name!=='files.json'&&!names.has(row.name));names.add(row.name);
+    const file=rows.get(row.name);assert.ok(file);
+    assert.equal(file.bytes.length,row.bytes);assert.equal(sha(file.bytes),row.sha256);
+  }
+  return rows;
+}
+async function readOriginalTar(path,python) {
+  const result=await subprocess(python,['-c',
+    'import base64,json,sys,tarfile\nrows=[]\nseen=set()\nwith tarfile.open(sys.argv[1],"r:") as archive:\n for member in archive:\n  if not member.isfile() or member.name in seen or member.size>128000000: raise ValueError("Unexpected original TAR member")\n  seen.add(member.name)\n  with archive.extractfile(member) as handle: body=handle.read()\n  if len(body)!=member.size: raise ValueError("Incomplete original TAR member")\n  rows.append({"name":member.name,"content":base64.b64encode(body).decode("ascii")})\nprint(json.dumps(rows,separators=(",",":")))\n',path]);
+  return JSON.parse(result.stdout).map(file=>({name:file.name,bytes:Buffer.from(file.content,'base64')}));
+}
+async function accountingTermsForOriginalFixture({sourceRoot,reportBytes,nativeOperation,preparePricingReportImport}) {
+  try {
+    const result=preparePricingReportImport(reportBytes,{accountingReference:'Original native performance proposal'});
+    return {...result,source:{kind:'ORIGINAL_PRICING_REPORT',reportSha256:result.reportSha256}};
+  } catch(error) {
+    if(error.code!=='UNSUPPORTED_PAYMENT_OPTION')throw error;
+    const expected={
+      'illustrative-service.json':'e882bac9ecf5f68ed47a23b097969bd0aded40c0',
+      'illustrative-native-shape-snapshot.json':'fdcd6a2621003c90398430d1bef02283fd57243d',
+      'example-terms.json':'fd37ff4d0c6cdd9eea42c102edaf2b81f0de25e7'
+    };
+    for(const [name,identity]of Object.entries(expected)) {
+      assert.equal(nativeOperation.fixtures.find(row=>row.name===name)?.gitBlob,identity);
+      assert.equal(git(await readFile(join(sourceRoot,SCF,'sf97-merchant-revenue-ops',name))),identity);
+    }
+    const report=JSON.parse(utf8(reportBytes));
+    assert.equal(report.routes.length,1);
+    const route=report.routes[0],options=route.paymentOptions??[route.payment];
+    assert.equal(route.routeId,'dataset');assert.equal(route.method,'GET');assert.equal(route.path,'/dataset');
+    assert.equal(options.length,1);assert.equal(options[0].network,'stellar:testnet');
+    assert.equal(options[0].asset,'UNVERIFIED_DEMO_ASSET');assert.equal(options[0].payTo,'UNVERIFIED_DEMO_RECIPIENT');
+    const producerPath=SCF+'merchant-settlement-accounting/receivables/EXERCISE.mjs';
+    const producer=await readFile(join(sourceRoot,producerPath));
+    assert.equal(git(producer),'033ae261caf720f1de950fb3273b35a8dd05598e');
+    // These are the exact terms emitted by that existing original fixture.
+    const terms={schema:'stellar-forge.merchant-accounting-terms.v1',routes:[{
+      routeId:'exercise',method:'GET',network:'stellar:testnet',
+      asset:'CAAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQC526',
+      payTo:'GABAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEJXA',
+      amountAtomic:'1000000',unitPriceUsd:'1',unitCostUsd:null,priceBasis:'Local software exercise'
+    }]};
+    const termsBytes=Buffer.from(json(terms)),reportSha256=sha(reportBytes),termsSha256=sha(termsBytes);
+    assert.equal(termsSha256,'bc186f2afeb60acca3989b214acaa1d6d2d2d73c7c8b21fe0872ed0ae1afe298');
+    const source={kind:'ORIGINAL_RECEIVABLES_EXERCISE',purpose:'EMPTY_FIXTURE_ACCOUNTING_WORKSPACE',
+      producer:{path:producerPath,gitBlob:git(producer),sha256:sha(producer),bytes:producer.length},
+      originalPricingReport:{sha256:reportSha256,bytes:reportBytes.length},
+      originalPricingImport:{code:error.code,message:error.message,details:error.details??null}};
+    return {terms,termsBytes,termsSha256,reportBytes,reportSha256,source,
+      summary:{merchantName:report.merchantName,accountingSource:source.kind,
+        accountingPurpose:source.purpose,retainedPricingRoutes:report.routes.length,
+        emptyOutbox:true,emptyProofs:true}};
+  }
+}
+
 async function snapshot(source,target) {
   assert.ok(target!==source&&!target.startsWith(source+'/')&&!source.startsWith(target+'/'));
   await directory(target);
@@ -152,6 +229,8 @@ export async function runPerformanceFinancial({
   process.umask(0o077);
   for(const path of [sourceRoot,nativeRun,performanceRun,output]) absolute(path);
   if(customerRun!==undefined) absolute(customerRun);
+  assert.equal(resolve(fileURLToPath(new URL('../../',import.meta.url))),sourceRoot,
+    'Run the financial helper from this complete original source root.');
   assert.ok(!output.startsWith(nativeRun+'/')&&!nativeRun.startsWith(output+'/')&&output!==nativeRun);
   assert.ok(!output.startsWith(performanceRun+'/')&&!performanceRun.startsWith(output+'/')&&output!==performanceRun);
   assert.ok(Number.isInteger(termMonths)&&termMonths>=1&&termMonths<=120);
@@ -167,7 +246,7 @@ export async function runPerformanceFinancial({
       {runPerformanceCommercial},{openCaseStore},{openCaseCommercial,commercialWorkspaceId},
       {parseWorkspace},{commercialContext},{commissioningFileBytes},{commercialCli},
       {openWorkspace},{preparePricingReportImport},{openAccountingWorkspace},
-      {ReceivablesWorkspace},{compileQuoteInvoice},{minor,money,renderCustomerTar},
+      {ReceivablesWorkspace},{compileQuoteInvoice},{minor,money,renderCustomerTar,invoiceSummary},
       {ServiceAgreementWorkspace},{monthDate,shiftDays},{createServiceAgreementsServer},
       {createServiceAgreementClient}
     ]=await Promise.all([
@@ -198,6 +277,8 @@ export async function runPerformanceFinancial({
     assert.equal(performance.operationDirectory,performanceRun);
     const native=await maybeJSON(join(nativeRun,'flow-result.json'));
     assert.equal(native?.status,'COMPLETE');
+    const nativeOperation=await maybeJSON(join(nativeRun,'operation.json'));
+    assert.equal(nativeOperation?.schema,'stellar-forge.merchant-tariff-native-operation.v1');
     const performanceBytes=await readFile(join(performanceRun,'flow-result.json'));
     const nativeBytes=await readFile(join(nativeRun,'flow-result.json'));
     const casesDirectory=join(performanceRun,'recipient-cases'),caseId=performance.recipientCaseId;
@@ -211,6 +292,8 @@ export async function runPerformanceFinancial({
       assert.equal(quote.sha256,selection.sha256); return quote;
     }
     const measured=quoteOf(selectedIds.measured),earlier=quoteOf(selectedIds.oldRateRevision),revised=quoteOf(selectedIds.revisedNativeRate);
+    assert.equal(revised.draft.customer.name,'Repository fixture recipient',
+      'This programme continues the original repository fixture customer.');
     assert.equal(revised.sourceBindings.performance.measuredQuote.id,measured.id);
     assert.equal(revised.sourceBindings.performance.measuredQuote.sha256,measured.sha256);
     assert.equal(earlier.sourceBindings.performance.id,revised.sourceBindings.performance.id);
@@ -232,7 +315,13 @@ export async function runPerformanceFinancial({
     assert.deepEqual(operation.chosenQuote,{id:revised.id,sha256:revised.sha256});
     const priorResult=await maybeJSON(join(output,'flow-result.json'));
     if(priorResult) {
-      assert.equal(priorResult.operationId,operation.operationId);
+      assert.equal(priorResult.schema,RESULT);assert.equal(priorResult.state,'COMPLETE');
+      assert.equal(priorResult.operationId,operation.operationId);assert.equal(priorResult.output,output);
+      assert.equal(priorResult.sourceRoot,sourceRoot);assert.equal(priorResult.originalNative,nativeRun);
+      assert.equal(priorResult.originalPerformance,performanceRun);assert.equal(priorResult.case.id,caseId);
+      assert.equal(priorResult.originalResults.nativeSha256,operation.nativeResultSha256);
+      assert.equal(priorResult.originalResults.performanceSha256,operation.performanceResultSha256);
+      assert.equal(priorResult.response.quoteId,revised.id);assert.equal(priorResult.response.quoteSha256,revised.sha256);
       await retain(join(output,'index.html'),renderReport(priorResult));
       if(!await maybeJSON(join(output,'files.json'))) {
         const files=await inventory(output);
@@ -305,7 +394,8 @@ export async function runPerformanceFinancial({
       snapshot:join(pricingRoot,'illustrative-native-shape-snapshot.json'),directory:join(nativeRun,'pricing')});
     const pricingVersion=performance.nativeProposal.pricingVersion;
     const pricingReport=Buffer.from(await pricing.download(pricingVersion,'report/report.json'));
-    const pricingImport=preparePricingReportImport(pricingReport,{accountingReference:'Original native performance proposal'});
+    const pricingImport=await accountingTermsForOriginalFixture({sourceRoot,reportBytes:pricingReport,
+      nativeOperation,preparePricingReportImport});
     assert.equal(pricingImport.reportSha256,sha(pricingReport));
     await retain(join(output,'pricing-source','pricing-report.json'),pricingReport);
     const termsFile=join(output,'pricing-source','accounting-terms.json');
@@ -313,10 +403,13 @@ export async function runPerformanceFinancial({
     await retain(join(output,'pricing-source','source.json'),{
       schema:'stellar-forge.merchant-performance-financial-pricing.v1',pricingVersion,
       pricingRequestId:performance.nativeProposal.pricingRequestId,reportSha256:pricingImport.reportSha256,
-      termsSha256:pricingImport.termsSha256,summary:pricingImport.summary
+      termsSha256:pricingImport.termsSha256,accountingSource:pricingImport.source,summary:pricingImport.summary
     });
     const accountingDirectory=join(output,'accounting'),outboxDir=join(output,'outbox'),proofDir=join(output,'proofs');
     await directory(outboxDir);await directory(proofDir);
+    if(pricingImport.source.kind==='ORIGINAL_RECEIVABLES_EXERCISE') {
+      assert.deepEqual(await readdir(outboxDir),[]);assert.deepEqual(await readdir(proofDir),[]);
+    }
     accounting=await openAccountingWorkspace({directory:accountingDirectory,outboxDir,proofDir,termsFile});
     let receivables=await new ReceivablesWorkspace(accounting).init();
     let agreements=await new ServiceAgreementWorkspace(accounting,{receivables}).init();
@@ -410,13 +503,22 @@ export async function runPerformanceFinancial({
       if(name==='quote.json')assert.deepEqual(file.bytes,originals['revised-quote'].bytes);
       if(name==='response.json')assert.deepEqual(file.bytes,originals.response.bytes);
     }
-    for(const name of ['invoice.json','invoice.html','invoice.csv','manifest.json','status.json'])
+    for(const name of ['invoice.json','invoice.html','invoice.csv','manifest.json'])
       await retain(join(output,'invoice',name),(await receivables.file(invoiceId,name)).bytes);
+    const firstStatus=JSON.parse(utf8(await captureBytes(join(output,'invoice','status.json'),
+      async()=>(await receivables.file(invoiceId,'status.json')).bytes)));
+    assert.equal(firstStatus.schema,'stellar-forge.merchant-receivable-status.v1');
+    assert.equal(firstStatus.status.id,invoiceId);
     await retain(join(output,'invoice','detail.json'),invoice);
-    const agreementExport=await agreements.exportAgreement(agreementId,{asOf:operation.startDate});
+    const agreementExport=await captureFiles(join(output,'captures','agreement-export.json'),
+      ()=>agreements.exportAgreement(agreementId,{asOf:operation.startDate}));
+    assert.equal(agreementExport.agreementId,agreementId);
+    verifyAgreementFiles(agreementExport.files);
     for(const file of agreementExport.files) await retain(join(output,'agreement',file.name),file.bytes);
     await retain(join(output,'agreement.tar'),renderCustomerTar(agreementExport.files));
-    const customerExport=await receivables.exportCustomer(customer.id,{asOf:operation.startDate});
+    const customerExport=await captureFiles(join(output,'captures','customer-export.json'),
+      ()=>receivables.exportCustomer(customer.id,{asOf:operation.startDate}));
+    assert.equal(customerExport.value.customer.id,customer.id);
     for(const file of customerExport.files) await retain(join(output,'customer-account',file.name),file.bytes);
     await retain(join(output,'customer-account.tar'),renderCustomerTar(customerExport.files));
     const finalRevision=accounting.state.revision;
@@ -442,11 +544,30 @@ export async function runPerformanceFinancial({
       const bytes=Buffer.from(await response.arrayBuffer());assert.deepEqual(bytes,await readFile(join(sourceRoot,path)));
       assets.push({route,bytes:bytes.length,sha256:sha(bytes)});
     }
-    const exported=await fetch(new URL('/api/service-agreements/agreements/'+agreementId+'/export?format=tar&asOf='+operation.startDate,running.url),
-      {signal:AbortSignal.timeout(20000)});
-    assert.equal(exported.status,200);
-    const exportBytes=Buffer.from(await exported.arrayBuffer());
-    assert.deepEqual(exportBytes,await readFile(join(output,'agreement.tar')));
+    const httpArchive=join(output,'agreement-http.tar');
+    const exportBytes=await captureBytes(httpArchive,async()=>{
+      const file=await client.exportAgreement(agreementId,{format:'tar',asOf:operation.startDate,
+        signal:AbortSignal.timeout(20000)});
+      return Buffer.from(file.bytes);
+    });
+    const httpFiles=await readOriginalTar(httpArchive,python),httpRows=verifyAgreementFiles(httpFiles);
+    assert.deepEqual([...httpRows.keys()].sort(),agreementExport.files.map(file=>file.name).sort());
+    await running.workspace.serial(async()=>{
+      const receivables=running.agreements.receivables,data=receivables.data();
+      for(const original of agreementExport.files) {
+        const actual=httpRows.get(original.name).bytes;
+        if(original.name==='files.json')continue; // Each complete capture's own manifest was checked above.
+        if(/^invoice-[0-9a-f-]+-status\.json$/.test(original.name)) {
+          const status=JSON.parse(utf8(actual));
+          assert.equal(status.schema,'stellar-forge.merchant-receivable-status.v1');
+          assert.ok(Number.isFinite(Date.parse(status.observedAt)));
+          assert.equal(status.revision,running.workspace.state.revision);
+          const invoice=data.invoices.find(row=>row.id===status.status.id);assert.ok(invoice);
+          assert.deepEqual(status.status,invoiceSummary(invoice,data,status.status.asOf));
+          assert.deepEqual(status.history,invoice.history??[]);
+        } else assert.deepEqual(actual,original.bytes,'Keep original HTTP invoice/calendar source '+original.name);
+      }
+    });
     await retain(join(output,'agreement','http-reopen.json'),reopened);
     const http={url:running.url,revision:reopened.revision,assets,agreementTar:{bytes:exportBytes.length,sha256:sha(exportBytes)}};
     await running.close();running=null;
@@ -464,7 +585,8 @@ export async function runPerformanceFinancial({
       response:{id:responseId,status:response.payload.status,quoteId:response.payload.quoteId,
         quoteSha256:response.payload.quoteSha256,sourceCaseId:response.caseId,sha256:sha(originals.response.bytes)},
       pricingComparison:comparison,
-      pricingSource:{version:pricingVersion,reportSha256:pricingImport.reportSha256,termsSha256:pricingImport.termsSha256},
+      pricingSource:{version:pricingVersion,reportSha256:pricingImport.reportSha256,termsSha256:pricingImport.termsSha256,
+        accountingSource:pricingImport.source},
       calendar:{id:agreementId,revision:finalRevision,period:detail.periods[0],periods:detail.periods,
         sources:detail.agreement.sources.map(row=>({id:row.id,quote:row.quote,response:row.response}))},
       invoice:{id:invoiceId,number:issued.invoice.number,status:invoice.invoice.status,

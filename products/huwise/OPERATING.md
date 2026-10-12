@@ -70,12 +70,15 @@ can be received with the installer's maintained --adopt-existing operation.
 [Runtime installation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)
 covers package caches, installation recovery, native dependencies and upgrade.
 
-All commands below use the installed starforge dispatcher. From a prepared
-runtime, launch them with:
+All commands below use the installed starforge dispatcher. Define this function
+in the current shell using the actual toolkit and prepared runtime:
 
 ~~~sh
-node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \
-  --dir /absolute/private/huwise-runtime -- huwise --help
+starforge() {
+  node /absolute/toolkit/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs \
+    run --dir /absolute/private/huwise-runtime -- "$@"
+}
+starforge huwise --help
 ~~~
 
 For a source-only installation, install the returned archive with
@@ -264,6 +267,26 @@ payment setup are in
 [Merchant operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/opendatasoft/MERCHANT.md).
 Keep the workbench's original seller store when connecting the merchant agent.
 
+## Review and stage the same service with a facilitator
+
+The installed Huwise operator includes the original shared facilitator review
+engine. Open the original workbench with --facilitators HOST_PROFILE_JSON and
+choose Facilitators in its browser. Each source release must match its original
+merchant package, immutable handler and capture. Review retains the provider's
+complete native supported response, ordered payment alternatives and source
+digest; stage uses that saved review through the existing SF82 release owner.
+
+The original merchant controls continue to select, start, stop and roll back the
+running seller. The same buyer query, intent and completed acquisition stay in
+their original operation. Profile changes are host configuration; reopen the
+actual workbench owner to read the updated file.
+
+The full [facilitator operating and receiving guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/opendatasoft/FACILITATORS.md)
+includes complete installed CLI commands, browser operation, native recovery,
+typed client and customer delivery. The original immutable export accepts
+facilitatorReviewId together with merchantExportId and includes the complete
+review, source binding and guide. Existing earlier exports remain unchanged.
+
 ## Operate the same project through the merchant agent
 
 A private connection names the existing workbench and, when selected, its
@@ -303,7 +326,7 @@ host URL and its original credentials are the connection for the customer
 client. The initializer retains any selected release and existing seller
 history. A multi-project connection selects its primary seller with --workspace.
 
-starforge merchant-huwise tools shows the 44 Huwise action contracts. Open
+starforge merchant-huwise tools shows the 48 Huwise action contracts. Open
 the named workspace and use its returned operation IDs to await running work.
 The twelve tenant actions share the same native plan, reviewed configuration,
 publication and receiving identities. The full

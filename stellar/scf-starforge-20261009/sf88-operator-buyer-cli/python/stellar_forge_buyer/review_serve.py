@@ -34,7 +34,10 @@ def serve_foreground(library, args, *, received: dict[str, Any] | None = None):
     return_id = None
     if received:
         pending = received.get("receiving")
-        if pending and pending.get("state") == "PENDING":
+        if received.get("kind") == "collection":
+            if args.page == "auto":
+                page = "collections"
+        elif pending and pending.get("state") == "PENDING":
             page, return_id = "returns", pending["id"]
         elif received.get("comparisonId") and received.get("planSha256"):
             page, return_id = "returns", received["id"]
@@ -63,7 +66,10 @@ def serve_foreground(library, args, *, received: dict[str, Any] | None = None):
             if args.open_browser:
                 message["browserOpened"] = browser.open_tab(page, return_id=return_id)
             if received:
-                message["received"] = {key: received[key] for key in ("id", "state", "comparisonId") if key in received}
+                message["received"] = {key: received[key] for key in ("kind", "id", "state", "comparisonId") if key in received}
+                if received.get("kind") == "collection" and received.get("receipt"):
+                    message["received"].update({key: received["receipt"][key]
+                        for key in ("collectionId", "revision", "manifestSha256", "sha256", "memberCount")})
             print(json.dumps(message, ensure_ascii=False), flush=True)
             while not stop.wait(0.25):
                 if library._transport.process.poll() is not None:

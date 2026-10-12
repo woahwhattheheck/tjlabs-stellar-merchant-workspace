@@ -1,4 +1,5 @@
 import { serviceLevelTools } from "./service-levels-catalog.mjs";
+import { qualityTools } from "./quality-catalog.mjs";
 
 const string = { type: "string" };
 const integer = { type: "integer", minimum: 0 };
@@ -8,7 +9,7 @@ const schemaSelection = { from: string, to: string, comparisonId: string };
 const mutation = { operationId: string, expectedRevision: integer };
 const definitions = [
   ["workspace.metadata", "Read the exact original workspace identity, revision and complete record counts.", {}, []],
-  ["records.read", "Page an original collection at its selected workspace revision; continue nextOffset until null. Operation history is workspace-wide: omit edition.", { collection: { enum: ["jobs", "datasets", "runs", "edges", "observedEdges", "sources", "events", "editions", "reviews", "results", "diagnostics", "operations", "schemaComparisons", "schemaReviews"] }, edition: string, expectedRevision: integer, offset: integer, limit: { type: "integer", minimum: 1, maximum: 1000 } }, ["collection", "expectedRevision"]],
+  ["records.read", "Page an original collection at its selected workspace revision; continue nextOffset until null. Operation history is workspace-wide: omit edition.", { collection: { enum: ["jobs", "datasets", "runs", "edges", "observedEdges", "sources", "events", "editions", "reviews", "results", "diagnostics", "operations", "schemaComparisons", "schemaReviews", "qualityRules", "qualityEvaluations", "qualityDispositions"] }, edition: string, expectedRevision: integer, offset: integer, limit: { type: "integer", minimum: 1, maximum: 1000 } }, ["collection", "expectedRevision"]],
   ["object.read", "Read exact original source/result bytes in content-bound ranges.", { id: string, offset: integer, length: { type: "integer", minimum: 1, maximum: 4194304 } }, ["id"]],
   ["workspace.read", "Read the saved project and original jobs, datasets and runs.", { edition: string }, []],
   ["source.import", "Retain original OpenLineage JSON/NDJSON bytes and import their event observations.", { ...mutation, name: string, sourceUrl: string, text: string, base64: string, contentEncoding: { enum: ["identity", "gzip"] } }, ["operationId", "expectedRevision", "name"]],
@@ -27,7 +28,7 @@ const definitions = [
   ["export.read", "Read an exact byte range from an existing export; continue using the returned nextOffset.", { id: string, offset: integer, length: { type: "integer", minimum: 1, maximum: 4194304 } }, ["id"]],
   ["report.read", "Produce the complete JSON, spreadsheet-safe CSV or printable HTML project report.", { edition: string, format: { enum: ["json", "csv", "html"] } }, []]
 ];
-export const tools = [...serviceLevelTools, ...definitions.map(([action, description, properties, required]) => ({
+export const tools = [...serviceLevelTools, ...qualityTools, ...definitions.map(([action, description, properties, required]) => ({
   name: "lineage_" + action.replaceAll(".", "_"), description,
   inputSchema: { type: "object", properties, required, additionalProperties: false },
   annotations: { readOnlyHint: !["source.import", "edition.save", "review.save", "result.attach", "schema.review.save", "workspace.export"].includes(action), destructiveHint: false, idempotentHint: true, openWorldHint: false },

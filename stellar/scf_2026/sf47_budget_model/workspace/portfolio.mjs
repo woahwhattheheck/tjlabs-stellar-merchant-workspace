@@ -1,5 +1,6 @@
 /** Portfolio allocation over one original saved SF47 operating forecast. */
 import {formatNativeMoney} from './forecast_currency.mjs';
+import {installationIdentity,candidateForPlan,mergeInstallationCandidates,validateInstallationPlans,installationPlanSummary,renderInstallationPlanning,renderInstallationPlanResults,updateInstallationSummaries} from './portfolio_installation_plans.mjs';
 const SCHEMA='stellar-forge.sf47-portfolio.v1';
 const CACHE='stellar-forge.sf47-portfolio-ui.v1';
 const SCALE=100000000n;
@@ -27,13 +28,13 @@ function download(value,filename,type='application/json'){const url=URL.createOb
 function inputShape(value){
   const v=plain(value)&&plain(value.inputs)&&value.inputs.schema===SCHEMA?value.inputs:value;
   if(!plain(v)||v.schema!==SCHEMA||typeof v.forecastId!=='string'||typeof v.forecastSha256!=='string'||!plain(v.calendar)||!Array.isArray(v.resources)||!Array.isArray(v.tasks)||!Array.isArray(v.alternatives))throw new Error('Choose a complete portfolio input or its saved portfolio JSON.');
-  const allowed=new Set(['schema','name','forecastId','forecastSha256','calendar','resources','tasks','alternatives','note']);
+  const allowed=new Set(['schema','name','forecastId','forecastSha256','calendar','resources','tasks','installationPlans','alternatives','note']);
   for(const key of Object.keys(v))if(!allowed.has(key))throw new Error('Unexpected portfolio input field: '+key);
   const out=clone(v);
   function resources(rows){if(!Array.isArray(rows))throw new Error('Resource capacity needs its complete array.');for(const r of rows){if(!plain(r)||typeof r.id!=='string')throw new Error('Each resource needs its original object and ID.');if(r.hoursByWeekday!==null&&r.hoursByWeekday!==undefined&&(!Array.isArray(r.hoursByWeekday)||r.hoursByWeekday.length!==7))throw new Error('Resource weekday capacity needs seven entries.');if(r.hoursByDate!==undefined&&!plain(r.hoursByDate))throw new Error('Dated resource capacity needs its date-to-hours object.');}}
   function tasks(rows){if(!Array.isArray(rows))throw new Error('Remaining tasks need their complete array.');for(const t of rows)if(!plain(t)||typeof t.id!=='string'||(t.effortHours!==undefined&&!plain(t.effortHours))||(t.dependsOn!==undefined&&!Array.isArray(t.dependsOn)))throw new Error('Each task needs its source ID, effort object and dependency array.');}
-  resources(out.resources);tasks(out.tasks);
-  for(const a of out.alternatives){if(!plain(a)||typeof a.id!=='string'||a.id==='base'||a.alternatives!==undefined)throw new Error('Use distinct flat alternatives beside the base plan.');if(a.resources!==undefined)resources(a.resources);if(a.tasks!==undefined)tasks(a.tasks);if(a.calendar!==undefined&&!plain(a.calendar))throw new Error('An alternative calendar replaces the complete calendar object.');}
+  resources(out.resources);tasks(out.tasks);if(out.installationPlans!==undefined)validateInstallationPlans(out.installationPlans);
+  for(const a of out.alternatives){if(!plain(a)||typeof a.id!=='string'||a.id==='base'||a.alternatives!==undefined)throw new Error('Use distinct flat alternatives beside the base plan.');if(a.resources!==undefined)resources(a.resources);if(a.tasks!==undefined)tasks(a.tasks);if(a.calendar!==undefined&&!plain(a.calendar))throw new Error('An alternative calendar replaces the complete calendar object.');if(a.installationPlans!==undefined)validateInstallationPlans(a.installationPlans,'Alternative installation phase plans');}
   return out;
 }
 function sourceRows(forecast){return [...list(forecast?.report?.packages).map(r=>({...r,id:'package/'+r.id,sourceId:r.id,sourceKind:'package',title:r.id})),...list(forecast?.report?.commercial).filter(r=>r.selected).map(r=>({...r,id:'commercial/'+r.id,sourceId:r.id,sourceKind:'commercial',title:r.title||r.id}))];}
@@ -70,14 +71,14 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
   if(!document.querySelector('link[data-sf47-portfolio-style]')){const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('./portfolio.css',import.meta.url).href;style.dataset.sf47PortfolioStyle='true';document.head.append(style);}
   const root=document.createElement('section');root.className='portfolio';root.setAttribute('aria-label','Portfolio delivery allocation');container.replaceChildren(root);
   const caseId=current.program.id,path='/api/operations/'+caseId,cacheKey='sf47.portfolio.'+caseId;
-  const s={active:true,generation:0,busy:false,hostBusy:false,recoveryRaw:null,draft:null,sourceTasks:[],baseForecast:null,preview:null,saved:null,portfolios:[],profile:'base',resultProfile:'base',tab:'inputs',dirty:false,pending:null,lastRejected:null,requestNonce:'',sourceChoice:'',savedChoice:initialPortfolioId||'',error:'',message:'',storageWarning:'',dailyPage:0,allocationPage:0,cashPage:0};
+  const s={active:true,generation:0,busy:false,hostBusy:false,recoveryRaw:null,draft:null,sourceTasks:[],installationCandidates:[],installationSource:null,installationChoices:{},baseForecast:null,preview:null,saved:null,portfolios:[],profile:'base',resultProfile:'base',tab:'inputs',dirty:false,pending:null,lastRejected:null,requestNonce:'',sourceChoice:'',savedChoice:initialPortfolioId||'',error:'',message:'',storageWarning:'',dailyPage:0,allocationPage:0,cashPage:0};
   const available=()=>s.active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   function ensure(g=s.generation){if(!available()||g!==s.generation){const error=new Error('This portfolio view has changed. Reopen the retained case.');error.code='PORTFOLIO_VIEW_CLOSED';throw error;}}
   async function api(url,body,options){const g=s.generation;ensure(g);const value=await transport(url,body,options);ensure(g);return value;}
   function retain(){
     if(!available())return;
-    try{sessionStorage.setItem(cacheKey,json({schema:CACHE,caseId,draft:s.draft,profile:s.profile,resultProfile:s.resultProfile,dirty:s.dirty,pending:s.pending,lastRejected:s.lastRejected,requestNonce:s.requestNonce,savedChoice:s.savedChoice,sourceChoice:s.sourceChoice,recoveryRaw:s.recoveryRaw}));s.storageWarning='';}
+    try{sessionStorage.setItem(cacheKey,json({schema:CACHE,caseId,draft:s.draft,profile:s.profile,resultProfile:s.resultProfile,dirty:s.dirty,pending:s.pending,lastRejected:s.lastRejected,requestNonce:s.requestNonce,savedChoice:s.savedChoice,sourceChoice:s.sourceChoice,installationCandidates:s.installationCandidates,installationSource:s.installationSource,installationChoices:s.installationChoices,recoveryRaw:s.recoveryRaw}));s.storageWarning='';}
     catch{s.storageWarning='This browser could not retain the draft. Download it before closing the view.';}
   }
   function status(message,error=false){if(!available())return;s.message=error?'':message;s.error=error?message:'';const node=$('[data-portfolio-status]');if(node){node.textContent=message;node.setAttribute('role',error?'alert':'status');}const note=$('[data-portfolio-storage]');if(note)note.textContent=s.storageWarning;}
@@ -96,12 +97,12 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
     const badge=$('[data-portfolio-draft-state]');if(badge)badge.textContent='Draft changed — preview before saving.';
   }
   function selectedAlternative(){return s.profile==='base'?null:s.draft?.alternatives.find(a=>a.id===s.profile)||null;}
-  function effective(){const a=selectedAlternative();return a?{...s.draft,calendar:a.calendar??s.draft.calendar,resources:a.resources??s.draft.resources,tasks:a.tasks??s.draft.tasks}:s.draft;}
+  function effective(){const a=selectedAlternative();return a?{...s.draft,calendar:a.calendar??s.draft.calendar,resources:a.resources??s.draft.resources,tasks:a.tasks??s.draft.tasks,installationPlans:a.installationPlans??s.draft.installationPlans??[]}:s.draft;}
   function own(field){const a=selectedAlternative();return !a||Object.hasOwn(a,field);}
   function editable(field){return !s.pending&&own(field);}
   function fieldset(field,title,body){
     const a=selectedAlternative(),inherits=a&&!Object.hasOwn(a,field);
-    return '<section class="portfolio-block"><div class="portfolio-section-heading"><h4>'+esc(title)+'</h4>'+(a?'<label class="portfolio-check"><input type="checkbox" data-portfolio-override="'+field+'"'+(!inherits?' checked':'')+'>Override this whole '+esc(field)+' field</label>':'')+'</div>'+(inherits?empty('Inherited from the base plan. Enable its override to edit an independent replacement.'): '')+'<fieldset '+(inherits?'disabled':'')+' data-portfolio-group="'+field+'">'+body+'</fieldset></section>';
+    return '<section class="portfolio-block"><div class="portfolio-section-heading"><h4>'+esc(title)+'</h4>'+(a?'<label class="portfolio-check"><input type="checkbox" data-portfolio-override="'+field+'"'+(!inherits?' checked':'')+'>Override this whole '+esc(field==='installationPlans'?'installation phase plans':field)+' field</label>':'')+'</div>'+(inherits?empty('Inherited from the base plan. Enable its override to edit an independent replacement.'): '')+'<fieldset '+(inherits?'disabled':'')+' data-portfolio-group="'+field+'">'+body+'</fieldset></section>';
   }
   function taskSource(id){return s.sourceTasks.find(r=>(r.id??r.taskId)===id)||sourceRows(s.baseForecast).find(r=>r.id===id)||{id,title:id};}
   function taskName(id){const r=taskSource(id);return r.title||r.name||r.sourceId||id;}
@@ -120,20 +121,23 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
     }).join('');
     return fieldset('resources','Resource availability',rows+button('Add role or person','add-resource'));
   }
+  function renderInstallationPlans(p){
+    return fieldset('installationPlans','Installation phases',renderInstallationPlanning({profile:s.profile,inputs:p,candidates:s.installationCandidates,choices:s.installationChoices,taskName,taskHours}));
+  }
   function renderTasks(p){
     const options=p.tasks.map(t=>[t.id,taskName(t.id)]);
     return fieldset('tasks','Remaining work and dependencies',p.tasks.map((t,i)=>{
-      const source=taskSource(t.id),expected=quantity(taskHours(t.id)),entered=Object.values(t.effortHours||{}),valid=entered.map(quantity),sum=valid.every(v=>v!==null)?valid.reduce((a,b)=>a+b,0n):null;
-      const total=sum===null?'Assignments incomplete':decimal(sum)+' / '+num(taskHours(t.id))+' source hours'+(expected!==null&&sum!==expected?' — reconcile total':'');
-      return '<details class="portfolio-task"><summary><span>'+esc(taskName(t.id))+'</span><small>'+esc(total)+'</small></summary><p class="portfolio-muted">'+esc(source.sourceKind||t.id.split('/')[0])+' · original forecast window '+esc(source.startDate||source.oldStartDate||'not supplied')+' to '+esc(source.endDate||source.oldEndDate||'not supplied')+'</p>'+(source.scope?'<p>'+esc(source.scope)+'</p>':'')+currencySourceHtml(source)+(source.timing?'<div class="portfolio-note"><strong>Original start condition</strong><p>'+esc(source.timing.startCondition)+'</p><p>Delivery within '+esc(source.timing.deliveryBusinessDays)+' working days. '+source.timing.receiptConditions.map(r=>esc(r.receiptId)+': '+esc(r.condition)).join(' · ')+'</p><p>'+(source.timing.reviewedReleaseDate?'Original reviewed trigger: '+esc(source.timing.reviewedReleaseDate)+'. The deadline stays anchored to this date; a later release below defers work without moving the original promise.':'Keep the release date empty while the triggering event is unresolved; the complete work remains saved in this allocation.')+'</p></div>':'')+'<div class="portfolio-fields">'+input('Release date',t.releaseDate,'data-portfolio-task="'+i+'" data-task-key="releaseDate"','date')+input('Due date',t.dueDate,'data-portfolio-task="'+i+'" data-task-key="dueDate"','date')+input('Minimum working duration',t.minBusinessDays,'data-portfolio-task="'+i+'" data-task-key="minBusinessDays" min="0" step="1"','number','Begins with actual work; entered 0 adds no minimum duration.')+input('Priority',t.priority,'data-portfolio-task="'+i+'" data-task-key="priority" step="1"','number')+select('Predecessors',t.dependsOn,options.filter(([id])=>id!==t.id),'data-portfolio-task="'+i+'" data-task-dependencies',true)+area('Work, dependency or date assumption',t.note,'data-portfolio-task="'+i+'" data-task-key="note"')+'</div><h5>Remaining effort by resource</h5>'+(p.resources.length?'<div class="portfolio-effort-grid">'+p.resources.map(r=>input(r.name||r.id,t.effortHours?.[r.id],'data-portfolio-task="'+i+'" data-effort-resource="'+esc(r.id)+'" min="0" step="0.00000001"','number')).join('')+'</div>':empty('Add resources before assigning the original remaining effort.'))+'<p class="portfolio-muted">The complete role assignment must equal '+esc(taskHours(t.id))+' original remaining hours. Accepted work and original commercial costs stay in the source forecast.</p></details>';
+      const source=taskSource(t.id),phasePlan=list(p.installationPlans).find(plan=>plan.taskId===t.id),expected=quantity(taskHours(t.id)),entered=Object.values(t.effortHours||{}),valid=entered.map(quantity),sum=valid.every(v=>v!==null)?valid.reduce((a,b)=>a+b,0n):null;
+      const total=phasePlan?installationPlanSummary(phasePlan,taskHours(t.id)):(sum===null?'Assignments incomplete':decimal(sum)+' / '+num(taskHours(t.id))+' source hours'+(expected!==null&&sum!==expected?' — reconcile total':''));
+      return '<details class="portfolio-task"><summary><span>'+esc(taskName(t.id))+'</span><small>'+esc(total)+'</small></summary><p class="portfolio-muted">'+esc(source.sourceKind||t.id.split('/')[0])+' · original forecast window '+esc(source.startDate||source.oldStartDate||'not supplied')+' to '+esc(source.endDate||source.oldEndDate||'not supplied')+'</p>'+(source.scope?'<p>'+esc(source.scope)+'</p>':'')+currencySourceHtml(source)+(source.timing?'<div class="portfolio-note"><strong>Original start condition</strong><p>'+esc(source.timing.startCondition)+'</p><p>Delivery within '+esc(source.timing.deliveryBusinessDays)+' working days. '+source.timing.receiptConditions.map(r=>esc(r.receiptId)+': '+esc(r.condition)).join(' · ')+'</p><p>'+(source.timing.reviewedReleaseDate?'Original reviewed trigger: '+esc(source.timing.reviewedReleaseDate)+'. The deadline stays anchored to this date; a later release below defers work without moving the original promise.':'Keep the release date empty while the triggering event is unresolved; the complete work remains saved in this allocation.')+'</p></div>':'')+'<div class="portfolio-fields">'+input('Release date',t.releaseDate,'data-portfolio-task="'+i+'" data-task-key="releaseDate"','date')+input('Due date',t.dueDate,'data-portfolio-task="'+i+'" data-task-key="dueDate"','date')+input(phasePlan?'Aggregate minimum duration':'Minimum working duration',t.minBusinessDays,'data-portfolio-task="'+i+'" data-task-key="minBusinessDays" min="0" step="1"'+(phasePlan&&Number(t.minBusinessDays)===0?' disabled data-portfolio-disabled="true"':''),'number',phasePlan?'Review the remaining duration on each installation phase, then set this aggregate duration to 0.':'Begins with actual work; entered 0 adds no minimum duration.')+input('Priority',t.priority,'data-portfolio-task="'+i+'" data-task-key="priority" step="1"','number')+select('Predecessors',t.dependsOn,options.filter(([id])=>id!==t.id),'data-portfolio-task="'+i+'" data-task-dependencies',true)+area('Work, dependency or date assumption',t.note,'data-portfolio-task="'+i+'" data-task-key="note"')+'</div>'+(phasePlan?'<p class="portfolio-note">Remaining effort is assigned in Installation phases. These aggregate controls keep the customer release, due date, priority and dependencies. The retained aggregate assignments resume if you choose aggregate work instead.</p>':'<h5>Remaining effort by resource</h5>'+(p.resources.length?'<div class="portfolio-effort-grid">'+p.resources.map(r=>input(r.name||r.id,t.effortHours?.[r.id],'data-portfolio-task="'+i+'" data-effort-resource="'+esc(r.id)+'" min="0" step="0.00000001"','number')).join('')+'</div>':empty('Add resources before assigning the original remaining effort.'))+'<p class="portfolio-muted">The complete role assignment must equal '+esc(taskHours(t.id))+' original remaining hours. Accepted work and original commercial costs stay in the source forecast.</p>')+'</details>';
     }).join(''));
   }
   function editor(){
     if(!s.draft)return empty('Select an original saved forecast and create a delivery plan.');
     const p=effective(),a=selectedAlternative();
     return '<div class="portfolio-profile-toolbar">'+select('Plan or alternative',s.profile,[['base','Base plan'],...s.draft.alternatives.map(x=>[x.id,x.name||'Unnamed alternative'])],'data-portfolio-profile')+'<div class="portfolio-actions">'+button('Add alternative','add-alternative')+(a?button('Remove alternative','remove-alternative'):'')+'</div></div>'
-      +(a?'<div class="portfolio-fields">'+input('Alternative name',a.name,'data-portfolio-alt-key="name"')+area('Alternative assumptions',a.note,'data-portfolio-alt-key="note"')+'</div><p class="portfolio-note">An override replaces its whole calendar, resource list or task list. Other fields continue to use the base plan.</p>':'<div class="portfolio-fields">'+input('Saved plan name',s.draft.name,'data-portfolio-input="name"')+area('Planning assumptions and decision',s.draft.note,'data-portfolio-input="note"')+'</div>')
-      +renderCalendar(p)+renderResources(p)+renderTasks(p);
+      +(a?'<div class="portfolio-fields">'+input('Alternative name',a.name,'data-portfolio-alt-key="name"')+area('Alternative assumptions',a.note,'data-portfolio-alt-key="note"')+'</div><p class="portfolio-note">An override replaces its complete calendar, resource list, task list or installation phase plans. Other fields continue to use the base plan.</p>':'<div class="portfolio-fields">'+input('Saved plan name',s.draft.name,'data-portfolio-input="name"')+area('Planning assumptions and decision',s.draft.note,'data-portfolio-input="note"')+'</div>')
+      +renderCalendar(p)+renderResources(p)+renderInstallationPlans(p)+renderTasks(p);
   }
   function findingsHtml(values){
     const rows=list(values);if(!rows.length)return empty('No outstanding allocation input findings.');
@@ -160,6 +164,7 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
     return '<section class="portfolio-results"><div class="portfolio-section-heading"><h4>'+(s.saved?'Saved allocation result':'Current allocation preview')+'</h4>'+button('Download this analysis','download-analysis','data-pending-allowed')+'</div>'+original+'<p class="portfolio-muted">The original forecast reports '+esc(num(baseline.overloadedDays))+' calendar dates above its weekly-equivalent capacity. Allocation below uses the entered role-by-day calendar.</p>'+comparison+(baseline.eventTiming?'<p class="portfolio-note">'+esc(baseline.eventTiming.undatedHours)+' original hours and '+cash(baseline.eventTiming.undatedDeliveryCostUsd)+' of work costs await work dates; '+cash(baseline.eventTiming.undatedCustomerReceiptsUsd)+' of quoted collections await dates. The original dated cash curve excludes these undated amounts while complete scope totals retain them.</p>':'')+'<p class="portfolio-note">'+esc(report.paymentTimingBasis||'Cash uses the original operating forecast with the selected work dates. Quote receipt dates and original costs remain their entered values.')+'</p>'
       +(currencyMode?'<p class="portfolio-note">'+esc(report.comparisonBasis)+'</p>'+currencyCoverageHtml(chosen.forecast?.report||s.baseForecast?.report,'Native currency and selected valuation'):'')+'<h4>'+esc(chosen.name||chosen.id)+'</h4>'+findingsHtml(chosen.findings)
       +'<div class="portfolio-metrics"><div><span>Projected finish</span><strong>'+esc(summary.finishDate||'Unscheduled')+'</strong></div><div><span>Tasks scheduled</span><strong>'+esc(num(summary.scheduledTasks))+' / '+esc(num(summary.tasks))+'</strong></div><div><span>Late tasks</span><strong>'+esc(num(summary.lateTasks))+'</strong></div><div><span>Maximum lateness</span><strong>'+esc(num(summary.maxLatenessDays))+' days</strong></div><div><span>Cash needed before opening balance</span><strong>'+cash(summary.additionalCashNeededUsd)+'</strong></div><div><span>Collection timing to review</span><strong>'+esc(num(summary.collectionTimingReviews))+'</strong></div></div>'
+       +renderInstallationPlanResults(chosen.installationPlans,taskName)
       +'<details open><summary>Delivery dates and dependencies</summary>'+(tasks.length?table(['Work','Ready','First work','Finish','Due','Lateness','Hours','Capacity delay'],tasks.map(t=>[esc(t.title||taskName(t.id||t.task_id)),esc(t.ready_date||'—'),esc(t.first_work_date||'—'),esc(t.finish_date||'Unscheduled'),esc(t.due_date||'—'),esc(num(t.late_calendar_days)),esc(num(t.effort_hours)),esc(num(t.capacity_delay_business_days))+' working days'])):empty('Complete the reported inputs to allocate the original work.'))+'</details>'
       +'<details open><summary>Resource workload</summary>'+(resources.length?table(['Resource','Requested hours','Allocated hours','Available hours','Utilization'],resources.map(r=>[esc(r.name||r.resource_id||r.id),esc(num(r.requested_hours)),esc(num(r.allocated_hours)),esc(num(r.available_hours)),r.utilization_percent===null||r.utilization_percent===undefined?'—':esc(r.utilization_percent)+'%'])):empty('Resource allocation is unavailable for this incomplete plan.'))+'</details>'
       +'<details><summary>Selected changes to original work dates</summary>'+table(['Work','Original start','Chosen start','Start change','Original finish','Chosen finish','Finish change'],list(chosen.chosenDates).map(r=>[esc(taskName(r.taskId)),esc(r.oldStartDate||'Undated'),esc(r.startDate||'Unscheduled'),r.startShiftDays===null?'New date':esc(num(r.startShiftDays))+' days',esc(r.oldEndDate||'Undated'),esc(r.endDate||'Unscheduled'),r.endShiftDays===null?'New date':esc(num(r.endShiftDays))+' days']))+'</details>'
@@ -181,6 +186,7 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
       +(selectedName?'<p class="portfolio-source-note">Source: <strong>'+esc(selectedName)+'</strong>'+ (s.baseForecast?.inputs?.asOfDate?' · as of '+esc(s.baseForecast.inputs.asOfDate):'')+'. '+s.sourceTasks.length+' original remaining-work entries.</p>':'')
       +(current.program.state==='CLOSED'?'<p class="portfolio-note">This case is closed. Read and preview the allocation, or reopen the case in its original controls before saving.</p>':'')
       +(s.saved?.current?.sourceChanged?'<p class="portfolio-note">The current case facts differ from this retained allocation source. The saved result remains its original calculation.</p>':'')
+      +(s.saved?.current?.installationSourceChanged?'<div class="portfolio-note"><p>The selected installation editions have changed since this allocation was saved. Edit a new allocation and use Refresh saved installations to choose the current editions. This saved result retains its original calculation.</p>'+button('Edit a new allocation','edit-saved')+'</div>':'')
       +'<div class="portfolio-tabs" role="group" aria-label="Portfolio view">'+[['inputs','Inputs and alternatives'],['results','Delivery and cash comparison']].map(([id,title])=>button(title,'tab','data-id="'+id+'" aria-pressed="'+(s.tab===id)+'" data-pending-allowed')).join('')+'</div>'
       +(s.tab==='inputs'?'<div class="portfolio-editor">'+(s.saved?'<div class="portfolio-actions">'+button('Edit a new allocation from this saved input','edit-saved')+'</div><p class="portfolio-muted">The saved inputs remain immutable. Create a new allocation to change them.</p>':editor())+'</div>':'')
       +(s.draft&&!s.saved?'<div class="portfolio-review-bar"><p data-portfolio-draft-state>'+esc(s.preview?'Reviewed input and source ready to save.':'Draft — preview before saving.')+'</p>'+button('Preview allocation and cash','preview')+button(s.pending?'Resolve retained request':'Save reviewed allocation','save',s.preview&&current.program.state!=='CLOSED'?'':'disabled data-portfolio-disabled="true"')+'</div>':'')
@@ -191,12 +197,50 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
     const original=await api(path+'/forecasts/'+forecastId);s.baseForecast=original;
     if(s.draft&&original.sha256!==s.draft.forecastSha256)throw new Error('The selected original forecast differs from this draft’s saved source identity.');
     if(!s.sourceTasks.length)s.sourceTasks=sourceRows(original);
+    if(!s.installationCandidates.length&&!s.pending)await refreshInstallationSources(false);
+  }
+  function retainInstallationSource(value){
+    if(Array.isArray(value.installationCandidates)){
+      const pinned=new Set([s.draft,value.inputs].filter(Boolean).flatMap(draft=>[...list(draft.installationPlans),...list(draft.alternatives).flatMap(row=>list(row.installationPlans))]).map(installationIdentity));
+      const retained=s.installationCandidates.filter(row=>pinned.has(installationIdentity(row))).map(row=>({...row,selectionAvailable:false}));
+      s.installationCandidates=mergeInstallationCandidates(retained,value.installationCandidates.map(row=>({...row,selectionAvailable:!row.unavailable})));
+    }else{
+      const retained=list(value.report?.installationCandidates).map(row=>({...row,selectionAvailable:s.installationCandidates.find(existing=>installationIdentity(existing)===installationIdentity(row))?.selectionAvailable}));
+      s.installationCandidates=mergeInstallationCandidates(s.installationCandidates,retained);
+    }
+    if(value.installationSource)s.installationSource=clone(value.installationSource);
+  }
+  async function refreshInstallationSources(show=true){
+    if(!s.draft)return;
+    const value=await api(path+'/portfolio-seed',{expectedVersion:current.program.version,forecastId:s.draft.forecastId,inputs:clone(s.draft),installationSelections:[]});
+    retainInstallationSource(value);
+    if(!s.sourceTasks.length)s.sourceTasks=list(value.sourceTasks);
+    retain();
+    if(show){render();status('Refreshed the saved installation editions. The complete editable plan is retained.');}
+  }
+  async function useInstallation(taskId){
+    if(!s.draft||!editable('installationPlans'))return;
+    const p=effective(),key=s.profile+'|'+taskId,existing=list(p.installationPlans).find(plan=>plan.taskId===taskId);
+    const identity=Object.hasOwn(s.installationChoices,key)?s.installationChoices[key]:(existing?installationIdentity(existing):'');
+    const chosen=s.installationCandidates.find(candidate=>installationIdentity(candidate)===identity&&candidate.selectionAvailable!==false&&!candidate.unavailable&&list(candidate.matchingTaskIds).includes(taskId));
+    if(!chosen)throw new Error('Choose a compatible saved installation edition for this customer task.');
+    if(existing&&installationIdentity(existing)!==identity&&!window.confirm('Use the selected installation edition? A changed customer scope replaces its phase plan; an unchanged scope keeps your phase edits.'))return;
+    const alternative=selectedAlternative(),requestInputs=clone(s.draft);
+    if(alternative){requestInputs.calendar=clone(p.calendar);requestInputs.resources=clone(p.resources);requestInputs.tasks=clone(p.tasks);requestInputs.installationPlans=clone(p.installationPlans||[]);requestInputs.alternatives=[];}
+    const selection={taskId,installationId:chosen.installationId,installationRevision:chosen.installationRevision,installationSha256:chosen.installationSha256};
+    const value=await api(path+'/portfolio-seed',{expectedVersion:current.program.version,forecastId:s.draft.forecastId,inputs:requestInputs,installationSelections:[selection]});
+    const joined=inputShape(value.inputs);
+    if(alternative){alternative.installationPlans=clone(joined.installationPlans||[]);alternative.tasks=clone(joined.tasks);}
+    else s.draft=joined;
+    retainInstallationSource(value);s.sourceTasks=list(value.sourceTasks);s.installationChoices[key]=identity;
+    invalidate(true);status('Added the original installation phases. Review remaining hours, resource assignments and the delivery milestone before previewing.');
   }
   async function seed(){
     if(s.pending)throw new Error('Resolve the original pending save request first.');
     if(!s.sourceChoice)throw new Error('Select an original saved operating forecast.');
     if(s.dirty&&!window.confirm('Replace the current editable draft with a plan from the selected saved forecast?'))return;
     const value=await api(path+'/portfolio-seed',{expectedVersion:current.program.version,forecastId:s.sourceChoice});
+    s.installationCandidates=[];s.installationSource=null;s.installationChoices={};retainInstallationSource(value);
     s.draft=inputShape(value.inputs);s.sourceTasks=list(value.sourceTasks);s.baseForecast=value.baseForecast;s.saved=null;s.preview=null;s.pending=null;s.profile='base';s.resultProfile='base';s.savedChoice='';s.dirty=false;s.requestNonce='';onSelection(null);
     if(!s.baseForecast?.report)await attachSource(s.draft.forecastId);
     retain();render();status('Created a draft from the original remaining work. Enter daily availability and any unassigned effort.');
@@ -204,12 +248,13 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
   async function loadSaved(id){
     if(s.pending)throw new Error('Resolve the original pending save request first.');
     if(s.dirty&&!window.confirm('Open the saved allocation and replace the current editable draft?')){render();return;}
-    const value=await api(path+'/portfolios/'+id);s.saved=value;s.preview=null;s.draft=inputShape(value.inputs);s.sourceTasks=list(value.report?.sourceTasks);s.sourceChoice=s.draft.forecastId;s.savedChoice=value.id;s.profile='base';s.resultProfile='base';s.dirty=false;s.pending=null;s.tab='results';s.dailyPage=0;s.allocationPage=0;s.cashPage=0;await attachSource(s.draft.forecastId);onSelection(value.id);retain();render();status('Reopened the original saved allocation and its source-bound cash comparison.');
+    const value=await api(path+'/portfolios/'+id);s.installationCandidates=[];s.installationSource=null;s.installationChoices={};retainInstallationSource(value);s.saved=value;s.preview=null;s.draft=inputShape(value.inputs);s.sourceTasks=list(value.report?.sourceTasks);s.sourceChoice=s.draft.forecastId;s.savedChoice=value.id;s.profile='base';s.resultProfile='base';s.dirty=false;s.pending=null;s.tab='results';s.dailyPage=0;s.allocationPage=0;s.cashPage=0;await attachSource(s.draft.forecastId);onSelection(value.id);retain();render();status('Reopened the original saved allocation and its source-bound cash comparison.');
   }
   async function preview(){
     if(s.pending)throw new Error('Resolve the original pending save request first.');
     if(!s.draft)throw new Error('Create or import a portfolio draft first.');
     const value=await api(path+'/portfolio-preview',{expectedVersion:current.program.version,inputs:clone(s.draft)});
+    retainInstallationSource(value);
     s.draft=inputShape(value.inputs);s.preview=value;s.saved=null;s.savedChoice='';s.sourceTasks=list(value.report?.sourceTasks);s.tab='results';s.resultProfile=resultRows().some(r=>r.id===s.resultProfile)?s.resultProfile:'base';s.dailyPage=0;s.allocationPage=0;s.cashPage=0;onSelection(null);retain();render();status('Calculated the original work, explicit capacity and dated cash alternatives. Incomplete plans can be retained for further work.');
   }
   async function save(){
@@ -240,6 +285,22 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
   function editEvent(event){
     if(s.busy||s.hostBusy||s.pending||!s.draft)return;
     const el=event.target,p=effective();let touched=false;
+    if(el.hasAttribute('data-portfolio-phase-plan')&&editable('installationPlans')){
+      const plan=list(p.installationPlans).find(row=>row.taskId===el.dataset.portfolioPhasePlan);if(!plan)return;
+      const phase=plan.phases.find(row=>row.phaseId===el.dataset.phaseId);
+      if(el.dataset.phasePlanKey){plan[el.dataset.phasePlanKey]=el.value;touched=true;}
+      else if(phase){
+        if(el.hasAttribute('data-phase-boundary')){const selected=new Set(plan.deliveryPhaseIds);if(el.checked)selected.add(phase.phaseId);else selected.delete(phase.phaseId);plan.deliveryPhaseIds=plan.phases.filter(row=>selected.has(row.phaseId)).map(row=>row.phaseId);}
+        else if(el.hasAttribute('data-phase-resource'))phase.effortHours[el.dataset.phaseResource]=optional(el.value);
+        else if(el.hasAttribute('data-phase-dependencies')){
+          const original=candidateForPlan(s.installationCandidates,plan)?.phases.find(row=>row.phaseId===phase.phaseId);
+          if(!original)return;
+          phase.dependsOn=[...new Set([...list(original.dependsOn),...[...el.selectedOptions].map(option=>option.value)])];
+        }else{const key=el.dataset.phaseKey;if(!['remainingHours','minBusinessDays','priority','releaseDate','dueDate','note'].includes(key))return;phase[key]=['minBusinessDays','priority'].includes(key)?integer(el.value):['remainingHours','releaseDate','dueDate'].includes(key)?optional(el.value):el.value;}
+        touched=true;
+      }
+      if(touched){invalidate();updateInstallationSummaries(root,plan,taskHours(plan.taskId));}return;
+    }
     if(el.dataset.portfolioInput){s.draft[el.dataset.portfolioInput]=el.value;touched=true;}
     else if(el.dataset.portfolioAltKey){const a=selectedAlternative();if(a){a[el.dataset.portfolioAltKey]=el.value;touched=true;}}
     else if(el.dataset.portfolioCalendar&&editable('calendar')){p.calendar[el.dataset.portfolioCalendar]=el.dataset.portfolioCalendar==='horizonDays'?integer(el.value):el.value;touched=true;}
@@ -261,13 +322,21 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
   root.addEventListener('input',editEvent);
   root.addEventListener('change',event=>{
     const el=event.target;
+    if(el.hasAttribute('data-portfolio-installation-choice')){
+      if(s.busy||s.hostBusy||s.pending||!editable('installationPlans'))return;
+      const taskId=el.dataset.portfolioInstallationChoice;s.installationChoices[s.profile+'|'+taskId]=el.value;
+      const chosen=s.installationCandidates.find(candidate=>installationIdentity(candidate)===el.value&&candidate.selectionAvailable!==false&&!candidate.unavailable&&list(candidate.matchingTaskIds).includes(taskId));
+      const apply=[...root.querySelectorAll('[data-portfolio-action="use-installation"]')].find(node=>node.dataset.taskId===taskId);
+      if(apply){apply.dataset.portfolioDisabled=chosen?'false':'true';apply.disabled=!chosen;}
+      retain();return;
+    }
     if(el.hasAttribute('data-portfolio-source')){s.sourceChoice=el.value;retain();return;}
     if(el.hasAttribute('data-portfolio-saved')){const id=el.value;if(id)run(()=>loadSaved(id));return;}
     if(el.hasAttribute('data-portfolio-profile')){s.profile=el.value;retain();render();return;}
-    if(el.hasAttribute('data-portfolio-override')&&!s.busy&&!s.pending){const a=selectedAlternative(),field=el.dataset.portfolioOverride;if(a){if(el.checked)a[field]=clone(s.draft[field]);else delete a[field];invalidate(true);}return;}
+    if(el.hasAttribute('data-portfolio-override')&&!s.busy&&!s.pending){const a=selectedAlternative(),field=el.dataset.portfolioOverride;if(a){if(el.checked)a[field]=clone(s.draft[field]??(field==='installationPlans'?[]:s.draft[field]));else delete a[field];invalidate(true);}return;}
     if(el.hasAttribute('data-portfolio-file')){
       const file=el.files[0];if(!file)return;
-      run(async()=>{if(s.pending)throw new Error('Resolve the original retained save first.');if(file.size>2*1024*1024)throw new Error('Choose a complete portfolio input smaller than 2 MiB.');const value=inputShape(JSON.parse(await file.text()));ensure();if(s.dirty&&!window.confirm('Replace the current editable draft with this imported portfolio input?'))return;s.draft=value;s.sourceChoice=value.forecastId;s.sourceTasks=[];s.baseForecast=null;s.saved=null;s.preview=null;s.profile='base';s.resultProfile='base';s.savedChoice='';s.dirty=true;await attachSource(value.forecastId);onSelection(null);retain();render();status('Loaded the complete source-bound draft. Preview it against this current case before saving.');});return;
+      run(async()=>{if(s.pending)throw new Error('Resolve the original retained save first.');if(file.size>2*1024*1024)throw new Error('Choose a complete portfolio input smaller than 2 MiB.');const value=inputShape(JSON.parse(await file.text()));ensure();if(s.dirty&&!window.confirm('Replace the current editable draft with this imported portfolio input?'))return;s.draft=value;s.sourceChoice=value.forecastId;s.sourceTasks=[];s.installationCandidates=[];s.installationSource=null;s.installationChoices={};s.baseForecast=null;s.saved=null;s.preview=null;s.profile='base';s.resultProfile='base';s.savedChoice='';s.dirty=true;retain();await attachSource(value.forecastId);onSelection(null);retain();render();status('Loaded the complete source-bound draft. Preview it against this current case before saving.');});return;
     }
     editEvent(event);
   });
@@ -305,6 +374,15 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
     if(action.startsWith('page-')){const chosen=selectedResult(),tasks=list(chosen?.schedule?.tasks),kind=action.slice(5),counts={daily:list(chosen?.schedule?.daily_workload).length,allocations:tasks.reduce((n,t)=>n+list(t.allocations).length,0),cash:list(chosen?.forecast?.report?.days).length},keys={daily:'dailyPage',allocations:'allocationPage',cash:'cashPage'};if(!Object.hasOwn(keys,kind))return;const key=keys[kind],count=counts[kind];s[key]=Math.max(0,Math.min(Math.ceil(count/40)-1,s[key]+Number(el.dataset.direction)));render();return;}
     run(async()=>{
       if(action==='seed')return seed();
+      if(action==='refresh-installations')return refreshInstallationSources();
+      if(action==='use-installation')return useInstallation(el.dataset.taskId);
+      if(action==='remove-installation'){
+        if(!s.draft||!editable('installationPlans'))return;
+        const p=effective(),plan=list(p.installationPlans).find(row=>row.taskId===el.dataset.taskId);if(!plan)return;
+        if(window.confirm('Return this customer task to its retained aggregate effort assignments? The editable phase plan will be removed from this alternative.')){
+          const target=selectedAlternative()||s.draft;target.installationPlans=list(p.installationPlans).filter(row=>row.taskId!==plan.taskId);delete s.installationChoices[s.profile+'|'+plan.taskId];invalidate(true);status('Returned to aggregate work. Review its retained resource assignments and minimum duration before previewing.');
+        }return;
+      }
       if(action==='preview')return preview();
       if(action==='save'||action==='retry-save')return save();
       if(action==='reload')return onReload();
@@ -320,7 +398,8 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
       if(action==='remove-resource'){
         if(!editable('resources'))return;const r=p.resources[index];if(!r)return;
         if(!own('tasks'))throw new Error('Enable the whole task override before removing an alternative resource used by inherited tasks.');
-        if(window.confirm('Remove this resource and its effort assignments from this editable plan?')){p.resources.splice(index,1);for(const t of p.tasks)delete t.effortHours?.[r.id];invalidate(true);}return;
+        if(list(p.installationPlans).some(plan=>plan.phases.some(phase=>Object.hasOwn(phase.effortHours,r.id)))&&!own('installationPlans'))throw new Error('Enable the installation phase plan override before removing an alternative resource used by inherited phases.');
+        if(window.confirm('Remove this resource and its effort assignments from this editable plan?')){p.resources.splice(index,1);for(const t of p.tasks)delete t.effortHours?.[r.id];for(const plan of list(p.installationPlans))for(const phase of plan.phases)delete phase.effortHours[r.id];invalidate(true);}return;
       }
       if(action==='spread-resource'){showResourceDialog(index,'spread');return;}
       if(action==='add-date'||action==='edit-date'){showResourceDialog(index,'date',el.dataset.date||'');return;}
@@ -343,7 +422,7 @@ export function mountPortfolio({container,current,api:transport,mutationId,recor
       if(cached.schema!==CACHE||cached.caseId!==caseId)throw new Error('The retained browser record belongs to a different input format or case.');
       const draft=cached.draft?inputShape(cached.draft):null,pending=cached.pending||null;
       if(pending&&(!plain(pending.payload)||pending.payload.action!=='portfolio.save'||!plain(pending.payload.data)||typeof pending.payload.requestId!=='string'||!Number.isInteger(pending.payload.expectedVersion)||!draft||json(pending.payload.data.inputs)!==json(draft)))throw new Error('The retained save request needs its original complete case input.');
-      s.draft=draft;s.profile=cached.profile||'base';s.resultProfile=cached.resultProfile||'base';s.dirty=Boolean(cached.dirty);s.pending=pending;s.lastRejected=cached.lastRejected||null;s.requestNonce=cached.requestNonce||'';s.sourceChoice=cached.sourceChoice||draft?.forecastId||'';s.savedChoice=cached.savedChoice||'';s.recoveryRaw=cached.recoveryRaw||null;
+      s.draft=draft;s.profile=cached.profile||'base';s.resultProfile=cached.resultProfile||'base';s.dirty=Boolean(cached.dirty);s.pending=pending;s.lastRejected=cached.lastRejected||null;s.requestNonce=cached.requestNonce||'';s.sourceChoice=cached.sourceChoice||draft?.forecastId||'';s.savedChoice=cached.savedChoice||'';s.recoveryRaw=cached.recoveryRaw||null;s.installationCandidates=list(cached.installationCandidates);s.installationSource=plain(cached.installationSource)?cached.installationSource:null;s.installationChoices=plain(cached.installationChoices)?cached.installationChoices:{};
       if(s.profile!=='base'&&!s.draft?.alternatives.some(a=>a.id===s.profile))s.profile='base';
     }catch(error){s.recoveryRaw=raw;s.error=error.message+' Download its retained text and review the original saved receipts.';}
   }

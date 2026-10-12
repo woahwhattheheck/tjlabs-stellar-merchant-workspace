@@ -7,6 +7,8 @@ import {CustomerStatementWorkspace} from '../customer-statements/store.mjs';
 import {compileQuoteInvoice} from './quote-import.mjs';
 import {PaymentRequestsWorkspace} from './payment-requests-workspace.mjs';
 import {RefundsWorkspace} from './refunds-workspace.mjs';
+import {CollectionsWorkspace} from './collections-workspace.mjs';
+import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
 import {paymentRequestSummary, requestRows} from './payment-requests.mjs';
 import {createInvoiceTransferVerifier} from './payment-requests-verifier.mjs';
@@ -81,6 +83,8 @@ export class ReceivablesWorkspace {
       verifyTransfer: verifyInvoiceTransfer || createInvoiceTransferVerifier(),
     });
     this.refundsWorkspace = new RefundsWorkspace(this);
+    this.collectionsWorkspace = new CollectionsWorkspace(this);
+    this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
   }
   async init() {
     await this.statements.init();
@@ -124,6 +128,12 @@ export class ReceivablesWorkspace {
     if (record.creditId) result.credit = structuredClone(data.credits.find(row => row.id === record.creditId));
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
+    if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.collectionCaseId) {
+      result.collectionCase = this.collectionsWorkspace.summary(record.collectionCaseId, record.collectionAsOf ?? asOf);
+      result.workspaceId = this.collectionsWorkspace.workspaceId();
+      if (record.collectionEventId) result.collectionEvent = structuredClone(this.collectionsWorkspace.row(record.collectionCaseId).events.find(row => row.id === record.collectionEventId));
+    }
     if (record.invoiceIds) result.invoices = record.invoiceIds.map(id => invoiceSummary(this._invoice(id), data, asOf));
     if (record.allocationIds) result.allocations = record.allocationIds.map(id => structuredClone(this._allocation(id)));
     if (record.refundId) {
@@ -189,6 +199,26 @@ export class ReceivablesWorkspace {
   async reportPaymentReturn(id, value) { return this.paymentRequestWorkspace.reportReturn(id, value); }
   async receivePaymentRequest(id, value) { return this.paymentRequestWorkspace.receive(id, value); }
   async paymentRequestFile(id, name) { return this.paymentRequestWorkspace.file(id, name); }
+  async cashPlans(query = {}) { return this.cashPlanningWorkspace.list(query); }
+  async previewCashPlan(value) { return this.cashPlanningWorkspace.preview(value); }
+  async cashPlan(id, query = {}) { return this.cashPlanningWorkspace.detail(id, query); }
+  async saveCashPlan(value) { return this.cashPlanningWorkspace.save(value); }
+  async archiveCashPlan(id, value) { return this.cashPlanningWorkspace.status(id, value, 'ARCHIVED'); }
+  async reopenCashPlan(id, value) { return this.cashPlanningWorkspace.status(id, value, 'ACTIVE'); }
+  async cashPlanFile(id, name, query = {}) { return this.cashPlanningWorkspace.file(id, name, query); }
+  async compareCashPlans(query) { return this.cashPlanningWorkspace.compare(query); }
+  async cashPlanComparisonFile(name, query) { return this.cashPlanningWorkspace.comparisonFile(name, query); }
+  async cashPlanOperation(requestId) { return this.cashPlanningWorkspace.operation(requestId); }
+  async collectionCases(query = {}) { return this.collectionsWorkspace.list(query); }
+  async collectionCase(id, query = {}) { return this.collectionsWorkspace.detail(id, query); }
+  async saveCollectionCase(value) { return this.collectionsWorkspace.save(value); }
+  async recordCollectionActivity(id, value) { return this.collectionsWorkspace.activity(id, value); }
+  async closeCollectionCase(id, value) { return this.collectionsWorkspace.transition(id, value, 'CLOSE'); }
+  async reopenCollectionCase(id, value) { return this.collectionsWorkspace.transition(id, value, 'REOPEN'); }
+  async collectionReminder(id, query = {}) { return this.collectionsWorkspace.reminder(id, query); }
+  async collectionFile(id, name, query = {}) { return this.collectionsWorkspace.file(id, name, query); }
+  async collectionsFile(name, query = {}) { return this.collectionsWorkspace.reportFile(name, query); }
+  async collectionOperation(requestId) { return this.collectionsWorkspace.operation(requestId); }
   async customerFunds(query = {}) { return this.refundsWorkspace.customerFunds(query); }
   async previewRefund(value) { return this.refundsWorkspace.previewRefund(value); }
   async commitRefund(value) { return this.refundsWorkspace.commitRefund(value); }

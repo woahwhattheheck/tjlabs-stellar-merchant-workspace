@@ -186,6 +186,100 @@ The existing forecast preview/save commands accept complete original-currency in
 
 The original `operations` command includes `forecast-preview`, `forecast-save`, `forecasts`, `forecast-show` and `forecast-export`. Use the same case ID, explicit expected version and stable request ID. Saving additionally requires the exact reviewed preview SHA-256 and complete input JSON. Full examples and source/receiving semantics are in [FORECAST.md](FORECAST.md). The ordinary case `export` and `import` commands carry all immutable saved forecasts with the original source and work/payment records.
 
+## Portfolio with installation phases
+
+Use the original Portfolio commands to allocate saved Installation phases alongside all other grant and customer work. The installed release and original source both call the same case owner. Close the managed browser service before opening that same workspace with the headless CLI.
+
+In the commands below, `$CASE_ID`, `$CASE_VERSION` and `$FORECAST_ID` are the actual values from the current case and its selected saved Forecast. Create the private output directory first. The [Portfolio guide](PORTFOLIO.md) describes phase effort, original terms, the commercial delivery boundary and support capacity.
+
+Read the current case and seed its saved Forecast:
+
+```sh
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  show --case "$CASE_ID" --output /absolute/private/output/case-current.json
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  portfolio-seed --case "$CASE_ID" --forecast "$FORECAST_ID" \
+  --expected-version "$CASE_VERSION" --output /absolute/private/output/portfolio-seed.json
+```
+
+Review the complete `installationCandidates` and `sourceTasks` arrays in that seed. Write the selected exact editions as one JSON array. Every item contains `taskId`, `installationId`, `installationRevision` and `installationSha256`. Use the returned original IDs, edition numbers and digests.
+
+Extract the complete seed's `inputs` object for editing. This retains all original arrays and decimal strings:
+
+```sh
+python3 - /absolute/private/output/portfolio-seed.json /absolute/private/output/portfolio-base-inputs.json <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as source:
+    retained = json.load(source)
+with open(sys.argv[2], "x", encoding="utf-8") as target:
+    json.dump(retained["inputs"], target, ensure_ascii=False, indent=2)
+    target.write("\n")
+PY
+```
+
+Seed the selected phase source while preserving that complete draft:
+
+```sh
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  portfolio-seed --case "$CASE_ID" --forecast "$FORECAST_ID" \
+  --expected-version "$CASE_VERSION" \
+  --installation-selections /absolute/private/output/installation-selections.json \
+  --inputs /absolute/private/output/portfolio-base-inputs.json \
+  --output /absolute/private/output/portfolio-phase-seed.json
+```
+
+Both new flags are optional. `--installation-selections` reads a complete JSON array; `--inputs` reads a complete existing Portfolio draft object. Reuse the same extraction command with the phase-seed filename and a new draft filename, then edit that full `inputs` object. Passing an entire seed/preview wrapper as `--inputs` does not select its inner input.
+
+Enter resource availability and phase remaining hours, retain each original phase and dependency, and enter the delivery boundary and its note. Every phase effort map must total its remaining hours; phase remainders must total the original commercial task's remainder. Set the bound parent minimum working duration to zero. Phase `priority: null` inherits the aggregate task priority; an entered integer, including `100`, is explicit. Newly seeded phase priorities are null.
+
+The seed attaches or refreshes base phase plans and preserves every explicit alternative override, including `installationPlans: []`. Omission inherits the base array; an explicit empty array uses the original aggregate tasks and requires their complete resource effort. To refresh one alternative, compose its complete inherited fields as temporary base `inputs` with `alternatives: []`, run `portfolio-seed` with its reviewed selections, and retain only the returned `installationPlans` as that alternative's complete override in the original draft. Keep the other settings and alternatives. The [SDK example](AGENT.md#prepare-one-explicit-phase-alternative) shows the same full-input transformation.
+
+Preview and retain the reviewed input:
+
+```sh
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  portfolio-preview --case "$CASE_ID" --expected-version "$CASE_VERSION" \
+  --inputs /absolute/private/output/portfolio-reviewed-inputs.json \
+  --output /absolute/private/output/portfolio-preview.json
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  portfolio-save --case "$CASE_ID" --expected-version "$CASE_VERSION" \
+  --inputs /absolute/private/output/portfolio-reviewed-inputs.json \
+  --expected-preview-sha256 "$PORTFOLIO_PREVIEW_SHA256" \
+  --actor "$ACTOR" --request-id "$PORTFOLIO_REQUEST_ID" \
+  --note "$PORTFOLIO_REVIEW_NOTE" --output /absolute/private/output/portfolio-save.json
+```
+
+Set the preview digest from the exact retained preview. Keep that complete input file, every save argument and the stable request ID before dispatch. A save receipt's `recordId` is the new saved Portfolio ID, and `version` is the new case version. After an interrupted response, repeat the identical save command and input with the same request ID. A definite original source/version conflict requires a refreshed review and a new request.
+
+Reopen the result with `portfolio-show --case "$CASE_ID" --portfolio "$PORTFOLIO_ID"`. Select a saved `READY` alternative using the freshly read case version:
+
+```sh
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  portfolio-selection --case "$CASE_ID" --portfolio "$PORTFOLIO_ID" \
+  --alternative "$ALTERNATIVE_ID" --expected-version "$CURRENT_CASE_VERSION" \
+  --output /absolute/private/output/portfolio-selected-forecast.json
+```
+
+Extract that result's complete `inputs` with the same JSON extraction procedure. Pass the extracted file to `forecast-preview` and then `forecast-save` with the current version, exact preview SHA, actor and a separate retained Forecast request ID. Review original collections, currencies, rates and event conditions before saving. Selection itself leaves the original saved Forecast available.
+
+Export the complete calculation and receiving case:
+
+```sh
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  portfolio-export --case "$CASE_ID" --portfolio "$PORTFOLIO_ID" \
+  --output /absolute/private/output/installation-portfolio.zip
+starforge grant-workspace operations --workspace /absolute/private/scf-planning \
+  export --case "$CASE_ID" --expected-version "$LATEST_CASE_VERSION" \
+  --output /absolute/private/output/installation-portfolio-case.zip
+starforge grant-workspace operations --workspace /absolute/private/receiving-workspace \
+  import --file /absolute/private/output/installation-portfolio-case.zip \
+  --name "Received installation allocation" --actor "$ACTOR" \
+  --request-id "$RECEIVING_REQUEST_ID"
+```
+
+Use the received case ID to list and reopen its saved Portfolios. Keep the complete original case ZIP and receiving request for exact import replay. The calculation ZIP contains the full reviewed source and results; the whole case ZIP restores the saved Installation editions, attachments, original events and Forecasts through the existing receiver.
+
 ## Cohort acceptance and its original tranche join
 
 Use `operations cohort-seed`, `cohort-preview`, `cohort-prepare` and `cohort-export` against the same retained case. Put `--workspace` after `operations` and before the selected action. The seed/preview need the exact current case version; preparation also needs the original actor/request ID, complete reviewed `--inputs` object and exact `--expected-preview-sha256`. An unchanged retry reuses the same request and source.

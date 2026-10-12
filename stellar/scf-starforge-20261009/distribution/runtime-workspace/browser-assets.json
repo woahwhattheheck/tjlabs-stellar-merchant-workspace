@@ -73,6 +73,13 @@
       ]
     ],
     [
+      "/application-setup-codec.mjs",
+      [
+        "application-setup-codec.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/application-review.mjs",
       [
         "application-review.mjs",

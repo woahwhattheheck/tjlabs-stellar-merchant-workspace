@@ -23,7 +23,10 @@ import { imageOperationFields, imageWorkspaceState, reviewWorkspaceImage, attach
 
 import { initializeApplications, applicationsState, applicationsHistory, reviewApplication, saveApplication, applicationBindingOperation,
   reviewApplicationStart, dispatchApplicationStart, cancelApplicationRun, applicationOperation, applicationOutput,
-  readApplicationTerminal, sendApplicationTerminal } from './applications.mjs';
+  readApplicationTerminal, sendApplicationTerminal } from './applications-core.mjs';
+import { initializeApplicationGroups, applicationGroupsState, saveApplicationGroup, reviewApplicationGroup,
+  startApplicationGroup, continueApplicationGroup, applyApplicationGroupReview,
+  applicationGroupMemberAction, stopApplicationGroup } from './application-groups.mjs';
 import { transferOperationFields, initializeTransferWorkspace, runtimeTransferWorkspaceState,
   reviewWorkspaceRuntimeTransfer, attachWorkspaceRuntimeTransfer, prepareWorkspaceRuntimeTransferReceive,
   uploadWorkspaceRuntimeTransferPart, downloadWorkspaceRuntimeTransfer, normalizeRuntimeTransferOperation,
@@ -185,9 +188,15 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
   const { root, config } = await context(directory);
   await initializeManagedWorkspace(root);
   await initializeApplications(root);
+  await initializeApplicationGroups(root);
   await initializeTransferWorkspace(root);
   await initializePythonWorkspace(root);
   await initializeSourceBuildWorkspace(root);
+  const groupLifecycle = {
+    start: input => model.applicationsStart(input),
+    recover: input => model.applicationsRecover(input),
+    stop: input => model.applicationsStop(input),
+  };
   const model = {
     directory: root,
     async sourceBuildsState() { return sourceBuildWorkspaceState(root); },
@@ -427,6 +436,14 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
         'RUNTIME_WORKSPACE_INSTALL_LOG_UNAVAILABLE', 'This runtime has no npm attempt log yet');
       return { name: state.logFile, ...await tailFile(join(selected.directory, state.logFile)) };
     },
+    async applicationGroupsState(options) { return applicationGroupsState(root, options); },
+    async applicationGroupsSave(input) { return saveApplicationGroup(root, input); },
+    async applicationGroupsReview(input) { return reviewApplicationGroup(root, input); },
+    async applicationGroupsStart(input) { return startApplicationGroup(root, input, groupLifecycle); },
+    async applicationGroupsContinue(input) { return continueApplicationGroup(root, input, groupLifecycle); },
+    async applicationGroupsApplyReview(input) { return applyApplicationGroupReview(root, input); },
+    async applicationGroupsMember(input) { return applicationGroupMemberAction(root, input, groupLifecycle); },
+    async applicationGroupsStop(input) { return stopApplicationGroup(root, input, groupLifecycle); },
     async applicationsState(options) { return applicationsState(root, options); },
     async applicationsHistory(options) { return applicationsHistory(root, options); },
     async applicationsOpenApiSetup(input) {
@@ -439,12 +456,15 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     },
     async applicationsSave(input) {
       const saved = await saveApplication(root, input);
+      if (saved.saveSuperseded) return { applicationId: saved.id, revision: saved.revision, saved: true,
+        replayed: true, superseded: true, currentRevision: saved.currentRevision, connection: null, connectionError: null };
       let connection = null, connectionError = null;
       try {
         const request = await applicationBindingOperation(root, saved.id);
         if (request) connection = await model.begin(request);
       } catch (error) { connectionError = asError(error); }
-      return { applicationId: saved.id, revision: saved.revision, saved: true, connection, connectionError };
+      return { applicationId: saved.id, revision: saved.revision, saved: true,
+        ...(saved.saveReplayed ? { replayed: true, superseded: false } : {}), connection, connectionError };
     },
     async applicationsConnect({ applicationId }) {
       const request = await applicationBindingOperation(root, applicationId);
