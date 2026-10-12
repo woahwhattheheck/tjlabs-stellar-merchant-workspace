@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "customer-scenarios",
+  "description": "Retained customer SQL scenarios, exact keyed comparisons, operator reviews and complete editable delivery",
+  "commands": {
+    "scenarios": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/scenario-cli.mjs"
+  },
+  "commandDescriptions": {
+    "scenarios": "Compare named assumptions on one retained data selection, review complete results and deliver an editable customer workspace"
+  },
+  "exports": {
+    "./buyer/scenarios": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/scenario-cli.mjs"
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python"
+  ]
+}
