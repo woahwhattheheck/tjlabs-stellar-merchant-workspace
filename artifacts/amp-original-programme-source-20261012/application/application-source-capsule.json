@@ -1,0 +1,928 @@
+{
+  "schema": "commons.amp-source-capsule.v1",
+  "operation": "DEVELOPMENT-GATEWAY-AMP-COMMISSIONING-20261012",
+  "originalRequest": "1791828427.059809",
+  "sourceCommit": "ae0737ec31b8404da10a22a76a4ed890a4b9982d",
+  "archive": {
+    "name": "amp-complete-source-20261012.zip",
+    "encoding": "binary-git-parts",
+    "bytes": 1678743,
+    "sha256": "694b927944dea58b6e2da484bfd7f47a69a9269b4738caf6faca0f04e558ac99",
+    "parts": [
+      {
+        "name": "amp-complete-source.zip.part001",
+        "path": "artifacts/amp-original-programme-source-20261012/application/amp-complete-source.zip.part001",
+        "bytes": 850000,
+        "sha256": "a9aefde704f87da87abcd517e41444f07e764b5aa8c2e3e02ac10647699dff2a",
+        "gitBlob": "b24a3709423cf70aaff77bf1ddcf6bedd1b85fd2"
+      },
+      {
+        "name": "amp-complete-source.zip.part002",
+        "path": "artifacts/amp-original-programme-source-20261012/application/amp-complete-source.zip.part002",
+        "bytes": 828743,
+        "sha256": "ede6a7333aaa6234ff8e63789765a5588a331043b427ef47bf9fd8ed3cbbcbb3",
+        "gitBlob": "fa703c4503eb3b9f9fb2373e1af0d29306a66c3a"
+      }
+    ]
+  },
+  "sourceManifest": {
+    "schema": "commons.complete-application-source.v1",
+    "operation": "DEVELOPMENT-GATEWAY-AMP-COMMISSIONING-20261012",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "sourceCommit": "ae0737ec31b8404da10a22a76a4ed890a4b9982d",
+    "files": {
+      "stellar-forge/mcp-merchant-operator/catalog/source-iati-amp.mjs": {
+        "bytes": 5528,
+        "sha256": "dd4673142436b7b0594a73b707c9a48e6c49033df0fd6a73e1e4aa43d5348276"
+      },
+      "stellar-forge/mcp-merchant-operator/catalog/source-iati-organisation.mjs": {
+        "bytes": 6454,
+        "sha256": "5387185fbcfdcd6db3f70d4cf14dcc10b40d9cf2d84ba068450698fe7d235301"
+      },
+      "stellar-forge/mcp-merchant-operator/catalog/source-workspace.mjs": {
+        "bytes": 20906,
+        "sha256": "07fb0c09674edd26de659d97136eaf32bd4de72f964de4c14b20f531f8bed9ab"
+      },
+      "stellar-forge/mcp-merchant-operator/provider-contract.mjs": {
+        "bytes": 6260,
+        "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
+      },
+      "stellar-forge/mcp-merchant-operator/providers/source-workspaces.mjs": {
+        "bytes": 1562,
+        "sha256": "543d9c818e54133c4086ff9d20379069e2c755c6e6e638b1d049daa06c29da2f"
+      },
+      "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs": {
+        "bytes": 156,
+        "sha256": "81c52bc3e26e35ba719be72bab26aadea2d5c3105448cd76857abecafc76db34"
+      },
+      "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs": {
+        "bytes": 23135,
+        "sha256": "6c589b54c28a8bc6dbf7aab6bb9e548e4b7b3e4d030b7f2b5d8157f9dff7d209"
+      },
+      "stellar-forge/mcp-merchant-operator/SOURCE_WORKSPACES.md": {
+        "bytes": 25515,
+        "sha256": "d21cff886fe52b8287d4b97365316eac59e0be7fb0566386635129adee33f26f"
+      },
+      "stellar-forge/mcp-merchant-operator/source-iati-amp.mjs": {
+        "bytes": 4490,
+        "sha256": "a7aff0eb1c7471fd413aec5702788d5c89ed0405b7853551505de0f9e11d60eb"
+      },
+      "stellar-forge/mcp-merchant-operator/source-iati-organisation.mjs": {
+        "bytes": 7750,
+        "sha256": "f0b5deb6c2695da95c63fea61b0ec389f4ea08b196c2938b02bce657192b0a44"
+      },
+      "stellar-forge/mcp-merchant-operator/source-workspace.mjs": {
+        "bytes": 45092,
+        "sha256": "9cbcad1f7e0d3e46bbce70d9293ee1d7b61c3254b988939ab755b19753ff38ae"
+      },
+      "stellar/scf-starforge-20261009/distribution/contributions/iati.json": {
+        "bytes": 938,
+        "sha256": "8fc329cc19b095aab7b471b395b2b304d072d955e689db3df09eb1a8221ac12e"
+      },
+      "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-iati.mjs": {
+        "bytes": 16117,
+        "sha256": "6a393a2b8689edfa608839117c14df91356e31ccb2d7b063b19557cfd8e2e192"
+      },
+      "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs": {
+        "bytes": 7132,
+        "sha256": "584c5db3d682e203b1d8da8637148fdc3dd14bed81adb54afeaf0ce095687ebd"
+      },
+      "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/iati.mjs": {
+        "bytes": 1342,
+        "sha256": "337a21e8ca6006da38b0fefb2371659f8a67955ff67d600507a1d54812393e04"
+      },
+      "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs": {
+        "bytes": 7357,
+        "sha256": "bee7d94573457532cbda3125a717ace8f9efc640c3ede656d7aac7aa8286a825"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-handler.mjs": {
+        "bytes": 35511,
+        "sha256": "352b28104d6cd2818a0aa88bf87537147ab8550bf35c1b994be662ce09d21daa"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp_cli.py": {
+        "bytes": 5766,
+        "sha256": "f1c19194305a3be818de13b429ad19e87b4a35a907f1f831329a07d1eaf812bc"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp_client.d.mts": {
+        "bytes": 7213,
+        "sha256": "70980bce0464299b06e7ffb7b843f211b0a75a00972e675e303344a3c0371348"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp_http.py": {
+        "bytes": 5394,
+        "sha256": "eaebdd2ddad2880ede057a6686f259fb6013b01a94c0fecc3257f912117572da"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/AMP.md": {
+        "bytes": 18331,
+        "sha256": "2980d4620854c17b3645791c78307fa2e5c9c23ba333ea9afb3442f6edef453d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/__init__.py": {
+        "bytes": 124,
+        "sha256": "dbda8c5c40a86f3d1d7afa1af0eec32f46260acf3001bdfb89bbbcff6100ecce"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/batch.py": {
+        "bytes": 2792,
+        "sha256": "994389a4ae78703e47ad271c693008590f17dd2e9275e39fd95ff84d86bb83a4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/codec.py": {
+        "bytes": 5625,
+        "sha256": "acab9e42fa3b6e5849426d8255a635ee38e831fa391e62b2659545cf919e7893"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/DESTINATION_UPSTREAM.json": {
+        "bytes": 16343,
+        "sha256": "db01c57c72e4d8b349598c46828929144b4d04291773de4f45f3a0a88cf84bd3"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/DESTINATION.md": {
+        "bytes": 12609,
+        "sha256": "c32c179c0b54d3547ede61a1dac36f6f1c28e2ae3f5bc80565ff1df50441295e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/destination.py": {
+        "bytes": 52570,
+        "sha256": "0b63a86ba8096128cedda78777e30bf8dad875bd7eee4432173d21bf8e29c93d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/domain.py": {
+        "bytes": 42484,
+        "sha256": "2bb60f8344a6bf367d580d00b1bb84449e8e53db37f4fbf8c70af60d989ef1e3"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/native.py": {
+        "bytes": 11535,
+        "sha256": "2297d36ff75a9a5d4d7bfb7e0b2402971a5e20e88211bf72b88f9c2419c7dce3"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/portable.py": {
+        "bytes": 23671,
+        "sha256": "e718a168c698b4589f497cc631e43ca97a68bb9b9eb5ce76e4a8101332a3590f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream-manifest.json": {
+        "bytes": 9071,
+        "sha256": "10cbce01dd6c188beb74ef7f77ade7215ec35ea9891e5a70b642cf19f28fdf5d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/Dockerfile": {
+        "bytes": 13481,
+        "sha256": "b4b4a6251b3b868a5ca5a7a30c690924c86656a861a71b6bc45039e0872387cb"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/activity/ActivityEPConstants.java": {
+        "bytes": 10430,
+        "sha256": "3a7314c71318d784f5f2fbfe815b7f68e7edc25e9679d15e514672d74f2f651a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/activity/dto/ActivitySummary.java": {
+        "bytes": 4014,
+        "sha256": "b1537971c0fbe264263647c5275a592583950c233d9c008ba5b9e1dec1c65a0a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/activity/field/APIField.java": {
+        "bytes": 12678,
+        "sha256": "6d516d82e9181c57616b893d1f29bc9592925f4c2d01108a922b2851bd240ac3"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/activity/InterchangeEndpoints.java": {
+        "bytes": 46420,
+        "sha256": "3b9e4f377e5583c1c27e2f53f9c2b7f1ba6656b35059164d218b80db452bd2a0"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/activity/ProjectList.java": {
+        "bytes": 11698,
+        "sha256": "8271253c841d709748c8ab49dff414d23fa4a8bfa2750bd79ade68397088d2ce"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/common/JsonApiResponse.java": {
+        "bytes": 3996,
+        "sha256": "9da10921b870df9878ed7d5d919521a18b0d007d19a58f1e5385b8ad38932cd6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/errors/ApiErrorResponse.java": {
+        "bytes": 1124,
+        "sha256": "e52242764dc79493f1c85b05f153388cfb9a30b025d2a08319e5751a2d1a80d4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/security/ApiAuthentication.java": {
+        "bytes": 3586,
+        "sha256": "99216530c55acdffddda9f4a2ac2330122d464392948b5974ee446193f7295c8"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/security/dto/AuthenticationRequest.java": {
+        "bytes": 1068,
+        "sha256": "448b857b162523373e9c8096793ee117c11fc65521c2af3934dd8a14e70a523f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/security/dto/LayoutInformation.java": {
+        "bytes": 4382,
+        "sha256": "ab4180c0eb9f75362ec031923a7fc66fb1ab632470730c24f229908aeb941f9c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/security/dto/UserSessionInformation.java": {
+        "bytes": 2443,
+        "sha256": "71a41eb927ecfb257fea7ca9af2d1dfc4c47ac9a1983e9cab3f3bed63e85bcd8"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/security/Security.java": {
+        "bytes": 11686,
+        "sha256": "ed458a8cc3b1a4fbe99c155d183b647188b9838223a1def89ea0628c81b1b943"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/kernel/ampapi/endpoints/security/SecurityService.java": {
+        "bytes": 15548,
+        "sha256": "66ac7c2b100a6c3243c72d61b020da9e5f9f0f3780b53e89207ff0c0753a3d88"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/action/dataimporter/model/Funding.java": {
+        "bytes": 4749,
+        "sha256": "bdce1de282b0d5a39968bde0390f6bcb33aa95e12fbdab2ffc3f6bc0297e4d3e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/action/dataimporter/model/Transaction.java": {
+        "bytes": 2861,
+        "sha256": "8cec3f7ff25a1172616596ffd20f3e5a09f01680a431dbfdf7dd8ca180295784"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/action/dataimporter/util/ImporterConstants.java": {
+        "bytes": 6038,
+        "sha256": "62e842672524a4b5c7534fab0fab9e3eff2b532c1d2bfd9bc29c8ab06683ddfa"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/action/dataimporter/util/ImporterUtil.java": {
+        "bytes": 166090,
+        "sha256": "dae73f29f00e0c61fdf217b43f58ab51136bdd8ed53ecb67b42fea5184c5f9dc"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/annotations/interchange/ActivityFieldsConstants.java": {
+        "bytes": 6738,
+        "sha256": "2fb281f99d284d8ba0f45169083343e3640b5f76a81da1ce339b3679a96b4466"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/dbentity/AmpFunding.java": {
+        "bytes": 44812,
+        "sha256": "b3a83104175bf99cc5df9184d7375ec7c185cc3d11d8c9d031689ec6d045f6a1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/amp/src/main/java/org/digijava/module/aim/dbentity/AmpFundingDetail.java": {
+        "bytes": 26720,
+        "sha256": "e375812d0ec2242e4e66040b84e44a4bae4f58e17ee21f57d94033a82827fdc7"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/docs/IMPORTER_QUICK_GUIDE.md": {
+        "bytes": 3934,
+        "sha256": "604d14b7177e7a69620224505c575f7d8c9f6af9752e7d6d80e4270cb5370154"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/LICENSE": {
+        "bytes": 35147,
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/upstream/NOTICE.md": {
+        "bytes": 411,
+        "sha256": "0811bed487f8671aa65d38fefdd6702def4c27c369bb29bc5237bb483b0d0e57"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/amp/workspace.py": {
+        "bytes": 52996,
+        "sha256": "af0d1140d6dc3795dedbfd20e0babfc1266979021295b6b6b7026efe1dbb8bc0"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/cli.mjs": {
+        "bytes": 1565,
+        "sha256": "3fb4fb2e3d71401bc37c91b438a1a3a46a63cd8b1ff0cb8078c9a9626962f66f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/cli.py": {
+        "bytes": 9633,
+        "sha256": "4fc93bf236ea40beda70589447d0670170b6bf650b4b0d45872b4a6d032b1751"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/client.d.mts": {
+        "bytes": 34862,
+        "sha256": "da1cf3a1e48338c89406654eee7c2b09ad01907422729501edfc44217a9bd0b0"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/client.mjs": {
+        "bytes": 29445,
+        "sha256": "e659122cdff6f20d446082b6bb033c69d3243c204954062c26c3fd3b7e4b4880"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DOMAIN.md": {
+        "bytes": 8829,
+        "sha256": "3ebf49ae53e90391747a0e8d511f4c06e3f96c61e6bc2696dc93e9aa64be1375"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa_cli.py": {
+        "bytes": 4760,
+        "sha256": "1fdbb91ae08bfc7066ca66e371c425ad0f0570067062fa44570c9b0034de75f3"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa_http.py": {
+        "bytes": 4513,
+        "sha256": "590e35e3074a90391485d705165fc240f38e50d381a93dbca16accf71128e6cb"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa-provider/LICENSE.MD": {
+        "bytes": 1074,
+        "sha256": "c28f4182d18d38a908952ce8ad586942cfc2b8805d4ecb9221b833fc3eec0f96"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa-provider/README.md": {
+        "bytes": 7249,
+        "sha256": "beccbc27b8de44344e943f1dcb64b288a4edbb986ecc891d21746c62fe23680b"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa-provider/source.json": {
+        "bytes": 489,
+        "sha256": "bac4d3470f8cfbb17fb88223f9d0c5529c8c7042eafa972cebbe41ab48046f09"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa-provider/VALIDATOR_RULES.md": {
+        "bytes": 9553,
+        "sha256": "2e6ae0e6fede7f009b5a2ddbad3c3be665c4eeda1208c5e010d0cc473a147bd2"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DQA.md": {
+        "bytes": 13338,
+        "sha256": "81c946a4db261a7fece9e34f56ea07eb0d55ac3c7c78ecfe2871bb3ae34c4093"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/dqa.py": {
+        "bytes": 74472,
+        "sha256": "539d6b7eb5ddb195ebf7c85b7b1b186ad400b221e97fdabd54bfa40b9ddf4b2d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/AIDDATA_NIGERIA.md": {
+        "bytes": 4963,
+        "sha256": "5106ec973f3432cdd9556e16a6f310547984b0709dae077a288adc1c0a5b3ed6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/aiddata-nigeria.json": {
+        "bytes": 5222,
+        "sha256": "241832296ad6e4ed05385a8064f8a6a982dfd61afd1b29dc55245bc0b5f7035d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/aiddata-nigeria-2016/iati_2.03_NigeriaAIMS_GeocodedResearchRelease.xml": {
+        "bytes": 309331,
+        "sha256": "4eddc914f4e5a60ca869f3d52046cb55fc7bb44cabb829d78b2f510fbff4ca9e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/amp-haiti/PROGRAMME.md": {
+        "bytes": 6555,
+        "sha256": "35306514e0370164ab4620b7f9dc99f80dd8b0f2b1f01c33889f470000f3e371"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/amp-haiti/selection.json": {
+        "bytes": 13049,
+        "sha256": "bf38199d337fad49472bc59432f4769aeaef7d83601b742ce9c11e368f1ddb71"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/organisation.xml": {
+        "bytes": 99013,
+        "sha256": "c18e63db2d543eaeb5525a4df21cd16561f0316dab831789bfdd176e1accdfce"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/publisher-receipt.json": {
+        "bytes": 19779,
+        "sha256": "2ae140717ce5a3b7244f6f73eb5e35899bb5b2f8d0cf65d815f9ed41e64660fc"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-organisation-2026/SOURCE.md": {
+        "bytes": 1853,
+        "sha256": "2cf91f6f901bf169e5e20371f20210dd18bb5620c806b48b4ef60f73e5b9a336"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/original-inventory.json": {
+        "bytes": 5068,
+        "sha256": "acf865a791d74046a436185a785042840610d6d632ccd1f2fd3b6b6e492771c6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/prepare_receiving.py": {
+        "bytes": 4752,
+        "sha256": "0dcecf7ebfdf2b1ad5fd02efe97bcd30a94054a62bb9d2c2e42f24e917406d05"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/publisher-receipt.json": {
+        "bytes": 1363,
+        "sha256": "bfc1ac8a9759944e83b42cae0affb34ab1a0188848cec8b718858bf3efd89455"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/receiving-evidence.json": {
+        "bytes": 3748,
+        "sha256": "d97c43595f6ac7da06a416a8b16ad9abe2d534966de4e5e119d7dc2c8dd49f67"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/receiving-feedback.csv": {
+        "bytes": 1592,
+        "sha256": "5d16c83e198a947dd4a2369faca73ce1fb857e0f5bdb77c392560a6ea0d6f61a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/receiving-selection.json": {
+        "bytes": 4039,
+        "sha256": "805ef6519d02191d2dd8c55b5121d85bd7081cb9bc53aea5c378621b8c38f93f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/RECEIVING.md": {
+        "bytes": 5625,
+        "sha256": "3a570d6340f2b47b04e7abc4e251bef219762021c2b8158be12a3f2b335f5c15"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/SOURCE.md": {
+        "bytes": 2487,
+        "sha256": "aea0a13ce6900f00521682540acac9ea5441f72a71d5a546f54d5ec61e5153bd"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/transparency-international-2026/README.md": {
+        "bytes": 2456,
+        "sha256": "6ff743ec8235aabcbd6a0bca6831dc07310d1eb16e95ee33d5080fcc62191c08"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/transparency-international-2026/source-provenance.json": {
+        "bytes": 3286,
+        "sha256": "912c7999984b3076512582d195234f2a33ddefcf2e3bceb44eff7bf538855b7d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/transparency-international-2026/transparency-international-activities.xml": {
+        "bytes": 131359,
+        "sha256": "5b31447719873d89c511a11b8da645d398b5ab7fb3c471d35c359f30118a429d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/transparency-international-2026/transparency-international-activity-metadata.json": {
+        "bytes": 337,
+        "sha256": "91b5096332978b21d6d7fd9842e454931fe9cea60ef18e5e9619194f6410ef14"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/iati_source.py": {
+        "bytes": 36230,
+        "sha256": "aa5bf1182b1fbda83bf4a75d42171a95a07ac41836cc252b0082066108b9c92e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/iati_workspace.py": {
+        "bytes": 51523,
+        "sha256": "9a0d60b22c78018ab4d71db4e03fb20eb9d41390d17da14dd30e8327d4c7f7f1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/managed.py": {
+        "bytes": 11628,
+        "sha256": "9cfca80d9ca691e806ae0d6d5ba911942273f7caa964426b37b536c565280ee6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md": {
+        "bytes": 26107,
+        "sha256": "590c39b528b73ab20943589f69785a7f4028263c30d082b7797cf6efa88cab5d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation_cli.py": {
+        "bytes": 6818,
+        "sha256": "c86236c64392f55537b6afb49ea42e7023c4f5ecea298227f21559d2cd766f57"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation_client.d.mts": {
+        "bytes": 9343,
+        "sha256": "52d98d51db5936fb68a3048bd2b55d9ba69eea4d89ba7cbc969729a84756d417"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation_http.py": {
+        "bytes": 5029,
+        "sha256": "95b55a4fc9cbd9d3f23f7509f06bf30f838a976016c266cb60f071fde6a79487"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/__init__.py": {
+        "bytes": 142,
+        "sha256": "a7cd41e0450bd388233744521f9b4e330115c9eed659cd4048066f067aa874c7"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/assessment.py": {
+        "bytes": 22787,
+        "sha256": "8549e8ae1f24d90b59ad9cc4b6a82e8eb3fc46be365acafd2294fe84752bc969"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/GUIDE.md": {
+        "bytes": 17848,
+        "sha256": "7e148b0c375f6f574f18b2973baf30fd149160dc2db591ef2a1b07554cdc6c4a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/methodology.json": {
+        "bytes": 16157,
+        "sha256": "0174094ff5f1dac0da69ddc0ef11b5f5290aaf4f20e98a80dafa2317758ddbc4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/portable.py": {
+        "bytes": 25929,
+        "sha256": "719f790589ad785dd8d5ef5fababdd7b5bf7d2c4aabdc6ce64ad80a023014268"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support-manifest.json": {
+        "bytes": 7151,
+        "sha256": "c68690c5a257750bbbce28355a772a3d0398ca32bcd17aba31e927c0e38f4089"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/codelist.xsd": {
+        "bytes": 4523,
+        "sha256": "792dcf85fdb6e8a080b3c41d9ce81b5f958c25d939c66e01c30d2ffe49f9bf9c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/LICENSE": {
+        "bytes": 1262,
+        "sha256": "848901d34aeca4909575f9904795417db22f90c55f6aa909b45b80b9b048354d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/mapping.xml": {
+        "bytes": 18287,
+        "sha256": "c382ee4c9d83b84a89ee3308c8b3cd8dbe627d468e666723a4b5d4def90d49de"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/README.rst": {
+        "bytes": 6669,
+        "sha256": "eb30dafee4234efc15714e1e4c14110bdab84d9821199ad4815f0a2f9391e534"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/xml.xsd": {
+        "bytes": 8836,
+        "sha256": "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/xml/BudgetStatus.xml": {
+        "bytes": 1518,
+        "sha256": "a492cd2a63f22e8a398c8e0e48096c11dc09aaed12fb91a689680d1884a91de2"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/core/xml/DocumentCategory.xml": {
+        "bytes": 11871,
+        "sha256": "d24a73014e1850f8da1c9415d57c00e903906e1c8429d97ac7c99e52f0848f10"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/LICENSE": {
+        "bytes": 1262,
+        "sha256": "848901d34aeca4909575f9904795417db22f90c55f6aa909b45b80b9b048354d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/README.md": {
+        "bytes": 2884,
+        "sha256": "7e5ebaed52a48d9ffa368fbc63c096e3f69b0d17a4dca1e67bc4054789e8033e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/Country.xml": {
+        "bytes": 43063,
+        "sha256": "7a23a69464a1ea63e315c4d21989495c4bcdc91bb016aa408660705f57b2fbf7"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/Currency.xml": {
+        "bytes": 31824,
+        "sha256": "ac7b58ff8e96fe83abdaea89bd522a55f00676d0030c3b02159178f620a77c66"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/DocumentCategory-category.xml": {
+        "bytes": 1184,
+        "sha256": "bfcfd0563e54512d5c7d132b0d5b6037ebcf7eb4b86fc1819148cbf6fabc1fed"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/FileFormat.xml": {
+        "bytes": 242810,
+        "sha256": "7c78808a96a565b57439d01df71d15e3099cc7b28755e05fb7cf019a993ab186"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/Language.xml": {
+        "bytes": 30296,
+        "sha256": "d069a4376e7172584be1a62d7c6d7921bb8fe57d41c424ce20e90335407ebbd1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/OrganisationType.xml": {
+        "bytes": 4581,
+        "sha256": "4dfbab053668d5c39c49349f1afb583a63ced5b9a556e0481684cc90502c3166"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/Region.xml": {
+        "bytes": 7577,
+        "sha256": "0df74f993312d74d63e5fc7ab55615d6ba16551b49e9bf3d1d47ee46bb46436c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/RegionVocabulary.xml": {
+        "bytes": 2134,
+        "sha256": "cba9470bf543a040dd41bbe13c0377dbe7e3b94d5ff71dd4a342d032a0bc05c6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/codelists/nonembedded/xml/Version.xml": {
+        "bytes": 1480,
+        "sha256": "c2744ca4a00310cb722ce3c28ea160ad89aa097eead727e436ae3a47056c72f5"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/licences/IATI-Guidance-license.rst": {
+        "bytes": 548,
+        "sha256": "60ba759d03c7cb53c501f2f33ef8ca866731d03adef1c236d06d202a26d88094"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/methodology/fcdo-2023-profile.json": {
+        "bytes": 3064,
+        "sha256": "4d8994eb6a17fadbc227cce8b5b0add85591543b317d7759b62991efa8e86db4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/methodology/METHODOLOGY-SOURCES.md": {
+        "bytes": 5132,
+        "sha256": "d5809f5a9cd0198ac2fa3d1f77a6e3b3a443b4208c6f83d5335c33e2397c3fba"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/methodology/pwyf-2026-profile.json": {
+        "bytes": 10855,
+        "sha256": "d810db1d9bfb0fdb8a3fe585ec638ad0b8fa8e13240d9c7166b3ff19059c8407"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/organisation-codelist-map.json": {
+        "bytes": 3931,
+        "sha256": "a9d279b7eb2eaf718d4b734495971c503cfc378c3c2ddf862aec1aa9f8bd1460"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/RESEARCH-NOTICE.md": {
+        "bytes": 2989,
+        "sha256": "5b27ad06f85c5960ea67ab6452eea2a7b9097b0fbfa07d6e7ee9d49767202f87"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/schema/iati-common.xsd": {
+        "bytes": 12042,
+        "sha256": "322692e4ea1f4434b154855f381eb4bd972aaa2e1349dfaf9578b775ad6c9c6b"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/schema/iati-organisations-schema.xsd": {
+        "bytes": 38161,
+        "sha256": "74970dd716dcbde3ea8a0406111189899c713aea5231ed5e5088411136bc252a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/schema/LICENSE": {
+        "bytes": 76,
+        "sha256": "2b962e0f5993967689792e993e6cb61b37c3ebc057093db034eafc4bfc595d95"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/schema/README.rst": {
+        "bytes": 4487,
+        "sha256": "5168a71019414e7f8a264ae4775ed336a400150946e4f5bd53a5d582ca0e46ab"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/schema/xml.xsd": {
+        "bytes": 8836,
+        "sha256": "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/support/source-manifest.json": {
+        "bytes": 17130,
+        "sha256": "f28bcb625404b35fec3f372494fa3ef0b64f05071e88411af2222bbf3c99a07c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/validation.py": {
+        "bytes": 6218,
+        "sha256": "5c4dc1f303f1a6db68fc0e7d5202b72fc0051158dd297700dd3e64b8e1fc42a6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/workspace.py": {
+        "bytes": 39247,
+        "sha256": "fb101d58fb506683b8e630ad8c2bcce38390e90c2570fc23b5430afb6f9a4651"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/organisation/xml.py": {
+        "bytes": 28530,
+        "sha256": "870f5baa011ddc224b945e57e575a2dc6d4feb1e19d9d74953a670a3d034d433"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/amp.css": {
+        "bytes": 2106,
+        "sha256": "d00cf1bd74d21a9cda83ab832a11148d055d6629373b984b2d97eb03515079fe"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/amp.js": {
+        "bytes": 29121,
+        "sha256": "89bf6697dcef2a9c0de5d30e40329bfb9c07984ee3a46cede48420294b2151ed"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/app.js": {
+        "bytes": 31601,
+        "sha256": "ea7638ef2498f88aaae65e79e46cb34f7944e287692398a6b70ff02b7681a7f0"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/dqa.css": {
+        "bytes": 1783,
+        "sha256": "2d16833ccde982ac8a98586484685fb80afbe1e2d5e09527b38c2a534cba928a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/dqa.js": {
+        "bytes": 21684,
+        "sha256": "ca35df63826b02ac83946071ef1e5c2a610e527d01767ee11d4981072b108279"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/index.html": {
+        "bytes": 76823,
+        "sha256": "2b6753fa6ecef95c6f5f06fbbc4a04348feed8af952ea1877cba830a0efd3f74"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/organisation.css": {
+        "bytes": 1925,
+        "sha256": "b7b3ae9e26c5cd2128128c92ebb052f61cd4946a5deebff50126f2a7f108945a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/organisation.js": {
+        "bytes": 33618,
+        "sha256": "490109778d2d7f09f95bee57df45c5923633c8a7e45499aca4f37313a8eecbb7"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/publishing.css": {
+        "bytes": 1836,
+        "sha256": "6c4687c2bddd4340a0be6b1153c7303a47b22925f2d9a63ca63d28c4e2abaf22"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/publishing.js": {
+        "bytes": 28222,
+        "sha256": "b75bc04a8d3062efd9fb29f21321622437f234da3a2365642e5e6a88d2d88801"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/refresh.css": {
+        "bytes": 3623,
+        "sha256": "5cfff756d9cd06d021bc2bfd966b47779d21a6ffe619f266883e6c02f0b9c3e2"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/refresh.js": {
+        "bytes": 41640,
+        "sha256": "ffeaafc41fda1de563dcf66c5908518ebbfa4f7a42115ef5289d2eb02a84fa80"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/public/style.css": {
+        "bytes": 9303,
+        "sha256": "44614bd6f994db280e03bf2c7c046115c4c25a4066f71f9f2b20661d8c89c9b0"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing_cli.py": {
+        "bytes": 3158,
+        "sha256": "eed3ba6b396f93ecc6d65b0240cade00ec3d3543efd62c60e80862d5e06b984a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing_http.py": {
+        "bytes": 5716,
+        "sha256": "671e6a9d320d96e4fcd5149241d3acc440fc8a7e3709c06bbc6be71fe775aaa0"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/PUBLISHING_SOURCES.md": {
+        "bytes": 6057,
+        "sha256": "efaebe6c6181f7bc2e944b6d6e5415bb2b531ffec2272692da3cb0dbfa48c13a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing_validation.py": {
+        "bytes": 4693,
+        "sha256": "0a2e4f3ddc184db9b3349d24140d4e29129e67bd72343fd5a04c0fb729c29aab"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing_xml.py": {
+        "bytes": 21965,
+        "sha256": "a67d4cb41b71601059d74c22cc48d0fd742f345283598ed57874d7da658fd3e6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-methodology.json": {
+        "bytes": 5416,
+        "sha256": "74cdad83a94f88529bf2741f0277cb970103d215fcd68a01ef56d8e3e4acd79e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema-source.json": {
+        "bytes": 2197,
+        "sha256": "c23165638ca7daba5a88878669af9e07f9b9bc4567026a9c7fd21c90afefef53"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema/iati-activities-schema.xsd": {
+        "bytes": 127500,
+        "sha256": "66aa6ce8a1cbdba9f18674913772199e1c640935ff805d780d699f6d6378e7e4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema/iati-common.xsd": {
+        "bytes": 12042,
+        "sha256": "322692e4ea1f4434b154855f381eb4bd972aaa2e1349dfaf9578b775ad6c9c6b"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema/IATI-LICENSE.rst": {
+        "bytes": 548,
+        "sha256": "60ba759d03c7cb53c501f2f33ef8ca866731d03adef1c236d06d202a26d88094"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema/LICENSE": {
+        "bytes": 76,
+        "sha256": "2b962e0f5993967689792e993e6cb61b37c3ebc057093db034eafc4bfc595d95"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing-schema/xml.xsd": {
+        "bytes": 8836,
+        "sha256": "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/PUBLISHING.md": {
+        "bytes": 23843,
+        "sha256": "74a630092ac977481953f760f5358b9004d32a07ab7cf397c7a514e37821884e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/publishing.py": {
+        "bytes": 60825,
+        "sha256": "414945f3e5105ccc61dc57d46284b8dccb343b08730959b0281b669d329b7cc8"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/README.md": {
+        "bytes": 10307,
+        "sha256": "19f0f9586d28beb5bd46c03eac2fdb146685874eeba4916cb7b3cee9ac79118b"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/AIDDATA_NIGERIA.md": {
+        "bytes": 4963,
+        "sha256": "5106ec973f3432cdd9556e16a6f310547984b0709dae077a288adc1c0a5b3ed6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/aiddata-nigeria.json": {
+        "bytes": 5222,
+        "sha256": "241832296ad6e4ed05385a8064f8a6a982dfd61afd1b29dc55245bc0b5f7035d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/AMP.md": {
+        "bytes": 7719,
+        "sha256": "dc3bd5de32d3fba3b4f4cedb748bc6844649838e8cced2fb9aebaabb762dc0d4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/amp.py": {
+        "bytes": 20466,
+        "sha256": "6d8940f602d63ebe4527d4f0a975253e32f60479bb9c1b85551686e35227d78e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/browser.mjs": {
+        "bytes": 15797,
+        "sha256": "893b2f9798c312652e4a0ea53e36c704b27a0746b94e30892e32e5b622aa5dab"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md": {
+        "bytes": 11814,
+        "sha256": "fcbc1f5fd31d029afe39cbed5bcd96718a29a192a17cef9c5dda37f1d242f504"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/complete.mjs": {
+        "bytes": 23868,
+        "sha256": "46d39635f24a447a7aa60d846d7efa48f958b3ac38cdf403a92619fa8d6c7e6d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/assessment-requests.json": {
+        "bytes": 1128,
+        "sha256": "5a8625db466a9d36f1799b708e84eaece9a51bd23a11ab520dba47a55e44fb44"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/complete.example.json": {
+        "bytes": 2042,
+        "sha256": "951f111606be40bed7c8b298340df41478891e177146d046e4d5f834bcec2e53"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/complete.py": {
+        "bytes": 44839,
+        "sha256": "0c1488bdf07719eb76bbcae1d20fe5f58bbf26e873a1506c34a2460825c93e80"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/public_solr_transport.py": {
+        "bytes": 19525,
+        "sha256": "1c877431839486d1a4bae3b2b63b27b68bf20ec44891057763bb867a6e589d83"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/public-source/bd-exploration.json": {
+        "bytes": 635,
+        "sha256": "740f182781b801e6fe1c63de7be9668cc1c375300f3d86a31ee272fd8ae7fa65"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/public-source/gb-gov-1-exploration.json": {
+        "bytes": 485,
+        "sha256": "cfd3225ee2619b9aa4bb7965d132d8f799fa185b1d416fd13e8a334b8297e66d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/public-source/health-exploration.json": {
+        "bytes": 262,
+        "sha256": "7d4fca40d104a3c0292b7de3d719530ba74b393019dc004be1e1ff863308ee50"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/README.md": {
+        "bytes": 15317,
+        "sha256": "44776b3747630bf4fea9c3a5ac38c846da8c0bc52a3662db60e7e3626b874f31"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/SETUP.md": {
+        "bytes": 12099,
+        "sha256": "df1e5a490d096516625a67e26b2bc4df63325e51b9bf4e9f13b088c7cf688a1a"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/SOURCE_CONTRACT.json": {
+        "bytes": 4263,
+        "sha256": "ae9c9b667b31193c554dbf7fe9de8a031e3ac9855ad5be09c6eaec5ecb3374db"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/upstream.example.json": {
+        "bytes": 783,
+        "sha256": "cc38ffe37007da0fbd550aba31c39a916eda538c978f8db29d8812c78fd31ae5"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa-source/upstream.py": {
+        "bytes": 33860,
+        "sha256": "96eb393902d35c714d47ed01168301c233d33dcc0d10f5215b876d9ce9fa42a7"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/DQA.md": {
+        "bytes": 18439,
+        "sha256": "3de4a639dc455fbf92acff92a964ae659bcedcf0f17c2fbde7f56e2f2a090c53"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/dqa.mjs": {
+        "bytes": 97656,
+        "sha256": "b0a1ef93cf2b0bb7f790d70c277460fe6f760cd4cc448cdc78cf095f7194d75c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/HANDOVER.md": {
+        "bytes": 12504,
+        "sha256": "7370734321141af4e04f22d1e3c171528cd8cf5ba270c090343f2c9d8c1846a1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/handover.py": {
+        "bytes": 36304,
+        "sha256": "165e19781c29d87124003cb663a3eac33a69c485e0246cd6425a6b4faefd6c9f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/operator.mjs": {
+        "bytes": 46957,
+        "sha256": "509879b14d8835fedd6daf0c90a075b9dcd081202ff749e2098a34cf41ab9248"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/organisation-browser.mjs": {
+        "bytes": 7981,
+        "sha256": "2af77efb169acdc6d22aac9b703064f2d148652dfd83ef0fcddc5a1fb858cac6"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/ORGANISATION.md": {
+        "bytes": 7087,
+        "sha256": "63285ba0a1cfbb18fc974d18138c03c458d23a67d70bdf9c83e7feaefd624ca4"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/organisation.mjs": {
+        "bytes": 33635,
+        "sha256": "234aef12554392eeb688f159f0daaf98f968afde77b2d72ff09e0d0639325985"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/organisation.py": {
+        "bytes": 22066,
+        "sha256": "9976a66f2d94999fd91d1ce4b21ae7055205da898364cc984d8d2e2dbf6966e9"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/publisher.py": {
+        "bytes": 23745,
+        "sha256": "ae26775743c1d06beaa33b8167812c37c15cc679f59b31c64b134345acb32410"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/PUBLISHING.md": {
+        "bytes": 18124,
+        "sha256": "cd7a9b8925389b7959dd2ebb323182499ba539fb123f11008206a8ea5eb3e7c1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/publishing.mjs": {
+        "bytes": 92666,
+        "sha256": "515126bf241fbb54e05ec39b24eae57e096660e0cc6119c91c1c31e495469f8d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/publishing.py": {
+        "bytes": 21816,
+        "sha256": "3cd89010ffec7739f3ac166d802c64d40563cc6b4173c446c78887aafd8a12cd"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/README.md": {
+        "bytes": 11254,
+        "sha256": "cc478e20cf4c06008f32e1bb1b06b479cba6571f5f0874556240a43d7d85e2c3"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/refresh_archive.py": {
+        "bytes": 6340,
+        "sha256": "e2302c393b792d9df88a32a6d12870a343a68b95069c0a90b38b272d626cc5a8"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/REFRESH.md": {
+        "bytes": 16172,
+        "sha256": "221137caef234f9d212f93f78790bab5c60058d1599bcd0a0901c41e2a00e038"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/refresh.mjs": {
+        "bytes": 74511,
+        "sha256": "bb4b549164968deb8e73dac7e5a68490942bbc6b5bb5070711370197236d9bcd"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/refresh.py": {
+        "bytes": 25865,
+        "sha256": "8b02fa1c6c053aa072d1f0ba4a31e6866c3ac8e0994991d7c969761af1d05d10"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/requirements.json": {
+        "bytes": 5722,
+        "sha256": "74be677e4cd7d9da73ad8a966c45cae56e3ab9d0aa2942ba706eb82b6772a01e"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/RUNTIME.md": {
+        "bytes": 12016,
+        "sha256": "d5556acc5e0033d712bf843b2dbbe2bbba5717741feff166789eb5f07bdd74b1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/runtime.mjs": {
+        "bytes": 25530,
+        "sha256": "d6d79426e303b04b1fe0f195efe0eea9c7524e85697a3916de7b4bd322679ebc"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/refresh_cli.py": {
+        "bytes": 3250,
+        "sha256": "86f9cf1686c768057daad75c5b407a1460bf9da42d6bd0a33ed45accf852b265"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/refresh_http.py": {
+        "bytes": 3265,
+        "sha256": "98bb70b9b53b79f6a1e919ce6e813ab0764c60aadc893cb4a22c33d674b57f07"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/refresh_packet.py": {
+        "bytes": 24303,
+        "sha256": "d1efac99a887aafd8082736a5ffb78b51c91cfceb23c1d39b79b6b2c37d40633"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/REFRESH.md": {
+        "bytes": 19807,
+        "sha256": "bec047bf0ac0caacaf056ea516ccf4981cde9f1d5b0c96cb0ba89a82a61bbd84"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/refresh.py": {
+        "bytes": 40688,
+        "sha256": "acacb33b969368ea0ecadbd754ff2b5d660aa8ebe9a0a3c0872e7e966d32d4bd"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/server.py": {
+        "bytes": 9037,
+        "sha256": "129b4a4874dd814f282e81249bcab5c63408db710b40b55ec145da07f44dd166"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/README.md": {
+        "bytes": 19658,
+        "sha256": "3c469b2182e684ce38742c602cb5abaa06b3b5f4e70599f484306ae0bfb4a471"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/cli.mjs": {
+        "bytes": 1330,
+        "sha256": "3c4643f404e2e735d0d939422199b4faf46de1a6135d087357b6de887ee5e678"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/cli.py": {
+        "bytes": 5290,
+        "sha256": "0eeaa12bd713e7c0efe5a854324b7a37f440fcc18b986ba9279e4badeab0eb65"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/examples/inventory.xml": {
+        "bytes": 695,
+        "sha256": "7ee2a4586c22bf68e15f465a1d7a6d668dbbc3c4a43e605a58cad1fcfab08d60"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/examples/mapping.json": {
+        "bytes": 1406,
+        "sha256": "f8ee440d8bfd53c6606ce10b92cf9316603ab2e2a021e93ec74e720fb6bd523f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/native.mjs": {
+        "bytes": 1629,
+        "sha256": "d86c38389963cc6ea8d5f5d3e7d57472ca6a1751fc0227d3421bd83a66f1d72f"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/public/app.js": {
+        "bytes": 24116,
+        "sha256": "d4747e01354cd89d6e96c5933baec26152c6149d48407b630beadc19020abdb1"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/public/index.html": {
+        "bytes": 7659,
+        "sha256": "5e08dbd8475498958187534bed1cae10f89fed5a3606834edee98e928b6bc35b"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/public/style.css": {
+        "bytes": 7261,
+        "sha256": "c00b9a2a5d052be77f331e3ca4ae81ff3aa961a6e4765ef4f6c1dbda72672885"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/README.md": {
+        "bytes": 11987,
+        "sha256": "d63040402ffbf6bae7d4b1150361b9cd657703789c783c612d170f6735a0e31c"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/server.py": {
+        "bytes": 9434,
+        "sha256": "c5ae9b7e4203bca1d661b762203ed952a48687647080d214b0d7a50e56dc401d"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/workspace.py": {
+        "bytes": 36232,
+        "sha256": "e0c141ad42b931e116be124e15b727a6a625a65ca7b7731cfc4db83cc6b0ca90"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/xml_source.py": {
+        "bytes": 17648,
+        "sha256": "bbd8608684f27937ef2239d1b5efd533b4ff9a683f20e393aa50513c95ae7a4b"
+      },
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/FCDO-set-20.xml.gz": {
+        "bytes": 647227,
+        "sha256": "4df991d0ce8bbcc2ff44d0c71644f9f6fb2f4b10c9edd037294d146634433645"
+      }
+    }
+  }
+}
