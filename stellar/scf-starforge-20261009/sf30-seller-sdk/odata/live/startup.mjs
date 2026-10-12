@@ -85,7 +85,8 @@ export async function odataProcessIdentity(pid = process.pid) {
   return { pid, ppid: pid === process.pid ? process.ppid : Number(fields[1]), start: fields[19] };
 }
 
-export async function prepareODataLaunch({ workspace, expectedIdentity, liveId, expectedLive } = {}) {
+export async function prepareODataLaunch({ workspace, expectedIdentity, liveId, expectedLive,
+  subscriptionConnection, expectedSubscriptionsSha256 } = {}) {
   const identity = await odataWorkspaceIdentity(workspace.directory);
   need(expectedIdentity === undefined || expectedIdentity === 'new' || identity.sha256 === expectedIdentity,
     'Reopen the selected original OData workspace.');
@@ -93,13 +94,21 @@ export async function prepareODataLaunch({ workspace, expectedIdentity, liveId, 
   need(!expectedLive || live?.sha256 === expectedLive, 'The selected live service changed before launch.');
   if (live) need((await workspace.state()).liveProducts?.some(value => value.id === live.id && value.sourceBinding === live.sourceBinding),
     'The selected live service does not belong to this OData workspace.');
-  return { workspace: identity, live };
+  need(subscriptionConnection !== undefined || expectedSubscriptionsSha256 === undefined,
+    'Select a subscription connection with its expected SHA256.');
+  let subscriptions = null;
+  if (subscriptionConnection !== undefined) {
+    const { odataSubscriptionSelection } = await import('./subscriptions/managed.mjs');
+    subscriptions = (await odataSubscriptionSelection(subscriptionConnection,
+      { expectedSha256: expectedSubscriptionsSha256 })).identity;
+  }
+  return { workspace: identity, live, subscriptions };
 }
 
 /** Small original listener view; it does not copy catalogs, provider credentials or row pages. */
-export async function odataWorkspaceProbe(workspace) {
+export async function odataWorkspaceProbe(workspace, { subscriptions = null } = {}) {
   return { schema: ODATA_PROBE, workspace: await odataWorkspaceIdentity(workspace.directory),
-    process: await odataProcessIdentity() };
+    process: await odataProcessIdentity(), subscriptions };
 }
 
 export function odataLoopback(value, selectedPort = 0) {
@@ -116,7 +125,11 @@ export function odataLoopback(value, selectedPort = 0) {
 /** Called by the original CLI after its workspace and optional live merchant are listening. */
 export async function announceODataWorkspace({ workspace, server, launch, liveRuntime = null } = {}) {
   const current = await prepareODataLaunch({ workspace, expectedIdentity: launch.workspace.sha256,
-    liveId: launch.live?.id, expectedLive: launch.live?.sha256 });
+    liveId: launch.live?.id, expectedLive: launch.live?.sha256,
+    subscriptionConnection: launch.subscriptions?.path,
+    expectedSubscriptionsSha256: launch.subscriptions?.sha256 });
+  need(stable(server.subscriptionIdentity ?? null) === stable(current.subscriptions),
+    'The running subscription operator differs from the selected connection.');
   const address = server.server.address();
   need(address && typeof address === 'object' && address.address === '127.0.0.1', 'The original OData workspace is not listening.');
   const url = odataLoopback(server.url, address.port);
@@ -127,7 +140,7 @@ export async function announceODataWorkspace({ workspace, server, launch, liveRu
       operationsUrl: odataLoopback(liveRuntime.operationsUrl) };
   } else need(liveRuntime === null, 'The running live service differs from the selected OData application.');
   const value = { schema: ODATA_STARTUP, status: 'ODATA_WORKSPACE_READY', launchId: randomUUID(),
-    workspace: current.workspace, process: await odataProcessIdentity(), url, live };
+    workspace: current.workspace, process: await odataProcessIdentity(), url, live, subscriptions: current.subscriptions };
   await atomic(join(workspace.directory, ODATA_LAUNCH_FILE), value);
   return value;
 }

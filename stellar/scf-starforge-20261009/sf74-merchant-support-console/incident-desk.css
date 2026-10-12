@@ -19,3 +19,21 @@
 .incident-detail pre{white-space:pre-wrap;max-height:350px;overflow:auto;font-size:11px}
 @media(max-width:1000px){.incident-filters{grid-template-columns:1fr 1fr}.incident-filters>button{align-self:end}.incident-counters{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.incident-filters,.incident-ack-form{grid-template-columns:1fr}.incident-counters{grid-template-columns:repeat(2,minmax(0,1fr))}.incident-ack-form .full{grid-column:auto}.incident-worker .actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.incident-worker .actions>button:last-child{grid-column:1/-1}.incident-config textarea{font-size:16px}.incident-detail .scope{grid-template-columns:1fr}}
+
+/* Complete incident-store recovery uses the same grayscale Support controls. */
+.incident-recovery{margin-top:1.5rem;border-top:1px solid var(--line,#d6d6d6);padding-top:1rem}
+.incident-recovery-body{display:grid;gap:1rem;padding-top:1rem}
+.incident-recovery-body h3,.incident-recovery-body h4,.incident-recovery-body p{margin:0}
+.incident-recovery-form{display:grid;gap:.75rem;max-width:58rem}
+.incident-recovery-form label{display:grid;gap:.4rem}
+.incident-recovery-form input:not([type=checkbox]),.incident-recovery-form textarea{width:100%}
+.incident-recovery-form .incident-recovery-confirmation{display:flex;align-items:flex-start;gap:.75rem}
+.incident-recovery-confirmation input{width:auto;flex:0 0 auto;margin-top:.25rem}
+.incident-recovery-receive,.incident-recovery-reconcile,.incident-recovery-abandon{padding:1rem;border:1px solid var(--line,#d6d6d6);display:grid;gap:.8rem}
+.incident-recovery [hidden]{display:none!important}
+.incident-recovery td small,.incident-recovery .scope-row span{overflow-wrap:anywhere}
+.incident-recovery td:last-child button{display:block;margin-bottom:.4rem}
+.incident-recovery-requests{display:grid;gap:.8rem;margin:1rem 0}
+.incident-recovery-request{display:grid;gap:.4rem;border-bottom:1px solid var(--line,#d6d6d6);padding-bottom:.8rem}
+.incident-recovery-request small{overflow-wrap:anywhere}
+.incident-recovery pre{max-height:24rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}

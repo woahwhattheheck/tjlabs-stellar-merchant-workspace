@@ -1,8 +1,14 @@
 // MIT. Carry accepted customer sections into the maintained SCF reviewer edition.
+const FEDERAL = '## Federal awards: complete funding research, workshares and receiving';
 const WEBHOOK = '## Webhook customer adoption: complete event tasks and operator handover';
 const OPENFN = '## OpenFn: paid workflow commissioning and complete receiving';
 const REFERRAL = '## Referral implementation: source changes, returned outcomes and complete receiving';
 const RISINGWAVE = '## Recurring subscription delivery and streaming-data commissioning';
+const OPENLINEAGE = '## OpenLineage service operations and complete customer receiving';
+const A2A = '## A2A analytical services: complete agent work, merchant delivery and customer receiving';
+const CUSTOMER_WORKSHARES = '## External buyer onboarding and study-operations commissioning';
+const AIR_QUALITY = '## Air-quality reporting and complete customer receiving';
+const MUNICIPAL = '## Municipal source operations, service reporting and reviewed GIS delivery';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
@@ -132,6 +138,17 @@ export function receiveGrantCustomerSources(index, companion) {
     if (previous.url && previous.url !== url) delete source.git_blob;
     if (at < 0) index.sources.push(source); else index.sources[at] = source;
   };
+  const federal = section(companion, FEDERAL)?.text || '';
+  receive('federal-awards-readme', 'Federal awards complete product guide',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/README\.md)/, federal);
+  receive('federal-awards-operating', 'Federal awards installed operating guide',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/OPERATING\.md)/, federal);
+  receive('federal-awards-receiving', 'Federal awards complete workspace receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/RECEIVING\.md)/, federal);
+  receive('federal-awards-report-guide', 'Complete funding report, merchant and buyer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/federal-awards\/FUNDING_REPORTS\.md)/, federal);
+  receive('federal-awards-federal-awards', 'Federal awards complete product selection',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/selections\/federal-awards\.json)/, federal);
   const webhook = section(companion, WEBHOOK)?.text || '';
   const openfn = section(companion, OPENFN)?.text || '';
   receive('webhook-customer-commissioning', 'Complete webhook customer commissioning',
@@ -159,6 +176,57 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-payment-plans\/README\.md)/, billing);
   receive('merchant-xero-customer-receiving', 'Accountant document receiving and complete customer handover',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/merchant-settlement-accounting\/receivables\/xero\/README\.md)/, billing);
+  receive('merchant-service-renewal-operation', 'Merchant service renewal and accepted continuation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf74-merchant-support-console\/SERVICE_RENEWALS\.md)/, billing);
+  receive('merchant-accepted-service-calendar', 'Accepted service renewal financial calendar and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-service-agreements\/README\.md)#accepted-service-renewals/, billing);
+  const lineage = section(companion, OPENLINEAGE)?.text || '';
+  receive('openlineage-installed-operations', 'OpenLineage operations — installed product',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/openlineage\/OPERATING\.md)/, lineage);
+  receive('openlineage-source-contract', 'OpenLineage original source contracts',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/openlineage-workspace\/SOURCE_CONTRACT\.md)/, lineage);
+  receive('openlineage-service-levels', 'OpenLineage service policies, assessments and incidents',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/openlineage-workspace\/SERVICE_LEVELS\.md)/, lineage);
+  receive('openlineage-service-levels-operator', 'OpenLineage service-level operator desk and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/openlineage-workspace\/SERVICE_LEVELS_OPERATOR\.md)/, lineage);
+  receive('openlineage-service-levels-native-receiving', 'OpenLineage original service-level receiving programme',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(\.swarm-delivery\/openlineage-service-levels-bbbd-\d{8}\/SERVICE_LEVELS_RECEIVING\.mjs)/, lineage);
+  receive('openlineage-quality-operator', 'OpenLineage dataset quality operations',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/openlineage-workspace\/QUALITY_OPERATOR\.md)/, lineage);
+  receive("analysis-openlineage-operations", "Analysis source, query and workbook lineage publication",
+    /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf88-operator-buyer-cli\/python\/ANALYSIS_LINEAGE\.md)/, lineage);
+  receive("analysis-openlineage-native-receiving", "Analysis and OpenLineage complete native receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf88-operator-buyer-cli\/python\/examples\/ANALYSIS_LINEAGE_NATIVE\.md)/, lineage);
+  const analytical = section(companion, A2A)?.text || '';
+  receive("a2a-analysis-installed-product", "Complete analytical service and merchant product",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/a2a-analysis\/README\.md)/, analytical);
+  receive("a2a-analysis-operating", "Analytical service installed operation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/a2a-analysis\/OPERATING\.md)/, analytical);
+  receive("a2a-analysis-customer-receiving", "Complete analytical output and workspace receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/a2a-analysis\/RECEIVING\.md)/, analytical);
+  receive("a2a-analysis-native-service", "Native A2A analytical procedures and task authority",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar-forge\/a2a-analysis-agent\/README\.md)/, analytical);
+  receive("a2a-merchant-operator", "Merchant Agent, publication and release operation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/a2a\/OPERATOR\.md)/, analytical);
+  receive("a2a-merchant-commissioning", "Original merchant A2A commissioning source",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/a2a\/receiving\/commission\.mjs)/, analytical);
+  receive("a2a-complete-native-programme", "Complete analytical service native commissioning entry",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(operations\/scf-a2a-native-analysis-0c7a-\d{8}\/RUN_NATIVE\.md)/, analytical);
+  const workshares = section(companion, CUSTOMER_WORKSHARES)?.text || '';
+  receive("medstar-study-workspace", "Study operations original application",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/README\.md)/, workshares);
+  receive("medstar-study-integration", "Study operations implementation and customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/INTEGRATION_HANDOVER\.md)/, workshares);
+  receive("medstar-study-api", "Study review, comparison and report API",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/API_CONTRACT\.md)/, workshares);
+  const airQuality = section(companion, AIR_QUALITY)?.text || '';
+  receive('openaq-customer-operation', 'Air-quality reporting and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/openaq\/README\.md)/, airQuality);
+  const municipal = section(companion, MUNICIPAL)?.text || '';
+  receive('municipal-installed-gis-receiving', 'Municipal source operations and GIS receiving installation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/open311\/gis\/INSTALL\.md)/, municipal);
+  receive('municipal-native-format-interchange', 'Municipal GIS original format interchange result',
+    /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(operations\/open311-gis-8e5f-\d{8}\/format-interchange-result\.json)/, municipal);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

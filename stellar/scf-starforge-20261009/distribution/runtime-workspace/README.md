@@ -256,6 +256,21 @@ and merchant state stay under the original home during release changes.
 See [Managed release operations](MANAGED_OPERATIONS.md) for the complete browser
 and headless workflow, retained selection guards, configuration saves and recovery.
 
+## Application setup snapshots and receiving
+
+The Applications editor can save named complete setup snapshots, export and
+receive all retained tool variants, and reconcile concurrent edits against the
+current saved application. See [Application setup and receiving](APPLICATION_SETUP.md)
+for the browser workflow, complete document format and headless operator handoff.
+
+The native CLI can inspect or export that same setup document, prepare a receiving
+operation against an explicit host runtime, and save its original native review.
+The operation retains the full source, all variants, host bindings and request ID
+so another operator can continue it after interruption. Start with
+`application-setup-inspect --document COMPLETE_JSON`; the guide covers
+`application-setup-export`, `application-setup-prepare`,
+`application-setup-status` and `application-setup-save`.
+
 ## Application API and retained records
 
 The workspace model and server can be embedded in another local operator tool:

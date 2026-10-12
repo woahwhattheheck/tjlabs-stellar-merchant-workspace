@@ -4,6 +4,8 @@ Use **Merchant fleet** in the installed **Applications** catalog to open the ori
 
 The application uses the same fleet and SF82 leases as the foreground CLI and merchant MCP. Stop the current owner before opening another interface over those directories. Closing the runtime workspace's browser tab or HTTP server leaves its original managed worker running; **Stop** acts on that selected application operation.
 
+The **Saved rollouts** desk records ordered multi-merchant waves with source and price review, an independent pause control, exact-request continuation, whole-mapping restoration and drained-instance retirement. Use the complete [rollout operating guide](../../stellar/scf-starforge-20261009/merchant-fleet-gateway/CAMPAIGNS.md) for the browser, installed terminal/MCP client and complete Fleet receiving.
+
 The source-owned entry is declared in [merchant-fleet-gateway.json](../../stellar/scf-starforge-20261009/distribution/contributions/merchant-fleet-gateway.json). The full native lifecycle remains in the [fleet guide](../../stellar/scf-starforge-20261009/merchant-fleet-gateway/RELEASE_OPERATOR.md). The [runtime workspace](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md) supplies installation, original Applications request history and connection recovery.
 
 ## 1. Select the existing installation and actual merchant sources
@@ -565,3 +567,20 @@ Use recovery to reconcile the original request/worker state, not as a substitute
 | Received state has different physical directory identities | Review the actual received original plan/state before launching it. |
 
 A useful final operator handoff contains the original runtime installation identity, application ID and current operation result, exact fleet plan/digest, declared stores/ports, current native release/gateway state, completed customer files and receiving receipts, delivery/discovery history and the current host/recovery runbook. Keep private configuration and credentials in their original host custody. Report which native operations actually completed and which remain prepared or pending.
+
+
+## 13. Operate saved rollout waves in this application
+
+The original **Build a product** workflow includes a committed **merchant-fleet** source selection. It packages the Fleet application, release and native source commands, saved-rollout browser and typed MCP client, complete customer delivery and SF101 host recovery. Select that recipe from the chosen source commit, prepare the source-specific runtime profile and complete its original READY installation before attaching the runtime here.
+
+In the running Fleet console, use **Saved rollouts** to choose retained releases and order their waves. Save the proposal, review the full current-to-target mapping and original source/price comparisons, then approve one wave. The original gateway activates all merchants in that wave at one native revision. The next wave requires its own review.
+
+Pause uses a separate control revision and remains available while a wave prepares. Unpause permits explicit continuation of the same accepted request. A lost response or restart keeps the original request ID, reviewed mapping and operation history in the same private manager directory.
+
+Earlier mapping restoration uses the original retained gateway snapshot when available. After that bounded history expires, the desk can review the exact retained releases through the original preparation path. Its availability view distinguishes serving, prepared, draining and retired slots; a different serving release must move through a reviewed available mapping before that port can be reused.
+
+Download the complete campaign decision/history document for the handoff. To move execution to a replacement host, follow section 11's complete original Fleet capture/receive workflow: it includes the manager's saved campaigns alongside gateway and release state. On reopening this same application, inspect the saved native relationship before continuing its exact pending request.
+
+Full browser steps, rollback availability, operator limits and installed examples: [CAMPAIGNS.md](../../stellar/scf-starforge-20261009/merchant-fleet-gateway/CAMPAIGNS.md).
+
+Full terminal, ten MCP methods and typed request reconciliation: [FLEET_CAMPAIGN_CLIENT.md](../../stellar-forge/mcp-merchant-operator/FLEET_CAMPAIGN_CLIENT.md).

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TIND migration workspace</title>
+<link rel="stylesheet" href="/assets/style.css">
+<script type="module" src="/assets/browser.mjs"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to workspace</a>
+<header>
+  <div><p class="eyebrow">Repository operations</p><h1>TIND migration workspace</h1><p id="workspace-name" class="muted">Opening the original repository workspace…</p></div>
+  <div class="header-controls"><label for="project-select">Migration</label><select id="project-select"><option value="">Choose a migration</option></select><button id="refresh" type="button">Refresh</button></div>
+</header>
+<div id="message" role="status" aria-live="polite"></div>
+<section id="pending" class="notice" hidden>
+  <h2>Finish the saved operation</h2>
+  <p id="pending-description"></p>
+  <div class="actions"><button id="retry-pending" type="button">Resume this exact operation</button><button id="download-pending" type="button">Download saved request</button></div>
+</section>
+<nav aria-label="Migration workspace">
+  <button type="button" data-tab="overview" aria-current="page">Overview</button>
+  <button type="button" data-tab="records">Records and decisions</button>
+  <button type="button" data-tab="mapping">Destination mapping</button>
+  <button type="button" data-tab="receiving">Native export and files</button>
+  <button type="button" data-tab="batches">Batches and delivery</button>
+  <button type="button" data-tab="handover">Editable handover</button>
+</nav>
+<main id="main">
+<section data-panel="overview">
+  <div id="summary" class="summary"></div>
+  <section class="panel">
+    <h2>Create a migration from a reviewed repository edition</h2>
+    <p>Choose an edition retained by the original repository workspace. Its identifiers, metadata, original response pages and review history stay connected to the migration.</p>
+    <form id="create-form">
+      <div class="grid two"><label>Migration title<input name="title" required maxlength="256"></label><label>Selected TIND institution<input name="instance" type="url" placeholder="https://your-institution.tind.io" required></label></div>
+      <label>Reviewed original edition<select name="editionId" id="edition-select" required></select></label>
+      <details><summary>Complete initial mapping profile</summary><p>Review exact XML selectors and target MARC fields. You can edit this profile again in Destination mapping.</p><label>Profile JSON<textarea name="profile" id="create-profile" rows="16" spellcheck="false"></textarea></label></details>
+      <button type="submit">Create complete migration</button>
+    </form>
+  </section>
+  <section class="panel project-only" hidden>
+    <h2>Receive a newer source edition</h2>
+    <p>Continue the same repository, metadata format and set. The original OAI edition retains baseline records and explicit deletion headers; previous delivery baselines and staff decisions stay in the working migration.</p>
+    <form id="edition-form"><label>Reviewed source edition<select name="editionId" id="continue-edition" required></select></label><button type="submit">Receive this complete edition</button></form>
+  </section>
+</section>
+<section data-panel="records" hidden>
+  <section class="panel">
+    <div class="section-heading"><div><h2>Records and staff decisions</h2><p id="record-total" class="muted"></p></div><button id="prepare-selected" type="button">Prepare selected records</button></div>
+    <form id="search-form" class="row"><label>Identifier or retained title<input name="query" id="record-query" type="search"></label><button type="submit">Find records</button><button id="clear-selection" type="button">Clear selection</button></form>
+    <div class="table-scroll"><table><caption class="sr-only">Current repository records and native destination decisions</caption><thead><tr><th scope="col">Select</th><th scope="col">Record</th><th scope="col">Destination</th><th scope="col">Status</th><th scope="col">Decisions</th><th scope="col">Open</th></tr></thead><tbody id="record-rows"></tbody></table></div>
+    <div class="row"><button id="previous-page" type="button">Previous page</button><span id="page-label"></span><button id="next-page" type="button">Next page</button><span id="selection-count" class="muted"></span></div>
+  </section>
+  <section class="panel">
+    <h2>Receive prepared staff decisions</h2>
+    <p>Receive up to 5,000 complete records per transaction. Each row contains its exact <code>identifier</code> and <code>staff</code> object, including reviewer, note, access, hierarchy and merge choices.</p>
+    <form id="bulk-review-form"><label>Staff decisions JSON file<input name="file" type="file" accept=".json,application/json"></label><label>Or paste the complete records array<textarea name="records" rows="8" spellcheck="false"></textarea></label><button type="submit">Receive staff decisions</button></form>
+  </section>
+</section>
+<section data-panel="mapping" hidden>
+  <section class="panel">
+    <h2>Destination profile and repeated metadata</h2>
+    <p>Each rule selects an exact expanded XML path from the original OAI record. Ordered repeatable MARC fields remain editable. The default profile separates the first title and creator from alternate titles and additional creators, retains other source identifiers, and reconciles native DOI and OAI identities.</p>
+    <form id="mapping-form"><label>Complete destination mapping profile<textarea id="mapping-json" name="profile" rows="28" spellcheck="false" required></textarea></label><button type="submit">Save and remap the complete source edition</button></form>
+  </section>
+  <section class="panel">
+    <h2>Native field references</h2>
+    <p>The source OAI identifier is retained in <code>909CO$o</code>. DOI values use <code>0247 $a</code> with <code>$2 doi</code>. Existing native <code>001</code>, <code>005</code> and <code>856</code> fields remain attached to their original destination records. Journal host records and volume, issue and page relationships use the reviewed <code>773</code> group.</p>
+    <p><a href="https://info.tind.io/roadmap/24.0.0-ils" target="_blank" rel="noreferrer">TIND native identifier and export changes</a> · <a href="https://www.loc.gov/marc/bibliographic/bd024.html" target="_blank" rel="noreferrer">MARC identifier fields</a> · <a href="https://www.loc.gov/marc/bibliographic/bd773.html" target="_blank" rel="noreferrer">MARC host item relationships</a></p>
+  </section>
+</section>
+<section data-panel="receiving" hidden>
+  <div class="grid two">
+    <section class="panel">
+      <h2>Receive the original native export</h2>
+      <form id="destination-form">
+        <label>MARCXML export<input name="file" type="file" accept=".xml,.marcxml,application/xml,text/xml" required></label>
+        <label>Original export URL<input name="url" type="url" required></label>
+        <div class="grid two"><label>Native record count<input name="recordCount" type="number" min="0" step="1" required></label><label>Retrieval time with timezone<input name="retrievedAt" class="now-field" required></label></div>
+        <label>Exact selection and permissions<textarea name="scope" rows="3" required></textarea></label>
+        <label>Native field coverage<select name="fieldCoverage" required><option value="public">Publicly exported fields</option><option value="selected">Selected fields</option><option value="complete">Complete selected record fields</option></select></label><label>Actual export permissions<textarea name="authority" rows="2" placeholder="Native role and selected export visibility"></textarea></label><label>Selected instance version<input name="instanceVersion" maxlength="128"></label>
+        <label>Receiving operator<input name="reviewer" required maxlength="256"></label>
+        <label class="check"><input name="complete" type="checkbox"> The complete selected native export is received</label>
+        <button type="submit">Receive native destination records</button>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Read the native MARCXML search API</h2>
+      <p>For an institution exposing the hosted search API, continue its actual returned record count until the native empty page. Every original page stays in this workspace.</p>
+      <form id="native-search-form">
+        <label>Native query arguments<textarea name="selection" rows="5" spellcheck="false">{"p":""}</textarea></label>
+        <div class="grid two"><label>Requested records per page<input name="pageSize" type="number" min="1" max="10000" value="100" required></label><label>Seconds between requests<input name="interval" type="number" min="0" max="3600" step="0.1" value="2.1" required></label></div>
+        <label>Native field coverage<select name="fieldCoverage" required><option value="public">Publicly exported fields</option><option value="selected">Selected fields</option><option value="complete">Complete selected record fields</option></select></label><label>Actual export permissions<textarea name="authority" rows="2" placeholder="Native role and selected export visibility"></textarea></label><label>Selected instance version<input name="instanceVersion" maxlength="128"></label>
+        <label>Existing authorization environment variable<input name="authorizationEnvironment" placeholder="TIND_AUTHORIZATION" autocomplete="off"></label>
+        <button type="submit">Read the selected native export</button>
+      </form>
+      <div id="native-search-status"></div>
+    </section>
+  </div>
+  <section class="panel">
+    <h2>Original file manifest and complete source tree</h2>
+    <p>Each file stays tied to its exact source record, original bytes, checksum, role and access terms. Large binaries remain in the selected file tree and stream into the complete handover.</p>
+    <form id="files-form"><label>File manifest JSON<input name="file" type="file" accept=".json,application/json"></label><label>Or paste the file rows<textarea name="files" rows="10" spellcheck="false" placeholder='[{"identifier":"exact source ID","id":"original-file-1","filename":"article.pdf","path":"journal/article.pdf","role":"article","mediaType":"application/pdf","bytes":12345,"sha256":"complete SHA-256","access":{"metadata":"public","files":"public","releaseDate":"","restriction":"","licenseURI":""}}]'></textarea></label><button type="submit">Receive file manifest</button></form>
+    <form id="file-root-form"><label>Original file directory on this machine<input name="path" required></label><button type="submit">Bind original file tree</button><button id="verify-files" type="button">Read and verify retained file bytes</button></form>
+    <p id="file-root-state" class="muted"></p>
+  </section>
+  <section class="panel">
+    <h2>Receive native file or object results</h2>
+    <p>Record the returned native record and file/object IDs with the actual downloaded or returned checksum. The retained original receipt travels with the file.</p>
+    <form id="file-receipt-form">
+      <div class="grid two"><label>Exact source identifier<input name="identifier" required></label><label>Source file ID<input name="fileId" required></label><label>Native record ID<input name="nativeRecordId" required></label><label>Native file/object ID<input name="nativeFileId" required></label><label>Native file URL<input name="url" type="url" required></label><label>Observed SHA-256<input name="sha256" pattern="[a-f0-9]{64}" required></label><label>Exact bytes<input name="bytes" type="number" min="0" step="1" required></label><label>Observation time with timezone<input name="observedAt" class="now-field" required></label><label>Receiving operator<input name="operator" required></label></div>
+      <label>Complete original native file result<textarea name="original" rows="6" required spellcheck="false"></textarea></label><button type="submit">Receive native file result</button>
+    </form>
+  </section>
+</section>
+<section data-panel="batches" hidden>
+  <section class="panel">
+    <h2>Prepare the complete ready population</h2>
+    <p>Each batch freezes its exact source edition, mapping, current native export, staff decisions, ordered MARCXML records and file manifest. Remaining decisions stay visible in the working record desk.</p>
+    <form id="prepare-form"><div class="grid two"><label>Preparing operator<input name="reviewer" required></label><label>Selection<input name="selection" id="batch-selection" readonly value="Every ready record"></label></div><label>Scope and handover note<textarea name="note" rows="3" required></textarea></label><button type="submit">Prepare native import files</button><button id="all-ready" type="button">Use every ready record</button></form>
+  </section>
+  <div id="batch-list"></div>
+  <div class="grid two">
+    <section class="panel">
+      <h2>Send one exact native request</h2>
+      <p>Select the batch file and use the current institution's documented endpoint, method, fields and encoding. The complete frozen request and original response stay attached to the operation.</p>
+      <form id="native-send-form">
+        <label>Prepared batch<select name="batchId" class="batch-select" required></select></label>
+        <label>Complete native request contract<textarea name="request" id="native-request" rows="13" spellcheck="false" required></textarea></label>
+        <label>Existing authorization environment variable<input name="authorizationEnvironment" placeholder="TIND_AUTHORIZATION" autocomplete="off"></label>
+        <button type="submit">Send the selected native request</button>
+      </form>
+      <div id="native-transfer-status"></div>
+    </section>
+    <section class="panel">
+      <h2>Receive the actual batch job result</h2>
+      <form id="receipt-form">
+        <label>Frozen batch<select name="batchId" class="batch-select" required></select></label>
+        <label>Native transfer operation ID, when used<input name="transferId"></label>
+        <div class="grid two"><label>Native job ID<input name="jobId" required></label><label>Observed native state<select name="status"><option value="submitted">Submitted</option><option value="completed">Completed</option><option value="failed">Failed</option><option value="unknown">Unknown</option></select></label></div>
+        <label>Original native job URL<input name="url" type="url" required></label>
+        <div class="grid two"><label>Observation time with timezone<input name="observedAt" class="now-field" required></label><label>Receiving operator<input name="operator" required></label></div>
+        <label>Complete original native receipt<textarea name="original" rows="6" required spellcheck="false"></textarea></label>
+        <label>Exact per-record results<textarea name="records" rows="7" spellcheck="false" placeholder='[{"identifier":"exact source ID","nativeId":"returned native ID","status":"accepted"}]'>[]</textarea></label>
+        <button type="submit">Receive native job result</button>
+      </form>
+    </section>
+  </div>
+</section>
+<section data-panel="handover" hidden>
+  <section class="panel">
+    <h2>Complete editable receiving</h2>
+    <p>The handover contains the original OAI/XML database and response pages, complete operator source, all mapping and staff revisions, native exports and receipts, frozen batches and original file manifest. A full handover streams the verified referenced file tree into the same ZIP64 package.</p>
+    <div class="actions"><a class="button" href="/download/handover?files=true">Download complete source, workspace and files</a><a class="button secondary" href="/download/handover?files=false">Download metadata, workspace and source</a></div>
+    <p id="handover-size" class="muted"></p>
+    <h3>Reopen on the receiving machine</h3>
+    <p>Receive the package into a new directory with the retained source command, then open the received original workspace. The original handover includes the same source beneath <code>source/oai-pmh/tind/</code>.</p>
+    <pre><code id="receive-command"></code></pre>
+    <p>The receiving command streams every listed member, restores the original database, relocates delivered file paths and opens the saved workspace. Run the original <code>oai</code> command against the same workspace when preparing the next source edition.</p>
+  </section>
+  <section class="panel"><h2>Operator session</h2><p id="session-details" class="muted"></p><p>Large native exports can be received through <code>destination-file</code> in an exact apply request. The complete JSON request envelope and browser imports are limited to 8 MiB; the local command reads larger original MARCXML files directly.</p></section>
+</section>
+</main>
+<dialog id="record-dialog" aria-labelledby="record-heading">
+<form method="dialog" class="dialog-close"><button type="submit">Close record</button></form>
+<h2 id="record-heading"></h2><p id="record-id" class="mono"></p><p id="record-source-status" class="muted"></p>
+<div id="record-issues"></div>
+<form id="record-form">
+  <div class="grid three"><label>Staff disposition<select name="action"><option value="migrate">Migrate</option><option value="exclude">Exclude from this migration</option><option value="withdraw">Withdraw explicit source deletion</option></select></label><label>Native destination record ID<input name="targetId"></label><label>Staff reviewer<input name="reviewer" required></label></div>
+  <fieldset><legend>Original access and release terms</legend><div class="grid three"><label>Metadata visibility<select name="metadata"><option value="unreviewed">Choose from source terms</option><option value="public">Public</option><option value="restricted">Restricted</option></select></label><label>File visibility<select name="files"><option value="unreviewed">Choose from source terms</option><option value="public">Public</option><option value="restricted">Restricted</option><option value="embargoed">Embargoed until original release</option><option value="none">Metadata only</option></select></label><label>Original release date<input name="releaseDate" type="date"></label></div><label>Original restriction wording<textarea name="restriction" rows="3"></textarea></label><label>Item license URI<input name="licenseURI" type="url"></label></fieldset>
+  <fieldset><legend>Journal and host record relationships</legend><div class="grid three"><label>Journal or host title<input name="journalTitle"></label><label>Volume<input name="volume"></label><label>Issue<input name="issue"></label><label>Pages<input name="pages"></label><label>Native parent record ID<input name="parentRecordId"></label><label>ISSN<input name="issn"></label><label>Relationship<input name="relationship"></label></div></fieldset>
+  <div id="field-conflicts"></div>
+  <details><summary>Complete editable source MARC record</summary><p>Retain each repeated data field and ordered subfield. Native destination identifiers are selected separately above.</p><label>Source MARC JSON<textarea name="mappedOverride" rows="22" spellcheck="false"></textarea></label><button id="reset-mapped" type="button">Use current mapped source record</button></details>
+  <div class="grid two"><details><summary>Current native destination record</summary><pre id="destination-record"></pre></details><details><summary>Prepared merged record</summary><pre id="proposed-record"></pre></details></div>
+  <label>Staff decision note<textarea name="note" rows="4" required></textarea></label>
+  <div class="actions"><button type="submit">Save complete staff record</button><button id="download-record" type="button">Download working record</button><button id="show-original" type="button">Read original OAI observation</button></div>
+  <pre id="original-observation" hidden></pre>
+</form>
+</dialog>
+</body>
+</html>

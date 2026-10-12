@@ -36,6 +36,7 @@ function delay(ms,signal) {
 async function drainNotifications(store,env,signal) {
   if(signal?.aborted)return;
   const jobs=await store.transaction(state=>{
+    if(state.recovery?.deliveryPaused)return [];
     const now=Date.now(),jobs=[];
     for(const event of state.notifications) {
       if(event.status==='IN_FLIGHT'&&Date.parse(event.inFlightUntil)<=now) {

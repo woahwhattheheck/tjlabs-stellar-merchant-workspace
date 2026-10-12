@@ -6,6 +6,7 @@ export const MERCHANT_OPERATION_FIELDS = Object.freeze([
   "serverIndex",
   "amountAtomic",
   "headerEnv",
+  "queryEnv",
   "securityAlternative",
   "responseMode",
   "responseValidation",

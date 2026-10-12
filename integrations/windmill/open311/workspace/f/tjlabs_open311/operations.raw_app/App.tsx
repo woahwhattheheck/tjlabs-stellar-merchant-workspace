@@ -24,6 +24,12 @@ function trimRuns(values: Run[]): Run[] {
     return active(run) || completed++ < 30;
   });
 }
+function recoveredRuns(current: Run[], saved: Launch[]): Run[] {
+  const known = new Set(current.map(run => run.id));
+  return trimRuns([...current, ...saved.filter(ticket => !known.has(ticket.id)).map(ticket => ({
+    id: ticket.id, kind: ticket.kind, label: ticket.label, createdAt: ticket.createdAt, status: "Submission pending"
+  }))]);
+}
 function retainedRuns(): Run[] {
   try {
     const value = JSON.parse(localStorage.getItem(storageKey) || "[]");
@@ -49,6 +55,23 @@ async function journal(method: "put" | "get" | "delete" | "getAll", value?: Laun
     tx.oncomplete = () => resolve(request.result);
     tx.onerror = () => reject(tx.error || request.error || new Error("Could not retain the original action."));
     tx.onabort = () => reject(tx.error || new Error("The original action was not saved."));
+  });
+}
+async function persistRuns(values: Run[]): Promise<void> {
+  const retained = trimRuns(values);
+  // Save job identity and status before retiring any complete launch input.
+  // If browser storage is full, every launch ticket remains available for recovery.
+  localStorage.setItem(storageKey, JSON.stringify(retained.map(({result, approval, ...run}) => run)));
+  const terminal = retained.filter(run => !active(run));
+  if (!terminal.length) return;
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("launches", "readwrite");
+    const store = tx.objectStore("launches");
+    for (const run of terminal) store.delete(run.id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error("Could not finish saving activity."));
+    tx.onabort = () => reject(tx.error || new Error("Activity is saved; its original action input is still retained."));
   });
 }
 async function download(file: Data) {
@@ -98,15 +121,18 @@ export default function App() {
   const pollInProgress = useRef(false);
   const runsRef = useRef(runs);
   const fetchEpoch = useRef(0);
-  useEffect(() => { runsRef.current = runs;
-    try { localStorage.setItem(storageKey, JSON.stringify(runs.map(({result, approval, ...run}) => run))); } catch {}
+  useEffect(() => {
+    runsRef.current = runs;
+    persistRuns(runs).catch(e => {
+      if (mounted.current) setError("Could not finish saving activity in this browser: " + errorText(e));
+    });
   }, [runs]);
   useEffect(() => {
     mounted.current = true;
     journal("getAll").then((saved: Launch[]) => {
       if (!mounted.current || !saved.length) return;
-      setRuns(current => trimRuns([...saved.map(item => ({id:item.id,kind:item.kind,label:item.label,createdAt:item.createdAt,status:"Submission pending"})), ...current]));
-      setNotice("Saved actions are available in Activity. Resume a submission to reopen the same Windmill job.");
+      setRuns(current => recoveredRuns(current, saved));
+      setNotice("Saved actions are available in Activity. Their progress refreshes automatically; resume a pending submission to continue with its original job.");
     }).catch(e => { if (mounted.current) setError(errorText(e)); });
     return () => { mounted.current = false; };
   }, []);
@@ -153,9 +179,6 @@ export default function App() {
           try {
             const job: any = await getJob(run.id);
             if (!mounted.current) return;
-            if (["Submitting", "Submission pending"].includes(run.status)) {
-              await journal("delete",run.id);
-            }
             if (job.type === "CompletedJob") {
               const failed = job.success === false;
               let result: any;
@@ -191,15 +214,18 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
   async function submit(ticket: Launch) {
-    setRuns(current => trimRuns([{id:ticket.id,kind:ticket.kind,label:ticket.label,status:"Submitting",createdAt:ticket.createdAt},...current]));
+    setRuns(current => {
+      const existing = current.find(run => run.id === ticket.id);
+      if (!existing) return trimRuns([{id:ticket.id,kind:ticket.kind,label:ticket.label,status:"Submitting",createdAt:ticket.createdAt},...current]);
+      return current.map(run => run.id === ticket.id && ["Submitting","Submission pending"].includes(run.status) ? {...run,status:"Submitting",error:undefined} : run);
+    });
     try {
       const result = await (backend as any).launch({target:"source",args:{kind:ticket.kind,jobId:ticket.id,input:ticket.input}});
       if (result.jobId !== ticket.id) throw new Error("The returned job differs from the saved action.");
-      await journal("delete",ticket.id);
-      setRuns(current => current.map(run => run.id === ticket.id ? {...run,status:"Queued",error:undefined} : run));
+      setRuns(current => current.map(run => run.id === ticket.id && ["Submitting","Submission pending"].includes(run.status) ? {...run,status:"Queued",error:undefined} : run));
       setNotice(ticket.label + (result.replayed ? " reopened." : " started.") + " Its progress is in Activity.");
     } catch(e) {
-      setRuns(current => current.map(run => run.id === ticket.id ? {...run,status:"Submission pending",error:errorText(e)} : run));
+      setRuns(current => current.map(run => run.id === ticket.id && ["Submitting","Submission pending"].includes(run.status) ? {...run,status:"Submission pending",error:errorText(e)} : run));
       setTab("Activity");
       throw e;
     }

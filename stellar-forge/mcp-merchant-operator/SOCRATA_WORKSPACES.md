@@ -181,6 +181,7 @@ The connection can also declare:
 | --- | --- |
 | merchants | Named profiles with label, origin, path and the original public payment object |
 | runtime | Original release port, facilitator and optional explicit allowLocalFacilitator |
+| facilitatorConnection | Host profile JSON for native provider review, retained complete reviews and reviewed staging |
 | buyerWorkspaces | Named existing SF88 operator directories with their original identity, signer, policy and ledger |
 
 A merchant profile's payment contains scheme, network, asset, amount, payTo and
@@ -194,13 +195,22 @@ export from the source workspace and calls the original publisher.
 
 The publisher accepts the same actions and reviewed native IDs as the
 [full publishing workflow](../../stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/PUBLISHING.md),
-with three host-binding translations:
+with the following host bindings:
 
 | Original action | MCP payload |
 | --- | --- |
 | publisher.prepare | exportId from this original source workspace |
 | publisher.release.stage | draftId, id and optional label; runtime comes from the host connection |
 | publisher.buyer.session | buyerId, buyerWorkspace alias, maxPages, maxTotalAtomic, optional maxRows/maxPageBytes |
+| publisher.facilitators.review | provider alias, releaseId, new id and optional label |
+| publisher.facilitators.stage / inspect | reviewId from the retained complete native review |
+
+The [same-Publisher facilitator guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/FACILITATORS.md)
+describes the host profiles, browser controls, complete native alternatives and
+reviewed release lifecycle. publisher.facilitators.history pages retained reviews
+with after/limit and nextCursor. merchant_socrata_file kind facilitator-review
+reads the entire original JSON by its 64-character review ID through the existing
+chunked file transport.
 
 All other action payloads use the original publisher schema. In sequence, prepare
 the retained draft, stage its release, activate its reviewed generation and start

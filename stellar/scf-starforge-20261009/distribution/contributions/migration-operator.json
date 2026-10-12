@@ -1,0 +1,24 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "migration-operator",
+  "description": "Complete GIS migration product and original Applications lifecycle with selected native environments and workspace identity",
+  "commands": {
+    "migration-operator": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/managed.mjs"
+  },
+  "commandDescriptions": {
+    "migration-operator": "Create, select, open and connect the original native GIS migration workspace"
+  },
+  "applicationProviders": {
+    "migration-operator": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/migration.mjs"
+  },
+  "components": [
+    "products/gis-migration"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/migration.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/managed.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/server.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/plugin-package.py"
+  ]
+}

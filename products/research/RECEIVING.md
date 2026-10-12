@@ -825,6 +825,155 @@ The ordinary Analysis archive contains the publication raw bytes, all protocol e
 
 The [source-native receiving programme](../../stellar/scf-starforge-20261009/distribution/receiving/synthesis/BROWSER_RECEIVING.md) owns the complete browser-created job, its typed/installed-CLI receiving, archive/restore, cold reopen and customer files. Continue its original configuration, run directory and retained outputs after interruption. The BCG reference programme requires the complete current Research extraction/publication source as recorded in its original source map; compose that selected source with this same Research package rather than a separate producer. Its native outcome must come from the original receiving result, independently of source publication or package installation.
 
+## 15. Receive the paid Research installation and editable customer result
+
+Receive the same complete selected Research or Zotero installation that includes the `research-customer-commerce` and original `buyer-runbook` contributions. Its source inventory must retain the complete Research paid-delivery directory, original SF101 receiver, whole Buyer Runbook application, browser assets, agent client/storage and original retained-file helpers. Static ESM helpers are resolved by the maintained distribution builder; the explicit whole Buyer component also preserves its dynamic report and browser source. Existing extraction, appraisal, template, Zotero, source and synthesis files remain part of that same installation.
+
+The installed managed provider is the original **Research dossiers** application. A receiving host can set `customerCommerceHost` to its own private original host configuration, select the actual merchant/Buyer aliases and review that file and its referenced native configurations. Existing startup and connection controls bind the same Research workspace and listener. Keep the actual native merchant and Buyer deployment settings supplied for this operation.
+
+### Preserve the publication-to-receiving chain
+
+Carry these complete selections and artifacts from the original operation:
+
+| Selection | Complete original result |
+| --- | --- |
+| Research source | Dossier ID, frozen delivery and work IDs, saved revision, selected source-workspace request and actor |
+| Merchant publication | Retained review SHA, publication request UUID, original SF101 order, exact public publication and merchant handoff |
+| Delivery promise | Actual network/asset/recipient/atomic amount, complete archive bytes/SHA-256 and every member's identity |
+| Buyer preparation | Original Buyer alias and selection digest, native paid-file revision, budgets, plan/run/operation and prepared SHA |
+| Original payment and retrieval | Existing approval/execution, entitlement/receipt and whole paid-resource export from that run |
+| Editable receiving | Complete original handover, received dossier/history/source IDs, saved customer work and four unchanged frozen reports |
+| Customer continuation | A later correction/work record in that received dossier, with the first received delivery still identifiable |
+| Recovery | Original operation/result directories and complete native workspace backups |
+
+The paid route accepts a complete compressed archive up to 32 MiB. Its full original manifest and member order are verified before extracted files are published. The source owner’s original per-file limits also apply. A report preview or publication metadata response is not the complete purchased content.
+
+### Receive or reopen the exact archive
+
+The ordinary whole customer flow is `commerce-receive-dossier` in **Paid delivery** or the original CLI. It consumes the existing purchase, captures and verifies its complete native paid resource, and uses the same dossier/source receiving engines. Keep its one `--run-directory` and retained request.
+
+For a separately transferred complete original archive, use the existing archive functions:
+
+~~~sh
+starforge research-client commerce-archive-inspect \
+  --file /absolute/private/research-customer.handover.gz \
+  --sha256 ACTUAL_ARCHIVE_SHA256 --bytes ACTUAL_ARCHIVE_BYTES
+
+starforge research-client commerce-archive-receive \
+  --file /absolute/private/research-customer.handover.gz \
+  --sha256 ACTUAL_ARCHIVE_SHA256 --bytes ACTUAL_ARCHIVE_BYTES \
+  --manifest-sha256 ACTUAL_HANDOVER_SHA256 \
+  --run-directory /absolute/private/received-archive
+~~~
+
+These operate the original archive reader and create-only receiving files. After the complete input has been retained, the same receive command can omit `--file` to reopen its existing directory. The returned `handover.directory` is the complete original handover consumed by the Research receiving workflow.
+
+A stopped or completed native acquisition retains its original payment intent. Reopen its actual state, reconcile an uncertain original request where reported, and continue that request/download. A subsequent customer correction or a moved donor does not require purchasing the original frozen package again.
+
+### Join the existing programme once
+
+Append the paid publication, Buyer approval/retrieval and editable receiving to the same retained NCT/source/extraction/appraisal/template/customer programme. Use its actual frozen delivery and original native merchant/Buyer configuration. The browser commissioner's inspection mode opens the receiving copy at the selected IDs; it does not recreate the independent author submissions or source acquisition.
+
+The complete receiving result records which installation source was selected, the original programme identity, actual publication/native Buyer IDs, the entire archived handover and the later customer correction. Preserve source syntax evidence and already accepted native phases from the original programme. Installed recipe/provider publication alone is not a new native payment or a completed receiving result.
+
+Use [Paid Research delivery](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-commerce/OPERATING.md) for the full source-owned form, CLI, typed-client, cancellation, replay and shutdown contracts. The original Buyer’s `AGENT.md`, `PAID_FILES.md`, `WORKSPACE.md` and `RECOVERY.md` remain inside the same whole component.
+
+## 16. Receive the registered protocol and methods
+
+Build and install the current complete `research-workspace` selection as described above. The same full Research source also travels in the `zotero-research` selection. The `research-client` contribution registers both `research-study-protocol` and `research-protocol-review`, all browser and client modules, the original license and complete operating instructions.
+
+Keep the existing study-extraction owner, protocol operation, capture directory, workspace and question. Open the complete retained `source-bundle.json` in **Protocol and methods**, inspect the original PDF/page text, preview the selected question and retain the exact `REVIEW.json` request. Use the [operating sequence](OPERATING.md#review-the-registered-protocol-and-planned-methods) to reconcile and receive that request. A completed capture can be reviewed without another PDF request or another extraction.
+
+The original installed receiving programme accepts an explicit engine source selection for the actual installed edition:
+
+~~~sh
+starforge research-study-protocol receive \
+  --capture /ABS/original-protocol-capture \
+  --directory /ABS/original-protocol-receiving \
+  --connection /PRIVATE/original-application-url.json \
+  --workspace-id research_ACTUAL_WORKSPACE_ID \
+  --dossier d_ACTUAL_DOSSIER_ID \
+  --question ACTUAL_QUESTION_ID \
+  --base-revision ORIGINAL_SELECTED_BASE_REVISION \
+  --operation ORIGINAL_PROTOCOL_OPERATION \
+  --engine-source /ABS/Research_Engine_Selection.json
+~~~
+
+Use the complete source manifest selected by the original receiving owner, with the actual installed files and hashes. The programme retains that selection before exporting, then preserves it on restart. Keep the frozen 292-file DBC61 source kit with its original operation when using that kit; an installed upgrade has its own explicit current source selection.
+
+The complete handover contains `ENGINE_SOURCE.json`, every selected engine file, the six protocol programme files, the whole directly reusable `original-source/` capture directory, revision-specific reports and the editable dossier. The [protocol receiving guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-RECEIVING.md) supplies the original package, inspect and fresh private receiving commands, including exact-byte archive recovery.
+
+For the existing customer's receiving continuation, retain the original inspection, `REVIEW.json`, reconciled import state, `RECEIVED.json`, selected report downloads and full handover beside the original operation's outputs. Reopen the editable dossier through the existing Research workspace and verify that the same source edition, methods findings and original history are present. A repeated save uses the original source/request identity; a genuinely changed source or question begins an explicit new review directory.
+
+## 17. Receive the current protocol and Python paid interfaces
+
+Use the same selected Research installation and original receiving programme. The current contribution closure contains the full Protocol and methods browser, `research-protocol-review` command, original capture/current-engine receiver, scientific Python paid-delivery attachment, full native commerce source, SF101 receiver and Buyer application.
+
+The maintained contribution path is `stellar/scf-starforge-20261009/distribution/contributions/research-customer-commerce.json`. Its complete declaration carries both SF101 and Buyer components, the Python bridge, typed inputs, terminal module, original paid archive reader and operating guides. The Research contribution supplies the protocol assets and client/CLI exports. Both recipes retain their existing source families. The original builder follows actual relative ESM imports, including the Analysis bridge’s original OpenLineage client dependency; a second package is not needed for that imported consumer.
+
+For the selected installed edition, retain its actual source manifest with the original receiving directory. Carry these complete parts into the receiving host:
+
+| Part | Material retained for the original continuation |
+|---|---|
+| Source and runtime | Actual full installed source identities, original runtime profile and selected Python/Node executables. |
+| Protocol capture | Complete original SourceBundle, registry/PDF, every extracted page, methods projection and acquisition/extraction provenance. |
+| Protocol review | Complete `REVIEW.json`, original request, native preview, `RECEIVED.json` when committed, dossier/question selection and received source edition. |
+| Seller | Original configured merchant selection, frozen delivery, complete publication request/review/enrollment and exported public publication. |
+| Buyer | Original intake, preparation, atomic budgets, approval/run/action identities, retrieved archive and received editable result. |
+| Python calls | Original seller/customer directories, retained request/reply files, call IDs and exact native operation identities. |
+| Customer files | Complete archive, manifest, four reports, work snapshot, editable dossier and optional full source workspace. |
+| Operating source | Complete protocol, paid JavaScript and paid Python guides, plus the original executable receiving programme. |
+
+The full protocol operator can attach as a following stage to an existing source import. Inspect the retained bundle, read the original import state, recover the exact request when needed, and open the existing page links and revision reports. If that source is already received, retain its original edition and importer result. The original capture and accepted extraction/appraisal submissions are not repeated.
+
+A source-inclusive protocol handover uses the actual complete engine selection for its chosen installed edition. Keep a previously frozen engine kit with its original programme; record an explicit following selection when the installed source changes. The complete capture/current-engine receiver and package/inspect/receive commands are documented in [the protocol operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md).
+
+For a Python paid continuation, use the two existing original Research connections and their private client directories. The [complete retained programme](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_paid_delivery.py) accepts the actual saved publication, Buyer selection, native request IDs and approval budgets. It retains publication, enrollment, intake, preparation, execution, retrieval, complete receiving and original-call reopening in that same programme directory. Carry any customer correction as a later explicit operation.
+
+Receiving a completed archive locally needs the installed source but can omit a live connection. Supply its exact archive bytes/hash and original handover-manifest hash. Reopen through `ResearchCommerceArchive` and the original editable-dossier/source receiver; read the full reports from their retained descriptors. Reusing a completed call ID verifies and returns its saved result before needing the original donor path.
+
+Record the actual interfaces used by the operating receiver. Browser review, typed-client actions, terminal actions and native exports each retain their real outputs; source construction or syntax parsing does not replace an unperformed native payment or receiving phase. Continue the original equipped owner’s programme rather than creating another source acquisition or customer order.
+
+## 18. Reopen and close the original Zotero attachment
+
+The installed Zotero shutdown continuation retains its writer until the original database has actually closed. The workspace drains admitted operations and preserves unfinished receiving children with their original parent and Research bridge. A failed close remains retryable; the connection becomes inactive only after full closure.
+
+Keep the same Zotero state path and original Research connection when reopening. The Applications provider continues to pin its actual selected private state and authenticated listener identity. A client attachment borrows the Research listener; closing the attachment joins its work without taking ownership of that listener.
+
+During an interrupted shutdown, inspect the original owner’s listener, writer and receiving state before continuing the same close. Do not discard its state file or create a replacement library to make a connection appear stopped. The original CLI retains its shutdown handlers through a failed close and releases them after success. Completed source captures and receiving results remain in the original store.
+
+[Zotero native receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/NATIVE_RECEIVING.md) carries the complete SQLite → capture → CLI → browser → Research → independent/onward receiving operation. Its source owner keeps that programme and journal. The Research installation consumes the seven current shutdown postimages while preserving its newer dossier, host, protocol and customer source.
+
+## 19. Receive the complete RIS source review
+
+The RIS handover contains the complete selected engine source, original provider response carrier, both source editions and their decisions, full browser recovery artifacts, retained Merchant exports and a separately reopened editable dossier. Start with `RIS_NATIVE_COMPLETE.json` and `DELIVERY_MANIFEST.json` for this operation's actual files and revisions. The [full RIS receiving guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/RECEIVING_GUIDE.md) describes every package directory, original input, receiving example and verification command.
+
+For a new receiving operation, use the supplied `RECEIVING_SELECTION.example.json`. Select the actual Node 24+, Python, Playwright and Chromium paths, the complete source root and exact engine-manifest hash, the unchanged original input carrier, and a new owned private run directory. Preserve the original selection and IDs when continuing the existing operation.
+
+~~~sh
+starforge research-ris-receiving \
+  --selection /ABSOLUTE/PRIVATE/RIS_SELECTION.json
+~~~
+
+This is the original complete programme: it receives the baseline, operates the actual browser draft/reload/recovery/revision-conflict workflow, recovers a committed request after its response is lost, reads and exports through the same Merchant attachment, and closes the listener before fresh-process portable receiving. Its final file inventory selects the complete customer result. It uses the exact retained provider carrier and explicitly labelled local duplicate in that selected example; a later review does not reacquire those sources.
+
+After that original result is complete, package and independently inspect it using the full source supplied by the selection:
+
+~~~sh
+python3 "$RIS_ROOT/ris-source/package.py" \
+  --selection /ABSOLUTE/PRIVATE/RIS_SELECTION.json \
+  --output /ABSOLUTE/PRIVATE/Research_RIS_Operations_20261012.zip
+
+python3 "$RIS_ROOT/ris-source/package.py" \
+  --verify /ABSOLUTE/PRIVATE/Research_RIS_Operations_20261012.zip
+~~~
+
+Set `RIS_ROOT` to the actual selected `research-dossiers` source directory. The archive includes the original source manifest, all engine members and original modes, complete native result, response carrier, selection, guides and each explicit customer output. An identical existing archive is verified and reused. The original private working stores and connection material stay with their operation; editable portable outputs are selected explicitly for the delivery.
+
+To reopen an exported dossier, start the delivered original Research listener in a new private receiving directory and run `starforge research-client reopen` with that listener's connection file and directory, the selected complete JSON/gzip portable and its SHA256. Inspect **RIS sources**, original records, review decisions and edition comparison in the reopened browser. The [operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/OPERATING_GUIDE.md) includes the full listener and CLI commands. A new receiving edit can be exported through the original revision-selected dossier export route.
+
+The current installed Research source and its full engine manifest are selected explicitly for this workflow. Earlier frozen protocol, Citation and Europe PMC programmes retain their own source and request identities. The preceding chapters remain the operating paths for those original products.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |

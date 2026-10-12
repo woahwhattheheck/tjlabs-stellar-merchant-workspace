@@ -121,7 +121,7 @@ function originalBytes(value,limit){
     'SF93_CKAN_ORIGINAL_BYTES_CHANGED');
   return bytes;
 }
-function age(now,value){return instant(value)?Math.max(0,Math.floor((now-Date.parse(value))/1000)):null;}
+function age(now,value){return instant(value)&&Date.parse(value)<=now+5000?Math.max(0,Math.floor((now-Date.parse(value))/1000)):null;}
 function codeOf(error){return CODE.test(error?.code??'')?error.code:'CKAN_SOURCE_FORMAT_INVALID';}
 const integrityCode=code=>/^(CKAN_(?:RETAINED_(?:DIGEST_CHANGED|FILE_MISSING|PATH_INVALID)|WORKBENCH_(?:INVALID|RECORD_INVALID|OPERATION_INVALID)|SOURCE_BINDING_CHANGED|CAPTURE_.*(?:CHANGED|INVALID|MISSING)|SEMANTIC_.*(?:CHANGED|INVALID)|REFRESH_.*(?:CHANGED|INVALID)|PUBLICATION_.*(?:CHANGED|INVALID)|MERCHANT_.*(?:CHANGED|INVALID)|OUTPUT_INVALID|RESPONSE_.*))$/.test(code??'');
 function table(meta,before,after,count,bytes){
@@ -131,7 +131,7 @@ function table(meta,before,after,count,bytes){
       createdAt:before?.createdAt??after?.createdAt??null,updatedAt:before?.updatedAt??after?.updatedAt??null,
       identity:before?ckanObservationHash(encoded({catalogOrigin:before.catalogOrigin,createdAt:before.createdAt})):null},
     selection:{sourceId:null,refreshId:null,publicationId:null,effectiveSourceId:null},
-    workbench:{beforeSha256:null,afterSha256:null,stable:false},operation:null,source:null,effectiveSource:null,
+    workbench:{beforeSha256:null,afterSha256:null,stable:null},operation:null,source:null,effectiveSource:null,
     editions:[],refresh:null,publication:null,exports:[],
     pending:{review:false,reviewAgeSeconds:null,publication:false,publicationAgeSeconds:null},
     identityContradiction:[before,after].filter(Boolean).some(state=>state.createdAt!==selected.projectCreatedAt||state.catalogOrigin!==selected.catalogOrigin),
@@ -290,7 +290,7 @@ export function analyzeCkanObservation(meta,snapshots,retained){
   }
   const summary=table(meta,before,after,entries.length,total);
   Object.assign(summary.workbench,{beforeSha256:beforeRaw?ckanObservationHash(beforeRaw):null,
-    afterSha256:afterRaw?ckanObservationHash(afterRaw):null,stable:Boolean(beforeRaw&&afterRaw&&beforeRaw.equals(afterRaw))});
+    afterSha256:afterRaw?ckanObservationHash(afterRaw):null,stable:beforeRaw&&afterRaw?beforeRaw.equals(afterRaw):null});
   let contentError=parseError;
   if(before){
     try{

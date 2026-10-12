@@ -19,7 +19,7 @@
           "id": "datacove-sensorthings-commissioning-20261012-source",
           "type": "SOURCE_VERIFIED",
           "occurred_at": "2026-10-12T17:14:16Z",
-          "evidence_kind": "PARTNER_SOURCE",
+          "evidence_kind": "ISSUER_SOURCE",
           "evidence_url": "https://datacove.eu/services/"
         },
         {
@@ -120,22 +120,22 @@
     "source": {
       "version": "dealscout.workshare-case-source.v1",
       "case_id": "datacove-sensorthings-commissioning-20261012",
-      "operation_id": "DSR-case-party-cc55bacec59807ec--case-buyer-2802950aef6a50a7",
+      "operation_id": "DSR-case-party-d22719fd9b3a4faf--case-buyer-d7e17374980e46c2",
       "observed_at": "2026-10-12T17:14:16Z",
       "partner": {
-        "id": "case-party-cc55bacec59807ec",
+        "id": "case-party-d22719fd9b3a4faf",
         "name": "DataCove e.U.",
-        "source_url": "https://datacove.eu/services/"
+        "source_url": "https://datacove.eu/contact/"
       },
       "opportunity": {
-        "id": "case-buyer-2802950aef6a50a7",
+        "id": "case-buyer-d7e17374980e46c2",
         "buyer": "DataCove source-to-FROST commissioning delivery",
         "source_url": "https://datacove.eu/services/"
       }
     },
     "plan": {
       "version": "dealscout.workshare-plan.v1",
-      "operation_id": "DSR-case-party-cc55bacec59807ec--case-buyer-2802950aef6a50a7",
+      "operation_id": "DSR-case-party-d22719fd9b3a4faf--case-buyer-d7e17374980e46c2",
       "title": "Complete source-to-FROST commissioning and receiving workshare",
       "customer": "DataCove e.U.",
       "supplier": "TokenJunkie Labs",
@@ -242,7 +242,7 @@
         {
           "id": "datacove-published-harmonization",
           "kind": "PARTNER_CAPABILITY",
-          "entity_id": "case-party-cc55bacec59807ec",
+          "entity_id": "case-party-d22719fd9b3a4faf",
           "entity": "DataCove e.U.",
           "text": "DataCove publishes data modelling, harmonization and provision services.",
           "source_url": "https://datacove.eu/services/",

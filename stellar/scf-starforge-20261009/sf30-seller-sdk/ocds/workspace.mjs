@@ -41,7 +41,22 @@ function preparedSource(document, meta = {}) {
   try { text = decoded(body); parsed = parseBody(text); } catch { throw failure('INVALID_JSON', 'Source must be complete UTF-8 JSON'); }
   if (document !== undefined && canonical(parsed) !== canonical(document)) throw failure('SOURCE_BODY_MISMATCH', 'Parsed document differs from the retained original source body');
   const id = sha256(body);
-  const normalized = normalizeOcds(parsed, { sourceId: id, label: String(meta.label || 'OCDS source'), url: String(meta.url || ''), retrievedAt: meta.retrievedAt || now() });
+  // An import clock is separate from an upstream acquisition clock. Unknown
+  // publisher retrieval time survives original adoption and portable receiving.
+  const importedAt = meta.importedAt === undefined ? now() : meta.importedAt;
+  const retrievedAt = own(meta, 'retrievedAt') && meta.retrievedAt !== undefined ? meta.retrievedAt : importedAt;
+  for (const [name, value] of [['importedAt', importedAt], ['retrievedAt', retrievedAt]]) {
+    if (name === 'retrievedAt' && value === null) continue;
+    if (typeof value !== 'string' || !Number.isFinite(Date.parse(value)))
+      throw failure('SOURCE_TIME_INVALID', name + ' must be an original timestamp, or null for unknown retrieval time');
+  }
+  let acquisition;
+  if (meta.acquisition !== undefined) {
+    if (!plain(meta.acquisition)) throw failure('SOURCE_ACQUISITION_INVALID', 'Original acquisition metadata must be a JSON object');
+    try { acquisition = JSON.parse(JSON.stringify(meta.acquisition)); }
+    catch { throw failure('SOURCE_ACQUISITION_INVALID', 'Original acquisition metadata must contain complete JSON values'); }
+  }
+  const normalized = normalizeOcds(parsed, { sourceId: id, label: String(meta.label || 'OCDS source'), url: String(meta.url || ''), retrievedAt });
   const emptyEnvelope = value => plain(value) && (
     (Array.isArray(value.releases) && value.releases.length === 0 && !own(value, 'ocid'))
     || (Array.isArray(value.records) && value.records.length === 0));
@@ -53,14 +68,14 @@ function preparedSource(document, meta = {}) {
     ...normalized.source, id, sha256: id, bytes: body.length,
     label: String(meta.label || normalized.source?.label || 'OCDS source'),
     url: String(meta.url || normalized.source?.url || ''),
-    retrievedAt: meta.retrievedAt || normalized.source?.retrievedAt || now(),
+    retrievedAt, importedAt, ...(acquisition === undefined ? {} : { acquisition }),
     diagnostics: normalized.diagnostics || [], links: normalized.links || [],
     sourceEntryCount: normalized.entries.length,
     bodyKind: meta.rawText !== undefined || meta.rawBytes !== undefined ? 'original-utf8' : 'serialized-json'
   };
   const entries = normalized.entries.filter(entry => typeof entry.ocid === 'string' && entry.ocid.length > 0).map(entry => ({
     ...entry, id: sha256(id + '\n' + entry.sourcePointer), sourceId: id,
-    sourcePointer: entry.sourcePointer, importedAt: metadata.retrievedAt,
+    sourcePointer: entry.sourcePointer, importedAt: metadata.importedAt,
     documentSha256: sha256(canonical(entry.document))
   }));
   return { id, body, text, metadata, entries };

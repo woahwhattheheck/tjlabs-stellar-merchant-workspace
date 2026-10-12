@@ -95,7 +95,8 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     ...result.packet.object.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
       successful:result.successful===true,reason:result.error??null}};
   if(merchant.ckan&&result.packet?.ckan)row.ckanObservation={observedAt:result.packet.ckan.generatedAt,
-    ...result.packet.ckan.summary,poll:{appliedAt:iso(now),fresh:result.fresh===true,
+    ...result.packet.ckan.summary,originalJson:JSON.stringify(result.packet.ckan.summary,null,2),
+    poll:{appliedAt:iso(now),fresh:result.fresh===true,
       successful:result.successful===true,reason:result.error??null}};
   let currentCapture;
   const capture=async()=>{

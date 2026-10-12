@@ -362,3 +362,49 @@ Install this Node package with its matching complete SF88 runtime, including
 `operations-handoff/{contract,capture,customer}.mjs`. The wrapper does not
 embed or substitute an older native reader. Python applications use the
 [read-only Inbox customer guide](../python/INBOX.md) over the same source.
+
+
+## Diagnose a native command without losing its original state
+
+An Inbox failure retains the same private command directory and the original
+public error code. When the native worker can write there, it also saves
+`native-error.json` beside `request.json`, `native.json`, `stdout.json`
+and `stderr.log`. Failures outside the selected native command use
+`worker-error.json`. These files contain the complete error name, message,
+stack, cause graph and aggregate errors, plus the hashes of the request, worker,
+queue, configuration, operator bridge and network configuration observed after
+the failure. Source files and saved Inbox jobs are read in place.
+
+The SDK returns a small diagnostic reference through `InboxError.diagnostic`
+and `InboxResult.diagnostic`. It includes the error class, fixed local filename,
+byte count and SHA-256. The original code stays unchanged, so an application that
+already handles `INBOX_OPERATION_FAILED` can continue to handle it.
+
+~~~js
+try {
+  await inbox.list();
+} catch (error) {
+  // Safe for a routine application log: code, class and fixed local file reference.
+  console.error(JSON.stringify(error));
+  if (error.diagnostic?.status === 'SAVED') {
+    // Use this direct private path for local support or an authorized handover.
+    const privateFile = error.diagnosticPath;
+    await saveInPrivateSupportBundle(privateFile);
+  }
+}
+~~~
+
+`diagnosticPath` and the command directory remain private recovery properties.
+Automatic JSON and ordinary error inspection do not expose the native message,
+stack, source paths, request URLs or credentials. Read the complete file locally
+when diagnosing the error; keep it private when assembling a support handover.
+If writing the diagnostic also failed, `status:'UNAVAILABLE'` preserves a safe
+`writeErrorCode` while the SDK continues to report the original command error.
+
+For example, a runtime assembled from incompatible source versions can raise a
+native `SyntaxError` before a queue opens. Its private file identifies the missing
+module export and the observed source hashes on the first call. Install one
+coherent matching runtime in a separate source directory and reopen the same
+saved Inbox there. Existing requests, attempt records and response files keep
+their original identities. Inspect the retained job before any further economic
+action; a failure diagnostic is never an instruction to retry a purchase.

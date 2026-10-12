@@ -4,8 +4,8 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const nativeText=value=>value===null||value===undefined?'—':typeof value==='string'?value:JSON.stringify(value);
 const table=(heads,rows)=>'<div class="scroll case-table-wrap"><table class="case-table"><thead><tr>'+heads.map(value=>'<th>'+esc(value)+'</th>').join('')+
   '</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(value=>'<td>'+esc(nativeText(value))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
-const original=(label,value)=>value===null||value===undefined?'':
-  '<details><summary>'+esc(label)+'</summary><pre>'+esc(JSON.stringify(value,null,2))+'</pre></details>';
+const original=(label,value,text)=>value===null||value===undefined?'':
+  '<details><summary>'+esc(label)+'</summary><pre>'+esc(text??JSON.stringify(value,null,2))+'</pre></details>';
 const recordState=value=>value?.state??value?.status??null;
 
 
@@ -23,14 +23,14 @@ export function ckanCaptureHtml(c) {
       op?.id,op?nativeText(op.kind)+' / '+nativeText(op.state):null,
       op?nativeText(op.startedAt)+' / '+nativeText(op.completedAt):null,
       op?nativeText(op.ageSeconds)+' / '+selected.operationAfterSeconds+' seconds':null]])+
-    original('Original saved operation',op)+
+    original('Original saved operation',op,s.originalDocuments?.operation)+
     original('Registered source selection and workload',selected)+
-    original('Complete selected source declaration metadata',source)+
-    (effective?.id&&effective.id!==source?.id?original('Complete effective successor source metadata',effective):'')+
+    original('Complete selected source declaration metadata',source,s.originalDocuments?.source)+
+    (effective?.id&&effective.id!==source?.id?original('Complete effective successor source metadata',effective,s.originalDocuments?.effectiveSource):'')+
     '<h3>Original retained editions</h3>'+
     table(['Edition','State','Selected rows / pages','Capture SHA-256','Semantic definition'],s.editions.map(e=>[
       e.id,e.state,nativeText(e.rowCount)+' / '+nativeText(e.pageCount),e.manifestSha256,e.semanticSchemaSha256]))+
-    original('Complete edition metadata and selections',s.editions)+
+    original('Complete edition metadata and selections',s.editions,s.originalDocuments?.editions)+
     '<h3>Reviewed refresh</h3>'+
     (refresh?table(['Refresh','State','Comparison SHA-256','Decision SHA-256'],[[
       refreshRecord.id,recordState(refreshRecord),refreshRecord.comparisonSha256,refresh.decisionSha256]])+
@@ -38,9 +38,9 @@ export function ckanCaptureHtml(c) {
         refresh.decisionPending,refresh.reviewPending+' / '+nativeText(refresh.reviewAgeSeconds)+' seconds',
         refresh.changes?nativeText(refresh.changes.rows)+' rows · '+refresh.changes.bytes+' bytes':null,refresh.changes?.sha256]])+
       '<p>The comparison retains the original query selection, row identities and interpretation. A different query window changes which rows were selected; inspect that selection before interpreting additions or removals.</p>'+
-      original('Complete original comparison and interpretation',refresh.comparison)+
-      original('Complete original review decision',refresh.decision)+
-      original('Original refresh record',refreshRecord):
+      original('Complete original comparison and interpretation',refresh.comparison,s.originalDocuments?.comparison)+
+      original('Complete original review decision',refresh.decision,s.originalDocuments?.decision)+
+      original('Original refresh record',refreshRecord,s.originalDocuments?.refresh):
       '<p>No related refresh is selected in this observation.</p>')+
     '<h3>Publication and merchant output</h3>'+
     (pub?table(['Publication','Saved state','Published output retained','Verified CSV bytes / rows'],[[
@@ -49,12 +49,12 @@ export function ckanCaptureHtml(c) {
       table(['Original output SHA-256','Original snapshot','Publication review age / threshold'],[[
         pub.verifiedOutput?.sha256,pub.verifiedOutput?.snapshot,
         nativeText(s.pending?.publicationAgeSeconds)+' / '+selected.publicationAfterSeconds+' seconds']])+
-      original('Original publication review',pub.review)+
-      original('Original candidate',pub.candidate)+
-      original('Original publication result',pub.result)+
-      original('Original publication record',pubRecord):
+      original('Original publication review',pub.review,s.originalDocuments?.publicationReview)+
+      original('Original candidate',pub.candidate,s.originalDocuments?.candidate)+
+      original('Original publication result',pub.result,s.originalDocuments?.publicationResult)+
+      original('Original publication record',pubRecord,s.originalDocuments?.publication):
       '<p>No related publication is selected in this observation.</p>')+
-    original('Original merchant exports and retained semantics',s.exports)+
+    original('Original merchant exports and retained semantics',s.exports,s.originalDocuments?.exports)+
     '<h3>Complete retained source inventory</h3>'+
     '<p>'+esc(s.files.count)+' original files · '+esc(s.files.bytes)+' bytes. The portable case carries their complete bytes in the original CKAN packet.</p>'+
     table(['Original relative path','Role','Bytes','SHA-256'],s.originalFiles.map(f=>[f.path,f.role,f.bytes,f.sha256]));

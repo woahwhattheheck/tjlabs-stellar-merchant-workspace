@@ -21,6 +21,13 @@ export function ckanCaptureView(capture,currentInputs) {
     mode:'ORIGINAL_READ_ONLY_CKAN',observerAttached:null,observerErrors:0,
     route:{id:meta.registration.id,method:'GET'},native:null,
     ckan:{...summary,registrationSelection:meta.selection,
+      originalDocuments:Object.fromEntries([
+        ['operation',summary.operation],['source',summary.source],['effectiveSource',summary.effectiveSource],
+        ['editions',summary.editions],['comparison',summary.refresh?.comparison],['decision',summary.refresh?.decision],
+        ['refresh',summary.refresh?.record],['publicationReview',summary.publication?.review],
+        ['candidate',summary.publication?.candidate],['publicationResult',summary.publication?.result],
+        ['publication',summary.publication?.record],['exports',summary.exports]
+      ].map(([key,value])=>[key,value===undefined||value===null?null:JSON.stringify(value,null,2)])),
       originalFiles:retained.files.map(({path,role,bytes,sha256})=>({path,role,bytes,sha256}))},
     alerts,files:Object.entries(capture.files).map(([name,value])=>({name,bytes:value.bytes,sha256:value.sha256}))};
 }
