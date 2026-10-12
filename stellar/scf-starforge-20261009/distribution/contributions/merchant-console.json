@@ -8,14 +8,18 @@
   },
   "commandDescriptions": {
     "merchant-console-application-receive": "Continue the original merchant customer through saved Applications, private console Open, Stop and reopen",
-    "merchant-workflow-series": "Operate recurring customer tasks, retain original period runs and receive the complete profile and customer files"
+    "merchant-workflow-series": "Operate recurring customer tasks, retain original period runs, receive complete customer files and prepare the saved Installation handover"
   },
   "exports": {
     "./merchant/console/managed": "./source/stellar-forge/mcp-merchant-operator/console/managed.mjs",
     "./merchant/console/application": "./source/stellar-forge/mcp-merchant-operator/console/application.mjs",
     "./merchant/console/receiving": "./source/stellar-forge/mcp-merchant-operator/receiving/console-applications.mjs",
     "./merchant/console/series": "./source/stellar-forge/mcp-merchant-operator/console/workflow-series-client.mjs",
-    "./merchant/console/series-handover": "./source/stellar-forge/mcp-merchant-operator/console/workflow-series-handover.mjs"
+    "./merchant/console/series-handover": "./source/stellar-forge/mcp-merchant-operator/console/workflow-series-handover.mjs",
+    "./merchant/console/installation-handover": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.mjs"
+    }
   },
   "applicationProviders": {
     "merchant-console": "stellar-forge/mcp-merchant-operator/console/application-provider.mjs"
@@ -24,6 +28,11 @@
     "stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md",
     "stellar-forge/mcp-merchant-operator/console/WORKFLOW_SERIES.md",
     "stellar-forge/mcp-merchant-operator/console/workflow-series-client.d.mts",
-    "stellar-forge/mcp-merchant-operator/console/workflow-series-handover.d.mts"
+    "stellar-forge/mcp-merchant-operator/console/workflow-series-handover.d.mts",
+    "stellar-forge/mcp-merchant-operator/console/WORKFLOW_INSTALLATIONS.md",
+    "stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_workflow_source.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_workflows.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_workflows.mjs"
   ]
 }
