@@ -701,7 +701,7 @@ Independent receiving follows each original application: Laboratory receives the
 
 The customer workorder names the commissioning payer, merchant, independent buyer, scientific reviewer and receiving engineer. It selects one whole laboratory review/reissue or reporting-window operation, the source and format edition, full required output, price unit and receiving environment. Staff preserve original observations, blank non-detects, qualifiers and each reported limit while reviewing changes. The receiving operator uses the full EDD in the client's selected EDP or receives the complete monitoring report into the analyst's project. A later delivery or reporting window provides a distinct repeat-use task.
 
-Four original October 12 implementation scopes make this adoption arm concrete:
+Five original October 12 implementation scopes make this adoption arm concrete:
 
 |Organization|Complete proposed work|Proposed fee / hours / delivery|
 |  ---  |  ---  |  ---  |
@@ -709,11 +709,16 @@ Four original October 12 implementation scopes make this adoption arm concrete:
 |McCampbell|One current client EDD format, complete delivery and one reissue, saved scientific choices, native files, client EDP and private installation.|$4,800 / 40 hours / ten business days|
 |Phoenix|One current client EQuIS four-file format, full initial/reissue family, complete comparison, native EDP receiving and operator handover.|$4,800 / 40 hours / ten business days|
 |Waterborne|One study/reporting window and up to two field/lab export families, retained scientific fields, compatible reporting groups, complete report/crosswalk and independent analyst receiving.|$4,800 / 40 hours / ten business days|
+|KISTERS|One KiWIS service and complete monitoring programme, one agreed WQX or Laboratory counterpart, explicit source/time/quality correspondence, revised editions, all eight commissioning exports and independent operator handover.|$6,000 / 50 hours / twelve business days|
 
 
-The complete scopes total **$18,600 for 156 planned delivery hours**, with proposed kickoff and accepted-handover milestones of **$9,300 each**. Each original contact is recorded in its company case; the original four mail threads retained their single recorded outbound in the complete 15:22 UTC October 12 read, with Geotech and Waterborne checked again before 15:54:32 UTC. Accepted workorders, assigned delivery dates, invoices and receipts carry those cases forward. Bryce takes further relationship sends after favorable human contact.
+The five complete proposed scopes total **$24,600 for 206 planned delivery hours**, with proposed kickoff and accepted-handover milestones of **$12,300 each**. The four original company introductions are recorded as SENT in their respective cases. The complete KISTERS offer and its five commercial assets are prepared in the existing sender workflow. Accepted workorders, assigned delivery dates, invoices and receipts carry those same cases forward. Bryce takes further relationship sends after favorable human contact.
 
-For either funded installation, the original grant workorder assigns its customer-specific source/runtime, paid function, buyer integration, independent facilitators and production handover to the existing six packages. The grant retains **400 hours / $38,000 over 150 days** across its two installations. Existing environmental software and completed examples provide the starting product. The complete environmental installation package contains both complete operator and receiving workflows, the legacy Excel field-review and native reissue, the installed paid scientific source selection, all seven scientific output formats, original company scopes, phase-by-phase grant mapping, source links and customer-value measures. Its full editable source is merged at e2c5fedab3659cd7d1363ceb1da564a52f980539.
+The McCampbell and Phoenix company cases now have completed native receiving programmes. Each preserves its original company, source pack, workshare, outreach reference, commercial assets and full handover; the original receiving workspace opens those records and serves their complete files. The editable packages contain the full application source and operated results. These completed case workflows provide the commercial and operator foundation for the customer-specific environmental installations.
+
+The KISTERS commissioning plan allocates 50 hours across source selection, complete capture, counterpart mapping, revised-edition receiving and operator handover. Its original monitoring-source import has run on all 371 CSI02 TP observations with all original value/type fields, the 66-series catalogue and complete quality, release and station catalogues. The complete KiWIS application and paid customer receiving extension are being integrated against the retained original monitoring and laboratory exports.
+
+For either funded installation, the original grant workorder assigns its customer-specific source/runtime, paid function, buyer integration, independent facilitators and production handover to the existing six packages. The grant retains **400 hours / $38,000 over 150 days** across its two installations. Existing environmental software and completed examples provide the starting product. The complete environmental installation package contains the complete operator and receiving workflows, legacy Excel field review and native reissue, installed paid scientific source selection, all seven scientific output formats, five original company scopes, completed McCampbell and Phoenix case receiving, the complete KISTERS commissioning plan, phase-by-phase grant mapping and customer-value measures. Its full editable source is merged at ed44030a7cf1e532f1ecd4456bee47d6db7d6b3b.
 
 These operations give customer commissioning a concrete sequence: inspect source and terms, receive the complete result, save useful analysis or receiving choices, review a changed edition, and reopen the earlier work. Source, original outcomes and the installed support/recovery state accompany the selected release. The [document receiving entry](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/b59f7f560668d729e3bf718852d0264feb1656bb/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_document_workbook.py) supplies this complete source review/import, full JSONL/CSV/SQLite export, workbook, archive and cold restore for a selected retained edition. The [interactive receiving entry](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/2240d46ad5fea7980c319d485741ecd876e0af8a/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_intake_workbook.py) adds actual browser selection, original capture-reply recovery and the same complete export and restore. The [native agent guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/2240d46ad5fea7980c319d485741ecd876e0af8a/stellar-forge/mcp-paid-agent/ANALYSIS.md) operates that same saved source through the existing Analysis service. Both receiving entry points are attached to the original managed document operation, whose native receiving run awaits its retained source output. The delivered source preserves the actual provider output, original operation IDs and reviewed file/edition digests throughout the customer handover.
 
@@ -1387,6 +1392,83 @@ The source includes a complete receiving programme that joins the original brows
 The programme remains **400 prospective hours / USD 38,000 over 150 days from actual award acceptance**, with the original 80/40/70/50/90/70-hour package allocation. T2 retains at least ten useful testnet purchases in total by two independent buyers over seven consecutive days ending by day 90. T3 retains at least thirty useful mainnet purchases in total by two independent buyers over fourteen consecutive days ending by day 150, with both returning for a distinct purchase on another day. Two merchant organizations and two independently operated facilitators retain their original meaning. Each adaptation is assigned once to its funded package or separately commissioned workorder.
 
 **Learning and repeatable delivery.** The commissioning case records time from the original source selection to a usable report, engineer time spent interpreting fields and resolving differences, time to receive a corrected period, actual installation effort and subsequent support demand. The cohort records distinct completed purchases and whole customer tasks separately, together with their accountable operators, original payment amounts, provider and completion dates. The receiving engineer confirms that the output supports the agreed business decision and continues the same workflow for the next required period. These observations show which source interpretations, customer mappings and operating procedures can be reused in the next paid installation.
+
+## IATI publishing, programme finance and complete customer receiving
+
+An aid-data publisher or its implementation partner can commission one operating workflow that turns the organisation publication and its selected activity portfolios into an editable financial review. The receiving analyst gets the original XML, assessed records, explicit scope, original currency and dates, named decisions, comparison report and the workspace needed for the next edition. A programme officer can explain how the selected activity amounts relate to the organisation's published budget while retaining the original source qualifications.
+
+### Customer task and commercial roles
+
+The workorder identifies the commissioning payer, publisher or source administrator, merchant operator, buyer organisation, financial reviewer and receiving engineer. The publisher selects the authorised organisation and activity sources. The reviewer defines the reporting period and activity coverage. The engineer agrees the complete report and files that must open in the customer's existing application, along with the host, integration and acceptance owner.
+
+The existing AidStream offer gives this installation work a concrete commercial unit: USD 6,400 for 64 planned hours over ten business days, up to three selected publisher organisations and two editions each, one export/API integration, complete organisation budget/document review and corrected XML, two consolidated reviews and portable operator handover. Its two proposed milestones are USD 3,200 each. The original commissioning scope and sent proposal remain the terms of that offer. Financial reconciliation is an additional reusable product capability; its selected customer scope belongs in the corresponding agreed workorder.
+
+This approach also supports the existing consultant proposals in the source record: Data4Development's edition, finance and client-receiving workshare and Zimmerman's native assessment integration. Each company keeps its original conversation, payer and scope. A publishing or implementation partner can introduce the organisation whose recurring reporting task needs the installation.
+
+### Implemented product and financial meaning
+
+The [merged cumulative IATI implementation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/388) composes organisation planning and document review, activity portfolios, Results, AMP and financial reconciliation into the maintained Merchant Workspace. The complete selected source includes the native engines, browser, CLI, typed client, Merchant MCP tools, Applications bindings, publisher inputs and operating guides. The [financial operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/ORGANISATION_RECONCILIATION.md) defines the complete workflow.
+
+The operator selects one exact saved organisation revision and one or more exact activity-portfolio revisions. The application reads their complete financial registers. Each comparison selects the actual organisation record and individual activity rows and retains the reviewer's coverage statement. Named issue decisions, saved revisions and approval or request-changes reviews remain attached to that definition.
+
+|Financial question|Maintained operating behaviour|
+|  ---  |  ---  |
+|What is being compared?|Organisation budgets select activity budget records; organisation total expenditure selects activity expenditure transactions. Reporting identity, hierarchy, period, budget type and status remain visible.|
+|Which activities and periods are covered?|The comparison records the exact selected rows and its own coverage statement. The operator can explicitly retain an organisation record with no selected activity coverage and its associated finding.|
+|How are differing value dates handled?|The default keeps incompatible value-date contexts separate. An explicit nominal comparison preserves both original dates and their qualification while comparing eligible amounts in the same currency.|
+|What happens to overlapping or incompatible records?|Original/revised budgets, overlapping periods and incompatible hierarchy contexts retain their native exclusions and reasons. The reviewer can respond to a finding while the calculated eligibility remains visible.|
+|What does the customer receive?|Complete HTML, CSV and JSON reports plus a nested-source package carrying the organisation, activity and reconciliation work. A receiving engineer can reopen the selected revision and continue its current case.|
+
+
+Monetary values remain decimal strings through the browser and typed client. The native engine owns the calculation, and the saved report retains every included or excluded row. A later review is visible in history even when the numerical comparison remains unchanged. These behaviours make the financial conclusion explainable to the receiving analyst.
+
+### Completed organisation operation and financial review example
+
+The organisation programme completed the original CLI, typed client, Merchant transfer, independent receiving and desktop/mobile browser workflow using FCDO's public organisation publication. It retained all 148 financial records and 80 document links, corrected two trailing URL spaces while preserving the financial elements, and carried reviewed revision 4 into a separately editable receiving workspace at revision 5. Its [complete source and operating launcher](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/377) are merged.
+
+The following financial operation received that original organisation publication together with the complete 1,332-activity FCDO publisher file. The [retained source description](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/SOURCE.md) identifies the full 8,496,890-byte XML and its acquisition. The selected example follows WADI child activity GB-GOV-1-400043-401 through the organisation's financial year from 1 April 2026 to 31 March 2027.
+
+The selected organisation record is its GBP 6,815,000,000 indicative planning budget, dated 31 March 2026. The original activity budgets use 18 September 2025 as their value date. The programme first saved the separate-date interpretation, then explicitly reviewed the reported nominal GBP amounts with both dates and the publisher's planning qualification retained.
+
+|Selected activity period|Original reported GBP amount|
+|  ---  |  ---  |
+|1 April–30 June 2026|103,192|
+|1 July–30 September 2026|164,543|
+|1 October–31 December 2026|723,056|
+|1 January–31 March 2027|509,209|
+|Reviewed full-year activity selection|1,500,000|
+|Reviewed first-three-quarter selection|990,791|
+
+
+The first reviewed scope contains all four whole quarters. A later scope deliberately selects the first three quarters and retains the fourth quarter in the original portfolio and earlier review. The saved comparison explains that selection change over the same source editions. The resulting difference is interpreted within the selected WADI activity and periods, alongside the organisation's published planning context.
+
+Both retained financial native attempts completed all five saved revisions, historical request replay, changed-selection comparison, complete nested export, CLI close/reopen and independent native receiving. The [original receiving programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/reconciliation_receiving.py) and complete native continuation record retain those results. The full receiving procedure continues from these completed stages into the typed client, Merchant and desktop/mobile browser using the corrected merged transport and receiving implementation. The independently completed organisation operation and the captured financial stages provide concrete starting material for the customer installation.
+
+### Recurring work, payment and receiving
+
+A suitable commissioned service supplies one agreed financial-review edition: the exact organisation revision, activity portfolios, period, coverage, reviewed report and complete receiving package. The customer workorder records the priced unit and aggregate spending limit. The proposed Stellar installation connects that resource to the maintained merchant terms, approved buyer request, selected network/asset/recipient and native settlement.
+
+The buyer receives the complete agreed output in its existing application. If the selected commercial resource charges for several requests or files, the parent customer task retains every required part and its total approved cost. Reopening the already acquired edition continues the original receiving operation. A later publisher edition, different reporting period or newly approved activity scope becomes an explicit subsequent task.
+
+Stable request IDs retain the complete save or review payload. After an interrupted response, the operator can read the saved result or continue the same action. A rejected selection restores its original definition for correction, including the exact source revisions and expected case revision. The full exported work preserves earlier decisions and supplies the receiving engineer with both the imported revision and the current case. This supports repeat review without reconstructing the earlier analysis.
+
+### Use within the existing six funded packages
+
+The IATI workflow is a candidate for the two funded merchant installations. The funded work adapts the customer's actual source, host, commercial resource and receiving application using the existing programme.
+
+|Existing package|IATI customer implementation and acceptance|
+|  ---  |  ---  |
+|T1 merchant-resource integration, 80 hours|Bind the selected publisher editions, financial-review resource and complete reports/package to the customer's HTTP or MCP service and buyer receiving application. The independent buyer opens the agreed full output with its original financial context.|
+|T1 authority and handover, 40 hours|Carry a reviewed source/terms change or withdrawal through the installation. A second operator reopens the exact sources and reviews and performs the agreed change.|
+|T2 provider and ledger deployment, 70 hours|Configure the same useful review resource through two independent testnet facilitators, joining each approved purchase, transfer and complete output. The existing independent-buyer purchase targets apply.|
+|T2 deployed threat response, 50 hours|Operate interrupted settled delivery and merchant-delivery failure with the original request, financial outcome and unfinished receiving work retained. Complete the customer's recovery and operating notifications.|
+|T3 mainnet rollout, 90 hours|Deploy the selected production host/network/asset/account configuration and recurring publisher-period workflow, then complete independent buyer use under the existing mainnet cohort targets.|
+|T3 production recovery and handover, 70 hours|Restore the original configuration, selected sources, reviewed cases and customer files on the receiving host; reconcile later operations and complete another maintainer's support case.|
+
+
+The existing 400-hour, USD 38,000, 150-day allocation remains the combined grant programme. Each customer adaptation is assigned once to that programme or its separately commissioned workorder. Completed source engineering supplies the starting product.
+
+The receiving analyst's acceptance is practical: open the full sources and report, explain the selected financial coverage, inspect the original dates and exclusions, make a named review decision, receive the complete work independently and continue with the next agreed edition. The installation records active effort, manual corrections and time to accepted output alongside the shared customer-value and recurring-use measures.
 
 ## 10. Open the existing work
 

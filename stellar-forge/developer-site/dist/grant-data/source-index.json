@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 37646,
-    "sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
-    "git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee"
+    "bytes": 39337,
+    "sha256": "4c562f12b1559e0d04437cea2deff4a2b6f40df3f5cab20665fec47bce516130",
+    "git_blob": "8cf6a03b79932a1cdaa646b8a44ef651603bba40"
   },
   "request": {
     "basis": "prospective",
@@ -1035,13 +1035,40 @@
       "sha256": "b5ac5adc973538290943a681de83608227fb19caa1b9aee5b1f171049311396a",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c339d0615c1dd3ced464eb7669ae5ec9bbdbc5a9/products/timescale-customer/GRANT.md",
       "application_operation": "SCF-TIMESCALE-CUSTOMER-APPLICATION-2769-20261012"
+    },
+    {
+      "id": "iati-organisation-financial-workspace",
+      "kind": "published-source",
+      "label": "IATI organisation and programme financial review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/ORGANISATION_RECONCILIATION.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/ORGANISATION_RECONCILIATION.md"
+    },
+    {
+      "id": "iati-complete-financial-receiving",
+      "kind": "published-source",
+      "label": "IATI complete source and financial customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/reconciliation_receiving.py",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/reconciliation_receiving.py"
+    },
+    {
+      "id": "iati-fcdo-wadi-original-source",
+      "kind": "published-source",
+      "label": "Original FCDO organisation and WADI activity publication",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/SOURCE.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2854a9f5f0d792dd78497228a1d23d9a69305763/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/examples/fcdo-wadi-2026/SOURCE.md"
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "e67240067a9b7459ed1767306f73db1284fac5de",
-    "bytes": 295936,
-    "sha256": "f779c3db8e4f540dcfb7212fbc5df550b03b30c93daa1479bcb0663a322355ab",
+    "git_blob": "7728a53f3f8d08af8e0515fd39220dcb5b5ea65e",
+    "bytes": 309378,
+    "sha256": "dd5fac5dd771b9b49d0b3abddbf656bdcbf6849fb7dcf82512282d78872aebd8",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -1159,7 +1186,7 @@
         "canonical_projection": "Complete native Canvas section serialization. Original chapter prose and every table cell retained; native table whitespace is projected by the original customer-section receiver."
       }
     ],
-    "current_application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
+    "current_application_sha256": "4c562f12b1559e0d04437cea2deff4a2b6f40df3f5cab20665fec47bce516130",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -1167,8 +1194,8 @@
     "composition": {
       "operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
-      "canonical_front_sha256": "74d9738cf4f29047ca0f6555a6b168abe41a436042afeb0db7f2858176953828",
-      "canonical_front_bytes": 37734,
+      "canonical_front_sha256": "502bf379254640094a3bd27a25ea9cd03dd30fef06e6e0fa8014ae432f098b97",
+      "canonical_front_bytes": 39341,
       "renderer_git_blob": "4286979763c4d530d65ba78e3b1b2f704d233a56",
       "source_editions": [
         {
@@ -1223,10 +1250,11 @@
         "Current alternatives, commercial units and customer value",
         "Customer value and delivery economics",
         "Timescale commissioning and complete customer reconciliation",
+        "IATI publishing, programme finance and complete customer receiving",
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "aacfde59d72288ae2392e9428e9331d0cc463aa4",
+      "projector_git_blob": "1ca6e4a833e5552158472d281090e0d85eadc599",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -1247,8 +1275,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
-    "application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
+    "application_sha256": "4c562f12b1559e0d04437cea2deff4a2b6f40df3f5cab20665fec47bce516130",
+    "application_git_blob": "8cf6a03b79932a1cdaa646b8a44ef651603bba40",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -1307,8 +1335,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
-    "application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
+    "application_sha256": "4c562f12b1559e0d04437cea2deff4a2b6f40df3f5cab20665fec47bce516130",
+    "application_git_blob": "8cf6a03b79932a1cdaa646b8a44ef651603bba40",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -1321,8 +1349,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "f779c3db8e4f540dcfb7212fbc5df550b03b30c93daa1479bcb0663a322355ab",
-    "source_bytes": 295936,
+    "source_sha256": "dd5fac5dd771b9b49d0b3abddbf656bdcbf6849fb7dcf82512282d78872aebd8",
+    "source_bytes": 309378,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",
