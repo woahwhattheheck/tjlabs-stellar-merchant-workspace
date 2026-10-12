@@ -1,0 +1,173 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reviewed source collection reading</title><style>body{font:16px/1.6 system-ui,sans-serif;color:#252525;background:#f4f4f2;margin:0}main{max-width:960px;margin:32px auto;padding:24px}article{background:white;border:1px solid #ccc;padding:22px;margin:22px 0}h1{font-size:30px;line-height:1.2}h2{font-size:20px}pre{font:14px/1.7 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}small{color:#555}p{white-space:pre-wrap}details{overflow-wrap:anywhere}@media(max-width:500px){main{padding:16px;margin:0}article{padding:14px}}</style><main><h1>Reviewed source collection reading</h1><p>The reviewed order retains the original question and each exact source range.</p><small>Complete selected passages from retained originals. Byte ranges use an exclusive end. Native reading passages count LF separators; research handover passages retain the original CRLF, CR and LF line convention. Original files are included in the editable reading project.</small><section><h2>Original research question</h2><p>resource collection</p><p>All words across each original file; saved search revision 1</p><small>Captured build: c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853<br>Selection: 39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca<br>Original collection revision: 1</small></section><article><h2>COLLECTIONS.md</h2><small>Lines 1–4</small><p>Operator review: keep this exact source passage first and preserve the question that selected it.</p><pre># Resource collections and portable receiving
+
+A collection is an ordered, named edition of selected delivered files and analyst
+</pre><details><summary>Source reference</summary><p>Original SHA-256: 7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d<br>Bytes: 0–129<br>Passage SHA-256: 3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642</p></details></article><article><h2>README.md</h2><small>Lines 1–4</small><p></p><pre># Buyer resource library
+
+Find and use files delivered by the original SF88 buyer. The library connects
+</pre><details><summary>Source reference</summary><p>Original SHA-256: dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd<br>Bytes: 0–104<br>Passage SHA-256: d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9</p></details></article><article><h2>README.md</h2><small>Lines 624–627</small><p></p><pre>inalOutcomeReport&quot;]`, and the original ledger for the separate payment/settlement classification. A saved payload can remain useful even if subsequent evidence collection or cleanup failed; `result.open()` preserves that recovery path.
+
+## Command line
+</pre><details><summary>Source reference</summary><p>Original SHA-256: d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b<br>Bytes: 37210–37463<br>Passage SHA-256: e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd</p></details></article><article><h2>READING.md</h2><small>Lines 41–45</small><p></p><pre>
+## Receive the original resource library
+
+The existing SF88 library is the source of record. Its completed scan determines
+</pre><details><summary>Source reference</summary><p>Original SHA-256: 49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53<br>Bytes: 1973–2097<br>Passage SHA-256: ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7</p></details></article><article><h2>COLLECTIONS.md</h2><small>Lines 1–160</small><p>Reader-added native passage for adjacent source context.</p><pre># Resource collections and portable receiving
+
+A collection is an ordered, named edition of selected delivered files and analyst
+notes from the original buyer resource library. The edition retains the exact file
+size, SHA-256, source identity, payment-term strings and reviewed annotation.
+Later changes to the inbox, annotations or collection do not rewrite an older
+edition. The complete files travel in one ordinary USTAR archive.
+
+The original `openLibrary()` SQLite index, full-file verifier, private server and
+native downloader remain the implementations. Collection tables use that same
+index connection. Receiving has the explicit source kind `collection`; it does
+not create or replay a buyer job.
+
+## Use the original installed command
+
+Initialize or refresh a library through its existing inbox adapter:
+
+```sh
+starforge inbox library scan --state /private/library \
+  --inbox /private/inbox --files-root /private/downloads
+starforge inbox library collections serve --state /private/library
+```
+
+Open the private URL printed by `serve`. The collection page and original
+resource page share one foreground service and private browser session. The
+ordinary `library serve` command also includes the collection page.
+
+Search the original index, add individual resources or all matching results, and
+review their source and exact content. Name the collection and save an edition.
+Selected-file order is retained. `Use current review` explicitly selects a newer
+annotation; otherwise editing a saved edition retains its original snapshots.
+The browser retains drafts and operation IDs. Saving an old edition against a
+newer current edition returns a revision conflict rather than silently replacing
+it. Loading the latest saved edition replaces the displayed draft.
+
+`Download saved rN` packages that exact saved edition. Unsaved changes must first
+be saved or replaced with the saved edition. Full file bytes, rather than the
+text-search prefix, are included in the archive. Binary files are preserved.
+
+## Receive and continue on another machine
+
+```sh
+starforge inbox library collections export --state /private/library \
+  --id customer-research --revision 2 --out /private/customer-research.tar
+
+starforge inbox library collections inspect \
+  --archive /private/customer-research.tar --sha256 EXPECTED_ARCHIVE_SHA256
+
+starforge inbox library collections receive \
+  --archive /private/customer-research.tar --out /private/received \
+  --state /private/receiver --sha256 EXPECTED_ARCHIVE_SHA256
+
+starforge inbox library collections serve --state /private/receiver
+```
+
+Use the `sha256` emitted by export or the browser download when checking a known
+handoff. `inspect` hashes the entire archive and every complete object. Export
+creates a new file in a private directory; it never overwrites an existing file.
+The receiving parent must also be private. All paths supplied to native commands
+are absolute.
+
+Receiving publishes `manifest.json` only after the complete archive and every
+object validate. An interrupted receive retains its package-bound `intake.json`
+and completed content-addressed objects. Repeat the same command with
+`--resume true`; it rechecks incoming bytes and reuses already verified objects.
+A mismatched package or an occupied destination without the matching intake is
+refused. A completed receive can also be repeated after a lost response.
+
+The original source paths and source note remain visible under each imported
+resource&#x27;s `origin`. Receiver-local paths and IDs are separate. Inherited notes
+start at local revision zero, with their original revision retained as
+`inheritedRevision`; subsequent receiver edits use the original annotation
+engine. The source collection is adopted as a local edition, while its original
+collection revision remains in `origin.collectionRevision`. Further reopening
+preserves local collection and annotation edits.
+
+An archive carries private source metadata, original host paths and full file
+content. Distribute it only to an intended recipient with the necessary rights.
+Digest checks establish byte integrity, not the identity or trustworthiness of a
+sender. Imported source material remains explicitly identified as received data.
+
+## Native API
+
+```js
+import { openLibrary } from &#x27;./library.mjs&#x27;;
+import {
+  exportCollection, receiveCollection, openReceivedLibrary
+} from &#x27;./collection-package.mjs&#x27;;
+
+const library = await openLibrary({state: &#x27;/private/library&#x27;});
+try {
+  const selected = library.search({status: &#x27;VERIFIED&#x27;, limit: 200}).items;
+  const edition = library.collections.save({
+    id: &#x27;customer-research&#x27;, name: &#x27;Customer research&#x27;, note: &#x27;Reviewed selection&#x27;,
+    expectedRevision: 0, operationId: &#x27;customer-research-first-edition&#x27;,
+    members: selected.map(r =&gt; ({
+      id: r.id, sha256: r.sha256, annotationRevision: r.annotation.revision
+    }))
+  });
+  await exportCollection(library, {
+    id: edition.id, revision: edition.revision,
+    destination: &#x27;/private/customer-research.tar&#x27;
+  });
+} finally { await library.close(); }
+
+const received = await receiveCollection({
+  archive: &#x27;/private/customer-research.tar&#x27;, destination: &#x27;/private/received&#x27;
+});
+const receiver = await openReceivedLibrary({
+  directory: received.directory, state: &#x27;/private/receiver&#x27;
+});
+try { console.log(receiver.collections.list()); }
+finally { await receiver.close(); }
+```
+
+Search and collection lists are paginated; follow `total`, `offset` and `limit`
+when selecting more than one page. The example deliberately selects its displayed
+page. The browser&#x27;s `Add all matching` reads every page against one unchanged
+index generation.
+
+`collections.show(id, revision?)`, `list()` and `history(id)` expose saved
+editions. `save()` uses `expectedRevision` and `operationId`. Replaying an exact
+save returns the original edition even after subsequent edits. Reusing that
+operation ID with different input is a conflict. Member selectors bind the SHA
+and displayed annotation revision. `mode: &#x27;current&#x27;` captures the current verified
+resource; `mode: &#x27;retain&#x27;` keeps the corresponding member from the previous saved
+edition. A saved edition can still be exported after its source leaves the current
+index, as long as its pinned original bytes remain within the declared roots.
+
+The default archive limit is 16 GiB, selected through `maxBytes` or `--max-bytes`.
+Individual files follow USTAR&#x27;s size field limit. Metadata is limited to 64 MiB
+and a collection to the original source limit of 10,000 resources. File content
+is streamed in 128 KiB chunks; the whole payload is never held in a JavaScript
+string or browser Blob. Identical object hashes share one archived object.
+
+## Compose a customer application
+
+`collectionExtension(library)` returns `additionalAssets` and
+`authenticatedRoute` for the original `serveLibrary()` service. Combine customer
+and collection asset arrays and authenticated handler arrays. Handlers receive
+`request`, `response`, `url`, `send`, `signal`, `body(maximum?)` and
+`registerDownload(produce)`. They return `true` only when handling their namespace.
+The collection API is `/api/collections`; original `/api/resources` remains the
+resource and annotation API.
+
+`registerDownload` reserves capacity before invoking `produce(signal)`. Return a
+native descriptor `{file, bytes, sha256, resource: {id, name}, dispose}`; the
+original single-use transfer route streams it and owns disposal. Collection and
+resource downloads share the original four transfer slots, cancellation, expiry,
+origin checks and private-session check. Customer applications therefore do not
+need another downloader, session or resource index.
+
+`library.d.mts` and `collection-package.d.mts` describe the native API. The source
+journey `collections-acceptance.mjs` exercises original indexing, revisions, exact
+archive receiving, source-independent reopening and retry recovery with local
+files. Native HTTP checks additionally exercise shared transfers and auth.
+
+Format references: [GNU USTAR layout](https://www.gnu.org/software/tar/manual/html_node/Standard.html)
+and [Node 22.16 file handles](https://nodejs.org/download/release/v22.16.0/docs/api/fs.html).
+</pre><details><summary>Source reference</summary><p>Original SHA-256: 7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d<br>Bytes: 0–8141<br>Passage SHA-256: 7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d</p></details></article></main></html>

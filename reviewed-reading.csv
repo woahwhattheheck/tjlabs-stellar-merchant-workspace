@@ -1,0 +1,178 @@
+name,start_line,end_line,start_byte,end_byte,note,text,resource_id,sha,ordinal,digest,line_convention,handover_id,selection_id,original_query,query_mode,search_build
+COLLECTIONS.md,1,4,0,129,Operator review: keep this exact source passage first and preserve the question that selected it.,"# Resource collections and portable receiving
+
+A collection is an ordered, named edition of selected delivered files and analyst
+",3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd,7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d,,3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642,CRLF_OR_CR_OR_LF,handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca,4441583d80952f05be92ddd5fe31657e8f1cdc4602d45dbbe2efaf5834a0a23d,resource collection,all,c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853
+README.md,1,4,0,104,,"# Buyer resource library
+
+Find and use files delivered by the original SF88 buyer. The library connects
+",defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344,dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd,,d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9,CRLF_OR_CR_OR_LF,handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca,333c0549e116468ab9b2f370e415a1f2eb436138d7038c53b00659651859aa85,resource collection,all,c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853
+README.md,624,627,37210,37463,,"inalOutcomeReport""]`, and the original ledger for the separate payment/settlement classification. A saved payload can remain useful even if subsequent evidence collection or cleanup failed; `result.open()` preserves that recovery path.
+
+## Command line
+",52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795,d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b,,e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd,CRLF_OR_CR_OR_LF,handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca,d3b2ded86956449f5cbdd61801c161d3d1b524f4692630f912d4b35790d0022b,resource collection,all,c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853
+READING.md,41,45,1973,2097,,"
+## Receive the original resource library
+
+The existing SF88 library is the source of record. Its completed scan determines
+",a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378,49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53,,ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7,CRLF_OR_CR_OR_LF,handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca,b47f06206d729eced1448b7f79efb78b3eb904720d76da52b49093d5be7e39df,resource collection,all,c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853
+COLLECTIONS.md,1,160,0,8141,Reader-added native passage for adjacent source context.,"# Resource collections and portable receiving
+
+A collection is an ordered, named edition of selected delivered files and analyst
+notes from the original buyer resource library. The edition retains the exact file
+size, SHA-256, source identity, payment-term strings and reviewed annotation.
+Later changes to the inbox, annotations or collection do not rewrite an older
+edition. The complete files travel in one ordinary USTAR archive.
+
+The original `openLibrary()` SQLite index, full-file verifier, private server and
+native downloader remain the implementations. Collection tables use that same
+index connection. Receiving has the explicit source kind `collection`; it does
+not create or replay a buyer job.
+
+## Use the original installed command
+
+Initialize or refresh a library through its existing inbox adapter:
+
+```sh
+starforge inbox library scan --state /private/library \
+  --inbox /private/inbox --files-root /private/downloads
+starforge inbox library collections serve --state /private/library
+```
+
+Open the private URL printed by `serve`. The collection page and original
+resource page share one foreground service and private browser session. The
+ordinary `library serve` command also includes the collection page.
+
+Search the original index, add individual resources or all matching results, and
+review their source and exact content. Name the collection and save an edition.
+Selected-file order is retained. `Use current review` explicitly selects a newer
+annotation; otherwise editing a saved edition retains its original snapshots.
+The browser retains drafts and operation IDs. Saving an old edition against a
+newer current edition returns a revision conflict rather than silently replacing
+it. Loading the latest saved edition replaces the displayed draft.
+
+`Download saved rN` packages that exact saved edition. Unsaved changes must first
+be saved or replaced with the saved edition. Full file bytes, rather than the
+text-search prefix, are included in the archive. Binary files are preserved.
+
+## Receive and continue on another machine
+
+```sh
+starforge inbox library collections export --state /private/library \
+  --id customer-research --revision 2 --out /private/customer-research.tar
+
+starforge inbox library collections inspect \
+  --archive /private/customer-research.tar --sha256 EXPECTED_ARCHIVE_SHA256
+
+starforge inbox library collections receive \
+  --archive /private/customer-research.tar --out /private/received \
+  --state /private/receiver --sha256 EXPECTED_ARCHIVE_SHA256
+
+starforge inbox library collections serve --state /private/receiver
+```
+
+Use the `sha256` emitted by export or the browser download when checking a known
+handoff. `inspect` hashes the entire archive and every complete object. Export
+creates a new file in a private directory; it never overwrites an existing file.
+The receiving parent must also be private. All paths supplied to native commands
+are absolute.
+
+Receiving publishes `manifest.json` only after the complete archive and every
+object validate. An interrupted receive retains its package-bound `intake.json`
+and completed content-addressed objects. Repeat the same command with
+`--resume true`; it rechecks incoming bytes and reuses already verified objects.
+A mismatched package or an occupied destination without the matching intake is
+refused. A completed receive can also be repeated after a lost response.
+
+The original source paths and source note remain visible under each imported
+resource's `origin`. Receiver-local paths and IDs are separate. Inherited notes
+start at local revision zero, with their original revision retained as
+`inheritedRevision`; subsequent receiver edits use the original annotation
+engine. The source collection is adopted as a local edition, while its original
+collection revision remains in `origin.collectionRevision`. Further reopening
+preserves local collection and annotation edits.
+
+An archive carries private source metadata, original host paths and full file
+content. Distribute it only to an intended recipient with the necessary rights.
+Digest checks establish byte integrity, not the identity or trustworthiness of a
+sender. Imported source material remains explicitly identified as received data.
+
+## Native API
+
+```js
+import { openLibrary } from './library.mjs';
+import {
+  exportCollection, receiveCollection, openReceivedLibrary
+} from './collection-package.mjs';
+
+const library = await openLibrary({state: '/private/library'});
+try {
+  const selected = library.search({status: 'VERIFIED', limit: 200}).items;
+  const edition = library.collections.save({
+    id: 'customer-research', name: 'Customer research', note: 'Reviewed selection',
+    expectedRevision: 0, operationId: 'customer-research-first-edition',
+    members: selected.map(r => ({
+      id: r.id, sha256: r.sha256, annotationRevision: r.annotation.revision
+    }))
+  });
+  await exportCollection(library, {
+    id: edition.id, revision: edition.revision,
+    destination: '/private/customer-research.tar'
+  });
+} finally { await library.close(); }
+
+const received = await receiveCollection({
+  archive: '/private/customer-research.tar', destination: '/private/received'
+});
+const receiver = await openReceivedLibrary({
+  directory: received.directory, state: '/private/receiver'
+});
+try { console.log(receiver.collections.list()); }
+finally { await receiver.close(); }
+```
+
+Search and collection lists are paginated; follow `total`, `offset` and `limit`
+when selecting more than one page. The example deliberately selects its displayed
+page. The browser's `Add all matching` reads every page against one unchanged
+index generation.
+
+`collections.show(id, revision?)`, `list()` and `history(id)` expose saved
+editions. `save()` uses `expectedRevision` and `operationId`. Replaying an exact
+save returns the original edition even after subsequent edits. Reusing that
+operation ID with different input is a conflict. Member selectors bind the SHA
+and displayed annotation revision. `mode: 'current'` captures the current verified
+resource; `mode: 'retain'` keeps the corresponding member from the previous saved
+edition. A saved edition can still be exported after its source leaves the current
+index, as long as its pinned original bytes remain within the declared roots.
+
+The default archive limit is 16 GiB, selected through `maxBytes` or `--max-bytes`.
+Individual files follow USTAR's size field limit. Metadata is limited to 64 MiB
+and a collection to the original source limit of 10,000 resources. File content
+is streamed in 128 KiB chunks; the whole payload is never held in a JavaScript
+string or browser Blob. Identical object hashes share one archived object.
+
+## Compose a customer application
+
+`collectionExtension(library)` returns `additionalAssets` and
+`authenticatedRoute` for the original `serveLibrary()` service. Combine customer
+and collection asset arrays and authenticated handler arrays. Handlers receive
+`request`, `response`, `url`, `send`, `signal`, `body(maximum?)` and
+`registerDownload(produce)`. They return `true` only when handling their namespace.
+The collection API is `/api/collections`; original `/api/resources` remains the
+resource and annotation API.
+
+`registerDownload` reserves capacity before invoking `produce(signal)`. Return a
+native descriptor `{file, bytes, sha256, resource: {id, name}, dispose}`; the
+original single-use transfer route streams it and owns disposal. Collection and
+resource downloads share the original four transfer slots, cancellation, expiry,
+origin checks and private-session check. Customer applications therefore do not
+need another downloader, session or resource index.
+
+`library.d.mts` and `collection-package.d.mts` describe the native API. The source
+journey `collections-acceptance.mjs` exercises original indexing, revisions, exact
+archive receiving, source-independent reopening and retry recovery with local
+files. Native HTTP checks additionally exercise shared transfers and auth.
+
+Format references: [GNU USTAR layout](https://www.gnu.org/software/tar/manual/html_node/Standard.html)
+and [Node 22.16 file handles](https://nodejs.org/download/release/v22.16.0/docs/api/fs.html).
+",3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd,7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d,0,7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d,LF,,,,,

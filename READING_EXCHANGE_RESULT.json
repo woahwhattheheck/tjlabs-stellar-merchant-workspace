@@ -1,0 +1,1529 @@
+{
+  "schema": "stellar-forge.sf88.reading-exchange-native.v1",
+  "source": {
+    "kind": "complete original maintained Git documents",
+    "documents": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/COLLECTIONS.md",
+        "bytes": 8141,
+        "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+        "git_blob_sha1": "58bf9ee71c175e5896765f4216c97a866258a03c",
+        "source": "Original maintained Git source document"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/README.md",
+        "bytes": 7510,
+        "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+        "git_blob_sha1": "4c819d10d7815eec6860d59658f5ba363bf128af",
+        "source": "Original maintained Git source document"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/README.md",
+        "bytes": 44044,
+        "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+        "git_blob_sha1": "1efb21e0be306df0624d63a086c5b2109af19422",
+        "source": "Original maintained Git source document"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/READING.md",
+        "bytes": 14588,
+        "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+        "git_blob_sha1": "1f55b2810dbee6298bd40036d7d04c4ec82efadc",
+        "source": "Original maintained Git source document"
+      }
+    ]
+  },
+  "python": "3.12.14",
+  "node": "v24.19.0",
+  "steps": [
+    {
+      "operation": "original research and authenticated handover preparation",
+      "queryRevision": 1,
+      "laterSavedQueryRevision": 2,
+      "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+      "capture": {
+        "captureSha256": "39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "name": "Original resource collection operating material",
+        "note": "Read the selected original source passages, keep decisions beside their exact text, and return a complete editable project.",
+        "createdAt": "2026-10-12T20:00:49.825Z",
+        "query": {
+          "engine": "stellar-forge.resource-content-search.v1",
+          "q": "resource collection",
+          "mode": "all",
+          "terms": [
+            "resource",
+            "collection"
+          ],
+          "semantics": {
+            "scope": "whole-file",
+            "words": "Unicode NFC case-insensitive; accents retained",
+            "quotes": "punctuation",
+            "combine": "AND"
+          },
+          "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+          "resourceId": null,
+          "savedQuery": {
+            "id": "a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644",
+            "name": "Resource collection reading",
+            "q": "resource collection",
+            "mode": "all",
+            "revision": 1,
+            "updatedAt": "2026-10-12T20:00:49.806Z"
+          }
+        },
+        "source": {
+          "schema": "stellar-forge.resource-content-search.v1",
+          "generation": "b2a83004-8425-418d-8f59-2bff62255ae0",
+          "sourceSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+          "sourceKind": "collection",
+          "source": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/manifest.json"
+        },
+        "coverage": {
+          "files": 4,
+          "bytes": 74283,
+          "counts": {
+            "TEXT": 4,
+            "BINARY": 0,
+            "UNAVAILABLE": 0,
+            "PENDING": 0,
+            "INDEXING": 0
+          },
+          "issues": [],
+          "matchingFiles": 4
+        },
+        "sourceFiles": 4,
+        "sourceBytes": 74283,
+        "selectedPassages": 4,
+        "selectionMode": "excerpt",
+        "sample": [
+          {
+            "resourceId": "274df6c7c0878eb611dc6c6b44b34a841a4ba0ca4ffcf97df0be64b8974bb65b",
+            "sourceSha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+            "ordinal": 0,
+            "kind": "excerpt",
+            "byteStart": 1973,
+            "byteEnd": 2097,
+            "lineStart": 41,
+            "lineEnd": 45,
+            "sha256": "ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7",
+            "note": "",
+            "id": "b47f06206d729eced1448b7f79efb78b3eb904720d76da52b49093d5be7e39df",
+            "name": "READING.md"
+          },
+          {
+            "resourceId": "2fa8f3c2e96814fa94bacb8bd7880ae237e7ad0b3faa3b73437371c63acbdde2",
+            "sourceSha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+            "ordinal": 1,
+            "kind": "excerpt",
+            "byteStart": 37210,
+            "byteEnd": 37463,
+            "lineStart": 624,
+            "lineEnd": 627,
+            "sha256": "e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd",
+            "note": "",
+            "id": "d3b2ded86956449f5cbdd61801c161d3d1b524f4692630f912d4b35790d0022b",
+            "name": "README.md"
+          },
+          {
+            "resourceId": "a8c255e916ff428c42162951ee83ce947459cca7f3a061b33ea23905441eeaa8",
+            "sourceSha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+            "ordinal": 0,
+            "kind": "excerpt",
+            "byteStart": 0,
+            "byteEnd": 104,
+            "lineStart": 1,
+            "lineEnd": 4,
+            "sha256": "d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9",
+            "note": "",
+            "id": "333c0549e116468ab9b2f370e415a1f2eb436138d7038c53b00659651859aa85",
+            "name": "README.md"
+          },
+          {
+            "resourceId": "ddca2477f2bc49dc1435454a6583701fb9405827e363206cb10efbff6ae9311d",
+            "sourceSha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+            "ordinal": 0,
+            "kind": "excerpt",
+            "byteStart": 0,
+            "byteEnd": 129,
+            "lineStart": 1,
+            "lineEnd": 4,
+            "sha256": "3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642",
+            "note": "",
+            "id": "4441583d80952f05be92ddd5fe31657e8f1cdc4602d45dbbe2efaf5834a0a23d",
+            "name": "COLLECTIONS.md"
+          }
+        ]
+      },
+      "prepared": {
+        "bytes": 29766,
+        "captureSha256": "39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "collection": {
+          "id": "reading-handover-source",
+          "memberCount": 4,
+          "revision": 1,
+          "sha256": "573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c"
+        },
+        "name": "reading-handover.zip",
+        "operationId": "reading-handover-actual-1",
+        "query": {
+          "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+          "engine": "stellar-forge.resource-content-search.v1",
+          "mode": "all",
+          "q": "resource collection",
+          "resourceId": null,
+          "savedQuery": {
+            "id": "a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644",
+            "mode": "all",
+            "name": "Resource collection reading",
+            "q": "resource collection",
+            "revision": 1,
+            "updatedAt": "2026-10-12T20:00:49.806Z"
+          },
+          "semantics": {
+            "combine": "AND",
+            "quotes": "punctuation",
+            "scope": "whole-file",
+            "words": "Unicode NFC case-insensitive; accents retained"
+          },
+          "terms": [
+            "resource",
+            "collection"
+          ]
+        },
+        "schema": "stellar-forge.sf88.reading-handover.v1",
+        "selectedPassages": 4,
+        "sha256": "6492b3e65d39eaaeba41fc3bdd5ecffb9acd06439e5125326051b597357e0cc8",
+        "sourceArchive": {
+          "bytes": 91136,
+          "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+          "name": "sources.tar",
+          "sha256": "b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9"
+        },
+        "sourceFiles": 4
+      },
+      "http": {
+        "prepared": {
+          "bytes": 29766,
+          "captureSha256": "39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+          "collection": {
+            "id": "reading-handover-source",
+            "memberCount": 4,
+            "revision": 1,
+            "sha256": "573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c"
+          },
+          "name": "reading-handover.zip",
+          "operationId": "reading-handover-actual-1",
+          "query": {
+            "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+            "engine": "stellar-forge.resource-content-search.v1",
+            "mode": "all",
+            "q": "resource collection",
+            "resourceId": null,
+            "savedQuery": {
+              "id": "a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644",
+              "mode": "all",
+              "name": "Resource collection reading",
+              "q": "resource collection",
+              "revision": 1,
+              "updatedAt": "2026-10-12T20:00:49.806Z"
+            },
+            "semantics": {
+              "combine": "AND",
+              "quotes": "punctuation",
+              "scope": "whole-file",
+              "words": "Unicode NFC case-insensitive; accents retained"
+            },
+            "terms": [
+              "resource",
+              "collection"
+            ]
+          },
+          "schema": "stellar-forge.sf88.reading-handover.v1",
+          "selectedPassages": 4,
+          "sha256": "6492b3e65d39eaaeba41fc3bdd5ecffb9acd06439e5125326051b597357e0cc8",
+          "sourceArchive": {
+            "bytes": 91136,
+            "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+            "name": "sources.tar",
+            "sha256": "b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9"
+          },
+          "sourceFiles": 4
+        },
+        "query": {
+          "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+          "total": 4
+        },
+        "assets": [
+          {
+            "route": "/research",
+            "status": 200,
+            "bytes": 4065,
+            "sha256": "140f17f06507d42a395117ad50cf1f6b35efee26eb43dbdc632da6b70cc64841"
+          },
+          {
+            "route": "/research.js",
+            "status": 200,
+            "bytes": 13101,
+            "sha256": "a8a377690aeb6532f4e0dc9e92edef14b8048248ea71fb1eba37159adb72242b"
+          },
+          {
+            "route": "/research.css",
+            "status": 200,
+            "bytes": 5400,
+            "sha256": "06ce0ad1f3d8783e6573baed591502b86326a2a56447158e5a989e36937b69a2"
+          },
+          {
+            "route": "/reading-exchange.js",
+            "status": 200,
+            "bytes": 12846,
+            "sha256": "9171a3f48372e03af1529db45c7263cd16ec2a7fe101e77cb6befb5f58a76f72"
+          }
+        ],
+        "privateStatus": 401,
+        "download": {
+          "bytes": 29766,
+          "sha256": "6492b3e65d39eaaeba41fc3bdd5ecffb9acd06439e5125326051b597357e0cc8"
+        }
+      },
+      "transferInterruptedAt": 1024,
+      "resumedFrom": 1024
+    },
+    {
+      "operation": "original receiving, editable exact ranges and reading HTTP",
+      "receipt": {
+        "schema": "stellar-forge.sf88.reading-handover.v1",
+        "archive_sha256": "6492b3e65d39eaaeba41fc3bdd5ecffb9acd06439e5125326051b597357e0cc8",
+        "archive_bytes": 29766,
+        "capture_sha256": "39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "directory": "/dev/dff77-reading-exchange-bc7fnhcu/received",
+        "project": "/dev/dff77-reading-exchange-bc7fnhcu/received/project",
+        "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "reading_list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "reading_list_revision": 1,
+        "collection_receipt": {
+          "schema": "stellar-forge.sf88.resource-collection-package.v1",
+          "collection": {
+            "schema": "stellar-forge.sf88.resource-collection.v1",
+            "id": "reading-handover-source",
+            "revision": 1,
+            "name": "Original resource collection operating material",
+            "note": "Read the selected original source passages, keep decisions beside their exact text, and return a complete editable project.",
+            "updatedAt": "2026-10-12T20:00:50.019Z",
+            "scan": {
+              "sourceSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+              "sourceBytes": 5466,
+              "resourceCount": 4,
+              "collection": {
+                "id": "scf-library-source-reading",
+                "name": "Original SF88 resource and collection documentation",
+                "revision": 1,
+                "note": "Operator reading selection of the exact Git-pinned maintained documents."
+              },
+              "jobCount": null,
+              "withoutFile": 0,
+              "rejected": [],
+              "generation": "b2a83004-8425-418d-8f59-2bff62255ae0",
+              "startedAt": "2026-10-12T20:00:49.717Z",
+              "completedAt": "2026-10-12T20:00:49.735Z",
+              "counts": {
+                "VERIFIED": 4
+              }
+            }
+          },
+          "collectionSha256": "573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c",
+          "memberCount": 4,
+          "objectCount": 4,
+          "objectBytes": "74283",
+          "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+          "bytes": 91136,
+          "sha256": "b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9"
+        },
+        "resource_mapping": [
+          {
+            "source_id": "274df6c7c0878eb611dc6c6b44b34a841a4ba0ca4ffcf97df0be64b8974bb65b",
+            "resource_id": "a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378",
+            "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+            "bytes": 14588,
+            "source_lineage": [
+              {
+                "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+                "collectionId": "reading-handover-source",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "274df6c7c0878eb611dc6c6b44b34a841a4ba0ca4ffcf97df0be64b8974bb65b",
+                  "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                  "bytes": 14588,
+                  "name": "READING.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1f55b2810dbee6298bd40036d7d04c4ec82efadc"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "inheritedRevision": 0
+                }
+              },
+              {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "685cd4a7f88a7693d599f5a496f08a64e87a3f97c751ae07f60128b864043d34",
+                  "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                  "bytes": 14588,
+                  "name": "READING.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1f55b2810dbee6298bd40036d7d04c4ec82efadc"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false
+                }
+              }
+            ]
+          },
+          {
+            "source_id": "2fa8f3c2e96814fa94bacb8bd7880ae237e7ad0b3faa3b73437371c63acbdde2",
+            "resource_id": "52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795",
+            "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+            "bytes": 44044,
+            "source_lineage": [
+              {
+                "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+                "collectionId": "reading-handover-source",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "2fa8f3c2e96814fa94bacb8bd7880ae237e7ad0b3faa3b73437371c63acbdde2",
+                  "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                  "bytes": 44044,
+                  "name": "README.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1efb21e0be306df0624d63a086c5b2109af19422"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "inheritedRevision": 0
+                }
+              },
+              {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "0953e65a838b91aafa336881e146632aaf0052c45aeb2697ecd3ba34d8f0258b",
+                  "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                  "bytes": 44044,
+                  "name": "README.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1efb21e0be306df0624d63a086c5b2109af19422"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false
+                }
+              }
+            ]
+          },
+          {
+            "source_id": "a8c255e916ff428c42162951ee83ce947459cca7f3a061b33ea23905441eeaa8",
+            "resource_id": "defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344",
+            "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+            "bytes": 7510,
+            "source_lineage": [
+              {
+                "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+                "collectionId": "reading-handover-source",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "a8c255e916ff428c42162951ee83ce947459cca7f3a061b33ea23905441eeaa8",
+                  "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                  "bytes": 7510,
+                  "name": "README.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/4c819d10d7815eec6860d59658f5ba363bf128af"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "inheritedRevision": 0
+                }
+              },
+              {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "f4ed7e8d92d14f21319a33cd4c28f992b59f5e7a214f92d23558b9f024550d16",
+                  "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                  "bytes": 7510,
+                  "name": "README.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/4c819d10d7815eec6860d59658f5ba363bf128af"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false
+                }
+              }
+            ]
+          },
+          {
+            "source_id": "ddca2477f2bc49dc1435454a6583701fb9405827e363206cb10efbff6ae9311d",
+            "resource_id": "3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd",
+            "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+            "bytes": 8141,
+            "source_lineage": [
+              {
+                "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+                "collectionId": "reading-handover-source",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "ddca2477f2bc49dc1435454a6583701fb9405827e363206cb10efbff6ae9311d",
+                  "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                  "bytes": 8141,
+                  "name": "COLLECTIONS.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/58bf9ee71c175e5896765f4216c97a866258a03c"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "inheritedRevision": 0
+                }
+              },
+              {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "356c6d517a7e751677135d31762e771f0e5c2e2ae39c049a9091163882455b4d",
+                  "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                  "bytes": 8141,
+                  "name": "COLLECTIONS.md",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/58bf9ee71c175e5896765f4216c97a866258a03c"
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false
+                }
+              }
+            ]
+          }
+        ],
+        "sync": {
+          "id": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+          "label": "Original resource collection operating material",
+          "created": "2026-10-12T20:00:50+00:00",
+          "source_identity": "a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2",
+          "native_generation": "8c62234d-bcd2-422a-aafc-e2179faaad3b",
+          "counts": {
+            "resources": 4,
+            "indexed": 4,
+            "download_only": 0,
+            "unavailable": 0,
+            "bytes": 74283,
+            "passages": 5
+          }
+        }
+      },
+      "list": {
+        "id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "revision": 2,
+        "passages": 5
+      },
+      "http": {
+        "/": {
+          "status": 200,
+          "bytes": 7647,
+          "type": "text/html"
+        },
+        "/reading.js": {
+          "status": 200,
+          "bytes": 16574,
+          "type": "text/javascript"
+        },
+        "/reading.css": {
+          "status": 200,
+          "bytes": 6601,
+          "type": "text/css"
+        },
+        "/api/status": {
+          "status": 200,
+          "bytes": 5781,
+          "type": "application/json"
+        }
+      },
+      "reports": {
+        "html": {
+          "path": "/dev/dff77-reading-exchange-bc7fnhcu/reviewed-reading.html",
+          "format": "html",
+          "passages": 5,
+          "sha256": "eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d",
+          "bytes": 12193,
+          "selection": {
+            "list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+            "list_revision": 2,
+            "query": null,
+            "snapshot": null,
+            "resource_id": null
+          }
+        },
+        "json": {
+          "path": "/dev/dff77-reading-exchange-bc7fnhcu/reviewed-reading.json",
+          "format": "json",
+          "passages": 5,
+          "sha256": "1adbc444af78b4090b142ccfeb04100b5ffdf51ec06cb502f07a35a6a304cd35",
+          "bytes": 15225,
+          "selection": {
+            "list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+            "list_revision": 2,
+            "query": null,
+            "snapshot": null,
+            "resource_id": null
+          }
+        },
+        "csv": {
+          "path": "/dev/dff77-reading-exchange-bc7fnhcu/reviewed-reading.csv",
+          "format": "csv",
+          "passages": 5,
+          "sha256": "a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c",
+          "bytes": 11196,
+          "selection": {
+            "list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+            "list_revision": 2,
+            "query": null,
+            "snapshot": null,
+            "resource_id": null
+          }
+        }
+      },
+      "originalSourceCollection": {
+        "collection": {
+          "schema": "stellar-forge.sf88.resource-collection.v1",
+          "id": "reviewed-original-source-reading",
+          "revision": 1,
+          "name": "Reviewed source collection reading",
+          "note": "The reviewed order retains the original question and each exact source range.",
+          "updatedAt": "2026-10-12T20:00:50.557Z",
+          "scan": {
+            "sourceSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+            "sourceBytes": 5466,
+            "resourceCount": 4,
+            "collection": {
+              "id": "scf-library-source-reading",
+              "name": "Original SF88 resource and collection documentation",
+              "revision": 1,
+              "note": "Operator reading selection of the exact Git-pinned maintained documents."
+            },
+            "jobCount": null,
+            "withoutFile": 0,
+            "rejected": [],
+            "generation": "b2a83004-8425-418d-8f59-2bff62255ae0",
+            "startedAt": "2026-10-12T20:00:49.717Z",
+            "completedAt": "2026-10-12T20:00:49.735Z",
+            "counts": {
+              "VERIFIED": 4
+            }
+          },
+          "members": [
+            {
+              "id": "ddca2477f2bc49dc1435454a6583701fb9405827e363206cb10efbff6ae9311d",
+              "name": "COLLECTIONS.md",
+              "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+              "bytes": 8141,
+              "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+              "deliveryStatus": "SAVED",
+              "status": "VERIFIED",
+              "contentType": "text/markdown",
+              "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/58bf9ee71c175e5896765f4216c97a866258a03c",
+              "source": {
+                "kind": "collection",
+                "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/manifest.json"
+              },
+              "inheritedAnnotation": {
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null
+              },
+              "origin": {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "356c6d517a7e751677135d31762e771f0e5c2e2ae39c049a9091163882455b4d",
+                  "name": "COLLECTIONS.md",
+                  "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                  "bytes": 8141,
+                  "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                  "deliveryStatus": "SAVED",
+                  "status": "VERIFIED",
+                  "contentType": "text/markdown",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/58bf9ee71c175e5896765f4216c97a866258a03c",
+                  "source": {
+                    "kind": "git-blob",
+                    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+                    "gitBlob": "58bf9ee71c175e5896765f4216c97a866258a03c",
+                    "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/COLLECTIONS.md",
+                    "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/58bf9ee71c175e5896765f4216c97a866258a03c"
+                  }
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "updatedAt": null
+                }
+              },
+              "verification": {
+                "verifiedAt": "2026-10-12T20:00:49.721Z",
+                "bytes": 8141,
+                "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                "indexedBytes": 8141,
+                "coverage": "COMPLETE"
+              },
+              "annotation": {
+                "id": "ddca2477f2bc49dc1435454a6583701fb9405827e363206cb10efbff6ae9311d",
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null,
+                "inheritedRevision": 0
+              }
+            },
+            {
+              "id": "a8c255e916ff428c42162951ee83ce947459cca7f3a061b33ea23905441eeaa8",
+              "name": "README.md",
+              "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+              "bytes": 7510,
+              "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+              "deliveryStatus": "SAVED",
+              "status": "VERIFIED",
+              "contentType": "text/markdown",
+              "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/4c819d10d7815eec6860d59658f5ba363bf128af",
+              "source": {
+                "kind": "collection",
+                "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/manifest.json"
+              },
+              "inheritedAnnotation": {
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null
+              },
+              "origin": {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "f4ed7e8d92d14f21319a33cd4c28f992b59f5e7a214f92d23558b9f024550d16",
+                  "name": "README.md",
+                  "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                  "bytes": 7510,
+                  "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                  "deliveryStatus": "SAVED",
+                  "status": "VERIFIED",
+                  "contentType": "text/markdown",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/4c819d10d7815eec6860d59658f5ba363bf128af",
+                  "source": {
+                    "kind": "git-blob",
+                    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+                    "gitBlob": "4c819d10d7815eec6860d59658f5ba363bf128af",
+                    "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/README.md",
+                    "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/4c819d10d7815eec6860d59658f5ba363bf128af"
+                  }
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "updatedAt": null
+                }
+              },
+              "verification": {
+                "verifiedAt": "2026-10-12T20:00:49.724Z",
+                "bytes": 7510,
+                "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                "indexedBytes": 7510,
+                "coverage": "COMPLETE"
+              },
+              "annotation": {
+                "id": "a8c255e916ff428c42162951ee83ce947459cca7f3a061b33ea23905441eeaa8",
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null,
+                "inheritedRevision": 0
+              }
+            },
+            {
+              "id": "2fa8f3c2e96814fa94bacb8bd7880ae237e7ad0b3faa3b73437371c63acbdde2",
+              "name": "README.md",
+              "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+              "bytes": 44044,
+              "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+              "deliveryStatus": "SAVED",
+              "status": "VERIFIED",
+              "contentType": "text/markdown",
+              "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1efb21e0be306df0624d63a086c5b2109af19422",
+              "source": {
+                "kind": "collection",
+                "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/manifest.json"
+              },
+              "inheritedAnnotation": {
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null
+              },
+              "origin": {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "0953e65a838b91aafa336881e146632aaf0052c45aeb2697ecd3ba34d8f0258b",
+                  "name": "README.md",
+                  "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                  "bytes": 44044,
+                  "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                  "deliveryStatus": "SAVED",
+                  "status": "VERIFIED",
+                  "contentType": "text/markdown",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1efb21e0be306df0624d63a086c5b2109af19422",
+                  "source": {
+                    "kind": "git-blob",
+                    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+                    "gitBlob": "1efb21e0be306df0624d63a086c5b2109af19422",
+                    "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/README.md",
+                    "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1efb21e0be306df0624d63a086c5b2109af19422"
+                  }
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "updatedAt": null
+                }
+              },
+              "verification": {
+                "verifiedAt": "2026-10-12T20:00:49.730Z",
+                "bytes": 44044,
+                "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                "indexedBytes": 44044,
+                "coverage": "COMPLETE"
+              },
+              "annotation": {
+                "id": "2fa8f3c2e96814fa94bacb8bd7880ae237e7ad0b3faa3b73437371c63acbdde2",
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null,
+                "inheritedRevision": 0
+              }
+            },
+            {
+              "id": "274df6c7c0878eb611dc6c6b44b34a841a4ba0ca4ffcf97df0be64b8974bb65b",
+              "name": "READING.md",
+              "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+              "bytes": 14588,
+              "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+              "deliveryStatus": "SAVED",
+              "status": "VERIFIED",
+              "contentType": "text/markdown",
+              "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1f55b2810dbee6298bd40036d7d04c4ec82efadc",
+              "source": {
+                "kind": "collection",
+                "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/manifest.json"
+              },
+              "inheritedAnnotation": {
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null
+              },
+              "origin": {
+                "manifestSha256": "113a6196444f8f48955930b2375d9195a64ce451d5a347bfdae8dcb42596ffca",
+                "collectionId": "scf-library-source-reading",
+                "collectionRevision": 1,
+                "resource": {
+                  "id": "685cd4a7f88a7693d599f5a496f08a64e87a3f97c751ae07f60128b864043d34",
+                  "name": "READING.md",
+                  "path": "/dev/dff77-reading-exchange-bc7fnhcu/original-source-selection/objects/49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                  "bytes": 14588,
+                  "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                  "deliveryStatus": "SAVED",
+                  "status": "VERIFIED",
+                  "contentType": "text/markdown",
+                  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1f55b2810dbee6298bd40036d7d04c4ec82efadc",
+                  "source": {
+                    "kind": "git-blob",
+                    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+                    "gitBlob": "1f55b2810dbee6298bd40036d7d04c4ec82efadc",
+                    "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/READING.md",
+                    "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/blobs/1f55b2810dbee6298bd40036d7d04c4ec82efadc"
+                  }
+                },
+                "annotation": {
+                  "revision": 0,
+                  "note": "Original maintained source document selected for collection delivery.",
+                  "tags": [
+                    "source"
+                  ],
+                  "starred": false,
+                  "updatedAt": null
+                }
+              },
+              "verification": {
+                "verifiedAt": "2026-10-12T20:00:49.734Z",
+                "bytes": 14588,
+                "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                "indexedBytes": 14588,
+                "coverage": "COMPLETE"
+              },
+              "annotation": {
+                "id": "274df6c7c0878eb611dc6c6b44b34a841a4ba0ca4ffcf97df0be64b8974bb65b",
+                "revision": 0,
+                "note": "Original maintained source document selected for collection delivery.",
+                "tags": [
+                  "source"
+                ],
+                "starred": false,
+                "updatedAt": null,
+                "inheritedRevision": 0
+              }
+            }
+          ]
+        },
+        "resource_mapping": [
+          {
+            "reading_resource_id": "3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd",
+            "native_resource_id": "ddca2477f2bc49dc1435454a6583701fb9405827e363206cb10efbff6ae9311d",
+            "sha256": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d"
+          },
+          {
+            "reading_resource_id": "defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344",
+            "native_resource_id": "a8c255e916ff428c42162951ee83ce947459cca7f3a061b33ea23905441eeaa8",
+            "sha256": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd"
+          },
+          {
+            "reading_resource_id": "52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795",
+            "native_resource_id": "2fa8f3c2e96814fa94bacb8bd7880ae237e7ad0b3faa3b73437371c63acbdde2",
+            "sha256": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b"
+          },
+          {
+            "reading_resource_id": "a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378",
+            "native_resource_id": "274df6c7c0878eb611dc6c6b44b34a841a4ba0ca4ffcf97df0be64b8974bb65b",
+            "sha256": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53"
+          }
+        ],
+        "list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+        "list_revision": 2,
+        "target_source": "8244fec73744ee99938c2ac85fb1c8b4f203d86c655333a231e067c026ed6162"
+      },
+      "portableProject": {
+        "path": "/dev/dff77-reading-exchange-bc7fnhcu/editable-reading-project.zip",
+        "sha256": "c6bef7fd2bcd8c8e70a008c9ac20411ef03b19adddd575673e21f07ef90f4e74",
+        "bytes": 34083,
+        "originals": 4,
+        "source_bytes": 74283
+      }
+    },
+    {
+      "operation": "Node-free return receiving, cold reopen and original-writer return",
+      "return": {
+        "schema": "stellar-forge.sf88.reading-return.v1",
+        "directory": "/dev/dff77-reading-exchange-bc7fnhcu/returned",
+        "project": {
+          "directory": "/dev/dff77-reading-exchange-bc7fnhcu/returned/project",
+          "archive_sha256": "3305e51dea7745d7138febe1ac48d74b41db6846bbf1095d30d1ddba373bc718",
+          "archive_bytes": 33293,
+          "originals": 4,
+          "source_bytes": 74283,
+          "workspace": {
+            "schema": "stellar-forge.sf88.reading-workspace.v1",
+            "id": "67584d44-9ce7-42f9-b216-3375eb1968bb",
+            "created": "2026-10-12T20:00:50+00:00",
+            "source_identity": "a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2",
+            "current_snapshot": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+            "snapshots": [
+              {
+                "id": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "label": "Original resource collection operating material",
+                "created": "2026-10-12T20:00:50+00:00",
+                "source_identity": "a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2",
+                "native_generation": "8c62234d-bcd2-422a-aafc-e2179faaad3b",
+                "counts": {
+                  "bytes": 74283,
+                  "download_only": 0,
+                  "indexed": 4,
+                  "passages": 5,
+                  "resources": 4,
+                  "unavailable": 0
+                }
+              }
+            ],
+            "assets": {
+              "files": 4,
+              "bytes": 74283,
+              "passages": 5
+            },
+            "syncs": [
+              {
+                "id": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "state": "complete",
+                "completed": 4,
+                "total": 4,
+                "error": null
+              }
+            ],
+            "saved_searches": [],
+            "reading_lists": [
+              {
+                "created": "2026-10-12T20:00:50+00:00",
+                "id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "items": [
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "4441583d80952f05be92ddd5fe31657e8f1cdc4602d45dbbe2efaf5834a0a23d"
+                    },
+                    "digest": "3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642",
+                    "end_byte": 129,
+                    "end_line": 4,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "COLLECTIONS.md",
+                    "note": "Operator review: keep this exact source passage first and preserve the question that selected it.",
+                    "ordinal": null,
+                    "resource_id": "3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd",
+                    "selection_kind": "source-range",
+                    "sha": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                    "start_byte": 0,
+                    "start_line": 1
+                  },
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "333c0549e116468ab9b2f370e415a1f2eb436138d7038c53b00659651859aa85"
+                    },
+                    "digest": "d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9",
+                    "end_byte": 104,
+                    "end_line": 4,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "README.md",
+                    "note": "",
+                    "ordinal": null,
+                    "resource_id": "defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344",
+                    "selection_kind": "source-range",
+                    "sha": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                    "start_byte": 0,
+                    "start_line": 1
+                  },
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "d3b2ded86956449f5cbdd61801c161d3d1b524f4692630f912d4b35790d0022b"
+                    },
+                    "digest": "e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd",
+                    "end_byte": 37463,
+                    "end_line": 627,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "README.md",
+                    "note": "",
+                    "ordinal": null,
+                    "resource_id": "52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795",
+                    "selection_kind": "source-range",
+                    "sha": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                    "start_byte": 37210,
+                    "start_line": 624
+                  },
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "b47f06206d729eced1448b7f79efb78b3eb904720d76da52b49093d5be7e39df"
+                    },
+                    "digest": "ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7",
+                    "end_byte": 2097,
+                    "end_line": 45,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "READING.md",
+                    "note": "",
+                    "ordinal": null,
+                    "resource_id": "a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378",
+                    "selection_kind": "source-range",
+                    "sha": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                    "start_byte": 1973,
+                    "start_line": 41
+                  },
+                  {
+                    "digest": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                    "end_byte": 8141,
+                    "end_line": 160,
+                    "name": "COLLECTIONS.md",
+                    "note": "Reader-added native passage for adjacent source context.",
+                    "ordinal": 0,
+                    "resource_id": "3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd",
+                    "sha": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                    "start_byte": 0,
+                    "start_line": 1
+                  }
+                ],
+                "kind": "list",
+                "name": "Reviewed source collection reading",
+                "note": "The reviewed order retains the original question and each exact source range.",
+                "revision": 2
+              }
+            ],
+            "handovers": [
+              {
+                "id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "revision": 1,
+                "created": "2026-10-12T20:00:50+00:00",
+                "name": "Original resource collection operating material",
+                "capture_sha256": "39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "query": {
+                  "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+                  "engine": "stellar-forge.resource-content-search.v1",
+                  "mode": "all",
+                  "q": "resource collection",
+                  "resourceId": null,
+                  "savedQuery": {
+                    "id": "a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644",
+                    "mode": "all",
+                    "name": "Resource collection reading",
+                    "q": "resource collection",
+                    "revision": 1,
+                    "updatedAt": "2026-10-12T20:00:49.806Z"
+                  },
+                  "semantics": {
+                    "combine": "AND",
+                    "quotes": "punctuation",
+                    "scope": "whole-file",
+                    "words": "Unicode NFC case-insensitive; accents retained"
+                  },
+                  "terms": [
+                    "resource",
+                    "collection"
+                  ]
+                },
+                "selected_passages": 4,
+                "source_files": 4,
+                "collection": {
+                  "id": "reading-handover-source",
+                  "memberCount": 4,
+                  "revision": 1,
+                  "sha256": "573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c"
+                },
+                "archive": {
+                  "bytes": 91136,
+                  "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+                  "name": "sources.tar",
+                  "sha256": "b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9"
+                },
+                "reading_list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca"
+              }
+            ]
+          }
+        },
+        "list": {
+          "id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+          "name": "Reviewed source collection reading",
+          "passages": 5,
+          "revision": 2
+        },
+        "archive_sha256": "f0285286e6298e06fe3057ec8d85854c36658f858214bdd530742ec515e8c82d",
+        "archive_bytes": 49164,
+        "files": [
+          {
+            "bytes": 33293,
+            "name": "project.zip",
+            "sha256": "3305e51dea7745d7138febe1ac48d74b41db6846bbf1095d30d1ddba373bc718"
+          },
+          {
+            "bytes": 12193,
+            "name": "reading-list.html",
+            "sha256": "eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d"
+          },
+          {
+            "bytes": 15225,
+            "name": "reading-list.json",
+            "sha256": "1adbc444af78b4090b142ccfeb04100b5ffdf51ec06cb502f07a35a6a304cd35"
+          },
+          {
+            "bytes": 11196,
+            "name": "reading-list.csv",
+            "sha256": "a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c"
+          }
+        ]
+      },
+      "laterReturn": {
+        "path": "/dev/dff77-reading-exchange-bc7fnhcu/second-reading-return.zip",
+        "sha256": "751e14b4adb46e045aaf1177927359c818acb499c6a710335afcd85e197095d2",
+        "bytes": 51320,
+        "schema": "stellar-forge.sf88.reading-return.v1",
+        "list": {
+          "id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+          "revision": 3,
+          "name": "Reviewed source collection reading",
+          "passages": 5
+        },
+        "files": [
+          {
+            "name": "project.zip",
+            "sha256": "fd1452270d9b52a162690baea58e8262792ce49caf40b25b185a94f18e469447",
+            "bytes": 35424
+          },
+          {
+            "name": "reading-list.html",
+            "sha256": "eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d",
+            "bytes": 12193
+          },
+          {
+            "name": "reading-list.json",
+            "sha256": "b97c9ede9ab73f9c41eba8486de72fcd46458a02d18cb588c4a3688bf237e392",
+            "bytes": 15225
+          },
+          {
+            "name": "reading-list.csv",
+            "sha256": "a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c",
+            "bytes": 11196
+          }
+        ]
+      },
+      "laterReceiver": {
+        "schema": "stellar-forge.sf88.reading-return.v1",
+        "directory": "/dev/dff77-reading-exchange-bc7fnhcu/second-receiver",
+        "project": {
+          "directory": "/dev/dff77-reading-exchange-bc7fnhcu/second-receiver/project",
+          "archive_sha256": "fd1452270d9b52a162690baea58e8262792ce49caf40b25b185a94f18e469447",
+          "archive_bytes": 35424,
+          "originals": 4,
+          "source_bytes": 74283,
+          "workspace": {
+            "schema": "stellar-forge.sf88.reading-workspace.v1",
+            "id": "67584d44-9ce7-42f9-b216-3375eb1968bb",
+            "created": "2026-10-12T20:00:50+00:00",
+            "source_identity": "a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2",
+            "current_snapshot": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+            "snapshots": [
+              {
+                "id": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "label": "Original resource collection operating material",
+                "created": "2026-10-12T20:00:50+00:00",
+                "source_identity": "a387ba452f30f6f2b8c1e7e92580643366b54c24fadc8aef20761ea563e43eb2",
+                "native_generation": "8c62234d-bcd2-422a-aafc-e2179faaad3b",
+                "counts": {
+                  "bytes": 74283,
+                  "download_only": 0,
+                  "indexed": 4,
+                  "passages": 5,
+                  "resources": 4,
+                  "unavailable": 0
+                }
+              }
+            ],
+            "assets": {
+              "files": 4,
+              "bytes": 74283,
+              "passages": 5
+            },
+            "syncs": [
+              {
+                "id": "receive-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "state": "complete",
+                "completed": 4,
+                "total": 4,
+                "error": null
+              }
+            ],
+            "saved_searches": [],
+            "reading_lists": [
+              {
+                "created": "2026-10-12T20:00:51+00:00",
+                "id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "items": [
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "4441583d80952f05be92ddd5fe31657e8f1cdc4602d45dbbe2efaf5834a0a23d"
+                    },
+                    "digest": "3be4083c2cd7d6b92275763e788ce1cd9296e792d00a3f391985656823f46642",
+                    "end_byte": 129,
+                    "end_line": 4,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "COLLECTIONS.md",
+                    "note": "Operator review: keep this exact source passage first and preserve the question that selected it.",
+                    "ordinal": null,
+                    "resource_id": "3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd",
+                    "selection_kind": "source-range",
+                    "sha": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                    "start_byte": 0,
+                    "start_line": 1
+                  },
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "333c0549e116468ab9b2f370e415a1f2eb436138d7038c53b00659651859aa85"
+                    },
+                    "digest": "d398c328084969deccfa2098425c46de89913e8a929bec5021deea32ab5eaad9",
+                    "end_byte": 104,
+                    "end_line": 4,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "README.md",
+                    "note": "",
+                    "ordinal": null,
+                    "resource_id": "defa4f31d93ca765bb168087b8477a2ecf6bdfbfb19525ca6e3e2d2c54eab344",
+                    "selection_kind": "source-range",
+                    "sha": "dcb2d7e5df7227eff31954a7a3206cd6873a44412f2c9f53b3b04d13c05ae2cd",
+                    "start_byte": 0,
+                    "start_line": 1
+                  },
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "d3b2ded86956449f5cbdd61801c161d3d1b524f4692630f912d4b35790d0022b"
+                    },
+                    "digest": "e2be996179b212d10503abb6179ec9ffdd9a07723fbb0f1b512ebc4c8e73aecd",
+                    "end_byte": 37463,
+                    "end_line": 627,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "README.md",
+                    "note": "",
+                    "ordinal": null,
+                    "resource_id": "52aeae7a63cff821c6f3a69b7481ed7881a18e9f08957925d8a2d0ce70517795",
+                    "selection_kind": "source-range",
+                    "sha": "d0b8bcc69846334f8162c3bb7e91c35532114741ee571c790aea51d57575348b",
+                    "start_byte": 37210,
+                    "start_line": 624
+                  },
+                  {
+                    "citation": {
+                      "handover_id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                      "selection_id": "b47f06206d729eced1448b7f79efb78b3eb904720d76da52b49093d5be7e39df"
+                    },
+                    "digest": "ea1be9735c5cefdfb0e299a017f4e258c613f2490349509c417e8e22dfa082d7",
+                    "end_byte": 2097,
+                    "end_line": 45,
+                    "line_convention": "CRLF_OR_CR_OR_LF",
+                    "name": "READING.md",
+                    "note": "",
+                    "ordinal": null,
+                    "resource_id": "a986b3244c973b519993d69633a6b4b71510d767f74a9a2821da6810cc10b378",
+                    "selection_kind": "source-range",
+                    "sha": "49fb4868bf7928e0b28f667a57886f7db80108fd882ab70b3ce79aaa8648aa53",
+                    "start_byte": 1973,
+                    "start_line": 41
+                  },
+                  {
+                    "digest": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                    "end_byte": 8141,
+                    "end_line": 160,
+                    "name": "COLLECTIONS.md",
+                    "note": "Reader-added native passage for adjacent source context.",
+                    "ordinal": 0,
+                    "resource_id": "3272ed79c3e7580f6c16660b3d92ff2ef0d52171334660226f15f581c74f35bd",
+                    "sha": "7118c983b41fcdd01720b9ee5e96f444ed1649ef226988f211a6aab2dd10b76d",
+                    "start_byte": 0,
+                    "start_line": 1
+                  }
+                ],
+                "kind": "list",
+                "name": "Reviewed source collection reading",
+                "note": "The reviewed order retains the original question and each exact source range.",
+                "revision": 3
+              }
+            ],
+            "handovers": [
+              {
+                "id": "handover-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "revision": 1,
+                "created": "2026-10-12T20:00:50+00:00",
+                "name": "Original resource collection operating material",
+                "capture_sha256": "39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+                "query": {
+                  "build": "c6e8a7575f51535d75a118dd4c4a775da8e875bc1e2263cc9a1fa1cd82e0d853",
+                  "engine": "stellar-forge.resource-content-search.v1",
+                  "mode": "all",
+                  "q": "resource collection",
+                  "resourceId": null,
+                  "savedQuery": {
+                    "id": "a9a646326ea7ec2ef4a00b0cb7719a55b0826777035bb2ef1cf6a9de06b4b644",
+                    "mode": "all",
+                    "name": "Resource collection reading",
+                    "q": "resource collection",
+                    "revision": 1,
+                    "updatedAt": "2026-10-12T20:00:49.806Z"
+                  },
+                  "semantics": {
+                    "combine": "AND",
+                    "quotes": "punctuation",
+                    "scope": "whole-file",
+                    "words": "Unicode NFC case-insensitive; accents retained"
+                  },
+                  "terms": [
+                    "resource",
+                    "collection"
+                  ]
+                },
+                "selected_passages": 4,
+                "source_files": 4,
+                "collection": {
+                  "id": "reading-handover-source",
+                  "memberCount": 4,
+                  "revision": 1,
+                  "sha256": "573c4f78d35fdac0e3cf751ccae80c517234f884b08bd03cfe6dea933c4d3f8c"
+                },
+                "archive": {
+                  "bytes": 91136,
+                  "manifestSha256": "edeb39b1a43519c6c823ef211e0ed7b84c28644b48238e751215076074880736",
+                  "name": "sources.tar",
+                  "sha256": "b2b36307db802b6e3a61cda3f3397b254b8d67dc4c63adcb6b270360452875b9"
+                },
+                "reading_list_id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca"
+              }
+            ]
+          }
+        },
+        "list": {
+          "id": "reading-39b60a7ae724e0f028699de19c81b87a4ec54c6706ea60fbad5f242498d53cca",
+          "name": "Reviewed source collection reading",
+          "passages": 5,
+          "revision": 3
+        },
+        "archive_sha256": "751e14b4adb46e045aaf1177927359c818acb499c6a710335afcd85e197095d2",
+        "archive_bytes": 51320,
+        "files": [
+          {
+            "bytes": 35424,
+            "name": "project.zip",
+            "sha256": "fd1452270d9b52a162690baea58e8262792ce49caf40b25b185a94f18e469447"
+          },
+          {
+            "bytes": 12193,
+            "name": "reading-list.html",
+            "sha256": "eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d"
+          },
+          {
+            "bytes": 15225,
+            "name": "reading-list.json",
+            "sha256": "b97c9ede9ab73f9c41eba8486de72fcd46458a02d18cb588c4a3688bf237e392"
+          },
+          {
+            "bytes": 11196,
+            "name": "reading-list.csv",
+            "sha256": "a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c"
+          }
+        ]
+      },
+      "returnedCollection": {
+        "bytes": 90624,
+        "sha256": "68000878a5ce15173206a94a8e03e0b1474530a131be147eeb75e7bcf0c2df95",
+        "source": {
+          "kind": "collection",
+          "id": "reviewed-original-source-reading",
+          "revision": 1,
+          "format": "tar"
+        }
+      }
+    }
+  ],
+  "result": "PASS",
+  "completed_at": "2026-10-12T20:00:51Z",
+  "artifacts": [
+    {
+      "name": "reviewed-reading.html",
+      "sha256": "eb5665a832962bd66c175a4e77165c50f850ff42fd2a5d0d280ec457008c2b2d",
+      "bytes": 12193
+    },
+    {
+      "name": "reviewed-reading.json",
+      "sha256": "1adbc444af78b4090b142ccfeb04100b5ffdf51ec06cb502f07a35a6a304cd35",
+      "bytes": 15225
+    },
+    {
+      "name": "reviewed-reading.csv",
+      "sha256": "a869560e75f6f12234a70572dc90f2d86f979cf5e673e55e436df481790ba29c",
+      "bytes": 11196
+    },
+    {
+      "name": "sdk-reading-handover.zip",
+      "sha256": "6492b3e65d39eaaeba41fc3bdd5ecffb9acd06439e5125326051b597357e0cc8",
+      "bytes": 29766
+    },
+    {
+      "name": "reading-return.zip",
+      "sha256": "f0285286e6298e06fe3057ec8d85854c36658f858214bdd530742ec515e8c82d",
+      "bytes": 49164
+    },
+    {
+      "name": "editable-reading-project.zip",
+      "sha256": "c6bef7fd2bcd8c8e70a008c9ac20411ef03b19adddd575673e21f07ef90f4e74",
+      "bytes": 34083
+    },
+    {
+      "name": "second-reading-return.zip",
+      "sha256": "751e14b4adb46e045aaf1177927359c818acb499c6a710335afcd85e197095d2",
+      "bytes": 51320
+    },
+    {
+      "name": "reviewed-original-collection.tar",
+      "sha256": "68000878a5ce15173206a94a8e03e0b1474530a131be147eeb75e7bcf0c2df95",
+      "bytes": 90624
+    }
+  ]
+}
