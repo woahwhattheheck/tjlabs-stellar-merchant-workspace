@@ -24,6 +24,7 @@ They retain its original dependency manifests and lock.
 | Accounting provider operations | The existing merchant MCP runtime and original selected QuickBooks/Xero workspace configuration |
 | Merchant pricing, supplier costs and scenario planning | The same installed merchant runtime, original seller configuration and selected operations source or retained exports |
 | Material catalog | The catalog guide's original runtime feature and provider configuration |
+| Kafka event datasets and complete customer clients | Python 3.11 or later; `confluent-kafka==2.16.0` in that Python environment for broker work; Node 22.16 or later for browser/client and the merchant's selected runtime features |
 
 Use `starforge registrations` to inspect the selected package's actual command
 registrations. `starforge source` opens its source identity. Runtime upgrades
@@ -560,6 +561,8 @@ provides the complete host declaration, saved request and file-transfer commands
 | Watcher stops | The original incident directory and current process ownership |
 | Notification reply is uncertain | The original event, destination, attempts and provider receipt |
 | Accounting response is uncertain | Original prepared operation directory and native reconciliation |
+| Kafka capture stops | The original capture ID, immutable ranges, accepted source bytes and latest returned revision |
+| Kafka merchant download stops | The original MCP endpoint, workspace/artifact, native manifest and private receiving directory |
 | Runtime installation stops | The same install directory, source archive and original installer state |
 
 Before moving or upgrading a complete operating workspace, stop its owned
@@ -571,3 +574,143 @@ Open the received result, inspect its original identity and selected files, then
 continue work in that received workspace. Keep the previous runtime and
 completed handoff while selecting a new runtime or release. The original
 controllers retain concurrency checks, history and ownership across reopening.
+
+## 10. Turn Kafka history into a dataset and merchant
+
+Use the Kafka workspace for a selected broker topic, explicit partition ranges,
+retained event history, a mapped dataset, and its complete merchant or customer
+handoff. The browser, Node client and Kafka merchant tools connect to the same
+saved workspace. A complete received project can be opened and queried using
+its retained source.
+
+Create the original workspace with Python 3.11 or later and Node 22.16 or later.
+Install `confluent-kafka==2.16.0` in that selected Python environment for broker
+inspection and capture:
+
+~~~sh
+starforge dataset-kafka --python /absolute/python3 \
+  --workspace /srv/starforge/state/kafka init
+
+starforge dataset-kafka --python /absolute/python3 \
+  --workspace /srv/starforge/state/kafka serve --port 0 \
+  --connection-file /srv/starforge/state/kafka-console.connection \
+  --startup-format json
+~~~
+
+Open the private URL returned by the original server. In Applications, choose
+**Kafka datasets**, select this workspace and its actual Python/environment,
+then Review, Save and Start. The managed entry retains the source, workspace
+and Python binding. Open uses its accepted console; Stop drains its original
+capture and console before a following Start reopens the same state.
+
+### Select and retain the actual source
+
+Save the actual bootstrap addresses, topic, security protocol and credential
+environment variable names. Keep the referenced values in the server's existing
+private environment. Each saved connection has a fixed revision.
+
+Inspect that revision and retain the returned cluster identity, topic UUID and
+partition offsets. Prepare the inclusive start and exclusive end for each
+selected partition, then run that capture. Resume uses its original capture ID
+and latest returned revision. Stop closes the native consumer and retains the
+accepted batches and next offsets.
+
+The event table uses compact metadata. Open an individual event for its complete
+original key, value, ordered headers, timestamp and exact partition/offset
+identity. UTF-8, Base64 and decoded JSON views preserve the native representation;
+a null value remains a tombstone, an empty value remains empty, and equal payloads
+at different offsets remain separate events.
+
+### Build the edition customers will use
+
+Choose the retained capture revisions and the edition's event/deletion policy.
+**Every event** preserves the selected history. **Latest per partition key**
+uses each exact binary key within its original topic partition and requires a
+key on every selected event. Retain an audit edition when the source also
+contains unkeyed events. For a Goldsky stream, review the original `dbz.op`
+headers and explicitly select how its create, update and delete events should
+affect the customer dataset.
+
+Review the suggested fields in the mapping editor. Save the mapping, build the
+edition, query its actual rows and compare following editions through the
+original dataset engine. The source, mapping, build and fixed Kafka projection
+remain independently selectable.
+
+Generate the merchant package with the actual seller address, Stellar network,
+asset, amount, origin and route. The native generator supplies the seller
+configuration, selected dataset and JavaScript/TypeScript customer files.
+Use the existing release and deployment workflow for that generated merchant.
+
+### Connect an agent to the same workspace
+
+The complete Node client reads the private console connection on every
+operation and checks its live source/workspace identity:
+
+~~~sh
+starforge kafka-client inspect \
+  --connection /srv/starforge/state/kafka-console.connection
+~~~
+
+Use the returned workspace UUID and binding SHA-256 as `--expect-workspace` and `--expect-binding` for following commands. The client provides the
+original connection, inspection, capture, projection, mapping, build, query and
+complete download operations. It preserves large JSON numeric tokens and full
+native response bytes.
+
+The Kafka merchant setup registers the existing console by a local workspace
+alias and the retained workspace/binding IDs. Its 26 Kafka tools attach to that
+same original HTTP writer. Host-selected input files retain their original
+kind and SHA-256. The source-owned provider registry keeps the configured
+workspace, file reader and close lifecycle together.
+
+Follow the complete
+[Node client guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/CLIENT.md)
+and
+[Kafka merchant setup guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MCP.md)
+for the exact client requests, private connection schema, native factory
+configuration and tool catalog.
+
+### Deliver and reopen the complete result
+
+The Kafka project export carries the chosen projection history and the native
+NDJSON source, mapping and build together. Select the original build and
+projection when exporting. Import reconstructs that same edition in the
+receiving private workspace and retains its captured history.
+
+For a merchant export, retain the artifact returned by the original tool and
+inspect its native manifest:
+
+~~~sh
+starforge kafka-merchant-download inspect \
+  --url "$KAFKA_MCP_URL" --workspace "$KAFKA_WORKSPACE" \
+  --artifact "$KAFKA_ARTIFACT"
+
+starforge kafka-merchant-download download \
+  --url "$KAFKA_MCP_URL" --workspace "$KAFKA_WORKSPACE" \
+  --artifact "$KAFKA_ARTIFACT" --directory ./received-kafka-export \
+  --manifest-sha256 "$KAFKA_MANIFEST_SHA256" \
+  --workspace-id "$KAFKA_WORKSPACE_ID" \
+  --binding-sha256 "$KAFKA_BINDING_SHA256"
+~~~
+
+Supply the existing bearer token through `MCP_ACCESS_TOKEN`. The downloader
+publishes the complete file only after its full length and SHA-256 match the
+original manifest. Keep the manifest, received file and `download-state/`
+together. After an interruption, repeat the same command with the same endpoint,
+workspace, artifact and receiving directory to continue its durable byte offset.
+
+The completed local result reopens with the original merchant stopped:
+
+~~~sh
+starforge kafka-merchant-download verify \
+  --directory ./received-kafka-export \
+  --workspace "$KAFKA_WORKSPACE" --artifact "$KAFKA_ARTIFACT" \
+  --manifest-sha256 "$KAFKA_MANIFEST_SHA256"
+~~~
+
+The
+[Kafka workspace guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/README.md)
+contains the native request files, exact range/revision semantics, export
+members and recovery commands. The
+[customer download guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MERCHANT-DOWNLOAD.md)
+covers SDK receiving, cancellation, remote restart, complete-file reopening and
+the same retained file transfer.
