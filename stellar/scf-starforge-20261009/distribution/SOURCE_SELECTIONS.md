@@ -8,6 +8,39 @@ Applications launcher and recovery commands remain the distribution workflow.
 
 ## Complete runtime and browser source
 
+Selecting the original merchant HTTP host also selects its complete operator
+console. This applies when the host's original `serve.mjs` is named by a base
+command, package export, support file or component, or by a selected source
+contribution. Conditional package exports use the same rule. The host's
+`--operator-console-dir` option dynamically loads this console; static Node
+import discovery alone cannot find it.
+
+The shared selector retains the original console and developer SDK components,
+requires the console's original `service.mjs`, and carries its maintained browser
+route manifest.
+The builder then follows those original static imports and mapped browser
+assets to complete the source closure. The host's imported developer client
+generator also reads three maintained source bodies at module load, rather
+than importing them: `developer/client-runtime.mjs`, `developer/request.mjs`
+and `query-parameters.mjs` in the original SF30 SDK. The shared selector carries
+these exact runtime inputs as explicit support files, together with the original
+seller developer portal's `developer/index.html`, `developer/browser.mjs` and
+`developer/style.css` bodies. This keeps the configured source/release path
+available when it loads the seller portal. Each resulting source file keeps its
+original Git blob, SHA-256 and byte count in the package manifest. Recipes
+without that original HTTP host receive no extra console capability from this
+rule. The recipe's selected commands, exports, providers, dependency groups
+and runtime profile remain its original choices.
+
+A source selection that explicitly excludes a required console/runtime input or
+mapped source still fails the existing packaged-entry/import checks. Use a
+separate product selection when omitting the HTTP host; an incomplete declared
+host cannot be repaired by removing its runtime checks. Existing archived
+packages retain their original selected source. To receive this correction,
+build a new output from the correction's complete source commit, install or
+receive that package through the maintained runtime workflow, and inspect its
+own manifest before opening the merchant host.
+
 A selected component carries the maintained browser route maps for its included
 HTTP servers. The builder uses the same JSON manifests as those servers, so a
 browser import such as `./operations.mjs` resolves through its served URL to
