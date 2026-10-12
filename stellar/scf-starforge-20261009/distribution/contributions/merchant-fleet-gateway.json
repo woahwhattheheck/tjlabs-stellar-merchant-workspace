@@ -13,5 +13,14 @@
   ],
   "applicationProviders": {
     "merchant-fleet": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-fleet.mjs"
+  },
+  "components": [
+    "products/merchant-fleet"
+  ],
+  "commands": {
+    "merchant-fleet-configure": "products/merchant-fleet/configure.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-fleet-configure": "Prepare original fleet Applications settings and stable reviewed save/start request files"
   }
 }

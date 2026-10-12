@@ -352,15 +352,21 @@ export async function main(args = process.argv.slice(2)) {
   const signals = ['SIGTERM', 'SIGINT'];
   const stop = () => {
     requestedClose = true;
-    if (service && !stopping) stopping = service.close().finally(() => {
+    if (!service) return undefined;
+    if (stopping) return stopping;
+    const attempt = Promise.resolve().then(() => service.close());
+    stopping = attempt;
+    // The original native close retains leases on incomplete cleanup and permits
+    // the same owner to retry. Keep both signal handlers until it really drains.
+    attempt.then(() => {
       for (const signal of signals) process.off(signal, onSignal);
-    });
-    return stopping;
+    }, () => { if (stopping === attempt) stopping = undefined; });
+    return attempt;
   };
   const onSignal = () => { stop()?.catch(() => { process.exitCode = 1; }); };
   // Embedded original SF82 sessions use handleSignals:false. Own signals before
   // startup can create its first session, including a signal received mid-boot.
-  for (const signal of signals) process.once(signal, onSignal);
+  for (const signal of signals) process.on(signal, onSignal);
   try {
     service = await startFleetWorkspace({ stateDirectory: options.get('--state'), manifests, port: Number(portText),
       releasePlan: options.get('--releases'), releaseDirectory: options.get('--release-state'),
@@ -373,9 +379,12 @@ export async function main(args = process.argv.slice(2)) {
     process.stdout.write(JSON.stringify(announcement) + '\n');
     return service;
   } catch (error) {
-    try { if (service) await service.close(); }
-    catch (cleanup) { error.cleanupError = nativeError(cleanup); }
-    finally { for (const signal of signals) process.off(signal, onSignal); }
+    if (service) {
+      try { await stop(); }
+      catch (cleanup) { error.cleanupError = nativeError(cleanup); }
+    } else {
+      for (const signal of signals) process.off(signal, onSignal);
+    }
     throw error;
   }
 }
