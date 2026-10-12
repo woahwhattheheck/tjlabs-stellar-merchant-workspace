@@ -79,6 +79,8 @@ the original `0.1.0-source.g0123456789ab` version form.
 | `mssql` | SQL Server catalog and typed queries, retained sellers, merchant tools and complete customer/merchant receiving | SQL Server data products; merchant console | [Installed product and operating guide](../../../products/mssql/README.md) |
 | `accountant-portfolio` | Client procedures, exact close files, preparation/review, named backup handovers, staff capacity, native accounting and complete portfolio receiving | Client runbooks; Client portfolio; Merchant accounting; Cryptoworth accounting | [Complete installation and receiving](../../../products/accountant-portfolio/README.md) |
 | `merchant-economics` | Supplier sources, exact tariffs and pricing, customer quotations, accepted implementation, Service and buyer/accountant continuation, full receiving and seller releases | Merchant pricing and scenario planning; Merchant support; API merchant; Runtime management | [Complete installed workflow](../../../products/merchant-economics/OPERATING.md) |
+| `merchant-receivables` | Original service quotations, issued invoices, payments, credits, retained installment schedules, dated collections and complete customer accounts | Merchant receivables; Customer payment plans; Merchant accounting; Merchant support | [Complete installed operation](../../../products/merchant-receivables/README.md) |
+| `merchant-payment-plans` | Reviewed customer installments, dated collection desk, retained schedule editions and original invoice, payment and credit operation | Customer payment plans; Merchant receivables; Merchant accounting; Merchant support | [Complete installation and collection workflow](../../../products/merchant-payment-plans/README.md) |
 | `all` or no flag on a new build | Complete maintained toolkit | All registered applications | [Runtime installation](RUNTIME_INSTALL.md) |
 
 Use the product's installed `starforge --help` and `starforge registrations`
@@ -135,6 +137,7 @@ its dependency profile from the complete installed workflow linked above:
 
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
+| `merchant-receivables`, `merchant-payment-plans` | `--native --feature schema --feature openapi --operator` |
 | `study-research` | `--native --feature schema --feature openapi --feature mcp --feature postgres --operator` |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations`, `dbnomics`, `coingecko` | `--native --feature schema --feature openapi --feature mcp --operator` |
