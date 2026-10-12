@@ -64,6 +64,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
   const available=()=>active&&root.isConnected,$=selector=>root.querySelector(selector);
   const accountName=id=>current.records.contributors.find(row=>row.id===id)?.name||'Original supplier';
   const sourceName=id=>current.sources.find(row=>row.id===id)?.filename||id;
+  const costName=id=>current.plan.scenario.future_costs.find(row=>row.id===id)?.remaining_work||id||'Unassigned';
   const editable=()=>current.program.state==='OPEN';
   const original=(kind,id)=>current.records[kind]?.find(row=>row.id===id);
   function state(){
@@ -112,7 +113,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
       field('Retained documents','sourceIds',data.sourceIds||[],{options:current.sources.map(row=>[row.id,row.filename]),multiple:true,wide:true})+
       field('Original source reference','sourceNote',data.sourceNote||'',{area:true,wide:true})+
       '</div><div class="supplier-actions">'+button('Attach original document','attach-source')+
-      (session.previousRequest?.body?.action==='source.add'&&session.previousRequest.after?.draftId===session.draft?.draftId?button('Record retained source document','retained-source'):'')+'</div></fieldset>';
+      (session.previousRequest?.body?.action==='source.add'&&!session.previousRequest.recovered&&session.previousRequest.after?.draftId===session.draft?.draftId?button('Record retained source document','retained-source'):'')+'</div></fieldset>';
   }
   function costs(){return [['','Unassigned'],...current.plan.scenario.future_costs.map(row=>[row.id,row.remaining_work||row.id])];}
   function workOptions(contributorId){return current.records.work.filter(row=>row.contributorId===contributorId).map(row=>[row.id,row.description+' · '+date(row.endDate)+' · '+row.hours+' h · '+label(row.state)]);}
@@ -164,7 +165,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
         esc(date(row.issuedDate))+'<br>'+esc(date(row.dueDate)),esc(money(row.totalUsd)),esc(money(row.closingPaidUsd)),
         esc(money(row.openUsd))+' / '+esc(money(row.creditUsd)),button('Open invoice','show-invoice',{id:row.id})]))+pager(count,pages)+
       (selected?'<section class="supplier-detail"><h4>'+esc(selected.number)+'</h4><p>'+esc(label(selected.state))+' · Original total '+esc(money(selected.totalUsd))+'</p>'+
-        table(['Line description','Amount USD','Work package','Original work links'],selected.lines.map(line=>[esc(line.description),esc(money(line.amountUsd)),esc(line.costId||'Unassigned'),
+        table(['Line description','Amount USD','Work package','Original work links'],selected.lines.map(line=>[esc(line.description),esc(money(line.amountUsd)),esc(costName(line.costId)),
           line.workIds.map(id=>button(original('work',id)?.description||id,'show-work',{id})).join(' ')]))+
         '<div class="supplier-actions">'+nativeActions('invoices',selected)+button('Allocate an observed payment','invoice-payment',{id:selected.id,disabled:!!session.draft||!editable()})+
         button('Allocate an observed refund','invoice-refund',{id:selected.id,disabled:!!session.draft||!editable()})+'</div><h5>Original sources</h5>'+sources(selected)+
@@ -217,6 +218,8 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
   function editor(){
     const draft=session.draft;if(!draft)return '';
     const data=draft.data,transition=!['contributor.save','work.save','invoice.save','cash.record'].includes(draft.action);
+    const supplierId=data.contributorId||draft.contributorId||draft.before?.contributorId;
+    const supplierName=draft.action==='contributor.save'?(data.name||'New supplier'):supplierId?accountName(supplierId):draft.action.startsWith('cash.')?'Original cash observation':'Original supplier';
     let fields='';
     if(draft.action==='contributor.save')fields=field('Supplier or contributor name','name',data.name,{required:true})+
       field('Kind','kind',data.kind,{options:choices(['PERSON','ORGANIZATION','TEAM','ROLE'])})+
@@ -248,7 +251,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
         field('Allocated USD','allocations.'+index+'.amountUsd',item.amountUsd,{required:true})+'</div>'+
         button('Remove allocation','remove-allocation',{id:String(index)})+'</fieldset>').join('')+
       button('Add allocation','add-allocation',{disabled:data.allocations.length>=200})+'</div>';
-    return '<section class="supplier-editor"><h4>'+esc(draft.label)+'</h4><p>Supplier: '+esc(accountName(data.contributorId||draft.contributorId||session.contributorId))+
+    return '<section class="supplier-editor"><h4>'+esc(draft.label)+'</h4><p>Supplier: '+esc(supplierName)+
       ' · Original case version '+draft.expectedVersion+'</p>'+
       (draft.reconciledRecord?'<section class="supplier-reconciliation"><h5>Current original record at this version</h5><p>The retained form is your earlier input. Compare it with the current original record before saving.</p>'+
         '<pre>'+esc(pretty(draft.reconciledRecord))+'</pre>'+button('Use current original record in the form','use-current-record')+'</section>':'')+
@@ -282,7 +285,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
       button('Download complete account JSON','download-report',{disabled:!report,always:true})+
       button('Download desk input','download-desk',{always:true})+button('Open desk input','open-desk')+
       button('Budget performance','performance')+button('Bulk ledger intake','ledger-intake')+
-      button('Contributor details','contributors')+button('All observed cash','cash')+'</div>'+
+      button('Contributor details','contributors')+button('Account statements','statements')+button('All observed cash','cash')+'</div>'+
       '<input data-pa-desk-file type="file" accept=".json,application/json" hidden><input data-pa-source-file type="file" hidden>'+
       editor()+summaries()+
       '<nav class="supplier-tabs" aria-label="Supplier account sections">'+[['summary','Account / balances'],['invoices','Invoices'],['work','Work'],['cash','Payments / refunds'],['sources','Original sources'],['activity','Period activity']]
@@ -295,10 +298,12 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     status();controls();
   }
   async function loadReport(){
+    report=null;
     const query=new URLSearchParams({endDate:session.endDate||today(),expectedVersion:String(current.program.version)});
     if(session.contributorId)query.set('contributorId',session.contributorId);
     if(session.startDate)query.set('startDate',session.startDate);
     const value=await api(prefix+'/supplier-account?'+query);
+    if(!available())return;
     if(value.schema!==REPORT_SCHEMA||value.case?.id!==caseId||value.case.version!==current.program.version)throw new Error('The account does not match the selected original case.');
     report=value;session.contributorId=value.selection.contributorId;session.startDate=value.selection.startDate||'';session.endDate=value.selection.endDate;
     await persist();
@@ -333,7 +338,8 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     if(session.draft||session.pending)throw new Error('Finish or close the current original draft first.');
     const [kind]=action.split('.'),before=original(kind==='invoice'?'invoices':kind,id);
     if(!before)throw new Error('Open the original record in this case.');
-    session.draft={draftId:crypto.randomUUID(),action,data:{id},before:clone(before),expectedVersion:current.program.version,reason:'',
+    session.draft={draftId:crypto.randomUUID(),contributorId:before.contributorId||report?.account?.id||session.contributorId||null,
+      action,data:{id},before:clone(before),expectedVersion:current.program.version,reason:'',
       label:label(action.replace('.',' '))+' · '+(before.number||before.description||before.externalRef)};
     session.reviewed=null;schedule();render();
   }
@@ -356,6 +362,10 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
       const result=await saveApi(prefix+'/command',clone(pending.body));
       if(result.id!==caseId||result.action!==pending.body.action)throw new Error('The result differs from the retained original request.');
       session.result=result;session.pending=null;session.reviewed=null;
+      if(pending.body.action==='source.add'&&session.previousRequest?.body?.action==='source.add'&&
+        session.previousRequest.after?.draftId===pending.after.draftId&&pretty(session.previousRequest.body.data)===pretty(pending.body.data)){
+        session.previousRequest.recovered={requestId:pending.body.requestId,result:clone(result),recordedAt:new Date().toISOString()};
+      }
       if(pending.after.kind==='source'&&session.draft?.draftId===pending.after.draftId){
         session.draft.data.sourceIds||=[];if(!session.draft.data.sourceIds.includes(result.recordId))session.draft.data.sourceIds.push(result.recordId);
         session.draft.expectedVersion=result.version;
@@ -404,7 +414,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     }
     if(node.matches('[data-pa-attention]')){session.onlyAttention=node.checked;session.page=0;render();return;}
     const key=node.dataset.paField;if(!key)return;
-    if(key.startsWith('select.')){session[key.slice(7)]=node.value;return;}
+    if(key.startsWith('select.')){session[key.slice(7)]=node.value;report=null;session.selectedId=null;session.page=0;schedule();render();return;}
     if(!session.draft)return;
     setField(key,node.multiple?Array.from(node.selectedOptions).map(option=>option.value):node.value);
     session.reviewed=null;schedule();
@@ -434,13 +444,13 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     if(session.pending)return;
     if(action==='panel'){session.panel=id;session.page=0;session.query='';session.onlyAttention=false;schedule();render();return;}
     if(action==='previous'||action==='next'){session.page+=action==='next'?1:-1;render();return;}
-    if(['performance','ledger-intake','contributors','cash'].includes(action)){onOpen(action);return;}
+    if(['performance','ledger-intake','contributors','statements','cash'].includes(action)){onOpen(action);return;}
     if(action==='load'){run(async()=>{session.page=0;session.selectedId=null;await loadReport();});return;}
     if(action==='refresh'){run(async()=>{const next=await api(prefix);await onCase(next,{version:next.program.version,action:'refresh'});});return;}
     if(action==='select-account'){run(async()=>{session.contributorId=id;session.selectedId=null;session.page=0;await loadReport();});return;}
     if(action==='open-desk'){$('[data-pa-desk-file]').click();return;}
     if(action==='attach-source'){$('[data-pa-source-file]').click();return;}
-    if(action==='retained-source'&&session.previousRequest?.body.action==='source.add'){run(()=>prepareRequest('source.add',session.previousRequest.body.data,{kind:'source',draftId:session.draft?.draftId}));return;}
+    if(action==='retained-source'&&session.previousRequest?.body?.action==='source.add'&&!session.previousRequest.recovered&&session.previousRequest.after?.draftId===session.draft?.draftId){run(()=>prepareRequest('source.add',session.previousRequest.body.data,{kind:'source',draftId:session.draft?.draftId}));return;}
     if(action==='source'){run(async()=>{const response=await api(prefix+'/sources/'+id,undefined,{download:true});download(await response.blob(),sourceName(id));});return;}
     if(action==='export-account'&&report){run(async()=>{
       const selected=report.selection,query=new URLSearchParams({endDate:selected.endDate,expectedVersion:String(report.case.version),expectedReportSha256:report.reportSha256});
