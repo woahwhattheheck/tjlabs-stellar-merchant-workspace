@@ -6,6 +6,7 @@ import {resolve,dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {GRANT_TRANSFER_CHUNK_BYTES} from './agent-contracts.mjs';
 import {MerchantGrantWorkspaces,readGrantWorkspaceConfiguration}
   from '../../../../stellar-forge/mcp-merchant-operator/grant-workspace.mjs';
 
@@ -110,7 +111,7 @@ async function main(){
     const chunks=[];let offset=0,readId;
     do{
       const chunk=await provider.call('merchant_grant_file_read',{workspace:snapshot.workspace,snapshotId:snapshot.id,
-        expectedSha256:snapshot.file.sha256,offset,limit:196608,...(readId?{readId}:{})});
+        expectedSha256:snapshot.file.sha256,offset,limit:GRANT_TRANSFER_CHUNK_BYTES,...(readId?{readId}:{})});
       need(chunk.offset===offset&&chunk.encoding==='base64','Original byte reader returned another position or encoding.');
       const bytes=Buffer.from(chunk.data,'base64');need(bytes.length===chunk.bytesRead,'Original byte page is incomplete.');
       chunks.push(bytes);readId=chunk.readId;offset=chunk.nextOffset;
@@ -171,7 +172,7 @@ async function main(){
       const phaseName='attach-'+alias.replaceAll('_','-');
       const attached=await call(phaseName,'source_attach',{...sourceArgs(caseId),expectedVersion:current.program.version,
         input:{hostInput:alias},expectedInputSha256:descriptor.sha256,
-        requestId:requestId(phaseName),actor:ACTOR,filename,kind:descriptor.kind,mediaType:descriptor.mediaType,
+        requestId:requestId(phaseName),actor:ACTOR,filename,kind:'work',mediaType:descriptor.mediaType,
         sourceUrl:'https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C8ALYESLB',
         observedAt:originalWorkshare.workshare_input.source.observed_at});
       attachments[alias]={sourceId:attached.value.recordId,sha256:descriptor.sha256};
@@ -314,9 +315,27 @@ async function main(){
   need(cliHistory.editions.length===2&&cliHistory.nextBefore===null,'Reopen the complete original Installation history.');
   await exactFile(join(options.work,'delivery','Freeform_Workshare_Installation_CLI_History.json'),json(cliHistory));
   const cliZip=join(options.work,'delivery','Freeform_Workshare_Installation_CLI_Export.zip');
-  const cliExport=cli('installation-export',['--case',delivery.receivingCaseId,'--installation',delivery.installationId,
-    '--revision','2','--output',cliZip]);
+  const cliRequest={operation:OPERATION,phase:'cli-export',caseId:delivery.receivingCaseId,
+    installationId:delivery.installationId,revision:2,editionSha256:delivery.editions[1].sha256,
+    argv:['--case',delivery.receivingCaseId,'--installation',delivery.installationId,'--revision','2','--output',cliZip]};
+  await exactFile(join(phaseRoot,'cli-export.request.json'),json(cliRequest));
+  const commandFile=join(phaseRoot,'cli-export.command-result.json');
+  let commandBytes=await optional(commandFile);
+  if(!await optional(cliZip)){
+    need(!commandBytes,'The original completed CLI export file must be restored with its saved command result.');
+    const commandResult=cli('installation-export',cliRequest.argv);
+    commandBytes=json(commandResult);await exactFile(commandFile,commandBytes);
+  }
+  const completeCase=delivery.files.find(file=>file.name==='Freeform_Workshare_Installation_Received_Edition_2.zip');
+  const cliArchive=runPython(options.python,
+    "import runpy,sys,json\nsys.path.insert(0,sys.argv[1])\nm=runpy.run_path(sys.argv[2])\n"+
+    "print(json.dumps(m['verify_cli_export'](sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],int(sys.argv[7]),sys.argv[8])))",
+    [HERE,join(HERE,'workshare-installation-inputs.py'),cliZip,completeCase.path,
+      delivery.receivingCaseId,delivery.installationId,'2',delivery.editions[1].sha256]);
+  const cliExport={...cliRequest,archive:cliArchive,originalCommand:commandBytes?JSON.parse(commandBytes):null};
+  await exactFile(join(phaseRoot,'cli-export.complete.json'),json(cliExport));
   const cliBytes=await readFile(cliZip);
+  need(cliBytes.length===cliArchive.bytes&&sha(cliBytes)===cliArchive.sha256,'The received original CLI archive changed.');
   delivery.cli={showSha256:cliShow.sha256,historyEditions:cliHistory.editions.length,export:cliExport};
   delivery.files.push({name:'Freeform_Workshare_Installation_CLI_Export.zip',path:cliZip,bytes:cliBytes.length,sha256:sha(cliBytes)});
   const opening='# Freeform Workshare Installation\n\n'+
