@@ -20,6 +20,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import signal
+import socket
 import stat
 import subprocess
 import sys
@@ -44,6 +45,7 @@ SHA = re.compile(r"[a-f0-9]{64}")
 ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}")
 STOP = None
 ACTIVE_HTTP = None
+ACTIVE_HTTP_SOCKET = None
 ACTIVE_AGENT = None
 
 
@@ -69,8 +71,23 @@ def stopped(signum, _frame):
         STOP = ReceivingError("INTERRUPTED", "The original receiving was interrupted.",
                               {"signal": signum})
     forward_agent(signum)
-    if ACTIVE_HTTP is not None:
-        ACTIVE_HTTP.close()
+    connection = ACTIVE_HTTP
+    active_socket = ACTIVE_HTTP_SOCKET
+    if active_socket is None and connection is not None:
+        active_socket = connection.sock
+    if active_socket is not None:
+        try:
+            # HTTPResponse can retain its makefile after HTTPConnection has
+            # detached the socket for Connection: close. Interrupt that same
+            # accepted read; its original owners still perform final cleanup.
+            active_socket.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+    if connection is not None:
+        try:
+            connection.close()
+        except BaseException as error:
+            STOP.data.setdefault("httpCloseError", failure(error))
 
 
 def canonical(value):
@@ -429,7 +446,7 @@ class Host:
                           "keyFile": str(self.key_file), "keySha256": info["sha256"]}
 
     def request(self, method, path, *, raw=None, headers=None, timeout=30):
-        global ACTIVE_HTTP
+        global ACTIVE_HTTP, ACTIVE_HTTP_SOCKET
         check()
         need(method in ("GET", "POST") and path.startswith("/api/") and not path.startswith("//")
              and "\r" not in path and "\n" not in path, "HTTP_PATH", "Use the original native API path.")
@@ -446,11 +463,18 @@ class Host:
             supplied["Content-Length"] = str(len(raw))
         connection = http.client.HTTPConnection(self.address.hostname, self.address.port, timeout=timeout)
         ACTIVE_HTTP = connection
+        ACTIVE_HTTP_SOCKET = None
         response = None
         original_error = None
         request_deadline = time.monotonic() + timeout
         try:
             connection.request(method, path, body=raw, headers=supplied)
+            ACTIVE_HTTP_SOCKET = connection.sock
+            check()
+            remaining = request_deadline - time.monotonic()
+            need(remaining > 0, "HTTP_DEADLINE", "The original native request reached its retained response deadline.")
+            if ACTIVE_HTTP_SOCKET is not None and ACTIVE_HTTP_SOCKET.fileno() >= 0:
+                ACTIVE_HTTP_SOCKET.settimeout(remaining)
             response = connection.getresponse()
             length = response.getheader("Content-Length")
             expected = int(length) if length is not None and length.isdigit() else None
@@ -460,8 +484,8 @@ class Host:
                 check()
                 remaining = request_deadline - time.monotonic()
                 need(remaining > 0, "HTTP_DEADLINE", "The original native request reached its retained response deadline.")
-                if connection.sock is not None:
-                    connection.sock.settimeout(max(0.1, remaining))
+                if ACTIVE_HTTP_SOCKET is not None and ACTIVE_HTTP_SOCKET.fileno() >= 0:
+                    ACTIVE_HTTP_SOCKET.settimeout(remaining)
                 block = response.read(CHUNK)
                 if not block:
                     break
@@ -473,7 +497,9 @@ class Host:
             check()
             return response.status, dict(response.getheaders()), b"".join(blocks)
         except BaseException as error:
-            original_error = error
+            original_error = STOP if STOP is not None else error
+            if STOP is not None and error is not STOP:
+                raise STOP from error
             raise
         finally:
             cleanup_error = None
@@ -486,6 +512,7 @@ class Host:
                             cleanup_error = error
             if ACTIVE_HTTP is connection:
                 ACTIVE_HTTP = None
+                ACTIVE_HTTP_SOCKET = None
             if cleanup_error is not None:
                 if original_error is not None:
                     original_error.receiving_cleanup_error = failure(cleanup_error)
@@ -674,9 +701,17 @@ class Receiving:
         self.save()
         try:
             raw = None if request["method"] == "GET" else encoded(request["body"])
+            timeout = max(1, min(30, int(self.deadline - time.monotonic())))
+            if (request["mutation"] and isinstance(request["body"], dict)
+                    and request["body"].get("action") == "engagement.receiving"):
+                # This original transaction validates full saved Forecast and
+                # Portfolio outputs. Its accepted request owns the remaining
+                # receiving budget, rather than an unrelated 30-second cap.
+                timeout = self.deadline - time.monotonic()
+                need(timeout > 0, "DEADLINE", "The original receiving reached its selected deadline.")
             status, _, response = selected_host.request(request["method"], path, raw=raw,
                 headers={"Content-Type": "application/json"} if raw is not None else {},
-                timeout=max(1, min(30, int(self.deadline - time.monotonic()))))
+                timeout=timeout)
             value = parse(response)
             need(status == 200 and isinstance(value, dict), "NATIVE_REQUEST",
                  "The original native request did not complete.",
