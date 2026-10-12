@@ -749,3 +749,22 @@ purchase and do not add a transaction or provider data acquisition.
 Use `starforge mpp-workspace` or **Applications → Native MPP merchant and customer** to create or attach one original native workspace. Its retained product opens the original merchant/customer browser and merchant agent together. Configure the merchant’s exact resources and prices, receive its customer contract, review the payer limits and governor settings, prepare one stable purchase ID, and continue the original consent, payment and recovery workflow.
 
 The [native MPP operating guide](../mpp-workspace/OPERATING.md) gives the exact runtime selection, private setup, browser and typed client commands, managed terminal and original purchase recovery. Its [receiving guide](../mpp-workspace/RECEIVING.md) carries all twelve generated customer files and the original response bytes, including interrupted transfer and reopen. Existing purchases retain their accepted profile and request while current customer inputs move to a later revision.
+
+## 12. Operate and hand over a Timescale data product
+
+Use **Applications → Timescale merchant workspace** or `starforge timescale-agent`
+to open the original Timescale project with its PostgreSQL publisher, browser and
+merchant agent. The [complete Timescale operating guide](../timescale/OPERATING.md)
+connects runtime selection and private source setup to native edition capture,
+reviewed refresh/job changes, complete aggregate comparison and dataset publication.
+
+The same workflow carries saved Remediate/Defer decisions into assigned work,
+original plans and observed outcomes, later-edition resolution, reopened work and
+full JSON/HTML reports. The typed client and complete-file receiver preserve the
+original project identity, request UUIDs and all retained history across a host
+restart and portable receiving.
+
+Its complete native demonstration operates the original six-reading example in
+one native Timescale2.30.2 database, then runs the merchant/browser and assigned-work
+receiving in that same cluster. The original Ubuntu runner and all three receiving
+programs are included in this product's source-owned Timescale contribution.
