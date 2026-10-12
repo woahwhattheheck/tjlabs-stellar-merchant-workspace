@@ -22,7 +22,7 @@ These are different completion facts. A published source package or a successful
 
 Prepare a real READY installation through the original distribution builder. Use the maintained helper from this same selected source edition:
 
-    node stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/runtime.mjs --input /absolute/runtime-input.json
+    node stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/runtime.mjs /absolute/runtime-input.json
 
 The helper's complete input and source-selection contract are documented in [RUNTIME.md](RUNTIME.md). It must finish its original build, prepare, install and inspect sequence. Preserve the returned sourceRoot, runtimeDirectory, sourceCommit, installation/profile/lock identities and source-manifest SHA. A hand-written READY document is not an installation.
 
