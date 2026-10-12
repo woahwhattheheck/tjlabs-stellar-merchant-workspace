@@ -31,6 +31,12 @@ Choose **Work packages**, **Milestones**, **Contributors** or **Assignments**.
 
 **Download original source** reproduces the selected source text. The complete portable source project retains the original filename, byte length, acquisition time and source hash for every edition.
 
+## Read source editions and reviews
+
+The source selector shows the received date and time, including the local time zone, and a readable file size. Source rows use **Empty** for an empty value and **Not provided** for a field omitted by the mapping. **Download original source** retains the complete source text, and source details contain its recorded timestamp and exact byte count.
+
+Plan changes show labeled before-and-after fields. Contributor names, capacity sources, assignments and payment inputs are readable in the preview. Saved source-import reviews include their dates, notes and complete changes; their source and calculation details remain available within each review.
+
 ## Source parsing and column types
 
 Expand **Source parsing and column types** to set the delimiter, header and empty-record choices. Applying new parsing choices rebuilds the source-column mapping; then review the planning-field bindings.

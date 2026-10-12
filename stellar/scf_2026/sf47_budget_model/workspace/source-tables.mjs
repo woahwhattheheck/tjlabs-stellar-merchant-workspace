@@ -17,9 +17,75 @@ const $ = (name, text, className) => {
   return element;
 };
 const money = value => {
-  const [whole, fraction = ''] = String(value ?? '0').split('.');
+  if (value === null || value === undefined || value === '') return 'Not entered';
+  const [whole, fraction = ''] = String(value).split('.');
   return '$' + whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + fraction.padEnd(2,'0') + ' USD';
 };
+
+const sourceDate = value => {
+  if (value === null || value === undefined || value === '') return 'Date not recorded';
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toLocaleString('en-US', {
+    year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short',
+  }) : 'Date unavailable';
+};
+const fileSize = value => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'Size unavailable';
+  if (value < 1024) return value.toLocaleString('en-US') + (value === 1 ? ' byte' : ' bytes');
+  const units = ['KiB','MiB','GiB'], index = Math.min(2, Math.floor(Math.log(value) / Math.log(1024)) - 1);
+  return (value / Math.pow(1024,index + 1)).toLocaleString('en-US',{maximumFractionDigits:2}) + ' ' + units[index];
+};
+const sourceValue = value => value === null || value === '' ? 'Empty' :
+  value === undefined ? 'Not provided' : typeof value === 'boolean' ? value ? 'Yes' : 'No' : String(value);
+const fieldNames = {
+  id:'Identifier', costId:'Work package', contributorId:'Contributor', weeklyHours:'Weekly capacity (hours)',
+  estimated_hours:'Estimated hours', assumed_hourly_rate_usd:'Hourly rate (USD)', amount_usd:'Amount (USD)',
+  award_request_usd:'Requested award (USD)', scenario_name:'Scenario', project_end_day:'Project end day',
+  start_day:'Start day', end_day:'End day', remaining_work:'Work to complete', measurable_proof:'Completion assessment',
+  pricing_mode:'Pricing method', review_and_payment_lag_days:'Review and payment delay (days)',
+  submit_day:'Submission day', capitalUsd:'Available capital (USD)', capitalNote:'Capital source',
+  calendarStart:'Calendar start', payments:'Payment timing', lagComparisons:'Payment delay comparisons',
+};
+const fieldLabel = value => fieldNames[value] || String(value).replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase());
+function readableValue(value) {
+  if (value === null || value === undefined) return $('span','Not present','pt-help');
+  if (typeof value !== 'object') return $('span',sourceValue(value));
+  if (Array.isArray(value)) {
+    if (!value.length) return $('span','No entries','pt-help');
+    const group=$('div'); let page=0;
+    const renderPage=()=>{
+      const start=page*40, pages=Math.ceil(value.length/40), previous=$('button','Previous entries'), next=$('button','Next entries');
+      previous.type=next.type='button'; previous.disabled=page===0; next.disabled=page+1>=pages;
+      previous.addEventListener('click',()=>{page--;renderPage();}); next.addEventListener('click',()=>{page++;renderPage();});
+      const position=$('span','Entries ' + (start+1) + '–' + Math.min(start+40,value.length) + ' of ' + value.length);
+      position.setAttribute('aria-live','polite');
+      const controls=$('div',undefined,'pt-actions'); controls.append(previous,position,next);
+      group.replaceChildren(table(['Entry','Value'],value.slice(start,start+40).map((item,index)=>[start+index+1,readableValue(item)])));
+      if(pages>1)group.append(controls);
+    };
+    renderPage(); return group;
+  }
+  const entries=Object.entries(value);
+  if (!entries.length) return $('span','No fields','pt-help');
+  return table(['Field','Value'],entries.map(([key,item])=>{
+    if(key==='calendarStart' && typeof item==='string' && /^\d{4}-\d{2}-\d{2}$/.test(item)) {
+      const [year,month,day]=item.split('-').map(Number), date=new Date(year,month-1,day);
+      return [fieldLabel(key),date.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})];
+    }
+    if(key.endsWith('Usd') || key.endsWith('_usd')) return [fieldLabel(key),money(item)];
+    return [fieldLabel(key),readableValue(item)];
+  }));
+}
+function changeLabel(change) {
+  let values;
+  try { const parsed=JSON.parse(change.key); values=Array.isArray(parsed)?parsed:[parsed]; }
+  catch { values=[change.key]; }
+  const kind={packages:'Work package',milestones:'Milestone',contributors:'Contributor',assignments:'Assignment',
+    settings:'Setting','payment settings':'Payment setting'}[change.kind] || fieldLabel(change.kind);
+  const action={add:'Add',remove:'Remove',change:'Update'}[change.action] || fieldLabel(change.action);
+  return action + ' · ' + kind + ' · ' + values.map(value=>change.kind==='settings'?fieldLabel(value):sourceValue(value)).join(' / ');
+}
+
 const download = (value, filename, type = 'application/json') => {
   const blob = value instanceof Blob ? value : new Blob([value], {type});
   const url = URL.createObjectURL(blob), a = $('a');
@@ -116,7 +182,7 @@ export function mountPlanningSourceTables(context) {
         binding.excludedRows.find(x => x.editionId === result.edition.id && x.record === position.record).note = value;
       }), {area: true, maximum: 2000}));
       return [decision, position.record + ' · line ' + position.line,
-        ...sourceFields.map(key => Object.hasOwn(row, key) ? row[key] === null ? 'null' : String(row[key]) : '(omitted)')];
+        ...sourceFields.map(key => Object.hasOwn(row, key) ? sourceValue(row[key]) : 'Not provided')];
     });
     panel.append(table(['Use','Original record', ...sourceFields], rows));
     const pages = Math.max(1, Math.ceil(result.rows.length / PAGE)), nav = $('div', undefined, 'pt-actions');
@@ -233,7 +299,7 @@ export function mountPlanningSourceTables(context) {
     }
     const panel = section(ROLES[role].label + ' source editions', 'Every received edition and reviewed mapping stays with this plan. A new source file keeps the earlier rows and mapping available for comparison.');
     panel.append(select('Selected source edition', doc.selectedEditionId,
-      doc.editions.map(x => [x.id, x.filename + ' · ' + x.receivedAt + ' · ' + x.bytes + ' bytes']), value => {
+      doc.editions.map(x => [x.id, x.filename + ' · ' + sourceDate(x.receivedAt) + ' · ' + fileSize(x.bytes)]), value => {
         editBook(next => { next.project.documents.find(x => x.id === doc.id).selectedEditionId = value; }, true);
       }));
     const actions = $('div', undefined, 'pt-actions');
@@ -262,7 +328,7 @@ export function mountPlanningSourceTables(context) {
     catch (error) { status(error.message, true); }
   }
   function settingsPanel() {
-    const panel = section('Native plan settings', 'These explicit values go to the original calculator with the mapped rows. The requested award remains a separate entered value.');
+    const panel = section('Plan settings', 'Set the scenario, requested award and completion day. These values are calculated together with the mapped work and staffing.');
     const grid = $('div', undefined, 'pt-grid');
     grid.append(field('Scenario description', book.settings.scenarioName, value => editBook(next => { next.settings.scenarioName = value; }), {maximum: 500}),
       field('Requested award · USD', book.settings.awardRequestUsd, value => editBook(next => { next.settings.awardRequestUsd = value; })),
@@ -274,7 +340,7 @@ export function mountPlanningSourceTables(context) {
     root.append(panel);
   }
   function nativePreviewPanel() {
-    const panel = section('Calculate and apply the complete plan', 'The native planner checks all mapped work, hours, rates, dates, tranches, contributor assignments and payment timing together.');
+    const panel = section('Calculate and apply the complete plan', 'Calculate the mapped work, prices, work dates, staffing and payment schedule. Review the result and its changes before applying it to the working plan.');
     panel.append(button('Calculate native preview', async () => {
       requireWorkingBaseline(book, context.getPlan(), context.getDraft());
       const preparation = await preparePlanningImport(book);
@@ -295,23 +361,28 @@ export function mountPlanningSourceTables(context) {
       $('p', 'Peak modeled cash requirement: ' + money(report.cash.peakCashGapUsd) + ' on day ' + report.cash.peakCashGapDay + '.'));
     panel.append(table(['Package','Complete remaining work','Price','Hours / rate','Work days','Completion assessment'],
       scenario.future_costs.map(row => [row.id, row.remaining_work, money(row.amount_usd),
-        row.estimated_hours + (planning.pricing[row.id] === 'hours' ? ' hours × $' + row.assumed_hourly_rate_usd : ' hours · fixed price'),
+        sourceValue(row.estimated_hours) + (planning.pricing[row.id] === 'hours' ? ' hours × ' + money(row.assumed_hourly_rate_usd) : ' hours · fixed price'),
         row.start_day + '–' + row.end_day, row.measurable_proof])));
     panel.append(table(['Tranche','Submission day','Complete deliverable','Completion assessment'],
       scenario.milestones.map(row => [row.tranche, row.submit_day, row.deliverable, row.measurable_proof])));
     panel.append(table(['Conditional payment','USD','Modeled receipt day','Release condition'],
       report.originalModel.payouts.map(row => [row.tranche === 0 ? 'Initial allocation' : 'After tranche ' + row.tranche,
-        money(row.usd), row.hypothetical_paid_day, row.release_condition])));
-    panel.append(details('Complete contributor capacity and assignments',
-      $('pre', JSON.stringify({contributors: planning.contributors, assignments: planning.assignments, capacity: report.capacity}, null, 2))),
-      details('Retained payment timing and capital inputs',
-        $('pre', JSON.stringify({payments: planning.payments, calendarStart: planning.calendarStart,
-          capitalUsd: planning.capitalUsd, capitalNote: planning.capitalNote, lagComparisons: report.lagComparisons}, null, 2))));
+        money(row.usd), row.hypothetical_paid_day ?? 'Not scheduled', row.release_condition])));
+    const contributorName = id => planning.contributors?.find(row=>row.id===id)?.name || id;
+    panel.append(details('Contributor capacity and assignments',
+      (planning.contributors || []).length ? table(['Contributor','Weekly capacity (hours)','Capacity source'],
+        planning.contributors.map(row=>[row.name,sourceValue(row.weeklyHours),sourceValue(row.note)])) : $('p','No contributor capacity entered.'),
+      (planning.assignments || []).length ? table(['Work package','Contributor','Assigned hours'],
+        planning.assignments.map(row=>[row.costId,contributorName(row.contributorId),sourceValue(row.hours)])) : $('p','No work assignments entered.'),
+      details('Complete capacity calculation',readableValue(report.capacity))),
+      details('Payment timing and capital',
+        readableValue({calendarStart:planning.calendarStart,capitalUsd:planning.capitalUsd,capitalNote:planning.capitalNote,
+          payments:planning.payments,lagComparisons:report.lagComparisons})));
     const changes = preview.review.changes, start = changePage * PAGE;
     const review = section('Changes from the saved plan', changes.length + ' complete row or setting changes. The before and after values below use the native calculated result.');
     for (const change of changes.slice(start, start + PAGE)) {
-      const entry = details(change.action + ' · ' + change.kind + ' · ' + change.key,
-        table(['Before','After'], [[$('pre', JSON.stringify(change.before, null, 2)), $('pre', JSON.stringify(change.after, null, 2))]]));
+      const entry = details(changeLabel(change),
+        table(['Before','After'], [[readableValue(change.before),readableValue(change.after)]]));
       review.append(entry);
     }
     if (changes.length > PAGE) {
@@ -371,7 +442,15 @@ export function mountPlanningSourceTables(context) {
     }
     root.append(choices);
     sourcePanel(); settingsPanel(); nativePreviewPanel();
-    if (book.reviews.length) root.append(details('Saved source-import reviews', $('pre', JSON.stringify(book.reviews, null, 2))));
+    if (book.reviews.length) {
+      const reviews=book.reviews.map(review=>details(sourceDate(review.reviewedAt || review.preparedAt) + ' · ' +
+        review.changes.length + ' changes', $('p',review.note || 'Review note not entered.'),
+        $('p','Compared with saved revision ' + review.base.revision + '.'),
+        ...review.changes.map(change=>details(changeLabel(change),
+          table(['Before','After'],[[readableValue(change.before),readableValue(change.after)]]))),
+        details('Source and calculation details',$('pre',JSON.stringify(review,null,2)))));
+      root.append(details('Saved source-import reviews',...reviews));
+    }
     const link = $('a','Full operating guide'); link.href = '/source-tables-guide.md'; link.target = '_blank'; link.rel = 'noopener';
     root.append(link);
     setHostBusy(hostBusy);
