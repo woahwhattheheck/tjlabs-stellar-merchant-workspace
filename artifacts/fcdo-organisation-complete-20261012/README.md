@@ -4,6 +4,14 @@ This package carries all **119 original source files / 2,214,849 source bytes** 
 
 The capsule SHA-256 is `a7f613aa6cdb901e6caca4d5d23dfe0a51283ebf59dd3eeb1e4628bced63ed02` (627,959 bytes). Its gzip payload is 470,715 bytes / SHA-256 `34772b730e3abd6dfe7bbb586c5e6765321c6494914489a7e2f483b2a398ab47`. The launcher checks every complete member's byte count, SHA-256 and Git blob identity before writing source. All119 source members match the selected original Git tree and its five published receiving corrections.
 
+## Completed original receiving
+
+The original programme completed on 12 October 2026 with exit code 0. It retained all 148 financial records and 80 document rows, applied both exact document URL corrections, released the reviewed sender at revision 4 and continued the independent receiving workspace at revision 5.
+
+The completed operation covered publisher intake, whole registers, precise corrections, named review and release, whole-edition comparison, original request replay, all five complete CLI files, the native portable packet, typed client and complete Merchant receiving, desktop/mobile browser controls and final independent CLI reopening. The browser returned no application errors and retained a 390-pixel document/body width at its 390-pixel phone viewport.
+
+The resulting full customer archive contains 108 members and 8,038,834 bytes. Both the closed preparation and the complete receiving case were saved before the producing process ended. The saved complete archive was reopened and every member matched its declared byte count and SHA-256. Its retained native package contains 82 members and 1,135,004 bytes. The public source capsule and launcher in this directory are the unchanged source selection used for that completed operation.
+
 ## Run the complete original operation
 
 Use an existing Python3.11+ installation with Expat2.6+ and `lxml`, the original Node22+ runtime and an installed Chromium/Playwright JavaScript entrypoint. Select actual canonical executable/module paths on the producing host. The source, case and artifacts directories must be separate private directories.
