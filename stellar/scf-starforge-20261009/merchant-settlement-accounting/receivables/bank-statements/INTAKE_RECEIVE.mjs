@@ -16,9 +16,20 @@ export async function receiveOriginalIntakeAlias({origin,workspace,account,origi
   const source={accountId:saved.receiptIntakeAccountId,format:'OFX',
     file:{name:original.file.name,dataBase64:Buffer.from(original.file.content).toString('base64')}};
   const inspection=await api.inspectBankSource(source);
+  assert(!inspection.issues.some(issue=>['BANK_CURRENCY_MISMATCH','BANK_ACCOUNT_MISMATCH','BANK_ID_MISMATCH'].includes(issue.code)),json(inspection.issues));
   const selection=inspection.sections.find(section=>section.accountReference==='operating-001');
   assert(selection,'The original Python intake parser retains the same native OFX account');
   const imported=(await api.importBankSource(request({...source,sectionId:selection.id}))).bankImport;
+  const parserReport=await (await api.bankImportFile(imported.id,'parser-report.json')).json();
+  const parsedSource=parserReport.sources[0].parsed;
+  assert.equal(parsedSource.closing_statements.length,1);
+  const closing=parsedSource.closing_statements[0];
+  assert.equal(closing.account.ACCTID,'operating-001');assert.equal(closing.currency,'USD');
+  assert.equal(closing.closings[0].raw.FITID,'native-closing-oct04');
+  assert.equal(closing.closings[0].amounts.BALOPEN,'1000');
+  assert.equal(closing.closings[0].amounts.BALCLOSE,'1272');
+  assert.equal(closing.closings[0].dates.DTCLOSE.local_date,'2026-10-04');
+  assert.equal(parsedSource.statements[0].pending_asof.local_date,'2026-10-04');
   const full=await api.bankImport(imported.id,{view:'rows',limit:500});
   const rows=full.rows.items;
   const net=rows.find(row=>row.transactionId==='B100'),existing=rows.find(row=>row.transactionId==='C200');

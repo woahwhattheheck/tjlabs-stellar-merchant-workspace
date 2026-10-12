@@ -287,9 +287,9 @@ function receiptIntakeBinding(source,accountId){
  const bound=original?.receiptIntakeAccountId||'';
  const choices=bound?all.filter(value=>value.id===bound):all.filter(value=>
    value.status!=='ARCHIVED'&&(value.statementSourceIdentitySha256===identity||
-     Boolean(basis&&value.bankId===basis.institution&&value.accountReference===basis.accountId)));
+     Boolean(basis&&value.bankId===(source.account.bankId||basis.institution)&&value.accountReference===basis.accountId)));
  const automatic=choices.filter(value=>value.statementSourceIdentitySha256===identity||
-   Boolean(basis&&!basis.branchId&&value.bankId===basis.institution&&value.accountReference===basis.accountId));
+   Boolean(basis&&!basis.branchId&&value.bankId===(source.account.bankId||basis.institution)&&value.accountReference===basis.accountId));
  const key=accountId+':'+(identity||'');
  const retained=readSmall('receipt-intake-bindings',{})[key]||'';
  const selected=bound||(choices.some(value=>value.id===retained)?retained:automatic.length===1?automatic[0].id:'');

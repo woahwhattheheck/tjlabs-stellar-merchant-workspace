@@ -103,8 +103,9 @@ export function bindStatementIntakeAccount(data,account,sourceAccount,actor,at,n
   need(basis&&typeof basis.institution==='string'&&typeof basis.accountId==='string',
     'BANK_SOURCE_ACCOUNT_IDENTITY','Retain the original institution and account identity.',409);
   data.bankAccounts??=[];
+  const originalBankId=sourceAccount.bankId||basis.institution;
   const exact=item=>currencyKey(item.currency)===currencyKey(account.currency)&&
-    item.bankId===basis.institution&&item.accountReference===basis.accountId;
+    item.bankId===originalBankId&&item.accountReference===basis.accountId;
   let intake=null;
   if(account.receiptIntakeAccountId||selectedId) {
     const id=identifier(account.receiptIntakeAccountId??selectedId,'receipt intake account');
@@ -124,7 +125,7 @@ export function bindStatementIntakeAccount(data,account,sourceAccount,actor,at,n
       'BANK_INTAKE_ACCOUNT_IDENTITY','The receipt account is bound to another original statement identity.',409);
   } else {
     const normalized=normalizeBankAccount({reference:'Statement '+account.id,name:account.name,currency:account.currency,
-      bankId:basis.institution,accountReference:basis.accountId,method:'Bank transfer'});
+      bankId:originalBankId,accountReference:basis.accountId,method:'Bank transfer'});
     intake={...normalized,createdAt:at,updatedAt:at,history:[{at,actor,action:'bank_account_created',version:1}]};
     data.bankAccounts.unshift(intake);
   }
