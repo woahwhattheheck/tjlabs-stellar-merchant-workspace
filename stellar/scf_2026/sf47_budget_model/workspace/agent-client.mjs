@@ -373,6 +373,7 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      expenses:() => '/api/operations/' + cid() + '/expense-attribution',
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
@@ -573,6 +574,51 @@ export class GrantWorkspaceClient {
       body:{...original, action:'support.receive', data:{...supportHandoff(bytes, filename),
         expectedPreviewSha256, deploymentId, ...(deployment === undefined ? {} : {deployment})}}});
   }
+  expensePreview(caseId, expectedVersion, bytes, filename) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    need(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= GRANT_MAX_SOURCE_BYTES,
+      'GRANT_INPUT_TOO_LARGE', 'Choose the complete original issued source or accountant ZIP within 8 MiB.');
+    text(filename, 'Original expense filename', 240);
+    return this.#request('/api/operations/' + caseId + '/expense-preview',
+      {body:{expectedVersion,filename,contentBase64:bytes.toString('base64')},mutation:false});
+  }
+  expenseReceive(caseId, bytes, body) {
+    id(caseId, 'operation');
+    exact(body, ['expectedVersion','requestId','actor','note','filename','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','filename','expectedPreviewSha256']);
+    integer(body.expectedVersion, 'Current case version'); requestId(body.requestId);
+    sha(body.expectedPreviewSha256); text(body.actor, 'Receiving operator', 300);
+    text(body.filename, 'Original expense filename', 240);
+    need(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= GRANT_MAX_SOURCE_BYTES,
+      'GRANT_INPUT_TOO_LARGE', 'Use the exact reviewed original expense file within 8 MiB.');
+    const {filename,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'expense.receive',
+      data:{filename,expectedPreviewSha256,contentBase64:bytes.toString('base64')}});
+  }
+  expenseSave(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','data'],['expectedVersion','requestId','actor','data']);
+    object(body.data,'Original expense attribution inputs');
+    return this.command(caseId,{...body,action:'expense.save'});
+  }
+  expenseTransition(caseId, action, body) {
+    need(['review','reopen','void'].includes(action),'GRANT_INVALID_ACTION','Choose the original expense review transition.');
+    exact(body,['expectedVersion','requestId','actor','note','id','expectedContentSha256'],
+      ['expectedVersion','requestId','actor','note','id','expectedContentSha256']);
+    need(typeof body.id==='string' && /^expense-attribution-[a-f0-9]{32}$/.test(body.id),
+      'GRANT_INVALID_INPUT','Select the retained expense attribution.');
+    sha(body.expectedContentSha256);text(body.note,'Expense review note',12000);
+    const {id:attributionId,expectedContentSha256,...original}=body;
+    return this.command(caseId,{...original,action:'expense.'+action,data:{id:attributionId,expectedContentSha256}});
+  }
+  expenseRequest(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','action','data'],
+      ['expectedVersion','requestId','actor','action','data']);
+    need(['expense.receive','expense.save','expense.review','expense.reopen','expense.void'].includes(body.action),
+      'GRANT_INVALID_ACTION','Select a complete original expense request.');
+    requestId(body.requestId);object(body.data);
+    return this.#request('/api/operations/'+caseId+'/expense-request',{body,mutation:false});
+  }
   buyerPreview(caseId, expectedVersion, bytes, filename) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
     return this.#request('/api/operations/' + caseId + '/buyer-preview',
@@ -610,6 +656,9 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      'expense-attributions':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attributions.csv',
+      'expense-sources':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-sources.csv',
+      'expense-html':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attribution.html',
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
       installation:() => '/api/operations/' + id(args.caseId,'operation') + '/installations/' + id(args.installationId,'installation') +

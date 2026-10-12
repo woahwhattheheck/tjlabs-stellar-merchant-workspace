@@ -8,6 +8,10 @@ export const GRANT_COMPLETION_ACTIONS = Object.freeze([
   'completion.save', 'completion.prepare', 'completion.extension', 'completion.submit', 'completion.decision',
 ]);
 
+export const GRANT_EXPENSE_ACTIONS = Object.freeze([
+  'expense.receive', 'expense.save', 'expense.review', 'expense.reopen', 'expense.void',
+]);
+
 export const GRANT_CASE_ACTIONS = Object.freeze([
   'contributor.save', 'work.save', 'work.submit', 'work.accept', 'work.reopen', 'work.void',
   'invoice.save', 'invoice.review', 'invoice.dispute', 'invoice.reopen', 'invoice.void',
@@ -15,4 +19,5 @@ export const GRANT_CASE_ACTIONS = Object.freeze([
   'purchase.void', 'outcome.save', 'review', 'close', 'reopen',
   'cohort.prepare', 'installation.save', 'implementation.prepare',
   ...GRANT_COMPLETION_ACTIONS,
+  ...GRANT_EXPENSE_ACTIONS,
 ]);

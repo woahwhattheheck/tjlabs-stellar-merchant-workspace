@@ -533,6 +533,23 @@ class Operations:
             review = self.review(program_id, review_id)
             return completion.review_files(review, lambda source_id: self.source(program_id, source_id))
 
+    def expense_request(self, program_id, body):
+        program_id = identifier(program_id, "operation")
+        if not isinstance(body, dict) or body.get("action") not in expenses.ACTIONS or not isinstance(body.get("data"), dict):
+            domain.fail("Select the complete original expense request.", "EXPENSE_REQUEST_INVALID")
+        request_id = short_id(body.get("requestId"), "Original request ID")
+        fingerprint = digest({"domain": SCHEMA, "programId": program_id, "body": body})
+        with self.workspace.mutex:
+            program, _ = self._program(program_id)
+            row = self.db.execute("SELECT fingerprint,result_json FROM requests WHERE request_id=?", (request_id,)).fetchone()
+            if row:
+                if row[0] != fingerprint:
+                    domain.fail("This original request ID belongs to different selected inputs.", "REQUEST_CONFLICT", 409)
+                return {"status": "COMMITTED", "requestId": request_id, "caseId": program_id,
+                        "receipt": json.loads(row[1]), "currentVersion": program["version"]}
+            return {"status": "NOT_RECORDED", "requestId": request_id, "caseId": program_id,
+                    "currentVersion": program["version"]}
+
     def preview_expense(self, program_id, body):
         with self.workspace.mutex:
             return expenses.preview(self._context(identifier(program_id, "operation")), body)

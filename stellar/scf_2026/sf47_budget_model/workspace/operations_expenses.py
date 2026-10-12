@@ -529,15 +529,20 @@ def normalized(context, data, previous=None, restoring=False):
             with localcontext() as arithmetic:
                 arithmetic.prec = 120
                 amounts = [Decimal(part["nativeAmount"]).scaleb(-decimals) for part in allocations]
-                total_native = currency.native(sum(amounts, Decimal(0)))
-            money = currency.normalize_money({"amount": total_native, "currency": code,
-                "fxRateId": rates[0]["id"] if rates else None}, rate_map, "Attributed original native units")
-            converted = currency.allocate(amounts, money, rate_map)
-            for part, amount_usd in zip(allocations, converted):
-                part["usdValue"] = amount_usd
-            normalized_valuation.update({"nativeUnit": {"currency": code, "decimals": decimals},
-                "rate": rates[0] if rates else None, "originalMoney": money,
-                "calculation": currency.money_details(money, rate_map)})
+                total_native = currency.quantity(currency.native(sum(amounts, Decimal(0))),
+                    "Attributed original native units", places=18)
+                # Invoice-entry precision is separate from token atomic precision.
+                # Keep the original currency/rate relationship validation, then
+                # pass the exact scaled native units through its unchanged allocator.
+                money = currency.normalize_money({"amount": "0", "currency": code,
+                    "fxRateId": rates[0]["id"] if rates else None}, rate_map, "Attributed original native units")
+                money["amount"] = total_native
+                converted = currency.allocate(amounts, money, rate_map)
+                for part, amount_usd in zip(allocations, converted):
+                    part["usdValue"] = amount_usd
+                normalized_valuation.update({"nativeUnit": {"currency": code, "decimals": decimals},
+                    "rate": rates[0] if rates else None, "originalMoney": money,
+                    "calculation": currency.money_details(money, rate_map)})
         valuation = normalized_valuation
     elif valued:
         fail("Retain the original source and review basis for entered USD amounts.", "EXPENSE_VALUATION_SOURCE_REQUIRED")
