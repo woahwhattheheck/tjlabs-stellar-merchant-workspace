@@ -1,3 +1,4 @@
+import { organisationReconciliationTools } from '../organisation_reconciliation_mcp.mjs';
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 import { iatiAmpTools } from './source-iati-amp.mjs';
@@ -21,6 +22,7 @@ const read = { readOnly: true, idempotent: true };
 
 function sourceWorkspaceTools(tool) {
   return [
+    ...organisationReconciliationTools(tool),
     tool('merchant_source_workspaces', 'List configured original XML/NDJSON/IATI consoles, source-file handles and retained download sessions.', {}, [], read),
     tool('merchant_source_status', 'Read original saved source, mapping, build and comparison counts. Recover completed work here and through inventory after an interrupted reply.', selection, ['workspace'], read),
     tool('merchant_source_inventory', 'Page saved sources, plans, builds or comparisons from the original workspace. Continue its snapshot with expectedSnapshot.', { ...selection, kind: { type: 'string', enum: ['sources', 'plans', 'builds', 'comparisons', 'portfolios'] }, ...page }, ['workspace', 'kind'], read),
@@ -91,7 +93,6 @@ function sourceWorkspaceTools(tool) {
     tool('merchant_source_iati_refresh_resume', 'Continue the exact saved native portfolio request, or return its retained completed/abandoned outcome, without changing source, selection or operation identity.', { ...selection, requestId:{type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$'} }, ['workspace','requestId'], {idempotent:true}),
     tool('merchant_source_iati_refresh_export', 'Retain the entire refresh journal, every original publisher XML, complete original portfolio/native packets, readable reports and guide. expectedSnapshot selects the WHOLE journal from refresh_status. Read via merchant_source_file_read or receive via merchant_source_import.', { ...selection, plan:digest, expectedSnapshot:digest }, ['workspace','plan'], {}),
     ...iatiOrganisationTools(tool, { selection, digest, page, read }),
-    ...iatiAmpTools(tool, { selection, digest, page, read }),
 
     tool('merchant_source_iati_results_inventory', 'Page original results projects, source projections or receiving receipts. Preserve the returned snapshot when paging; no publisher request or native financial operation is started.', { ...selection, kind: { type:'string', enum:['projects','projections','receipts'] }, ...page }, ['workspace','kind'], read),
     tool('merchant_source_iati_results_source', 'Inspect one complete retained publisher XML with the original IATI reader and retain its exact result/indicator/period projection. A source with no result elements remains a genuine empty-coverage source.', { ...selection, source:digest }, ['workspace','source'], {idempotent:true}),
@@ -105,6 +106,7 @@ function sourceWorkspaceTools(tool) {
     tool('merchant_source_iati_results_preview', 'Preview the complete original results definition, source coverage, selected explicit period pairs and exact decimal calculations before saving a new review revision.', { ...selection, definition:{type:'object'} }, ['workspace','definition'], read),
     tool('merchant_source_iati_results_action', 'Save, compare or explicitly select a results revision with the original requestId and revision basis. Cancel only an exact uncommitted original input under that same journal; completed reviews and observations are never withdrawn by this action.', { ...selection, action:{type:'string',enum:['save','compare','adopt','cancel']}, definition:{type:'object'} }, ['workspace','action','definition'], {idempotent:true}),
     tool('merchant_source_iati_results_export', 'Retain a complete editable results project or report-only ZIP through the original full-file reader. Project packets include all original XML, report revisions, named reviews, source comparisons and prior receiving closure; receive editable packets with merchant_source_import.', { ...selection, project:digest, revision:{type:'integer',minimum:1}, kind:{type:'string',enum:['project','report']} }, ['workspace','project','kind'], {}),
+    ...iatiAmpTools(tool, { selection, digest, page, read }),
   ];
 }
 

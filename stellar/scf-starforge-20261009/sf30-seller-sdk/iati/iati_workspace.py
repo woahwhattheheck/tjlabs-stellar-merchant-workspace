@@ -282,10 +282,12 @@ class IatiWorkspace(Workspace):
         self.organisation = OrganisationPlanner(self)
         from refresh import IatiRefresh
         self.refresh = IatiRefresh(self)
-        from amp import AmpWorkspace
-        self.amp = AmpWorkspace(self)
+        from organisation_reconciliation import OrganisationReconciliation
+        self.reconciliation = OrganisationReconciliation(self)
         from results.workspace import IatiResults
         self.results = IatiResults(self)
+        from amp import AmpWorkspace
+        self.amp = AmpWorkspace(self)
 
     def presets(self):
         return source_presets()
@@ -302,8 +304,8 @@ class IatiWorkspace(Workspace):
             result["portfolios"] = self.portfolios()
             result["publishing"] = {"projects":len(self.publishing.list())}
             result["refresh"] = {"plans": len(self.refresh.plans())}
-            result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
             result["results"] = {"projects": len(self.results.inventory()["projects"])}
+            result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -816,10 +818,13 @@ class IatiWorkspace(Workspace):
         from organisation.portable import PACKET as ORGANISATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
             return self.organisation.receive({"path": path})
-        from amp.portable import SCHEMA as AMP_PACKET
-        if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
-            return self.amp.receive(path)
         from results.transfer import PACKET as RESULTS_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == RESULTS_PACKET:
             return self.results.receive(path)
+        from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
+            return self.reconciliation.receive({"path": path})
+        from amp.portable import SCHEMA as AMP_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
+            return self.amp.receive(path)
         return super().import_packet(path)

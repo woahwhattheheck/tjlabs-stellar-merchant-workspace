@@ -11,7 +11,7 @@ import zipfile
 from iati_source import InputError, fingerprint
 from iati_workspace import packet_write, MAX_PACKET, MAX_FILES, MAX_METADATA
 from workspace import json_bytes, load_json, private_write, regular, file_digest
-from .model import CONTRACT
+from .model import CONTRACT, build_report
 from .report import report_files
 from .workspace import RECEIVING, SNAPSHOT, MAX_BODY
 
@@ -237,14 +237,25 @@ def receive_project(api, path, *, expected_sha256=None, expected_bytes=None):
             raise InputError("The manifest changes the full original source closure")
         # Every prior receiving snapshot remains semantically bound to the same
         # original source bytes, not merely copied as unexamined metadata.
+        selected_basis = None
         for value in snapshots.values():
             if value["id"] != snapshot["id"]:
                 raise InputError("A receiving history contains another project")
-            api.validate_snapshot(value, sources)
-        selected = next(e for e in snapshot["editions"] if e["revision"] == snapshot["selectedRevision"])
-        if selected["report"]["reportSha256"] != manifest["reportSha256"]:
+            validated = api.validate_snapshot(value, sources)
+            if value["sha256"] == snapshot["sha256"]:
+                selected_basis = validated
+        if selected_basis is None:
+            raise InputError("Receiving lacks its validated selected snapshot")
+        editions, projections = selected_basis
+        selected = editions[snapshot["selectedRevision"]]
+        # Render from the same freshly rebuilt native report as export_project.
+        # Canonical snapshot JSON preserves values, but not insertion order used
+        # by the original readable HTML renderer. Keep all byte checks below.
+        report = build_report(selected["definition"],
+                              [projections[ref["id"]][1] for ref in selected["projections"]])
+        if report != selected["report"] or report["reportSha256"] != manifest["reportSha256"]:
             raise InputError("The receiving manifest changes the selected report")
-        reports = report_files(selected, selected["report"], snapshot["comparisons"])
+        reports = report_files(selected, report, snapshot["comparisons"])
         for name, data in reports.items():
             relative = "reports/" + name
             if relative not in paths or paths[relative].read_bytes() != data:

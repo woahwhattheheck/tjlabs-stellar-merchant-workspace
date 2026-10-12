@@ -18,6 +18,8 @@ let currentRecord = null, page = null, offset = 0, query = '', busy = false, pen
 let selected = new Set(), batchSelection = 'ready', recordDirty = false, mappingDirty = false, pollTimer = null;
 let allEditions = [], dbPromise, resetOverride = false;
 let filePage = null, fileOffset = 0, fileQuery = '', fileHistory = null;
+let sourceCollections = null, sourceCollectionOffset = 0, sourceCollection = null, sourcePlan = null;
+let sourceReviewNext = 0, sourcePlanDirty = false, sourceContext = '';
 
 function message(text, error = false) {
   $('#message').textContent = text;
@@ -82,6 +84,10 @@ async function replay() {
     if (result.projectId) projectId = result.projectId;
     message(result.task ? 'Native operation started. Its original responses will appear below.' : 'Saved operation ' + result.operationId + '.');
     await reload({preserve:true});
+    if(result.kind==='source-cases'||result.kind==='source-case-review'){
+      sourcePlanDirty=false;sourcePlan=null;
+      await openSourceCollection(result.kind==='source-cases'?result.result.id:result.result.collectionId);
+    }
     return result;
   } catch (error) {
     if (!completed && error.status >= 400 && error.status < 500) {
@@ -151,6 +157,7 @@ function tab(name) {
   $$('[data-tab]').forEach(button => { if (button.dataset.tab === name) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
   if (name === 'records' && data?.project) loadRecords().catch(error => message(error.message,true));
   if (name === 'receiving' && data?.project) loadFiles().catch(error => message(error.message,true));
+  if (name === 'source-cases') loadSourceCollections().catch(error => message(error.message,true));
 }
 function recordLink(view) {
   return '/download/record?' + new URLSearchParams({project:projectId, identifier:view.identifier});
@@ -254,7 +261,82 @@ async function reload({preserve=false}={}) {
   renderState(preserve); pendingUI();
   if(!allEditions.length || allEditions[0]?.id!==data.original.editions[0]?.id) await receiveEditions();
   if(!$('[data-panel="receiving"]').hidden) await loadFiles();
+  if(sourceContext!==projectId){sourceContext=projectId;sourceCollection=null;sourceCollections=null;sourcePlan=null;sourcePlanDirty=false;sourceCollectionOffset=0;$('#source-case-detail').hidden=true;}
+  if(!$('[data-panel="source-cases"]').hidden) await loadSourceCollections();
 }
+
+function sourceQuery(values={}) { return new URLSearchParams({project:projectId,...values}); }
+async function loadSourceCollections() {
+  if(!data?.project){$('#source-collection-rows').innerHTML='<tr><td colspan="4" class="empty">Choose a migration first.</td></tr>';return;}
+  sourceCollections=await api('/api/source-cases?'+sourceQuery({offset:String(sourceCollectionOffset),limit:'50'}));
+  $('#source-collection-count').textContent=sourceCollections.total+' complete collections';
+  $('#source-collection-rows').innerHTML=sourceCollections.items.map((item,index)=>'<tr><td><strong>'+esc(item.title)+'</strong><div class="record-id">'+esc(item.id)+'</div></td><td>'+esc(item.observedOn)+'</td><td>'+item.matchedCount+' single · '+item.unmatchedCount+' unmatched · '+item.ambiguousCount+' multiple</td><td><button type="button" data-source-collection="'+index+'">Open collection</button></td></tr>').join('')||'<tr><td colspan="4" class="empty">Receive the first source collection above.</td></tr>';
+  $('#source-collections-previous').disabled=sourceCollectionOffset===0;
+  $('#source-collections-next').disabled=sourceCollections.next===null;
+  $('#source-collection-page').textContent=sourceCollections.total?'Collections '+(sourceCollectionOffset+1)+'–'+(sourceCollectionOffset+sourceCollections.items.length):'No collections';
+}
+async function openSourceCollection(identity) {
+  if(sourcePlanDirty)throw new Error('Download the current edited draft or save its decisions before opening another collection.');
+  sourceCollection=await api('/api/source-case?'+sourceQuery({id:identity}));
+  sourcePlan=null;sourceReviewNext=0;
+  $('#source-case-detail').hidden=false;$('#source-case-review-desk').hidden=true;
+  $('#source-case-title').textContent=sourceCollection.title;
+  $('#source-case-description').textContent='Original observations '+sourceCollection.observedOn+' · '+sourceCollection.caseCount+' cases · matching current repository edition '+short(sourceCollection.currentEditionId)+'.';
+  $('#source-case-download').href='/download/source-cases?'+sourceQuery({id:identity});
+  $('#source-case-rows').innerHTML=sourceCollection.document.cases.map((item,index)=>{
+    const candidates=sourceCollection.matches[item.caseId]||[];
+    return '<tr><td><input type="checkbox" data-source-case="'+index+'" aria-label="Select '+esc(item.title)+'" '+(!candidates.length?'disabled':'')+'></td><td><strong>'+esc(item.title)+'</strong><div class="record-id">'+esc(item.caseId)+'</div><p>'+item.sourceUrls.map(url=>'<a href="'+esc(url)+'" target="_blank" rel="noreferrer">Original source</a>').join(' · ')+'</p><details><summary>Complete source observations</summary><pre>'+esc(pretty(item))+'</pre></details></td><td>'+
+      (candidates.length?'<label>Exact original record<select data-source-match="'+index+'">'+(candidates.length>1?'<option value="">Choose the actual matching record</option>':'')+candidates.map(candidate=>'<option value="'+esc(candidate.identifier)+'">'+esc(candidate.identifier+' — '+candidate.title)+'</option>').join('')+'</select></label><p>'+candidates.length+' original identity match'+(candidates.length===1?'':'es')+'</p>':'<p>No retained original identity matches yet. Receive the source edition or edit the source document with its actual identifier, then import that continuation.</p>')+'</td></tr>';
+  }).join('');
+  $('#source-case-review-history').innerHTML='';
+  await loadSourceCaseReviews();
+}
+async function loadSourceCaseReviews() {
+  if(!sourceCollection||sourceReviewNext===null)return;
+  const page=await api('/api/source-case-reviews?'+sourceQuery({id:sourceCollection.id,offset:String(sourceReviewNext),limit:'50'}));
+  $('#source-case-review-history').insertAdjacentHTML('beforeend',page.items.map(item=>'<p><a href="/download/source-case-review?'+esc(sourceQuery({id:item.id}))+'">Download complete review</a> · '+item.recordCount+' records · '+esc(item.reviewedAt)+'</p>').join('')||(!sourceReviewNext?'<p class="muted">Saved staff decisions will appear here.</p>':''));
+  sourceReviewNext=page.next;$('#source-case-review-more').hidden=page.next===null;
+}
+function sourceChoices() {
+  return $$('#source-case-rows [data-source-case]:checked').map(box=>{
+    const index=Number(box.dataset.sourceCase),caseItem=sourceCollection.document.cases[index];
+    const identifier=$('#source-case-rows [data-source-match="'+index+'"]')?.value;
+    if(!identifier)throw new Error('Choose the actual original record for '+caseItem.caseId+'.');
+    return {caseId:caseItem.caseId,identifier};
+  });
+}
+async function prepareSourceCases() {
+  projectRequired();
+  if(!sourceCollection)throw new Error('Open a source collection.');
+  if(sourcePlanDirty)throw new Error('Download the current edited draft or save its decisions before preparing another.');
+  const choices=sourceChoices();
+  if(!choices.length)throw new Error('Select source cases and their actual original record identities.');
+  const result=await api('/api/source-cases/plan',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({projectId,collectionId:sourceCollection.id,choices})});
+  sourcePlan={...result,projectId,workspaceIdentity:data.workspaceIdentity};
+  sourcePlanDirty=false;
+  $('#source-case-review-json').value=pretty(result.input);
+  $('#source-case-plan-description').textContent=result.plans.length+' complete records prepared at migration revision '+result.revision+'. The save uses this same revision; reopen the plan if another change is saved first.';
+  $('#source-case-plan-details').innerHTML=result.plans.map(plan=>'<details><summary>'+esc(plan.case.title)+'</summary>'+
+    (plan.warnings.length?'<ul>'+plan.warnings.map(value=>'<li>'+esc(value)+'</li>').join('')+'</ul>':'')+
+    '<p>'+esc(plan.changes.join('; ')||'The complete current record is retained with the proposed access and hierarchy.')+'</p><pre>'+esc(pretty({source:plan.case,currentStaff:plan.currentStaff,currentSource:plan.currentSource,currentFiles:plan.currentFiles}))+'</pre></details>').join('');
+  $('#source-case-review-desk').hidden=false;
+  $('#source-case-review-desk').scrollIntoView({block:'start'});
+}
+function sourceReviewInput(form) {
+  if(!sourcePlan||sourcePlan.projectId!==projectId||sourcePlan.workspaceIdentity!==data.workspaceIdentity)throw new Error('Prepare the source-case plan in this current workspace.');
+  const input=JSON.parse(form.elements.input.value);
+  if(input.collectionId!==sourcePlan.collectionId||!Array.isArray(input.records)||!input.records.length)throw new Error('Keep this collection and its complete selected records in the review.');
+  const reviewer=form.elements.reviewer.value.trim(),note=form.elements.note.value.trim();
+  if(!reviewer||!note)throw new Error('Enter the reviewing operator and source decision note.');
+  for(const row of input.records){
+    if(!row.staff||typeof row.staff!=='object')throw new Error('Retain each complete staff object.');
+    row.staff.reviewer=reviewer;
+    row.staff.note=[row.staff.note,note].filter(Boolean).join('\n');
+  }
+  return input;
+}
+
 async function loadRecords() {
   if(!data?.project){$('#record-rows').innerHTML='<tr><td colspan="6" class="empty">Choose a migration first.</td></tr>';return;}
   page=await api('/api/records?'+new URLSearchParams({project:projectId,offset:String(offset),limit:'50',query}));
@@ -357,6 +439,7 @@ function recordStaff(form) {
   }
   const staff={action:String(values.get('action')),targetId:String(values.get('targetId')||'')||null,access,hierarchy,
     reviewer:String(values.get('reviewer')),note:String(values.get('note')),decisions};
+  if(currentRecord.staff?.sourceSupplement)staff.sourceSupplement=currentRecord.staff.sourceSupplement;
   const mapped=JSON.parse(form.elements.mappedOverride.value);
   if(resetOverride && JSON.stringify(mapped)===JSON.stringify(currentRecord.mappedSource)) { /* The source mapping resumes ownership. */ }
   else if(JSON.stringify(mapped)!==JSON.stringify(currentRecord.source))staff.mappedOverride=mapped;
@@ -381,7 +464,7 @@ $$('[data-tab]').forEach(button=>button.addEventListener('click',()=>tab(button.
 $$('.now-field').forEach(input=>{input.value=now();});
 $('#project-select').addEventListener('change',async event=>{
   const next=event.target.value;
-  if((recordDirty||mappingDirty)&&!confirm('Discard unsaved form changes and open this migration?')){event.target.value=projectId;return;}
+  if((recordDirty||mappingDirty||sourcePlanDirty)&&!confirm('Discard unsaved form changes and open this migration?')){event.target.value=projectId;return;}
   if(pending){event.target.value=projectId;message('Resume the saved operation before changing migrations.',true);return;}
   projectId=next;selected.clear();offset=0;query='';recordDirty=false;mappingDirty=false;currentRecord=null;
   filePage=null;fileOffset=0;fileQuery='';fileHistory=null;$('#file-search-form').elements.query.value='';$('#file-history').hidden=true;
@@ -419,6 +502,62 @@ action('#reset-mapped',()=>{$('#record-form').elements.mappedOverride.value=pret
 action('#download-record',()=>{if(currentRecord)location.assign(recordLink(currentRecord));});
 action('#show-original',async()=>{const result=await api('/api/original?observation='+encodeURIComponent(currentRecord.observationId));$('#original-observation').textContent=pretty(result);$('#original-observation').hidden=false;});
 formHandler('#bulk-review-form',async(form)=>{const rows=await jsonInput(form,'records');await apply('review-many',{records:Array.isArray(rows)?rows:rows.records});await loadRecords();});
+
+formHandler('#source-case-import',async form=>{
+  if(form.elements.file.files[0]?.size>MAX)throw new Error('Split this collection into complete source documents below 8 MiB.');
+  const document=await jsonInput(form,'document'),project=projectRequired();
+  const request={operationId:id(),kind:'source-cases',projectId,expectedRevision:project.revision,input:{document}};
+  if(encoder.encode(JSON.stringify(request)).length>MAX)throw new Error('Split this source collection so its complete save body fits within 8 MiB.');
+  const result=await submit('/api/apply',request);
+  sourceCollectionOffset=0;await loadSourceCollections();
+
+});
+action('#refresh-source-cases',()=>loadSourceCollections());
+action('#source-collections-previous',async()=>{sourceCollectionOffset=Math.max(0,sourceCollectionOffset-50);await loadSourceCollections();});
+action('#source-collections-next',async()=>{if(sourceCollections?.next!==null&&sourceCollections?.next!==undefined){sourceCollectionOffset=sourceCollections.next;await loadSourceCollections();}});
+$('#source-collection-rows').addEventListener('click',event=>{
+  const button=event.target.closest('[data-source-collection]');if(!button)return;
+  const item=sourceCollections?.items[Number(button.dataset.sourceCollection)];
+  if(item)openSourceCollection(item.id).catch(error=>message(error.message,true));
+});
+action('#source-case-select-matched',()=>{$$('#source-case-rows [data-source-case]').forEach(box=>{const item=sourceCollection.document.cases[Number(box.dataset.sourceCase)];box.checked=(sourceCollection.matches[item.caseId]||[]).length===1;});});
+action('#source-case-clear',()=>{$$('#source-case-rows [data-source-case]').forEach(box=>{box.checked=false;});});
+action('#source-case-plan',()=>prepareSourceCases());
+action('#source-case-review-more',()=>loadSourceCaseReviews());
+$('#source-case-review-json').addEventListener('input',()=>{sourcePlanDirty=true;});
+formHandler('#source-case-draft-form',async form=>{
+  if(sourcePlanDirty)throw new Error('Save or download the current edited draft before receiving another.');
+  const draft=await jsonInput(form,'draft');
+  if(draft.schema!=='stellar-forge.tind-source-case-draft.v1'||draft.projectId!==projectId||
+    draft.collectionId!==sourceCollection?.id||!Number.isSafeInteger(draft.expectedRevision)||draft.expectedRevision<0||
+    draft.input?.collectionId!==draft.collectionId||!Array.isArray(draft.input?.records))
+    throw new Error('Receive the complete draft for this same migration and source collection.');
+  sourcePlan={collectionId:draft.collectionId,revision:draft.expectedRevision,projectId,
+    workspaceIdentity:data.workspaceIdentity,sourceWorkspaceIdentity:draft.workspaceIdentity};
+  $('#source-case-review-json').value=pretty(draft.input);
+  $('#source-case-review-form').elements.reviewer.value=draft.reviewer||'';
+  $('#source-case-review-form').elements.note.value=draft.note||'';
+  $('#source-case-plan-description').textContent='Received complete editable draft at migration revision '+draft.expectedRevision+'.';
+  $('#source-case-plan-details').innerHTML='<p>The original source collection and review history remain available above.</p>';
+  $('#source-case-review-desk').hidden=false;sourcePlanDirty=false;
+});
+formHandler('#source-case-review-form',async form=>{
+  const input=sourceReviewInput(form),plan=sourcePlan;
+  const request={operationId:id(),kind:'source-case-review',projectId,expectedRevision:plan.revision,input};
+  if(encoder.encode(JSON.stringify(request)).length>MAX)throw new Error('Save fewer complete source-case records per operation so the body fits within 8 MiB.');
+  const result=await submit('/api/apply',request);
+  if(result)message('Saved '+result.result.recordCount+' complete source-case decisions.');
+});
+action('#source-case-download-draft',()=>{
+  const form=$('#source-case-review-form');
+  if(!sourcePlan)throw new Error('Prepare the source-case plan first.');
+  const input=JSON.parse(form.elements.input.value);
+  download('tind-source-case-draft.json',pretty({schema:'stellar-forge.tind-source-case-draft.v1',
+    projectId:sourcePlan.projectId,workspaceIdentity:sourcePlan.workspaceIdentity,expectedRevision:sourcePlan.revision,
+    collectionId:sourcePlan.collectionId,reviewer:form.elements.reviewer.value,note:form.elements.note.value,input}));
+  sourcePlanDirty=false;
+});
+
 formHandler('#destination-form',async(form,values)=>{
   const marcxml=await fileText(form.elements.file.files[0]);
   await apply('destination',{marcxml,provenance:{url:String(values.get('url')),retrievedAt:String(values.get('retrievedAt')),
@@ -491,7 +630,7 @@ $('#batch-list').addEventListener('click',async event=>{
     }
   }catch(error){message(error.message,true);}
 });
-window.addEventListener('beforeunload',event=>{if(pending||recordDirty||mappingDirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(pending||recordDirty||mappingDirty||sourcePlanDirty){event.preventDefault();event.returnValue='';}});
 (async()=>{
   try{
     if(!token)throw new Error('Open the complete local launch link to enter the original workspace.');

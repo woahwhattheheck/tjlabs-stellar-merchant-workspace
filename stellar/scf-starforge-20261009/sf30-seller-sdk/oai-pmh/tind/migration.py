@@ -17,6 +17,7 @@ from bridge import storage, InputError
 from harvest import jbytes, decode, sha, stamp, plain, page_values
 from marc import access, canonical, default_profile, doi, field_key, grouped, identifiers
 from marc import mapped_record, marcxml, merge_records, native_id, normalize_profile, normalize_record, parse_marc
+from source_cases import case_tables, import_cases, review_cases, referenced_case, supplements
 
 SCHEMA = "stellar-forge.tind-migration.v1"
 MAX_JSON = 8 * 1024 * 1024
@@ -230,6 +231,8 @@ class Migration:
             CREATE TABLE IF NOT EXISTS tind_operations(id TEXT PRIMARY KEY,request_sha TEXT NOT NULL,response TEXT NOT NULL);
         """)
 
+        case_tables(self)
+
     def close(self):
         self.ws.close()
 
@@ -299,7 +302,8 @@ class Migration:
                 "destination": self._destination, "destination-file": self._destination_file,
                 "files": self._files, "file-root": self._file_root, "verify-files": self._verify_files,
                 "prepare": self._prepare, "receipt": self._receipt, "file-receipt": self._file_receipt,
-                "reconcile": self._reconcile, "withdraw-batch": self._withdraw_batch
+                "reconcile": self._reconcile, "withdraw-batch": self._withdraw_batch,
+                "source-cases": self._source_cases, "source-case-review": self._source_case_review
             }
             if kind not in methods:
                 raise InputError("Unknown TIND operation")
@@ -313,6 +317,20 @@ class Migration:
                         "revision": project["revision"], "result": result}
             self.db.execute("INSERT INTO tind_operations VALUES(?,?,?)", (operation, request_sha, jbytes(response).decode()))
             return response
+
+    def _mapped_source(self, project, observation, staff):
+        record = mapped_record(observation, project["profile"], staff)
+        if staff.get("sourceSupplement") is not None:
+            case = referenced_case(self, project["id"], staff["sourceSupplement"])
+            record, _, warnings = supplements(record, case)
+            return record, warnings
+        return record, []
+
+    def _source_cases(self, project, value, operation):
+        return import_cases(self, project, value, operation)
+
+    def _source_case_review(self, project, value, operation):
+        return review_cases(self, project, value, operation)
 
     def _create(self, _, value, operation):
         edition = self.ws.edition(value["editionId"])
@@ -341,7 +359,7 @@ class Migration:
             body["sourceStatus"] = observation["status"]
             body["sourceDatestamp"] = observation["datestamp"]
             body["setSpecs"] = observation.get("setSpecs", [])
-            mapped = body["staff"].get("mappedOverride") or mapped_record(observation, project["profile"], body["staff"])
+            mapped = body["staff"].get("mappedOverride") or self._mapped_source(project, observation, body["staff"])[0]
             body["title"] = next((s["value"] for f in mapped["fields"] if f["tag"] == "245" for s in f.get("subfields", []) if s["code"] == "a"), row["identifier"])
             self.db.execute("INSERT INTO tind_records VALUES(?,?,?,?) ON CONFLICT(project_id,identifier) DO UPDATE SET observation_id=excluded.observation_id,body=excluded.body",
                             (project["id"], row["identifier"], row["observation_id"], jbytes(body).decode()))
@@ -382,7 +400,7 @@ class Migration:
         staff = value.get("staff")
         if not isinstance(staff, dict):
             raise InputError("Supply the complete staff record")
-        if set(staff) - {"action", "targetId", "access", "hierarchy", "decisions", "note", "reviewer", "mappedOverride", "reviewedAt"}:
+        if set(staff) - {"action", "targetId", "access", "hierarchy", "decisions", "note", "reviewer", "mappedOverride", "reviewedAt", "sourceSupplement"}:
             raise InputError("Unknown staff record field")
         staff = dict(staff)
         if staff.get("action", "migrate") not in {"migrate", "exclude", "withdraw"}:
@@ -399,12 +417,14 @@ class Migration:
                 raise InputError("Select the destination ID separately from editable source metadata")
         if not isinstance(staff.get("hierarchy", {}), dict) or not isinstance(staff.get("decisions", {}), dict):
             raise InputError("Hierarchy and merge decisions must be objects")
+        if staff.get("sourceSupplement") is not None:
+            referenced_case(self, project["id"], staff["sourceSupplement"])
         staff["reviewedAt"] = stamp()
         # reviewedAt is retained internally rather than accepted from a later browser edit.
         body["staff"] = staff
         self.db.execute("UPDATE tind_records SET body=? WHERE project_id=? AND identifier=?", (jbytes(body).decode(), project["id"], identifier))
         observation = self.ws.observation(row["observation_id"])
-        mapped = staff.get("mappedOverride") or mapped_record(observation, project["profile"], staff)
+        mapped = staff.get("mappedOverride") or self._mapped_source(project, observation, staff)[0]
         body["title"] = next((s["value"] for f in mapped["fields"] if f["tag"] == "245" for s in f.get("subfields", []) if s["code"] == "a"), identifier)
         self.db.execute("UPDATE tind_records SET body=? WHERE project_id=? AND identifier=?", (jbytes(body).decode(), project["id"], identifier))
         self.db.execute("DELETE FROM tind_source_ids WHERE project_id=? AND identifier=?", (project["id"], identifier))
@@ -574,7 +594,7 @@ class Migration:
         row, body = self._record_row(project, identifier)
         observation = self.ws.observation(row["observation_id"])
         staff = body.get("staff") or {}
-        mapped_source = mapped_record(observation, project["profile"], staff)
+        mapped_source, supplement_warnings = self._mapped_source(project, observation, staff)
         source = staff.get("mappedOverride") or mapped_source
         action = staff.get("action", "migrate")
         visibility = access(staff.get("access", project["profile"]["defaultAccess"]))
@@ -585,7 +605,7 @@ class Migration:
                 matches.update(r[0] for r in self.db.execute("SELECT native_id FROM tind_destination_ids WHERE snapshot_id=? AND namespace=? AND value=?",
                                                            (snapshot["id"], namespace, value)))
         target_id = staff.get("targetId")
-        issues = []
+        issues = [{"kind": "source_supplement", "message": warning} for warning in supplement_warnings] if not staff.get("mappedOverride") else []
         if target_id is None and len(matches) == 1:
             target_id = next(iter(matches))
         elif target_id is None and len(matches) > 1:

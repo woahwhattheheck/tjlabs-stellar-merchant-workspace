@@ -1,29 +1,34 @@
 # Prepare and receive the complete IATI application
 
-This carrier preserves the complete source at commit
-`cf4f8d5eefa16ce547795bce156d4fef53973ef1`: original XML/IATI workspace,
+This carrier preserves the complete source selection
+`3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873`: original XML/IATI workspace,
 DQA, publishing, organisation budgets and documents, saved publisher refresh,
-the original AMP destination workflow, Results monitoring, and the complete Programme desk and commissioning contribution.
-It includes the native CLI, industrial browser, client,
-Merchant/MCP provider, Applications binding, original schema and codelist
-dependencies, licences, and the existing receiving programmes.
+Results monitoring, programme review and commissioning, financial reconciliation, and native AMP commissioning.
+It composes Results author commit `7f010cbc26344f840c8b864ea59edbabec5d02d5`,
+financial author commit `ae8a650025f6e9ec53275751aa36d7770d58b25f`,
+the complete reviewed client/MCP/operator corrections and maintained receiving programme.
+The combined selection is bound by its full inventory; an invented combined source
+commit is not substituted for that identity.
 
-The source package also retains the exact SNV SP2194 activity-export ZIP and
-its separate complete third-party notice. The selected operation uses those
-retained original bytes; no publisher acquisition is required.
+The source includes the native CLI, industrial browser, client, Merchant/MCP
+provider, Applications binding, original schema/codelist dependencies, licences
+and existing receiving programmes. It retains the exact original SNV SP2194
+activity-export ZIP with its third-party notice, and the complete original FCDO
+organisation XML, activity gzip and both successful publisher acquisition receipts.
+No new publisher acquisition is needed for these already selected operations.
 
 | Item | Exact identity |
 | --- | --- |
-| Text source | 189 files; 3,531,603 UTF-8 bytes |
-| Original SNV source ZIP | 1 file; 17,001 bytes |
-| Complete installed closure | 190 files; 3,548,604 bytes |
-| Compressed envelope | 793,517 bytes |
-| Envelope SHA256 | `a101fd4a4c184bb63723844e49b3da05385fa2d12e18f3da69d823edcdceb94d` |
-| Decoded envelope | 3,722,993 bytes |
-| Decoded SHA256 | `737b0244bc0372ebd33f97b44cb46fb111dda9521882739de55f08bc4a6f2924` |
-| Original application commit | `cf4f8d5eefa16ce547795bce156d4fef53973ef1` |
-| Packet commit | `dc2f317a5f252e6991a8251fea6130d3949c95bb` |
-| Native/Applications source binding | The same 152 runtime files |
+| Text source | 201 files; 3,846,277 UTF-8 bytes |
+| Original binary publisher inputs | 2 files; 664,228 bytes |
+| Complete installed closure | 203 files; 4,510,505 bytes |
+| Compressed envelope | 1,539,216 bytes |
+| Envelope SHA256 | `2ee3332f9e254d40076fad1a0f5bd8dc8c5c3f3286383d64296c830183f1b952` |
+| Decoded envelope | 4,952,476 bytes |
+| Decoded SHA256 | `600a4ad86a698d68e0ee3f582dfef1fd0ae008e12a37f2f91d393c4c698ed3be` |
+| Source selection | `3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873` |
+| Packet commit | `9bfca6df8ebbd8e6c4583557df1978accd015a23` |
+| Native/Applications source binding | The same 167 runtime files |
 
 ## Prepare the exact source
 
@@ -35,8 +40,8 @@ and organisation validators use their declared lxml dependency when selected.
 
 ```sh
 python3 -B prepare_source.py \
-  --root /absolute/private/iati-source-cf4f8d5e \
-  --packet-file /absolute/complete-source-cf4f8d5e.json.gz \
+  --root /absolute/private/iati-source-3bbeeb3c \
+  --packet-file /absolute/complete-source.json.gz \
   --node /absolute/installed/node
 ```
 
@@ -47,32 +52,44 @@ rejects a changed existing member. It does not create an IATI workspace.
 
 The application keeps its original repository paths under the returned
 `source` directory. The native console and Applications lifecycle use the
-same 152-file manifest, including all organisation, refresh, AMP, Programme and commissioning dependencies.
+same 167-file manifest, including all organisation and refresh dependencies.
 Do not install a Results-only subset.
-
-The carrier matches the actual composed repository files, including the current
-original XML database backup allowance and dataset-handler schema additions.
-The unchanged AMP runtime and its retained Java contract sources remain included;
-source preparation does not start an AMP destination or native write.
 
 The source-preparation receipt records syntax and source custody separately
 from the original native receiving outcome. A completed source receipt does
 not mean that the case, browser or customer handover has run.
 
-## Programme and commissioning continuation
+## Run the selected FCDO financial operation
 
-The composed edition preserves the original Programme desk, commissioning
-schema/model, implementation guide and same-case Programme browser. Those
-features use the same Results selections, version history, source references
-and original request recovery. They do not create a separate workspace store.
-A commissioning document records its source bindings, original permissions,
-hierarchy and review observations; a reviewed preview supplies the unchanged
-native Results request.
+The exact current `iati/reconciliation_receiving.py` and its complete
+`RECONCILIATION_RECEIVING.md` are included. Use the original receiving
+operation `fcdo-financial-reconciliation-cb2a-20261012` and its existing private
+output directory. Keep the original actor, Node, Playwright and Chromium
+selections. The programme accepts the supplied full activity gzip directly.
 
-See `results/PROGRAMME.md` and `results/COMMISSIONING.md` for the complete
-operator contract. The Programme owner's receiving programme must continue its
-already selected case and actual source edition. Installing this carrier does
-not execute or duplicate that operation.
+Use the materialized IATI directory's `examples/fcdo-organisation-2026/organisation.xml`
+for `--organisation-source` and its adjacent `publisher-receipt.json` for
+`--organisation-acquisition`. Use
+`examples/fcdo-wadi-2026/FCDO-set-20.xml.gz` for `--activity-source` and
+its adjacent `publisher-receipt.json` for `--activity-receipt`. Supply the
+materialized `stellar-forge/mcp-merchant-operator` directory as
+`--mcp-directory`.
+
+The whole programme retains the original financial case and five request-bound
+revisions, complete financial and nested organisation/activity packets, HTTP/client/MCP
+file reads and original operator browser continuation. Its source-edition continuation
+reopens the same case after an installed-source correction. Use its complete guide
+for the actual command and keep one operator on that same output directory.
+
+For connectors that cannot return the complete binary inline, the packet commit
+also retains `artifacts/iati-cumulative-financial-20261012/complete-source.base64.part01`
+through `part05`. Their complete ASCII sizes and SHA256 values are listed in
+that directory's README. Join their unchanged data in order, base64-decode once,
+verify the full gzip above, and pass that exact retained file with `--packet-file`.
+
+## Continue an existing AMP commissioning operation
+
+The current merged AMP application is included in full, with its original upstream source, destination definitions and country-programme selection. Read `iati/AMP.md`, `iati/amp/DESTINATION.md` and `iati/receiving/AMP.md` for the original installed-programme contract. Its browser, CLI, typed client and Merchant tools use the same source workspace and native packet dispatcher. Reuse the original selected AMP operation and account configuration.
 
 ## Run the retained SNV operation
 
@@ -88,15 +105,15 @@ The original operation is
 root on retry. Coordinate its one execution with the existing receiving owner.
 
 ```sh
-python3 -B /absolute/private/iati-source-cf4f8d5e/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/prepare_snv.py \
-  --source-zip /absolute/private/iati-source-cf4f8d5e/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/SNV_SP2194_DPortal_Source_20261012.zip \
+python3 -B /absolute/private/iati-source-3bbeeb3c/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/prepare_snv.py \
+  --source-zip /absolute/private/iati-source-3bbeeb3c/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/examples/snv-sp2194/SNV_SP2194_DPortal_Source_20261012.zip \
   --root /absolute/private/iati-results-snv-sp2194-6966-20261012 \
   --operator "Actual receiving operator" \
   --run \
   --node /absolute/installed/node \
   --playwright /absolute/installed/playwright \
   --chromium /absolute/installed/chromium \
-  --merchant-root /absolute/private/iati-source-cf4f8d5e/source/stellar-forge/mcp-merchant-operator
+  --merchant-root /absolute/private/iati-source-3bbeeb3c/source/stellar-forge/mcp-merchant-operator
 ```
 
 The native programme retains the original source, draft, named source review,
@@ -128,8 +145,8 @@ case when all browser/reviewer options are supplied:
 
 ```sh
 python3 -B prepare_source.py \
-  --root /absolute/private/iati-source-cf4f8d5e \
-  --packet-file /absolute/complete-source-cf4f8d5e.json.gz \
+  --root /absolute/private/iati-source-3bbeeb3c \
+  --packet-file /absolute/complete-source.json.gz \
   --node /absolute/installed/node \
   --receiving-config /absolute/private/receiving-selection.json \
   --playwright /absolute/installed/playwright \
@@ -161,3 +178,13 @@ The entire source and original source package remain immutable in this
 carrier. A later source edition uses a new source-preparation destination;
 a continuation of the existing case keeps its original receiving root and
 explicitly records the chosen executable source.
+
+## Following cumulative source corrections
+
+This edition preserves the original Results, organisation, refresh and financial engines while adding the already merged AMP commissioning hooks and their complete native destination source. Both explicit source declarations contain the same 167 names. The native packet dispatcher, Merchant exports, HTTP routes, typed client and browser retain all five workflows.
+
+The selected financial receiving programme reads ordinary installed source through its original `digest_file` and includes the actual subprocess return code in a failed continuation receipt. The selected private HTTP client uses the maintained Node HTTP carrier with a byte-counted Readable queue, preserving the original Request/Response APIs, body lengths, cancellation and timeouts. The historical financial comparison types and Merchant preflight remain the current original author's complete corrections.
+
+The Results transfer is the original owner's legacy-compatible complete postimage `bb11009027ad4eca01fca30998a1718775951fb8` from commit `ad07e749861424e732440d0af11f985b657a5f2c`. It reconstructs the original exporter report basis from validated projections when reopening the retained ZIP. The original `report.py` stays unchanged; old report bytes are preserved.
+
+Source preparation, a native operation result and a durable customer handover are separate receipts. This source capsule contains original application code and public publisher inputs, without an executed private customer workspace or an assertion that every native receiving phase has completed.

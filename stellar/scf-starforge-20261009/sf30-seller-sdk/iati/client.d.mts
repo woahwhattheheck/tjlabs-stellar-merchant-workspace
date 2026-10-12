@@ -1,3 +1,4 @@
+import type { OrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
 import type { AmpStatus, AmpCapture, AmpPlan, AmpSelection, AmpDecisionState, AmpRows, AmpRunSummary, AmpRun, AmpEvents, AmpRequest, AmpAction, AmpCaptureInput, AmpCaptureResult, AmpSave, AmpSaved, AmpScope, AmpScopePreview, AmpDecisions, AmpAdvance, AmpReview, AmpPrepare, AmpNativeCapture, AmpNativeStart, AmpNativeStarted, AmpCredentials, AmpNativeReconcile, AmpNativeReceived, AmpFileKind, AmpReceiving } from './amp_client.mjs';
 export type * from './amp_client.mjs';
 import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
@@ -541,6 +542,7 @@ export type ResultsOperation =
  input:ResultsSave|ResultsCompare|ResultsAdopt|ResultsCancel;response:ResultsEdition|ResultsSavedComparison|ResultsHeadSelection|ResultsCancelled};
 
 export declare class IatiWorkspaceClient {
+  readonly organisationReconciliation: OrganisationReconciliationClient;
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
   state(options?: RequestOptions): Promise<WorkspaceState>;
@@ -629,6 +631,27 @@ export declare class IatiWorkspaceClient {
   organisationReceive(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<OrganisationReceiving>;
 
 
+  resultsInventory(options?:RequestOptions):Promise<ResultsInventory>;
+  resultsSource(source:Sha256,options?:RequestOptions):Promise<ResultsSource>;
+  resultsIndicators(projection:Sha256,options?:RequestOptions & {offset?:number;limit?:number;search?:string;measure?:string}):Promise<{
+    projection:ResultsProjectionRecord;sourceCounts:Record<string,number>;rows:Array<Record<string,unknown>>;total:number;offset:number;nextOffset:number|null}>;
+  resultsIndicator(projection:Sha256,key:Sha256,options?:RequestOptions):Promise<ResultsIndicator>;
+  resultsPreview(input:ResultsDefinition,options?:RequestOptions):Promise<ResultsPreview>;
+  resultsSave(input:ResultsSave,options?:RequestOptions):Promise<ResultsEdition>;
+  resultsCompare(input:ResultsCompare,options?:RequestOptions):Promise<ResultsSavedComparison>;
+  resultsAdopt(input:ResultsAdopt,options?:RequestOptions):Promise<ResultsHeadSelection>;
+  resultsCancel(input:ResultsCancel,options?:RequestOptions):Promise<ResultsCancelled>;
+  resultsRequest(requestId:string,options?:RequestOptions):Promise<ResultsOperation>;
+  resultsProject(id:Sha256,options?:RevisionOptions):Promise<ResultsEdition>;
+  resultsReport(id:Sha256,options?:RevisionOptions):Promise<{edition:ResultsEdition;report:ResultsReport}>;
+  resultsHistory(id:Sha256,options?:RequestOptions):Promise<{id:Sha256;headRevision:number;editions:ResultsEdition[]}>;
+  resultsComparisons(id:Sha256,options?:RequestOptions):Promise<{comparisons:ResultsSavedComparison[]}>;
+  /** The caller must consume/cancel the complete returned file stream. */
+  resultsExport(id:Sha256,options?:RevisionOptions & {reportOnly?:boolean}):Promise<Response>;
+  resultsOriginalSource(source:Sha256,options?:RequestOptions):Promise<Response>;
+  resultsReceive(input:Pick<PacketInput,'body'|'bytes'> & {sha256?:Sha256},options?:RequestOptions):Promise<ResultsReceiving>;
+
+
   ampStatus(options?:RequestOptions):Promise<AmpStatus>;
   ampCapture(id:Sha256,options?:RequestOptions):Promise<AmpCapture>;
   ampPlan(id:Sha256,options?:RevisionOptions):Promise<AmpPlan>;
@@ -653,27 +676,6 @@ export declare class IatiWorkspaceClient {
   ampFile(id:Sha256,kind:AmpFileKind,options?:RevisionOptions):Promise<Response>;
   ampAsset(sha256:Sha256,options?:RequestOptions):Promise<Response>;
   ampReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<AmpReceiving>;
-
-
-  resultsInventory(options?:RequestOptions):Promise<ResultsInventory>;
-  resultsSource(source:Sha256,options?:RequestOptions):Promise<ResultsSource>;
-  resultsIndicators(projection:Sha256,options?:RequestOptions & {offset?:number;limit?:number;search?:string;measure?:string}):Promise<{
-    projection:ResultsProjectionRecord;sourceCounts:Record<string,number>;rows:Array<Record<string,unknown>>;total:number;offset:number;nextOffset:number|null}>;
-  resultsIndicator(projection:Sha256,key:Sha256,options?:RequestOptions):Promise<ResultsIndicator>;
-  resultsPreview(input:ResultsDefinition,options?:RequestOptions):Promise<ResultsPreview>;
-  resultsSave(input:ResultsSave,options?:RequestOptions):Promise<ResultsEdition>;
-  resultsCompare(input:ResultsCompare,options?:RequestOptions):Promise<ResultsSavedComparison>;
-  resultsAdopt(input:ResultsAdopt,options?:RequestOptions):Promise<ResultsHeadSelection>;
-  resultsCancel(input:ResultsCancel,options?:RequestOptions):Promise<ResultsCancelled>;
-  resultsRequest(requestId:string,options?:RequestOptions):Promise<ResultsOperation>;
-  resultsProject(id:Sha256,options?:RevisionOptions):Promise<ResultsEdition>;
-  resultsReport(id:Sha256,options?:RevisionOptions):Promise<{edition:ResultsEdition;report:ResultsReport}>;
-  resultsHistory(id:Sha256,options?:RequestOptions):Promise<{id:Sha256;headRevision:number;editions:ResultsEdition[]}>;
-  resultsComparisons(id:Sha256,options?:RequestOptions):Promise<{comparisons:ResultsSavedComparison[]}>;
-  /** The caller must consume/cancel the complete returned file stream. */
-  resultsExport(id:Sha256,options?:RevisionOptions & {reportOnly?:boolean}):Promise<Response>;
-  resultsOriginalSource(source:Sha256,options?:RequestOptions):Promise<Response>;
-  resultsReceive(input:Pick<PacketInput,'body'|'bytes'> & {sha256?:Sha256},options?:RequestOptions):Promise<ResultsReceiving>;
 
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;

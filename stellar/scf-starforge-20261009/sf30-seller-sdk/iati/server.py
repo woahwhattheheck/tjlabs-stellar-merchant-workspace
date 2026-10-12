@@ -13,9 +13,10 @@ from iati_workspace import IatiWorkspace, InputError, MAX_SOURCE, MAX_PACKET, lo
 import dqa_http
 import publishing_http
 import organisation_http
+import organisation_reconciliation_http
 import refresh_http
-import amp_http
 import results.http as results_http
+import amp_http
 
 HERE = Path(__file__).resolve().parent
 SHARED = HERE.parent / "xml"
@@ -85,10 +86,10 @@ class Handler(_original.Handler):
         target = urlsplit(self.path)
         if results_http.asset(self, target.path):
             return
-        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/organisation.js", "/organisation.css", "/refresh.js", "/refresh.css", "/amp.js", "/amp.css"}:
+        if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/organisation.js", "/organisation.css", "/organisation_reconciliation_ui.mjs", "/organisation_reconciliation.css", "/refresh.js", "/refresh.css", "/amp.js", "/amp.css"}:
             self._gate(api=False)
             name = target.path[1:]
-            media = "text/javascript; charset=utf-8" if name.endswith(".js") else "text/css; charset=utf-8"
+            media = "text/javascript; charset=utf-8" if name.endswith((".js", ".mjs")) else "text/css; charset=utf-8"
             body = (self.server.assets_directory / name).read_bytes()
             self._headers(200, media, len(body))
             self.wfile.write(body)
@@ -104,6 +105,8 @@ class Handler(_original.Handler):
         if amp_http.get(self, target.path, q):
             return
         if refresh_http.get(self, target.path, q):
+            return
+        if organisation_reconciliation_http.get(self, target.path, q):
             return
         if organisation_http.get(self, target.path, q):
             return
@@ -167,6 +170,8 @@ class Handler(_original.Handler):
         if amp_http.post(self, target.path):
             return
         if refresh_http.post(self, target.path):
+            return
+        if organisation_reconciliation_http.post(self, target.path):
             return
         if organisation_http.post(self, target.path):
             return
