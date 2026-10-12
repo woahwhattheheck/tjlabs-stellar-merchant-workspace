@@ -15,6 +15,7 @@ original saved records from source selection through delivery and reopening.
 | --- | --- | --- |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
+| Operate native MPP merchant and customer | **Applications → Native MPP merchant and customer** or `starforge mpp-workspace` | One retained native workspace, original 402 purchase and consent/recovery flow, browser/agent operation, twelve-file customer delivery and exact paid-response receiving |
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
@@ -203,6 +204,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [Native MPP merchant, customer and managed receiving](products/mpp-workspace/README.md)
 
 - [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 - [Grant purchase review and complete receiving](products/grant-reviewer/OPERATING.md)

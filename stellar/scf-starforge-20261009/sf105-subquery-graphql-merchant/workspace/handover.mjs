@@ -88,6 +88,26 @@ async function put(root, filename, bytes, replace = false) {
   } finally { await rm(temporary, { force: true }); }
 }
 function entry(filename, bytes) { return { name: filename, bytes: bytes.length, sha256: digest(bytes) }; }
+// Check every original reference before suppressing a repeated artifact read.
+// A repeated UUID/generation may not silently substitute different source bytes.
+function seenReference(seen, reference, kind) {
+  if (!plain(reference) || !UUID.test(reference.id ?? '') || !SHA.test(reference.recordSha256 ?? ''))
+    fail('A committed artifact reference has no original UUID or record hash.');
+  const fields = kind === 'deployment' ? ['id', 'directory', 'exportId', 'generation', 'recordSha256']
+    : kind === 'preview' ? ['id', 'project', 'inputDigest', 'recordSha256']
+    : ['id', 'directory', 'inputDigest', 'recordSha256'];
+  if (kind === 'deployment' && (!UUID.test(reference.exportId ?? '') || !Number.isSafeInteger(reference.generation) || reference.generation < 1)
+      || kind !== 'deployment' && !SHA.test(reference.inputDigest ?? ''))
+    fail('A committed artifact reference has an inconsistent native identity.');
+  const key = kind === 'deployment' ? reference.id + ':' + reference.generation : reference.id;
+  const identity = JSON.stringify(fields.map(field => reference[field]));
+  if (seen.has(key)) {
+    if (seen.get(key) !== identity) fail('Committed revisions disagree about the same original ' + kind + ' reference.', 409);
+    return true;
+  }
+  seen.set(key, identity);
+  return false;
+}
 function originalPath(index, path) {
   if (!canonicalRoot(path)) fail('A retained reference has a noncanonical path.');
   const root = workspaceOrigin(index.roots, path);
@@ -164,14 +184,13 @@ export async function describeProjectHandover(store, { project, revision } = {})
     loaders.set(filename, { file: info, load: () => bytesAt(store.root, filename, info) });
   };
   const addGroup = async (root, files) => { for (const file of files) await add(join(root, name(file.name)), file); };
-  const exports = new Set(), deployments = new Set(), previews = new Set();
+  const exports = new Map(), deployments = new Map(), previews = new Map();
   for (let number = 1; number <= revision; number++) {
     const saved = await store.read(project, number);
     usedPathRoots(saved, context, roots);
     await add(join(store.root, 'projects', project, number + '.json'));
     for (const reference of saved.exports) {
-      const key = reference.id + ':' + reference.recordSha256;
-      if (exports.has(key)) continue;
+      if (seenReference(exports, reference, 'merchant')) continue;
       const record = await readExport(reference); await verifyExport(record);
       const path = join(dirname(referenceDirectory(reference)), 'workspace-export.json');
       const raw = decode(await bytesAt(store.root, logical(store.root, path)));
@@ -179,11 +198,9 @@ export async function describeProjectHandover(store, { project, revision } = {})
       await add(path, { bytes: (await bytesAt(store.root, logical(store.root, path))).length, sha256: reference.recordSha256 });
       await addGroup(record.directory, record.files);
       if (record.evolution) await addGroup(record.evolution.directory, record.evolution.files);
-      exports.add(key);
     }
     for (const reference of saved.deployments ?? []) {
-      const key = reference.id + ':' + reference.generation;
-      if (deployments.has(key)) continue;
+      if (seenReference(deployments, reference, 'deployment')) continue;
       const record = await readDeployment(reference);
       const path = join(dirname(referenceDirectory(reference)), 'workspace-deployment-' + reference.generation + '.json');
       const raw = await bytesAt(store.root, logical(store.root, path));
@@ -191,14 +208,12 @@ export async function describeProjectHandover(store, { project, revision } = {})
       await add(path, { bytes: raw.length, sha256: reference.recordSha256 });
       await verifyFiles(record.directory, record.files); await addGroup(record.directory, record.files);
       for (const host of record.hosts) { await verifyFiles(host.directory, host.files); await addGroup(host.directory, host.files); }
-      deployments.add(key);
     }
     for (const reference of saved.previews ?? []) {
-      if (previews.has(reference.id)) continue;
+      if (seenReference(previews, reference, 'preview')) continue;
       await readPreview(store, reference);
       const path = join(store.previews, reference.id + '.json'), raw = await bytesAt(store.root, logical(store.root, path));
       await add(path, { bytes: raw.length, sha256: reference.recordSha256 });
-      previews.add(reference.id);
     }
   }
   const head = json({ id: project, revision, inputDigest: selected.inputDigest }), headName = 'projects/' + project + '/head.json';
@@ -238,7 +253,7 @@ async function verifyClosure(index, load) {
     if (!Array.isArray(entries)) fail('A retained artifact has no original file manifest.');
     for (const item of entries) requireFile(originalPath(index, join(root, name(item.name))), item);
   };
-  const exported = new Map(), deployed = new Map(), previewed = new Set();
+  const exported = new Map(), deployed = new Map(), previewed = new Map();
   let last;
   for (let number = 1; number <= index.project.revision; number++) {
     const file = requireFile('projects/' + index.project.id + '/' + number + '.json');
@@ -246,18 +261,15 @@ async function verifyClosure(index, load) {
     if (saved.revision !== number) fail('The handover revision order changed.');
     last = saved;
     for (const reference of saved.exports) {
-      const key = reference.id + ':' + reference.recordSha256;
-      if (exported.has(key)) continue;
+      if (seenReference(exported, reference, 'merchant')) continue;
       const record = await recordJson(originalPath(index, join(dirname(reference.directory), 'workspace-export.json')), reference.recordSha256);
       if (record.id !== reference.id || record.directory !== reference.directory || record.inputDigest !== reference.inputDigest)
         fail('A merchant record does not match its original project reference.');
       group(record.directory, record.files);
       if (record.evolution) group(record.evolution.directory, record.evolution.files);
-      exported.set(key, record);
     }
     for (const reference of saved.deployments ?? []) {
-      const key = reference.id + ':' + reference.generation;
-      if (deployed.has(key)) continue;
+      if (seenReference(deployed, reference, 'deployment')) continue;
       const record = await recordJson(originalPath(index, join(dirname(reference.directory),
         'workspace-deployment-' + reference.generation + '.json')), reference.recordSha256);
       if (record.schema !== 'stellar-forge.graphql-workspace-deployment.v1' || record.id !== reference.id
@@ -266,10 +278,9 @@ async function verifyClosure(index, load) {
         fail('A deployment record does not match its original project reference.');
       group(record.directory, record.files);
       for (const host of record.hosts) group(host.directory, host.files);
-      deployed.set(key, record);
     }
     for (const reference of saved.previews ?? []) {
-      if (previewed.has(reference.id)) continue;
+      if (seenReference(previewed, reference, 'preview')) continue;
       if (!UUID.test(reference.id ?? '') || reference.project !== index.project.id) fail('A preview belongs to another project.');
       const record = await recordJson('previews/' + reference.id + '.json', reference.recordSha256);
       if (record.schema !== 'stellar-forge.graphql-workspace-preview.v1' || record.id !== reference.id
@@ -280,7 +291,6 @@ async function verifyClosure(index, load) {
       if (response.length !== record.responseBytes || digest(response) !== record.responseSha256
           || digest(Buffer.from(JSON.stringify(record.request))) !== record.requestSha256)
         fail('The retained preview request or response identity changed.');
-      previewed.add(reference.id);
     }
   }
   const head = decode(await load(requireFile('projects/' + index.project.id + '/head.json')));

@@ -1,0 +1,19 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-provider-api-merchant-workspaces",
+  "description": "Complete original API merchant operations, typed client and native encrypted receiving.",
+  "merchantProviders": {
+    "api-merchant-workspaces": "stellar-forge/mcp-merchant-operator/providers/api-merchant-workspaces.mjs"
+  },
+  "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/api-merchant-client.d.mts",
+    "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-application/workspace/AGENT_OPERATING.md"
+  ],
+  "exports": {
+    "./merchant/api-merchant-workspace/client": "./source/stellar-forge/mcp-merchant-operator/api-merchant-client.mjs",
+    "./merchant/api-merchant-workspace/agent": "./source/stellar-forge/mcp-merchant-operator/api-merchant-workspace.mjs",
+    "./merchant/api-merchant-workspace/protocol": "./source/stellar-forge/mcp-merchant-operator/api-merchant-protocol.mjs",
+    "./merchant/api-merchant-workspace/connection": "./source/stellar-forge/mcp-merchant-operator/api-merchant-connection.mjs",
+    "./merchant/api-merchant-workspace/setup": "./source/stellar-forge/mcp-merchant-operator/api-merchant-setup.mjs"
+  }
+}

@@ -5,11 +5,12 @@ Use one Research workspace for a question, its received source editions, the ana
 This product supports a complete working sequence:
 
 1. Open the existing dossier and select its research question.
-2. Review the complete received sources, their coverage and the saved evidence selections.
-3. Prepare or resume the original Crossref request for DOI metadata and update review.
-4. Receive the reviewed edition and preserve the question's earlier notes, selections and findings.
-5. Write the source-linked analysis, then deliver the complete report and portable dossier.
-6. Reopen the exported dossier on the receiving workspace with its original history.
+2. Review the received sources, their coverage and the saved evidence selections.
+3. Bring original files and their authored findings into that question with one reviewed source bundle, or receive a retained cohort through its configured source.
+4. Prepare or resume the original Crossref request for DOI metadata and update review.
+5. Receive the reviewed edition and preserve the question's earlier notes, selections and findings.
+6. Write the source-linked analysis, then deliver the complete report and portable dossier.
+7. Reopen the exported dossier on the receiving workspace with its original history.
 
 ## Open the original workspace
 
@@ -74,6 +75,68 @@ Use the identifiers returned by the original workspace. A page returns its selec
 The workspace groups matching source identities while retaining their original edition occurrences and content variants. Review the actual source and its operating assumptions before changing a finding. A publication date, deposit date and source-capture date describe different events and remain separate in retained source metadata.
 
 Structured edits use `--input REQUEST.json`. Read the current notes, compose the full intended value, and include the reviewed `expectedRevision`. For example, the question update object has `notes`, optional `text` or `status`, and `expectedRevision`. A conflicting revision prompts another read of that original dossier.
+
+## Receive original files with their findings
+
+A source bundle keeps an original collection of files, its source definitions, the analyst's evidence selections and the linked findings together. Receiving saves that complete collection under the chosen question in one dossier revision.
+
+In the browser, choose **Import source bundle** and select the original question. Open an existing bundle, or choose a source manifest and the folder containing its named files. Review the source titles, terms, selections and complete finding text in the preview. **Download bundle** preserves that prepared input; **Import into question** receives the reviewed bytes.
+
+The [source-bundle guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/SOURCE_BUNDLES.md) includes the complete manifest format. Each source names its original files; each finding links to those source keys. The file list is explicit, so a larger working folder can hold other material without adding it to the selected bundle.
+
+Build a bundle from the original manifest and source folder with the installed command:
+
+~~~sh
+starforge research-dossiers bundle-create \
+  --manifest /srv/starforge/inputs/source-manifest.json \
+  --source-directory /srv/starforge/inputs/original-files \
+  --out /srv/starforge/inputs/reviewed-sources.json
+~~~
+
+Preview it against the existing running workspace, then receive it with the revision and bundle hash returned by that preview:
+
+~~~sh
+starforge research-client bundle-preview \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research \
+  --id DOSSIER_ID --question QUESTION_ID \
+  --file /srv/starforge/inputs/reviewed-sources.json
+
+starforge research-client import-bundle \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research \
+  --id DOSSIER_ID --question QUESTION_ID \
+  --file /srv/starforge/inputs/reviewed-sources.json \
+  --revision PREVIEW_REVISION --sha256 REVIEWED_BUNDLE_SHA256
+~~~
+
+If another analyst changes the dossier before a fresh import, preview the same bundle against the current revision. If the receive reply is lost, repeat the same file and question: the original receiver recognizes that complete bundle already saved under the question and preserves later work. Changed file bytes identify another reviewed source edition.
+
+For merchant operation, add a source handle to the existing workspace configuration's `sources` object:
+
+~~~json
+{
+  "reviewed_sources": {
+    "kind": "source-bundle",
+    "file": "/srv/starforge/inputs/reviewed-sources.json",
+    "sha256": "REVIEWED_BUNDLE_SHA256"
+  }
+}
+~~~
+
+Use `merchant_research_source_bundle_preview` with the workspace, dossier, question and that source alias. Use `merchant_research_source_bundle_receive` with the same selection, preview revision and bundle hash. The attachment reads the complete host file and calls the original authenticated Research application.
+
+After receiving, source details expose each original file. Text can be read in full, and downloads preserve the original bytes. The complete bundle remains inside the retained edition and travels with the portable dossier, including binary files and original manifest bytes. The builder and receiver verify file lengths and SHA-256 values; the current limits are 64 MiB for the complete bundle JSON and 48 MiB for decoded source files.
+
+The installed SDK exports `createSourceBundleFromDirectory`, `createSourceBundle` and `inspectSourceBundle` through the Research dossier module and its `source-bundles` export. The existing `ResearchWorkspaceClient` supplies byte and host-file preview/receive methods, so a service can use the same reviewed input and revision controls.
+
+## Work with a retained ClinicalTrials cohort
+
+The same Research attachment operates the original ClinicalTrials receiving workspace. Configure a `clinicaltrials-packet` source handle with the actual retained ZIP and its SHA-256, then import that packet, select its captured cohort and prepare receiving under the original question.
+
+Its tools cover saved inputs, review, start/resume, stop, receipt into the dossier, complete study reads, cohort analysis and comparison. The original source operator owns registry acquisition. Research retains the selected packet, complete nested studies, source coverage and reviewed findings. Analysis keeps distinct studies and source occurrences separate and uses the original cohort's reported values.
+
+The [ClinicalTrials merchant operating guide](../../stellar-forge/mcp-merchant-operator/RESEARCH_CLINICALTRIALS.md) gives the exact tool fields and complete export selections. Whole-study, selected-analysis and source-packet exports use this attachment's existing file retainer and restart recovery. Reopening the portable dossier keeps its retained clinical edition available independently of the earlier receiving operation's working directory.
 
 ## Continue the saved Crossref review
 
@@ -143,7 +206,7 @@ starforge merchant-mcp serve \
 
 An existing merchant may instead add `researchWorkspaceConnection` to its original configuration. The provider loads when a configured Research tool first needs it.
 
-The 27-tool family lists the declared aliases, attaches to the original listener, reads paged dossiers and findings, operates the saved Crossref lifecycle, receives reviewed sources and retains complete files. Tools use the returned attachment ID and original dossier, question and operation IDs. Host-declared source handles select exact private files and hashes.
+The Research tool family lists the declared aliases, attaches to the original listener, reads paged dossiers and findings, operates the saved Crossref lifecycle, receives reviewed sources and retains complete files. Tools use the returned attachment ID and original dossier, question and operation IDs. Host-declared source handles select exact private files and hashes.
 
 The client rereads the original connection file after a managed restart. Its authenticated workspace and instance checks bind each request to the selected original application. Detaching drains the attachment's requests and temporary file readers; Applications continues to own the listener and saved acquisition.
 
@@ -183,6 +246,8 @@ Merchant exports use the same complete sources. `merchant_research_exports` list
 
 ## Operating source
 
+- [Original source bundles, file manifests and atomic receiving](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/SOURCE_BUNDLES.md)
+- [ClinicalTrials cohort receiving and complete merchant exports](../../stellar-forge/mcp-merchant-operator/RESEARCH_CLINICALTRIALS.md)
 - [Complete Research client, SDK and merchant contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_CLIENT.md)
 - [Research workspace and configured sources](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/README.md)
 - [Crossref review, acquisition and recovery](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF.md)

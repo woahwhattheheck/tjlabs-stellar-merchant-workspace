@@ -153,17 +153,11 @@ def main(argv=None):
         return
     if args.command == "serve":
         config = gateway.load_config(args.config)
-        session = gateway.start(config,api_port=args.api_port,console_port=args.console_port)
-        stopping = threading.Event()
-        for sig in (signal.SIGINT,signal.SIGTERM):
-            signal.signal(sig,lambda *_:stopping.set())
-        output_json({"status":"API_PASS_GATEWAY_RUNNING","apiUrl":session["apiUrl"],
-                     "privateConsoleUrl":session["consoleUrl"]})
-        sys.stdout.flush()
-        try:
-            stopping.wait()
-        finally:
-            gateway.stop(session)
+        def ready(session):
+            output_json({"status":"API_PASS_GATEWAY_RUNNING","apiUrl":session["apiUrl"],
+                         "privateConsoleUrl":session["consoleUrl"]})
+            sys.stdout.flush()
+        gateway.serve(config, api_port=args.api_port, console_port=args.console_port, on_ready=ready)
         return
     state = pass_store.receiver.require_private_dir(args.state)
     if args.command == "attach":

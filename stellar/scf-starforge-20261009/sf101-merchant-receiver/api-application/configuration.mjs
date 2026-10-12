@@ -1,8 +1,9 @@
 // MIT. Purchased application access composes the original API gateway and job compiler.
 import { constants } from 'node:fs';
-import { open, lstat, realpath, mkdir, writeFile, chmod } from 'node:fs/promises';
-import { resolve, join, isAbsolute } from 'node:path';
+import { open, lstat, realpath, mkdir, link, unlink, readdir } from 'node:fs/promises';
+import { resolve, join, isAbsolute, dirname } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { acquireStateLease } from '../../merchant-fleet-gateway/state-lease.mjs';
 import { readJobMerchant, compileJobMerchant, canonical, digest, jobError } from '../../sf30-seller-sdk/jobs/config.mjs';
 
 export const PROFILE_SCHEMA = 'stellar-forge.sf101.api-application.v1';
@@ -55,13 +56,20 @@ function routesFor(source, gateway, pairs, origin) {
   }
   return result;
 }
-export async function configureApplication({ merchant, gateway: gatewayPath, directory, port, mappings, bindRoutes = false }) {
+export const PREPARED_CONFIGURATION_SCHEMA = 'stellar-forge.sf101.api-application-preparation.v1';
+
+/** Compile one exact private configuration before publishing any of its files. */
+export async function prepareApplicationConfiguration({ merchant, gateway: gatewayPath, directory, port, mappings, bindRoutes = false }) {
   if (!Number.isSafeInteger(port) || port < 1 || port > 65535) fail('APP_PRIVATE_PORT_REQUIRED');
   merchant = resolve(merchant); gatewayPath = resolve(gatewayPath); directory = resolve(directory);
+  if (directory === '/' || await realpath(dirname(directory)) !== dirname(directory))
+    fail('APP_CANONICAL_PRIVATE_DIRECTORY_REQUIRED');
+  const inputMerchant = merchant;
   let source = await readJobMerchant(merchant);
   const originalSource = source.identity;
   let derivedBytes = null;
-  const gateway = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await readPrivateFile(gatewayPath)));
+  const inputGatewayBytes = await readPrivateFile(gatewayPath);
+  const gateway = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(inputGatewayBytes));
   if (bindRoutes) {
     if (!Array.isArray(mappings) || !mappings.length || mappings.length > 64 || !Array.isArray(gateway.routes))
       fail('APP_ROUTE_MAPPING_REQUIRED');
@@ -91,21 +99,141 @@ export async function configureApplication({ merchant, gateway: gatewayPath, dir
   }) };
   const profilePath = join(directory, 'application.json'), nextGatewayPath = join(directory, 'gateway.json');
   const keyPath = join(directory, 'application.key'), storePath = join(directory, 'executions');
-  const gatewayBytes = jsonBytes(nextGateway);
-  const capability = randomBytes(32).toString('hex');
+  const gatewayBytes = jsonBytes(nextGateway), capability = randomBytes(32).toString('hex');
   const profile = { schema: PROFILE_SCHEMA, merchant, gateway: nextGatewayPath,
     gatewaySha256: digest(gatewayBytes), capabilitySha256: digest(capability), source: source.identity, store: storePath, key: keyPath,
     origin, port, originalSource, routes: mappings.map(value => ({ id: value.id, functionId: value.functionId })) };
-  // A new directory is an explicit reviewed version; existing service files are never overwritten.
-  await mkdir(directory, { mode: 0o700 });
-  await chmod(directory, 0o700);
-  if (await realpath(directory) !== directory) fail('APP_CANONICAL_PRIVATE_DIRECTORY_REQUIRED');
-  if (derivedBytes) await writeFile(merchant, derivedBytes, { flag: 'wx', mode: 0o600 });
-  await writeFile(keyPath, capability + '\n', { flag: 'wx', mode: 0o600 });
-  await writeFile(nextGatewayPath, gatewayBytes, { flag: 'wx', mode: 0o600 });
-  await writeFile(profilePath, jsonBytes(profile), { flag: 'wx', mode: 0o600 });
-  return { schema: PROFILE_SCHEMA, profile: profilePath, gateway: nextGatewayPath, store: storePath,
-    merchantState: gateway.state, origin, routes, source: source.identity };
+  const member = (name, bytes) => ({ name, content: bytes.toString('utf8'), sha256: digest(bytes) });
+  const files = [
+    ...(derivedBytes ? [member('merchant.json', derivedBytes)] : []),
+    member('application.key', Buffer.from(capability + '\n')),
+    member('gateway.json', gatewayBytes), member('application.json', jsonBytes(profile)),
+  ];
+  return { schema: PREPARED_CONFIGURATION_SCHEMA, directory, inputMerchant, inputGateway: gatewayPath,
+    inputGatewaySha256: digest(inputGatewayBytes), originalSource, files,
+    result: { schema: PROFILE_SCHEMA, profile: profilePath, gateway: nextGatewayPath, store: storePath,
+      merchantState: gateway.state, origin, routes, source: source.identity } };
+}
+
+async function preparedDirectory(directory, exclusive) {
+  try { await mkdir(directory, { mode: 0o700 }); }
+  catch (error) { if (error.code !== 'EEXIST' || exclusive) throw error; }
+  const info = await lstat(directory);
+  if (!info.isDirectory() || info.isSymbolicLink() || info.mode & 0o077 ||
+      await realpath(directory) !== directory || process.getuid && info.uid !== process.getuid())
+    fail('APP_CANONICAL_PRIVATE_DIRECTORY_REQUIRED');
+}
+
+async function samePreparedFile(path, bytes) {
+  let info;
+  try { info = await lstat(path); } catch (error) { if (error.code === 'ENOENT') return false; throw error; }
+  if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1 || info.mode & 0o077 ||
+      process.getuid && info.uid !== process.getuid() || !(await readPrivateFile(path, 4194304)).equals(bytes))
+    fail('APP_PREPARED_FILE_CHANGED', 409);
+  return true;
+}
+
+async function retainPreparedFile(path, bytes) {
+  if (await samePreparedFile(path, bytes)) return;
+  const temporary = join(dirname(path), '.app-preparation-' + digest(bytes) + '-' + randomBytes(16).toString('hex') + '.tmp');
+  let handle;
+  try {
+    handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+    await handle.writeFile(bytes); await handle.sync(); await handle.close(); handle = null;
+    try { await link(temporary, path); }
+    catch (error) { if (error.code !== 'EEXIST' || !await samePreparedFile(path, bytes)) throw error; }
+    await unlink(temporary);
+    const directory = await open(dirname(path), constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+    try { await directory.sync(); } finally { await directory.close(); }
+  } finally {
+    await handle?.close().catch(() => {});
+    await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  }
+}
+
+async function recoverPreparedTemporaries(directory, files) {
+  const expected = new Map([...files].map(([name, bytes]) => [digest(bytes), { name, bytes }]));
+  let changed = false;
+  for (const name of await readdir(directory)) {
+    const match = /^\.app-preparation-([a-f0-9]{64})-[a-f0-9]{32}\.tmp$/.exec(name);
+    if (!match || !expected.has(match[1])) continue;
+    const item = expected.get(match[1]), path = join(directory, name);
+    const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      const info = await handle.stat();
+      if (!info.isFile() || ![1, 2].includes(info.nlink) || info.mode & 0o077 ||
+          info.size > item.bytes.length || process.getuid && info.uid !== process.getuid())
+        fail('APP_PREPARATION_TEMP_CHANGED', 409);
+      const body = await handle.readFile();
+      if (!item.bytes.subarray(0, body.length).equals(body))
+        fail('APP_PREPARATION_TEMP_CHANGED', 409);
+      if (info.nlink === 2) {
+        const target = await lstat(join(directory, item.name));
+        if (body.length !== item.bytes.length || target.isSymbolicLink() || !target.isFile() ||
+            target.dev !== info.dev || target.ino !== info.ino || target.nlink !== 2)
+          fail('APP_PREPARATION_TEMP_CHANGED', 409);
+      }
+      const current = await lstat(path);
+      if (current.isSymbolicLink() || current.dev !== info.dev || current.ino !== info.ino)
+        fail('APP_PREPARATION_TEMP_CHANGED', 409);
+      await unlink(path); changed = true;
+    } finally { await handle.close(); }
+  }
+  if (changed) {
+    const handle = await open(directory, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+    try { await handle.sync(); } finally { await handle.close(); }
+  }
+}
+
+/** Resume these exact prepared bytes, including the original generated capability. */
+export async function materializeApplicationConfiguration(prepared, { expectedSha256, exclusive = false } = {}) {
+  if (!object(prepared) || prepared.schema !== PREPARED_CONFIGURATION_SCHEMA ||
+      typeof prepared.directory !== 'string' || resolve(prepared.directory) !== prepared.directory ||
+      prepared.directory === '/' || typeof expectedSha256 !== 'string' ||
+      digest(jsonBytes(prepared)) !== expectedSha256 || typeof exclusive !== 'boolean')
+    fail('APP_PREPARED_CONFIGURATION_CHANGED', 409);
+  const names = prepared.files?.map(item => item.name);
+  if (!Array.isArray(names) || !['["application.key","gateway.json","application.json"]',
+      '["merchant.json","application.key","gateway.json","application.json"]'].includes(JSON.stringify(names)))
+    fail('APP_PREPARED_CONFIGURATION_INVALID');
+  const files = new Map();
+  for (const item of prepared.files) {
+    if (typeof item.content !== 'string' || Buffer.byteLength(item.content) > 4194304 ||
+        digest(Buffer.from(item.content)) !== item.sha256) fail('APP_PREPARED_CONFIGURATION_CHANGED', 409);
+    files.set(item.name, Buffer.from(item.content));
+  }
+  const original = await readJobMerchant(prepared.inputMerchant);
+  if (canonical(original.identity) !== canonical(prepared.originalSource) ||
+      digest(await readPrivateFile(prepared.inputGateway)) !== prepared.inputGatewaySha256)
+    fail('APP_PREPARATION_SOURCE_CHANGED', 409);
+  const profile = parseApplicationProfile(files.get('application.json'));
+  const selected = prepared.directory;
+  if (profile.gateway !== join(selected, 'gateway.json') || profile.key !== join(selected, 'application.key') ||
+      profile.store !== join(selected, 'executions') ||
+      profile.merchant !== (files.has('merchant.json') ? join(selected, 'merchant.json') : prepared.inputMerchant) ||
+      canonical(profile.originalSource) !== canonical(original.identity) ||
+      canonical(prepared.result?.source) !== canonical(profile.source))
+    fail('APP_PREPARED_CONFIGURATION_INVALID');
+  await preparedDirectory(selected, exclusive);
+  const lease = await acquireStateLease(selected);
+  try {
+    await recoverPreparedTemporaries(selected, files);
+    for (const [name, bytes] of files) await retainPreparedFile(join(selected, name), bytes);
+    const runtime = await readApplication(join(selected, 'application.json'));
+    if (canonical(runtime.source.identity) !== canonical(prepared.result.source) ||
+        runtime.gateway.state !== prepared.result.merchantState ||
+        runtime.profilePath !== prepared.result.profile || runtime.profile.gateway !== prepared.result.gateway ||
+        runtime.profile.store !== prepared.result.store || runtime.profile.origin !== prepared.result.origin ||
+        canonical(runtime.routes) !== canonical(prepared.result.routes))
+      fail('APP_PREPARED_CONFIGURATION_CHANGED', 409);
+    return structuredClone(prepared.result);
+  } finally { await lease.close(); }
+}
+
+/** Original configure remains exclusive; merchant workspaces retain preparation before resume. */
+export async function configureApplication(options) {
+  const prepared = await prepareApplicationConfiguration(options);
+  return materializeApplicationConfiguration(prepared, { expectedSha256: digest(jsonBytes(prepared)), exclusive: true });
 }
 export function parseApplicationProfile(profileBytes) {
   const profile = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(profileBytes));

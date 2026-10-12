@@ -9,7 +9,7 @@ const child = spawn(process.env.STARFORGE_PYTHON || 'python3',
 const handlers = new Map(['SIGINT', 'SIGTERM'].map(signal => [signal, () => child.kill(signal)]));
 for (const [signal, handler] of handlers) process.on(signal, handler);
 child.once('error', () => { console.error('API_PASS_PYTHON_UNAVAILABLE'); process.exitCode = 1; });
-child.once('exit', code => {
+child.once('close', code => {
   for (const [signal, handler] of handlers) process.off(signal, handler);
   process.exitCode = code ?? 1;
 });
