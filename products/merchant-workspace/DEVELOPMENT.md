@@ -620,6 +620,16 @@ remaining package scope and hours before the next submission. The deployment
 plan carries a concrete task, accountable operator and usable result for each
 installation.
 
+### Prepare complete customer workorders
+
+The [customer installation workorders](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/README.md)
+provide complete CoCart and Blockscout task, source and receiving profiles for
+the existing Customer installations desk. Receive the original customer
+Workshare, then prepare its full native input with the selected source edition,
+merchant and buyer deployments, actual host, payment authority and receiving
+engineer. The original commercial terms, funded packages and acceptance phases
+continue into the same case's preview, saved installation and complete handover.
+
 ## 8. Technical handover and ongoing ownership
 
 A complete handover equips another engineer to operate the same customer service.
