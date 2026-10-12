@@ -1,5 +1,6 @@
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { costToolDefinitions } from './pricing-costs.mjs';
+import { tariffToolDefinitions } from './pricing-tariffs.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 
 const alias = { type: 'string', pattern: '^[a-z0-9][a-z0-9_-]{0,63}$' };
@@ -83,6 +84,7 @@ const scenarioPage = { view: { type: 'string', enum: scenarioViews }, scenarioId
 
 const definitions = [
   ...costToolDefinitions,
+  ...tariffToolDefinitions,
   ['merchant_pricing_status', 'List host-declared pricing workspaces and their process-local capture/file-read state. Does not capture operations or open a workspace.', { ...base }, [], read],
   ['merchant_pricing_open', 'Open the original SF97 workspace model and capture its configured native operations source. Reopening the same alias reuses its original captures. Original per-save compare-and-swap remains shared with the browser.', base, ['workspace'], { idempotent: true }],
   ['merchant_pricing_close', 'Release this MCP handle\'s source view and temporary file reads. Original saved reviews, price decisions and staged releases remain in their original stores.', base, ['workspace'], { idempotent: true }],

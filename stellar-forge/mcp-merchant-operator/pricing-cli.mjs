@@ -4,7 +4,8 @@ import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { callMerchantPricing,downloadMerchantScenario,downloadMerchantCosts,downloadMerchantPriceDecision,pricingClientOperations } from './pricing-client.mjs';
+import { callMerchantPricing,downloadMerchantScenario,downloadMerchantCosts,downloadMerchantPriceDecision,pricingClientOperations,
+  downloadMerchantTariffPlan,downloadMerchantTariffPortfolio,downloadMerchantTariffPricingReview } from './pricing-client.mjs';
 
 const fail=(code,message)=>Object.assign(new Error(message),{code:'PRICING_CLIENT_'+code});
 const HELP = `merchant-mcp pricing
@@ -25,6 +26,22 @@ const HELP = `merchant-mcp pricing
   price-download --url MCP_ENDPOINT --workspace ALIAS --decision UUID --out PRIVATE_DIRECTORY
       [--manifest-sha256 REVIEWED_DIGEST] [--chunk-bytes BYTES]
 
+  tariff-state|tariff-list --url MCP_ENDPOINT --workspace ALIAS
+  tariff-source --url MCP_ENDPOINT --workspace ALIAS --version SAVED_REVIEW
+  tariff-preview|tariff-save|tariff-commit --url MCP_ENDPOINT --input PRIVATE_JSON
+  tariff-load|tariff-manifest --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID
+  tariff-selection --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --comparison-id SHA256
+  tariff-download --url MCP_ENDPOINT --workspace ALIAS --plan-id UUID --out PRIVATE_DIRECTORY
+  tariff-bundle --url MCP_ENDPOINT --workspace ALIAS [--portfolio-sha256 SHA256]
+  tariff-portfolio-download --url MCP_ENDPOINT --workspace ALIAS --out PRIVATE_DIRECTORY
+      [--portfolio-sha256 SHA256] [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
+  tariff-receive --url MCP_ENDPOINT --workspace ALIAS --portfolio-file PRIVATE_PORTFOLIO_JSON
+  tariff-price-source|tariff-review-manifest --url MCP_ENDPOINT --workspace ALIAS --version UUID
+  tariff-price-preview|tariff-price-save|tariff-price-stage --url MCP_ENDPOINT --input PRIVATE_JSON
+  tariff-price-manifest --url MCP_ENDPOINT --workspace ALIAS --decision UUID
+  tariff-price-download --url MCP_ENDPOINT --workspace ALIAS --decision UUID --out PRIVATE_DIRECTORY
+  tariff-review-download --url MCP_ENDPOINT --workspace ALIAS --version UUID --out PRIVATE_DIRECTORY
+
   cost-state|cost-list|cost-inputs --url MCP_ENDPOINT --workspace ALIAS [--kind KIND]
   cost-input --url MCP_ENDPOINT --workspace ALIAS --kind SOURCE|BOOK|PACKAGE --input-alias ALIAS
   cost-upload|cost-capture|cost-mapping|cost-weights --url MCP_ENDPOINT --input PRIVATE_JSON
@@ -35,6 +52,12 @@ const HELP = `merchant-mcp pricing
   cost-manifest --url MCP_ENDPOINT --workspace ALIAS --kind source|edition|export|received --id UUID
   cost-download --url MCP_ENDPOINT --workspace ALIAS --kind source|edition|export|received --id UUID
       --out PRIVATE_DIRECTORY [--manifest-sha256 SHA256] [--chunk-bytes BYTES]
+
+Tariffs use the same original Pricing alias, model and native save authorities.
+Preserve complete selection, planRequestId and pricingRequestId before tariff-commit.
+All tariff downloads accept --manifest-sha256 and --chunk-bytes and resume the same
+private directory. Portfolio receiving follows the original WORKSPACE_BACKUP
+restore; TARIFFS.md explains both complete artifacts and native source matching.
 
 Cost operations use the existing pricing alias and original cost model.
 A complete large book is selected by a host-declared bookSource with inspected
@@ -56,11 +79,13 @@ See PRICING.md for scenarios, exact quote conversion and the complete saved work
 
 const flags=new Set(['--url','--workspace','--input','--version','--plan-id','--scenario-id',
   '--view','--offset','--limit','--suggestion-kind','--out','--token-env','--manifest-sha256','--chunk-bytes',
-  '--kind','--id','--source-id','--edition','--after','--input-alias','--expected-sha256','--expected-bytes','--decision']);
+  '--kind','--id','--source-id','--edition','--after','--input-alias','--expected-sha256','--expected-bytes','--decision',
+  '--comparison-id','--portfolio-sha256','--portfolio-file']);
 const fieldFlags={'--workspace':'workspace','--version':'version','--plan-id':'planId',
   '--scenario-id':'scenarioId','--view':'view','--offset':'offset','--limit':'limit','--suggestion-kind':'suggestionKind',
   '--kind':'kind','--id':'id','--source-id':'sourceId','--edition':'edition','--after':'after',
-  '--input-alias':'input','--expected-sha256':'expectedSha256','--expected-bytes':'expectedBytes','--decision':'decision'};
+  '--input-alias':'input','--expected-sha256':'expectedSha256','--expected-bytes':'expectedBytes','--decision':'decision',
+  '--comparison-id':'comparisonId','--portfolio-sha256':'portfolioSha256'};
 function options(args) {
   const result=new Map();
   for (let i=0;i<args.length;i+=2) {
@@ -75,14 +100,14 @@ function count(value,name) {
     throw fail('ARGUMENTS','Supply a safe nonnegative whole number for '+name+'.');
   return Number(value);
 }
-async function inputFile(path) {
+async function inputFile(path,maximum=8*1024*1024) {
   const handle=await open(resolve(path),constants.O_RDONLY|(constants.O_NOFOLLOW??0));
   try {
     const stat=await handle.stat();
-    if (!stat.isFile() || stat.size > 8*1024*1024 || process.platform !== 'win32' && stat.mode&0o077)
-      throw fail('PRIVATE_INPUT_REQUIRED','Use a private regular input JSON file of at most 8 MiB (mode 0600).');
+    if (!stat.isFile() || stat.size > maximum || process.platform !== 'win32' && stat.mode&0o077)
+      throw fail('PRIVATE_INPUT_REQUIRED','Use a private regular input JSON file of at most '+maximum+' bytes (mode 0600).');
     const bytes=await handle.readFile();
-    if (bytes.length > 8*1024*1024) throw fail('PRIVATE_INPUT_REQUIRED','The input file grew beyond 8 MiB.');
+    if (bytes.length > maximum) throw fail('PRIVATE_INPUT_REQUIRED','The input file grew beyond its selected byte limit.');
     const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     if (!value || typeof value !== 'object' || Array.isArray(value))
       throw fail('ARGUMENTS','The private input JSON must be an argument object.');
@@ -93,15 +118,22 @@ async function inputFile(path) {
 export async function main(argv=process.argv.slice(2),{environment=process.env,write=value=>process.stdout.write(JSON.stringify(value)+'\n')}={}) {
   if (!argv.length || argv.length===1 && ['--help','help'].includes(argv[0])) {process.stdout.write(HELP);return;}
   const [operation,...rest]=argv, values=options(rest);
-  if (!Object.hasOwn(pricingClientOperations,operation) && !['download','cost-download','price-download'].includes(operation))
+  if (!Object.hasOwn(pricingClientOperations,operation) && !['download','cost-download','price-download','tariff-download','tariff-portfolio-download','tariff-price-download','tariff-review-download'].includes(operation))
     throw fail('ARGUMENTS','Choose an operation listed by merchant-mcp pricing --help.');
   if (!values.has('--url')) throw fail('ARGUMENTS','Supply the existing --url MCP endpoint.');
-  const args=values.has('--input') ? await inputFile(values.get('--input')) : {};
+  const args=values.has('--input') ? await inputFile(values.get('--input'),operation.startsWith('tariff-')?128*1024*1024:8*1024*1024) : {};
   for (const [flag,key] of Object.entries(fieldFlags)) if (values.has(flag)) {
     const value=['offset','limit','expectedBytes'].includes(key) ? count(values.get(flag),flag) : values.get(flag);
     if (Object.hasOwn(args,key) && args[key] !== value)
       throw fail('ARGUMENTS','The '+flag+' value differs from the retained input JSON.');
     args[key]=value;
+  }
+  if(values.has('--portfolio-file')) {
+    if(operation!=='tariff-receive')throw fail('ARGUMENTS','--portfolio-file belongs to tariff-receive.');
+    const bundle=await inputFile(values.get('--portfolio-file'),64*1024*1024);
+    if(Object.hasOwn(args,'bundle')&&JSON.stringify(args.bundle)!==JSON.stringify(bundle))
+      throw fail('ARGUMENTS','The selected portfolio differs from the retained input bundle.');
+    args.bundle=bundle;
   }
   const controller=new AbortController();
   const stop=()=>controller.abort(fail('INTERRUPTED','The request was interrupted. Recover with the same request ID, inputs or download directory.'));
@@ -109,7 +141,20 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
   try {
     const connection={url:values.get('--url'),tokenEnv:values.get('--token-env')??'MCP_ACCESS_TOKEN',environment,signal:controller.signal};
     let result;
-    if (operation === 'price-download') {
+    const tariffDownloads={
+      'tariff-download':{run:downloadMerchantTariffPlan,fields:['workspace','planId']},
+      'tariff-portfolio-download':{run:downloadMerchantTariffPortfolio,fields:['workspace','portfolioSha256']},
+      'tariff-review-download':{run:downloadMerchantTariffPricingReview,fields:['workspace','version']}
+    };
+    if(Object.hasOwn(tariffDownloads,operation)) {
+      const selected=tariffDownloads[operation];
+      if(!values.has('--out')||Object.keys(args).some(key=>!selected.fields.includes(key)))
+        throw fail('ARGUMENTS','Choose the original tariff artifact selectors and --out private directory.');
+      result=await selected.run({...connection,...args,directory:values.get('--out'),
+        ...(values.has('--manifest-sha256')?{expectedManifestSha256:values.get('--manifest-sha256')}:{ }),
+        ...(values.has('--chunk-bytes')?{chunkSize:count(values.get('--chunk-bytes'),'--chunk-bytes')}:{ }),
+        onProgress:progress=>process.stderr.write(JSON.stringify(progress)+'\n')});
+    } else if (operation === 'price-download' || operation === 'tariff-price-download') {
       if (!values.has('--out') || Object.keys(args).some(key=>!['workspace','decision'].includes(key)))
         throw fail('ARGUMENTS','Price download selects only --workspace, --decision and --out.');
       result=await downloadMerchantPriceDecision({...connection,...args,directory:values.get('--out'),
@@ -132,7 +177,7 @@ export async function main(argv=process.argv.slice(2),{environment=process.env,w
         onProgress:progress=>process.stderr.write(JSON.stringify(progress)+'\n')});
     } else {
       if (['--out','--manifest-sha256','--chunk-bytes'].some(flag=>values.has(flag)))
-        throw fail('ARGUMENTS','Output and chunk flags belong to download, price-download or cost-download.');
+        throw fail('ARGUMENTS','Output and chunk flags belong to an original scenario, price, cost or tariff download.');
       if (operation === 'manifest' && Object.hasOwn(args,'planId')) {
         if (Object.hasOwn(args,'id') && args.id !== args.planId || Object.hasOwn(args,'kind') && args.kind !== 'scenario')
           throw fail('ARGUMENTS','The plan selector conflicts with the original manifest selector.');
