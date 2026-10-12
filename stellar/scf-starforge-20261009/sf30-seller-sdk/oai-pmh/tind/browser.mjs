@@ -17,6 +17,7 @@ let data = null, projectId = new URLSearchParams(location.search).get('project')
 let currentRecord = null, page = null, offset = 0, query = '', busy = false, pending = null;
 let selected = new Set(), batchSelection = 'ready', recordDirty = false, mappingDirty = false, pollTimer = null;
 let allEditions = [], dbPromise, resetOverride = false;
+let filePage = null, fileOffset = 0, fileQuery = '', fileHistory = null;
 
 function message(text, error = false) {
   $('#message').textContent = text;
@@ -149,6 +150,7 @@ function tab(name) {
   $$('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
   $$('[data-tab]').forEach(button => { if (button.dataset.tab === name) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
   if (name === 'records' && data?.project) loadRecords().catch(error => message(error.message,true));
+  if (name === 'receiving' && data?.project) loadFiles().catch(error => message(error.message,true));
 }
 function recordLink(view) {
   return '/download/record?' + new URLSearchParams({project:projectId, identifier:view.identifier});
@@ -251,6 +253,7 @@ async function reload({preserve=false}={}) {
   history.replaceState(null,'',url.pathname+url.search);
   renderState(preserve); pendingUI();
   if(!allEditions.length || allEditions[0]?.id!==data.original.editions[0]?.id) await receiveEditions();
+  if(!$('[data-panel="receiving"]').hidden) await loadFiles();
 }
 async function loadRecords() {
   if(!data?.project){$('#record-rows').innerHTML='<tr><td colspan="6" class="empty">Choose a migration first.</td></tr>';return;}
@@ -261,6 +264,61 @@ async function loadRecords() {
   $('#previous-page').disabled=offset===0;$('#next-page').disabled=page.next===null;
   selectionLabel();
 }
+
+async function loadFiles() {
+  if(!data?.project) {
+    filePage=null;$('#file-rows').innerHTML='<tr><td colspan="6" class="empty">Choose a migration first.</td></tr>';
+    $('#file-page-label').textContent='';$('#previous-files').disabled=true;$('#next-files').disabled=true;return;
+  }
+  const requestedProject=projectId;
+  const response=await api('/api/files?'+new URLSearchParams({project:projectId,offset:String(fileOffset),limit:'50',query:fileQuery}));
+  if(requestedProject!==projectId)return;
+  filePage=response;
+  $('#file-rows').innerHTML=response.items.map((item,index)=>{
+    const file=item.file, native=file.destination, receiving=item.receiving;
+    const policy=file.access.files+(file.access.releaseDate?' / '+file.access.releaseDate:'');
+    return '<tr><td><strong>'+esc(file.filename)+'</strong><div class="record-id">'+esc(file.identifier)+'</div><div>'+esc(file.id)+' · '+Number(file.bytes).toLocaleString()+' bytes</div></td>'+
+      '<td>'+esc(file.role)+'<div>'+esc(policy)+'</div></td><td>'+esc(item.targetId||'Choose native match')+(native?'<div class="record-id">Observed '+esc(native.nativeRecordId)+'</div>':'')+'</td>'+
+      '<td>'+esc(receiving.bytesConfirmed?'Confirmed':receiving.bytesObserved?'Observed; match record':'Receive bytes')+'</td>'+
+      '<td>'+esc(receiving.policyConfirmed?'Confirmed':receiving.policyObserved?'Compare observed policy':'Receive role and access')+'</td>'+
+      '<td><button type="button" data-file-receive="'+index+'">Receive result</button><button type="button" data-file-history="'+index+'">History</button><button type="button" data-file-download="'+index+'">Working file</button></td></tr>';
+  }).join('')||'<tr><td colspan="6" class="empty">No retained files match this selection.</td></tr>';
+  $('#file-page-label').textContent=response.total?'Files '+(fileOffset+1)+'–'+(fileOffset+response.items.length)+' of '+response.total:'No retained files';
+  $('#previous-files').disabled=fileOffset===0;$('#next-files').disabled=response.next===null;
+}
+function receiveFileRow(item) {
+  const form=$('#file-receipt-form'), file=item.file, observed=file.destination||{};
+  const fields={identifier:file.identifier,fileId:file.id,nativeRecordId:observed.nativeRecordId||item.targetId||'',
+    nativeFileId:observed.nativeFileId||'',url:observed.url||'',sha256:observed.sha256||file.sha256,bytes:observed.bytes??file.bytes,
+    observedAt:observed.observedAt||now(),operator:observed.operator||'',original:'',
+    attachmentRole:'',attachmentSourceUrl:'',attachmentObservedAt:now(),attachmentMetadata:'',attachmentFiles:'',
+    attachmentReleaseDate:'',attachmentRestriction:'',attachmentLicenseURI:'',attachmentOriginal:''};
+  for(const [key,value]of Object.entries(fields))form.elements[key].value=String(value);
+  $('#attachment-observed').checked=false;$('#attachment-observation').disabled=true;
+  form.scrollIntoView({block:'center'});form.elements.nativeFileId.focus();
+  message('Selected '+file.filename+'. Enter the actual native result and include its observed attachment settings when available.');
+}
+async function loadFileHistory(item=null) {
+  if(item) {
+    fileHistory={identifier:item.file.identifier,fileId:item.file.id,next:0};
+    $('#file-history-title').textContent=item.file.filename+' / '+item.file.id;
+    $('#file-history-list').textContent='';$('#file-history').hidden=false;$('#file-history').open=true;
+  }
+  if(!fileHistory || fileHistory.next===null)return;
+  const selectedHistory=fileHistory, requestedProject=projectId;
+  const result=await api('/api/file-history?'+new URLSearchParams({project:projectId,identifier:fileHistory.identifier,
+    file:fileHistory.fileId,offset:String(fileHistory.next),limit:'50'}));
+  if(selectedHistory!==fileHistory || requestedProject!==projectId)return;
+  if(!result.items.length && fileHistory.next===0)$('#file-history-list').textContent='No separate native observations have been received. The working file retains any earlier native result.';
+  for(const entry of result.items) {
+    const link=document.createElement('a');
+    link.href='/download/file-receipt?'+new URLSearchParams({project:projectId,id:entry.id});
+    link.textContent=entry.observedAt+' · native '+entry.nativeRecordId+' / '+entry.nativeFileId+' · '+(entry.attachment?'bytes and attachment/access':'bytes');
+    const paragraph=document.createElement('p');paragraph.append(link);$('#file-history-list').append(paragraph);
+  }
+  fileHistory.next=result.next;$('#more-file-history').hidden=result.next===null;
+}
+
 function selectionLabel() {$('#selection-count').textContent=selected.size+' selected';}
 async function openRecord(identifier) {
   if(recordDirty && !confirm('Discard unsaved changes to the open record?'))return;
@@ -326,6 +384,7 @@ $('#project-select').addEventListener('change',async event=>{
   if((recordDirty||mappingDirty)&&!confirm('Discard unsaved form changes and open this migration?')){event.target.value=projectId;return;}
   if(pending){event.target.value=projectId;message('Resume the saved operation before changing migrations.',true);return;}
   projectId=next;selected.clear();offset=0;query='';recordDirty=false;mappingDirty=false;currentRecord=null;
+  filePage=null;fileOffset=0;fileQuery='';fileHistory=null;$('#file-search-form').elements.query.value='';$('#file-history').hidden=true;
   if($('#record-dialog').open)$('#record-dialog').close();
   try{await reload();if(projectId)await loadRecords();}catch(error){message(error.message,true);}
 });
@@ -382,7 +441,35 @@ $('#native-search-status').addEventListener('click',async event=>{
 formHandler('#files-form',async form=>{const rows=await jsonInput(form,'files');await apply('files',{files:Array.isArray(rows)?rows:rows.files});});
 formHandler('#file-root-form',async(_form,values)=>{await apply('file-root',{path:String(values.get('path'))});});
 action('#verify-files',async()=>{await apply('verify-files',{});});
-formHandler('#file-receipt-form',async(_form,values)=>{const input=Object.fromEntries(values);input.bytes=Number(input.bytes);await apply('file-receipt',input);});
+formHandler('#file-receipt-form',async(_form,values)=>{
+  const input={};
+  for(const key of ['identifier','fileId','nativeRecordId','nativeFileId','url','sha256','observedAt','operator','original'])
+    input[key]=String(values.get(key)||'');
+  input.bytes=Number(values.get('bytes'));
+  if(values.get('attachmentObserved')==='on')input.attachment={
+    role:String(values.get('attachmentRole')),sourceUrl:String(values.get('attachmentSourceUrl')),
+    observedAt:String(values.get('attachmentObservedAt')),original:String(values.get('attachmentOriginal')),
+    access:{metadata:String(values.get('attachmentMetadata')),files:String(values.get('attachmentFiles')),
+      releaseDate:String(values.get('attachmentReleaseDate')||''),restriction:String(values.get('attachmentRestriction')||''),
+      licenseURI:String(values.get('attachmentLicenseURI')||'')}
+  };
+  await apply('file-receipt',input);
+});
+$('#attachment-observed').addEventListener('change',event=>{$('#attachment-observation').disabled=!event.target.checked;});
+formHandler('#file-search-form',async(_form,values)=>{fileQuery=String(values.get('query')||'');fileOffset=0;await loadFiles();});
+action('#refresh-files',()=>loadFiles());
+action('#previous-files',async()=>{fileOffset=Math.max(0,fileOffset-50);await loadFiles();});
+action('#next-files',async()=>{if(filePage?.next!==null&&filePage?.next!==undefined){fileOffset=filePage.next;await loadFiles();}});
+action('#more-file-history',()=>loadFileHistory());
+$('#file-rows').addEventListener('click',event=>{
+  const button=event.target.closest('[data-file-receive],[data-file-history],[data-file-download]');
+  if(!button)return;
+  const index=Number(button.dataset.fileReceive??button.dataset.fileHistory??button.dataset.fileDownload);
+  const item=filePage?.items[index];if(!item)return;
+  if(button.hasAttribute('data-file-receive'))receiveFileRow(item);
+  else if(button.hasAttribute('data-file-download'))download('tind-working-file.json',pretty(item.file));
+  else loadFileHistory(item).catch(error=>message(error.message,true));
+});
 formHandler('#prepare-form',async(_form,values)=>{await apply('prepare',{identifiers:batchSelection,reviewer:String(values.get('reviewer')),note:String(values.get('note'))});});
 $('#native-send-form').elements.batchId.addEventListener('change',()=>{try{updateNativeTemplate();}catch(error){message(error.message,true);}});
 formHandler('#native-send-form',async(form,values)=>{

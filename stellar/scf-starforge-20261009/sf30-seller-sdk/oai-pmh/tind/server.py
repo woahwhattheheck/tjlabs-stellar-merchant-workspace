@@ -166,6 +166,19 @@ class Handler(BaseHTTPRequestHandler):
                 with owner.mutex:
                     result = owner.records(query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")), query.get("query", ""))
                 self.respond(200, result)
+            elif path == "/api/files":
+                with owner.mutex:
+                    result = owner.files(query["project"], int(query.get("offset", "0")), int(query.get("limit", "50")), query.get("query", ""))
+                self.respond(200, result)
+            elif path == "/api/file-history":
+                with owner.mutex:
+                    result = owner.file_history(query["project"], query["identifier"], query["file"],
+                                                int(query.get("offset", "0")), int(query.get("limit", "50")))
+                self.respond(200, result)
+            elif path == "/download/file-receipt":
+                with owner.mutex:
+                    result = owner.file_receipt(query["project"], query["id"])
+                self.respond(200, result, download="tind-file-observation.json")
             elif path == "/api/record":
                 with owner.mutex:
                     result = owner.preview(owner.project(query["project"]), query["identifier"])
