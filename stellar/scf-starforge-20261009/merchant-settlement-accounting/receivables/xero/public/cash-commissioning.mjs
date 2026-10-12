@@ -52,7 +52,7 @@ export function createCashDesk(host) {
   const root=host.root,view={
     package:null,packageIds:new Set(),packages:new Map(),importIds:new Set(),files:[],
     asOf:'',label:'',baselineCycleId:'',cycles:[],selectedCycle:null,
-    matches:new Map(),sourceBindings:[],preview:null,review:null,epoch:0,cohortEpoch:0,cycleEpoch:0,sourceEpoch:0,working:0,
+    matches:new Map(),sourceBindings:[],preview:null,review:null,epoch:0,loadEpoch:0,working:false,
     entryFilter:'',entryStatus:'',dialog:null
   };
   const context=()=>host.context();
@@ -63,7 +63,7 @@ export function createCashDesk(host) {
   };
   const ready=()=>view.preview&&view.preview.epoch===view.epoch&&view.preview.revision===context().data?.revision;
   function sync() {
-    const busy=view.working>0||context().busy||Boolean(context().pending);
+    const busy=view.working||context().busy||Boolean(context().pending);
     for(const control of root.querySelectorAll('[data-cash-edit]'))control.disabled=busy;
     for(const control of root.querySelectorAll('[data-cash-action="preview"]'))control.disabled=busy||!view.package;
     for(const control of root.querySelectorAll('[data-cash-action="capture"]'))control.disabled=busy||!ready();
@@ -98,25 +98,22 @@ export function createCashDesk(host) {
       (!row.totals?.currency||sameCurrency(row.totals.currency,current.profile.currency)));
   }
   async function loadCohort() {
-    const epoch=++view.cohortEpoch,id=view.package?.id;
+    const epoch=++view.loadEpoch,id=view.package?.id;
     if(!id)return;
-    view.working++;sync();
-    try {
-      const selected=[...view.packageIds];
-      const records=await Promise.all(selected.map(async packageId=>packageId===id?view.package:(await context().client.detail(packageId)).package));
-      if(epoch!==view.cohortEpoch||id!==view.package?.id)return;
-      view.packages=new Map(records.map(row=>[row.id,row]));
-      const eligible=new Set(originalImports().map(row=>row.id));
-      for(const importId of [...view.importIds])if(!eligible.has(importId))view.importIds.delete(importId);
-      const cycles=new Map(records.flatMap(row=>(row.cashCycles??[]).map(cycle=>[cycle.id,cycle])));
-      if(!cycles.size)for(const record of records) {
-        const result=await context().client.cashCycles(record.id);
-        if(epoch!==view.cohortEpoch||id!==view.package?.id)return;
-        for(const cycle of result.items)cycles.set(cycle.id,cycle);
-      }
-      view.cycles=[...cycles.values()].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
-      render();
-    }finally{view.working--;sync();}
+    const selected=[...view.packageIds];
+    const records=await Promise.all(selected.map(async packageId=>packageId===id?view.package:(await context().client.detail(packageId)).package));
+    if(epoch!==view.loadEpoch||id!==view.package?.id)return;
+    view.packages=new Map(records.map(row=>[row.id,row]));
+    const eligible=new Set(originalImports().map(row=>row.id));
+    for(const importId of [...view.importIds])if(!eligible.has(importId))view.importIds.delete(importId);
+    const cycles=new Map(records.flatMap(row=>(row.cashCycles??[]).map(cycle=>[cycle.id,cycle])));
+    if(!cycles.size)for(const record of records) {
+      const result=await context().client.cashCycles(record.id);
+      if(epoch!==view.loadEpoch||id!==view.package?.id)return;
+      for(const cycle of result.items)cycles.set(cycle.id,cycle);
+    }
+    view.cycles=[...cycles.values()].sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+    render();
   }
   function renderSelection() {
     const section=el('section',null,{className:'review'});section.append(el('h3','Cycle and original package cohort'));
@@ -193,8 +190,7 @@ export function createCashDesk(host) {
     const cycle=view.selectedCycle;if(!cycle)return null;
     const section=el('section',null,{className:'review'});
     const heading=el('div',null,{className:'section-heading'}),buttons=el('div',null,{className:'actions'});
-    const baseline=action('Use as next baseline','baseline',cycle.id);baseline.setAttribute('data-cash-edit','1');
-    buttons.append(action('Download complete handover','archive',cycle.id),baseline,action('Close saved cycle','close-cycle'));
+    buttons.append(action('Download complete handover','archive',cycle.id),action('Use as next baseline','baseline',cycle.id),action('Close saved cycle','close-cycle'));
     heading.append(el('h3',cycle.label),buttons);section.append(heading);
     section.append(el('p',cycle.organisation+' · account date '+cycle.asOf+' · recorded '+dateTime(cycle.createdAt)+' · '+cycle.status));
     section.append(el('p','Saved cycle '+cycle.id+' · original review '+cycle.reviewSha256,{className:'source-note mono'}));
@@ -223,7 +219,7 @@ export function createCashDesk(host) {
   }
   async function chooseSources(files) {
     if(view.files.length+files.length>20)throw new Error('Select no more than 20 additional original response files.');
-    const id=view.package?.id,epoch=++view.sourceEpoch;view.working++;sync();
+    const id=view.package?.id,epoch=++view.loadEpoch;view.working=true;sync();
     try {
       const prepared=[];
       for(const original of files) {
@@ -236,12 +232,12 @@ export function createCashDesk(host) {
         if(!Object.keys(collections).length)throw new Error(original.name+' has no original Xero accounting response collection.');
         prepared.push({file:loaded.file,sha256,bytes:loaded.bytes.length,observedAt:new Date().toISOString(),collections});
       }
-      if(id!==view.package?.id||epoch!==view.sourceEpoch)return;
+      if(id!==view.package?.id||epoch!==view.loadEpoch)return;
       view.files.push(...prepared);changed(true);render();
-    }finally{view.working--;sync();}
+    }finally{view.working=false;sync();}
   }
   async function reviewCycle() {
-    const id=view.package?.id,input=selection(),intent=JSON.stringify(input);view.working++;sync();
+    const id=view.package?.id,input=selection(),intent=JSON.stringify(input);view.working=true;sync();
     try {
       let result;
       for(let attempt=0;attempt<2;attempt++) {
@@ -253,7 +249,7 @@ export function createCashDesk(host) {
       if(id!==view.package?.id||JSON.stringify(selection())!==intent)return;
       if(result.revision!==context().data?.revision)throw new Error('The accounting revision changed during this review. Review the updated customer account again.');
       view.review=result;view.preview={input,epoch:view.epoch,revision:result.revision,sha256:result.previewSha256};render();
-    }finally{view.working--;sync();}
+    }finally{view.working=false;sync();}
   }
   async function saveCycle() {
     if(!ready())throw new Error('Review the current cash selection and matches before saving.');
@@ -261,20 +257,16 @@ export function createCashDesk(host) {
     await host.mutate('cashCapture','Customer cash commissioning cycle',{...structuredClone(saved.input),previewSha256:saved.sha256},view.package.id);
   }
   async function openCycle(id) {
-    const packageId=view.package?.id,epoch=++view.cycleEpoch;
+    const packageId=view.package?.id,epoch=++view.loadEpoch;
     const summary=view.cycles.find(row=>row.id===id),owner=summary?.packageIds.includes(packageId)?packageId:summary?.packageId;
     if(!owner)throw new Error('Select a saved cycle from this original package cohort.');
-    view.working++;sync();
-    try {
-      const result=await context().client.cashCycle(owner,id);
-      if(epoch!==view.cycleEpoch||packageId!==view.package?.id)return;
-      view.selectedCycle=result.cashCycle;render();
-    }finally{view.working--;sync();}
+    const result=await context().client.cashCycle(owner,id);
+    if(epoch!==view.loadEpoch||packageId!==view.package?.id)return;
+    view.selectedCycle=result.cashCycle;render();
   }
   async function open(record,{cycleId}={}) {
     if(record?.id!==view.package?.id) {
-      view.epoch++;view.cohortEpoch++;view.cycleEpoch++;view.sourceEpoch++;view.dialog?.close();
-      view.package=record??null;view.packageIds=new Set(record?[record.id]:[]);
+      view.epoch++;view.loadEpoch++;view.package=record??null;view.packageIds=new Set(record?[record.id]:[]);
       view.packages=new Map(record?[[record.id,record]]:[]);view.importIds=new Set();view.files=[];
       view.asOf=context().data?.asOf??record?.asOf??new Date().toISOString().slice(0,10);
       view.label='';view.baselineCycleId='';view.cycles=[];view.selectedCycle=null;view.matches.clear();
@@ -485,7 +477,7 @@ export function createCashDesk(host) {
         changed();render();
       }
       else if(name==='cycle')await openCycle(value);
-      else if(name==='close-cycle'){view.cycleEpoch++;view.selectedCycle=null;render();}
+      else if(name==='close-cycle'){view.selectedCycle=null;render();}
       else if(name==='baseline') {
         const cycle=view.selectedCycle;if(!cycle||cycle.id!==value)return;
         view.baselineCycleId=value;view.packageIds=new Set([...view.packageIds,...cycle.packageIds]);

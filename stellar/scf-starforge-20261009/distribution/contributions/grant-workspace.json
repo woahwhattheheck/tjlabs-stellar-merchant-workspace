@@ -10,7 +10,7 @@
     "grant-installation-receive": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/receive.mjs"
   },
   "commandDescriptions": {
-    "grant-installation-workorder": "Prepare a complete CoCart or Blockscout workorder for the original customer Installation",
+    "grant-installation-workorder": "Receive complete original Workshare sources and prepare a selected customer Installation workorder",
     "grant-installation-receive": "Receive original customer Workshares into the current Installation case and reopen the complete case on the receiving host"
   },
   "exports": {

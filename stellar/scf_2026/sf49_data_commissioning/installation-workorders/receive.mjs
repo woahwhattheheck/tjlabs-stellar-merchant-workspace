@@ -3,12 +3,11 @@
 import {readFileSync, writeFileSync, openSync, closeSync, fsyncSync, linkSync, unlinkSync,
   existsSync, mkdirSync, lstatSync, realpathSync} from "node:fs";
 import {dirname, join, resolve} from "node:path";
-import {fileURLToPath} from "node:url";
 import {createHash, randomUUID} from "node:crypto";
 import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
+import {profileCatalog, readProfile} from "./profiles.mjs";
 
-const here = dirname(fileURLToPath(import.meta.url));
 const schema = "stellar-forge.installation-workshare-receiving.v1";
 const usage = "node receive.mjs --operations-cli /absolute/workspace/cli.py --workspace /absolute/original-workspace --case operation-ID --plan plan-ID --inputs PAIR_RECEIVING.json --source-root /absolute/original-files --out /absolute/private-output --receiving-workspace /absolute/receiving-workspace --actor ACTUAL_OPERATOR [--receiving-actor ACTUAL_RECEIVER] [--python python3]";
 const fail = message => { throw new Error(message); };
@@ -114,8 +113,9 @@ function readInputs() {
       !Array.isArray(value.customers) || !value.customers.length || value.customers.length > 20)
     fail("Use a complete receiving input with a stable requestPrefix and customer list.");
   const cases = new Set();
+  const profileIds = new Set(profileCatalog().map(profile => profile.id));
   for (const customer of value.customers) {
-    if (!record(customer) || !["cocart", "blockscout"].includes(customer.profile) ||
+    if (!record(customer) || !profileIds.has(customer.profile) ||
         typeof customer.workshareCaseId !== "string" || !customer.workshareCaseId ||
         cases.has(customer.workshareCaseId) || !/^[a-f0-9]{64}$/.test(customer.planSha256 || "") ||
         !Array.isArray(customer.files) || !customer.files.length)
@@ -129,11 +129,18 @@ function readInputs() {
           typeof file.sourceUrl !== "string" || !file.sourceUrl ||
           typeof file.observedAt !== "string" || !Number.isFinite(Date.parse(file.observedAt)))
         fail("Use original file names, complete-file hashes and source observations.");
+      file.mediaType ??= "application/json";
+      if (typeof file.mediaType !== "string" || file.mediaType.length > 200 ||
+          !/^[A-Za-z0-9!#$&^_.+-]+\/[A-Za-z0-9!#$&^_.+-]+$/.test(file.mediaType) ||
+          (file.role !== "source" && file.mediaType !== "application/json"))
+        fail("Keep the original source media type; commissioning and packet files use application/json.");
       commissioning += file.role === "commissioning" ? 1 : 0;
       packets += file.role === "packet" ? 1 : 0;
       const path = join(options["source-root"], file.filename);
       const raw = regular(path);
-      if (hash(raw) !== file.sha256) fail("Original customer source differs: " + file.filename);
+      if (hash(raw) !== file.sha256 || (file.bytes !== undefined &&
+          (!Number.isSafeInteger(file.bytes) || file.bytes < 0 || file.bytes !== raw.length)))
+        fail("Original customer source differs: " + file.filename);
       const retainedDirectory = join(options.out, "original-inputs", file.sha256);
       privateDirectory(retainedDirectory);
       file.path = retain(join(retainedDirectory, file.filename), raw).path;
@@ -145,13 +152,15 @@ function readInputs() {
 }
 function receiveFile(file) {
   return retryCurrent(state => {
-    const existing = state.sources.filter(row => row.sha256 === file.sha256);
+    const existing = state.sources.filter(row => row.sha256 === file.sha256 &&
+      row.mediaType === file.mediaType);
     if (existing.length) return existing.sort((a, b) => a.id.localeCompare(b.id))[0];
     const version = state.program.version;
-    const requestId = operationId("source", {caseId: options.case, version, sha256: file.sha256, filename: file.filename});
+    const requestId = operationId("source", {caseId: options.case, version, sha256: file.sha256, filename: file.filename,
+      ...(file.mediaType === "application/json" ? {} : {mediaType: file.mediaType})});
     const result = native(["attach", "--case", options.case, "--expected-version", String(version),
       "--actor", options.actor, "--request-id", requestId, "--file", file.path,
-      "--kind", "work", "--media-type", "application/json", "--source-url", file.sourceUrl,
+      "--kind", "work", "--media-type", file.mediaType, "--source-url", file.sourceUrl,
       "--observed-at", file.observedAt, "--note", "Receive the complete original customer Workshare source: " + file.filename]);
     nativeMutations.push(result);
     const source = current().sources.find(row => row.id === result.recordId && row.sha256 === file.sha256);
@@ -184,7 +193,7 @@ function appliedBindings(base, supplied, sourceIds) {
   return result;
 }
 function receiveCustomer(customer, attached) {
-  const profile = JSON.parse(regular(join(here, customer.profile + ".json")).toString("utf8"));
+  const profile = readProfile(customer.profile).value;
   return retryCurrent(state => {
     const before = existingInstallation(state, customer.workshareCaseId);
     const version = state.program.version;

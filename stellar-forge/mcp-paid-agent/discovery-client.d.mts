@@ -65,6 +65,9 @@ export interface DiscoveryPage {
     observedAt: string;
     mode: DiscoveryMode;
     request: NormalizedBrowseRequest | NormalizedSearchRequest;
+    /** Exact retained provider page, when supplied by this server. */
+    pageSha256?: string;
+    pageBytes?: number;
   };
   page: {
     received: number;
@@ -85,8 +88,47 @@ export interface HttpQueryParameter {
   encoding: 'literal-or-repeated' | 'form-comma' | 'form-repeated';
   source: string;
 }
+/** Explicit raw strings are encoded once into their advertised URL segments. */
+export type HttpPath = Record<string, string>;
+export interface HttpPathBinding {
+  routeTemplate: string | null;
+  values: HttpPath;
+  /** Complete original advertised resource URL, before explicit path values. */
+  advertisedUrl: string;
+  /** Concrete URL retained by the original preparation and durable intent. */
+  requestUrl: string;
+}
+export interface HttpPathParameter {
+  name: string;
+  required: boolean;
+  type: string | string[] | null;
+  title: string | null;
+  description: string | null;
+  source: string;
+}
+export interface HttpPathInput extends NativeRecord {
+  /** Original published route template, or null for an exact resource URL. */
+  routeTemplate: string | null;
+  advertisedKeys: string[];
+  /** Unbound path fields that the caller must explicitly supply. */
+  requiredKeys: string[];
+  /** Already concrete URL bindings retained by the original advertisement. */
+  fixedValues: HttpPath;
+  parameters: HttpPathParameter[];
+  keysSource: string | null;
+  valueType: 'string';
+  maxKeys: number;
+  maxKeyLength: number;
+  maxValueLength: number;
+  maxEncodedPathBytes: number;
+}
 export interface HttpPreviewInput extends NativeRecord {
   container: 'query';
+  /** Present on path-aware servers; query metadata remains beside this descriptor. */
+  path?: HttpPathInput | null;
+  containers?: ['path', 'query'];
+  additionalContainers?: false;
+  pathInputError?: (ContinuationError & { details?: NativeRecord }) | null;
   advertisedKeys: string[];
   keysSource: string | null;
   parameters: HttpQueryParameter[];
@@ -115,7 +157,16 @@ export interface ResourceDescription extends NativeRecord {
   bazaar: NativeRecord;
   /** Complete eligible alternatives; these indexes are used unchanged by preview. */
   accepts: PaymentOption[];
-  source: NativeRecord & { url: string; observedAt: string; resource: string | NativeRecord };
+  source: NativeRecord & {
+    url: string;
+    observedAt: string;
+    resource: string | NativeRecord;
+    /** Exact retained provider response identity, when available on this server. */
+    pageSha256?: string;
+    pageBytes?: number;
+    /** Zero-based original provider row before buyer filtering, when retained by this server. */
+    rowIndex?: number;
+  };
   /** Milliseconds since the Unix epoch. */
   expiresAt: number;
   preview: NativeRecord & {
@@ -131,7 +182,14 @@ export type HttpQuery = Record<string, HttpQueryScalar | HttpQueryScalar[]>;
 export interface PreviewRequest {
   handle: string;
   acceptIndex?: number;
-  input: { query: HttpQuery } | { arguments: JsonObject };
+  input: { query?: HttpQuery; path?: HttpPath } | { arguments: JsonObject };
+}
+export interface PreviewHttpRequest {
+  handle: string;
+  acceptIndex?: number;
+  path?: HttpPath;
+  /** Defaults to an empty explicit query. Original fixed URL pairs are retained. */
+  query?: HttpQuery;
 }
 export interface PreparedQuote extends NativeRecord {
   quoteId: string;
@@ -180,6 +238,8 @@ export interface BazaarDiscoveryClient {
   searchPages(request: SearchRequest, options?: CallOptions): AsyncGenerator<DiscoveryPage, void, unknown>;
   describe(handle: string, options?: CallOptions): Promise<ResourceDescription>;
   preview(request: PreviewRequest, options?: CallOptions): Promise<PreparedQuote>;
+  /** Prepare a concrete GET/HEAD request from the original advertised route and explicit inputs. */
+  previewHttp(request: PreviewHttpRequest, options?: CallOptions): Promise<PreparedQuote>;
   previewHttpQuery(
     request: { handle: string; query: HttpQuery; acceptIndex?: number },
     options?: CallOptions,

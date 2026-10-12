@@ -10,10 +10,17 @@ through export, a second receiving, and merchant restart.
 
 The operation is `BUYER-FINANCE-STANDALONE-6200-20261012`. Its selected product is
 `buyer-expenses` in `woahwhattheheck/tjlabs-stellar-merchant-workspace`, at commit
-`27347f1b1a9ae0f1ab7979803dd471f26c5185cf` and tree
-`ab96fa5fe8686f7f8461d18c0f65a5ebc33ff7df`. That source was integrated by merge
-`b86b7da8a72aed4ebd9f38aef7c2c37129940410`. The exact source selection stays
-fixed as the containing repository gains later product features.
+`9e1dad6b3d1a444170c249b18cde76da1aca8ce9` and tree
+`fcc33ad4a642f8f162726903e34fec585c6f3c7b`. This is the original application's source at
+`27347f1b1a9ae0f1ab7979803dd471f26c5185cf`, with the later selected-package boundary
+from `2b77bdf4a10bd65e7883e57a1bf62975ee38e8ef` and the complete original SF82 release
+store dependency graph. Its missing SF101 outbox-continuity and SF66 JSON-RPC
+source comes byte-for-byte from original financial source
+`ee47e6141f9824bd7017f57b299df7bd4837debd`. The original builder retains the
+exported customer-module templates through explicit source declarations. The original application was integrated by merge
+`b86b7da8a72aed4ebd9f38aef7c2c37129940410`; the complete new Git commit and tree
+carry the actual selection correction. The source pin stays fixed as the
+containing repository gains later product features.
 
 Obtain the original receiving ZIP from the existing F232 financial handoff.
 Keep that financial input in the operator's private receiving directory.
@@ -76,7 +83,7 @@ browser, the 97 runtime dependencies requested by the selected builder's actual
 receiving, and the complete 814-path original reference cache. The packet retains
 1,130 original required paths and 814 additional exact paths, backed by all
 1,942 unique original Git objects. Two paths share existing object bytes. Every
-body retains its unchanged Git blob identity, and the original receiver verifies
+body matches its selected Git blob identity, and the original receiver verifies
 all objects before the selected builder starts.
 
 This broader cache includes the maintained accounting-provider and merchant-host
@@ -110,6 +117,44 @@ The selected customer package explicitly includes its product README and
 operating guide. This repository receiving directory carries the complete frozen
 source input and execution entrypoint; it stays outside that customer package's
 component selection, so the packet does not become a nested source dependency.
+
+## Original runtime result and source correction
+
+The original native operation `39111` on October 12 reached the maintained
+installer's `READY` state on Node 24.19.0 and Python 3.12.14. It verified the
+complete source and produced the selected distributable. Financial receiving
+then reached the original MCP configuration and found a required dynamic import:
+`sf82-seller-pilot/releases.mjs`.
+
+The next original operation `56230` verified the corrected source, then found
+SF98 exchange's missing SF101 outbox-continuity module during packaging. Its
+full native source cache and outcome are retained in
+`libfile_1a70022fd9ac8191ae70f37cd126466c` (10,047,292 bytes; SHA-256
+`e9d7da076d91b6cc6a066c41a92ddbadcea0f2f36c1bf8be7ebd0f8b5ed5c9ac`).
+
+The complete correction follows every original literal dynamic import reached
+through release, destination and exchange modules, with the native Python and
+Ruby companions, XML/feed/NDJSON/SDMX readers, Wherobots decoder sources and
+served/exported assets. The recipe retains 577 exact support paths beside the
+same ten financial components. The Python and Ruby request bridges remain
+complete `moduleTemplates`: the builder parses their source without resolving
+the sibling generated only by the original customer exporter. Executable
+entrypoints and imports cannot select a template as a runtime module. The
+original financial receiving driver and financial application arithmetic are
+unchanged. The
+recipe also retains its later two exact customer guides and excludes this
+repository's large receiving packet from the customer package.
+
+The prior operation's complete source cache, installed-source receipts and
+failure output are retained in `libfile_bdb9252be7408191a9f29cb3a9173a16`
+(10,698,787 bytes; SHA-256
+`cb4b7d0a253bc9669dcc70e5ac05030d43bf71e5dcddcc8f4726dfb1454107a6`).
+Its selected package is retained in
+`libfile_46ca5c9c367481918f99355701137b35`
+(4,964,380 bytes; SHA-256
+`09ac46ed30a99341af6a29ece51b05eb12e582b7c34bdd775b6758167a22f279`).
+The corrected source receives and builds its own verified runtime before
+continuing the same complete financial programme.
 
 ## Run the complete operation
 

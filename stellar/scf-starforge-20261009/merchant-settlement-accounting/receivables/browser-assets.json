@@ -92,6 +92,41 @@
         "credit-control.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/bank-statements.mjs",
+      [
+        "bank-statements.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/remittances.html",
+      [
+        "remittances.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/remittances-app.mjs",
+      [
+        "remittances-app.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/remittances.css",
+      [
+        "remittances.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/remittances-client.mjs",
+      [
+        "../remittances-client.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

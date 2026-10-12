@@ -85,6 +85,115 @@ async function publishFile(temporary, destination, expected) {
   } finally { await unlink(temporary).catch(() => {}); }
   await syncDirectory(dirname(destination));
 }
+/** Retain one complete original file without replacing an existing identity. */
+async function retainOriginalFile(source, destination, expected, { signal, handle: suppliedHandle = null } = {}) {
+  if (await exists(destination)) {
+    const current = await fileIdentity(destination, { maximum: expected.bytes, signal });
+    need(equal(current, expected), 'RUNTIME_TRANSFER_IMMUTABLE_CONFLICT');
+    return { ...expected, reused: true };
+  }
+  const input = suppliedHandle ?? await open(source, constants.O_RDONLY | constants.O_NOFOLLOW);
+  let output = null, temporary = destination + '.pending-' + randomUUID();
+  try {
+    const before = await input.stat();
+    need(before.isFile() && before.size === expected.bytes, 'RUNTIME_TRANSFER_INPUT_CHANGED');
+    output = await open(temporary, 'wx', 0o600);
+    const buffer = Buffer.allocUnsafe(256 * 1024), hash = createHash('sha256'); let position = 0;
+    while (position < expected.bytes) {
+      checkAbort(signal);
+      const { bytesRead } = await input.read(buffer, 0, Math.min(buffer.length, expected.bytes - position), position);
+      need(bytesRead > 0, 'RUNTIME_TRANSFER_INPUT_CHANGED');
+      const bytes = buffer.subarray(0, bytesRead);
+      await output.writeFile(bytes); hash.update(bytes); position += bytesRead;
+    }
+    need(SAME(before, await input.stat()) && hash.digest('hex') === expected.sha256, 'RUNTIME_TRANSFER_INPUT_CHANGED');
+    await output.sync(); await output.close(); output = null;
+    await publishFile(temporary, destination, expected); temporary = null;
+    return { ...expected, reused: false };
+  } finally {
+    if (output) await output.close().catch(() => {});
+    if (temporary) await unlink(temporary).catch(() => {});
+    if (!suppliedHandle) await input.close();
+  }
+}
+function storageMode(state) {
+  const mode = state?.storage ?? state?.binding?.storage ?? 'parts';
+  need(['parts', 'files'].includes(mode) &&
+    (!state?.binding?.storage || state.binding.storage === mode), 'RUNTIME_TRANSFER_STORAGE_INVALID');
+  return mode;
+}
+function selectStorage(requested, state) {
+  const selected = requested ?? storageMode(state);
+  need(['parts', 'files'].includes(selected), 'RUNTIME_TRANSFER_STORAGE_INVALID');
+  if (state) need(selected === storageMode(state), 'RUNTIME_TRANSFER_REQUEST_CHANGED');
+  return selected;
+}
+function transferFilesRoot(root, state) { return state.mode === 'EXPORT' ? root : join(root, 'files'); }
+/** Binary search keeps large manifests proportional to the files actually crossing this part. */
+function partFragments(manifest, part) {
+  let low = 0, high = manifest.files.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2), file = manifest.files[middle];
+    if (file.offset + file.bytes <= part.offset) low = middle + 1; else high = middle;
+  }
+  const fragments = [], end = part.offset + part.bytes;
+  for (let index = low; index < manifest.files.length && manifest.files[index].offset < end; index++) {
+    const file = manifest.files[index], start = Math.max(part.offset, file.offset);
+    const bytes = Math.min(end, file.offset + file.bytes) - start;
+    if (bytes > 0) fragments.push({ file, offset: start - file.offset, bytes });
+  }
+  need(fragments.reduce((sum, item) => sum + item.bytes, 0) === part.bytes, 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH');
+  return fragments;
+}
+/** Yield exactly the original part, from a part file or its complete retained source files. */
+async function* transferPartChunks(root, state, manifest, part, signal, onVerified = async () => {}) {
+  const partFile = join(root, 'parts', part.name), present = await exists(partFile);
+  const partHash = createHash('sha256'); let total = 0, originalStat = null;
+  const fragments = present ? [{ path: partFile, bytes: part.bytes, offset: 0, fileBytes: part.bytes }] : [];
+  if (!present) {
+    need(storageMode(state) === 'files', 'ENOENT', 'The declared transfer part is missing');
+    const filesRoot = await privateDirectory(transferFilesRoot(root, state));
+    for (const fragment of partFragments(manifest, part))
+      fragments.push({ path: join(filesRoot, fragment.file.path), bytes: fragment.bytes,
+        offset: fragment.offset, fileBytes: fragment.file.bytes });
+  }
+  for (const fragment of fragments) {
+    const input = await open(fragment.path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      const before = await input.stat();
+      need(before.isFile() && before.size === fragment.fileBytes, 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH');
+      const buffer = Buffer.allocUnsafe(256 * 1024); let position = 0;
+      while (position < fragment.bytes) {
+        checkAbort(signal);
+        const { bytesRead } = await input.read(buffer, 0, Math.min(buffer.length, fragment.bytes - position),
+          fragment.offset + position);
+        need(bytesRead > 0, 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH');
+        const bytes = buffer.subarray(0, bytesRead);
+        partHash.update(bytes); position += bytesRead; total += bytesRead;
+        yield bytes;
+      }
+      need(SAME(before, await input.stat()), 'RUNTIME_TRANSFER_INPUT_CHANGED');
+      if (present) originalStat = before;
+    } finally { await input.close(); }
+  }
+  need(total === part.bytes && partHash.digest('hex') === part.sha256, 'RUNTIME_TRANSFER_PART_HASH_MISMATCH');
+  // Call only after the input descriptor has closed: unlinking changes its ctime.
+  await onVerified(part, originalStat);
+}
+async function partAvailability(root, state, manifest, part) {
+  const present = await exists(join(root, 'parts', part.name));
+  if (present) return { storage: 'parts', status: present.isFile() && !present.isSymbolicLink() &&
+    present.size === part.bytes ? 'PRESENT' : 'INVALID' };
+  if (storageMode(state) !== 'files') return { storage: 'parts', status: 'MISSING' };
+  const filesRoot = transferFilesRoot(root, state);
+  for (const { file } of partFragments(manifest, part)) {
+    const retained = await exists(join(filesRoot, file.path));
+    if (!retained) return { storage: 'files', status: 'MISSING' };
+    if (!retained.isFile() || retained.isSymbolicLink() || retained.size !== file.bytes)
+      return { storage: 'files', status: 'INVALID' };
+  }
+  return { storage: 'files', status: 'PRESENT' };
+}
 async function saveState(root, value) {
   await saveJSON(join(root, STATE), { schema: TRANSFER_STATE_SCHEMA, ...value, updatedAt: now() }, true);
 }
@@ -195,14 +304,14 @@ async function retainedPackage(root, artifact, cache, { npm, offline, leaseFd, s
   await rm(temporary, { recursive: true, force: true });
   return { ...artifact, ...observed };
 }
-async function writePayload(root, files, partBytes, signal) {
+async function writePayload(root, files, partBytes, signal, persistParts = true) {
   const parts = [], payloadHash = createHash('sha256'); let total = 0, part = null;
   async function finish() {
     if (!part) return;
-    await part.handle.sync(); await part.handle.close();
+    if (part.handle) { await part.handle.sync(); await part.handle.close(); part.handle = null; }
     const record = { index: parts.length, name: partName(parts.length), offset: total - part.bytes,
       bytes: part.bytes, sha256: part.hash.digest('hex') };
-    await publishFile(part.temporary, join(root, 'parts', record.name), { bytes: record.bytes, sha256: record.sha256 });
+    if (persistParts) await publishFile(part.temporary, join(root, 'parts', record.name), { bytes: record.bytes, sha256: record.sha256 });
     parts.push(record); part = null;
   }
   try {
@@ -222,10 +331,12 @@ async function writePayload(root, files, partBytes, signal) {
           while (position < bytes.length) {
             if (!part) {
               const temporary = join(root, 'parts', partName(parts.length) + '.pending-' + randomUUID());
-              part = { temporary, handle: await open(temporary, 'wx', 0o600), bytes: 0, hash: createHash('sha256') };
+              part = { temporary: persistParts ? temporary : null,
+                handle: persistParts ? await open(temporary, 'wx', 0o600) : null, bytes: 0, hash: createHash('sha256') };
             }
             const slice = bytes.subarray(position, position + Math.min(partBytes - part.bytes, bytes.length - position));
-            await part.handle.writeFile(slice); part.hash.update(slice);
+            if (part.handle) await part.handle.writeFile(slice);
+            part.hash.update(slice);
             part.bytes += slice.length; total += slice.length; position += slice.length;
             if (part.bytes === partBytes) await finish();
           }
@@ -236,12 +347,13 @@ async function writePayload(root, files, partBytes, signal) {
     await finish();
     return { parts, payload: { bytes: total, sha256: payloadHash.digest('hex'), partBytes } };
   } finally {
-    if (part) { await part.handle.close().catch(() => {}); await unlink(part.temporary).catch(() => {}); }
+    if (part?.handle) await part.handle.close().catch(() => {});
+    if (part?.temporary) await unlink(part.temporary).catch(() => {});
   }
 }
 export async function exportRuntimeTransfer({ runtimeDirectory, directory, cache, npm = 'npm',
   offline = true, partBytes = MAX_PART_BYTES, maxBytes = DEFAULT_MAX_BYTES,
-  expectedLockSha256, signal, onProgress = async () => {} } = {}) {
+  expectedLockSha256, storage, signal, onProgress = async () => {} } = {}) {
   need(typeof runtimeDirectory === 'string' && runtimeDirectory && typeof directory === 'string' && directory &&
     typeof cache === 'string' && cache && typeof offline === 'boolean' &&
     Number.isSafeInteger(partBytes) && partBytes >= 64 * 1024 && partBytes <= MAX_PART_BYTES &&
@@ -257,14 +369,15 @@ export async function exportRuntimeTransfer({ runtimeDirectory, directory, cache
   try {
     state = await readRecord(join(root, STATE), true);
     need(created || state?.mode === 'EXPORT', 'RUNTIME_TRANSFER_EXISTING_DIRECTORY');
+    const selectedStorage = selectStorage(storage, state);
     const binding = { runtimeDirectory: resolve(runtimeDirectory), cache: cachePath, offline, partBytes, maxBytes,
-      expectedLockSha256: expectedLockSha256 ?? null };
+      expectedLockSha256: expectedLockSha256 ?? null, ...(selectedStorage === 'files' ? { storage: 'files' } : {}) };
     if (state) {
       need(state.mode === 'EXPORT' && equal(state.binding, binding), 'RUNTIME_TRANSFER_REQUEST_CHANGED');
       if (state.phase === 'COMPLETE') return inspectRuntimeTransfer({ directory: root, verify: true });
     }
     if (!state) {
-      state = { mode: 'EXPORT', phase: 'REVIEWING', binding, runtime: null, createdAt: now(),
+      state = { mode: 'EXPORT', phase: 'REVIEWING', binding, storage: selectedStorage, runtime: null, createdAt: now(),
         completedPackages: 0, totalPackages: 0 };
       await saveState(root, state);
     }
@@ -291,7 +404,10 @@ export async function exportRuntimeTransfer({ runtimeDirectory, directory, cache
       state = { ...state, phase: 'PACKAGES', completedPackages: artifacts.length };
       await saveState(root, state); await onProgress({ phase: state.phase, completed: artifacts.length, total: state.totalPackages });
     }
-    const files = [{ path: 'source.tgz', source: join(inputs.directory, 'source.tgz'), ...inputs.archive },
+    const archiveSource = selectedStorage === 'files' ? join(root, 'source.tgz') : join(inputs.directory, 'source.tgz');
+    if (selectedStorage === 'files')
+      await retainOriginalFile(join(inputs.directory, 'source.tgz'), archiveSource, inputs.archive, { signal });
+    const files = [{ path: 'source.tgz', source: archiveSource, ...inputs.archive },
       ...['runtime-profile.json', 'package.json', 'package-lock.json'].map(path => ({
         path, source: join(root, path), bytes: inputs.bytes[path].length, sha256: digest(inputs.bytes[path]) }))];
     const seen = new Set();
@@ -305,7 +421,7 @@ export async function exportRuntimeTransfer({ runtimeDirectory, directory, cache
     need(offset <= maxBytes, 'RUNTIME_TRANSFER_PAYLOAD_LIMIT');
     state = { ...state, phase: 'PARTS' }; await saveState(root, state);
     await onProgress({ phase: 'PARTS', bytes: offset });
-    const payload = await writePayload(root, files, partBytes, signal);
+    const payload = await writePayload(root, files, partBytes, signal, selectedStorage === 'parts');
     const current = await runtimeInputs(runtimeDirectory, { verifySource: false });
     need(equal(current.runtime, inputs.runtime), 'RUNTIME_TRANSFER_RUNTIME_CHANGED');
     const identity = { runtime: inputs.runtime, ...payload,
@@ -338,31 +454,41 @@ export async function inspectRuntimeTransfer({ directory, verify = false } = {})
   const state = await readRecord(join(root, STATE));
   need(state?.schema === TRANSFER_STATE_SCHEMA && ['EXPORT', 'RECEIVE'].includes(state.mode),
     'RUNTIME_TRANSFER_STATE_INVALID');
+  const storage = storageMode(state);
   if (!(await exists(join(root, MANIFEST))))
-    return { schema: 'stellar-forge.runtime-transfer-inspection.v1', directory: root, state,
+    return { schema: 'stellar-forge.runtime-transfer-inspection.v1', directory: root, state, storage,
       complete: false, manifest: null, manifestSha256: null, parts: [] };
   const selected = await manifestAt(root, state.manifestSha256);
   if (state.transferId) need(state.transferId === selected.manifest.transferId, 'RUNTIME_TRANSFER_STATE_CHANGED');
   if (state.runtime) need(equal(state.runtime, selected.manifest.runtime), 'RUNTIME_TRANSFER_STATE_CHANGED');
   const parts = [];
   for (const part of selected.manifest.parts) {
-    const filename = join(root, 'parts', part.name), present = await exists(filename);
-    let status = !present ? 'MISSING' : present.isFile() && !present.isSymbolicLink() && present.size === part.bytes ? 'PRESENT' : 'INVALID';
+    const availability = await partAvailability(root, state, selected.manifest, part);
+    let status = availability.status;
     if (verify && status === 'PRESENT') {
-      const observed = await fileIdentity(filename, { maximum: part.bytes });
-      status = observed.sha256 === part.sha256 ? 'VERIFIED' : 'INVALID';
+      try {
+        for await (const bytes of transferPartChunks(root, state, selected.manifest, part)) void bytes;
+        status = 'VERIFIED';
+      } catch (error) {
+        if (error.code === 'ENOENT') status = 'MISSING';
+        else if (['ELOOP', 'ENOTDIR', 'RUNTIME_TRANSFER_INPUT_CHANGED', 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH',
+          'RUNTIME_TRANSFER_PART_HASH_MISMATCH'].includes(error.code)) status = 'INVALID';
+        else throw error;
+      }
     }
-    parts.push({ ...part, status });
+    parts.push({ ...part, storage: availability.storage, status });
   }
   const complete = parts.every(part => ['PRESENT', 'VERIFIED'].includes(part.status));
   return { schema: 'stellar-forge.runtime-transfer-inspection.v1', directory: root,
-    state, manifest: selected.manifest, manifestSha256: selected.sha256, parts, complete,
+    state, storage, manifest: selected.manifest, manifestSha256: selected.sha256, parts, complete,
     missingParts: parts.filter(part => part.status === 'MISSING').map(part => part.index),
     invalidParts: parts.filter(part => part.status === 'INVALID').map(part => part.index),
     cacheDirectory: state.mode === 'RECEIVE' ? join(root, 'cache') : null,
-    filesDirectory: state.mode === 'RECEIVE' && state.filesReady ? join(root, 'files') : null };
+    filesDirectory: state.mode === 'RECEIVE' && state.filesReady ? join(root, 'files') :
+      state.mode === 'EXPORT' && storage === 'files' && complete ? root : null };
 }
-export async function beginRuntimeTransferReceive({ directory, manifest, manifestSha256, maxBytes = DEFAULT_MAX_BYTES } = {}) {
+export async function beginRuntimeTransferReceive({ directory, manifest, manifestSha256,
+  maxBytes = DEFAULT_MAX_BYTES, storage } = {}) {
   need(typeof directory === 'string' && directory && validHash(manifestSha256), 'RUNTIME_TRANSFER_RECEIVE_OPTIONS_INVALID');
   const bytes = Buffer.isBuffer(manifest) ? manifest : typeof manifest === 'string' ? Buffer.from(manifest) : Buffer.from(json(manifest));
   need(bytes.length <= MAX_MANIFEST_BYTES && digest(bytes) === manifestSha256, 'RUNTIME_TRANSFER_MANIFEST_HASH_MISMATCH');
@@ -376,10 +502,11 @@ export async function beginRuntimeTransferReceive({ directory, manifest, manifes
     const existing = await readRecord(join(root, STATE), true);
     if (!created) need(existing && existing.mode === 'RECEIVE' && existing.manifestSha256 === manifestSha256 &&
       existing.transferId === selected.transferId, 'RUNTIME_TRANSFER_EXISTING_DIRECTORY');
+    const selectedStorage = selectStorage(storage, existing);
     if (!existing) {
       await ensurePrivate(join(root, 'parts'));
       await immutableBytes(join(root, MANIFEST), bytes);
-      await saveState(root, { mode: 'RECEIVE', phase: 'RECEIVING', createdAt: now(),
+      await saveState(root, { mode: 'RECEIVE', storage: selectedStorage, phase: 'RECEIVING', createdAt: now(),
         manifestSha256, transferId: selected.transferId, runtime: selected.runtime,
         filesReady: false, cachedArtifacts: [], installations: [] });
     }
@@ -396,11 +523,10 @@ export async function receiveRuntimeTransferPart({ directory, index, body, file,
     need(Number.isSafeInteger(index) && index >= 0 && index < manifest.parts.length &&
       Boolean(body) !== Boolean(file), 'RUNTIME_TRANSFER_PART_OPTIONS_INVALID');
     const part = manifest.parts[index], destination = join(root, 'parts', part.name);
-    const reused = Boolean(await exists(destination));
-    if (reused) {
-      const current = await fileIdentity(destination, { maximum: part.bytes });
-      need(current.sha256 === part.sha256 && current.bytes === part.bytes, 'RUNTIME_TRANSFER_PART_CHANGED');
-      }
+    const availability = await partAvailability(root, state, manifest, part);
+    need(availability.status !== 'INVALID', 'RUNTIME_TRANSFER_PART_CHANGED');
+    const reused = availability.status === 'PRESENT';
+    if (reused) for await (const bytes of transferPartChunks(root, state, manifest, part, signal)) void bytes;
     let iterable = body, first;
     if (file) {
       inputHandle = await open(resolve(file), constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -409,20 +535,25 @@ export async function receiveRuntimeTransferPart({ directory, index, body, file,
       iterable = inputHandle.createReadStream({ autoClose: false, highWaterMark: 256 * 1024 });
     }
     need(iterable && typeof iterable[Symbol.asyncIterator] === 'function', 'RUNTIME_TRANSFER_PART_STREAM_REQUIRED');
-    temporary = destination + '.pending-' + randomUUID();
-    const output = await open(temporary, 'wx', 0o600), hash = createHash('sha256'); let bytes = 0;
+    // A replay still consumes and verifies its input, but never writes another copy.
+    temporary = reused ? null : destination + '.pending-' + randomUUID();
+    const output = temporary ? await open(temporary, 'wx', 0o600) : null;
+    const hash = createHash('sha256'); let bytes = 0;
     try {
       for await (const chunk of iterable) {
         checkAbort(signal);
         need(Buffer.isBuffer(chunk) || chunk instanceof Uint8Array, 'RUNTIME_TRANSFER_BINARY_REQUIRED');
         bytes += chunk.length; need(bytes <= part.bytes, 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH');
-        await output.writeFile(chunk); hash.update(chunk);
+        if (output) await output.writeFile(chunk);
+        hash.update(chunk);
       }
       need(bytes === part.bytes && hash.digest('hex') === part.sha256, 'RUNTIME_TRANSFER_PART_HASH_MISMATCH');
       if (inputHandle) need(SAME(first, await inputHandle.stat()), 'RUNTIME_TRANSFER_INPUT_CHANGED');
-      await output.sync();
-    } finally { await output.close(); }
-    await publishFile(temporary, destination, { bytes: part.bytes, sha256: part.sha256 }); temporary = null;
+      if (output) await output.sync();
+    } finally { if (output) await output.close(); }
+    if (temporary) {
+      await publishFile(temporary, destination, { bytes: part.bytes, sha256: part.sha256 }); temporary = null;
+    }
     await saveState(root, { ...state, phase: state.filesReady ? state.phase : 'RECEIVING',
       lastReceivedPart: index, error: null });
     return { index, sha256: part.sha256, bytes: part.bytes, status: 'VERIFIED', reused };
@@ -432,60 +563,90 @@ export async function receiveRuntimeTransferPart({ directory, index, body, file,
     await lease.close();
   }
 }
-async function* payloadChunks(root, manifest, signal) {
+async function* payloadChunks(root, state, manifest, signal, onVerified) {
   const hash = createHash('sha256'); let total = 0;
-  for (const part of manifest.parts) {
-    const input = await open(join(root, 'parts', part.name), constants.O_RDONLY | constants.O_NOFOLLOW);
-    try {
-      const before = await input.stat(), partHash = createHash('sha256');
-      need(before.isFile() && before.size === part.bytes, 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH');
-      let offset = 0;
-      const buffer = Buffer.allocUnsafe(256 * 1024);
-      while (offset < part.bytes) {
-        checkAbort(signal);
-        const { bytesRead } = await input.read(buffer, 0, Math.min(buffer.length, part.bytes - offset), offset);
-        need(bytesRead > 0, 'RUNTIME_TRANSFER_PART_SIZE_MISMATCH');
-        const chunk = buffer.subarray(0, bytesRead);
-        partHash.update(chunk); hash.update(chunk); offset += bytesRead; total += bytesRead;
-        yield chunk;
-      }
-      need(SAME(before, await input.stat()) && partHash.digest('hex') === part.sha256, 'RUNTIME_TRANSFER_PART_HASH_MISMATCH');
-    } finally { await input.close(); }
-  }
+  for (const part of manifest.parts)
+    for await (const chunk of transferPartChunks(root, state, manifest, part, signal, onVerified)) {
+      hash.update(chunk); total += chunk.length;
+      yield chunk;
+    }
   need(total === manifest.payload.bytes && hash.digest('hex') === manifest.payload.sha256, 'RUNTIME_TRANSFER_PAYLOAD_HASH_MISMATCH');
 }
-async function reconstructFiles(root, manifest, signal) {
+async function reconstructFiles(root, state, manifest, signal) {
   const outputRoot = await ensurePrivate(join(root, 'files'));
   await ensurePrivate(join(outputRoot, 'artifacts'));
-  let fileIndex = 0, output = null, position = 0, hash = null, temporary = null;
+  const retireParts = storageMode(state) === 'files', verifiedParts = new Map();
+  let fileIndex = 0, current = null, publishedThrough = 0, closedPartIndex = -1, retireIndex = 0;
+  async function releaseCoveredParts() {
+    if (!retireParts) return;
+    let removed = false;
+    while (retireIndex <= closedPartIndex) {
+      const part = manifest.parts[retireIndex];
+      if (part.offset + part.bytes > publishedThrough) break;
+      const path = join(root, 'parts', part.name), observed = await exists(path);
+      if (observed) {
+        const original = verifiedParts.get(retireIndex);
+        need(original && SAME(original, observed) && observed.isFile() && !observed.isSymbolicLink(),
+          'RUNTIME_TRANSFER_PART_CHANGED');
+        await unlink(path); removed = true;
+      }
+      verifiedParts.delete(retireIndex++);
+    }
+    if (removed) await syncDirectory(join(root, 'parts'));
+  }
+  async function partClosed(part, originalStat) {
+    closedPartIndex = part.index;
+    if (retireParts) verifiedParts.set(part.index, originalStat);
+    await releaseCoveredParts();
+  }
   async function begin() {
-    const file = manifest.files[fileIndex];
-    temporary = join(outputRoot, file.path) + '.pending-' + randomUUID();
-    output = await open(temporary, 'wx', 0o600); position = 0; hash = createHash('sha256');
+    const file = manifest.files[fileIndex], destination = join(outputRoot, file.path);
+    current = { file, destination, position: 0, hash: createHash('sha256'),
+      output: null, retained: null, temporary: null, originalStat: null };
+    if (await exists(destination)) {
+      current.retained = await open(destination, constants.O_RDONLY | constants.O_NOFOLLOW);
+      current.originalStat = await current.retained.stat();
+      const identity = await fileIdentity(destination, { maximum: file.bytes, signal, handle: current.retained });
+      need(identity.bytes === file.bytes && identity.sha256 === file.sha256, 'RUNTIME_TRANSFER_IMMUTABLE_CONFLICT');
+    } else {
+      current.temporary = destination + '.pending-' + randomUUID();
+      current.output = await open(current.temporary, 'wx', 0o600);
+    }
   }
   async function finish() {
-    const file = manifest.files[fileIndex];
-    need(position === file.bytes && hash.digest('hex') === file.sha256, 'RUNTIME_TRANSFER_FILE_HASH_MISMATCH');
-    await output.sync(); await output.close(); output = null;
-    await publishFile(temporary, join(outputRoot, file.path), { bytes: file.bytes, sha256: file.sha256 });
-    temporary = null; fileIndex++;
+    const { file, destination } = current;
+    need(current.position === file.bytes && current.hash.digest('hex') === file.sha256,
+      'RUNTIME_TRANSFER_FILE_HASH_MISMATCH');
+    if (current.output) {
+      await current.output.sync(); await current.output.close(); current.output = null;
+      await publishFile(current.temporary, destination, { bytes: file.bytes, sha256: file.sha256 });
+      current.temporary = null;
+    } else {
+      need(SAME(current.originalStat, await current.retained.stat()), 'RUNTIME_TRANSFER_INPUT_CHANGED');
+      await current.retained.sync(); await current.retained.close(); current.retained = null;
+    }
+    publishedThrough = file.offset + file.bytes; current = null; fileIndex++;
+    await releaseCoveredParts();
   }
   try {
-    for await (const bytes of payloadChunks(root, manifest, signal)) {
+    for await (const bytes of payloadChunks(root, state, manifest, signal, partClosed)) {
       let offset = 0;
       while (offset < bytes.length) {
         need(fileIndex < manifest.files.length, 'RUNTIME_TRANSFER_PAYLOAD_OVERFLOW');
-        if (!output) await begin();
-        const file = manifest.files[fileIndex], length = Math.min(file.bytes - position, bytes.length - offset);
+        if (!current) await begin();
+        const length = Math.min(current.file.bytes - current.position, bytes.length - offset);
         const slice = bytes.subarray(offset, offset + length);
-        await output.writeFile(slice); hash.update(slice); position += length; offset += length;
-        if (position === file.bytes) await finish();
+        if (current.output) await current.output.writeFile(slice);
+        current.hash.update(slice); current.position += length; offset += length;
+        if (current.position === current.file.bytes) await finish();
       }
     }
-    need(!output && fileIndex === manifest.files.length, 'RUNTIME_TRANSFER_PAYLOAD_INCOMPLETE');
+    need(!current && fileIndex === manifest.files.length, 'RUNTIME_TRANSFER_PAYLOAD_INCOMPLETE');
+    await releaseCoveredParts();
   } finally {
-    if (output) await output.close().catch(() => {});
-    if (temporary) await unlink(temporary).catch(() => {});
+    if (current?.output) await current.output.close().catch(() => {});
+    if (current?.retained) await current.retained.close().catch(() => {});
+    if (current?.temporary) await unlink(current.temporary).catch(() => {});
   }
   return outputRoot;
 }
@@ -526,7 +687,7 @@ export async function completeRuntimeTransferReceive({ directory, npm = 'npm', p
     if (!state.filesReady) {
       state = { ...state, phase: 'RECONSTRUCTING', error: null }; await saveState(root, state);
       await onProgress({ phase: state.phase, bytes: manifest.payload.bytes });
-      await reconstructFiles(root, manifest, signal);
+      await reconstructFiles(root, state, manifest, signal);
       await validateReceivedFiles(root, manifest, signal);
       state = { ...state, filesReady: true, phase: 'RECEIVED', receivedAt: now() }; await saveState(root, state);
     } else await validateReceivedFiles(root, manifest, signal);
@@ -556,24 +717,50 @@ export async function completeRuntimeTransferReceive({ directory, npm = 'npm', p
   } finally { await lease.close(); }
 }
 /** Read retained bytes for the existing authenticated workspace download path. */
-export async function openRuntimeTransferDownload({ directory, kind, index } = {}) {
+export async function openRuntimeTransferDownload({ directory, kind, index, signal } = {}) {
   const root = await privateDirectory(resolve(directory)), state = await readRecord(join(root, STATE));
   const selected = await manifestAt(root, state.manifestSha256);
-  let name, expected;
+  let name, expected, handle = null, temporary = null;
   if (kind === 'manifest') { name = MANIFEST; expected = { bytes: selected.bytes.length, sha256: selected.sha256 }; }
   else {
     need(kind === 'part' && Number.isSafeInteger(index) && index >= 0 && index < selected.manifest.parts.length,
       'RUNTIME_TRANSFER_DOWNLOAD_INVALID');
     const part = selected.manifest.parts[index]; name = 'parts/' + part.name; expected = part;
   }
-  const path = join(root, name), handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  const path = join(root, name);
   try {
-    const observed = await fileIdentity(path, { maximum: expected.bytes, handle });
+    if (kind === 'part' && !(await exists(path)) && storageMode(state) === 'files') {
+      // One temporary part per open download preserves the native FileHandle API.
+      // After unlink, the receiving stream's descriptor owns these bytes until close.
+      const temporaryRoot = await ensurePrivate(join(root, 'download-work'));
+      temporary = join(temporaryRoot, partName(index) + '.pending-' + randomUUID());
+      handle = await open(temporary, 'wx', 0o600);
+      for await (const bytes of transferPartChunks(root, state, selected.manifest, expected, signal))
+        await handle.writeFile(bytes);
+      await handle.sync(); await handle.close(); handle = null;
+      handle = await open(temporary, constants.O_RDONLY | constants.O_NOFOLLOW);
+      await unlink(temporary); temporary = null;
+      await syncDirectory(temporaryRoot);
+    } else handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const observed = await fileIdentity(path, { maximum: expected.bytes, handle, signal });
     need(observed.sha256 === expected.sha256 && observed.bytes === expected.bytes, 'RUNTIME_TRANSFER_DOWNLOAD_CHANGED');
-  } catch (error) { await handle.close(); throw error; }
-  return { handle, file: kind === 'manifest' ? 'runtime-transfer-' + selected.manifest.transferId.slice(0, 12) + '.json' :
-    selected.manifest.parts[index].name, bytes: expected.bytes,
-    type: kind === 'manifest' ? 'application/json' : 'application/octet-stream', sha256: expected.sha256 };
+    return { handle, file: kind === 'manifest' ? 'runtime-transfer-' + selected.manifest.transferId.slice(0, 12) + '.json' :
+      selected.manifest.parts[index].name, bytes: expected.bytes,
+      type: kind === 'manifest' ? 'application/json' : 'application/octet-stream', sha256: expected.sha256 };
+  } catch (error) {
+    if (handle) await handle.close().catch(() => {});
+    throw error;
+  } finally { if (temporary) await unlink(temporary).catch(() => {}); }
+}
+/** Publish a declared part to an explicit path for an offline handoff. */
+export async function copyRuntimeTransferPart({ directory, index, file, signal } = {}) {
+  need(typeof file === 'string' && file, 'RUNTIME_TRANSFER_PART_OPTIONS_INVALID');
+  const destination = resolve(file), download = await openRuntimeTransferDownload({ directory, kind: 'part', index, signal });
+  try {
+    const copied = await retainOriginalFile(null, destination, { bytes: download.bytes, sha256: download.sha256 },
+      { handle: download.handle, signal });
+    return { index, file: destination, ...copied };
+  } finally { await download.handle.close(); }
 }
 function disjoint(a, b) { return a !== b && !a.startsWith(b + '/') && !b.startsWith(a + '/'); }
 export async function installReceivedRuntime({ directory, runtimeDirectory, npm = 'npm', python = 'python3',
@@ -655,3 +842,4 @@ export async function installReceivedRuntime({ directory, runtimeDirectory, npm 
     throw error;
   } finally { await lease.close(); }
 }
+

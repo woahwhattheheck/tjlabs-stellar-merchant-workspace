@@ -248,12 +248,16 @@ export function mountDeliveryCalendar({container,current,api,session,onOpen}){
     if(!target||target.disabled||busy||hostBusy)return;
     const action=target.dataset.calendarAction;
     if(action==='refresh'){await refresh();return;}
-    if(action==='completion'){onOpen('completion');return;}
+    if(action==='completion'){onOpen('completion',null,{asOfDate:report?.asOfDate||session.asOfDate});return;}
     if(action==='select'){session.selectedId=target.dataset.calendarId;persist();render();$('.calendar-detail')?.scrollIntoView({block:'nearest'});return;}
     if(action==='clear-selection'){session.selectedId='';persist();render();return;}
     if(action==='source'){
       const entry=[...(report?.entries||[]),...(report?.undated||[])].find(row=>row.id===target.dataset.calendarId);
-      if(entry)onOpen(originTab(entry),entry.tranche);return;
+      if(entry)onOpen(originTab(entry),entry.tranche,{
+        asOfDate:report.asOfDate,
+        receiptId:entry.kind==='SUBMISSION_DEADLINE'?entry.sourceId:entry.receiptId,
+        costId:entry.costId,reviewId:entry.reviewId,
+      });return;
     }
     if(action==='page-back'||action==='page-next'){session.page+=action==='page-next'?1:-1;render();return;}
     if(action==='month-back'||action==='month-next'){session.month=calendarMonthShift(session.month,action==='month-next'?1:-1);persist();render();return;}

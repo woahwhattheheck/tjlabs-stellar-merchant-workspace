@@ -7,6 +7,9 @@ import {normalizeTrafficHistoryReport} from '../sf30-seller-sdk/operations/histo
 import {parseWorkspace,MAX_WORKSPACE_BYTES} from './workspace-file.mjs';
 import {OBJECT_FILES,readObjectObservationFiles} from '../sf93-seller-support-bundle/object-observation.mjs';
 import {objectCaptureView,compareObjectCaptures,objectRepairQueue,objectCaptureHtml} from './object-runtime.mjs';
+import {CKAN_FILES,CKAN_FILE_LIMIT,readCkanObservationFiles} from '../sf93-seller-support-bundle/ckan-observation.mjs';
+import {ckanCaptureView,compareCkanCaptures,ckanRepairQueue} from './ckan-runtime.mjs';
+import {ckanCaptureHtml,ckanComparisonHtml} from './ckan-render.mjs';
 
 export const RUNTIME_SCHEMA = 'stellar-forge.merchant-runtime-case.v1';
 export const HANDOFF_SCHEMA = 'stellar-forge.merchant-support-handoff.v1';
@@ -17,7 +20,7 @@ const MAX_FILE = 2_000_000;
 const PACKET_FILES = ['bundle.json','operator-brief.md','metrics.prom','manifest.json'];
 const NATIVE_FILES = ['report.json','events.ndjson','deliveries.ndjson'];
 const PERIOD_FILES = ['history.json',...NATIVE_FILES];
-const FILES = [...PACKET_FILES,...PERIOD_FILES,...OBJECT_FILES];
+const FILES = [...PACKET_FILES,...PERIOD_FILES,...OBJECT_FILES,...CKAN_FILES];
 const INPUTS = ['resource','catalog','origin','network','payTo','method','credentialed'];
 const COUNTERS = ['started','completed','responses','inFlight','success','challenge','clientError','serverError','other','disconnected'];
 const CUMULATIVE = COUNTERS.filter(key=>key!=='inFlight');
@@ -178,6 +181,12 @@ function readCaptureFiles(files) {
     const bytes=Object.fromEntries(OBJECT_FILES.map(name=>[name,source(files[name],name)]));
     return {kind:'OBJECT_SESSION',bytes,original:readObjectObservationFiles(bytes)};
   }
+  if(own(files,'ckan-observation.json')) {
+    if(Object.keys(files).length!==CKAN_FILES.length||CKAN_FILES.some(name=>!own(files,name)))
+      fail('A CKAN observation needs all three original files without another runtime capture mixed into them');
+    const bytes=Object.fromEntries(CKAN_FILES.map(name=>[name,source(files[name],name,CKAN_FILE_LIMIT)]));
+    return {kind:'CKAN_WORKBENCH',bytes,original:readCkanObservationFiles(bytes)};
+  }
   const period=own(files,'history.json'),bytes={};
   if(period) {
     if(Object.keys(files).some(name=>!PERIOD_FILES.includes(name))||!own(files,'report.json'))
@@ -207,6 +216,12 @@ function sample(value) {
   if(kind==='OBJECT_SESSION') {
     if(own(value.scope,'path')||inputs.method!=='GET'||routeId!==original.meta.registration.id)
       fail('Select the registered original Object source and the GET case method');
+    return {kind,scope:{inputs,routeId},files:value.files,original,
+      route:{id:routeId,method:'GET'},native:null};
+  }
+  if(kind==='CKAN_WORKBENCH') {
+    if(own(value.scope,'path')||inputs.method!=='GET'||routeId!==original.meta.registration.id)
+      fail('Select the registered original CKAN source and the GET case method');
     return {kind,scope:{inputs,routeId},files:value.files,original,
       route:{id:routeId,method:'GET'},native:null};
   }
@@ -250,13 +265,16 @@ export function parseRuntime(textValue) {
     sourceBytes:[before,after].filter(Boolean).reduce((n,s)=>n+Object.values(s.files).reduce((k,f)=>k+f.bytes,0),0),
     ...([before,after].some(c=>c?.kind==='OBJECT_SESSION')?
       {objectCaptures:[before,after].filter(c=>c?.kind==='OBJECT_SESSION').length}: {}),
+    ...([before,after].some(c=>c?.kind==='CKAN_WORKBENCH')?
+      {ckanCaptures:[before,after].filter(c=>c?.kind==='CKAN_WORKBENCH').length}: {}),
     ...([before,after].some(c=>c?.kind==='DURABLE_PERIOD')?
       {periodCaptures:[before,after].filter(c=>c?.kind==='DURABLE_PERIOD').length}: {})}};
 }
 export function inspectRuntimeFiles({files,inputs,routeId,path}) {
   fields(files,FILES,'uploaded runtime files');
-  const wrapped={},maximum=own(files,'history.json')?MAX_PERIOD_SOURCE_BYTES:MAX_FILE;
+  const wrapped={},defaultMaximum=own(files,'history.json')?MAX_PERIOD_SOURCE_BYTES:MAX_FILE;
   for(const [name,data] of Object.entries(files)) {
+    const maximum=CKAN_FILES.includes(name)?CKAN_FILE_LIMIT:defaultMaximum;
     if(typeof data!=='string'||data.length>4*Math.ceil(maximum/3))fail('Invalid uploaded '+name);
     const bytes=Buffer.from(data,'base64');
     if(bytes.toString('base64')!==data)fail('Invalid source encoding for '+name);
@@ -269,6 +287,9 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
     if(kind==='OBJECT_SESSION')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
       sessionId:original.meta.selection.sessionId,capturedAt:original.meta.generatedAt,
       mode:'ORIGINAL_READ_ONLY_BUYER',object:original.summary};
+    if(kind==='CKAN_WORKBENCH')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
+      sessionId:original.summary.project.identity,capturedAt:original.meta.generatedAt,
+      mode:'ORIGINAL_READ_ONLY_CKAN',ckan:original.summary};
     if(kind==='DURABLE_PERIOD')return {kind,routes:original.routes,sessionId:null,
       sessionIds:original.report.sessionIds,capturedAt:original.history.generatedAt,
       mode:original.report.originalSellerMode,range:original.history.range,days:original.history.days.length};
@@ -281,6 +302,7 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
 function captureView(capture,currentInputs) {
   if(!capture)return null;
   if(capture.kind==='OBJECT_SESSION')return objectCaptureView(capture,inputScope(currentInputs));
+  if(capture.kind==='CKAN_WORKBENCH')return ckanCaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='DURABLE_PERIOD')return periodCaptureView(capture,currentInputs);
   const o=capture.original.observation;
   const native=capture.native;
@@ -360,6 +382,7 @@ function compareRuntime(before,after) {
   if(!isDeepStrictEqual(before.scope.inputs,after.scope.inputs)||before.scope.routeId!==after.scope.routeId||
     !before.caseMatches||!after.caseMatches)
     return {state:'SCOPE_DIFFERS',detail:'The case inputs or selected runtime route changed. Review each capture under its saved scope.',interval:null};
+  if(before.kind==='CKAN_WORKBENCH'||after.kind==='CKAN_WORKBENCH')return compareCkanCaptures(before,after);
   if(before.kind==='OBJECT_SESSION'||after.kind==='OBJECT_SESSION')return compareObjectCaptures(before,after);
   if(before.kind==='DURABLE_PERIOD'||after.kind==='DURABLE_PERIOD') {
     if(before.kind!==after.kind)return {state:'DIFFERENT_OBSERVATION_KINDS',
@@ -389,6 +412,7 @@ export function reviewRuntime(supportText,inputs) {
   const comparison=compareRuntime(before,after),queue=[];
   for(const [side,capture] of [['before',before],['after',after]])if(capture) {
     if(capture.kind==='OBJECT_SESSION')queue.push(...objectRepairQueue(capture,side));
+    if(capture.kind==='CKAN_WORKBENCH')queue.push(...ckanRepairQueue(capture,side));
     if(!capture.caseMatches)queue.push({source:side,routeId:capture.scope.routeId,kind:'scope',action:'Review the saved case mapping before using this capture for the current route.'});
     if(capture.observerAttached===false||capture.observerErrors)queue.push({source:side,routeId:capture.scope.routeId,kind:'observer',action:'Inspect the original observer lifecycle and errors before relying on complete traffic counts.'});
     if(capture.period) {
@@ -408,7 +432,9 @@ export function reviewRuntime(supportText,inputs) {
   if(observed.disconnected)queue.push({source:comparison.interval?'interval':after?'after':'before',routeId:latest.scope.routeId,kind:'http',action:`Review ${observed.disconnected} disconnected request(s), backend deadlines and caller cancellation.`});
   return {schema:'stellar-forge.merchant-runtime-review.v1',generatedAt:new Date().toISOString(),
     before,after,comparison,queue,summary:parsed.summary,
-    interpretation:'HTTP outcomes, native settlement notices, merchant inbox delivery and customer fulfillment are separate observations. Original packet hashes identify retained bytes; they do not authenticate a seller.'};
+    interpretation:[before,after].some(c=>c?.kind==='CKAN_WORKBENCH')?
+      'CKAN source captures, reviewed refresh decisions, publication output and customer delivery retain their original identities. Row changes apply to the original selected windows and comparison. Saved operation records describe the workbench state at the retained read; original source hashes identify the bytes carried in this case.':
+      'HTTP outcomes, native settlement notices, merchant inbox delivery and customer fulfillment are separate observations. Original packet hashes identify retained bytes; they do not authenticate a seller.'};
 }
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const bindingLabel=value=>({CURRENT_ROUTE:'Current saved route',HISTORICAL_ROUTE_VARIANT:'Earlier method or path',REMOVED_ROUTE:'Removed from current report'}[value]??value);
@@ -465,15 +491,15 @@ function periodComparisonHtml(comparison) {
 export function runtimeHtml(report,{name='Merchant case',metadata={}}={}) {
   const sections=['before','after'].filter(side=>report[side]).map(side=>{
     const c=report[side],r=c.route;
-    return `<section><h2>${side==='before'?'Before':'After'} · ${escape(r.id)}</h2><p>${escape(c.scope.inputs.resource)} · ${escape(r.method)}</p><p>${escape(c.startedAt)} → ${escape(c.capturedAt)} · ${escape(c.mode)} · ${c.period?c.sessionIds.length+' original sessions':'Session '+escape(c.sessionId)}</p>
-      ${c.kind==='OBJECT_SESSION'?objectCaptureHtml(c):`<table><tr><th>Started</th><th>Completed</th><th>2xx</th><th>402</th><th>5xx</th><th>Disconnected</th></tr><tr>${['started','completed','success','challenge','serverError','disconnected'].map(k=>'<td>'+r[k]+'</td>').join('')}</tr></table>`}
+    return `<section><h2>${side==='before'?'Before':'After'} · ${escape(r.id)}</h2><p>${escape(c.scope.inputs.resource)} · ${escape(r.method)}</p><p>${escape(c.startedAt)} → ${escape(c.capturedAt)} · ${escape(c.mode)} · ${c.kind==='CKAN_WORKBENCH'?'Project identity '+escape(c.sessionId):c.period?c.sessionIds.length+' original sessions':'Session '+escape(c.sessionId)}</p>
+      ${c.kind==='CKAN_WORKBENCH'?ckanCaptureHtml(c):c.kind==='OBJECT_SESSION'?objectCaptureHtml(c):`<table><tr><th>Started</th><th>Completed</th><th>2xx</th><th>402</th><th>5xx</th><th>Disconnected</th></tr><tr>${['started','completed','success','challenge','serverError','disconnected'].map(k=>'<td>'+r[k]+'</td>').join('')}</tr></table>`}
       <p>${c.caseMatches?'Mapped to the current case inputs.':'Saved mapping differs from the current case.'}</p>
-      ${c.kind==='OBJECT_SESSION'?'':periodHtml(c)+nativeHtml(c)}
+      ${['OBJECT_SESSION','CKAN_WORKBENCH'].includes(c.kind)?'':periodHtml(c)+nativeHtml(c)}
       <details><summary>Original runtime alerts</summary><ul>${c.alerts.map(a=>'<li>'+escape(a)+'</li>').join('')}</ul></details>
       <details><summary>Original source files</summary><table><tr><th>File</th><th>Bytes</th><th>SHA-256</th></tr>${c.files.map(f=>`<tr><td>${escape(f.name)}</td><td>${f.bytes}</td><td><code>${f.sha256}</code></td></tr>`).join('')}</table></details></section>`;
   }).join('');
   const interval=report.comparison.interval;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escape(name)} · Runtime support</title><style>body{margin:0;background:#f3f3f3;color:#222;font:14px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:32px 20px}h1{font-size:26px}h2{font-size:19px}h3{font-size:16px}header{border-bottom:2px solid #444}section{background:white;border:1px solid #ccc;padding:20px;margin:18px 0}p,li,td{overflow-wrap:anywhere}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{text-align:left;padding:9px;border-bottom:1px solid #ddd;vertical-align:top}code{font-size:11px;overflow-wrap:anywhere}summary{cursor:pointer}small{color:#555}pre{white-space:pre-wrap}@media(max-width:620px){th,td{padding:5px;font-size:11px}main{padding:16px 10px}section{padding:12px}}@media print{body{background:white}section{break-inside:avoid}main{padding:0}}</style></head><body><main><header><small>Merchant operations · Private support handoff</small><h1>${escape(name)}</h1><p>${escape(metadata.merchant)} · Owner ${escape(metadata.owner||'Unassigned')} · ${escape(metadata.status||'new')}</p><p>Next action: ${escape(metadata.nextAction||'Not recorded')} · Follow-up ${escape(metadata.followUpOn||'Not recorded')}</p></header><section><h2>Runtime review</h2><p>${escape(report.comparison.detail)}</p>${periodComparisonHtml(report.comparison)}${interval?`<p>Interval: ${interval.started} starts · ${interval.completed} completions · ${interval.success} 2xx · ${interval.challenge} 402 · ${interval.serverError} 5xx · ${interval.disconnected} disconnects.</p>`:''}<ul>${report.queue.map(q=>`<li><b>${escape(q.source)} · ${escape(q.routeId)}</b>: ${escape(q.action)}</li>`).join('')||'<li>No additional repair action identified from these attached sources.</li>'}</ul></section>${sections}<section><h2>Case notes</h2><pre>${escape(metadata.notes||'No notes recorded.')}</pre><h2>Interpretation</h2><p>${escape(report.interpretation)}</p><p>Capture sources and unfinished commercial terms remain in the portable support handoff. This document does not send a message or record an agreement.</p></section><small>Generated ${escape(report.generatedAt)}</small></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escape(name)} · Runtime support</title><style>body{margin:0;background:#f3f3f3;color:#222;font:14px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:32px 20px}h1{font-size:26px}h2{font-size:19px}h3{font-size:16px}header{border-bottom:2px solid #444}section{background:white;border:1px solid #ccc;padding:20px;margin:18px 0}p,li,td{overflow-wrap:anywhere}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{text-align:left;padding:9px;border-bottom:1px solid #ddd;vertical-align:top}code{font-size:11px;overflow-wrap:anywhere}summary{cursor:pointer}small{color:#555}pre{white-space:pre-wrap}@media(max-width:620px){th,td{padding:5px;font-size:11px}main{padding:16px 10px}section{padding:12px}}@media print{body{background:white}section{break-inside:avoid}main{padding:0}}</style></head><body><main><header><small>Merchant operations · Private support handoff</small><h1>${escape(name)}</h1><p>${escape(metadata.merchant)} · Owner ${escape(metadata.owner||'Unassigned')} · ${escape(metadata.status||'new')}</p><p>Next action: ${escape(metadata.nextAction||'Not recorded')} · Follow-up ${escape(metadata.followUpOn||'Not recorded')}</p></header><section><h2>Runtime review</h2><p>${escape(report.comparison.detail)}</p>${periodComparisonHtml(report.comparison)}${ckanComparisonHtml(report.comparison)}${interval?`<p>Interval: ${interval.started} starts · ${interval.completed} completions · ${interval.success} 2xx · ${interval.challenge} 402 · ${interval.serverError} 5xx · ${interval.disconnected} disconnects.</p>`:''}<ul>${report.queue.map(q=>`<li><b>${escape(q.source)} · ${escape(q.routeId)}</b>: ${escape(q.action)}</li>`).join('')||'<li>No additional repair action identified from these attached sources.</li>'}</ul></section>${sections}<section><h2>Case notes</h2><pre>${escape(metadata.notes||'No notes recorded.')}</pre><h2>Interpretation</h2><p>${escape(report.interpretation)}</p><p>Capture sources and unfinished commercial terms remain in the portable support handoff. This document does not send a message or record an agreement.</p></section><small>Generated ${escape(report.generatedAt)}</small></main></body></html>`;
 }
 export async function exportRuntimeHandoff({workspaceText,supportText,metadata,generatedAt}) {
   const workspace=await parseWorkspace(workspaceText),report=reviewRuntime(supportText,workspace.inputs);

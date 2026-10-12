@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { isAbsolute, resolve, dirname, join, sep } from 'node:path';
 import { config, execution, need } from '../config.mjs';
 import { openWorkspace } from '../workspace.mjs';
+import { openCollectionComposer } from '../collection-composer/model.mjs';
 import { inspectWorkspaceRecovery, snapshotWorkspaceRecovery,
   verifyWorkspaceRecovery, restoreWorkspaceRecovery } from '../workspace-recovery.mjs';
 
@@ -154,6 +155,19 @@ export async function inspectCollectionRecovery({ collections, stateRoot, signal
       directory: manifest.directory, manifestSha256: entry.manifestSha256,
       itemCount: manifest.items.length, state: entry.snapshot.state,
       statusSha256: statusIdentity(entry.snapshot) });
+  }
+  // Prepared authoring requests already depend on their original operators.
+  // Include those exact native roots before a collection or inbox job exists.
+  const authoringPath = join(source.directory, 'authoring');
+  if (await present(authoringPath)) {
+    await privateDirectory(authoringPath);
+    const composer = openCollectionComposer({ collections });
+    try {
+      const authored = await composer.inspectRecoverySources();
+      for (const path of authored.configFiles) await original(await config(path), path);
+      for (const path of authored.operatorConfigFiles)
+        await include(path, { missing: true, kind: 'authoring_operator_configuration' });
+    } finally { composer.close(); }
   }
   const jobs = [], deliveries = [];
   for (const job of source.jobs) {

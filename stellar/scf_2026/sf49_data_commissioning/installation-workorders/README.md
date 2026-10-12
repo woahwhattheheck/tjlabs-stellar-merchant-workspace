@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart or Blockscout product. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality, Lutra QGIS migration, supplier catalogue onboarding, supplier order integration, Stellarcarbon and CFCE/GiveCredit. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -13,12 +13,37 @@ The maintained commercial importer remains the entry for an original customer Wo
 | prepare.mjs | Node CLI; complete local JSON input, private create-only output and exact-byte receiving metadata |
 | receive.mjs | Complete native source intake, original Installation refresh/save and full-case receiving driver |
 | prepare-core.mjs | Pure preparation functions, selected-source checks and complete workorder rendering |
+| profiles.mjs | Shared installed-profile discovery, schema/identity validation and exact complete-source metadata |
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
+| stellarcarbon.json | Whole source edition → customer/project assignments → complete statements → original accounting and editable receiving |
+| cfce-givecredit.json | Registry/receipt/ledger intake → provider funding → carbon associations → donor/initiative statements and editable receiving |
+| CARBON_REPORTING.md | Complete source bindings, commercial setup, statement operations and independent native receiving for both reporting desks |
+| queryfarm.json | Complete result acquisition → retained VGI/SQL use → deliberate next edition → original receiving task |
+| ars-air-quality.json | Complete source intake → named air-quality review → client report/delivery → correction and original receiving task |
+| lutra-qgis.json | Complete baseline/corrected vector migration → two native QGIS projects/publications → original independent receiving and operator handover |
+| LUTRA_QGIS.md | Full Lutra source, commercial phases, native operation, correction, complete receiving and handover |
+| supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
+| supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
+| source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
+| SUPPLIER_WORKSHARES.md | Full source preparation, phase-ID correction, commissioning, original native receiving and commercial/funding treatment |
+| CUSTOMER_PROGRAMMES.md | Customer task selection, source semantics, recurring-use cadence and original-case commissioning for Query.Farm and ARS |
 
-The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. Both complete profiles are included in its selected source.
+The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. Every complete profile and its operating guide in this maintained directory is included in the selected source.
 
-Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library and makes no service calls. The selected customer applications retain their own native runtime/dependency requirements.
+Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library; the sources command also uses Python's standard library and the original SF47 Workshare importer. These local preparation commands make no service calls. The selected customer applications retain their own native runtime/dependency requirements.
+
+## Discover the installed customer programmes
+
+~~~sh
+starforge grant-installation-workorder profiles
+
+node stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mjs profiles
+~~~
+
+The catalogue returns each installed profile's ID, title and complete-file source identity. Both commands use the same profile loader. A complete new customer profile JSON and guide join this directory; matching packaged profiles are discovered by the preparer and receiver. Each profile's schema and ID must match its regular source file. The loader retains the existing 2 MiB source-file limit and reads the selected complete JSON before preparation or native customer receiving.
+
+Choose the actual customer programme from that installed catalogue. [LUTRA_QGIS.md](LUTRA_QGIS.md) gives the full original migration scope and native operating route.
 
 ## 1. Receive the original commercial case
 
@@ -47,7 +72,7 @@ The [original Installation guide](../../sf47_budget_model/workspace/INSTALLATION
 
 ## 2. Prepare customer bindings
 
-Choose cocart or blockscout for the selected actual product.
+Choose the original customer's installed profile, such as cocart, blockscout, queryfarm, ars-air-quality, lutra-qgis, supplier-catalogues, supplier-orders, stellarcarbon or cfce-givecredit for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
 
 ~~~sh
 node prepare.mjs template --profile cocart \
@@ -85,7 +110,7 @@ node prepare.mjs prepare --profile cocart \
   --out "$PRIVATE_OUTPUT/cocart-installation"
 ~~~
 
-The same command with --profile blockscout prepares the other product from its own original commercial seed and bindings.
+The same command with any selected installed profile prepares that product from its own original commercial seed and bindings.
 
 | Output | Native use |
 | --- | --- |
@@ -144,6 +169,31 @@ Use the existing **Blockscout connection setup** and **Blockscout token merchant
 
 The receiving journey includes the agreed actual API response, testnet purchase, exact response download/recovery, applicable limit behavior and same-state stop/reopen. Receive source, pinned dependencies, reviewed connection/deployment package, both consumers and full original state. The customer/prime's chosen operator controls production rollout and ongoing accounts.
 
+### Query.Farm and ARS air-quality
+
+Query.Farm covers the complete acquired data result, original VGI catalog/worker, typed SQL use, retained-edition recovery and an explicitly selected next edition. ARS covers authorized client source intake, the named air-quality review, complete client reporting and delivery, linked correction and independent reopening. Its default is the original monthly reporting scope; a daily-review programme uses explicit customer task bindings.
+
+Use [Customer programmes](CUSTOMER_PROGRAMMES.md) for the full operating journeys, first-installation commands, existing-installation updates and a recurring-use calendar grounded in the actual source cadence.
+
+## Supplier catalogue and order workshares
+
+Use [Supplier workshares](SUPPLIER_WORKSHARES.md) for complete original proposal
+intake and actual customer commissioning. The catalogue profile covers full
+source editions, selected PIM import and complete recipient catalogue delivery.
+The order profile covers selected customer profile/mapping, original document
+workflow, configured HTTPS, complete customer receiving and return.
+
+`starforge grant-installation-workorder sources` retains every original packet
+and document, verifies explicit phase-effort pointers and the quoted total, and
+calls the original Workshare reader before publishing the accepted commissioning,
+complete packet group and `SUPPLIER_RECEIVING.json`. The existing
+`grant-installation-receive` then continues the original Operations case.
+
+The professional fee, phase plan and commissioning state remain in the original
+Workshare. Paid service amounts and deployment/receiving authority remain actual
+customer selections. An accepted phase-ID-only amendment retains the exact
+original source and its reversible mapping.
+
 ## Funding and meaningful cohort work
 
 Installation assignments reference the pinned original funded packages. They do not add hours or alter the application request. Retain separately priced commercial work in its original Workshare. Record each actual engineering hour once, with its real funding basis; commercial implementation and grant-funded future development use their original respective work records.
@@ -152,7 +202,7 @@ Use the independent cohort's actual participating operators, useful customer tas
 
 ## Maintained source
 
-The two profile files name their exact observed Git blobs. The implementation is built against:
+The profile files name their exact observed Git blobs. The implementation is built against:
 
 - workspace/operations_installations.py: d1215083000905d8df2669e26173609f7a5d6282.
 - workspace/operations_workshare_installations.py: 887ed17e1aeb71c02ef646653748ba819a363a7c.
@@ -162,9 +212,9 @@ The tool uses the existing native schema. Its complete output continues through 
 
 ## Complete native receiving in one operation
 
-The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and both complete profiles.
+The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and the complete installed profiles.
 
-Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. The private CoCart/Zeeve commissioning package supplies the filled input and all four original files.
+Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. Optional bytes verifies the exact original length; optional mediaType retains an additional source document’s actual type (application/json remains the default). Commissioning and packet roles use application/json. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm, ARS and Lutra use their own complete original commissioning sources and receiving packets with their matching installed profile IDs. Supplier catalogue and order programmes use the complete source preparation and native receiving path in [Supplier workshares](SUPPLIER_WORKSHARES.md).
 
 ~~~sh
 starforge grant-installation-receive \
@@ -178,7 +228,7 @@ starforge grant-installation-receive \
 
 The selected original case and plan are required. The receiving workspace is a separate operator-selected workspace. Node 22 and the original Python Operations application execute the operation; the driver uses the same native preview, save and complete-case importer as the browser.
 
-The driver retains the four complete files privately, reuses matching original attached bytes, and reads the actual case version for each mutation. It receives the complete native Workshare seed, composes the customer workorder, obtains the original preview and saves that edition. An existing installation is found by its original Workshare case. Native source refresh preserves its current task, payment, deployment, receiving fields and observed checks; changed original phases follow the native source-refresh rules. If its complete native document already matches, the existing saved edition is reopened.
+The driver retains all selected complete files privately, reuses matching original attached bytes, and reads the actual case version for each mutation. It receives the complete native Workshare seed, composes the customer workorder, obtains the original preview and saves that edition. An existing installation is found by its original Workshare case. Native source refresh preserves its current task, payment, deployment, receiving fields and observed checks; changed original phases follow the native source-refresh rules. If its complete native document already matches, the existing saved edition is reopened.
 
 The input's optional customer **bindings** object edits only **merchantDeploymentId**, **buyerDeploymentIds**, **task**, **source**, **payment** and **receiving**. A first PLANNED edition can retain pending customer selections. Existing operated installations retain their stage and native observations while the original preview resolves supplied edits and source changes.
 

@@ -12,7 +12,7 @@
     "buyer-agent": "stellar/scf-starforge-20261009/buyer-runbook/agent-cli.mjs"
   },
   "commandDescriptions": {
-    "buyer-agent": "Operate the original Buyer receiving workspace and resume complete customer files"
+    "buyer-agent": "Connect a running Buyer to receiving and Research, then operate and resume complete customer files"
   },
   "exports": {
     "./buyer/agent": {
@@ -30,6 +30,7 @@
     "stellar/scf-starforge-20261009/buyer-runbook/agent-cli.mjs",
     "stellar/scf-starforge-20261009/buyer-runbook/agent-client.d.mts",
     "stellar/scf-starforge-20261009/buyer-runbook/agent-setup.mjs",
+    "stellar/scf-starforge-20261009/buyer-runbook/agent-connect.mjs",
     "stellar/scf-starforge-20261009/buyer-runbook/merchant-provider.mjs",
     "stellar/scf-starforge-20261009/buyer-runbook/agent-receiving.mjs",
     "stellar/scf-starforge-20261009/buyer-runbook/AGENT.md"

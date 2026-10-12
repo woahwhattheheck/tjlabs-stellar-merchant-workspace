@@ -11,8 +11,10 @@ const state = {
   workspace:null,identity:null,busy:false,screen:'pairs',db:null,storageError:null,
   pairs:page('pairs'),runs:page('runs'),reports:page('reports'),operations:page('operations'),
   pair:null,run:null,report:null,export:null,runTab:'groups',runPairFilter:'',
-  groups:page('rows'),rows:page('rows'),decisions:page('decisions'),changes:page('rows'),
+  groups:page('rows'),rows:page('rows'),fields:page('rows'),normalizations:page('rows'),decisions:page('decisions'),changes:page('rows'),
   filters:{category:'',duplicates:'',side:'',status:'',group_id:''},
+  fieldFilters:{group_id:'',column_name:'',state:''},fieldDetail:null,
+  normalizationFilters:{side:'',column_name:'',state:'',group_id:''},normalizationDetail:null,normalizationPreviews:new WeakMap(),
   subject:null,rowDetail:null,decisionActor:'',decisionReason:'',decisionOutcome:'REQUIRES_CORRECTION',
   beforeRunId:'',baselines:[],editions:[],editionCursor:null,editionCatalogStarted:false,editionDetails:new Map(),
   draft:null,draftVersion:0,draftTimer:null,preview:null,previewDefinition:null,
@@ -130,7 +132,7 @@ function listItem(title,meta,operation,selected=false) {
 }
 function grid(columns,rows,rowActions) {
   const box=el('div',undefined,'table-scroll'),table=el('table'),head=el('thead'),tr=el('tr'),body=el('tbody');
-  columns.forEach(col=>{const th=el('th',typeof col==='string'?col:col.name);if(col.type)th.title=col.type;tr.append(th);});
+  columns.forEach(col=>{const th=el('th',typeof col==='string'?col:(col.label||col.name));if(col.type)th.title=col.type;tr.append(th);});
   if(rowActions)tr.append(el('th','Review'));
   head.append(tr);table.append(head,body);box.append(table);
   for(const row of rows) {
@@ -145,7 +147,7 @@ function grid(columns,rows,rowActions) {
       if(col.type)cell.title=col.type;
       line.append(cell);
     });
-    if(rowActions) { const td=el('td',undefined,'action-cell');td.append(rowActions(object));line.append(td); }
+    if(rowActions) { const td=el('td',undefined,'action-cell');td.append(rowActions(object,row));line.append(td); }
     body.append(line);
   }
   if(!rows.length){const line=el('tr'),td=el('td','No rows in this selection.','muted');td.colSpan=columns.length+(rowActions?1:0);line.append(td);body.append(line);}
@@ -294,6 +296,8 @@ async function saveDraft() {
 }
 function edited() {
   state.draftVersion++;
+  state.normalizationPreviews=new WeakMap();
+  document.querySelectorAll('[data-normalization-preview]').forEach(node=>{if(node.childNodes.length)node.replaceChildren(el('p','The definition changed. Preview the current conversion.','hint'));});
   state.preview=null;state.previewDefinition=null;
   const review=$('mapping-review');if(review)review.replaceChildren(el('p','Review the current mapping to save this edition.','muted'));
   const save=$('save-pair');if(save){save.dataset.disabled='true';save.disabled=true;}
@@ -360,7 +364,7 @@ function renderPairs() {
       const result=await retained(API+'/run',{workspace_id:state.workspace,pair_id:p.pair_id,expected_revision:p.revision,definition_sha256:p.definition_sha256});
       await receiveResult(API+'/run',result);await loadStatus();notice('Reconciliation completed. Every source row is accounted for.','success');
     },{primary:true}),button('Show runs',async()=>{state.runPairFilter=p.pair_id;await loadRuns(0);show('runs');}));
-    split.append(panel(p.label||p.name,facts([['Name',p.name],['Pair',p.pair_id],['Revision',p.revision],['Source edition',p.definition.source_edition],['Target edition',p.definition.target_edition],['Saved',when(p.created_at)]]),actions,history,details('Complete saved definition',p.definition),details('Original mapping review',p.review)));
+    split.append(panel(p.label||p.name,facts([['Name',p.name],['Pair',p.pair_id],['Revision',p.revision],['Source edition',p.definition.source_edition],['Target edition',p.definition.target_edition],['Saved',when(p.created_at)]]),actions,history,normalizationRulesView(p.definition,p.review?.normalizations),comparisonRulesView(p.definition,p.review?.comparison_rules),details('Complete saved definition',p.definition),details('Original mapping review',p.review)));
   }else split.append(panel('Selected pair',empty('Open a saved pair to review its definition, edit a revision or start a run.')));
   root.append(split);
 }
@@ -419,9 +423,318 @@ function renderValueMap(row,side) {
   section.append(toolbar(button('Add exact value',async()=>{
     values.push({original:'',canonical:''});positions[side]=Math.floor((values.length-1)/PAGE_SIZE)*PAGE_SIZE;
     edited();renderEditor();
-  },{small:true,disabled:values.length>=10000})));
+  },{small:true,disabled:values.length>=10000||Object.hasOwn(row,'normalization')})));
   return section;
 }
+
+
+const NORMALIZATION_STATES = {
+  CONVERTED:['Converted','The original value is represented exactly in the reviewed canonical type.'],
+  NULL_PRESERVED:['SQL NULL preserved','The original SQL NULL remains NULL. A NULL matching key retains its original quarantine rule.'],
+  NOT_NUMERIC:['Not numeric','The original value is not valid numeric text for this reviewed conversion.'],
+  NON_FINITE:['Nonfinite','The original numeric value is not finite.'],
+  OUT_OF_RANGE:['Outside type range','The exact converted value is outside the reviewed canonical type or time range.'],
+  PRECISION_LOSS:['Precision would be lost','The canonical type cannot represent the exact converted value.'],
+  INVALID_TIME:['Invalid timestamp','The original value does not match its reviewed time format.'],
+  OFFSET_REQUIRED:['Offset required','The original timestamp is missing an offset required by the reviewed rule.'],
+  OFFSET_CONFLICT:['Offset conflict','The original timestamp conflicts with the reviewed embedded or fixed offset.'],
+  SUBMICROSECOND:['Submicrosecond remainder','The original timestamp cannot be represented exactly at UTC microsecond precision.'],
+  NUMERIC_LIMIT:['Numeric limit','The value exceeds the exact numeric conversion limits.']
+};
+const NORMALIZATION_COLUMNS = [
+  ['side','Side'],['row','Original row'],['column_name','Field'],['original_value_text','Original value'],
+  ['original_unit','Original unit'],['canonical_value_text','Canonical value'],['canonical_unit','Canonical unit'],
+  ['state','Conversion result'],['reason','Reason']
+].map(([name,label])=>({name,label}));
+const NORMALIZATION_RUN_COLUMNS = [{name:'group_id',label:'Group'},...NORMALIZATION_COLUMNS];
+const NORMALIZATION_FORMATS = [
+  ['','Choose the original time representation'],['native','Native date or timestamp'],['iso8601','ISO 8601 text'],
+  ['unix-seconds','Unix seconds'],['unix-milliseconds','Unix milliseconds'],
+  ['unix-microseconds','Unix microseconds'],['unix-nanoseconds','Unix nanoseconds']
+];
+const normalizationObject=value=>Boolean(value&&typeof value==='object'&&!Array.isArray(value));
+const exactNumericType=value=>/^(?:BIGINT|HUGEINT|DECIMAL\([0-9]+,\s*[0-9]+\))$/.test(value||'');
+const normalizableNumericType=value=>/^(?:VARCHAR|BIGINT|HUGEINT|DOUBLE|DECIMAL\([0-9]+,\s*[0-9]+\))$/.test(value||'');
+function hasRecordedNormalizations(run=state.run) { return Boolean(run?.normalizations); }
+function normalizationEligible(row,mode) {
+  if((row.source_map?.length||0)+(row.target_map?.length||0))return false;
+  const types=['source','target'].map(side=>mappingType(side,row[side]));
+  if(mode==='numeric-affine')return row.role==='value'&&types.every(normalizableNumericType);
+  return ['key','value'].includes(row.role)&&types.every(type=>normalizableNumericType(type)||/^(?:DATE|TIMESTAMP|TIMESTAMPTZ)$/.test(type));
+}
+function normalizationInput(control,path) { control.dataset.normalizationPath=path;return control; }
+function normalizationEditor(row,index) {
+  const box=el('details',undefined,'normalization-rule');box.dataset.normalizationColumn=String(index);
+  const present=Object.hasOwn(row,'normalization'),policy=row.normalization;
+  const known=normalizationObject(policy)&&['numeric-affine','time-utc'].includes(policy.mode);
+  const editable=known&&normalizationObject(policy.source)&&normalizationObject(policy.target);
+  box.open=present;
+  box.append(el('summary','Unit and time normalization · '+(present?(known?policy.mode==='numeric-affine'?'Reviewed numeric conversion':'Reviewed UTC time':'Retained policy needs review'):'Original native values')));
+  const choices=[['native','Use original native values'],['numeric-affine','Reviewed numeric scale and offset'],['time-utc','Reviewed UTC timestamp']];
+  if(present&&!known)choices.push(['unrecognized','Unrecognized retained normalization']);
+  const mode=select(choices,present?(known?policy.mode:'unrecognized'):'native',value=>{
+    if(value==='native')delete row.normalization;
+    else if(['numeric-affine','time-utc'].includes(value)){
+      if(!normalizationEligible(row,value)){notice('Choose compatible original columns and remove their literal value maps before selecting this normalization.','error');renderEditor();return;}
+      row.normalization=value==='numeric-affine'?{
+        mode:value,canonical_type:'',canonical_unit:'',source:{unit:'',scale:'1',offset:'0'},
+        target:{unit:'',scale:'1',offset:'0'},basis:''
+      }:{mode:value,canonical_type:'TIMESTAMPTZ',source:{format:'',offset:''},target:{format:'',offset:''},basis:''};
+    }else return;
+    edited();renderEditor();
+  });
+  for(const option of mode.options)if(option.value==='unrecognized'||(['numeric-affine','time-utc'].includes(option.value)&&!normalizationEligible(row,option.value)))option.disabled=true;
+  box.append(field('Normalization mode',normalizationInput(mode,'mode'),'Choose the conversion explicitly for each side. Original source editions and values remain available.'));
+  if(!present)return box;
+  if(!editable){
+    box.append(el('p','The complete imported policy is retained. Select original native values to remove it, select a compatible new mode, or correct the complete definition before review.','notice'),details('Complete retained normalization',policy));
+    return box;
+  }
+  if(!normalizationEligible(row,policy.mode))box.append(el('p','This retained policy conflicts with the selected column types, role or literal maps. Resolve that conflict explicitly before reviewing the definition.','notice'));
+  const set=(target,key,path,{placeholder='',length=240,hint='',label=key}={})=>{
+    const control=input(target[key],{placeholder,maxLength:length,onInput:value=>{target[key]=value;edited();}});
+    if(['scale','offset'].includes(key)&&policy.mode==='numeric-affine')control.inputMode='decimal';
+    return field(label,normalizationInput(control,path),hint);
+  };
+  const canonical=el('div',undefined,'fields spacer');
+  if(policy.mode==='numeric-affine'){
+    canonical.append(set(policy,'canonical_type','canonical_type',{label:'Canonical SQL type',length:40,placeholder:'DECIMAL(30,6)',hint:'BIGINT, HUGEINT or DECIMAL(p,s), with at most 38 digits. Every converted value must fit exactly.'}),
+      set(policy,'canonical_unit','canonical_unit',{label:'Canonical unit',placeholder:'kWh',hint:'The common unit used for grouping, comparison and any reviewed numeric tolerance.'}));
+  }else canonical.append(field('Canonical SQL type',normalizationInput(input(policy.canonical_type,{readOnly:true}),'canonical_type'),'UTC TIMESTAMPTZ at exact microsecond precision.'));
+  box.append(canonical);
+  const sides=el('div',undefined,'normalization-sides');
+  for(const side of ['source','target']){
+    const current=policy[side],section=el('section',undefined,'normalization-side');
+    section.append(el('h4',side==='source'?'Source conversion':'Target conversion'),el('p',row[side]+' · '+mappingType(side,row[side]),'type-label'));
+    const controls=el('div',undefined,'fields');
+    if(policy.mode==='numeric-affine'){
+      controls.append(set(current,'unit',side+'.unit',{label:'Original '+side+' unit',hint:'Use the unit in this original source.'}),
+        set(current,'scale',side+'.scale',{label:side==='source'?'Source scale':'Target scale',length:256,hint:'Nonzero signed decimal text. For example, 0.001 converts Wh to kWh.'}),
+        set(current,'offset',side+'.offset',{label:side==='source'?'Source offset':'Target offset',length:256,hint:'Signed decimal text in the canonical unit, added after scaling.'}));
+    }else{
+      const options=[...NORMALIZATION_FORMATS];
+      if(current.format&&!options.some(([value])=>value===current.format))options.push([current.format,String(current.format)+' · retained format']);
+      const format=select(options,current.format,value=>{current.format=value;edited();renderEditor();});
+      controls.append(field(side==='source'?'Source time format':'Target time format',normalizationInput(format,side+'.format'),'Select the actual native type, ISO text or explicit Unix unit.'),
+        set(current,'offset',side+'.offset',{label:side==='source'?'Source time offset':'Target time offset',length:32,placeholder:'embedded, utc, or +01:00',hint:'Use embedded for aware native/ISO values, a fixed ±HH:MM for naive native/ISO values, and utc for Unix values.'}));
+    }
+    section.append(controls);sides.append(section);
+  }
+  box.append(sides);
+  const basis=textarea(policy.basis,value=>{policy.basis=value;edited();},3);basis.maxLength=4000;
+  box.append(field('Normalization review basis',normalizationInput(basis,'basis'),'Record the original units or time contract and the engineering decision behind this conversion.'));
+  box.append(el('p',policy.mode==='numeric-affine'?'Canonical value = original value × scale + offset. Exact arithmetic retains decimal text; values that need rounding or exceed the chosen type are quarantined.':'Each side is converted to the same UTC instant. Missing or conflicting offsets, invalid times and submicrosecond remainders remain quarantined.','hint'));
+  if(policy.mode==='numeric-affine'&&row.comparison?.mode==='numeric-tolerance'&&row.comparison.unit!==policy.canonical_unit)
+    box.append(el('p','The numeric tolerance unit must match the reviewed canonical unit. Update the comparison rule explicitly.','notice'));
+  const actions=toolbar();
+  for(const side of ['source','target']){
+    const preview=button(side==='source'?'Preview source conversions':'Preview target conversions',()=>loadNormalizationPreview(row,index,side,0));
+    preview.dataset.normalizationPreviewAction=side;actions.append(preview);
+  }
+  box.append(actions,el('p','Previews read the complete current definition and page through every original value for this field. Editing the definition invalidates its previews.','hint'));
+  for(const side of ['source','target'])box.append(normalizationPreviewView(row,index,side));
+  box.append(details('Complete retained normalization',policy));
+  return box;
+}
+async function loadNormalizationPreview(row,index,side,offset=0) {
+  if(state.draft?.definition?.columns[index]!==row)throw new Error('Reopen the current field before previewing its conversion.');
+  const definition=clone(state.draft.definition),meaning=keyBody(definition),version=state.draftVersion;
+  const result=await api(API+'/normalization-preview',{definition,side,column_name:row.name,offset,limit:25});
+  if(version!==state.draftVersion||meaning!==keyBody(state.draft.definition))throw new Error('The definition changed during conversion preview. Preview its current revision.');
+  if(result.workspace_id!==state.workspace||result.side!==side||result.column_name!==row.name||!ID64.test(result.review_sha256||'')||result.offset!==offset)
+    throw new Error('The conversion preview did not retain its original workspace, side, field and review.');
+  const saved=state.normalizationPreviews.get(row)||{};saved[side]={...result,definition:meaning,detail:null};
+  state.normalizationPreviews.set(row,saved);renderEditor();
+  notice('Original '+side+' values and reviewed conversions opened for '+row.name+'.');
+}
+function normalizationPreviewView(row,index,side) {
+  const box=el('section',undefined,'normalization-preview');box.dataset.normalizationPreview=side;
+  const result=state.normalizationPreviews.get(row)?.[side];if(!result)return box;
+  box.append(el('h4',side==='source'?'Source conversion preview':'Target conversion preview'),
+    grid(NORMALIZATION_COLUMNS,nativeGridObjects(result),(visible,original)=>toolbar(button('Inspect conversion',async()=>{
+      result.detail=clone(original);renderEditor();
+    },{small:true}))),pager(result,offset=>loadNormalizationPreview(row,index,side,offset)));
+  if(result.detail)box.append(normalizationInspection(result.detail));
+  return box;
+}
+function normalizationInspection(object) {
+  const code=String(scalar(object.state)),meaning=NORMALIZATION_STATES[code],box=el('section',undefined,'normalization-inspection');
+  box.append(el('h4',nativeText(object.column_name)+' · '+(meaning?.[0]||code)),el('p',meaning?.[1]||nativeText(object.reason),'hint'),
+    facts([['Side',object.side],['Original row',object.row],['Original column',object.original_column],['Role',object.role],
+      ['Original SQL type',object.original_sql_type],['Canonical SQL type',object.canonical_sql_type],['Mode',object.mode]]),
+    grid(['Quantity','Exact recorded value'],[['Original value',object.original_value_text],['Original unit',object.original_unit],
+      ['Canonical value',object.canonical_value_text],['Canonical unit',object.canonical_unit],['Reason',object.reason]]),
+    details('Exact conversion numbers',{original:object.original_exact_numeric,canonical:object.canonical_exact_numeric}),
+    details('Reviewed normalization policy',scalar(object.policy_json)),details('Complete recorded normalization',object));
+  if(!['CONVERTED','NULL_PRESERVED'].includes(code))box.append(el('p','A retained mathematical candidate is diagnostic. A failed conversion has no accepted canonical value and does not enter comparison grouping.','hint'));
+  return box;
+}
+function normalizationRulesView(definition,contract) {
+  const columns=contract?.columns||(definition?.columns||[]).flatMap((column,index)=>Object.hasOwn(column,'normalization')?[{index,name:column.name,role:column.role,normalization:column.normalization}]:[]);
+  if(!columns.length)return null;
+  const box=el('section',undefined,'normalization-summary');box.append(el('h4','Reviewed unit and time normalization'));
+  for(const column of columns){
+    const policy=column.normalization,known=normalizationObject(policy),entry=el('details',undefined,'normalization-record');
+    entry.append(el('summary',column.name+' · '+(known?policy.mode:'Retained policy')),
+      facts([['Role',column.role],['Original source type',column.source_type],['Original target type',column.target_type],
+        ['Canonical type',column.canonical_type||(known?policy.canonical_type:'')]]));
+    if(known&&normalizationObject(policy.source)&&normalizationObject(policy.target)){
+      entry.append(grid(['Side','Original unit / format','Scale','Offset','Canonical unit'],
+        ['source','target'].map(side=>[side,policy[side].unit??policy[side].format,policy[side].scale??null,policy[side].offset,policy.canonical_unit??'UTC'])),
+        el('p',policy.basis||'Review basis is not recorded.','wrap'));
+    }
+    entry.append(details('Complete normalization policy',policy));box.append(entry);
+  }
+  box.append(el('p','Every original value and conversion result remains available. Numeric values must fit the reviewed type exactly; time values retain the same UTC instant at microsecond precision.','hint'));
+  if(contract)box.append(details('Complete frozen normalizations',contract));
+  return box;
+}
+function normalizationCounts(summary) {
+  if(!summary)return null;
+  const box=el('section',undefined,'normalization-accounting');box.append(el('h4','Conversion accounting'),
+    grid(['Transformed values','Source','Target'],[['Original values',summary.source?.values,summary.target?.values],
+      ['Converted exactly',summary.source?.converted,summary.target?.converted],['SQL NULL preserved',summary.source?.nulls,summary.target?.nulls],
+      ['Conversion failed',summary.source?.failed,summary.target?.failed]]));
+  const source=new Map((summary.source?.states||[]).map(row=>[row.state,row.values])),target=new Map((summary.target?.states||[]).map(row=>[row.state,row.values]));
+  const states=[...new Set([...source.keys(),...target.keys()])];
+  if(states.length)box.append(grid(['Recorded result','Source values','Target values'],states.map(key=>[NORMALIZATION_STATES[key]?.[0]||key,source.get(key)??0,target.get(key)??0])));
+  box.append(el('p','These counts describe transformed field values. Complete row accounting above includes every original row.','hint'));
+  return box;
+}
+async function loadNormalizations(offset=0) {
+  if(!hasRecordedNormalizations()){state.normalizations={...page('rows'),unavailable:true};renderRunTable();return;}
+  const selected=state.normalizationFilters,group=selected.group_id===''?undefined:indexValue(selected.group_id,'group');
+  const result=await api(runPath('normalizations')+query({offset,limit:PAGE_SIZE,side:selected.side,column_name:selected.column_name,state:selected.state,group_id:group}));
+  if(result.run_id!==state.run.run_id)throw new Error('The normalization page belongs to another saved run.');
+  state.normalizations={...page('rows'),...result};renderRunTable();
+}
+async function groupNormalizations(object) {
+  state.normalizationFilters={side:'',column_name:'',state:'',group_id:String(indexValue(object.group_id,'group'))};
+  state.runTab='normalizations';await loadNormalizations(0);renderRunDetail();notice('Every recorded conversion in the original key group opened.');
+}
+async function chooseNormalization(object) {
+  await chooseRow(object);state.normalizationDetail=clone(object);renderSubject();
+  notice('The complete conversion and every original field in its source row are open.');
+}
+
+const FIELD_STATES = {
+  EXACT_EQUAL:['Exact equality','The reviewed canonical values are exactly equal under this field’s comparison.'],
+  EXACT_DIFFERENT:['Exact difference','The reviewed canonical values differ and this field has no tolerance rule.'],
+  NULLS_EQUAL:['Both NULL, accepted','Both values are SQL NULL and the reviewed rule explicitly treats two NULLs as equal.'],
+  WITHIN_TOLERANCE:['Within tolerance','The exact absolute difference is within the allowance from this reviewed rule.'],
+  OUTSIDE_TOLERANCE:['Outside tolerance','The exact absolute difference exceeds the allowance from this reviewed rule.'],
+  NULL_NOT_COMPARABLE:['NULL, not comparable','A value is SQL NULL and the reviewed rule does not establish an accepted comparison.'],
+  NON_FINITE_NOT_COMPARABLE:['Nonfinite, not comparable','A native numeric value is nonfinite, so this rule cannot establish a comparison.'],
+  DUPLICATE_NOT_PAIRED:['Duplicate group','This group retains exact multiset accounting. Open all group rows to inspect every observation.'],
+  ONE_SIDED:['One side only','The known key is present on only one side. No counterpart or numeric difference is inferred.'],
+  QUARANTINED:['Quarantined','The original row or group is quarantined. Open the original rows to inspect its recorded reason.']
+};
+const FIELD_COLUMNS = [
+  ['group_id','Group'],['column_name','Field'],['source_value_text','Source value'],
+  ['target_value_text','Target value'],['state','Comparison result'],['absolute_difference','Absolute difference'],
+  ['allowed_difference','Allowed difference'],['unit','Comparison unit']
+].map(([name,label])=>({name,label}));
+function hasRecordedFields(run=state.run) { return Boolean(run?.comparison_rules||run?.normalizations); }
+function nativeGridObjects(record) {
+  const names=(record.columns||[]).map(column=>typeof column==='string'?column:column.name);
+  return (record.rows||[]).map(row=>Array.isArray(row)?Object.fromEntries(names.map((name,index)=>[name,row[index]])):row);
+}
+function numericRuleEligible(row) {
+  if(Object.hasOwn(row,'normalization'))return row.role==='value'&&row.normalization?.mode==='numeric-affine'&&exactNumericType(row.normalization.canonical_type);
+  const source=mappingType('source',row.source),target=mappingType('target',row.target);
+  return row.role==='value'&&source===target&&/^(?:BIGINT|HUGEINT|DOUBLE|DECIMAL(?:\([0-9]+,\s*[0-9]+\))?)$/.test(source);
+}
+function comparisonEditor(row,index) {
+  const section=el('details',undefined,'comparison-rule');
+  section.dataset.comparisonColumn=String(index);
+  const present=Object.hasOwn(row,'comparison'),rule=row.comparison;
+  const known=present&&rule&&typeof rule==='object'&&!Array.isArray(rule)&&rule.mode==='numeric-tolerance';
+  section.open=present;
+  section.append(el('summary','Comparison rule · '+(present?'Reviewed numeric tolerance':'Exact native values')));
+  const eligible=numericRuleEligible(row),options=[['exact','Exact native comparison'],['numeric-tolerance','Reviewed numeric tolerance']];
+  if(present&&!known)options.push(['unrecognized','Unrecognized retained rule']);
+  const mode=select(options,present?(known?'numeric-tolerance':'unrecognized'):'exact',value=>{
+    if(value==='exact')delete row.comparison;
+    else if(value==='numeric-tolerance'){
+      if(!numericRuleEligible(row))throw new Error('Choose a compared value with identical native numeric types or an explicit exact canonical numeric type before adding its rule.');
+      row.comparison={mode:'numeric-tolerance',absolute:'0',relative:'0',unit:'',nulls:'',basis:''};
+    }else return;
+    edited();renderEditor();
+  });
+  for(const option of mode.options)if(option.value==='unrecognized'||(option.value==='numeric-tolerance'&&!eligible))option.disabled=true;
+  section.append(field('Comparison mode',mode,
+    'Matching keys remain exact. Numeric tolerances apply to a common native numeric type or the reviewed exact canonical numeric type.'));
+  if(!present)return section;
+  if(!known){
+    section.append(el('p','The complete imported rule is retained. Choose exact comparison to remove it, or correct the full definition and review it.','hint'),details('Retained comparison object',rule));
+    return section;
+  }
+  if(!eligible)section.append(el('p','This retained rule no longer matches the selected role or native types. Choose compatible compared-value columns, or explicitly change its mode to exact comparison.','notice'));
+  const fields=el('div',undefined,'fields three spacer');
+  const coefficient=key=>{const control=input(rule[key],{maxLength:256,onInput:value=>{rule[key]=value;edited();}});control.inputMode='decimal';return control;};
+  fields.append(
+    field('Absolute allowance',coefficient('absolute'),'Nonnegative decimal text, in the reviewed comparison unit.'),
+    field('Relative fraction',coefficient('relative'),'A fraction from 0 to 1. For example, 0.005 means 0.5%.'),
+    field('Comparison unit',input(rule.unit,{maxLength:240,onInput:value=>{rule.unit=value;edited();}}),row.normalization?.mode==='numeric-affine'?'Use the reviewed canonical unit: '+(row.normalization.canonical_unit||'enter the normalization unit first')+'.':'Record the common unit already used by both native columns.'),
+    field('Two SQL NULL values',select([['','Choose the missing-value rule'],['equal','Treat two NULLs as equal'],['uncomparable','Leave two NULLs not comparable']],rule.nulls,value=>{rule.nulls=value;edited();})));
+  const basis=textarea(rule.basis,value=>{rule.basis=value;edited();},3);basis.maxLength=4000;
+  fields.append(field('Review basis',basis,'Explain the source specification or engineering decision behind this allowance.'));
+  section.append(fields,el('p','Accepted when |source − target| ≤ absolute + relative × max(|source|, |target|).','comparison-formula'),
+    el('p','The native comparison keeps the original numbers and your literal coefficient text. One NULL or a nonfinite numeric value is not comparable. Duplicate groups use their original exact multiset accounting.','hint'));
+  return section;
+}
+function comparisonRulesView(definition,contract) {
+  const columns=definition?.columns||[],rules=contract?.columns||
+    columns.flatMap((column,index)=>Object.hasOwn(column,'comparison')?[{index,name:column.name,comparison:column.comparison}]:[]);
+  if(!rules.length)return null;
+  const box=el('section',undefined,'comparison-summary');
+  box.append(el('h4','Reviewed numeric rules'),el('p',
+    'Accepted when |source − target| ≤ absolute + relative × max(|source|, |target|). Coefficients below retain their original text.','hint'));
+  box.append(grid(['Field','Native type','Absolute allowance','Relative fraction','Comparison unit','Two NULLs','Review basis'],
+    rules.map(column=>{const rule=column.comparison||{};return [column.name,column.type||'',rule.absolute,rule.relative,rule.unit,
+      rule.nulls==='equal'?'Accepted as equal':rule.nulls==='uncomparable'?'Not comparable':rule.nulls,rule.basis];})));
+  box.append(el('p','Matching keys and fields without a rule compare exactly. Duplicate groups retain exact multiplicity; no tolerance-based row pairing is created.','hint'));
+  if(contract)box.append(details('Complete frozen comparison rules',contract));
+  return box;
+}
+async function loadFields(offset=0) {
+  if(!hasRecordedFields()){state.fields={...page('rows'),unavailable:true};renderRunTable();return;}
+  const group=state.fieldFilters.group_id===''?undefined:indexValue(state.fieldFilters.group_id,'group');
+  try{
+    state.fields={...page('rows'),...await api(runPath('fields')+query({offset,limit:PAGE_SIZE,
+      group_id:group,column_name:state.fieldFilters.column_name,state:state.fieldFilters.state}))};
+  }catch(error){
+    if(error.code!=='FIELDS_NOT_RECORDED')throw error;
+    state.fields={...page('rows'),unavailable:true};
+  }
+  renderRunTable();
+}
+async function groupFields(object) {
+  state.fieldFilters={group_id:String(indexValue(object.group_id,'group')),column_name:'',state:''};
+  state.runTab='fields';await loadFields(0);renderRunDetail();notice('Every recorded value field in this key group opened.');
+}
+async function chooseField(object) {
+  state.subject=groupSubject(object);state.rowDetail=null;state.fieldDetail=clone(object);
+  renderSubject();renderDecisionEditor();
+  notice('The complete recorded field is open. Review decisions apply to its original key group.');
+  $('selected-subject')?.scrollIntoView({block:'nearest'});
+}
+function fieldInspection(object) {
+  const result=String(scalar(object.state)),meaning=FIELD_STATES[result],box=el('section',undefined,'field-inspection');
+  box.append(el('h4',nativeText(object.column_name)+' · '+(meaning?.[0]||result)),el('p',meaning?.[1]||'Read the complete original field record.','hint'));
+  box.append(facts([['Native SQL type',object.sql_type],['Source column',object.source_column],['Target column',object.target_column],
+    ['Source observations',object.source_count],['Target observations',object.target_count],['Source row',object.source_row],['Target row',object.target_row]]));
+  box.append(el('div',undefined,'spacer'),grid(['Quantity','Exact recorded value'],[
+    ['Source value',object.source_value_text],['Target value',object.target_value_text],
+    ['Signed difference (target − source)',object.signed_difference],['Absolute difference',object.absolute_difference],
+    ['Relative scale: max(|source|, |target|)',object.relative_scale],['Allowed difference',object.allowed_difference],['Comparison unit',object.unit]]));
+  if(scalar(object.rule_json)!==null)box.append(details('Reviewed field rule',scalar(object.rule_json)));
+  if(hasRecordedNormalizations())box.append(el('p','For normalized fields, the source and target text above retains the original values. Exact numbers, differences and allowances use the reviewed canonical type and unit. Open the group conversions to inspect every transformation.','hint'));
+  box.append(details('Exact native numeric representation',{source:object.source_exact_numeric,target:object.target_exact_numeric}),
+    details('Complete recorded field',object),toolbar(button('All group rows',()=>groupRows(object),{small:true}),hasRecordedNormalizations()?button('Group conversions',()=>groupNormalizations(object),{small:true}):null));
+  return box;
+}
+
 function mappingTable() {
   const box=el('div',undefined,'table-scroll'),table=el('table'),head=el('thead'),header=el('tr'),body=el('tbody');
   ['Canonical field','Source column','Target column','Role','Meaning',''].forEach(name=>header.append(el('th',name)));
@@ -430,10 +743,10 @@ function mappingTable() {
     const tr=el('tr'),name=el('td'),source=el('td'),target=el('td'),role=el('td'),meaning=el('td'),actions=el('td');
     name.append(input(row.name,{maxLength:120,required:true,onInput:v=>{row.name=v;edited();}}));
     const sourceType=el('span',mappingType('source',row.source),'type-label');
-    source.append(select(columnOptions('source',row.source),row.source,v=>{row.source=v;sourceType.textContent=mappingType('source',v);edited();}),sourceType);
+    source.append(select(columnOptions('source',row.source),row.source,v=>{row.source=v;sourceType.textContent=mappingType('source',v);edited();renderEditor();}),sourceType);
     const targetType=el('span',mappingType('target',row.target),'type-label');
-    target.append(select(columnOptions('target',row.target),row.target,v=>{row.target=v;targetType.textContent=mappingType('target',v);edited();}),targetType);
-    role.append(select([['key','Matching key'],['value','Compared value']],row.role,v=>{row.role=v;edited();}));
+    target.append(select(columnOptions('target',row.target),row.target,v=>{row.target=v;targetType.textContent=mappingType('target',v);edited();renderEditor();}),targetType);
+    role.append(select([['key','Matching key'],['value','Compared value']],row.role,v=>{row.role=v;edited();renderEditor();}));
     meaning.append(textarea(row.meaning,v=>{row.meaning=v;edited();},2));
     actions.append(button('Remove',async()=>{state.draft.definition.columns.splice(index,1);edited();renderEditor();},{small:true}));
     tr.append(name,source,target,role,meaning,actions);body.append(tr);
@@ -441,8 +754,8 @@ function mappingTable() {
     const d=el('details'),summary=el('summary','Exact value maps · '+(row.source_map.length+row.target_map.length)+' entries');
     d.open=row.source_map.length+row.target_map.length>0;
     const maps=el('div',undefined,'equal-columns spacer');maps.append(renderValueMap(row,'source'),renderValueMap(row,'target'));
-    d.append(summary,el('p','Value maps apply only to VARCHAR fields. With a map, every non-null original string needs an explicit entry; missing values are quarantined. Spaces, case and empty strings are preserved. Native NULL stays NULL.','hint'),maps);
-    cell.append(d);detailRow.append(cell);body.append(detailRow);
+    d.append(summary,el('p','Value maps apply only to VARCHAR fields and cannot coexist with unit or time normalization. With a map, every non-null original string needs an explicit entry; missing values are quarantined. Spaces, case and empty strings are preserved. Native NULL stays NULL.','hint'),maps);
+    cell.append(normalizationEditor(row,index),comparisonEditor(row,index),d);detailRow.append(cell);body.append(detailRow);
   });
   if(!state.draft.definition.columns.length){const tr=el('tr'),td=el('td','Add the fields to compare. Choose at least one matching key.','muted');td.colSpan=6;tr.append(td);body.append(tr);}
   return box;
@@ -452,7 +765,7 @@ function windowsEditor() {
   const options=[['','All rows / no window column'],...definition.columns.filter(c=>c.name).map(c=>[c.name,c.name])];
   if(definition.window_column&&!options.some(([key])=>key===definition.window_column))options.push([definition.window_column,definition.window_column+' · missing canonical field']);
   box.append(field('Window field',select(options,definition.window_column||'',v=>{definition.window_column=v||null;edited();}),
-    'No windows includes all rows. Each declared window includes its start and excludes its end.'));
+    'Windows use the reviewed canonical value, with bounds that fit its SQL type exactly. Each window includes its start and excludes its end; no windows includes all rows.'));
   definition.windows.forEach((window,index)=>{
     const p=el('div',undefined,'panel subtle'),fields=el('div',undefined,'fields');
     fields.append(field('Window identifier',input(window.id,{maxLength:120,onInput:v=>{window.id=v;edited();}})),
@@ -497,6 +810,8 @@ function renderMappingReview() {
   if(!review){root.append(el('p','Review the current mapping to see its exact native types, row scope and omitted fields.','muted'));return;}
   root.append(facts([['Source rows',review.source?.row_count],['Target rows',review.target?.row_count],['Reviewed fields',review.comparison_columns?.length]]));
   root.append(el('div',undefined,'spacer'),grid(['Canonical field','Native SQL type','Role'],(review.comparison_columns||[]).map(c=>[c.name,c.type,c.role])));
+  const normalization=normalizationRulesView(review.definition,review.normalizations);if(normalization)root.append(normalization);
+  const rules=comparisonRulesView(review.definition,review.comparison_rules);if(rules)root.append(rules);
   const omitted=el('div',undefined,'equal-columns spacer');
   for(const side of ['source','target']) {
     const rows=review.omitted?.[side]||[],box=panel(side==='source'?'Omitted source fields':'Omitted target fields');
@@ -512,7 +827,7 @@ async function savePair() {
 }
 function renderEditor() {
   const root=$('screen-editor');
-  root.replaceChildren(heading('editor','Pair definition','Choose the exact source fields and their meanings. Values are compared using their native types; any conversion must already be explicit in the source editions.',button('New pair',newPair)));
+  root.replaceChildren(heading('editor','Pair definition','Choose the exact source fields and their meanings. Keep the native values or review explicit unit and time conversions before grouping and comparison.',button('New pair',newPair)));
   if(!state.draft){root.append(panel('Pair editor',empty('Create a new pair or open a saved pair for editing.'),toolbar(button('Create a pair',newPair,{primary:true}))));return;}
   const d=state.draft.definition,base=state.draft.base_revision;
   const basic=el('div',undefined,'fields');
@@ -558,7 +873,11 @@ function renderEditor() {
 
 async function openRun(id) {
   if(!ID64.test(id||''))throw new Error('Choose a complete saved run identifier.');
-  state.run=await api(API+'/runs/'+id);state.subject=null;state.rowDetail=null;state.decisionReason='';
+  state.run=await api(API+'/runs/'+id);state.subject=null;state.rowDetail=null;state.fieldDetail=null;state.normalizationDetail=null;state.decisionReason='';
+  state.fields=page('rows');state.fieldFilters={group_id:'',column_name:'',state:''};
+  state.normalizations=page('rows');state.normalizationFilters={side:'',column_name:'',state:'',group_id:''};
+  if(!hasRecordedNormalizations()&&state.runTab==='normalizations')state.runTab='groups';
+  if(!hasRecordedFields()){if(state.runTab==='fields')state.runTab='groups';if(state.filters.category==='TOLERANCE_MATCHED')state.filters.category='';}
   state.groups=page('rows');state.rows=page('rows');state.decisions=page('decisions');
   await loadRunTab(0);renderRuns();show('runs');notice('Complete saved reconciliation run opened.');
 }
@@ -585,20 +904,30 @@ async function loadRunTab(offset=0) {
   if(!state.run)return;
   if(state.runTab==='groups')await loadGroups(offset);
   else if(state.runTab==='rows')await loadRows(offset);
+  else if(state.runTab==='fields')await loadFields(offset);
+  else if(state.runTab==='normalizations')await loadNormalizations(offset);
   else await loadDecisions(offset);
 }
 function summaryView(summary) {
   const wrapper=el('div'),rows=[];
-  for(const key of ['total','included','quarantined','excluded','matched','unmatched'])
-    rows.push([({total:'Original rows',included:'Included in comparison',quarantined:'Quarantined',excluded:'Outside declared windows',matched:'Matched rows',unmatched:'Unmatched included rows'})[key],summary?.source?.[key],summary?.target?.[key]]);
+  const labels={total:'Original rows',included:'Included in comparison',quarantined:'Quarantined',excluded:'Outside declared windows',
+    canonical_matched:'Canonical exact matches',exact_matched:'Accepted exact matches',tolerance_matched:'Accepted tolerance matches',
+    matched:'Matched rows',unmatched:'Unmatched included rows'};
+  for(const key of ['total','included','quarantined','excluded','canonical_matched','exact_matched','tolerance_matched','matched','unmatched']){
+    if(['canonical_matched','exact_matched','tolerance_matched'].includes(key)&&summary?.source?.[key]===undefined&&summary?.target?.[key]===undefined)continue;
+    rows.push([labels[key],summary?.source?.[key],summary?.target?.[key]]);
+  }
   const table=grid(['Row accounting','Source','Target'],rows);table.classList.add('summary-table');wrapper.append(table);
   const groups=summary?.groups||{},metrics=el('div',undefined,'metric-line');
-  for(const name of ['MATCHED','SOURCE_ONLY','TARGET_ONLY','VALUE_DIFFERENCE','MULTISET_DIFFERENCE','NOT_COMPARABLE'])
+  for(const name of ['MATCHED','TOLERANCE_MATCHED','SOURCE_ONLY','TARGET_ONLY','VALUE_DIFFERENCE','MULTISET_DIFFERENCE','NOT_COMPARABLE'])
     if(groups[name]!==undefined)metrics.append(el('span',name.replaceAll('_',' ')+' '+count(groups[name]),'tag'));
   if(groups.duplicate_groups!==undefined)metrics.append(el('span','DUPLICATE KEY GROUPS '+count(groups.duplicate_groups),'tag'));
   wrapper.append(metrics);
+  if(summary?.source?.tolerance_matched!==undefined||summary?.target?.tolerance_matched!==undefined)
+    wrapper.append(el('p','Matched rows = accepted exact matches + accepted tolerance matches. Canonical exact matches retain the original value multiplicities before the reviewed numeric and NULL rules.','hint'));
   wrapper.append(el('p',summary?.accounting_balanced===true?'Native row accounting is balanced. Quarantined and excluded rows remain available for review.':'Read the complete native accounting result before interpreting the comparison.','hint'));
   if(summary?.scope_note)wrapper.append(el('p',summary.scope_note,'hint'));
+  const conversions=normalizationCounts(summary?.normalizations);if(conversions)wrapper.append(conversions);
   if(summary?.decisions)wrapper.append(details('Decision counts',summary.decisions));
   return wrapper;
 }
@@ -634,17 +963,18 @@ function renderRunDetail() {
   const summary=panel('Saved comparison',facts([['Run',run.run_id],['Pair',run.pair_id],['Pair revision',run.pair_revision],['Decision revision',run.review_revision],['Saved',when(run.created_at)]]),
     el('div',undefined,'spacer'),summaryView(run.summary),
     toolbar(button('Open pair definition',()=>openPair(run.pair_id,run.pair_revision))),
-    details('Complete run record',run));
+    normalizationRulesView(null,run.normalizations),comparisonRulesView(null,run.comparison_rules),details('Complete run record',run));
   root.append(summary);
   const review=panel('Review groups and rows'),tabs=el('div',undefined,'tabs');tabs.setAttribute('role','tablist');
-  for(const [key,label] of [['groups','Key groups'],['rows','Original rows'],['decisions','Decision history']]){
+  for(const [key,label] of [['groups','Key groups'],...(hasRecordedFields()?[['fields','Field differences']]:[]),...(hasRecordedNormalizations()?[['normalizations','Normalizations']]:[]),['rows','Original rows'],['decisions','Decision history']]){
     const b=button(label,async()=>{state.runTab=key;await loadRunTab(0);renderRunDetail();notice(label+' opened.');});
     b.setAttribute('role','tab');b.setAttribute('aria-selected',String(state.runTab===key));tabs.append(b);
   }
   review.append(tabs);
+  if(!hasRecordedFields())review.append(el('p','Per-field differences were not recorded for this run. Its complete key groups and original rows remain available.','hint'));
   const filters=el('div',undefined,'filters');
   if(state.runTab==='groups'){
-    const category=select([['','All categories'],...['MATCHED','SOURCE_ONLY','TARGET_ONLY','VALUE_DIFFERENCE','MULTISET_DIFFERENCE','NOT_COMPARABLE'].map(v=>[v,v.replaceAll('_',' ')])],state.filters.category);
+    const category=select([['','All categories'],...['MATCHED',...(hasRecordedFields()?['TOLERANCE_MATCHED']:[]),'SOURCE_ONLY','TARGET_ONLY','VALUE_DIFFERENCE','MULTISET_DIFFERENCE','NOT_COMPARABLE'].map(v=>[v,v.replaceAll('_',' ')])],state.filters.category);
     const duplicates=select([['','All key groups'],['true','Duplicate keys'],['false','Without duplicate keys']],state.filters.duplicates);
     filters.append(field('Category',category),field('Key multiplicity',duplicates),button('Apply group filters',async()=>{
       state.filters.category=category.value;state.filters.duplicates=duplicates.value;await loadGroups(0);notice('Key group selection updated.');
@@ -657,6 +987,31 @@ function renderRunDetail() {
       if(group.value.trim())indexValue(group.value.trim(),'group');
       state.filters.side=side.value;state.filters.status=status.value;state.filters.group_id=group.value.trim();await loadRows(0);notice('Original row selection updated.');
     }),button('All original rows',async()=>{state.filters.side='';state.filters.status='';state.filters.group_id='';await loadRows(0);renderRunDetail();}));
+  }else if(state.runTab==='fields'){
+    const group=input(state.fieldFilters.group_id,{placeholder:'All groups'});
+    const column=input(state.fieldFilters.column_name,{placeholder:'Every compared value field'});
+    const result=select([['','All recorded states'],...Object.entries(FIELD_STATES).map(([key,value])=>[key,value[0]])],state.fieldFilters.state);
+    filters.append(field('Field group identifier',group),field('Canonical value field',column),field('Field result',result),
+      button('Apply field filters',async()=>{
+        if(group.value.trim())indexValue(group.value.trim(),'group');
+        state.fieldFilters={group_id:group.value.trim(),column_name:column.value,state:result.value};
+        await loadFields(0);notice('Recorded field selection updated.');
+      }),button('All recorded fields',async()=>{
+        state.fieldFilters={group_id:'',column_name:'',state:''};await loadFields(0);renderRunDetail();notice('All recorded fields opened.');
+      }));
+  }
+  if(state.runTab==='normalizations'){
+    const chosen=state.normalizationFilters,side=select([['','Both sides'],['source','Source'],['target','Target']],chosen.side);
+    const column=input(chosen.column_name,{placeholder:'Every normalized field'}),group=input(chosen.group_id,{placeholder:'All groups'});
+    const result=select([['','All conversion results'],...Object.entries(NORMALIZATION_STATES).map(([key,value])=>[key,value[0]])],chosen.state);
+    filters.append(field('Normalization side',side),field('Normalized field',column),field('Conversion result',result),field('Normalization group identifier',group),
+      button('Apply normalization filters',async()=>{
+        if(group.value.trim())indexValue(group.value.trim(),'group');
+        state.normalizationFilters={side:side.value,column_name:column.value,state:result.value,group_id:group.value.trim()};
+        await loadNormalizations(0);notice('Recorded conversion selection updated.');
+      }),button('All recorded conversions',async()=>{
+        state.normalizationFilters={side:'',column_name:'',state:'',group_id:''};await loadNormalizations(0);renderRunDetail();
+      }));
   }
   review.append(filters);const table=el('div');table.id='run-grid';const paging=el('div');paging.id='run-grid-pager';review.append(table,paging);root.append(review);
   const selected=el('div');selected.id='selected-subject';root.append(selected);
@@ -673,7 +1028,7 @@ function rowSubject(object) {
   return {kind:'row',side,row:indexValue(object.row,'row')};
 }
 async function chooseGroup(object) {
-  state.subject=groupSubject(object);state.rowDetail=null;renderSubject();renderDecisionEditor();
+  state.subject=groupSubject(object);state.rowDetail=null;state.fieldDetail=null;state.normalizationDetail=null;renderSubject();renderDecisionEditor();
   notice('Key group '+state.subject.group_id+' selected for an explicit review decision.');
   $('selected-subject')?.scrollIntoView({block:'nearest'});
 }
@@ -686,7 +1041,7 @@ async function chooseRow(object) {
   const subject=rowSubject(object);
   const detail=await api(runPath('row')+query({side:subject.side,row:subject.row}));
   if(detail.side!==subject.side||indexValue(detail.row,'row')!==subject.row)throw new Error('The returned original row differs from the selected side and row index.');
-  state.subject=subject;state.rowDetail=detail;renderSubject();renderDecisionEditor();
+  state.subject=subject;state.rowDetail=detail;state.fieldDetail=null;state.normalizationDetail=null;renderSubject();renderDecisionEditor();
   notice('Complete '+subject.side+' row '+subject.row+' opened.');$('selected-subject')?.scrollIntoView({block:'nearest'});
 }
 function renderRunTable() {
@@ -694,11 +1049,26 @@ function renderRunTable() {
   root.replaceChildren();paging.replaceChildren();
   if(state.runTab==='groups'){
     root.append(grid(state.groups.columns||[],state.groups.rows||[],object=>toolbar(
-      button('Review group',()=>chooseGroup(object),{small:true}),button('All group rows',()=>groupRows(object),{small:true}))));
+      button('Review group',()=>chooseGroup(object),{small:true}),button('All group rows',()=>groupRows(object),{small:true}),
+      hasRecordedFields()?button('Field differences',()=>groupFields(object),{small:true}):null,
+      hasRecordedNormalizations()?button('Group conversions',()=>groupNormalizations(object),{small:true}):null)));
     paging.append(pager(state.groups,loadGroups));
   }else if(state.runTab==='rows'){
     root.append(grid(state.rows.columns||[],state.rows.rows||[],object=>toolbar(button('Open full row',()=>chooseRow(object),{small:true}))));
     paging.append(pager(state.rows,loadRows));
+  }else if(state.runTab==='fields'){
+    if(state.fields.unavailable){root.append(empty('Per-field differences were not recorded for this original run. Reopen its key groups or original rows.'));return;}
+    root.append(el('p','Inspect a field for its full rule, exact numeric representations and signed difference. Duplicate groups retain all original observations without a chosen row pairing.','hint'),
+      grid(FIELD_COLUMNS,nativeGridObjects(state.fields),(visible,original)=>toolbar(
+        button('Inspect field',()=>chooseField(original),{small:true}),
+        button('Review group',()=>chooseGroup(original),{small:true}),button('All group rows',()=>groupRows(original),{small:true}))));
+    paging.append(pager(state.fields,loadFields));
+  }else if(state.runTab==='normalizations'){
+    if(state.normalizations.unavailable){root.append(empty('This original run has no recorded normalization. Its original rows and key groups remain available.'));return;}
+    root.append(el('p','Every transformed field retains its original value, exact candidate, accepted canonical value and result. Inspect a conversion to open all fields in its original row.','hint'),
+      grid(NORMALIZATION_RUN_COLUMNS,nativeGridObjects(state.normalizations),(visible,original)=>toolbar(
+        button('Inspect conversion',()=>chooseNormalization(original),{small:true}))));
+    paging.append(pager(state.normalizations,loadNormalizations));
   }else {
     const list=el('div',undefined,'item-list');
     for(const decision of state.decisions.decisions||[]){
@@ -707,7 +1077,7 @@ function renderRunTable() {
         el('p',decision.reason||'','wrap'),details('Complete saved decision',decision));
       const subject=decision.subject;
       if(subject)p.append(toolbar(button('Review this subject',async()=>{
-        state.subject=clone(subject);state.rowDetail=null;
+        state.subject=clone(subject);state.rowDetail=null;state.fieldDetail=null;state.normalizationDetail=null;
         if(subject.kind==='row')state.rowDetail=await api(runPath('row')+query({side:subject.side,row:subject.row}));
         renderSubject();renderDecisionEditor();notice('Original decision subject selected.');
       },{small:true})));
@@ -721,6 +1091,8 @@ function renderSubject() {
   const root=$('selected-subject');if(!root)return;
   root.replaceChildren();if(!state.subject)return;
   const subject=state.subject,selected=panel(subject.kind==='group'?'Selected key group '+subject.group_id:'Selected '+subject.side+' row '+subject.row);
+  if(state.fieldDetail&&subject.kind==='group'&&indexValue(state.fieldDetail.group_id,'group')===subject.group_id)selected.append(fieldInspection(state.fieldDetail));
+  if(state.normalizationDetail&&subject.kind==='row'&&scalar(state.normalizationDetail.side)===subject.side&&indexValue(state.normalizationDetail.row,'row')===subject.row)selected.append(normalizationInspection(state.normalizationDetail));
   if(state.rowDetail){
     selected.append(facts([['Original edition',state.rowDetail.edition_id],['Side',state.rowDetail.side],['Row index',state.rowDetail.row]]));
     const original=state.rowDetail.original||{},canonical=state.rowDetail.canonical||{};
@@ -728,7 +1100,7 @@ function renderSubject() {
       el('h4','Canonical comparison values','spacer'),grid(['Canonical field','Native value'],Object.entries(canonical)),
       details('Complete original and canonical row',state.rowDetail));
   }else selected.append(el('p','The decision applies to this complete key group. Open All group rows to inspect both sides and every duplicate.','muted'));
-  selected.append(toolbar(button('Clear selection',async()=>{state.subject=null;state.rowDetail=null;renderSubject();renderDecisionEditor();notice('Review selection cleared.');},{small:true})));
+  selected.append(toolbar(button('Clear selection',async()=>{state.subject=null;state.rowDetail=null;state.fieldDetail=null;state.normalizationDetail=null;renderSubject();renderDecisionEditor();notice('Review selection cleared.');},{small:true})));
   root.append(selected);
 }
 function renderDecisionEditor() {
@@ -891,16 +1263,19 @@ function renderReports() {
       }),button('Prepare complete handover',async()=>{
         const result=await retained(API+'/exports',{report_id:report.report_id});await receiveResult(API+'/exports',result);notice('Full native report export and warehouse handover prepared.','success');
       },{primary:true})),
-      details('Complete frozen definition',report.definition),details('Complete immutable report',report)));
+      normalizationRulesView(report.definition,report.review?.normalizations),comparisonRulesView(report.definition,report.review?.comparison_rules),details('Complete frozen definition',report.definition),details('Complete immutable report',report)));
     if(report.before_run_id){
       const changes=panel('Changes from the previous run',
         el('p','These are the complete native group comparisons. Absence remains explicit, and decisions stay attached to the run where they were made.','muted'),
+        report.scope_comparison&&Object.hasOwn(report.scope_comparison,'normalizations_equal')?facts([['Normalization policy',report.scope_comparison.normalizations_equal?'Unchanged':'Changed']]):null,
         report.scope_comparison?details('Full comparison scope',report.scope_comparison):null);
       const table=el('div');table.id='report-changes-grid';const paging=el('div');paging.id='report-changes-pager';changes.append(table,paging);right.append(changes);
     }
     const queries=panel('Original saved query recipes');
     for(const q of report.queries||[]){
-      queries.append(panel(q.kind||q.name,facts([['Query name',q.name],['Query',q.query_id],['Revision',q.revision]]),
+      queries.append(panel(q.kind==='fields'?'Complete field differences':q.kind==='normalizations'?'Complete normalization records':q.kind||q.name,
+        q.kind==='fields'?el('p','The complete handover includes every recorded field, original value, exact difference, allowance and rule in the original CSV and Parquet query exports.','hint'):q.kind==='normalizations'?el('p','The complete CSV and Parquet exports retain every original value, exact conversion candidate, canonical value, policy, result and failure reason.','hint'):null,
+        facts([['Query name',q.name],['Query',q.query_id],['Revision',q.revision]]),
         details('Complete saved SQL and parameters',{sql:q.sql,parameters_text:q.parameters_text}),details('Full native query record',q)));
     }
     right.append(queries);

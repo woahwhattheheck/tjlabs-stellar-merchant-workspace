@@ -1,5 +1,7 @@
 /** MIT. Original quote workflow and complete native result consumption. */
 import {BuyerConsoleClient} from './client.mjs';
+import {createHttpPathFields} from './path-form.mjs';
+import {createNativeRequestDesk} from './native-request.mjs';
 
 const client = new BuyerConsoleClient();
 const $ = id => document.getElementById(id);
@@ -12,6 +14,10 @@ const state = {connected:false, serial:0, view:'discover', resources:[], searchA
   searchContinuation:null, searchError:null, searching:0, searchBusy:false, searchSeen:new Set(),
   description:null, quote:null, history:[], historyCursor:null, results:[], resultCursor:null,
   result:null, reading:null, spending:null, spendingRead:0, selection:0, describing:0, executing:new Set(), uncertain:new Set(), urls:new Set()};
+
+const nativeDesk = createNativeRequestDesk({client,
+  ui:{node, table, facts, badge, detail, empty, pre, url, download, renderRecords, errorText, notice},
+  onView:() => setView('native')});
 
 function node(tag, {text, className, ...attrs} = {}, children = []) {
   const element = document.createElement(tag);
@@ -77,13 +83,13 @@ function download(bytes, filename, type = 'application/json') {
 }
 function setView(view) {
   state.view = view;
-  for (const name of ['discover','history','results']) $('view-' + name).hidden = name !== view;
+  for (const name of ['discover','history','results','native']) $('view-' + name).hidden = name !== view;
   for (const tab of document.querySelectorAll('[data-view]')) {
     if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
   }
 }
 function reset() {
-  state.serial++; client.disconnect(); revokeDownloads();
+  state.serial++; client.disconnect(); revokeDownloads(); nativeDesk.reset();
   state.selection++; state.describing++; state.searching++;
   Object.assign(state, {connected:false, resources:[], description:null, quote:null, result:null, reading:null, spending:null,
     searchArgs:null, searchPages:[], searchContinuation:null, searchError:null, searchBusy:false,
@@ -105,7 +111,8 @@ async function connect(event) {
     const init = await client.connect(token);
     state.connected = true; $('workspace').hidden = false; $('connection').hidden = true; $('disconnect').hidden = false;
     $('connection-label').textContent = 'Connected · ' + (init.serverInfo?.name ?? 'Workspace');
-    setView('discover'); notice('Connected. Select a resource or reopen an original quote.');
+    nativeDesk.connected();
+    setView('discover'); notice('Connected. Select a resource or reopen an original request.');
     await loadHistory(false);
   }, submit);
 }
@@ -297,10 +304,12 @@ async function describe(handle) {
   target.removeAttribute('aria-busy');
   state.description = value;
   const preview = value.preview, container = preview.input.container;
-  const declarationErrors = [preview.input.inputError, preview.input.requiredKeysError, preview.remoteMcpError]
+  const declarationErrors = [preview.input.pathInputError, preview.input.inputError, preview.input.requiredKeysError, preview.remoteMcpError]
     .filter((error, index, errors) => error && errors.findIndex(other => other?.code === error.code && other?.message === error.message) === index);
   const canPreview = preview.allowedOrigin && preview.methodSupported && declarationErrors.length === 0;
   let inputRevision = 0;
+  const pathFields = container === 'query' ? createHttpPathFields(value, {node, empty}) : null;
+  pathFields?.onChange(() => { inputRevision++; });
   const options = node('select', {id:'payment-option', 'aria-label':'Payment option'}, value.accepts.map((option, index) =>
     node('option', {value:index, text:(index + 1) + ' · ' + option.amount + ' ' + option.asset + ' · ' + option.network})));
   const choice = node('div');
@@ -308,7 +317,7 @@ async function describe(handle) {
   options.addEventListener('change', () => { inputRevision++; showChoice(); }); showChoice();
   const input = node('textarea', {id:'invocation-input', spellcheck:'false', 'aria-label':container === 'arguments' ? 'Tool arguments JSON' : 'Query values JSON'});
   input.value = '{}'; input.addEventListener('input', () => { inputRevision++; });
-  const form = node('form', {}, [node('label', {text:container === 'arguments' ? 'Tool arguments (JSON object)' : 'Query values (JSON object)'}, [input]),
+  const form = node('form', {}, [...(pathFields ? [pathFields.element] : []), node('label', {text:container === 'arguments' ? 'Tool arguments (JSON object)' : 'Query values (JSON object)'}, [input]),
     node('p', {className:'field-note', text:container === 'query'
       ? 'Enter explicit strings or nonempty arrays of strings. ' +
         (preview.input.querySerialization ? 'The seller’s declared form encoding applies to each field. ' : 'Strings stay literal; arrays repeat their key. ') +
@@ -337,7 +346,8 @@ async function describe(handle) {
       const revision = inputRevision, selection = ++state.selection;
       let quote;
       try {
-        quote = await client.call('bazaar_preview', {handle:value.handle, acceptIndex:Number(options.value), input:{[container]:parsed}});
+        const invocationInput = {[container]:parsed, ...(pathFields ? {path:pathFields.read()} : {})};
+        quote = await client.call('bazaar_preview', {handle:value.handle, acceptIndex:Number(options.value), input:invocationInput});
       } catch (error) {
         if (serial === state.serial && request === state.describing && state.description === value && selection === state.selection && revision === inputRevision) throw error;
         return;
@@ -365,6 +375,8 @@ async function describe(handle) {
       node('p', {className:'field-note', text:'Amounts use the asset’s original base units. A quote does not make a payment.'}),
       detail('Full original declaration', value.bazaar), detail('Discovery source', value.source)]),
   ]));
+  if (preview.resourceType === 'http') target.append(nativeDesk.offer(value,
+    () => serial === state.serial && request === state.describing && state.description === value));
   target.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -684,5 +696,6 @@ for (const tab of document.querySelectorAll('[data-view]')) tab.addEventListener
   setView(tab.dataset.view);
   if (state.view === 'history') await loadHistory(false);
   if (state.view === 'results') await loadResults(false);
+  if (state.view === 'native') await nativeDesk.open();
 }));
-window.addEventListener('pagehide', () => { client.disconnect(); revokeDownloads(); });
+window.addEventListener('pagehide', () => { nativeDesk.reset(); client.disconnect(); revokeDownloads(); });

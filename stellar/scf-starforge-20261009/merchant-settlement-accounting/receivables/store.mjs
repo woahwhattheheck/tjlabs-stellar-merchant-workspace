@@ -10,6 +10,9 @@ import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
 import {CreditControlWorkspace} from './credit-control-workspace.mjs';
+import {RemittancesWorkspace} from './remittances-workspace.mjs';
+import {BankReceiptsWorkspace} from './bank-receipts-workspace.mjs';
+import {bankAccountRows, bankAccountSummary} from './bank-receipts.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
 import {paymentRequestSummary, requestRows} from './payment-requests.mjs';
 import {createInvoiceTransferVerifier} from './payment-requests-verifier.mjs';
@@ -87,6 +90,8 @@ export class ReceivablesWorkspace {
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
     this.creditControlWorkspace = new CreditControlWorkspace(this);
+    this.remittancesWorkspace = new RemittancesWorkspace(this);
+    this.bankReceiptsWorkspace = new BankReceiptsWorkspace(this);
   }
   async init() {
     await this.statements.init();
@@ -131,6 +136,7 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.remittanceBatchId) Object.assign(result, this.remittancesWorkspace.result(record));
     if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
       Object.assign(result, this.creditControlWorkspace.result(record));
     if (record.collectionCaseId) {
@@ -138,6 +144,10 @@ export class ReceivablesWorkspace {
       result.workspaceId = this.collectionsWorkspace.workspaceId();
       if (record.collectionEventId) result.collectionEvent = structuredClone(this.collectionsWorkspace.row(record.collectionCaseId).events.find(row => row.id === record.collectionEventId));
     }
+    if (record.bankAccountId) result.bankAccount = bankAccountSummary(bankAccountRows(data).find(row => row.id === record.bankAccountId));
+    if (record.bankImportId) result.bankImport = this.bankReceiptsWorkspace.summary(record.bankImportId, data);
+    if (record.bankPostingId) result.bankPosting = this.bankReceiptsWorkspace.postingSummary(record.bankImportId, record.bankPostingId, data);
+    if (record.receiptIds) result.receipts = record.receiptIds.map(id => receiptSummary(this._receipt(id), data, asOf));
     if (record.invoiceIds) result.invoices = record.invoiceIds.map(id => invoiceSummary(this._invoice(id), data, asOf));
     if (record.allocationIds) result.allocations = record.allocationIds.map(id => structuredClone(this._allocation(id)));
     if (record.refundId) {
@@ -190,6 +200,8 @@ export class ReceivablesWorkspace {
         reason: row.document.reason, customerId: row.document.customer.id})),
       paymentRequests: requestRows(data).map(row => paymentRequestSummary(row, data, asOf)),
       refunds: this.refundsWorkspace.summaries(data, asOf),
+      bankAccounts: bankAccountRows(data).map(bankAccountSummary),
+      bankImports: this.bankReceiptsWorkspace.summaries(data),
       creditDispositions: dispositionRows(data).map(row => this.refundsWorkspace.dispositionSummary(row.id, data)),
       allocations: data.allocations, aging: agingReport(data, asOf),
       history: this.workspace.state.history.filter(row => row.action.startsWith('receivables_')).slice(-200).reverse()});
@@ -203,6 +215,12 @@ export class ReceivablesWorkspace {
   async reportPaymentReturn(id, value) { return this.paymentRequestWorkspace.reportReturn(id, value); }
   async receivePaymentRequest(id, value) { return this.paymentRequestWorkspace.receive(id, value); }
   async paymentRequestFile(id, name) { return this.paymentRequestWorkspace.file(id, name); }
+  async remittances() { return this.remittancesWorkspace.list(); }
+  async remittance(id) { return this.remittancesWorkspace.detail(id); }
+  async previewRemittance(value) { return this.remittancesWorkspace.preview(value); }
+  async applyRemittance(value) { return this.remittancesWorkspace.apply(value); }
+  async remittanceOperation(requestId) { return this.remittancesWorkspace.operation(requestId); }
+  async remittanceFile(id, name) { return this.remittancesWorkspace.file(id, name); }
   async creditControl(query = {}) { return this.creditControlWorkspace.control(query); }
   async creditPolicy(id) { return this.creditControlWorkspace.policy(id); }
   async saveCreditPolicy(value) { return this.creditControlWorkspace.savePolicy(value); }
@@ -244,6 +262,18 @@ export class ReceivablesWorkspace {
   async refundFile(id, name) { return this.refundsWorkspace.refundFile(id, name); }
   async previewCreditDisposition(value) { return this.refundsWorkspace.previewCreditDisposition(value); }
   async applyCreditDisposition(value) { return this.refundsWorkspace.applyCreditDisposition(value); }
+  async bankAccounts(query = {}) { return this.bankReceiptsWorkspace.bankAccounts(query); }
+  async saveBankAccount(value) { return this.bankReceiptsWorkspace.saveBankAccount(value); }
+  async inspectBankSource(value) { return this.bankReceiptsWorkspace.inspectBankSource(value); }
+  async importBankSource(value) { return this.bankReceiptsWorkspace.importBankSource(value); }
+  async bankImports(query = {}) { return this.bankReceiptsWorkspace.bankImports(query); }
+  async bankImport(id, query = {}) { return this.bankReceiptsWorkspace.bankImport(id, query); }
+  async previewBankPosting(id, value) { return this.bankReceiptsWorkspace.previewBankPosting(id, value); }
+  async postBankReceipts(id, value) { return this.bankReceiptsWorkspace.postBankReceipts(id, value); }
+  async ignoreBankRows(id, value) { return this.bankReceiptsWorkspace.ignoreBankRows(id, value); }
+  async restoreBankRows(id, value) { return this.bankReceiptsWorkspace.restoreBankRows(id, value); }
+  async closeBankImport(id, value) { return this.bankReceiptsWorkspace.closeBankImport(id, value); }
+  async bankImportFile(id, name) { return this.bankReceiptsWorkspace.bankImportFile(id, name); }
   async settings(value) {
     return this._mutate('settings_saved', value, async data => {
       data.issuer = normalizeIssuer(value, data.issuer.version + 1); return {settings: true};
@@ -415,20 +445,26 @@ export class ReceivablesWorkspace {
     });
   }
 
+  // Internal writer, invoked inside the original _mutate transaction by receipt intake adapters.
+  _appendReceipt(data, actor, value, provenance = null) {
+    need(data === this.data(), 'RECEIPT_WRITER_CONTEXT', 'Use the current original receivables transaction.', 409);
+    const customer = this._customer(value.customerId), currency = currencyOf(value.currency);
+    const amount = money(minor(value.amount, currency, 'payment amount', {positive: true}), currency);
+    const receivedDate = dateValue(value.receivedDate, 'received date'), method = field(value.method, 'payment method', 100);
+    const reference = field(value.reference, 'payment reference', 300), note = field(value.note ?? '', 'internal payment note', 4000, true);
+    const sourceKey = provenance?.sourceKey ?? sha(json({kind: 'OPERATOR_RECORDED', method: method.toLowerCase(), reference}));
+    need(HEX.test(sourceKey) && (!provenance || plain(provenance.source) && typeof provenance.source.kind === 'string'),
+      'INVALID_RECEIPT_SOURCE', 'Retain the exact original payment source identity.');
+    need(!data.receipts.some(row => row.sourceKey === sourceKey), 'PAYMENT_REFERENCE_EXISTS',
+      'This payment reference is already recorded. Use its existing receipt.', 409);
+    const row = {id: randomUUID(), customerId: customer.id, customer: customerSnapshot(customer), currency, amount,
+      receivedDate, method, reference, note, sourceKey, source: structuredClone(provenance?.source ?? {kind: 'OPERATOR_RECORDED'}),
+      createdAt: at(), actor, status: 'RECORDED',
+      history: [{at: at(), actor, action: provenance?.action ?? 'recorded'}]};
+    data.receipts.unshift(row); return {receiptId: row.id};
+  }
   async receipt(value) {
-    return this._mutate('payment_recorded', value, async (data, actor) => {
-      const customer = this._customer(value.customerId), currency = currencyOf(value.currency);
-      const amount = money(minor(value.amount, currency, 'payment amount', {positive: true}), currency);
-      const receivedDate = dateValue(value.receivedDate, 'received date'), method = field(value.method, 'payment method', 100);
-      const reference = field(value.reference, 'payment reference', 300), note = field(value.note ?? '', 'internal payment note', 4000, true);
-      const sourceKey = sha(json({kind: 'OPERATOR_RECORDED', method: method.toLowerCase(), reference}));
-      need(!data.receipts.some(row => row.sourceKey === sourceKey), 'PAYMENT_REFERENCE_EXISTS',
-        'This payment reference is already recorded. Use its existing receipt.', 409);
-      const row = {id: randomUUID(), customerId: customer.id, customer: customerSnapshot(customer), currency, amount,
-        receivedDate, method, reference, note, sourceKey, source: {kind: 'OPERATOR_RECORDED'},
-        createdAt: at(), actor, status: 'RECORDED', history: [{at: at(), actor, action: 'recorded'}]};
-      data.receipts.unshift(row); return {receiptId: row.id};
-    });
+    return this._mutate('payment_recorded', value, async (data, actor) => this._appendReceipt(data, actor, value));
   }
   async _report(runId) {
     const run = this.workspace.runRow(runId);
@@ -504,37 +540,41 @@ export class ReceivablesWorkspace {
       data.receipts.unshift(row); return {receiptId: row.id};
     });
   }
+  // The same dated conservation writer serves standalone and bank-derived allocations.
+  _allocatePayment(data, actor, value) {
+    need(data === this.data(), 'ALLOCATION_WRITER_CONTEXT', 'Use the current original receivables transaction.', 409);
+    const invoice = this._invoice(value.invoiceId), receipt = this._receipt(value.receiptId);
+    const allocatedDate = dateValue(value.allocatedDate, 'allocation date');
+    need(invoice.status === 'ISSUED' && receipt.status === 'RECORDED', 'ALLOCATION_RECORD_CLOSED',
+      'Choose an issued invoice and a current payment receipt.', 409);
+    need(invoice.document.customer.id === receipt.customerId &&
+      currencyKey(invoice.document.currency) === currencyKey(receipt.currency),
+      'ALLOCATION_IDENTITY_MISMATCH', 'The invoice and receipt must have the same customer, currency and precision.', 409);
+    need(allocatedDate >= invoice.document.issueDate && allocatedDate >= (receipt.accountingDate ?? receipt.receivedDate),
+      'INVALID_ALLOCATION_DATE', 'Allocate on or after both the invoice and receipt dates.');
+    need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
+      'Receive or adopt this payment’s original verified outgoing return before making another allocation.', 409);
+    const units = minor(value.amount, receipt.currency, 'allocation amount', {positive: true});
+    const invoiceNow = invoiceSummary(invoice, data, allocatedDate), receiptNow = receiptSummary(receipt, data, allocatedDate);
+    need(units <= minor(invoiceNow.amountDue, receipt.currency) && units <= minor(receiptNow.available, receipt.currency),
+      'ALLOCATION_EXCEEDS_BALANCE', 'Allocate no more than the invoice amount due and the available payment on the selected date.', 409);
+    const allocation = {id: randomUUID(), invoiceId: invoice.id, receiptId: receipt.id,
+      customerId: receipt.customerId, currency: structuredClone(receipt.currency), amount: money(units, receipt.currency),
+      minorAmount: units.toString(), allocatedDate, releasedDate: null, createdAt: at(), actor,
+      history: [{at: at(), actor, action: 'allocated', allocatedDate}]};
+    data.allocations.unshift(allocation);
+    // Check every dated interval, including previously recorded future allocations.
+    conserved(data, invoice, receipt);
+    invoice.version++; invoice.updatedAt = at();
+    invoice.history.push({at: at(), actor, action: 'payment_allocated', allocationId: allocation.id, receiptId: receipt.id,
+      amount: allocation.amount, allocatedDate});
+    receipt.history.push({at: at(), actor, action: 'allocated', invoiceId: invoice.id, allocationId: allocation.id,
+      amount: allocation.amount, allocatedDate});
+    return {invoiceId: invoice.id, receiptId: receipt.id, allocationId: allocation.id};
+
+  }
   async allocate(value) {
-    return this._mutate('payment_allocated', value, async (data, actor) => {
-      const invoice = this._invoice(value.invoiceId), receipt = this._receipt(value.receiptId);
-      const allocatedDate = dateValue(value.allocatedDate, 'allocation date');
-      need(invoice.status === 'ISSUED' && receipt.status === 'RECORDED', 'ALLOCATION_RECORD_CLOSED',
-        'Choose an issued invoice and a current payment receipt.', 409);
-      need(invoice.document.customer.id === receipt.customerId &&
-        currencyKey(invoice.document.currency) === currencyKey(receipt.currency),
-        'ALLOCATION_IDENTITY_MISMATCH', 'The invoice and receipt must have the same customer, currency and precision.', 409);
-      need(allocatedDate >= invoice.document.issueDate && allocatedDate >= receipt.receivedDate,
-        'INVALID_ALLOCATION_DATE', 'Allocate on or after both the invoice and receipt dates.');
-      need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
-        'Receive or adopt this payment’s original verified outgoing return before making another allocation.', 409);
-      const units = minor(value.amount, receipt.currency, 'allocation amount', {positive: true});
-      const invoiceNow = invoiceSummary(invoice, data, allocatedDate), receiptNow = receiptSummary(receipt, data, allocatedDate);
-      need(units <= minor(invoiceNow.amountDue, receipt.currency) && units <= minor(receiptNow.available, receipt.currency),
-        'ALLOCATION_EXCEEDS_BALANCE', 'Allocate no more than the invoice amount due and the available payment on the selected date.', 409);
-      const allocation = {id: randomUUID(), invoiceId: invoice.id, receiptId: receipt.id,
-        customerId: receipt.customerId, currency: structuredClone(receipt.currency), amount: money(units, receipt.currency),
-        minorAmount: units.toString(), allocatedDate, releasedDate: null, createdAt: at(), actor,
-        history: [{at: at(), actor, action: 'allocated', allocatedDate}]};
-      data.allocations.unshift(allocation);
-      // Check every dated interval, including previously recorded future allocations.
-      conserved(data, invoice, receipt);
-      invoice.version++; invoice.updatedAt = at();
-      invoice.history.push({at: at(), actor, action: 'payment_allocated', allocationId: allocation.id, receiptId: receipt.id,
-        amount: allocation.amount, allocatedDate});
-      receipt.history.push({at: at(), actor, action: 'allocated', invoiceId: invoice.id, allocationId: allocation.id,
-        amount: allocation.amount, allocatedDate});
-      return {invoiceId: invoice.id, receiptId: receipt.id, allocationId: allocation.id};
-    });
+    return this._mutate('payment_allocated', value, async (data, actor) => this._allocatePayment(data, actor, value));
   }
   async release(id, value) {
     identifier(id, 'allocation');
@@ -559,7 +599,7 @@ export class ReceivablesWorkspace {
     return this._mutate('payment_voided', {...value, receiptId: id}, async (data, actor) => {
       const receipt = this._receipt(id), voidDate = dateValue(value.voidDate, 'void date'), reason = field(value.reason, 'void reason', 3000);
       need(receipt.status === 'RECORDED', 'RECEIPT_ALREADY_VOID', 'This receipt is already void.', 409);
-      need(voidDate >= receipt.receivedDate, 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
+      need(voidDate >= (receipt.accountingDate ?? receipt.receivedDate), 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
       need(data.allocations.filter(row => row.receiptId === id).every(row => row.releasedDate && row.releasedDate <= voidDate),
         'RECEIPT_HAS_ALLOCATIONS', 'Release this receipt’s allocations before the selected void date.', 409);
       need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
@@ -607,31 +647,34 @@ export class ReceivablesWorkspace {
         history: invoice.history, revision: this.workspace.state.revision});
     });
   }
-  async exportCustomer(customerId, query = {}) {
-    return this.workspace.serial(async () => {
-      const result = customerExport(this.data(), this._customer(customerId), query.asOf ?? today());
-      const documents = [...result.value.invoices.map(row => row.id), ...result.value.credits.map(row => row.id)];
-      let totalBytes = result.files.reduce((total, file) => total + file.bytes.length, 0);
-      for (const id of documents) {
-        const record = this.data().invoices.find(row => row.id === id) ?? this.data().credits.find(row => row.id === id);
-        for (const name of Object.keys(record.files)) {
-          const file = await this._file(id, name);
-          totalBytes += file.bytes.length;
-          need(totalBytes <= 128_000_000, 'CUSTOMER_EXPORT_LIMIT', 'This customer export exceeds 128 MB. Select an earlier account date or individual documents.');
-          result.files.push({...file, name: 'documents/' + file.name});
-        }
-      }
-      for (const file of await this.refundsWorkspace.customerFiles(customerId, result.value.asOf)) {
+  // Complete original customer documents; callers retain the existing workspace lease.
+  async _exportCustomer(customerId, query = {}) {
+    const result = customerExport(this.data(), this._customer(customerId), query.asOf ?? today());
+    const documents = [...result.value.invoices.map(row => row.id), ...result.value.credits.map(row => row.id)];
+    let totalBytes = result.files.reduce((total, file) => total + file.bytes.length, 0);
+    for (const id of documents) {
+      const record = this.data().invoices.find(row => row.id === id) ?? this.data().credits.find(row => row.id === id);
+      for (const name of Object.keys(record.files)) {
+        const file = await this._file(id, name);
         totalBytes += file.bytes.length;
         need(totalBytes <= 128_000_000, 'CUSTOMER_EXPORT_LIMIT', 'This customer export exceeds 128 MB. Select an earlier account date or individual documents.');
-        result.files.push(file);
+        result.files.push({...file, name: 'documents/' + file.name});
       }
-      const files = Object.fromEntries(result.files.map(file => [file.name, {bytes: file.bytes.length, sha256: sha(file.bytes)}]));
-      result.files.push({name: 'manifest.json', type: 'application/json; charset=utf-8',
-        bytes: Buffer.from(json({schema: 'stellar-forge.merchant-receivables-customer-files.v1', customerId,
-          asOf: result.value.asOf, files}))});
-      result.revision = this.workspace.state.revision;
-      return result;
-    });
+    }
+    for (const file of [...await this.refundsWorkspace.customerFiles(customerId, result.value.asOf),
+      ...await this.bankReceiptsWorkspace.customerFiles(customerId, result.value.asOf)]) {
+      totalBytes += file.bytes.length;
+      need(totalBytes <= 128_000_000, 'CUSTOMER_EXPORT_LIMIT', 'This customer export exceeds 128 MB. Select an earlier account date or individual documents.');
+      result.files.push(file);
+    }
+    const files = Object.fromEntries(result.files.map(file => [file.name, {bytes: file.bytes.length, sha256: sha(file.bytes)}]));
+    result.files.push({name: 'manifest.json', type: 'application/json; charset=utf-8',
+      bytes: Buffer.from(json({schema: 'stellar-forge.merchant-receivables-customer-files.v1', customerId,
+        asOf: result.value.asOf, files}))});
+    result.revision = this.workspace.state.revision;
+    return result;
+  }
+  async exportCustomer(customerId, query = {}) {
+    return this.workspace.serial(async () => this._exportCustomer(customerId, query));
   }
 }

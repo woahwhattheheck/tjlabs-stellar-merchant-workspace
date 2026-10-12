@@ -1,6 +1,7 @@
 // MIT — Private collections and original browser approval over the same CLI.
 import { createApprovalPanel } from '/approval-panel.mjs';
 import { createCollectionRecoveryPanel } from '/recovery.mjs';
+import { createCollectionComposerPanel } from '/composer.mjs';
 const $ = id => document.getElementById(id);
 const sessionKey = 'starforge.collections.' + location.origin;
 const state = { token: '', connected: false, busy: false, status: null,
@@ -13,7 +14,22 @@ const approvalPanel = createApprovalPanel({ host: $('approval-host'),
   decide: decideApproval, refresh: refreshApproval });
 const recoveryPanel = createCollectionRecoveryPanel({ host: $('recovery-panel'), api,
   onOpen: async () => { await connect(state.token); showView('recovery'); },
-  onBusy: value => { state.recoveryBusy = value; buttons(); } });
+  onBusy: value => { state.recoveryBusy = value; buttons(); if (!value) resumePendingConnection(); } });
+const composerPanel = createCollectionComposerPanel({ host: $('composer-panel'), api,
+  onCreated: async edition => {
+    if (!state.connected || !edition.collection?.id) return;
+    const token = state.token, directory = state.status?.directory;
+    await selectCollection(edition.collection.id);
+    if (!state.connected || state.token !== token || state.status?.directory !== directory
+      || state.selectedId !== edition.collection.id) return;
+    $('shared-workspace').value = '';
+    $('intent-workspaces').value = Object.entries(edition.workspaceByIntent ?? {})
+      .map(([intent, directory]) => intent + '=' + directory).join('\n');
+    $('detail-panel').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    say('Collection created from the saved request plan. Review its retained requests before queuing.');
+    buttons();
+  },
+  onBusy: value => { state.composerBusy = value; buttons(); if (!value) resumePendingConnection(); } });
 const recordedStates = new Set(['ATTEMPT_RECORDED', 'RECOVERED']);
 const queuedStates = new Set(['QUEUED']);
 const errors = {
@@ -76,7 +92,8 @@ function humanError(error) {
   return 'The operation could not finish. ' + String(code).replaceAll('_', ' ');
 }
 function locked() {
-  state.connected = false; state.token = ''; recoveryPanel.disconnect();
+  state.connected = false; state.token = ''; state.pendingToken = null;
+  recoveryPanel.disconnect(); composerPanel.disconnect();
   state.generation += 1; state.approvalGeneration += 1;
   state.approval = null; state.approvalDecision = null; approvalPanel.disconnect();
   try { sessionStorage.removeItem(sessionKey); } catch {}
@@ -109,56 +126,66 @@ function showView(view) {
   $('create-panel').hidden = view !== 'create';
   $('detail-panel').hidden = view !== 'detail';
   $('recovery-panel').hidden = view !== 'recovery'; recoveryPanel.setVisible(view === 'recovery');
+  $('composer-panel').hidden = view !== 'composer'; composerPanel.setVisible(view === 'composer');
+  $('open-composer').setAttribute('aria-current', String(view === 'composer'));
 }
 const actionIds = ['preview-button', 'save-collection', 'enqueue', 'export',
   'recover', 'cancel', 'run-command', 'run-browser', 'refresh', 'refresh-detail', 'new-collection'];
 function buttons() {
-  for (const id of actionIds) $(id).disabled = state.busy || !state.connected;
+  const working = state.busy || state.composerBusy;
+  composerPanel.setBlocked(state.busy || state.recoveryBusy || !state.connected);
+  $('open-composer').disabled = working || state.recoveryBusy || !state.connected;
+  $('open-composer').hidden = !state.status?.directory;
+  $('empty-compose').hidden = !state.status?.directory;
+  $('empty-compose').disabled = working || state.recoveryBusy || !state.connected;
+  for (const id of actionIds) $(id).disabled = working || !state.connected;
   $('open-recovery').disabled = !state.connected;
   $('new-collection').hidden = !state.status?.directory;
   $('empty-create').hidden = !state.status?.directory;
   const running = activeRunStates.has(state.execution?.state);
   const hasCurrent = Boolean(state.current && state.view === 'detail');
   for (const id of ['enqueue', 'export', 'refresh-detail'])
-    $(id).disabled = state.busy || !hasCurrent;
+    $(id).disabled = working || !hasCurrent;
   const selectedItems = (state.current?.items ?? []).filter(item => state.selected.has(item.intentId));
   const any = hasCurrent && selectedItems.length > 0;
-  $('run-command').disabled = state.busy || !any || selectedItems.some(item => item.state !== 'QUEUED');
-  $('cancel').disabled = state.busy || running || !any || selectedItems.some(item => item.state !== 'QUEUED');
-  $('recover').disabled = state.busy || running || !any || selectedItems.some(item => item.job?.attempt?.kind !== 'EXECUTE');
+  $('run-command').disabled = working || !any || selectedItems.some(item => item.state !== 'QUEUED');
+  $('cancel').disabled = working || running || !any || selectedItems.some(item => item.state !== 'QUEUED');
+  $('recover').disabled = working || running || !any || selectedItems.some(item => item.job?.attempt?.kind !== 'EXECUTE');
   $('enqueue').disabled ||= running;
   $('save-collection').disabled ||= running;
   $('export').disabled ||= running;
   $('run-command').disabled ||= running;
   const browser = state.status?.paymentApproval === 'original-browser';
   $('run-browser').hidden = !browser; $('run-workspaces').hidden = !browser;
-  $('run-browser').disabled = state.busy || running || !browser || !any
+  $('run-browser').disabled = working || running || !browser || !any
     || selectedItems.some(item => item.state !== 'QUEUED');
-  $('pause-run').disabled = state.busy || !state.connected || !running
+  $('pause-run').disabled = working || !state.connected || !running
     || state.execution?.state === 'PAUSING';
-  $('save-collection').disabled = state.busy || running || !state.preview;
+  $('save-collection').disabled = working || running || !state.preview;
   $('copy-command').disabled = !state.command;
   for (const button of document.querySelectorAll('[data-download-key]'))
-    button.disabled = state.busy || !state.connected || state.downloads.has(button.dataset.downloadKey);
+    button.disabled = working || !state.connected || state.downloads.has(button.dataset.downloadKey);
   $('selection-count').textContent = state.selected.size + ' selected';
   $('connection-state').textContent = state.connected
-    ? state.busy ? 'Updating' : running ? 'Run in progress' : 'Private session' : 'Locked';
+    ? working ? 'Updating' : running ? 'Run in progress' : 'Private session' : 'Locked';
   if (state.approval) redrawApproval(false);
   if (state.recoveryBusy) for (const id of ['preview-button', 'save-collection', 'enqueue', 'export',
     'recover', 'cancel', 'run-command', 'run-browser', 'new-collection', 'empty-create']) $(id).disabled = true;
 }
 async function task(label, operation) {
-  if (state.busy) return;
+  if (state.busy || state.composerBusy || state.recoveryBusy) return;
   state.busy = true; buttons(); say(label);
   try { await operation(); }
   catch (error) { say(humanError(error), 'error'); }
   finally {
     state.busy = false; buttons();
-    if (state.pendingToken) {
-      const token = state.pendingToken; state.pendingToken = null;
-      void task('Reconnecting to the workspace…', async () => { await connect(token); say('Private session refreshed.'); });
-    }
+    resumePendingConnection();
   }
+}
+function resumePendingConnection() {
+  if (state.busy || state.composerBusy || state.recoveryBusy || !state.pendingToken) return;
+  const token = state.pendingToken; state.pendingToken = null;
+  void task('Reconnecting to the workspace…', async () => { await connect(token); say('Private session refreshed.'); });
 }
 function table(headings, rows) {
   const wrap = node('div', null, 'table-wrap'), table = node('table');
@@ -360,6 +387,7 @@ async function selectCollection(id) {
   const changed = state.selectedId !== id;
   state.selectedId = id;
   if (changed) {
+    $('shared-workspace').value = ''; $('intent-workspaces').value = '';
     state.selected.clear(); state.command = null; state.exported = null;
     $('command-panel').hidden = true; $('export-panel').hidden = true;
   }
@@ -368,7 +396,7 @@ async function selectCollection(id) {
   renderList(); buttons();
 }
 function beginCreate() {
-  if (state.busy || state.recoveryBusy || !state.status?.directory) return;
+  if (state.busy || state.composerBusy || state.recoveryBusy || !state.status?.directory) return;
   state.preview = null; $('preview-panel').hidden = true;
   $('collection-id').value = 'collection-' + crypto.randomUUID().slice(0, 8);
   $('collection-name').value = ''; $('config-files').value = '';
@@ -396,7 +424,7 @@ async function connect(token) {
   try { sessionStorage.setItem(sessionKey, state.token); } catch {}
   $('connection').hidden = true; $('workspace').hidden = false; $('lock').hidden = false;
   $('session-key').value = '';
-  renderLocations(); await refresh(); await recoveryPanel.connect(status);
+  renderLocations(); await refresh(); await recoveryPanel.connect(status); composerPanel.connect(status);
   if (!status.directory) showView('recovery'); buttons();
 }
 function renderExecution() {
@@ -497,12 +525,14 @@ function selectedWorkspaces() {
       { code: 'COLLECTION_ONE_WORKSPACE_SOURCE_REQUIRED' });
   if (workspace) return { workspace };
   const workspaceByIntent = Object.create(null);
+  const known = new Set((state.current?.items ?? []).map(item => item.intentId)), seen = new Set();
   for (const line of lines) {
     const split = line.indexOf('='), intent = line.slice(0, split).trim(), directory = line.slice(split + 1).trim();
-    if (split < 1 || !state.selected.has(intent) || Object.hasOwn(workspaceByIntent, intent))
+    if (split < 1 || !known.has(intent) || seen.has(intent))
       throw Object.assign(new Error('COLLECTION_WORKSPACE_MAP_INVALID'),
         { code: 'COLLECTION_WORKSPACE_MAP_INVALID' });
-    workspaceByIntent[intent] = directory;
+    seen.add(intent);
+    if (state.selected.has(intent)) workspaceByIntent[intent] = directory;
   }
   return { workspaceByIntent };
 }
@@ -639,6 +669,10 @@ $('export').addEventListener('click', () => task('Saving results export…', asy
   say('Results exported to the saved workspace location.');
 }));
 $('open-recovery').addEventListener('click', () => { showView('recovery'); buttons(); });
+for (const id of ['open-composer', 'empty-compose']) $(id).addEventListener('click', () => {
+  if (state.busy || state.composerBusy || state.recoveryBusy) return;
+  showView('composer'); buttons(); $('composer-panel').scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
 $('lock').addEventListener('click', () => { locked(); say('Workspace locked in this tab.'); });
 $('connect-form').addEventListener('submit', event => {
   event.preventDefault();
@@ -650,7 +684,7 @@ window.addEventListener('hashchange', () => {
   const token = location.hash.slice(1);
   if (!token) return;
   history.replaceState(null, '', location.pathname);
-  if (state.busy) { state.pendingToken = token; return; }
+  if (state.busy || state.composerBusy || state.recoveryBusy) { state.pendingToken = token; return; }
   void task('Reconnecting to the workspace…', async () => { await connect(token); say('Private session refreshed.'); });
 });
 let initialToken = location.hash.slice(1);
@@ -664,7 +698,8 @@ if (initialToken) {
 } else locked();
 setInterval(() => {
   void recoveryPanel.refresh();
-  if (!state.connected || state.busy || document.hidden || state.view === 'create' && !activeRunStates.has(state.execution?.state)) return;
+  if (!state.connected || state.busy || state.composerBusy || document.hidden
+    || (state.view === 'create' || state.view === 'composer') && !activeRunStates.has(state.execution?.state)) return;
   refresh({ silent: true }).catch(error => {
     state.approval = null; state.approvalDecision = null; approvalPanel.disconnect();
     if (state.connected) say(humanError(error), 'error');

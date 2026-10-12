@@ -71,6 +71,21 @@ Review/Save, Review Start, Start, Open and Stop operations. The provider starts
 this same command and reads its exact listener status. Saved application and
 runtime identities stay with the original Applications lifecycle.
 
+## Save a customer operating plan
+
+Choose **Operating plans** in the browser to turn selected registrations into
+a named customer procedure with ordered work, exact arguments, owners, recorded
+progress, revision history and complete transfer files. Each Command finder
+result can be added directly to a plan.
+
+Use a consistent listener port, such as `starforge discover serve --port 8846`,
+to reopen the browser's saved plans. The same model is available through
+`starforge discover plan --help` and the typed
+`@tokenjunkielabs/starforge-merchant/operator/operating-plans` API.
+
+[Prepare, run and hand over operating plans](./OPERATING_PLANS.md) covers the
+editor, source comparison, history, draft recovery and complete JSON import.
+
 ## Export the complete selection
 
 ```sh
@@ -116,6 +131,22 @@ A source may own several commands, exports and runtime groups. Their
 `featureIds` record that shared source relationship. Select the actual feature
 profile through the existing runtime profile and installer when preparing a
 runtime; `starforge doctor --feature NAME` inspects available dependencies.
+
+
+## Products covering required capabilities
+
+Use **Build a product** in the original Runtime workspace to select a complete capability requirement and compare maintained recipes. The original product catalog supplies search and comparison; the requirements extension adds exact coverage, source owners, committed runtime versions and native build review request exports.
+
+~~~sh
+starforge discover requirements --repository /srv/starforge/source \
+  --require command:grant-workspace --require command:grant-source-tables
+
+starforge discover review-request grant-operations \
+  --repository /srv/starforge/source --out grant-review-request.json \
+  --require command:grant-workspace --require command:grant-source-tables
+~~~
+
+[Choose a product by required capabilities](./PRODUCT_REQUIREMENTS.md) explains exact IDs, complete and partial coverage, dependency locks, native review handoff and typed APIs.
 
 ## JavaScript and TypeScript
 

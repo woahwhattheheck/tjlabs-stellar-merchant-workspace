@@ -17,6 +17,48 @@ After the original Performance result reaches `COMPLETE`, a new financial operat
 
 The original `performance-financial.mjs` helper then continues the saved case, quotation, invoice and calendar under its retained source root and request IDs. The following manual source-receive and helper commands remain useful for an operator who is already inside that same retained process; the complete continuation entry point composes those maintained operations with the archive receiving and save lifecycle.
 
+## Receive original source files on another equipped host
+
+The original caller can read the complete already-received source files directly. Add `sourceFiles` to the same private native04 input:
+
+```json
+{
+  "sourceFiles": {
+    "compact": "/ABS/native04-source/compact-source.json",
+    "complete": "/ABS/native04-source/complete-source.json",
+    "following": "/ABS/native04-source/financial-source-successor.json"
+  }
+}
+```
+
+These are additional fields in the complete original input; retain its archive selection, four native archive helper bodies, compact-source descriptor and existing operation options. Receive the three original files as full UTF-8 bytes through the existing connected Git or source-transfer tools:
+
+| Input | Original Git blob | Bytes |
+| --- | --- | ---: |
+| compact | `96d4980da9795e19f7cc1daecdb51634e04da018` | 2,485,576 |
+| complete | `0fff38e8e50d8c96be1b3f91cad7b4f8e8dc2c01` | 9,291,618 |
+| following | `a5548d76367906e07c4726bd6237080fbe3ef410` | 250,851 |
+
+All three blobs are in `woahwhattheheck/tjlabs-stellar-merchant-workspace`. The following file is also published at commit `c2199987c03b59ee41cc28c0f247840e3948ea87`, path `experiments/merchant-performance-financial-84df-20261012/financial-source-successor.json`. Preserve the final newline and original Unicode. The complete file has SHA256 `6a0bb5c96335fcc82cee328b4932952b84437c6e42eda53e69c3b539c8b816e5`; the following file has SHA256 `aa97fd5757afdf49f2e8b244621266e7384f187d8c5edafc5978b4a2f1772355`.
+
+A complete checkout of this maintained experiment directory is also sufficient. The original `native04-compact-source.json`, `source-transfer.json`, seven `source-parts/` files and `financial-source-successor.json` are retained at their original paths. Select `index` in place of `complete`:
+
+```json
+{
+  "sourceFiles": {
+    "compact": "/ABS/checkout/experiments/merchant-performance-financial-84df-20261012/native04-compact-source.json",
+    "index": "/ABS/checkout/experiments/merchant-performance-financial-84df-20261012/source-transfer.json",
+    "following": "/ABS/checkout/experiments/merchant-performance-financial-84df-20261012/financial-source-successor.json"
+  }
+}
+```
+
+The original index is Git `0c5ca60440d46895bcd2c03a6254850708f29620`, 4,949 bytes. The caller reads its seven original part files relative to that index, verifies the complete part bytes and content descriptors, and joins their UTF-8 content in the original order. The resulting complete source must match the exact 9,291,618-byte identity above. This mode consumes the existing indexed source directly. A provider preview or shortened response cannot supply these inputs.
+
+The caller verifies all three complete files before adopting source. It resolves any required original module, whole carrier, index or ordered part from those same immutable source bytes and checks the resulting Git identity. This intake performs zero Git requests and uses the selected original regular files. Its source journal records `sourceIntake: "retained-local-source"`, the selected paths and the actual returned blob reads. Omitting `sourceFiles` selects the existing secondary Git reader and its original account verification.
+
+Run the same maintained command shown above from the equipped Linux host. Use its existing Python and Node runtime, the same private archive receiver and the same saved native04 case. The original 411-file Performance installer, 474-file financial source continuation, request replay, attempt history, child cleanup and complete private save remain in the original caller. Reconcile a recovered newer native04 checkpoint with the current receiving owner before entering the original continuation.
+
 ## Source and existing input
 
 The complete current Pricing/Commercial source is retained in canonical Git blob598a222c3ca2fa480359e33dca02955e9f22f00e in woahwhattheheck/tjlabs-stellar-merchant-workspace: 8,072,936 UTF-8 bytes, SHA256 31e20a31de004333d72d8fc3161ed7a0b82681b22f5b5c9703a9d9c819cb5723. It carries the complete411-file current source and the frozen181-file original tariff source separately, including the twelve original workspace browser assets needed by the integrated listener. Preserve both original source roots and the saved operation paths.
@@ -126,3 +168,37 @@ node /dev/scf-performance-25fd-20261012-native04/work/financial-source/experimen
 ```
 
 The existing financial programme continues the original recipient case, accepted response, revised quotation, pricing/performance source and native IDs. Its operation and complete output retain the exact source descriptors it actually loads. The original native04 Performance source and frozen foundation remain attached to their own completed records. The existing 84DF receiver owns this same customer operation and reconciles the latest saved native04 archive before continuing it.
+
+## Explicit disk directory for receiving and saved exports
+
+On a host whose `/dev` tmpfs is too small for complete result archives, the
+original continuation accepts an optional `receivingDirectory` in the private
+input:
+
+```json
+{
+  "receivingDirectory": "/mnt/data/native04-private-receiving"
+}
+```
+
+Select an absolute normalized directory owned by the receiver, with mode
+`0700`, outside
+`/dev/scf-performance-25fd-20261012-native04`. The caller creates a new
+private child there for the original file helpers, downloads, temporary
+files, complete ZIP and result reports. Every selected ancestor must be a
+real directory. Omitting the field preserves the original `/dev` placement.
+The source, case, requests, quotation material, financial paths and final
+private-save operation keep their existing behavior.
+
+This placement is separate from the saved native04 work tree. The existing
+archive and programmes retain the canonical absolute work path
+`/dev/scf-performance-25fd-20261012-native04/work`, and their original
+receiving/accounting checks require real paths. Use an existing authorized
+filesystem mapping, such as an owned bind mount, when that canonical tree
+must physically use another filesystem. A symbolic link does not satisfy
+those original contracts. Retain the backing directory and completed output
+through the original receiver's final save.
+
+The complete original archive is 10,843,745 bytes and expands to 52,658,994
+bytes before additional source, operating files and exports. Reserve space
+for the whole continuation when selecting its physical work location.

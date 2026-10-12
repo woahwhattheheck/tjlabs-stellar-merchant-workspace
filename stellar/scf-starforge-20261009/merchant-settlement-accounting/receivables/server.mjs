@@ -7,6 +7,8 @@ import {accountingWorkspaceBinding, assertAccountingWorkspaceBinding} from '../w
 import {ReceivablesWorkspace, RECEIVABLE_REQUEST_BYTES} from './store.mjs';
 import {renderCustomerTar} from './core.mjs';
 import {PaymentPlanWorkspace} from './payment-plans/store.mjs';
+import {BankStatementsWorkspace} from './bank-statements/store.mjs';
+import {bankStatementAsset, handleBankStatementsRequest, BANK_REQUEST_BYTES} from './bank-statements/server.mjs';
 import {paymentPlanAsset, handlePaymentPlansRequest, PAYMENT_PLAN_REQUEST_BYTES} from './payment-plans/server.mjs';
 import {readBrowserAssets} from '../../distribution/browser-assets.mjs';
 import {CustomerStatementWorkspace, STATEMENT_REQUEST_BYTES} from '../customer-statements/store.mjs';
@@ -144,6 +146,14 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       result = {schema, workspaceId, sourcesSha256};
     }
     else if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'remittances') result = await receivables.remittances();
+    else if (parts[0] === 'remittances' && parts[1] === 'operations' && parts.length === 3)
+      result = await receivables.remittanceOperation(parts[2]);
+    else if (parts[0] === 'remittances' && parts.length === 2) result = await receivables.remittance(parts[1]);
+    else if (parts[0] === 'remittances' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.remittanceFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'credit-control') result = await receivables.creditControl({
       customerId:search.get('customerId')||undefined,search:search.get('search')||undefined,
     });
@@ -184,6 +194,24 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       result = await receivables.collectionReminder(parts[1], {asOf: search.get('asOf') || undefined});
     else if (parts[0] === 'collections' && parts[2] === 'files' && parts.length === 4) {
       const selected = await receivables.collectionFile(parts[1], parts[3], {asOf: search.get('asOf') || undefined});
+      return {file: selected, type: selected.type};
+    }
+    else if (route === 'bank-accounts') result = await receivables.bankAccounts({
+      status: search.get('status') || undefined, search: search.get('search') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (route === 'bank-imports') result = await receivables.bankImports({
+      accountId: search.get('accountId') || undefined, status: search.get('status') || undefined,
+      search: search.get('search') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'bank-imports' && parts.length === 2) result = await receivables.bankImport(parts[1], {
+      view: search.get('view') || undefined, rowStatus: search.get('rowStatus') || undefined,
+      direction: search.get('direction') || undefined, search: search.get('search') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'bank-imports' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.bankImportFile(parts[1], parts[3]);
       return {file: selected, type: selected.type};
     }
     else if (route === 'funds') result = await receivables.customerFunds({
@@ -240,6 +268,8 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'remittances/preview') result = await receivables.previewRemittance(value);
+    else if (route === 'remittances') result = await receivables.applyRemittance(value);
     else if (route === 'credit-control/policies') result = await receivables.saveCreditPolicy(value);
     else if (parts[0] === 'credit-control' && parts[1] === 'invoices' && parts[3] === 'assessment' && parts.length === 4)
       result = await receivables.previewCreditAssessment(parts[2],value);
@@ -260,6 +290,17 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       else if (parts[2] === 'close') result = await receivables.closeCollectionCase(parts[1], value);
       else if (parts[2] === 'reopen') result = await receivables.reopenCollectionCase(parts[1], value);
       else throw problem('NOT_FOUND', 'Choose an existing collection case operation.', 404);
+    }
+    else if (route === 'bank-accounts') result = await receivables.saveBankAccount(value);
+    else if (route === 'bank-imports/inspect') result = await receivables.inspectBankSource(value);
+    else if (route === 'bank-imports') result = await receivables.importBankSource(value);
+    else if (parts[0] === 'bank-imports' && parts.length === 3) {
+      if (parts[2] === 'preview') result = await receivables.previewBankPosting(parts[1], value);
+      else if (parts[2] === 'post') result = await receivables.postBankReceipts(parts[1], value);
+      else if (parts[2] === 'ignore') result = await receivables.ignoreBankRows(parts[1], value);
+      else if (parts[2] === 'restore') result = await receivables.restoreBankRows(parts[1], value);
+      else if (parts[2] === 'close') result = await receivables.closeBankImport(parts[1], value);
+      else throw problem('NOT_FOUND', 'This bank statement operation does not exist.', 404);
     }
     else if (route === 'refunds/preview') result = await receivables.previewRefund(value);
     else if (route === 'refunds') result = await receivables.commitRefund(value);
@@ -298,11 +339,13 @@ export async function handleReceivablesRequest(receivables, {method, path, query
 }
 
 /** Compose with a provided accounting workspace; no additional lease is acquired. */
-export async function createReceivablesHandler(receivables, {apiPath = '/api/receivables', uiPath = '/receivables', port, statements, paymentPlans} = {}) {
+export async function createReceivablesHandler(receivables, {apiPath = '/api/receivables', uiPath = '/receivables', port, statements, paymentPlans, bankStatements} = {}) {
   apiPath = basePath(apiPath, '/api/receivables'); uiPath = basePath(uiPath, '/receivables');
   await receivables.init();
   if (paymentPlans) await paymentPlans.init();
-  const planApiPath = apiPath + '/payment-plans';
+  bankStatements ??= new BankStatementsWorkspace(receivables);
+  await bankStatements.init();
+  const planApiPath = apiPath + '/payment-plans', bankApiPath = apiPath + '/bank-statements';
   return async function receivablesHandler(request, response) {
     let url;
     try { url = new URL(request.url || '/', 'http://localhost'); } catch { return false; }
@@ -312,7 +355,9 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
       url.pathname === '/api/customer-statements' || url.pathname.startsWith('/api/customer-statements/'));
     const planUi = url.pathname === '/payment-plans' || url.pathname.startsWith('/payment-plans/');
     const planRequest = paymentPlans && (planUi || url.pathname === planApiPath || url.pathname.startsWith(planApiPath + '/'));
-    if (!api && !ui && !customer && !planRequest) return false;
+    const bankUi = url.pathname === '/bank-statements' || url.pathname.startsWith('/bank-statements/');
+    const bankRequest = bankUi || url.pathname === bankApiPath || url.pathname.startsWith(bankApiPath + '/');
+    if (!api && !ui && !customer && !planRequest && !bankRequest) return false;
     securityHeaders(response);
     try {
       const mutation = request.method === 'POST';
@@ -320,7 +365,9 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
       if (request.method === 'GET' || request.method === 'HEAD') {
         if (url.pathname === uiPath) { response.writeHead(302, {Location: uiPath + '/'}); response.end(); return true; }
         if (planRequest && url.pathname === '/payment-plans') { response.writeHead(302, {Location: '/payment-plans/'}); response.end(); return true; }
-        const asset = planRequest ? await paymentPlanAsset(url.pathname, {apiPath: planApiPath}) :
+        if (bankRequest && url.pathname === '/bank-statements') { response.writeHead(302, {Location: '/bank-statements/'}); response.end(); return true; }
+        const asset = bankRequest ? await bankStatementAsset(url.pathname, {apiPath: bankApiPath, receivablesApiBase: apiPath, receivablesUi: uiPath + '/'}) :
+          planRequest ? await paymentPlanAsset(url.pathname, {apiPath: planApiPath}) :
           ui ? await receivablesAsset(url.pathname, {apiPath, uiPath}) : customer ? await customerStatementAsset(url.pathname) : null;
         if (asset) {
           response.writeHead(200, {'Content-Type': asset.type, 'Content-Length': asset.bytes.length});
@@ -328,11 +375,12 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
         }
       }
       if (request.method !== 'GET' && request.method !== 'POST') throw problem('METHOD_NOT_ALLOWED', 'Use a supported workspace operation.', 405);
-      const value = mutation ? await body(request, planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
+      const value = mutation ? await body(request, bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
       const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath,
         expectedWorkspaceId: request.headers['x-accounting-workspace-id'],
         expectedSourcesSha256: request.headers['x-accounting-sources-sha256']};
-      const result = planRequest ? await handlePaymentPlansRequest(paymentPlans, {...parameters, apiPath: planApiPath}) :
+      const result = bankRequest ? await handleBankStatementsRequest(bankStatements, {...parameters, apiPath: bankApiPath}) :
+        planRequest ? await handlePaymentPlansRequest(paymentPlans, {...parameters, apiPath: planApiPath}) :
         customer ? await handleCustomerStatementRequest(statements, parameters) : await handleReceivablesRequest(receivables, parameters);
       if (!result) throw problem('NOT_FOUND', 'This workspace route does not exist.', 404);
       if (result.file) file(response, result.file);
@@ -344,7 +392,7 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
     } catch (error) {
       if (response.headersSent) { response.end(); return true; }
       const responseError = publicError(error);
-      if (responseError.status === 405) response.setHeader('Allow', ui || planUi ? 'GET, HEAD' : 'GET, POST');
+      if (responseError.status === 405) response.setHeader('Allow', ui || planUi || bankUi ? 'GET, HEAD' : 'GET, POST');
       json(response, responseError.status, responseError.value);
     }
     return true;
@@ -375,11 +423,13 @@ export async function prepareReceivablesServer(options = {}) {
   let receivables;
   let statements;
   let paymentPlans;
+  let bankStatements;
   try {
     receivables = new ReceivablesWorkspace(workspace);
     if (options.includeCustomerStatements !== false) { statements = new CustomerStatementWorkspace(workspace); await statements.init(); }
     if (options.includePaymentPlans !== false) paymentPlans = new PaymentPlanWorkspace(workspace);
-    handler = await createReceivablesHandler(receivables, {...options, port: port || undefined, statements, paymentPlans});
+    bankStatements = new BankStatementsWorkspace(receivables);
+    handler = await createReceivablesHandler(receivables, {...options, port: port || undefined, statements, paymentPlans, bankStatements});
   } catch (error) { if (ownsWorkspace) await workspace.close(); throw error; }
   const server = createServer(async (request, response) => {
     try {
@@ -396,7 +446,7 @@ export async function prepareReceivablesServer(options = {}) {
     if (server.listening) await new Promise((accept, reject) => server.close(error => error ? reject(error) : accept()));
     if (ownsWorkspace) await workspace.close();
   }
-  return {server, workspace, receivables, statements, paymentPlans, handler, port, close,
+  return {server, workspace, receivables, statements, paymentPlans, bankStatements, handler, port, close,
     async listen() {
       await new Promise((accept, reject) => { server.once('error', reject); server.listen(port, host, () => {server.off('error', reject); accept();}); });
       const actual = server.address();

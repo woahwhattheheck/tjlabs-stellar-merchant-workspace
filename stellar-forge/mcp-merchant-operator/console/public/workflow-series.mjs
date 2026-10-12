@@ -6,7 +6,8 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
   const routes={'series-save':'workflow-series-save','series-cycle-save':'workflow-cycle-save',
     'series-cycle-start':'workflow-cycle-start','series-cycle-cancel':'workflow-cycle-cancel'};
   const own={profileId:null,session:null,list:[],selected:null,id:null,dirty:false,version:0,selection:0,refresh:0,
-    page:null,offset:0,cycle:null,cycleVersion:0,cycleSelection:0,review:null,pending:[],ready:false,lastRefresh:0,calendar:null};
+    page:null,offset:0,cycle:null,cycleVersion:0,cycleSelection:0,review:null,pending:[],ready:false,lastRefresh:0,calendar:null,
+    agenda:null,agendaEpoch:0,agendaLoading:false};
   const order=value=>Array.isArray(value)?value.map(order):value&&typeof value==='object'?
     Object.fromEntries(Object.keys(value).sort().map(key=>[key,order(value[key])])):value;
   const same=(a,b)=>JSON.stringify(order(a))===JSON.stringify(order(b));
@@ -25,7 +26,8 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
     own.profileId=state.profile?.id??null;own.session=state.sessionEpoch;own.version++;own.selection++;
     own.refresh++;own.cycleVersion++;own.cycleSelection++;own.list=[];own.selected=null;own.id=null;
     own.dirty=false;own.page=null;own.offset=0;own.cycle=null;own.review=null;own.pending=[];own.ready=false;
-    own.lastRefresh=0;own.calendar=null;
+    own.lastRefresh=0;own.calendar=null;own.agenda=null;own.agendaEpoch++;own.agendaLoading=false;
+    resetAgenda();
     for(const id of ['series-editor','series-work','series-cycle-editor','series-review','series-cycle-detail','series-pending'])$(id).hidden=true;
     for(const id of ['series-calendar-list','series-cycles','series-pending-list'])$(id).replaceChildren();
     renderList();sync();
@@ -260,6 +262,84 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
       packet.manual?'This series selects each period explicitly. Use New period or source edition.':'No periods overlap this calendar window.');
     $('series-calendar-next').hidden=!packet.nextFrom;
   }
+  function localDay(value=new Date()){
+    return String(value.getFullYear()).padStart(4,'0')+'-'+String(value.getMonth()+1).padStart(2,'0')+'-'+String(value.getDate()).padStart(2,'0');
+  }
+  function resetAgenda(){
+    const date=new Date(),later=new Date(date.getFullYear(),date.getMonth(),date.getDate()+30);
+    $('series-agenda-from').value=localDay(date);$('series-agenda-to').value=localDay(later);
+    $('series-agenda-today').value=localDay(date);$('series-agenda-query').value='';
+    $('series-agenda-status').value='open';$('series-agenda-overdue').checked=true;$('series-agenda-proposed').checked=true;
+    renderAgenda();
+  }
+  function agendaRequest(offset=0){
+    return {profileId:requireProfile().id,from:$('series-agenda-from').value,to:$('series-agenda-to').value,
+      today:$('series-agenda-today').value,query:$('series-agenda-query').value,status:$('series-agenda-status').value,
+      includeOverdue:$('series-agenda-overdue').checked,includeProposed:$('series-agenda-proposed').checked,offset,limit:50};
+  }
+  function agendaChanged(){
+    own.agendaEpoch++;own.agenda=null;own.agendaLoading=false;renderAgenda();sync();
+  }
+  async function loadAgenda(offset=0){
+    const request=agendaRequest(offset),ctx=context(),epoch=++own.agendaEpoch;
+    own.agendaLoading=true;sync();
+    try{
+      const packet=await invoke('workflow-series-agenda',request,ctx);
+      if(!current(ctx)||epoch!==own.agendaEpoch)return;
+      own.agenda=packet;renderAgenda();
+    }finally{if(current(ctx)&&epoch===own.agendaEpoch){own.agendaLoading=false;sync();}}
+  }
+  async function openAgendaItem(item){
+    const ctx=context();
+    await openSeries(item.seriesId,{revision:item.seriesRevision});
+    if(!current(ctx)||own.selected?.id!==item.seriesId||own.selected.revision!==item.seriesRevision)return;
+    if(item.kind==='saved'){
+      await openCycle(item.id);
+      if(current(ctx))$('series-cycle-detail').scrollIntoView({block:'start'});
+    }else{
+      newCycle(item);$('series-cycle-editor').scrollIntoView({block:'start'});
+    }
+  }
+  function renderAgenda(){
+    const packet=own.agenda,body=$('series-agenda-rows');
+    body.replaceChildren();
+    if(!packet){
+      text($('series-agenda-summary'),'Choose a due-date window and open the delivery agenda.');
+      text($('series-agenda-page'),'');
+      const row=node('tr'),cell=node('td','Customer periods appear here.','empty');cell.colSpan=5;row.append(cell);body.append(row);return;
+    }
+    const counts=packet.counts;
+    text($('series-agenda-summary'),counts.total+' periods · '+counts.overdue+' overdue · '+counts.today+
+      ' due today · '+counts.proposed+' to plan · '+counts.attention+' awaiting attention · updated '+when(packet.generatedAt));
+    for(const item of packet.items){
+      const row=node('tr'),due=node('td'),work=node('td'),status=node('td'),source=node('td'),controls=node('td');
+      due.append(node('strong',item.dueDate),node('p',item.dueGroup==='today'?'Due today':item.dueGroup,'hint'));
+      work.append(node('strong',item.customer),node('p',item.seriesName),node('p',item.label,'hint'),
+        node('p',item.period.start+' to '+item.period.end,'hint'));
+      status.append(tag(item.state));
+      if(item.stepCount!==null)status.append(node('p',item.stepsComplete+' / '+item.stepCount+' steps','hint'));
+      if(!item.seriesEnabled)status.append(node('p','New work paused','hint'));
+      source.append(node('p',item.sourceEdition|| (item.kind==='proposed'?'Select the source for this period':'Source retained in original inputs'),'break'));
+      const open=node('button',item.kind==='proposed'?'Plan period':'Open period');open.type='button';
+      open.disabled=mutationActive();action(open,()=>openAgendaItem(item));controls.append(open,node('p',item.nextAction,'hint'));
+      row.append(due,work,status,source,controls);body.append(row);
+    }
+    if(!packet.items.length){
+      const row=node('tr'),cell=node('td',packet.total?'This page moved. Return to the first page.':'No customer periods match these dates and filters.','empty');
+      cell.colSpan=5;row.append(cell);body.append(row);
+    }
+    text($('series-agenda-page'),packet.total?'Showing '+(packet.items.length?packet.offset+1:0)+'–'+
+      (packet.offset+packet.items.length)+' of '+packet.total:'0 periods');
+  }
+  async function exportAgenda(){
+    const ctx=context(),request=agendaRequest(),epoch=own.agendaEpoch;
+    const packet=await invoke('workflow-series-agenda-calendar',request,ctx);
+    if(!current(ctx)||epoch!==own.agendaEpoch)return;
+    const href=URL.createObjectURL(new Blob([packet.content],{type:packet.mediaType})),link=node('a');
+    link.href=href;link.download=packet.filename;document.body.append(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(href),1000);
+    notice('Downloaded '+packet.events+' customer deadlines for the complete selected agenda.');
+  }
   async function refresh(force=false){
     profileChanged();const ctx=context();if(!ctx.profileId)return;
     if(!force&&Date.now()-own.lastRefresh<7000)return;
@@ -278,11 +358,17 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
       if(latest&&latest.revision!==own.selected.revision)
         text($('series-edition'),'Selected original edition '+own.selected.revision+' · latest edition '+latest.revision+'. Reopen the series to edit the latest.');
     }
+    if(force&&own.agenda)await loadAgenda(own.agenda.offset);
     sync();
   }
   function sync(){
     const selected=Boolean(state.profile),mutating=mutationActive(),saved=isSaved(),closing=Boolean(state.host?.console.closing);
     const ready=selected&&own.ready&&!mutating&&!closing;
+    $('series-agenda-load').disabled=!selected||own.agendaLoading;
+    $('series-agenda-export').disabled=!selected||own.agendaLoading;
+    $('series-agenda-previous').disabled=!own.agenda||own.agenda.offset===0||own.agendaLoading;
+    $('series-agenda-next').disabled=!own.agenda||own.agenda.nextOffset===null||own.agendaLoading;
+    for(const button of $('series-agenda-rows').querySelectorAll('button'))button.disabled=mutating;
     for(const button of $('series-pending-list').querySelectorAll('[data-series-retry]'))button.disabled=!ready;
     $('series-new').disabled=!selected||mutating;$('series-refresh').disabled=!selected||mutating;
     $('series-save').disabled=!ready||!own.id;$('series-export').disabled=!selected;
@@ -321,5 +407,12 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
   action($('series-calendar-next'),()=>calendar(true));
   action($('series-cycles-previous'),()=>openSeries(own.selected.id,{revision:own.selected.revision,offset:Math.max(0,own.offset-50)}));
   action($('series-cycles-next'),()=>openSeries(own.selected.id,{revision:own.selected.revision,offset:own.page.nextOffset}));
+  $('series-agenda-form').addEventListener('submit',event=>{event.preventDefault();busy(event.submitter,()=>loadAgenda());});
+  $('series-agenda-form').addEventListener('input',agendaChanged);
+  $('series-agenda-form').addEventListener('change',agendaChanged);
+  action($('series-agenda-export'),exportAgenda);
+  action($('series-agenda-previous'),()=>loadAgenda(Math.max(0,own.agenda.offset-50)));
+  action($('series-agenda-next'),()=>loadAgenda(own.agenda.nextOffset));
+  resetAgenda();
   return {refresh,profileChanged,reset,sync};
 }

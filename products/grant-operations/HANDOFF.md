@@ -1,14 +1,67 @@
 # Grant Operations — complete application handoff
 
-Use **starforge grant-application-handoff** to hand another operator one complete Grant Operations case together with the saved Application that opens its workspace. The receiving operator selects an installed runtime and private grant workspace, receives the original case through its native importer, reviews the destination Application, and saves it through the existing Applications writer.
+Use **starforge grant-application-handoff** to receive a complete original native Grant Operations case, or hand another operator that case together with the saved Application that opens its workspace. The receiving operator selects an installed runtime and private grant workspace, receives the original case through its native importer, reviews the destination Application, and saves it through the existing Applications writer.
 
-The single **grant-handoff.json** file contains the original complete operating-case ZIP and complete Applications setup JSON. It carries the pinned plan, original records and attachments, history, forecasts, portfolios, installation editions, statement and billing source, and every other item included by the installed case export. Its source metadata identifies the selected application revision, case version, runtime edition and original grant service. The setup document keeps the original application settings and source catalog beside those case bytes.
+The single **grant-handoff.json** file contains the original complete operating-case ZIP and complete Applications setup JSON. It carries the pinned plan, original records and attachments, history, forecasts, portfolios, installation editions, statement and billing source, and every other item included by the installed case export. A paired export's source metadata identifies the selected application revision, case version, runtime edition and original grant service. The setup document keeps the original application settings and source catalog beside those case bytes.
 
 The command is included in the **grant-operations** selected product. Its public API is **./grant/application-handoff**.
 
+## Use the Applications browser
+
+Open **Applications → Grant case handoff** in the existing private runtime workspace. The screen uses the same complete handoff operation as the installed command below.
+
+**Export a saved grant case.** Select the original saved Grant Application, then **Load current cases**. Each choice shows its native name, current version and operating purpose. Select the case, name the handoff, and choose **Export complete handoff**. Its retained operation provides **Download complete handoff**. If the original grant service is closed, select the explicit start option before loading its cases; a service borrowed from Applications stays under that Application's control.
+
+**Receive a complete handoff.** Select **Case and saved Application** and choose the whole **grant-handoff.json** file. The screen displays its original case version and the sizes of both complete files. Select the receiving READY runtime, Application name, case name, private grant workspace, Python executable, optional scenario, port and recording operator. Additional settings JSON carries any other required Application settings. Use the explicit service-start option when this operation should open a closed receiving service.
+
+**Prepare receiving** commits the complete uploaded bytes and destination bindings into the original handoff operation before obtaining the existing Applications host review. Inspect that host review, then choose **Receive case and review Application**. The native importer returns the actual received case, and the original Application review appears beside it. **Save reviewed Application** commits the existing writer's request. **Open saved Application** selects the resulting Application in the normal Applications view; use its existing Start/Open controls and select the named received case in Delivery operations.
+
+**Retained handoffs** lists the server's original browser operations with pagination. Open an operation to continue its export, case receiving or Application save. **Open last handoff** reopens the last selected operation remembered by this browser tab. Once preparation has committed, closing the browser or removing the incoming file does not remove the retained case, setup or host bindings. **Refresh operation** reads the current original operation after a response is lost.
+
+Prepared input fields remain fixed for that operation. **New export** or **New receiving operation** begins a deliberately separate selection while retaining the previous operation. If an input fails before preparation creates its original record, correct the input in a new operation.
+
+Browser operations live under **RUNTIME_WORKSPACE/grant-application-handoffs/OPERATION_ID**. **Complete operation details** gives that exact directory, request identities, original native result and complete Application review/result. The installed command can continue the same browser operation with that directory and its original runtime workspace; the browser then reads the updated operation. Browser uploads preserve complete valid UTF-8 bytes, and package inspection/import use the original size and source checks.
+
+## Receive a case produced before Applications was configured
+
+Choose **Original native case — complete ZIP** in the same receiving form. Select the original native operating-case ZIP, selected Installation ZIP, Delivery Queue ZIP, or another full-case wrapper supported by the installed Grant Operations importer. The input includes the complete original case; a delivery folder containing several separate reports and ZIPs is an outer carrier, so select its complete native case ZIP.
+
+The producing operator does not need to create a historical Application or recreate its old machine. The receiving operator selects the actual READY runtime, private grant workspace, Python executable and complete Application settings on the current host. The screen shows the original filename and byte size, then **Prepare receiving** saves those exact bytes and host bindings before the original Applications host review.
+
+Preparation creates a new unsaved setup from the receiving workspace's maintained Grant Application catalogue. Its retained document identifies this input as **native-archive**. It contains the full original ZIP and complete new setup with its original field values. A paired **grant-handoff.json** continues to retain its saved producing-host Application and revision.
+
+Use **Receive case and review Application** to continue. The original Grant importer reads and validates the complete case and any selected delivery wrapper, then returns the actual received case, imported plan and original history. The handoff obtains the source case identity and version from that native import. The displayed receiving Application review uses the selected host's exact settings. **Save reviewed Application** commits the original Applications writer's request. Open that saved Application and choose the received case to continue its existing installations, operating records, forecasts and portfolios.
+
+The original launcher supplies its running Node executable to both the Buyer and Support source readers. A case containing original Node observations can therefore reopen through this same native receiving flow when the host was started with an absolute Node path. Explicit SF47_BUYER_NODE and SF47_SUPPORT_NODE selections remain available for an operator's existing environment.
+
+The installed command performs the same operation. With the complete receiving binding file described below:
+
+~~~sh
+starforge grant-application-handoff prepare \
+  --workspace /absolute/receiving/runtime-workspace \
+  --operation /absolute/receiving/native-case-operation \
+  --case-archive /absolute/delivery/complete-native-case.zip \
+  --bindings /absolute/receiving/host-bindings.json \
+  --name "Customer grant operations"
+
+starforge grant-application-handoff receive \
+  --workspace /absolute/receiving/runtime-workspace \
+  --operation /absolute/receiving/native-case-operation
+
+starforge grant-application-handoff save \
+  --workspace /absolute/receiving/runtime-workspace \
+  --operation /absolute/receiving/native-case-operation
+~~~
+
+The operator reads the returned Application review between **receive** and **save**. Both commands return the original operation when repeated. Resume **prepare** using only the original workspace and operation directory, or pass the same original ZIP and bindings; changed bytes require a new operation. Once prepared, the incoming ZIP can move without affecting the retained original.
+
+The native case limit is **32 MiB**. Browser transfer uses canonical base64 for the original binary bytes and keeps the original filename. The receiving package stores those bytes, the new setup, explicit bindings and the original native import/Application save requests together. A completed native import is recovered through its existing request identity, including a response lost before the handoff record advances. The native importer preserves the original source plan and case identity in the received case's origin, while assigning its actual receiving case and plan identities.
+
+After saving, the ordinary **Export a saved grant case** form can export the received case and its now-saved Application as a normal complete paired handoff. This is the same export, independent receiving and reopen workflow described below.
+
 ## 1. Choose the source and destination
 
-Use the original runtime workspace containing the saved **Grant planning and delivery** Application. Read that application's ID and the case's current native ID/version from Applications and the grant operator. The source and receiving runtime workspaces each need an attached **READY** runtime containing Grant Operations.
+Use the original runtime workspace containing the saved **Grant planning and delivery** Application. Read that application's ID and the case's current native ID/version from Applications and the grant operator. The source and receiving runtime workspaces each need an attached **READY** runtime containing Grant Operations. For a native ZIP, only the receiving workspace needs a saved runtime binding; the source is the retained original archive.
 
 A receiving operation names the private grant workspace explicitly. It can receive into a new workspace or into an existing one. The native importer creates its destination plan and case while preserving the original record, attachment and history identities. Existing cases stay available in the same workspace.
 
@@ -194,7 +247,9 @@ import {
 } from '@tokenjunkielabs/starforge-merchant/grant/application-handoff';
 ~~~
 
-The exported functions accept an opened original runtime-workspace model where required:
+The exported functions accept an opened original runtime-workspace model where required. Browser and service adapters can pass **packageText** and a complete **bindingsValue** to preparation instead of input paths; the same original atomic preparation stores their full bytes and native requests. **grantHandoffCases** reads the original selected Application's native case list, and **grantHandoffDownload** returns the complete original export for an authenticated browser.
+
+
 
 ~~~js
 const exported = await exportGrantHandoff(sourceModel, {
