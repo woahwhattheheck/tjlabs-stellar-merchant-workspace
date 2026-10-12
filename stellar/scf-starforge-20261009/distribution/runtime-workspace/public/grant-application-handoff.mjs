@@ -35,10 +35,10 @@ export function createGrantApplicationHandoffView({
 }) {
   let scope = 0, busy = false, loaded = false, workspaceId = null, selectedOperation = null;
   let cases = [], caseApplicationId = null, sourceOperationId = null, receivingOperationId = null;
-  let packageText = null, inspected = null, fileGeneration = 0, cursor = null, trail = [], nextCursor = null;
+  let packageText = null, caseBase64 = null, caseFilename = null, inspected = null, fileGeneration = 0, cursor = null, trail = [], nextCursor = null;
   const section = el('details', undefined, 'panel');
   section.append(el('summary', 'Grant case handoff'));
-  section.append(el('p', 'Transfer a complete grant case and its saved Application. Choose the receiving host, receive the case, then review and save its Application.', 'note'));
+  section.append(el('p', 'Receive a complete native grant case or a case with its saved Application. Choose the receiving host, receive the original case, then review and save its Application.', 'note'));
   const sourceForm = el('form'), sourceFields = el('fieldset');
   sourceFields.append(el('legend', 'Export a saved grant case'));
   const sourceApp = el('select'); sourceApp.required = true;
@@ -68,8 +68,12 @@ export function createGrantApplicationHandoffView({
   sourceForm.append(newExport);
 
   const receiveForm = el('form'), receiveFields = el('fieldset');
-  receiveFields.append(el('legend', 'Receive a complete handoff'));
+  receiveFields.append(el('legend', 'Receive a complete case'));
+  const receiveFormat = el('select');
+  receiveFormat.append(new Option('Case and saved Application — grant-handoff.json', 'paired'),
+    new Option('Original native case — complete ZIP', 'native'));
   const file = input('file'); file.accept = 'application/json,.json';
+  const fileLabel = field('Complete grant-handoff.json', file);
   const inspection = el('div', undefined, 'result'); inspection.hidden = true;
   const destinationRuntime = el('select'); destinationRuntime.required = true;
   const label = input(), caseName = input(), directory = input(), python = input('text', '/usr/bin/python3');
@@ -86,7 +90,7 @@ export function createGrantApplicationHandoffView({
     field('Python executable', python), field('Original scenario, if needed', scenario),
     field('Application port; 0 chooses an available port', port), field('Recording operator', actor));
   const prepareButton = el('button', 'Prepare receiving'); prepareButton.type = 'submit';
-  receiveFields.append(field('Complete grant-handoff.json', file), inspection, destination,
+  receiveFields.append(field('Incoming format', receiveFormat), fileLabel, inspection, destination,
     field('Start the original receiving service if it is closed', allowStart), advanced, prepareButton);
   receiveForm.append(receiveFields);
   const newReceive = button('New receiving operation', () => { receivingOperationId = null; syncDisabled(); });
@@ -123,7 +127,7 @@ export function createGrantApplicationHandoffView({
     receiveFields.disabled = busy || Boolean(receivingOperationId);
     previous.disabled = busy || !trail.length; next.disabled = busy || !nextCursor;
     recover.hidden = !remembered(); newExport.hidden = !sourceOperationId; newReceive.hidden = !receivingOperationId;
-    prepareButton.disabled = !packageText || busy; exportButton.disabled = busy || !cases.length;
+    prepareButton.disabled = (!packageText && !caseBase64) || busy; exportButton.disabled = busy || !cases.length;
     for (const control of resultPanel.querySelectorAll('button')) control.disabled = busy;
   }
   async function act(action) {
@@ -234,36 +238,65 @@ export function createGrantApplicationHandoffView({
       showOperation(result); await readList(context); message('The complete grant case and Application handoff is ready to download.');
     });
   });
+  receiveFormat.addEventListener('change', () => {
+    fileGeneration++; file.value = '';
+    packageText = caseBase64 = caseFilename = inspected = null; receivingOperationId = null; inspection.hidden = true;
+    const native = receiveFormat.value === 'native';
+    file.accept = native ? 'application/zip,.zip' : 'application/json,.json';
+    fileLabel.firstChild.textContent = native ? 'Complete original native case ZIP' : 'Complete grant-handoff.json';
+    syncDisabled();
+  });
   file.addEventListener('change', () => {
-    const selected = file.files?.[0], generation = ++fileGeneration;
-    packageText = null; inspected = null; receivingOperationId = null; inspection.hidden = true; syncDisabled();
+    const selected = file.files?.[0], generation = ++fileGeneration, native = receiveFormat.value === 'native';
+    packageText = caseBase64 = caseFilename = inspected = null; receivingOperationId = null; inspection.hidden = true; syncDisabled();
     if (!selected) return;
     act(async context => {
-      if (selected.size < 1 || selected.size > 48 * 1024 * 1024) throw new Error('Choose the complete handoff file, up to 48 MiB.');
-      const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(await selected.arrayBuffer());
+      const maximum = (native ? 32 : 48) * 1024 * 1024;
+      if (selected.size < 1 || selected.size > maximum)
+        throw new Error(native ? 'Choose the complete native case ZIP, up to 32 MiB.' : 'Choose the complete handoff file, up to 48 MiB.');
+      const bytes = new Uint8Array(await selected.arrayBuffer());
       if (!current(context) || generation !== fileGeneration) return;
-      const value = await post(context, 'inspect', { packageText: text });
-      if (!current(context) || generation !== fileGeneration) return;
-      packageText = text; inspected = value;
-      if (!label.value) label.value = value.name.slice(0, 120);
-      if (!caseName.value) caseName.value = value.name;
-      inspection.replaceChildren(el('h4', value.name), rows([
-        ['Case purpose', value.source.case.mode], ['Case version', value.source.case.version],
-        ['Complete case archive', size(value.files.case.bytes)], ['Complete Application setup', size(value.files.setup.bytes)],
-      ])); inspection.hidden = false; syncDisabled();
+      if (native) {
+        let binary = '';
+        for (let offset = 0; offset < bytes.length; offset += 32768)
+          binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
+        caseBase64 = btoa(binary); caseFilename = selected.name;
+        const name = selected.name.replace(/\.zip$/i, '').replace(/_/g, ' ').slice(0, 300);
+        inspected = { native: true, name, bytes: bytes.length };
+        if (!label.value) label.value = name.slice(0, 120);
+        if (!caseName.value) caseName.value = name;
+        inspection.replaceChildren(el('h4', name), rows([
+          ['Original native archive', selected.name], ['Complete case archive', size(bytes.length)],
+          ['Application', 'Create from the selected receiving host and settings'],
+        ]), el('p', 'The original native importer reads the complete plan, case, history and selected delivery document before this Application is saved.', 'note'));
+      } else {
+        const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+        const value = await post(context, 'inspect', { packageText: text });
+        if (!current(context) || generation !== fileGeneration) return;
+        packageText = text; inspected = value;
+        if (!label.value) label.value = value.name.slice(0, 120);
+        if (!caseName.value) caseName.value = value.name;
+        inspection.replaceChildren(el('h4', value.name), rows([
+          ['Case purpose', value.source.case?.mode ?? 'Read from the original native archive'],
+          ['Case version', value.source.case?.version ?? 'Read during native receiving'],
+          ['Complete case archive', size(value.files.case.bytes)], ['Complete Application setup', size(value.files.setup.bytes)],
+        ]));
+      }
+      inspection.hidden = false; syncDisabled();
     });
   });
   receiveForm.addEventListener('submit', event => {
     event.preventDefault();
     act(async context => {
-      if (!packageText || !inspected) throw new Error('Choose and inspect the complete handoff file.');
+      if ((!packageText && !caseBase64) || !inspected) throw new Error('Choose the complete handoff or original native case file.');
       const extras = JSON.parse(extra.value || '{}');
       if (!object(extras)) throw new Error('Additional settings must be one JSON object.');
       const bindingsValue = { runtimeId: destinationRuntime.value, label: label.value, caseName: caseName.value,
         actor: actor.value, allowStart: allowStart.checked, settings: { ...extras, workspaceDirectory: directory.value,
           pythonExecutable: python.value, scenarioFile: scenario.value, port: Number(port.value) } };
       const id = receivingOperationId ?? crypto.randomUUID(); receivingOperationId = id; remember(id); syncDisabled();
-      const value = await post(context, 'prepare', { id, packageText, bindingsValue });
+      const incoming = caseBase64 ? { caseBase64, caseFilename } : { packageText };
+      const value = await post(context, 'prepare', { id, ...incoming, bindingsValue });
       if (!current(context)) return;
       showOperation(value); await readList(context); message('The complete handoff and destination settings are retained. Review the host, then receive the case.');
     });
@@ -290,8 +323,9 @@ export function createGrantApplicationHandoffView({
     reset() {
       scope++; fileGeneration++; busy = false; loaded = false; workspaceId = null; selectedOperation = null;
       cases = []; caseApplicationId = sourceOperationId = receivingOperationId = null;
-      packageText = inspected = null; cursor = nextCursor = null; trail = [];
-      sourceForm.reset(); receiveForm.reset(); extra.value = '{}'; python.value = '/usr/bin/python3'; port.value = '0';
+      packageText = caseBase64 = caseFilename = inspected = null; cursor = nextCursor = null; trail = [];
+      sourceForm.reset(); receiveForm.reset(); file.accept = 'application/json,.json';
+      fileLabel.firstChild.textContent = 'Complete grant-handoff.json'; extra.value = '{}'; python.value = '/usr/bin/python3'; port.value = '0';
       sourceApp.replaceChildren(); sourceCase.replaceChildren(); destinationRuntime.replaceChildren();
       delete sourceApp.dataset.signature; delete destinationRuntime.dataset.signature;
       inspection.hidden = resultPanel.hidden = true; resultPanel.replaceChildren(); entries.replaceChildren(); paging.textContent = '';
