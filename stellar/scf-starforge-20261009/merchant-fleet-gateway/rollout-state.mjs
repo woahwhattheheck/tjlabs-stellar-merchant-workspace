@@ -47,6 +47,22 @@ function birth(pid) {
       stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19];
   } catch { return null; }
 }
+function snapshotContent(fleet) {
+  if (!fleet.sourceManifest || !Array.isArray(fleet.sourceConfigs)) throw new Error('FLEET_SOURCE_REQUIRED');
+  const manifest = structuredClone(fleet.sourceManifest), files = [];
+  for (let i = 0; i < manifest.tenants.length; i++) {
+    const name = 'sellers/' + manifest.tenants[i].id + '.json';
+    const bytes = Buffer.from(json(fleet.sourceConfigs[i]));
+    if (bytes.length > 1024 * 1024) throw new Error('FLEET_CONFIG_TOO_LARGE');
+    files.push({ path: name, sha256: hash(bytes) });
+    manifest.tenants[i].sellerConfig = './' + name;
+  }
+  files.push({ path: 'fleet.json', sha256: hash(json(manifest)) });
+  return { manifest, files, digest: hash(json(files)) };
+}
+/** The original snapshot's content identity, before a native prepare dispatch. */
+export function fleetSnapshotDigest(fleet) { return snapshotContent(fleet).digest; }
+
 export async function openRolloutState(directory) {
   if (!isAbsolute(directory) || resolve(directory) !== directory || directory === '/')
     throw new TypeError('Use an absolute normalized private fleet state directory');
@@ -97,19 +113,10 @@ export async function openRolloutState(directory) {
         const dir = join(snapshots, snapshotId); mkdirSync(dir, { mode: 0o700 });
         try {
           const configDir = join(dir, 'sellers'); privateDirectory(configDir);
-          const manifest = structuredClone(fleet.sourceManifest);
-          const files = [];
-          for (let i = 0; i < manifest.tenants.length; i++) {
-            const name = 'sellers/' + manifest.tenants[i].id + '.json';
-            const bytes = Buffer.from(json(fleet.sourceConfigs[i]));
-            if (bytes.length > 1024 * 1024) throw new Error('FLEET_CONFIG_TOO_LARGE');
-            atomic(join(dir, name), fleet.sourceConfigs[i]);
-            files.push({ path: name, sha256: hash(bytes) });
-            manifest.tenants[i].sellerConfig = './' + name;
-          }
+          const { manifest, files, digest } = snapshotContent(fleet);
+          for (let i = 0; i < fleet.sourceManifest.tenants.length; i++)
+            atomic(join(dir, files[i].path), fleet.sourceConfigs[i]);
           atomic(join(dir, 'fleet.json'), manifest);
-          files.push({ path: 'fleet.json', sha256: hash(json(manifest)) });
-          const digest = hash(json(files));
           atomic(join(dir, 'snapshot.json'), { schema: 'stellar-forge.fleet-snapshot.v1', snapshotId, digest, files });
           return { snapshotId, digest };
         } catch (error) { rmSync(dir, { recursive: true, force: true }); throw error; }

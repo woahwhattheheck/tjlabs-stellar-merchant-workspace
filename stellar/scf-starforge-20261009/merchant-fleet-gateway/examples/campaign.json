@@ -1,0 +1,29 @@
+{
+  "id": "october-rollout",
+  "title": "October merchant release rollout",
+  "requestId": "october-save-01",
+  "waves": [
+    {
+      "id": "pilot",
+      "label": "First merchant",
+      "targets": [
+        {
+          "tenant": "python",
+          "slot": "green",
+          "releaseId": "python-v2"
+        }
+      ]
+    },
+    {
+      "id": "remaining",
+      "label": "Second merchant",
+      "targets": [
+        {
+          "tenant": "rpc",
+          "slot": "green",
+          "releaseId": "rpc-v2"
+        }
+      ]
+    }
+  ]
+}
