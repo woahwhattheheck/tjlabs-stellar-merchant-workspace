@@ -199,12 +199,13 @@ export interface Retirement extends PinnedRelease {
 export interface RollbackBlocker {
   tenant: string;
   slot: string;
+  /** SLOT_UNAVAILABLE has only tenant, slot and code; live slot details appear when observed. */
   code: string;
-  serving: boolean;
-  candidate: boolean;
-  drainingRequests: number;
-  canRetire: boolean;
-  runningReleaseId: string | null;
+  serving?: boolean;
+  candidate?: boolean;
+  drainingRequests?: number;
+  canRetire?: boolean;
+  runningReleaseId?: string | null;
 }
 export interface RollbackTarget extends NativeSelection {
   mode: RestoreMode;
