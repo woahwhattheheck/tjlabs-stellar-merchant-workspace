@@ -50,7 +50,7 @@ export function sourceSelectionPath(id) {
 export function validateSourceSelection(value, path) {
   need(plain(value) && value.schema === sourceSelectionSchema &&
     Object.keys(value).every(key => ['schema', 'id', 'title', 'description', 'base',
-      'contributions', 'components', 'supportFiles', 'excludeFiles', 'product'].includes(key)),
+      'contributions', 'components', 'supportFiles', 'moduleTemplates', 'excludeFiles', 'product'].includes(key)),
   'Unsupported distribution source selection');
   identifier(value.id, 'ID');
   if (path !== undefined) need(path === sourceSelectionPath(value.id),
@@ -72,6 +72,10 @@ export function validateSourceSelection(value, path) {
   list(value.contributions, 'contribution', identifier);
   list(value.components, 'component', sourcePath);
   list(value.supportFiles, 'support file', sourcePath);
+  if (value.moduleTemplates !== undefined) list(value.moduleTemplates, 'module template', entry => {
+    sourcePath(entry, 'module template');
+    need(/\.(?:mjs|js)$/.test(entry), 'A module template must name original JavaScript source');
+  });
   if (value.excludeFiles !== undefined) list(value.excludeFiles, 'excluded file', sourcePath);
   need(value.components.length > 0, 'A source selection needs at least one complete original component');
   if (value.product !== undefined) productPackageMetadata(value.product);
@@ -103,6 +107,9 @@ export function selectDistributionSources({ base, contributions, selection }) {
   const selected = copy(base);
   selected.components = [...recipe.components];
   selected.supportFiles = [...recipe.supportFiles];
+  selected.moduleTemplates = [...new Set([...(recipe.moduleTemplates ?? []),
+    ...(base.moduleTemplates ?? []).filter(path => selected.supportFiles.includes(path) ||
+      selected.components.some(root => path.startsWith(root + '/')))])];
   selected.excludeFiles = [...new Set([...(base.excludeFiles ?? []), ...(recipe.excludeFiles ?? [])])];
   selected.commands = selectMap(base.commands, recipe.base.commands, 'command');
   selected.exports = selectMap(base.exports, recipe.base.exports, 'export');
@@ -120,7 +127,16 @@ export function selectDistributionSources({ base, contributions, selection }) {
       put(selected.runtimePackageManifests, name, base.runtimePackageManifests[name]);
   }
   const browser = new Map((base.browserAssets ?? []).map(entry => [entry.server, entry]));
-  selected.browserAssets = (recipe.base.browserAssets ?? []).map(server => {
+  // Complete selected components include their original HTTP servers and pages.
+  // Carry those servers' maintained route maps too, so browser-relative imports
+  // resolve to the same source files that the actual server serves.
+  const browserServers = new Set(recipe.base.browserAssets ?? []);
+  for (const server of browser.keys()) {
+    if (!selected.excludeFiles.includes(server) &&
+        (selected.components.some(root => server.startsWith(root + '/')) ||
+         selected.supportFiles.includes(server))) browserServers.add(server);
+  }
+  selected.browserAssets = [...browserServers].map(server => {
     need(browser.has(server), 'Unknown selected base browser server: ' + server);
     return copy(browser.get(server));
   });
