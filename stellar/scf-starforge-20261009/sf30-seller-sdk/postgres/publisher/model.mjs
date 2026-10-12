@@ -2,7 +2,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdir, lstat, chmod, open, rename } from 'node:fs/promises';
 import { randomUUID, createHash } from 'node:crypto';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { openPostgresSourceFile, readPostgresSourceFile } from '../config.mjs';
 import { PostgresResultError } from '../stream.mjs';
 import { loadDatasetConfig } from '../../dataset-handler.mjs';
@@ -38,7 +38,7 @@ export function openPostgresPublisher(options = {}) { return openSourceDatasetPu
 /** Trusted application adapter, never selected by an HTTP request or source JSON.
  * Both source types use this same durable candidate, review and version writer. */
 export async function openSourceDatasetPublisher({ directory, create = false, sourceFile, targetDirectory,
-  environment = process.env, seller = null, resource = null } = {}, driver = postgresDriver) {
+  environment = process.env, seller = null, resource = null, relativePaths = false } = {}, driver = postgresDriver) {
   if (!driver || ['workspaceSchema', 'statusSchema', 'candidateSchema'].some(key =>
     typeof driver[key] !== 'string' || !/^stellar-forge\.[a-z-]+\.v1$/.test(driver[key])) ||
     ['capturePlan', 'inspectSource', 'openSource', 'checkColumnTypes', 'encodeRow', 'validateExtraction']
@@ -47,6 +47,7 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
   if (typeof sourceName !== 'string' || !/^[A-Za-z][A-Za-z0-9 -]{0,63}$/.test(sourceName))
     throw new TypeError('A plain source display name is required');
   absolute(directory);
+  if (typeof relativePaths !== 'boolean') throw fault('WORKSPACE_PATH_MODE_INVALID');
   if (create) {
     if (!await absent(directory)) throw fault('WORKSPACE_EXISTS', 'Use a new workspace or reopen this one without --create.');
     absolute(sourceFile, 'source file'); absolute(targetDirectory, 'target state directory');
@@ -72,11 +73,20 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, run TEXT, created TEXT NOT NULL, kind TEXT NOT NULL, data TEXT NOT NULL);`);
     if (create) {
       await createFile(join(directory, 'workspace.json'), bytes({ schema: driver.workspaceSchema,
-        sourceFile, targetDirectory, createdAt: stamp() }));
+        sourceFile: relativePaths ? relative(directory, sourceFile) : sourceFile,
+        targetDirectory: relativePaths ? relative(directory, targetDirectory) : targetDirectory,
+        ...(relativePaths ? { pathBase: 'workspace' } : {}), createdAt: stamp() }));
       await privateDirectory(join(directory, 'plans'), true); await privateDirectory(join(directory, 'runs'), true);
       await syncDirectory(directory);
     }
-    const settings = await readJson(join(directory, 'workspace.json'), 4096);
+    const storedSettings = await readJson(join(directory, 'workspace.json'), 4096);
+    if (storedSettings.pathBase !== undefined && storedSettings.pathBase !== 'workspace')
+      throw fault('WORKSPACE_PATH_MODE_INVALID');
+    // The host may select portable bindings when creating a new publisher.
+    // Existing absolute declarations and every saved plan/review keep their bytes.
+    const settings = storedSettings.pathBase === 'workspace' ? { ...storedSettings,
+      sourceFile: resolve(directory, storedSettings.sourceFile),
+      targetDirectory: resolve(directory, storedSettings.targetDirectory) } : storedSettings;
     if (settings.schema !== driver.workspaceSchema ||
         sourceFile && sourceFile !== settings.sourceFile || targetDirectory && targetDirectory !== settings.targetDirectory)
       throw fault('WORKSPACE_BINDING_CHANGED', 'Reopen with its original source and dataset target.');
@@ -363,7 +373,8 @@ export async function openSourceDatasetPublisher({ directory, create = false, so
       const path = join(directory, 'runs', id, 'buyer-' + randomUUID() + '.json');
       await createFile(path, Buffer.from(prepared.configText)); await syncDirectory(join(directory, 'runs', id));
       event('BUYER_HANDOFF_PREPARED', id, { snapshot: prepared.snapshot, configSha256: prepared.configSha256,
-        offerSha256: prepared.offerSha256, intentId: input.intentId, path });
+        offerSha256: prepared.offerSha256, intentId: input.intentId, path,
+        relativePath: relative(directory, path).split('\\').join('/') });
       return { ...prepared, path };
       });
     }
