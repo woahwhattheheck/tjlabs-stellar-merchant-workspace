@@ -10,6 +10,7 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_commercial_cli as commercial_cli
 import operations_ledger_intake as ledger_intake
 
 
@@ -280,6 +281,7 @@ def register(subparsers, common):
     selection(target); mutation(target)
     target.add_argument("--file", required=True)
 
+    commercial_cli.register(command)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -360,6 +362,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if action.startswith("commercial-"):
+        return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
