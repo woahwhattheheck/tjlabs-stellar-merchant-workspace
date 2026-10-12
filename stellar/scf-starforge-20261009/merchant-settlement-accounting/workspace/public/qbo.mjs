@@ -18,6 +18,8 @@ let draftRows=new Map(),draftSelected=new Set(),sourceDrafts=new Map(),planPrevi
 let connection=null,connectionIssue='',nativePreview=null,nativeToken=0,nativeAttemptOffset=0,loadedCompanyOrigin=null;
 const identity=()=>({id:crypto.randomUUID(),createdAt:new Date().toISOString()});
 let createIdentity=identity();
+let buyerValuationBasis='';
+const buyerReviewOffsets={preview:0,plan:0};
 const base=()=>'/api/qbo/plans/'+encode(selected);
 const cancelled=()=>detail?.record?.status==='CANCELLED';
 const receivable=()=>detail?.record?.status==='REVIEWED'&&!nativeOwnsReturn();
@@ -25,6 +27,67 @@ const approved=()=>!cancelled()&&(Boolean(detail?.record?.review)||['REVIEWED','
 const resumable=item=>responseRecord(item)?.status==='PENDING'&&!cancelled();
 const cancellable=()=>Boolean(detail)&&!['BOOKED','CANCELLED'].includes(detail.record.status)&&nativeAllowsCancellation()&&!responses().some(item=>responseRecord(item).status==='PENDING');
 const eligible=row=>!['BOOKED','EXCLUDED'].includes(String(row?.externalStatus??'').toUpperCase());
+const buyerSource=(value=source)=>value?.sourceKind==='buyer-expense-period';
+const buyerPlan=plan=>plan?.sourceKind==='buyer-expense-period';
+const sourceTitle=row=>row?.eventId??row?.sourceLineId??row?.rowId??'Allocation';
+function buyerIncludeBlockers(row){
+  const issues=[];
+  if(!eligible(row))issues.push('Its accountant status is '+String(row?.externalStatus)+'. Choose Exclude explicitly.');
+  if(/^[+-]?0+$/.test(String(row?.amountAtomic??'')))issues.push('The original native amount is zero. Choose Exclude explicitly.');
+  if($('qbo-environment').value==='production'){
+    if(row?.network!=='stellar:pubnet')issues.push('Production requires the original Stellar public network.');
+    if(row?.dataContext!=='operational')issues.push('Production requires operational source data.');
+    if(row?.transfer!=='TRANSFER_MATCHED')issues.push('Production requires the original matched transfer.');
+    if(!/^[0-9a-f]{64}$/.test(String(row?.observationSha256??'')))issues.push('Production requires the retained transfer observation digest.');
+  }
+  return issues;
+}
+function buyerCounts(){
+  const count={total:0,include:0,exclude:0,pending:0,blocked:0};
+  for(const row of source?.rows??[]){
+    count.total++;const decision=draftRows.get(row.rowId)?.decision;
+    if(decision==='include'){count.include++;if(buyerIncludeBlockers(row).length)count.blocked++;}
+    else if(decision==='exclude')count.exclude++;else count.pending++;
+  }
+  return count;
+}
+function syncBuyerSelected(){draftSelected=new Set((source?.rows??[]).filter(row=>draftRows.get(row.rowId)?.decision==='include').map(row=>row.rowId));}
+function buyerKind(row){const kind=row?.kind??row?.sourceAllocation?.kind;return kind==='BUYER_CREDIT'?'Buyer credit':kind==='BUYER_EXPENSE'?'Buyer expense':kind??'Buyer allocation';}
+function buyerFact(row,key){if(row?.[key]!==undefined)return row[key];return row?.sourceAllocation?.[key];}
+function buyerOriginalFacts(row){
+  const keys=['sourceLineId','sourceRowSha256','economicId','network','amountAtomic','originalEconomicAmount','asset','sourceAt','recognitionDate','transfer','observationSha256','dataContext','itemId','creditId','costCenter','project','sourceAccountCode','codingId','line','externalStatus','externalBookRef'];
+  const facts=Object.fromEntries(keys.map(key=>[key,buyerFact(row,key)]).filter(([,value])=>value!==undefined));
+  return '<details class="qbo-allocation-facts"><summary>Original allocation and source facts</summary><dl class="record-values">'+definitions(facts)+'</dl>'+
+    (row.sourceAllocation?'<h5>Source allocation</h5><pre class="qbo-json">'+esc(JSON.stringify(row.sourceAllocation,null,2))+'</pre>':'')+
+    (row.original?'<h5>Issued allocation</h5><pre class="qbo-json">'+esc(JSON.stringify(row.original,null,2))+'</pre>':'')+'</details>';
+}
+function buyerSourceCell(row){
+  const amount=buyerFact(row,'amountAtomic'),economic=buyerFact(row,'originalEconomicAmount'),recognition=buyerFact(row,'recognitionDate')??buyerFact(row,'sourceAt'),asset=buyerFact(row,'asset');
+  return '<strong>'+esc(sourceTitle(row))+'</strong><span class="subtle">'+esc(buyerKind(row))+'</span><span class="subtle exact">'+esc(row.rowId)+'</span>'+
+    (amount!==undefined?'<span class="subtle exact">'+esc(amount)+' original atomic units</span>':'')+
+    (economic!==undefined?'<span class="subtle">Original economic amount: '+esc(exact(economic))+'</span>':'')+
+    (asset!==undefined?'<span class="subtle">Asset: '+esc(exact(asset))+'</span>':'')+
+    '<span class="subtle">Recognition date: '+esc(recognition??'Not recorded')+'</span>'+
+    (buyerFact(row,'network')!==undefined?'<span class="subtle">'+esc(buyerFact(row,'network'))+'</span>':'')+
+    buyerOriginalFacts(row);
+}
+function buyerText(value,label){const text=String(value??'').trim();if(!text||text.length>2000)throw new Error(label+' must contain 1–2000 characters.');return text;}
+function buyerReviewRows(plan){return [...(plan?.rows??[]).map(row=>({...row,decision:'include'})),...(plan?.excluded??[]).map(row=>({...row,decision:'exclude'}))];}
+function renderBuyerReview(kind,plan){
+  const prefix='qbo-buyer-'+kind,section=$(prefix+'-review');section.hidden=!buyerPlan(plan);if(section.hidden)return;
+  const count=(plan.rows??[]).length,excluded=(plan.excluded??[]).length;
+  $(prefix+'-summary').textContent=count+' included allocations · '+excluded+' explicitly excluded. Exclusions belong to this journal plan and leave the original accountant status unchanged.';
+  $(prefix+'-basis').textContent=plan.valuationBasis??'Not recorded';
+  const search=$(prefix+'-search').value.trim().toLowerCase(),decision=$(prefix+'-filter').value;
+  const rows=buyerReviewRows(plan).filter(row=>(decision==='all'||row.decision===decision)&&(!search||JSON.stringify(row).toLowerCase().includes(search)));
+  const offset=Math.min(buyerReviewOffsets[kind],Math.max(0,Math.floor((rows.length-1)/PAGE)*PAGE));buyerReviewOffsets[kind]=offset;
+  const page=rows.slice(offset,offset+PAGE);
+  $(prefix+'-rows').innerHTML=page.map(row=>'<tr><td>'+badge(row.decision==='include'?'Included':'Excluded')+'</td><td>'+buyerSourceCell(row)+'</td><td>'+
+    (row.decision==='include'?'<strong class="exact">'+esc(row.amount)+' '+esc(plan.baseCurrency)+'</strong><span class="subtle">Debit '+esc(row.debitAccount?.name||row.debitAccount?.value)+' · '+esc(row.debitAccount?.value)+'</span><span class="subtle">Credit '+esc(row.creditAccount?.name||row.creditAccount?.value)+' · '+esc(row.creditAccount?.value)+'</span>':'<span class="hint">No journal lines</span>')+
+    '</td><td class="qbo-allocation-note">'+(row.decision==='include'?'<strong>Valuation note</strong><p>'+esc(row.valuationNote)+'</p>'+(row.description?'<strong>Journal description</strong><p>'+esc(row.description)+'</p>':''):'<strong>Exclusion reason</strong><p>'+esc(row.reason)+'</p>')+'</td></tr>').join('')||
+    '<tr><td colspan="4" class="qbo-empty-row">No allocation decisions match this filter.</td></tr>';
+  pageLabel(prefix,offset,page.length,rows.length);
+}
 const planRows=(plan=detail?.plan)=>plan?.rows??[];
 const journal=(plan=detail?.plan)=>plan?.journalEntry??{};
 const lines=(plan=detail?.plan)=>journal(plan).Line??[];
@@ -32,13 +95,21 @@ const responseRecord=item=>item?.record??item;
 const responseResult=item=>item?.result??item;
 const responses=()=>detail?.responses??[];
 const resultLabel=result=>result?.status==='PENDING'?'Accountant return pending':result?.status==='SAVED'?'Accountant return saved':result?.kind==='MATCHED'?'Journal matched':result?.kind==='FAULT'?'QuickBooks fault':result?.status??'Response retained';
-const summaryMetrics=plan=>[['Source events',plan?.summary?.rowCount??planRows(plan).length],['Journal lines',plan?.summary?.lineCount??lines(plan).length],['Debits',plan?.summary?.totalDebit??'See journal'],['Credits',plan?.summary?.totalCredit??'See journal']];
+const summaryMetrics=plan=>[...(buyerPlan(plan)?[['Included allocations',planRows(plan).length],['Excluded allocations',plan?.excluded?.length??0]]:[['Source events',plan?.summary?.rowCount??planRows(plan).length]]),['Journal lines',plan?.summary?.lineCount??lines(plan).length],['Debits',plan?.summary?.totalDebit??'See journal'],['Credits',plan?.summary?.totalCredit??'See journal']];
 class RequestError extends Error{
   constructor(response,value){super(value.message||value.error||'The workspace request could not be completed.');this.status=response.status;this.code=value.error;}
 }
 async function api(path,body){
   const response=await fetch(path,body===undefined?{cache:'no-store'}:{method:'POST',headers:{'Content-Type':'application/json','X-Workspace-Request':'1'},body:JSON.stringify(body)});
-  const value=await response.json().catch(()=>({message:'The workspace returned an unreadable response.'}));
+  const type=response.headers.get('content-type')??'';
+  let value;
+  try{
+    if(!/^application\/json(?:\s*;|$)/i.test(type))throw new Error('Not an application/json response.');
+    value=await response.json();
+    if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Not a workspace response object.');
+  }catch{
+    const error=new Error('The workspace returned an unreadable response. Read or retry the same submitted operation.');error.status=response.status;error.outcomeUnknown=true;throw error;
+  }
   if(!response.ok)throw new RequestError(response,value);
   const next=typeof value.revision==='number'?value.revision:value.state?.revision;
   if(typeof next==='number')revision=Math.max(revision,next);
@@ -69,7 +140,8 @@ function controls(){
   $('qbo-native-preview').disabled=!writable||!nativeCanStart();$('qbo-native-post').disabled=!writable||!nativePreviewCurrent()||!$('qbo-native-confirm').checked;
   $('qbo-native-confirm').disabled=!writable||!nativePreviewCurrent();$('qbo-native-clear-preview').disabled=busy;
   $('qbo-native-resume').disabled=!writable||!nativeCanResume();
-  $('qbo-create').disabled=!writable||!source||!draftSelected.size;
+  const buyer=buyerSource(),counts=buyer?buyerCounts():null;
+  $('qbo-create').disabled=!writable||!source||(buyer?(!counts.include||counts.pending>0||counts.include>MAX_ROWS):!draftSelected.size);
   $('qbo-retain-plan').disabled=!writable||!planPreview;
   $('qbo-clear-plan-preview').disabled=busy;
   $('qbo-review').disabled=!writable||!detail||approved()||cancelled();
@@ -82,11 +154,15 @@ function controls(){
   $('qbo-clear-preview').disabled=busy;
   $('qbo-retry').disabled=busy||!pending;$('qbo-dismiss-retry').disabled=busy;
   $('qbo-fill-accounts').disabled=!writable||!draftSelected.size;
-  $('qbo-draft-select-page').disabled=!writable||!source;$('qbo-draft-clear').disabled=!writable||!draftSelected.size;
+  $('qbo-draft-select-page').disabled=!writable||!source;$('qbo-draft-clear').disabled=!writable||(buyer?!(counts.include||counts.exclude):!draftSelected.size);
+  $('qbo-buyer-exclude-pending').disabled=!writable||!buyer||!counts?.pending;
   const sourceById=new Map((source?.rows??[]).map(row=>[row.rowId,row]));
-  for(const input of $('qbo-mappings').querySelectorAll('input,textarea')){
+  for(const input of $('qbo-mappings').querySelectorAll('input,textarea,select')){
     const id=input.closest('[data-qbo-source-row]')?.dataset.qboSourceRow;
-    input.disabled=!writable||!eligible(sourceById.get(id))||(input.type!=='checkbox'&&!draftSelected.has(id));
+    if(buyer){
+      const decision=draftRows.get(id)?.decision??'pending';
+      input.disabled=!writable||(input.hasAttribute('data-qbo-decision')?false:input.dataset.qboField==='reason'?decision!=='exclude':decision!=='include');
+    }else input.disabled=!writable||!eligible(sourceById.get(id))||(input.type!=='checkbox'&&!draftSelected.has(id));
   }
   for(const button of $('qbo-plan-list').querySelectorAll('button'))button.disabled=busy;
   for(const form of ['qbo-create-form','qbo-review-form','qbo-response-form','qbo-company-form','qbo-cancel-form'])for(const input of $(form).querySelectorAll('input,select,textarea'))if(!input.closest('#qbo-mappings'))input.disabled=busy||Boolean(pending)||((form==='qbo-response-form'&&!receivable())||(form==='qbo-review-form'&&cancelled()));
@@ -110,10 +186,10 @@ async function perform(intent,retrying=false){
     await refresh();notify(typeof intent.message==='function'?intent.message(result):intent.message||'Saved to the original accounting workspace.');
   }catch(error){
     if(received)notify('The operation was saved, but its updated view could not be loaded. Refresh saved state to reopen it. '+error.message,true);
-    else if(error.status===409){
+    else if(!error.outcomeUnknown&&error.status===409){
       pending=null;$('qbo-retry-panel').hidden=true;invalidatePlan();invalidateResponse();invalidateNative();
       await refresh().catch(()=>{});notify(error.message+' Saved state has changed; the form is retained for a new preview.',true);
-    }else if(!error.status||error.status>=500){
+    }else if(error.outcomeUnknown||!error.status||error.status>=500){
       pending=intent;$('qbo-retry-panel').hidden=false;$('qbo-retry-message').textContent=error.message+' The exact operation ID and submitted values remain in this tab.';
       notify('The submitted '+intent.description+' needs a response. Continue using the same operation.',true);
     }else{pending=null;$('qbo-retry-panel').hidden=true;notify(error.message,true);}
@@ -130,57 +206,112 @@ function renderHistory(){
   $('qbo-plan-list').innerHTML=plans.slice(0,planLimit).map(row=>'<button type="button" data-qbo-plan="'+esc(row.id)+'"'+(selected===row.id?' class="selected" aria-current="true"':'')+'><strong>'+esc(row.name)+'</strong><span>'+esc(row.companyName??row.realmId??'')+' · '+esc(row.environment??'')+'</span><span>'+esc(date(row.createdAt))+' · '+esc(row.nativePost?(nativeLabels[row.nativePost.status]??row.nativePost.status):row.status??'DRAFT')+'</span></button>').join('')||'<p class="hint">No retained plans match this search.</p>';
   $('qbo-plan-more').hidden=plans.length<=planLimit;$('qbo-state-version').textContent='Saved workspace revision '+revision+' · '+(metadata?.plans?.length??0)+' journal plans';
 }
-function saveDraft(){if(sourceChoice)sourceDrafts.set(sourceChoice,{rows:draftRows,selected:draftSelected});}
+function saveDraft(){if(sourceChoice)sourceDrafts.set(sourceChoice,{rows:draftRows,selected:draftSelected,valuationBasis:buyerValuationBasis});}
 async function loadSource({force=false}={}){
   const id=$('qbo-handoff').value;
   if(!id){source=null;renderSource();return;}if(sourceChoice===id&&source&&!force)return;
-  if(sourceChoice!==id){saveDraft();const old=sourceDrafts.get(id);draftRows=old?.rows??new Map();draftSelected=old?.selected??new Set();sourceChoice=id;draftOffset=0;source=null;invalidatePlan();}
+  if(sourceChoice!==id){saveDraft();const old=sourceDrafts.get(id);draftRows=old?.rows??new Map();draftSelected=old?.selected??new Set();buyerValuationBasis=old?.valuationBasis??'';sourceChoice=id;draftOffset=0;source=null;invalidatePlan();}
   const token=++sourceToken;$('qbo-source-description').textContent='Loading the original handoff…';controls();
   const value=await api('/api/qbo/handoffs/'+encode(id));if(token!==sourceToken||id!==sourceChoice)return;
   if(source&&source.expectedParentId!==value.expectedParentId)invalidatePlan();source=value;
-  for(const row of source.rows??[])if(!draftRows.has(row.rowId))draftRows.set(row.rowId,{amount:'',debitAccount:{value:'',name:''},creditAccount:{value:'',name:''},description:''});
-  const valid=new Set((source.rows??[]).filter(eligible).map(row=>row.rowId)),prior=draftSelected.size;
-  draftSelected=new Set([...draftSelected].filter(id=>valid.has(id)));
-  if(draftSelected.size<prior)notify('The current bookkeeping state removed '+(prior-draftSelected.size)+' events from this draft selection. Their entered mapping values are retained.');
+  for(const row of source.rows??[])if(!draftRows.has(row.rowId))draftRows.set(row.rowId,{amount:'',debitAccount:{value:'',name:''},creditAccount:{value:'',name:''},description:'',decision:'pending',reason:'',valuationNote:''});
+  if(buyerSource()){
+    syncBuyerSelected();const blocked=buyerCounts().blocked;
+    if(blocked)notify(blocked+' included allocations are now blocked by the current source or company environment. Their decisions and entered values remain; review and explicitly exclude them or select a supported company environment.',true);
+  }else{
+    const valid=new Set((source.rows??[]).filter(eligible).map(row=>row.rowId)),prior=draftSelected.size;
+    draftSelected=new Set([...draftSelected].filter(id=>valid.has(id)));
+    if(draftSelected.size<prior)notify('The current bookkeeping state removed '+(prior-draftSelected.size)+' events from this draft selection. Their entered mapping values are retained.');
+  }
   if(!$('qbo-name').dataset.dirty)$('qbo-name').value=((source.record?.name??'Merchant settlement')+' · QuickBooks').slice(0,160);
   renderSource();
 }
 function renderSource(){
+  const buyer=buyerSource();
   $('qbo-accountant-revision').value=source?(source.expectedParentId?'Saved return '+source.expectedParentId:'Original handoff'):'Choose a handoff';
   if(source){const origin=source.source??source.record?.source??{};
-    $('qbo-source-description').innerHTML='<p><strong>'+esc(source.record?.name??'Original accountant handoff')+'</strong> · '+esc(source.rows?.length??0)+' source events</p><p class="hint">'+esc(origin.periodClose?'Retained period close '+origin.periodClose.id+' · version '+origin.periodClose.revision:'Original reconciliation '+(origin.runId??''))+'</p>';
-  }else $('qbo-source-description').innerHTML='<p>Prepare an accountant handoff in the merchant workspace, then return here to choose its original events.</p>';
+    $('qbo-source-description').innerHTML='<p><strong>'+esc(source.record?.name??'Original accountant handoff')+'</strong> · '+esc(source.rows?.length??0)+' '+(buyer?'buyer allocations':'source events')+'</p>'+
+      (buyer?'<p class="hint">Each expense or credit allocation needs an explicit journal decision. Original asset amounts and recognition dates are preserved; enter home-currency values and both account directions yourself.</p><details><summary>Buyer and handoff source</summary><dl class="record-values">'+definitions({buyer:source.buyer??origin.buyer,source:origin})+'</dl></details>':'<p class="hint">'+esc(origin.periodClose?'Retained period close '+origin.periodClose.id+' · version '+origin.periodClose.revision:'Original reconciliation '+(origin.runId??''))+'</p>');
+  }else $('qbo-source-description').innerHTML='<p>Prepare an accountant handoff in the merchant workspace, then return here to choose its source.</p>';
+  $('qbo-buyer-basis-field').hidden=!buyer;$('qbo-valuation-basis').required=buyer;$('qbo-valuation-basis').value=buyerValuationBasis;
+  $('qbo-buyer-bulk').hidden=!buyer;
+  $('qbo-mapping-title').textContent=buyer?'Decide every buyer allocation and map its journal lines':'Select source events and map their journal lines';
+  $('qbo-mapping-description').textContent=buyer?'Include or exclude every allocation. Included expenses and credits need a positive home-currency amount, two distinct accounts and a valuation note. Exclusions need a reason and stay local to this journal plan.':'Enter the amount in company home currency and the debit and credit accounts for each selected original event.';
+  $('qbo-draft-search-label').textContent=buyer?'Find buyer allocations':'Find source events';
+  $('qbo-draft-search').placeholder=buyer?'Allocation, expense, credit, project or source reference':'Event, option, network or original reference';
+  $('qbo-draft-select-page').textContent=buyer?'Include pending on this page':'Select this page';
+  $('qbo-draft-clear').textContent=buyer?'Reset all decisions':'Clear selection';
+  $('qbo-fill-description').textContent=buyer?'Fill blank account fields across included allocations':'Fill blank account fields across selected events';
+  $('qbo-mapping-caption').textContent=buyer?'Journal decisions and mapping for every original buyer allocation':'Journal mapping for each original payment option';
+  $('qbo-mapping-head').innerHTML=buyer?'<tr><th scope="col">Decision / exclusion reason</th><th scope="col">Original buyer allocation</th><th scope="col">Home-currency amount / valuation</th><th scope="col">Debit account</th><th scope="col">Credit account</th><th scope="col">Journal description</th></tr>':'<tr><th scope="col">Select</th><th scope="col">Original event</th><th scope="col">Home-currency amount</th><th scope="col">Debit account</th><th scope="col">Credit account</th><th scope="col">Journal description</th></tr>';
+  $('qbo-mappings').closest('table').classList.toggle('qbo-buyer-mapping',buyer);
   renderDraftRows();controls();
 }
 function filteredSourceRows(){const search=$('qbo-draft-search').value.trim().toLowerCase();return (source?.rows??[]).filter(row=>!search||JSON.stringify(row).toLowerCase().includes(search));}
 function draftField(id,field,label,value,{amount=false}={}){return '<input data-qbo-field="'+field+'" aria-label="'+esc(label+' for '+id)+'" value="'+esc(value)+'"'+(['debitId','creditId'].includes(field)?' list="qbo-account-options"':'')+(amount?' class="qbo-row-amount" inputmode="decimal" autocomplete="off" placeholder="0.00" maxlength="12"':' maxlength="160"')+'>';}
+function renderBuyerDraftRow(row,currency){
+  const d=draftRows.get(row.rowId),decision=d.decision??'pending',issues=buyerIncludeBlockers(row),title=sourceTitle(row);
+  return '<tr data-qbo-source-row="'+esc(row.rowId)+'"><td><select data-qbo-decision aria-label="Journal decision for '+esc(title)+'">'+
+    [['pending','Pending decision'],['include','Include'],['exclude','Exclude']].map(([value,label])=>'<option value="'+value+'"'+(decision===value?' selected':'')+(value==='include'&&issues.length?' disabled':'')+'>'+label+'</option>').join('')+
+    '</select><label class="qbo-inline-input-label">Exclusion reason<textarea data-qbo-field="reason" aria-label="Exclusion reason for '+esc(title)+'" rows="3" maxlength="2000">'+esc(d.reason??'')+'</textarea></label>'+
+    (issues.length?'<p class="qbo-allocation-blocker">'+esc(issues.join(' '))+'</p>':'')+'</td><td>'+buyerSourceCell(row)+'</td><td>'+
+    draftField(title,'amount','Home-currency amount',d.amount,{amount:true})+'<span class="hint qbo-currency-label">'+esc(currency||'Enter currency above')+'</span>'+
+    '<label class="qbo-inline-input-label">Valuation note<textarea data-qbo-field="valuationNote" aria-label="Valuation note for '+esc(title)+'" rows="3" maxlength="2000">'+esc(d.valuationNote??'')+'</textarea></label>'+
+    '</td><td>'+draftField(title,'debitId','Debit account ID',d.debitAccount.value)+'<span class="qbo-inline-input-label">Account name</span>'+draftField(title,'debitName','Debit account name',d.debitAccount.name)+
+    '</td><td>'+draftField(title,'creditId','Credit account ID',d.creditAccount.value)+'<span class="qbo-inline-input-label">Account name</span>'+draftField(title,'creditName','Credit account name',d.creditAccount.name)+
+    '</td><td><textarea data-qbo-field="description" aria-label="Journal description for '+esc(title)+'" rows="3" maxlength="2000">'+esc(d.description)+'</textarea></td></tr>';
+}
 function renderDraftRows(){
   const rows=filteredSourceRows();draftOffset=Math.min(draftOffset,Math.max(0,Math.floor((rows.length-1)/PAGE)*PAGE));
   const page=rows.slice(draftOffset,draftOffset+PAGE),currency=$('qbo-currency').value.trim();
   $('qbo-mappings').innerHTML=page.map(row=>{
+    if(buyerSource())return renderBuyerDraftRow(row,currency);
     const d=draftRows.get(row.rowId),chosen=draftSelected.has(row.rowId),label=row.label;
     return '<tr data-qbo-source-row="'+esc(row.rowId)+'"><td><input type="checkbox" data-qbo-selected aria-label="Include '+esc(row.eventId??row.rowId)+'"'+(chosen?' checked':'')+'></td><td><strong>'+esc(row.eventId??row.rowId)+'</strong><span class="subtle">'+esc(row.network??'')+'</span><span class="subtle">'+esc(typeof label==='object'?(label.assetLabel??label.accountName??''):label??'')+'</span><span class="subtle exact">'+esc(row.amountAtomic)+' original atomic units</span><span class="subtle">'+esc(row.externalStatus??'UNREVIEWED')+(row.externalBookRef?' · '+esc(row.externalBookRef):'')+'</span></td><td>'+draftField(row.eventId,'amount','Home-currency amount',d.amount,{amount:true})+'<span class="hint qbo-currency-label">'+esc(currency||'Enter currency above')+'</span></td><td>'+draftField(row.eventId,'debitId','Debit account ID',d.debitAccount.value)+'<span class="qbo-inline-input-label">Account name</span>'+draftField(row.eventId,'debitName','Debit account name',d.debitAccount.name)+'</td><td>'+draftField(row.eventId,'creditId','Credit account ID',d.creditAccount.value)+'<span class="qbo-inline-input-label">Account name</span>'+draftField(row.eventId,'creditName','Credit account name',d.creditAccount.name)+'</td><td><textarea data-qbo-field="description" aria-label="Journal description for '+esc(row.eventId)+'" rows="3" maxlength="2000">'+esc(d.description)+'</textarea></td></tr>';
   }).join('')||'<tr><td colspan="6" class="qbo-empty-row">'+(source?'No source events match this filter.':'Choose a handoff to load its original events.')+'</td></tr>';
-  $('qbo-mapping-help').textContent=draftSelected.size+' of '+MAX_ROWS+' supported events selected. Enter each amount in company home currency. Booked and excluded events keep their existing accounting status.';
+  if(buyerSource()){
+    const count=buyerCounts();
+    $('qbo-mapping-help').textContent=count.include+' included · '+count.exclude+' excluded · '+count.pending+' pending out of '+count.total+' allocations. A journal needs 1–'+MAX_ROWS+' included allocations and an explicit decision for every source row.'+(count.blocked?' '+count.blocked+' included allocations require source review before preview.':'');
+    $('qbo-buyer-bulk-count').textContent='Applies to all '+count.pending+' still-pending allocations in this handoff, including rows outside the current page or search. Existing Include and Exclude decisions stay as entered.';
+    $('qbo-buyer-exclude-pending').textContent='Exclude '+count.pending+' pending allocations';
+  }else $('qbo-mapping-help').textContent=draftSelected.size+' of '+MAX_ROWS+' supported events selected. Enter each amount in company home currency. Booked and excluded events keep their existing accounting status.';
   pageLabel('qbo-draft',draftOffset,page.length,rows.length);controls();
+}
+function mappedDraftRow(row){
+  const d=draftRows.get(row.rowId),amount=d.amount.trim(),title=sourceTitle(row);
+  if(!/^(?:0|[1-9][0-9]{0,8})(?:\.[0-9]{1,2})?$/.test(amount)||!/[1-9]/.test(amount))throw new Error('Enter a positive home-currency amount up to 999999999.99, with at most two decimal places, for '+title+'.');
+  if(!d.debitAccount.value.trim()||!d.creditAccount.value.trim())throw new Error('Enter both QuickBooks account IDs for '+title+'.');
+  return {rowId:row.rowId,amount,debitAccount:{value:d.debitAccount.value.trim(),name:d.debitAccount.name.trim()},creditAccount:{value:d.creditAccount.value.trim(),name:d.creditAccount.name.trim()},description:d.description.trim()};
 }
 function draftValue(){
   if(!source)throw new Error('Choose an original accountant handoff.');
-  const actor=operator(),chosen=(source.rows??[]).filter(row=>draftSelected.has(row.rowId));
-  if(!chosen.length||chosen.length>MAX_ROWS)throw new Error('Select between 1 and '+MAX_ROWS+' original events.');
-  const rows=chosen.map(row=>{const d=draftRows.get(row.rowId),amount=d.amount.trim();
-    if(!eligible(row))throw new Error('The selected event '+(row.eventId??row.rowId)+' already has a booked or excluded status.');
-    if(!/^(?:0|[1-9][0-9]{0,8})(?:\.[0-9]{1,2})?$/.test(amount)||!/[1-9]/.test(amount))throw new Error('Enter a positive home-currency amount up to 999999999.99, with at most two decimal places, for '+(row.eventId??row.rowId)+'.');
-    if(!d.debitAccount.value.trim()||!d.creditAccount.value.trim())throw new Error('Enter both QuickBooks account IDs for '+(row.eventId??row.rowId)+'.');
-    return {rowId:row.rowId,amount,debitAccount:{value:d.debitAccount.value.trim(),name:d.debitAccount.name.trim()},creditAccount:{value:d.creditAccount.value.trim(),name:d.creditAccount.name.trim()},description:d.description.trim()};
-  });
-  return {...createIdentity,name:$('qbo-name').value.trim(),actor,handoffId:sourceChoice,expectedParentId:source.expectedParentId??null,revision,realmId:$('qbo-realm').value.trim(),companyName:$('qbo-company-name').value.trim(),baseCurrency:$('qbo-currency').value,environment:$('qbo-environment').value,txnDate:$('qbo-date').value,docNumber:$('qbo-doc-number').value.trim(),rows,...(loadedCompany?{companySnapshot:loadedCompany}:{})};
+  const actor=operator(),buyer=buyerSource();let rows,valuationBasis;
+  if(buyer){
+    const count=buyerCounts();
+    if(count.pending)throw new Error('Choose Include or Exclude for all '+count.pending+' pending buyer allocations.');
+    if(!count.include||count.include>MAX_ROWS)throw new Error('A QuickBooks journal requires between 1 and '+MAX_ROWS+' included buyer allocations.');
+    valuationBasis=buyerText(buyerValuationBasis,'The common valuation basis');
+    rows=(source.rows??[]).map(row=>{
+      const d=draftRows.get(row.rowId),title=sourceTitle(row);
+      if(d.decision==='exclude')return {rowId:row.rowId,decision:'exclude',reason:buyerText(d.reason,'The exclusion reason for '+title)};
+      if(d.decision!=='include')throw new Error('Choose an explicit journal decision for '+title+'.');
+      const issues=buyerIncludeBlockers(row);if(issues.length)throw new Error(title+': '+issues.join(' '));
+      const value=mappedDraftRow(row);
+      if(value.debitAccount.value===value.creditAccount.value)throw new Error('Choose distinct debit and credit account IDs for '+title+'.');
+      return {...value,decision:'include',valuationNote:buyerText(d.valuationNote,'The valuation note for '+title)};
+    });
+  }else{
+    const chosen=(source.rows??[]).filter(row=>draftSelected.has(row.rowId));
+    if(!chosen.length||chosen.length>MAX_ROWS)throw new Error('Select between 1 and '+MAX_ROWS+' original events.');
+    rows=chosen.map(row=>{if(!eligible(row))throw new Error('The selected event '+sourceTitle(row)+' already has a booked or excluded status.');return mappedDraftRow(row);});
+  }
+  return {...createIdentity,name:$('qbo-name').value.trim(),actor,handoffId:sourceChoice,expectedParentId:source.expectedParentId??null,revision,realmId:$('qbo-realm').value.trim(),companyName:$('qbo-company-name').value.trim(),baseCurrency:$('qbo-currency').value,environment:$('qbo-environment').value,txnDate:$('qbo-date').value,docNumber:$('qbo-doc-number').value.trim(),rows,...(buyer?{valuationBasis}:{}),...(loadedCompany?{companySnapshot:loadedCompany}:{})};
 }
 function renderPlanPreview(){
   if(!planPreview)return;const p=planPreview.value.plan;
   $('qbo-plan-preview-panel').hidden=false;$('qbo-plan-preview-description').textContent=p.companyName+' · '+p.baseCurrency+' · '+p.environment+' · '+p.txnDate;
   $('qbo-plan-preview-metrics').innerHTML=metrics(summaryMetrics(p));$('qbo-plan-preview-json').textContent=JSON.stringify(journal(p),null,2);
-  renderIssues($('qbo-plan-preview-issues'),p.issues);$('qbo-plan-preview-panel').scrollIntoView({block:'nearest',behavior:'smooth'});controls();
+  renderBuyerReview('preview',p);renderIssues($('qbo-plan-preview-issues'),p.issues);$('qbo-plan-preview-panel').scrollIntoView({block:'nearest',behavior:'smooth'});controls();
 }
 const download=(filename,label,planId=selected)=>'<a class="button" download href="/api/qbo/plans/'+encode(planId)+'/download/'+encode(filename)+'">'+esc(label??filename)+'</a>';
 function renderPlan(){
@@ -191,7 +322,8 @@ function renderPlan(){
   $('qbo-metrics').innerHTML=metrics(summaryMetrics(p));
   $('qbo-company-summary').innerHTML='<p><strong>'+esc(p.companyName)+'</strong> · Company '+esc(p.realmId)+' · '+esc(p.baseCurrency)+' · '+esc(p.environment)+'</p><p class="hint">Journal date '+esc(p.txnDate)+(p.docNumber?' · Document '+esc(p.docNumber):'')+'</p>';
   $('qbo-lineage').innerHTML=definitions({handoffId:p.handoffId,handoffSha256:p.handoffSha256,accountantVersion:p.accountantRevisionId??'Original handoff',planId:p.id,planSha256:p.integrity.sha256,companyId:p.realmId,homeCurrency:p.baseCurrency,environment:p.environment});
-  $('qbo-journal-description').textContent=planRows(p).length+' selected source events, with a debit and credit retained for each event.';$('qbo-balance-status').textContent='Balanced per source event';
+  $('qbo-journal-description').textContent=buyerPlan(p)?planRows(p).length+' included buyer allocations, with '+(p.excluded?.length??0)+' reasoned exclusions retained in this plan.':planRows(p).length+' selected source events, with a debit and credit retained for each event.';$('qbo-balance-status').textContent=buyerPlan(p)?'Balanced per allocation':'Balanced per source event';
+  renderBuyerReview('plan',p);
   renderIssues($('qbo-plan-issues'),p.issues);$('qbo-request-json').textContent=JSON.stringify(journal(p),null,2);
   $('qbo-request-downloads').innerHTML=[...(approved()?[download('journal-entry.json','QuickBooks journal request')]:[]),download('plan.json','Complete plan JSON'),download('accountant.csv','Source-linked accountant CSV'),download('review.html','Offline journal review')].join('');
   $('qbo-review-form').hidden=approved()||cancelled();
@@ -221,7 +353,7 @@ function renderFiles(){
 }
 async function selectPlan(id,{reset=id!==selected}={}){
   const token=++detailToken;selected=id;
-  if(reset){invalidateNative();nativeAttemptOffset=0;detail=null;currentAccountant=null;selectedResponse='';responseDetail=null;loadedFile=null;fileLoading=false;++fileToken;invalidateResponse();$('qbo-response-file').value='';$('qbo-response-name').value='';$('qbo-file-status').textContent='Choose the complete received JSON file.';lineOffset=0;lineIndex=-1;comparisonOffset=0;showView('journal');}
+  if(reset){buyerReviewOffsets.plan=0;invalidateNative();nativeAttemptOffset=0;detail=null;currentAccountant=null;selectedResponse='';responseDetail=null;loadedFile=null;fileLoading=false;++fileToken;invalidateResponse();$('qbo-response-file').value='';$('qbo-response-name').value='';$('qbo-file-status').textContent='Choose the complete received JSON file.';lineOffset=0;lineIndex=-1;comparisonOffset=0;showView('journal');}
   renderHistory();if(!id){detail=null;renderPlan();remember();return;}
   const value=await api('/api/qbo/plans/'+encode(id));if(token!==detailToken||id!==selected)return;
   detail=value;const accountant=await api('/api/accountant/handoffs/'+encode(value.plan.handoffId));if(token!==detailToken||id!==selected)return;
@@ -264,7 +396,7 @@ function renderResponse(){
   $('qbo-response-description').textContent='Saved by '+(r.actor??'recorded operator')+' · '+date(r.createdAt);
   $('qbo-comparison-description').textContent=(result.journalEntryId?'Received journal '+result.journalEntryId+' · ':'')+resultLabel(result);
   $('qbo-comparison-status').textContent=resultLabel(result);
-  $('qbo-comparison-metrics').innerHTML=metrics([['Matched events',result.summary?.matchedRows??0],['QuickBooks journal',result.journalEntryId??'Not recorded'],['Sync token',result.syncToken??'Not recorded'],['Reported issues',result.errors?.length??0]]);
+  $('qbo-comparison-metrics').innerHTML=metrics([[buyerPlan(detail?.plan)?'Matched allocations':'Matched events',result.summary?.matchedRows??0],['QuickBooks journal',result.journalEntryId??'Not recorded'],['Sync token',result.syncToken??'Not recorded'],['Reported issues',result.errors?.length??0]]);
   renderIssues($('qbo-comparison-issues'),result.errors);renderComparisonRows(result);
   $('qbo-response-json').textContent=JSON.stringify(result,null,2);
   const allowed=new Set(['response.json','result.json','returned.csv','return-request.json']);
@@ -283,8 +415,8 @@ function renderAccountant(){
   empty.querySelector('p').textContent=nativePending?nativeStatusDescription(detail.record.nativePost):'The preview compares the journal to its retained request and shows the bookkeeping changes for the current accountant handoff.';
   const next=empty.querySelector('[data-qbo-open]');next.dataset.qboOpen=nativePending?'journal':'response';next.textContent=nativePending?'Open retained posting':'Choose a QuickBooks response';
   const r=currentAccountant.record,current=currentAccountant.selectedRevision,s=current?.summary??{};
-  $('qbo-accountant-current').textContent=r.name+' · '+(current?'Current return: '+current.name:'Original handoff')+' · '+r.rowCount+' original events';
-  $('qbo-accountant-metrics').innerHTML=metrics([['Original events',r.rowCount],['Reviewed',s.reviewedRows??0],['Bookkeeper posted',s.bookedRows??0],['Returned versions',r.revisions?.length??0]]);
+  $('qbo-accountant-current').textContent=r.name+' · '+(current?'Current return: '+current.name:'Original handoff')+' · '+r.rowCount+(buyerPlan(detail?.plan)?' original allocations':' original events');
+  $('qbo-accountant-metrics').innerHTML=metrics([[buyerPlan(detail?.plan)?'Original allocations':'Original events',r.rowCount],['Reviewed',s.reviewedRows??0],['Bookkeeper posted',s.bookedRows??0],['Returned versions',r.revisions?.length??0]]);
   const original='/api/accountant/handoffs/'+encode(detail.plan.handoffId);
   $('qbo-accountant-downloads').innerHTML=[['accountant.csv','Current accountant CSV'],['review.html','Current offline review'],['accountant-handoff.tar','Complete current handoff']].map(([name,label])=>'<a class="button" download href="'+original+'/download/'+encode(name)+'">'+esc(label)+'</a>').join('');
   $('qbo-accountant-history').innerHTML=[...(r.revisions??[])].reverse().map(item=>'<tr><td>'+esc(item.name)+'</td><td>'+esc(item.actor)+'</td><td>'+esc(date(item.createdAt))+'</td><td>'+esc(item.summary?.reviewedRows??0)+' reviewed / '+esc(item.summary?.bookedRows??0)+' booked</td></tr>').join('')||'<tr><td colspan="4" class="qbo-empty-row">This original handoff has no returned versions yet.</td></tr>';
@@ -294,7 +426,7 @@ function renderResponsePreview(){
   const result=responsePreview.value.result,proposed=result.accountantReturn,rows=result.kind==='MATCHED'?planRows():[],summary=proposed?.summary??{};
   $('qbo-preview-panel').hidden=false;$('qbo-return-empty').hidden=true;
   $('qbo-preview-description').textContent=responsePreview.request.name+' · '+resultLabel(result)+(proposed?' · Accountant return '+proposed.id:'');
-  $('qbo-preview-metrics').innerHTML=metrics([['Matched events',result.summary?.matchedRows??0],['Return outcome',summary.outcome??'No return'],['Applied rows',summary.appliedRows??0],['Unchanged rows',summary.unchangedRows??0],['Booked rows',summary.bookedRows??0],['Conflicts',summary.conflictRows??0],['Unknown rows',summary.unknownRows??0],['Missing rows',summary.missingRows??0]]);
+  $('qbo-preview-metrics').innerHTML=metrics([[buyerPlan(detail?.plan)?'Matched allocations':'Matched events',result.summary?.matchedRows??0],['Return outcome',summary.outcome??'No return'],['Applied rows',summary.appliedRows??0],['Unchanged rows',summary.unchangedRows??0],['Booked rows',summary.bookedRows??0],['Conflicts',summary.conflictRows??0],['Unknown rows',summary.unknownRows??0],['Missing rows',summary.missingRows??0]]);
   renderIssues($('qbo-preview-issues'),result.errors??[]);
   previewOffset=Math.min(previewOffset,Math.max(0,Math.floor((rows.length-1)/PAGE)*PAGE));const page=rows.slice(previewOffset,previewOffset+PAGE);
   $('qbo-preview-rows').innerHTML=page.map(row=>'<tr><td>'+esc(row.eventId??row.rowId)+'</td><td class="exact">'+esc(row.amount)+' '+esc(detail.plan.baseCurrency)+'</td><td>'+esc(row.debitAccount.name||row.debitAccount.value)+'<span class="subtle exact">'+esc(row.debitAccount.value)+'</span></td><td>'+esc(row.creditAccount.name||row.creditAccount.value)+'<span class="subtle exact">'+esc(row.creditAccount.value)+'</span></td></tr>').join('')||'<tr><td colspan="4" class="qbo-empty-row">This received response contains no matched journal events.</td></tr>';
@@ -550,7 +682,7 @@ $('qbo-create-form').addEventListener('submit',event=>{
     const request=draftValue(),token=createIdentity.id;
     const value=await api('/api/qbo/preview',request);
     if(token!==createIdentity.id)return;
-    planPreview={value,request:{...request,revision:value.revision,previewSha256:value.previewSha256}};
+    buyerReviewOffsets.preview=0;planPreview={value,request:{...request,revision:value.revision,previewSha256:value.previewSha256}};
     renderPlanPreview();notify('The source, company and journal mapping are ready to retain.');
   }));
 });
@@ -582,7 +714,8 @@ $('qbo-handoff').addEventListener('change',()=>attempt(()=>reading(()=>loadSourc
 $('qbo-operator').addEventListener('input',()=>{invalidatePlan();invalidateResponse();invalidateNative();});
 $('qbo-create-form').addEventListener('input',event=>{
   const input=event.target;
-  if(input.id==='qbo-draft-search'||input.id.startsWith('qbo-default-')||input.matches('[data-qbo-selected]'))return;
+  if(input.id==='qbo-draft-search'||input.id==='qbo-buyer-bulk-reason'||input.id.startsWith('qbo-default-')||input.matches('[data-qbo-selected],[data-qbo-decision]'))return;
+  if(input.id==='qbo-valuation-basis')buyerValuationBasis=input.value;
   if(input.id==='qbo-name')input.dataset.dirty='true';
   if(['qbo-realm','qbo-company-name','qbo-currency','qbo-environment'].includes(input.id)&&loadedCompany)useManualCompany({message:false});
   const field=input.dataset.qboField;
@@ -593,12 +726,26 @@ $('qbo-create-form').addEventListener('input',event=>{
     else if(field==='creditId'){row.creditAccount.value=input.value;if(!row.creditAccount.name){row.creditAccount.name=accountName(input.value.trim());const name=input.closest('td').querySelector('[data-qbo-field="creditName"]');if(name)name.value=row.creditAccount.name;}}
     else if(field==='debitName')row.debitAccount.name=input.value;
     else if(field==='creditName')row.creditAccount.name=input.value;
-    else if(field==='amount'||field==='description')row[field]=input.value;
+    else if(['amount','description','reason','valuationNote'].includes(field))row[field]=input.value;
   }
   invalidatePlan();
   if(input.id==='qbo-currency')document.querySelectorAll('.qbo-currency-label').forEach(label=>{label.textContent=input.value||'Enter currency above';});
+  if(input.id==='qbo-environment'&&buyerSource())renderDraftRows();
 });
 $('qbo-mappings').addEventListener('change',event=>{
+  const decision=event.target.closest('[data-qbo-decision]');
+  if(decision){
+    if(busy||pending||!buyerSource())return;
+    const id=decision.closest('[data-qbo-source-row]').dataset.qboSourceRow,row=source.rows.find(item=>item.rowId===id),draft=draftRows.get(id);
+    if(!row||!draft)return;
+    const value=decision.value;
+    if(!['pending','include','exclude'].includes(value))return;
+    if(value==='include'){
+      const issues=buyerIncludeBlockers(row);if(issues.length){decision.value=draft.decision??'pending';notify(issues.join(' '),true);return;}
+      if(draft.decision!=='include'&&buyerCounts().include>=MAX_ROWS){decision.value=draft.decision??'pending';notify('A journal supports up to '+MAX_ROWS+' included allocations. Preserve the remaining allocations with explicit exclusions.',true);return;}
+    }
+    draft.decision=value;syncBuyerSelected();invalidatePlan();renderDraftRows();return;
+  }
   const checkbox=event.target.closest('[data-qbo-selected]');if(!checkbox)return;
   const id=checkbox.closest('[data-qbo-source-row]').dataset.qboSourceRow,row=source?.rows?.find(item=>item.rowId===id);
   if(!eligible(row)){checkbox.checked=false;return;}
@@ -608,18 +755,40 @@ $('qbo-mappings').addEventListener('change',event=>{
 });
 $('qbo-draft-search').addEventListener('input',()=>{draftOffset=0;renderDraftRows();});
 $('qbo-draft-select-page').addEventListener('click',()=>{
+  if(buyerSource()){
+    if(busy||pending)return;
+    const page=filteredSourceRows().slice(draftOffset,draftOffset+PAGE),undecided=page.filter(row=>!['include','exclude'].includes(draftRows.get(row.rowId)?.decision)),rows=undecided.filter(row=>!buyerIncludeBlockers(row).length);
+    if(buyerCounts().include+rows.length>MAX_ROWS){notify('Including the pending eligible allocations on this page would exceed '+MAX_ROWS+'. Choose individual allocations or revise an earlier decision.',true);return;}
+    for(const row of rows)draftRows.get(row.rowId).decision='include';
+    syncBuyerSelected();invalidatePlan();renderDraftRows();notify('Included '+rows.length+' pending allocations on this page. '+(undecided.length-rows.length)+' pending allocations have source blockers; their decisions remain Pending.');return;
+  }
   const rows=filteredSourceRows().slice(draftOffset,draftOffset+PAGE).filter(eligible),next=new Set([...draftSelected,...rows.map(row=>row.rowId)]);
   if(next.size>MAX_ROWS){notify('This page would exceed '+MAX_ROWS+' events. Select individual events or clear part of the existing selection.',true);return;}
   draftSelected=next;invalidatePlan();renderDraftRows();
 });
-$('qbo-draft-clear').addEventListener('click',()=>{draftSelected.clear();invalidatePlan();renderDraftRows();});
+$('qbo-draft-clear').addEventListener('click',()=>{
+  if(busy||pending)return;
+  if(buyerSource()){
+    for(const row of source.rows??[]){const draft=draftRows.get(row.rowId);if(draft)draft.decision='pending';}
+    syncBuyerSelected();notify('All buyer decisions are Pending. Entered amounts, mappings, notes and reasons remain available.');
+  }else draftSelected.clear();
+  invalidatePlan();renderDraftRows();
+});
+$('qbo-buyer-exclude-pending').addEventListener('click',()=>attempt(()=>{
+  if(busy||pending||!buyerSource())return;
+  const reason=buyerText($('qbo-buyer-bulk-reason').value,'The reason for excluding the pending allocations');
+  const rows=(source.rows??[]).filter(row=>!['include','exclude'].includes(draftRows.get(row.rowId)?.decision));
+  for(const row of rows){const draft=draftRows.get(row.rowId);draft.decision='exclude';draft.reason=reason;}
+  syncBuyerSelected();invalidatePlan();renderDraftRows();
+  notify('Explicitly excluded '+rows.length+' pending allocations with the entered reason. Existing decisions and all original accountant statuses are unchanged.');
+}));
 $('qbo-draft-previous').addEventListener('click',()=>{draftOffset=Math.max(0,draftOffset-PAGE);renderDraftRows();});
 $('qbo-draft-next').addEventListener('click',()=>{draftOffset+=PAGE;renderDraftRows();});
 $('qbo-fill-accounts').addEventListener('click',()=>{
   const defaults={debitAccount:{value:$('qbo-default-debit-id').value.trim(),name:$('qbo-default-debit-name').value.trim()},creditAccount:{value:$('qbo-default-credit-id').value.trim(),name:$('qbo-default-credit-name').value.trim()}};
   let changed=0;
   for(const id of draftSelected){const row=draftRows.get(id);if(!row)continue;for(const side of ['debitAccount','creditAccount'])for(const field of ['value','name'])if(!row[side][field].trim()&&defaults[side][field]){row[side][field]=defaults[side][field];changed++;}}
-  invalidatePlan();renderDraftRows();notify(changed?'Filled '+changed+' blank account fields across the selected events.':'Enter account defaults to fill the selected events’ blank fields.');
+  invalidatePlan();renderDraftRows();notify(changed?'Filled '+changed+' blank account fields across '+(buyerSource()?'the included allocations.':'the selected events.'):'Enter account defaults to fill '+(buyerSource()?'the included allocations’ blank fields.':'the selected events’ blank fields.'));
 });
 for(const [id,name] of [['qbo-default-debit-id','qbo-default-debit-name'],['qbo-default-credit-id','qbo-default-credit-name']])$(id).addEventListener('change',()=>{if(!$(name).value.trim())$(name).value=accountName($(id).value.trim());});
 $('qbo-plan-search').addEventListener('input',()=>{planLimit=24;renderHistory();controls();});
@@ -678,5 +847,12 @@ $('qbo-retry').addEventListener('click',()=>{if(pending)attempt(()=>perform(pend
 $('qbo-dismiss-retry').addEventListener('click',()=>{
   pending=null;$('qbo-retry-panel').hidden=true;invalidatePlan();invalidateResponse();invalidateNative();notify('The form is retained. Refresh saved state before creating another operation.');controls();
 });
+for(const kind of ['preview','plan']){
+  const prefix='qbo-buyer-'+kind,render=()=>renderBuyerReview(kind,kind==='preview'?planPreview?.value?.plan:detail?.plan);
+  $(prefix+'-search').addEventListener('input',()=>{buyerReviewOffsets[kind]=0;render();});
+  $(prefix+'-filter').addEventListener('change',()=>{buyerReviewOffsets[kind]=0;render();});
+  $(prefix+'-previous').addEventListener('click',()=>{buyerReviewOffsets[kind]=Math.max(0,buyerReviewOffsets[kind]-PAGE);render();});
+  $(prefix+'-next').addEventListener('click',()=>{buyerReviewOffsets[kind]+=PAGE;render();});
+}
 window.addEventListener('beforeunload',()=>{if(previewUrl)URL.revokeObjectURL(previewUrl);});
 renderCompany();renderConnection();controls();attempt(()=>reading(refresh));
