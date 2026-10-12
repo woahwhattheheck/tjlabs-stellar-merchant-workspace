@@ -1,5 +1,7 @@
 # Merchant receivables and service billing
 
+Follow the [complete merchant financial workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md) for original Stellar reconciliation, customer billing, dated payment plans, Xero handover and full operating recovery in this same accounting workspace.
+
 Operate a merchant's complete invoice and customer-payment cycle in the original private accounting workspace. The product brings customer records, service quotations, issued invoices, payment allocation, credit notes and dated account delivery into one installed operator.
 
 The maintained `merchant-receivables` selection includes the invoice and quotation workflow, typed payment interfaces, Stellar wallet collection, customer payment plans, dated collections, accounting and support commands, their explicit package exports and managed Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery. `starforge registrations` shows the inventory in the installed source edition.

@@ -77,7 +77,11 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
     "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+    "products/merchant-workspace/FINANCIAL_OPERATIONS.md",
+    "products/merchant-receivables/README.md",
+    "products/merchant-payment-plans/README.md",
+    "products/merchant-service-agreements/README.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

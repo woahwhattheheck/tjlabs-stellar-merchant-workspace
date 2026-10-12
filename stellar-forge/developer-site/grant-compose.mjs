@@ -3,6 +3,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
+import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
+import { attachGrantSubmission } from './grant-submission.mjs';
 
 const DEFAULT_DIRECTORY = join(dirname(fileURLToPath(import.meta.url)), 'dist');
 const CANONICAL_MANUSCRIPT = 'https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF';
@@ -132,7 +134,7 @@ export function receiveCoastalApplication(productAndFinanceMarkdown, manuscript)
 /** Pure composition; the caller chooses whether and where the result is written. */
 export function composeGrantApplication({
   applicationMarkdown, productAndFinanceMarkdown, templateHtml, sourceIndex,
-  fredCommit, coopsCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
+  fredCommit, coopsCommit = null, financeCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
 }) {
   need(typeof fredCommit === 'string' && /^[a-f0-9]{40}$/.test(fredCommit), 'Select the actual merged economic product commit.');
   need(coopsCommit === null || (typeof coopsCommit === 'string' && /^[a-f0-9]{40}$/.test(coopsCommit)), 'Select the actual merged coastal product commit.');
@@ -146,7 +148,7 @@ export function composeGrantApplication({
   need(articleAt >= 0 && existingAt > articleAt, 'Use the complete existing grant.html shell and existing-work section.');
   const answer = application.slice(application.indexOf('## '));
   const html = templateHtml.slice(0, articleAt) + ARTICLE + renderGrantMarkdown(answer) + templateHtml.slice(existingAt);
-  const index = JSON.parse(JSON.stringify(sourceIndex));
+  let index = JSON.parse(JSON.stringify(sourceIndex));
   need(index.schema === 'stellar-forge.grant-reviewer-source-index.v1', 'Use the original application source-index schema.');
   index.application = { ...index.application, bytes: bytes(application), sha256: digest(application), git_blob: gitBlob(application), canonical_manuscript: canonicalManuscript };
   index.product_and_finance = { ...index.product_and_finance, bytes: bytes(companion), sha256: digest(companion), git_blob: gitBlob(companion),
@@ -185,23 +187,33 @@ export function composeGrantApplication({
     index.narrative_source.coastal_product_commit = coopsCommit;
     index.narrative_source.coastal_application_operation = COASTAL_OPERATION;
   }
+  const selectedFinanceCommit = financeCommit || index.narrative_source?.financial_product_commit || null;
+  let financialSources = null, financialOperation = null;
+  if (selectedFinanceCommit) {
+    const attached = attachFinancialSources(index, {financeCommit: selectedFinanceCommit, productAndFinanceMarkdown: companion});
+    index = attached.sourceIndex;
+    financialSources = attached.financialSources;
+    financialOperation = attached.financialOperation;
+  }
+  const submission = attachGrantSubmission({templateHtml: html, sourceIndex: index});
+  index = submission.sourceIndex;
   const indexText = JSON.stringify(index, null, 2) + '\n';
   const files = {
-    'grant.html': html,
+    'grant.html': submission.templateHtml,
     'grant-data/application.md': application,
     'grant-data/product-and-finance.md': companion,
     'grant-data/source-index.json': indexText,
   };
   return { files, sourcePins: Object.fromEntries(Object.entries(files).map(([path, body]) => ['/' + path, gitBlob(body)])),
-    application: index.application, productAndFinance: index.product_and_finance, economicSource: source, coastalSource };
+    application: index.application, productAndFinance: index.product_and_finance, economicSource: source, coastalSource, financialSources, financialOperation };
 }
 
 function argumentsFor(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
-    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--source-pins-output'].includes(name) && i + 1 < argv.length,
-      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha> and --source-pins-output <file>.');
+    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--finance-commit', '--source-pins-output'].includes(name) && i + 1 < argv.length,
+      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha>, --finance-commit <merged sha> and --source-pins-output <file>.');
     need(!Object.hasOwn(options, name), 'Use each composition option once: ' + name);
     options[name] = argv[++i];
   }
@@ -219,17 +231,19 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   const index = JSON.parse(indexText);
   const manuscript = options['--manuscript'] ? await readFile(resolve(options['--manuscript']), 'utf8') : null;
   const coopsCommit = options['--coops-commit'] || index.narrative_source?.coastal_product_commit || null;
+  const financeCommit = options['--finance-commit'] || index.narrative_source?.financial_product_commit || null;
   let companion = manuscript ? receiveEconomicApplication(productAndFinanceMarkdown, manuscript) : productAndFinanceMarkdown;
   if (manuscript && coopsCommit) companion = receiveCoastalApplication(companion, manuscript);
+  if (manuscript && financeCommit) companion = receiveFinancialApplication(companion, manuscript);
   const result = composeGrantApplication({
     applicationMarkdown: manuscript ? extractReviewerApplication(manuscript) : applicationMarkdown,
     productAndFinanceMarkdown: companion, templateHtml, sourceIndex: index,
     fredCommit: options['--fred-commit'] || index.narrative_source?.economic_product_commit,
-    coopsCommit,
+    coopsCommit, financeCommit,
   });
   for (const [path, body] of Object.entries(result.files)) await writeFile(join(directory, path), body);
   if (options['--source-pins-output']) await writeFile(resolve(options['--source-pins-output']), JSON.stringify(result.sourcePins, null, 2) + '\n');
-  return { sourcePins: result.sourcePins, application: result.application, productAndFinance: result.productAndFinance, economicSource: result.economicSource, coastalSource: result.coastalSource };
+  return { sourcePins: result.sourcePins, application: result.application, productAndFinance: result.productAndFinance, economicSource: result.economicSource, coastalSource: result.coastalSource, financialSources: result.financialSources, financialOperation: result.financialOperation };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   runGrantComposition().then(result => process.stdout.write(JSON.stringify(result, null, 2) + '\n')).catch(error => {
