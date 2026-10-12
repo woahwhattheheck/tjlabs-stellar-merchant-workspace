@@ -274,6 +274,31 @@ export async function receiveGrantPlanning(page,{
       need(records.length<=1,'More than one native browser record matches this operation. Their complete snapshots are retained. Open the intended record through Browser drafts and resume from that editor.');
       return records[0]||null;
     };
+    const savedStateEvidence=item=>{
+      const accepted=stateHash(full.document.draft),draft=item.document.draft;
+      if(draft.id!==full.document.draft.id)return null;
+      if(stateHash(draft)===accepted)return {recordId:item.id,revision:item.revision,versionId:null,
+        acceptedStateSha256:accepted,snapshot:item.file};
+      for(const version of draft.versions){
+        if(version.planningReview?.sourceSha!==planningSha256||
+          version.answers.find(answer=>answer.id==='delivery')?.text!==selection.preview)continue;
+        if(stateHash(restoreVersion(draft,version.id))===accepted)return {recordId:item.id,revision:item.revision,
+          versionId:version.id,acceptedStateSha256:accepted,snapshot:item.file};
+      }
+      return null;
+    };
+    const retainedSaveEvidence=async record=>{
+      let evidence=savedStateEvidence(record);if(evidence)return evidence;
+      for(const previous of journal.browserSnapshots){
+        if(previous.id!==record.id||previous.origin!==expectedOrigin||previous.revision>record.revision||
+          previous.relativePath===record.file.relativePath)continue;
+        const path=artifactPath(output,previous),bytes=await ordinary(path);
+        need(sha(bytes)===previous.sha256,'Retain the actual saved browser snapshot bytes.');
+        const item={...previous,document:await envelope(bytes),file:receipt(output,path,bytes)};
+        evidence=savedStateEvidence(item);if(evidence)return evidence;
+      }
+      return null;
+    };
     page.on('pageerror',onError);
     try{
       const routes=new Map(SUBMISSION_ROUTES.map(([route,[filename]])=>[route,filename]));
@@ -395,15 +420,24 @@ export async function receiveGrantPlanning(page,{
       if(!reopened){
         await updateAttempt('browser_saved');
         let record=chooseBrowser(snapshots.filter(item=>item.document.draft.id===journal.draftId));
-        if(!record){
-          await openDraft(full);await page.getByRole('button',{name:'Save version',exact:true}).click();await ready('Saved browser revision');currentDocumentSha=null;
+        let evidence=record?await retainedSaveEvidence(record):null;
+        if(!evidence){
+          if(record){
+            await editor();
+            const current=await capture(relative(output,join(attemptDirectory,'Before_Pending_Browser_Save.json')));keep(current.file);
+            const bound=await page.locator('#workspace-root').evaluate(root=>({
+              id:root.dataset.savedDraftId||null,revision:Number(root.dataset.savedDraftRevision||0)}));
+            need(bound.id===record.id&&bound.revision===record.revision&&stateHash(current.document.draft)===stateHash(full.document.draft),
+              'The selected browser record does not yet retain the accepted Delivery. Both complete files are preserved. Continue its original editor with the accepted working state and saved-record binding; importing a full draft as a new copy does not update this record.');
+          }else await openDraft(full);
+          await page.getByRole('button',{name:'Save version',exact:true}).click();await ready('Saved browser revision');currentDocumentSha=null;
           snapshots=await retainBrowser([journal.draftId]);
-          const accepted=chooseBrowser(snapshots.filter(item=>item.document.draft.id===journal.draftId));
-          need(accepted&&stateHash(accepted.document.draft)===stateHash(full.document.draft),
-            'Reopen the one accepted save in the original browser draft store.');record=accepted;
+          record=chooseBrowser(snapshots.filter(item=>item.document.draft.id===journal.draftId));
+          evidence=record?await retainedSaveEvidence(record):null;
+          need(evidence,'Read back the accepted Delivery from its actual native saved record before completing this phase.');
         }
         journal.browser={id:record.id,revision:record.revision,draftId:record.draftId,origin:expectedOrigin};
-        await phase('browser_saved',journal.browser);
+        await phase('browser_saved',{...journal.browser,accepted:evidence});
       }
 
       await updateAttempt('full_export_reopened');
