@@ -22,6 +22,10 @@ def register_static(static):
         "/scf-starforge-20261009/distribution/discovery/catalog.mjs":
             ("../../../scf-starforge-20261009/distribution/discovery/catalog.mjs", "text/javascript; charset=utf-8"),
     })
+    static.update({"/operations_funding.mjs": ("operations_funding.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_funding.css": ("operations_funding.css", "text/css; charset=utf-8"),
+                   "/COST_FUNDING.md": ("COST_FUNDING.md", "text/markdown; charset=utf-8")})
+    static["/operations_funding_requests.mjs"] = ("operations_funding_requests.mjs", "text/javascript; charset=utf-8")
     static.update({"/operations_task_outcomes.mjs": ("operations_task_outcomes.mjs", "text/javascript; charset=utf-8"),
                    "/operations_task_outcomes.css": ("operations_task_outcomes.css", "text/css; charset=utf-8")})
     static.update({"/operations_account_reconciliation.mjs": ("operations_account_reconciliation.mjs", "text/javascript; charset=utf-8"),
@@ -53,6 +57,7 @@ def register_static(static):
                    "/operations_implementation.css": ("operations_implementation.css", "text/css; charset=utf-8"),
                    "/cohort_planning.mjs": ("cohort_planning.mjs", "text/javascript; charset=utf-8"),
                    "/cohort_planning_calendar.mjs": ("cohort_planning_calendar.mjs", "text/javascript; charset=utf-8"),
+                   "/cohort_planning_scheduling.mjs": ("cohort_planning_scheduling.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort_planning.mjs": ("operations_cohort_planning.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort_planning.css": ("operations_cohort_planning.css", "text/css; charset=utf-8"),
                    "/operations_cohort.mjs": ("operations_cohort.mjs", "text/javascript; charset=utf-8"),
@@ -95,6 +100,25 @@ def read(handler, parsed):
     if commercial_http(handler, parsed, ops, "GET"):
         return True
     path = parsed.path
+    funding_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/cost-funding(?:/(edition|request|export.zip))?", path)
+    if funding_match:
+        ident, action = funding_match.groups()
+        supplied = query.get("revision", [None])[0]
+        try:
+            revision = int(supplied) if supplied is not None else None
+            expected = int(query.get("expectedVersion", ["0"])[0])
+        except (TypeError, ValueError) as exc:
+            raise Problem("Select the original integer funding revision and case version.", 422, "INVALID_COST_FUNDING") from exc
+        if action is None:
+            handler.send(200, ops.funding_catalog(ident))
+        elif action == "edition":
+            handler.send(200, ops.funding(ident, revision))
+        elif action == "request":
+            handler.send(200, ops.funding_request(ident, query.get("requestId", [None])[0]))
+        else:
+            handler.send(200, ops.export_funding(ident, revision, expected, query.get("expectedReportSha256", [None])[0]),
+                         "application/zip", ident + "-cost-funding-r" + str(revision) + ".zip")
+        return True
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
@@ -331,7 +355,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -340,6 +364,7 @@ def write(handler, parsed):
                          "application/zip", match.group(1) + "-amendment-calendars.zip")
             return True
         methods = {"command": ops.command,
+                   "funding-seed": ops.seed_funding, "funding-preview": ops.preview_funding,
                    "task-outcomes-seed": ops.seed_task_outcomes, "task-outcomes-preview": ops.preview_task_outcomes,
                    "customer-use-calendar": ops.customer_use_calendar,
                    "customer-use-calendar-expand": ops.expand_customer_use_calendar,

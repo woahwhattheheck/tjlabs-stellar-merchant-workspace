@@ -13,6 +13,7 @@ from operations import Operations, MAX_SOURCE
 import operations_commercial_cli as commercial_cli
 import operations_installation_returns_cli as installation_returns_cli
 import operations_ledger_intake as ledger_intake
+import operations_funding_cli as funding_cli
 
 
 def register(subparsers, common):
@@ -39,6 +40,7 @@ def register(subparsers, common):
         target.add_argument("--name", required=True)
         target.add_argument("--calendar-start", help="Explicit operational YYYY-MM-DD anchor; does not record an award")
 
+    funding_cli.register(command, mutation)
     target = command("list", "List delivery operations cases", output=True)
     target.add_argument("--plan")
     target = command("create", "Pin a saved plan and open an operations or walkthrough case")
@@ -626,6 +628,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if action == "cost-funding" or action.startswith("funding-"):
+        return funding_cli.operate(ops, args, read_bytes, publish)
     if action == "installation-returns" or action.startswith("installation-return-"):
         return installation_returns_cli.operate(ops, args, read_bytes, publish)
     if action.startswith("commercial-"):

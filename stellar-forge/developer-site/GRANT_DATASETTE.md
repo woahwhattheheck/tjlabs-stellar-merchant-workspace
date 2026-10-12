@@ -26,19 +26,17 @@ The **detailed product, capacity and financing companion** download includes the
 
 ## Receive a later manuscript edition
 
-Use the existing composer with the current full canonical Markdown and both actual published Datasette source commits. This example selects the merged customer application and the original publisher source used for this composition:
+Use the existing composer with the current full canonical Markdown and both actual published Datasette source commits. The composer retains the current economic, coastal, financial and publisher selections in the existing source index. This example selects the exact customer source used by the completed 12 October receiving operation, while preserving those other selections:
 
 ~~~sh
 node stellar-forge/developer-site/grant-compose.mjs \
   --manuscript /absolute/path/to/current-scf-application.md \
-  --fred-commit be44be564e35b63af23246bad531a95374bbb4c0 \
-  --coops-commit 92eb1c73a3cab9781ef7dbabdc12067344fb6aa2 \
-  --datasette-commit b1a6ad827c02cdf95c613b23ef07ce1996400fd6 \
-  --datasette-publisher-commit ab876f6dc2ad24b7938f6b928202d78fbdeef777 \
+  --directory /absolute/path/to/current-reader-dist \
+  --datasette-commit 84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4 \
   --source-pins-output /absolute/path/to/current-grant-source-pins.json
 ~~~
 
-The two Datasette options select separate source contributions. The customer commit contains the Analysis integration and installation guide. The publisher commit contains the original capture, edition, publication and source receiving modules. Keep both source contributions in the installed merchant product.
+The two Datasette options select separate source contributions. The example above inherits the already-selected publisher commit from the current source index; an initial composition supplies both published commits explicitly. The customer commit contains the Analysis integration and installation guide. The publisher commit contains the original capture, edition, publication and source receiving modules. Keep both source contributions in the installed merchant product.
 
 The original composer receives the nine front answers, the economic and selected coastal sections, and the exact Datasette section. It replaces that existing subsection or inserts it before the coastal section. Duplicate Datasette sections are rejected before files are written. All other companion content remains in the same document.
 
@@ -64,26 +62,54 @@ The commissioning workorder names the source/release operator, commissioning pay
 The source and programme remain directly available:
 
 - [Merged customer application](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2287)
-- [Customer installation guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/b1a6ad827c02cdf95c613b23ef07ce1996400fd6/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/INSTALLATION.md)
-- [Customer operating guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/b1a6ad827c02cdf95c613b23ef07ce1996400fd6/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/README.md)
+- [Customer installation guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/INSTALLATION.md)
+- [Customer operating guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/84b0b2415fe9f76a654f12dc23aae07eb1c5ebc4/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/README.md)
 - [Original source and publisher](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2281)
 - [Original full source programme](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791818956136219)
 
-The same original programme carries the whole customer receiving journey: open the reviewed source, read all 189 original rows through the operator, download the five original report/workbook products and workspace archive, restore through original archive receiving, save the 65-row USA query, create a new workspace export, restore again and reopen that saved query. Its actual outputs attach to the same operation and source entries as they return.
+The original customer receiving operation completed on 12 October 2026. It read all 189 original rows through the operator, produced and reopened the five original report/workbook products, exported the original workspace and restored it through original archive receiving. The receiving operator then saved the 65-row USA query, produced a fresh workspace delivery, restored it again and reopened the same saved query and result. The completed operation is [delivered in its original coordination thread](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791840304679349).
+
+## Open the completed customer products
+
+The existing reader’s Datasette entry now includes the complete country table, the five historical generation-coverage counts, and all six original product downloads. The country and coverage values come directly from the published typed report. Original files use the owner’s workspace access; the installation guides and retained public WRI source remain directly linked beside them.
+
+| Original product | Contents | Bytes |
+|---|---|---:|
+| [Analysis workbook](https://chatgpt.com/api/library/files/libfile_bdfd843bcd6481919be911e00be870c5/download) | Original Excel workbook with plant, country, owner, fuel and source-coverage tables. | 59,405 |
+| [Workbook handover](https://chatgpt.com/api/library/files/libfile_18792f4b2b908191958007a4c4233efd/download) | Original workbook and its complete handover members. | 90,762 |
+| [Complete analysis report](https://chatgpt.com/api/library/files/libfile_833c06cd58408191a41cb08e3699fe8b/download) | Published report with all 189 plant records and the complete source summaries. | 650,741 |
+| [Report data](https://chatgpt.com/api/library/files/libfile_680fc6853a388191b44c348df9062cdf/download) | Original report definition, retained view identities and five complete typed tables. | 511,332 |
+| [Report tables](https://chatgpt.com/api/library/files/libfile_f6d08d5056808191b9b2ad12d2b07391/download) | Original exported table files for the published report. | 83,538 |
+| [Edited customer workspace](https://chatgpt.com/api/library/files/libfile_f255113651b88191b2424a733d00b216/download) | Complete original editable workspace after the receiving operator saved the USA country query; reopened through the original archive receiver. | 660,741 |
+
+The report contains five complete sections: 189 plant records, 22 country groups, 61 owner groups including the null-owner group, one primary-fuel group and 141 source-coverage rows. The source names 60 non-null owners. Capacity-data years are 2017 for 74 records, 2016 for five, and null for 110. Generation columns for 2013–2017 have 60, 61, 64, 66 and 65 known observations respectively. Each column retains its own historical coverage.
+
+The edited delivery is the existing Analysis workspace `aaae8fc5f4924ae8849c2bff43b95b0d`. Its original receiver reopened the same saved query at revision 1:
+
+~~~sql
+SELECT "country", "name", "gppd_idnr", "capacity_mw", "year_of_capacity_data"
+FROM "datasette_377ec1c2ddd3_plants"
+WHERE "country" = ?
+ORDER BY "name"
+~~~
+
+The retained parameter is `["USA"]`; both the saved result and the reopened result contain 65 rows and have SHA256 `6a9141a22c494bd86039b9e724d5d81978d8fbe76b0b1f80fa44f7ae1153b418`. The edited workspace archive has 660,741 bytes and SHA256 `508c80f9e9beaa8c07abd8925b5a79a60219cc7837546e7a9f9f20288ddadd33`.
+
+`grant-datasette-example.mjs` carries the exact original product identities, the completed customer-source commit, all 22 published country totals, the source-year coverage, and the saved/reopened query identities. The existing `datasette-customer-analysis` source record receives that complete example. Its dated operation source remains distinct from whichever newer customer and publisher installation commits the current composer selects.
 
 ## Source-owned integration
 
-grant-datasette.mjs supplies three complete integration seams to the existing grant-compose.mjs:
+grant-datasette.mjs and its additive grant-datasette-example.mjs source supply three complete integration seams to the existing grant-compose.mjs:
 
 | Function | Existing source it receives |
 |---|---|
 | receiveDatasetteApplication(companion, manuscript) | One exact canonical Datasette subsection, with all other companion sections retained |
-| receiveDatasetteExistingWork(html, selection) | The original tenth HTML section, with one maintained Datasette installation entry |
-| addDatasetteGrantSources(index, selection, options) | The original cloned source index and the two published Datasette source selections |
+| receiveDatasetteExistingWork(html, selection) | The original tenth HTML section, with one maintained installation, complete country/coverage tables and original customer downloads |
+| addDatasetteGrantSources(index, selection, options) | The original cloned source index, the two published source selections and the complete dated customer example |
 
 datasetteSourceSelection validates the paired 40-character source commits. The composer retains its original nine-answer validation, economic/coastal handling, source hashing, four-file output and optional sourcePins interface. grant-datasette.mjs uses the existing Site styles and source URLs.
 
-The grant-reviewer contribution already includes the complete developer-site component. These maintained modules, guide and reader files travel in that original selected product. Original customer Applications installation and source publisher selection remain with the Datasette merchant runtime.
+The grant-reviewer contribution already includes the complete developer-site component. These maintained modules, the complete dated customer example, guide and reader files travel in that original selected product. Original customer Applications installation and source publisher selection remain with the Datasette merchant runtime.
 
 ## Joining the current Site source
 

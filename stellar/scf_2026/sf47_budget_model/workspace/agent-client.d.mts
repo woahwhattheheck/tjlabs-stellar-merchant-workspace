@@ -15,7 +15,7 @@ export type GrantCheckState = 'OPEN' | 'IN_PROGRESS' | 'ACCEPTED' | 'CHANGES_REQ
 export type GrantDeliveryPriority = 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
 export type GrantDeliveryDueStatus = 'COMPLETE' | 'INACTIVE' | 'UNDATED' | 'OVERDUE' | 'TODAY' | 'UPCOMING';
 export type GrantCaseAction =
-  | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save'
+  | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save' | 'funding.save'
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
   | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
@@ -1620,6 +1620,8 @@ export interface GrantCaseImportReceipt extends GrantObject {
   accountReconciliation?: GrantAccountReconciliationReceived;
   selectedInstallation?: GrantInstallationRef;
   selectedInstallationReturn?: GrantInstallationReturnSummary;
+  /** Exact selected allocation edition carried by a complete cost-funding handover. */
+  selectedFunding?: GrantFundingLink & {reportSha256: string; period: GrantFundingPeriod};
 }
 /** Original accepted customer quotation, its complete source and task identities. */
 export interface GrantCommercialInstallationBinding {
@@ -2187,6 +2189,118 @@ export interface GrantTaskMethod {
   attemptedTasks: string | null; completedTasks: string | null; elapsedMinutes: string | null;
   sourceIds: string[]; notes: string; effort: GrantTaskEffort[]; costs: GrantTaskCost[];
 }
+
+/** Internal funding assignment; does not change original work, invoice, cash or issuer state. */
+export type GrantFundingKind = 'PREAWARD' | 'GRANT' | 'CUSTOMER' | 'INTERNAL' | 'OTHER';
+export type GrantFundingEligibility = 'UNASSESSED' | 'SUPPORTED' | 'EXCLUDED';
+export interface GrantFundingSource {
+  id: string; name: string; kind: GrantFundingKind; reference: string;
+  decision: 'PROPOSED' | 'RECORDED'; sourceIds: string[]; conditions: string;
+  costWindowStart: GrantCivilDate | null; costWindowEnd: GrantCivilDate | null;
+  receiptTiming: string; limitUsd: string | null; note: string;
+}
+export interface GrantFundingAllocation {
+  fundId: string; quantity: string; eligibility: GrantFundingEligibility;
+  sourceIds: string[]; basis: string;
+}
+export interface GrantFundingAssignment {
+  kind: 'WORK' | 'INVOICE'; recordId: string; lineId: string | null; note: string;
+  allocations: GrantFundingAllocation[];
+}
+export interface GrantFundingDocument {
+  title: string; status: 'DRAFT' | 'REVIEWED'; asOfDate: GrantCivilDate;
+  periodStart: GrantCivilDate | null; periodEnd: GrantCivilDate; note: string;
+  funds: GrantFundingSource[]; assignments: GrantFundingAssignment[];
+}
+export interface GrantFundingInputs { expectedRevision: number; document: GrantFundingDocument }
+export interface GrantFundingTarget {
+  key: string; kind: 'WORK' | 'INVOICE'; recordId: string; lineId: string | null;
+  recordVersion: number; recordSha256: string; state: string; date: GrantCivilDate; startDate: GrantCivilDate;
+  costId: string | null; contributorId: string; contributor: string; description: string; invoiceNumber: string | null;
+  unit: 'HOURS' | 'USD'; quantity: string; originalQuantity: string; originalFundingBasis: GrantFundingKind | null;
+  workIds: string[]; sourceIds: string[];
+}
+export interface GrantFundingCase extends GrantObject {
+  id: string; name: string; version: number; mode: 'OPERATIONS' | 'WALKTHROUGH'; createdAt: string;
+}
+export interface GrantFundingSnapshot {
+  case: GrantFundingCase; plan: GrantObject;
+  records: {contributors: GrantObject[]; work: GrantObject[]; invoices: GrantObject[]};
+  sources: GrantObject[];
+}
+export interface GrantFundingLink {
+  sourceId: string; sourceSha256: string; revision: number; editionSha256: string;
+}
+export interface GrantFundingPeriod {startDate: GrantCivilDate | null; endDate: GrantCivilDate; asOfDate: GrantCivilDate}
+export interface GrantFundingTotals {
+  invoiceUsd: string; workHours: string; acceptedHours: string; reviewedInvoiceUsd: string;
+  supportedInvoiceUsd: string; excludedInvoiceUsd: string;
+}
+export interface GrantFundingFundBalance {
+  id: string; name: string; kind: GrantFundingKind | 'UNASSIGNED';
+  decision: 'PROPOSED' | 'RECORDED' | 'UNASSIGNED'; limitUsd: string | null; limitExcessUsd: string | null;
+  opening: GrantFundingTotals; period: GrantFundingTotals; closing: GrantFundingTotals; afterEnd: GrantFundingTotals;
+}
+export interface GrantFundingBalance extends GrantFundingTarget {
+  interval: 'OPENING' | 'PERIOD' | 'AFTER_END'; assigned: string; unassigned: string;
+  allocationNote: string; spansPeriodStart: boolean;
+}
+export interface GrantFundingAllocationRow extends GrantFundingTarget {
+  fundId: string | null; fundName: string; fundKind: GrantFundingKind | 'UNASSIGNED';
+  fundDecision: 'PROPOSED' | 'RECORDED' | 'UNASSIGNED'; eligibility: GrantFundingEligibility;
+  basis: string; fundSourceIds: string[]; fundReference: string; allocationNote: string;
+  interval: 'OPENING' | 'PERIOD' | 'AFTER_END'; windowObservation: 'UNSTATED' | 'OUTSIDE_SOURCE_WINDOW' | 'WITHIN_SOURCE_WINDOW';
+}
+export interface GrantFundingChange {key: string; change: string; before: GrantObject | null; after: GrantObject | null}
+export interface GrantFundingChanges {
+  previous: GrantFundingLink | null; originalRows: GrantFundingChange[];
+  assignments: GrantFundingChange[]; funds: GrantFundingChange[];
+}
+export interface GrantFundingReport {
+  schema: 'stellar-forge.sf47-cost-funding.v1.report'; period: GrantFundingPeriod; basis: string; dateBasis: string;
+  sourceCounts: {work: number; invoices: number; targets: number; allocationParts: number};
+  totals: Record<'opening' | 'period' | 'closing' | 'afterEnd', GrantFundingTotals>;
+  funds: GrantFundingFundBalance[];
+  packages: Array<{costId: string | null; plannedUsd: string | number | null; plannedHours: string | number | null;
+    invoiceUsd: string; assignedInvoiceUsd: string; unassignedInvoiceUsd: string; workHours: string; assignedWorkHours: string; unassignedWorkHours: string}>;
+  balances: GrantFundingBalance[]; allocations: GrantFundingAllocationRow[];
+  findings: Array<{code: string; key: string; fundId: string | null; message: string}>; changes: GrantFundingChanges;
+}
+export interface GrantFundingSummary extends GrantFundingLink {
+  title: string; status: 'DRAFT' | 'REVIEWED'; savedAt: string; actor: string; caseVersion: number;
+  period: GrantFundingPeriod; reportSha256: string;
+}
+export interface GrantFundingCatalog {
+  case: GrantFundingCase; plan: {id: string; revision: number; contentSha256: string};
+  targets: GrantFundingTarget[]; sources: GrantObject[]; packages: GrantObject[];
+}
+export interface GrantFundingPreview {
+  schema: 'stellar-forge.sf47-cost-funding.v1.preview'; inputs: GrantFundingInputs; previous: GrantFundingLink | null;
+  source: GrantFundingSnapshot; report: GrantFundingReport; reportSha256: string; previewSha256: string;
+}
+export interface GrantFundingEdition {
+  schema: 'stellar-forge.sf47-cost-funding.v1'; id: 'cost-funding'; revision: number; caseVersion: number;
+  previous: GrantFundingLink | null; savedAt: string; actor: string; note: string;
+  document: GrantFundingDocument; source: GrantFundingSnapshot; report: GrantFundingReport;
+  reportSha256: string; previewSha256: string; sha256: string;
+}
+export interface GrantFundingView {
+  source: GrantObject; edition: GrantFundingEdition; catalog: GrantFundingCatalog;
+  history: GrantFundingSummary[]; currentSourceChanges: GrantFundingChange[]; inputs: GrantFundingInputs;
+}
+export interface GrantFundingSeed {inputs: GrantFundingInputs; catalog: GrantFundingCatalog; selectedEdition: GrantFundingSummary | null; history: GrantFundingSummary[]}
+export interface GrantFundingSaveInput {
+  expectedVersion: number; requestId: string; actor: string; note: string;
+  inputs: GrantFundingInputs; expectedPreviewSha256: string;
+  /** Full original result, when already accepted; prevents resubmission into an older restored journal. */
+  acceptedResult?: GrantFundingReceipt;
+}
+export interface GrantFundingReceipt {
+  id: string; version: number; action: 'funding.save'; kind: 'source'; recordId: string; funding: GrantFundingSummary;
+}
+export type GrantFundingRequest = {caseId: string; caseCreatedAt: string; requestId: string} &
+  ({found: false} | {found: true; fingerprint: string; result: GrantFundingReceipt; resultSha256: string});
+
 export interface GrantTaskOutcomeDocument {
   title: string; customer: string; task: string; unit: string; currency: string;
   installation: { id: string; revision: number } | null;
@@ -2484,6 +2598,7 @@ export interface GrantDownloadSelections {
   'costs-csv': { planId: string };
   case: { caseId: string };
   'task-outcomes': {caseId: string; comparisonId: string; revision: number; expectedVersion: number};
+  'cost-funding': {caseId: string; revision: number; expectedVersion: number; expectedReportSha256: string};
   forecast: { caseId: string; forecastId: string };
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
@@ -2563,6 +2678,12 @@ export class GrantWorkspaceClient {
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   portfolioSave<T = GrantPortfolioSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSelection<T = GrantPortfolioSelection>(caseId: string, expectedVersion: number, portfolioId: string, alternativeId: string): Promise<GrantJsonResponse<T>>;
+  read(view: 'cost-funding', selection: {caseId: string}): Promise<GrantJsonResponse<{catalog: GrantFundingCatalog; history: GrantFundingSummary[]}>>;
+  read(view: 'funding-edition', selection: {caseId: string; revision?: number}): Promise<GrantJsonResponse<GrantFundingView>>;
+  read(view: 'funding-request', selection: {caseId: string; requestId: string}): Promise<GrantJsonResponse<GrantFundingRequest>>;
+  fundingSeed(caseId: string, body: {expectedVersion: number; revision?: number}): Promise<GrantJsonResponse<GrantFundingSeed>>;
+  fundingPreview(caseId: string, body: {expectedVersion: number; inputs: GrantFundingInputs}): Promise<GrantJsonResponse<GrantFundingPreview>>;
+  fundingSave(caseId: string, body: GrantFundingSaveInput): Promise<GrantJsonResponse<GrantFundingReceipt>>;
   taskOutcomesSeed(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<{inputs: GrantTaskOutcomeInputs; case: {id: string; version: number}}>>;
   taskOutcomesPreview(caseId: string, body: {expectedVersion: number; inputs: GrantTaskOutcomeInputs}): Promise<GrantJsonResponse<GrantTaskOutcomePreview>>;
   taskOutcomesSave(caseId: string, body: GrantTaskOutcomeSaveInput): Promise<GrantJsonResponse<GrantTaskOutcomeReceipt>>;
