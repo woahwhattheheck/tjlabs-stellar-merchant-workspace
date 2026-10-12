@@ -179,6 +179,10 @@ export function prepareMerchant(specText, plan) {
     for (const name of authentication.environment) envNames.add(name);
     if (!materialized.has(row.path)) {
       facade.paths[row.path] = structuredClone(item);
+      // Every selected operation receives its complete original parameter set.
+      // Private query fields can then be removed without inherited parameters
+      // adding them back to a buyer's public request schema.
+      delete facade.paths[row.path].parameters;
       materialized.add(row.path);
     }
     const publicOperation = preparePublicOperation(spec, item, op, row, method);
@@ -193,7 +197,7 @@ export function prepareMerchant(specText, plan) {
       ...(idempotency ? {admit:idempotency.admission} : {})});
     upstreams.bindings[id] = {origin:backend.origin,
       path:backend.pathname.replace(/\/$/, '') + row.path.replace(/\{([^{}]+)\}/g, ':$1'), method,
-      headerEnv:headers, responseMode:row.responseMode ?? 'json',
+      headerEnv:headers, ...(authentication.queryEnv?{queryEnv:authentication.queryEnv}:{}), responseMode:row.responseMode ?? 'json',
       ...(row.transport===undefined?{}:{transport:row.transport}),
       ...(stream ? {stream} : {}),
       ...(requestBody?{bodyType:requestBody.bodyType}:{}),
@@ -236,7 +240,7 @@ export function prepareMerchant(specText, plan) {
       paymentFlow:selections[i].accepts[0].extra?.paymentFlow??'authorization',
       responseMode:binding.responseMode, responseMimeType:offer.seller.resource.mimeType??null,
       requestBody:transformations[i].requestBody,maxRequestBytes:binding.maxRequestBytes??1048576,
-      environment:[...new Set([...Object.values(binding.headerEnv),...(binding.oauth2?[binding.oauth2.clientIdEnv,binding.oauth2.clientSecretEnv]:[]),
+      environment:[...new Set([...Object.values(binding.headerEnv),...Object.values(binding.queryEnv ?? {}),...(binding.oauth2?[binding.oauth2.clientIdEnv,binding.oauth2.clientSecretEnv]:[]),
         ...(binding.oauthConnection?[binding.oauthConnection.directoryEnv,...(binding.oauthConnection.clientSecretEnv?[binding.oauthConnection.clientSecretEnv]:[])]:[])])].sort(),
       backendAuthentication:transformations[i].backendAuthentication,oauth2:binding.oauth2??null,oauthConnection:binding.oauthConnection??null,
       publicDescription:facade.paths[offer.path][offer.method.toLowerCase()].description ?? '',
@@ -471,7 +475,7 @@ export async function savePackage({specText, plan, parent, name, sourceRevision,
     'Full instructions: sf61-openapi-seller-import/workspace/STREAMING.md and sf66-demo-launcher/COMMERCE_STREAMS.md.',
     '', '## Explicit facade adaptation', '',
     'Original server URLs remain in the unchanged original OpenAPI source file identified by merchant-package.json. Selected facade operations use your declared public seller server.',
-    'Supported backend security is satisfied by operator header environment references and removed only from the generated public facade.',
+    'Supported backend security is satisfied by operator header/query environment references and removed only from the generated public facade.',
     'The original API description remains unchanged. No endpoint was probed during preparation.',
     '', '## Routes', '', ...prepared.preview.routes.map(r => '- ' + r.method + ' ' + r.publicUrl + ' -> ' + r.upstream + ' (' + r.amountAtomic + ' atomic units)'), ''
   ].join('\n');

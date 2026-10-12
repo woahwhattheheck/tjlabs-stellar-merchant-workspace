@@ -12,6 +12,7 @@ The maintained source includes both complete original applications, their browse
 | Frozen report publication, buyer receiving and Operations association | `starforge groundwater-report` | [Report Desk guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/OPERATOR.md) |
 | Scientific publisher operation in its existing runtime | `starforge groundwater-native` | [Complete native workflow](../../stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater/examples/NATIVE_WORKFLOW.md) |
 | Same-report publication and receiving continuation | `starforge groundwater-report-native` | [Report Desk API and original caller](../../stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/API.md) |
+| Managed Report Desk launch, stop, reopen and received-desk operation | Applications → **Groundwater Report Desk** | [Managed installation and receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/INSTALLATION.md) |
 | Existing Tethys portal deployment | Original `groundwater/tethys_app/` source | [Tethys deployment and receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater/TETHYS.md) |
 | Installed source, selected dependencies and upgrades | `starforge runtime-install` | [Runtime installation and recovery](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) |
 
@@ -51,6 +52,33 @@ node /absolute/checkout/stellar/scf-starforge-20261009/distribution/runtime-inst
 The installation returns the complete original `sourceRoot` and `dependencyRoot`. It retains the chosen archive and its source selection in the package manifest. Once using the installed `starforge` command, `starforge runtime-install run --dir /private/runtimes/groundwater-01 -- COMMAND ...` is the equivalent forwarding form. The source command lists the actual installed identities.
 
 For a stopped dependency installation, use the same `runtime-install resume --dir` operation. An upgrade prepares another runtime directory and preserves the previous one for the maintained activation or rollback workflow. The [runtime guide](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) covers offline cache use, import readiness and exact original profile recovery.
+
+### Receive and reopen the complete installation
+
+The [complete retained installation caller](../../stellar/scf-starforge-20261009/distribution/receiving/GROUNDWATER.md)
+uses this existing `groundwater-reports` recipe through **Build a product**. Supply
+one full reviewed commit and a private receiving directory in the original
+[input file](../../stellar/scf-starforge-20261009/distribution/receiving/groundwater-receiving.example.json),
+then run:
+
+```sh
+node /absolute/checkout/stellar/scf-starforge-20261009/distribution/receiving/groundwater-reports.mjs \
+  /private/requests/groundwater-receiving.json
+```
+
+It retains the original source review and request, builds and installs the
+selected profile, reads back all 64 scientific source files, creates the
+maintained runtime transfer, and installs that exact source/profile/lock from
+the received parts into a second runtime. The second installation uses the
+received cache offline. The original Runtime Workspace then reopens the same
+source review and verifies the complete archive download; an explicitly
+selected browser also reopens that saved review.
+
+Keep its original input and directory when continuing an interrupted call.
+A completed result names both actual runtimes, their deployment handoffs, the
+source archive and every transfer part. This installation workflow inspects
+source and commands; scientific model execution and existing report/desk
+receiving use their own original records and explicit selections.
 
 ## Open the scientific workspace
 
@@ -97,6 +125,28 @@ starforge groundwater-report serve \
 Open the actual URL from the launch result. The browser has **Frozen reports**, **Publication**, **Buyer preparation**, **Report receiving**, **Operations & recovery**, and complete handover controls. A buyer receiving an existing public report catalog can use a desk without a scientific source connection.
 
 Keep the launch file private: it contains the local access link. The server binds the original desk UUID, verifies its loopback Host and Origin, and owns graceful shutdown of its services. Each new launch selects a new explicit launch-file name. The source workspace option opens the already selected scientific database.
+
+### Manage the existing desk through Applications
+
+The full product includes the source-owned `groundwater-reports` Applications
+provider and its managed commands. In the original Runtime Workspace, choose
+**Applications → New application → Groundwater Report Desk**, then select the
+existing desk directory and actual Python interpreter. An existing scientific
+workspace and private Operations access file are optional explicit selections.
+
+Review and save that application, review its start, then open the actual private
+URL returned by the original worker. Startup verifies the selected and executed
+source, original desk identity and optional scientific database before exposing
+the authenticated listener. **Stop** drains the original process; a later
+reviewed start reopens the same desk. It does not initialize a scientific
+workspace or dispatch a model, report publication or buyer operation.
+
+The [complete managed guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/INSTALLATION.md)
+covers the original CLI, stable browser origin, lost-response recovery and the
+`groundwater-report-managed-native` continuation. That continuation requires the
+actual existing desk and original receiving inputs. It launches, stops and
+reopens the desk, exports its complete archive, receives the same archive, and
+opens the received copy through Applications.
 
 ### Publish one frozen report
 
@@ -195,6 +245,6 @@ For an uncertain write, use **Operations & recovery**, or `starforge groundwater
 
 ## Original source and continued maintenance
 
-This installed adoption keeps all 64 scientific source files from reviewed source `729aa1830369e51ca3c6db0d5c9fb35979bba06a` and all 23 Report Desk source files from [public PR 2441](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2441), merged as `9b6b92c2c290b73ca6e263d28603fdcad3a19bf6`. Their original contribution files register the commands and typed exports in this maintained distribution. Both full original source inventories were matched by Git blob identity at adoption.
+This installed adoption keeps all 64 scientific source files from reviewed source `96a1d66ad032cbbb2640252fedd3f4048a6c8dd6`, carried by complete capsule `ec6a1d1faa4d641835d2853715887ad5481be800`. It includes the attributed reference-inspection correction from [public PR 2460](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2460) and the publisher JSON descriptor correction from [public PR 2498](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2498). The original 23-file Report Desk from [public PR 2441](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2441) is retained with its six additional managed source files and exact shared-file joins from [public PR 2471](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2471). Their source-owned contributions register the original commands, typed exports, merchant tools and Applications provider.
 
 The scientific source includes the complete publisher inventory and licenses; the Report Desk preserves the original SF30 publisher, SF88 buyer handoff, scientific receiving and SF47 Operations interfaces. Existing scientific and report-producing operations retain their saved inputs and native results. Use the selected source manifest and the full original guides when continuing those operations or preparing a later reviewed product release.

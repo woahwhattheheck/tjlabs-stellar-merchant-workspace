@@ -1,7 +1,7 @@
 // MIT. Template-based Xero sales documents from original merchant receivables.
 import {json, sha, need, plain, field, identifier, dateValue, currencyOf, currencyKey,
-  minor, money, csv, receiptSummary, refundAccountSummary, INVOICE_SCHEMA, CREDIT_SCHEMA} from '../core.mjs';
-import {cwDecode, readCryptoworthCsv, writeCryptoworthCsv} from '../../accountant/cryptoworth-csv.mjs';
+  minor, money, csv, receiptSummary, refundAccountSummary, INVOICE_SCHEMA, CREDIT_SCHEMA} from '../receivables/core.mjs';
+import {cwDecode, readCryptoworthCsv, writeCryptoworthCsv} from '../accountant/cryptoworth-csv.mjs';
 
 export const XERO_SCHEMA = 'stellar-forge.merchant-receivables-xero.v1';
 export const XERO_PROFILE_SCHEMA = 'stellar-forge.merchant-receivables-xero-profile.v1';

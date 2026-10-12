@@ -1,6 +1,7 @@
 // MIT. One response-cache engine and the original SF30 upstream transport.
 import { createHash } from 'node:crypto';
 import { createUpstreamHandler, beginUpstreamRequest, resolveUpstreamHeaders } from '../upstream-handler.mjs';
+import { serverQueryCredentials, resolveUpstreamQueryCredentials } from '../upstream-query-credentials.mjs';
 import { createResponseCache, normalizeCacheRetention } from './cache.mjs';
 import { cacheDirectives, upstreamCacheBypass, upstreamFreshness } from './http-freshness.mjs';
 
@@ -31,7 +32,7 @@ export function createCachedUpstream(options, cacheOptions) {
   if (Object.hasOwn(cacheOptions, 'handler') || Object.hasOwn(cacheOptions, 'storagePolicy') || Object.hasOwn(cacheOptions, 'bypassRequest')) {
     throw new TypeError('Upstream factory owns handler and HTTP cache policy hooks');
   }
-  const { headers = {}, lookup, onResult, invokeSource, credentialProvider, supplierQuota, tls, agent, ...serializable } = options;
+  const { headers = {}, queryCredentials = {}, lookup, onResult, invokeSource, credentialProvider, supplierQuota, tls, agent, ...serializable } = options;
   if (invokeSource !== undefined && typeof invokeSource !== 'function') throw new TypeError('invokeSource must be a trusted source function');
   const fixed = structuredClone(serializable);
   if (lookup !== undefined) fixed.lookup = lookup;
@@ -43,6 +44,8 @@ export function createCachedUpstream(options, cacheOptions) {
   if (agent !== undefined) fixed.agent = agent;
   const headerFactory = typeof headers === 'function' ? headers : null;
   const staticHeaders = headerFactory ? null : frozenHeaders(headers);
+  const queryFactory = typeof queryCredentials === 'function' ? queryCredentials : null;
+  const staticQueryCredentials = queryFactory ? null : serverQueryCredentials(queryCredentials);
   const expose = new Set((fixed.responseHeaders ?? ['content-type', 'content-language']).map(name => name.toLowerCase()));
   fixed.responseHeaders = [...new Set([...expose, ...META])];
   fixed.cachePolicyMetadata = true;
@@ -54,7 +57,7 @@ export function createCachedUpstream(options, cacheOptions) {
   const policy = { ...structuredClone(cacheData), ...(admit === undefined ? {} : { admit }), varyHeaders,
     maxSourceInFlight, maxResponseBytes: cacheOptions.maxResponseBytes ?? fixed.maxResponseBytes ?? 1048576 };
   // Original factories perform their complete construction-time validation.
-  createUpstreamHandler({ ...fixed, headers: staticHeaders ?? {}, ...(credentialProvider ? {credentialProvider} : {}) });
+  createUpstreamHandler({ ...fixed, headers: staticHeaders ?? {}, queryCredentials:staticQueryCredentials ?? {}, ...(credentialProvider ? {credentialProvider} : {}) });
   const admission = createResponseCache({ ...policy, handler: () => { throw new Error('Admission-only cache has no source'); } });
   const generations = new Set(), credentialWaiters = new Set();
   const maxCredentialWaiters = admission.stats().limits.maxWaiters;
@@ -85,14 +88,14 @@ export function createCachedUpstream(options, cacheOptions) {
     const previous = current; current = null; revision++;
     previous.cache.invalidate(); release(previous);
   }
-  function select(serverHeaders, credentialGeneration) {
+  function select(serverHeaders, serverQuery, credentialGeneration) {
     // This digest is only a private equality token, never a diagnostic or output.
-    const fingerprint = createHash('sha256').update(JSON.stringify([serverHeaders,credentialGeneration])).digest('hex');
+    const fingerprint = createHash('sha256').update(JSON.stringify([serverHeaders,serverQuery,credentialGeneration])).digest('hex');
     if (current?.fingerprint === fingerprint) return current;
-    const original = createUpstreamHandler({ ...fixed, headers: serverHeaders });
+    const original = createUpstreamHandler({ ...fixed, headers: serverHeaders, queryCredentials:serverQuery });
     if (current) { totals.credentialRotations++; retire(); }
     const generation = { fingerprint, number: ++sequence, users: 0, active: 0, cache: null };
-    const authenticated = Object.hasOwn(serverHeaders, 'authorization');
+    const authenticated = Object.hasOwn(serverHeaders, 'authorization') || Object.keys(serverQuery).length > 0;
     const source = async context => {
       if (closed) return failure(503, 'UPSTREAM_CACHE_CLOSED');
       if (totals.sourceInFlight >= maxSourceInFlight) return failure(503, 'UPSTREAM_CAPACITY_EXHAUSTED');
@@ -143,10 +146,11 @@ export function createCachedUpstream(options, cacheOptions) {
         // still receives one fixed immutable authorization snapshot, never a
         // provider that can change credentials while its cached data is in use.
         const trusted = frozenHeaders(await resolveUpstreamHeaders(headerFactory ?? staticHeaders,credentialProvider,lifetime));
+        const trustedQuery = await resolveUpstreamQueryCredentials(queryFactory ?? staticQueryCredentials,lifetime);
         if (closed) return failure(503,'UPSTREAM_CACHE_CLOSED');
         const epoch = credentialProvider ? credentialProvider.generation() : null;
         if (epoch !== null && (!Number.isSafeInteger(epoch) || epoch < 0)) throw new TypeError('Invalid credential generation');
-        generation = select(trusted,epoch);
+        generation = select(trusted,trustedQuery,epoch);
       } catch {
         if (closed) return failure(503,'UPSTREAM_CACHE_CLOSED');
         if (lifetime.signal.aborted) return failure(lifetime.signal.reason.code === 'UPSTREAM_TIMEOUT' ? 504 : 499,lifetime.signal.reason.code);

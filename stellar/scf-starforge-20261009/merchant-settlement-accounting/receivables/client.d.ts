@@ -1,4 +1,20 @@
 import type {
+  CreditControlQuery,CreditControlReport,CreditPolicyDetail,SaveCreditPolicyInput,
+  CreditPolicyMutationResult,CreditAssessmentPreview,SaveCreditDecisionInput,CreditDecisionMutationResult,
+  CreditDecisionDetail,WithdrawCreditDecisionInput,CreditDecisionFileName,CreditControlOperationResult,
+  CreditPreviewMetadata,CreditRelease,CreditIssueResult
+} from './credit-control-types.d.ts';
+export type {
+  CreditTerms,CreditPolicy,CreditPolicyEdition,CreditHistory,CreditPolicyDetail,SaveCreditPolicyInput,
+  CreditExposure,CreditDispute,CreditDraftSummary,CreditExposureInvoice,CreditTrigger,CreditSource,CreditAssessment,
+  CreditInvoicePreview,CreditPreviewMetadata,CreditAssessmentPreview,CreditDecisionOutcome,CreditDecisionStatus,
+  CreditDecision,CreditDecisionSummary,CreditControlQuery,CreditControlReport,SaveCreditDecisionInput,
+  WithdrawCreditDecisionInput,CreditDecisionDetail,CreditRelease,CreditPolicyMutationResult,
+  CreditDecisionMutationResult,CreditIssueResult,CreditDecisionFileName,CreditDecisionDownload,
+  CreditDecisionManifest,CreditControlOperationResult
+} from './credit-control-types.d.ts';
+
+import type {
   CustomerFundsQuery, CustomerFunds, RefundPreviewInput, RefundPreview,
   CommitRefundInput, RefundQuery, RefundPage, RefundDetail,
   CancelRefundInput, ReverseRefundInput, ReportRefundReturnInput, ReceiveRefundInput,
@@ -136,10 +152,11 @@ export type QuoteImportInput = MutationContext & {
 export interface Operation {
   id: string; action: string; actor: string; at: string; intentSha256: string; replayed: boolean;
   result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; refundId?: string; refundReturnId?: string; creditDispositionId?: string;
-    invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean};
+    invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean;
+    creditPolicyId?:string;creditPolicyVersion?:number;creditDecisionId?:string;creditRelease?:CreditRelease};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
-export interface Preview { document: InvoiceDocument; previewSha256: string; expectedVersion: number; revision: Revision }
+export interface Preview extends CreditPreviewMetadata { document: InvoiceDocument; previewSha256: string; expectedVersion: number; revision: Revision }
 export interface CreditInput extends MutationContext {
   creditDate: DateOnly; reason: string; lines: Array<{invoiceLineId: string; netAmount: Money; taxAmount: Money}>;
 }
@@ -283,13 +300,28 @@ export type PaymentRequestFileName = 'payment-request.json' | 'payment-request.h
 export interface PaymentRequestDownload { name: PaymentRequestFileName; type: string; bytes: Uint8Array }
 export interface RequestOptions { signal?: AbortSignal }
 
-export interface ClientOptions { baseUrl?: string; fetch?: typeof fetch }
+export interface ClientOptions {
+  baseUrl?: string;
+  fetch?: typeof fetch;
+  expectedWorkspaceId?: string;
+  expectedSourcesSha256?: string;
+}
 export class ReceivablesApiError extends Error {
   status: number; code: string; details: unknown; requestId: string | null; response: unknown;
 }
 export class ReceivablesClient {
   constructor(options?: ClientOptions);
+  identity(): Promise<{schema: string; workspaceId: string; sourcesSha256: string}>;
   state(query?: {asOf?: DateOnly}): Promise<ReceivablesState>;
+  creditControl(query?:CreditControlQuery,options?:RequestOptions):Promise<CreditControlReport>;
+  creditPolicy(id:string,options?:RequestOptions):Promise<CreditPolicyDetail>;
+  saveCreditPolicy(value:SaveCreditPolicyInput,options?:RequestOptions):Promise<CreditPolicyMutationResult>;
+  previewCreditAssessment(invoiceId:string,value:{workspaceId:string},options?:RequestOptions):Promise<CreditAssessmentPreview>;
+  saveCreditDecision(invoiceId:string,value:SaveCreditDecisionInput,options?:RequestOptions):Promise<CreditDecisionMutationResult>;
+  creditDecision(id:string,options?:RequestOptions):Promise<CreditDecisionDetail>;
+  withdrawCreditDecision(id:string,value:WithdrawCreditDecisionInput,options?:RequestOptions):Promise<CreditDecisionMutationResult>;
+  creditDecisionFile(id:string,name:CreditDecisionFileName,options?:RequestOptions):Promise<Response>;
+  creditControlOperation(requestId:string,options?:RequestOptions):Promise<CreditControlOperationResult>;
   cashPlans(query?:CashPlanListQuery, options?:RequestOptions):Promise<CashPlanList>;
   previewCashPlan(value:CashPlanPreviewInput, options?:RequestOptions):Promise<CashPlanPreview>;
   cashPlan(id:string, query?:{editionId?:string}, options?:RequestOptions):Promise<CashPlanDetail>;
@@ -340,7 +372,7 @@ export class ReceivablesClient {
   refundBytes(id: string, name: RefundFileName, options?: RequestOptions): Promise<RefundDownload>;
   previewCreditDisposition(value: CreditDispositionPreviewInput, options?: RequestOptions): Promise<CreditDispositionPreview>;
   applyCreditDisposition(value: ApplyCreditDispositionInput, options?: RequestOptions): Promise<CreditDispositionMutationResult>;
-  issue(id: string, value: MutationContext & {expectedVersion: number; previewSha256: string}): Promise<MutationResult & {invoice: InvoiceSummary}>;
+  issue(id: string, value: MutationContext & {expectedVersion: number; previewSha256: string; creditDecisionId?:string}): Promise<CreditIssueResult>;
   voidInvoice(id: string, value: MutationContext & {voidDate: DateOnly; reason: string}): Promise<MutationResult & {invoice: InvoiceSummary}>;
   credit(id: string, value: CreditInput): Promise<MutationResult & {credit: CreditRecord; invoice: InvoiceSummary}>;
   receipt(value: ReceiptInput): Promise<MutationResult & {receipt: Receipt}>;

@@ -85,6 +85,13 @@
         "cash-planning-display.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/credit-control.mjs",
+      [
+        "credit-control.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

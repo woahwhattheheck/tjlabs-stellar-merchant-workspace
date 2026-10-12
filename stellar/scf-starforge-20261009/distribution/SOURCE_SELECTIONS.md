@@ -25,6 +25,28 @@ These source dependencies leave the recipe's command, package-export, provider
 and runtime-feature choices intact. Explicitly selecting an excluded browser
 server remains an invalid package and reports the missing packaged entry.
 
+## Explicit original support files
+
+An explicit `supportFiles` entry selects that exact original file, including its
+original format. The terminal extension heuristic applies to automatic component
+expansion; it cannot silently remove a validated explicit declaration. Publisher
+TeX, R/Rd, lock files, original notices and other declared formats therefore
+remain in the selected package without making those formats automatic matches.
+
+The existing path checks, hidden and excluded directory rules, limited fixture
+data exception, exact `excludeFiles`, regular Git blob requirements, hashes and
+byte limits still apply. Required selected files continue to be checked against
+the resulting package manifest. An excluded or unavailable required file remains
+an error.
+
+The complete [Groundwater installation and independent receiving workflow](receiving/GROUNDWATER.md)
+uses the existing `groundwater-reports` recipe and Runtime Workspace. It builds
+the reviewed source, installs the original dependency profile, transfers the
+complete lock-bound package and dependency parts, and reopens the independently
+received runtime. Its source contract checks all 64 scientific files in both
+installations; the original scientific operation retains its own model inputs,
+runs, reports and portal receiving.
+
 ## Build through the runtime workspace
 
 The private runtime workspace's **Build a product** view discovers the recipes
@@ -68,6 +90,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `tind-migration` | Original OAI editions, native TIND MARCXML and file receiving, staff metadata reconciliation, complete editable migration handover | TIND scholarly migration; OAI repository workspace; Runtime management | [Complete installation and operation](../../../products/tind/OPERATING.md) |
 | `haystack-turnover` | Native building grids, source-local equipment and points, typed tag review, saved editions and complete editable turnover receiving | Haystack building turnover; Runtime management | [Complete installed operator guide](../../../products/haystack/OPERATING.md) |
 | `groundwater-reports` | Original groundwater sources, scenarios and native results, frozen report publication, buyer receiving, Operations association and complete scientific/desk handover | Groundwater scientific and Report Desk browsers; Buyer runbook; Merchant console | [Complete installation and operation](../../../products/groundwater/OPERATING.md) |
 | `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |

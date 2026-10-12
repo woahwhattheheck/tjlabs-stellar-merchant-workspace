@@ -1,13 +1,18 @@
 // MIT — Adds a research desk to the original authenticated library server.
 import {readFile} from 'node:fs/promises';
+import {readingExchangeExtension} from '../reading-exchange/server.mjs';
 import {serveLibrary} from '../server.mjs';
 import {openContentSearch} from './engine.mjs';
 import {reportDownload} from './reports.mjs';
 import {requireValue} from '../files.mjs';
 export async function contentSearchExtension(search){
   let work=null,lastJob=null,closing=false;
+  const reading=await readingExchangeExtension(search);
   const additionalAssets=await Promise.all([['/research','index.html','text/html'],['/research.js','app.js','text/javascript'],['/research.css','style.css','text/css']].map(async([route,file,type])=>({route,type,bytes:await readFile(new URL(file,import.meta.url))})));
-  const authenticatedRoute=async({request,url,send,body,registerDownload})=>{
+  additionalAssets.push(...reading.additionalAssets);
+  const authenticatedRoute=async(context)=>{
+    if(await reading.authenticatedRoute(context))return true;
+    const {request,url,send,body,registerDownload}=context;
     const prefix='/api/content-search';if(!url.pathname.startsWith(prefix+'/'))return false;
     requireValue(!closing,'SEARCH_CLOSING',503);const action=url.pathname.slice(prefix.length),method=request.method;
     const values=()=>{const out={};for(const key of ['q','mode','build','resourceId'])if(url.searchParams.has(key))out[key]=url.searchParams.get(key);for(const key of ['offset','limit','ordinal'])if(url.searchParams.has(key))out[key]=Number(url.searchParams.get(key));return out;};
@@ -28,7 +33,7 @@ export async function contentSearchExtension(search){
     else requireValue(false,'RESEARCH_ROUTE_NOT_FOUND',404);
     return true;
   };
-  return {additionalAssets,authenticatedRoute,async close(){closing=true;search.cancel();if(work)await work;}};
+  return {additionalAssets,authenticatedRoute,async close(){closing=true;await reading.close();search.cancel();if(work)await work;}};
 }
 export async function serveContentSearch(library,options={}){
   const search=await openContentSearch(library);let extension,host;

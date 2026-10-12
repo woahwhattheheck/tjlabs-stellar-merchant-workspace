@@ -2,6 +2,7 @@
 // MIT — Python operates the original SF88 library, worker and review writers.
 import {randomUUID} from 'node:crypto';
 import {createReviewBrowser} from './review-browser.mjs';
+import {createResearchBinding,researchActions} from './review-reading.mjs';
 import {openLibrary} from '../resource-library/library.mjs';
 import {collectionMembers, inspectOriginalCollection, receiveOriginalCollection, openOriginalCollection, collectionDownload} from './review-collections.mjs';
 import {readSnapshot, requireValue, digest} from '../resource-library/files.mjs';
@@ -9,9 +10,9 @@ import {readSnapshot, requireValue, digest} from '../resource-library/files.mjs'
 const SCHEMA='stellar-forge.sf88.python-review.v1';
 const MAX_FRAME=8*1024*1024, CHUNK=1024*1024;
 let reportDescriptor,verifyHandover,available=[];
-let library=null, browser=null, closing=false, input=Buffer.alloc(0), output=Promise.resolve();
+let library=null, browser=null, research=null, closing=false, input=Buffer.alloc(0), output=Promise.resolve();
 const active=new Map(), transfers=new Map();
-const ACTIONS=[
+const ACTIONS=[...researchActions,
   'library.status','library.scan','library.search','library.resource','library.preview','library.select',
   'annotation.save','annotation.history','collections.list','collections.show','collections.history','collections.save',
   'collections.members','collections.inspectArchive','collections.receiveArchive',
@@ -55,7 +56,7 @@ async function dispatch(action,p,signal){
         p.collectionMaxBytes===undefined&&!p.collectionResume,'COLLECTION_RECEIVED_DIRECTORY_REQUIRED');
       library=await openLibrary(p);
     }
-    browser=createReviewBrowser(library);
+    browser=createReviewBrowser(library);research=createResearchBinding(library);
     // The existing source library remains usable while its optional edition
     // product is composed. Never install or synthesize a comparison engine.
     if(library.comparisons){
@@ -65,11 +66,12 @@ async function dispatch(action,p,signal){
     available=ACTIONS.filter(action=>action.startsWith('returns.')?Boolean(library.comparisons?.returns):
       action.startsWith('comparisons.')||action==='handover.verify'?Boolean(library.comparisons):true);
     return {schema:SCHEMA,node:process.versions.node,actions:available,
-      features:{resources:true,browser:true,collections:true,comparisons:Boolean(library.comparisons),returns:Boolean(library.comparisons?.returns)},
+      features:{resources:true,browser:true,collections:true,research:true,comparisons:Boolean(library.comparisons),returns:Boolean(library.comparisons?.returns)},
       collectionReceipt,library:library.status()};
   }
   requireValue(library&&!closing,'REVIEW_NOT_OPEN',409);
   requireValue(available.includes(action),'REVIEW_CAPABILITY_UNAVAILABLE',409);
+  if(action.startsWith("research."))return research.dispatch(action,p,signal);
   const c=library.comparisons,r=c?.returns,{id,options={},input:body={}}=p;
   switch(action){
     case 'browser.start':return browser.start(p);
@@ -117,9 +119,10 @@ async function dispatch(action,p,signal){
     }
     case 'transfer.open':{
       requireValue(transfers.size<8,'REVIEW_TRANSFER_CAPACITY',409);
-      requireValue(['resource','comparison','return','library-review','collection'].includes(p.kind),'REVIEW_TRANSFER_KIND_INVALID');
+      requireValue(['resource','comparison','return','library-review','collection','reading-handover'].includes(p.kind),'REVIEW_TRANSFER_KIND_INVALID');
       let descriptor;
-      if(p.kind==='resource')descriptor=await library.download(id,{signal});
+      if(p.kind==='reading-handover')descriptor=await research.download(id,signal);
+      else if(p.kind==='resource')descriptor=await library.download(id,{signal});
       else if(p.kind==='collection')descriptor=await collectionDownload(library,p,signal);
       else {
         requireValue(typeof reportDescriptor==='function','REVIEW_COMPARISON_RUNTIME_REQUIRED',409);
@@ -149,7 +152,7 @@ async function dispatch(action,p,signal){
     case 'close':{
       closing=true;for(const controller of active.values())controller.abort();
       for(const token of [...transfers.keys()])await releaseTransfer(token);
-      await browser.close();await library.close();return {closed:true};
+      await browser.close();await research.close();await library.close();return {closed:true};
     }
     default:requireValue(false,'REVIEW_ACTION_INVALID');
   }
@@ -158,6 +161,7 @@ async function shutdown(){
   if(!closing){closing=true;for(const controller of active.values())controller.abort();
     for(const token of [...transfers.keys()])await releaseTransfer(token).catch(()=>{});
     if(browser)await browser.close().catch(()=>{});
+    if(research)await research.close().catch(()=>{});
     if(library)await library.close().catch(()=>{});}
   await output.catch(()=>{});
 }

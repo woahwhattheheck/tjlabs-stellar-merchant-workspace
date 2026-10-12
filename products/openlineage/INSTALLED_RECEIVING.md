@@ -135,7 +135,7 @@ workspace operation history remain unchanged.
 
 The selected package explicitly includes `OPENLINEAGE_LICENSE`. That upstream notice
 is part of every original editable application inventory. The maintained distribution
-filter accepts the explicitly declared original project license name, so installation
+builder retains the explicitly declared original project license name, so installation
 can prepare the Application and export the complete workspace.
 
 ## Native progress and continuation

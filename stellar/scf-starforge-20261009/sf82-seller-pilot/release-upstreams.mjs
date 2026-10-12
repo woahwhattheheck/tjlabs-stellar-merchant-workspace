@@ -60,6 +60,7 @@ function inspectBytes(bytes, service, allowLoopback) {
       binding: name, configurationSha256: digest(stable(value.transport ? {binding:raw,transport:value.transport} : raw)),
       origin: value.origin, path: value.path, method: value.method, query: value.query,
       requestHeaders: value.requestHeaders, headerEnvironment: raw.headerEnv ?? {},
+      queryEnvironment: raw.queryEnv ?? {},
       responseHeaders: value.responseHeaders, responseMode: value.responseMode,
       responseContractSha256: raw.responseContract ? digest(stable(raw.responseContract)) : null,
       timeoutMs: value.timeoutMs, maxResponseBytes: value.maxResponseBytes,
