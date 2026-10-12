@@ -1,6 +1,7 @@
 // MIT. QCEW inventories belong to the original FRED project and its transaction journal.
 import { need, plain, clone, canonical, period } from './model.mjs';
 import { validateQcewProfile } from './profile.mjs';
+import { validateQcewPublicationRecord } from './publication-model.mjs';
 export const QCEW_STATE='stellar-forge.fred-qcew-project.v1';
 export const QCEW_EXTENSION='stellar-forge.fred-qcew-extension.v1';
 const hash=/^[a-f0-9]{64}$/;
@@ -28,6 +29,15 @@ export function validateQcewState(state) {
     need(typeof edition.createdAt==='string'&&Number.isFinite(Date.parse(edition.createdAt)),'The edition creation time is invalid.');
     earlier.add(edition.id);
   }
+  const publications=value.publications??[];
+  inventory(publications,'publication');
+  for(const publication of publications) {
+    const edition=value.editions.find(item=>item.id===publication.editionId);
+    need(edition,'The county publication lost its original saved edition.');
+    validateQcewPublicationRecord(publication,edition);
+  }
+  need(value.selectedPublication===undefined||value.selectedPublication===null||
+    publications.some(item=>item.id===value.selectedPublication),'The selected county publication is not retained.');
   for(const [field,items] of [['selectedCapture',value.captures],['selectedProfile',value.profiles],['selectedEdition',value.editions]])
     need(value[field]===null||items.some(item=>item.id===value[field]),'The selected QCEW '+field+' is not retained.');
   return value;
@@ -44,5 +54,6 @@ export function mutableQcewState(state) {
 }
 export function qcewProjectSummary(state) {
   const value=validateQcewState(state);
-  return value?clone(value):{schema:QCEW_STATE,captures:[],profiles:[],editions:[],selectedCapture:null,selectedProfile:null,selectedEdition:null};
+  return value?{...clone(value),publications:clone(value.publications??[]),selectedPublication:value.selectedPublication??null}:
+    {schema:QCEW_STATE,captures:[],profiles:[],editions:[],publications:[],selectedCapture:null,selectedProfile:null,selectedEdition:null,selectedPublication:null};
 }

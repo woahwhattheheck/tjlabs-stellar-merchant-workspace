@@ -167,7 +167,7 @@
 
 <div class="box" id="qcew-report-panel"><h3>Saved reports and original data</h3>
 <label>Report edition<select id="qcew-edition"></select></label>
-<div class="buttons"><button id="qcew-open-edition" type="button">Open report</button><button id="qcew-use-edition" type="button">Use as the next edition’s predecessor</button></div>
+<div class="buttons"><button id="qcew-open-edition" type="button">Open report</button><button id="qcew-use-edition" type="button">Use as the next edition’s predecessor</button><button id="qcew-publish-selected" type="button">Publish selected report</button></div>
 <p id="qcew-report-status" role="status" aria-live="polite">Produce a reporting quarter or open a saved edition.</p>
 <div id="qcew-report-metrics" class="metrics"></div><div id="qcew-downloads" class="buttons"></div>
 <div id="qcew-charts" class="qcew-charts"></div>
@@ -274,19 +274,32 @@
 </section>
 
 <section data-panel="publication" hidden>
-<h2>Operate a reviewed merchant edition</h2><p>Publish a saved review with the merchant’s original public payment terms. Each edition keeps a stable snapshot and its own public resource path.</p>
-<form id="publication-form" class="form-grid"><label class="wide">Saved review<select id="review-select"></select></label><label>Public HTTPS origin<input id="public-origin" type="url" placeholder="https://your-merchant.example" required></label><label>Resource path<input id="public-path" value="/economic-data" required></label>
-<label class="wide">Public payment terms<textarea id="payment" rows="9" spellcheck="false" required></textarea><small>Use your configured scheme, network, token contract, atomic amount, recipient and timeout.</small></label><div class="wide"><button type="submit">Publish reviewed source</button></div></form>
+<h2>Operate a published economic edition</h2><p>Select a saved source review or complete county report and use the merchant’s public payment terms. Each publication retains its original files and public resource paths.</p><p><a href="/county-merchant-guide" target="_blank" rel="noopener">County report publication and receiving guide</a></p>
+<form id="publication-form" class="form-grid"><label class="wide">Publication kind<select id="publication-kind"><option value="FRED">Reviewed FRED source or briefing</option><option value="QCEW">Complete county report</option></select></label><label class="wide" id="publication-review-field">Saved review<select id="review-select"></select></label><label class="wide" id="publication-county-field" hidden>Saved county report<select id="qcew-merchant-edition"></select></label><label>Public HTTPS origin<input id="public-origin" type="url" placeholder="https://your-merchant.example" required></label><label>Resource path<input id="public-path" value="/economic-data" required></label>
+<label class="wide">Public payment terms<textarea id="payment" rows="9" spellcheck="false" required></textarea><small>Use your configured scheme, network, token contract, atomic amount, recipient and timeout.</small></label><div class="wide buttons"><button id="publish-button" type="submit">Publish selected edition</button><button id="county-publish-continue" type="button" hidden>Continue saved county publication</button></div><p id="county-publication-status" class="wide" role="status" aria-live="polite"></p></form>
 <h3>Retained merchant</h3><label>Publication<select id="publication-select"></select></label><div class="buttons"><button id="open-publication">Open publication</button><button id="merchant-start">Start original seller</button><button id="merchant-stop">Stop and retain seller</button></div>
-<pre id="merchant-state">Select a publication.</pre><div id="publication-detail"></div>
-<label>Original dataset query<textarea id="preview-query" rows="2" spellcheck="false">limit=25</textarea></label><button id="preview">Preview original dataset</button><div id="preview-result" class="table-wrap"></div>
+<pre id="merchant-state">Select a publication.</pre><div id="publication-detail" class="table-wrap"></div><div id="publication-files" class="table-wrap"></div>
+<div id="publication-data-preview"><label>Original dataset query<textarea id="preview-query" rows="2" spellcheck="false">limit=25</textarea></label><button id="preview">Preview original dataset</button><div id="preview-result" class="table-wrap"></div></div>
 </section>
 <section data-panel="customer" hidden>
 <h2>Receive the original edition</h2><p>Prepare the exact published request and inspect its terms. The configured original buyer asks for approval in the terminal and retains its attempt and delivered bytes.</p>
 <p id="buyer-status"></p><div class="form-grid"><label class="wide">Publication<select id="customer-publication"></select></label><label class="wide">Resource<select id="customer-file"><option value="">Observation page</option></select></label><label>Stable intent<input id="intent" maxlength="96"></label><label>Payment alternative<input id="accept-index" type="number" min="0" value="0"></label><label class="wide">Original page query<textarea id="customer-query" rows="3" spellcheck="false">limit=25</textarea></label></div>
-<div class="buttons"><button id="prepare">Prepare this request</button><button id="buy">Review and execute original purchase</button><button id="recover">Reopen original result</button><button id="download-customer">Download retained delivery</button><button id="next-customer-page">Prepare next page selection</button></div>
+<div class="buttons"><button id="new-customer-request">New request</button><button id="prepare">Prepare this request</button><button id="buy">Review and execute original purchase</button><button id="recover">Reopen original result</button><button id="download-customer">Download retained delivery</button><button id="next-customer-page">Prepare next page selection</button></div>
 <h3>Saved requests</h3><select id="request-select"></select><button id="open-request">Select saved request</button>
 <pre id="customer-result">The original request, selected terms and retained result appear here.</pre><div id="customer-rows" class="table-wrap"></div>
+
+<div id="county-purchase-receiving" class="box" hidden>
+<h3>Receive the purchased county report</h3>
+<p>The complete report package carries the original report files and predecessor editions. Its receiving destination stays with the same purchase.</p>
+<form id="county-receive-purchase-form" class="form-grid">
+<label class="wide">Customer receiving directory<input id="county-purchase-directory" placeholder="/absolute/path/to/customer-report" autocomplete="off"></label>
+<div class="wide buttons"><button id="county-receive-purchase" type="submit">Receive or continue original report</button><button id="county-open-receiving" type="button">Open saved receiving</button></div>
+</form>
+<p id="county-customer-status" role="status" aria-live="polite"></p>
+<div id="county-customer-receipt" class="table-wrap"></div>
+<label>Received report edition<select id="county-received-edition"></select></label>
+<div id="county-customer-downloads" class="buttons"></div>
+</div>
 </section>
 <section data-panel="recovery" hidden>
 <h2>History and receiving</h2><p>The project retains source captures, saved review decisions, publications and completed operation identities. Resume an interrupted source acquisition with the same operation.</p>

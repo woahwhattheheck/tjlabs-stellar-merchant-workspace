@@ -134,10 +134,140 @@ export function getQcewEdition(directory: string, editionId?: QcewSha256, option
 export function downloadQcewMember(options: { directory: string; editionId?: QcewSha256; name: string }):
   Promise<{ name: string; contentType: string; bytes: Uint8Array; sha256: QcewSha256 }>;
 export function viewQcewProject(options: { directory: string }): Promise<{
-  projectId: string; title: string; revision: number; pending: Record<string, unknown> | null; qcew: Record<string, unknown>
+  projectId: string; title: string; revision: number; pending: Record<string, unknown> | null; qcew: QcewProjectInventory
 }>;
 export function readQcewFiles(directory: string, editionId: QcewSha256, options?: { expectedManifest?: QcewFileManifest | null }):
   Promise<QcewFilePackage>;
 export function validateQcewFilePackage(packet: unknown, options?: {
   report?: QcewReport; previousReport?: QcewReport | null; expectedEdition?: QcewEdition | null; rebuildText?: boolean;
 }): QcewFilePackage & { report: QcewReport };
+
+
+export interface QcewPaymentTerms {
+  scheme: string; network: string; asset: string; amount: string; payTo: string; maxTimeoutSeconds: number;
+  [field: string]: unknown;
+}
+export interface QcewMerchantTerms { origin: string; path: string; payment: QcewPaymentTerms; }
+export interface QcewMerchantFile {
+  path: string; bytes: number; sha256: QcewSha256; contentType: string; resource: string;
+  role: 'REPORT_PACKAGE' | 'REPORT_MANIFEST' | 'REPORT_MEMBER';
+}
+export interface QcewMerchantPlan extends QcewMerchantTerms {
+  schema: 'stellar-forge.qcew-merchant.v1'; publicationId: QcewSha256; editionId: QcewSha256;
+  reportId: QcewSha256; manifestSha256: QcewSha256; deliverySha256: QcewSha256; planSha256: QcewSha256;
+  resource: string; downloads: QcewMerchantFile[]; configSha256: QcewSha256; offersSha256: QcewSha256;
+}
+export interface QcewPublicationRecord extends QcewMerchantTerms {
+  id: QcewSha256; editionId: QcewSha256; reportId: QcewSha256; manifestSha256: QcewSha256;
+  deliverySha256: QcewSha256; planSha256: QcewSha256; resource: string; createdAt: string;
+}
+export interface QcewProjectInventory {
+  schema: 'stellar-forge.fred-qcew-project.v1';
+  captures: Array<{ id: QcewSha256; captureSha256: QcewSha256; summary: QcewSourceSummary; importedAt: string }>;
+  profiles: QcewProfile[]; editions: QcewEdition[]; publications: QcewPublicationRecord[];
+  selectedCapture: QcewSha256 | null; selectedProfile: QcewSha256 | null;
+  selectedEdition: QcewSha256 | null; selectedPublication: QcewSha256 | null;
+}
+export interface QcewReportDelivery {
+  schema: 'stellar-forge.qcew-report-delivery.v1'; editionId: QcewSha256; reportId: QcewSha256;
+  manifestSha256: QcewSha256; deliverySha256: QcewSha256; editions: QcewFilePackage[];
+}
+export interface QcewCheckedReportDelivery {
+  delivery: QcewReportDelivery; editions: Array<QcewFilePackage & { report: QcewReport }>;
+  edition: QcewFilePackage & { report: QcewReport };
+}
+export interface QcewReportReceiving {
+  schema: 'stellar-forge.qcew-report-receiving.v1'; state: 'RECEIVED'; editionId: QcewSha256;
+  reportId: QcewSha256; manifestSha256: QcewSha256; deliverySha256: QcewSha256;
+  editions: number; files: number; title: string; period: QcewPeriod; reportFiles: QcewFileManifest['files'];
+  packageSha256: QcewSha256; packageBytes: number; receivedAt: string;
+}
+export interface QcewReceivedReport extends QcewCheckedReportDelivery {
+  receipt: QcewReportReceiving; directory: string; bytes: Uint8Array;
+}
+export interface QcewMerchantEdition {
+  schema: 'stellar-forge.qcew-merchant-edition.v1'; editionId: QcewSha256; reportId: QcewSha256;
+  manifestSha256: QcewSha256; deliverySha256: QcewSha256; title: string; period: QcewPeriod;
+  source: QcewReport['source']; cpi: QcewReport['cpi']; availability: QcewReport['availability'];
+  files: QcewFileManifest['files']; predecessorEditions: number;
+}
+export interface QcewMerchantView {
+  edition: QcewMerchantEdition; plan: QcewMerchantPlan; directory: string;
+  config: Record<string, unknown>; offers: unknown[]; offersBytes: Uint8Array; deliveryBytes: Uint8Array;
+}
+export interface QcewMerchantSession {
+  url: string; mode: 'NATIVE_SELLER' | 'CHALLENGE_ONLY'; publicationId: QcewSha256;
+  editionId: QcewSha256; reportId: QcewSha256; resource: string; close(): Promise<unknown>;
+  [field: string]: unknown;
+}
+export interface QcewPurchase {
+  schema: 'stellar-forge.qcew-purchase.v1'; publicationId: QcewSha256; editionId: QcewSha256;
+  reportId: QcewSha256; manifestSha256: QcewSha256; deliverySha256: QcewSha256; captureSha256: QcewSha256;
+  planSha256: QcewSha256; intentId: string; url: string; file: string; expected: QcewMerchantFile;
+  configSha256: QcewSha256; purchaseSha256: QcewSha256;
+  config: Record<string, unknown> & { operation: Record<string, unknown>; preparedFrom: { acceptIndex: number; [key: string]: unknown };
+    responseFile: { destination: string; maxBytes: number; expectedSha256: QcewSha256; expectedBytes: number; expectedContentType: string } };
+}
+export interface QcewBuyer {
+  fromConfig(config: Record<string, unknown>, options?: { signal?: AbortSignal }): Promise<unknown>;
+  operation(intentId: string): unknown;
+}
+export interface QcewNativeDeliveryResult {
+  record: Record<string, unknown>; raiseForStatus(): void;
+  bytes(options: { limit: number }): Promise<Uint8Array>;
+}
+export type QcewPurchaseOutcome =
+  | { state: 'DELIVERED'; intentId: string; publicationId: QcewSha256; editionId: QcewSha256; reportId: QcewSha256;
+      metadata: QcewMerchantFile; bytes: number; sha256: QcewSha256; result: QcewNativeDeliveryResult;
+      report?: { title: string; period: QcewPeriod; editions: number; files: number } }
+  | { state: 'PREPARED_NOT_STARTED' | 'AWAITING_NATIVE_RESULT'; intentId: string; publicationId: QcewSha256; editionId: QcewSha256 }
+  | { state: 'NATIVE_PREPARATION_INCOMPLETE'; intentId: string };
+export interface QcewPurchaseReceivingSelection {
+  schema: 'stellar-forge.qcew-purchase-receiving.v1'; intentId: string; publicationId: QcewSha256;
+  directory: string; packageSha256: QcewSha256; requestedAt: string;
+}
+export interface QcewSavedPurchase {
+  intentId: string; publicationId: QcewSha256; editionId: QcewSha256; file: string; url: string;
+  purchaseSha256: QcewSha256; expected: QcewMerchantFile; receiving: QcewPurchaseReceivingSelection | null;
+}
+export interface QcewDeliveredFile { bytes: Uint8Array; filename: string; contentType: string; sha256?: QcewSha256; }
+export const QCEW_MERCHANT: 'stellar-forge.qcew-merchant.v1';
+export const QCEW_REPORT_PACKAGE: 'report-package.json.gz';
+export const QCEW_PURCHASE: 'stellar-forge.qcew-purchase.v1';
+export const QCEW_REPORT_DELIVERY: 'stellar-forge.qcew-report-delivery.v1';
+export const QCEW_REPORT_RECEIVING: 'stellar-forge.qcew-report-receiving.v1';
+export const MAX_QCEW_DELIVERY_JSON_BYTES: number;
+export function normalizeQcewMerchantTerms(options: { origin: string; path?: string; payment: QcewPaymentTerms }): QcewMerchantTerms;
+export function qcewPublicationId(options: QcewMerchantTerms & { editionId: QcewSha256 }): QcewSha256;
+export function validateQcewMerchantPlan(plan: unknown, options?: { record?: QcewPublicationRecord | null; edition?: QcewEdition | null }): QcewMerchantPlan;
+export function publishQcewEdition(options: QcewOperation & { editionId: QcewSha256; origin: string; path?: string; payment: QcewPaymentTerms }):
+  Promise<QcewResult<{ publicationId: QcewSha256; editionId: QcewSha256; reportId: QcewSha256;
+    manifestSha256: QcewSha256; planSha256: QcewSha256; deliverySha256: QcewSha256; resource: string; downloads: QcewMerchantFile[] }>>;
+export function selectQcewPublication(directory: string, publicationId: QcewSha256): Promise<string>;
+export function qcewPublicationDirectory(directory: string, publicationId: QcewSha256): string;
+export function prepareQcewMerchant(options: { directory: string; editions: QcewFilePackage[]; origin: string;
+  path?: string; payment: QcewPaymentTerms; originalDeliveryBytes?: Uint8Array | null }):
+  Promise<{ edition: QcewMerchantEdition; plan: QcewMerchantPlan; directory: string }>;
+export function readQcewMerchant(directory: string): Promise<QcewMerchantView>;
+export function startQcewMerchant(options: { directory: string; port?: number; nativeFactory?: unknown; facilitator?: string;
+  allowLocalFacilitator?: boolean; maxInFlight?: number; drainGraceMs?: number }): Promise<QcewMerchantSession>;
+export function createQcewReportDelivery(editions: QcewFilePackage[]): QcewReportDelivery;
+export function validateQcewReportDelivery(value: unknown): QcewCheckedReportDelivery;
+export function encodeQcewReportDelivery(value: QcewReportDelivery): Uint8Array;
+export function decodeQcewReportDelivery(bytes: Uint8Array): QcewCheckedReportDelivery;
+export function receiveQcewReportDelivery(options: { directory: string; bytes: Uint8Array }):
+  Promise<QcewReportReceiving & { directory: string; reused: boolean }>;
+export function readQcewReportReceiving(directory: string): Promise<QcewReceivedReport>;
+export function exportQcewReportReceiving(directory: string): Promise<QcewDeliveredFile & { sha256: QcewSha256 }>;
+export function prepareQcewPurchase(options: { directory: string; intentId: string; file?: string | null;
+  acceptIndex?: number; query?: URLSearchParams | Record<string, string>; previous?: null }): Promise<QcewPurchase>;
+export function executeQcewPurchase(options: { directory: string; buyer: QcewBuyer; purchase: QcewPurchase; signal?: AbortSignal }): Promise<QcewPurchaseOutcome>;
+export function recoverQcewPurchase(options: { directory: string; buyer: QcewBuyer; intentId: string }): Promise<QcewPurchaseOutcome>;
+export function exportQcewPurchase(options: { directory: string; buyer: QcewBuyer; intentId: string }): Promise<QcewDeliveredFile>;
+export function receiveQcewPurchase(options: { directory: string; buyer: QcewBuyer; intentId: string; receivingDirectory?: string | null }):
+  Promise<QcewReportReceiving & { directory: string; reused: boolean; intentId: string; publicationId: QcewSha256 }>;
+export function listQcewPurchases(directory: string): Promise<QcewSavedPurchase[]>;
+export function readQcewPurchaseReceiving(options: { directory: string; intentId: string }):
+  Promise<QcewReceivedReport & { intentId: string; publicationId: QcewSha256 }>;
+export function exportQcewPurchaseReceiving(options: { directory: string; intentId: string; file?: string; editionId?: QcewSha256 | null }):
+  Promise<QcewDeliveredFile & { sha256: QcewSha256 }>;

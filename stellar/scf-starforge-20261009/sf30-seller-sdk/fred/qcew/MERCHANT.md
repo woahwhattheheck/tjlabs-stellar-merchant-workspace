@@ -1,0 +1,219 @@
+# County report publication and customer receiving
+
+The saved economic project can sell a complete QCEW county report through the maintained Stellar Forge merchant and Buyer. The same workspace produces the report, publishes its original files, prepares the customer request and opens the delivered package.
+
+A publication selects one saved county report and its complete predecessor chain. The default resource, **report-package.json.gz**, contains every report edition in that chain, each original manifest, and every original report member. Customers can reopen the current report, inspect an earlier edition and download its original files independently of the merchant.
+
+The current report's HTML, PDF when produced, complete JSON, calculated CSV, source-row CSV, methodology and comparison files are also available as individual paid resources. The original publication lists the exact resources, byte lengths, content types and SHA256 values before the customer prepares a request.
+
+## Operate the installed workspace
+
+Use the existing FRED application in Applications, or start the same saved project with its configured Buyer and facilitator:
+
+~~~sh
+starforge fred serve \
+  --project /absolute/economic-project \
+  --buyer-config /absolute/private/buyer.json \
+  --facilitator https://your-configured-facilitator.example \
+  --merchant-port 8091
+~~~
+
+The command prints the private workspace URL. Open that complete URL in the operator browser. Route the merchant's public HTTPS origin to the selected merchant port through the installation's existing reverse proxy. The workspace and seller have separate listeners; the private workspace URL remains the operator entry.
+
+An original local facilitator can be selected with its http://127.0.0.1 address and the existing **--allow-local-facilitator** option. Use the installation's actual facilitator and Buyer configuration. The Buyer keeps its original review, approval, attempt and settlement behaviour.
+
+### Publish a saved report
+
+1. Open **County reports**, choose the original saved report and review its files, source availability and predecessor comparison.
+2. Choose **Publish selected report** to carry that exact edition into the merchant form. The same form is available under **Merchant** by selecting **Complete county report**.
+3. Enter the public HTTPS origin, resource path and the merchant's public payment terms. Payment uses the installed scheme, network, token contract, atomic amount, recipient and timeout.
+4. Choose **Publish selected edition**. The operation retains its edition, public terms, complete package and original file inventory in the saved project.
+5. Open the retained publication and choose **Start original seller**. The merchant status shows the selected publication and its actual listener.
+
+The payment terms apply to each advertised resource. A complete-package purchase includes the entire selected report chain; buying an individual file purchases that exact file. Choose the complete package when the customer needs reports, predecessor comparisons and offline receiving together.
+
+County publication uses the same durable browser operation journal as source production and receiving. If the browser loses a response, choose **Continue saved county publication**. It resumes the same selected edition and terms. The saved report and publication IDs remain available in project history.
+
+Each distinct edition or set of public terms has its own publication ID. Publishing an already retained selection opens the same original merchant files. The previously retained compressed package is reused when the publisher restarts.
+
+### Buy and receive a report
+
+1. Open **Customer** and select the retained county publication.
+2. Keep the default complete report package, or choose one exact original file. Review the stable intent and payment alternative.
+3. Choose **Prepare this request**. The workspace displays the original URL, expected public terms and expected file identity.
+4. Choose **Review and execute original purchase** and complete the configured Buyer's existing approval interaction. The original SF88 operation retains the native attempt and delivered bytes.
+5. Choose **Reopen original result** after a lost response or restart. It recovers the same native operation and file.
+6. For a complete-package purchase, select an absolute customer receiving directory and choose **Receive or continue original report**.
+7. Use **Received report edition** to inspect the current report or an original predecessor. Download the complete package again or any original member shown for that edition.
+
+The customer receiving directory is saved with the same purchase before receiving starts. Repeating the operation continues that destination. The original report package is retained atomically and each report file is reconstructed and checked against the saved manifest. A process interruption can be continued with the same intent and directory.
+
+Saved requests restore the original resource and receiving selection. **New request** creates a new intent for another purchase. The original result remains attached to its original request.
+
+A separately downloaded complete package can be received on another host using the installed commands below. That recipient does not need the seller's project directory or the seller's source-acquisition credentials.
+
+## Installed command workflow
+
+The examples use absolute paths and names chosen for one operator session. Read the actual project revision and edition IDs from the existing project before issuing publication:
+
+~~~sh
+starforge fred qcew show --project /absolute/economic-project
+starforge fred qcew edition --project /absolute/economic-project --verify-sources
+~~~
+
+Save the installation's public payment object in **/absolute/public-payment.json**. It is the same public object accepted by the existing seller definition: scheme, network, asset, amount, payTo and maxTimeoutSeconds. Supply its actual values from the configured merchant.
+
+~~~sh
+starforge fred qcew publish \
+  --project /absolute/economic-project \
+  --id county-publish-2026-q1 \
+  --expected-revision CURRENT_REVISION \
+  --edition ORIGINAL_EDITION_SHA256 \
+  --origin https://your-merchant.example \
+  --path /county-reports \
+  --payment /absolute/public-payment.json
+
+starforge fred qcew publication \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256
+~~~
+
+Retain the returned publication ID. The publication output contains the complete plan, offers, report identity and saved customer requests.
+
+Run the original native merchant in its foreground process:
+
+~~~sh
+starforge fred qcew merchant \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256 \
+  --port 8091 \
+  --facilitator https://your-configured-facilitator.example
+~~~
+
+SIGINT or SIGTERM drains and closes the listener. Merchant files and prepared requests remain in the saved project.
+
+Prepare and execute the complete-package purchase through the configured original Buyer:
+
+~~~sh
+starforge fred qcew prepare \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256 \
+  --intent county-customer-2026-q1
+
+starforge fred qcew buy \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256 \
+  --intent county-customer-2026-q1 \
+  --buyer-config /absolute/private/buyer.json
+
+starforge fred qcew recover \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256 \
+  --intent county-customer-2026-q1 \
+  --buyer-config /absolute/private/buyer.json
+
+starforge fred qcew receive-purchase \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256 \
+  --intent county-customer-2026-q1 \
+  --buyer-config /absolute/private/buyer.json \
+  --receiving-directory /absolute/customer/county-2026-q1
+~~~
+
+Continue the original receiving by running **receive-purchase** again with the same intent and Buyer. The receiving-directory option can be omitted after its original selection is saved.
+
+For an individual file, prepare another intent with **--file report.pdf**, **--file data.csv** or an exact member listed in the original plan. Use the same buy, recover and delivery commands for that intent.
+
+Export the original paid bytes:
+
+~~~sh
+starforge fred qcew delivery \
+  --project /absolute/economic-project \
+  --publication ORIGINAL_PUBLICATION_SHA256 \
+  --intent county-customer-2026-q1 \
+  --buyer-config /absolute/private/buyer.json \
+  --out /absolute/delivery/report-package.json.gz
+~~~
+
+Open a downloaded package independently:
+
+~~~sh
+starforge fred qcew receive-report \
+  --directory /absolute/customer/received-county-report \
+  --source /absolute/delivery/report-package.json.gz
+
+starforge fred qcew received-report \
+  --directory /absolute/customer/received-county-report
+
+starforge fred qcew received-file \
+  --directory /absolute/customer/received-county-report \
+  --file report.html \
+  --out /absolute/customer/exports/report.html
+
+starforge fred qcew received-file \
+  --directory /absolute/customer/received-county-report \
+  --edition ORIGINAL_PREDECESSOR_EDITION_SHA256 \
+  --file data.csv \
+  --out /absolute/customer/exports/previous-data.csv
+~~~
+
+Omit **--file** from **received-file** to export the original complete package. CLI export destinations are create-only. Reopen an existing retained export directly or choose a new destination for a new export.
+
+## Complete project handover
+
+The existing complete FRED project export includes county sources, profiles, report files, original predecessor relationships and retained county publications. Each publication includes its original merchant plan and exact compressed report package.
+
+~~~sh
+starforge fred qcew export \
+  --project /absolute/economic-project \
+  --out /absolute/handover/economic-project.json
+
+starforge fred qcew receive \
+  --project /absolute/receiving/economic-project \
+  --source /absolute/handover/economic-project.json
+~~~
+
+The receiving project reconstructs each county merchant using the retained compressed bytes and original public terms. Reopen the saved publication on that project and use the receiving host's configured Buyer, facilitator and proxy.
+
+Buyer operation directories remain part of the configured Buyer's own storage. Move them through that Buyer's existing backup and receiving procedures when transferring an in-progress or completed native purchase between operator hosts.
+
+Projects without county publications retain their existing QCEW extension v1. A project with county publications uses QCEW extension v2 inside the existing FRED project envelope. The envelope preserves its original version and all other economic source, release, briefing and DDP content.
+
+## Original files and capacity
+
+| Resource | Contents |
+| --- | --- |
+| report-package.json.gz | Entire selected report and every original predecessor, including complete manifests and files |
+| manifest.json | Current report manifest and exact original member descriptors |
+| report.html | Complete offline current report |
+| report.pdf | Original generated PDF when the report contains one |
+| report.json | Complete original calculated report model |
+| data.csv | Complete calculated report rows |
+| source-rows.csv | Original source rows selected into the report |
+| methodology.md | Original calculation and source methodology |
+| changes.json / changes.csv | Original comparison to the saved predecessor when present |
+
+The underlying native asset seller supports a maximum of 16 MiB per paid file and 64 MiB for a publication's complete resource inventory. The report-package reader supports at most 256 MiB of decompressed JSON. Publication checks the complete original files against those capacities and reports the actual capacity error if exceeded.
+
+The paid report package retains the report's full original files and source references. The complete source archives and sealed source captures remain in the complete project handover. The source-production guide describes their acquisition and historical coverage.
+
+## Programme integration
+
+The original-data **native-journey.mjs** creates the full saved county project from the complete retained source intake and CPI capture. **workspace-journey.mjs** opens the same complete original report editions, downloads the report and original source files, traverses history and comparisons, and receives the full project through the browser.
+
+The paid merchant continuation should use that original project with the actual installation's public origin, public payment file, configured SF88 Buyer, facilitator, fixed merchant port, Chromium and Playwright module. It exercises publication and native purchase through the same Merchant and Customer desks, reopens the original purchase after a restart, receives every original report edition and compares the complete received package with the original paid bytes.
+
+Retain those original configuration selections with the programme operation. On continuation, recover its original publication and intents before attempting further work. The programme's journal belongs alongside the existing source intake, native-result.json and browser receiving outputs.
+
+## Module interface
+
+The installed **./seller/fred/qcew** entry exports publication, purchase and report receiving with TypeScript declarations:
+
+- publishQcewEdition and selectQcewPublication operate the existing saved project.
+- prepareQcewMerchant, readQcewMerchant and startQcewMerchant operate the retained native seller.
+- prepareQcewPurchase, executeQcewPurchase, recoverQcewPurchase and exportQcewPurchase use the original SF88 Buyer.
+- receiveQcewPurchase, readQcewPurchaseReceiving and exportQcewPurchaseReceiving operate a purchase's original receiving selection.
+- createQcewReportDelivery, encodeQcewReportDelivery and decodeQcewReportDelivery represent the complete original report chain.
+- receiveQcewReportDelivery, readQcewReportReceiving and exportQcewReportReceiving open a downloaded complete package independently.
+
+See **index.d.mts** for complete argument and result types, **WORKSPACE.md** for source production and browser recovery, and **README.md** for original QCEW calculations and intake.
