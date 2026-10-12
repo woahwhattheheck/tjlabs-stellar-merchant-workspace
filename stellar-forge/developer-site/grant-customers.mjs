@@ -281,6 +281,10 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf74-merchant-support-console\/SERVICE_RENEWALS\.md)/, billing);
   receive('merchant-accepted-service-calendar', 'Accepted renewal periods and complete financial receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-service-agreements\/README\.md)#accepted-service-renewals/, billing);
+  receive('facilitator-public-response-receiving', 'Complete public facilitator responses and original SDK review',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf82-seller-pilot\/FACILITATOR_RESPONSES\.md)/, companion);
+  receive('publisher-facilitator-operations', 'Original Publisher provider review, release lifecycle and receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/socrata\/FACILITATORS\.md)/, companion);
   receive('installation-source-builds', 'Product selection, source comparison and installation',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/distribution\/runtime-workspace\/SOURCE_BUILDS\.md)/, companion);
   receive('request-collection-authoring', 'Reusable buyer request plans and complete prepared periods',
