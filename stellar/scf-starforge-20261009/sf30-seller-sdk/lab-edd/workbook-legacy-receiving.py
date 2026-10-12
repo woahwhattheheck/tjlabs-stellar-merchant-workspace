@@ -13,7 +13,6 @@ import io
 import json
 import os
 from pathlib import Path
-import re
 import struct
 import sys
 
@@ -159,11 +158,129 @@ def render(bridge,path,table,definitions,changes=None):
             "headers":table["headers"],"fieldTypes":[field["type"] for field in definitions],"rows":rows})
     return result,rows
 
-def execute(out, fixture_only=None):
+
+def cli_receiving(out, node, definitions, bridge):
+    """Operate the original full CLI and result reader on the retained format source."""
+    import csv
+    import subprocess
+    import zipfile
+    node=Path(node).resolve(strict=True)
+    directory=out/"cli";directory.mkdir(mode=0o700,exist_ok=True)
+    scratch=directory/"scratch";scratch.mkdir(mode=0o700,exist_ok=True)
+    source=out/"explicit-formula-values.xls"
+    source_bytes=source.read_bytes()
+    source_identity=receipt(source_bytes)
+    env={**os.environ,"LAB_EDD_PYTHON":sys.executable,"LAB_EDD_TEMP_ROOT":str(scratch)}
+    calls=[]
+    def run(name,*arguments):
+        command=[str(node),"--max-old-space-size=192",str(HERE/"cli.mjs"),*map(str,arguments)]
+        completed=subprocess.run(command,env=env,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,timeout=180)
+        record={"name":name,"command":command,"exitCode":completed.returncode,
+                "stdout":completed.stdout.decode("utf-8"),"stderr":completed.stderr.decode("utf-8")}
+        calls.append(record)
+        exact(directory/(name+".command.json"),json_bytes(record))
+        if completed.returncode:
+            raise RuntimeError("The original CLI operation failed: "+name+"\n"+record["stderr"])
+        return completed.stdout
+    common=["--source",source,"--profile","geotech-dts8d"]
+    run("inspect","inspect",*common,"--out",directory/"inspection.json")
+    inspection=json.loads((directory/"inspection.json").read_bytes())
+    source_sha=inspection["source"]["sourceSha256"]
+    run("editable-original","table",*common,"--scope","all","--format","tsv",
+        "--out",directory/"original-decisions.tsv")
+    with (directory/"original-decisions.tsv").open(newline="",encoding="utf-8") as original:
+        rows=list(csv.reader(original,delimiter="\t"))
+    header=rows[0];indices={name:index for index,name in enumerate(header)}
+    assert rows[1][indices["kind"]]=="source"
+    assert len(rows[2:])==300
+    choices=[]
+    for row in rows[2:]:
+        if row[indices["row"]]=="4" and row[indices["field"]] in ("value","description"):
+            row[indices["action"]]="set"
+            row[indices["value"]]=("001.2300" if row[indices["field"]]=="value" else "reviewed\rline\n_x000D_")
+            row[indices["reason"]]="Explicit literal from the complete labelled native format receiving; retain the original BIFF cell and cached result."
+            choices.append({"recordId":row[indices["record_id"]],"field":row[indices["field"]],
+                            "before":row[indices["before"]],"value":row[indices["value"]]})
+    assert len(choices)==2
+    edited=io.StringIO(newline="")
+    csv.writer(edited,delimiter="\t",lineterminator="\r\n").writerows(rows)
+    exact(directory/"reviewed-decisions.tsv",edited.getvalue().encode("utf-8"))
+    run("initial-receive","receive",*common,"--scope","all","--review","dts8d-legacy-original",
+        "--out",directory/"original-result.zip")
+    run("initial-reopen","result","--file",directory/"original-result.zip",
+        "--out",directory/"original-result.json")
+    original_result=json.loads((directory/"original-result.json").read_bytes())
+    assert original_result["manifest"]["nativePreparation"]["status"]=="REVIEW_REQUIRED"
+    with zipfile.ZipFile(directory/"original-result.zip") as retained:
+        assert "report.html" in retained.namelist() and "decisions.tsv" in retained.namelist()
+        assert retained.read(original_result["manifest"]["originalMembers"]["source"])==source_bytes
+    run("preview","preview",*common,"--decisions",directory/"reviewed-decisions.tsv","--format","tsv",
+        "--out",directory/"preview.json")
+    preview=json.loads((directory/"preview.json").read_bytes())["review"]
+    assert preview["source"]["sourceSha256"]==source_sha and preview["changes"]["set"]==2
+    for kind in ("csv","tsv"):
+        path=directory/("complete-decisions."+kind)
+        run("table-"+kind,"table",*common,"--decisions",directory/"reviewed-decisions.tsv",
+            "--scope","all","--format",kind,"--out",path)
+        run("roundtrip-"+kind,"preview",*common,"--decisions",path,"--format",kind,
+            "--out",directory/("preview-"+kind+".json"))
+        recovered=json.loads((directory/("preview-"+kind+".json")).read_bytes())["review"]
+        assert recovered["document"]==preview["document"] and recovered["reviewSha256"]==preview["reviewSha256"]
+    run("reviewed-receive","receive",*common,"--scope","all","--review","dts8d-legacy-reviewed",
+        "--decisions",directory/"complete-decisions.tsv","--format","tsv",
+        "--out",directory/"reviewed-result.zip")
+    run("reviewed-reopen","result","--file",directory/"reviewed-result.zip",
+        "--out",directory/"reviewed-result.json")
+    received=json.loads((directory/"reviewed-result.json").read_bytes())
+    manifest=received["manifest"]
+    assert manifest["sourceSha256"]==source_sha
+    assert manifest["reviewSha256"]==preview["reviewSha256"]
+    assert manifest["documentSha256"]==preview["documentSha256"]
+    assert manifest["nativePreparation"]["status"]=="PREPARED"
+    expected={"filename":source.name,"bytes":len(source_bytes),"sha256":source_identity["sha256"]}
+    native_record=manifest["prepared"]["files"][0]
+    assert native_record["filename"]==source.name+".xlsx" and native_record["sourceFile"]==expected
+    assert native_record["formatConversion"]=={"from":"xls-biff8","to":"xlsx","profileId":"geotech-dts8d","originalRetained":True}
+    assert manifest["nativePreparation"]["conversions"]==[
+        {"filename":native_record["filename"],"sourceFile":expected,**native_record["formatConversion"]}]
+    with zipfile.ZipFile(directory/"reviewed-result.zip") as retained:
+        assert retained.read(manifest["originalMembers"]["source"])==source_bytes
+        assert json.loads(retained.read("decisions.json"))==preview["document"]
+        native_archive=retained.read(manifest["prepared"]["archive"])
+        assert receipt(native_archive)=={"bytes":manifest["prepared"]["bytes"],"sha256":manifest["prepared"]["sha256"]}
+        with zipfile.ZipFile(io.BytesIO(native_archive)) as native_zip:
+            assert native_zip.namelist()==[source.name+".xlsx"]
+            native=native_zip.read(source.name+".xlsx")
+        native_path=directory/(source.name+".xlsx");exact(native_path,native)
+        native_table=decode(bridge,native_path)["tables"][0]
+        assert native_table["headers"]==[field["name"] for field in definitions]
+        assert [{"rowNumber":row["rowNumber"],"fields":row["fields"]} for row in native_table["records"]]==[
+            {"rowNumber":row["rowNumber"],"fields":row["fields"]} for row in preview["tables"][0]["rows"]]
+        assert native_table["origin"]["epoch"]=="1904"
+        assert native_table["origin"]["blankRows"]==[3] and native_table["origin"]["hiddenRows"]==[3]
+        editor=retained.read("report.html")
+        exact(directory/"reviewed-report.html",editor)
+    assert source.read_bytes()==source_bytes and not list(scratch.iterdir())
+    report={"schema":"starforge.lab-edd-legacy-cli-receiving.v1","operationId":OPERATION,
+        "status":"COMPLETE","sourceKind":"generated software-format fixture",
+        "source":source_identity,"sourceSha256":source_sha,"documentSha256":preview["documentSha256"],
+        "reviewSha256":preview["reviewSha256"],"commands":len(calls),"sourceRows":2,"fieldsPerRow":150,
+        "completeEditableRows":300,"explicitLiterals":choices,"tableRoundTrips":["csv","tsv"],
+        "initialNativePreparation":original_result["manifest"]["nativePreparation"],
+        "reviewedNativePreparation":manifest["nativePreparation"],"prepared":native_record,
+        "initialResult":receipt((directory/"original-result.zip").read_bytes()),
+        "reviewedResult":receipt((directory/"reviewed-result.zip").read_bytes()),
+        "originalReopened":True,"completeNativeFieldsReopened":True,"scratchRetired":True}
+    exact(out/"cli-result.json",json_bytes(report))
+    return report
+
+def execute(out, fixture_only=None, node=None):
     bridge=module("lab_legacy_receiving_bridge",HERE/"workbook_bridge.py")
     legacy=module("lab_legacy_receiving_reader",HERE/"workbook_legacy.py")
-    definitions=json.loads(re.search(r"DTS8D_FIELDS = Object.freeze\((\[[\s\S]*?\])\);",
-        (HERE/"profiles"/"dts8.mjs").read_text()).group(1))
+    profile=(HERE/"profiles"/"dts8.mjs").read_text()
+    declaration=profile.split("DTS8D_FIELDS = Object.freeze(",1)[1]
+    definitions,_=json.JSONDecoder().raw_decode(declaration)
     assert len(definitions)==150
     upstream=HERE/"examples"/"xlrd"/"formula_test_sjmachin.xls"
     raw=upstream.read_bytes()
@@ -250,15 +367,18 @@ def execute(out, fixture_only=None):
         "upstreamWorksheets":len(upstream_view["sheets"]),"upstreamFormulaCells":upstream_view["formulaCells"],
         "cases":all_cases,"acknowledgement":legacy.ACKNOWLEDGEMENT}
     exact(out/"result.json",json_bytes(result))
+    if node: return {**result,"cli":cli_receiving(out,node,definitions,bridge)}
     return result
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out",type=Path)
     parser.add_argument("--fixture-only",type=Path)
+    parser.add_argument("--node",type=Path,help="Run the original complete Laboratory CLI after native format receiving.")
     args=parser.parse_args()
     if bool(args.out)==bool(args.fixture_only):parser.error("Choose --out or --fixture-only.")
-    output=execute(args.out.resolve() if args.out else None,args.fixture_only.resolve() if args.fixture_only else None)
+    if args.node and args.fixture_only:parser.error("--node operates the complete --out receiving workflow.")
+    output=execute(args.out.resolve() if args.out else None,args.fixture_only.resolve() if args.fixture_only else None,args.node)
     print(json.dumps(output,ensure_ascii=False),flush=True)
 
 if __name__=="__main__":

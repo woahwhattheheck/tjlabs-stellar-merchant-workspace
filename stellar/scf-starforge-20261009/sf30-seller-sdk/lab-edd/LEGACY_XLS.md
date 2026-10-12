@@ -171,23 +171,60 @@ See [Applications](APPLICATIONS.md), the full
 and [receiving guide](RECEIVING.md). The configured application source hash
 includes this decoder, all ten original xlrd modules and the full license.
 
-## Native format and whole-worker receiving
+## Native format and whole CLI receiving
 
-The Python format receiver consumes the exact bundled upstream formula
+The maintained Python receiver opens the exact bundled upstream formula
 workbook and generates a labelled 150-field DTS software-format fixture from
-native BIFF records. It checks formula bindings, native refusal until literal
-choices are supplied, all unchanged field values and cell types, text
-zeroes/CR/escapes, original 1904 dates, hidden/blank rows and XLSX reopening.
+native BIFF records. It checks every original cell and formula binding, native
+literal choices, all unchanged field values and types, text zeroes/CR/escapes,
+the original 1904 epoch, hidden/blank rows and independent XLSX reopening.
+
+Supply the existing Node executable to continue through the original complete
+Laboratory CLI in the same operation:
 
 ```sh
 python3 \
   stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/workbook-legacy-receiving.py \
-  --out /absolute/private/dts8d-legacy-format
+  --out /absolute/private/dts8d-legacy-receiving \
+  --node /absolute/existing/node
 ```
 
-Outputs contain the original upstream XLS and its complete decoded cell graph,
-both generated format sources, source/received tables, literal choices, native
-XLSX files and `result.json`. The source kind and upstream identity are recorded.
+The same command without `--node` performs the native format portion. The CLI
+continuation uses `inspect`, complete editable `table`, `preview`, `receive`
+and `result` against the original source. It keeps the complete 300-field
+catalogue, records two explicit literals, exports and imports both complete
+CSV and TSV representations, and reopens the initial and reviewed ZIPs through
+the original result reader. Every prepared field is independently decoded.
+
+The completed 2026-10-12 operation retained these actual outcomes:
+
+| Operation | Retained outcome |
+| --- | --- |
+| Upstream original workbook | 3 worksheets, 6 source formula cells, exact original 16,896 bytes |
+| Complete DTS format sources | 150 headers and 2 physical observation rows each, 1904 epoch, blank/hidden row retained |
+| Original CLI workflow | 11 commands completed; 300 editable fields; full CSV and TSV round trips |
+| Initial native output state | `REVIEW_REQUIRED`, with the original Excel error at cell N4 visible in review |
+| Recorded literal choices | Description retains `reviewed\\rline\\n_x000D_`; value retains the exact text `001.2300` |
+| Reviewed native output | `PREPARED`; exact `explicit-formula-values.xls.xlsx`, 4,989 bytes |
+| Independent result reopening | Original XLS, all selected/native fields, source binding and complete conversion manifest matched |
+
+The generated fixture also exercises incomplete required/reference fields.
+Its recorded profile disposition is `CORRECTION_REQUIRED`, with 48 error
+observations retained in the report; native literal preparation is recorded
+separately as `PREPARED`. The recipient's reference tables and import choices
+remain part of its own DTS receiving environment.
+
+The [complete source and receiving delivery](../../../../deliveries/dts8d-legacy-excel-20261012/README.md)
+contains the exact executable source used, full operator instructions, the
+39-member native output archive and its complete member inventory. The archive
+retains `cli-result.json`, original and reviewed result ZIPs, the full editable
+tables, profile observations, native XLSX and offline report.
+
+Outputs from the local command also contain the original upstream XLS and its
+complete decoded cell graph, both generated format sources, source/received
+tables, literal choices, native XLSX files and `result.json`. The source kind
+and upstream identity are recorded. With `--node`, `cli-result.json` records the
+complete original command sequence and source/review identities.
 
 For the existing sealed-worker/browser workflow, copy
 `receiving.legacy.example.json`, select the actual retained XLS input and source

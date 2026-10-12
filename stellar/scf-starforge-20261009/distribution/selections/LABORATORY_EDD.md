@@ -14,8 +14,8 @@ Use the complete source commit and archive returned by the existing product owne
 To build from a checkout containing that selected commit:
 
 ```sh
-node stellar/scf-starforge-20261009/distribution/build.mjs \\
-  --repo /absolute/checkout --ref ORIGINAL_COMMIT \\
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/checkout --ref ORIGINAL_COMMIT \
   --selection laboratory-edd --out /absolute/laboratory-release
 ```
 
@@ -25,7 +25,7 @@ binds the original commit, source tree, complete source files and exact
 `.selection.laboratory-edd`. Resume an interrupted build with the same output:
 
 ```sh
-node stellar/scf-starforge-20261009/distribution/build.mjs \\
+node stellar/scf-starforge-20261009/distribution/build.mjs \
   --repo /absolute/checkout --out /absolute/laboratory-release --resume
 ```
 
@@ -41,13 +41,13 @@ Use Linux, Node 24, Python 3.11 or later, npm and `flock`. Select native Stellar
 `schema`, `mcp` and operator support through the original runtime installer:
 
 ```sh
-node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs prepare \\
-  --dir /absolute/laboratory-runtime \\
-  --archive /absolute/laboratory-release/ORIGINAL.tgz \\
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs prepare \
+  --dir /absolute/laboratory-runtime \
+  --archive /absolute/laboratory-release/ORIGINAL.tgz \
   --sha256 ORIGINAL_ARCHIVE_SHA256 --native --feature schema --feature mcp --operator
-node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs install \\
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs install \
   --dir /absolute/laboratory-runtime
-node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect \\
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect \
   --dir /absolute/laboratory-runtime --load --source
 ```
 
@@ -61,7 +61,7 @@ The runtime retains its package under `package/`, dependency tree under
 READY identity. Run an installed command through:
 
 ```sh
-node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \\
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \
   --dir /absolute/laboratory-runtime -- lab-edd profiles
 ```
 
@@ -71,7 +71,7 @@ The commands below use that runtime's `starforge` executable.
 
 ```sh
 starforge runtime-workspace init --workspace /private/runtime-desk
-starforge runtime-workspace attach --workspace /private/runtime-desk \\
+starforge runtime-workspace attach --workspace /private/runtime-desk \
   --runtime /absolute/laboratory-runtime --label "Laboratory EDD"
 starforge runtime-workspace serve --workspace /private/runtime-desk --port 8465
 ```
@@ -141,3 +141,8 @@ with a checked conversion binding. The existing Laboratory command, editor,
 42-operation merchant desk, sealed worker and result reader operate that same
 source. Python 3.10+ uses the included unchanged xlrd package.
 This product includes software developed by David Giffin <david@giffin.org>.
+
+The [complete legacy source and receiving package](../../../../deliveries/dts8d-legacy-excel-20261012/README.md)
+includes the actual 11-command native CLI result, full 300-field CSV/TSV review,
+original binary sources and independently reopened XLSX. Its guide provides
+the exact standalone command and retains all source/profile observations.

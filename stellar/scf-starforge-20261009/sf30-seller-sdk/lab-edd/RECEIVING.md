@@ -207,5 +207,9 @@ Use `receiving.cross-profile.example.json` for the complete two-source cross-pro
 choices, separately named native XLSX and source-bound result reopen. The
 original worker and browser use `receiving.legacy.example.json`; the maintained
 `workbook-legacy-receiving.py` also receives the exact upstream formula workbook
-and all 150 generated DTS headers through the real native reader/writer.
+and all 150 generated DTS headers through the real native reader/writer. Add
+`--node /absolute/existing/node` to perform its complete original CLI intake,
+300-field CSV/TSV editing, native preparation and independent result reopen in
+the same operation. The completed source and full native output are available
+in the [legacy receiving delivery](../../../../deliveries/dts8d-legacy-excel-20261012/README.md).
 This product includes software developed by David Giffin <david@giffin.org>.
