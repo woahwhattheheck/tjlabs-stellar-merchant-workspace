@@ -149,6 +149,22 @@ export class MerchantCapturedHandovers {
             fail('INVALID_PARAMS','Supply the complete original working edit JSON file within its 4 MiB limit.');
           if(input.expectedSha256!==undefined)digest(input.expectedSha256);
           return result(await client.json('/draft/working-import',input));
+        case 'merchant_handover_editions':
+          identity(input.id);if(input.expectedComparisonSha256!==undefined)digest(input.expectedComparisonSha256);
+          return result(await client.editionComparison(input));
+        case 'merchant_handover_edition_review':
+          identity(input.id);identity(input.comparisonId);digest(input.expectedRevision);digest(input.comparisonSha256);
+          return result(await client.reviewReceivingDecision(input));
+        case 'merchant_handover_edition_save':
+          identity(input.id);identity(input.comparisonId);identity(input.requestId);digest(input.expectedRevision);
+          digest(input.comparisonSha256);digest(input.reviewSha256);
+          return result(capturedHandoverDraftPage(await client.saveReceivingDecision(input)));
+        case 'merchant_handover_edition_file':
+          identity(input.id);digest(input.expectedComparisonSha256);digest(input.expectedSha256);
+          return result(await client.readEditionFile(input));
+        case 'merchant_handover_edition_file_release':
+          identity(input.id);identity(input.readId);digest(input.comparisonSha256);
+          return result(await client.releaseEditionFile(input));
         case 'merchant_handover_jobs':return result(await client.json('/jobs?'+query(input)));
         case 'merchant_handover_job':
           identity(input.id);return result(await client.json('/job-page?'+query(input)));
@@ -196,7 +212,7 @@ export class MerchantCapturedHandovers {
     sf61Exact(args,Object.keys(definition.properties),definition.required);
     const serialized=JSON.stringify(args);
     const maximum=name==='merchant_handover_working_import'?8*1024*1024:
-      ['merchant_handover_merge_review','merchant_handover_merge_save','merchant_handover_working_export'].includes(name)?4*1024*1024:1024*1024;
+      ['merchant_handover_merge_review','merchant_handover_merge_save','merchant_handover_working_export','merchant_handover_edition_review','merchant_handover_edition_save'].includes(name)?4*1024*1024:1024*1024;
     if(Buffer.byteLength(serialized)>maximum)
       fail('INVALID_PARAMS','Keep the complete request within this original operation’s '+String(maximum/1048576)+' MiB limit.');
     // Capture the actual wire request before its first asynchronous operation.
