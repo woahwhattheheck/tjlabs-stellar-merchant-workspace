@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "research-workspace",
   "title": "Research workspace",
-  "description": "Original Research questions and citation review, saved Documents/Pipelines, direct Analysis browser and native MCP source intake, complete typed exports/workbooks and portable customer receiving",
+  "description": "Original Research questions, citation and eligibility programmes, Europe PMC source editions, saved Documents/Pipelines, direct Analysis, typed exports and complete Python/Merchant customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -158,14 +158,21 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_CITATIONS.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_citation_analyst.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_citation_analyst.py"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_citation_analyst.py",
+    "stellar-forge/mcp-merchant-operator/research-eligibility.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/research-eligibility.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ELIGIBILITY_REVIEW.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ELIGIBILITY-OPERATOR.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_ELIGIBILITY.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.py"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Source-linked Research, complete citation and Python review, direct browser/native-agent Analysis intake, original Documents/Pipelines, full workbooks and editable customer receiving",
+    "description": "Source-linked Research, complete citation and eligibility review, Python/Merchant customer delivery, direct Analysis, original Documents/Pipelines, workbooks and editable receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
