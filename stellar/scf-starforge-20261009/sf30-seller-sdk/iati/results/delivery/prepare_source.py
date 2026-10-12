@@ -7,6 +7,8 @@ changes the XML selected by an operator or creates another receiving case.
 from __future__ import annotations
 import argparse
 import ast
+import base64
+import binascii
 import gzip
 import hashlib
 import io
@@ -20,19 +22,21 @@ import sys
 import tempfile
 import urllib.request
 
-SOURCE_COMMIT = "6b1bc913e7d2efd028a9fe77b0e84ea797a59734"
-PACKET_COMMIT = "8b006148d9cc9943ef6d7cafb4b9b7f40bbde571"
+SOURCE_COMMIT = "71d0118d3cc86f72689dbd9ed4c70c86113a3241"
+PACKET_COMMIT = "fbc01112d2c1e9579c2153411c66d49a75c9bb9f"
 RELATIVE = "stellar/scf-starforge-20261009/sf30-seller-sdk/iati"
 PACKET_URL = ("https://raw.githubusercontent.com/woahwhattheheck/"
               "tjlabs-stellar-merchant-workspace/" + PACKET_COMMIT + "/" +
-              RELATIVE + "/results/delivery/complete-source-6b1bc913.json.gz")
-PACKET_BYTES = 263996
-PACKET_SHA256 = "7e82e0a97d0261462e86e0541c0b7f0fc1fd37d2731a5d6be831331dd0b8ae92"
-DECODED_BYTES = 1143415
-DECODED_SHA256 = "1a300f93a44be43b70130daa47df4f5984d65811d85884a4ac2f45010bba4904"
+              RELATIVE + "/results/delivery/complete-source-71d0118d.json.gz")
+PACKET_BYTES = 561108
+PACKET_SHA256 = "f4359d6d9fe1574dbe02054e5bf531e28a78461dd050384aa989bbe436fe6eac"
+DECODED_BYTES = 2651007
+DECODED_SHA256 = "b9a6e6ab6959e3a8cbdf575d01fb5cf548bca1d868a4e4c109fcbc3706c08a65"
 SCHEMA = "stellar-forge.iati-results-complete-source.v1"
-FILE_COUNT = 55
-SOURCE_BYTES = 1091495
+FILE_COUNT = 136
+SOURCE_BYTES = 2508700
+BINARY_COUNT = 1
+BINARY_BYTES = 17001
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -143,6 +147,30 @@ def read_packet(packet_file=None):
         files[name] = data
     require(sum(map(len, files.values())) == SOURCE_BYTES,
             "The complete source byte inventory differs")
+    binary = envelope.get("binaryFiles")
+    require(isinstance(binary, list) and len(binary) == BINARY_COUNT,
+            "The exact original binary source package is required")
+    binary_total = 0
+    for record in binary:
+        require(isinstance(record, dict) and set(record) ==
+                {"path", "base64", "bytes", "sha256"}, "Invalid binary source record")
+        name = record["path"]
+        require(isinstance(name, str) and name and "\\" not in name and
+                not any(ord(c) < 32 for c in name), "Unsafe binary source member name")
+        p = PurePosixPath(name)
+        require(not p.is_absolute() and p.as_posix() == name and
+                all(part not in ("", ".", "..") for part in p.parts) and
+                name not in files, "Duplicate or escaping binary source member")
+        require(isinstance(record["base64"], str), "Binary source must retain exact base64")
+        try:
+            data = base64.b64decode(record["base64"], validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise ValueError("Binary source encoding is invalid") from exc
+        require(type(record["bytes"]) is int and len(data) == record["bytes"] and
+                digest(data) == record["sha256"], "Binary source identity mismatch")
+        files[name] = data
+        binary_total += len(data)
+    require(binary_total == BINARY_BYTES, "Original binary source byte inventory differs")
     return compressed, decoded, files
 
 def prepare(root, *, packet_file=None, node=None):
@@ -173,7 +201,9 @@ def prepare(root, *, packet_file=None, node=None):
         "schema": "stellar-forge.iati-results-source-preparation.v1",
         "sourceCommit": SOURCE_COMMIT, "packetCommit": PACKET_COMMIT,
         "packetSha256": PACKET_SHA256, "source": str(source),
-        "files": len(files), "bytes": SOURCE_BYTES,
+        "files": len(files), "sourceFiles": FILE_COUNT,
+        "sourceBytes": SOURCE_BYTES, "binaryFiles": BINARY_COUNT,
+        "binaryBytes": BINARY_BYTES, "bytes": SOURCE_BYTES + BINARY_BYTES,
         "pythonParsed": python_files, "javascriptParsed": javascript_files,
         "node": selected_node,
         "receivingExecuted": False,
