@@ -227,6 +227,56 @@ export class IatiWorkspaceClient{
   return this.#request('/api/iati/organisation/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
  }
 
+
+ // AMP uses the same original authenticated console and full retained native JSON strings.
+ #ampPost(route,input,options={}){
+  if(!object(input))throw problem('AMP_INPUT','Supply the complete original AMP action.');
+  if(!['decision/preview','native/continue'].includes(route)&&
+    (typeof input.requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(input.requestId)))
+   throw problem('AMP_REQUEST','Retain the original AMP requestId.');
+  const body=JSON.stringify(input);if(Buffer.byteLength(body)>64*1024*1024)throw problem('AMP_INPUT','Supply a complete AMP JSON request within 64 MiB.');
+  return this.#request('/api/iati/amp/'+route,{...options,body,headers:{'content-type':'application/json'},maximum:64*1024*1024});
+ }
+ ampStatus(options={}){return this.#request('/api/iati/amp/status',{...options,maximum:64*1024*1024});}
+ ampCapture(id,options={}){return this.#request('/api/iati/amp/capture?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampPlan(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/amp/plan?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ ampHistory(id,options={}){return this.#request('/api/iati/amp/history?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampRows(input,options={}){
+  if(!object(input))throw problem('AMP_PAGE','Select an original AMP plan and page.');
+  const selected={...input,id:hash(input.id),revision:revision(input.revision),offset:input.offset??0,limit:input.limit??50};
+  if(!Number.isSafeInteger(selected.offset)||selected.offset<0||selected.offset>1000000||!Number.isSafeInteger(selected.limit)||selected.limit<1||selected.limit>250||
+    selected.state!==undefined&&!['included','excluded','review'].includes(selected.state))throw problem('AMP_PAGE','Select an original financial row page.');
+  return this.#request('/api/iati/amp/rows?'+query(selected),{...options,maximum:64*1024*1024});
+ }
+ ampRuns(id,options={}){return this.#request('/api/iati/amp/runs?'+query({id:id===undefined?undefined:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampRun(id,options={}){return this.#request('/api/iati/amp/run?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampEvents(id,{after=0,limit=100,...options}={}){
+  if(!Number.isSafeInteger(after)||after<0||!Number.isSafeInteger(limit)||limit<1||limit>250)throw problem('AMP_PAGE','Select an original native event page.');
+  return this.#request('/api/iati/amp/events?'+query({id:hash(id),after,limit}),{...options,maximum:64*1024*1024});
+ }
+ ampRequest(requestId,options={}){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('AMP_REQUEST','Use the original AMP requestId.');return this.#request('/api/iati/amp/request?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ ampCaptureImport(input,options){return this.#ampPost('capture',input,options);}
+ ampSave(input,options){return this.#ampPost('plan',input,options);}
+ ampDecisionPreview(input,options){return this.#ampPost('decision/preview',input,options);}
+ ampDecisions(input,options){return this.#ampPost('decision/apply',input,options);}
+ ampAdvance(input,options){return this.#ampPost('advance',input,options);}
+ ampReview(input,options){return this.#ampPost('review',input,options);}
+ ampPrepare(input,options){return this.#ampPost('prepare',input,options);}
+ ampNativeCapture(input,options){return this.#ampPost('native/capture',input,options);}
+ ampNativeStart(input,options){return this.#ampPost('native/start',input,options);}
+ ampNativeContinue(input,options){return this.#ampPost('native/continue',input,options);}
+ ampNativeReconcile(input,options){return this.#ampPost('native/reconcile',input,options);}
+ ampExport(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/amp/export?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});}
+ ampFile(id,kind,{revision:selectedRevision,...options}={}){
+  if(!['analysis','sourceRows','comparison','prepared','report'].includes(kind))throw problem('AMP_FILE','Select the complete original AMP file.');
+  return this.#request('/api/iati/amp/file?'+query({id:hash(id),revision:revision(selectedRevision),kind}),{...options,raw:true});
+ }
+ ampAsset(sha256,options={}){return this.#request('/api/iati/amp/asset?'+query({sha256:hash(sha256)}),{...options,raw:true});}
+ ampReceive({body,bytes},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('AMP_PACKET','Choose the complete AMP handover ZIP up to 4 GiB.');
+  return this.#request('/api/iati/amp/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
+ }
+
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));
   await Promise.allSettled([...this.#pending]);}
 }

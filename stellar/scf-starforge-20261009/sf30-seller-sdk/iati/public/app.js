@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),short=x=>String(x??'').slice(0,12);
 let token=location.hash.slice(1);
 try{token ||= sessionStorage.getItem('sf30.iati.token');if(token)sessionStorage.setItem('sf30.iati.token',token);
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch{}
-let dqaUi, publishingUi, refreshUi, organisationUi;
+let dqaUi, publishingUi, refreshUi, organisationUi, ampUi;
 let state={sources:[],plans:[],builds:[],comparisons:[]},portfolios=[],presets=[];
 let source=null,portfolio=null,report=null,comparison=null,changesOffset=0,nextChanges=null;
 let currentQuery={},queryBase={},cursor=null,queryHistory=[],busy=false,savedPlan=null;
@@ -37,6 +37,7 @@ function buttons(){
  dqaUi?.buttons();
  publishingUi?.buttons();
  organisationUi?.buttons();
+ ampUi?.buttons();
  $('source-to-portfolio').disabled=busy||source?.inventory?.kind==='organisation';
  $('source-to-organisation').hidden=source?.inventory?.kind!=='organisation';
  refreshUi?.buttons();
@@ -120,6 +121,7 @@ async function refresh(selected={}){
  cards($('overview-sources'),state.sources,async item=>{show('sources');await openSource(item.id);},'The original source workspace is empty.');
  await publishingUi?.refresh();
  await refreshUi?.refresh();
+ await ampUi?.refresh();
  $('connection').textContent='Private source workspace';buildSummary();buttons();
 }
 async function openSource(id){
@@ -271,6 +273,7 @@ dqaUi=window.IatiDqaUi({get,post,request,action,status,download,metrics,table,pr
 publishingUi=window.IatiPublishingUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>({...state,sources:state.sources.filter(x=>!organisationUi?.isOrganisationSource(x.id))}),refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
 organisationUi=window.IatiOrganisationUi({get,post,request,action,status,download,metrics,table,properties,details,refreshWorkspace:refresh,show,isBusy:()=>busy});
 refreshUi=window.IatiRefreshUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>({...state,sources:state.sources.filter(x=>!organisationUi?.isOrganisationSource(x.id))}),portfolioList:()=>portfolios,refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
+ampUi=window.IatiAmpUi({get,post,request,action,status,download,metrics,table,properties,details,portfolioList:()=>portfolios,refreshWorkspace:refresh,show,isBusy:()=>busy});
 action('Opening the original private IATI workspace…',async()=>{
  if(!token)throw new Error('Open the private console URL printed by this original process.');
  await refresh();const catalogue=await get('/api/iati/presets');presets=presetList(catalogue);select('preset-select',presets);
