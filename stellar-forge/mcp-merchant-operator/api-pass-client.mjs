@@ -3,7 +3,7 @@ import {join} from 'node:path';
 import {openMerchantFileClient,createRetainedDownload} from './retained-download.mjs';
 import {API_PASS_PREFIX,API_PASS_ALIAS,API_PASS_UUID,API_PASS_SHA,API_PASS_EXPORT_MANIFEST,API_PASS_MAX_FILE_BYTES,
  apiPassPlain,apiPassNeed,apiPassChecked,apiPassArguments,apiPassHash,parseApiPassExport} from './api-pass-protocol.mjs';
-const METHODS={open:'open',status:'status',passes:'passes',pass:'pass',callDetail:'call',callPreview:'call_preview',bodyPreview:'body_preview',
+const METHODS={open:'open',status:'status',portfolio:'portfolio',portfolioRequests:'portfolio_requests',configurePortfolio:'portfolio_configure',refreshPortfolio:'portfolio_refresh',prepareReplacement:'purchase_replenish',passes:'passes',pass:'pass',callDetail:'call',callPreview:'call_preview',bodyPreview:'body_preview',
  remoteCalls:'remote_calls',history:'history',task:'task',approval:'approval',input:'input',operation:'operation',
  connectPass:'connect',preparePurchase:'purchase_prepare',attachPurchase:'purchase_attach',updatePass:'update',prepareRequest:'prepare_request',
  adoptRequest:'adopt_request',enqueue:'enqueue',cancel:'cancel',decide:'decide',capture:'capture',exports:'exports',manifest:'manifest',readFileChunk:'file',releaseFile:'file_release'};
@@ -38,18 +38,30 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
  apiPassChecked(workspace,API_PASS_ALIAS,'workspace alias');if(workspaceId!==undefined)apiPassChecked(workspaceId,API_PASS_UUID,'original workspace ID');
  apiPassNeed(typeof call==='function','Supply the existing structured MCP call.','API_PASS_CLIENT_CONFIGURATION');
  let selectedId=workspaceId,closing=false,closePromise;const pending=new Set();
- async function wire(kind,input={},options){
+ function capture(kind,input={},options){
   apiPassNeed(apiPassPlain(input)&&!Object.hasOwn(input,'workspace'),'Use this caller’s selected workspace alias.');
   const args=apiPassArguments(kind,{...input,workspace}),name=kind.startsWith(API_PASS_PREFIX)?kind:API_PASS_PREFIX+kind;
+  return {name,args,options:options===undefined?undefined:{...options}};
+ }
+ async function dispatch({name,args,options}){
   const result=nativeReply(await call(name,args,options),workspace,selectedId);selectedId??=result.workspaceId;return result.native;
+ }
+ function wire(kind,input={},options){return dispatch(capture(kind,input,options));}
+ function request(kind,input={},options){
+  const captured=capture(kind,input,options);
+  return tracked(()=>dispatch(captured));
+ }
+ function trackedOptions(options,work){
+  const captured=options===undefined?undefined:{...options};
+  return tracked(()=>work(captured));
  }
  function tracked(work){
   apiPassNeed(!closing,'This caller is draining or closed.','API_PASS_CLIENT_CLOSING');
   const promise=Promise.resolve().then(work);pending.add(promise);promise.finally(()=>pending.delete(promise)).catch(()=>{});return promise;
  }
  const client={workspace,get workspaceId(){return selectedId;},endpoint,
-  invoke:(kind,args={},options)=>tracked(()=>wire(kind,args,options)),
-  allPasses:(options={})=>tracked(async()=>{
+  invoke:(kind,args={},options)=>request(kind,args,options),
+  allPasses:(options={})=>trackedOptions(options,async options=>{
    const items=[];let offset=0,observed;
    for(;;){
     const result=await wire('passes',{offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
@@ -60,7 +72,46 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
     apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<result.total,'The original pass page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
    }
   }),
-  allHistory:({profileId,view},options={})=>tracked(async()=>{
+  allPortfolio:(options={})=>trackedOptions(options,async options=>{
+   const passes=[],seen=new Set();let offset=0,observed,head,total;
+   for(;;){
+    const result=await wire('portfolio',{offset,limit:20,...(observed===undefined?{}:{expectedRevision:observed})},options),selection=result.passPagination;
+    observed??=result.revision;total??=selection?.total;
+    apiPassNeed(result.schema==='stellar-forge.sf101.api-pass-portfolio.v1'&&Number.isSafeInteger(observed)&&observed>=1&&
+     result.revision===observed&&Array.isArray(result.passes)&&selection?.offset===offset&&selection.limit===20&&selection.total===total&&
+     Number.isSafeInteger(total)&&total>=0&&total<=200&&result.passes.length===Math.min(20,Math.max(0,total-offset))&&
+     apiPassPlain(result.settings)&&apiPassPlain(result.summary)&&Array.isArray(result.attention?.items),
+     'The complete original portfolio page changed.','API_PASS_CLIENT_PAGE_CHANGED');
+    head??={revision:observed,schema:result.schema,settings:result.settings,summary:result.summary,attention:result.attention};
+    apiPassNeed(JSON.stringify(head.settings)===JSON.stringify(result.settings)&&JSON.stringify(head.summary)===JSON.stringify(result.summary),
+     'The original portfolio settings changed within one observed revision.','API_PASS_CLIENT_PAGE_CHANGED');
+    for(const pass of result.passes){
+     apiPassNeed(API_PASS_UUID.test(pass.id??'')&&!seen.has(pass.id),'The complete original portfolio repeats a pass.','API_PASS_CLIENT_PAGE_CHANGED');
+     seen.add(pass.id);passes.push(pass);
+    }
+    if(selection.nextOffset===null){apiPassNeed(passes.length===total,'The original portfolio ended early.','API_PASS_CLIENT_PAGE_CHANGED');return {...head,passes};}
+    apiPassNeed(selection.nextOffset===offset+result.passes.length&&selection.nextOffset>offset&&selection.nextOffset<total,
+     'The original portfolio page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=selection.nextOffset;
+   }
+  }),
+  allPortfolioRequests:(options={})=>trackedOptions(options,async options=>{
+   const items=[],seen=new Set();let offset=0,observed,total;
+   for(;;){
+    const result=await wire('portfolio_requests',{offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
+    observed??=result.revision;total??=result.total;
+    apiPassNeed(Array.isArray(result.items)&&Number.isSafeInteger(observed)&&observed>=1&&result.revision===observed&&result.offset===offset&&result.limit===200&&
+     result.total===total&&Number.isSafeInteger(total)&&total>=0&&total<=5000&&result.items.length===Math.min(200,Math.max(0,total-offset)),
+     'The complete original attention-request page changed.','API_PASS_CLIENT_PAGE_CHANGED');
+    for(const row of result.items){
+     apiPassNeed(API_PASS_UUID.test(row.id??'')&&API_PASS_UUID.test(row.profileId??'')&&!seen.has(row.id),
+      'The complete original attention inventory repeats a request.','API_PASS_CLIENT_PAGE_CHANGED');seen.add(row.id);items.push(row);
+    }
+    if(result.nextOffset===null){apiPassNeed(items.length===total,'The original attention inventory ended early.','API_PASS_CLIENT_PAGE_CHANGED');return {revision:observed,items};}
+    apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<total,
+     'The original attention page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
+   }
+  }),
+  allHistory:({profileId,view},options={})=>trackedOptions(options,async options=>{
    const items=[];let offset=0,observed,total;
    for(;;){
     const result=await wire('history',{profileId,view,offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
@@ -71,7 +122,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
     apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<total,'The history page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
    }
   }),
-  downloadExport:options=>tracked(async()=>{
+  downloadExport:options=>trackedOptions(options,async options=>{
    apiPassNeed(typeof endpoint==='string'&&endpoint.length>0,'Retain this MCP connection’s stable endpoint identity before downloading.','API_PASS_CLIENT_ENDPOINT_REQUIRED');
    const transfer=fileTransport({workspace,workspaceId:selectedId,connect:async options=>({get endpoint(){apiPassChecked(selectedId,API_PASS_UUID,'original workspace ID');return endpoint+'#api-pass-workspace='+encodeURIComponent(workspace)+'&workspace-id='+selectedId;},
     call:(name,args,request)=>wire(name,args,{requestSignal:options.signal,...request})})});
@@ -79,7 +130,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
   }),
   disconnect(){if(!closePromise){closing=true;closePromise=(async()=>{await Promise.allSettled([...pending]);})();}return closePromise;}
  };
- for(const [method,kind]of Object.entries(METHODS))client[method]=(args={},options)=>tracked(()=>wire(kind,args,options));
+ for(const [method,kind]of Object.entries(METHODS))client[method]=(args={},options)=>request(kind,args,options);
  return Object.freeze(client);
 }
 export async function connectApiPassWorkspaceClient({workspace,workspaceId,...options}={}){

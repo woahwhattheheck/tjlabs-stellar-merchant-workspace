@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import type {ApiPassWorkspaceClient,ApiPassOperationArguments,MutationIdentity,MutationResult,ExportDescription} from './api-pass-client.mjs';
-export type WriteKind = 'connect' | 'purchase_prepare' | 'purchase_attach' | 'update' | 'prepare_request' |
+export type WriteKind = 'portfolio_configure' | 'portfolio_refresh' | 'purchase_replenish' | 'connect' | 'purchase_prepare' | 'purchase_attach' | 'update' | 'prepare_request' |
  'adopt_request' | 'enqueue' | 'cancel' | 'decide' | 'capture';
 type WithOptionalOperation<T> = T extends MutationIdentity ? Omit<T,'operationId'> & {operationId?:string} : T;
 export type PreparationArguments<K extends WriteKind> = WithOptionalOperation<ApiPassOperationArguments[K]>;

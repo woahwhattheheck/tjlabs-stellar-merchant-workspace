@@ -14,10 +14,37 @@ function revision(value,expected){
  return value;
 }
 function profileSummary(row){
- return Object.fromEntries(['id','label','archived','mode','createdAt','updatedAt','orderReference','gatewayBaseUrl','manifestSha256','claimEnv','claimAvailable','intentId','purchasePrepared','checkedAt','error','callCount']
+ return Object.fromEntries(['id','label','archived','mode','createdAt','updatedAt','orderReference','gatewayBaseUrl','manifestSha256','claimEnv','claimAvailable','intentId','purchasePrepared','checkedAt','error','callCount','replacesProfileId','replacementProfileId']
   .filter(key=>Object.hasOwn(row,key)).map(key=>[key,clone(row[key])]));
 }
 function page(items,{offset=0,limit=100}={}){const selected=items.slice(offset,offset+limit);return {items:selected,offset,limit,total:items.length,nextOffset:offset+selected.length<items.length?offset+selected.length:null};}
+function originalPortfolio(state,expected){
+ revision(state.revision,expected);
+ const value=state.portfolio;
+ apiPassNeed(value?.schema==='stellar-forge.sf101.api-pass-portfolio.v1'&&apiPassPlain(value.settings)&&apiPassPlain(value.summary)&&
+  Array.isArray(value.passes)&&Array.isArray(state.profiles)&&value.passes.length===state.profiles.length&&value.passes.length<=200&&
+  value.summary.passes===value.passes.length&&Number.isSafeInteger(value.settings.lowUnitsThreshold)&&value.settings.lowUnitsThreshold>=0&&value.settings.lowUnitsThreshold<=1000000000&&
+  (value.settings.selectedProfileId===null||API_PASS_UUID.test(value.settings.selectedProfileId??''))&&
+  Array.isArray(value.attention?.items)&&apiPassPlain(value.attention?.pagination),
+  'Update and reopen the original customer workspace with its portfolio source, then read its actual per-order projection.','API_PASS_PORTFOLIO_UNAVAILABLE');
+ const profiles=new Set(state.profiles.map(row=>row.id)),seen=new Set();
+ for(const row of value.passes){
+  apiPassNeed(API_PASS_UUID.test(row.id??'')&&profiles.has(row.id)&&!seen.has(row.id)&&Array.isArray(row.routes)&&apiPassPlain(row.requests),
+   'The original allowance projection changed its pass identity.','API_PASS_PORTFOLIO_BINDING');seen.add(row.id);
+ }
+ return value;
+}
+function attentionPage(value,args){
+ const offset=args.offset??0,limit=args.limit??100,selection=value.pagination;
+ revision(value.revision,args.expectedRevision);
+ apiPassNeed(Array.isArray(value.items)&&value.items.length<=limit&&selection?.offset===offset&&selection.limit===limit&&
+  Number.isSafeInteger(selection.total)&&selection.total>=0&&selection.total<=5000&&
+  value.items.length===Math.min(limit,Math.max(0,selection.total-offset))&&
+  selection.nextOffset===(offset+value.items.length<selection.total?offset+value.items.length:null)&&
+  value.items.every(row=>API_PASS_UUID.test(row.id??'')&&API_PASS_UUID.test(row.profileId??'')&&['ATTENTION','RECOVERY_READY'].includes(row.status)),
+  'The original attention-request page changed. Reopen the same native inventory.','API_PASS_PORTFOLIO_PAGE_CHANGED');
+ return {revision:value.revision,items:value.items,offset,limit,total:selection.total,nextOffset:selection.nextOffset};
+}
 function nativeError(error,mutation=false){
  const code=/^[A-Z][A-Z0-9_]{1,140}$/.test(error?.code??'')?error.code:'API_PASS_OPERATION_FAILED';
  return apiPassFailure(code,error?.apiPassPublic===true?error.message:'The selected API-pass operation returned '+code+'. Check the original host connection and retained state.',
@@ -69,24 +96,42 @@ export class MerchantApiPassWorkspaces{
   return {bytes:reply.bytes,contentType,source:{instanceId:reply.connection.instanceId,launchSha256:reply.connection.launchSha256,entrySha256:reply.connection.entrySha256,path:route,
    observedAt:new Date().toISOString(),nativeSha256:header,revision:nativeRevision}};
  }
- async #post(client,route,body,{purchase,profileId}={}){
+ async #post(client,route,body,{purchase,profileId,replacement}={}){
   let received=false;
   try{
    const reply=await client.json(route,{body}),value=reply.native;received=true;
    if(profileId&&value.result.profileId!==undefined)apiPassNeed(value.result.profileId===profileId,'The original operation returned another profile.','API_PASS_RESULT_BINDING');
    if(purchase){const profile=value.state.profiles?.find(row=>row.id===value.result.profileId);
     apiPassNeed(profile?.intentId===purchase.intentId&&profile?.orderReference===purchase.orderReference,'The adopted original purchase differs from its declared intent or order.','API_PASS_PURCHASE_BINDING');}
+   if(replacement){
+    const profile=value.state.profiles?.find(row=>row.id===value.result.profileId);
+    apiPassNeed(value.result.replacesProfileId===replacement.profileId&&profile?.replacesProfileId===replacement.profileId&&
+     profile.id!==replacement.profileId&&profile.mode==='purchase'&&profile.orderReference===replacement.orderReference&&
+     profile.manifestSha256===replacement.manifestSha256&&profile.intentId===replacement.intentId,
+     'The prepared replacement differs from the original selected pass, checkout handoff or purchase intent.','API_PASS_REPLACEMENT_BINDING');
+   }
    return {result:value.result,revision:revision(value.state.revision)};
   }catch(error){if(received)error.outcomeUnknown=true;throw error;}
  }
  async #resolveMutation(client,kind,args){
   const {workspace,profileId,callId,taskId,...rest}=args;let route,body=rest,binding=profileId?{profileId}:null;
   switch(kind){
+   case 'portfolio_configure':route='/api/portfolio/configure';break;
+   case 'portfolio_refresh':route='/api/portfolio/refresh';break;
    case 'connect':route='/api/passes/connect';break;
-   case 'purchase_prepare':{
+   case 'purchase_prepare':case 'purchase_replenish':{
     const {handoff,expectedHandoffSha256,...original}=rest,source=await client.input(handoff,'handoff',expectedHandoffSha256);
     let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(source.bytes);}catch{throw apiPassFailure('API_PASS_HANDOFF_INVALID','The complete original handoff must be UTF-8 JSON.');}
-    body={...original,handoff:text};route='/api/purchases/prepare';break;
+    body={...original,handoff:text};
+    if(kind==='purchase_replenish'){
+     let handoffValue;try{handoffValue=JSON.parse(text);}catch{throw apiPassFailure('API_PASS_HANDOFF_INVALID','The complete original handoff must be UTF-8 JSON.');}
+     apiPassNeed(apiPassPlain(handoffValue)&&typeof handoffValue.orderReference==='string'&&API_PASS_SHA.test(handoffValue.file?.sha256??''),
+      'Use the original complete API purchase handoff with its order and manifest identity.','API_PASS_HANDOFF_INVALID');
+     binding={replacement:{profileId,orderReference:handoffValue.orderReference,manifestSha256:handoffValue.file.sha256,
+      intentId:original.intentId,handoffSha256:source.source.sha256}};
+     route=profilePath(profileId)+'/replenish';
+    }else route='/api/purchases/prepare';
+    break;
    }
    case 'purchase_attach':{
     const {purchase:name,...original}=rest,purchase=await client.purchase(name);
@@ -132,7 +177,18 @@ export class MerchantApiPassWorkspaces{
     apiPassNeed(Array.isArray(state.profiles)&&Array.isArray(state.tasks)&&Array.isArray(state.history),'The original state inventory is invalid.','API_PASS_NATIVE_STATE_INVALID');
     native={schema:state.schema,id:state.id,title:state.title,revision:revision(state.revision),purchaseEnabled:state.purchaseEnabled,approvalMode:state.approvalMode,claimEnvs:state.claimEnvs,
      counts:{passes:state.profiles.length,savedCalls:state.profiles.reduce((n,row)=>n+row.callCount,0)},recentTasks:state.tasks,recentHistory:state.history,
-     windows:{tasks:150,history:100},completeProfileHistory:true,exports:exports.summary};break;
+     windows:{tasks:150,history:100},completeProfileHistory:true,exports:exports.summary,
+     portfolio:state.portfolio?{schema:originalPortfolio(state).schema,settings:clone(state.portfolio.settings),summary:clone(state.portfolio.summary)}:null};break;
+   }
+   case 'portfolio':{
+    const state=(await client.json('/api/state')).native,value=originalPortfolio(state,args.expectedRevision);
+    const selected=page(value.passes,{offset:args.offset??0,limit:args.limit??20}),{items,...passPagination}=selected;
+    native={revision:state.revision,schema:value.schema,settings:clone(value.settings),summary:clone(value.summary),
+     passes:clone(items),passPagination,attention:clone(value.attention)};break;
+   }
+   case 'portfolio_requests':{
+    const value=(await client.json('/api/portfolio/requests?offset='+(args.offset??0)+'&limit='+(args.limit??100))).native;
+    native=attentionPage(value,args);break;
    }
    case 'passes':{const state=(await client.json('/api/state')).native;apiPassNeed(Array.isArray(state.profiles),'The native pass inventory is invalid.','API_PASS_NATIVE_STATE_INVALID');native={revision:revision(state.revision,args.expectedRevision),...page(state.profiles.map(profileSummary),args)};break;}
    case 'pass':{
@@ -148,7 +204,7 @@ export class MerchantApiPassWorkspaces{
    case 'operation':native=await this.#operations.get(workspace).read(args.operationId);break;
    case 'approval':native=(await client.json(profilePath(profileId)+'/approval')).native;break;
    case 'input':native=(await client.input(args.file)).source;break;
-   case 'connect':case 'purchase_prepare':case 'purchase_attach':case 'update':case 'prepare_request':case 'adopt_request':case 'enqueue':case 'cancel':case 'decide':
+   case 'portfolio_configure':case 'portfolio_refresh':case 'purchase_replenish':case 'connect':case 'purchase_prepare':case 'purchase_attach':case 'update':case 'prepare_request':case 'adopt_request':case 'enqueue':case 'cancel':case 'decide':
     native=await this.#mutate(client,kind,args);break;
    case 'capture':native=await exports.capture(rest,selection=>this.#capture(client,selection));break;
    case 'exports':native=await exports.list(rest);break;
@@ -165,7 +221,7 @@ export class MerchantApiPassWorkspaces{
   apiPassNeed(!this.#closing,'The API-pass adapter is draining accepted requests.','API_PASS_CLOSING');
   apiPassNeed(this.#pending.size<32,'Finish an existing original operation before opening another request.','API_PASS_REQUEST_CAPACITY');
   if(!name.startsWith(API_PASS_PREFIX))name=API_PASS_PREFIX+name;
-  const args=apiPassArguments(name,input),mutation=['connect','purchase_prepare','purchase_attach','update','prepare_request','adopt_request','enqueue','cancel','decide'].includes(name.slice(API_PASS_PREFIX.length));
+  const args=apiPassArguments(name,input),mutation=['portfolio_configure','portfolio_refresh','purchase_replenish','connect','purchase_prepare','purchase_attach','update','prepare_request','adopt_request','enqueue','cancel','decide'].includes(name.slice(API_PASS_PREFIX.length));
   const promise=Promise.resolve().then(()=>this.#execute(name,args)).catch(error=>{throw nativeError(error,mutation);});
   this.#pending.add(promise);promise.finally(()=>this.#pending.delete(promise)).catch(()=>{});return promise;
  }
