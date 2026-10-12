@@ -263,7 +263,9 @@ A report request uses the same original API:
 
 To include a full source comparison, add input.compare with the original before
 and after capture IDs. The report freezes the selected complete records and
-source-specific review editions. Subsequent work creates a new report.
+source-specific review editions before creating customer files. An interrupted
+report or dataset resumes those original selections even if later company review
+has continued. Subsequent work creates a new report or dataset.
 
 ## Prepare and operate a native merchant dataset
 

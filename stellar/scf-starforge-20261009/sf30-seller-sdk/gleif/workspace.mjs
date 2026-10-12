@@ -65,6 +65,24 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       const rows=selected==='all'?records:records.filter(r=>reviews.some(v=>v.captureId===r.row.captureId&&v.lei===r.row.lei&&v.decision==='include'&&v.resourceSha256===identity(r.resource)));
       return {captures,records:rows,reviews,selection:selected};
     }
+    async function frozenSelection(input,record) {
+      if(!record.sourceSelection) {
+        const selected=await selection(input);
+        record.sourceSelection={selection:selected.selection,captureIds:selected.captures.map(c=>c.id),
+          reviews:selected.reviews.map(r=>({id:r.id,version:r.version})),
+          records:selected.records.map(r=>({captureId:r.row.captureId,lei:r.row.lei,resourceSha256:identity(r.resource)}))};
+        // Retain the accepted source and decision editions before creating any customer file.
+        await save();return selected;
+      }
+      const saved=record.sourceSelection,captures=[],available=new Map(),records=[],reviews=[];
+      for(const id of saved.captureIds){const full=await entities(id);need(full.complete,'GLEIF_SOURCE_INCOMPLETE');captures.push(full.capture);
+        for(const item of full.records)available.set(item.row.captureId+'/'+item.row.lei,item);}
+      for(const selected of saved.records){const item=available.get(selected.captureId+'/'+selected.lei);
+        need(item&&identity(item.resource)===selected.resourceSha256,'GLEIF_PREPARED_SOURCE_CHANGED','The originally selected source record differs.',409);records.push(item);}
+      for(const selected of saved.reviews){const review=state.reviews.find(r=>r.id===selected.id&&r.version===selected.version);
+        need(review,'GLEIF_PREPARED_REVIEW_CHANGED','The original selected review version is missing.',409);reviews.push(clone(review));}
+      return {captures,records,reviews,selection:saved.selection};
+    }
     async function compare(beforeId,afterId) {
       const before=await entities(beforeId),after=await entities(afterId);
       need(before.complete&&after.complete,'GLEIF_COMPARISON_INCOMPLETE','Complete both source captures.');
@@ -83,7 +101,7 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     }
     async function retainedFile(name,content) {const raw=Buffer.isBuffer(content)?content:Buffer.from(content);return {name,...await put(raw)};}
     async function prepareReport(input,record) {
-      const selected=await selection(input),title=label(input.title,'report title',200);
+      const selected=await frozenSelection(input,record),title=label(input.title,'report title',200);
       let comparison=null;if(input.compare)comparison=await compare(input.compare.before,input.compare.after);
       const report={schema:SCHEMA+'.report',id:record.id,title,createdAt:record.createdAt,workspaceId:metadata.id,source:SOURCE,
         ...selected,comparison};
@@ -104,7 +122,7 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       return retainedFile(name,data);
     }
     async function prepareDataset(input,record) {
-      const selected=await selection(input),name=label(input.name,'dataset name',128);
+      const selected=await frozenSelection(input,record),name=label(input.name,'dataset name',128);
       need(selected.records.length>0,'GLEIF_DATASET_EMPTY','Select at least one source record.');
       const config={schema:'stellar-forge.csv-dataset.v1',file:'dataset.csv',name,columns:Object.fromEntries(COLUMNS.map(k=>[k,'string'])),
         filters:['lei','legalName','entityStatus','registrationStatus','legalJurisdiction','captureId'],ranges:[],
