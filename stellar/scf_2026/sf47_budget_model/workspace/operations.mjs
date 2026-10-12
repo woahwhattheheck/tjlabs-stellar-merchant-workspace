@@ -46,6 +46,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   const root=document.createElement('section');root.className='operations';root.setAttribute('aria-label','Delivery and cash operations');container.replaceChildren(root);
   const view={cases:[],current:null,tab:'overview',busy:false,events:[],nextAfter:null,form:null};
   let active=true,forecastView=null,forecastViewCase=null,portfolioView=null,supportView=null,completionView=null,buyerView=null,cohortView=null,installationView=null,implementationView=null;
+  let localBusy=false,hostBusy=false;
   view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;
   const available=()=>active&&root.isConnected;
   function requireActive() {if(!available()){const error=new Error('This operations view is closed. Reopen the retained case to continue.');error.code='OPERATIONS_VIEW_CLOSED';throw error;}}
@@ -80,11 +81,14 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   const optional=(list,label='Unassigned')=>[['',label],...list];
   const commonSource=row=>'<fieldset class="ops-wide"><legend>Original sources</legend><div class="ops-fields">'+field('Retained attachments','sourceIds',row.sourceIds||[],{options:sourceOptions(),multiple:true,wide:true})+field('Original reference and observation','sourceNote',row.sourceNote||'',{area:true,wide:true,help:'Attach documents in Sources. A direct operator entry remains labeled as such.'})+'</div></fieldset>';
   const flag=value=>'<span class="ops-state">'+esc(title(value))+'</span>';
-  function setBusy(value) {
+  function applyBusy() {
+    const value=localBusy||hostBusy;
     view.busy=value;root.setAttribute('aria-busy',String(value));
-    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.portfolio,.support-delivery,.completion-desk,.buyer-receiving,.cohort-desk,.installation-desk,.implementation-evidence-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
-    portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);buyerView?.setHostBusy(value);cohortView?.setHostBusy(value);installationView?.setHostBusy(value);implementationView?.setHostBusy(value);
+    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-forecast,.portfolio,.support-delivery,.completion-desk,.buyer-receiving,.cohort-desk,.installation-desk,.implementation-evidence-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
+    forecastView?.setHostBusy(value);portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);buyerView?.setHostBusy(value);cohortView?.setHostBusy(value);installationView?.setHostBusy(value);implementationView?.setHostBusy(value);
   }
+  function setBusy(value) {localBusy=Boolean(value);applyBusy();}
+  function setHostBusy(value) {hostBusy=Boolean(value);if(available())applyBusy();}
   function alertError(error) {if(!available())return;inform(error.message,true);const target=$('[data-ops-message]');if(target){target.textContent=error.message;target.setAttribute('role','alert');}}
   async function run(action) {if(view.busy||!available())return;setBusy(true);try{await action();}catch(error){alertError(error);}finally{if(available())setBusy(false);}}
   function recordingActor() {requireActive();const value=($('[name=recordingActor]')?.value||actor).trim();if(!value)throw new Error('Enter the recording operator before saving.');actor=value;try{sessionStorage.setItem('sf47.operations.actor',value);}catch{}return value;}
@@ -171,14 +175,14 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       forecastView=mountForecast({container:$('[data-ops-forecast]'),current:c,api,mutationId,recordingActor,
         initialForecastId:retained,initialInputs:retained?null:view.forecastDraft,onSelection:id=>{view.forecastId=id;if(id)view.forecastDraft=null;},
         onSaved:async result=>{if(view.current?.program.id!==c.program.id)return;view.forecastId=result.recordId;view.forecastDraft=null;forecastView?.dispose();forecastView=null;await refresh();inform('Saved the original operating forecast with its source, dated cash and remaining work.');}});
-      forecastView.ready.catch(alertError);
+      forecastView.setHostBusy(view.busy);forecastView.ready.catch(alertError);
     }
     if(c&&view.tab==='portfolio'){
       portfolioView=mountPortfolio({container:$('[data-ops-portfolio]'),current:c,api,mutationId,recordingActor,
         initialPortfolioId:view.portfolioId,onSelection:id=>{view.portfolioId=id;},onReload:refresh,
         onSaved:async result=>{if(view.current?.program.id!==c.program.id)return;view.portfolioId=result.recordId;await refresh();inform('Saved the complete source-bound delivery allocation and original cash alternatives.');},
         onForecastInputs:async(inputs,selection)=>{if(view.current?.program.id!==c.program.id)return;view.forecastDraft=structuredClone(inputs);view.forecastId=null;view.tab='forecast';render();inform('Opened an editable forecast from '+selection.alternativeId+'. Review original collection dates before previewing and saving its cash assumptions.');}});
-      portfolioView.ready.catch(alertError);
+      portfolioView.setHostBusy(view.busy);portfolioView.ready.catch(alertError);
     }
     if(c&&view.tab==='implementation'){
       if(!retainedImplementationSessions.has(c.program.id))retainedImplementationSessions.set(c.program.id,{});
@@ -381,5 +385,5 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   });
   root.innerHTML='<p>Opening retained delivery operations…</p>';
   const ready=loadCases();
-  return {ready,refresh,dispose,root};
+  return {ready,refresh,dispose,setHostBusy,root};
 }

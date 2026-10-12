@@ -45,6 +45,10 @@ Mutations retain their original requestId and current version/revision. After an
 
 A borrowed Applications instance keeps its existing lifetime. A client-started service uses the same original managed startup and workspace lock; the client drains and closes that owned server on shutdown. Keep the access-fragment URL and private launch record with the original operator.
 
+## Original-currency forecasts and portfolio selection
+
+`forecastPreview` and `forecastSave`, and Merchant's corresponding original tools, accept `fxRates` plus per-project `nativePricing` and native receipt amounts within the same complete input object. Source references, inline inputs and `inputPointer` retain their existing routes. See [Original currencies in operating forecasts](CURRENCY.md) for exact decimals, rate direction, dated sources, original payment and cost credits, rounding and coverage. Portfolio selection preserves these complete inputs; assess both selected-scope and dated-cash coverage before using financial deltas or a frontier.
+
 ## Portfolio allocation and original cash handoff
 
 Read views portfolios and portfolio use caseId and, for the saved result, portfolioId. Portfolio exports use kind portfolio and those same IDs. The native complete case ZIP remains the receiving carrier for all saved portfolios, sources, forecasts and original history.

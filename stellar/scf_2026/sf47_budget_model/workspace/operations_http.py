@@ -23,6 +23,7 @@ def register_static(static):
                    "/operations.mjs": ("operations.mjs", "text/javascript; charset=utf-8"),
                    "/operations.css": ("operations.css", "text/css; charset=utf-8"),
                    "/forecast.mjs": ("forecast.mjs", "text/javascript; charset=utf-8"),
+                   "/forecast_currency.mjs": ("forecast_currency.mjs", "text/javascript; charset=utf-8"),
                    "/forecast.css": ("forecast.css", "text/css; charset=utf-8"),
                    "/portfolio.mjs": ("portfolio.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio.css": ("portfolio.css", "text/css; charset=utf-8")})
