@@ -451,11 +451,16 @@ export class MerchantGrantWorkspaces {
         ? await client.ledgerIntakePreview(caseId,{...body,document})
         : await client.ledgerIntakeApply(caseId,{...body,document});
     }
+    else if (verb === 'statement_inspect') original=await client.statementInspect(args.caseId,args.expectedVersion,
+      await this.#modelInputs(alias,args,'Original bank statement',GRANT_MAX_BUNDLE_BYTES));
     else if (verb === 'statement_preview') original=await client.statementPreview(args.caseId,args.expectedVersion,
       await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES));
     else if (verb === 'statement_receive') {
       const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
       original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
+    }
+    else if (verb === 'installation_return_review_seed') {
+      const {caseId,...body}=rest; original=await client.installationReturnReviewSeed(caseId,body);
     }
     else if (verb === 'installation_return_seed') {
       const {caseId,...body}=rest; original=await client.installationReturnSeed(caseId,body);

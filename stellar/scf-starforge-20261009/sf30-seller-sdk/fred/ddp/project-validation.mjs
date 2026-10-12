@@ -5,12 +5,11 @@ import { inspectFredDdpCrosswalk } from './crosswalk.mjs';
 import { inspectFredDdpPackage } from './package.mjs';
 import { validateFredDdpMigrationPlan } from './migration.mjs';
 import { validateFredDdpReceiving } from './receiving.mjs';
-import { fredDdpReceivingFileManifest, verifyFredDdpReceivingFiles,
-  validateFredDdpReceivingFileManifest } from './receiving-report.mjs';
+import { verifyFredDdpReceivingManifest, validateFredDdpReceivingFileManifest } from './receiving-report.mjs';
 
 export const FRED_DDP_PROJECT_BUNDLE = 'stellar-forge.fred-project-bundle.v5';
 export const FRED_DDP_PROJECT_BUNDLE_MAX_BYTES = 480 * 1024 * 1024;
-export const FRED_DDP_PROJECT_KEYS = ['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
+export const FRED_DDP_PROJECT_KEYS = Object.freeze(['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings']);
 
 function id(value, prefix, label) {
   need(typeof value === 'string' && value.startsWith(prefix) &&
@@ -178,7 +177,7 @@ export function validateFredDdpProjectBundle({
   for (const plan of ddpMigrations) {
     const packageCapture = packages.get(plan.packageId), crosswalk = crosswalks.get(plan.crosswalkId);
     need(packageCapture && crosswalk, 'The complete migration lost its original sources.');
-    validateFredDdpMigrationPlan(plan, { packageCapture, crosswalk });
+    validateFredDdpMigrationPlan(plan, { packageCapture, crosswalk, copy: false });
     const summary = fredDdpMigrationSummary(plan);
     need(canonical(summary) === canonical(migrationIndex.get(plan.id)), 'The migration plan index changed.');
     const index = operationBefore(state, 'ddp-migration-save', operation =>
@@ -200,7 +199,7 @@ export function validateFredDdpProjectBundle({
       new Set(selected.map(capture => canonical(captureModels.get(capture.captureSha256).selection))).size === selected.length,
       'The migration result contains an unplanned or repeated native acquisition.');
     validateFredDdpReceiving(receiving, { packageCapture: packages.get(plan.packageId),
-      crosswalk: crosswalks.get(plan.crosswalkId), plan, captures: selected });
+      crosswalk: crosswalks.get(plan.crosswalkId), plan, captures: selected, copy: false });
     for (const capture of selected) {
       const model = captureModels.get(capture.captureSha256);
       const adopted = state.captures.find(item => item.id === capture.captureSha256);
@@ -209,8 +208,8 @@ export function validateFredDdpProjectBundle({
         canonical(adopted.missing) === canonical(model.missing) && canonical(adopted.series) === canonical(model.series),
         'The adopted migration observation index differs from its original native capture.');
     }
-    const files = verifyFredDdpReceivingFiles(receiving, summary);
-    need(canonical(fredDdpReceivingSummary(receiving, fredDdpReceivingFileManifest(files))) === canonical(summary),
+    const manifest = verifyFredDdpReceivingManifest(receiving, summary);
+    need(canonical(fredDdpReceivingSummary(receiving, manifest)) === canonical(summary),
       'The retained migration receiving index changed.');
     const index = operationBefore(state, 'ddp-migration-acquire', operation =>
       operation.result?.migrationId === plan.id && operation.result?.receivingId === receiving.id &&

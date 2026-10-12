@@ -5,6 +5,31 @@ const copy=v=>structuredClone(v), check=(v,m)=>{if(!v)throw Error(m);};
 const uuid=()=>crypto.randomUUID().replaceAll('-','');
 const keyOf=r=>fundingCanonical([r.kind,r.recordId,r.lineId??null]);
 const title=v=>String(v??'').replaceAll('_',' ').toLowerCase();
+function editableInput(value){
+  const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
+  const strings=v=>Array.isArray(v)&&v.length<=200&&v.every(x=>typeof x==='string');
+  const nullable=v=>v===null||typeof v==='string';
+  check(object(value)&&Number.isInteger(value.expectedRevision)&&value.expectedRevision>=0&&object(value.document),
+    'Choose a complete editable funding input from the original seed or editor download.');
+  const d=value.document;
+  check(['title','status','asOfDate','periodEnd','note'].every(k=>typeof d[k]==='string')
+    &&nullable(d.periodStart)&&Array.isArray(d.funds)&&d.funds.length<=50
+    &&Array.isArray(d.assignments)&&d.assignments.length<=10000,
+    'The complete funding document fields are required before opening an editable draft.');
+  for(const fund of d.funds)check(object(fund)
+    &&['id','name','kind','reference','decision','conditions','receiptTiming','note'].every(k=>typeof fund[k]==='string')
+    &&strings(fund.sourceIds)&&['costWindowStart','costWindowEnd','limitUsd'].every(k=>nullable(fund[k])),
+    'Each funding source must retain its complete editable terms and source selection.');
+  for(const row of d.assignments){
+    check(object(row)&&['WORK','INVOICE'].includes(row.kind)&&typeof row.recordId==='string'
+      &&nullable(row.lineId)&&typeof row.note==='string'&&Array.isArray(row.allocations)&&row.allocations.length<=50,
+      'Each assignment must retain its original row and complete allocation list.');
+    for(const part of row.allocations)check(object(part)
+      &&['fundId','quantity','eligibility','basis'].every(k=>typeof part[k]==='string')&&strings(part.sourceIds),
+      'Each allocation must retain its editable quantity, assessment and original source selection.');
+  }
+  return value;
+}
 const path=p=>esc(JSON.stringify(p));
 const show=v=>v===null||v===undefined||v===''?'Unstated':String(v);
 function download(raw,name,type='application/json'){
@@ -302,9 +327,9 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
     check(file&&file.size>0&&file.size<=32*1024*1024,'Choose the complete JSON input or editor recovery up to 32 MiB.');
     const value=JSON.parse(await file.text());if(!available())return;
     if(mode==='input'){
-      check(value&&typeof value==='object'&&Number.isInteger(value.expectedRevision)&&value.expectedRevision>=0
-        &&value.document&&Array.isArray(value.document.funds)&&Array.isArray(value.document.assignments),'Choose complete funding inputs with funds and assignments.');
+      editableInput(value);
       check(pending.length===0,'Recover the original save before importing another editable draft.');
+      check(Object.keys(session.drafts).length<50,'Retain/export your existing drafts before importing more than 50 in this browser.');
       const id=uuid();session.drafts[id]={inputs:copy(value),caseVersion:currentCase.program.version,
         createdAt:new Date().toISOString(),saveNote:'',baseEdition:null};
       session.draftId=id;session.mode='draft';session.targetKey=null;
@@ -313,11 +338,14 @@ export function mountFunding({container,current,api,saveApi=api,session={},mutat
         &&value.drafts&&typeof value.drafts==='object'&&!Array.isArray(value.drafts)&&Object.keys(value.drafts).length<=50,
         'Choose the complete original case editor recovery.');
       for(const [id,d]of Object.entries(value.drafts)){
-        check(/^[a-f0-9]{32}$/.test(id)&&d&&d.inputs&&d.inputs.document&&Array.isArray(d.inputs.document.funds)
-          &&Array.isArray(d.inputs.document.assignments)&&Number.isInteger(d.inputs.expectedRevision)
-          &&Number.isInteger(d.caseVersion)&&typeof d.createdAt==='string','The recovered editable input is incomplete.');
+        check(/^[a-f0-9]{32}$/.test(id)&&d&&Number.isInteger(d.caseVersion)&&d.caseVersion>=1
+          &&typeof d.createdAt==='string'&&(d.saveNote===undefined||typeof d.saveNote==='string'),
+          'The recovered editable input is incomplete.');
+        editableInput(d.inputs);
         if(session.drafts[id])check(fundingEqual(session.drafts[id].inputs,d.inputs),'A retained draft with this identity has different edits. Keep both recovery files.');
       }
+      check(new Set([...Object.keys(session.drafts),...Object.keys(value.drafts)]).size<=50,
+        'This receiving selection would exceed 50 retained drafts. Keep the complete recovery files and select the intended original editor.');
       pending=await requests.importRecovery(value.requests);
       for(const [id,d]of Object.entries(value.drafts)){
         const fresh=copy(d);delete fresh.preview;delete fresh.previewSignature;session.drafts[id]??=fresh;
