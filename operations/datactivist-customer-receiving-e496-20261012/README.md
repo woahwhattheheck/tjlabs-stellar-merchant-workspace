@@ -92,7 +92,7 @@ The runner prints the actual process identifier, paths and newly completed progr
 
 After execution, the runner preserves Datactivist_Original_Operating_Workspace.zip and DATACTIVIST_NATIVE_RUN_RESULT.json together. A completed customer journey also yields Datactivist_Complete_Customer_Handover.zip. The original operating package contains the selected source, original capture, original saved operation, complete controller and native output. If a programme reports an error, its actual original workspace and output remain in the operating package for continuation.
 
-Artifact preservation runs before the foreground command returns. The runner creates root/runtime-tmp and sets the process-wide TMPDIR and Python tempfile directory before starting Node, Chromium or the unchanged preservation helper. It passes the documented uploads-only request and returns each preserved file identity, current version number and exact package hash.
+Artifact preservation runs before the foreground command returns. The runner creates root/runtime-tmp and sets the process-wide TMPDIR and Python tempfile directory before starting Node, Chromium or the unchanged preservation helper. It passes the documented uploads-only request and returns each preserved file identity, current version number and exact package hash. The upload child explicitly initializes Python's tempfile directory before running the unchanged helper, so an interpreter that cached /tmp still uses the owned private upload directory.
 
 ## Completed outputs
 
@@ -145,11 +145,11 @@ The restore procedure checks every output path, keeps existing live workspace fi
 Run the complete continuation with the private configuration:
 
 ~~~sh
-NODE_OPTIONS="--max-old-space-size=128 --max-semi-space-size=4" \
+NODE_OPTIONS="--max-old-space-size=256 --max-semi-space-size=8" \
   python3 -B runtime/resume_saved.py /ABSOLUTE_PRIVATE_CONFIG/resume-original.json
 ~~~
 
-The Node settings provide an explicit heap budget for the shared cloud machine. The runtime records the actual NODE_OPTIONS in its output. They preserve the full original dataset and every customer page. Use the machine's actual available memory when selecting a different heap budget.
+The Node settings provide an explicit heap budget for the shared cloud machine. The complete original core and customer queries ran at 128 MiB, but loading the browser stage reached that V8 heap limit; the full continuation therefore selects 256 MiB. The runtime records the actual NODE_OPTIONS in its output. They preserve the full original dataset and every customer page. Use the machine's actual available memory when selecting a different heap budget.
 
 The original workspace ZIP and result should update their existing saved files. Map Datactivist_Original_Operating_Workspace.zip and DATACTIVIST_NATIVE_RUN_RESULT.json to their observed file IDs and current version numbers in library_replacements. The unchanged upload helper applies those version guards and returns the new versions. The completed customer handover is created with the full package only after that installed customer operation completes.
 
