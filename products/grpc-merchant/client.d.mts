@@ -80,7 +80,9 @@ export declare function grpcProductTools(): GrpcToolDefinition[];
 export declare class GrpcProductClient {
   constructor(options: GrpcProductClientOptions);
   readonly endpoint: string;
-  ready(): Promise<{ productId: string; workspace: string; instanceId: string; nativeInstanceId: string; endpoint: string; browserUrl: string; mcpUrl: string }>;
+  ready(): Promise<{ productId: string; workspace: string; instanceId: string; nativeInstanceId: string; endpoint: string;
+    browserUrl: string; mcpUrl: string; operatorUrl: string | null; operatorDirectory: string | null;
+    operatorWorkspaceId: string | null; operatorSourceSha256: string | null }>;
   call(name: GrpcToolName, input?: Record<string, Json>, options?: CallOptions): Promise<NativeResult>;
   status(): Promise<NativeResult>;
   revision(revision: string, section?: 'summary' | 'source' | 'plan' | 'methods' | 'routes', page?: PageSelection): Promise<NativeResult>;

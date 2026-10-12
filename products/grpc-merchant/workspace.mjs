@@ -131,6 +131,8 @@ export async function inspectGrpcProduct(directory) {
     handles: { captures: Object.keys(selected.captures), reflections: Object.keys(selected.reflections), files: Object.keys(selected.files) },
     session: session ? { state: session.state, instanceId: session.instanceId, startedAt: session.startedAt,
       endedAt: session.endedAt, nativeInstanceId: session.nativeInstanceId,
+      operatorUrl: session.operatorUrl ?? null, operatorDirectory: session.operatorDirectory ?? null,
+      operatorWorkspaceId: session.operatorWorkspaceId ?? null, operatorSourceSha256: session.operatorSourceSha256 ?? null,
       note: 'Retained session status; use the live original console or agent for current operation status.' } : null };
 }
 
@@ -145,7 +147,10 @@ export async function openGrpcProduct(input = {}, { environment = process.env } 
     instanceId: randomUUID(), startedAt: new Date().toISOString(), bindingSha256: first.bindingSha256,
     resourceId: first.resourceId, connectionFile: first.profile.connectionFile,
     consoleUrlFile: first.profile.consoleUrlFile, port: options.port, workspacePort: options.workspacePort,
-    tokenEnv: options.tokenEnv, browserOnly: options.browserOnly, browserUrl: null, mcpUrl: null };
+    tokenEnv: options.tokenEnv, browserOnly: options.browserOnly, browserUrl: null, mcpUrl: null,
+    operatorUrl: null, operatorDirectory: first.operatorConsole?.directory ?? null,
+    operatorWorkspaceId: first.operatorConsole?.workspaceId ?? null,
+    operatorSourceSha256: first.operatorConsole?.source.sha256 ?? null };
   const save = value => publish(first.profile.connectionFile, value, true);
   async function finish(finalState = 'CLOSED', sourceError) {
     const errors = [];
@@ -187,15 +192,35 @@ export async function openGrpcProduct(input = {}, { environment = process.env } 
     if (!options.browserOnly) {
       const { startMerchantMcp } = await import('../../stellar-forge/mcp-merchant-operator/serve.mjs');
       agent = await startMerchantMcp({ configPath: first.profile.configuration, port: options.port,
-        tokenEnv: options.tokenEnv, environment });
+        tokenEnv: options.tokenEnv, environment, consoleDirectory: selected.operatorConsole.directory });
     }
     // Opening the native store can create internal directories; current contract selection remains bound by the native owner.
     const confirmed = await readGrpcProduct(first.directory);
     need(canonical(confirmed.profile) === canonical(first.profile), 'The product changed during startup.', 'BINDING_CHANGED');
     for (const file of selected.files) need(sha256(await privateBytes(file.path, false, file.maximum ?? 1024 * 1024)) === file.sha256,
       'A reviewed product configuration changed during startup.', 'BINDING_CHANGED');
+    let operatorWorkspaceId = null;
+    if (agent) {
+      const { merchantConsoleSource, inspectMerchantConsoleDirectory } = await import('../../stellar-forge/mcp-merchant-operator/console/managed.mjs');
+      const expected = selected.operatorConsole;
+      const current = await inspectMerchantConsoleDirectory(expected.directory);
+      need(canonical(await merchantConsoleSource()) === canonical(expected.source),
+        'The installed merchant Console source changed during startup.', 'BINDING_CHANGED');
+      need(agent.operatorConsole && UUID.test(agent.operatorConsole.store?.id ?? '') &&
+        current.directory === expected.directory && current.workspaceId === agent.operatorConsole.store.id &&
+        (expected.workspaceId === null || current.workspaceId === expected.workspaceId),
+      'The original merchant Console must retain its selected private workspace.', 'CONSOLE_STARTUP');
+      let endpoint, operatorUrl;
+      try { endpoint = new URL(agent.url); operatorUrl = new URL(agent.consoleUrl); } catch {}
+      need(endpoint && operatorUrl && operatorUrl.protocol === 'http:' && operatorUrl.hostname === '127.0.0.1' &&
+        operatorUrl.origin === endpoint.origin && operatorUrl.pathname === '/operator/' &&
+        !operatorUrl.username && !operatorUrl.password && !operatorUrl.search && !operatorUrl.hash,
+      'The merchant owner must return its original local Console URL.', 'CONSOLE_STARTUP');
+      operatorWorkspaceId = current.workspaceId;
+    }
     lease.assertHeld();
     started = { state: 'OPEN', browserUrl: native.url, mcpUrl: agent ? new URL('/mcp', agent.url).href : null,
+      operatorUrl: agent?.consoleUrl ?? null, operatorWorkspaceId,
       nativeInstanceId: nativeLaunch.instanceId, nativeLaunch };
     await save({ ...initial, ...started });
     return { ...initial, ...started, native, operator: agent?.operator,

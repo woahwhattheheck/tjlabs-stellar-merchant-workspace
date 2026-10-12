@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grpc-merchant",
-  "title": "Native gRPC merchant product and customer receiving",
-  "description": "Original protobuf and reflection intake, typed unary and streaming calls, seller releases, contract upgrades, retained service health, browser/agent operation and complete customer files",
+  "title": "Native gRPC merchant product, operator Console and customer receiving",
+  "description": "Original protobuf and reflection intake, typed unary and streaming calls, seller releases, contract upgrades, retained service health, saved merchant Console workflows and complete customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -58,6 +58,7 @@
     "grpc-request-streams",
     "grpc-health",
     "merchant-provider-grpc-workspaces",
+    "merchant-console",
     "grpc-product"
   ],
   "components": [
@@ -68,7 +69,8 @@
     "stellar/scf-starforge-20261009/sf46-release",
     "stellar/scf-starforge-20261009/sf82-seller-pilot",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
-    "stellar/scf-starforge-20261009/distribution/python-runtime"
+    "stellar/scf-starforge-20261009/distribution/python-runtime",
+    "stellar-forge/mcp-merchant-operator/console"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/distribution/cli.mjs",
@@ -98,7 +100,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Original gRPC merchant browser, agent, streaming contracts, service health and complete receiving",
+    "description": "Original gRPC merchant browser, agent and persistent operator Console with native streams, service health and complete customer receiving",
     "readme": "stellar/scf-starforge-20261009/distribution/selections/GRPC_MERCHANT.md",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
