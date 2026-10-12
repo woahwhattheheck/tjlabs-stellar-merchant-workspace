@@ -1,10 +1,10 @@
 // MIT. Publisher-owned subscription editions over complete retained OData collections.
-import {mkdtemp,rm} from 'node:fs/promises';
+import {mkdtemp,rm,rename} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {restoreCollection,openCollection,collectionRetainedFiles} from '../collection.mjs';
 import {define,compatible,sourceCollection,sourceRecord,scope,derive,DEFINITION_SCHEMA,EDITION_SCHEMA,TRANSFER_SCHEMA} from './engine.mjs';
 import {need,plain,shape,text,integer,HASH,LIMITS,sha,same,bytes,identity,read,readJSON,maybeJSON,
-  privateDirectory,pathAt,measureChecked,immutable,copy,atomic,inventory,leased,lines} from './files.mjs';
+  privateDirectory,pathAt,measureChecked,immutable,copy,atomic,inventory,leased,lines,syncDir} from './files.mjs';
 
 export const STATE_SCHEMA='stellar-forge.odata-subscription-state.v1';
 export const editionDirectory=revision=>'editions/'+String(revision).padStart(6,'0');
@@ -23,6 +23,7 @@ async function selected(root){
   const state=await readJSON(root,'state.json');need(state.schema===STATE_SCHEMA&&state.definitionSha256===sha(definitionRaw)&&
     Array.isArray(state.editions)&&state.editions.length<=LIMITS.editions&&state.head===state.editions.length,
     'STATE','The subscription state differs from its original definition.');
+  const cancelled=state.cancelledRequests??[];need(Array.isArray(cancelled)&&cancelled.length<=LIMITS.editions&&new Set(cancelled.map(r=>r.requestId)).size===cancelled.length&&cancelled.every(r=>plain(r)&&typeof r.requestId==='string'&&HASH.test(r.requestSha256)&&typeof r.cancelledAt==='string'&&!state.editions.some(e=>e.requestId===r.requestId)),'STATE','The terminal cancelled request history changed.');
   for(let i=0;i<state.editions.length;i++){const row=state.editions[i];need(row.revision===i+1&&HASH.test(row.sha256)&&
     typeof row.requestId==='string'&&HASH.test(row.requestSha256),'STATE','The published edition order changed.');}
   return {definition,definitionRaw,definitionSha256:sha(definitionRaw),state};
@@ -74,7 +75,7 @@ async function appendUnlocked(root,input,{create=false}={}){
   if(create&&selection)need(same(define(source.collection,{title:body.title,...(body.fields===null?{}:{fields:body.fields})}),definition),'DEFINITION_CHANGED','The original creation definition changed.');
   if(!selection){
     const definitionRaw=bytes(definition);await immutable(root,definitionPath,definitionRaw);
-    const state={schema:STATE_SCHEMA,definitionSha256:sha(definitionRaw),head:0,editions:[],pending:null,pendingRequest:null};
+    const state={schema:STATE_SCHEMA,definitionSha256:sha(definitionRaw),head:0,editions:[],cancelledRequests:[],pending:null,pendingRequest:null};
     await atomic(root,'state.json',state);selection=await selected(root);
   }
   compatible(selection.definition,source.collection);const previous=selection.state.head?await editionAt(root,selection,selection.state.head):null;
@@ -129,10 +130,27 @@ export async function subscriptionRows(directory,{revision,kind='rows',offset=0,
     need(total===(kind==='rows'?selectedEdition.edition.rows:selectedEdition.edition.counts.events),'ROW_COUNT','The complete row count changed.');
     return {revision,editionSha256:selectedEdition.sha256,kind,offset,total,items,nextOffset:offset+items.length<total?offset+items.length:null};});
 }
+async function isolateCancelledEdition(root,requestId,revision){
+  const from=join(root,editionDirectory(revision)),to=await pathAt(root,'cancelled/'+requestKey(requestId)+'/edition',{create:true});
+  async function exists(path){try{await privateDirectory(path);return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
+  const sourceExists=await exists(from),destinationExists=await exists(to);
+  need(!sourceExists||!destinationExists,'CANCEL_FILES','The cancelled request has conflicting unpublished edition directories. Preserve both for inspection.');
+  if(sourceExists){await rename(from,to);await syncDir(join(root,'editions'));await syncDir(join(root,'cancelled',requestKey(requestId)));}
+}
 export async function cancelSubscriptionRequest(directory,{requestId}){
   text(requestId,'request ID',200);return leased(directory,async root=>{const s=await selected(root),name='requests/'+requestKey(requestId)+'.json',request=await maybeJSON(root,name)??s.state.pendingRequest;
+    const terminal=(s.state.cancelledRequests??[]).find(r=>r.requestId===requestId);
+    if(terminal){need(request?.state==='CANCELLED'&&request.bodySha256===terminal.requestSha256,'CANCEL','The terminal cancelled request changed.');return {requestId,state:'CANCELLED',cancelledAt:terminal.cancelledAt,reused:true};}
     need(s.state.pending===requestId&&!s.state.editions.some(e=>e.requestId===requestId)&&request&&['SELECTED','CANCELLED'].includes(request.state),'CANCEL','Only the selected unpublished request can be cancelled.');
-    await atomic(root,name,{...request,state:'CANCELLED',cancelledAt:new Date().toISOString()});s.state.pending=null;s.state.pendingRequest=null;await atomic(root,'state.json',s.state);return {requestId,state:'CANCELLED'};});
+    need((s.state.cancelledRequests??[]).length<LIMITS.editions,'HISTORY_LIMIT','The cancelled request history has reached its retained limit.');
+    const cancelled={...request,state:'CANCELLED',cancelledAt:request.cancelledAt??new Date().toISOString()};
+    await atomic(root,name,cancelled);
+    // Keep the request selected until its unpublished revision is isolated. A resumed
+    // cancellation adopts the same directory move; a new request cannot inherit its files.
+    await isolateCancelledEdition(root,requestId,s.state.head+1);
+    s.state.cancelledRequests=[...(s.state.cancelledRequests??[]),{requestId,requestSha256:request.bodySha256,cancelledAt:cancelled.cancelledAt}];
+    s.state.pending=null;s.state.pendingRequest=null;await atomic(root,'state.json',s.state);
+    return {requestId,state:'CANCELLED',cancelledAt:cancelled.cancelledAt,reused:false};});
 }
 export async function exportSubscription(directory,{output,fromRevision=0,toRevision}={}){
   integer(fromRevision,0,LIMITS.editions,'starting edition');need(typeof output==='string','OUTPUT','Choose a private transfer directory.',400);
@@ -162,9 +180,10 @@ export async function exportSubscriptionOriginal(directory,{revision,output}={})
     for(const file of files)await copy(destination,file.path,join(collection.directory,file.path),{bytes:file.bytes,sha256:file.sha256});
     const reopened=await openCollection(destination);return {revision,collectionSha256:reopened.manifestSha256,analysis:reopened.analysis,files:files.length,directory:destination};});
 }
-export async function subscriptionBackup(directory,{output}={}){
+export async function subscriptionBackup(directory,{output,expectedRevision}={}){
   return leased(directory,async root=>{const s=await selected(root);need(!s.state.pending,'PENDING','Finish or cancel the selected publisher append before backup.');
-    const names=[definitionPath,'state.json'];
+    if(expectedRevision!==undefined)need(s.state.head===expectedRevision,'REVISION','The selected publisher edition advanced before backup.');
+    const names=[definitionPath,'state.json',...(s.state.cancelledRequests??[]).map(r=>'requests/'+requestKey(r.requestId)+'.json')];
     for(const entry of s.state.editions){const e=await editionAt(root,s,entry.revision);names.push(e.directory+'/edition.json',e.directory+'/rows.jsonl',e.directory+'/changes.jsonl',
       'requests/'+requestKey(entry.requestId)+'.json');const c=await openCollection(join(root,'collections',e.edition.source.collectionSha256));
       for(const file of await collectionRetainedFiles(c))names.push('collections/'+c.manifestSha256+'/'+file.path);}
@@ -207,6 +226,9 @@ export async function restoreSubscription({directory,source,expectedSha256}={}){
       }finally{await rm(working,{recursive:true,force:true});}
       previous={rows:edition.edition.rows,path:await pathAt(root,edition.directory+'/rows.jsonl'),identity:edition.edition.files['rows.jsonl']};
     }
+    const cancelled=state.cancelledRequests??[];need(Array.isArray(cancelled)&&cancelled.length<=LIMITS.editions&&new Set(cancelled.map(r=>r.requestId)).size===cancelled.length,'BACKUP_REQUEST','The cancelled request history is invalid.');
+    for(const terminal of cancelled){const name='requests/'+requestKey(terminal.requestId)+'.json',request=await readJSON(root,name);required.add(name);
+      need(!state.editions.some(e=>e.requestId===terminal.requestId)&&request.schema==='stellar-forge.odata-subscription-request.v1'&&request.state==='CANCELLED'&&request.body?.requestId===terminal.requestId&&request.bodySha256===terminal.requestSha256&&sha(bytes(request.body))===terminal.requestSha256&&request.cancelledAt===terminal.cancelledAt,'BACKUP_REQUEST','A terminal cancelled request differs from its original selection.');}
     need(names.size===required.size&&[...required].every(n=>names.has(n)),'BACKUP_CLOSURE','The backup must include exactly its complete selected source and edition closure.');
     await atomic(root,'state.json',state);const result={schema:'stellar-forge.odata-subscription-restored.v1',sha256:expectedSha256,definitionSha256:backup.definitionSha256,head:backup.head};
     await atomic(root,'restored.json',result);await atomic(root,'restore-intent.json',{sha256:expectedSha256,state:'COMMITTED'});return {...result,reused:false};});

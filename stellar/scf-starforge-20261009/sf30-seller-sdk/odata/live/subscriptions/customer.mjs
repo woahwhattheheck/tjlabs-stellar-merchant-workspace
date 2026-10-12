@@ -63,9 +63,11 @@ async function receiveUnlocked(root,input,{restoring=false}={}){
   const restoreIntent=await maybeJSON(root,'restore-intent.json');need(restoring||!restoreIntent||restoreIntent.state==='COMMITTED','RESTORE_PENDING','Continue the selected customer backup receiving first.');
   let current=await customerState(root);const existing=current?.state.transfers.find(t=>t.sha256===expectedSha256);
   const selected=await verifySubscriptionTransfer(transferDirectory,expectedSha256);
-  if(existing){need(existing.bytes===selected.bytes,'TRANSFER_CHANGED','The saved delivery manifest changed.');
-    await atomic(root,'intent.json',{sha256:expectedSha256,state:'COMMITTED',result:existing.result});return {...existing.result,reused:true};}
   const pending=await maybeJSON(root,'intent.json');
+  if(existing){need(existing.bytes===selected.bytes,'TRANSFER_CHANGED','The saved delivery manifest changed.');
+    // A reusable old delivery must never displace a newer selected delivery.
+    if(!pending||pending.sha256===expectedSha256)await atomic(root,'intent.json',{sha256:expectedSha256,state:'COMMITTED',result:existing.result});
+    return {...existing.result,reused:true};}
   need(!pending||pending.state==='COMMITTED'||pending.sha256===expectedSha256,'PENDING','Continue the exact previously selected customer delivery before another one.');
   const m=selected.manifest;
   if(current)need(m.mode==='changes'&&m.definitionSha256===current.state.definitionSha256&&
@@ -130,8 +132,10 @@ async function selectedCustomerFiles(root,current){
     for(const e of transfer.editions){names.add('snapshots/'+e.sha256+'/rows.jsonl');names.add('snapshots/'+e.sha256+'/edition.json');}
   }return inventory(root,[...names]);
 }
-export async function subscriptionCustomerBackup(directory,{output}={}){
+export async function subscriptionCustomerBackup(directory,{output,expectedRevision,expectedEditionSha256}={}){
   return leased(directory,async root=>{const current=await customerState(root);need(current,'CUSTOMER_MISSING','Receive a baseline first.');
+    if(expectedRevision!==undefined)need(current.state.revision===expectedRevision,'REVISION','The selected customer edition advanced before export.');
+    if(expectedEditionSha256!==undefined)need(current.state.editionSha256===expectedEditionSha256,'EDITION_CHANGED','The selected customer edition differs before export.');
     const intent=await maybeJSON(root,'intent.json');need(!intent||intent.state==='COMMITTED','PENDING','Complete the selected customer receiving before backup.');
     const destination=await privateDirectory(output,{create:true});need(destination!==root&&!destination.startsWith(root+'/'),'OUTPUT','Place the complete backup outside the original customer directory.');
     const files=await selectedCustomerFiles(root,current);for(const file of files)await copy(destination,file.path,await pathAt(root,file.path),{bytes:file.bytes,sha256:file.sha256});
@@ -168,9 +172,11 @@ export function subscriptionAnalysisMapping(definition,{source,sourceRevision}={
   return {source,source_revision:sourceRevision,mapping:{collection:'',sse_data:'text',columns:definition.mapping.flatMap(f=>[
     {name:f.name,pointer:pointer(f.name),type:'text',missing:'error'},{name:f.name+'_state',pointer:pointer(f.name+'_state'),type:'text',missing:'error'}])}};
 }
-export async function exportSubscriptionCustomer(directory,{output,title}={}){
+export async function exportSubscriptionCustomer(directory,{output,title,expectedRevision,expectedEditionSha256}={}){
   return leased(directory,async root=>{
     const current=await customerState(root);need(current,'CUSTOMER_MISSING','Receive a complete baseline first.');title??=current.definition.title;text(title,'customer export title');
+    if(expectedRevision!==undefined)need(current.state.revision===expectedRevision,'REVISION','The selected customer edition advanced before export.');
+    if(expectedEditionSha256!==undefined)need(current.state.editionSha256===expectedEditionSha256,'EDITION_CHANGED','The selected customer edition differs before export.');
     const destination=await privateDirectory(output,{create:true});need(destination!==root&&!destination.startsWith(root+'/'),'OUTPUT','Export outside the original customer directory.');
     const proof=await selectedCustomerFiles(root,current);need(proof.reduce((n,f)=>n+f.bytes,0)<=128*1024*1024,'ANALYSIS_PROOF_LIMIT','Receive a newly selected complete baseline in a new customer workspace for this Analysis export.');
     const working=await mkdtemp(join(root,'.subscription-export-'));
