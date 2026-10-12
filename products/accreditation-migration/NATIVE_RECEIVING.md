@@ -57,6 +57,7 @@ Existing entity records remain intact when `describe` runs again. A compatible n
 | `lookup` | Database path and exact original request ID | The result originally committed for that request |
 | `extract` | Database path and original project ID | Complete current project rows, relationships and assets |
 | `form-map` | Complete original DOCX file | Original package, part inventory, controls, tables, fields, relationships and source locations |
+| `form-fill` | Original DOCX and source-bound fill mapping | Complete successor DOCX, original member identities and exact changes |
 
 Without `--output`, stdout contains the complete result as UTF-8 JSON followed by one newline. With `--output PATH`, the receiver writes the complete object atomically to that path and prints a small descriptor containing its absolute path, byte count and SHA-256. The output must be separate from the original input files and database. Treat an existing selected output path as a deliberate replacement.
 
@@ -173,6 +174,89 @@ The source register retains these original IANZ locations. Save and hash each ac
 | Inspection gap analysis | [ianz-gap-analysis-17020-2026.docx](https://www.ianz.govt.nz/media/me1pcvar/ianz-gap-analysis-17020-2026.docx) |
 
 Run `form-map` on each complete retained DOCX. PDF scopes remain original binary assets with their own editions and source/page references; `form-map` handles Word packages. The application retains the public structured transcription separately from each actual original file and its digest.
+
+## Fill an original template and retain its successor
+
+The same receiver creates actual document output from saved selections in the original form map:
+
+```sh
+"$IANZ_PYTHON" "$IANZ_PRODUCT/receiver.py" form-fill \
+  --input "$IANZ_WORKSPACE/originals/application-for-accreditation-lab.docx" \
+  --mapping "$IANZ_WORKSPACE/forms/saved-fill.json" \
+  --output "$IANZ_WORKSPACE/forms/filled-result.json"
+```
+
+The workbench saves the selected original location and either the exact canonical source value chosen by the operator or an explicit replacement. The fill mapping has schema `tjlabs.accreditation-docx-fill.v1`:
+
+```json
+{
+  "schema": "tjlabs.accreditation-docx-fill.v1",
+  "original_sha256": "<exact original.sha256 from the form map>",
+  "changes": [
+    {
+      "part": "word/document.xml",
+      "locator": "<exact original paragraph, run, text, control or field locator>",
+      "text": "<explicit replacement text>",
+      "expected_text": "<original visible text at that location>"
+    },
+    {
+      "part": "word/document.xml",
+      "locator": "<exact original choice control or dropdown field locator>",
+      "choice_value": "<one actual original native choice value>",
+      "expected_text": "<original visible text at that location>"
+    }
+  ]
+}
+```
+
+The angle-bracket values above describe fields to populate from the actual saved source. Every change uses one of `text` or `choice_value`. `expected_text` is optional; when supplied, it must match the selected original text exactly. The original SHA-256 is always required and binds all part/locator selections to the complete original ZIP bytes.
+
+Supported targets are original text nodes, runs, single paragraphs, plain/rich text content controls with one paragraph, original dropdown/combo controls, and complete original legacy `FORMTEXT`/`FORMDROPDOWN` fields. Use the original content control or field location when its content belongs to that native control. This keeps its choice properties and visible result together.
+
+The receiver resolves every selection against the same original document before writing. Overlapping selections fail as a whole. Text replacements preserve original run properties and other content outside the selected location. Explicit LF newlines and tabs become native line-break/tab elements within a selected run, paragraph or text control. Select the enclosing run or paragraph when a replacement needs those characters; an individual original text node accepts ordinary text.
+
+A dropdown must name one actual original `choice_value`. The original display label becomes its visible text. The native content-control last value or legacy dropdown selected index is updated with that result. A combo box also accepts explicitly entered text. Legacy text fields retain their original field code and honor an original maximum length.
+
+Structural edits, repeating groups, nested controls, custom-XML-bound controls, locked content, tracked structural revisions, calculated fields and unsupported typed controls return their concrete original-location error. A signed package requires its unsigned editable original. The extractor retains all of those original structures; filling applies only the selected supported operation.
+
+The returned schema is `tjlabs.accreditation-docx-fill-result.v1`:
+
+| Member | Retained output |
+| --- | --- |
+| `original` | Original filename, byte count, SHA-256 and media type |
+| `output` | Complete successor DOCX filename, byte count, SHA-256, media type and base64 |
+| `mapping`, `mapping_sha256` | Exact saved mapping and digest of its original UTF-8 file bytes |
+| `changes` | Original part/locator, target kind, original text, actual replacement and selected native choice where applicable |
+| `changed_parts` | Each edited XML part's original and successor byte counts/hashes |
+| `preserved_members` | Complete inventory of every other original member, with original bytes/hash |
+| `counts` | Applied changes, edited parts, preserved members and total package members |
+
+The edited XML preserves original namespace prefixes and declarations, comments, processing instructions and unaffected elements. The new ZIP retains member order, original member metadata and archive comment. Every unchanged member retains its exact decoded bytes. The receiver reopens the completed successor and compares all members with the intended complete bytes before returning it.
+
+The application saves `output.base64` as a separate original document edition linked to `original.sha256`, together with the saved fill mapping and changes. It keeps the earlier original unchanged. For direct CLI operation, the complete result file can be decoded to a new local file:
+
+```sh
+"$IANZ_PYTHON" - "$IANZ_WORKSPACE/forms/filled-result.json" \
+  "$IANZ_WORKSPACE/forms/application-for-accreditation-lab.filled.docx" <<'PY'
+import base64
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+output = result["output"]
+data = base64.b64decode(output["base64"], validate=True)
+if len(data) != output["bytes"] or hashlib.sha256(data).hexdigest() != output["sha256"]:
+    raise SystemExit("The complete filled document differs from its native output identity.")
+with Path(sys.argv[2]).open("xb") as stream:
+    stream.write(data)
+PY
+```
+
+Run `form-map` on that completed successor to reopen its actual controls and visible content. Select its new source edition in the workbench, retain the predecessor link and export the complete project. A later recipient can inspect both originals and repeat or amend the same explicit field mapping against the corresponding source SHA.
+
+Native Word choice behavior follows the original XML properties documented for [content-control last values](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.sdtcontentdropdownlist.lastvalue) and [legacy dropdown selection](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.dropdownlistselection).
 
 ## Independent installation and portable continuation
 

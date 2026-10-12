@@ -6,6 +6,7 @@ import argparse
 import base64
 import binascii
 from collections import defaultdict
+import copy
 from datetime import date, datetime, timezone
 import hashlib
 import io
@@ -21,6 +22,8 @@ import tempfile
 from urllib.parse import quote, unquote, urlsplit
 import uuid
 import xml.etree.ElementTree as ET
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 import zipfile
 
 REQUEST_SCHEMA = "tjlabs.accreditation-native-request.v1"
@@ -1129,6 +1132,481 @@ def form_map(input_path, max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=5
     return result
 
 
+
+FILL_SCHEMA = "tjlabs.accreditation-docx-fill.v1"
+FILL_RESULT_SCHEMA = "tjlabs.accreditation-docx-fill-result.v1"
+XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace"
+
+
+def dom_elements(node):
+    if node.nodeType == node.ELEMENT_NODE:
+        yield node
+    for nested in node.childNodes:
+        if nested.nodeType == nested.ELEMENT_NODE:
+            yield from dom_elements(nested)
+
+
+def dom_word(node, name):
+    return node is not None and node.nodeType == node.ELEMENT_NODE and node.namespaceURI in WORD_URIS and node.localName == name
+
+
+def dom_child(node, name):
+    if node is None:
+        return None
+    return next((item for item in node.childNodes if item.nodeType == item.ELEMENT_NODE and item.localName == name), None)
+
+
+def dom_attribute(node, name, default=None):
+    if node is None or node.nodeType != node.ELEMENT_NODE:
+        return default
+    for index in range(node.attributes.length):
+        item = node.attributes.item(index)
+        if item.localName == name:
+            return item.value
+    return default
+
+
+def dom_nearest(node, name):
+    node = node.parentNode
+    while node is not None:
+        if dom_word(node, name):
+            return node
+        node = node.parentNode
+    return None
+
+
+def dom_text_node(node):
+    return "".join(item.data for item in node.childNodes if item.nodeType in (item.TEXT_NODE, item.CDATA_SECTION_NODE))
+
+
+def dom_visible(node):
+    pieces = []
+    def visit(item):
+        if item.nodeType != item.ELEMENT_NODE or dom_word(item, "del") or dom_word(item, "moveFrom"):
+            return
+        if dom_word(item, "t"):
+            pieces.append(dom_text_node(item))
+        elif dom_word(item, "tab"):
+            pieces.append("\t")
+        elif dom_word(item, "br") or dom_word(item, "cr"):
+            pieces.append("\n")
+        elif dom_word(item, "noBreakHyphen"):
+            pieces.append("\u2011")
+        elif dom_word(item, "softHyphen"):
+            pieces.append("\u00ad")
+        else:
+            for nested in item.childNodes:
+                visit(nested)
+    visit(node)
+    return "".join(pieces)
+
+
+def dom_set_text(node, value):
+    for nested in list(node.childNodes):
+        need(nested.nodeType != nested.ELEMENT_NODE, "DOCX_FILL_STRUCTURE",
+             "The original text node contains unsupported nested elements.")
+        node.removeChild(nested)
+    node.appendChild(node.ownerDocument.createTextNode(value))
+    node.setAttributeNS(XML_NAMESPACE, "xml:space", "preserve")
+
+
+def dom_new_word(parent, name, anchor=None):
+    original = anchor if anchor is not None else parent
+    while original is not None and not (original.nodeType == original.ELEMENT_NODE and original.namespaceURI in WORD_URIS):
+        original = original.parentNode
+    need(original is not None, "DOCX_FILL_NAMESPACE", "The selected location has no original Word namespace.")
+    qualified = (original.prefix + ":" if original.prefix else "") + name
+    return parent.ownerDocument.createElementNS(original.namespaceURI, qualified)
+
+
+def dom_set_word_attribute(node, name, value, anchor=None):
+    original = anchor if anchor is not None else node
+    while original is not None and not (original.nodeType == original.ELEMENT_NODE and original.namespaceURI in WORD_URIS):
+        original = original.parentNode
+    need(original is not None, "DOCX_FILL_NAMESPACE", "The selected property has no original Word namespace.")
+    prefix = original.prefix or "w"
+    # A namespaced attribute cannot use the default element namespace.
+    if not original.prefix:
+        node.setAttribute("xmlns:" + prefix, original.namespaceURI)
+    node.setAttributeNS(original.namespaceURI, prefix + ":" + name, value)
+
+
+def dom_index(part, document, declared):
+    namespaces = dict(NAMESPACES)
+    for item in declared:
+        if item["uri"] not in namespaces:
+            namespaces[item["uri"]] = item["prefix"] or "ns" + str(len(namespaces))
+    def qualified(node):
+        namespace, name = node.namespaceURI or "", node.localName or node.tagName
+        return namespaces.get(namespace, "{" + namespace + "}") + ":" + name if namespace else name
+    by_location, by_node, ordered = {}, {}, []
+    def visit(node, location):
+        actual = part + "#" + location
+        need(actual not in by_location, "DOCX_FILL_LOCATION", "The source has an ambiguous form location.", locator=actual)
+        by_location[actual], by_node[id(node)] = node, actual
+        ordered.append(node)
+        counts = defaultdict(int)
+        for nested in node.childNodes:
+            if nested.nodeType != nested.ELEMENT_NODE:
+                continue
+            key = (nested.namespaceURI or "", nested.localName or nested.tagName)
+            counts[key] += 1
+            visit(nested, location + "/" + qualified(nested) + "[" + str(counts[key]) + "]")
+    visit(document.documentElement, "/" + qualified(document.documentElement) + "[1]")
+    return {"document": document, "locations": by_location, "node_locations": by_node,
+            "ordered": ordered, "positions": {id(node): index for index, node in enumerate(ordered)}}
+
+
+def fill_control_guard(node):
+    current = node
+    while current is not None:
+        if dom_word(current, "sdt"):
+            need(current is node, "DOCX_FILL_CONTROL_LOCATION",
+                 "Select the enclosing original content control so its native properties remain bound to its value.")
+            properties = dom_child(current, "sdtPr")
+            need(dom_child(properties, "dataBinding") is None, "DOCX_FILL_DATA_BINDING",
+                 "This original control is bound to custom XML; retain an explicit native data-binding edit.")
+            need(dom_child(properties, "repeatingSection") is None and dom_child(properties, "repeatingSectionItem") is None,
+                 "DOCX_FILL_REPEATING", "Repeating original controls require an explicit structural mapping.")
+            locked = dom_attribute(dom_child(properties, "lock"), "val")
+            need(locked not in ("contentLocked", "sdtContentLocked"), "DOCX_FILL_LOCKED",
+                 "This original control's content is locked.", lock=locked)
+        need(not any(dom_word(current, name) for name in ("del", "moveFrom", "ins", "moveTo")),
+             "DOCX_FILL_REVISION", "Select an original location outside a tracked structural revision.")
+        current = current.parentNode
+
+
+def fill_plain_scope(scope, control=False):
+    nodes = list(dom_elements(scope))
+    denied = {"fldChar", "fldSimple", "instrText", "delInstrText", "del", "moveFrom", "ins", "moveTo",
+              "tbl", "tr", "tc", "sdt", "drawing", "object", "pict", "sym", "altChunk", "subDoc"}
+    for node in nodes:
+        need(not (node.namespaceURI in WORD_URIS and node.localName in denied),
+             "DOCX_FILL_STRUCTURE", "The selected text contains a field, nested control, or structural content.",
+             element=node.tagName)
+    paragraphs = [node for node in nodes if dom_word(node, "p")]
+    need(len(paragraphs) <= 1, "DOCX_FILL_STRUCTURE",
+         "Select one original paragraph or a single-paragraph text control.")
+    if control:
+        need(scope.localName == "sdtContent", "DOCX_FILL_STRUCTURE", "The original control has no retained content container.")
+    return [node for node in nodes if node.namespaceURI in WORD_URIS and node.localName in
+            ("t", "tab", "br", "cr", "noBreakHyphen", "softHyphen")]
+
+
+def fill_replace_text(scope, replacement, tokens=None, anchor=None):
+    """Replace visible text within one selected original inline/paragraph scope."""
+    tokens = fill_plain_scope(scope) if tokens is None else tokens
+    if tokens:
+        first = tokens[0]
+        run = first.parentNode
+        need(dom_word(run, "r"), "DOCX_FILL_STRUCTURE", "Original text token is not in a Word run.")
+        if not dom_word(first, "t"):
+            created = dom_new_word(run, "t", anchor)
+            run.insertBefore(created, first)
+            run.removeChild(first)
+            first = created
+        for token in tokens[1:]:
+            if dom_word(token, "t"):
+                dom_set_text(token, "")
+            elif token.parentNode is not None:
+                token.parentNode.removeChild(token)
+    else:
+        if dom_word(scope, "r"):
+            run = scope
+        else:
+            paragraphs = [node for node in dom_elements(scope) if dom_word(node, "p")]
+            paragraph = paragraphs[0] if paragraphs else scope if dom_word(scope, "p") else None
+            if paragraph is not None:
+                runs = [node for node in dom_elements(paragraph) if dom_word(node, "r")]
+                run = runs[0] if runs else dom_new_word(paragraph, "r", anchor)
+                if not runs:
+                    paragraph.appendChild(run)
+            elif scope.localName == "sdtContent":
+                sdt = scope.parentNode
+                if dom_word(sdt.parentNode, "p"):
+                    run = dom_new_word(scope, "r", sdt)
+                    scope.appendChild(run)
+                else:
+                    need(dom_word(sdt.parentNode, "body") or dom_word(sdt.parentNode, "tc"),
+                         "DOCX_FILL_STRUCTURE", "The empty control needs an explicit original structural mapping.")
+                    paragraph = dom_new_word(scope, "p", sdt)
+                    scope.appendChild(paragraph)
+                    run = dom_new_word(paragraph, "r", sdt)
+                    paragraph.appendChild(run)
+            else:
+                raise ReceiverError("DOCX_FILL_STRUCTURE", "Select an original run, paragraph or text control.")
+        first = dom_new_word(run, "t", anchor)
+        run.appendChild(first)
+    pieces = re.split(r"(\t|\n)", replacement)
+    dom_set_text(first, pieces[0])
+    previous = first
+    inserted = [first]
+    for piece in pieces[1:]:
+        created = dom_new_word(run, "tab" if piece == "\t" else "br" if piece == "\n" else "t", anchor)
+        if piece not in ("\t", "\n"):
+            dom_set_text(created, piece)
+        run.insertBefore(created, previous.nextSibling)
+        previous = created
+        inserted.append(created)
+    return inserted
+
+
+def fill_replacement(value, label):
+    value = text(value, label, nonempty=False)
+    need(not re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ufffe\uffff]", value),
+         "DOCX_FILL_TEXT", "Replacement text contains a character outside XML 1.0.")
+    need("\r" not in value, "DOCX_FILL_TEXT", "Use LF newlines in an explicit form replacement.")
+    return value
+
+
+def form_fill(input_path, mapping_path, max_input_bytes=256 * 1024 * 1024, max_expanded_bytes=512 * 1024 * 1024):
+    mapping_bytes = Path(mapping_path).expanduser().resolve().read_bytes()
+    mapping = parse_json(mapping_bytes, "Original form fill mapping")
+    need(isinstance(mapping, dict) and mapping.get("schema") == FILL_SCHEMA, "DOCX_FILL_MAPPING",
+         "Use a complete saved original form fill mapping.")
+    expected_sha = mapping.get("original_sha256")
+    need(isinstance(expected_sha, str) and re.fullmatch(r"[0-9a-f]{64}", expected_sha),
+         "DOCX_FILL_SOURCE", "The mapping needs the exact original document SHA-256.")
+    changes = mapping.get("changes")
+    need(isinstance(changes, list) and changes, "DOCX_FILL_MAPPING", "Select actual original form locations and values.")
+    mapped = form_map(input_path, max_input_bytes, max_expanded_bytes)
+    need(mapped["original"]["sha256"] == expected_sha, "DOCX_FILL_SOURCE",
+         "The selected original document differs from the saved fill mapping.",
+         expected_sha256=expected_sha, actual_sha256=mapped["original"]["sha256"])
+    raw = base64.b64decode(mapped["original"]["base64"], validate=True)
+    contents = {member["path"]: base64.b64decode(member["base64"], validate=True) for member in mapped["members"]}
+    need(not any(name.startswith("_xmlsignatures/") for name in contents), "DOCX_FILL_SIGNED_PACKAGE",
+         "The original package contains a digital signature; select its unsigned editable source.")
+    parts = {part["path"]: part for part in mapped["parts"]}
+    original_controls = {control["locator"]: control for control in mapped["controls"]}
+    original_fields = {field["locator"]: field for field in mapped["fields"]}
+    contexts, plans, selected = {}, [], []
+    for change in changes:
+        need(isinstance(change, dict), "DOCX_FILL_MAPPING", "Each explicit form change must be an object.")
+        part = relative_path(change.get("part"))
+        location = text(change.get("locator"), "Original form locator")
+        need(location.startswith(part + "#/") and part in parts, "DOCX_FILL_LOCATION",
+             "The location must name an original XML part in this document.", part=part, locator=location)
+        modes = [mode for mode in ("text", "choice_value") if mode in change]
+        need(len(modes) == 1, "DOCX_FILL_VALUE", "Use one explicit replacement text or original choice value.", locator=location)
+        mode = modes[0]
+        replacement = fill_replacement(change[mode], "Original form replacement")
+        if part not in contexts:
+            document = minidom.parseString(contents[part])
+            contexts[part] = dom_index(part, document, parts[part]["namespaces"])
+        context = contexts[part]
+        node = context["locations"].get(location)
+        need(node is not None, "DOCX_FILL_LOCATION", "The exact original location was not found.", part=part, locator=location)
+        need(parts[part]["role"] in ("document", "header", "footer", "footnotes", "endnotes", "comments"),
+             "DOCX_FILL_PART", "Select an original visible Word document part.", part=part)
+        for earlier in selected:
+            need(not (earlier == location or earlier.startswith(location + "/") or location.startswith(earlier + "/")),
+                 "DOCX_FILL_OVERLAP", "Original fill selections overlap; choose one explicit replacement per location.", locator=location)
+        fill_control_guard(node)
+        position = context["positions"][id(node)]
+        for field_location, original_field in original_fields.items():
+            if original_field["part"] != part or field_location == location:
+                continue
+            field_start = context["locations"].get(field_location)
+            field_end = context["locations"].get(original_field.get("end_locator"))
+            inside = location.startswith(field_location + "/")
+            if field_start is not None and field_end is not None:
+                inside = inside or context["positions"][id(field_start)] <= position <= context["positions"][id(field_end)]
+            need(not inside, "DOCX_FILL_FIELD_LOCATION",
+                 "Select the original field location so its native choice and result remain bound.",
+                 locator=location, field_locator=field_location)
+        selected.append(location)
+        plan = {"part": part, "locator": location, "node": node, "mode": mode,
+                "replacement": replacement, "properties": [], "tokens": None}
+        if dom_word(node, "sdt"):
+            original = original_controls.get(location)
+            need(original is not None, "DOCX_FILL_LOCATION", "The selected control is absent from the original form map.")
+            kinds = original["kinds"]
+            need(all(kind in ("text", "richText", "unspecified", "comboBox", "dropDownList") for kind in kinds),
+                 "DOCX_FILL_CONTROL", "This original control needs a supported explicit native control edit.", kinds=kinds)
+            properties, scope = dom_child(node, "sdtPr"), dom_child(node, "sdtContent")
+            need(scope is not None, "DOCX_FILL_CONTROL", "The selected original control has no content.")
+            tokens = fill_plain_scope(scope, control=True)
+            choice = dom_child(properties, "dropDownList")
+            if choice is None:
+                choice = dom_child(properties, "comboBox")
+            if choice is not None:
+                if mode == "choice_value":
+                    matches = [entry for entry in choice.childNodes if entry.nodeType == entry.ELEMENT_NODE and
+                               entry.localName == "listItem" and dom_attribute(entry, "value") == replacement]
+                    need(len(matches) == 1, "DOCX_FILL_CHOICE", "Select one actual original native choice value.",
+                         locator=location, matches=len(matches), choices=original["choices"])
+                    plan["choice_value"] = replacement
+                    replacement = dom_attribute(matches[0], "displayText", replacement)
+                    replacement = fill_replacement(replacement, "Original choice display text")
+                    plan["properties"].append(("last_value", choice, plan["choice_value"]))
+                else:
+                    need(choice.localName == "comboBox", "DOCX_FILL_CHOICE",
+                         "A dropdown requires an original choice_value.", locator=location, choices=original["choices"])
+                    plan["properties"].append(("last_value", choice, replacement))
+            else:
+                need(mode == "text", "DOCX_FILL_CHOICE", "This original control has no choices.", locator=location)
+            plan.update(kind="control_choice" if mode == "choice_value" else "control_text",
+                        scope=scope, tokens=tokens, before=dom_visible(scope), replacement=replacement)
+            placeholder = dom_child(properties, "showingPlcHdr")
+            if placeholder is not None:
+                plan["properties"].append(("remove", placeholder, None))
+        elif dom_word(node, "fldSimple") or dom_word(node, "fldChar"):
+            original = original_fields.get(location)
+            need(original is not None and original["status"] == "complete", "DOCX_FILL_FIELD",
+                 "Select a complete original form field begin location.", locator=location)
+            instruction = original["instruction"].strip().split()
+            field_code = instruction[0].upper() if instruction else ""
+            need(field_code in ("FORMTEXT", "FORMDROPDOWN"), "DOCX_FILL_FIELD",
+                 "Select a text or dropdown form field; calculated field instructions stay original.",
+                 locator=location, instruction=original["instruction"])
+            if dom_word(node, "fldSimple"):
+                scope = node
+                ff_data = dom_child(node, "ffData")
+                result_nodes = [item for item in dom_elements(node) if item is not node and
+                                not dom_nearest(item, "ffData")]
+                need(not any(dom_word(item, "fldChar") or dom_word(item, "fldSimple") for item in result_nodes),
+                     "DOCX_FILL_FIELD", "Nested fields require an explicit native field mapping.")
+            else:
+                separator = context["locations"].get(original.get("separator_locator"))
+                end = context["locations"].get(original.get("end_locator"))
+                need(separator is not None and end is not None and dom_nearest(node, "p") is dom_nearest(end, "p"),
+                     "DOCX_FILL_FIELD", "Select a form field with an original separator and one-paragraph result.")
+                start_at, end_at = context["positions"][id(separator)], context["positions"][id(end)]
+                need(start_at < end_at, "DOCX_FILL_FIELD", "The original field result order is invalid.")
+                result_nodes = context["ordered"][start_at + 1:end_at]
+                need(not any(dom_word(item, "fldChar") or dom_word(item, "fldSimple") or dom_word(item, "instrText") for item in result_nodes),
+                     "DOCX_FILL_FIELD", "Nested field results need their own original native mapping.")
+                scope = dom_nearest(node, "p")
+                ff_data = dom_child(node, "ffData")
+                plan["field_range"] = (context["positions"][id(node)], end_at)
+            tokens = [item for item in result_nodes if item.namespaceURI in WORD_URIS and item.localName in
+                      ("t", "tab", "br", "cr", "noBreakHyphen", "softHyphen")]
+            need(tokens, "DOCX_FILL_FIELD", "The original form field has no retained editable result run.")
+            need(not any(item.namespaceURI in WORD_URIS and item.localName in
+                         ("drawing", "object", "pict", "sdt", "tbl", "del", "moveFrom", "ins", "moveTo") for item in result_nodes),
+                 "DOCX_FILL_FIELD", "The original form field result contains structural content.")
+            if field_code == "FORMDROPDOWN":
+                need(mode == "choice_value", "DOCX_FILL_CHOICE", "An original dropdown field requires its exact choice_value.")
+                choice = dom_child(ff_data, "ddList")
+                need(choice is not None, "DOCX_FILL_CHOICE", "The original dropdown field has no retained choice definition.")
+                entries = [entry for entry in choice.childNodes if entry.nodeType == entry.ELEMENT_NODE and entry.localName == "listEntry"]
+                matches = [(index, entry) for index, entry in enumerate(entries) if dom_attribute(entry, "val") == replacement]
+                need(len(matches) == 1, "DOCX_FILL_CHOICE", "Select one actual original dropdown field value.",
+                     locator=location, choices=[dom_attribute(entry, "val") for entry in entries])
+                plan["choice_value"] = replacement
+                plan["properties"].append(("legacy_selection", choice, str(matches[0][0])))
+            else:
+                need(mode == "text", "DOCX_FILL_VALUE", "An original text form field accepts explicit text.")
+                text_input = dom_child(ff_data, "textInput")
+                text_type = dom_attribute(dom_child(text_input, "type"), "val", "regular")
+                need(text_type == "regular", "DOCX_FILL_FIELD",
+                     "This original typed/calculated text field needs its own native value rule.", field_type=text_type)
+                limit = dom_attribute(dom_child(text_input, "maxLength"), "val")
+                if limit is not None:
+                    need(limit.isdigit() and (int(limit) == 0 or len(replacement) <= int(limit)),
+                         "DOCX_FILL_VALUE", "Replacement exceeds the original text field maximum length.", maximum=limit)
+            before = "".join(dom_visible(item) for item in tokens)
+            plan.update(kind="field_choice" if mode == "choice_value" else "field_text",
+                        scope=scope, tokens=tokens, before=before)
+        elif dom_word(node, "p") or dom_word(node, "r") or dom_word(node, "t"):
+            need(mode == "text", "DOCX_FILL_CHOICE", "An original text location accepts explicit text.")
+            scope = node
+            if dom_word(node, "t"):
+                need("\n" not in replacement and "\t" not in replacement, "DOCX_FILL_TEXT",
+                     "Select the original run or paragraph for multiline or tabbed text.")
+                tokens = [node]
+            else:
+                tokens = fill_plain_scope(scope)
+            plan.update(kind="text", scope=scope, tokens=tokens, before=dom_visible(scope))
+        else:
+            raise ReceiverError("DOCX_FILL_STRUCTURE", "Select an original text, run, paragraph or supported form control.",
+                                locator=location, element=node.tagName)
+        if "expected_text" in change:
+            expected_text = text(change["expected_text"], "Original expected text", nonempty=False)
+            need(plan["before"] == expected_text, "DOCX_FILL_ORIGINAL_TEXT",
+                 "The original selected text differs from the saved mapping.",
+                 locator=location, expected_text=expected_text, actual_text=plan["before"])
+        plan["footprint"] = {id(item) for item in dom_elements(node)} | {id(item) for item in plan["tokens"]}
+        for earlier in plans:
+            if earlier["part"] != part:
+                continue
+            overlap = bool(earlier["footprint"] & plan["footprint"])
+            for left, right in ((earlier, plan), (plan, earlier)):
+                if "field_range" in left:
+                    start_at, end_at = left["field_range"]
+                    overlap = overlap or any(start_at <= context["positions"].get(identity, -1) <= end_at for identity in right["footprint"])
+            need(not overlap, "DOCX_FILL_OVERLAP", "The original form selections modify the same field content.", locator=location)
+        plans.append(plan)
+    observed_changes = []
+    for plan in plans:
+        if dom_word(plan["node"], "t"):
+            dom_set_text(plan["node"], plan["replacement"])
+            result_nodes = [plan["node"]]
+        else:
+            result_nodes = fill_replace_text(plan["scope"], plan["replacement"], plan["tokens"], plan["node"])
+        actual_after = "".join(dom_visible(item) for item in result_nodes)
+        need(actual_after == plan["replacement"], "DOCX_FILL_RESULT",
+             "The native document text differs from the selected replacement.", locator=plan["locator"])
+        for kind, node, value in plan["properties"]:
+            if kind == "remove":
+                node.parentNode.removeChild(node)
+            elif kind == "last_value":
+                dom_set_word_attribute(node, "lastValue", value, plan["node"])
+            elif kind == "legacy_selection":
+                selection = dom_child(node, "result")
+                if selection is None:
+                    selection = dom_new_word(node, "result", plan["node"])
+                    node.insertBefore(selection, node.firstChild)
+                dom_set_word_attribute(selection, "val", value, plan["node"])
+        observed = {"part": plan["part"], "locator": plan["locator"], "kind": plan["kind"],
+                    "before": plan["before"], "after": actual_after}
+        if "choice_value" in plan:
+            observed["choice_value"] = plan["choice_value"]
+        observed_changes.append(observed)
+    replacements, changed_parts = {}, []
+    for part, context in contexts.items():
+        original_declaration = re.match(br"\s*<\?xml\b[^?]*\?>", contents[part])
+        standalone = None
+        if original_declaration:
+            value = re.search(br"\bstandalone\s*=\s*['\"](yes|no)['\"]", original_declaration.group(0))
+            if value:
+                standalone = value.group(1) == b"yes"
+        updated = context["document"].toxml(encoding="utf-8", standalone=standalone)
+        parse_xml(updated, part)
+        replacements[part] = updated
+        changed_parts.append({"path": part, "original_bytes": len(contents[part]), "original_sha256": digest(contents[part]),
+                              "bytes": len(updated), "sha256": digest(updated)})
+    target = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(raw)) as source, zipfile.ZipFile(target, "w") as destination:
+        destination.comment = source.comment
+        for entry in source.infolist():
+            destination.writestr(copy.copy(entry), replacements.get(entry.filename, contents[entry.filename]))
+    output = target.getvalue()
+    preserved_members = []
+    with zipfile.ZipFile(io.BytesIO(output)) as reopened:
+        need(reopened.namelist() == [member["path"] for member in mapped["members"]],
+             "DOCX_FILL_PACKAGE", "The successor package changed its original member order.")
+        for member in mapped["members"]:
+            name = member["path"]
+            received = reopened.read(name)
+            expected = replacements.get(name, contents[name])
+            need(received == expected, "DOCX_FILL_PACKAGE", "The successor package changed retained member bytes.", member=name)
+            if name not in replacements:
+                preserved_members.append({"path": name, "bytes": len(received), "sha256": digest(received)})
+    original = {key: mapped["original"][key] for key in ("filename", "bytes", "sha256", "media_type")}
+    source_path = Path(input_path)
+    output_filename = source_path.stem + ".filled" + source_path.suffix
+    return {"schema": FILL_RESULT_SCHEMA, "status": "FILLED", "original": original,
+            "output": {"filename": output_filename, "bytes": len(output), "sha256": digest(output),
+                       "media_type": mapped["original"]["media_type"], "base64": base64.b64encode(output).decode("ascii")},
+            "mapping_sha256": digest(mapping_bytes), "mapping": mapping, "changes": observed_changes,
+            "preserved_members": preserved_members, "changed_parts": changed_parts,
+            "counts": {"changes": len(observed_changes), "changed_parts": len(changed_parts),
+                       "preserved_members": len(preserved_members), "members": len(mapped["members"])}}
+
+
+
 def write_result(result, output=None, protected_paths=()):
     data = json_bytes(result)
     if output is None:
@@ -1168,18 +1646,21 @@ def main(argv=None):
             item.add_argument("--request-id", required=True)
         else:
             item.add_argument("--project-id", required=True)
-    item = subcommands.add_parser("form-map")
-    item.add_argument("--input", required=True)
-    item.add_argument("--output")
-    item.add_argument("--max-input-bytes", type=int, default=256 * 1024 * 1024)
-    item.add_argument("--max-expanded-bytes", type=int, default=512 * 1024 * 1024)
+    for command in ("form-map", "form-fill"):
+        item = subcommands.add_parser(command)
+        item.add_argument("--input", required=True)
+        item.add_argument("--output")
+        item.add_argument("--max-input-bytes", type=int, default=256 * 1024 * 1024)
+        item.add_argument("--max-expanded-bytes", type=int, default=512 * 1024 * 1024)
+        if command == "form-fill":
+            item.add_argument("--mapping", required=True)
     args = parser.parse_args(argv)
     connection = None
     try:
-        protected = [getattr(args, name, None) for name in ("database", "contract", "request", "input")]
-        if args.command == "form-map":
+        protected = [getattr(args, name, None) for name in ("database", "contract", "request", "input", "mapping")]
+        if args.command in ("form-map", "form-fill"):
             need(args.max_input_bytes > 0 and args.max_expanded_bytes > 0, "DOCX_CAPACITY", "Use positive original document capacities.")
-            result = form_map(args.input, args.max_input_bytes, args.max_expanded_bytes)
+            result = form_fill(args.input, args.mapping, args.max_input_bytes, args.max_expanded_bytes) if args.command == "form-fill" else form_map(args.input, args.max_input_bytes, args.max_expanded_bytes)
         else:
             connection = connect(args.database, create=args.command == "describe")
             if args.command == "describe":
@@ -1204,7 +1685,7 @@ def main(argv=None):
         sys.stdout.buffer.write(json_bytes({"schema": ERROR_SCHEMA, "status": "ERROR", "code": error.code,
                                            "message": str(error), "details": error.details}))
         return 2
-    except (OSError, sqlite3.Error, zipfile.BadZipFile, RuntimeError, ValueError, TypeError, RecursionError) as error:
+    except (OSError, sqlite3.Error, zipfile.BadZipFile, ExpatError, RuntimeError, ValueError, TypeError, RecursionError) as error:
         sys.stdout.buffer.write(json_bytes({"schema": ERROR_SCHEMA, "status": "ERROR",
                                            "code": "NATIVE_" + type(error).__name__.upper(),
                                            "message": str(error), "details": {}}))
