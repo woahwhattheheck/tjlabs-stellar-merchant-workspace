@@ -329,14 +329,7 @@ Use `starforge-merchant erddap provider-handoff --help` or the installed `erddap
 
 The complete source includes reusable native dataset, provider handoff and browser receiving entrypoints. They consume actual captured source ZIPs and keep their original workspaces and checkpoints through failure.
 
-First, the original native source-to-customer operation:
-
-~~~sh
-python3 -B "$ERDDAP/delivery/native-receive.py" \
-  --source-root "$ERDDAP" --operation-root /private/erddap-operation \
-  --source-packet /private/noaa-capture/mur-sst-june-2025.erddap.zip \
-  --source-packet /private/noaa-capture/ndbc-46042-june-2025.erddap.zip
-~~~
+First, run the complete five-source command in **Complete fixed historical source set** above. Retain its original `NOAA_OPERATION` directory and packet order.
 
 It imports complete originals, proposes the explicit lexical mapping, builds through the original engine, reads every native cursor page, exports seller datasets and complete customer packets, then independently reconstructs and closes/reopens each received edition. Actual same-mapping source pairs also produce the full original comparison. native/native-result.json records the actual results and source/engine identities.
 
@@ -344,8 +337,8 @@ Then run the existing browser owner on that same now-closed workspace:
 
 ~~~sh
 python3 -B "$ERDDAP/delivery/browser-owner.py" \
-  --source-root "$ERDDAP" --operation-root /private/erddap-operation \
-  --workspace /private/erddap-operation/workspace
+  --source-root "$ERDDAP" --operation-root "$NOAA_OPERATION" \
+  --workspace "$NOAA_OPERATION/workspace"
 ~~~
 
 The browser owner uses the selected Node/Playwright/Chromium environment. It owns one page/context, the original operator and one independent customer receiver. It operates real source upload, reviewed mapping, build/native cursor query, preserved drafts, edition comparison, source/native/project downloads and customer receiving, then reopens the closed receiving workspace.
