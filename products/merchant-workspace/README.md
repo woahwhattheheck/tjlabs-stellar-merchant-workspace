@@ -4,9 +4,10 @@ Build and operate a data service with Stellar payment access, native customer
 clients, retained source results, deployment releases, and an operator workspace.
 
 The product brings together captured HTTP API and GraphQL service authoring,
-satellite imagery and processing history, searchable material catalogs, merchant
-incident work, supplier costs and pricing, and QuickBooks or Xero accounting operations. Each workflow keeps
-its original saved records from source selection through delivery and reopening.
+Kafka event datasets, satellite imagery and processing history, searchable
+material catalogs, merchant incident work, supplier costs and pricing, and
+QuickBooks or Xero accounting operations. Each workflow keeps its original
+saved records from source selection through delivery and reopening.
 
 ## Choose a workflow
 
@@ -15,6 +16,7 @@ its original saved records from source selection through delivery and reopening.
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Turn an existing GraphQL query service into a merchant | `starforge graphql-workspace` or the merchant MCP tools | Reviewed operations, actual source previews, buyer clients, versioned merchant packages and deployment releases |
+| Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
@@ -32,6 +34,13 @@ compilation, agent operation and receiving in one retained product. The
 [purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 opens existing access or a saved purchase through the browser, generated agent
 settings and exact request client.
+
+The [Kafka workspace guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/README.md)
+connects original broker capture, exact event history, field mapping and merchant
+delivery. Its [complete client](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/CLIENT.md)
+and [customer download](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MERCHANT-DOWNLOAD.md)
+guides cover the same saved workspace and receiving an original export across
+an interrupted transfer.
 
 ## Open the source product
 
