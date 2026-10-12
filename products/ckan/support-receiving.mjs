@@ -170,8 +170,9 @@ export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
     assert(independent.supportText===reopened.supportText&&independent.workspaceText===reopened.workspaceText,
       'Independent case receiving changed the original workspace or Support bytes.');
     const runtime=reviewRuntime(independent.supportText,q.inputs),browser=JSON.parse(JSON.stringify(runtime));
+    await json(join(root,'runtime-review.json'),runtime);
     if(q.exerciseAvailability)assert(runtime.comparison.state==='CKAN_COVERAGE_INCOMPLETE',
-      'A source-unavailable observation was misdiagnosed as a changed project identity.');
+      'Unexpected comparison for an observed source outage and recovery: '+runtime.comparison.state);
     for(const side of ['before','after']){
       const capture=runtime[side];
       if(!capture)continue;
@@ -189,7 +190,6 @@ export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
     await save(join(root,'CKAN_Support_Handoff.html'),exported.html);
     await save(join(root,'Merchant_Workspace.json'),independent.workspaceText);
     await save(join(root,'Runtime_Support.json'),independent.supportText);
-    await json(join(root,'runtime-review.json'),runtime);
     await phase('original-case-saved-exported-and-received',{sourceCase:saved.case,receivedCase:receivedCase.case,
       workspaceSha256:digest(reopened.workspaceText),supportSha256:digest(reopened.supportText),
       handoffSha256:digest(exported.handoff),comparison:runtime.comparison,
