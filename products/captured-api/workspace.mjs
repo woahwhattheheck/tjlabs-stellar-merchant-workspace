@@ -253,22 +253,40 @@ export async function adoptCapturedApi({ directory, kind, sourceDirectory, label
 }
 /** Opens the original browser and MCP together; externally managed consoles keep their own lifetime. */
 export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browserOnly = false,
-  tokenEnv = 'MCP_ACCESS_TOKEN', environment = process.env } = {}) {
-  const profile = await readCapturedApi(directory), ownership = await lease(profile.directory);
-  let consoleSession, mcp, started, closing;
-  const initial = { schema: 'stellar-forge.captured-api-session.v1', startedAt: new Date().toISOString(),
-    consoleOwnership: profile.console.ownership, configuration: profile.configuration, pid: process.pid };
+  tokenEnv = 'MCP_ACCESS_TOKEN', environment = process.env, managedBindingSha256 } = {}) {
+  let profile = await readCapturedApi(directory);
+  const ownership = await lease(profile.directory);
+  let consoleSession, mcp, started, closing, initial, launchBinding;
+  const inspectBinding = async () => {
+    const { inspectCapturedApiLaunch } = await import('./managed.mjs');
+    const inspected = await inspectCapturedApiLaunch({ directory: profile.directory, port, mcpPort, browserOnly, tokenEnv },
+      { environment });
+    if (inspected.bindingSha256 !== managedBindingSha256)
+      throw fail('CAPTURED_API_CONFIGURATION_CHANGED',
+        'The retained captured API configuration changed. Review this original product again before starting it.');
+    return inspected;
+  };
   const finish = async (state, cause) => {
     const errors = [];
     const attempt = async action => { try { await action(); } catch (error) { errors.push(error); } };
     await attempt(async () => { if (mcp) await mcp.close(); });
     await attempt(async () => { if (consoleSession) await consoleSession.close(); });
-    await attempt(() => write(join(profile.directory, SESSION), { ...initial, ...started, state,
+    // A rejected managed binding has not opened a session; preserve the previous session record.
+    if (initial) await attempt(() => write(join(profile.directory, SESSION), { ...initial, ...started, state,
       stoppedAt: new Date().toISOString(), ...(cause ? { error: { code: cause.code ?? 'OPEN_FAILED', message: cause.message } } : {}) }, true));
     await attempt(() => ownership.close());
     if (errors.length) throw new AggregateError(errors, 'Captured API sessions did not finish closing.');
   };
   try {
+    if (managedBindingSha256 !== undefined) {
+      if (typeof managedBindingSha256 !== 'string' || !hash.test(managedBindingSha256))
+        throw fail('CAPTURED_API_BINDING_REQUIRED', 'Use the exact inspected captured API launch SHA-256.');
+      launchBinding = await inspectBinding();
+      profile = launchBinding.profile;
+    }
+    initial = { schema: 'stellar-forge.captured-api-session.v1', startedAt: new Date().toISOString(),
+      consoleOwnership: profile.console.ownership, configuration: profile.configuration, pid: process.pid,
+      ...(launchBinding ? { bindingSha256: launchBinding.bindingSha256, resourceId: launchBinding.resourceId } : {}) };
     await write(join(profile.directory, SESSION), { ...initial, state: 'STARTING' }, true);
     if (profile.console.ownership === 'PRODUCT') {
       const { startWorkspace } = await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs');
@@ -285,11 +303,13 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
       const { startMerchantMcp } = await import('../../stellar-forge/mcp-merchant-operator/serve.mjs');
       mcp = await startMerchantMcp({ configPath: profile.configuration, port: mcpPort, tokenEnv, environment });
     }
+    if (launchBinding) await inspectBinding();
     started = { browserUrl: selected.url, mcpUrl: mcp?.url ?? null, workspace: 'merchant',
       sourceCount: selected.library.total, state: 'OPEN' };
     ownership.assertHeld();
     await write(join(profile.directory, SESSION), { ...initial, ...started }, true);
-    return { ...profile, ...started, close: () => closing ??= finish('CLOSED') };
+    return { ...profile, ...started, ...(launchBinding ? { launchBinding } : {}),
+      close: () => closing ??= finish('CLOSED') };
   } catch (error) {
     try { await finish('FAILED', error); } catch (cleanup) { throw new AggregateError([error, cleanup], error.message); }
     throw error;

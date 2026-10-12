@@ -116,6 +116,131 @@ The selected projects directory must already be canonical and private. The
 product opens the original console against it and keeps its existing merchant
 packages and captured-source library.
 
+### Run the retained product from Applications
+
+Applications can own this product's browser and merchant agent as one original
+managed process. Start with the complete installed runtime selected in section 1
+and initialize the private product once:
+
+~~~sh
+starforge runtime-install run --dir /private/runtimes/captured-api -- \
+  captured-api init --dir /private/state/captured-api --name 'Supplier API'
+~~~
+
+An existing project library can be selected with the same original `--projects`
+option. Finish initialization before selecting the application. Review reads the
+retained product; setup and source intake remain the original product operations.
+
+In the runtime workspace, select the actual READY installation and choose
+**Applications → New application → Captured API merchant**.
+
+| Application setting | Select |
+| --- | --- |
+| Product directory | The existing private directory containing `product.json`, such as `/private/state/captured-api` |
+| Browser only | Enable for the original source/merchant browser alone; disable to add its original merchant agent |
+| Browser port | `0` for an available loopback port, or the actual fixed callback port required by the selected browser OAuth configuration |
+| MCP port | `0` for an available port, or the intended original agent port; it must differ from a fixed owned browser port |
+| Token environment name | The host's original incoming MCP token reference, normally `MCP_ACCESS_TOKEN` |
+| Environment file | The existing private environment selected for the original process, where required by the merchant and its providers |
+
+For the full agent, supply its existing fixed bearer token or the original
+`MCP_OAUTH_CONFIG` configuration according to the native merchant MCP
+authorization contract. Applications retains environment reference names and
+the selected file path; token values belong to the original private host
+environment.
+
+Use the original application lifecycle:
+
+1. **Review application** to inspect the retained product name, exact project and
+   configuration paths, browser ownership, both source providers, listener choices
+   and selected runtime/source.
+2. **Save application** to retain that selection through the existing managed
+   release. Keep its saved application and operation identity if the reply is lost.
+3. **Review start** to bind the current product profile, original operator and
+   connection files, optional OAuth configuration and directory identities.
+4. **Start reviewed application** to open the original product through its existing
+   lease. Applications receives one source-bound startup record after the original
+   listeners are open and the selected files have been checked again.
+5. **Open application** to enter the original captured-source library and merchant
+   form. With the agent enabled, use the actual returned MCP listener and native
+   workspace alias `merchant`. The HAR and OpenAPI providers share the same product.
+6. Complete capture, operation review, merchant terms, route pricing, package save,
+   release and receiving using sections 3–8.
+7. **Stop application** to drain the original agent, then the owned browser and its
+   merchant. Review the same saved application again and start it to reopen its
+   retained sources, review revisions, plans, packages and releases.
+
+Close an existing manually started product before starting its managed application.
+Both use the same original product lease. Closing the Applications browser window
+leaves its managed process available through the existing runtime operation;
+use **Stop application** when that process should close.
+
+The launch binding changes when a retained product/configuration file, selected
+directory identity, listener choice or authorization configuration changes.
+Review the actual current selection again after such an edit. Normal capture,
+review, pricing, package and release work leaves that launch configuration intact.
+Session records and changing private listener tokens are deliberately outside it.
+
+An externally attached original console retains its own lifetime. For such a
+product, choose browser port `0`: its existing console already owns the browser
+port and provider registry. Stopping this managed product drains its owned agent;
+the selected external console remains under its original owner.
+
+The [Applications guide](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md)
+covers the existing READY runtime, save/start review, original process recovery
+and reopening controls.
+
+### Embed the same managed launcher
+
+The product also exports its inspected launch for an existing host integration:
+
+~~~js
+import {
+  inspectCapturedApiLaunch,
+  openCapturedApiManaged,
+} from './products/captured-api/managed.mjs';
+
+const options = {
+  directory: '/private/state/captured-api',
+  port: 0,
+  mcpPort: 0,
+  browserOnly: true,
+  tokenEnv: 'MCP_ACCESS_TOKEN',
+};
+const reviewed = await inspectCapturedApiLaunch(options, { environment: process.env });
+const session = await openCapturedApiManaged({
+  ...options,
+  expectedBindingSha256: reviewed.bindingSha256,
+}, { environment: process.env });
+
+// The existing host owns session.close() and calls it when its operation stops.
+// session.startup contains the original listeners and the reviewed binding.
+~~~
+
+Inspection returns the complete source binding, nonsecret review fields, stable
+product resource identity, static file paths/byte counts/SHA-256 values and
+directory identities. It opens no listener. Managed open rechecks that binding
+under the original product lease before starting and before announcing success.
+
+The command-line inspection returns that same binding without starting a process:
+
+~~~sh
+starforge captured-api inspect-launch --dir /private/state/captured-api --browser-only
+
+starforge captured-api open --dir /private/state/captured-api --browser-only \
+  --managed-binding-sha256 ACTUAL_INSPECTED_BINDING_SHA256
+~~~
+
+Copy the actual `bindingSha256` from inspection and retain the same selected
+options and original environment for opening.
+
+The corresponding original CLI accepts `--managed-binding-sha256` on `open`.
+That mode prints exactly one JSON startup line with schema
+`stellar-forge.captured-api-managed-session.v1`; it includes the inspected
+binding, product identity and actual original browser/MCP URLs. These capability
+URLs belong to the host's private operation record. Ordinary `open` retains its
+readable JSON output and the same signal handling.
+
 ### Attach an Applications-managed console
 
 ~~~sh
@@ -463,6 +588,8 @@ alongside the saved process session.
 | Decision save reply is lost | The original source's immutable review list |
 | Merchant save reply is lost | Intended package name, original source and complete plan |
 | Managed browser restarts | Its original private URL record on the next operation |
+| Applications launch configuration changes | Fresh review of the same saved product before its next start |
+| Applications start reply is lost | The saved original application and managed operation, including its retained private startup record |
 | Worksheet transfer stops | Same source/plan, worksheet identity and native downloader |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |

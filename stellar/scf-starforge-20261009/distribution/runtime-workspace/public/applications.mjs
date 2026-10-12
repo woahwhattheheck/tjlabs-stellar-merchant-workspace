@@ -1,5 +1,6 @@
 // MIT. Applications presentation over the original runtime and managed-command APIs.
 import { renderOpenApiApplicationReview } from './openapi-application.mjs';
+import { renderApplicationReview } from './application-review.mjs';
 import { createOpenApiConnectionSetupView } from './openapi-connection-setup.mjs';
 const element = (tag, text, className) => {
   const node = document.createElement(tag);
@@ -311,7 +312,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
         await refresh(); await refreshWorkspace(); message(result.connectionError?.message ?? 'Application saved with its original runtime and data locations.');
       }));
       reviewResult.replaceChildren(element('h3', 'Reviewed application'), rows,
-        renderOpenApiApplicationReview(reviewed.command), save);
+        renderOpenApiApplicationReview(reviewed.command), renderApplicationReview(reviewed.command), save);
       if (reviewed.command.createDirectories.length) reviewResult.append(element('p', 'Creates private folder: ' + reviewed.command.createDirectories.join(', '), 'note'));
       reviewResult.hidden = false;
     });
@@ -339,7 +340,7 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
       ['Inputs', reviewed.command.inputs.map(item => item.path).join('\n')],
       ['Terminal', reviewed.command.terminal ? 'Explicit operator input through the original controlling terminal' : 'Retained original output'],
       ...mppReviewRows(reviewed.command),
-    ]), renderOpenApiApplicationReview(reviewed.command), start); operationReview.hidden = false;
+    ]), renderOpenApiApplicationReview(reviewed.command), renderApplicationReview(reviewed.command), start); operationReview.hidden = false;
   }
   function renderSelected() {
     const app = selected(); selectedPanel.hidden = !app; history.hidden = !app;

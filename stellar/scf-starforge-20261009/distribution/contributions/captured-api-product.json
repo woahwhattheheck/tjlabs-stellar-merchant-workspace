@@ -12,6 +12,10 @@
     "captured-api": "Initialize and operate the captured API merchant with its original browser, agent, route worksheet and receiving."
   },
   "exports": {
-    "./products/captured-api": "./source/products/captured-api/workspace.mjs"
+    "./products/captured-api": "./source/products/captured-api/workspace.mjs",
+    "./products/captured-api/managed": "./source/products/captured-api/managed.mjs"
+  },
+  "applicationProviders": {
+    "captured-api": "products/captured-api/application-provider.mjs"
   }
 }
