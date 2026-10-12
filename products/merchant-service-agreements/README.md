@@ -34,6 +34,18 @@ Only one writer owns an accounting directory at a time. Close that directory in 
 6. **Maintain the relationship.** Add a newly accepted quotation edition, extend the agreement by whole months, or cancel future periods at an original monthly boundary.
 7. **Deliver the account record.** Export the agreement's reports and complete retained quotation files. Follow the invoice references into customer statements and the existing receivables history.
 
+### Accepted service renewals
+
+When an original service case has an accepted operational renewal, export its complete renewal handover from Service Renewals. Choose that one JSON file in the agreement creation or amendment form. The browser retains the handover and extracts the exact original quotation and acceptance bytes. Review the selected accounting customer, monthly calendar, accepted head and distinct original, proposed and active terms before saving.
+
+The original Service Renewals validator checks the full retained histories, acceptance and document materials. The financial edition stores its sealed handover identity, original case and service agreement references, accepted renewal reference and exact UTC service interval. The financial agreement keeps its own UUID. You can download the complete `renewal.json` from the source review or the agreement export.
+
+Every billed monthly period must fit inside the accepted service interval. Original times and an open-ended interval are retained exactly. To continue a calendar past a finite accepted interval, first amend at the current original end boundary using the next accepted renewal, then extend the calendar. The accepted continuation supplies the new price edition for the added months. Existing billed periods remain attached to their original editions.
+
+The same accepted renewal cannot create another financial calendar through a new request or a differently sealed later export. A duplicate identifies its existing agreement so the operator can reopen it. Later amendments on that joined calendar require the complete accepted handover and retain the same original service case and agreement lineage. Reusing the same accepted handover on its original calendar remains available for a payment-term change.
+
+CLI, typed HTTP and merchant-tool creation/amendment inputs accept optional `renewalJson` alongside the exact `quoteContent` and `responseContent` extracted from that handover. Keep all three original strings in the same retained request. Their combined source bytes and the complete transport request retain the existing two-megabyte limit.
+
 ### Calendar and pricing rules
 
 | Setting | Behavior |
@@ -123,7 +135,7 @@ The HTTP API accepts at most 2,000,000 UTF-8 bytes per complete request, includi
 
 ## Native merchant tools
 
-The product selects the original `accounting` provider and its dependent `service-agreements` provider. Use the existing merchant configuration's `accounting.workspaces` aliases and original accounting source paths. The service-agreement provider borrows the already owned accounting session; it does not define a second accounting directory or source configuration.
+The product selects the original accounting, service-agreement and support providers with their declared dependencies. Use the existing merchant configuration's `accounting.workspaces` aliases and original accounting source paths. The service-agreement provider borrows the already owned accounting session. Configure the existing `supportConnection` for the same original case directory used by the support console; the operational renewal tools appear when that support connection is configured.
 
 Start the existing merchant MCP transport through the packaged `merchant-mcp` or `merchant-mcp-stdio` command. The `merchant-mcp-client-config` command remains the client configuration entry point. Agreement tools all use the `merchant_service_agreements_` prefix:
 
@@ -149,10 +161,20 @@ For an export, retain the returned `asOf`, selected file name and SHA256. Pass t
 
 For an original source, begin with `source_file` and its edition's `sourceId`. Subsequent chunks retain the returned read identity and exact file hash. Close or release an interrupted read when it is no longer needed.
 
+### Operational renewals in the same merchant session
+
+The `merchant_service_renewals_` tools operate the original saved service case before the financial calendar receives its accepted continuation. Use `queue` with an explicit UTC `asOf` and page through `nextOffset`, then `read` the selected case. Keep its case revision SHA distinct from the renewal and service-terms edition numbers. The `preview`, `propose` and `decide` operations retain the original case writer, reviewed continuation, matching quotation and actual customer response.
+
+Receive the accepted handover with `handover` or the complete `handover_file` reader. Pin its original case revision and renewal UUID. When downloading chunks, keep the file digest, read identity and returned byte offset; verify the completed byte count and SHA256. `file_reads` inspects unfinished reads, and `file_release` releases one original read.
+
+Decode the complete handover JSON as UTF-8 and retain that exact string as `renewalJson`. Decode `materials.quote.data` and `materials.acceptance.data` from base64 to the exact `quoteContent` and `responseContent` strings. Send all three with the financial `create` or `amend` request, the reviewed accounting customer and original monthly calendar. The accepted service interval and same-calendar lineage remain enforced by that financial controller.
+
+The complete operational proposal, customer decision and recovery examples are in the installed `source/stellar-forge/mcp-merchant-operator/SERVICE_RENEWALS.md`. Keep each original operational request body for replay. Its case request UUID and revision guards belong to that case operation; each intended financial change has its own retained financial request and workspace guards.
+
 ## Product contents and integration
 
 The source-owned selection is `stellar/scf-starforge-20261009/distribution/selections/merchant-service-agreements.json`. Its contribution declares the command, controller/core/server exports, typed client, Applications provider, browser asset manifest and merchant provider.
 
-The selection retains the original receivables product's accounting, connection, support, commercial, implementation and service-operation contributions. It adds the original merchant MCP transport and accounting provider together with service agreements. The existing distribution builder resolves these selected sources and their imports.
+The selection retains the original receivables product's accounting, connection, support, commercial, implementation and service-operation contributions. Its merchant MCP registration includes service agreements and the original support provider's accounting and buyer-expense dependencies. The existing distribution builder resolves these selected sources and their imports.
 
 Persistent agreement state lives in the original accounting workspace. Accepted quotation sources and billing operations retain their original identities. Exports contain the agreement's complete file set; the native transport adds a complete TAR archive through the existing retained-file reader.

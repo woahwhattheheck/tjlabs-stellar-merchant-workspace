@@ -8,6 +8,7 @@ import {AGREEMENTS_SCHEMA, AGREEMENT_EXPORT_SCHEMA, clone, integer, normalizeTer
   monthDate, monthIndex, shiftDays, effectiveEnd, schedule, linkedInvoice, billingOccupied,
   assertUnbilledFrom, agreementStatus, periodLabel, previewIdentity, scheduleCsv, agreementHtml} from './core.mjs';
 import {validateSourceBodies, retainSource, readSourceFile, sourceBodies, SOURCE_NAMES} from './files.mjs';
+import {acceptedServiceRenewal, assertRenewalAssignment} from './renewal.mjs';
 const at = () => new Date().toISOString();
 function requestIdentifier(value) {
   const id = field(value, 'request ID', 160);
@@ -102,6 +103,8 @@ export class ServiceAgreementWorkspace {
   }
   async _edition(agreement, value, fromMonth, fallback, actor, reason) {
     validateSourceBodies(value);
+    const renewal = await acceptedServiceRenewal(value);
+    assertRenewalAssignment(this.data().agreements, agreement, renewal);
     const terms = normalizeTerms(value, fallback), issueDate = monthDate(agreement.startDate, fromMonth);
     const selection = {quoteContent: value.quoteContent, responseContent: value.responseContent,
       customerId: agreement.customerId, currencyScale: agreement.currency.scale,
@@ -113,10 +116,14 @@ export class ServiceAgreementWorkspace {
     const amountsByPeriods = {'1': compiled.draft.totals.total};
     for (let count = 2; count <= 12; count++) amountsByPeriods[String(count)] =
       compileQuoteInvoice({...selection, periodCount: count, periodLabel: 'Original whole-month agreement rate'}).draft.totals.total;
-    const source = await retainSource(this.workspace, value, compiled); agreement.sources.push(source);
-    return {id: randomUUID(), fromMonth, effectiveDate: issueDate, ...terms, sourceId: source.id,
-      quote: clone(source.quote), response: clone(source.response), currency: clone(compiled.draft.currency),
+    const edition = {id: randomUUID(), fromMonth, effectiveDate: issueDate, ...terms, sourceId: null,
+      quote: clone(compiled.source.quote), response: clone(compiled.source.response),
+      currency: clone(compiled.draft.currency), ...(renewal ? {renewal} : {}),
       amountsByPeriods, createdAt: at(), actor, reason};
+    // Reject an invalid complete calendar before creating retained source files.
+    schedule({...agreement, editions: [...agreement.editions, edition]}, this.receivables.data(), today());
+    const source = await retainSource(this.workspace, value, compiled); agreement.sources.push(source);
+    return {...edition, sourceId: source.id};
   }
   async state({asOf = today()} = {}) {
     return this.workspace.serial(async () => ({schema: AGREEMENTS_SCHEMA, workspaceId: this._workspaceId(),
@@ -274,6 +281,7 @@ export class ServiceAgreementWorkspace {
         {name: 'schedule.csv', type: 'text/csv; charset=utf-8', bytes: Buffer.from(scheduleCsv(agreement, agreement.periods))},
         {name: 'agreement.html', type: 'text/html; charset=utf-8', bytes: Buffer.from(agreementHtml(agreement, agreement.periods, asOf))}];
       for (const source of original.sources) for (const name of SOURCE_NAMES) {
+        if (!source.files[name]) continue;
         const file = await readSourceFile(this.workspace, source, name); files.push({...file, name: 'source-' + source.id + '-' + name});
       }
       for (const invoice of invoiceRows) {

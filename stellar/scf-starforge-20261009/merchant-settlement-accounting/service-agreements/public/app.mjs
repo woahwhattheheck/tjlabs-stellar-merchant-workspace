@@ -145,6 +145,11 @@ function syncControls() {
   for (const control of $$('#agreement-form input, #agreement-form select, #agreement-form textarea')) {
     control.disabled = state.mutationRunning || Boolean(state.pending);
   }
+  for (const input of $$('input[data-source="quote"], input[data-source="response"]')) {
+    input.disabled = state.mutationRunning || Boolean(state.pending) || Boolean(state.modal?.renewalJson || state.modal?.renewalLoading || state.modal?.requireRenewal);
+  }
+  const clearRenewal = $('#remove-renewal');
+  if (clearRenewal) clearRenewal.disabled = blocked || Boolean(state.modal?.fileLoads);
   for (const button of $$('[data-action="refresh"]')) button.disabled = state.reading || state.mutationRunning;
   const retry = $('[data-action="retry-pending"]');
   if (retry) retry.disabled = state.mutationRunning || state.reading ||
@@ -370,13 +375,86 @@ function renderMain() {
     state.view === 'history' ? historyView(agreements) : agreementsTable(agreements));
   syncControls();
 }
-function sourceLinks(agreementId, sourceId) {
+function sourceLinks(agreementId, sourceId, renewal = null) {
   if (!sourceId) return '';
   const base = apiPath + '/agreements/' + encodeURIComponent(agreementId) + '/sources/' + encodeURIComponent(sourceId) + '/';
   return '<div class="actions">' + [
-    ['quote.json', 'Quotation'], ['response.json', 'Accepted response'], ['source.json', 'Source'], ['review.json', 'Calculation review']
+    ['quote.json', 'Quotation'], ['response.json', 'Accepted response'], ['source.json', 'Source'], ['review.json', 'Calculation review'],
+    ...(renewal ? [['renewal.json', 'Original renewal handover']] : [])
   ].map(([file, title]) => '<a class="button-link small" href="' + esc(base + file) + '" download>' + title + '</a>').join('') + '</div>';
 }
+
+function tariffBasisView(tariff, imported = null) {
+  if (!tariff?.basis) return '';
+  const basis = tariff.basis;
+  const amount = value => 'USD ' + esc(value ?? '—');
+  return '<section class="section-title"><h3>Accepted tariff basis</h3><p class="help">' + esc(basis.text) + '</p>' +
+    '<dl class="definition-grid"><div><dt>Tariff</dt><dd>' + esc(basis.tariffLabel) +
+    '</dd></div><div><dt>Schedule</dt><dd>' + esc(label(basis.mode)) +
+    '</dd></div><div><dt>Saved selection volume / month</dt><dd class="amount">' + esc(basis.selectedQuantity) +
+    '</dd></div><div><dt>Quoted requests / month</dt><dd class="amount">' + esc(basis.quotedQuantity) +
+    '</dd></div><div><dt>Quoted uniform rate / request</dt><dd class="amount">' + amount(basis.uniformUnitUsd) +
+    '</dd></div><div><dt>Original selected tariff total</dt><dd class="amount">' + amount(basis.originalTariffGrossUsd) +
+    '</dd></div><div><dt>Original upward unit rounding</dt><dd class="amount">' + amount(basis.originalRoundingDeltaUsd) +
+    '</dd></div>' + (imported ? '<div><dt>Original quoted route / month</dt><dd class="amount">' +
+      amount(imported.originalMonthlyAmountUsd) + '</dd></div>' : '') + '</dl>' +
+    (basis.changedQuantity ? '<div class="notice"><strong>Quoted volume changed</strong><p>At ' + esc(basis.quotedQuantity) +
+      ' requests, the retained tier comparison totals ' + amount(basis.tariffGrossAtQuotedQuantityUsd) + '. ' +
+      (basis.derivedUnitAtQuotedQuantityUsd === null ? 'The zero-request comparison has no per-request rate.' :
+        'Its comparison rate is ' + amount(basis.derivedUnitAtQuotedQuantityUsd) + ' per request.') +
+      ' The accepted quotation uses its saved uniform rate of ' + amount(basis.uniformUnitUsd) + ' per request.</p></div>' : '') +
+    (imported?.includedInScope ? '<p class="help">This billing scope carries the original quoted route for ' +
+      esc(imported.periodCount) + ' complete month' + (imported.periodCount === 1 ? '' : 's') + ': ' +
+      amount(imported.invoiceAmount) + ' at the selected invoice precision.</p>' : '') +
+    '<details><summary>Original tariff tiers and source</summary><div class="table-wrap"><table><thead><tr>' +
+    '<th scope="col">Request quantity</th><th scope="col" class="align-right">USD / request</th></tr></thead><tbody>' +
+    array(tariff.tiers).map(tier => '<tr><td>' + (tier.upTo === null ? 'Remaining requests' : 'Through ' + esc(tier.upTo)) +
+      '</td><td class="align-right amount">' + esc(tier.unitPriceUsd) + '</td></tr>').join('') +
+    '</tbody></table></div><p class="meta">Original selection ' + esc(tariff.selectionRequestId) +
+    '</p><p class="meta">Source ' + esc(tariff.id) + '</p></details></section>';
+}
+
+
+function performanceBasisView(binding, imported = null) {
+  if (!binding) return '';
+  const period = binding.period || {}, measured = binding.measuredQuote || {}, proposed = binding.proposed || {};
+  const date = value => String(value || '').replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  const observed = [period.observedFrom, period.observedUntil].filter(Boolean).map(date).join(' → ');
+  const amount = value => value === null || value === undefined ? '—' : 'USD ' + esc(value);
+  const row = (name, value) => '<tr><th scope="row">' + esc(name) + '</th><td>' + value + '</td></tr>';
+  const counts = Object.entries(binding.basis?.counts || {});
+  const notes = Array.isArray(binding.issues) ? binding.issues : [];
+  return '<section class="section-title"><h3>Recorded usage and this quotation revision</h3>' +
+    '<p class="help">The saved review describes its measured period. This quotation records the proposed monthly requests and accepted price separately.</p>' +
+    '<div class="table-wrap"><table><tbody>' +
+    row('Measured quotation', esc(measured.title || measured.id)) +
+    row('Observed period', esc(observed || 'Saved observation period')) +
+    row('Recorded quantity', esc(binding.basis?.quantity ?? '—') + ' ' + esc(binding.basis?.label || '')) +
+    row('Measured route', esc(binding.route?.method) + ' ' + esc(binding.route?.path)) +
+    row('Earlier quoted uniform rate / request', amount(binding.quoted?.savedUnitUsd)) +
+    row('Earlier quote value at recorded quantity', amount(binding.quoted?.valueAtObservedQuantityUsd)) +
+    row('Original tariff total at recorded quantity', amount(binding.tariff?.quote?.totalUsd)) +
+    row('Proposed requests / month', esc(proposed.monthlyRequests)) +
+    row('Revised quoted rate / request', amount(proposed.unitUsd)) +
+    row('Revised quoted route / month', amount(proposed.amountUsd)) +
+    (imported?.includedInScope ? row('Imported route charge', amount(imported.invoiceAmount) + ' · ' +
+      esc(imported.periodCount) + ' complete month' + (imported.periodCount === 1 ? '' : 's')) : '') +
+    '</tbody></table></div><details class="section-title"><summary>Saved cost view, source counts and identities</summary>' +
+    '<div class="table-wrap"><table><tbody>' +
+    row('Estimated cost at recorded quantity', amount(binding.costs?.estimated?.valueAtBasisQuantityUsd)) +
+    row('Contribution using estimated unit cost', amount(binding.costs?.contributionUsingEstimatedUnitCostUsd)) +
+    (binding.costs?.recorded ? row('Recorded cost edition', esc(binding.costs.recorded.edition)) +
+      row('Cost period alignment', esc(typeof binding.costs.recorded.periodAlignment === 'object' ?
+        JSON.stringify(binding.costs.recorded.periodAlignment) : binding.costs.recorded.periodAlignment)) : '') +
+    counts.map(([key, value]) => row(key, esc(value ?? '—'))).join('') +
+    '</tbody></table></div>' +
+    (notes.length ? '<ul>' + notes.map(note => '<li>' + esc(note.message || note.code || '') + '</li>').join('') + '</ul>' : '') +
+    '<p class="meta">Measured quote ' + esc(measured.id) + ' · ' + esc(measured.sha256) +
+    '</p><p class="meta">Native source ' + esc(binding.nativeSourceId) +
+    '</p><p class="meta">Usage version ' + esc(binding.usageVersion) + ' · revision ' + esc(binding.usageRevision) +
+    '</p><p class="meta">Recorded-usage source ' + esc(binding.id) + '</p></details></section>';
+}
+
 function currentAgreement() {
   const id = state.selectedId;
   if (!id || state.detail?.agreement?.id !== id) return null;
@@ -406,6 +484,7 @@ function renderDetail() {
     ' complete months</dd></div><div><dt>Agreement edition</dt><dd>' + esc(agreement.version) +
     '</dd></div><div><dt>As of</dt><dd>' + esc(asOf()) + '</dd></div></dl></div>' +
     '<div class="downloads">' + downloadLinks(agreement.id) + '</div></section>' +
+    renewalContinuationGuidance(agreement, {buttons: true}) +
     '<section class="panel"><div class="panel-head"><h3>Service periods and original invoices</h3><span class="meta">' +
     periods.length + ' retained period' + (periods.length === 1 ? '' : 's') + '</span></div>' +
     (periods.length ? '<div class="table-wrap"><table><caption>Each period uses its saved accepted quotation and native invoice calculation.</caption><thead><tr>' +
@@ -426,7 +505,9 @@ function renderDetail() {
       esc(label(edition.invoiceTiming)) + ' · payment due in ' + esc(edition.dueDays) + ' days</dd></div></dl>' +
       '<h3 class="section-title">' + esc(edition.quote?.title || 'Original accepted quotation') + '</h3>' +
       '<p class="help">' + esc(edition.reason || 'Original agreement terms') + ' · ' + esc(edition.actor || '—') + ' · ' +
-      esc(when(edition.createdAt)) + '</p>' + sourceLinks(agreement.id, edition.sourceId) +
+      esc(when(edition.createdAt)) + '</p>' + sourceLinks(agreement.id, edition.sourceId, edition.renewal) +
+      renewalIdentityView(edition.renewal) + tariffBasisView(edition.quote?.bindings?.tariff) +
+      performanceBasisView(edition.quote?.bindings?.performance) +
       '<details class="section-title"><summary>Source identity and complete edition</summary><pre>' + esc(json(edition)) +
       '</pre></details></div>').join('') : '<div class="panel-body"><p class="help">No quotation editions were returned.</p></div>') +
     '</section><section class="panel"><div class="panel-head"><h3>Complete agreement history</h3></div>' +
@@ -486,13 +567,86 @@ function selectField(name, title, options, value, required = true) {
     '<option value="' + esc(key) + '"' + (String(key) === String(value) ? ' selected' : '') + '>' + esc(text) + '</option>').join('') +
     '</select></label>';
 }
-function sourceFields() {
+function renewalIdentityView(renewal, {draft = false} = {}) {
+  if (!renewal || typeof renewal !== 'object') return '';
+  const join = renewal.financialJoin || {};
+  const head = renewal.acceptedHead || {};
+  const servicePeriod = renewal.servicePeriod || (renewal.proposedContinuation?.effectiveFrom ? {
+    effectiveFrom: renewal.proposedContinuation.effectiveFrom, effectiveUntil: renewal.proposedContinuation.effectiveUntil
+  } : null);
+  const terms = [
+    ['Prior service terms', join.sourceTerms, renewal.sourceTerms],
+    ['Customer-accepted continuation', join.proposedContinuation, renewal.proposedContinuation || servicePeriod],
+    ['Activated service terms', join.activeTerms, renewal.activeTerms || (join.activeTerms ? servicePeriod : null)]
+  ];
+  return '<section class="renewal-summary"><h4>' + (draft ? 'Loaded service renewal' : 'Linked service renewal') + '</h4>' +
+    '<dl class="definition-grid"><div><dt>Original service case</dt><dd>' + esc(join.caseId || renewal.case?.id || '—') +
+    '</dd></div><div><dt>Operational agreement</dt><dd>' + esc(join.agreementId || '—') +
+    '</dd></div><div><dt>Accepted renewal</dt><dd>' + esc(head.id || '—') +
+    '<span class="subline">Edition ' + esc(head.revision ?? '—') + '</span></dd></div>' +
+    '<div><dt>Customer acceptance</dt><dd>' + esc(when(join.acceptedAt)) + '</dd></div>' +
+    (servicePeriod ? '<div><dt>Accepted service interval</dt><dd>' + esc(when(servicePeriod.effectiveFrom)) +
+      '<span class="subline">' + (servicePeriod.effectiveUntil === null ? 'No fixed end' : 'Until ' + esc(when(servicePeriod.effectiveUntil))) +
+      '</span></dd></div>' : '') + '</dl>' +
+    '<div class="table-wrap"><table><caption>The accepted quotation and activated service terms retain their original editions.</caption>' +
+    '<thead><tr><th scope="col">Terms</th><th scope="col">Original agreement / edition</th><th scope="col">Service interval</th></tr></thead><tbody>' +
+    terms.map(([title, reference, original]) => '<tr><th scope="row">' + title + '</th><td>' +
+      (reference ? esc(reference.id) + '<span class="subline">Edition ' + esc(reference.revision) + '</span>' :
+        'Awaiting service activation') + '</td><td>' +
+      (original?.effectiveFrom ? esc(when(original.effectiveFrom)) + '<span class="subline">Until ' +
+        (original.effectiveUntil === null ? 'no fixed end' : esc(when(original.effectiveUntil))) + '</span>' : 'See original handover') + '</td></tr>').join('') +
+    '</tbody></table></div><details><summary>Original renewal references</summary><pre>' +
+    esc(json({sha256: renewal.sha256, acceptedHead: renewal.acceptedHead, financialJoin: renewal.financialJoin, servicePeriod})) +
+    '</pre></details></section>';
+}
+function renewalContinuationGuidance(agreement, {buttons = false} = {}) {
+  if (!agreement || agreement.status === 'CANCELLED' || agreement.cancellation) return '';
+  const latest = [...array(agreement.editions)].sort((a, b) => a.fromMonth - b.fromMonth).at(-1);
+  const period = latest?.renewal?.servicePeriod;
+  if (!period?.effectiveFrom) return '';
+  const prepared = latest.fromMonth >= agreement.termMonths;
+  if (!prepared && period.effectiveUntil === null) return '';
+  const nextMonthEnd = monthBoundary(agreement.startDate, agreement.termMonths + 1) + 'T00:00:00.000Z';
+  const exhausted = period.effectiveUntil !== null && Date.parse(nextMonthEnd) > Date.parse(period.effectiveUntil);
+  let title, message, action;
+  if (prepared) {
+    title = 'Accepted continuation is ready';
+    message = 'The next accepted terms are saved at the financial term end, ' + agreement.endDate +
+      '. Use Renew to add their complete monthly billing periods within the accepted service interval.';
+    action = ['renew', 'Extend service term'];
+  } else if (exhausted) {
+    title = 'Load the next accepted continuation';
+    message = 'Another complete month would exceed the current accepted service interval. Amend the agreement effective from its original financial end, ' +
+      agreement.endDate + ', using the next accepted renewal handover. Then use Renew to extend the service term.';
+    action = ['amend', 'Amend accepted terms'];
+  } else {
+    title = 'Accepted service interval';
+    message = 'The current accepted renewal permits service until ' + when(period.effectiveUntil) +
+      '. Additional whole billing periods must fit within that interval. To continue beyond it, save the next accepted renewal as an amendment at the financial term end, then use Renew.';
+  }
+  return '<section class="panel"><div class="panel-body"><h3>' + title + '</h3><p>' + esc(message) + '</p>' +
+    (buttons && action ? '<div class="actions"><button type="button" data-action="' + action[0] + '" data-id="' +
+      esc(agreement.id) + '" data-mutation>' + action[1] + '</button></div>' : '') + '</div></section>';
+}
+
+function sourceFields({renewalRequired = false} = {}) {
   return '<section class="form-section full"><h3>Original accepted quotation</h3>' +
-    '<p class="help">Load the exported quotation and its accepted customer response. Their original contents are retained with this edition.</p>' +
+    '<p class="help">' + (renewalRequired
+      ? 'This agreement retains an operational service renewal. Load its next accepted renewal handover below; the original quotation and response fill these source documents.'
+      : 'Load the exported quotation and its accepted customer response, or load the original renewal handover below. A renewal handover supplies both source documents.') + '</p>' +
     '<div class="form-grid"><label>Quotation JSON<input type="file" accept=".json,application/json" data-source="quote">' +
     '<span class="file-state" id="quote-file-state">Choose the original quotation.</span></label>' +
     '<label>Accepted response JSON<input type="file" accept=".json,application/json" data-source="response">' +
-    '<span class="file-state" id="response-file-state">Choose its accepted response.</span></label></div></section>';
+    '<span class="file-state" id="response-file-state">Choose its accepted response.</span></label></div></section>' +
+    '<section class="form-section full"><h3>Operational service renewal</h3>' +
+    '<p class="help">' + (renewalRequired
+      ? 'Required for this amendment: load the next accepted renewal from the same original merchant service case and operational agreement. The complete accepted handover keeps the existing financial calendar with its source history and accepted service dates.'
+      : 'Optional: load the complete accepted renewal exported by the merchant service case. Its original quotation and response fill the source documents above. The saved financial agreement retains the full case history and the accepted renewal reference.') + '</p>' +
+    '<label>Original renewal handover JSON' + (renewalRequired ? ' (required)' : '') +
+    '<input type="file" accept=".json,application/json" data-source="renewal"' + (renewalRequired ? ' aria-required="true"' : '') + '>' +
+    '<span class="file-state" id="renewal-file-state">Choose an original renewal handover to link this agreement.</span></label>' +
+    '<div id="renewal-file-summary"></div><div class="actions"><button type="button" data-action="remove-renewal" data-mutation id="remove-renewal" hidden>' +
+    'Clear renewal handover and its source documents</button></div></section>';
 }
 function monthBoundary(startDate, offset) {
   const [year, month, originalDay] = startDate.split('-').map(Number);
@@ -548,11 +702,17 @@ async function openForm(action, id = null, seed = null) {
     revision: values.revision ?? detail?.revision ?? state.data.revision,
     expectedVersion: values.expectedVersion ?? agreement?.version,
     dirty: Boolean(seed), fileLoads: 0, quoteContent: values.quoteContent ?? null,
-    responseContent: values.responseContent ?? null, quoteName: '', responseName: '', foreignWorkspace: false
+    responseContent: values.responseContent ?? null, quoteName: '', responseName: '',
+    renewalJson: values.renewalJson ?? null, renewalEnvelope: null, renewalName: '', renewalLoading: false,
+    requireRenewal: action === 'amend' && array(agreement?.editions).some(edition => Boolean(edition.renewal)),
+    foreignWorkspace: false
   };
+  if (typeof modal.renewalJson === 'string') {
+    try { modal.renewalEnvelope = JSON.parse(modal.renewalJson); } catch {}
+  }
   const monthDates = agreement ? boundaries(agreement) : [];
-  const nextDate = monthDates.find(date => date >= asOf() && date < agreement.endDate) ||
-    monthDates.filter(date => date < agreement?.endDate).at(-1) || agreement?.startDate || asOf();
+  const nextDate = monthDates.find(date => date >= asOf() && date <= agreement.endDate) ||
+    agreement?.endDate || agreement?.startDate || asOf();
   const edition = agreement ? effectiveEdition(agreement, values.effectiveDate || nextDate) : {};
   const monthlyOptions = Array.from({length: 12}, (_, index) => [index + 1, String(index + 1) + (index ? ' months' : ' month')]);
   const timingOptions = [['START', 'At the start of each period'], ['END', 'At the end of each period']];
@@ -580,12 +740,14 @@ async function openForm(action, id = null, seed = null) {
         {type: 'number', required: false, min: 0, max: 365}) +
       '<p class="help full">Use an original monthly boundary. The saved quotation replaces pricing from that date; already occupied service months retain their original invoice. Current selected terms: ' +
       esc(edition.billingMonths) + ' month billing, ' + esc(label(edition.invoiceTiming)) + ', due in ' + esc(edition.dueDays) + ' days.</p>' +
-      sourceFields();
+      '<p class="help full">For a newly accepted continuation, save its terms effective from the current financial end, ' +
+      esc(agreement.endDate) + ', then use Renew to extend the term into its complete service months.</p>' + sourceFields({renewalRequired: modal.requireRenewal});
   } else if (action === 'renew') {
     fields = inputField('additionalMonths', 'Additional complete service months', values.additionalMonths ?? 12,
       {type: 'number', min: 1, max: 120}) +
       '<p class="help">Current service end: ' + esc(agreement.endDate) +
-      '. The latest accepted terms continue into the additional months.</p>';
+      '. The latest accepted terms supply the additional months. Every new billing period must fit within their original accepted service interval.</p>' +
+      '<div class="full">' + renewalContinuationGuidance(agreement) + '</div>';
   } else if (action === 'cancel') {
     fields = inputField('effectiveDate', 'Service ends on this monthly boundary', values.effectiveDate || nextDate,
       {type: 'date', min: agreement.startDate, max: agreement.endDate, list: 'month-boundaries'}) +
@@ -607,12 +769,134 @@ async function openForm(action, id = null, seed = null) {
       if (element) { element.textContent = 'Original source retained from the saved request.'; element.classList.add('loaded'); }
     }
   }
+  renderRenewalSourceState(modal);
   presentDialog();
 }
+function renderRenewalSourceState(modal = state.modal) {
+  const target = $('#renewal-file-state');
+  if (!target || !modal) return;
+  const loaded = typeof modal.renewalJson === 'string';
+  if (loaded) target.classList.add('loaded'); else target.classList.remove('loaded');
+  target.textContent = loaded ? (modal.renewalName || 'Original handover retained from the saved request') +
+    ' · complete renewal source loaded' : 'Choose an original renewal handover to link this agreement.';
+  const summary = $('#renewal-file-summary');
+  if (summary) summary.innerHTML = loaded ? renewalIdentityView(modal.renewalEnvelope, {draft: true}) : '';
+  const clear = $('#remove-renewal');
+  if (clear) clear.hidden = !loaded;
+  if (loaded) {
+    for (const kind of ['quote', 'response']) {
+      const element = $('#' + kind + '-file-state');
+      if (!element) continue;
+      element.textContent = (kind === 'quote' ? 'Original quotation' : 'Original accepted response') +
+        ' loaded from the renewal handover.';
+      element.classList.add('loaded');
+    }
+  }
+}
+function originalRenewalMaterial(material, title) {
+  if (!material || material.encoding !== 'base64' || typeof material.data !== 'string' ||
+    !Number.isSafeInteger(material.bytes) || material.bytes < 1 || material.bytes > requestBytes) {
+    throw new Error('The handover must include the complete original ' + title + ' material.');
+  }
+  if (material.data.length % 4 !== 0 ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(material.data)) {
+    throw new Error('The original ' + title + ' material is not complete base64.');
+  }
+  const binary = atob(material.data);
+  if (binary.length !== material.bytes) throw new Error('The original ' + title + ' byte count differs from the handover.');
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+  const text = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(bytes);
+  if (!text.trim()) throw new Error('The original ' + title + ' document is empty.');
+  return text;
+}
+function readRenewalEnvelope(content) {
+  let envelope;
+  try { envelope = JSON.parse(content); }
+  catch { throw new Error('Choose the complete JSON renewal handover exported by the merchant service case.'); }
+  if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope) ||
+    envelope.schema !== 'stellar-forge.merchant-service-renewal-handover.v1') {
+    throw new Error('Choose the original merchant service renewal handover.');
+  }
+  if (!envelope.acceptedHead || typeof envelope.acceptedHead.id !== 'string' ||
+    !Number.isSafeInteger(envelope.acceptedHead.revision) || envelope.acceptedHead.revision < 1 ||
+    typeof envelope.acceptedHead.sha256 !== 'string') {
+    throw new Error('Choose a service renewal that retains its original customer acceptance.');
+  }
+  const quoteContent = originalRenewalMaterial(envelope.materials?.quote, 'quotation');
+  const responseContent = originalRenewalMaterial(envelope.materials?.acceptance, 'accepted response');
+  if (new TextEncoder().encode(JSON.stringify({renewalJson: content, quoteContent, responseContent})).byteLength > requestBytes) {
+    throw new Error('The complete renewal handover and its original documents exceed the 2,000,000-byte request limit.');
+  }
+  return {envelope, quoteContent, responseContent};
+}
+async function readRenewalSourceFile(input) {
+  const modal = state.modal;
+  if (!modal || !['create', 'amend'].includes(modal.action) || state.pending || state.mutationRunning) return;
+  const file = input.files?.[0];
+  if (!file) return;
+  const sequence = (modal.renewalLoadSequence || 0) + 1;
+  modal.renewalLoadSequence = sequence;
+  modal.fileLoads++; modal.renewalLoading = true; modal.dirty = true; syncControls();
+  const target = $('#renewal-file-state');
+  target.textContent = 'Reading ' + file.name + '…'; target.classList.remove('loaded');
+  try {
+    if (file.size > requestBytes) throw new Error('The source file exceeds the 2,000,000-byte request limit.');
+    const content = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(await file.arrayBuffer());
+    const loaded = readRenewalEnvelope(content);
+    if (state.modal !== modal || modal.renewalLoadSequence !== sequence) return;
+    for (const kind of ['quote', 'response']) modal[kind + 'LoadSequence'] = (modal[kind + 'LoadSequence'] || 0) + 1;
+    modal.renewalJson = content; modal.renewalEnvelope = loaded.envelope; modal.renewalName = file.name;
+    modal.quoteContent = loaded.quoteContent; modal.responseContent = loaded.responseContent;
+    modal.quoteName = 'Quotation from ' + file.name; modal.responseName = 'Accepted response from ' + file.name;
+    for (const kind of ['quote', 'response']) {
+      const field = $('input[data-source="' + kind + '"]');
+      if (field) field.value = '';
+    }
+    renderRenewalSourceState(modal);
+    notice('#dialog-message', 'The handover supplies the original quotation and accepted response. Review its continuation dates with the billing terms; saving validates and retains the complete renewal source.');
+  } catch (error) {
+    if (state.modal === modal && modal.renewalLoadSequence === sequence) {
+      input.value = ''; renderRenewalSourceState(modal); showError(error, '#dialog-message');
+    }
+  } finally {
+    modal.fileLoads--;
+    if (modal.renewalLoadSequence === sequence) modal.renewalLoading = false;
+    syncControls();
+  }
+}
+function clearRenewalSource() {
+  const modal = state.modal;
+  if (!modal || state.pending || state.mutationRunning || modal.fileLoads) return;
+  modal.renewalLoadSequence = (modal.renewalLoadSequence || 0) + 1;
+  modal.renewalJson = null; modal.renewalEnvelope = null; modal.renewalName = '';
+  modal.quoteContent = null; modal.responseContent = null; modal.quoteName = ''; modal.responseName = '';
+  modal.dirty = true;
+  for (const kind of ['quote', 'response', 'renewal']) {
+    const field = $('input[data-source="' + kind + '"]');
+    if (field) field.value = '';
+  }
+  for (const kind of ['quote', 'response']) {
+    const target = $('#' + kind + '-file-state');
+    if (target) {
+      target.textContent = kind === 'quote' ? 'Choose the original quotation.' : 'Choose its accepted response.';
+      target.classList.remove('loaded');
+    }
+  }
+  renderRenewalSourceState(modal);
+  notice('#dialog-message', 'Load a quotation and its accepted response, or choose another complete renewal handover.');
+  syncControls();
+}
+
 async function readSourceFile(input) {
   const modal = state.modal;
   const kind = input.dataset.source;
+  if (kind === 'renewal') return readRenewalSourceFile(input);
   if (!modal || !['quote', 'response'].includes(kind)) return;
+  if (modal.renewalJson || modal.renewalLoading) {
+    input.value = '';
+    throw new Error('Clear the loaded renewal handover before selecting separate quotation documents.');
+  }
   const file = input.files?.[0];
   if (!file) return;
   const counterKey = kind + 'LoadSequence';
@@ -649,10 +933,14 @@ function wholeField(form, name, minimum, maximum, optional = false) {
   return value;
 }
 function sourceBody(modal) {
+  if (modal.requireRenewal && typeof modal.renewalJson !== 'string') {
+    throw new Error('Load the next accepted renewal handover from this agreement’s original service case before saving its amendment.');
+  }
   if (typeof modal.quoteContent !== 'string' || typeof modal.responseContent !== 'string') {
     throw new Error('Load both the original quotation and its accepted response before saving.');
   }
-  return {quoteContent: modal.quoteContent, responseContent: modal.responseContent};
+  return {quoteContent: modal.quoteContent, responseContent: modal.responseContent,
+    ...(typeof modal.renewalJson === 'string' ? {renewalJson: modal.renewalJson} : {})};
 }
 function newRequestId() {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -712,6 +1000,7 @@ function previewContents(preview, agreement) {
   const review = preview.quoteReview || {};
   const customer = preview.customer || draft.customer || {};
   const recover = preview.recoveryRequest || period.recoveryRequest;
+  const renewal = array(agreement.editions).find(edition => edition.id === period.editionId || edition.sourceId === period.sourceId)?.renewal;
   const canBill = Boolean(period.canPrepare && (period.due || period.status === 'DUE' || period.status === 'PREPARING'));
   const description = period.status === 'PREPARING'
     ? 'Continue the original prepared billing operation with its saved operator and request.'
@@ -751,7 +1040,8 @@ function previewContents(preview, agreement) {
     '<p class="help">' + esc(review.calculation || draft.rounding || '') + '</p>' +
     (review.plannedRouteLines ? '<p class="help">' + esc(review.plannedRouteLines) +
       ' quoted planned-usage line' + (review.plannedRouteLines === 1 ? '' : 's') + ' included in this period.</p>' : '') +
-    sourceLinks(agreement.id, period.sourceId) +
+    tariffBasisView(review.tariff?.binding, review.tariff) + performanceBasisView(review.performance?.binding, review.performance) +
+    sourceLinks(agreement.id, period.sourceId, renewal) + renewalIdentityView(renewal) +
     '<details class="section-title"><summary>Original customer, quote calculation and complete invoice preview</summary><pre>' +
     esc(json(preview)) + '</pre></details>' +
     '<footer class="dialog-footer"><a class="button-link" href="' + esc(receivablesPath) + '">Open receivables</a>' +
@@ -932,6 +1222,7 @@ async function handleAction(button) {
   if (action === 'close-dialog') return closeDialog();
   if (action === 'resume-form') return presentDialog();
   if (action === 'discard-form') return discardForm();
+  if (action === 'remove-renewal') return clearRenewalSource();
   if (action === 'refresh-form') return reviewCurrentForm();
   if (action === 'retry-pending' && state.pending) return performRequest(state.pending);
   if (action === 'save-pending' && state.pending) return downloadObject(

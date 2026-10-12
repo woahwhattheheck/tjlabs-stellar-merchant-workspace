@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-service-agreements",
   "title": "Merchant service agreements and recurring billing",
-  "description": "Original accounting customers, accepted quotation agreements, monthly billing calendars, amendments and renewals, source-preserving receivables drafts, complete exports and native merchant tools.",
+  "description": "Original accounting customers, accepted service renewals and quotation agreements, monthly billing calendars, amendments, source-preserving receivables drafts, complete exports and native merchant tools.",
   "base": {
     "commands": [
       "installation",
@@ -63,7 +63,9 @@
     "merchant-commercial",
     "merchant-implementation",
     "merchant-service-operations",
-    "merchant-provider-accounting"
+    "merchant-provider-accounting",
+    "merchant-provider-buyer-expenses",
+    "merchant-provider-support"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
