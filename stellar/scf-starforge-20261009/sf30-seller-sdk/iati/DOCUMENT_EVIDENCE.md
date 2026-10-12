@@ -313,3 +313,9 @@ For continued publishing work, use the original source and current saved organis
 | SDK/connected row page | 1–500 rows; default 50 |
 
 The status response returns each plan's retained and remaining body bytes. Choose the intended document selection and acquisition settings before capture. For larger complete handovers, use the streaming connected or native transfer and preserve the selected output's byte count and hash.
+
+## Continue a received case with a complete public document
+
+The [following-observation programme](document_evidence/FOLLOWING.md) extends the existing recipient's saved edition through one explicitly acknowledged capture, a complete named deferred review, historical comparison, full native/SDK/Merchant body delivery, packet export and independent receiving. It retains the original recipient's local note, all earlier observations and the other document decisions. The complete programme and installed FCDO input are included with the original source; use the matching full installed edition for its new packet and receiving workspaces.
+
+The [following guide](document_evidence/FOLLOWING.md) covers the exact original case identities, native and connected commands, complete output, historical comparison and continuation across authorized workers. The previous packet and result retain their original source edition and remain separate from the following phase's complete deliverable.
