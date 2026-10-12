@@ -82,13 +82,198 @@ lease=os.open(PRIVATE/"remote-customer-host.lock",os.O_CREAT|os.O_RDWR|os.O_NOFO
 fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
 child=None
 receipt_path=PRIVATE/"remote-host.json"
-receipt={"schema":"stellar-forge.odata-remote-customer-native-host.v1","operation_id":OPERATION,
-    "private_root":str(PRIVATE),"pid":os.getpid(),"started_at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),
-    "original_customer_archive":{"path":str(ARCHIVE),"bytes":ARCHIVE_BYTES,"sha256":ARCHIVE_SHA},
-    "source_packet":{"bytes":PACKET_BYTES,"sha256":PACKET_SHA,"decoded_bytes":DECODED_BYTES,"decoded_sha256":DECODED_SHA},"state":"PREPARING","attempts":[]}
+def print_status(phase,**values):print(json.dumps({"phase":phase,"operation_id":OPERATION,**values}),flush=True)
+
+def resource_snapshot(label):
+    value={"label":label,"observed_at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),"pid":os.getpid(),"filesystem":{},"cgroup":{}}
+    for name,path in (("workspace",ARCHIVE.parent),("private",PRIVATE)):
+        try:
+            v=os.statvfs(path);value["filesystem"][name]={"path":str(path),"total":v.f_blocks*v.f_frsize,"free":v.f_bfree*v.f_frsize,"available":v.f_bavail*v.f_frsize}
+        except OSError as error:value["filesystem"][name]={"error":str(error)}
+    try:value["meminfo"]=Path("/proc/meminfo").read_text()
+    except OSError as error:value["meminfo_error"]=str(error)
+    roots=[Path("/sys/fs/cgroup")]
+    try:
+        for line in Path("/proc/self/cgroup").read_text().splitlines():
+            parts=line.split(":",2)
+            if len(parts)==3 and parts[0]=="0":roots.insert(0,Path("/sys/fs/cgroup")/parts[2].lstrip("/"))
+    except OSError:pass
+    for name in ("memory.current","memory.max","memory.events","memory.peak"):
+        for root in roots:
+            try:value["cgroup"][name]=(root/name).read_text().strip();break
+            except OSError:pass
+    receipt.setdefault("resources",[]).append(value);save(receipt_path,receipt)
+    print_status("remote-resource-observation",label=label,filesystem=value["filesystem"],cgroup=value["cgroup"])
+    return value
+def close_original_child():
+    global child
+    if child is None:return
+    try:
+        if child.poll() is None:
+            os.killpg(child.pid,signal.SIGTERM)
+            try:child.wait(timeout=20)
+            except subprocess.TimeoutExpired:os.killpg(child.pid,signal.SIGKILL);child.wait()
+        else:child.wait()
+    except ProcessLookupError:child.wait()
+    child=None
+def checkpoint_verify(path,label=None):
+    with zipfile.ZipFile(path) as archive:
+        members=archive.infolist()
+        need(len(members)<=20000 and len({m.filename for m in members})==len(members),"Preserve the complete unique checkpoint membership.")
+        need(sum(m.file_size for m in members)<=2*1024**3,"The complete checkpoint exceeds its receiving bound.")
+        marker="remote-checkpoint.json";raw=archive.read(marker);manifest=json.loads(raw)
+        need(manifest.get("schema")=="stellar-forge.odata-remote-customer-checkpoint.v1" and
+             manifest.get("operation_id")==OPERATION and manifest.get("private_root")==str(PRIVATE) and
+             manifest.get("original_archive_sha256")==ARCHIVE_SHA and manifest.get("decoded_source_sha256")==DECODED_SHA,
+             "Receive the original operation, source and customer checkpoint.")
+        if label is not None:need(manifest["label"]==label,"Preserve the selected checkpoint phase.")
+        declared={f["path"]:f for f in manifest["files"]}
+        need(len(declared)==len(manifest["files"]) and set(declared)|{marker}=={m.filename for m in members},
+             "Preserve every original checkpoint file.")
+        need("remote-host.json" in declared and "remote-customer-native-host.py" in declared,"Retain the original host and journal.")
+        for member in members:
+            safe_name(member.filename)
+            need(not member.is_dir() and stat.S_IFMT(member.external_attr>>16) in (0,stat.S_IFREG),"Receive regular checkpoint files only.")
+            if member.filename==marker:continue
+            name=member.filename;parts=PurePosixPath(name).parts
+            need((len(parts)>1 and parts[0] in {"SOURCE","INPUT","CUSTOMER","provider"}) or
+                 (len(parts)==1 and (name in {"remote-host.json","remote-customer-native-host.py"} or
+                  name.endswith((".stdout.ndjson",".stderr.log")))),"The checkpoint selected a foreign path.")
+            need("node_modules" not in parts and ".git" not in parts,"Restore the original source without mutable installations.")
+            expected=declared[name]
+            with archive.open(member) as stream:
+                need(member.file_size==expected["bytes"] and hashlib.file_digest(stream,"sha256").hexdigest()==expected["sha256"],
+                     "The complete checkpoint file changed: "+name)
+        need(declared["remote-customer-native-host.py"]["sha256"]==hashlib.sha256(_receiving_host_source.encode()).hexdigest(),
+             "Resume with the exact original checkpoint host source.")
+    return manifest
+def receive_checkpoint(selection):
+    path=Path(selection["path"])
+    need(path.is_file() and not path.is_symlink() and path.stat().st_size==selection["bytes"] and digest(path)==selection["sha256"],
+         "Select the complete original retained checkpoint bytes.")
+    manifest=checkpoint_verify(path);record=PRIVATE/"remote-checkpoint-receiving.json"
+    selected={"archive":identity(path),"operation_id":OPERATION,"label":manifest["label"]}
+    if record.exists():
+        need(json.loads(record.read_bytes())==selected,"Preserve the original checkpoint receiving selection.");return selected
+    with zipfile.ZipFile(path) as archive:
+        for item in manifest["files"]:
+            target=PRIVATE/item["path"];private(target.parent)
+            if target.exists():
+                need(not target.is_symlink() and target.stat().st_size==item["bytes"] and digest(target)==item["sha256"],
+                     "Preserve later or different original receiving work: "+item["path"]);continue
+            fd,temporary=tempfile.mkstemp(prefix="."+target.name+".receiving-",dir=target.parent)
+            try:
+                with os.fdopen(fd,"wb") as out,archive.open(item["path"]) as original:
+                    shutil.copyfileobj(original,out,1024*1024);out.flush();os.fsync(out.fileno())
+                need(Path(temporary).stat().st_size==item["bytes"] and digest(temporary)==item["sha256"],"The received original member changed.")
+                try:os.link(temporary,target)
+                except FileExistsError:need(target.stat().st_size==item["bytes"] and digest(target)==item["sha256"],"The original receiving target changed.")
+                sync_directory(target.parent)
+            finally:
+                if os.path.exists(temporary):os.unlink(temporary)
+    immutable(record,selected);return selected
+def checkpoint(label):
+    need(child is None,"Close the original native child before taking its complete checkpoint.")
+    records=receipt.setdefault("checkpoints",{})
+    book=records.setdefault(label,{"label":label,"state":"SELECTED","selected_at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime())})
+    if book.get("received"):return book
+    root=private(PRIVATE/"checkpoints")
+    target=root/("OData_Remote_Comparison_"+label+"_Checkpoint.zip");candidate=root/("."+target.name+".building")
+    save(receipt_path,receipt)
+    if not target.exists():
+        if candidate.exists():
+            try:checkpoint_verify(candidate,label)
+            except zipfile.BadZipFile:
+                old=identity(candidate);book.setdefault("retired_incomplete",[]).append(old);save(receipt_path,receipt)
+                need(identity(candidate)==old,"The original incomplete checkpoint changed.");candidate.unlink()
+        if not candidate.exists():
+            selected={}
+            for parent in (SOURCE,INPUT,OUTPUT,PRIVATE/"provider"):
+                for current,dirs,names in os.walk(parent,followlinks=False):
+                    for name in list(dirs):
+                        p=Path(current)/name
+                        if p.is_symlink():
+                            need(p==SOURCE/"node_modules" and p.readlink()==MODULES,"Preserve a foreign checkpoint directory.");dirs.remove(name)
+                    for name in names:
+                        p=Path(current)/name
+                        need(p.is_file() and not p.is_symlink(),"Preserve non-regular original checkpoint input: "+str(p))
+                        selected[str(p.relative_to(PRIVATE))]=p
+            for p in PRIVATE.iterdir():
+                if p.name in {"remote-host.json","remote-customer-native-host.py"} or p.name.endswith((".stdout.ndjson",".stderr.log")):
+                    need(p.is_file() and not p.is_symlink(),"Preserve a foreign original host file.");selected[p.name]=p
+            files=[{"path":name,"bytes":p.stat().st_size,"sha256":digest(p)} for name,p in sorted(selected.items())]
+            manifest={"schema":"stellar-forge.odata-remote-customer-checkpoint.v1","operation_id":OPERATION,
+                "private_root":str(PRIVATE),"original_archive_sha256":ARCHIVE_SHA,"decoded_source_sha256":DECODED_SHA,
+                "label":label,"selected_at":book["selected_at"],"files":files}
+            with zipfile.ZipFile(candidate,"x",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as archive:
+                for item in files:
+                    p=selected[item["path"]];before=identity(p)
+                    need(all(before[k]==item[k] for k in ("bytes","sha256")),"The original checkpoint selection changed.")
+                    info=zipfile.ZipInfo(item["path"]);info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(stat.S_IFREG|0o600)<<16
+                    with p.open("rb") as original,archive.open(info,"w",force_zip64=True) as out:shutil.copyfileobj(original,out,1024*1024)
+                    need(identity(p)==before,"An original checkpoint member changed during publication.")
+                archive.writestr("remote-checkpoint.json",encoded(manifest))
+            with candidate.open("rb") as stream:os.fsync(stream.fileno())
+            checkpoint_verify(candidate,label)
+        try:os.link(candidate,target)
+        except FileExistsError:checkpoint_verify(target,label)
+        candidate.unlink();sync_directory(root)
+    checkpoint_verify(target,label)
+    book["archive"]=identity(target);book["state"]="READY";save(receipt_path,receipt)
+    print_status("remote-closed-checkpoint",label=label,archive=book["archive"])
+    return book
+def library_return_success(body,paths):
+    if not isinstance(body,dict) or not isinstance(body.get("results"),list):return False
+    rows=body["results"]
+    if len(rows)!=len(paths) or len({r.get("local_path") for r in rows if isinstance(r,dict)})!=len(paths):return False
+    by_path={r.get("local_path"):r for r in rows if isinstance(r,dict)}
+    return set(by_path)==set(paths) and all(r.get("status")=="succeeded" and r.get("file_id") and r.get("library_file_id") for r in rows)
+def save_checkpoint(label):
+    global child
+    book=checkpoint(label)
+    if book.get("received"):return book
+    records=receipt.setdefault("checkpoint_saves",{})
+    prior=records.get(label)
+    if prior:
+        need(prior.get("state")=="SUCCEEDED","Reconcile the original checkpoint save before another provider invocation: "+label)
+        return prior
+    provider=private(PRIVATE/"provider"/("checkpoint-"+label))
+    request={"uploads":[{"local_path":book["archive"]["path"],"purpose":"create_library_file","library_artifact_type":"other"}]}
+    immutable(provider/"request.json",request)
+    record={"state":"SELECTED","request":identity(provider/"request.json"),"archive":book["archive"]}
+    records[label]=record;save(receipt_path,receipt)
+    with (provider/"stdout.json").open("xb",buffering=0) as out,(provider/"stderr.log").open("xb",buffering=0) as err:
+        process=subprocess.Popen([sys.executable,"-B",str(HELPER)],stdin=subprocess.PIPE,stdout=out,stderr=err,
+            cwd=provider,env={**os.environ,"TMPDIR":str(PRIVATE/"temporary")},pass_fds=(lease,),start_new_session=True)
+        child=process
+        record["pid"]=process.pid;save(receipt_path,receipt)
+        process.communicate(json.dumps(request).encode())
+        record["returncode"]=process.returncode;child=None
+    record["stdout"]=identity(provider/"stdout.json");record["stderr"]=identity(provider/"stderr.log")
+    try:body=json.loads((provider/"stdout.json").read_bytes())
+    except (ValueError,UnicodeError):body=None
+    record["state"]="SUCCEEDED" if record["returncode"]==0 and library_return_success(body,[book["archive"]["path"]]) else "RETURNED"
+    save(receipt_path,receipt)
+    print_status("remote-checkpoint-library-return",label=label,state=record["state"],returncode=record["returncode"],
+                 result=(provider/"stdout.json").read_text(errors="replace"),stderr=(provider/"stderr.log").read_text(errors="replace")[-4000:])
+    need(record["state"]=="SUCCEEDED","The complete original checkpoint save needs its actual provider result reconciled.")
+    return record
+
+receiving=receive_checkpoint(_remote_checkpoint) if globals().get("_remote_checkpoint") else None
+selection={"schema":"stellar-forge.odata-remote-customer-native-host.v1","operation_id":OPERATION,
+    "private_root":str(PRIVATE),"original_customer_archive":{"path":str(ARCHIVE),"bytes":ARCHIVE_BYTES,"sha256":ARCHIVE_SHA},
+    "source_packet":{"bytes":PACKET_BYTES,"sha256":PACKET_SHA,"decoded_bytes":DECODED_BYTES,"decoded_sha256":DECODED_SHA}}
+if receipt_path.exists():
+    receipt=json.loads(receipt_path.read_bytes())
+    need(all(receipt.get(key)==value for key,value in selection.items()),"Preserve the exact original host operation and source selection.")
+else:
+    receipt={**selection,"started_at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),"state":"PREPARING","attempts":[]}
+receipt["pid"]=os.getpid()
+if receiving:
+    label=receiving["label"];receipt.setdefault("checkpoints",{}).setdefault(label,{})["received"]=receiving
 immutable(PRIVATE/"remote-customer-native-host.py",_receiving_host_source.encode())
 save(receipt_path,receipt)
-def print_status(phase,**values):print(json.dumps({"phase":phase,"operation_id":OPERATION,**values}),flush=True)
+resource_snapshot("initial")
 def acquire_source_packet():
     decoded=INPUT/"remote-source.decoded.json"
     if decoded.exists():
@@ -296,19 +481,28 @@ remote-customer-files.json binds every delivered file by complete bytes and SHA-
     print_status("remote-customer-packaged",**{"archive":receipt["customer_archive"],"members":len(selected)})
     return [final,PRIVATE/"OData_Remote_Comparison_Customer_Result.json"]
 def save_completed_customer(files):
+    global child
     existing=receipt.get("library_save")
     if existing:
         print_status("original-library-save-already-selected",returncode=existing["returncode"],result_path=existing["stdout"]["path"])
         return existing
+    need(not receipt.get("library_intent"),"Reconcile the original selected final save before another provider invocation.")
     request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"other"} for path in files]}
     immutable(PRIVATE/"provider/library-request.json",request)
     receipt["library_intent"]={"request":identity(PRIVATE/"provider/library-request.json"),"state":"SELECTED"};save(receipt_path,receipt)
-    result=subprocess.run([sys.executable,"-B",str(HELPER)],input=json.dumps(request),text=True,capture_output=True,
-        cwd=PRIVATE/"provider",env={**os.environ,"TMPDIR":str(PRIVATE/"temporary")})
-    save(PRIVATE/"provider/library-stdout.json",result.stdout.encode());save(PRIVATE/"provider/library-stderr.log",result.stderr.encode())
-    receipt["library_save"]={"returncode":result.returncode,"stdout":identity(PRIVATE/"provider/library-stdout.json"),
-        "stderr":identity(PRIVATE/"provider/library-stderr.log")};save(receipt_path,receipt)
-    print_status("remote-customer-library-return",returncode=result.returncode,result=result.stdout,stderr=result.stderr[-4000:])
+    stdout=PRIVATE/"provider/library-stdout.json";stderr=PRIVATE/"provider/library-stderr.log"
+    with stdout.open("xb",buffering=0) as out,stderr.open("xb",buffering=0) as err:
+        child=subprocess.Popen([sys.executable,"-B",str(HELPER)],stdin=subprocess.PIPE,stdout=out,stderr=err,
+            cwd=PRIVATE/"provider",env={**os.environ,"TMPDIR":str(PRIVATE/"temporary")},pass_fds=(lease,),start_new_session=True)
+        receipt["library_intent"]["pid"]=child.pid;save(receipt_path,receipt)
+        child.communicate(json.dumps(request).encode());code=child.returncode;child=None
+    raw=stdout.read_text(errors="replace")
+    try:body=json.loads(raw)
+    except ValueError:body=None
+    succeeded=code==0 and library_return_success(body,[str(path) for path in files])
+    receipt["library_save"]={"state":"SUCCEEDED" if succeeded else "RETURNED","returncode":code,"stdout":identity(stdout),"stderr":identity(stderr)}
+    save(receipt_path,receipt)
+    print_status("remote-customer-library-return",state=receipt["library_save"]["state"],returncode=code,result=raw,stderr=stderr.read_text(errors="replace")[-4000:])
     return receipt["library_save"]
 _active=False
 def run_original_remote_customer():
@@ -317,20 +511,29 @@ def run_original_remote_customer():
     _active=True
     try:
         descriptor=stage_source()
+        if receipt.get("customer_archive"):
+            saved=receipt["customer_archive"];path=Path(saved["path"])
+            need(identity(path)==saved,"Preserve the already completed original customer archive.")
+            save_completed_customer([path,PRIVATE/"OData_Remote_Comparison_Customer_Result.json"]);return
         run_command("remote-customer",[str(NODE),str(SOURCE/"stellar-forge/mcp-merchant-operator/examples/remote-comparison-customer.mjs"),
             str(INPUT/"remote-customer-input.json")])
+        receipt["state"]="NATIVE_COMPLETE";save(receipt_path,receipt)
+        save_checkpoint("native-complete")
         run_command("remote-analysis",[sys.executable,"-B",str(SOURCE/"stellar-forge/mcp-merchant-operator/examples/remote-comparison-analysis.py"),
             "--checkout",str(SOURCE),"--operation",str(OUTPUT),"--node",str(NODE)])
+        receipt["state"]="ANALYSIS_COMPLETE";save(receipt_path,receipt);resource_snapshot("complete")
         save_completed_customer(package_customer())
     except BaseException as error:
-        receipt["state"]="NEEDS_ATTENTION";receipt["error"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()};save(receipt_path,receipt)
+        close_original_child()
+        receipt["state"]="NEEDS_ATTENTION";receipt["error"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
+        save(receipt_path,receipt);resource_snapshot("failure")
         print_status("remote-original-preserved",error=receipt["error"],private_root=str(PRIVATE))
+        try:save_checkpoint("failure-"+str(len(receipt.get("attempts",[]))))
+        except BaseException as saving_error:
+            receipt["checkpoint_error"]={"type":type(saving_error).__name__,"message":str(saving_error)};save(receipt_path,receipt)
+            print_status("remote-checkpoint-preserved",error=receipt["checkpoint_error"],private_root=str(PRIVATE))
     finally:
-        if child is not None:
-            try:os.killpg(child.pid,signal.SIGTERM);child.wait(timeout=20)
-            except ProcessLookupError:pass
-            except subprocess.TimeoutExpired:os.killpg(child.pid,signal.SIGKILL);child.wait()
-            child=None
+        close_original_child()
         _active=False
         print_status("REMOTE_CUSTOMER_ATTACHED",state=receipt["state"],private_root=str(PRIVATE),resume="run_original_remote_customer()")
 run_original_remote_customer()
