@@ -4,7 +4,7 @@
   "source_commit": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f",
   "source_pull_request": 2453,
   "target_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "target_base_commit": "ad6ad2d05ccd16105dc48295d1b7ebb2f3b1c839",
+  "target_base_commit": "6dfd31f9ff239efa9695af2b80a3e506c4e0a7b8",
   "selection": "open311-gis",
   "source_files": [
     {
@@ -812,7 +812,9 @@
       "selection": "open311-gis",
       "merchant_provider": "open311-gis-workspaces",
       "merchant_configuration": "open311GISWorkspaces",
-      "workspace_database": "open311-gis.sqlite"
+      "workspace_database": "open311-gis.sqlite",
+      "operating_program": "operations/open311-gis-8e5f-20261012/commission-gis.mjs",
+      "operating_continuation": "operations/open311-gis-8e5f-20261012/source-packet.json"
     }
   },
   "initial_source": {
@@ -821,10 +823,10 @@
   },
   "shared_contracts_observed_at": "faa3cf93020be2514b376f6a4d9c5c8a93bfda10",
   "previous_adoption": {
-    "source_commit": "e526c7a67f40ff4bb7db59410e9a2768df4d445b",
-    "source_pull_request": 2388,
-    "target_pull_request": 343,
-    "target_merge_commit": "4b3866b04fb0da3a5fb7662a5acae682e8dcb47f"
+    "source_commit": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f",
+    "source_pull_request": 2453,
+    "target_pull_request": 404,
+    "target_merge_commit": "978fac495329c4cf98af7e996de0e0e04249e499"
   },
   "source_updates": [
     {
@@ -1012,6 +1014,19 @@
         "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/gis/WORKSPACE.md",
         "operations/open311-collection-8e5f-20261012/README.md"
       ]
+    },
+    {
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461,
+      "source_merge_commit": "ad9f1c414ba34966fa196760edd4db43b807bb33",
+      "paths": [
+        "operations/open311-gis-8e5f-20261012/commission-gis.mjs",
+        "operations/open311-gis-8e5f-20261012/continue-boston.mjs",
+        "operations/open311-gis-8e5f-20261012/README.md",
+        "operations/open311-gis-8e5f-20261012/source-packet.json",
+        "operations/open311-gis-8e5f-20261012/format-interchange-input.json",
+        "operations/open311-gis-8e5f-20261012/format-interchange-result.json"
+      ]
     }
   ],
   "previous_adoptions": [
@@ -1062,6 +1077,12 @@
       "source_pull_request": 2388,
       "target_pull_request": 343,
       "target_merge_commit": "4b3866b04fb0da3a5fb7662a5acae682e8dcb47f"
+    },
+    {
+      "source_commit": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f",
+      "source_pull_request": 2453,
+      "target_pull_request": 404,
+      "target_merge_commit": "978fac495329c4cf98af7e996de0e0e04249e499"
     }
   ],
   "selections": [
@@ -1151,6 +1172,60 @@
       "sha256": "e44e50a25d521ba1cbaa9da9113b5da54962e6fd446b493204dfe0163517df73",
       "source_commit": "b1cc5ba862f3f18c41f6971eb638dbc2b8c1a1d9",
       "source_pull_request": 2403
+    },
+    {
+      "path": "operations/open311-gis-8e5f-20261012/commission-gis.mjs",
+      "git_blob": "f06c9bf1dcd34d033152560aa2d95bf0c0be59e3",
+      "bytes": 36005,
+      "sha256": "3bc889bf003733e46570af01e02b8361f228fcab7f70f5a25e040da93a2b02cc",
+      "mode": "100644",
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461
+    },
+    {
+      "path": "operations/open311-gis-8e5f-20261012/continue-boston.mjs",
+      "git_blob": "a98a01ed05b1d810cc4ed20036c77a5d69d047d6",
+      "bytes": 1061,
+      "sha256": "33b69ba364ea41a916b565d0ec9da1592d8229410eec40b424339adf3cb5e8ff",
+      "mode": "100644",
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461
+    },
+    {
+      "path": "operations/open311-gis-8e5f-20261012/format-interchange-input.json",
+      "git_blob": "01cfc4154b064782864d42b9661b0585e0da86d6",
+      "bytes": 71283,
+      "sha256": "f9078c3de1a6ae1ec30f0b2934df9d40fd1cddaaa49bb026e789428def6ffb51",
+      "mode": "100644",
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461
+    },
+    {
+      "path": "operations/open311-gis-8e5f-20261012/format-interchange-result.json",
+      "git_blob": "e318ba581471b69ab06b294c7e99dc67cd287316",
+      "bytes": 3947,
+      "sha256": "49fdad109ee02b1a53fe606c5b3302631977c03d1776d54861dc22148a22be28",
+      "mode": "100644",
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461
+    },
+    {
+      "path": "operations/open311-gis-8e5f-20261012/README.md",
+      "git_blob": "eb327c1dbebb2dbfb996d8c453bd0f11fe41d9fb",
+      "bytes": 6292,
+      "sha256": "a5c3447e2b1a9144ec61f2d4a273c0986c95184bc3945fa5b5d92cbc0236b485",
+      "mode": "100644",
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461
+    },
+    {
+      "path": "operations/open311-gis-8e5f-20261012/source-packet.json",
+      "git_blob": "ef539f23db771dd3bdf0b304bddad8d58f5b3e7f",
+      "bytes": 378772,
+      "sha256": "078eef4171dec064e6619fc27c248955617d908e18e6dc9f5cc58b6204b55223",
+      "mode": "100644",
+      "source_commit": "1f45ac52b20f60bb829c2df2c693666847a463aa",
+      "source_pull_request": 2461
     },
     {
       "path": "operations/open311-service-reporting-8e5f-20261012/browser-journey.mjs",
