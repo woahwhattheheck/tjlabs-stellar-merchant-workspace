@@ -72,7 +72,7 @@ export type DownloadSelection =
   | { profile: ProfileId; kind: 'provider-response'; id: Sha256; observationId: InstanceId };
 export interface CompleteDownload { bytes: Buffer; sha256: Sha256; name: string; mime: string }
 export interface ResponseMetadata {
-  status: number; headers: Record<string, string>; summary: JsonRecord;
+  status: number; headers: Record<string, string>; summary: JsonRecord | null;
   name: string; bytes: number; sha256: Sha256; preview: string; previewTruncated: boolean;
 }
 export interface CompleteResponse extends Omit<ResponseMetadata, 'bytes' | 'preview' | 'previewTruncated'> { bytes: Buffer }

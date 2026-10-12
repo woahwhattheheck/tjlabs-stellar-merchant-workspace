@@ -42,7 +42,21 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect
   --dir /absolute/private/tenderly-runtime --load
 ~~~
 
-Use the resulting READY runtime with Node 22.16 or later. The original Python customer and buyer package travel with the source; select their installed Python runtime for Python customer operation. The full build, installation and runtime-transfer references remain under source/stellar/scf-starforge-20261009/distribution in the package. Keep private operating data outside the software installation.
+Use the resulting READY runtime with Node 22.16 or later. Inspection returns its actual sourceRoot and dependencyRoot. Bind the following commands to that exact private installation:
+
+~~~sh
+TENDERLY_RUNTIME=/absolute/private/tenderly-runtime
+TENDERLY_SOURCE_ROOT=/ACTUAL_SOURCE_ROOT_RETURNED_BY_INSPECT
+export TENDERLY_SOURCE_ROOT
+starforge() {
+  node "$TENDERLY_SOURCE_ROOT/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs" \
+    run --dir "$TENDERLY_RUNTIME" -- "$@"
+}
+~~~
+
+The local function selects the READY installation for every starforge example below. The JavaScript examples use the same exported sourceRoot, so they resolve its actual installed modules and adjacent dependencies from any private customer directory. A project that installs the archive as its own npm dependency can instead use the published @tokenjunkielabs/starforge-merchant exports and their TypeScript declarations.
+
+The original Python customer and buyer package travel with the source; select their installed Python runtime for Python customer operation. The full build, installation and runtime-transfer references remain under source/stellar/scf-starforge-20261009/distribution in the package. Keep private operating data outside the software installation.
 
 ## Open one merchant through Applications
 
@@ -145,10 +159,16 @@ The full tool contracts, paging fields, recovery inputs and retained-file contin
 ## Use the typed Node attachment
 
 ~~~js
-import { TenderlyWorkspaceClient }
-  from '@tokenjunkielabs/starforge-merchant/partners/tenderly/workspace/connection';
 import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
+const sourceRoot = process.env.TENDERLY_SOURCE_ROOT;
+if (!sourceRoot) throw new Error('Set the READY installation sourceRoot.');
+const fromSource = path => import(pathToFileURL(join(sourceRoot, path)).href);
+const { TenderlyWorkspaceClient } = await fromSource(
+  'stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/connection.mjs'
+);
 const client = await TenderlyWorkspaceClient.connect(
   '/absolute/private/tenderly-operator/tenderly.connection.json'
 );
@@ -178,12 +198,16 @@ Use the exact plan and request packet handed over by the merchant. The original 
 
 ~~~js
 import { readFile } from 'node:fs/promises';
-import { prepareWorkspaceRequest }
-  from '@tokenjunkielabs/starforge-merchant/partners/tenderly/preparation';
-import { createSelection }
-  from '@tokenjunkielabs/starforge-merchant/partners/tenderly/customer/selection';
-import { TenderlyCustomer }
-  from '@tokenjunkielabs/starforge-merchant/partners/tenderly/customer';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const sourceRoot = process.env.TENDERLY_SOURCE_ROOT;
+if (!sourceRoot) throw new Error('Set the READY installation sourceRoot.');
+const fromSource = path => import(pathToFileURL(join(sourceRoot, path)).href);
+const partner = 'stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/';
+const { prepareWorkspaceRequest } = await fromSource(partner + 'customer.mjs');
+const { createSelection } = await fromSource(partner + 'customer/selection.mjs');
+const { TenderlyCustomer } = await fromSource(partner + 'customer/client.mjs');
 
 const plan = JSON.parse(await readFile('/absolute/private/customer/plan.json', 'utf8'));
 const prepared = await prepareWorkspaceRequest({
@@ -194,7 +218,7 @@ const prepared = await prepareWorkspaceRequest({
   responseOut: '/absolute/private/customer/input/provider-response.json'
 });
 const customer = new TenderlyCustomer({
-  runtimeDirectory: '/absolute/installed/source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli',
+  runtimeDirectory: join(sourceRoot, 'stellar/scf-starforge-20261009/sf88-operator-buyer-cli'),
   stateDirectory: '/absolute/private/customer/buyer',
   operatorProfile: '/absolute/private/operator-profile.json'
 });
@@ -213,7 +237,7 @@ await result.analyze({
 });
 ~~~
 
-Replace runtimeDirectory with the actual retained SF88 directory in the installed package. The native customer preserves its review, signer selection, approval and spending operation. Its recover action reopens that same original intent after interruption. The maintained [Node/Python customer guide](../../stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/customer/README.md) contains both language interfaces and the CLI modes.
+The customer uses the actual retained SF88 directory in that same installed package. The native customer preserves its review, signer selection, approval and spending operation. Its recover action reopens that same original intent after interruption. The maintained [Node/Python customer guide](../../stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/customer/README.md) contains both language interfaces and the CLI modes.
 
 The complete customer export contains response.json, request.json, buyer-result.json, request.body, simulation-request.json and any original buyer-evidence.json, followed by its manifest. The original openExport API or starforge tenderly-customer open-export verifies the complete received export and its execution context.
 
