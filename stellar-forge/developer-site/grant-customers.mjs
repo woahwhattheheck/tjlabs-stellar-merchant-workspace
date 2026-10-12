@@ -1,5 +1,6 @@
 import { currentGrantCompanionLinks } from './grant-companion.mjs';
 // MIT. Carry accepted customer sections into the maintained SCF reviewer edition.
+import { receiveGrantA2ASources } from './grant-a2a.mjs';
 const FEDERAL = '## Federal awards: complete funding research, workshares and receiving';
 const WEBHOOK = '## Webhook customer adoption: complete event tasks and operator handover';
 const OPENFN = '## OpenFn: paid workflow commissioning and complete receiving';
@@ -345,6 +346,7 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/a2a\/receiving\/commission\.mjs)/, analytical);
   receive("a2a-complete-native-programme", "Complete analytical service native commissioning entry",
     /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(operations\/scf-a2a-native-analysis-0c7a-\d{8}\/RUN_NATIVE\.md)/, analytical);
+  receiveGrantA2ASources(index, analytical);
   const workshares = section(companion, CUSTOMER_WORKSHARES)?.text || '';
   receive("medstar-study-workspace", "Study operations original application",
     /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/README\.md)/, workshares);
