@@ -39,6 +39,7 @@ export async function operateInstallationReturn(config){
     'pythonExecutable','chrome','playwrightModule'])need(path.isAbsolute(config[key]),'Select the original absolute '+key+'.');
   const nativeConfig=Object.fromEntries(['operationId','sourceRoot','workspaceDirectory','coreReceivedDirectory',
     'receivedDirectory','finalReceivedDirectory','outputDirectory'].map(k=>[k,config[k]]));
+  if(Object.hasOwn(config,'completedBase'))nativeConfig.completedBase=structuredClone(config.completedBase);
   const output=config.outputDirectory,inputFile=path.join(output,'native-input.json');
   await fs.mkdir(output,{recursive:true,mode:0o700});
   const existing=await optional(inputFile);
