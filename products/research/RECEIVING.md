@@ -4,6 +4,14 @@ This guide takes the maintained Research product from its original Git source to
 
 The [operating guide](OPERATING.md) is the analyst-facing workflow. The [Documents and Pipelines contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_DOCUMENTS.md) gives complete SDK, command, merchant and request fields. Original provider configuration belongs to the [Documents source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED.md) and [managed Pipelines source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED_PIPELINES.md).
 
+
+## Customer quotations and Applications commissioning
+
+Use the complete [Research commissioning workflow](COMMISSIONING.md) to select the original customer case store, observed pricing profiles, paid-delivery host and existing source connections. Preparation retains the full native configuration and source review; save produces the original Applications settings/request and same-source direct launch arguments. The existing Applications desk reviews, starts, stops and reopens that Research listener.
+
+The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
+
+
 ## 1. Build the complete selected source
 
 Use the existing repository containing the full source commit. The normal builder reads the committed recipe and selected source-owned registrations, follows their static imports and browser maps, and retains the complete declared component directories.

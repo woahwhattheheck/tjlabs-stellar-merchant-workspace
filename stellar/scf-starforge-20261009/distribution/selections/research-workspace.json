@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "research-workspace",
   "title": "Research workspace",
-  "description": "Original Research sources, Zotero libraries, independent extraction, appraisal, reviewed publications, customer update deliveries, Documents/Pipelines, Analysis and complete portable receiving",
+  "description": "Original Research sources, customer quotations and observed pricing, reviewed commissioning, paid frozen deliveries, complete receiving, Zotero, extraction, appraisal, Documents/Pipelines and retained customer history",
   "base": {
     "commands": [
       "installation",
@@ -179,14 +179,15 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/examples/research_eligibility_customer.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/COPYING",
     "products/zotero/OPERATING.md",
-    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json"
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "products/research/COMMISSIONING.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Source-linked Research, Zotero, extraction and appraisal, reviewed publications, customer update workspaces, original source processing and complete independent receiving",
+    "description": "Source-linked Research customer quotations, reviewed Applications commissioning, observed pricing, paid deliveries, original source processing and complete independent receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
