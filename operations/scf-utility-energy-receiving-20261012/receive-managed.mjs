@@ -42,7 +42,10 @@ export async function receiveUtilityEnergyApplications(config,{onProgress=()=>{}
   const bootstrap=config.bootstrapSourceRoot ?? join(config.runtimeDirectory,'package','source');
   const {inspectMerchantRuntime}=await moduleAt(bootstrap,'sf46-release/runtime-package.mjs');
   const runtime=await inspectMerchantRuntime(config.runtimeDirectory,{load:false});
-  const declaration=await readUtilityReceivingSource(sourceManifest,runtime.sourceRoot);
+  const sourceManifestBytes=typeof sourceManifest==='string'?await readFile(sourceManifest):null;
+  const sourceManifestValue=sourceManifestBytes===null
+    ?JSON.parse(JSON.stringify(sourceManifest)):JSON.parse(sourceManifestBytes.toString('utf8'));
+  const declaration=await readUtilityReceivingSource(sourceManifestValue,runtime.sourceRoot);
   if(declaration.installedPackage)need(declaration.sourceCommit===runtime.sourceCommit,
     'The complete package declaration belongs to a different installed source.');
   await verifyUtilityReceivingSource(declaration,runtime.sourceRoot);
@@ -51,6 +54,15 @@ export async function receiveUtilityEnergyApplications(config,{onProgress=()=>{}
     await moduleAt(runtime.sourceRoot,'distribution/runtime-workspace/model.mjs');
   const {makePrivate,privateDirectory,readJSON,saveJSON,operationLease,canonical}=
     await moduleAt(runtime.sourceRoot,'distribution/runtime-workspace/storage.mjs');
+  if(declaration.installedPackage){
+    const installedManifestBytes=await readFile(join(runtime.sourceRoot,'..','manifest.json'));
+    need(hash(installedManifestBytes)===runtime.sourceManifestSha256,
+      'The READY package manifest changed during receiving.');
+    need(sourceManifestBytes===null
+      ?JSON.stringify(canonical(sourceManifestValue))===JSON.stringify(canonical(JSON.parse(installedManifestBytes.toString('utf8'))))
+      :hash(sourceManifestBytes)===runtime.sourceManifestSha256,
+      'Use this READY installation\'s complete package manifest.');
+  }
   const {applicationEnvironment}=
     await moduleAt(runtime.sourceRoot,'distribution/runtime-workspace/application-command.mjs');
   const {managedCommandAlive}=

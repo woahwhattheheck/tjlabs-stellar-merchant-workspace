@@ -82,8 +82,8 @@ def verify(path, declared):
     return actual
 
 
-def read_source_manifest(path, source_root, family="leap"):
-    manifest = read_json(path)
+def read_source_manifest(path, source_root, family="leap", *, manifest_bytes=None):
+    manifest = read_json(path) if manifest_bytes is None else json.loads(manifest_bytes)
     if manifest.get("schema") == "stellar-forge.merchant-distribution-manifest.v1":
         helper = Path(source_root) / "operations/scf-utility-energy-receiving-20261012/receiving_source.py"
         spec = importlib.util.spec_from_file_location("energy_receiving_source", helper)
@@ -218,7 +218,10 @@ class Receiving:
 
     def preflight(self, *, inspect_runtime=True):
         manifest_path = Path(self.config.get("sourceManifest", HERE / "source-manifest.json")).absolute()
-        manifest = read_source_manifest(manifest_path, self.source)
+        manifest_bytes = manifest_path.read_bytes()
+        manifest_identity = {"bytes": len(manifest_bytes), "sha256": hashlib.sha256(manifest_bytes).hexdigest()}
+        verify(manifest_path, manifest_identity)
+        manifest = read_source_manifest(manifest_path, self.source, manifest_bytes=manifest_bytes)
         if manifest.get("installedPackage") and self.config.get("expectedSourceCommit"):
             need(manifest["sourceCommit"] == self.config["expectedSourceCommit"],
                  "The complete installed Leap source differs from the selected commit.")
@@ -236,6 +239,9 @@ class Receiving:
             verify(manifest_path, self.state["source"]["manifest"])
         if not inspect_runtime:
             need(self.state.get("source"), "Retain the original completed source selection.")
+            if manifest.get("installedPackage"):
+                installed_manifest = Path(self.state["source"]["runtime"]["sourceRoot"]).parent / "manifest.json"
+                verify(installed_manifest, manifest_identity)
             return
         helper = self.source / BASE / "distribution/runtime-install.mjs"
         code = (
@@ -248,9 +254,11 @@ class Receiving:
         if manifest.get("installedPackage"):
             need(descriptor["sourceCommit"] == manifest["sourceCommit"],
                  "The complete Leap declaration belongs to a different READY installation.")
+            installed_manifest = Path(descriptor["sourceRoot"]).parent / "manifest.json"
+            verify(installed_manifest, manifest_identity)
         self.original_command = [descriptor["executable"], *descriptor["args"], "--python", self.python]
         self.state["source"] = {
-            "manifest": {"path": str(manifest_path), **identity(manifest_path)},
+            "manifest": {"path": str(manifest_path), **verify(manifest_path, manifest_identity)},
             "members": members, "runtime": descriptor, "verifiedAt": stamp()
         }
         self.state["phases"]["source"] = {"status": "COMPLETE", "at": stamp()}
