@@ -1,6 +1,6 @@
 // MIT. Private operator UI over the ORIGINAL fleetControl adapter.
 import { createServer } from 'node:http';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +12,10 @@ const USAGE = `Usage: node workspace/server.mjs --state PRIVATE_FLEET_DIRECTORY
   [--manifest NAME=FILE ...] [--port 8402]
 Or: node workspace/server.mjs --releases ORIGINAL_PLAN --release-state PRIVATE_DIRECTORY
   [--state PRIVATE_GATEWAY_DIRECTORY] [--port 8402]
+Applications: managed --plan ORIGINAL_PLAN --directory PRIVATE_DIRECTORY
+  --source-root INSTALLED_SOURCE --expected-workspace-identity SHA256
+  --expected-source-sha256 SHA256 --operation-id UUID --port 0
+  [--state PRIVATE_GATEWAY_DIRECTORY]
 The existing gateway must be running with --state. Manifest names are declared
 by the operator at startup. Managed mode starts the original release sessions
 and gateway itself. The browser never supplies filesystem paths.`;
@@ -29,13 +33,13 @@ function nativeError(error) {
   if (/NOT an original SF30 seller/.test(error?.message ?? '')) return 'FLEET_SELLER_UNAVAILABLE';
   return 'FLEET_CONTROL_REJECTED';
 }
-async function body(req) {
+async function body(req, maximum = 8192) {
   if (req.headers['content-type']?.split(';', 1)[0].trim() !== 'application/json')
     throw failure('WORKSPACE_JSON_REQUIRED', 415);
   const chunks = []; let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 8192) throw failure('WORKSPACE_REQUEST_TOO_LARGE', 413);
+    if (size > maximum) throw failure('WORKSPACE_REQUEST_TOO_LARGE', 413);
     chunks.push(chunk);
   }
   try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks))); }
@@ -43,8 +47,15 @@ async function body(req) {
 }
 
 export async function startFleetWorkspace({ stateDirectory, manifests = {}, port = 8402,
-  releasePlan, releaseDirectory, expectedPlanDigest } = {}) {
+  releasePlan, releaseDirectory, expectedPlanDigest, managedBinding } = {}) {
   const managed = releasePlan !== undefined;
+  if (managedBinding !== undefined && (!managed || !object(managedBinding) ||
+      Object.keys(managedBinding).some(key => !['operationId', 'workspaceIdentity', 'sourceSha256'].includes(key)) ||
+      !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(managedBinding.operationId ?? '') ||
+      !/^[a-f0-9]{64}$/.test(managedBinding.workspaceIdentity ?? '') ||
+      !/^[a-f0-9]{64}$/.test(managedBinding.sourceSha256 ?? '')))
+    throw failure('FLEET_MANAGED_BINDING_INVALID');
+  const binding = managedBinding ? Object.freeze({ ...managedBinding }) : null;
   if (!managed && (typeof stateDirectory !== 'string' || !stateDirectory.trim())) throw new TypeError('--state is required');
   if (managed && (typeof releasePlan !== 'string' || !releasePlan.trim() ||
       typeof releaseDirectory !== 'string' || !releaseDirectory.trim())) throw new TypeError('--releases and --release-state are required together');
@@ -67,8 +78,16 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
     return { status: releaseStatus ? releaseStatus.native : await fleetControl(directory, 'status'),
       ...(releaseStatus ? { releaseStatus, planDigest: releases.planDigest } : {}), capturedAt: new Date().toISOString() };
   };
-  const sessionKey = randomBytes(32).toString('base64url');
+  const sessionKey = randomBytes(32).toString('base64url'), instanceId = randomUUID();
   let url, starting = true, closing = false, closingPromise;
+  const workspaceIdentity = () => ({
+    schema: 'stellar-forge.fleet-workspace-identity.v1',
+    instanceId, pid: process.pid, ppid: process.ppid, origin: url, managed,
+    planFile: managed ? resolve(releasePlan) : null,
+    directory: managed ? resolve(releaseDirectory) : null,
+    gatewayStateDirectory: directory, planDigest: releases?.planDigest ?? null,
+    ...(binding ?? {}),
+  });
   const headers = {
     'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
     'referrer-policy': 'no-referrer', 'cross-origin-resource-policy': 'same-origin',
@@ -98,9 +117,52 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
       if (req.method === 'GET' && asset) return send(res, 200, asset.bytes, asset.type);
       if (req.method === 'GET' && req.url === '/api/session')
         return send(res, 200, { session: sessionKey, manifests: [...sources.keys()], managed });
+      // The mounted original SF98 UI keeps its own native session token.
+      // Authority and same-origin checks above apply to every mounted route.
+      const deliveryMount = releases && /^\/delivery\/([a-z][a-z0-9-]{0,39})\/([a-z][a-z0-9-]{0,39})(?:\/|$)/.exec(new URL(req.url, url).pathname);
+      if (deliveryMount) {
+        if (!await releases.mountDelivery(req, res, { tenant: deliveryMount[1], slot: deliveryMount[2], origin: url }))
+          send(res, 404, { error: 'WORKSPACE_ROUTE_NOT_FOUND' });
+        return;
+      }
       if (!sameSession(req)) return send(res, 403, { error: 'WORKSPACE_SESSION_REQUIRED' });
+      if (req.method === 'GET' && req.url === '/api/identity')
+        return send(res, 200, workspaceIdentity());
       if (req.method === 'GET' && req.url === '/api/status')
         return send(res, 200, await snapshot());
+      if (releases && req.url.startsWith('/api/releases/delivery')) {
+        const target = new URL(req.url, url), base = '/api/releases/delivery';
+        const reads = {
+          [base]: ['deliveryStatus', []],
+          [base + '/events']: ['deliveryEvents', ['id', 'state', 'offset', 'limit']],
+          [base + '/transfers']: ['deliveryTransfers', ['after', 'limit']],
+          [base + '/transfer']: ['deliveryTransferManifest', ['id', 'expectedFingerprint']],
+          [base + '/download']: ['sendDeliveryTransfer', ['id', 'expectedFingerprint']],
+        };
+        if (req.method === 'GET' && Object.hasOwn(reads, target.pathname)) {
+          const [method, extra] = reads[target.pathname], names = [...target.searchParams.keys()];
+          if (new Set(names).size !== names.length || !target.searchParams.has('tenant') || !target.searchParams.has('slot') ||
+              names.some(name => !['tenant', 'slot', ...extra].includes(name))) throw failure('WORKSPACE_REQUEST_INVALID');
+          const input = Object.fromEntries(target.searchParams);
+          for (const name of ['limit', 'offset']) if (input[name] !== undefined) {
+            if (!/^(?:0|[1-9]\d*)$/.test(input[name]) || !Number.isSafeInteger(Number(input[name])))
+              throw failure('WORKSPACE_REQUEST_INVALID');
+            input[name] = Number(input[name]);
+          }
+          if (method === 'sendDeliveryTransfer') return releases.sendDeliveryTransfer(req, res, input);
+          return send(res, 200, await releases[method](input));
+        }
+        const changes = {
+          [base + '/control']: ['deliveryControl', ['action', 'input']],
+          [base + '/transfer']: ['deliveryTransfer', ['id', 'expectedSourceFingerprint']],
+        };
+        if (req.method === 'POST' && !target.search && Object.hasOwn(changes, target.pathname)) {
+          const [method, extra] = changes[target.pathname], input = await body(req, 32768);
+          keys(input, ['tenant', 'slot', ...extra]); operationDispatched = true;
+          return send(res, 200, await releases[method](input));
+        }
+        return send(res, 404, { error: 'WORKSPACE_ROUTE_NOT_FOUND' });
+      }
       if (releases && req.url.startsWith('/api/releases/discovery')) {
         const target = new URL(req.url, url), base = '/api/releases/discovery';
         const reads = {
@@ -219,22 +281,25 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
   const close = () => {
     if (closingPromise) return closingPromise;
     closing = true;
-    closingPromise = (async () => {
+    const attempt = (async () => {
       try {
         // An in-flight native stage may own an HTTP response. Signal its original
         // capture before waiting for that response and the listener to drain.
         releases?.cancelStaging?.();
         releases?.cancelClientTransfers?.();
+        releases?.cancelDeliveryOperations?.();
         if (server.listening) await new Promise((done, fail) => {
           server.close(error => error ? fail(error) : done()); server.closeIdleConnections();
         });
       } finally { await releases?.close(); }
     })();
-    return closingPromise;
+    closingPromise = attempt;
+    attempt.catch(() => { if (closingPromise === attempt) closingPromise = undefined; });
+    return attempt;
   };
   try {
     await new Promise((done, fail) => { server.once('error', fail); server.listen(port, HOST, done); });
-    url = 'http://' + HOST + ':' + server.address().port;
+    url = new URL('http://' + HOST + ':' + server.address().port).origin;
     // The original merchant authorizes this actual navigation origin, including
     // an automatically allocated workspace port. Requests wait for native startup.
     if (managed) {
@@ -245,7 +310,8 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
       directory = releases.stateDirectory;
     }
     await snapshot(); starting = false;
-    return { url, ...(releases ? { publicURL: releases.publicURL } : {}), close };
+    return { url, identity: workspaceIdentity(), sessionKey,
+      ...(releases ? { publicURL: releases.publicURL } : {}), close };
   } catch (error) {
     try { await close(); } catch (cleanup) { error.cleanupError = nativeError(cleanup); }
     throw error;
@@ -253,18 +319,31 @@ export async function startFleetWorkspace({ stateDirectory, manifests = {}, port
 }
 
 export async function main(args = process.argv.slice(2)) {
-  if (args.length === 1 && args[0] === '--help') { process.stdout.write(USAGE + '\n'); return null; }
+  if (args.length === 1 && args[0] === '--help' ||
+      args.length === 2 && args[0] === 'managed' && args[1] === '--help') {
+    process.stdout.write(USAGE + '\n'); return null;
+  }
   const manifests = Object.create(null), options = new Map();
-  for (let i = 0; i < args.length; i += 2) {
-    const flag = args[i], value = args[i + 1];
-    if (!['--state', '--manifest', '--port', '--releases', '--release-state'].includes(flag) || !value || value.startsWith('--')) throw new TypeError(USAGE);
-    if (flag === '--manifest') {
-      const split = value.indexOf('=');
-      if (split < 1 || Object.hasOwn(manifests, value.slice(0, split))) throw new TypeError(USAGE);
-      manifests[value.slice(0, split)] = value.slice(split + 1);
-    } else {
-      if (options.has(flag)) throw new TypeError(USAGE);
-      options.set(flag, value);
+  let launch, managedModule;
+  if (args[0] === 'managed') {
+    managedModule = await import('./managed.mjs');
+    launch = await managedModule.prepareFleetManagedLaunch(managedModule.parseFleetManagedArguments(args.slice(1)));
+    options.set('--releases', launch.selection.planFile);
+    options.set('--release-state', launch.selection.directory);
+    options.set('--state', launch.workspace.gatewayStateDirectory);
+    options.set('--port', String(launch.selection.port));
+  } else {
+    for (let i = 0; i < args.length; i += 2) {
+      const flag = args[i], value = args[i + 1];
+      if (!['--state', '--manifest', '--port', '--releases', '--release-state'].includes(flag) || !value || value.startsWith('--')) throw new TypeError(USAGE);
+      if (flag === '--manifest') {
+        const split = value.indexOf('=');
+        if (split < 1 || Object.hasOwn(manifests, value.slice(0, split))) throw new TypeError(USAGE);
+        manifests[value.slice(0, split)] = value.slice(split + 1);
+      } else {
+        if (options.has(flag)) throw new TypeError(USAGE);
+        options.set(flag, value);
+      }
     }
   }
   const portText = options.get('--port') ?? '8402';
@@ -273,24 +352,39 @@ export async function main(args = process.argv.slice(2)) {
   const signals = ['SIGTERM', 'SIGINT'];
   const stop = () => {
     requestedClose = true;
-    if (service && !stopping) stopping = service.close().finally(() => {
+    if (!service) return undefined;
+    if (stopping) return stopping;
+    const attempt = Promise.resolve().then(() => service.close());
+    stopping = attempt;
+    // The original native close retains leases on incomplete cleanup and permits
+    // the same owner to retry. Keep both signal handlers until it really drains.
+    attempt.then(() => {
       for (const signal of signals) process.off(signal, onSignal);
-    });
-    return stopping;
+    }, () => { if (stopping === attempt) stopping = undefined; });
+    return attempt;
   };
   const onSignal = () => { stop()?.catch(() => { process.exitCode = 1; }); };
   // Embedded original SF82 sessions use handleSignals:false. Own signals before
   // startup can create its first session, including a signal received mid-boot.
-  for (const signal of signals) process.once(signal, onSignal);
+  for (const signal of signals) process.on(signal, onSignal);
   try {
     service = await startFleetWorkspace({ stateDirectory: options.get('--state'), manifests, port: Number(portText),
-      releasePlan: options.get('--releases'), releaseDirectory: options.get('--release-state') });
+      releasePlan: options.get('--releases'), releaseDirectory: options.get('--release-state'),
+      ...(launch ? { expectedPlanDigest: launch.workspace.planDigest, managedBinding: launch.binding } : {}) });
     if (requestedClose) { await stop(); return null; }
-    process.stdout.write(JSON.stringify({ workspace: service.url, manifests: Object.keys(manifests),
-      ...(service.publicURL ? { merchantIngress: service.publicURL } : {}) }) + '\n');
+    const announcement = launch ? await managedModule.fleetManagedStartup({ launch, service }) : {
+      workspace: service.url, manifests: Object.keys(manifests),
+      ...(service.publicURL ? { merchantIngress: service.publicURL } : {}) };
+    if (requestedClose) { await stop(); return null; }
+    process.stdout.write(JSON.stringify(announcement) + '\n');
     return service;
   } catch (error) {
-    for (const signal of signals) process.off(signal, onSignal);
+    if (service) {
+      try { await stop(); }
+      catch (cleanup) { error.cleanupError = nativeError(cleanup); }
+    } else {
+      for (const signal of signals) process.off(signal, onSignal);
+    }
     throw error;
   }
 }

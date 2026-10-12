@@ -21,6 +21,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Operate and hand over buyer request collections | **Applications → Request collections** or `starforge buyer-collections-workspace` | Reviewed original requests, exact spending caps and outcomes, complete encrypted backup, receiving and reopening |
+| Operate a saved merchant fleet | **Applications → Merchant fleet** or `starforge merchant-fleet-workspace` | Reviewed source releases, controlled activation and drain, client delivery, durable settlement delivery, and encrypted recovery with the original fleet state |
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
 | Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
@@ -52,6 +53,13 @@ same workflow. The
 [pricing and supplier-cost guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 connects original supplier sources, allocation, saved pricing reviews, scenario
 planning and complete backup receiving through that same Applications lifecycle.
+
+The [merchant fleet guide](../merchant-fleet/OPERATING.md) connects an existing
+fleet plan and its original seller stores to Applications review, start, open,
+stop and reopening. `starforge merchant-fleet-configure` prepares the native
+configuration and exact request files; the same guide carries release review,
+activation and rollback, customer files, accounting and fulfillment delivery,
+and the original encrypted fleet recovery and receiving workflow.
 
 The [Kafka workspace guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/README.md)
 connects original broker capture, exact event history, field mapping and merchant
@@ -238,6 +246,7 @@ the replacement is operating as intended.
 - [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 - [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
 - [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
+- [Managed merchant fleet, settlement delivery and encrypted recovery](../merchant-fleet/OPERATING.md)
 - [Request Collections, encrypted backup and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/request-collections/OPERATING.md)
 - [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
 - [GraphQL product setup and complete project handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/HANDOVER.md)
