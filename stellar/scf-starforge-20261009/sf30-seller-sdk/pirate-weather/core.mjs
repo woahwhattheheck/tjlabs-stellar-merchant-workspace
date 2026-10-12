@@ -8,7 +8,7 @@ import {providerAccount,requireProviderKey,captureForecast} from './provider.mjs
 import {buildReport,inspectReport,compareReports,reportFiles} from './reports.mjs';
 import {prepareForecastDataset,nativePublishers,queryNativeDataset,prepareNativeRelease,inspectNativeRelease,controlNativeRelease,inspectBuyer,receiveBuyer,readBuyerOutput} from './dataset.mjs';
 export const ACTIONS=Object.freeze(['contract.save','capture.fetch','capture.import','capture.reconcile','report.prepare','report.review','report.export',
-  'dataset.prepare','release.prepare','release.activate','release.start','release.stop','release.rollback','buyer.receive','project.export']);
+  'dataset.prepare','release.prepare','release.activate','release.start','release.stop','release.rollback','release.reconcile','buyer.receive','project.export']);
 const now=()=>new Date().toISOString(),key=id=>identity({operationId:id}).slice(0,24),clone=structuredClone;
 function choice(list,id,label){const value=list.find(x=>x.id===id);need(value,'PIRATE_NOT_FOUND','Choose a retained '+label+'.',404);return value;}
 function decodeBase64(value){
@@ -28,7 +28,7 @@ function responseInput(p){
 }
 export async function openPirateWorkspace(directory,{create=false,config=null,environment=process.env,fetchImpl=globalThis.fetch,
   inboxDirectory=null,releaseRuntime={port:0},applicationSource=null}={}){
-  const existing=await inspectWorkspaceIdentity(directory,{allowMissing:create,schema:WORKSPACE_SCHEMA});
+  const existing=await inspectWorkspaceIdentity(directory,{allowMissing:true,schema:WORKSPACE_SCHEMA});
   if(!existing)need(create,'PIRATE_INITIALIZATION_REQUIRED','Initialize this original workspace before opening it.',409);
   const requested=config?configuration(config):null;
   const store=await openWorkspaceStore(directory,{schema:WORKSPACE_SCHEMA,initialState:{
@@ -38,8 +38,9 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
     configuration(store.read().providerReference);
     if(requested)need(identity(requested)===identity(store.read().providerReference),'PIRATE_CONNECTION_CHANGED','This workspace retains another original provider reference.',409);
   }catch(error){await store.close();throw error;}
-  const publishers=nativePublishers(store);let tail=Promise.resolve(),closing=false,poisoned=false,activeAbort=null;
+  const publishers=nativePublishers(store);let tail=Promise.resolve(),accepting=true,closing=false,closePromise=null,poisoned=false,activeAbort=null;
   const assertOpen=()=>need(!closing&&!poisoned,'PIRATE_REOPEN_REQUIRED','Close and reopen this original workspace before continuing an uncertain save.',503);
+  const assertAccepting=()=>{assertOpen();need(accepting,'PIRATE_CLOSING','The workspace is draining its accepted original requests.',503);};
   async function mutate(fn){
     assertOpen();let callbackError=false;
     try{return await store.mutate(async state=>{try{return await fn(state);}catch(error){callbackError=true;throw error;}});}
@@ -114,9 +115,13 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
       case 'release.stop':
       case 'release.rollback':
         exact(p,['releaseId','expectedGeneration'],['releaseId','expectedGeneration']);choice(store.read().releases,p.releaseId,'native release');whole(p.expectedGeneration,'the original release generation');break;
+      case 'release.reconcile':
+        exact(p,['originalOperationId','expectedObservationSha256','disposition','actor','note'],['originalOperationId','expectedObservationSha256','disposition','actor','note']);
+        uuid(p.originalOperationId);sha(p.expectedObservationSha256);actor();text(p.note,'the native reconciliation decision',8000);
+        need(['RECONCILE_OBSERVED_STATE','RETAIN_UNRESOLVED'].includes(p.disposition),'PIRATE_RECONCILIATION_DECISION','Choose the retained native observation disposition.');break;
       case 'buyer.receive':
         exact(p,['intentIds'],['intentIds']);need(Array.isArray(p.intentIds)&&p.intentIds.length>0&&p.intentIds.length<=100,'PIRATE_BUYER_SELECTION','Select the original buyer intent IDs.');
-        p.intentIds.forEach(v=>text(v,'an original buyer intent ID',240));context.inboxDirectory=inboxDirectory;break;
+        need(new Set(p.intentIds).size===p.intentIds.length&&p.intentIds.every(v=>typeof v==='string'&&/^[A-Za-z0-9._:-]{1,128}$/.test(v)),'PIRATE_BUYER_SELECTION','Select distinct original Inbox intent IDs.');context.inboxDirectory=inboxDirectory;break;
       case 'project.export':
         exact(p,['title'],['title']);text(p.title,'the complete project title',160);context.applicationSource=applicationSource;break;
       default:throw fault('PIRATE_ACTION','Choose a supported operation.');
@@ -132,9 +137,23 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
     if(retained){need(retained.payloadSha256===payloadSha256&&retained.action===request.action,'PIRATE_REQUEST_ID_REUSED','This UUID belongs to another exact original request.',409);return retained;}
     need(store.read().revision===request.expectedRevision,'PIRATE_REVISION_CHANGED','The workspace changed; review the current source and submit a new request UUID.',409);
     if(input.source)await object(input.source);
+    if(request.action==='project.export'){
+      need(applicationSource,'PIRATE_APPLICATION_REQUIRED','Open with the selected installed application source before preparing a complete project.',409);
+      // Freeze the complete original state outside the mutable request table.
+      // Repeated exports retain object references, never recursive snapshots.
+      input.context.snapshot=await object(bytes(store.read()));
+    }
     await mutate(s=>{
       need(s.revision===request.expectedRevision,'PIRATE_REVISION_CHANGED','The workspace changed before this request was accepted.',409);
-      if(request.action==='contract.save')need(s.currentContractSha256===input.payload.previousContractSha256,'PIRATE_CONTRACT_CHANGED','The contract edition changed; review its exact current source.',409);
+      if(request.action==='contract.save'){
+        need(s.currentContractSha256===input.payload.previousContractSha256,'PIRATE_CONTRACT_CHANGED','The contract edition changed; review its exact current source.',409);
+        input.context.ordinal=s.contractEditions.length+1;
+      }
+      if(['report.export','dataset.prepare'].includes(request.action)){
+        const approved=choice(s.reviews,input.payload.reviewId,'review'),latest=s.reviews.filter(r=>r.reportId===input.payload.reportId).at(-1);
+        need(approved.reportId===input.payload.reportId&&approved.disposition==='APPROVED'&&latest?.id===approved.id,'PIRATE_REVIEW_REQUIRED','Use the current named approval for this exact report.',409);
+        input.context.review=clone(approved);
+      }
       if(request.action==='capture.fetch'){
         requireProviderKey(s.providerReference,environment);
         if(s.providerHold){
@@ -142,7 +161,6 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
           need(until&&Date.parse(until)<=Date.now(),'PIRATE_PROVIDER_DEADLINE','The original provider response still defers source calls. Retain its deadline and original request.',429);
         }
       }
-      if(request.action==='project.export')input.context.snapshot=clone(s);
       retained={operationId:request.operationId,action:request.action,payload:input.payload,payloadSha256,expectedRevision:request.expectedRevision,
         createdAt:now(),state:'RUNNING',stages:{},context:input.context};
       s.operations[request.operationId]=retained;
@@ -180,14 +198,16 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
   }
   async function execute(op){
     op=operation(op.operationId);const p=op.payload,id=key(op.operationId);
-    if(op.stages.result)return commit(op,op.stages.result);
     switch(op.action){
       case 'contract.save':{
-        if(store.read().contractEditions.length){const old=await contractEdition(p.previousContractSha256);need(old.value.id===p.value.id,'PIRATE_CONTRACT_ID_CHANGED','Retain this customer contract ID across its revisions.',409);}
-        const body={schema:CONTRACT_SCHEMA,workspaceId:store.read().workspaceId,ordinal:store.read().contractEditions.length+1,previousSha256:p.previousContractSha256,
+        if(p.previousContractSha256!==null){const old=await contractEdition(p.previousContractSha256);need(old.value.id===p.value.id,'PIRATE_CONTRACT_ID_CHANGED','Retain this customer contract ID across its revisions.',409);}
+        const body={schema:CONTRACT_SCHEMA,workspaceId:store.read().workspaceId,ordinal:op.context.ordinal,previousSha256:p.previousContractSha256,
           value:p.value,actor:p.actor,note:p.note,createdAt:op.createdAt,operationId:op.operationId},digest=identity(body),value={...body,id:digest,sha256:digest};
         await edition(value);
-        return commit(op,value,s=>{s.contractEditions.push({id:digest,ordinal:value.ordinal,createdAt:value.createdAt,title:p.value.title,units:p.value.units,contractId:p.value.id});s.currentContractSha256=digest;});
+        return commit(op,value,s=>{
+          need(s.currentContractSha256===p.previousContractSha256&&s.contractEditions.length+1===value.ordinal,'PIRATE_CONTRACT_CHANGED','A later contract decision is retained. Keep this original request and review a new revision.',409);
+          s.contractEditions.push({id:digest,ordinal:value.ordinal,createdAt:value.createdAt,title:p.value.title,units:p.value.units,contractId:p.value.id});s.currentContractSha256=digest;
+        });
       }
       case 'capture.fetch':
       case 'capture.import':
@@ -240,7 +260,7 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
         const raw=bytes(value);need(raw.length<=64*1024*1024,'PIRATE_REPORT_CAPACITY','The complete report exceeds 64 MiB; all original source responses remain retained.',413);
         const saved=await object(raw);await edition({kind:'report',id:value.id,object:saved});
         const description={id:value.id,title:value.title,createdAt:value.createdAt,contractSha256:value.contractSha256,rows:value.rows.length,coverage:value.coverage,previousReportId:value.previousReportId};
-        return commit(op,description,s=>{s.reportIds.push(description);s.selectedReportId=value.id;});
+        return commit(op,description,s=>{s.reportIds.push(description);const selected=s.reportIds.find(r=>r.id===s.selectedReportId);if(!selected||Date.parse(selected.createdAt)<=Date.parse(op.createdAt))s.selectedReportId=value.id;});
       }
       case 'report.review':{
         await report(p.reportId);
@@ -249,7 +269,7 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
       }
       case 'report.export':
       case 'dataset.prepare':{
-        const value=await report(p.reportId),review=choice(store.read().reviews,p.reviewId,'review');
+        const value=await report(p.reportId),review=op.context.review;
         need(review.reportId===value.id&&review.disposition==='APPROVED','PIRATE_REVIEW_REQUIRED','Select the named approval for this exact report.',409);
         if(op.action==='dataset.prepare'){
           const captures=await Promise.all(value.sources.map(x=>capture(x.captureId)));
@@ -260,19 +280,34 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
         return commit(op,{reportId:value.id,reviewId:review.id,files},s=>{for(const f of files)s.fileIndex[f.id]=f;s.exports.push({id:op.operationId,kind:'report',reportId:value.id,reviewId:review.id,files:files.map(x=>x.id),createdAt:op.createdAt});});
       }
       case 'release.prepare':{
-        const output=await prepareNativeRelease(store,{dataset:choice(store.read().datasets,p.datasetId,'dataset'),origin:p.origin,path:p.path,payment:p.payment,id:'pirate-'+id,runtime:op.context.releaseRuntime,publishers});
-        await checkpoint(op,'nativeResult',output);return commit(op,output,s=>s.releases.push(output));
+        const output=op.stages.nativeResult??await prepareNativeRelease(store,{dataset:choice(store.read().datasets,p.datasetId,'dataset'),origin:p.origin,path:p.path,payment:p.payment,id:'pirate-'+id,runtime:op.context.releaseRuntime,publishers});
+        if(!op.stages.nativeResult)await checkpoint(op,'nativeResult',output);return commit(op,output,s=>s.releases.push(output));
       }
       case 'release.activate':case 'release.start':case 'release.stop':case 'release.rollback':{
         if(op.stages.nativeInvoking&&!op.stages.nativeResult)throw fault('PIRATE_NATIVE_RECONCILIATION_REQUIRED','Inspect the original release generation before continuing its interrupted control request.',409);
         if(op.stages.nativeResult)return commit(op,op.stages.nativeResult);
-        await checkpoint(op,'nativeInvoking',{releaseId:p.releaseId,expectedGeneration:p.expectedGeneration,action:op.action});
+        const before=await inspectNativeRelease(store,choice(store.read().releases,p.releaseId,'release'),publishers);
+        need(before.selection.generation===p.expectedGeneration,'PIRATE_NATIVE_GENERATION','Review the current original release generation.',409);
+        await checkpoint(op,'nativeInvoking',{releaseId:p.releaseId,expectedGeneration:p.expectedGeneration,action:op.action,before,at:now()});
         const output=await controlNativeRelease(store,choice(store.read().releases,p.releaseId,'release'),op.action.split('.')[1],p,publishers);
         await checkpoint(op,'nativeResult',output);return commit(op,output);
       }
+      case 'release.reconcile':{
+        const observed=await releaseRecovery(p.originalOperationId);
+        need(observed.observationSha256===p.expectedObservationSha256,'PIRATE_NATIVE_OBSERVATION_CHANGED','The original native state changed; review its current observation.',409);
+        need(p.disposition==='RETAIN_UNRESOLVED'||observed.canReconcile,'PIRATE_NATIVE_UNRESOLVED','The original engine does not currently demonstrate the selected state; retain this observation without claiming completion.',409);
+        const result={originalOperationId:p.originalOperationId,disposition:p.disposition,actor:p.actor,note:p.note,at:op.createdAt,
+          observation:observed,providerInvocations:0,nativeControlInvocations:0,authority:'ORIGINAL_ENGINE_OBSERVATION_WITH_NAMED_RECONCILIATION',
+          causality:'The current native state is observed. The missing original call acknowledgement is not reconstructed.'};
+        const accepted=await object(bytes(result));
+        return commit(op,result,s=>{const original=s.operations[p.originalOperationId];original.reconciliations??=[];original.reconciliations.push({operationId:op.operationId,observationSha256:observed.observationSha256,disposition:p.disposition});
+          if(p.disposition==='RECONCILE_OBSERVED_STATE'){original.state='COMPLETE';original.result=accepted;original.completedAt=op.createdAt;original.error=null;original.completionAuthority=result.authority;}
+        });
+      }
       case 'buyer.receive':{
-        const output=await receiveBuyer(store,op.context.inboxDirectory,p.intentIds,'buyer-'+id);await checkpoint(op,'nativeResult',output);
-        return commit(op,output,s=>s.receipts.push(output));
+        const output=op.stages.nativeResult??await receiveBuyer(store,op.context.inboxDirectory,p.intentIds,'buyer-'+id);if(!op.stages.nativeResult)await checkpoint(op,'nativeResult',output);
+        const files=[];for(const download of output.downloads){const original=await readBuyerOutput(store,output,download.name);files.push(await fileDescriptor(op,'buyer-'+download.name,download.name,download.type,original.bytes,{receiptId:output.id,role:'original-buyer-output'}));}
+        const result={...output,files};return commit(op,result,s=>{s.receipts.push(result);for(const f of files)s.fileIndex[f.id]=f;});
       }
       case 'project.export':{
         const {exportProject}=await import('./package.mjs');
@@ -281,7 +316,22 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
       }
     }
   }
+  async function releaseRecovery(operationId){
+    const original=operation(operationId);
+    need(['release.activate','release.start','release.stop','release.rollback'].includes(original.action)&&original.stages.nativeInvoking&&!original.stages.nativeResult&&original.state!=='COMPLETE',
+      'PIRATE_NATIVE_RECOVERY_SCOPE','Select the original interrupted native control request.',409);
+    const p=original.payload,before=original.stages.nativeInvoking.before,observed=await inspectNativeRelease(store,choice(store.read().releases,p.releaseId,'release'),publishers);
+    const selection=observed.selection,history=selection.history??[],prior=before?.selection?.history??[],action=original.action.split('.')[1],runtime=observed.publisher?.releases?.runtime;
+    const extendsOnce=history.length===prior.length+1&&identity(history.slice(0,-1))===identity(prior)&&history.at(-1)?.operation===action&&selection.generation===p.expectedGeneration+1;
+    const canReconcile=action==='activate'?extendsOnce&&selection.active===p.releaseId:
+      action==='rollback'?extendsOnce:
+      action==='start'?selection.generation===p.expectedGeneration&&selection.active===p.releaseId&&runtime?.state==='RUNNING'&&runtime.observed?.releaseId===p.releaseId:
+      selection.generation===p.expectedGeneration&&runtime?.state==='STOPPED';
+    const proof={originalOperationId:operationId,action,releaseId:p.releaseId,expectedGeneration:p.expectedGeneration,before,observed,canReconcile};
+    return {...proof,observationSha256:identity(proof)};
+  }
   async function act(request){
+    assertAccepting();
     const pending=tail.then(async()=>{
       assertOpen();let op;
       try{
@@ -300,7 +350,7 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
     return {schema:WORKSPACE_SCHEMA,workspaceId:s.workspaceId,revision:s.revision,createdAt:s.createdAt,provider:providerAccount(s.providerReference,environment),
       currentContractSha256:s.currentContractSha256,contractEditions:s.contractEditions,captures:s.captures,reports:s.reportIds,reviews:s.reviews,
       datasets:s.datasets,releases:s.releases.map(({handoff,...r})=>r),buyerReceipts:s.receipts,exports:s.exports,
-      providerHold:s.providerHold,selectedReportId:s.selectedReportId,closing,requiresReopen:poisoned,
+      providerHold:s.providerHold,selectedReportId:s.selectedReportId,closing:!accepting,requiresReopen:poisoned,
       requests:Object.values(s.operations).map(({context,payload,stages,result,...o})=>({...o,stageNames:Object.keys(stages),result:result??null})),
       counts:{captures:s.captures.length,reports:s.reportIds.length,reviews:s.reviews.length,datasets:s.datasets.length}};
   }
@@ -312,7 +362,10 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
       const value=await report(input.id),offset=whole(input.offset??0,'the first row'),limit=whole(input.limit??100,'the row count',1,500);
       const {rows,...metadata}=value;return {...metadata,rows:rows.slice(offset,offset+limit),total:rows.length,offset,nextOffset:offset+limit<rows.length?offset+limit:null};
     }
-    if(method==='compare')return compareReports(await report(input.beforeId),await report(input.afterId));
+    if(method==='compare'){
+      const value=compareReports(await report(input.beforeId),await report(input.afterId)),offset=whole(input.offset??0,'the first change'),limit=whole(input.limit??100,'the change count',1,500);
+      return {...value,added:value.added.slice(offset,offset+limit),removed:value.removed.slice(offset,offset+limit),changed:value.changed.slice(offset,offset+limit),offset,limit};
+    }
     if(method==='operation'){
       const op=operation(input.operationId),{context,...publicOp}=op;
       return {...publicOp,...(op.state==='COMPLETE'?{acceptedResult:await resultOf(op)}:{})};
@@ -328,6 +381,7 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
       return {request,requestSha256:identity(request),source:selected.normalized.source,summary,error,retainedOnImport:true,providerInvocations:0};
     }
     if(method==='dataset.query')return queryNativeDataset(store,choice(store.read().datasets,input.datasetId,'dataset'),input.query);
+    if(method==='release.recovery-preview')return releaseRecovery(input.operationId);
     if(method==='release.inspect')return inspectNativeRelease(store,choice(store.read().releases,input.releaseId,'release'),publishers);
     if(method==='buyer.inspect')return inspectBuyer(inboxDirectory,input.intentIds);
     throw fault('PIRATE_READ','Choose a supported retained workspace view.');
@@ -339,7 +393,16 @@ export async function openPirateWorkspace(directory,{create=false,config=null,en
     }
     const {readProjectFile}=await import('./package.mjs');return readProjectFile(store,value);
   }
-  return {directory:store.root,workspaceId:store.read().workspaceId,act,read,file,
-    async close(){if(closing)return;activeAbort?.abort();await tail;closing=true;try{await publishers.close();}finally{await store.close();}},
-    requestClose(){activeAbort?.abort();},get closed(){return closing;}};
+  async function fileSource(id){
+    sha(id);const value=store.read().fileIndex[id];need(value,'PIRATE_FILE_NOT_FOUND','Select a retained original output.',404);
+    if(value.storage.kind==='object')return {path:join(store.root,'objects',sha(value.storage.sha256)),...clone(value)};
+    const {readProjectSource}=await import('./package.mjs');return readProjectSource(store,value);
+  }
+  const close=()=>{
+    if(closePromise)return closePromise;accepting=false;activeAbort?.abort();
+    closePromise=(async()=>{await tail;closing=true;try{await publishers.close();}finally{await store.close();}})();return closePromise;
+  };
+  return {directory:store.root,workspaceId:store.read().workspaceId,configurationSha256:identity(store.read().providerReference),act,read,file,fileSource,close,
+    requestClose(){accepting=false;activeAbort?.abort();},get closed(){return closing;}};
+
 }
