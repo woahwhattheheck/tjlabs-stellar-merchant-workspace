@@ -62,7 +62,9 @@
     "merchant-provider-facilitators",
     "merchant-provider-publishers",
     "merchant-provider-receiving",
-    "merchant-provider-tools"
+    "merchant-provider-tools",
+    "job-intake-browser",
+    "paid-job-operations"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -107,7 +109,9 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "stellar/scf-starforge-20261009/sf66-demo-launcher/commerce-jsonrpc.mjs",
+    "stellar/scf-starforge-20261009/sf66-demo-launcher/commerce-jsonrpc-recovery.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
