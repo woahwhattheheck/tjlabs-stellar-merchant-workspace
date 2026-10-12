@@ -4,7 +4,19 @@ This programme continues the completed original Object monitoring and Support ca
 
 The application source is fixed at **33600e3f5654a5199991562dedd166eee36d9e87**. The full source input selects **797 files / 11,343,307 bytes**. It includes the original 734-file application selection, every changed or newly imported dependency needed by this edition, and three original license files. The 100 changed or new bodies are complete. The other source bodies come from the completed original package and are checked against the current Git tree.
 
-The programme is executable source. Its publication does not report a completed native customer run. A completed run writes the native result and the saved full-package identity described below.
+The programme includes the complete Object Support baseline runner and customer as well as the current recovery programme. A completed run writes the native result and the saved full-package identity described below.
+
+## Receiving the archived Object data after a host restart
+
+The original Analysis handover contains the full 267-byte Object and its exports. Its saved ZIP is 23,530 bytes, SHA256 427e862f51282bfb0c8dc71b04a13d75f1f9f305a49bc5405c2c37a11146d8b3. The archived source session is f269be5c-ca82-4a78-b603-3f526abf90a9.
+
+When raw session state is unavailable, receive those exact saved data bytes through the maintained native Object application. This creates an actual new session ID. Keep that returned ID and the complete receiving result, with the original archive and session lineage. The source-data checksum remains 80bc251619f969166dd39f60290b0450663fbf54ab2dc037a2635dbfb921c19a.
+
+The supplied original-support-runner.py forwards received_session_id and source_data_receiving from its private baseline configuration to original-support-customer.mjs. The customer checks the actual session, full archive, full native receiving-result bytes and original Object checksum before operating Support. source_data_receiving uses schema stellar-forge.object-source-receiving-lineage.v1, state COMPLETE, archivedSessionId, receivedSessionId, objectBytes, objectSha256, and sourceArchive/nativeReceivingResult objects containing absolute path, bytes and sha256.
+
+The baseline runs against f7200d52fdc5722619d0cf708041ee46db447e7f and retains the same reviewed 1,024-byte and explicit 266-byte workload settings. Its complete package now includes every Object session, incident-store and case-store member, the original archive, actual receiving result, all application source and operating source. The recovered session is checked unchanged across Support operations; its recorded ID remains distinct from the archived predecessor.
+
+This receiving step uses the saved data and the native no-payment path. The Support and recovery programmes then operate the completed session; they do not reacquire data or execute a purchase.
 
 ## What the operator completes
 
@@ -29,6 +41,8 @@ The selected original configuration has no notification destination and no notif
 
 | File | Purpose |
 | --- | --- |
+| original-support-customer.mjs | The full Object Support baseline, including actual restored-session identity and original archive lineage. |
+| original-support-runner.py | The full baseline source receiver, native runner and complete state/data package save. |
 | incident-recovery-customer.mjs | The complete HTTP operator and independent receiving journey. |
 | run-recovery.py | Receive the exact source, run the customer, package the full result and save it. |
 | git-object-receiving.py | The unchanged maintained Git source receiver, Git blob 3d402bc7e20e0da26193d099ad9429d0b47feef2. |
@@ -52,7 +66,7 @@ Copy programme.example.json into a private directory, set mode 0600, and fill in
 | project | A persistent private directory for the receiving customer, case stores, full package and returned save identity. |
 | work | A separate private working directory for source receiving and temporary upload state. |
 | baselineProject | The completed original f7200d52 programme directory containing its configuration, delivery-result.json and full original package. |
-| originalRunner | Its unchanged source/run.py, Git blob 5d58cd32bbec5b98f51631da738d277d4ec384d5. |
+| originalRunner | Its complete source/run.py, supplied as original-support-runner.py, Git blob ee7a28366f38960e101b27c589cd6401c2f13068. |
 | driver | The incident-recovery-customer.mjs shipped beside this guide. |
 | sourceReceiver | The unchanged git-object-receiving.py shipped beside this guide. |
 | sourceInput | The full source-input.json.gz or uncompressed source-input.json. |
@@ -107,7 +121,7 @@ Opening a received profile is repeated for each fresh Support process because an
 
 Case writes retain the full request before dispatch. On continuation, the programme reads the same case ID first. If the actual saved workspace, support data and metadata match the prepared request, it adopts that saved revision. Otherwise, the original expected revision must still match before the existing case API may save it. A conflicting case is preserved for integration with its current owner.
 
-The native customer closes its own Support children during cleanup. The completed customer's result is reused for packaging; a completed programme is reported from its retained delivery result.
+The native customer closes its own Support children during cleanup. The outer programme also owns the complete child process group, retains the unreaped leader through termination, and closes the group before releasing the programme lock after a timeout or cancellation. The completed customer's result is reused for packaging; a completed programme is reported from its retained delivery result.
 
 The package save records its complete prepare/finalize calls separately under library-calls. If a save result is already present, it is checked and reused. If the transport ended after a save dispatch and before its result, use the retained calls and the actual saved file metadata to reconcile that dispatch. The complete native package remains available for that work.
 
@@ -117,8 +131,8 @@ The ZIP contains the following material, with a complete file manifest and conte
 
 - source/: all 797 selected files of the current application, including all three licenses.
 - receiving/: the actual snapshot and received incident store, recovery operations, private source profiles, continued case handoff, separate receiving case database, reports and original application outputs.
-- object-session/: every original retained Object session member. The programme checks that the original session is unchanged throughout the operation.
-- baseline/: the complete original Object monitoring and Support receiving ZIP.
+- object-session/: every retained Object session member, preserving its native file permissions. The programme checks that the selected session is unchanged throughout the operation.
+- baseline/: the complete Object monitoring and Support receiving ZIP, including all baseline stores, the original archived data and actual native receiving result.
 - native/: the current operating programme, unchanged Git receiver, unchanged original customer host and original runner.
 - source-metadata.json and the complete source input.
 - RECEIVING.md and MANIFEST.json.

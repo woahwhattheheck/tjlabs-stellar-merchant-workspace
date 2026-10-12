@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Continue the completed Object Support operation with its complete incident recovery source."""
 from __future__ import annotations
-import argparse, fcntl, gzip, hashlib, io, json, os, stat, subprocess, sys, types, uuid, zipfile
+import argparse, fcntl, gzip, hashlib, io, json, os, signal, stat, subprocess, sys, time, types, uuid, zipfile
 from pathlib import Path
 
 APP_COMMIT = "33600e3f5654a5199991562dedd166eee36d9e87"
 INPUT_SHA = "e5ac88b0132e5e457ca9a4ceae888befc7334391cf575bde2a3a2320373a08f1"
-ORIGINAL_RUNNER_GIT = "5d58cd32bbec5b98f51631da738d277d4ec384d5"
+ORIGINAL_RUNNER_GIT = "ee7a28366f38960e101b27c589cd6401c2f13068"
 SOURCE_RECEIVER_GIT = "3d402bc7e20e0da26193d099ad9429d0b47feef2"
-CUSTOMER_GIT = "8aff97b3d33fb748cc6c038b68570c0ccfef8150"
-DRIVER_GIT = "8e7437cc37563c91f36a49176a85710d9b6ab4c6"
+CUSTOMER_GIT = "3cff80371b90d14cff31d8b5dcdfca1ef65e08dc"
+DRIVER_GIT = "52dc2748e712e080332e8c6850b1ff10d8b35a61"
 
 def require(value, message):
     if not value:
@@ -73,12 +73,36 @@ class Programme:
                        {"name":name, "command":command, "at":self.original.now()})
         with open(directory / (invocation + ".stdout"), "xb") as stdout, open(directory / (invocation + ".stderr"), "xb") as stderr:
             os.fchmod(stdout.fileno(), 0o600); os.fchmod(stderr.fileno(), 0o600)
-            result = subprocess.run(command, cwd=self.project, stdout=stdout, stderr=stderr, timeout=timeout,
-                                    env=dict(os.environ, SCF_PYTHON=self.base_config["python"]), check=False)
-            stdout.flush(); os.fsync(stdout.fileno()); stderr.flush(); os.fsync(stderr.fileno())
-        self.save_json(directory / (invocation + ".result.json"),
-                       {"name":name, "returncode":result.returncode, "at":self.original.now()})
-        require(result.returncode == 0, "Inspect the actual " + name + " output in " + str(directory))
+            process = None; observed = None; expired = False
+            try:
+                process = subprocess.Popen(command, cwd=self.project, stdout=stdout, stderr=stderr,
+                                           start_new_session=True,
+                                           env=dict(os.environ, SCF_PYTHON=self.base_config["python"]))
+                deadline = time.monotonic() + timeout
+                while True:
+                    observed = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                    if observed is not None: break
+                    if time.monotonic() >= deadline:
+                        expired = True; break
+                    time.sleep(0.05)
+            finally:
+                code = None
+                if process is not None:
+                    # The unreaped leader retains this owned process-group identity
+                    # through closure of the original Support hosts and receiver.
+                    try: os.killpg(process.pid, signal.SIGTERM)
+                    except ProcessLookupError: pass
+                    deadline = time.monotonic() + 1
+                    while observed is None and time.monotonic() < deadline:
+                        observed = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                        if observed is None: time.sleep(0.05)
+                    try: os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError: pass
+                    code = process.wait()
+                stdout.flush(); os.fsync(stdout.fileno()); stderr.flush(); os.fsync(stderr.fileno())
+                self.save_json(directory / (invocation + ".result.json"),
+                               {"name":name, "returncode":code, "timeout":expired, "at":self.original.now()})
+        require(code == 0 and not expired, "Inspect the actual " + name + " output in " + str(directory))
         return directory / (invocation + ".stdout")
 
     def receive_source(self):
@@ -152,7 +176,7 @@ class Programme:
         for row in after:
             file = session / row["path"]
             files.append(("object-session/" + row["path"], file,
-                          {"bytes":row["bytes"], "sha256":row["sha256"], "mode":oct(row["mode"])}))
+                          {"bytes":row["bytes"], "sha256":row["sha256"], "mode":row["mode"]}))
         files += [("baseline/" + self.baseline_package.name, self.baseline_package, None),
                   ("source-metadata.json", metadata_file, None),
                   ("source-input" + (".json.gz" if str(self.cfg["sourceInput"]).endswith(".gz") else ".json"), Path(self.cfg["sourceInput"]), None),
@@ -193,8 +217,9 @@ class Programme:
                                     require(hashlib.sha256(body).hexdigest() == expected["sha256"], "The complete original Object session changed.")
                             info = zipfile.ZipInfo(name, (2026,10,12,0,0,0))
                             info.compress_type = zipfile.ZIP_DEFLATED; info.create_system = 3
-                            executable = expected and expected.get("mode") == "100755"
-                            info.external_attr = ((0o100755 if executable else 0o100644) << 16)
+                            selected_mode = expected.get("mode") if expected else file.stat().st_mode & 0o777
+                            mode = 0o755 if selected_mode == "100755" else 0o644 if selected_mode == "100644" else selected_mode if type(selected_mode) is int else 0o600
+                            info.external_attr = ((stat.S_IFREG | mode) << 16)
                             archive.writestr(info, body)
                             members.append({"path":name, "bytes":len(body), "sha256":hashlib.sha256(body).hexdigest()})
                         manifest = {"schema":manifest_schema, "operationId":self.cfg["operationId"], "sourceCommit":APP_COMMIT,
@@ -271,6 +296,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
+    for number in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(number, lambda sig, frame: (_ for _ in ()).throw(SystemExit(128 + sig)))
     programme = Programme(args.config)
     with open(programme.project / "programme.lock", "a+b") as lock:
         os.fchmod(lock.fileno(), 0o600)

@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 const APP_COMMIT='33600e3f5654a5199991562dedd166eee36d9e87';
 const INPUT_SHA256='e5ac88b0132e5e457ca9a4ceae888befc7334391cf575bde2a3a2320373a08f1';
-const ORIGINAL_CUSTOMER_GIT='8aff97b3d33fb748cc6c038b68570c0ccfef8150';
+const ORIGINAL_CUSTOMER_GIT='3cff80371b90d14cff31d8b5dcdfca1ef65e08dc';
 const sha=body=>crypto.createHash('sha256').update(body).digest('hex');
 const git=body=>crypto.createHash('sha1').update(Buffer.from('blob '+body.length+'\0')).update(body).digest('hex');
 const jsonBytes=value=>Buffer.from(JSON.stringify(value,null,2)+'\n');
@@ -98,7 +98,14 @@ async function main(){
   assert.equal(baseline.schema,'stellar-forge.object-incident-support-customer-result.v1');
   assert.equal(baseline.state,'COMPLETE');assert.equal(delivery.state,'COMPLETE');
   assert.equal(baseline.sourceCommit,'f7200d52fdc5722619d0cf708041ee46db447e7f');
-  assert.equal(baseline.originalSessionId,'f269be5c-ca82-4a78-b603-3f526abf90a9');
+  assert.equal(baseline.archivedSessionId??baseline.originalSessionId,'f269be5c-ca82-4a78-b603-3f526abf90a9');
+  assert.match(baseline.originalSessionId,/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  if(baseline.originalSessionId!=='f269be5c-ca82-4a78-b603-3f526abf90a9'){
+    assert.equal(baseline.sourceDataReceiving?.schema,'stellar-forge.object-source-receiving-lineage.v1');
+    assert.equal(baseline.sourceDataReceiving.state,'COMPLETE');
+    assert.equal(baseline.sourceDataReceiving.receivedSessionId,baseline.originalSessionId);
+    assert.equal(baseline.sourceDataReceiving.sourceArchive.sha256,'427e862f51282bfb0c8dc71b04a13d75f1f9f305a49bc5405c2c37a11146d8b3');
+  }
   assert.equal(baseline.objectSha256,'80bc251619f969166dd39f60290b0450663fbf54ab2dc037a2635dbfb921c19a');
   assert.equal(baseline.incidentFinalStatus,'RETIRED');assert.equal(baseline.incidentReason,'CONFIGURATION_CHANGED');
   assert.equal(baseline.originalSessionUnchanged,true);assert.equal(baseline.notificationConfigured,false);
@@ -305,7 +312,8 @@ async function main(){
     const after=await inventory(session);assert.deepEqual(after,previousSession);
     await write(path.join(root,'original-session-after.json'),after);
     const result={schema:'stellar-forge.incident-recovery-receiving-result.v1',state:'COMPLETE',source:reviewedSource,
-      originalSessionId:baseline.originalSessionId,objectSha256:baseline.objectSha256,originalSessionUnchanged:true,
+      originalSessionId:baseline.originalSessionId,archivedSessionId:baseline.archivedSessionId??baseline.originalSessionId,
+      sourceDataReceiving:baseline.sourceDataReceiving??null,objectSha256:baseline.objectSha256,originalSessionUnchanged:true,
       originalIncidentId:baseline.incidentId,originalIncidentStatus:detail.incident.status,
       snapshot:{operationId:operationIds.snapshot,directory:snapshot.directory,manifestSha256:inspected.manifestSha256,files:inspected.files,totalBytes:inspected.totalBytes},
       received:{operationId:operationIds.receive,directory:opened.directory,sourceId:recoveredId,reconciliation,notificationDeliveryPaused:reconciled.deliveryPaused},
