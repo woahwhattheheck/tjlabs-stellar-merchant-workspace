@@ -67,15 +67,24 @@ object database.
 The acquired object set includes the original eleven builder/installer modules,
 the three original VGI receiving files, the source-job resolution limit and OAuth
 browser, and the 97 runtime dependency files requested by the selected builder's
-actual receiving. The packet now selects 1,130 original paths and carries
-136 acquired original source bodies. Each body retains its unchanged Git blob
-identity under the complete signed source tree.
+actual receiving. It also carries the complete 814-body original reference cache
+acquired from that same signed tree. The packet retains 1,130 original required
+paths, adds 814 exact paths through the receiver's existing additional-path
+interface, and carries 950 acquired original source bodies. Every body retains
+its unchanged Git blob identity.
 
-The default packet includes the maintained accounting-provider and merchant-host
-modules, original managed-workspace helpers, native seller dependencies and their
-shared browser inputs. The original builder follows their static imports as it
-assembles the selected archive; its actual source manifest remains the packaged
-file inventory.
+This broader cache includes the maintained accounting-provider and merchant-host
+modules, original managed-workspace helpers, native seller dependencies, readers
+and their shared browser inputs. It supplies original objects before the full
+selected builder runs. The unchanged Node builder follows its actual static and
+runtime source declarations and produces the packaged file inventory; the
+reference cache does not choose or add product registrations.
+
+The original launcher verifies the packet's exact compressed and decoded
+identities with a bounded 64 MiB decoded-source ceiling, matching the maintained
+source-receiving capacity. Saved additional paths are kept when repeated
+`--additional-path` arguments are supplied. Existing packets without that optional
+list retain their original behavior.
 
 If the chosen worker's donors lack other selected
 objects, the receiver reports their exact IDs and paths in
