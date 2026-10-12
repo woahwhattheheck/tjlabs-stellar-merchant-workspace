@@ -15,6 +15,11 @@ From an installed source tree, the publisher also exposes its original operation
 
 The maintained command alias is **starforge socrata-publisher**. JSON input files are read as files; quotation, secrets and shell interpolation are unnecessary. The original operator server keeps one publisher object open for its browser controls. A foreground publisher release-start process owns that same publisher directory until it drains and closes.
 
+For host-configured provider choices, complete native payment review, retained review
+history and reviewed staging through this same operator, use the
+[facilitator workflow](FACILITATORS.md). It is available in the Releases panel,
+CLI and the original merchant MCP.
+
 ## 1. Prepare the selected edition
 
 In the source workspace, finish capture, save the mapping, build the edition, configure its merchant and export it. Select that export in Publisher. The generated export contains adjacent dataset.csv, dataset.json, seller.json and source.json.

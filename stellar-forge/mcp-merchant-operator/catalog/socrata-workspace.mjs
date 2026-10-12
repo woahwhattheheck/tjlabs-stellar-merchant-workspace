@@ -18,7 +18,9 @@ const publisherActions = new Set([
   'publisher.activateSnapshot', 'publisher.collect', 'publisher.release.stage', 'publisher.release.inspect',
   'publisher.release.activate', 'publisher.release.rollback', 'publisher.release.start', 'publisher.release.stop',
   'publisher.buyer.review', 'publisher.buyer.prepare', 'publisher.buyer.session', 'publisher.buyer.run',
-  'publisher.buyer.recover', 'publisher.buyer.account', 'publisher.buyer.export'
+  'publisher.buyer.recover', 'publisher.buyer.account', 'publisher.buyer.export',
+  'publisher.facilitators.review', 'publisher.facilitators.stage',
+  'publisher.facilitators.inspect', 'publisher.facilitators.history'
 ]);
 
 function socrataWorkspaceTools(tool) {
@@ -52,12 +54,12 @@ function socrataWorkspaceTools(tool) {
       scoped({}), ['workspace']),
     tool('merchant_socrata_restore', 'Restore a host-declared complete portable package into this original empty workspace. The original importer verifies all retained source files, native snapshots and saved selection.',
       scoped({ sourceImport: alias }), ['workspace', 'sourceImport']),
-    tool('merchant_socrata_file', 'Read an exact original source export or publisher customer file in complete verified chunks. The first chunk returns its SHA-256. Continue with readId, expectedSha256 and nextOffset; the shared retained reader loads the original file once and releases its snapshot at EOF.',
-      scoped({ kind: { enum: ['source-export', 'draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review'] },
+    tool('merchant_socrata_file', 'Read an exact original source export, publisher customer file or complete retained facilitator review in verified chunks. The first chunk returns its SHA-256. Continue with readId, expectedSha256 and nextOffset; the shared retained reader loads the original file once and releases its snapshot at EOF.',
+      scoped({ kind: { enum: ['source-export', 'draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review'] },
         id: text, filename: { type: 'string', maxLength: 160 }, ...chunk }), ['workspace', 'kind', 'id'], read),
     tool('merchant_socrata_file_release', 'Release a selected unfinished retained-file read. Its original source export remains available.',
       scoped({ readId: uuid }), ['workspace', 'readId'], { idempotent: true }),
-    tool('merchant_socrata_publisher', 'Use the original dataset publisher, SF82 release lifecycle or SF88 acquisition. Prepare selects exportId from this workspace. Release staging uses host runtime settings. Buyer sessions select a host buyerWorkspace alias; original reviews, policy, ledger and page attempts govern execution. Explicit unpaid-page continuation uses publisher.buyer.run payload retryUnpaid:true and expectedAttemptSha256 from the original session report.',
+    tool('merchant_socrata_publisher', 'Use the original dataset publisher, SF82 release lifecycle or SF88 acquisition. Prepare selects exportId from this workspace. Release staging uses host runtime settings. Facilitator review selects a host provider alias and retained source release, preserves the complete native alternatives, and returns reviewId for reviewed staging; inspect/history reopen those same complete reviews. Buyer sessions select a host buyerWorkspace alias; original reviews, policy, ledger and page attempts govern execution. Explicit unpaid-page continuation uses publisher.buyer.run payload retryUnpaid:true and expectedAttemptSha256 from the original session report.',
       scoped({ action: { enum: [...publisherActions] }, payload: object }), ['workspace', 'action'], { openWorld: true }),
     tool('merchant_socrata_browser', 'Open or close the industrial browser over this exact original operator object and its lazy publisher. Returns a private local session URL. Closing this borrowed browser leaves the MCP-owned operator open.',
       scoped({ action: { enum: ['open', 'close'] }, port: { type: 'integer', minimum: 0, maximum: 65535 } }), ['workspace', 'action']),

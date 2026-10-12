@@ -40,7 +40,7 @@ export function createCollectionsUi(host) {
   function filtered() {
     const search = String(host.getSearch() || '').trim().toLowerCase();
     return list.cases.filter(row => (status === 'ALL' || row.status === status) && (!owner || row.owner === owner) &&
-      (!search || [row.title,row.owner,row.invoice.number,row.invoice.customerName].some(value => String(value || '').toLowerCase().includes(search))));
+      (!search || [row.id,row.title,row.owner,row.invoice.number,row.invoice.customerName].some(value => String(value || '').toLowerCase().includes(search))));
   }
   function render() {
     const rows = filtered(), owners = [...new Set(list.cases.map(row => row.owner))].sort();

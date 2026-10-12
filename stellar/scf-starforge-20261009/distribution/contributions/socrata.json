@@ -8,12 +8,13 @@
   },
   "commandDescriptions": {
     "socrata": "Capture, map and query Socrata datasets through the source workspace and its publication workflow.",
-    "socrata-publisher": "Publish Socrata editions, control seller releases, and run customer acquisition and delivery."
+    "socrata-publisher": "Publish Socrata editions, review and stage configured facilitators, control seller releases, and run customer acquisition and delivery."
   },
   "exports": {
     "./seller/socrata/source": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/source.mjs",
     "./seller/socrata/workspace": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/workspace.mjs",
     "./seller/socrata/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/server.mjs",
-    "./seller/socrata/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/publisher.mjs"
+    "./seller/socrata/publisher": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/publisher.mjs",
+    "./seller/socrata/publisher-facilitators": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/publisher-facilitators.mjs"
   }
 }

@@ -31,6 +31,10 @@
     "./unstructured": {
       "types": "./unstructured/index.d.mts",
       "import": "./unstructured/index.mjs"
+    },
+    "./agents/inbox-task": {
+      "types": "./agents/inbox-task.d.mts",
+      "import": "./agents/inbox-task.mjs"
     }
   },
   "files": [
@@ -53,7 +57,8 @@
     "unstructured",
     "PROTECTED_STORAGE.md",
     "preapproval-native-record.py",
-    "PREAPPROVAL_RECOVERY.md"
+    "PREAPPROVAL_RECOVERY.md",
+    "INBOX_TASKS.md"
   ],
   "sideEffects": false,
   "peerDependencies": {
@@ -75,5 +80,8 @@
     "zod": {
       "optional": true
     }
+  },
+  "bin": {
+    "starforge-inbox-task": "./agents/inbox-task-cli.mjs"
   }
 }

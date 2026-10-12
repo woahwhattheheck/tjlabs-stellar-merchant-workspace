@@ -8,8 +8,8 @@ import {createHash,randomUUID} from 'node:crypto';
 
 const CASE_ID = 'datacove-sensorthings-commissioning-20261012';
 const OPERATION_ID = 'datacove-complete-workshare-intake-0c7a-20261012';
-const SOURCE_SHA256 = '334945e1046a435f10a42d7ffcdc7732164cdd75a67b100f1336ce18e8d1ddeb';
-const SOURCE_BYTES = 38687;
+const SOURCE_SHA256 = '8cb5bc3256d7e1bebe154cce7017a6e4510f0784643ffb79cc9235be1b7a97a7';
+const SOURCE_BYTES = 38686;
 const basename = dirname(fileURLToPath(import.meta.url));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const encoded = value => JSON.stringify(value,null,2)+'\n';
@@ -52,6 +52,15 @@ export async function receiveDataCove({consoleRoot,workspace,inputFile=join(base
   if(packet.prepared_case?.id!==CASE_ID||packet.workshare_input?.plan?.phases?.length!==6||
      packet.workshare_input?.plan?.commercial?.amount!=='7800.00')
     throw problem('The original case, six-phase plan or fixed terms differ.');
+  // The maintained Workshare derives this relationship from the case's literal URLs.
+  const record=packet.prepared_case.case,sourceCase=packet.workshare_input.source,plan=packet.workshare_input.plan;
+  const partnerId='case-party-'+hash(Buffer.from(record.partner_url)).slice(0,16);
+  const buyerId='case-buyer-'+hash(Buffer.from(record.buyer_url)).slice(0,16);
+  const relationship='DSR-'+partnerId+'--'+buyerId;
+  if(sourceCase.partner.source_url!==record.partner_url||sourceCase.opportunity.source_url!==record.buyer_url||
+     sourceCase.partner.id!==partnerId||sourceCase.opportunity.id!==buyerId||
+     sourceCase.operation_id!==relationship||plan.operation_id!==relationship)
+    throw problem('The selected Workshare must identify this original case and its URL-derived relationship.');
   await mkdir(directory,{recursive:true,mode:0o700});
   const info=await lstat(directory);
   if(!info.isDirectory()||info.isSymbolicLink()||(info.mode&0o077)!==0)
