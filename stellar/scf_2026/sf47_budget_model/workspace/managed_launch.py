@@ -174,6 +174,7 @@ BOOT_FILES = (
     "operations_cohort.mjs",
     "cohort_planning.mjs",
     "cohort_planning_calendar.mjs",
+    "cohort_planning_scheduling.mjs",
     "cohort_planning_cli.mjs",
     "operations_cohort_planning.mjs",
     "operations_cohort_planning.css",
