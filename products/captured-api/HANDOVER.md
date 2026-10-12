@@ -320,6 +320,8 @@ Status reads the retained original manifest and reopens the native target files.
 A completed operation remains inspectable after the delivered bundle is moved
 or removed. A pending operation reports its completed member records and the
 remaining members; repeat `receive` with the original complete bundle to finish.
+If the first original manifest record has not finished publishing, status identifies
+that retained preparation step so the same receive command can complete it.
 
 | Where the process stopped | Continue |
 | --- | --- |

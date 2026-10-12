@@ -334,6 +334,8 @@ export async function prepareCapturedHandover({directory:productDirectory,out,re
     }
     const oldReview = await readJSON(root,'handover-review.json',true);
     if (oldReview) {
+      if (oldReview.requestSha256 !== digest(encode(retained)))
+        fail('CAPTURED_HANDOVER_CHANGED', 'The completed review belongs to another original selection.');
       await verifyReview(root,oldReview);
       const original = await bytes(root,'handover-review.json',METADATA_LIMIT);
       return {state:'PREPARED',directory:root,reviewSha256:digest(original),review:oldReview,reused:true};
@@ -363,6 +365,9 @@ export async function publishCapturedHandover({out,expectedReviewSha256}) {
     if (digest(original) !== expectedReviewSha256)
       fail('CAPTURED_HANDOVER_CHANGED', 'Review this original completed collection before publishing it.');
     const review = await verifyReview(root,decode(original));
+    const selected = await readJSON(root,'operation.json');
+    if (selected.schema !== OPERATION_SCHEMA || review.requestSha256 !== digest(encode(selected)))
+      fail('CAPTURED_HANDOVER_CHANGED', 'Publish the review of this retained original selection.');
     const core = reviewCore(review), handoverId = digest(Buffer.from(canonical(core)));
     const manifest = {...core,schema:CAPTURED_HANDOVER_SCHEMA,handoverId,reviewSha256:expectedReviewSha256,
       reviewFile:{name:'handover-review.json',bytes:original.length,sha256:expectedReviewSha256}};
@@ -487,7 +492,12 @@ async function originalReceiving(root, profile) {
   if (request.schema !== CAPTURED_HANDOVER_RECEIVE_SCHEMA ||
       canonical(request.product) !== canonical(productIdentity(profile)) || receivingId(request) !== root.split('/').at(-1))
     fail('CAPTURED_HANDOVER_CONFLICT', 'Open this receiving operation in its original product.');
-  const manifestBytes = await bytes(root,'original-handover.json',METADATA_LIMIT);
+  let manifestBytes;
+  try {manifestBytes = await bytes(root,'original-handover.json',METADATA_LIMIT);}
+  catch (error) {
+    if (error.code === 'ENOENT') return {request,manifest:null};
+    throw error;
+  }
   if (digest(manifestBytes) !== request.manifestSha256)
     fail('CAPTURED_HANDOVER_CHANGED', 'The retained original receiving manifest changed.');
   const manifest = decode(manifestBytes);
@@ -576,6 +586,10 @@ export async function receiveCapturedHandover({directory:productDirectory,bundle
 export async function inspectCapturedHandoverReceive({directory:productDirectory,operationId}) {
   const profile = await readCapturedApi(productDirectory), root = await receivingRoot(profile,operationId);
   const {request,manifest} = await originalReceiving(root,profile);
+  if (!manifest) return {schema:CAPTURED_HANDOVER_RECEIVE_SCHEMA,state:'RECEIVING',operationId,
+    handoverId:request.handoverId,manifestSha256:request.manifestSha256,
+    directory:profile.directory,recordDirectory:root,pendingRecord:'original-handover.json',
+    continuation:'Repeat receive with the original complete handover and review.'};
   const result = await readJSON(root,'received.json',true);
   if (result) {
     await verifyReceived(profile,manifest,request.names);
