@@ -1,14 +1,14 @@
 # Source workspaces through the merchant MCP
 
-The source-workspace adapter operates the same private XML or NDJSON console that
+The source-workspace adapter operates the same private XML, NDJSON or IATI console that
 an operator uses in the browser. Source intake, mapping, native queries, edition
 comparisons and exports run through that console's original HTTP handlers and
 retained workspace. An agent can finish a browser-started dataset, and a browser
 can inspect an agent's saved source and mapping immediately.
 
 The installed module is `@tokenjunkielabs/starforge-merchant/merchant/mcp/source-workspaces`.
-It contributes 18 tools to the existing merchant MCP and uses its current HTTP or
-stdio transport. The underlying source console owns the workspace lock, native
+It contributes dataset and IATI tools to the existing merchant MCP and uses its
+current HTTP or stdio transport. The underlying source console owns the workspace lock, native
 dataset worker and application lifecycle.
 
 ## Start the original console
@@ -191,3 +191,85 @@ For full receiving, call `merchant_source_export` with `kind: "portfolio"`, the 
 A receiving IATI alias can use `merchant_source_import` with that retained portfolio `exportId` and its original `fromWorkspace`. The native importer verifies every member and reconstructs all referenced datasets, full report bytes, request identities and revisions before publishing the portfolio history. Report-only archives are delivered for reading and are not importable portfolio packets.
 
 Full native CLI/client and Applications operations: [IATI operator guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md). The original source interpretation and limits are documented in [IATI DOMAIN](../../stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DOMAIN.md).
+
+## IATI native DQA customer cases
+
+The same IATI alias exposes provider profiles, original DQA assessments, saved
+customer case revisions and finding decisions. The source console owns these
+records in its existing workspace. Configure the existing original DQA service's
+authorization value in that console's environment; the profile stores only its
+environment variable name.
+
+| Tool | Native operation and selection |
+| --- | --- |
+| `merchant_source_iati_dqa_providers` | Page saved provider profiles |
+| `merchant_source_iati_dqa_provider` | Save the complete provider `definition` with its original request ID |
+| `merchant_source_iati_dqa_capture` | Capture the complete native assessment from its `definition` |
+| `merchant_source_iati_dqa_assessments` | Page retained assessment summaries |
+| `merchant_source_iati_dqa_assessment` | Read a complete saved `assessment` |
+| `merchant_source_iati_dqa_findings` | Page actual native findings for `assessment`, with optional `status` and `search` |
+| `merchant_source_iati_dqa_cases` | Page latest customer case summaries |
+| `merchant_source_iati_dqa_case` | Read a `case` and optional original `revision` |
+| `merchant_source_iati_dqa_history` | Page the complete saved `case` history |
+| `merchant_source_iati_dqa_save_case` | Save the complete case `definition`, selected assessments and review edits |
+| `merchant_source_iati_dqa_compare` | Compare complete `before` and `after` native assessments |
+| `merchant_source_iati_dqa_comparison` | Read a `comparison` and page its complete activity changes |
+| `merchant_source_iati_dqa_operations` | Recover original capture/save request records after an interrupted reply |
+| `merchant_source_iati_dqa_export` | Retain the complete customer `case` ZIP at an optional `revision` |
+| `merchant_source_iati_dqa_file` | Retain one complete original `assessment` file by `kind` |
+
+Every tool also takes the existing `workspace` alias. Paginated lists use
+`offset`, `limit` and their declared snapshot contract; native findings,
+comparison pages and operation recovery use their actual `nextOffset`.
+Findings preserve the provider's `pass`, `fail` and `not_applicable` statuses.
+
+A provider definition has `requestId`, `name`, an exact HTTPS `endpoint`
+ending in `/dqa`, `authorizationEnv`, and optional `timeoutSeconds`, `notes`
+and predecessor `previous`. An original local provider can use its own loopback
+HTTP origin. Requests preserve the raw provider Authorization value from the
+declared environment variable.
+
+A capture definition has `requestId`, `provider`, native `parameters`,
+`label`, `operator` and optional `notes`. The parameters retain the original
+organization/cohort, segmentation and rule options. The response retains the
+provider's complete raw bytes, actual configuration observations, native counts,
+financial year, generated time and returned activity details. A capture can take
+up to the selected provider timeout; retain its original request ID across a
+lost tool reply and recover it through the operation list before retrying.
+
+A saved case definition has `requestId`, `name`, `client`,
+`assessmentIds` and `review: {status, reviewer, note}`. Optional `portfolios`
+select original `{id, revision}` finance portfolios. A case edit adds both
+`id` and `expectedRevision`. Its `reviewEdits` select actual
+`{assessment, finding, status, owner, note, dueDate}` decisions; use
+`{assessment, finding, remove: true}` to remove one. Each saved revision
+preserves its full selected assessments and accumulated finding decisions.
+Replaying an unchanged original request returns that original revision after
+later edits.
+
+The comparison response carries its saved native comparison and a `page`
+containing full changed activity records. Compare actual received activity lists:
+the change kinds distinguish newly listed, no longer listed, changed and unchanged
+records. The original service can return details for failing activities only;
+read its native counts and inclusion options alongside the returned list.
+
+For original files, choose `kind` from `response`, `request`,
+`configuration-before` or `configuration-after`. The tool's returned
+`assessment` and `fileKind` preserve the current selection even when another
+assessment uses the same original bytes. The retained `exportId` is the SHA-256
+of that complete file. Read it with the existing `merchant_source_file_read`
+and keep the same ID across restarts.
+
+A complete DQA export carries the selected case's full revision history,
+assessments, original observations, review reports, related comparisons, provider
+history, full guides and any selected original finance portfolios. It uses the
+native 4 GiB package capacity and the existing complete-file reader. To receive it,
+call `merchant_source_import` with the receiving IATI alias, original
+`exportId` and `fromWorkspace`, or select a declared complete packet file.
+The original IATI importer verifies the complete package and reconstructs the
+same customer case in its receiving workspace.
+
+See [the full DQA operator guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DQA.md)
+and [installed receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/DQA.md)
+for executable CLI examples, the browser workflow, native source operation and
+complete customer delivery.

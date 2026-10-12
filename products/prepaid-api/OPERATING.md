@@ -53,7 +53,15 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect
   --dir /srv/starforge/prepaid-runtime --source
 ~~~
 
-Use the actual archive and hash returned by the builder. The installer records the exact native dependency profile, source and lock; `resume --dir ...` continues the same preparation. An existing compatible dependency installation can be adopted through the original `--adopt-existing` option. Existing offline caches and native Node headers use the original installer options.
+Use the actual archive and hash returned by the builder. The installer records the exact native dependency profile, source and lock. Once `runtime-install.json` exists, `resume --dir ...` continues that same installation. If preparation stopped before that plan was committed, preserve its directory and use the original recovery command with a new empty destination:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs recover \
+  --from /srv/starforge/prepaid-runtime \
+  --dir /srv/starforge/prepaid-runtime-recovered
+~~~
+
+That command reads the original `preparation.json` and retained archive/selection. Use the recovered runtime path for subsequent commands; do not run `prepare` again in the interrupted nonempty directory. A complete compatible dependency installation can be adopted through the original `--adopt-existing` option, keeping its entire `node_modules` layout and original `package-lock.json` together. Existing offline caches and native Node headers use the original installer options.
 
 Commands in this guide use `starforge` from that selected installation. The maintained launcher can invoke them directly:
 

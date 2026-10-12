@@ -367,6 +367,168 @@ The receiving stages have different meanings:
 | `FLEET_RECEIVING_COMPLETE` | The original target placement and generated bundle passed native verification. |
 | Actual native health and operating readback | The received original fleet was reopened and its retained merchant/customer/delivery state was observed. |
 
+### Review a restored fleet in the recovery workspace
+
+The installed **Merchant recovery** application now carries the complete
+receiving workflow in its original browser, connected CLI and merchant
+provider. Its [operating guide](../../stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/GUIDE.md#receive-an-original-merchant-fleet)
+contains the full host setup; the [fleet adapter guide](../../stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/FLEET_ADAPTER.md)
+explains the native receiving boundary.
+
+Use the existing private recovery-host configuration and recovery workspace.
+In the selected profile, declare the original encrypted bundle and completed
+plaintext restore in `fleetRestores`, and the existing receiving target file
+and native operation directory in `fleetTargets`. For example, these are
+additional fields on an already configured profile:
+
+~~~json
+{
+  "fleetRestores": [
+    {
+      "id": "accepted-fleet",
+      "label": "Accepted original fleet restore",
+      "bundleDirectory": "/private/fleet-backups/accepted",
+      "restoreDirectory": "/private/fleet-restored/accepted"
+    }
+  ],
+  "fleetTargets": [
+    {
+      "id": "original-host",
+      "label": "Original fleet receiving host",
+      "targetFile": "/private/fleet-recovery/targets.json",
+      "operationDirectory": "/private/fleet-recovery/native-receiving"
+    }
+  ]
+}
+~~~
+
+Replace these example paths and IDs with the retained original selections.
+Keep the encrypted bundle within that profile's declared bundle or download
+parents, the existing plaintext strictly within its restore parent, and the
+operator state outside those source parents. The target file keeps the actual
+captured recovery-plan digest, original destination parents and new deployment
+bundle. It does not remap the fleet's captured data paths. A local profile
+can use this workflow without an S3 configuration.
+
+Run the recovery workspace under the captured nonzero Linux UID/GID with its
+existing private passphrase environment. Open **Merchant recovery** through
+Applications using the actual configured runtime and private paths, or start
+its existing listener:
+
+~~~sh
+starforge merchant-recovery-remote workspace serve \
+  --config /private/fleet-recovery/workspace.json \
+  --directory /private/fleet-recovery/operator \
+  --port 8481
+~~~
+
+Open the actual URL returned by that listener. The current session belongs to
+this recovery workspace; it is separate from the fleet console's session.
+
+Choose **Prepare restored merchant fleet** or **Review fleet recovery** beside
+the existing restore. Select the original restore and receiving target, retain
+the request ID, and confirm that the fleet and selected writers remain stopped.
+A completed original remote cold restore can supply the source instead of a
+host-declared `fleetRestoreId`.
+
+**Review restored fleet** shows the authenticated snapshot, source plan and
+target hashes, original service account, every root and destination, merchant
+slots, active and previous releases, generation/history counts and full native
+review. Review these actual returned values before choosing **Prepare restored
+fleet**. The workspace's `reviewHash` binds the whole selected request; the
+native `reviewSha256` binds the original receiving engine's review. Keep both
+with their own meanings.
+
+The native engine retains the receiving lease, partial placement and generated
+deployment. The operator records that same result and its original completion
+time. It can adopt an already completed native receiving result without
+preparing the deployment again.
+
+### Use the same request through the CLI and merchant tools
+
+Keep the original recovery listener running. A complete private selection for
+the example profile and declarations above is:
+
+~~~json
+{
+  "profileId": "fleet-local",
+  "action": "fleet-prepare",
+  "id": "original-fleet-receiving",
+  "fleetRestoreId": "accepted-fleet",
+  "fleetTargetId": "original-host",
+  "quiesced": true
+}
+~~~
+
+Here `fleet-local` must be the selected existing profile ID. When selecting a
+completed remote cold restore, replace `fleetRestoreId` with its original
+`restoreId`; supply exactly one source selector.
+
+~~~sh
+starforge merchant-recovery-remote workspace review \
+  --config /private/fleet-recovery/workspace.json \
+  --directory /private/fleet-recovery/operator \
+  --selection /private/fleet-recovery/selection.json
+
+starforge merchant-recovery-remote workspace start \
+  --config /private/fleet-recovery/workspace.json \
+  --directory /private/fleet-recovery/operator \
+  --selection /private/fleet-recovery/selection.json \
+  --expected-review-hash ACTUAL_WORKSPACE_REVIEW_HASH
+
+starforge merchant-recovery-remote workspace request \
+  --config /private/fleet-recovery/workspace.json \
+  --directory /private/fleet-recovery/operator \
+  --profile fleet-local \
+  --id original-fleet-receiving
+~~~
+
+Use the actual outer hash returned by `review`. After a lost response, read
+this same request before continuing it. The connected `resume` command and
+browser **Continue operation** preserve its original selection and native
+journal. A completed request returns its retained result; cancellation can
+stop a stage before preparation, while a native preparation already in progress
+may finish and retain that outcome.
+
+The original `recovery-workspaces` merchant provider offers the same eleven
+status, inventory, request, review, start, resume and cancel operations. Its
+private connection names the original recovery directory and configuration;
+the merchant reads the listener's current instance and session. Follow
+[MCP.md](../../stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/MCP.md)
+for the full connection, setup, tool, typed-client and CLI contracts. The
+browser and these callers use one recovery writer and one request history.
+
+### Hand over the returned deployment and reopen
+
+The completed outer request retains the original native `prepared` object.
+Use its actual values:
+
+| Retained result | Receiving action |
+| --- | --- |
+| `prepared.deploymentBundle` and `originalDeploymentBundle` | Keep the new generated host bundle beside the captured deployment history. |
+| `prepared.serviceUid` and `serviceGid` | Reopen with the captured service account. |
+| `prepared.runtime` | Follow the returned unit, workspace port, Node executable and installed source. |
+| `prepared.roots` and `summary` | Inspect the received original paths, merchant slots and retained release state. |
+| `prepared.operationId`, `reviewSha256` and `operationDirectory` | Reopen or continue the original native receiving journal. |
+
+The recovery operator does not start the received fleet. Use the returned
+deployment's existing launch/runbook and inspect its actual native health.
+
+The installed `merchant-recovery-workspace` command exposes the same workspace
+arguments shown above. The installed `merchant-fleet-operator-receive` command
+exposes the original receiving continuation's arguments; select its completed
+case and existing runtimes exactly as described in the receiving guide.
+
+The original source owner's
+[receiving continuation](../../stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/README.md)
+can then open the complete operator over its already completed, closed native
+case. It consumes that case's actual `journey.json`, encrypted/plaintext paths,
+target file, service account and operation, and retains its browser, CLI,
+merchant calls and cold reopen under the same case. Its executable and exact
+inputs are supplied in that guide. It starts no second fleet journey. A
+published continuation or installed source is not an execution receipt; retain
+the original owner's returned result when that stage actually completes.
+
 For an Applications-managed received fleet, first finish the original native receiving/placement. Attach the actual supported runtime on that host, configure the returned original plan and directory, then Review/Save/Connect/Review Start/Start as above. Re-review its new physical identities; do not transplant an earlier Applications operation's PID, private URL or saved start approval. If the generated host service is already the fleet owner, use that service's existing console or stop it before selecting Applications as the owner.
 
 Keep the complete encrypted source, receiving receipt, original/current deployment bundles, host input declarations, environment provisioning reference and subsequent native reopen evidence together. SDK customer downloads and settlement destination transfers retain their own original identities inside that operating handoff.

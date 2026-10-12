@@ -426,6 +426,86 @@ Use `merchant_research_export` for `document-file`, `document-response`, `docume
 
 The client rereads the original connection file after a managed restart. Its authenticated workspace and instance checks bind each request to the selected original application. Detaching drains the attachment's requests and temporary file readers; Applications continues to own the listener and saved acquisition.
 
+## Use the original Analysis browser and native agent
+
+The selected Research product also includes the complete Analysis Research intake.
+An operator can select the actual saved document or retained managed output in the
+Analysis browser, review its full edition identity and capture the complete source.
+The browser, Python commands and native MCP actions use the same original jobs,
+source revisions, mapping, database, workbook and archive.
+
+Use the buyer Python package and the complete Node source from this release, as in
+[the Python installation step](RECEIVING.md#8-receive-the-complete-python-analysis-and-workbook).
+The host selects a private registry with schema
+`stellar-forge.analysis-research-connections.v1`. Its `connections` array names
+each allowed Research connection with `name`, `label`, absolute
+`connection_file` and the actual `expected_workspace_id`. Optional
+`request_timeout_ms` selects the original client deadline. Copy the workspace
+identity from the original Research listener; keep its capability in the private
+connection file. The complete [registry and intake contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_INTAKE.md)
+includes the exact JSON shape and supported bounds.
+
+Start the existing Analysis service with that registry:
+
+~~~sh
+python3 -m stellar_forge_buyer.analysis_workspace \
+  --database /srv/starforge/customer/analysis \
+  --checkout /absolute/installed-source \
+  --research-connections /srv/starforge/private/analysis-research-connections.json \
+  serve --port 0
+~~~
+
+Open its private local URL and select **Research**.
+
+1. Select a named connection and load its original dossier inventory. Choose the
+   intended dossier and the Documents or Pipelines family.
+2. Open an actual saved purchase, retained job output or received edition. Review
+   its digest, document/source metadata and original element pages. Display
+   filters affect the viewed elements; capture keeps the full selected edition.
+3. Choose the Analysis source name, its reviewed current revision, a title and
+   the explicit capture timestamp. Capture saves the exact request before
+   dispatch and retains one original `research-capture` job.
+4. Open the completed capture's original source in **Responses**. Its displayed
+   provenance, revision and eighteen-column mapping belong to that exact
+   captured edition. Preview exhausts the mapped source; import uses the
+   reviewed preview digest and returns an immutable database version.
+5. Activate that version under the intended SQL view, save the useful query and
+   continue through the existing full query export, workbook and whole-workspace
+   archive controls.
+
+After a lost reply, use **Refresh capture** or the saved request's reopen action.
+An interrupted capture resumes its original request. A completed registration is
+recovered from the local source closure before the client reconnects to Research.
+In **Activity**, an interrupted response preview or import can continue with its
+same original ID and request; import keeps the original completed preview and
+source version. Earlier complete outcomes stay available when the source alias
+advances.
+
+The native agent operates this same running Analysis service. Register its
+existing host-owned database using the selected package's original command:
+
+~~~sh
+starforge mcp-native analysis-register \
+  --dir /srv/starforge/private/native-mcp-buyer \
+  --name customer \
+  --database /srv/starforge/customer/analysis
+~~~
+
+The original MCP tool uses `action: analysis` and the registered
+`analysisWorkspace: customer`. Its eight Research operations list configured
+connections, dossiers and saved sources; review the selected edition and elements;
+capture the full source; page capture history; and cancel the original local
+capture. The existing `job` operation reads the complete original receipt.
+The [complete native Analysis guide](../../stellar-forge/mcp-paid-agent/ANALYSIS.md#saved-research-documents-and-managed-outputs)
+provides the exact operation bodies, pagination, preview/import and archive
+bindings. The selected installation includes the full native buyer/Analysis
+component and its original `mcp-native`, `mcp-stdio`,
+`mcp-client-config` and `mcp-analysis-archive` commands.
+
+Use the [complete interactive customer receiver](RECEIVING.md#11-receive-the-interactive-analysis-and-native-agent-workflow)
+to continue this actual saved source through the browser, full workbook and
+independent cold restore.
+
 ## Build the analytical workbook from a received document
 
 The same installed source also supplies the Python Research client and its complete document-to-workbook receiver. A reviewed original Document or Pipeline edition becomes one native Analysis source with every original occurrence, full text and provider metadata, source files and retained identity. The original Analysis engine then performs mapping preview/import, immutable version activation, saved query, complete typed exports, workbook delivery and full workspace restoration.

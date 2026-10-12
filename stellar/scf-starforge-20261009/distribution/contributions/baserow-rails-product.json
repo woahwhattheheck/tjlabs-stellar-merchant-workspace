@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "baserow-rails-product",
+  "description": "Complete Baserow source, publication, customer receiving and Rails application front door",
+  "components": [
+    "products/baserow-rails"
+  ],
+  "commands": {
+    "baserow-rails": "products/baserow-rails/cli.mjs"
+  },
+  "commandDescriptions": {
+    "baserow-rails": "Operate original Baserow sources, complete customer files and received Rails applications"
+  },
+  "exports": {
+    "./products/baserow-rails": "./source/products/baserow-rails/cli.mjs"
+  }
+}

@@ -10,11 +10,15 @@ const hash=value=>digest(json(canonical(value)));
 const MODULES=Object.freeze({
   analysis:'stellar_forge_buyer.analysis_workspace',
   duckdb:'stellar_forge_buyer.duckdb_cli',
+  vgi:'stellar_forge_buyer.vgi_service.cli',
   postgres:'stellar_forge_buyer.postgres_cli',
   workbooks:'stellar_forge_buyer.analysis_workbooks',
   workbookDelivery:'stellar_forge_buyer.workbook_client',
 });
 export const PYTHON_APPLICATION_COMMANDS=Object.freeze([
+  {id:'vgi',kind:'module',title:'Purchased-result VGI workspace',module:MODULES.vgi,
+    description:'Review complete original exports, publish retained tables and operate the authenticated VGI listener.'},
+  {id:'stellar-forge-vgi-results',kind:'script',title:'Native purchased-result VGI command'},
   {id:'postgres',kind:'module',title:'PostgreSQL receiving workspace',module:MODULES.postgres,
     description:'Review complete source mappings, import retained editions, compare changes and select the application SQL view.'},
   {id:'duckdb',kind:'module',title:'DuckDB dataset workspace',module:MODULES.duckdb,
@@ -39,6 +43,7 @@ function argumentsList(args) {
   return [...args];
 }
 function requiredExtras(command,args) {
+  if(['vgi','stellar-forge-vgi-results'].includes(command))return ['vgi'];
   if(['duckdb','stellar-forge-duckdb'].includes(command))return ['duckdb'];
   if(['postgres','stellar-forge-postgres'].includes(command))return ['postgres'];
   if(command==='stellar-forge-agent')return ['agents'];
@@ -82,7 +87,7 @@ export async function bindPythonApplicationCommand(root,{
         'PYTHON_APPLICATION_DATABASE_REQUIRED','Select one original Analysis database directory.');
       absolute(originalArgs[originalArgs.indexOf('--database')+1]);
     }
-    if(command==='duckdb'){
+    if(command==='duckdb' || command==='vgi' && !originalArgs.includes('runtime')){
       const workspaces=originalArgs.filter(item=>item==='--workspace');
       need(workspaces.length===1 && !originalArgs.some(item=>item==='--database' ||
         item.startsWith('--database=') || item.startsWith('--workspace=')),
@@ -112,7 +117,7 @@ export async function bindPythonApplicationCommand(root,{
     module,entrypoint,requiredExtras:extras,executable:installation.python,argv,cwd:binding.directory,
     ready:command==='analysis'?{kind:'analysis-private-launch',schema:'stellar-forge.customer-analysis.v1',
       file:join(absolute(originalArgs[originalArgs.indexOf('--database')+1]),'analysis-launch.json')}:
-      command==='duckdb'?{kind:'duckdb-private-launch',schema:'stellar-forge.duckdb-operator-launch.v1',
+      (command==='duckdb' || command==='vgi' && originalArgs.includes('workspace'))?{kind:'duckdb-private-launch',schema:'stellar-forge.duckdb-operator-launch.v1',
         directory:absolute(originalArgs[originalArgs.indexOf('--workspace')+1]),
         file:join(absolute(originalArgs[originalArgs.indexOf('--workspace')+1]),'duckdb-launch.json')}:
       command==='postgres' && originalArgs.includes('serve')?{

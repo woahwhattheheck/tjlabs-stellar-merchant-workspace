@@ -1,0 +1,18 @@
+{
+  "responseHeader":{
+    "status":0,
+    "QTime":0,
+    "params":{
+      "q":"*:*",
+      "fl":"iati-identifier",
+      "rows":"0",
+      "wt":"json"
+    }
+  },
+  "response":{
+    "numFound":425402,
+    "start":0,
+    "numFoundExact":true,
+    "docs":[ ]
+  }
+}

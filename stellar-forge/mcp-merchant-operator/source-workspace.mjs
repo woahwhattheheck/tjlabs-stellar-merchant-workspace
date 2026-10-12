@@ -14,7 +14,7 @@ const EXPORT_SCHEMA = 'stellar-forge.source-console-export.v1';
 
 const MAX_EXPORT = 256000000;
 const MAX_IATI_PACKET = 4 * 1024 * 1024 * 1024;
-const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report'].includes(kind) ? MAX_IATI_PACKET : MAX_EXPORT;
+const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa'].includes(kind) ? MAX_IATI_PACKET : kind === 'dqa-file' ? 64 * 1024 * 1024 : MAX_EXPORT;
 const MAX_SOURCE = 256 * 1024 * 1024;
 const MAX_JSON = 16 * 1024 * 1024;
 const fail = (code, message) => Object.assign(new Error(message), { code });
@@ -160,7 +160,7 @@ export class MerchantSourceWorkspaces {
   async #request(definition, route, { body, headers = {}, method = body === undefined ? 'GET' : 'POST' } = {}, consume) {
     const connection = await this.#connection(definition);
     try {
-      const response = await fetch(connection.origin + route, { method, redirect: 'error', signal: AbortSignal.timeout(240000),
+      const response = await fetch(connection.origin + route, { method, redirect: 'error', signal: AbortSignal.timeout(route.startsWith('/api/iati/dqa/') ? 900000 : 240000),
         headers: { Authorization: 'Bearer ' + connection.token, ...headers },
         ...(body === undefined ? {} : { body, ...(typeof body === 'string' || Buffer.isBuffer(body) ? {} : { duplex: 'half' }) }) });
       if (!response.ok) {
@@ -178,9 +178,10 @@ export class MerchantSourceWorkspaces {
   }
   #json(definition, route, body) {
     const payload = body === undefined ? undefined : JSON.stringify(body);
-    if (payload !== undefined && Buffer.byteLength(payload) > 131072) throw fail('INVALID_PARAMS', 'Native JSON request exceeds 128 KiB.');
+    const maximum = route.startsWith('/api/iati/dqa/') ? 64 * 1024 * 1024 : MAX_JSON;
+    if (payload !== undefined && Buffer.byteLength(payload) > (route.startsWith('/api/iati/dqa/') ? maximum : 131072)) throw fail('INVALID_PARAMS', 'Native JSON request exceeds its complete selection limit.');
     return this.#request(definition, route, { body: payload, headers: payload === undefined ? {} : { 'Content-Type': 'application/json' } },
-      async response => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await responseBytes(response, MAX_JSON))));
+      async response => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await responseBytes(response, maximum))));
   }
   async #state(definition) {
     const state = await this.#json(definition, '/api/state');
@@ -196,8 +197,8 @@ export class MerchantSourceWorkspaces {
     const directory = await this.#directory(workspace);
     const metadata = JSON.parse((await bytes(join(directory, id + '.json'), 65536, true)).toString('utf8'));
     if (metadata.schema !== EXPORT_SCHEMA || metadata.workspace !== workspace || metadata.exportId !== id ||
-        !['project','dataset','changes','merchant','portfolio','report'].includes(metadata.kind) ||
-        ['portfolio','report'].includes(metadata.kind) && metadata.format !== 'iati' ||
+        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file'].includes(metadata.kind) ||
+        ['portfolio','report','dqa','dqa-file'].includes(metadata.kind) && metadata.format !== 'iati' ||
         !Number.isSafeInteger(metadata.bytes) || metadata.bytes < 0 || metadata.bytes > exportLimit(metadata.format, metadata.kind))
       throw fail('SOURCE_EXPORT_INVALID', 'Retained export metadata changed.');
     return { directory, metadata };
@@ -224,9 +225,9 @@ export class MerchantSourceWorkspaces {
         await handle.sync();
         const exportId = digest.digest('hex'), destination = join(directory, exportId + '.data');
         await link(temporary, destination).catch(error => { if (error.code !== 'EEXIST') throw error; });
-        const name = definition.format + '-' + kind + (kind === 'changes' ? '.jsonl' : '.zip');
+        const name = definition.format + '-' + kind + (kind === 'changes' ? '.jsonl' : kind === 'dqa-file' ? '.json' : '.zip');
         const metadata = { schema: EXPORT_SCHEMA, workspace, format: definition.format, exportId, kind, ...selection,
-          name, bytes: length, sha256: exportId, contentType: kind === 'changes' ? 'application/x-ndjson' : 'application/zip', created: new Date().toISOString() };
+          name, bytes: length, sha256: exportId, contentType: kind === 'changes' ? 'application/x-ndjson' : kind === 'dqa-file' ? (response.headers.get('content-type') || 'application/json') : 'application/zip', created: new Date().toISOString() };
         const recordPath = join(directory, '.record-' + randomUUID());
         let record;
         try {
@@ -253,7 +254,8 @@ export class MerchantSourceWorkspaces {
         'Content-Length': String(info.size), 'Content-Type': route === '/api/import' ? 'application/zip' : 'application/octet-stream',
         ...(file.name ? { [prefix + 'Name']: encodeURIComponent(file.name) } : {}),
         ...(file.label ? { [prefix + 'Label']: encodeURIComponent(file.label) } : {}) } },
-        async response => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await responseBytes(response, MAX_JSON))));
+        async response => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await responseBytes(response,
+          route === '/api/import' && definition.format === 'iati' ? 64 * 1024 * 1024 : MAX_JSON))));
       const after = await handle.stat();
       if (after.size !== info.size || after.mtimeMs !== info.mtimeMs)
         throw fail('SOURCE_FILE_CHANGED', 'Source changed during intake. Inspect the original saved source before continuing.');
@@ -263,7 +265,7 @@ export class MerchantSourceWorkspaces {
   async #execute(name, args) {
     if (name === 'merchant_source_workspaces') return this.summary;
     const { workspace, ...input } = args, definition = this.#definition(workspace);
-    for (const field of ['source','plan','build','before','after','comparison','exportId','portfolio'])
+    for (const field of ['source','plan','build','before','after','comparison','exportId','portfolio','assessment','case'])
       if (input[field] !== undefined) checked(input[field], SHA, field + ' SHA256');
     const result = native => ({ workspace, native });
     if (name.startsWith('merchant_source_iati_') && definition.format !== 'iati')
@@ -355,8 +357,8 @@ export class MerchantSourceWorkspaces {
         } else {
           const owner = input.fromWorkspace ?? workspace; this.#definition(owner);
           const { directory, metadata } = await this.#exportMetadata(owner, input.exportId);
-          if (!['project','portfolio'].includes(metadata.kind) || metadata.format !== definition.format)
-            throw fail('INVALID_PARAMS', 'Import a complete project or IATI portfolio packet matching the original receiving format.');
+          if (!['project','portfolio','dqa'].includes(metadata.kind) || metadata.format !== definition.format)
+            throw fail('INVALID_PARAMS', 'Import a complete project, IATI portfolio or DQA customer packet matching the original receiving format.');
           file = { path: join(directory, input.exportId + '.data'), sha256: input.exportId };
         }
         return result(await this.#upload(definition, file, '/api/import'));
@@ -379,6 +381,62 @@ export class MerchantSourceWorkspaces {
         if (!plain(input.definition)) throw fail('INVALID_PARAMS', 'Supply the complete original IATI request definition.');
         return result(await this.#json(definition,
           name === 'merchant_source_iati_portfolio_save' ? '/api/iati/portfolio' : '/api/iati/compare', input.definition));
+
+      case 'merchant_source_iati_dqa_providers':
+      case 'merchant_source_iati_dqa_assessments':
+      case 'merchant_source_iati_dqa_cases': {
+        const family = name.slice('merchant_source_iati_dqa_'.length);
+        return result(paged((await this.#json(definition, '/api/iati/dqa/' + family))[family], input));
+      }
+      case 'merchant_source_iati_dqa_provider':
+      case 'merchant_source_iati_dqa_capture':
+      case 'merchant_source_iati_dqa_save_case': {
+        if (!plain(input.definition)) throw fail('INVALID_PARAMS', 'Supply the complete original DQA request with its retained requestId.');
+        const route = { merchant_source_iati_dqa_provider: 'provider', merchant_source_iati_dqa_capture: 'capture',
+          merchant_source_iati_dqa_save_case: 'case' }[name];
+        return result(await this.#json(definition, '/api/iati/dqa/' + route, input.definition));
+      }
+      case 'merchant_source_iati_dqa_assessment':
+        return result(await this.#json(definition, '/api/iati/dqa/assessment?id=' + input.assessment));
+      case 'merchant_source_iati_dqa_case': {
+        const revision = input.revision === undefined ? '' : '&revision=' + integer(input.revision, 1, Number.MAX_SAFE_INTEGER);
+        return result(await this.#json(definition, '/api/iati/dqa/case?id=' + input.case + revision));
+      }
+      case 'merchant_source_iati_dqa_history':
+        return result(paged((await this.#json(definition, '/api/iati/dqa/history?case=' + input.case)).history, input));
+      case 'merchant_source_iati_dqa_findings': {
+        if (input.status !== undefined && !['', 'pass', 'fail', 'not_applicable'].includes(input.status) ||
+            input.search !== undefined && (typeof input.search !== 'string' || input.search.length > 1000))
+          throw fail('INVALID_PARAMS', 'Choose a native finding status and complete activity or rule search.');
+        const query = new URLSearchParams({ id: input.assessment, offset: integer(input.offset ?? 0, 0, Number.MAX_SAFE_INTEGER),
+          limit: integer(input.limit ?? 50, 1, 250), status: input.status ?? '', search: input.search ?? '' });
+        return result(await this.#json(definition, '/api/iati/dqa/findings?' + query));
+      }
+      case 'merchant_source_iati_dqa_compare':
+        return result(await this.#json(definition, '/api/iati/dqa/compare', { before: input.before, after: input.after }));
+      case 'merchant_source_iati_dqa_comparison':
+      case 'merchant_source_iati_dqa_operations': {
+        const query = new URLSearchParams({ offset: integer(input.offset ?? 0, 0, Number.MAX_SAFE_INTEGER),
+          limit: integer(input.limit ?? 50, 1, 250) });
+        const route = name.endsWith('_comparison') ? 'comparison' : 'operations';
+        if (route === 'comparison') query.set('id', input.comparison);
+        return result(await this.#json(definition, '/api/iati/dqa/' + route + '?' + query));
+      }
+      case 'merchant_source_iati_dqa_export': {
+        const revision = input.revision === undefined ? '' : '&revision=' + integer(input.revision, 1, Number.MAX_SAFE_INTEGER);
+        return this.#retain(workspace, definition, '/api/iati/dqa/export?case=' + input.case + revision,
+          'dqa', { case: input.case, ...(input.revision === undefined ? {} : { revision: input.revision }) });
+      }
+      case 'merchant_source_iati_dqa_file': {
+        if (!['response', 'request', 'configuration-before', 'configuration-after'].includes(input.kind))
+          throw fail('INVALID_PARAMS', 'Select the complete original DQA response, request or configuration observation.');
+        const retained = await this.#retain(workspace, definition, '/api/iati/dqa/file?' +
+          new URLSearchParams({ assessment: input.assessment, kind: input.kind }), 'dqa-file',
+          { assessment: input.assessment, fileKind: input.kind });
+        // One original file can be selected by several assessments. Its SHA owns
+        // the bytes; this response owns the current assessment/kind selection.
+        return { ...retained, assessment: input.assessment, fileKind: input.kind };
+      }
       default: throw fail('TOOL_NOT_FOUND', 'Unknown original source-workspace operation.');
     }
   }

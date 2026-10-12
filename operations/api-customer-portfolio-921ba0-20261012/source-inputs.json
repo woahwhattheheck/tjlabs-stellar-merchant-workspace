@@ -1,0 +1,57 @@
+{
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceCommit": "5c210c0be7d1ea5e3e6b87625e7bc9d389d42334",
+  "operation": "api-customer-portfolio-921ba0-20261012",
+  "overlay": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/model.mjs",
+      "bytes": 47268,
+      "sha256": "d4767099d6dc0147d090781737ed6b112f0450a73650dbe282e307695501876d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/server.mjs",
+      "bytes": 11735,
+      "sha256": "444e418525acec821d129cfd4fc1e2f5d33e8cdc5fa6ed464795e3efcf19f669"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/portfolio.mjs",
+      "bytes": 6366,
+      "sha256": "50227f28ef725ed7238bebe589b027b2bf2fc4c0355fb4db5cc1e92248595955"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/close-owner.mjs",
+      "bytes": 574,
+      "sha256": "50c752182b33e3b9dc38025f657581db5da3bfe0bdc6fc698191b6b1bcffa4e0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/cli.mjs",
+      "bytes": 15564,
+      "sha256": "dfdf9fa38c1aea578e02cc15117e2e10b8e53c693505c641fe0392649d2aef87"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/public/app.mjs",
+      "bytes": 57632,
+      "sha256": "a1ad696aad165f5b76a07e52da5864d80b659dbb7c3b77eeca1294478a04f6d9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/public/index.html",
+      "bytes": 1973,
+      "sha256": "655f82d9d5ee750338e2f817571237654a6e8413404a46c52af721b53e4b4d87"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/public/style.css",
+      "bytes": 8195,
+      "sha256": "26f7d7eefb316258066901c2b1f9a7f8727873abf65620d7827d485e45105875"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/README.md",
+      "bytes": 26238,
+      "sha256": "862635caf8f4723db8e7855ecd1086f5907693dd5e73d6a0c57c9e6e9372678c"
+    }
+  ],
+  "journey": {
+    "path": "customer-journey.mjs",
+    "bytes": 11909,
+    "sha256": "ae6639b6fc0f47cc1ad395daacd123a31e842a5f6eb4f5a593b4173e2b09c701"
+  }
+}

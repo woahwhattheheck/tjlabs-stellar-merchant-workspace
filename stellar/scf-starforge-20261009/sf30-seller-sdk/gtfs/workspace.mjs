@@ -12,13 +12,15 @@ import { object, absolute, privateDirectory, acquireWorkspace, bytes, digest, id
 import { RetainedFileReads } from '../../../../stellar-forge/mcp-merchant-operator/retained-file-reads.mjs';
 import { GTFS_WORKSPACE_SCHEMA, GTFS_ZIP_MAX_BYTES, inspectGtfsArchive, compileGtfsEdition,
   inspectGtfsEdition, readGtfsRows, readGtfsSourceRows, compareGtfsEditions, runGtfsArchiveCommand } from './source.mjs';
+import { GTFS_FEED_SOURCE_SCHEMA, normalizeGtfsFeedSource, gtfsResponseValidators,
+  acquireGtfsFeedResponse, inspectGtfsFeedResponse, inspectGtfsFeedAttempts } from './feed-acquisition.mjs';
 
 export const GTFS_UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 export const GTFS_SHA256 = /^[a-f0-9]{64}$/;
 const STATE_MAX = 16 * 1024 * 1024;
 const INPUT_MAX = 1024 * 1024;
 const FILE_MAX = 8 * 1024 * 1024 * 1024;
-const KINDS = new Set(['retainFeed','createEdition','compareEditions','saveDecision','selectEdition','prepareRelease','stageRelease']);
+const KINDS = new Set(['retainFeed','saveFeedSource','acquireFeed','createEdition','compareEditions','saveDecision','selectEdition','prepareRelease','stageRelease']);
 const PUBLISHER = Object.freeze({ directory:'publisher', sourceFile:'selected-source.json', targetDirectory:'dataset' });
 const driver = Object.freeze({ ...frictionlessPublisherDriver, sourceName:'GTFS Schedule' });
 const copy = value => structuredClone(value);
@@ -105,6 +107,29 @@ function validState(value) {
     if(!Array.isArray(value[key])||value[key].length>20000||value[key].some(item=>!object(item)||!GTFS_UUID.test(item.id??''))||
       new Set(value[key].map(item=>item.id)).size!==value[key].length)
       throw fault('GTFS_WORKSPACE_INVALID','The retained GTFS history is inconsistent.');
+  }
+  for(const key of ['feedSources','acquisitions']) {
+    if(value[key]===undefined)continue;
+    if(!Array.isArray(value[key])||value[key].length>20000||
+      value[key].some(item=>!object(item)||!GTFS_UUID.test(item.id??''))||
+      new Set(value[key].map(item=>item.id)).size!==value[key].length)
+      throw fault('GTFS_WORKSPACE_INVALID','The retained feed-acquisition history is inconsistent.');
+  }
+  for(const source of value.feedSources??[]) {
+    if(!GTFS_UUID.test(source.versionId??'')||!GTFS_SHA256.test(source.sourceSha256??'')||
+      !Array.isArray(source.versions)||!source.versions.length||source.versions.length>20000||
+      source.versions.some(item=>!object(item)||!GTFS_UUID.test(item.id??'')||!GTFS_SHA256.test(item.sourceSha256??''))||
+      new Set(source.versions.map(item=>item.id)).size!==source.versions.length||
+      !source.versions.some(item=>item.id===source.versionId&&item.sourceSha256===source.sourceSha256)||
+      source.lastAcquisitionId!==null&&!GTFS_UUID.test(source.lastAcquisitionId??''))
+      throw fault('GTFS_WORKSPACE_INVALID','The saved feed-source versions are inconsistent.');
+  }
+  for(const acquisition of value.acquisitions??[]) {
+    const source=(value.feedSources??[]).find(item=>item.id===acquisition.sourceId);
+    if(!source?.versions.some(item=>item.id===acquisition.sourceVersionId&&item.sourceSha256===acquisition.sourceSha256)||
+      !value.feeds.some(item=>item.id===acquisition.feedId&&item.feedSha256===acquisition.feedSha256&&item.feedBytes===acquisition.feedBytes)||
+      !GTFS_SHA256.test(acquisition.acquisitionSha256??''))
+      throw fault('GTFS_WORKSPACE_INVALID','The retained acquisition lost its exact source or feed.');
   }
   if(!object(value.requests)||Object.keys(value.requests).length>20000||
     Object.keys(value.requests).some(key=>!GTFS_UUID.test(key))||
@@ -217,7 +242,7 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
   if(releaseStore!==null)releaseStore=absolute(resolve(releaseStore),'original SF82 release store');
   const releaseRoot=await acquireWorkspace(directory);
   const rootFile=(...parts)=>join(directory,...parts);
-  const lookup=(kind,id)=>{uuid(id);const result=state[kind].find(item=>item.id===id);
+  const lookup=(kind,id)=>{uuid(id);const result=(state[kind]??[]).find(item=>item.id===id);
     if(!result)throw fault('GTFS_RECORD_NOT_FOUND','Choose a retained '+kind+' record.',404);return result;};
   async function writeState(next) { validState(next);await atomicJson(directory,'workspace.json',next);state=next; }
   async function readAnchored(path,expected,maximum=INPUT_MAX) {
@@ -230,6 +255,74 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
     if(inspection.feedSha256!==saved.feedSha256||inspection.feedBytes!==saved.feedBytes)
       throw fault('GTFS_RECORD_CHANGED','The retained feed inspection changed.',409);
     return {record:copy(saved),inspection};
+  }
+  const sourceSummary=value=>{
+    const {versions,...summary}=value;return {...copy(summary),versionCount:versions.length};
+  };
+  async function feedSource(id,{versionId,offset=0,limit=25}={}) {
+    const saved=lookup('feedSources',id),selectedId=versionId===undefined?saved.versionId:uuid(versionId);
+    const version=saved.versions.find(item=>item.id===selectedId);
+    if(!version)throw fault('GTFS_FEED_SOURCE_VERSION_NOT_FOUND','Choose an original saved source version.',404);
+    const source=await readAnchored(rootFile('feed-sources',id,selectedId+'.json'),version.sourceSha256);
+    if(source.schema!==GTFS_FEED_SOURCE_SCHEMA||source.id!==id||source.versionId!==selectedId||
+      source.createdAt!==version.createdAt||source.previousVersionId!==version.previousVersionId||
+      identity(normalizeGtfsFeedSource({title:source.title,url:source.url,note:source.note,timeoutMs:source.timeoutMs}))!==
+        identity({title:source.title,url:source.url,note:source.note,timeoutMs:source.timeoutMs}))
+      throw fault('GTFS_FEED_SOURCE_CHANGED','The retained original feed-source version changed.',409);
+    return {record:sourceSummary(saved),source,version:copy(version),versions:page(saved.versions,offset,limit)};
+  }
+  async function originalAcquisitionRequest(id) {
+    uuid(id);
+    const operation=state.pending?.requestId===id?state.pending:state.requests[id];
+    if(operation?.kind!=='acquireFeed')throw fault('GTFS_ACQUISITION_NOT_FOUND','Choose an original feed-acquisition request.',404);
+    const original=await readJson(rootFile('requests',id+'.json'),INPUT_MAX);
+    if(original.schema!=='stellar-forge.gtfs-request.v1'||original.requestId!==id||original.kind!=='acquireFeed'||
+      original.payloadHash!==operation.payloadHash||
+      identity({kind:original.kind,expectedRevision:original.expectedRevision,payload:original.payload})!==original.payloadHash)
+      throw fault('GTFS_ACQUISITION_CHANGED','The retained acquisition request changed.',409);
+    const source=lookup('feedSources',original.payload.sourceId);
+    const version=source.versions.find(item=>item.sourceSha256===original.payload.sourceSha256);
+    if(!version)throw fault('GTFS_FEED_SOURCE_CHANGED','The acquisition source version is missing.',409);
+    return {original,operation,source:await feedSource(source.id,{versionId:version.id})};
+  }
+  const attemptSummary=item=>({request:copy(item.request),responseSha256:item.responseSha256,
+    response:item.response?{attemptId:item.response.attemptId,outcome:item.response.outcome,
+      startedAt:item.response.startedAt,completedAt:item.response.completedAt,retryAt:item.response.retryAt,
+      error:copy(item.response.error),body:copy(item.response.body),errorBody:copy(item.response.errorBody??null),
+      response:item.response.response?{url:item.response.response.url,status:item.response.response.status,
+        receivedAt:item.response.response.receivedAt,address:copy(item.response.response.address)}:null,
+      redirects:item.response.redirects.map(({url,nextUrl,status})=>({url,nextUrl,status}))}:null});
+  async function acquisition(id,{offset=0,limit=25}={}) {
+    if(active?.kind==='acquireFeed')throw fault('GTFS_WORKSPACE_BUSY','Let the original source acquisition finish before reading its retained response.',409);
+    const context=await originalAcquisitionRequest(id),path=rootFile('acquisitions',id);
+    if(!await exists(join(path,'request.json')))return {record:null,requestId:id,
+      requestState:context.operation.state??'PENDING',source:context.source.source,attempts:page([],offset,limit)};
+    const binding=await readJson(join(path,'request.json'),INPUT_MAX);
+    if(binding.requestId!==id||binding.sourceId!==context.source.record.id||
+      binding.sourceVersionId!==context.source.source.versionId||binding.sourceSha256!==context.source.version.sourceSha256||
+      binding.url!==context.source.source.url||binding.timeoutMs!==context.source.source.timeoutMs||
+      (binding.previous?.acquisitionId??null)!==context.original.payload.previousAcquisitionId||
+      (binding.previous?.acquisitionSha256??null)!==context.original.payload.expectedPreviousSha256||
+      (binding.previous?.conditional??false)!==context.original.payload.conditional)
+      throw fault('GTFS_ACQUISITION_CHANGED','The retained HTTP request differs from its original source selection.',409);
+    const history=await inspectGtfsFeedAttempts(path,binding);
+    const saved=(state.acquisitions??[]).find(item=>item.id===id);
+    if(!saved)return {record:null,requestId:id,requestState:context.operation.state??'PENDING',
+      source:context.source.source,binding,historySha256:history.historySha256,attempts:page(history.attempts.map(attemptSummary),offset,limit)};
+    const receipt=await readAnchored(join(path,'acquisition.json'),saved.acquisitionSha256,STATE_MAX);
+    const response=await inspectGtfsFeedResponse(path,binding),original=await feed(saved.feedId);
+    const body=await hashPrivate(rootFile('feeds',saved.feedId,'original.gtfs.zip'),GTFS_ZIP_MAX_BYTES);
+    if(receipt.schema!=='stellar-forge.gtfs-feed-acquisition.v1'||receipt.id!==id||
+      identity(receipt.request)!==identity(binding)||receipt.httpSha256!==response.responseSha256||
+      identity(receipt.http)!==identity(response.response)||receipt.feed.id!==saved.feedId||
+      receipt.feed.feedSha256!==saved.feedSha256||receipt.feed.feedBytes!==saved.feedBytes||
+      receipt.feed.inspectionSha256!==original.record.inspectionSha256||
+      body.hash!==saved.feedSha256||body.bytes!==saved.feedBytes||
+      response.response.outcome==='COMPLETE'&&(response.response.body.sha256!==saved.feedSha256||response.response.body.bytes!==saved.feedBytes)||
+      response.response.outcome==='NOT_MODIFIED'&&(binding.previous.feedId!==saved.feedId||binding.previous.feedSha256!==saved.feedSha256))
+      throw fault('GTFS_ACQUISITION_CHANGED','The original acquired response or inspected feed changed.',409);
+    return {record:copy(saved),requestId:id,requestState:'COMPLETE',source:context.source.source,
+      acquisition:receipt,feed:copy(original.record),historySha256:history.historySha256,attempts:page(history.attempts.map(attemptSummary),offset,limit)};
   }
   async function edition(id) {
     const saved=lookup('editions',id),value=await readAnchored(rootFile('editions',id,'edition.json'),saved.editionSha256,STATE_MAX);
@@ -355,6 +448,8 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
           createEdition:['editions',input.requestId,'edition.json'],compareEditions:['comparisons',input.requestId,'comparison.json'],
           saveDecision:['decisions',input.requestId+'.json'],prepareRelease:['releases',input.requestId,'release.json']}[kind];
         if(file)complete=await exists(rootFile(...file)).catch(()=>true);
+        if(kind==='saveFeedSource')complete=await exists(rootFile('feed-sources',input.payload.sourceId??input.requestId,input.requestId+'.json')).catch(()=>true);
+        if(kind==='acquireFeed')complete=await exists(rootFile('acquisitions',input.requestId,'acquisition.json')).catch(()=>true);
         if(kind==='selectEdition') {
           try {const current=await exists(rootFile('selected-source.json'))?
             digest(await readPrivate(rootFile('selected-source.json'),INPUT_MAX)):null;
@@ -400,6 +495,90 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
         feedBytes:payload.feedBytes,inspectionSha256:digest(await readPrivate(join(path,'inspection.json'),STATE_MAX)),
         createdAt:state.pending.createdAt};
       return {patch:{feeds:[saved,...state.feeds]},result:{feed:saved}};
+    }
+    if(kind==='saveFeedSource') {
+      only(payload,['sourceId','expectedSourceSha256','source'],['sourceId','expectedSourceSha256','source']);
+      const normalized=normalizeGtfsFeedSource(payload.source),newSource=payload.sourceId===null;
+      if(newSource&&payload.expectedSourceSha256!==null)
+        throw fault('GTFS_FEED_SOURCE_INVALID','A new saved source has no previous source hash.');
+      const previous=newSource?null:lookup('feedSources',uuid(payload.sourceId));
+      if(previous&&previous.sourceSha256!==sha(payload.expectedSourceSha256))
+        throw fault('GTFS_FEED_SOURCE_CHANGED','Edit the exact currently displayed source version.',409);
+      if(previous)await feedSource(previous.id);
+      const sourceId=previous?.id??id,source={schema:GTFS_FEED_SOURCE_SCHEMA,id:sourceId,versionId:id,
+        previousVersionId:previous?.versionId??null,createdAt:state.pending.createdAt,...normalized};
+      const path=rootFile('feed-sources',sourceId,id+'.json');
+      await sameFile(path,bytes(source));
+      const sourceSha256=digest(bytes(source));
+      const version={id,sourceSha256,createdAt:source.createdAt,previousVersionId:source.previousVersionId};
+      const saved={id:sourceId,title:source.title,url:source.url,versionId:id,sourceSha256,
+        createdAt:previous?.createdAt??source.createdAt,updatedAt:source.createdAt,
+        lastAcquisitionId:previous?.lastAcquisitionId??null,versions:[version,...(previous?.versions??[])]};
+      return {patch:{feedSources:[saved,...(state.feedSources??[]).filter(item=>item.id!==sourceId)]},
+        result:{source:sourceSummary(saved),version,configuration:source}};
+    }
+    if(kind==='acquireFeed') {
+      only(payload,['sourceId','sourceSha256','previousAcquisitionId','expectedPreviousSha256','conditional'],
+        ['sourceId','sourceSha256','previousAcquisitionId','expectedPreviousSha256','conditional']);
+      const selected=await feedSource(payload.sourceId),source=selected.source;
+      if(selected.record.sourceSha256!==sha(payload.sourceSha256)||typeof payload.conditional!=='boolean')
+        throw fault('GTFS_FEED_SOURCE_CHANGED','Acquire the exact currently displayed saved source.',409);
+      let previous=null;
+      if(payload.previousAcquisitionId===null) {
+        if(payload.expectedPreviousSha256!==null||payload.conditional)
+          throw fault('GTFS_FEED_PREVIOUS_REQUIRED','A conditional refresh needs an original retained acquisition.');
+      } else {
+        // Read the previous immutable response under this same original writer gate.
+        const previousRecord=lookup('acquisitions',uuid(payload.previousAcquisitionId));
+        if(previousRecord.acquisitionSha256!==sha(payload.expectedPreviousSha256)||previousRecord.sourceId!==source.id)
+          throw fault('GTFS_FEED_PREVIOUS_CHANGED','Choose the exact previous acquisition from this saved source.',409);
+        const previousReceipt=await readAnchored(rootFile('acquisitions',previousRecord.id,'acquisition.json'),
+          previousRecord.acquisitionSha256,STATE_MAX);
+        const previousResponse=await inspectGtfsFeedResponse(rootFile('acquisitions',previousRecord.id),previousReceipt.request);
+        const previousFeed=await feed(previousRecord.feedId);
+        const actual=await hashPrivate(rootFile('feeds',previousRecord.feedId,'original.gtfs.zip'),GTFS_ZIP_MAX_BYTES);
+        if(previousReceipt.id!==previousRecord.id||previousReceipt.sourceId!==source.id||previousReceipt.sourceUrl!==source.url||
+          previousReceipt.httpSha256!==previousResponse.responseSha256||previousReceipt.feed.id!==previousRecord.feedId||
+          previousReceipt.feed.feedSha256!==actual.hash||previousReceipt.feed.feedBytes!==actual.bytes||
+          previousFeed.record.feedSha256!==actual.hash||previousFeed.record.feedBytes!==actual.bytes)
+          throw fault('GTFS_FEED_PREVIOUS_CHANGED','The previous response must retain the exact original ZIP for this source URL.',409);
+        previous={acquisitionId:previousRecord.id,acquisitionSha256:previousRecord.acquisitionSha256,
+          feedId:previousRecord.feedId,feedSha256:actual.hash,feedBytes:actual.bytes,url:source.url,
+          validatorUrl:previousReceipt.http.response.url,validators:copy(previousReceipt.validators),conditional:payload.conditional};
+      }
+      const path=rootFile('acquisitions',id);
+      const response=await acquireGtfsFeedResponse(path,{requestId:id,sourceId:source.id,
+        sourceVersionId:source.versionId,sourceSha256:payload.sourceSha256,url:source.url,timeoutMs:source.timeoutMs,previous},{signal});
+      const unchanged=response.response.outcome==='NOT_MODIFIED'||previous&&
+        response.response.body.sha256===previous.feedSha256&&response.response.body.bytes===previous.feedBytes;
+      let retained;
+      if(unchanged)retained={patch:{},result:{feed:copy(lookup('feeds',previous.feedId))}};
+      else retained=await perform('retainFeed',id,{title:source.title,filename:'original.gtfs.zip',
+        feedSha256:response.response.body.sha256,feedBytes:response.response.body.bytes},signal,
+        await readPrivate(response.bodyFile,GTFS_ZIP_MAX_BYTES));
+      const original=unchanged?retained.result.feed:{...retained.result.feed,
+        acquiredFrom:{requestId:id,sourceId:source.id,sourceVersionId:source.versionId,sourceUrl:source.url,
+          receivedAt:response.response.completedAt,responseSha256:response.responseSha256}};
+      if(!unchanged)retained.patch.feeds=[original,...state.feeds];
+      const receivedValidators=gtfsResponseValidators(response.response.response.headers);
+      const validators=response.response.outcome==='NOT_MODIFIED'?{
+        etag:receivedValidators.etag??previous.validators.etag,
+        lastModified:receivedValidators.lastModified??previous.validators.lastModified}:receivedValidators;
+      const outcome=response.response.outcome==='NOT_MODIFIED'?'not-modified':unchanged?'same-content':'downloaded';
+      const receipt={schema:'stellar-forge.gtfs-feed-acquisition.v1',id,createdAt:state.pending.createdAt,
+        sourceId:source.id,sourceVersionId:source.versionId,sourceSha256:payload.sourceSha256,sourceUrl:source.url,
+        previousAcquisitionId:previous?.acquisitionId??null,previousAcquisitionSha256:previous?.acquisitionSha256??null,
+        outcome,request:response.binding,http:response.response,httpSha256:response.responseSha256,
+        feed:{id:original.id,feedSha256:original.feedSha256,feedBytes:original.feedBytes,
+          inspectionSha256:original.inspectionSha256},validators};
+      await sameFile(join(path,'acquisition.json'),bytes(receipt));
+      const saved={id,sourceId:source.id,sourceVersionId:source.versionId,sourceSha256:payload.sourceSha256,
+        previousAcquisitionId:receipt.previousAcquisitionId,outcome,httpStatus:response.response.response.status,
+        feedId:original.id,feedSha256:original.feedSha256,feedBytes:original.feedBytes,
+        createdAt:receipt.createdAt,acquisitionSha256:digest(bytes(receipt))};
+      const updatedSources=(state.feedSources??[]).map(item=>item.id===source.id?{...item,lastAcquisitionId:id}:item);
+      return {patch:{...retained.patch,feedSources:updatedSources,acquisitions:[saved,...(state.acquisitions??[])]},
+        result:{acquisition:saved,feed:original,source:sourceSummary(updatedSources.find(item=>item.id===source.id))}};
     }
     if(kind==='createEdition') {
       only(payload,['feedId','recipe'],['feedId','recipe']);
@@ -552,7 +731,7 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
     return saved;
   }
 
-  async function status({limit=25,feedsOffset=0,editionsOffset=0,comparisonsOffset=0,decisionsOffset=0,releasesOffset=0,exportsOffset=0}={}) {
+  async function status({limit=25,feedsOffset=0,feedSourcesOffset=0,acquisitionsOffset=0,editionsOffset=0,comparisonsOffset=0,decisionsOffset=0,releasesOffset=0,exportsOffset=0}={}) {
     const exported=[];
     if(await exists(exportsDirectory)) {
       await privateDirectory(exportsDirectory);
@@ -566,11 +745,12 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
     return {schema:'stellar-forge.gtfs-workspace-status.v1',id:state.id,title:state.title,createdAt:state.createdAt,
       revision:state.revision,selectedEditionId:state.selectedEditionId,selection:copy(state.selection),
       active:active?{kind:active.kind}:null,pending:copy(state.pending),
-      feeds:page(state.feeds,feedsOffset,limit),editions:page(state.editions,editionsOffset,limit),
+      feeds:page(state.feeds,feedsOffset,limit),feedSources:page((state.feedSources??[]).map(sourceSummary),feedSourcesOffset,limit),
+      acquisitions:page(state.acquisitions??[],acquisitionsOffset,limit),editions:page(state.editions,editionsOffset,limit),
       comparisons:page(state.comparisons,comparisonsOffset,limit),decisions:page(state.decisions,decisionsOffset,limit),
       releases:page(state.releases,releasesOffset,limit),exports:page(exported,exportsOffset,limit),
       publisher:rawPublisher.status({limit}),schedule:schedule.status({limit}),
-      capabilities:{sourceRows:true,completeOriginalZip:true,exactDatedSchedules:true,frequencyWindows:true,
+      capabilities:{sourceRows:true,completeOriginalZip:true,sourceAcquisition:true,conditionalFeedRefresh:true,exactDatedSchedules:true,frequencyWindows:true,
         completeWorkspaceArchive:true,releaseStore:Boolean(releaseStore)},reads:readers.summary};
   }
 
@@ -586,6 +766,12 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
   async function artifact(kind,id) {
     uuid(id);
     if(kind==='feed') {const saved=await feed(id);return {root:rootFile('feeds',id),anchor:saved.record.inspectionSha256};}
+    if(kind==='feedSource') {const saved=await feedSource(id);return {root:rootFile('feed-sources',id),anchor:saved.record.sourceSha256};}
+    if(kind==='acquisition') {
+      const saved=await acquisition(id);
+      if(!saved.historySha256)throw fault('GTFS_ACQUISITION_NOT_STARTED','Resume this original acquisition before downloading its response.',409);
+      return {root:rootFile('acquisitions',id),anchor:saved.record?.acquisitionSha256??saved.historySha256};
+    }
     if(kind==='edition') {const saved=await edition(id);return {root:rootFile('editions',id),anchor:saved.record.editionSha256};}
     if(kind==='comparison') {const saved=await comparison(id);return {root:rootFile('comparisons',id),anchor:saved.record.reportSha256};}
     if(kind==='decision') {
@@ -602,7 +788,7 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
         throw fault('GTFS_EXPORT_NOT_READY','Resume the original archive export request.',409);
       return {root:exportsDirectory,single:id+'.tar.gz',anchor:saved.result.archiveSha256,exact:saved.result};
     }
-    throw fault('GTFS_ARTIFACT_KIND','Choose a retained feed, edition, comparison, decision, release or workspace archive.');
+    throw fault('GTFS_ARTIFACT_KIND','Choose a retained feed, saved source, acquisition, edition, comparison, decision, release or workspace archive.');
   }
   async function fullManifest(kind,id) {
     const selected=await artifact(kind,id),key=kind+':'+id+':'+selected.anchor;
@@ -771,11 +957,13 @@ export async function openGtfsWorkspace({directory,create=false,title='GTFS Sche
     return Object.freeze({directory,exportsDirectory,get id(){return state.id;},get revision(){return state.revision;},
       publisher,schedule,status,identity:()=>({schema:'stellar-forge.gtfs-workspace-identity.v1',directory,
         workspaceId:state.id,revision:state.revision,pid:process.pid}),
-      feed:id=>trackRead(()=>feed(id)),edition:id=>trackRead(()=>edition(id)),comparison:id=>trackRead(()=>comparison(id)),
+      feed:id=>trackRead(()=>feed(id)),feedSource:(id,input)=>trackRead(()=>feedSource(id,input)),
+      acquisition:(id,input)=>trackRead(()=>acquisition(id,input)),edition:id=>trackRead(()=>edition(id)),comparison:id=>trackRead(()=>comparison(id)),
       sourceRows:input=>trackRead(async()=>{const original=await feed(input.feedId);return readGtfsSourceRows(
         rootFile('feeds',input.feedId,'original.gtfs.zip'),original.record.feedSha256,input,{env:environment});}),
       rows:input=>trackRead(async()=>{await edition(input.editionId);return readGtfsRows(rootFile('editions',input.editionId),input,{env:environment});}),
       retainFeed:(input,content)=>callRequest('retainFeed',input,content),
+      saveFeedSource:input=>callRequest('saveFeedSource',input),acquireFeed:input=>callRequest('acquireFeed',input),
       createEdition:input=>callRequest('createEdition',input),compareEditions:input=>callRequest('compareEditions',input),
       saveDecision:input=>callRequest('saveDecision',input),selectEdition:input=>callRequest('selectEdition',input),
       prepareRelease:input=>callRequest('prepareRelease',input),stageRelease:input=>callRequest('stageRelease',input),

@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "gtfs",
-  "description": "Complete GTFS feed authoring, schedule editions and original merchant publication",
+  "description": "Saved agency GTFS sources, retained HTTPS refresh, exact schedule editions and original merchant publication",
   "commands": {
     "gtfs": "stellar/scf-starforge-20261009/sf30-seller-sdk/gtfs/cli.mjs"
   },
   "commandDescriptions": {
-    "gtfs": "Retain complete GTFS feeds, review dated schedules, publish data and receive whole workspaces"
+    "gtfs": "Acquire or import complete GTFS feeds, refresh saved sources, review schedules, publish data and receive whole workspaces"
   },
   "exports": {
     "./seller/gtfs": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gtfs/source.mjs",
