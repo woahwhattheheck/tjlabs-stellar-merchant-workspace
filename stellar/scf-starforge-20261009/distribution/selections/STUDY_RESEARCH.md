@@ -23,6 +23,8 @@ The recipe retains the complete Study and Property modules, Census/BLS/HUD direc
 
 ## Receive and open the application
 
+Use the existing `starforge` operator CLI for the commands below. From a source checkout, the same installer is available as `node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs`; replace `starforge runtime-install` with that invocation while keeping the displayed arguments. The resulting installed package supplies the Study command and selected Merchant tools.
+
 Receive the produced archive and its SHA256 through the original runtime installer. Use the actual archive identity from the completed build receipt:
 
 ~~~sh
