@@ -109,7 +109,7 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
       const box=node('section',undefined,'subsection'),label=value.kind.replaceAll('-',' ');
       box.append(node('h5',label),node('p','Saved '+when(value.createdAt)+' · '+value.attempts+' dispatch attempt(s)','hint'));
       const buttons=node('div',undefined,'actions'),retry=node('button','Continue original action'),exported=node('button','Download original request');
-      retry.type=exported.type='button';retry.disabled=mutationActive()||!own.ready;
+      retry.type=exported.type='button';retry.dataset.seriesRetry='true';retry.disabled=mutationActive()||!own.ready||Boolean(state.host?.console.closing);
       action(retry,()=>mutate(()=>submitIntent(value.kind,value.body,true)));
       action(exported,()=>saveJson({schema:'stellar-forge.workflow-series-browser-intent.v1',...value},value.kind+'-original.json'));
       buttons.append(retry,exported);box.append(buttons);return box;
@@ -283,6 +283,7 @@ export function createWorkflowSeries({state,$,node,text,pretty,when,tag,properti
   function sync(){
     const selected=Boolean(state.profile),mutating=mutationActive(),saved=isSaved(),closing=Boolean(state.host?.console.closing);
     const ready=selected&&own.ready&&!mutating&&!closing;
+    for(const button of $('series-pending-list').querySelectorAll('[data-series-retry]'))button.disabled=!ready;
     $('series-new').disabled=!selected||mutating;$('series-refresh').disabled=!selected||mutating;
     $('series-save').disabled=!ready||!own.id;$('series-export').disabled=!selected;
     $('series-cycle-new').disabled=!saved||!ready;
