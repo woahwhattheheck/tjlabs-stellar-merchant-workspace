@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Carry a governed purchase through expense review and accountant handover | **Applications → Buyer expenses**, `starforge buyer-expenses` and [the complete operating guide](products/buyer-expenses/OPERATING.md) | Original shared-ledger source, exact allocation and issued periods, accountant returns, SDK/MCP operation and complete private project receiving |
 | Review exact economic series and source revisions | **Applications → DBnomics economic workspace** or `starforge dbnomics` | Original provider responses, precise native periods and values, saved analyst reports, reviewed publication and complete editable/customer receiving |
 | Receive an official World Bank edition through customer analysis | `starforge worldbank-product` and the original `worldbank-agent` Applications entry | Complete retained source, reviewed merchant edition, reports, typed workbook and reopened customer workspace |
 | Publish retained SEC facts and filings, then reopen the entire operator workspace | [SEC EDGAR operating guide](products/sec-edgar/OPERATING.md) | Original public-source editions, every saved revision, customer delivery, and a complete portable receiving package |
