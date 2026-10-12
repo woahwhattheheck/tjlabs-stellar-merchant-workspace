@@ -34,6 +34,7 @@ STATIC.update({
     "/plan_comparison.css": ("plan_comparison.css", "text/css; charset=utf-8"),
 })
 import source_tables
+import source_workbooks
 source_tables.register_static(STATIC)
 
 
@@ -216,6 +217,8 @@ class Handler(BaseHTTPRequestHandler):
             result = workspace.import_bundle(raw, name, self.headers.get("X-Request-ID", ""))
             return self.send(201, result)
         body = self.json_body()
+        if source_workbooks.write_http(self, path, body):
+            return
         if path == "/api/import-scenario":
             if ("sourceText" in body) == ("sourceBase64" in body):
                 raise Problem("Supply exactly one sourceText or sourceBase64 field.")
