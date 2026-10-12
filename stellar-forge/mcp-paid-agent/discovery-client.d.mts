@@ -65,6 +65,9 @@ export interface DiscoveryPage {
     observedAt: string;
     mode: DiscoveryMode;
     request: NormalizedBrowseRequest | NormalizedSearchRequest;
+    /** Exact retained provider page, when supplied by this server. */
+    pageSha256?: string;
+    pageBytes?: number;
   };
   page: {
     received: number;
@@ -115,7 +118,14 @@ export interface ResourceDescription extends NativeRecord {
   bazaar: NativeRecord;
   /** Complete eligible alternatives; these indexes are used unchanged by preview. */
   accepts: PaymentOption[];
-  source: NativeRecord & { url: string; observedAt: string; resource: string | NativeRecord };
+  source: NativeRecord & {
+    url: string;
+    observedAt: string;
+    resource: string | NativeRecord;
+    /** Exact retained provider response identity, when available on this server. */
+    pageSha256?: string;
+    pageBytes?: number;
+  };
   /** Milliseconds since the Unix epoch. */
   expiresAt: number;
   preview: NativeRecord & {

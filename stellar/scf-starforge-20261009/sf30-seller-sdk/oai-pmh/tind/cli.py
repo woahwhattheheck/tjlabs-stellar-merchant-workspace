@@ -35,6 +35,16 @@ def main():
     command.add_argument("--project", required=True); command.add_argument("--offset", type=int, default=0)
     command.add_argument("--limit", type=int, default=50); command.add_argument("--query", default="")
     command = sub.add_parser("record"); command.add_argument("--project", required=True); command.add_argument("--identifier", required=True)
+    command = sub.add_parser("source-cases")
+    command.add_argument("--project", required=True); command.add_argument("--offset", type=int, default=0)
+    command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("source-case"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command = sub.add_parser("source-case-plan"); command.add_argument("--project", required=True)
+    command.add_argument("--id", required=True); command.add_argument("--choices", required=True, help="Complete [{caseId,identifier}] JSON file")
+    command = sub.add_parser("source-case-reviews"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command.add_argument("--offset", type=int, default=0); command.add_argument("--limit", type=int, default=50)
+    command = sub.add_parser("source-case-review"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
+    command = sub.add_parser("source-case-export"); command.add_argument("--project", required=True); command.add_argument("--id", required=True)
     command = sub.add_parser("files")
     command.add_argument("--project", required=True); command.add_argument("--offset", type=int, default=0)
     command.add_argument("--limit", type=int, default=50); command.add_argument("--query", default="")
@@ -84,6 +94,31 @@ def main():
                     result = workspace.apply(document(args.request))
                 elif args.command == "records":
                     result = workspace.records(args.project, args.offset, args.limit, args.query)
+                elif args.command == "source-cases":
+                    from source_cases import list_collections
+                    with workspace.mutex:
+                        result = list_collections(workspace, args.project, args.offset, args.limit)
+                elif args.command == "source-case":
+                    from source_cases import view_collection
+                    with workspace.mutex:
+                        result = view_collection(workspace, args.project, args.id)
+                elif args.command == "source-case-plan":
+                    from source_cases import plan_many
+                    with workspace.mutex:
+                        result = plan_many(workspace, args.project, args.id, document(args.choices))
+                elif args.command == "source-case-reviews":
+                    from source_cases import reviews
+                    with workspace.mutex:
+                        result = reviews(workspace, args.project, args.id, args.offset, args.limit)
+                elif args.command == "source-case-review":
+                    from source_cases import review_document
+                    with workspace.mutex:
+                        result = review_document(workspace, args.project, args.id)
+                elif args.command == "source-case-export":
+                    from source_cases import collection
+                    with workspace.mutex:
+                        item, _ = collection(workspace, args.project, args.id)
+                        result = storage.load_json(workspace.object_path(item["original"]).read_bytes())
                 elif args.command == "files":
                     with workspace.mutex:
                         result = workspace.files(args.project, args.offset, args.limit, args.query)

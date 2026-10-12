@@ -101,3 +101,17 @@ Each case supports up to 50 amendment identities and 300 total editions within a
 The implementation is in operations_amendments.py, operations_amendments.mjs and operations_amendments.css, composed into the original Operations, HTTP, CLI, agent client and managed launch source. The grant-operations distribution selects the complete existing SF47 component.
 
 The first source edition is reviewable at the original amendment branch. Native operating and browser receiving outcomes are recorded separately when actually completed; authoring or parsing alone does not establish those outcomes.
+
+
+## Complete native operating example
+
+The included amendment_receiving.py uses the installed original Workspace and Operations modules. Run it from the selected source checkout with an absolute, private operating directory:
+
+    python3 stellar/scf_2026/sf47_budget_model/workspace/amendment_receiving.py \
+      --root /absolute/path/to/amendment-operating-work
+
+It creates a clearly labelled WALKTHROUGH case from the retained public proposal source. The complete CSV intake, invoice and cash allocations are internal exercise records. The workflow retains a historical forecast, saves a partial allocation change as a complete native revision, preserves a later planner revision, rejects an outdated case review, applies and replays the exact accepted amendment, then exports and receives the full case in two fresh native workspaces.
+
+Each issued request and phase is retained in output/amendment-receiving-checkpoint.json. The result and original archives remain under output; repeated invocation uses the same completed phase results and verifies its retained artifacts. Use the ordinary operating-case import for a selected exported case. Keep the full source and output directory together when handing over the completed exercise.
+
+The first native execution on October 12 completed all ten operating phases and the original three Node syntax checks. Its temporary host disappeared before package preservation. The retained phase-completion evidence remains separate from the subsequent complete receiving-package preservation.

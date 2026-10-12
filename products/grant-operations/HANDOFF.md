@@ -6,6 +6,22 @@ The single **grant-handoff.json** file contains the original complete operating-
 
 The command is included in the **grant-operations** selected product. Its public API is **./grant/application-handoff**.
 
+## Use the Applications browser
+
+Open **Applications → Grant case handoff** in the existing private runtime workspace. The screen uses the same complete handoff operation as the installed command below.
+
+**Export a saved grant case.** Select the original saved Grant Application, then **Load current cases**. Each choice shows its native name, current version and operating purpose. Select the case, name the handoff, and choose **Export complete handoff**. Its retained operation provides **Download complete handoff**. If the original grant service is closed, select the explicit start option before loading its cases; a service borrowed from Applications stays under that Application's control.
+
+**Receive a complete handoff.** Choose the whole **grant-handoff.json** file. The screen displays its original case version and the sizes of both complete files. Select the receiving READY runtime, Application name, case name, private grant workspace, Python executable, optional scenario, port and recording operator. Additional settings JSON carries any other required Application settings. Use the explicit service-start option when this operation should open a closed receiving service.
+
+**Prepare receiving** commits the complete uploaded bytes and destination bindings into the original handoff operation before obtaining the existing Applications host review. Inspect that host review, then choose **Receive case and review Application**. The native importer returns the actual received case, and the original Application review appears beside it. **Save reviewed Application** commits the existing writer's request. **Open saved Application** selects the resulting Application in the normal Applications view; use its existing Start/Open controls and select the named received case in Delivery operations.
+
+**Retained handoffs** lists the server's original browser operations with pagination. Open an operation to continue its export, case receiving or Application save. **Open last handoff** reopens the last selected operation remembered by this browser tab. Once preparation has committed, closing the browser or removing the incoming file does not remove the retained case, setup or host bindings. **Refresh operation** reads the current original operation after a response is lost.
+
+Prepared input fields remain fixed for that operation. **New export** or **New receiving operation** begins a deliberately separate selection while retaining the previous operation. If an input fails before preparation creates its original record, correct the input in a new operation.
+
+Browser operations live under **RUNTIME_WORKSPACE/grant-application-handoffs/OPERATION_ID**. **Complete operation details** gives that exact directory, request identities, original native result and complete Application review/result. The installed command can continue the same browser operation with that directory and its original runtime workspace; the browser then reads the updated operation. Browser uploads preserve complete valid UTF-8 bytes, and package inspection/import use the original size and source checks.
+
 ## 1. Choose the source and destination
 
 Use the original runtime workspace containing the saved **Grant planning and delivery** Application. Read that application's ID and the case's current native ID/version from Applications and the grant operator. The source and receiving runtime workspaces each need an attached **READY** runtime containing Grant Operations.
@@ -194,7 +210,9 @@ import {
 } from '@tokenjunkielabs/starforge-merchant/grant/application-handoff';
 ~~~
 
-The exported functions accept an opened original runtime-workspace model where required:
+The exported functions accept an opened original runtime-workspace model where required. Browser and service adapters can pass **packageText** and a complete **bindingsValue** to preparation instead of input paths; the same original atomic preparation stores their full bytes and native requests. **grantHandoffCases** reads the original selected Application's native case list, and **grantHandoffDownload** returns the complete original export for an authenticated browser.
+
+
 
 ~~~js
 const exported = await exportGrantHandoff(sourceModel, {
