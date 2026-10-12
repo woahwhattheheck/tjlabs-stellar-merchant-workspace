@@ -21,6 +21,7 @@ export type GrantCaseAction =
   | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
+  | 'amendment.save' | 'amendment.review' | 'amendment.apply'
   | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision';
 
 
@@ -368,6 +369,40 @@ export interface GrantCommercialCommandResult {
   intent: GrantCommercialIntent;
   native: GrantObject;
   commercial: GrantCommercialPrepared;
+}
+
+export interface GrantAmendmentInputs {
+  selectedRevision: number;
+  expectedContentSha256: string;
+  asOfDate: GrantCivilDate;
+  reason: string;
+  basis: {
+    kind: 'INTERNAL_PLAN' | 'ISSUER_DECISION' | 'CUSTOMER_DECISION' | 'WALKTHROUGH';
+    reference?: string;
+    date?: GrantCivilDate | null;
+    sourceIds?: string[];
+    note?: string;
+  };
+}
+export interface GrantAmendmentEdition extends GrantObject {
+  id: string; revision: number; version: number; sha256: string;
+  state: 'PROPOSED' | 'REVIEWED' | 'CHANGES_REQUESTED' | 'APPLIED';
+  preview: GrantObject & { inputs: GrantAmendmentInputs; previewSha256: string };
+  review: GrantObject | null;
+  application: GrantObject | null;
+}
+export interface GrantAmendmentSaveData extends GrantObject {
+  amendmentId?: string | null; expectedRevision: number;
+  inputs: GrantAmendmentInputs; expectedPreviewSha256: string;
+}
+export interface GrantAmendmentReviewData extends GrantObject {
+  amendmentId: string; expectedRevision: number; expectedAmendmentSha256: string;
+  expectedPreviewSha256: string; decision: 'APPROVE' | 'RETURN_FOR_CHANGES';
+  statement: string; sourceIds?: string[];
+}
+export interface GrantAmendmentApplyData extends GrantObject {
+  amendmentId: string; expectedRevision: number; expectedAmendmentSha256: string;
+  acknowledgeBaselineChange: true;
 }
 
 export interface GrantBindingInput {
@@ -1650,6 +1685,8 @@ export class GrantWorkspaceClient {
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
   read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
+  read(view: 'amendments', selection: { caseId: string }): Promise<GrantJsonResponse<GrantObject>>;
+  read(view: 'amendment', selection: { caseId: string; amendmentId: string; revision?: number }): Promise<GrantJsonResponse<{ amendment: GrantAmendmentEdition; current: GrantObject; history: GrantObject[] }>>;
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'work-intakes', selection: {caseId: string}): Promise<GrantJsonResponse<{intakes: GrantWorkIntakeSummary[]}>>;
@@ -1680,6 +1717,7 @@ export class GrantWorkspaceClient {
   ledgerIntakeInspect(caseId: string, file: GrantLedgerFile): Promise<GrantJsonResponse<GrantLedgerInspection>>;
   ledgerIntakePreview(caseId: string, body: GrantLedgerPreviewInput): Promise<GrantJsonResponse<GrantLedgerPreview>>;
   ledgerIntakeApply(caseId: string, body: GrantLedgerApplyInput): Promise<GrantJsonResponse<GrantLedgerReceipt>>;
+  amendmentPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantAmendmentInputs): Promise<GrantJsonResponse<T>>;
   forecastPreview<T = GrantForecastPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   forecastSave<T = GrantForecastSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSeed<T = GrantPortfolioSeed>(caseId: string, expectedVersion: number, forecastId: string, options?: GrantPortfolioSeedOptions): Promise<GrantJsonResponse<T>>;

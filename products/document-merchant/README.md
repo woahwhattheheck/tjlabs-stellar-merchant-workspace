@@ -14,7 +14,7 @@ Provider contracts and plan data were read on **12 October 2026**. MintPDF and P
 
 ## Install and run
 
-Use the maintained merchant package or its source checkout. The distribution contribution registers the command and typed package export:
+Use the maintained merchant package or its source checkout. Build `--selection document-merchant` for the complete document service with its original customer and merchant interfaces. The [build and installation instructions](OPERATING.md#build-and-install-the-complete-document-package) cover the archive, direct executable and existing private runtime installer. The distribution contribution registers the command and typed package export:
 
 ~~~sh
 starforge document-merchant template --provider mintpdf --out /srv/starforge/document-input/setup.json
