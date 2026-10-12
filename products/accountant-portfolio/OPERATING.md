@@ -24,7 +24,35 @@ Use the actual approved recording links, notes, transcripts, close instructions 
 
 Publishing a change creates a new immutable edition. An existing period keeps the edition selected when it opened. Stable task IDs permit an exact external checklist mapping even when task titles repeat.
 
-The task handover CSV preserves its original 12 human-readable columns and appends **Runbook ID**, **Edition ID**, **Period ID** and **Task ID**. Use that identity tuple when mapping tasks into the practice's existing Double or other close-management workspace. The product supplies the complete native handover and those stable identifiers; assisted task setup and the selected external system's own import workflow remain explicit operator steps.
+The task handover CSV preserves its original 12 human-readable columns and appends **Runbook ID**, **Edition ID**, **Period ID** and **Task ID**. Named-set periods also append **Procedure set ID** and **Procedure set name**. Use that identity tuple when mapping tasks into the practice's existing Double or other close-management workspace. The product supplies the complete native handover and those stable identifiers; assisted task setup and the selected external system's own import workflow remain explicit operator steps.
+
+## Use weekly and monthly procedure sets
+
+Use the [complete editable starter](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/examples/weekly-monthly-runbook.json) as the client's initial procedure catalog, or add named sets to its existing author draft. Preserve the real stable task IDs and edit the procedure instructions, resources and responsible people to match the engagement.
+
+| Saved set | Starter scope |
+| --- | --- |
+| `weekly-cash` | Source intake, cash position, upcoming obligations, short-term cash outlook, client questions and reviewer handover. |
+| `monthly-close` | Source intake, cash position, period cutoff, reconciliations, variance review, reporting pack, client questions and reviewer handover. |
+
+An edition can declare up to 32 named sets. Each selects one or more distinct IDs from that edition's procedure catalog; execution order follows the catalog. Publishing a changed membership creates another immutable edition. Existing periods retain their edition and selection.
+
+Choose the set when starting each new period. **All procedures** uses the complete catalog. **Start following period** retains the prior choice in the draft while requiring the new period's dates and actual source. A choice absent from the newly selected edition remains visible for correction before creation.
+
+For the installed native CLI, copy and edit the complete supplied JSON, then retain the original save request:
+
+~~~sh
+starforge client-close runbooks prepare \
+  --url http://127.0.0.1:8446 --client client-a --action save \
+  --input /private/client-a/weekly-monthly-runbook.json \
+  --out /private/client-a/save-procedures.json
+
+starforge client-close runbooks execute \
+  --url http://127.0.0.1:8446 --client client-a \
+  --prepared /private/client-a/save-procedures.json
+~~~
+
+Use the returned runbook and edition IDs in the native `create` input. Its optional `profileId` is the selected saved set, for example `weekly-cash`; omit it to retain the all-procedure behavior. The [full native guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/RUNBOOK_PROFILES.md) includes a complete creation input, source selection, SDK paging and receiving rules.
 
 ## Save the client commission
 
@@ -53,7 +81,7 @@ The new period also selects its immutable procedure edition, label, preparer, re
 
 Add one row per client period, selecting its commissioning edition and close/review dates. Enter the expected preparation, review and backup-reserve minutes. Use the commissioned people or explicitly select the planned assignment.
 
-A row can bind an existing original period. A planned future period can select its actual new source, or leave source selection until the files arrive. Creating the native period requires the real source selection.
+A row can bind an existing original period, which supplies its own immutable procedure edition and set. For a future period, select a named set from the commissioned edition or **All procedures**; the published row fixes that choice for its native create command. It can also select its actual new source, or leave source selection until the files arrive. Creating the native period requires the real source selection.
 
 **Preview** calculates the complete schedule against the saved firm edition and current published bookings. It works backwards from deadlines across the actual available working dates. Review is constrained to its close-to-review interval, and preparation/review allocation takes priority over backup reserve.
 
@@ -72,7 +100,7 @@ In the client desk, record each task's actual result and attach the supporting f
 | Not applicable | Record why the procedure does not apply to this period. |
 | Open item | Record the unresolved work, cause and follow-up note. |
 
-Submitting retains the complete preparation round. Required tasks must be complete, explained as not applicable, or recorded as open items with a note.
+Preparation and progress contain only the period's frozen selected procedures. Submitting retains that complete preparation round. Required selected tasks must be complete, explained as not applicable, or recorded as open items with a note.
 
 The reviewer can return the preparation with corrections. The preparer then edits the same period and submits another retained round. Approval retains the selected submission and review decision. Required open items must be resolved or explicitly selected as accepted exceptions with a review note.
 
