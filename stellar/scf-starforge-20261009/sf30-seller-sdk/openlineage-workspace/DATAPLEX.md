@@ -178,3 +178,15 @@ Additional Google REST operating references:
 - [LineageEvent and EntityReference fields](https://docs.cloud.google.com/knowledge-catalog/docs/reference/data-lineage/rest/v1/projects.locations.processes.runs.lineageEvents)
 - [Named lineage-event receiving permission](https://docs.cloud.google.com/knowledge-catalog/docs/reference/data-lineage/rest/v1/projects.locations.processes.runs.lineageEvents/get)
 - [Lineage retention](https://docs.cloud.google.com/knowledge-catalog/docs/about-data-lineage)
+
+## Complete development receiving
+
+The maintained `tools/openlineage-google-receiving.mjs` programme uses the original completed OpenLineage archive. Unpack that archive into `original/` beneath a new owned receiving root, then select this complete application directory:
+
+```sh
+node tools/openlineage-google-receiving.mjs \
+  /absolute/google-receiving \
+  /absolute/checkout/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace
+```
+
+The programme reopens the original version 1 baseline and both version 2 operating packages, prepares their actual saved source editions, and writes complete Google delivery packages and HTML reports. Its injected REST transport exercises a lost-response retry, quota-project headers, omitted repeated fields, table/column receiving and preservation of earlier responses. It then independently reopens each complete package with the exact carried application. The original standalone facet objects also pass through source review and complete export. `native-result.json` records actual source identities, application counts, receiving states and package hashes. Keep its whole output with the original development operation.
