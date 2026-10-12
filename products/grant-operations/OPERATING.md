@@ -362,6 +362,14 @@ preview and save, whole export/reopen and later installation editions. The
 installed Grant Operations source includes both profiles and their preparation
 module, alongside the existing native Installation implementation.
 
+### Stellarcarbon and CFCE / GiveCredit reporting workorders
+
+The same installed preparation and complete receiving commands accept **stellarcarbon** and **cfce-givecredit**. Their full profiles carry the original customer task, source semantics, reporting periods, complete file set, correction flow and independent editable handover into the existing Customer installations desk. The selected original Workshare retains the actual commercial terms, fee milestones, phase criteria and funding assignments.
+
+Use `starforge grant-installation-workorder template|prepare --profile stellarcarbon` or `--profile cfce-givecredit` against the original native seed. The whole receiving driver accepts either profile in its current customer input. Both complete reporting products remain their own Merchant Applications entries.
+
+The [complete carbon reporting installation guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/CARBON_REPORTING.md) supplies the exact source bindings, outputs, native save/receiving sequence and reporting operations.
+
 ### Review original implementation evidence
 
 Open **Implementation evidence** in the same operating case. Attach the complete original commissioning JSON, merchant workspace or Merchant Support handoff through the existing Sources intake. Select it by its actual filename, byte count and SHA-256, then **Read original implementation**. The installed SF74 producer supplies the original tasks, measurements, receiving records, comparisons and readable report.
