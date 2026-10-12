@@ -94,6 +94,11 @@ complete donor. A selected builder dependency discovered later is retained in
 `build-source-issue.json` and can be supplied through the same original source
 path and object mechanism.
 
+The selected customer package explicitly includes its product README and
+operating guide. This repository receiving directory carries the complete frozen
+source input and execution entrypoint; it stays outside that customer package's
+component selection, so the packet does not become a nested source dependency.
+
 ## Run the complete operation
 
 Use a durable private archive directory for all results. The temporary
