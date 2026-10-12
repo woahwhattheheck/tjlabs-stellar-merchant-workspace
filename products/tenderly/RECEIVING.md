@@ -6,7 +6,7 @@ The complete original input and customer exports remain the source of the operat
 
 ## Source and runtime
 
-The product source is fixed at `b9d888ab2c417d956c804b9b9133ed86ac3c9c0a` in `woahwhattheheck/tjlabs-stellar-merchant-workspace`. `receiving-source.json` records the exact 203 required files, 2,637,065 source bytes, their SHA-256 values and Git blob identities, plus the complete adjacent Node receiving driver.
+The product source is fixed at `b9d888ab2c417d956c804b9b9133ed86ac3c9c0a` in `woahwhattheheck/tjlabs-stellar-merchant-workspace`. `receiving-source.json` records the exact 237 required receiving files, 2,953,861 source bytes, their SHA-256 values and Git blob identities, plus the complete adjacent Node receiving driver.
 
 Use Python 3.12 or newer, Node 22.16 or newer, and an existing compatible installed dependency directory. The original cloud runtime has used x402 core/stellar/extensions 2.28.0 and Stellar SDK 16.3.1. The full managed source must match the manifest before the receiver starts. The receiver copies those selected bodies into its new private operation, so another checkout writer cannot change the running source.
 
@@ -23,17 +23,9 @@ Keep these four receiving files from the current receiving contribution together
 
 The original workspace archive is `tenderly-mcp-received-workspace-20261012.tar.gz`, 55,271 bytes, SHA-256 `8c4374a9cb0e1494a02769526871df0c0bf06162dd542449b1207a8e1f4893a5`. Its original `workspace.json` has SHA-256 `2eb50abf345d42992d214bbc0d7e3d89bac83b36bd96f877225acb52446fb0fa` and workspace ID `1c5eecfb-93f8-4ce1-bd39-7b6e680212a8`.
 
-The existing shared-host locations observed for this same operation are:
+The complete saved checkpoint is `Starforge_Tenderly_Managed_2026-10-12_Checkpoint.zip`, 200,424 bytes, SHA-256 `8f09a3d7f4bcf64e1075bd09c1ea88dd2519208e66eb0080a69ec56ef03f4c0a`. It retains the unchanged workspace archive, the original successful MCP acceptance, and both complete Node and Python customer exports. Select it with `--checkpoint` to continue on another machine. The receiver verifies every saved member against the included manifest and restores the complete customer files and their directory structure.
 
-| Input | Existing location |
-| --- | --- |
-| Original workspace archive | `/workspace/scratch/a5f3ed0632fa/tenderly-mcp-delivery/tenderly-mcp-received-workspace-20261012.tar.gz` |
-| Original selected case and private environment | `/dev/shm/a5f3-tenderly/mcp-receiving-journey.mjs` |
-| Original Node customer export | `/dev/shm/reidgardas-b710-tenderly/customer-journey/delivery` |
-| Original Python customer export | `/dev/shm/reidgardas-b710-tenderly/customer-journey/delivery-python` |
-| Existing installed dependencies | `/workspace/scratch/9b238a12a516/grpc-reflection/source/node_modules` |
-
-On the original operator's host, select its corresponding existing paths. The receiver freezes these original inputs before starting. The retained driver supplies the original `selected` initializer, its two explicit Tenderly environment assignments, the original merchant options and native factory, and its existing provider-call counters. The receiver reads those exact definitions, attaches the managed listener with that configuration and checks the original counters after the complete saved-response operation. Both original customer exports are received as complete regular-file trees and reopened through the original customer client.
+The existing operator also retains its original `mcp-receiving-journey.mjs`, SHA-256 `e2cc01d971997218e9587c70dd8c81d4cf6a03c6f4a9c79b227572b79958db04`. Supply that complete file with `--original-driver`. The retained driver supplies the original `selected` initializer, its two explicit Tenderly environment assignments, the original merchant options and native factory, and its existing provider-call counters. The receiver reads those exact definitions, attaches the managed listener with that configuration and checks the original counters after the complete saved-response operation. Both original customer exports are received as complete regular-file trees and reopened through the original customer client.
 
 Original coordination: <https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791748442023179>.
 
@@ -54,7 +46,20 @@ python3 /ABSOLUTE/RECEIVING/receiving.py \
   --save-helper /ABSOLUTE/CURRENT/library_upload.py
 ```
 
-The optional current upload helper saves the complete result and customer archive together before the native lifetime closes. Its unchanged workflow uses this operation's private directory for transfer state. Without that argument, the same complete files remain in the private receiving directory for the executing host's existing file tools.
+A restored customer ZIP supplies all three original data inputs directly:
+
+```sh
+python3 /ABSOLUTE/RECEIVING/receiving.py \
+  --source-root /ABSOLUTE/PRIVATE/tenderly-original-source \
+  --directory /ABSOLUTE/PRIVATE/tenderly-customer-operation \
+  --checkpoint /ABSOLUTE/RESTORED/Starforge_Tenderly_Managed_2026-10-12_Checkpoint.zip \
+  --original-driver /ABSOLUTE/ORIGINAL/mcp-receiving-journey.mjs \
+  --node /ABSOLUTE/EXISTING/node \
+  --node-modules /ABSOLUTE/EXISTING/node_modules \
+  --save-helper /ABSOLUTE/CURRENT/library_upload.py
+```
+
+The optional delivery helper saves the complete result and customer archive together before the native lifetime closes. Keep the five current helper files together: `library_upload.py`, `library_hosted_apps.py`, `library_file_transfer.py`, `native_library_delivery.py` and `native_library_requests.py`. The receiver invokes the existing returned-PUT worker, keeps transfer state and original provider requests inside this operation's private directory, and retains the save result and receipt markers there. Without that argument, the same complete files remain in the private receiving directory for the executing host's existing file tools.
 
 The full continuation uses the original saved response and operation identifiers. It attaches the managed merchant without taking over the Applications listener, proves that detaching its own client preserves the other live client, resumes the entire SHA-bound response in a new file-read handle, and lets the original Applications owner stop and restart its listener. The customer and analysis phases operate the complete retained original files.
 

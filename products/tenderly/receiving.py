@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """MIT. Continue the original saved Tenderly case through its managed customer product."""
 from __future__ import annotations
-import argparse,hashlib,json,os,shutil,signal,stat,subprocess,sys,tarfile,time,zipfile
+import argparse,hashlib,io,json,os,shutil,signal,stat,subprocess,sys,tarfile,time,zipfile
 from pathlib import Path
 SOURCE_COMMIT="b9d888ab2c417d956c804b9b9133ed86ac3c9c0a"
 PACKAGE_SHA="8c4374a9cb0e1494a02769526871df0c0bf06162dd542449b1207a8e1f4893a5"
@@ -54,20 +54,54 @@ def copy_regular_tree(original,target):
         if path.is_dir():(target/relative).mkdir(mode=0o700,parents=True,exist_ok=True)
         elif path.is_file():write(target/relative,path.read_bytes())
         else:raise ValueError("The original customer export contains an unsupported entry")
+def read_checkpoint(path):
+    body=path.resolve().read_bytes()
+    with zipfile.ZipFile(io.BytesIO(body)) as archive:
+        entries=archive.infolist();names=[entry.filename for entry in entries]
+        if len(set(names))!=len(names):raise ValueError("The saved customer ZIP contains duplicate members")
+        for entry in entries:
+            name=Path(entry.filename)
+            if name.is_absolute() or ".." in name.parts or stat.S_ISLNK(entry.external_attr>>16):
+                raise ValueError("The saved customer ZIP contains an unsafe member")
+        manifest=json.loads(archive.read("files.json"))
+        if manifest.get("schema")!="stellar-forge.tenderly-managed-customer-files.v1":
+            raise ValueError("Use the complete original Tenderly customer or checkpoint ZIP")
+        files=manifest["members"];directories=manifest["directories"]
+        if set(names)!=set(files)|set(directories)|{"files.json"}:
+            raise ValueError("The complete saved customer ZIP differs from its member manifest")
+        selected={}
+        for name,pin in files.items():
+            data=archive.read(name)
+            if len(data)!=pin["bytes"] or sha(data)!=pin["sha256"]:
+                raise ValueError("The saved original customer member changed: "+name)
+            if name=="original-workspace.tar.gz" or name.startswith(("customer-exports/node/","customer-exports/python/")):
+                selected[name]=data
+        if "original-workspace.tar.gz" not in selected:raise ValueError("The saved customer ZIP has no original workspace archive")
+        for language in ("node","python"):
+            if not any(name.startswith("customer-exports/"+language+"/") for name in selected):
+                raise ValueError("The saved customer ZIP must retain both complete original customer exports")
+        return {"sha256":sha(body),"files":selected,"directories":directories}
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-root",required=True,type=Path)
     parser.add_argument("--directory",required=True,type=Path,help="New directory beneath an existing owned private parent")
-    parser.add_argument("--package",required=True,type=Path)
+    parser.add_argument("--checkpoint",type=Path,help="Complete saved customer or checkpoint ZIP; restores its original archive and both customer exports")
+    parser.add_argument("--package",type=Path)
     parser.add_argument("--original-driver",required=True,type=Path,help="Existing original selected-case and private-environment definitions")
-    parser.add_argument("--customer-node",required=True,type=Path)
-    parser.add_argument("--customer-python",required=True,type=Path)
+    parser.add_argument("--customer-node",type=Path)
+    parser.add_argument("--customer-python",type=Path)
     parser.add_argument("--node",default="node")
     parser.add_argument("--node-modules",required=True,type=Path)
     parser.add_argument("--save-helper",type=Path,help="Current library_upload.py; saves the complete result and archive together")
     args=parser.parse_args()
+    if args.checkpoint:
+        if any((args.package,args.customer_node,args.customer_python)):
+            parser.error("Select either a saved checkpoint ZIP or the three original input paths")
+    elif not all((args.package,args.customer_node,args.customer_python)):
+        parser.error("Provide --checkpoint or all of --package, --customer-node and --customer-python")
     private_directory(args.directory.parent)
-    package=args.package.resolve();body=package.read_bytes()
+    checkpoint=read_checkpoint(args.checkpoint) if args.checkpoint else None
+    body=checkpoint["files"]["original-workspace.tar.gz"] if checkpoint else args.package.resolve().read_bytes()
     if len(body)!=55271 or sha(body)!=PACKAGE_SHA:raise ValueError("Use the unchanged original Tenderly workspace archive")
     manifest=json.loads(Path(__file__).with_name("receiving-source.json").read_text())
     if manifest["sourceCommit"]!=SOURCE_COMMIT:raise ValueError("Use the selected original receiving source")
@@ -94,10 +128,17 @@ def main():
     write(inputs/"original-driver.mjs",original_driver)
     write(inputs/"original-workspace.tar.gz",body)
     customers=directory/"customer-exports";customers.mkdir(mode=0o700)
-    copy_regular_tree(args.customer_node,customers/"node")
-    copy_regular_tree(args.customer_python,customers/"python")
+    if checkpoint:
+        for name in checkpoint["directories"]:
+            if name in ("customer-exports/node/","customer-exports/python/") or name.startswith(("customer-exports/node/","customer-exports/python/")):
+                (directory/name).mkdir(mode=0o700,parents=True,exist_ok=True)
+        for name,data in checkpoint["files"].items():
+            if name.startswith("customer-exports/"):write(directory/name,data)
+    else:
+        copy_regular_tree(args.customer_node,customers/"node")
+        copy_regular_tree(args.customer_python,customers/"python")
     receiving=directory/"received";receiving.mkdir(mode=0o700)
-    with tarfile.open(package,"r:gz") as archive:
+    with tarfile.open(fileobj=io.BytesIO(body),mode="r:gz") as archive:
         members=archive.getmembers()
         if any(member.issym() or member.islnk() or member.name.startswith("/") or ".." in Path(member.name).parts for member in members):
             raise ValueError("The original workspace archive contains an unsafe member")
@@ -147,7 +188,8 @@ def main():
         "sourceCommit":SOURCE_COMMIT,"originalArchiveSha256":PACKAGE_SHA,"originalWorkspaceSha256":WORKSPACE_SHA,"error":error,
     }
     result.update({"completed":completed,"nativeProcess":process,"sourceFiles":len(manifest["files"]),
-        "originalDriverSha256":sha(original_driver),"receivingDriverSha256":sha(driver)})
+        "originalDriverSha256":sha(original_driver),"receivingDriverSha256":sha(driver),
+        "originalCheckpointSha256":checkpoint["sha256"] if checkpoint else None})
     title="Starforge_Tenderly_Managed_2026-10-12"
     report=directory/(title+("_Receiving.json" if completed else "_Checkpoint.json"))
     write(report,(json.dumps(result,indent=2)+"\n").encode())
@@ -189,26 +231,34 @@ def main():
         "archiveSha256":sha(output.read_bytes()),"files":len(members),"directory":str(directory)}
     print(json.dumps({"stage":"COMPLETE_TENDERLY_CUSTOMER_DELIVERY" if completed else "ORIGINAL_TENDERLY_CHECKPOINT",**delivery}),flush=True)
     if args.save_helper:
+        helper=args.save_helper.resolve();helpers=helper.parent
+        for name in ("library_upload.py","library_hosted_apps.py","library_file_transfer.py",
+                     "native_library_delivery.py","native_library_requests.py"):
+            if not (helpers/name).is_file():raise ValueError("Keep the five current delivery helper files together: "+name)
         request={"uploads":[{"local_path":str(report),"purpose":"create_library_file","library_artifact_type":"other"},
                             {"local_path":str(output),"purpose":"create_library_file","library_artifact_type":"other"}]}
-        worker="""import importlib.util,json,sys
+        request_path=directory/"library-save-request.json"
+        result_path=directory/"library-save-result.json"
+        receipt_path=directory/"library-save-receipts.jsonl"
+        provider_requests=directory/"library-provider-requests"
+        write(request_path,(json.dumps(request)+"\n").encode())
+        worker="""import sys
 from pathlib import Path
-helper=Path(sys.argv[1]).resolve()
-spec=importlib.util.spec_from_file_location("tenderly_library_upload",helper)
-module=importlib.util.module_from_spec(spec);sys.modules[spec.name]=module;spec.loader.exec_module(module)
-result=module.LibraryUploadWorkflow(apps_client=module.HostedAppsClient(),
-    materializer=module.LibraryFileMaterializer(),uploader=module.SignedUrlUploader(),
-    state_parent=Path(sys.argv[2])).run(json.load(sys.stdin))
-print(json.dumps(result,separators=(",",":")),flush=True)
-sys.exit(0 if result.get("results") and all(item.get("status")=="succeeded" for item in result["results"]) else 1)
+helpers=Path(sys.argv[1]).resolve()
+sys.path.insert(0,str(helpers))
+from native_library_delivery import _worker
+sys.exit(_worker(helpers,Path(sys.argv[2]),Path(sys.argv[3]),Path(sys.argv[4]),
+    Path(sys.argv[5]),Path(sys.argv[6]),upload_mode="returned-put"))
 """
-        saved=subprocess.run([sys.executable,"-c",worker,str(args.save_helper.resolve()),str(directory)],input=json.dumps(request),text=True,
-            stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=180)
-        write(directory/"library-save-result.json",saved.stdout.encode())
+        saved=subprocess.run([sys.executable,"-c",worker,str(helpers),str(request_path),str(result_path),
+            str(receipt_path),str(directory),str(provider_requests)],text=True,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=300)
+        write(directory/"library-save-stdout.txt",saved.stdout.encode())
         write(directory/"library-save-stderr.txt",saved.stderr.encode())
-        print(saved.stdout,end="",flush=True)
-        for line in saved.stderr.splitlines():
-            if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__="):print(line,file=sys.stderr,flush=True)
+        for stream in (saved.stdout,saved.stderr):
+            for line in stream.splitlines():
+                if line.startswith("__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__="):print(line,file=sys.stderr,flush=True)
+        if result_path.is_file():print(result_path.read_text(),end="",flush=True)
         if saved.returncode:raise RuntimeError("The complete customer files remain in the receiving directory; their save did not finish")
     return 0 if completed else 1
 if __name__=="__main__":sys.exit(main())
