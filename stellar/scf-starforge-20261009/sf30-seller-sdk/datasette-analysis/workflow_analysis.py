@@ -7,6 +7,7 @@ identities and complete outputs in the caller's private request workspace.
 from __future__ import annotations
 
 import contextlib
+from datetime import datetime, timezone
 import fcntl
 import hashlib
 import importlib.util
@@ -400,6 +401,62 @@ class NativeWorkflowAdapter:
             handover = original["record"]
             files.append(_preserve_bytes(self.outputs / (filename_prefix + "Original_Handover.json"),
                                          original["raw"], "application/json"))
+
+        elif kind == "csv":
+            path = _absolute(config["path"])
+            _require(isinstance(config.get("sha256"), str) and _HASH.fullmatch(config["sha256"])
+                     and type(config.get("bytes")) is int and config["bytes"] >= 0,
+                     "WORKFLOW_CSV_DESCRIPTOR_REQUIRED")
+            descriptor = _file(path, expected=config)
+            original = path.read_bytes()
+            _require(_sha(original) == descriptor["sha256"], "WORKFLOW_CSV_SOURCE_CHANGED")
+            original_output = self.outputs / (filename_prefix + "Original_Source.csv")
+            files.append(_preserve_bytes(original_output, original, "text/csv; charset=utf-8"))
+            supplier = self.configuration.get("delivery", {}).get("supplier", {})
+            parser = _absolute(config.get("parser") or
+                               str(_absolute(supplier["component"]) / "supplier-report.mjs"))
+            parser_file = _file(parser, content_type="text/javascript")
+            if config.get("parserSha256") is not None:
+                _require(parser_file["sha256"] == config["parserSha256"],
+                         "WORKFLOW_CSV_PARSER_CHANGED")
+            self._bind(scope + "csvParser", parser_file)
+            delivery = {"kind": "csv-source", "csv": str(original_output),
+                        "sha256": descriptor["sha256"], "parser": str(parser),
+                        "parser_sha256": parser_file["sha256"]}
+            metadata = config.get("metadata")
+            if metadata is not None:
+                _require(isinstance(metadata, dict) and isinstance(metadata.get("sha256"), str)
+                         and _HASH.fullmatch(metadata["sha256"]) and type(metadata.get("bytes")) is int,
+                         "WORKFLOW_CSV_METADATA_REQUIRED")
+                metadata_path = _absolute(metadata["path"])
+                metadata_file = _file(metadata_path, expected=metadata)
+                metadata_raw = metadata_path.read_bytes()
+                _require(_sha(metadata_raw) == metadata_file["sha256"],
+                         "WORKFLOW_CSV_METADATA_CHANGED")
+                metadata_output = self.outputs / (filename_prefix + "Original_Metadata.json")
+                files.append(_preserve_bytes(metadata_output, metadata_raw, "application/json"))
+                delivery.update(metadata=str(metadata_output),
+                                metadata_sha256=metadata_file["sha256"])
+            source = config.get("source")
+            _require(isinstance(source, dict) and source.get("url")
+                     and source.get("publisher") and source.get("title"),
+                     "WORKFLOW_CSV_PUBLISHER_SOURCE_REQUIRED")
+            source = json.loads(_json(source))
+            receipt_key = scope + "csvOriginalImport"
+            if receipt_key not in self.state.setdefault("bindings", {}):
+                self._bind(receipt_key, {"importedAt": datetime.now(timezone.utc).isoformat(),
+                    "sourceSha256": descriptor["sha256"], "source": source})
+            receipt = self.state["bindings"][receipt_key]
+            _require(receipt["sourceSha256"] == descriptor["sha256"] and receipt["source"] == source,
+                     "WORKFLOW_CSV_SOURCE_CHANGED")
+            source["captured_at"] = receipt["importedAt"]
+            source["capture_time_basis"] = "local-original-file-import"
+            handover = {"schema": "stellar-forge.datasette-analysis-handover.v1",
+                        "delivery": delivery, "source": source,
+                        "review": {"keys": config.get("key", [])},
+                        "column_mapping": config.get("columnMapping", {})}
+            self._bind(scope + "originalCsv", {"file": descriptor, "delivery": delivery,
+                                              "review": handover["review"]})
         elif kind in {"native-edition", "datasette"}:
             if kind == "native-edition":
                 edition_file, edition_sha = str(_absolute(config["edition"])), config.get("sha256")
@@ -471,9 +528,23 @@ class NativeWorkflowAdapter:
     def _action(self, phase, action, body):
         request_id = self._id(phase)
         self._bind("action:" + phase, {"action": action, "body": body, "requestId": request_id})
-        result = self.client.submit(action, body, request_id=request_id)["request"]
-        if result["status"] in {"FAILED", "INTERRUPTED"}:
-            result = self.client.resume(request_id)["request"]
+        deadline = time.monotonic() + self.wait_seconds
+        waiting = False
+        while True:
+            try:
+                result = self.client.submit(action, body, request_id=request_id)["request"]
+                if result["status"] in {"FAILED", "INTERRUPTED"}:
+                    result = self.client.resume(request_id)["request"]
+                break
+            except DatasetteClientError as error:
+                if error.code != "DATASETTE_OPERATOR_BUSY":
+                    raise
+                _require(time.monotonic() < deadline, "WORKFLOW_NATIVE_OPERATOR_STILL_BUSY",
+                         {"phase": phase, "requestId": request_id})
+                if not waiting:
+                    self._emit(phase.upper(), nativeId=request_id, status="WAITING_FOR_NATIVE_OWNER")
+                    waiting = True
+                time.sleep(0.5)
         if result["status"] == "RUNNING":
             result = self.client.wait(request_id, timeout=self.wait_seconds,
                 progress=lambda item: self._emit(phase.upper(), nativeId=request_id, status=item["status"]))
@@ -572,6 +643,29 @@ class NativeWorkflowAdapter:
         _require(type(maximum) is int and 1 <= maximum <= 100000, "WORKFLOW_QUERY_LIMIT_INVALID")
         return {"sql": sql, "parameters_text": _json(values).decode(), "max_rows": maximum}
 
+
+    def _analysis_phase(self, phase):
+        return ("selected-" if self.state.get("selectionContinuation") else "") + phase
+
+    def _analysis_filename(self, name):
+        return ("Selected_" if self.state.get("selectionContinuation") else "") + name
+
+    def _source_views(self, editions):
+        """Pin the original imported versions, independent of other requests."""
+        selected = {}
+        for edition in editions.values():
+            for item in edition["collections"].values():
+                binding = {"name": item["name"], "version_id": item["version_id"],
+                           "revision": item["view_revision"]}
+                previous = selected.get(item["name"].lower())
+                _require(previous is None or previous == binding,
+                         "WORKFLOW_SOURCE_VIEW_COLLISION")
+                selected[item["name"].lower()] = binding
+        _require(selected, "WORKFLOW_SOURCE_VIEWS_REQUIRED")
+        value = {"scope": "selected",
+                 "bindings": [selected[name] for name in sorted(selected)]}
+        return self._bind("querySourceViews", value)
+
     def _queries(self, edition, request, editions=None):
         config = self.configuration["analysis"]
         queries = config.get("queries")
@@ -579,10 +673,7 @@ class NativeWorkflowAdapter:
             queries = [config.get("query")]
         _require(isinstance(queries, list) and 1 <= len(queries) <= 12,
                  "WORKFLOW_CUSTOMER_QUERIES_REQUIRED")
-        views_key = "queryViews"
-        if views_key not in self.state.setdefault("bindings", {}):
-            self._bind(views_key, self.client.analysis_state()["views"])
-        views = self.state["bindings"][views_key]
+        views = self._source_views(editions or {self.source_alias: edition})
         files, results, names = [], [], set()
         formats = self.configuration.get("delivery", {}).get("queryFormats", ["csv", "jsonl", "sqlite"])
         _require(isinstance(formats, list) and formats and len(formats) == len(set(formats))
@@ -604,14 +695,15 @@ class NativeWorkflowAdapter:
                 saved = self.client.save_query(name, fields, expected_revision=0)
             _require(all(saved.get(key) == value for key, value in fields.items()),
                      "WORKFLOW_SAVED_CUSTOMER_QUERY_CHANGED", {"name": name})
-            job = self._job("query" + str(ordinal), "query", {**fields, "expected_views": views})
-            output = self._job("queryExport" + str(ordinal), "query-export", {
+            job = self._job(self._analysis_phase("query" + str(ordinal)), "query",
+                            {**fields, "expected_views": views})
+            output = self._job(self._analysis_phase("queryExport" + str(ordinal)), "query-export", {
                 "query_id": job["id"], "result_sha256": job["result"]["result_sha256"],
                 "label": query.get("title", query["name"]).strip(), "formats": formats})
             for item in output["result"]["files"]:
                 _require(item["name"] in {"rows.csv", "rows.jsonl", "rows.sqlite3", "manifest.json"},
                          "WORKFLOW_NATIVE_QUERY_FILENAME_INVALID")
-                destination = self.outputs / (query["name"] + "_" + item["name"])
+                destination = self.outputs / self._analysis_filename(query["name"] + "_" + item["name"])
                 expected = {"bytes": item["bytes"], "sha256": item["sha256"], "contentType": item["mime"]}
                 route = "/api/query-exports/" + output["id"] + "/file?" + urlencode({"name": item["name"]})
                 files.append(self.http.download(route, destination, expected))
@@ -627,7 +719,9 @@ class NativeWorkflowAdapter:
     def _report(self, edition, queries, views, editions=None):
         config = self.configuration["analysis"].get("report", {})
         name = "workflow_report_" + self.state["runId"]
-        request_id = self._id("reportDefinition")
+        if self.state.get("selectionContinuation"):
+            name += "_selected"
+        request_id = self._id(self._analysis_phase("reportDefinition"))
         source_note = "\nSource edition: " + edition["edition_id"]
         if editions:
             source_note = "\n" + "\n".join("Source " + alias + ": " + item["edition_id"]
@@ -638,18 +732,18 @@ class NativeWorkflowAdapter:
             "introduction": config.get("introduction", "") + source_note,
             "sections": [{"title": query["title"], "note": query["note"], "query_name": query["name"],
                           "query_revision": query["revision"], "parameters_text": None} for query in queries]}
-        self._bind("reportDefinition", definition_input)
+        self._bind(self._analysis_phase("reportDefinition"), definition_input)
         saved = self.http.json("/api/reports/" + name, definition_input)
         definition = self.http.json("/api/reports/" + name + "?" + urlencode({"revision": saved["revision"]}))
-        job = self._job("report", "report", {"name": name, "revision": saved["revision"],
+        job = self._job(self._analysis_phase("report"), "report", {"name": name, "revision": saved["revision"],
                     "definition_sha256": definition["sha256"], "expected_views": views}, allow_partial=True)
         if job["status"] != "COMPLETE":
             return {"status": "PARTIAL", "name": name, "jobId": job["id"],
                     "definitionRevision": saved["revision"], "nativeError": job.get("error")}, []
-        publication_id = self._id("reportPublication")
+        publication_id = self._id(self._analysis_phase("reportPublication"))
         publish_input = {"id": publication_id, "result_sha256": job["result"]["result_sha256"],
                          "expected_revision": 0, "note": config.get("note", "Original source and customer SQL retained together.")}
-        self._bind("reportPublication", publish_input)
+        self._bind(self._analysis_phase("reportPublication"), publish_input)
         publication = self.http.json("/api/report-runs/" + job["id"] + "/publish", publish_input)
         before, observed = None, None
         while True:
@@ -670,11 +764,11 @@ class NativeWorkflowAdapter:
             ("html", "Customer_Report.html", "text/html; charset=utf-8"),
             ("json", "Customer_Report.json", "application/json"),
             ("csv", "Customer_Report_Tables.zip", "application/zip")):
-            exported = self._job("reportExport" + format, "report-export", {
+            exported = self._job(self._analysis_phase("reportExport" + format), "report-export", {
                 "publication_id": publication_id, "publication_sha256": observed["sha256"], "format": format})
             result = exported["result"]
             files.append(self.http.download("/api/report-export/" + exported["id"],
-                self.outputs / filename, {"bytes": result["bytes"], "sha256": result["sha256"],
+                self.outputs / self._analysis_filename(filename), {"bytes": result["bytes"], "sha256": result["sha256"],
                                           "contentType": content_type}))
         return {"status": "COMPLETE", "name": name, "jobId": job["id"],
                 "definitionRevision": saved["revision"], "definitionSha256": definition["sha256"],
@@ -706,8 +800,10 @@ class NativeWorkflowAdapter:
                 "selectionSha256": comparison["page"]["selection_sha256"]}, files
 
     def _deliver(self, edition, editions=None):
-        export_id = self._id("workspaceExport")
-        exported = self._action("export", "export", {"export_id": export_id})
+        phase = self._analysis_phase("export")
+        export_id = self._id(phase)
+        exported = self._action(phase, "export", {"export_id": export_id,
+                                               "edition_id": edition["edition_id"]})
         _require(exported["id"] == export_id and exported.get("edition_id") == edition["edition_id"],
                  "WORKFLOW_ARCHIVE_SOURCE_EDITION_CHANGED")
         files, archive = [], None
@@ -716,7 +812,7 @@ class NativeWorkflowAdapter:
             if alias != self.source_alias:
                 original_files.extend((alias, item) for item in related.get("files", []))
         for alias, item in original_files:
-            filename = ("" if alias is None else alias + "_") + item["filename"]
+            filename = self._analysis_filename(("" if alias is None else alias + "_") + item["filename"])
             _require(Path(filename).name == filename and filename not in {".", ".."},
                      "WORKFLOW_NATIVE_FILENAME_INVALID")
             destination = self.outputs / filename
@@ -789,6 +885,14 @@ class NativeWorkflowAdapter:
                 "rowCount": item["row_count"], "collections": item["collections"]}
                 for alias, item in sorted(editions.items())})
             self._save()
+            if "queryViews" in self.state.get("bindings", {}) and not self.state.get("selectionContinuation"):
+                # Retain interrupted older jobs and create an explicit native
+                # continuation with selected-source identities and filenames.
+                self.state["selectionContinuation"] = {
+                    "from": "full-view-catalogue", "to": "selected-source-views",
+                    "originalNativeIds": dict(self.state["nativeIds"])}
+                self._save()
+                self._emit("SOURCE_SELECTION_CONTINUATION", status="RUNNING")
             comparison, comparison_files = self._comparison(edition)
             comparisons = {self.source_alias: comparison} if comparison is not None else {}
             for alias, selection in sorted(analysis.get("comparisons", {}).items()):
@@ -810,7 +914,7 @@ class NativeWorkflowAdapter:
                 "analysis": {"status": status, "workspaceId": original["workspace_id"],
                              "operationId": original["operation_id"], "queries": queries,
                              "report": report, "comparison": comparison, "comparisons": comparisons,
-                             "sourceAlias": self.source_alias,
+                             "sourceAlias": self.source_alias, "viewSelection": views,
                              "sources": {alias: {"editionId": item["edition_id"],
                                  "rowCount": item["row_count"], "source": item["source"],
                                  "sourceReview": item.get("source_review"),

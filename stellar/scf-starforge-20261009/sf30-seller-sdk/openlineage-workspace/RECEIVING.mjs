@@ -13,6 +13,12 @@ import { tools as nativeTools } from "./catalog.mjs";
 import { sha256 } from "./model.mjs";
 
 const SOURCE = dirname(fileURLToPath(import.meta.url));
+const RECEIVING_ACTIONS = new Set([
+  "workspace.metadata", "records.read", "object.read", "workspace.read", "source.import", "source.read",
+  "entity.read", "lineage.read", "edition.save", "edition.compare", "review.save", "result.attach",
+  "workspace.export", "export.read", "report.read", "schema.compare", "schema.impact",
+  "schema.review.save", "schema.report"
+]);
 function originalBlob(bytes) {
   return createHash("sha1").update(Buffer.from("blob " + bytes.length + "\0")).update(bytes).digest("hex");
 }
@@ -188,8 +194,11 @@ export async function receiveOriginalExamples(outputDirectory) {
     assert.equal(sha256(merchantBytes), exported.id);
     await fs.writeFile(join(root, "merchant-workspace.json"), merchantBytes, { flag: "wx", mode: 0o600 });
     record("merchant-complete-export-ranges", { id: exported.id, bytes: merchantBytes.length });
-    for (const native of nativeTools) assert.equal(usedMerchantTools.has("merchant_" + native.name), true, native.name + " through the original merchant owner");
-    record("merchant-complete-native-catalog", { nativeActions: nativeTools.length, calledTools: [...usedMerchantTools].sort() });
+    const originalTools = nativeTools.filter(tool => RECEIVING_ACTIONS.has(tool.action));
+    assert.equal(originalTools.length, RECEIVING_ACTIONS.size, "The complete receiving catalog remains installed");
+    for (const native of originalTools) assert.equal(usedMerchantTools.has("merchant_" + native.name), true, native.name + " through the original merchant owner");
+    record("merchant-complete-native-catalog", { nativeActions: originalTools.length, calledTools: [...usedMerchantTools].sort(),
+      installedCatalog: nativeTools.map(tool => tool.name), extensionActions: nativeTools.filter(tool => !RECEIVING_ACTIONS.has(tool.action)).map(tool => tool.action) });
     await merchant.close(); merchant = null;
     assert.equal((await client.metadata()).revision, beforeReplay);
     record("merchant-close-preserves-original-server", { workspaceId: identity.workspaceId, revision: beforeReplay });

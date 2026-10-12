@@ -416,6 +416,8 @@ class DatasetteAnalysis:
                     raw_edition = _source.read_retained(handover)
                 elif selected["record"]["delivery"]["kind"] == "native-edition":
                     raw_edition = _source.read_native_edition(handover, node=self.analysis.node)
+                elif selected["record"]["delivery"]["kind"] == "csv-source":
+                    raw_edition = _source.read_csv_source(handover, node=self.analysis.node)
                 else:
                     raw_edition = self._finalized(selected, resume=resume)
                 identity = raw_edition["id"]
@@ -537,12 +539,14 @@ class DatasetteAnalysis:
                     "rows": page.get("rows") or page.get("changes") or [],
                     "page": page, "native": job["result"]}
 
-    def export(self, *, destination=None, export_id=None, resume=False):
-        """Snapshot current customer work; a retained export ID replays its archive."""
+    def export(self, *, destination=None, export_id=None, edition_id=None, resume=False):
+        """Snapshot an exact edition and current work; an export ID replays it."""
         with self._mutex:
             self.record = self._read()
             require(any(edition["status"] == "COMPLETE" for edition in self.record["editions"]),
                     "DATASETTE_COMPLETED_EDITION_REQUIRED")
+            require(edition_id is None or isinstance(edition_id, str) and _EDITION.fullmatch(edition_id),
+                    "DATASETTE_EXPORT_EDITION_INVALID")
             if export_id is None:
                 if resume:
                     pending = [item for item in self.record["exports"]
@@ -556,9 +560,14 @@ class DatasetteAnalysis:
                     "DATASETTE_EXPORT_ID_INVALID")
             existing = next((item for item in self.record["exports"]
                              if item["id"] == export_id), None)
+            if existing is not None and edition_id is not None:
+                require(existing.get("edition_id") == edition_id,
+                        "DATASETTE_EXPORT_EDITION_CHANGED")
+            selected = self._selected(self.record, edition_id or (existing or {}).get("edition_id"))
+            require(selected["status"] == "COMPLETE", "DATASETTE_COMPLETED_EDITION_REQUIRED")
             if existing is None:
                 existing = {"id": export_id, "status": "PREPARING", "files": [],
-                            "created_at": _now(), "edition_id": self.record["current_edition"],
+                            "created_at": _now(), "edition_id": selected["edition_id"],
                             "workspace_id": self.analysis.identity}
                 self.record["exports"].append(existing)
                 self.record["status"] = "COMPLETE"
@@ -572,6 +581,10 @@ class DatasetteAnalysis:
                     # workbooks and customer edits. Replaying that same ID uses
                     # the original native archive operation and exact snapshot.
                     existing["status"] = "PREPARING"
+                    # Select the retained request edition before the native
+                    # archive snapshots the operation record. The model mutex
+                    # and original operator serialize source preparation here.
+                    self.record["current_edition"] = existing["edition_id"]
                     self._save()
                     job = self._job("WORKSPACE_EXPORT:" + export_id, "workspace-export",
                                     {"include_previous_backups": False}, resume=resume)
@@ -694,7 +707,7 @@ class DatasetteAnalysis:
                                 resume=body.get("resume", False))
         if action == "export":
             return self.export(destination=body.get("destination"), export_id=body.get("export_id"),
-                               resume=body.get("resume", False))
+                               edition_id=body.get("edition_id"), resume=body.get("resume", False))
         raise _source.SourceError("DATASETTE_ACTION_UNKNOWN", action)
 
     def close(self):

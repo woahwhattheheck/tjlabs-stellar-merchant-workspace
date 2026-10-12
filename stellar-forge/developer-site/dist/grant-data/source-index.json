@@ -543,10 +543,11 @@
       "repository": "woahwhattheheck/commons",
       "commit": "efeb06e05d82d1569b93a8f4b00d37ab88b6b211",
       "path": "opportunities/openfn-commissioning-20261012",
-      "url": "https://github.com/woahwhattheheck/commons/tree/efeb06e05d82d1569b93a8f4b00d37ab88b6b211/opportunities/openfn-commissioning-20261012",
       "operator_workflow": "Original source and strict mapping, reviewed buyer input digest, stable merchant-owned isolated namespace, quality review/apply/reconcile, inventoried editable handover, same-job recovery and independent receiving.",
       "paid_unit": "One complete commissioning/review-and-handover operation under its reviewed function offer; the implementation workshare has separate terms.",
-      "delivery_state": "Published complete source; original native and paid-job receiving operations continue."
+      "delivery_state": "Published complete source; original native and paid-job receiving operations continue.",
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#openfn-paid-workflow-commissioning-and-complete-receiving"
     },
     {
       "id": "openfn-grant-inclusion",
@@ -556,7 +557,8 @@
       "commit": "2e3849c83ea968f2324c7402b30c2487b762b49c",
       "path": "opportunities/openfn-commissioning-20261012/SCF_INCLUSION.md",
       "git_blob": "f6fca247aa4a908fa2fabe76c7309666c76472d1",
-      "url": "https://github.com/woahwhattheheck/commons/blob/2e3849c83ea968f2324c7402b30c2487b762b49c/opportunities/openfn-commissioning-20261012/SCF_INCLUSION.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#openfn-paid-workflow-commissioning-and-complete-receiving"
     },
     {
       "id": "datasette-customer-analysis",
@@ -611,7 +613,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "732163f1642772d130e5e21d1c919be89582b730",
       "path": "tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/SOURCE_DOMAIN.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/732163f1642772d130e5e21d1c919be89582b730/tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/SOURCE_DOMAIN.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#referral-implementation-source-changes-returned-outcomes-and-complete-receiving"
     },
     {
       "id": "gravity-referral-receiving",
@@ -620,7 +623,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "732163f1642772d130e5e21d1c919be89582b730",
       "path": "tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/OPERATED_GRAVITY_RECEIVING.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/732163f1642772d130e5e21d1c919be89582b730/tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/OPERATED_GRAVITY_RECEIVING.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#referral-implementation-source-changes-returned-outcomes-and-complete-receiving"
     },
     {
       "id": "gravity-referral-commissioning",
@@ -629,7 +633,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "732163f1642772d130e5e21d1c919be89582b730",
       "path": "tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/Elimu_Referral_Implementation_Workshare_Offer_20261012.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/732163f1642772d130e5e21d1c919be89582b730/tools/revenue_owner_console_20261010/case_assets/elimu-gravity-referral-implementation-20261012-450e/Elimu_Referral_Implementation_Workshare_Offer_20261012.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#referral-implementation-source-changes-returned-outcomes-and-complete-receiving"
     },
     {
       "id": "risingwave-subscription-operation",
@@ -647,7 +652,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "0bd8be6087069d85d9efadbbe2af67562c78a7f2",
       "path": "tools/revenue_owner_console_20261010/case_assets/risingwave-subscription-delivery-pilot-20261012",
-      "url": "https://github.com/woahwhattheheck/commons/tree/0bd8be6087069d85d9efadbbe2af67562c78a7f2/tools/revenue_owner_console_20261010/case_assets/risingwave-subscription-delivery-pilot-20261012"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#recurring-subscription-delivery-and-streaming-data-commissioning"
     },
     {
       "id": "merchant-receivables-operation",
@@ -888,7 +894,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "40ce05d2096c77443b177c9f9b056f0dff225f59",
       "path": "operations/scf-a2a-native-analysis-0c7a-20261012/RUN_NATIVE.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/40ce05d2096c77443b177c9f9b056f0dff225f59/operations/scf-a2a-native-analysis-0c7a-20261012/RUN_NATIVE.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#a2a-analytical-services-complete-agent-work-merchant-delivery-and-customer-receiving"
     },
     {
       "id": "medstar-study-workspace",
@@ -897,7 +904,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "d0baf7f4f49bf34f890a7f6911942740c6c413fc",
       "path": "opportunities/medstar_shadow_study_2026/workspace/README.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/d0baf7f4f49bf34f890a7f6911942740c6c413fc/opportunities/medstar_shadow_study_2026/workspace/README.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#external-buyer-onboarding-and-study-operations-commissioning"
     },
     {
       "id": "medstar-study-integration",
@@ -906,7 +914,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "5f6b4b58155234262a18aa562b3058848a2dafee",
       "path": "opportunities/medstar_shadow_study_2026/workspace/INTEGRATION_HANDOVER.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/5f6b4b58155234262a18aa562b3058848a2dafee/opportunities/medstar_shadow_study_2026/workspace/INTEGRATION_HANDOVER.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#external-buyer-onboarding-and-study-operations-commissioning"
     },
     {
       "id": "medstar-study-api",
@@ -915,7 +924,8 @@
       "repository": "woahwhattheheck/commons",
       "commit": "d0baf7f4f49bf34f890a7f6911942740c6c413fc",
       "path": "opportunities/medstar_shadow_study_2026/workspace/API_CONTRACT.md",
-      "url": "https://github.com/woahwhattheheck/commons/blob/d0baf7f4f49bf34f890a7f6911942740c6c413fc/opportunities/medstar_shadow_study_2026/workspace/API_CONTRACT.md"
+      "access": "authenticated-source",
+      "reader_url": "../grant-companion.html#external-buyer-onboarding-and-study-operations-commissioning"
     },
     {
       "id": "openaq-customer-operation",
@@ -988,13 +998,51 @@
       "commit": "368405c4917577d8d4da5726b8c8bd77e22f33ef",
       "path": "products/grant-operations/HANDOFF.md",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/368405c4917577d8d4da5726b8c8bd77e22f33ef/products/grant-operations/HANDOFF.md"
+    },
+    {
+      "id": "timescale-customer",
+      "kind": "maintained-product",
+      "label": "Timescale commissioning and complete customer reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "source_commit": "b6d4704d7020a1cf60dc04fb1762aea192928651",
+      "path": "products/timescale-customer/OPERATING.md",
+      "git_blob": "d69eddd0fb2228402a67c716bd9b9ed9f0d15456",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b6d4704d7020a1cf60dc04fb1762aea192928651/products/timescale-customer/OPERATING.md",
+      "operator_workflow": "Original commissioning report and complete native source populations, reviewed field meanings, immutable baseline and observed editions, saved paired reconciliation, engineer decisions, complete portable DuckDB receiving.",
+      "paid_unit": "One reviewed complete commissioning result and agreed receiving output under the selected merchant terms; other advertised pages or queries retain their own requests and the complete parent customer task.",
+      "application_operation": "SCF-TIMESCALE-CUSTOMER-APPLICATION-2769-20261012"
+    },
+    {
+      "id": "timescale-customer-commissioning",
+      "kind": "maintained-product",
+      "label": "Timescale customer commissioning playbook",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "source_commit": "c339d0615c1dd3ced464eb7669ae5ec9bbdbc5a9",
+      "path": "products/timescale-customer/COMMISSIONING.md",
+      "git_blob": "9f26d2f52eb3ada2ab6078c67946df0b421ce9ca",
+      "bytes": 27487,
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c339d0615c1dd3ced464eb7669ae5ec9bbdbc5a9/products/timescale-customer/COMMISSIONING.md",
+      "application_operation": "SCF-TIMESCALE-CUSTOMER-APPLICATION-2769-20261012"
+    },
+    {
+      "id": "timescale-customer-grant",
+      "kind": "application-contribution",
+      "label": "Complete Timescale customer application chapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "source_commit": "c339d0615c1dd3ced464eb7669ae5ec9bbdbc5a9",
+      "path": "products/timescale-customer/GRANT.md",
+      "git_blob": "b1ecfbce7fb355bf5ddd68a286bce62b760920b8",
+      "bytes": 10062,
+      "sha256": "b5ac5adc973538290943a681de83608227fb19caa1b9aee5b1f171049311396a",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c339d0615c1dd3ced464eb7669ae5ec9bbdbc5a9/products/timescale-customer/GRANT.md",
+      "application_operation": "SCF-TIMESCALE-CUSTOMER-APPLICATION-2769-20261012"
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "b6b638ffa83f867795c0ab2da9a14e3de8961832",
-    "bytes": 289234,
-    "sha256": "7841c4fb4a3260d1c83201a7c836645299f08ace4d5f9bf8e3ebe413a7d2240b",
+    "git_blob": "e67240067a9b7459ed1767306f73db1284fac5de",
+    "bytes": 295936,
+    "sha256": "f779c3db8e4f540dcfb7212fbc5df550b03b30c93daa1479bcb0663a322355ab",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
     "prior_git_blob": "29e0ab9723e0eb787041409803158dc3ae94c1e3"
   },
@@ -1074,6 +1122,42 @@
           ],
           "ndbc_periods_overlap": true
         }
+      },
+      {
+        "id": "timescale-customer",
+        "application_operation": "SCF-TIMESCALE-CUSTOMER-APPLICATION-2769-20261012",
+        "basis": "Complete current canonical application, including its concurrent owner changes; whole original Timescale chapter and three application-answer additions.",
+        "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "source_commit": "b6d4704d7020a1cf60dc04fb1762aea192928651",
+        "source_path": "products/timescale-customer",
+        "contribution_commit": "c339d0615c1dd3ced464eb7669ae5ec9bbdbc5a9",
+        "contribution_git_blob": "b1ecfbce7fb355bf5ddd68a286bce62b760920b8",
+        "complete_companion_section_bytes": 10039,
+        "complete_companion_section_sha256": "66435c05168f74bf8ba1ebb8ced516e4e418ee5f7a6d8c54f8687024323a8620",
+        "front_additions": [
+          {
+            "answer": "Customer problem, need and adoption",
+            "bytes": 262,
+            "sha256": "62cb88310f2f32d137fb3e3e8e8c640339125a8c26d2af8465f908de08e4baa2"
+          },
+          {
+            "answer": "Working product and demonstrated results",
+            "bytes": 503,
+            "sha256": "9b3f5728bc1d49f9687236c49b54a89c4d86a74659556f757ef3226b671e31b0"
+          },
+          {
+            "answer": "Three funded tranches and six priced deliverables",
+            "bytes": 308,
+            "sha256": "f150f099424f0081978584b008c6f2916094ba17c390d1c75714be5db1b9e597"
+          }
+        ],
+        "common_budget_unchanged": true,
+        "native_receiving_basis": "Original producer and customer programme remain with the existing native receiving owner; this source composition adds no execution or purchase result.",
+        "contribution_source_bytes": 10062,
+        "contribution_source_sha256": "b5ac5adc973538290943a681de83608227fb19caa1b9aee5b1f171049311396a",
+        "canonical_received_sha256": "9f97ab07e4dfe7d3c4d36758563f63f9ca2666cf49535b51ba19727d40951180",
+        "canonical_received_bytes": 780073,
+        "canonical_projection": "Complete native Canvas section serialization. Original chapter prose and every table cell retained; native table whitespace is projected by the original customer-section receiver."
       }
     ],
     "current_application_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
@@ -1084,9 +1168,9 @@
     "composition": {
       "operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
       "source_join": "SCF-GRANT-CUMULATIVE-COMPOSITION-81CF-20261012",
-      "canonical_front_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
-      "canonical_front_bytes": 35819,
-      "renderer_git_blob": "adca97e4c94c253df927e75b9d5c6157bf0b6e70",
+      "canonical_front_sha256": "74d9738cf4f29047ca0f6555a6b168abe41a436042afeb0db7f2858176953828",
+      "canonical_front_bytes": 37734,
+      "renderer_git_blob": "4286979763c4d530d65ba78e3b1b2f704d233a56",
       "source_editions": [
         {
           "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -1139,10 +1223,11 @@
         "Air-quality reporting and complete customer receiving",
         "Current alternatives, commercial units and customer value",
         "Customer value and delivery economics",
+        "Timescale commissioning and complete customer reconciliation",
         "10. Open the existing work"
       ],
-      "previous_cumulative_commit": "9da20df5a03d06addc8d8a8b1ac379f0ebff766f",
-      "projector_git_blob": "d9bcf784022e98727add9d29e1b3243e3eff0d68",
+      "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
+      "projector_git_blob": "aacfde59d72288ae2392e9428e9331d0cc463aa4",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -1159,12 +1244,16 @@
     "financial_application_operation": "SCF-MERCHANT-FINANCE-APPLICATION-3FC8-20261012",
     "reviewer_front": {
       "operation": "SCF-REVIEWER-FRONT-B669-20261012",
-      "source_commit": "d6b918db4d87b553c21b63e42c64718b909fb75f",
-      "previous_application_git_blob": "3afd2e508d42256ceb2afa762d829a604ac7d9ac",
+      "source_commit": "0b005caa01350f7763a1905dcec9ce9edd45d781",
+      "previous_application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
       "retained_answer_identities": 9,
       "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
       "customer_calendar": "At least two independent buyers; thirty distinct useful purchases across fourteen days. Two weekday-only daily users supply twenty; selected workorders establish the additional useful demand or buyers.",
-      "complete_quality_receiving": "Original reported 1000 rows; reviewed 1001-row requirement failed; unreported column count remained unknown; original and received 76-file exports matched."
+      "complete_quality_receiving": "Original reported 1000 rows; reviewed 1001-row requirement failed; unreported column count remained unknown; original and received 76-file exports matched.",
+      "application_sha256": "de009925ef9468526123454f66c59520929656601729396e6b8df1490f20816a",
+      "application_git_blob": "025350138766fe87679b95ecfbd9bca11ba3d9d2",
+      "renderer_git_blob": "adca97e4c94c253df927e75b9d5c6157bf0b6e70",
+      "canonical_sync": "Prepared against current canonical front; synchronization in progress."
     }
   },
   "submission_workspace": {
@@ -1172,8 +1261,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "33b1d3148a05032c54c0a4ea19b5f62ffe0a4c39e2f8bee0f8978d038c5e376a",
-    "application_git_blob": "3afd2e508d42256ceb2afa762d829a604ac7d9ac",
+    "application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
+    "application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -1232,8 +1321,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "33b1d3148a05032c54c0a4ea19b5f62ffe0a4c39e2f8bee0f8978d038c5e376a",
-    "application_git_blob": "3afd2e508d42256ceb2afa762d829a604ac7d9ac",
+    "application_sha256": "fa3454edd39a1faafcf63ec9f5eb845e9367d058eb94dfcb305b542809674ad3",
+    "application_git_blob": "278780610df8cf22e703ee671b076e0c6a6acfee",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
@@ -1246,8 +1335,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "7841c4fb4a3260d1c83201a7c836645299f08ace4d5f9bf8e3ebe413a7d2240b",
-    "source_bytes": 289234,
+    "source_sha256": "f779c3db8e4f540dcfb7212fbc5df550b03b30c93daa1479bcb0663a322355ab",
+    "source_bytes": 295936,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",

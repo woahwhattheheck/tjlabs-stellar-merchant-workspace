@@ -186,6 +186,24 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       const selected = await receivables.collectionFile(parts[1], parts[3], {asOf: search.get('asOf') || undefined});
       return {file: selected, type: selected.type};
     }
+    else if (route === 'bank-accounts') result = await receivables.bankAccounts({
+      status: search.get('status') || undefined, search: search.get('search') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (route === 'bank-imports') result = await receivables.bankImports({
+      accountId: search.get('accountId') || undefined, status: search.get('status') || undefined,
+      search: search.get('search') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'bank-imports' && parts.length === 2) result = await receivables.bankImport(parts[1], {
+      view: search.get('view') || undefined, rowStatus: search.get('rowStatus') || undefined,
+      direction: search.get('direction') || undefined, search: search.get('search') || undefined,
+      offset: integer(search, 'offset', 0, Number.MAX_SAFE_INTEGER), limit: integer(search, 'limit', 100, 500),
+    });
+    else if (parts[0] === 'bank-imports' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.bankImportFile(parts[1], parts[3]);
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'funds') result = await receivables.customerFunds({
       customerId: search.get('customerId') || undefined, asOf: search.get('asOf') || undefined,
     });
@@ -260,6 +278,17 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       else if (parts[2] === 'close') result = await receivables.closeCollectionCase(parts[1], value);
       else if (parts[2] === 'reopen') result = await receivables.reopenCollectionCase(parts[1], value);
       else throw problem('NOT_FOUND', 'Choose an existing collection case operation.', 404);
+    }
+    else if (route === 'bank-accounts') result = await receivables.saveBankAccount(value);
+    else if (route === 'bank-imports/inspect') result = await receivables.inspectBankSource(value);
+    else if (route === 'bank-imports') result = await receivables.importBankSource(value);
+    else if (parts[0] === 'bank-imports' && parts.length === 3) {
+      if (parts[2] === 'preview') result = await receivables.previewBankPosting(parts[1], value);
+      else if (parts[2] === 'post') result = await receivables.postBankReceipts(parts[1], value);
+      else if (parts[2] === 'ignore') result = await receivables.ignoreBankRows(parts[1], value);
+      else if (parts[2] === 'restore') result = await receivables.restoreBankRows(parts[1], value);
+      else if (parts[2] === 'close') result = await receivables.closeBankImport(parts[1], value);
+      else throw problem('NOT_FOUND', 'This bank statement operation does not exist.', 404);
     }
     else if (route === 'refunds/preview') result = await receivables.previewRefund(value);
     else if (route === 'refunds') result = await receivables.commitRefund(value);

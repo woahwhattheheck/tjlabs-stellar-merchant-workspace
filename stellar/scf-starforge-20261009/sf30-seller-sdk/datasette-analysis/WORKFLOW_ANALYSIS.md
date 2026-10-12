@@ -514,3 +514,113 @@ Open the received **Datasette customer Analysis** application with its original 
 - [Original Analysis workspace](../../sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_workspace.py), [query exports](../../sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_exports.py) and [report engine](../../sf88-operator-buyer-cli/python/stellar_forge_buyer/analysis_reports.py)
 
 Copyright TokenJunkieLabs. MIT.
+
+
+## Shared Analysis operation and interrupted business requests
+
+A profile can reuse one running Analysis operation for multiple original business
+requests. Each request retains its own source editions and the exact native view
+name, immutable version ID and revision returned during source preparation.
+Customer queries and reports use the original SQL reader with this explicit form:
+
+```json
+{
+  "scope": "selected",
+  "bindings": [
+    {"name": "the_original_native_view", "version_id": "the_original_64_hex_version", "revision": 1}
+  ]
+}
+```
+
+The value belongs in the existing `expected_views` field. The native reader checks
+every selected binding in the same SQLite read transaction that reads the rows.
+Selected mode authorizes only those named views and their original immutable
+physical tables. Adding an unrelated source does not change that selection; an
+altered selected view or a query that reaches outside it produces the native
+source-selection error. The ordinary list form still checks the entire workspace
+view catalogue.
+
+Native query results, complete export manifests and published reports retain the
+selection. Complete query export reopens the original SQL with the same selection,
+including after another request has prepared another edition. The complete
+archive still carries the whole editable Analysis workspace and all retained
+original sources.
+
+The adapter submits native export with the exact requested `edition_id`.
+The original Datasette operator uses its request ID as the actual export ID;
+the bridge now derives and verifies that same identity. The native composer
+selects the requested complete edition before snapshotting its operation record,
+under the existing source/export owner. Replaying that export returns its retained
+archive and edition even when the live workspace has moved to another request.
+Submitting an existing export ID with another edition is rejected.
+
+When two workflow workers reach the native source operator together, the adapter
+waits on the existing owner and retries the same original request ID. SQL jobs keep
+their own retained identities and source selection. A worker can stop between
+preparation, SQL, publication and delivery, then resume after other requests have
+completed.
+
+An interrupted request created by the earlier full-catalogue bridge retains its
+original job and export IDs. Its selected-source continuation uses separate
+native job/publication identities and `Selected_` output names, with the
+relationship recorded in `selectionContinuation`. Previously completed requests
+continue to return their already retained complete result.
+
+The independent receiving operation should exercise the actual business path:
+complete request A, prepare a changed source edition for request B, reopen A's
+original output, then interrupt a request between source preparation and export
+and continue it after B. The source edition, selected views, query outputs,
+published report and archive must remain attached to their respective original
+requests.
+
+
+## Original supplier CSV files in native Analysis
+
+The bridge supports `source.kind: "csv"` for the actual published pricing and
+catalogue files. It runs the installed supplier product's maintained
+`parseCSV` function, retains its ordered columns and original row/line records,
+and passes the complete original strings through the existing
+`source_document`, ResponseDocument importer and Analysis composer. Source
+handover explicitly declares `delivery.kind: "csv-source"`.
+
+The input descriptor contains `path`, exact `bytes` and lowercase `sha256`,
+the reviewed original `key` columns, an optional `columnMapping`, and
+`source: {url, title, publisher, publisherEdition, license}`. The complete
+publisher metadata uses `metadata: {path, bytes, sha256}`. A `parser` path can
+select the installed `supplier-report.mjs`; otherwise it comes from
+`delivery.supplier.component`. The configured parser SHA and actual parser
+source remain bound to the original request.
+
+Every CSV field enters the native importer as the original string. Blank charity
+rates remain blank strings; an original `0` remains the published string `0`.
+Any numeric conversion belongs in the explicit customer SQL or maintained supplier
+rules. The native column profiles show the original representation. The original
+CSV bytes, publisher metadata, complete parser result and source handover are
+retained with the native edition and complete workspace archive.
+
+Import time records when the native operation receives the local original file.
+The publisher's edition date and retrieval metadata remain separate source fields.
+The source record describes a retained original CSV; its lineage identifies its
+real source URL, complete-file hash, metadata hash and maintained parser hash.
+
+For the current Elite Digital Agency source family, the exact retained input is:
+
+| Source | Business key | Original rows | Original bytes | Original SHA-256 |
+| --- | --- | ---: | ---: | --- |
+| Published pricing CSV | `name` | 23 | 3,558 | `6891cc62b1341ee0cdf601a78e9e04b6232f1c26cc1cdeb8f021a5edc1fa5dcb` |
+| Services catalogue CSV | `url` | 29 | 4,964 | `c225a1e081f783ce20eaf5de222449c03a3d01130ebb9d123b29fcb3673034c9` |
+| Publisher metadata JSON | Original data-package metadata | — | 3,780 | `6c758cf191a670985e7195752565c8d16169d6be8941f707a50ebd6638adefe2` |
+
+The original public files are [published-pricing.csv](https://elitedigitalagency.io/data/published-pricing.csv),
+[services-catalogue.csv](https://elitedigitalagency.io/data/services-catalogue.csv)
+and [datapackage.json](https://elitedigitalagency.io/data/datapackage.json).
+The retained edition is the publisher's August 12, 2026 data package, acquired on
+October 12. The package records Elite Digital AI Solutions Ltd and CC BY 4.0.
+
+Distinct price names can share a path. The named native source pair uses aliases
+`prices` and `catalog`, then exact URL joins retain every price tier and every
+catalogue entry. GBP amounts, one-off/month/free billing periods and original
+from-price wording remain separate. Customer SQL can use
+`{{source:prices}}`, `{{source:catalog}}`,
+`{{column:prices:name}}` and `{{column:catalog:url}}` against those actual
+native editions.
