@@ -28,6 +28,16 @@ function connection(bytes) {
   need(endpoint && endpoint.protocol === 'http:' && endpoint.hostname === '127.0.0.1' &&
     endpoint.pathname === '/mcp' && !endpoint.username && !endpoint.password && !endpoint.search && !endpoint.hash,
   'Use the original loopback merchant endpoint.', 'CONNECTION');
+  const consoleFields = ['operatorUrl', 'operatorDirectory', 'operatorWorkspaceId', 'operatorSourceSha256'];
+  if (consoleFields.some(key => Object.hasOwn(value, key))) {
+    let operatorUrl; try { operatorUrl = new URL(value.operatorUrl); } catch {}
+    need(operatorUrl && operatorUrl.protocol === 'http:' && operatorUrl.hostname === '127.0.0.1' &&
+      operatorUrl.origin === endpoint.origin && operatorUrl.pathname === '/operator/' &&
+      !operatorUrl.username && !operatorUrl.password && !operatorUrl.search && !operatorUrl.hash &&
+      value.operatorDirectory === join(absolute(value.directory), 'operator-console') &&
+      UUID.test(value.operatorWorkspaceId ?? '') && HASH.test(value.operatorSourceSha256 ?? ''),
+    'Use the same product’s retained merchant Console and workspace.', 'CONNECTION_CHANGED');
+  }
   return value;
 }
 /** Every call rereads the current session. Mutations are never automatically replayed. */
@@ -63,7 +73,9 @@ export class GrpcProductClient {
   async ready() {
     const { value } = await this.#connect();
     return { productId: value.productId, workspace: value.workspace, instanceId: value.instanceId,
-      nativeInstanceId: value.nativeInstanceId, endpoint: this.endpoint, browserUrl: value.browserUrl, mcpUrl: value.mcpUrl };
+      nativeInstanceId: value.nativeInstanceId, endpoint: this.endpoint, browserUrl: value.browserUrl, mcpUrl: value.mcpUrl,
+      operatorUrl: value.operatorUrl ?? null, operatorDirectory: value.operatorDirectory ?? null,
+      operatorWorkspaceId: value.operatorWorkspaceId ?? null, operatorSourceSha256: value.operatorSourceSha256 ?? null };
   }
   async call(name, input = {}, options = {}) {
     const definition = definitions.get(name);
