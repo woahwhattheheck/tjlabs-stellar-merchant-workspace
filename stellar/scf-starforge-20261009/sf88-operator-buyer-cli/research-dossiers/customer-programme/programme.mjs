@@ -263,7 +263,9 @@ export async function runCustomerProgramme(options){
           await include('analyst/'+key(received.key)+'/'+inside(received.root,row.file),row,'analyst');
       }
       for(const row of engine.files)await include('engine/'+row.path,row,'engine',row.mode);
-      for(const row of engine.implementation)await include('engine/'+row.path,row,'implementation',row.mode);
+      const engineMembers=new Set(engine.files.map(row=>row.path));
+      for(const row of engine.implementation)if(!engineMembers.has(row.path))
+        await include('engine/'+row.path,row,'implementation',row.mode);
       const engineManifestPin=await retainBytes(join(root,'ENGINE_SOURCE.original.json'),engine.manifestBytes);
       await include('ENGINE_SOURCE.json',engineManifestPin,'engine-selection');
       await include('ENGINE_AND_OPERATION_GUIDE.md',await descriptor(join(HERE,'README.md')),'guide');
@@ -279,7 +281,7 @@ export async function runCustomerProgramme(options){
         europePmc:europePmc.native,analyst:analystResults.map(row=>({key:row.key,original:row.original})),
         browser:{workspaceId:browser.workspaceId,readOnlyRequests:browser.readOnlyRequests,observations:browser.observations},
         merchant:{received:merchant.received.map(row=>({key:row.key,original:row.original}))},preserved,
-        engine:{repository:engine.manifest.repository,ref:engine.manifest.ref,
+        engine:{repository:engine.repository,ref:engine.ref,
           manifestSha256:engine.manifestSha256,originalFiles:engine.files.length,implementationFiles:engine.implementation.length}};
       await includeValue('PROGRAMME.json',programme,'programme');
       const guide=Buffer.from(customerGuide({selection,mapping,citations,europePmc,currentRevision,publicMembers:[...members.values()]}));
