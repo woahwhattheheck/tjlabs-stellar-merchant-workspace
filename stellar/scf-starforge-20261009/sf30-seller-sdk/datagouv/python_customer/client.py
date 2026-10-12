@@ -970,8 +970,14 @@ def prepare_adoption(client, directory, *, after_capture, keys, following_public
         full = client.comparison(result["id"])
         comparison_path = directory / "comparison.json"
         if comparison_path.exists():
-            _require(_read_json(comparison_path) == full, "CUSTOMER_COMPARISON_CHANGED",
+            retained = _read_json(comparison_path)
+            immutable = ("id", "summary", "changes", "complete", "changeCount")
+            _require(all(retained.get(key) == full.get(key) for key in immutable),
+                     "CUSTOMER_COMPARISON_CHANGED",
                      "The existing complete customer comparison differs from the original source comparison.")
+            # Decisions may advance while an interrupted review is resumed.
+            # Keep the original complete comparison and selection revision.
+            full = retained
         else:
             _save_json(comparison_path, full)
         review.update(state="READY", comparison_id=result["id"], summary=full["summary"],

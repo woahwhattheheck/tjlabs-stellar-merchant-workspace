@@ -54,24 +54,27 @@ These identities identify the delivered reference. Each later source edition ret
 
 Use Linux with Node 24 or newer, util-linux flock, and Python 3.10 or newer. The Python tools use the standard library. Choose the actual installed Node executable in the command.
 
-Run from the delivery directory containing install.py, source.json, workspace.datawork and their handover.json. For an initial repository delivery, the launcher is datagouv/python_customer/install.py. SOURCE_SHA256 and WORKSPACE_SHA256 below are the actual values recorded in the delivery's handover.json.
+Run from the delivery directory containing install.py and the complete native workspace.datawork. For an initial repository delivery, the launcher is datagouv/python_customer/install.py. WORKSPACE_SHA256 is the actual archive-file hash supplied with that delivery or its original download result. A handover produced by this launcher records it in handover.json:
 
 ~~~sh
-SOURCE_SHA256=$(python3 -c 'import json; print(json.load(open("handover.json"))["source"]["sha256"])')
 WORKSPACE_SHA256=$(python3 -c 'import json; print(json.load(open("handover.json"))["workspace"]["sha256"])')
+~~~
 
+For any complete native export, use its supplied archive hash with the installation command:
+
+~~~sh
 python3 install.py install \
   --directory /srv/datactivist/customer-a \
-  --source ./source.json \
-  --source-sha256 "$SOURCE_SHA256" \
   --archive ./workspace.datawork \
   --archive-sha256 "$WORKSPACE_SHA256" \
   --node /usr/bin/node
 ~~~
 
-The source packet must be complete decoded JSON. If a retained source carrier is compressed, first use its supplied maintained decoder. The installer accepts complete files or allSources selections and checks the original file bytes and declared hashes before materializing them.
+A native browser, API or CLI export can be received directly with its selected archive hash and this launcher. The installer derives the exact complete application selection from that archive, retains it, and uses it to run the unchanged native receiver.
 
 Choose a new or empty installation directory. The command retains the original inputs, installs the source selection, invokes the original DataGouv receiver, and opens the workspace through the embedded application. The native receiver verifies the complete application and workspace members and reopens each published snapshot before recording its completion.
+
+An explicitly supplied source selection can also be installed with --source FILE and --source-sha256 HASH. That packet must be complete decoded JSON. The installer accepts files or allSources selections and checks the original file bytes and declared hashes before materializing them. A compressed carrier is decoded first with its supplied maintained decoder.
 
 Continue an interrupted installation from its retained inputs:
 
@@ -79,9 +82,9 @@ Continue an interrupted installation from its retained inputs:
 python3 install.py resume --directory /srv/datactivist/customer-a
 ~~~
 
-A completed native receiving.json is reopened directly. The native receiver requires a new destination for an incomplete receive, so the launcher preserves the incomplete attempt and receives the same archive into a fresh private directory. The installation record retains both attempt paths. The active application and workspace are selected only after the original receive has completed.
+A completed native receiving.json is reopened directly. The native receiver requires a new destination for an incomplete receive, so the launcher preserves the incomplete attempt and receives the same archive into a fresh private directory. The installation record retains both attempt paths. The active application and workspace are selected only after the original receive has completed. A normal interruption stops and settles the launcher's native process before releasing the installation lock; its original output remains attached to that attempt.
 
-For a complete source installation used with an independently retained native dataset configuration, omit both archive arguments. Later, repeat install with the same source selection and add the original archive and hash to complete that installation.
+For a complete source installation used with an independently retained native dataset configuration, supply --source FILE and --source-sha256 HASH and omit both archive arguments. Later, repeat install with that same source selection and add the original archive and hash to complete the installation.
 
 ## 2. Locate the received source and dataset
 
@@ -209,6 +212,7 @@ Place the script beside client.py or add the delivered python_customer directory
 For direct access, replace the HTTP dataset selection with this context manager:
 
 ~~~python
+native_query_directory = Path("/absolute/received/workspace/customer/queries/python-native-analysis")
 with NativeDatasetSession(
     node="/usr/bin/node",
     handler="/absolute/received/application/stellar/scf-starforge-20261009/"
@@ -217,7 +221,7 @@ with NativeDatasetSession(
            "native/runs/RUN_ID/dataset.json",
 ) as dataset:
     description = dataset.describe()
-    completed = dataset.download(query_directory, "limit=250&sort=cog_commune")
+    completed = dataset.download(native_query_directory, "limit=250&sort=cog_commune")
 ~~~
 
 Use the actual saved config path reported by installation status. NativeDatasetSession also exposes page(), pages() and rows() for callers that need the original page boundaries or a streaming row iterator.
@@ -287,7 +291,7 @@ Use keep or withdraw for those actual decisions. Each decision goes through the 
 
 If the connection fails, repeat the same command with the same review directory, action, reviewer and note. The client continues the saved request body and UUID. When the original result is already complete, it returns that retained result.
 
-If another operator has changed the current selection, prepare a new review directory against that current selection and record the intended decision there. The previous comparison and request remain in history.
+A comparison's original source changes remain available even when another operator records a later decision on that comparison. The saved review keeps the complete immutable comparison and its original selection revision. If another operator has changed the current selection, prepare a new review directory against that current selection and record the intended decision there. The previous comparison and request remain in history.
 
 Read the resulting status and full operation history:
 
@@ -312,7 +316,7 @@ The native exporter creates workspace.datawork with the full application and wor
 
 Source files listed in the maintained application inventory travel with the archive, including local edits to those files. Add any deliberate new application file to products/datagouv/application-files.json before creating its delivery. The customer directory inside the workspace carries complete query results, adoption reviews, original request IDs and analysis products.
 
-On the receiving machine, run the new handover's install.py with source.json, workspace.datawork, their recorded hashes, and a new installation directory. The receiver opens the archive's embedded application and original workspace. Inspect the current selection, complete history and original saved query, then continue with the next actual edition.
+On the receiving machine, run the new handover's install.py with workspace.datawork, its recorded hash, and a new installation directory. The included source.json also provides the exact complete editable source selection. The receiver opens the archive's embedded application and original workspace. Inspect the current selection, complete history and original saved query, then continue with the next actual edition.
 
 A repeated archive command with the same completed handover directory returns that delivery after checking its recorded file identities. An incomplete archive attempt is retained before the original exporter creates a complete replacement.
 

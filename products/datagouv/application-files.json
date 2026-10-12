@@ -2,6 +2,7 @@
   "schema": "stellar-forge.datagouv-application-files.v1",
   "entrypoint": "start-publisher.mjs",
   "files": [
+    "LICENSE",
     "products/datagouv/API.md",
     "products/datagouv/OPERATING.md",
     "products/datagouv/application-files.json",

@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -164,7 +165,6 @@ def write_selected_source(root, files):
     root = private_directory(root)
     for name, body in files.items():
         target = root.joinpath(*PurePosixPath(name).parts)
-        parent = target.parent
         current = root
         for part in PurePosixPath(name).parts[:-1]:
             current = current / part
@@ -175,11 +175,26 @@ def write_selected_source(root, files):
             if ordinary_file(target).read_bytes() != body:
                 raise InstallationError("Preserve the existing source edit: " + str(target))
             continue
-        with target.open("xb") as stream:
-            stream.write(body)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.chmod(target, 0o600)
+        handle, temporary = tempfile.mkstemp(prefix=".install-source-", dir=target.parent)
+        try:
+            with os.fdopen(handle, "wb") as stream:
+                stream.write(body)
+                stream.flush()
+                os.fsync(stream.fileno())
+            # A selected file appears only after all original bytes are durable.
+            # Creating the link preserves any concurrent existing target.
+            os.link(temporary, target)
+            if hasattr(os, "O_DIRECTORY"):
+                parent = os.open(target.parent, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(parent)
+                finally:
+                    os.close(parent)
+        finally:
+            try:
+                os.unlink(temporary)
+            except FileNotFoundError:
+                pass
 
 
 def source_state(root, manifest):
@@ -221,20 +236,49 @@ def node_executable(value):
 
 def native_json(node, cli, arguments, directory, result_path):
     command = [node, str(cli), *arguments]
-    result = subprocess.run(command, cwd=directory, stdin=subprocess.DEVNULL,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    process = subprocess.Popen(command, cwd=directory, stdin=subprocess.DEVNULL,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               start_new_session=True)
+    try:
+        stdout, stderr = process.communicate()
+    except BaseException:
+        # Settle this original native process and its lock-holding descendants
+        # before the caller can release its installation lock.
+        blocked = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
+        try:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                stdout, stderr = process.communicate()
+            try:
+                atomic_json(result_path, {"startedCommand": [Path(node).name, str(cli), *arguments],
+                            "finishedAt": now(), "exitCode": process.returncode, "interrupted": True,
+                            "stdout": stdout.decode("utf-8", errors="replace"),
+                            "stderr": stderr.decode("utf-8", errors="replace")})
+            except Exception:
+                pass
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+        raise
     receipt = {"startedCommand": [Path(node).name, str(cli), *arguments], "finishedAt": now(),
-               "exitCode": result.returncode, "stdout": result.stdout.decode("utf-8", errors="replace"),
-               "stderr": result.stderr.decode("utf-8", errors="replace")}
+               "exitCode": process.returncode, "stdout": stdout.decode("utf-8", errors="replace"),
+               "stderr": stderr.decode("utf-8", errors="replace")}
     atomic_json(result_path, receipt)
-    if result.returncode:
-        raise InstallationError("The native command returned exit " + str(result.returncode) +
+    if process.returncode:
+        raise InstallationError("The native command returned exit " + str(process.returncode) +
                                 ". Its complete output is retained at " + str(result_path) + ".")
     try:
-        value = json.loads(result.stdout)
+        return json.loads(stdout)
     except (ValueError, UnicodeError) as error:
         raise InstallationError("The native result is not complete JSON; inspect " + str(result_path) + ".") from error
-    return value
 
 
 def file_identity(path):
@@ -259,7 +303,7 @@ def retain_file(original, target, expected):
     handle, temporary = tempfile.mkstemp(prefix=".receiving-input-", dir=target.parent)
     hasher, count = hashlib.sha256(), 0
     try:
-        with original.open("rb") as source, os.fdopen(handle, "wb") as out:
+        with os.fdopen(handle, "wb") as out, original.open("rb") as source:
             while part := source.read(4 * 1024 * 1024):
                 hasher.update(part)
                 count += len(part)
@@ -416,22 +460,33 @@ def receive_selected(directory, record, retained_archive, node=None):
 
 
 def install(args):
-    source_file, source_bytes = original_bytes(args.source, args.source_sha256, "Source selection")
+    if bool(args.archive) != bool(args.archive_sha256):
+        raise InstallationError("Supply both --archive and --archive-sha256.")
+    if bool(args.source) != bool(args.source_sha256):
+        raise InstallationError("Supply both --source and --source-sha256 when choosing an external source selection.")
+    if args.archive_sha256:
+        checked_hash(args.archive_sha256, "Workspace archive hash")
+    if args.source:
+        _, source_bytes = original_bytes(args.source, args.source_sha256, "Source selection")
+        source_sha256 = args.source_sha256
+    elif args.archive:
+        source_bytes, _, archive_identity = source_from_archive(args.archive)
+        if archive_identity["sha256"] != args.archive_sha256:
+            raise InstallationError("The complete native archive differs from its selected SHA-256.")
+        source_sha256 = digest(source_bytes)
+    else:
+        raise InstallationError("Choose the original workspace archive or a complete source selection.")
     files, selected_files = decode_source_selection(source_bytes)
     cli_path = str(relative_path(args.native_cli))
     if cli_path not in files:
         raise InstallationError("The selected native CLI must be included in the complete source selection.")
-    if bool(args.archive) != bool(args.archive_sha256):
-        raise InstallationError("Supply both --archive and --archive-sha256.")
-    if args.archive_sha256:
-        checked_hash(args.archive_sha256, "Workspace archive hash")
     node, runtime = node_executable(args.node)
     directory = private_directory(args.directory)
     with installation_lock(directory):
         record_path = directory / "installation.json"
         if record_path.exists() or record_path.is_symlink():
             record = load_record(directory)
-            if record.get("sourceSha256") != args.source_sha256 or record.get("nativeCli") != cli_path:
+            if record.get("sourceSha256") != source_sha256 or record.get("nativeCli") != cli_path:
                 raise InstallationError("This directory belongs to a different source selection.")
             if record.get("archiveSha256") != args.archive_sha256:
                 if record.get("archiveSha256") is None and record["state"] == "SOURCE_READY" and args.archive:
@@ -442,12 +497,12 @@ def install(args):
         else:
             if any(item.name != ".customer-install.lock" for item in directory.iterdir()):
                 raise InstallationError("Choose a new or empty installation directory.")
-            record = {"schema": SCHEMA, "directory": str(directory), "sourceSha256": args.source_sha256,
+            record = {"schema": SCHEMA, "directory": str(directory), "sourceSha256": source_sha256,
                       "nativeCli": cli_path, "archiveSha256": args.archive_sha256, "createdAt": now(),
                       "state": "INSTALLING", "node": node, "runtime": runtime, "files": selected_files}
             save_record(directory, record)
         inputs = private_directory(directory / "inputs")
-        retain_file(source_file, inputs / "selected-source.json", args.source_sha256)
+        write_selected_source(inputs, {"selected-source.json": source_bytes})
         if record["state"] == "INSTALLING":
             write_selected_source(directory / "source", files)
             record["state"] = "SOURCE_READY"
@@ -532,13 +587,18 @@ def serve(args):
     os.execv(node, command)
 
 
-def source_from_archive(path, workspace_id):
-    raw = ordinary_file(path).read_bytes()
+def source_from_archive(path, workspace_id=None):
+    original = ordinary_file(path)
+    if original.stat().st_size > 768 * 1024 * 1024:
+        raise InstallationError("The complete archive exceeds the native 768 MiB receiving limit.")
+    raw = original.read_bytes()
     packet = json.loads(raw)
     if not isinstance(packet, dict) or not isinstance(packet.get("files"), list):
         raise InstallationError("The complete native archive JSON is unreadable.")
     if (packet.get("schema") != "stellar-forge.datagouv-portable-workspace.v1" or
-            packet.get("complete") is not True or packet.get("workspace", {}).get("id") != workspace_id):
+            packet.get("complete") is not True or not isinstance(packet.get("workspace"), dict) or
+            not isinstance(packet["workspace"].get("id"), str) or
+            workspace_id is not None and packet["workspace"]["id"] != workspace_id):
         raise InstallationError("The exported native archive does not identify this workspace.")
     rows = []
     for entry in packet["files"]:
@@ -623,8 +683,8 @@ def main(argv=None):
     commands = parser.add_subparsers(dest="command", required=True)
     create = commands.add_parser("install", help="Install complete selected source and receive its native workspace.")
     create.add_argument("--directory", required=True)
-    create.add_argument("--source", required=True, help="Complete decoded source-selection JSON.")
-    create.add_argument("--source-sha256", required=True)
+    create.add_argument("--source", help="Optional complete source-selection JSON; otherwise use the archive application.")
+    create.add_argument("--source-sha256")
     create.add_argument("--archive", help="Original maintained workspace.datawork archive.")
     create.add_argument("--archive-sha256")
     create.add_argument("--native-cli", default=DEFAULT_CLI, help="Exact selected native CLI path within the source packet.")
@@ -651,14 +711,25 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if getattr(args, "port", 0) < 0 or getattr(args, "port", 0) > 65535:
         parser.error("--port must be between 0 and 65535.")
+    def interrupted(signum, frame):
+        raise KeyboardInterrupt("Signal " + str(signum))
+
+    original_term = signal.signal(signal.SIGTERM, interrupted)
     try:
         result = args.function(args)
         if result is not None:
             print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
+    except KeyboardInterrupt:
+        print(json.dumps({"error": "INSTALLATION_INTERRUPTED",
+                          "message": "The original native operation stopped. Resume this installation from its retained inputs."}),
+              file=sys.stderr)
+        return 130
     except (InstallationError, OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as error:
         print(json.dumps({"error": type(error).__name__, "message": str(error)}, ensure_ascii=False), file=sys.stderr)
         return 1
+    finally:
+        signal.signal(signal.SIGTERM, original_term)
 
 
 if __name__ == "__main__":
