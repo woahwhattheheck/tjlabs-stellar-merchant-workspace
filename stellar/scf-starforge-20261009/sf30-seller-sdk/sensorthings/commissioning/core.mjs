@@ -164,7 +164,7 @@ export function createCommissioningManager({store,edition,inboxDirectory=null,en
  async function project(id){
   active();const s=store.read(),p=find(s,'projects',hash(id)),snap=snapshotProject(s,id);
   return {project:projectHead(p),...snap.tables,targets:snap.tables.targets.map(x=>({...x,profile:publicTarget(x.profile)})),
-   jobs:snap.tables.jobs.map(localJob),handoffs:statePart(s).handoffs.filter(x=>x.projectId===id),
+   jobs:snap.tables.jobs.map(job=>localJob(job,s)),handoffs:statePart(s).handoffs.filter(x=>x.projectId===id),
    exports:statePart(s).handoffs.filter(x=>x.projectId===id),
    history:{total:p.history.length,headHash:p.headHash,rows:p.history.slice(-100)}};
  }
