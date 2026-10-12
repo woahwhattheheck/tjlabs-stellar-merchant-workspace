@@ -28,6 +28,7 @@ import operations_statements as statements
 import operations_performance as performance
 import operations_ledger_intake as ledger_intake
 import operations_payables as payables
+import operations_cash_accounts as cash_accounts
 import operations_implementation as implementation
 import operations_amendments as amendments
 import operations_work_intake as work_intake
@@ -286,6 +287,7 @@ class Operations:
                 after = self._source_add(program_id, data)
                 kind, record_id = "source", after["id"]
             elif command == "statement.receive":
+                context["cashCorrections"] = cash_accounts.statement_successors(self, context)
                 result = statements.receive(self, context, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
                 source_change = result.get("sourceChange")
@@ -638,9 +640,10 @@ class Operations:
         return buyer.preview(context, body)
 
     def preview_statement(self, program_id, body):
-        with self.workspace.mutex:
+        with self._snapshot():
             context = deepcopy(self._completion_context(program_id, body, ("inputs",)))
-        return statements.preview(context, body.get("inputs"))
+            context["cashCorrections"] = cash_accounts.statement_successors(self, context)
+            return statements.preview(context, body.get("inputs"))
 
     def preview_support(self, program_id, body):
         with self.workspace.mutex:
@@ -839,6 +842,27 @@ class Operations:
 
     def ledger_intake_original(self, program_id, source_id):
         return ledger_intake.original(self, identifier(program_id, "operation"), identifier(source_id, "source"))
+
+    def cash_account(self, program_id, selection=None, expected_version=None):
+        body = {"selection": selection or {}}
+        if expected_version is not None:
+            body["expectedVersion"] = expected_version
+        return cash_accounts.account(self, identifier(program_id, "operation"), body)
+
+    def cash_correction_preview(self, program_id, body):
+        return cash_accounts.preview(self, identifier(program_id, "operation"), body)
+
+    def cash_correction_apply(self, program_id, body):
+        return cash_accounts.apply(self, identifier(program_id, "operation"), body)
+
+    def export_cash_account(self, program_id, selection, expected_version, expected_report_sha256):
+        with self._snapshot():
+            report = self.cash_account(program_id, selection,
+                domain.integer(expected_version, "Reviewed cash account case version", 1, 10000000))
+            if domain.sha(expected_report_sha256, "Reviewed cash account", False) != report["reportSha256"]:
+                domain.fail("Reopen the original cash account before exporting its complete handover.",
+                            "CASH_ACCOUNT_SOURCE_CHANGED", 409)
+            return cash_accounts.export_bundle(report, self.export(program_id))
 
     def supplier_account(self, program_id, contributor_id=None, start_date=None, end_date=None, expected_version=None):
         with self._snapshot():
@@ -1095,7 +1119,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, supplier_account = payables.unwrap_bundle(raw)
+        native_raw, cash_account = cash_accounts.unwrap_bundle(raw)
+        native_raw, supplier_account = payables.unwrap_bundle(native_raw)
         native_raw, performance_report = performance.unwrap_bundle(native_raw)
         native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
         document, files = self._unpack(native_raw)
@@ -1158,6 +1183,7 @@ class Operations:
                 domain.fail("The complete original review snapshot and report are required.")
             if digest(review["snapshot"]) != review["businessSha256"]:
                 domain.fail("A frozen review differs from its retained business snapshot.")
+        cash_accounts.validate_import(context, events, files)
         statements.validate_import(context, events, files)
         has_node = buyer.validate_node_import(context, events, reviews, files)
         node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
@@ -1186,6 +1212,7 @@ class Operations:
         dispatch.validate_received(delivery_queue, document)
         performance.validate_received(performance_report, document)
         payables.validate_received(supplier_account, document)
+        cash_accounts.validate_received(cash_account, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         installation_returns.validate_import(context, reviews, events, saved_installations, files)
         selected_installation_return = installation_returns.selection_from_files(document, files)
@@ -1277,6 +1304,8 @@ class Operations:
                 origin["performance"] = performance.received_selection(performance_report)
             if supplier_account:
                 origin["supplierAccount"] = payables.received_selection(supplier_account)
+            if cash_account:
+                origin["cashAccount"] = cash_accounts.received_selection(cash_account)
             self.db.execute("INSERT INTO ops_programs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (pid, imported["id"], plan["revision"], source_program["version"], source_program["state"],
                  name, source_program["mode"], source_program.get("calendarStart"), canonical(pinned),
@@ -1310,7 +1339,8 @@ class Operations:
                     **({"selectedInstallationReturn": selected_installation_return} if selected_installation_return else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
                     **({"performance": performance.received_selection(performance_report)} if performance_report else {}),
-                    **({"supplierAccount": payables.received_selection(supplier_account)} if supplier_account else {})}
+                    **({"supplierAccount": payables.received_selection(supplier_account)} if supplier_account else {}),
+                    **({"cashAccount": cash_accounts.received_selection(cash_account)} if cash_account else {})}
         with self.workspace.mutex:
             # Reuse the original receipt table before the original plan import.
             # A rejected reuse or invalid request cannot create an extra plan.

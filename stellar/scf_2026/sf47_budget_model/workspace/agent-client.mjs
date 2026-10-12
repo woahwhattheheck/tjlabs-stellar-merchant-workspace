@@ -168,6 +168,27 @@ function supplierAccountQuery(args, exported = false) {
     values.set('contributorId', id(args.contributorId, 'person'));
   return values.size ? '?' + values.toString() : '';
 }
+function cashAccountQuery(args, exported = false) {
+  const values = new URLSearchParams(performanceQuery(args, exported));
+  for (const [key,maximum] of [['network',200],['currency',40],['asset',500]])
+    if (args[key] !== undefined && args[key] !== null)
+      values.set(key, text(args[key], 'Cash account ' + key, maximum, true));
+  return values.size ? '?' + values.toString() : '';
+}
+function cashCorrectionInput(body, applying = false) {
+  const keys = ['expectedVersion','selection','originalCashId','replacement','reason','attachments'];
+  const required = ['expectedVersion','originalCashId','replacement','reason'];
+  if (applying) { keys.push('expectedPreviewSha256','requestId','actor'); required.push('expectedPreviewSha256','requestId','actor'); }
+  exact(body, keys, required);
+  integer(body.expectedVersion, 'Current case version', 1, 10000000);
+  id(body.originalCashId, 'cash'); object(body.replacement, 'Complete replacement observation');
+  text(body.reason, 'Correction reason', 12000);
+  if (body.selection !== undefined) object(body.selection, 'Original cash account selection');
+  if (body.attachments !== undefined)
+    need(Array.isArray(body.attachments), 'GRANT_INVALID_INPUT', 'Use the complete original source attachments array.');
+  if (applying) { sha(body.expectedPreviewSha256); requestId(body.requestId); text(body.actor, 'Recording operator', 300); }
+  return body;
+}
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
     'GRANT_INVALID_INPUT', 'Select at most 20 distinct original frozen cohort reviews.');
@@ -485,6 +506,7 @@ export class GrantWorkspaceClient {
       'case-report':() => '/api/operations/' + cid() + '/report',
       'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'cash-account':() => '/api/operations/' + cid() + '/cash-account' + cashAccountQuery(args),
       amendments:() => '/api/operations/' + cid() + '/amendments',
       amendment:() => '/api/operations/' + cid() + '/amendments/' + id(args.amendmentId, 'amendment') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Amendment edition', 1, 300)),
@@ -543,6 +565,14 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  cashCorrectionPreview(caseId, body) {
+    id(caseId, 'operation'); cashCorrectionInput(body);
+    return this.#request('/api/operations/' + caseId + '/cash-correction-preview', {body, mutation:false});
+  }
+  cashCorrectionApply(caseId, body) {
+    id(caseId, 'operation'); cashCorrectionInput(body, true);
+    return this.#request('/api/operations/' + caseId + '/cash-correction', {body, originalRequestId:body.requestId});
   }
   ledgerIntakeInspect(caseId, file) {
     id(caseId, 'operation'); object(file, 'Original intake file');
@@ -955,6 +985,7 @@ export class GrantWorkspaceClient {
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
       'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
+      'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
       'delivery-queue':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-queue/export.zip' +
