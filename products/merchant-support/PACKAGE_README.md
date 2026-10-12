@@ -14,6 +14,8 @@ Operate the same saved merchant case through incidents, implementation, native s
 - [Service adjustments and complete native delivery](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_ADJUSTMENT_HANDOVER.md)
 - [Buyer period and accountant receiving](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/SERVICE_BUYER_HANDOVER.md)
 - [Commercial pricing-workspace receiving](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/RECEIVING.md)
+- [Tariff quotation and complete customer receiving](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/TARIFFS.md)
+- [Supplier costs, original tariff planning and pricing adoption](source/products/merchant-economics/OPERATING.md)
 - [Accepted quotations, implementation and change orders](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/COMMERCIAL_IMPLEMENTATION.md)
 
 Every linked guide is included as an original file under `source/`.
@@ -34,9 +36,19 @@ The optional accounting and buyer connection fields attach the existing native o
 
 Later quotation revisions continue through the same review and acceptance workflow. The receiving case keeps the original agreement and accepted changes alongside the delivered work.
 
+## Tariff quotation and editable handover
+
+Open **Applications → Merchant pricing and scenario planning → Tariff planning** to retain the original schedule, compare exact quantities and complete its selected scenario and pricing requests. In **Applications → Merchant support → Commercial quotations**, choose the saved customer case and open **Tariff sources**.
+
+Capture the completed original selection with its full pricing backup, inspect the retained source and attach it through the original case writer. The quote keeps its selected quantity, saved uniform rate, original tier total and rounding. A changed monthly quantity displays the original tariff calculation alongside the saved-rate charge.
+
+Continue the accepted quotation into implementation and receiving. The complete case package carries the original tariff source and pricing backup with its quote editions, customer responses and delivery history. In the receiving case, restore the original pricing workspace, receive the selected portfolio and reopen both saved native outcomes.
+
+The maintained commands are `starforge merchant-tariffs`, `starforge merchant-commercial tariffs` and the original `merchant-mcp pricing` and Support tools. The linked tariff guide provides the complete capture, three-request attachment, download, export and restoration inputs.
+
 ## Commands
 
-The installed `starforge` command includes `support-console`, `support-watch`, `merchant-implementation`, `merchant-services`, `merchant-commercial`, `merchant-support-agent`, `merchant-service-adjustments`, `merchant-service-adjustment-receiving`, `merchant-accounting-adjustments`, `buyer-expenses`, the original merchant MCP launchers, and the maintained runtime installation and transfer commands.
+The installed `starforge` command includes `support-console`, `support-watch`, `merchant-implementation`, `merchant-services`, `merchant-commercial`, `merchant-tariffs`, `merchant-support-agent`, `merchant-service-adjustments`, `merchant-service-adjustment-receiving`, `merchant-accounting-adjustments`, `buyer-expenses`, the original merchant MCP launchers, and the maintained runtime installation and transfer commands.
 
 Read the setup command's original options:
 

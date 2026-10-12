@@ -41,7 +41,9 @@ export const HELP = [
   '  commit --input FILE   Commit a complete selection plus two original request UUIDs',
   '  download --plan ID --name FILE --output PATH',
   '                        FILE is plan.json, tariffs.json or comparison.csv',
-  '  export                Export the complete tariff bundle',
+  '  export [--selection-request-id UUID]',
+  '                        Export the full portfolio or one original selection and its plan',
+  '  inspect --input FILE  Validate the complete portfolio against original saved sources',
   '  receive --input FILE  Receive the original complete tariff bundle',
   '  repricing-source --version ID',
   '  repricing-download --decision ID --name FILE --output PATH',
@@ -82,7 +84,8 @@ const COMMAND_FLAGS = Object.freeze({
   select: new Set(['input', 'plan', 'comparison', 'output']),
   commit: new Set(['input', 'output']),
   download: new Set(['plan', 'name', 'output']),
-  export: new Set(['output']),
+  export: new Set(['selection-request-id', 'output']),
+  inspect: new Set(['input', 'output']),
   receive: new Set(['input', 'output']),
   'repricing-source': new Set(['version', 'output']),
   'repricing-download': new Set(['decision', 'name', 'output']),
@@ -92,7 +95,7 @@ const COMMAND_FLAGS = Object.freeze({
   'repricing-stage': new Set(['input', 'output'])
 });
 const INPUT_COMMANDS = new Set([
-  'preview', 'save', 'commit', 'receive',
+  'preview', 'save', 'commit', 'inspect', 'receive',
   'repricing-preview', 'repricing-save', 'repricing-stage'
 ]);
 const DOWNLOAD_NAMES = new Set(['plan.json', 'tariffs.json', 'comparison.csv']);
@@ -360,7 +363,11 @@ export async function runTariffCli(argv = process.argv.slice(2)) {
       await writeCreateOnly(flags.output, bytes);
       return;
     }
-    case 'export': result = await workspace.bundle(); break;
+    case 'export':
+      result = await workspace.bundle(flags['selection-request-id'] === undefined ? {} :
+        { selectionRequestId: flags['selection-request-id'] });
+      break;
+    case 'inspect': result = await workspace.inspectPortfolio(input); break;
     case 'receive': result = await workspace.receive(input); break;
     case 'repricing-preview': result = await workspace.previewRepricing(input); break;
     case 'repricing-save': result = await workspace.saveRepricing(input); break;

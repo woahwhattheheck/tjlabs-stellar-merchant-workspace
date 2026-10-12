@@ -195,9 +195,29 @@ export interface TariffRequestOptions {
   readonly signal?: AbortSignal;
 }
 
+export interface TariffBundleOptions extends TariffRequestOptions {
+  /** Original pricingRequestId; exports that selection journal and its original plan. */
+  readonly selectionRequestId?: string;
+}
+
+export interface TariffPortfolioSelection {
+  readonly id: string;
+  readonly intent: JsonObject;
+  readonly result: JsonObject | null;
+}
+
+/** Original read-only source validation; the receiver separately checks destination conflicts. */
+export interface TariffPortfolioInspection {
+  readonly schema: 'stellar-forge.merchant-tariff-portfolio-review.v1';
+  readonly sha256: string;
+  readonly plans: readonly TariffPlan[];
+  readonly selections: readonly TariffPortfolioSelection[];
+}
+
 export interface TariffClientOptions {
-  /** Loopback launch URL with #token=HEX64, or the same origin with token supplied. */
+  /** Standalone /#token=HEX64 or original integrated /tariffs/ launch URL. */
   readonly url: string | URL;
+  /** Integrated host: pass the token returned by its original GET /api/state. */
   readonly token?: string;
   readonly fetch?: typeof globalThis.fetch;
 }
@@ -259,6 +279,7 @@ export class TariffProtocolError extends Error {
 export class TariffClient {
   constructor(options: TariffClientOptions);
   readonly origin: string;
+  readonly apiPrefix: '/api' | '/api/tariffs';
   state(options?: TariffRequestOptions): Promise<TariffWorkspaceState>;
   source(version: string, options?: TariffRequestOptions): Promise<TariffSource>;
   preview(input: TariffPreviewInput, options?: TariffRequestOptions): Promise<TariffPreviewResult>;
@@ -268,7 +289,8 @@ export class TariffClient {
   selection(input: TariffSelectionInput, options?: TariffRequestOptions): Promise<TariffSelection>;
   commitSelection(input: TariffCommitSelectionInput, options?: TariffRequestOptions): Promise<TariffCommitSelectionResult>;
   download(planId: string, name: string, options?: TariffRequestOptions): Promise<TariffDownload>;
-  bundle(options?: TariffRequestOptions): Promise<TariffBundle>;
+  bundle(options?: TariffBundleOptions): Promise<TariffBundle>;
+  inspectPortfolio(bundle: TariffBundle, options?: TariffRequestOptions): Promise<TariffPortfolioInspection>;
   receive(bundle: TariffBundle, options?: TariffRequestOptions): Promise<JsonValue>;
   previewRepricing(input: TariffRepricingInput, options?: TariffRequestOptions): Promise<JsonValue>;
   saveRepricing(input: TariffRepricingInput, options?: TariffRequestOptions): Promise<JsonValue>;
