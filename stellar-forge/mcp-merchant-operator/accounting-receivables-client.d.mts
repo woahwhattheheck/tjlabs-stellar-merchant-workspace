@@ -37,6 +37,15 @@ export type {
   CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
 } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/refund-client-types.d.ts';
 
+import type {
+  RemittanceSource, RemittanceGroup, RemittanceReview, RemittancePreview, RemittanceApplyInput,
+  RemittanceBatchSummary, RemittanceApplied
+} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts';
+export type {
+  RemittanceSource, RemittanceCurrency, RemittanceAllocation, RemittanceGroup, RemittanceReview,
+  RemittancePreview, RemittanceApplyInput, RemittanceBatchSummary, RemittanceApplied
+} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/remittances-client.d.ts';
+
 // MIT. Typed original receivables, reviewed invoices and Stellar collection over merchant MCP.
 export type Money = string;
 export type DateOnly = string;
@@ -138,7 +147,7 @@ export type QuoteImportInput = MutationContext & {
 export interface Operation {
   id: string; action: string; actor: string; at: string; intentSha256: string; replayed?: boolean;
   result: {invoiceId?: string; receiptId?: string; creditId?: string; allocationId?: string; paymentRequestId?: string; paymentReturnId?: string; refundId?: string; refundReturnId?: string; creditDispositionId?: string;
-    bankAccountId?: string; bankImportId?: string; bankPostingId?: string; receiptIds?: string[];
+    bankAccountId?: string; bankImportId?: string; bankPostingId?: string; remittanceBatchId?: string; receiptIds?: string[];
     invoiceIds?: string[]; allocationIds?: string[]; sourceRefundId?: string; sourceRefundReturnId?: string; resolvedRefundId?: string; settings?: boolean};
 }
 export interface MutationResult { revision: Revision; operation: Operation }
@@ -193,13 +202,13 @@ export interface StatusArguments extends PageArguments {
   view?: ReceivablesStatusView; customerId?: string; status?: string; search?: string; asOf?: DateOnly;
 }
 export interface ReceivablesStatusMetadata {
-  workspace: string; schema: string; view: ReceivablesStatusView; asOf: DateOnly;
+  workspace: string; workspaceId: string; schema: string; view: ReceivablesStatusView; asOf: DateOnly;
   customerId: string | null; revision: Revision;
 }
 export interface ReceivablesStatusSummary extends ReceivablesStatusMetadata {
   view: 'summary'; issuer: Issuer;
   counts: {customers: number; invoices: number; drafts: number; issued: number; void: number;
-    receipts: number; credits: number; allocations: number; paymentRequests: number; operations: number};
+    receipts: number; credits: number; allocations: number; paymentRequests: number; remittances: number; operations: number};
 }
 export interface CreditBrief extends CreditSummary { status: 'ISSUED'; customerName: string; files: DocumentFiles }
 export interface StatusRows {
@@ -397,8 +406,35 @@ export interface BankRowsRestoreArguments extends RestoreBankRowsInput {bankImpo
 export interface BankImportCloseArguments extends CloseBankImportInput {bankImportId: string}
 export interface BankFileSelection {kind: 'receivables-bank'; bankImportId: string; file: BankFileName}
 
+export type RemittancePreviewArguments = {workspaceId: string} & (
+  {source: RemittanceSource; sourceAlias?: never} |
+  {source: Omit<RemittanceSource, 'csv'>; sourceAlias: string}
+);
+export interface NativeRemittancePreview extends RemittancePreview {workspace: string}
+export interface RemittanceListArguments extends PageArguments {search?: string}
+export interface NativeRemittancePage extends ReceivablesPage<RemittanceBatchSummary> {workspace: string; workspaceId: string}
+export interface NativeRemittanceInventory extends ReceivablesInventory<RemittanceBatchSummary> {workspace: string; workspaceId: string}
+export type RemittanceFileName = 'source.csv' | 'review.json' | 'review.csv' | 'batch.json' | 'manifest.json';
+export interface RemittanceFileSelection {kind: 'receivables-remittance'; batchId: string; file: RemittanceFileName}
+export type NativeRemittanceView = 'summary' | 'groups' | 'errors';
+export interface RemittanceDetailArguments extends PageArguments {batchId: string; view?: NativeRemittanceView}
+export interface NativeRemittanceMetadata {
+  workspace: string; workspaceId: string; batchId: string; batch: RemittanceBatchSummary; revision: Revision;
+}
+export interface NativeRemittanceSummary extends NativeRemittanceMetadata {
+  view: 'summary'; reviewHeader: Omit<RemittanceReview, 'groups' | 'errors'>;
+  counts: {groups: number; errors: number; receipts: number; invoices: number; allocations: number; newReceipts: number};
+  files: ReceivablesFileIdentity<RemittanceFileSelection>[];
+}
+export type NativeRemittanceRows = {groups: RemittanceGroup; errors: RemittanceReview['errors'][number]};
+export type NativeRemittanceDetailPage<V extends keyof NativeRemittanceRows = keyof NativeRemittanceRows> =
+  ReceivablesPage<NativeRemittanceRows[V]> & NativeRemittanceMetadata & {view: V};
+export type NativeRemittanceDetail<V extends NativeRemittanceView = NativeRemittanceView> =
+  V extends 'summary' ? NativeRemittanceSummary :
+    V extends keyof NativeRemittanceRows ? NativeRemittanceDetailPage<V> : never;
+
 export type ReceivablesFileSelection = DocumentFileSelection | QuoteFileSelection | PreviewFileSelection |
-  PaymentFileSelection | CustomerFileSelection | RefundFileSelection | BankFileSelection;
+  PaymentFileSelection | CustomerFileSelection | RefundFileSelection | BankFileSelection | RemittanceFileSelection;
 export interface ReceivablesFileMetadata extends FileMetadata {name: string; type?: string}
 export interface ReceivablesFileIdentity<S extends ReceivablesFileSelection = ReceivablesFileSelection>
   extends ReceivablesFileMetadata {selection: S}
@@ -415,6 +451,7 @@ export interface ReceivablesMutationResult extends MutationResult {
   refund?: RefundSummary; refundReturn?: RefundReturn; creditDisposition?: CreditDispositionRecord;
   invoices?: InvoiceSummary[]; allocations?: Allocation[]; receipts?: Receipt[];
   bankAccount?: BankAccount; bankImport?: BankImportSummary; bankPosting?: BankPostingSummary;
+  workspaceId?: string; remittanceBatch?: RemittanceBatchSummary; remittanceReview?: RemittanceReview;
 }
 export type PaymentRequestMutationResult = ReceivablesMutationResult & {
   invoice: InvoiceSummary; paymentRequest: PaymentRequestSummary;
@@ -437,6 +474,8 @@ export interface ReceivablesArgumentsMap {
   refund_list: RefundQuery; refund_detail: RefundDetailArguments; refund_cancel: RefundCancelArguments;
   refund_reverse: RefundReverseArguments; refund_return: RefundReturnArguments; refund_receive: RefundReceiveArguments;
   credit_disposition_preview: CreditDispositionPreviewInput; credit_disposition_apply: ApplyCreditDispositionInput;
+  remittance_list: RemittanceListArguments; remittance_preview: RemittancePreviewArguments;
+  remittance_apply: RemittanceApplyInput; remittance_detail: RemittanceDetailArguments;
   bank_accounts: BankAccountsQuery; bank_account_save: BankAccountInput;
   bank_source_inspect: BankSourceInspectionInput; bank_source_import: BankSourceImportInput;
   bank_import_list: BankImportsQuery; bank_import_detail: BankImportDetailArguments;
@@ -461,6 +500,8 @@ export interface ReceivablesResultsMap {
   refund_list: RefundPage; refund_detail: RefundDetail; refund_cancel: RefundMutationResult;
   refund_reverse: RefundMutationResult; refund_return: RefundReturnMutationResult; refund_receive: RefundReturnMutationResult;
   credit_disposition_preview: CreditDispositionPreview; credit_disposition_apply: CreditDispositionMutationResult;
+  remittance_list: NativeRemittancePage; remittance_preview: NativeRemittancePreview;
+  remittance_apply: RemittanceApplied; remittance_detail: NativeRemittanceDetail;
   bank_accounts: BankAccountsPage; bank_account_save: BankAccountMutationResult;
   bank_source_inspect: BankSourceInspection; bank_source_import: BankImportMutationResult;
   bank_import_list: BankImportsPage; bank_import_detail: BankImportDetail;
@@ -472,17 +513,19 @@ export type ReceivablesMutation = 'settings' | 'draft_save' | 'quote_import' | '
   'receipt_record' | 'receipt_void' | 'settlement_import' | 'allocate' | 'release' |
   'payment_create' | 'payment_cancel' | 'payment_return' | 'payment_receive' |
   'refund_commit' | 'refund_cancel' | 'refund_reverse' | 'refund_return' | 'refund_receive' | 'credit_disposition_apply' |
-  'bank_account_save' | 'bank_source_import' | 'bank_receipts_post' | 'bank_rows_ignore' | 'bank_rows_restore' | 'bank_import_close';
-export type ReceivablesPagedOperation = 'status' | 'invoice_preview' | 'invoice_detail' | 'settlement_ledger' | 'payment_list' | 'payment_detail' | 'refund_list' | 'bank_accounts' | 'bank_import_list' | 'bank_import_detail';
+  'bank_account_save' | 'bank_source_import' | 'bank_receipts_post' | 'bank_rows_ignore' | 'bank_rows_restore' | 'bank_import_close' | 'remittance_apply';
+export type ReceivablesPagedOperation = 'status' | 'invoice_preview' | 'invoice_detail' | 'settlement_ledger' | 'payment_list' | 'payment_detail' | 'refund_list' | 'bank_accounts' | 'bank_import_list' | 'bank_import_detail' | 'remittance_list' | 'remittance_detail';
 export type ReceivablesAllRows<K extends ReceivablesPagedOperation> =
   K extends 'status' ? StatusRows[keyof StatusRows] : K extends 'invoice_preview' ? InvoiceLine :
   K extends 'invoice_detail' ? InvoiceDetailRows[keyof InvoiceDetailRows] : K extends 'settlement_ledger' ? LedgerItem :
   K extends 'payment_list' ? PaymentRequestSummary : K extends 'payment_detail' ? PaymentDetailRows[keyof PaymentDetailRows] :
   K extends 'bank_accounts' ? BankAccount : K extends 'bank_import_list' ? BankImportSummary :
-  K extends 'bank_import_detail' ? BankImportRows[BankImportView] : RefundSummary;
+  K extends 'bank_import_detail' ? BankImportRows[BankImportView] :
+  K extends 'remittance_list' ? RemittanceBatchSummary : K extends 'remittance_detail' ? NativeRemittanceRows[keyof NativeRemittanceRows] : RefundSummary;
 export type ReceivablesAllResult<K extends ReceivablesPagedOperation> =
   (K extends 'refund_list' ? RefundInventory : K extends 'bank_accounts' ? BankAccountsInventory :
     K extends 'bank_import_list' ? BankImportsInventory : K extends 'bank_import_detail' ? BankImportInventory :
+    K extends 'remittance_list' ? NativeRemittanceInventory :
     ReceivablesInventory<ReceivablesAllRows<K>>) & NativeRecord;
 export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<{
   status: 'status'; saveSettings: 'settings'; saveDraft: 'draft_save'; importQuote: 'quote_import';
@@ -500,6 +543,8 @@ export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<{
   importBankSource: 'bank_source_import'; bankImports: 'bank_import_list'; bankImport: 'bank_import_detail';
   previewBankPosting: 'bank_posting_preview'; postBankReceipts: 'bank_receipts_post'; ignoreBankRows: 'bank_rows_ignore';
   restoreBankRows: 'bank_rows_restore'; closeBankImport: 'bank_import_close';
+  remittances: 'remittance_list'; previewRemittance: 'remittance_preview';
+  applyRemittance: 'remittance_apply'; remittance: 'remittance_detail';
 }>;
 export const ACCOUNTING_RECEIVABLES_MUTATIONS: readonly ReceivablesMutation[];
 export function accountingReceivablesArguments<K extends ReceivablesMutation>(
@@ -529,6 +574,12 @@ export function accountingBankPostingPreview(preview: BankPostingPreview): BankP
 export function accountingBankPostingArguments(
   preview: BankPostingPreview, identity: {actor: string; requestId: string},
 ): BankReceiptsPostArguments;
+
+/** Validate the complete original UTF-8 source, workspace/revision binding and review SHA. */
+export function accountingRemittancePreview<T extends RemittancePreview>(preview: T): T;
+export function accountingRemittanceArguments(
+  preview: RemittancePreview, identity: {actor: string; requestId: string},
+): RemittanceApplyInput;
 
 /** One caller connection; disconnect drains its reads, closeWorkspace explicitly closes the original owner. */
 export interface AccountingReceivablesClient {
@@ -596,6 +647,14 @@ export interface AccountingReceivablesClient {
   restoreBankRows(args: BankRowsRestoreArguments, options?: ReceivablesCallOptions): Promise<BankImportMutationResult>;
   closeBankImport(args: BankImportCloseArguments, options?: ReceivablesCallOptions): Promise<BankImportMutationResult>;
   bankImportFile(args: {bankImportId: string; file: BankFileName}, options?: ReceivablesFileOptions & {maximumBytes?: number}):
+    Promise<{bytes: Uint8Array; file: ReceivablesFileMetadata}>;
+  remittances(args?: RemittanceListArguments, options?: ReceivablesCallOptions): Promise<NativeRemittancePage>;
+  previewRemittance(args: RemittancePreviewArguments, options?: ReceivablesCallOptions): Promise<NativeRemittancePreview>;
+  applyRemittance(args: RemittanceApplyInput, options?: ReceivablesCallOptions): Promise<RemittanceApplied>;
+  remittance<V extends NativeRemittanceView = 'summary'>(
+    args: RemittanceDetailArguments & {view?: V}, options?: ReceivablesCallOptions,
+  ): Promise<NativeRemittanceDetail<V>>;
+  remittanceFile(args: {batchId: string; file: RemittanceFileName}, options?: ReceivablesFileOptions & {maximumBytes?: number}):
     Promise<{bytes: Uint8Array; file: ReceivablesFileMetadata}>;
   lookupOperation(args: RequestLookupArguments, options?: ReceivablesCallOptions): Promise<RequestLookupResult>;
   /** Every page must retain the original revision, total and accounting date. */
