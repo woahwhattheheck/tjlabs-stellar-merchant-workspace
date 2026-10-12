@@ -203,7 +203,7 @@ th { font-weight: 650; background: #f4f4f4; }
   th, td { padding: .4rem .35rem; }
 }
 @media print {
-  .site-header nav, button, .review-sidebar, .filter-bar, #unlock, #pending-requests, #capture-form, #authoring-form, #compare-form { display: none !important; }
+  .site-header nav, button, .review-sidebar, .filter-bar, #unlock, #pending-requests, #capture-form, #draft-form, #authoring-form, #compare-form { display: none !important; }
   body, :root { background: #fff; }
   .review-layout, .source-grid { display: block; }
   .panel, .change-card { break-inside: avoid; }
@@ -212,3 +212,7 @@ th { font-weight: 650; background: #f4f4f4; }
 
 .table-mappings { border-top: 1px solid #d7d7d7; margin-top: 1rem; padding-top: 1rem; }
 .omitted-mappings { border: 1px solid #bdbdbd; padding: .55rem .75rem; margin-bottom: 1rem; }
+
+.source-files { border-top: 1px solid #d5d5d5; margin: .8rem 0 1rem; padding-top: .75rem; }
+.source-files .source-row { align-items: flex-start; }
+.source-files .file-name { font-size: .86rem; font-weight: 400; }

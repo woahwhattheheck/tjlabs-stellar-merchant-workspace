@@ -10,7 +10,7 @@ const actionLabels = {retainCapture: 'Retain published version', retainDraft: 'R
 const tokenKey = 'central-form-releases-token:' + location.origin;
 let token = '', state = null, review = null, draft = null, busy = false, page = 0;
 let selectedReviewId = '', storagePrefix = '', intents = {}, suggestedName = '', mustRefreshReview = false;
-let filteredChanges = [], searchIndex = new Map(), focusAfterRun = null;
+let filteredChanges = [], searchIndex = new Map(), focusAfterRun = null, sourceCache = new Map();
 function focusTarget(element) { if (busy) focusAfterRun = element; else element?.focus(); }
 
 function readStorage(key) { try { return sessionStorage.getItem(key); } catch { return null; } }
@@ -394,7 +394,7 @@ async function refresh(options = {}) {
     intents = readJSON(storagePrefix + ':requests', {});
     if (!object(intents)) intents = {};
     selectedReviewId = readStorage(storagePrefix + ':selected-review') || '';
-    review = null; draft = null;
+    review = null; draft = null; sourceCache = new Map();
   }
   reconcileIntents();
   $('desk').hidden = false;
@@ -496,6 +496,75 @@ function renderValue(value, depth = 0) {
   });
   return details;
 }
+function retainedFile(receipt) {
+  return object(receipt) && typeof receipt.sha256 === 'string' && /^[a-f0-9]{64}$/.test(receipt.sha256) &&
+    Number.isSafeInteger(receipt.bytes) && receipt.bytes >= 0;
+}
+function originalFiles(source) {
+  const form = source.form?.formId || source.id;
+  const files = [
+    {label:'XForm definition',name:form + '.xml',receipt:source.xml},
+    {label:'Native field schema',name:form + '-fields.json',receipt:source.fields},
+  ];
+  if (source.modelSource) files.push({label:'Retained authoring model',name:form + '-model.json',receipt:source.modelSource});
+  for (const item of list(source.media?.items)) files.push({label:'Form attachment',name:item.name,receipt:item});
+  return files;
+}
+async function showSourceFiles(id,side) {
+  notice('Opening the retained original source files…');
+  const value = await request('/api/form-releases/sources/' + encodeURIComponent(id));
+  const selected = snapshot(id);
+  if (!object(value) || value.id !== id || !object(value.form) || (selected?.contentHash && value.contentHash !== selected.contentHash))
+    throw new Error('The returned source differs from this selected retained edition. Refresh saved work.');
+  sourceCache.set(id,value);
+  renderSources();
+  focusTarget($('source-files-' + side));
+  notice('Original source files are ready to open.');
+}
+async function openOriginalFile(file) {
+  if (!retainedFile(file.receipt)) throw new Error('This original file does not have a retained byte receipt.');
+  notice('Opening original file: ' + file.name + '…');
+  const ticket = await request('/api/downloads',{kind:'source',hash:file.receipt.sha256,name:file.name});
+  if (ticket?.sha256 !== file.receipt.sha256 || ticket?.bytes !== file.receipt.bytes || typeof ticket.url !== 'string')
+    throw new Error('The download receipt differs from the selected original file.');
+  const address = new URL(ticket.url,location.origin);
+  if (address.origin !== location.origin || !/^\/api\/downloads\/[a-f0-9]{48}$/.test(address.pathname) || address.search || address.hash)
+    throw new Error('The workspace returned an unexpected original-file download address.');
+  const link = node('a');
+  link.href = address.href;
+  link.download = ticket.name || file.name;
+  link.rel = 'noreferrer';
+  document.body.append(link); link.click(); link.remove();
+  notice('Original file download opened: ' + (ticket.name || file.name) + ' · ' + ticket.bytes.toLocaleString() + ' bytes.');
+}
+function sourceFileControls(id,side) {
+  const section = node('div',null,'source-files'), heading = node('h4','Original files');
+  heading.id = 'source-files-' + side; heading.tabIndex = -1; section.append(heading);
+  const source = sourceCache.get(id);
+  if (!source) {
+    section.append(button('Show ' + side + ' original files',() => run(() => showSourceFiles(id,side))));
+    return section;
+  }
+  const rows = node('ul',null,'source-list');
+  for (const file of originalFiles(source)) {
+    const row = node('li',null,'source-row'), detail = node('div');
+    detail.append(node('strong',file.label),node('p',file.name,'file-name'));
+    if (retainedFile(file.receipt)) {
+      detail.append(node('p',file.receipt.bytes.toLocaleString() + ' bytes','muted'));
+      const open = button('Open original file',() => run(() => openOriginalFile(file)));
+      open.setAttribute('aria-label','Open original file ' + file.name);
+      row.append(detail,open);
+    } else {
+      const status = file.receipt?.datasetExists === true ? 'Dataset source linked'
+        : file.receipt?.outcome ? statusLabel(file.receipt.outcome) : 'Original file is not retained';
+      detail.append(node('p',status,'muted'));
+      row.append(detail);
+    }
+    rows.append(row);
+  }
+  section.append(rows);
+  return section;
+}
 function renderSources() {
   const pairs = [['Baseline', review.baselineId], ['Candidate', review.candidateId]];
   replace('source-pair', ...pairs.map(([label,id]) => {
@@ -511,7 +580,7 @@ function renderSources() {
       ['Source', id], ['Title', item?.title], ['Project', item?.form?.projectId], ['Form', item?.form?.formId],
       ['Original version', versionLabel(item?.form?.version)], ['Origin', originLabel(item?.origin)],
       ['Content hash', item?.contentHash], ['Retained', item?.createdAt ? dateLabel(item.createdAt) : undefined],
-    ]));
+    ]),sourceFileControls(id,label.toLowerCase()));
     return section;
   }));
 }
@@ -689,6 +758,7 @@ function renderChange(change, index) {
   const label = node('label', 'Staff disposition'), select = node('select'), noteLabel = node('label', 'Disposition note');
   const note = node('textarea');
   label.htmlFor = selectId; select.id = selectId;
+  select.setAttribute('aria-describedby',titleId);
   fillOptions(select, [
     {value:'accept',label:'Accept this change'},
     {value:'remap',label:'Reporting has been remapped'},
@@ -747,7 +817,9 @@ function renderReadiness() {
   if (list(readiness.unresolvedChangeIds).length) problems.push(list(readiness.unresolvedChangeIds).length + ' saved changes still need disposition.');
   if (list(readiness.incompatibleChangeIds).length) problems.push(list(readiness.incompatibleChangeIds).length + ' changes are incompatible with the selected source or reporting requirements.');
   if (readiness.dependenciesChanged === true || list(readiness.staleDependencies).length) problems.push('The selected reporting definitions have changed since this review. Update the reporting mappings to recompute their effects.');
-  if (draft.mappingDirty) problems.push('Save the changed reporting mappings to recompute this comparison.');
+  if (draft.mappingDirty) problems.push('Save the changed reporting mappings to recompute this comparison, or reset the mapping draft.');
+  const revisionChoices = Object.values(draft.decisions).filter(item => item?.decision === 'revise').length;
+  if (revisionChoices) problems.push(revisionChoices + ' dispositions request a candidate revision.');
   if (mustRefreshReview) problems.push('Refresh the saved review before the next revision-bound action.');
   if (conflict()) problems.push('This tab’s notes belong to an earlier saved revision.');
   const content = [node('strong', review.approval ? 'Approval retained for the saved review' :
@@ -953,6 +1025,13 @@ $('compare-form').addEventListener('submit', event => {
   });
 });
 $('mapping-form').addEventListener('submit', event => { event.preventDefault(); run(saveMappings); });
+$('reset-mappings').addEventListener('click',() => {
+  if (!review || !draft) return;
+  draft.mappings = serverMappings(review); draft.tableMappings = serverTableMappings(review);
+  draft.mappingNote = ''; draft.mappingDirty = false; $('mapping-note').value = '';
+  saveDraft(); renderMappings(); renderReadiness(); updateControls();
+  notice('Mapping draft reset to the current saved reporting inventory.');
+});
 $('decision-form').addEventListener('submit', event => { event.preventDefault(); run(() => saveDecision('review')); });
 $('request-revision').addEventListener('click', () => run(() => saveDecision('revise')));
 $('approve-review').addEventListener('click', () => run(() => saveDecision('approve')));
