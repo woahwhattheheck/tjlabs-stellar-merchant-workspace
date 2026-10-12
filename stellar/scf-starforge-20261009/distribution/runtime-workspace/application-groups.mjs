@@ -85,7 +85,8 @@ function memberPhase(operation) {
 }
 const acceptedFinalPhases = ['FAILED', 'CANCELLED', 'RECONCILED', 'OUTCOME_UNAVAILABLE'];
 function outcomeIdentity(operation) {
-  return hash({ phase: operation.phase, result: operation.result ?? operation.state?.result ?? null, stop: operation.stop ?? null });
+  return hash({ phase: operation.phase, result: operation.result ?? operation.state?.result ?? null,
+    error: operation.state?.error ?? null, stop: operation.stop ?? null });
 }
 function accepted(member, operation) {
   return member.acceptedOutcome?.identity === outcomeIdentity(operation);
