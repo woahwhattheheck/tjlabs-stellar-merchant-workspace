@@ -127,9 +127,9 @@ async function retain(path,body,apply) {
 async function replayPending(row) {
   return retain(row.path,JSON.parse(row.bodyText),async(result,request)=>{
     if(row.path==='draft/create') {
-      if(!editor||editor.id===result.id)adoptEditor(result);
+      if(!editor||editor.id===result.id&&editorMode==='WORKING')adoptEditor(result);
     } else if(row.path==='draft/save') {
-      if(!editor||editor.id===result.id) {
+      if(!editor||editor.id===result.id&&editorMode==='WORKING') {
         const keep=editor&&form?clone(form):null;
         adoptEditor(result,keep&&canonical(keep)!==canonical(request.form)?keep:null);
       }
@@ -212,7 +212,7 @@ async function showCurrentDraft() {
     lazyDetails('Current saved edition '+current.edition.sequence,current.edition.form));
   const actions=make('div',undefined,'actions');
   actions.append(button('Open current saved edition',()=>adoptEditor(current,undefined,{historical:true})));
-  actions.append(button('Keep my form for a new save',()=>{
+  if(editorMode==='WORKING')actions.append(button('Keep my form for a new save',()=>{
     const uncertain=pendingRows().filter(row=>row.path==='draft/save'&&JSON.parse(row.bodyText).id===selectedId);
     if(uncertain.some(row=>row.error?.code!=='CAPTURED_DESK_DRAFT_CHANGED'))
       throw new Error('Continue the retained original save before changing its selected base.');
