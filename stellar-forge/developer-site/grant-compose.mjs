@@ -248,7 +248,8 @@ export function composeGrantApplication({
     financialSources = attached.financialSources;
     financialOperation = attached.financialOperation;
   }
-  receiveGrantCustomerSources(index, companion);
+  // Register complete canonical source identities before projecting reader links.
+  receiveGrantCustomerSources(index, productAndFinanceMarkdown);
   index = projectGrantSourceIndex(index);
   const reviewerEntry = composeGrantEntry(html);
   const submission = attachGrantSubmission({ templateHtml: reviewerEntry.html, sourceIndex: index });
@@ -291,6 +292,9 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   ]);
   const index = JSON.parse(indexText);
   const manuscript = options['--manuscript'] ? await readFile(resolve(options['--manuscript']), 'utf8') : null;
+  // The section receiver also projects links. Capture original source identities
+  // from the full manuscript before receiving its accepted customer sections.
+  if (manuscript) receiveGrantCustomerSources(index, manuscript);
   const coopsCommit = options['--coops-commit'] || index.narrative_source?.coastal_product_commit || null;
   const financeCommit = options['--finance-commit'] || index.narrative_source?.financial_product_commit || null;
   const datasetteCommit = options['--datasette-commit'] || index.narrative_source?.datasette_customer_commit || null;
