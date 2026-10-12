@@ -29,6 +29,7 @@ import operations_performance as performance
 import operations_ledger_intake as ledger_intake
 import operations_payables as payables
 import operations_cash_accounts as cash_accounts
+import operations_account_reconciliation as account_reconciliation
 import operations_implementation as implementation
 import operations_engagements as engagements
 import engagement_handover
@@ -944,6 +945,31 @@ class Operations:
     def ledger_intake_original(self, program_id, source_id):
         return ledger_intake.original(self, identifier(program_id, "operation"), identifier(source_id, "source"))
 
+    def account_reconciliation(self, program_id, selection=None, expected_version=None):
+        body = {"selection": selection or {}}
+        if expected_version is not None:
+            body["expectedVersion"] = expected_version
+        return account_reconciliation.account(self, identifier(program_id, "operation"), body)
+
+    def account_reconciliation_preview(self, program_id, body):
+        return account_reconciliation.preview(self, identifier(program_id, "operation"), body)
+
+    def account_reconciliation_apply(self, program_id, body):
+        return account_reconciliation.apply(self, identifier(program_id, "operation"), body)
+
+    def account_reconciliation_statement_inputs(self, program_id, source_id):
+        return account_reconciliation.statement_inputs(self, identifier(program_id, "operation"),
+                                                        identifier(source_id, "source"))
+
+    def export_account_reconciliation(self, program_id, selection, expected_version, expected_report_sha256):
+        with self._snapshot():
+            report = self.account_reconciliation(program_id, selection,
+                domain.integer(expected_version, "Reviewed reconciliation case version", 1, 10000000))
+            if domain.sha(expected_report_sha256, "Reviewed reconciliation account", False) != report["reportSha256"]:
+                domain.fail("Reopen the original reconciliation edition before exporting its complete handover.",
+                            "RECONCILIATION_SOURCE_CHANGED", 409)
+            return account_reconciliation.export_bundle(report, self.export(program_id))
+
     def cash_account(self, program_id, selection=None, expected_version=None):
         body = {"selection": selection or {}}
         if expected_version is not None:
@@ -1226,7 +1252,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, cash_account = cash_accounts.unwrap_bundle(raw)
+        native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(raw)
+        native_raw, cash_account = cash_accounts.unwrap_bundle(native_raw)
         native_raw, supplier_account = payables.unwrap_bundle(native_raw)
         native_raw, performance_report = performance.unwrap_bundle(native_raw)
         native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
@@ -1292,6 +1319,7 @@ class Operations:
                 domain.fail("A frozen review differs from its retained business snapshot.")
         cash_accounts.validate_import(context, events, files)
         statements.validate_import(context, events, files)
+        account_reconciliation.validate_import(context, events, files)
         has_node = buyer.validate_node_import(context, events, reviews, files)
         node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
         node_view = buyer.node_observations(context)
@@ -1320,6 +1348,7 @@ class Operations:
         performance.validate_received(performance_report, document)
         payables.validate_received(supplier_account, document)
         cash_accounts.validate_received(cash_account, document)
+        account_reconciliation.validate_received(reconciliation_account, document, files)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         installation_returns.validate_import(context, reviews, events, saved_installations, files)
         selected_installation_return = installation_returns.selection_from_files(document, files)
@@ -1415,6 +1444,8 @@ class Operations:
                 origin["supplierAccount"] = payables.received_selection(supplier_account)
             if cash_account:
                 origin["cashAccount"] = cash_accounts.received_selection(cash_account)
+            if reconciliation_account:
+                origin["accountReconciliation"] = account_reconciliation.received_selection(reconciliation_account)
             self.db.execute("INSERT INTO ops_programs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (pid, imported["id"], plan["revision"], source_program["version"], source_program["state"],
                  name, source_program["mode"], source_program.get("calendarStart"), canonical(pinned),
@@ -1450,7 +1481,8 @@ class Operations:
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
                     **({"performance": performance.received_selection(performance_report)} if performance_report else {}),
                     **({"supplierAccount": payables.received_selection(supplier_account)} if supplier_account else {}),
-                    **({"cashAccount": cash_accounts.received_selection(cash_account)} if cash_account else {})}
+                    **({"cashAccount": cash_accounts.received_selection(cash_account)} if cash_account else {}),
+                    **({"accountReconciliation": account_reconciliation.received_selection(reconciliation_account)} if reconciliation_account else {})}
         with self.workspace.mutex:
             # Reuse the original receipt table before the original plan import.
             # A rejected reuse or invalid request cannot create an extra plan.
