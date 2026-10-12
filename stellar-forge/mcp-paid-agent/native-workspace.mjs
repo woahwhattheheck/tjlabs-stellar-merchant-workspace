@@ -262,7 +262,11 @@ function runOriginalQueue({root, workspace, intentId, signal}) {
   });
 }
 
-export async function openNativeWorkspace(directory) {
+export async function openNativeWorkspace(directory, {operationCoordinator} = {}) {
+  need(operationCoordinator === undefined || typeof operationCoordinator === 'function',
+    'MCP_NATIVE_COORDINATOR_INVALID');
+  const coordinate = (key, kind, signal, task) => operationCoordinator
+    ? operationCoordinator({key, kind, signal}, task) : task(signal);
   const root = nativeRoot(directory);
   await privateDirectory(root);
   const manifest = await privateJson(join(root, 'native-workspace.json'), 65536);
@@ -293,7 +297,7 @@ export async function openNativeWorkspace(directory) {
     const signal=AbortSignal.any([shutdown.signal,controller.signal,...(context.signal?[context.signal]:[])]);
     need(!closed&&!signal.aborted,'OPERATOR_ABORTED');
     const entry={controller,kind};
-    entry.promise=Promise.resolve().then(()=>task(signal));
+    entry.promise=Promise.resolve().then(()=>coordinate(key,kind,signal,task));
     active.set(key,entry);
     try{return await entry.promise;}finally{active.delete(key);}
   }
@@ -581,8 +585,15 @@ export async function openNativeWorkspace(directory) {
       const before = await queue.show(args.intentId);
       if (before.attempt) return nativeView(before);
       need(!closed && !signal.aborted, 'OPERATOR_ABORTED');
-      const worker = await runOriginalQueue({root:queue.root, workspace:manifest.workspace, intentId:args.intentId, signal});
-      return {...nativeView(await queue.show(args.intentId)), execution:worker};
+      try {
+        const worker = await coordinate('request:'+args.intentId, 'execute', signal,
+          () => runOriginalQueue({root:queue.root, workspace:manifest.workspace, intentId:args.intentId, signal}));
+        return {...nativeView(await queue.show(args.intentId)), execution:worker};
+      } catch (error) {
+        if (error?.code === 'MCP_NATIVE_OPERATOR_BUSY')
+          return {...nativeView(await queue.show(args.intentId)), execution:'OPERATOR_BUSY'};
+        throw error;
+      }
     })();
     active.set('request:'+args.intentId, entry);
     try { return await entry.promise; } finally { active.delete('request:'+args.intentId); }
@@ -651,24 +662,24 @@ export async function openNativeWorkspace(directory) {
     status:['intentId'], recover:['intentId'], cancel:['intentId'],
     read:['intentId','byteOffset','maxBytes'], history:['limit','cursor'],
   };
-  return {
-    manifest:structuredClone(manifest),
-    registerObjects:objects.register,
-    registerDatasets:datasets.register,
-    registerReceivedDataset:datasets.registerReceived,
-    completedDataset:datasets.completedDataset,
-    completedObject:objects.completedObject,completedResponse,
-    registerAnalysis:analysis.register,
-    registerDuckDB:duckdb.register,
-    registerCollections:collections.register,
-    registerCollectionRecovery:collectionRecovery.register,
-    collectionRecoveryOpenedConnection:collectionRecovery.openedConnection,
-    async registerSourceInbox(options){need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');await currentWorkspace();return registerNativeSourceInbox(manifest,options);},
-    async call(args = {}, context = {}) {
+  async function dispatch(args = {}, context = {}) {
       need(!closed, 'MCP_NATIVE_WORKSPACE_CLOSING');
       need(object(args) && object(context) &&
         (context.signal === undefined || context.signal instanceof AbortSignal), 'MCP_NATIVE_ARGUMENTS_INVALID');
       const action = args.action ?? 'execute';
+      if (action === 'request-workspaces') {
+        need(Object.keys(args).every(key => key === 'action'), 'MCP_NATIVE_ARGUMENTS_INVALID');
+        const selected = {...await requestWorkspace(), workspaceId:'default', workspaceLabel:'Configured service'};
+        return {schema:'stellar-forge.mcp-native-request-workspaces.v1',
+          defaultWorkspaceId:'default', total:1, workspaces:[selected]};
+      }
+      if (action === 'request-history') {
+        need(Object.keys(args).every(key => ['action','limit','cursor'].includes(key)),
+          'MCP_NATIVE_ARGUMENTS_INVALID');
+        const page = await dispatch({...args, action:'history'}, context);
+        return {...page, schema:'stellar-forge.mcp-native-request-history.v1', workspaceCount:1,
+          records:page.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}))};
+      }
       if(nativeObjectActions.includes(action))return objects.call(args,context);
       if(nativeDatasetActions.includes(action))return datasets.call(args,context);
       if(nativeAnalysisActions.includes(action))return analysis.call(args,context);
@@ -710,6 +721,34 @@ export async function openNativeWorkspace(directory) {
         return nativeView(record.attempt ? record : await queue.cancel(args.intentId));
       }
       return readResult(args);
+  }
+  return {
+    manifest:structuredClone(manifest),
+    registerObjects:objects.register,
+    registerDatasets:datasets.register,
+    registerReceivedDataset:datasets.registerReceived,
+    completedDataset:datasets.completedDataset,
+    completedObject:objects.completedObject,completedResponse,
+    registerAnalysis:analysis.register,
+    registerDuckDB:duckdb.register,
+    registerCollections:collections.register,
+    registerCollectionRecovery:collectionRecovery.register,
+    collectionRecoveryOpenedConnection:collectionRecovery.openedConnection,
+    async registerSourceInbox(options){need(!closed,'MCP_NATIVE_WORKSPACE_CLOSING');await currentWorkspace();return registerNativeSourceInbox(manifest,options);},
+    async call(args = {}, context = {}) {
+      need(object(args), 'MCP_NATIVE_ARGUMENTS_INVALID');
+      const forwarded = {...args};
+      if (forwarded.workspaceId !== undefined) {
+        need(forwarded.workspaceId === 'default', 'MCP_NATIVE_WORKSPACE_UNKNOWN');
+        delete forwarded.workspaceId;
+      }
+      const value = await dispatch(forwarded, context);
+      const action = forwarded.action ?? 'execute';
+      if (!Object.hasOwn(allowedFields, action)) return value;
+      const result = {...value, workspaceId:'default', workspaceLabel:'Configured service'};
+      if (action === 'history')
+        result.records = value.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}));
+      return result;
     },
     async close() {
       if (closed) return;
