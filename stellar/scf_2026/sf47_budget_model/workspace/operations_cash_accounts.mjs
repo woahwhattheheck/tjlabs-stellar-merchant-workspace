@@ -333,7 +333,7 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
       await persist();
       if(available()){const next=await api(prefix);await onCase(next,result);}
     }catch(problem){
-      pending.problem={message:problem.message||String(problem),status:problem.status||null,code:problem.code||null};pending.rejected=[400,401,403,404,409,413,422].includes(problem.status);
+      pending.problem={message:problem.message||String(problem),status:problem.status||null,code:problem.code||null};pending.rejected=[400,409,413,415,422].includes(problem.status)&&typeof problem.code==='string';
       if(session.pending===pending)await persist();if(available())error=pending.problem.message;
     }finally{if(available()){busy=false;render();}}
   }
@@ -444,10 +444,15 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
   });
   async function initialize(){
     if(!session.initialized){
-      try{const previous=await stored(caseId);session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId){validateDesk(previous);restore(previous);}}
-      catch{storageNote='Browser draft storage is unavailable. Download the complete desk to retain original input.';}
-      session.initialized=true;
+      session.initializing||=(async()=>{
+        try{const previous=await stored(caseId);session.storageRevision=Number.isSafeInteger(previous?._storedRevision)?previous._storedRevision:0;if(previous?.schema===DESK_SCHEMA&&previous.caseId===caseId){validateDesk(previous);restore(previous);}}
+        catch{storageNote='Browser draft storage is unavailable. Download the complete desk to retain original input.';}
+        session.initialized=true;
+      })();
+      await session.initializing;
     }
+    await session.storageWrites.catch(()=>{});
+    if(!available())return;
     if(session.incomingAccount){
       const incoming=session.incomingAccount;
       if(incoming.selection){session.selection=cleanSelection(incoming.selection);session.selectedId=null;}
@@ -457,5 +462,5 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
     render();await loadReport();render();
   }
   const ready=initialize().catch(problem=>{if(available())throw problem;});
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;loadSequence++;clearTimeout(saveTimer);persist();}};
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;loadSequence++;clearTimeout(saveTimer);if(session.initialized)persist();}};
 }

@@ -215,7 +215,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(file.size>MAX_DESK_BYTES)throw new Error('Choose a complete reconciliation desk up to 64 MiB.');
     const value=JSON.parse(await file.text());validateDesk(value);
     if(session.pending)throw new Error('Resume or reconcile this desk’s original request before opening another recovery copy.');
-    const revision=session.storageRevision??0;download(state(),caseId+'-reconciliation-before-recovery.json');restore(value);session.storageRevision=revision;
+    const revision=session.storageRevision??0;download(state(),caseId+'-reconciliation-before-recovery.json');restore(value);session.storageRevision=revision;report=null;render();
     await persist();await loadReport();notice='Opened the complete original desk. Resume its retained request or preview the editable input against the current case.';render();
   }
 
@@ -539,7 +539,7 @@ export function mountAccountReconciliation({container,current,api,saveApi=api,se
     if(action==='load-stored'){
       run(async()=>{
         await session.storageWrites.catch(()=>{});const value=await stored(caseId);if(!value)throw new Error('No saved reconciliation desk is available in this browser.');
-        validateDesk(value);download(state(),caseId+'-reconciliation-before-saved-browser-copy.json');restore(value);await loadReport();render();
+        validateDesk(value);download(state(),caseId+'-reconciliation-before-saved-browser-copy.json');restore(value);report=null;render();await loadReport();render();
       });return;
     }
     if(action==='source'){run(async()=>{const response=await api(prefix+'/sources/'+encodeURIComponent(id),undefined,{download:true});download(await response.blob(),sourceName(id));});return;}

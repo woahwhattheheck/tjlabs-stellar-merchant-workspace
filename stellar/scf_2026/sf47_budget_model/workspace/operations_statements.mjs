@@ -8,7 +8,7 @@ const label=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/
 const maximumSource=8*1024*1024;
 const pageSize=50;
 const statuses={NEW:'New cash movement',EXISTING:'Already recorded',EXCLUDED:'Excluded',CONFLICT:'Needs correction'};
-const definitive=error=>[400,401,403,404,409,413,415,422].includes(error?.status)&&typeof error?.code==='string';
+const definitive=error=>[400,409,413,415,422].includes(error?.status)&&typeof error?.code==='string';
 
 export function statementHeaders(raw,delimiter=','){
   const text=String(raw).replace(/^\uFEFF/,'');

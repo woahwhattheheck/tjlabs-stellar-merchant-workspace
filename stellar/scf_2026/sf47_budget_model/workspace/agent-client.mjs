@@ -9,7 +9,7 @@ import { request as httpRequest } from 'node:http';
 import { createHash } from 'node:crypto';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { inspectGrantWorkspaceSelection, readGrantWorkspaceLaunch, GRANT_LAUNCH_SCHEMA } from './launch.mjs';
+import { inspectGrantWorkspaceSelection, readGrantWorkspaceLaunch, GRANT_LAUNCH_SCHEMA, GRANT_MAX_LAUNCH_BYTES } from './launch.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -479,7 +479,7 @@ export class GrantWorkspaceClient {
   async #readLaunch() {
     const input = this.#binding;
     const record = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(
-      await readGrantAgentFile(join(input.directory, 'managed-launch.json'), 32768, true)));
+      await readGrantAgentFile(join(input.directory, 'managed-launch.json'), GRANT_MAX_LAUNCH_BYTES, true)));
     need(record.schema === GRANT_LAUNCH_SCHEMA && record.state === 'LISTENING', 'GRANT_APPLICATION_NOT_RUNNING',
       'Start or recover the original Grant planning and delivery application, then open this alias.');
     need(record.selectionSha256 === input.selectionSha256, 'GRANT_SELECTION_CHANGED',
@@ -550,7 +550,7 @@ export class GrantWorkspaceClient {
           owned.startup = finish;
           owned.startupData = chunk => {
             lineBuffer += chunk.toString('utf8');
-            if (lineBuffer.length > 65536)
+            if (Buffer.byteLength(lineBuffer) > GRANT_MAX_LAUNCH_BYTES)
               return finish(error('GRANT_START_OUTPUT_INVALID', 'The original startup output exceeded its bound.'));
             let cut;
             while ((cut = lineBuffer.indexOf('\n')) >= 0) {
@@ -916,6 +916,36 @@ export class GrantWorkspaceClient {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
     return this.#request('/api/operations/'+caseId+'/installation-seed',
       {body:{expectedVersion},mutation:false});
+  }
+  installationCommercial(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','sourceId','expectedSourceSha256'],['expectedVersion','sourceId','expectedSourceSha256']);
+    integer(body.expectedVersion,'Current case version');id(body.sourceId,'source');sha(body.expectedSourceSha256);
+    return this.#request('/api/operations/'+caseId+'/installation-commercial',{body,mutation:false});
+  }
+  installationCommercialSeed(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','sourceId','expectedSourceSha256','quoteId','quoteSha256',
+      'acceptanceId','acceptanceSha256','installationId','expectedRevision','document','resolutions'],
+      ['expectedVersion','sourceId','expectedSourceSha256','quoteId','quoteSha256',
+       'acceptanceId','acceptanceSha256','installationId','expectedRevision']);
+    integer(body.expectedVersion,'Current case version');id(body.sourceId,'source');sha(body.expectedSourceSha256);
+    for(const key of ['quoteId','acceptanceId'])need(typeof body[key]==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(body[key]),
+      'GRANT_INVALID_INPUT','Select the original quotation and customer-response UUIDs.');
+    sha(body.quoteSha256);sha(body.acceptanceSha256);
+    integer(body.expectedRevision,'Current Installation edition',0,500);
+    if(body.installationId!==null)id(body.installationId,'installation');
+    need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
+      'GRANT_INVALID_INPUT','Select the current Installation edition, or zero for a new Installation.');
+    if(Object.hasOwn(body,'document'))object(body.document,'Complete editable Installation document');
+    if(Object.hasOwn(body,'resolutions')){
+      object(body.resolutions,'Reviewed accepted-scope field choices');
+      const fields=['name','task.name','task.purpose','task.request','task.completeOutput','source.reference',
+        'source.authority','source.changePolicy','receiving.acceptanceRule','assignments.commercialRef'];
+      need(Object.entries(body.resolutions).every(([key,value])=>fields.includes(key)&&['accepted','current'].includes(value)),
+        'GRANT_INVALID_INPUT','Keep the current or accepted value for each original conflicting field.');
+    }
+    return this.#request('/api/operations/'+caseId+'/installation-commercial-seed',{body,mutation:false});
   }
   installationWorkshares(caseId, body) {
     id(caseId,'operation');

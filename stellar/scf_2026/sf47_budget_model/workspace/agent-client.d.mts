@@ -580,6 +580,7 @@ export interface GrantInstallationDocument {
   assignments: GrantObject;
   checks: GrantInstallationCheck[];
   workshare?: GrantObject;
+  commercial?: GrantCommercialInstallationBinding;
   workflowPeriods?: unknown;
   coordination?: GrantDeliveryCoordinationInput;
 }
@@ -940,6 +941,9 @@ export interface GrantSupplierAccountDownloadSelection extends GrantSupplierAcco
   endDate: GrantCivilDate; expectedVersion: number; expectedReportSha256: string;
 }
 
+export interface GrantAccountReconciliationCase {
+  id: string; name: string; mode: 'OPERATIONS' | 'WALKTHROUGH'; state: 'OPEN' | 'CLOSED'; version: number; planId: string;
+}
 export interface GrantAccountReconciliationSelection {
   caseId: string; reconciliationId?: string | null; revision?: number | null; expectedVersion?: number;
 }
@@ -995,7 +999,7 @@ export interface GrantAccountReconciliationTotals {
 }
 export interface GrantAccountReconciliationPreview {
   schema: 'stellar-forge.sf47-account-reconciliation.v1.preview';
-  case: GrantPerformanceReport['case']; expectedVersion: number; reconciliationId: string | null;
+  case: GrantAccountReconciliationCase; expectedVersion: number; reconciliationId: string | null;
   expectedRevision: number; requestedState: 'DRAFT' | 'CLOSED'; document: GrantAccountReconciliationDocument;
   selection: GrantAccountReconciliationPeriod;
   statement: {source: GrantObject; reviewSource: GrantObject; accountId: string; accountLabel: string;
@@ -1031,7 +1035,7 @@ export interface GrantAccountReconciliationStatement {
   balanceStatus: string; retainedAtVersion: number;
 }
 export interface GrantAccountReconciliationReport {
-  schema: 'stellar-forge.sf47-account-reconciliation.v1'; case: GrantPerformanceReport['case'];
+  schema: 'stellar-forge.sf47-account-reconciliation.v1'; case: GrantAccountReconciliationCase;
   statements: GrantAccountReconciliationStatement[]; reconciliations: GrantAccountReconciliationSummary[];
   selection: {reconciliationId: string | null; revision: number | null};
   selected: {source: GrantObject; record: GrantAccountReconciliationEdition} | null;
@@ -1280,6 +1284,48 @@ export interface GrantCaseImportReceipt extends GrantObject {
   accountReconciliation?: GrantAccountReconciliationReceived;
   selectedInstallation?: GrantInstallationRef;
   selectedInstallationReturn?: GrantInstallationReturnSummary;
+}
+/** Original accepted customer quotation, its complete source and task identities. */
+export interface GrantCommercialInstallationBinding {
+  schema: 'stellar-forge.sf47-commercial-installation.v1';
+  sourceId: string;
+  sourceSha256: string;
+  caseKey: string;
+  quoteId: string;
+  quoteSha256: string;
+  acceptanceId: string;
+  acceptanceSha256: string;
+  scopeSha256: string;
+  taskChecks: {taskId: string; checkId: string; definitionSha256: string}[];
+  sourceFiles: {name: string; sha256: string; bytes: number; sourceId: string}[];
+}
+export interface GrantCommercialSourceSelection {
+  expectedVersion: number;
+  sourceId: string;
+  expectedSourceSha256: string;
+}
+export type GrantCommercialField = 'name' | 'task.name' | 'task.purpose' | 'task.request' |
+  'task.completeOutput' | 'source.reference' | 'source.authority' | 'source.changePolicy' |
+  'receiving.acceptanceRule' | 'assignments.commercialRef';
+export interface GrantCommercialInstallationInput extends GrantCommercialSourceSelection, GrantInstallationSelection {
+  quoteId: string;
+  quoteSha256: string;
+  acceptanceId: string;
+  acceptanceSha256: string;
+  document?: GrantInstallationDocument;
+  resolutions?: Partial<Record<GrantCommercialField, 'accepted' | 'current'>>;
+}
+export interface GrantCommercialInstallationReview extends GrantInstallationSeed {
+  schema: 'stellar-forge.sf47-commercial-installation.v1';
+  installationId: string | null;
+  expectedRevision: number;
+  canApply: boolean;
+  conflicts: {key: GrantCommercialField; base: string; current: string; accepted: string; resolution: 'accepted' | 'current' | null}[];
+  resolutions: Partial<Record<GrantCommercialField, 'accepted' | 'current'>>;
+  changes: {fields: GrantObject[]; added: GrantObject[]; changed: GrantObject[]; unchanged: GrantObject[]; removed: GrantObject[]};
+  original: GrantObject;
+  sourceChanges: GrantObject[];
+  reviewSha256: string;
 }
 export interface GrantWorkshareSourceSelection {
   expectedVersion: number;
@@ -2110,6 +2156,8 @@ export class GrantWorkspaceClient {
   engagementPortfolio(caseId: string, expectedVersion: number, selection: GrantEngagementPortfolioSelection): Promise<GrantJsonResponse<GrantEngagementPortfolioPreview>>;
   engagementReceiving(caseId: string, body: GrantEngagementReceivingInput): Promise<GrantJsonResponse<GrantEngagementReceivingReceipt>>;
   installationSeed(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<GrantInstallationSeed>>;
+  installationCommercial<T = GrantObject>(caseId: string, body: GrantCommercialSourceSelection): Promise<GrantJsonResponse<T>>;
+  installationCommercialSeed(caseId: string, body: GrantCommercialInstallationInput): Promise<GrantJsonResponse<GrantCommercialInstallationReview>>;
   installationWorkshares<T = GrantObject>(caseId: string, body: GrantWorkshareSourceSelection): Promise<GrantJsonResponse<T>>;
   installationWorkshareSeed(caseId: string, body: GrantWorkshareSourceSelection & GrantInstallationSelection & { workshareCaseId: string; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;
   installationWorkflows<T = GrantObject>(caseId: string, body: GrantWorkflowSourceSelection): Promise<GrantJsonResponse<T>>;
