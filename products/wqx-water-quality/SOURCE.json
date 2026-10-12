@@ -445,8 +445,8 @@
     "schema": "starforge.kiwis-commissioning-installed-source.v1",
     "integrationBaseCommit": "df0f89f5c46b6a47e5a50e5386c1aa8e9604ecb2",
     "publicRepository": "woahwhattheheck/public-commons-sprint-2026",
-    "publicSourceCommit": "b63d5c2c16dd610bcd6a57d05087fa441e5d54a8",
-    "publicSourceTree": "c49d4ccd59150e27224c3aad0b62b58bbeb275f7",
+    "publicSourceCommit": "6a7e2e85728a34fa7ef1a95ac27831b21a731102",
+    "publicSourceTree": "f7fe408634e88b1eec02f72e2f31a81bf68519b5",
     "publicPullRequest": 2542,
     "sourceSelection": "wqx-water-quality",
     "sourcePrecedence": "The scientific files and application above retain their original source history. The commissioning files below are the current postimages for overlapping paths.",
@@ -556,9 +556,9 @@
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/kiwis/receiving.mjs",
         "previousGitBlob": null,
-        "gitBlob": "55a7b672f1180a71da4d53da3dd8ef918b985009",
-        "bytes": 23466,
-        "sha256": "56f39ccdba511fde21c41d7b0a6a1f453009dff400177cffb053376a2f8d57da"
+        "gitBlob": "285536c36b499785dc33d7f74c573a2daf53ca46",
+        "bytes": 23571,
+        "sha256": "0b3c0e0e6d3d3a84e8f0c4f47aa4db4730488fc5ae2e94900a060ffdd826321e"
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/cli.mjs",
