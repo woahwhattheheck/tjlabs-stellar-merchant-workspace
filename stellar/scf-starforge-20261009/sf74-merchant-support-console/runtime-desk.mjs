@@ -1,10 +1,13 @@
 // MIT. Runtime support in the original SF74 workspace; same-origin file APIs only.
 import {encodeSource,parseWorkspace} from './workspace-file.mjs';
+import {ckanCaptureHtml,ckanComparisonHtml} from './ckan-render.mjs';
 
 const SCHEMA='stellar-forge.merchant-runtime-case.v1';
 const PACKET=['bundle.json','operator-brief.md','metrics.prom','manifest.json'];
 const PERIOD=['history.json','report.json'];
 const OBJECT=['object-observation.json','object-report.json','object-accounting.json'];
+const CKAN=['ckan-observation.json','ckan-workbench.json','ckan-files.json'];
+const MAX_CKAN=8*1024*1024;
 const MAX_FILE=2_000_000,MAX_PERIOD=64*1024*1024,MAX_HANDOFF=224*1024*1024;
 const add=(parent,tag,text,cls='')=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;parent.append(n);return n;};
 const button=(parent,text,action,cls='secondary')=>{const b=add(parent,'button',text,cls);b.type='button';b.addEventListener('click',action);return b;};
@@ -24,7 +27,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   root.id='runtime';root.className='card runtime-desk';
   const head=add(root,'div',undefined,'section-heading'),heading=add(head,'div');
   add(heading,'p','Merchant operations','eyebrow');add(heading,'h2','Runtime support');
-  add(heading,'p','Attach an original seller packet, retained period or saved Object observation. Review the recorded financial and output outcomes, and keep the complete sources with this case.');
+  add(heading,'p','Attach an original seller packet, retained period, saved Object observation or CKAN workbench observation. Review the operational outcomes and keep the complete sources with this case.');
   add(head,'span','Original file intake','stage-hint');
   const status=add(root,'p','Select the four original packet files to begin. Importing files makes no seller request.','status');
   status.id='runtime-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -36,6 +39,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   add(kind,'option','One original seller session').value='session';
   add(kind,'option','Retained period across restarts').value='period';
   add(kind,'option','Saved Object buyer observation').value='object';
+  add(kind,'option','Saved CKAN workbench observation').value='ckan';
   const packetLabel=add(grid,'label','Original support packet files');
   add(packetLabel,'small','Select bundle.json, operator-brief.md, metrics.prom and manifest.json together.');
   const packet=add(packetLabel,'input');packet.type='file';packet.multiple=true;packet.id='runtime-packet';
@@ -45,6 +49,9 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   const objectLabel=add(grid,'label','Original Object observation files');objectLabel.hidden=true;
   add(objectLabel,'small','Select object-observation.json, object-report.json and object-accounting.json together. These retain the original request views and verified saved output.');
   const objectFile=add(objectLabel,'input');objectFile.type='file';objectFile.multiple=true;objectFile.id='runtime-object';
+  const ckanLabel=add(grid,'label','Original CKAN observation files');ckanLabel.hidden=true;
+  add(ckanLabel,'small','Select ckan-observation.json, ckan-workbench.json and ckan-files.json together. They carry both saved project reads and the complete selected source, refresh and publication records.');
+  const ckanFile=add(ckanLabel,'input');ckanFile.type='file';ckanFile.multiple=true;ckanFile.id='runtime-ckan';
   const advanced=add(intake,'details',undefined,'source-details');add(advanced,'summary','Optional native delivery records');
   const nativeHint=add(advanced,'p','Use the original SF97 report and both copied SF98 journals from this same seller session. The original reconciler keeps each report’s own observation window.');
   const nativeGrid=add(advanced,'div',undefined,'form-grid'),native={},nativeLabels={};
@@ -77,13 +84,13 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
   function invalidate(){review=null;lastExport=null;handoffDownloads.hidden=true;}
   function changed(){generation++;draft=true;selected=null;mapping.hidden=true;invalidate();controls();onChange();}
   function controls(){
-    inspect.disabled=busy||!(kind.value==='period'?period:kind.value==='object'?objectFile:packet).files.length;attach.disabled=busy||!selected||!route.value;
+    inspect.disabled=busy||!(kind.value==='period'?period:kind.value==='object'?objectFile:kind.value==='ckan'?ckanFile:packet).files.length;attach.disabled=busy||!selected||!route.value;
     clearDraft.disabled=busy&&!draft;refresh.disabled=busy||(!captures.before&&!captures.after);
     exportButton.disabled=busy||(!captures.before&&!captures.after);importButton.disabled=busy||!importFile.files.length;
     for(const n of loaded.querySelectorAll('button'))n.disabled=busy;
   }
   function resetDraft(){
-    generation++;packet.value='';period.value='';objectFile.value='';for(const input of Object.values(native))input.value='';
+    generation++;packet.value='';period.value='';objectFile.value='';ckanFile.value='';for(const input of Object.values(native))input.value='';
     selected=null;draft=false;mapping.hidden=true;controls();
     say('Selected files cleared. Attached captures are unchanged.');
   }
@@ -95,38 +102,40 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
     return body;
   }
   async function readFile(file,name){
-    const maximum=kind.value==='period'?MAX_PERIOD:MAX_FILE;
+    const maximum=kind.value==='period'?MAX_PERIOD:kind.value==='ckan'?MAX_CKAN:MAX_FILE;
     if(!file||file.size>maximum)throw new Error(name+' exceeds the '+maximum.toLocaleString()+' byte source limit.');
     return encodeSource(new Uint8Array(await file.arrayBuffer()));
   }
   async function inspectFiles(){
     if(busy)return;busy=true;controls();const epoch=++generation;
     try{
-      const isPeriod=kind.value==='period',isObject=kind.value==='object',required=isPeriod?PERIOD:isObject?OBJECT:PACKET;
-      const chosen=[...(isPeriod?period:isObject?objectFile:packet).files],names=chosen.map(f=>f.name);
+      const isPeriod=kind.value==='period',isObject=kind.value==='object',isCkan=kind.value==='ckan',required=isPeriod?PERIOD:isObject?OBJECT:isCkan?CKAN:PACKET;
+      const chosen=[...(isPeriod?period:isObject?objectFile:isCkan?ckanFile:packet).files],names=chosen.map(f=>f.name);
       if(chosen.length!==required.length||new Set(names).size!==required.length||required.some(n=>!names.includes(n)))
-        throw new Error(isPeriod?'Select original history.json and its matching SF97 report.json together.':isObject?'Select exactly the three original Object observation files together.':'Select exactly the four original SF93 packet files together.');
-      const pickedNative=(isObject?[]:Object.entries(native)).filter(([name,input])=>input.files.length&&(!isPeriod||name!=='report.json')).map(([name,input])=>[name,input.files[0]]);
+        throw new Error(isPeriod?'Select original history.json and its matching SF97 report.json together.':isObject?'Select exactly the three original Object observation files together.':isCkan?'Select exactly the three original CKAN observation files together.':'Select exactly the four original SF93 packet files together.');
+      const pickedNative=(isObject||isCkan?[]:Object.entries(native)).filter(([name,input])=>input.files.length&&(!isPeriod||name!=='report.json')).map(([name,input])=>[name,input.files[0]]);
       if(isPeriod&&[...chosen,...pickedNative.map(([,file])=>file)].reduce((sum,file)=>sum+file.size,0)>MAX_PERIOD)
         throw new Error('This period exceeds 64 MiB of combined original sources. Export fewer retained days or one route.');
       const files=Object.fromEntries(await Promise.all([...chosen.map(f=>[f.name,f]),...pickedNative].map(async([name,file])=>[name,await readFile(file,name)])));
       const information=await api('/api/runtime/inspect',{files});
       if(epoch!==generation)return;
       selected={files,information};route.replaceChildren();
-      add(route,'option',information.kind==='OBJECT_SESSION'?'Choose the original Object source':'Choose an original runtime route').value='';
+      add(route,'option',information.kind==='OBJECT_SESSION'?'Choose the original Object source':information.kind==='CKAN_WORKBENCH'?'Choose the original CKAN source':'Choose an original runtime route').value='';
       const inputs=readInputs();
       for(const [index,row] of information.routes.entries()){
         const option=add(route,'option',row.id+' · '+row.method+(information.kind==='DURABLE_PERIOD'?' '+row.path+' · '+bindingLabel(row.binding):''));option.value=String(index);
         option.disabled=row.method!==inputs.method;
       }
-      mappingInfo.textContent=(information.kind==='OBJECT_SESSION'?
+      mappingInfo.textContent=(information.kind==='CKAN_WORKBENCH'?
+        humanTime(information.capturedAt)+' · CKAN '+(information.ckan.project.catalogOrigin??'registered project')+' · Coverage '+information.ckan.coverage:
+        information.kind==='OBJECT_SESSION'?
         humanTime(information.capturedAt)+' · Object '+information.sessionId+' · Coverage '+information.object.coverage:
         information.kind==='DURABLE_PERIOD'?
         information.range.from+' → '+information.range.to+' UTC · '+information.mode+' · '+information.sessionIds.length+' original sessions':
         humanTime(information.capturedAt)+' · '+information.mode+' · Session '+information.sessionId)+
         '. Current case: '+(inputs.resource||'resource not entered')+' · '+inputs.method+'.';
       mapping.hidden=false;draft=true;
-      say(information.kind==='OBJECT_SESSION'?'All original Object observation files and their internal identities agree. Review the saved session and map its registered GET source to this case.':information.kind==='DURABLE_PERIOD'?'Original history bytes match the SF97 report and its retained coverage. Select the exact method/path and attach it to this case.':
+      say(information.kind==='CKAN_WORKBENCH'?'CKAN packet opened. Review the saved project, selected records and source coverage, then map its registered GET source to this case.':information.kind==='OBJECT_SESSION'?'All original Object observation files and their internal identities agree. Review the saved session and map its registered GET source to this case.':information.kind==='DURABLE_PERIOD'?'Original history bytes match the SF97 report and its retained coverage. Select the exact method/path and attach it to this case.':
         'Original packet files match their manifest. Select its route and attach to the current case.');
     }catch(error){if(epoch===generation){selected=null;mapping.hidden=true;say(error.message,true);}}
     finally{busy=false;controls();}
@@ -154,6 +163,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
       add(box,'p',capture.scope.routeId+' · '+capture.scope.inputs.method+(capture.scope.path?' '+capture.scope.path:''));
       if(capture.files['history.json'])add(box,'p','Retained period · exact original history and report','hint');
       if(capture.files['object-observation.json'])add(box,'p','Object buyer · exact original observation, native report and both accounting reads','hint');
+      if(capture.files['ckan-observation.json'])add(box,'p','CKAN workbench · original state reads, selected source, refresh decision and publication output','hint');
       add(box,'p',capture.scope.inputs.resource||'No external resource mapping recorded.','hint');
       add(box,'p',Object.keys(capture.files).length+' original files · '+Object.values(capture.files).reduce((sum,f)=>sum+f.bytes,0).toLocaleString()+' bytes','hint');
       const buttons=add(box,'div',undefined,'actions');
@@ -273,6 +283,7 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
     add(result,'h3','Runtime comparison');add(result,'p',review.comparison.detail);
     const interval=review.comparison.interval;
     if(interval)table(result,['Starts','Completions','2xx','402','5xx','Disconnected'],[['started','completed','success','challenge','serverError','disconnected'].map(k=>interval[k])]);
+    if(review.comparison.ckan){const view=add(result,'div');view.innerHTML=ckanComparisonHtml(review.comparison);}
     if(review.comparison.periods) {
       const p=review.comparison.periods;
       const rows=[['started','Started'],['completed','Completed'],['responses','HTTP responses'],['httpSuccessPercent','2xx share %'],
@@ -288,7 +299,8 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
       add(result,'h3',(position==='before'?'Before':'After')+' · '+capture.route.id);
       add(result,'p',humanTime(capture.startedAt)+' → '+humanTime(capture.capturedAt)+' · '+capture.mode,'hint');
       if(!capture.caseMatches)add(result,'p','Saved scope differs from this case’s current inputs.','status error');
-      if(capture.kind==='OBJECT_SESSION')renderObject(capture);
+      if(capture.kind==='CKAN_WORKBENCH'){const view=add(result,'div');view.innerHTML=ckanCaptureHtml(capture);}
+      else if(capture.kind==='OBJECT_SESSION')renderObject(capture);
       else {
         table(result,['Started','Completed',capture.period?'Responses':'In flight','2xx','402','5xx','Disconnected'],[
           ['started','completed',capture.period?'responses':'inFlight','success','challenge','serverError','disconnected'].map(k=>capture.route[k])]);
@@ -329,16 +341,16 @@ export function mountRuntimeDesk({root,readInputs,onChange=()=>{},exportCase,imp
     if(draft||selected)throw new Error('Attach or clear the selected runtime files before saving or exporting this case.');
     return rawText();
   }
-  for(const field of [packet,period,objectFile,...Object.values(native)])field.addEventListener('change',changed,{signal:controller.signal});
+  for(const field of [packet,period,objectFile,ckanFile,...Object.values(native)])field.addEventListener('change',changed,{signal:controller.signal});
   kind.addEventListener('change',()=>{
-    resetDraft();const isPeriod=kind.value==='period',isObject=kind.value==='object';
-    packetLabel.hidden=isPeriod||isObject;periodLabel.hidden=!isPeriod;objectLabel.hidden=!isObject;advanced.hidden=isObject;
+    resetDraft();const isPeriod=kind.value==='period',isObject=kind.value==='object',isCkan=kind.value==='ckan';
+    packetLabel.hidden=isPeriod||isObject||isCkan;periodLabel.hidden=!isPeriod;objectLabel.hidden=!isObject;ckanLabel.hidden=!isCkan;advanced.hidden=isObject||isCkan;
     nativeLabels['report.json'].hidden=isPeriod;
     nativeHint.textContent=isPeriod?'Optionally attach both copied original SF98 journals. The report retains its actual saved session/day/route coverage; no outbox is inferred when files are absent.':
       'Use the original SF97 report and both copied SF98 journals from this same seller session. The original reconciler keeps each report’s own observation window.';
-    limitHint.textContent=isPeriod?'Maximum 64 MiB of combined period sources. Original bytes and source hashes are retained.':'Maximum 2 MB per packet file. Original file bytes are retained.';
+    limitHint.textContent=isPeriod?'Maximum 64 MiB of combined period sources. Original bytes and source hashes are retained.':isCkan?'Maximum 8 MiB per CKAN observation file. Complete original bytes and both saved state reads are retained.':'Maximum 2 MB per packet file. Original file bytes are retained.';
     controls();say(isPeriod?'Select original history.json and matching report.json. Existing case captures are unchanged.':isObject?
-      'Select the three original Object observation files. Existing case captures are unchanged.':'Select the four original packet files. Existing case captures are unchanged.');
+      'Select the three original Object observation files. Existing case captures are unchanged.':isCkan?'Select the three original CKAN observation files.':'Select the four original packet files. Existing case captures are unchanged.');
   },{signal:controller.signal});
   side.addEventListener('change',()=>{generation++;controls();},{signal:controller.signal});
   route.addEventListener('change',()=>{generation++;controls();},{signal:controller.signal});
