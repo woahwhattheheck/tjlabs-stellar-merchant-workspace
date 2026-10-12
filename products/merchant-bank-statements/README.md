@@ -2,6 +2,8 @@
 
 The bank desk connects original OFX, QFX and explicitly mapped CSV statements to the merchant workspace's existing customer receipts, invoices and refunds. It retains the original files, reviews overlapping transactions and corrections, records exact split postings, and saves a balanced close with a complete accountant handover.
 
+Follow [Install and move the complete bank application](INSTALLATION.md) for source receiving, the selected runtime profile and managed Applications. The [operator handover](HANDOVER.md) connects original statement receiving, customer remittances, a retained account close and continued work; the [maintained complete example](EXAMPLE.md) follows its original account and saved sources.
+
 Open **Bank reconciliation** from Receivables, launch **Bank statement reconciliation** in Applications, or run:
 
 ~~~sh
@@ -37,6 +39,12 @@ Open **Source** in Bank receipts to follow **Posted source replacements** or **O
 Correct the original covered payment through the reviewed receipt-intake correction. Its unchanged portions retain their receipt lineage and allocation history. A prior bank close then identifies the changed receipt. Reopen the close, undo its affected matches, apply the reviewed statement correction and match the current receipt portions before retaining the replacement close. Each saved close keeps its original downloadable bytes.
 
 Credit policies, invoice approvals, collection cases and cash-planning editions continue through their existing Receivables controls. The CLI includes both the original bank-receipt commands and the bank-statements account-reconciliation command.
+
+## Apply original customer remittances
+
+Choose **Remittance receiving** from the same Receivables service to receive a complete original customer remittance CSV. The preview matches exact saved customer references and invoice numbers, reuses an agreeing original receipt and reviews every dated allocation. Save the reviewed request, then receive the whole conflict-free batch through the existing accounting writer.
+
+An existing bank or Stellar receipt retains its original identity and source. A new payment uses the original operator-recorded receipt category. The retained batch includes the original source CSV, complete review and output manifest. **Find saved operation** recovers its original request ID after an interrupted reply. Follow the [complete remittance guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/REMITTANCES.md) for the eleven-column source contract, exact receipt matching, unapplied funds, corrections and original-source export.
 
 ## Match customer cash and accountant postings
 
