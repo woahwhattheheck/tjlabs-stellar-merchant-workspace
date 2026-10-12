@@ -115,7 +115,7 @@ function readInputs() {
     fail("Use a complete receiving input with a stable requestPrefix and customer list.");
   const cases = new Set();
   for (const customer of value.customers) {
-    if (!record(customer) || !["cocart", "blockscout"].includes(customer.profile) ||
+    if (!record(customer) || !["cocart", "blockscout", "queryfarm", "ars-air-quality"].includes(customer.profile) ||
         typeof customer.workshareCaseId !== "string" || !customer.workshareCaseId ||
         cases.has(customer.workshareCaseId) || !/^[a-f0-9]{64}$/.test(customer.planSha256 || "") ||
         !Array.isArray(customer.files) || !customer.files.length)
