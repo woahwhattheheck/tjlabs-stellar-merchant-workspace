@@ -23,6 +23,7 @@ export async function prepareClose({workspace,profile,settlementId}) {
   return serialChannel(workspace,config.channel,async()=>{
     await assertOperating(workspace,config.channel);
     const previous=await workspace.read(groups.settlements,settlementId);
+    need(!previous || previous.streamKey===streamKey(config.channel), 'MPP_CHANNEL_CLOSE_ID_ALREADY_USED',409);
     if(previous?.signedXdr) return closeView(previous);
     need(!previous || ['DRAFT','CANCELLED'].includes(previous.phase), 'MPP_CHANNEL_RESUME_ORIGINAL_CLOSE',409);
     const native=await loadChannelNative(await dependencyRootFor(workspace,config)), store=nativeStore(workspace,config.channel);
