@@ -13,6 +13,7 @@ from operations import Operations, MAX_SOURCE
 import operations_commercial_cli as commercial_cli
 import operations_installation_returns_cli as installation_returns_cli
 import operations_ledger_intake as ledger_intake
+import award_terms_cli
 
 
 def register(subparsers, common):
@@ -442,6 +443,7 @@ def register(subparsers, common):
     selection(target); mutation(target)
     target.add_argument("--file", required=True)
 
+    award_terms_cli.register(command, mutation)
     commercial_cli.register(command)
     installation_returns_cli.register(command, mutation)
 
@@ -626,6 +628,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if award_terms_cli.operates(action):
+        return award_terms_cli.operate(ops, args, read_bytes, publish)
     if action == "installation-returns" or action.startswith("installation-return-"):
         return installation_returns_cli.operate(ops, args, read_bytes, publish)
     if action.startswith("commercial-"):
