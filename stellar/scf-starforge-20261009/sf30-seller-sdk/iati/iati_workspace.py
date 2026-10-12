@@ -284,6 +284,8 @@ class IatiWorkspace(Workspace):
         self.refresh = IatiRefresh(self)
         from amp import AmpWorkspace
         self.amp = AmpWorkspace(self)
+        from results.workspace import IatiResults
+        self.results = IatiResults(self)
 
     def presets(self):
         return source_presets()
@@ -301,6 +303,7 @@ class IatiWorkspace(Workspace):
             result["publishing"] = {"projects":len(self.publishing.list())}
             result["refresh"] = {"plans": len(self.refresh.plans())}
             result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
+            result["results"] = {"projects": len(self.results.inventory()["projects"])}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -816,4 +819,7 @@ class IatiWorkspace(Workspace):
         from amp.portable import SCHEMA as AMP_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
             return self.amp.receive(path)
+        from results.transfer import PACKET as RESULTS_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RESULTS_PACKET:
+            return self.results.receive(path)
         return super().import_packet(path)

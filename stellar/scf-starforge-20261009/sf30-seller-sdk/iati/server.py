@@ -15,6 +15,7 @@ import publishing_http
 import organisation_http
 import refresh_http
 import amp_http
+import results.http as results_http
 
 HERE = Path(__file__).resolve().parent
 SHARED = HERE.parent / "xml"
@@ -82,6 +83,8 @@ class Handler(_original.Handler):
 
     def _get(self):
         target = urlsplit(self.path)
+        if results_http.asset(self, target.path):
+            return
         if target.path in {"/dqa.js", "/dqa.css", "/publishing.js", "/publishing.css", "/organisation.js", "/organisation.css", "/refresh.js", "/refresh.css", "/amp.js", "/amp.css"}:
             self._gate(api=False)
             name = target.path[1:]
@@ -103,6 +106,8 @@ class Handler(_original.Handler):
         if refresh_http.get(self, target.path, q):
             return
         if organisation_http.get(self, target.path, q):
+            return
+        if results_http.get(self, target.path, q):
             return
         if publishing_http.get(self, target.path, q):
             return
@@ -164,6 +169,8 @@ class Handler(_original.Handler):
         if refresh_http.post(self, target.path):
             return
         if organisation_http.post(self, target.path):
+            return
+        if results_http.post(self, target.path):
             return
         if publishing_http.post(self, target.path):
             return
