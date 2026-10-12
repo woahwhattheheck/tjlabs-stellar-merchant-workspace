@@ -271,14 +271,14 @@ def safe_diagnostics(path):
     return value
 
 SELECTED={
-        "host":"/workspace/scratch/dbc61db6310c/native-runtime-history-final-3f3ccea8/host/swarm_cloud_job.py",
+        "host":"/workspace/scratch/33e6fc23d61c/fleet_infra/recovered-runtime-20261012T2123/host/swarm_cloud_job.py",
         "node":"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
         "python":"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
-        "modules":"/workspace/scratch/9345d3fc660b/native-runtime/node_modules",
+        "modules":"/workspace/scratch/814bb67cccdc/scf-recovered-native-runtime-20261012/node_modules",
         "playwright":"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules",
-        "chrome":"/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell",
-        "publicDonor":"/workspace/scratch/d1ccf784531e/scf-following-release/source.git",
-        "standaloneDonor":"/workspace/scratch/7737a0699973/scf"}
+        "chrome":"/workspace/scratch/b57f9a30380a/browser-runtime/chromium-153/chromium",
+        "publicDonor":"/workspace/scratch/6bbb4d88289b/public-commons-sprint-2026",
+        "standaloneDonor":"/workspace/scratch/9f774193b7b4/merchant-workspace"}
 def receive(view,selected):
     global HEAD
     root=private_directory(view/"source",True)
@@ -387,7 +387,7 @@ def main():
         "--runtime-path",SELECTED["modules"],"--runtime-path",SELECTED["playwright"],"--runtime-path",SELECTED["chrome"],
         "--runtime-consumers-root","/workspace/shared/swarm/jobs/runtime-consumers",
         "--worker-root",str(view/"worker"),"--temp-root",str(view/"worker-temp"),
-        "--artifact-on-success","run-native/receiving-summary.json","--retain-artifacts","--report-format","summary","--",
+        "--artifact-on-success","run-native/receiving-summary.json","--",
         SELECTED["python"],"-B",str(source_file),"--admitted-view",str(view)]
     save(view/"intake-intent.json",{"operation":OPERATION,"receiverSha256":bytes_sha(raw),
         "managedSource":MANAGED,"directSource":DIRECT,"applicationsSource":APPLICATIONS,
