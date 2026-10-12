@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biotech event monitor</title>
+<link rel="stylesheet" href="assets/style.css">
+<!-- REVECS_BOOT -->
+<script src="assets/app.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+  <div><p class="eyebrow">Biotech Catalyst Sentinel</p><h1 id="workspace-title">Event monitor</h1></div>
+  <div class="top-actions"><span id="mode" class="tag"></span><button id="refresh" type="button" class="live">Refresh view</button></div>
+</header>
+<div id="notice" role="status" aria-live="polite" hidden></div>
+<nav class="tabs" aria-label="Workspace">
+  <button type="button" data-tab="catalysts" aria-current="page">Catalysts</button>
+  <button type="button" data-tab="receiving">Receiving history</button>
+  <button type="button" data-tab="settings">Workspace &amp; handover</button>
+</nav>
+<main>
+<section id="catalysts" class="panel">
+  <div class="section-title"><div><h2>Watch the decisions that matter</h2><p id="history-status" class="muted"></p></div><label class="edition-control">History edition<select id="edition"><option value="">Current history</option></select></label></div>
+  <div class="metrics" aria-label="Current history totals">
+    <div><span>Catalysts shown</span><strong id="catalyst-count">0</strong></div>
+    <div><span>Retained events</span><strong id="event-count">0</strong></div>
+    <div><span>FDA extensions</span><strong id="extension-count">0</strong></div>
+    <div><span>Vendor repairs</span><strong id="repair-count">0</strong></div>
+  </div>
+  <div class="filters">
+    <label class="search">Find a company, drug or ticker<input id="search" type="search" autocomplete="off"></label>
+    <label class="check"><input id="watch-only" type="checkbox">My watchlist</label>
+    <label class="check"><input id="withdrawn" type="checkbox">Include withdrawn records</label>
+  </div>
+  <div class="review-layout">
+    <div class="records"><table><thead><tr><th scope="col">Catalyst</th><th scope="col">Date</th><th scope="col">Status</th></tr></thead><tbody id="catalyst-rows"></tbody></table><p id="empty" class="empty" hidden></p></div>
+    <aside id="detail" class="detail" aria-label="Selected catalyst" tabindex="-1"><h3>Filing &amp; history</h3><p class="muted">Select a catalyst to review its source and complete event history.</p></aside>
+  </div>
+</section>
+<section id="receiving" class="panel" hidden>
+  <div class="section-title"><div><h2>Complete pages and receiving history</h2><p class="muted">Open the original response from each request, including retained partial responses.</p></div></div>
+  <div id="receiving-controls" class="surface live">
+    <h3>Receive event updates</h3>
+    <p id="wallet-status" class="muted"></p>
+    <form id="receive-form" class="receive-form">
+      <label>Maximum new pages<input id="max-pages" type="number" value="20" min="1" max="100000" required></label>
+      <label>Total authorization (USDC)<input id="max-usdc" type="text" inputmode="decimal" value="1.00" required></label>
+      <label>Maximum per page (USDC)<input id="max-page-usdc" type="text" inputmode="decimal" value="0.05" required></label>
+      <label class="check"><input id="reconcile" type="checkbox">Reconcile the full history from its beginning</label>
+      <div class="button-row"><button type="submit" id="receive-button" class="primary">Receive updates</button><button type="button" id="stop" disabled>Stop after this response</button></div>
+    </form>
+    <p class="help">A page is saved before its cursor advances. A lost paid response needs a new authorization; each update operation uses the limits entered here.</p>
+  </div>
+  <div id="preview-controls" class="surface live" hidden>
+    <h3>Load the provider's public preview</h3>
+    <p>The published sample contains fictional records in the API's event format.</p>
+    <label>Public sample JSON<input id="preview-file" type="file" accept=".json,application/json"></label>
+  </div>
+  <div id="job-status" class="operation-status" role="status"></div>
+  <h3>Receiving operations</h3><div id="runs"></div>
+  <h3>Original responses</h3>
+  <table><thead><tr><th scope="col">Response</th><th scope="col">Received</th><th scope="col">Body</th><th scope="col">Open</th></tr></thead><tbody id="response-rows"></tbody></table>
+</section>
+<section id="settings" class="panel" hidden>
+  <div class="section-title"><div><h2>Workspace &amp; handover</h2><p class="muted">Keep the current watchlist, source pages and earlier receiving history together.</p></div></div>
+  <div class="settings-grid">
+    <section class="surface"><h3>My watchlist</h3><p>Watchlists include every co-filer exposed to a decision.</p>
+      <form id="watchlist-form"><label>Tickers, separated by commas<input id="watchlist" autocomplete="off"></label><button type="submit" class="live">Save watchlist</button></form>
+      <p id="watchlist-scope" class="help"></p>
+    </section>
+    <section class="surface"><h3>Workspace name</h3><form id="name-form"><label>Name<input id="name" maxlength="120" required></label><button type="submit" class="live">Save name</button></form>
+      <h3 class="subheading">Provider freshness</h3><p id="freshness"></p><button id="metadata" type="button" class="live">Read free provider metadata</button>
+    </section>
+    <section class="surface"><h3>Complete handover</h3><p>The export includes the database, every response, the offline reader and the complete local operator.</p>
+      <button id="export" type="button" class="primary live">Create complete export</button><div id="exports"></div>
+      <p id="offline-note" class="help" hidden>Open index.html to read this saved edition. Run python3 open.py from the extracted package for earlier editions, replay and continued receiving.</p>
+    </section>
+    <section class="surface"><h3>Replay saved history</h3><p>Rebuild the selected edition from its complete original pages. This operation stays local.</p><button id="replay" type="button" class="live">Replay this edition</button><p id="replay-status" role="status"></p>
+      <h3 class="subheading">Source contract</h3><p>Biotech Catalyst Sentinel 0.8.0. Vendor repairs remain distinct from FDA extensions, and withdrawn records keep their history.</p><a href="https://api.biotechcatalystsentinel.com/openapi.json" target="_blank" rel="noreferrer">Open the provider's API contract</a>
+    </section>
+  </div>
+</section>
+</main>
+<footer>Source-linked biotech event monitoring · Dates and records retain the provider's original filing references.</footer>
+</body></html>

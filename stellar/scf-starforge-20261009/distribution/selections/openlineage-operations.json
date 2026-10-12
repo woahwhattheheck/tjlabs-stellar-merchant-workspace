@@ -69,7 +69,8 @@
     "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery",
     "stellar-forge/mcp-paid-agent",
     "stellar/scf-starforge-20261009/sf43-agent-commerce",
-    "products/openlineage"
+    "products/openlineage",
+    "stellar-forge/mcp-merchant-operator/console"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -92,7 +93,32 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_file_delivery.py",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/OPENLINEAGE_LICENSE"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/OPENLINEAGE_LICENSE",
+    "stellar-forge/mcp-merchant-operator/grpc-workspace-export.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-operation-policies-cli.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-operation-policies-client.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-operation-policies-journey.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-operation-policy-file-format.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-route-worksheet-cli.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-route-worksheet-client.mjs",
+    "stellar-forge/mcp-merchant-operator/openapi-route-worksheet-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/descriptor.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/health-record.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/domain.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/operations/report.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/prepare.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/proto.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/request-series.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/transfer/manifest.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/upgrade-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/values.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/workspace/binding.mjs",
+    "stellar/scf_2026/presentation/reviewer/merchant/catalog.mjs",
+    "stellar/scf_2026/presentation/reviewer/merchant/client.mjs",
+    "stellar/scf_2026/presentation/reviewer/merchant/contracts.mjs",
+    "stellar/scf_2026/presentation/reviewer/workbench-model.mjs",
+    "stellar/scf_2026/presentation/reviewer/workbench.mjs",
+    "stellar/scf_2026/presentation/reviewer/workspace.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

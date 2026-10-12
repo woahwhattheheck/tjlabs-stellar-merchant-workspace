@@ -8,7 +8,7 @@ import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const usage = "node prepare.mjs template|prepare --profile cocart|blockscout|queryfarm|ars-air-quality|supplier-catalogues|supplier-orders --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]\nnode prepare.mjs sources --selection SOURCE_SELECTION.json --source-root ORIGINAL_FILES --out PRIVATE_DIRECTORY [--python python3]";
+const usage = "node prepare.mjs template|prepare --profile cocart|blockscout|queryfarm|ars-air-quality|supplier-catalogues|supplier-orders|stellarcarbon|cfce-givecredit --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]\nnode prepare.mjs sources --selection SOURCE_SELECTION.json --source-root ORIGINAL_FILES --out PRIVATE_DIRECTORY [--python python3]";
 function parse(argv) {
   const [command, ...args] = argv;
   if (!["template", "prepare", "sources"].includes(command)) throw new Error(usage);
@@ -24,7 +24,7 @@ function parse(argv) {
     result.python ??= "python3";
     return result;
   }
-  if (!["cocart", "blockscout", "queryfarm", "ars-air-quality", "supplier-catalogues", "supplier-orders"].includes(result.profile) || !result.seed || !result.out ||
+  if (!["cocart", "blockscout", "queryfarm", "ars-air-quality", "supplier-catalogues", "supplier-orders", "stellarcarbon", "cfce-givecredit"].includes(result.profile) || !result.seed || !result.out ||
       (command === "prepare" && !result.bindings) || (command === "template" && result.bindings)) throw new Error(usage);
   return result;
 }

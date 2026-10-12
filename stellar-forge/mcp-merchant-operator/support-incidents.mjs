@@ -12,7 +12,7 @@ const SCHEMA='stellar-forge.merchant-support-incident-sources.v1';
 const sourceNames=new Set(['merchant_support_profiles','merchant_support_configure','merchant_support_watch_status',
   'merchant_support_watch_start','merchant_support_watch_stop','merchant_notifications','merchant_incident_notify',
   'merchant_notification_update','merchant_incidents','merchant_incident_ack','merchant_incident_case']);
-const addedNames=new Set(['merchant_support_incident_sources','merchant_support_destination','merchant_incident_view','merchant_support_service_snapshot']);
+const addedNames=new Set(['merchant_support_incident_sources','merchant_support_destination','merchant_incident_view','merchant_support_service_snapshot','merchant_support_ckan_inspect']);
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const statuses=['OPEN','ACKNOWLEDGED','RECOVERED','RETIRED'];
 const notificationStates=['PENDING','RETRY','IN_FLIGHT','PAUSED','EXHAUSTED','DELIVERED','CANCELLED'];
@@ -22,7 +22,9 @@ const integer=(value,label,min=0)=>{if(!Number.isSafeInteger(value)||value<min)t
 const digest=value=>{if(typeof value!=='string'||!/^[a-f0-9]{64}$/.test(value))throw fail('INVALID_PARAMS','Use the exact inspected original SHA-256.');return value;};
 const projection=value=>({schema:value.schema,sha256:value.sha256,
   sources:value.sources.map(({id,label,directory})=>({id,label,directory}))});
-const publicSource=value=>value?{id:value.id,label:value.label}:null;
+const publicSource=value=>value?{id:value.id,label:value.label,
+  ...(value.objectSessions?.length?{objectSessions:value.objectSessions.map(({id,label})=>({id,label}))}:{}),
+  ...(value.ckanWorkspaces?.length?{ckanWorkspaces:value.ckanWorkspaces.map(({id,label})=>({id,label}))}:{})}:null;
 function pagination(args){
   const offset=integer(args.offset??0,'page offset'),limit=integer(args.limit??50,'page limit',1);
   if(limit>100)throw fail('INVALID_PARAMS','Use a page limit from 1 to 100.');
@@ -71,7 +73,7 @@ export class MerchantSupportIncidentSources {
     return {mode:this.configured?'sources':'legacy',configured:Boolean(this.configured||this.#config?.incidentsDirectory),
       sourceConfigurationSha256:this.#config?.incidentSources?.sha256??null,
       defaultIncidentSource:this.#config?.defaultIncidentSource??(this.#config?.incidentSources?.sources.length===1?this.#config.incidentSources.sources[0].id:null),
-      sources:(this.#config?.incidentSources?.sources??[]).map(publicSource),closing:this.#closing};
+      sources:(this.#manager?.profiles().sources??this.#config?.incidentSources?.sources??[]).map(publicSource),closing:this.#closing};
   }
   async #open(){
     if(this.#closing)throw fail('OPERATOR_CLOSING','Merchant support is closing.',503);
@@ -178,6 +180,10 @@ export class MerchantSupportIncidentSources {
       }
       if(!manager)throw fail('SUPPORT_INCIDENT_SOURCES_REQUIRED','Select the original incident source file in the host support connection.');
       switch(name){
+        case 'merchant_support_ckan_inspect':{
+          const {incidentSource,...input}=args;
+          return {...await manager.inspectCkan(source.id,input),incidentSource:selected};
+        }
         case 'merchant_support_profiles':{
           const current=await manager.list(source.id,{limit:1});
           const state={configRevision:current.configRevision,configHash:current.configHash,configuration:current.config};

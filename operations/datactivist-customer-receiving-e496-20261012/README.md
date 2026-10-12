@@ -164,3 +164,12 @@ A later continuation reuses the completed publisher only when the complete appli
 Each operating programme runs in a process group created by this runner. If its driver exits abnormally, the runner sends termination to that owned group and settles remaining server/browser children before saving the case. It escalates to a kill signal only within that same owned group after the grace period. This prevents a terminated driver from leaving its active browser or server competing with the save process.
 
 The customer controller releases the verified full source/archive buffers after recording their hashes and original identities. The restorer and runner likewise release decoded source copies after hydration. The selected files and original datasets remain on disk for the full customer operation, while browser loading uses the documented 256-MiB Node heap.
+
+
+### Complete installed browser handover
+
+The complete publisher case at application commit `1025cb17d9f38d1285d474a931d9f2605b64a7c3` has finished all eight original operating stages, including desktop and 390-pixel browser views, native archive creation, and independent receiving. Its saved publisher result and archive let the customer continuation retain the original workspace and continue directly from that completed arm.
+
+The installed browser's source and workspace downloads now join the download listener and click in the same handled operation. Full-workspace downloads use the native server's 360-second request window. The controller records the actual response status, request failure, downloaded byte count, and any returned error body in the existing attempt log directory. It also watches the original server process, so a server exit becomes an immediate native failure rather than an unexplained download timeout. These observations carry no private connection headers.
+
+The installed server's stdout and stderr stream directly into their existing attempt files for the whole process lifetime. Browser failures still run the normal context, service, and owned-process cleanup, while the actual server output remains available for the same-case continuation and delivery save.

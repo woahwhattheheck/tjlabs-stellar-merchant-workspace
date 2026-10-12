@@ -3,12 +3,13 @@ import {createHash} from 'node:crypto';
 import {loopbackOrigin} from './bundle.mjs';
 import {slackTeamId,slackChannelId} from './notifications-slack.mjs';
 import {normalizeObjectSource,OBJECT_KINDS} from './object-observation.mjs';
+import {normalizeCkanSource,CKAN_KINDS} from './ckan-observation.mjs';
 
 export const CONFIG_SCHEMA = 'stellar-forge.seller-watch-config.v1';
 export const hash = value => createHash('sha256').update(value).digest('hex');
 export const idPattern = /^[A-Za-z0-9_-]{1,64}$/;
 export const kinds = ['ENDPOINT_UNAVAILABLE','OBSERVER_INCOMPLETE','HTTP_5XX',
-  'DISCONNECTED','DELIVERY_UNAVAILABLE','DELIVERY_BACKLOG','DELIVERY_EXHAUSTED',...OBJECT_KINDS];
+  'DISCONNECTED','DELIVERY_UNAVAILABLE','DELIVERY_BACKLOG','DELIVERY_EXHAUSTED',...OBJECT_KINDS,...CKAN_KINDS];
 export const activeIncident = item => ['OPEN','ACKNOWLEDGED'].includes(item.status);
 const fail = field => {throw new TypeError('SF93_CONFIG_INVALID: '+field);};
 function fields(value, names, label) {
@@ -53,10 +54,16 @@ export function compileConfig(input) {
   if (!Array.isArray(c.merchants) || c.merchants.length<1 || c.merchants.length>8) fail('1..8 merchants required');
   const ids = new Set();
   for (const value of c.merchants) {
-    const m = fields(value,['id','label','seller','ops','delivery','object'],'merchant');
+    const m = fields(value,['id','label','seller','ops','delivery','object','ckan'],'merchant');
     const id = text(m.id,64,'merchant.id',idPattern);
     if (ids.has(id) || ['__proto__','constructor','prototype'].includes(id)) fail('duplicate or reserved merchant.id');
     ids.add(id);
+    if (m.ckan !== undefined) {
+      if (m.object !== undefined || m.seller !== undefined || m.ops !== undefined || m.delivery !== undefined)
+        fail('ckan source cannot also select another source');
+      result.merchants.push({id,label:text(m.label ?? id,120,'merchant.label'),ckan:normalizeCkanSource(m.ckan)});
+      continue;
+    }
     if (m.object !== undefined) {
       if (m.seller !== undefined || m.ops !== undefined || m.delivery !== undefined) fail('object source cannot also select seller endpoints');
       result.merchants.push({id,label:text(m.label ?? id,120,'merchant.label'),object:normalizeObjectSource(m.object)});
@@ -104,7 +111,9 @@ export function compileConfig(input) {
   return result;
 }
 export const configHash = config => hash(JSON.stringify(config));
-export const merchantBinding = (config, merchant) => merchant.object
+export const merchantBinding = (config, merchant) => merchant.ckan
+  ? hash(JSON.stringify({id:merchant.id,ckan:merchant.ckan,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))
+  : merchant.object
   ? hash(JSON.stringify({id:merchant.id,object:merchant.object,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))
   : hash(JSON.stringify({id:merchant.id,
   seller:merchant.seller,ops:merchant.ops,delivery:merchant.delivery,
