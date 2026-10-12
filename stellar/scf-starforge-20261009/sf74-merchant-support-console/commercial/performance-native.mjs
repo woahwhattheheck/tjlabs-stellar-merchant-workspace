@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. One complete original Pricing performance → revised Commercial quotation → recipient operation.
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {readFile,mkdir} from 'node:fs/promises';
 import {join,resolve,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID,createHash} from 'node:crypto';
@@ -10,7 +10,7 @@ import {openWorkspace} from '../../sf97-merchant-revenue-ops/workspace/model.mjs
 import {openTariffWorkspace} from '../../sf97-merchant-revenue-ops/tariffs/workspace.mjs';
 import {openPerformanceWorkspace} from '../../sf97-merchant-revenue-ops/performance/workspace.mjs';
 import {runTariffCommercialReceiving} from './tariff-receiving-native.mjs';
-import {openCaseStore} from '../case-store.mjs';
+import {openCaseStore,retainCaseArtifact} from '../case-store.mjs';
 import {openCaseCommercial,commercialWorkspaceId} from '../case-commercial.mjs';
 import {commercialCli} from '../commercial-cli.mjs';
 import {commercialPerformanceCli} from './performance-cli.mjs';
@@ -33,8 +33,7 @@ async function readJSON(path){return JSON.parse(await readFile(path,'utf8'));}
 async function optional(path){try{return await readJSON(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function retain(path,value){
   const body=Buffer.isBuffer(value)?value:Buffer.from(json(value));
-  try{await writeFile(path,body,{flag:'wx',mode:0o600});}
-  catch(error){if(error.code!=='EEXIST')throw error;assert.deepEqual(await readFile(path),body,'Keep original operation bytes: '+path);}
+  await retainCaseArtifact(path,body);
   return value;
 }
 async function keep(path,create){return await optional(path)??retain(path,await create());}
@@ -69,6 +68,20 @@ export async function runPerformanceCommercial({nativeRun,output,customerRun,pyt
   }));
   assert.equal(operation.schema,SCHEMA);assert.equal(operation.caseId,id);
   assert.equal(operation.nativeOperationSha256,hash(await readFile(join(nativeRun,'operation.json'))));
+  assert.equal(operation.nativeRun,nativeRun);assert.equal(operation.customerRun,customerRun);
+  const completed=await optional(join(output,'flow-result.json'));
+  if(completed){
+    assert.equal(completed.schema,'stellar-forge.merchant-performance-customer-result.v1');
+    assert.equal(completed.state,'COMPLETE');assert.equal(completed.operationDirectory,output);
+    assert.equal(completed.originalNative,nativeRun);assert.equal(completed.originalCustomer,customerRun);
+    assert.equal(completed.originalCaseId,id);assert.equal(completed.recorded.performanceId,operation.performanceRequestId);
+    assert.equal(completed.quotes.measured.id,operation.measuredQuoteId);
+    assert.equal(completed.quotes.revisedNativeRate.id,operation.revisedQuoteRequestId);
+    assert.equal(completed.nativeProposal.pricingRequestId,operation.proposalPricingRequestId);
+    assert.equal(completed.pricingInterfaces.state,'COMPLETE');
+    assert.equal(completed.pricingInterfaces.sourceSha256,completed.recorded.sourceSha256);
+    return completed;
+  }
   const requests=join(output,'requests'),downloads=join(output,'downloads');
   await privateDirectory(requests);await privateDirectory(downloads);
   const request=(name,create)=>keep(join(requests,name+'.json'),create);
@@ -271,8 +284,7 @@ export async function runPerformanceCommercial({nativeRun,output,customerRun,pyt
     };
     result.pricingInterfaces=await runPerformanceInterfaces({settings,nativeRun,output:join(output,'pricing-interfaces'),
       performanceId:saved.performanceId,envelope,saveInput,proposalSave,proposalCommit});
-    await keep(join(output,'flow-result.json'),async()=>result);
-    return result;
+    return await keep(join(output,'flow-result.json'),async()=>result);
   }finally{await Promise.allSettled([mcp?.close(),reads?.close(),recipientSupport?.close(),support?.close(),tariffController.close()]);}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
