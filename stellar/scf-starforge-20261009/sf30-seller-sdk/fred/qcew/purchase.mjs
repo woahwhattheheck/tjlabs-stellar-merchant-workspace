@@ -259,39 +259,41 @@ export function validateQcewCustomerState(value, merchant) {
   }
   return value;
 }
+async function retainedCustomerState(directory, merchant) {
+  const root = join(resolve(directory), 'customer-requests');
+  const names = await readdir(root).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+  const requests = [];
+  for (const name of names.sort()) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(name)) continue;
+    const purchase = await optionalJson(join(root, name, 'prepared.json'));
+    const receiving = await originalReceivingRequest(directory, name);
+    if (!purchase) {
+      need(receiving === null, 'A retained receiving selection lost its original prepared request.');
+      continue;
+    }
+    need(purchase.intentId === name, 'A retained original county request changed.');
+    requests.push({ purchase, receiving });
+  }
+  return validateQcewCustomerState({ schema: QCEW_CUSTOMER_STATE,
+    publicationId: merchant.plan.publicationId, requests }, merchant);
+}
 export async function exportQcewCustomerState(directory, merchant = null) {
   merchant ??= await readQcewMerchant(directory);
-  return withPrivateLock(resolve(directory), CUSTOMER_LOCK, async () => {
-    const root = join(resolve(directory), 'customer-requests');
-    const names = await readdir(root).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
-    const requests = [];
-    for (const name of names.sort()) {
-      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(name)) continue;
-      const purchase = await optionalJson(join(root, name, 'prepared.json'));
-      const receiving = await originalReceivingRequest(directory, name);
-      if (!purchase) {
-        need(receiving === null, 'A retained receiving selection lost its original prepared request.');
-        continue;
-      }
-      need(purchase.intentId === name, 'A retained original county request changed.');
-      requests.push({ purchase, receiving });
-    }
-    return validateQcewCustomerState({ schema: QCEW_CUSTOMER_STATE,
-      publicationId: merchant.plan.publicationId, requests }, merchant);
-  });
+  return withPrivateLock(resolve(directory), CUSTOMER_LOCK, () => retainedCustomerState(directory, merchant));
 }
 export async function receiveQcewCustomerState(directory, value, merchant = null) {
   merchant ??= await readQcewMerchant(directory);
   validateQcewCustomerState(value, merchant);
   return withPrivateLock(resolve(directory), CUSTOMER_LOCK, async () => {
-    // Check every retained record before writing any member of this transfer.
-    for (const record of value.requests) {
-      const root = join(resolve(directory), 'customer-requests', record.purchase.intentId);
-      for (const [name, incoming] of [['prepared.json', record.purchase], ['receiving-request.json', record.receiving]]) {
-        const current = await optionalJson(join(root, name));
-        need(current === null || incoming !== null && jsonBytes(current).equals(jsonBytes(incoming)),
-          'This receiving project retains another original customer request.', 'QCEW_PURCHASE_CONFLICT', 409);
-      }
+    // A partial receive may complete the same inventory; it cannot add another saved intent.
+    const current = await retainedCustomerState(directory, merchant);
+    const incoming = new Map(value.requests.map(record => [record.purchase.intentId, record]));
+    for (const retained of current.requests) {
+      const selected = incoming.get(retained.purchase.intentId);
+      need(selected && jsonBytes(retained.purchase).equals(jsonBytes(selected.purchase)) &&
+        (retained.receiving === null || selected.receiving !== null &&
+          jsonBytes(retained.receiving).equals(jsonBytes(selected.receiving))),
+        'This receiving project retains another original customer request.', 'QCEW_PURCHASE_CONFLICT', 409);
     }
     for (const record of value.requests) {
       const root = await privateDirectory(join(resolve(directory), 'customer-requests', record.purchase.intentId));
