@@ -1,0 +1,36 @@
+{
+  "sha": "018f1c473e7470e0f5903010a3ac33a7e3bf2b89",
+  "node_id": "C_kwDOVFb2ztoAKDAxOGYxYzQ3M2U3NDcwZTBmNTkwMzAxMGEzYWMzM2E3ZTNiZjJiODk",
+  "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/commits/018f1c473e7470e0f5903010a3ac33a7e3bf2b89",
+  "html_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/commit/018f1c473e7470e0f5903010a3ac33a7e3bf2b89",
+  "author": {
+    "name": "woahwhattheheck",
+    "email": "brycembusiness2@gmail.com",
+    "date": "2026-10-12T15:10:20Z"
+  },
+  "committer": {
+    "name": "woahwhattheheck",
+    "email": "brycembusiness2@gmail.com",
+    "date": "2026-10-12T15:10:20Z"
+  },
+  "tree": {
+    "sha": "3f2b9e10a850e0c944839cf7fd5acd1a4dbe356b",
+    "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/trees/3f2b9e10a850e0c944839cf7fd5acd1a4dbe356b"
+  },
+  "message": "Retain complete original ODK installed source delta for managed receiving",
+  "parents": [
+    {
+      "sha": "c11fb82ebd1d5311d9f4b0c7319969644de00ab8",
+      "url": "https://api.github.com/repos/woahwhattheheck/tjlabs-stellar-merchant-workspace/git/commits/c11fb82ebd1d5311d9f4b0c7319969644de00ab8",
+      "html_url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/commit/c11fb82ebd1d5311d9f4b0c7319969644de00ab8"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  },
+  "commitText": "tree 3f2b9e10a850e0c944839cf7fd5acd1a4dbe356b\nparent c11fb82ebd1d5311d9f4b0c7319969644de00ab8\nauthor woahwhattheheck <brycembusiness2@gmail.com> 1791817820 -0400\ncommitter woahwhattheheck <brycembusiness2@gmail.com> 1791817820 -0400\n\nRetain complete original ODK installed source delta for managed receiving"
+}
