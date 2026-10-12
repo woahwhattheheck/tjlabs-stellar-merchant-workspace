@@ -1,0 +1,212 @@
+{
+  "schema": "stellar-forge.a2a-grant-catalogue-receiving.v1",
+  "operation_id": "SCF-A2A-CUSTOMER-COMMISSIONING-0C7A-20261012",
+  "receiving_date": "2026-10-12",
+  "runtime": "Actual V8 evaluation of the complete original/current pure mapper and helper, with their module linkage supplied explicitly; not Node module loading or native application execution.",
+  "canonical_shape_receiving": "The retained original reader journey intro and current A2A H2 were placed under the mapper's original canonical JOURNEY heading. The target is the full retained companion. This authored receiving input is not a newly acquired or published canonical manuscript.",
+  "inputs": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "commit": "6ccf9f01147418338a0fee51b38b160fdcbacc5f",
+      "git_blob": "5c1229c5011ffbd5b63653a79fcb694953b26afe",
+      "bytes": 83594,
+      "sha256": "a9e92a9793befbcfc590fb8340e2ce0d00539325bc410afa6ac8bf41187bfb2f"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "commit": "6ccf9f01147418338a0fee51b38b160fdcbacc5f",
+      "git_blob": "9f71be416f613e6527b7ce87223700a4c37cf2a1",
+      "bytes": 319707,
+      "sha256": "b7e0e5a9d3d0004ece5ca7e321deddaca71b30c11933511e5ee9ffb994f0eede"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-customers.mjs",
+      "ref": "355e98f3ea45ccc322d2a6a8651e522f14ab3bec",
+      "git_blob": "3907386b549ed7b8802581057d0a264356c18c39",
+      "bytes": 36288,
+      "sha256": "7fe76eff137cc4abe8e1a2b0074aeab2888c7ca1a730da62a0e8607371e09393"
+    },
+    {
+      "path": "stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md",
+      "bytes": 18446,
+      "sha256": "9ab9d30a24ee5837bc41d37ae0aa6c4c796bab9e02b14932d3db59170e343e2f",
+      "git_blob": "d96a45554a926a23409bbe4b6902b2559749c130",
+      "commit": "33dfb64798f5316a586c165d4d7591de972ca4e2"
+    },
+    {
+      "path": "stellar-forge/developer-site/a2a-customer-commissioning.json",
+      "bytes": 58559,
+      "sha256": "d41c2de3b6624bff4b73521baae77b217879413504b7b4514343e96318e34fd7",
+      "git_blob": "ef8e382b15d32890fd1d37810344ba4ba92c3964",
+      "commit": "33dfb64798f5316a586c165d4d7591de972ca4e2"
+    }
+  ],
+  "selected_source": [
+    {
+      "path": "stellar-forge/developer-site/grant-a2a.mjs",
+      "bytes": 20708,
+      "sha256": "e6678d7cfb03d29e618a46eb7f7e31f1d1a0878ccb99920cfe96b2d6481935c2"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-customers.mjs",
+      "bytes": 36391,
+      "sha256": "e8fe11e8d2da3c44c7ab1aa76fa58d3f83096716d8f29186bbeac169d83e7ce9"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-compose.mjs",
+      "bytes": 24285,
+      "sha256": "beac22963179a281a36e9f7201e7d1ef94e3d7450f9d28b6061a5cf3355b7a59"
+    },
+    {
+      "path": "stellar-forge/developer-site/GRANT_A2A_CATALOGUE.md",
+      "bytes": 6314,
+      "sha256": "fddddb76fed9dd1ea6fa1be0057ca624cf3bdfd0124c434617069fb509a29564"
+    },
+    {
+      "path": "stellar-forge/developer-site/A2A_APPLICATION_INSERTION.md",
+      "bytes": 2808,
+      "sha256": "a4ca03bd8c8b3c28b2384120be41c5186ca181e23d0de990a4c4ab146aa46f42"
+    }
+  ],
+  "checks": [
+    {
+      "name": "New mapper preserves every non-A2A field of current mapper output",
+      "passed": true
+    },
+    {
+      "name": "Preserve request",
+      "passed": true
+    },
+    {
+      "name": "Preserve baseline",
+      "passed": true
+    },
+    {
+      "name": "Preserve milestones",
+      "passed": true
+    },
+    {
+      "name": "Preserve capacity",
+      "passed": true
+    },
+    {
+      "name": "Preserve cash",
+      "passed": true
+    },
+    {
+      "name": "Preserve submission",
+      "passed": true
+    },
+    {
+      "name": "Preserve submission_workspace",
+      "passed": true
+    },
+    {
+      "name": "Preserve submission_review_round",
+      "passed": true
+    },
+    {
+      "name": "Both complete proposed work files have exact URL/Git/SHA/byte witnesses",
+      "passed": true
+    },
+    {
+      "name": "Same-input replay is stable",
+      "passed": true
+    },
+    {
+      "name": "Original canonical journey receiver preserves other target chapters",
+      "passed": true
+    },
+    {
+      "name": "Original H2 receiver includes complete new H3",
+      "passed": true
+    },
+    {
+      "name": "Original A2A engineering and funded-work paragraphs remain",
+      "passed": true
+    },
+    {
+      "name": "Original public projection preserves non-A2A fields",
+      "passed": true
+    },
+    {
+      "name": "Public projection removes private Slack URLs recursively",
+      "passed": true
+    },
+    {
+      "name": "Original public-index receiving restores both exact document witnesses",
+      "passed": true
+    },
+    {
+      "name": "Public-index receiving restores only exact original observation URL",
+      "passed": true
+    },
+    {
+      "name": "Conflicting immutable tuple stays rejected when public URL is absent",
+      "passed": true
+    },
+    {
+      "name": "Changed native observation cannot be restored as its original",
+      "passed": true
+    },
+    {
+      "name": "Changed selected URL removes old measured witness",
+      "passed": true
+    },
+    {
+      "name": "Conflicting two chapter editions remain rejected",
+      "passed": true
+    },
+    {
+      "name": "Later owner observation is preserved",
+      "passed": true
+    },
+    {
+      "name": "SDK tree has no fabricated file digest",
+      "passed": true
+    },
+    {
+      "name": "Thirty unique jobs; fifteen per buyer; both buyers use both merchants",
+      "passed": true
+    },
+    {
+      "name": "Three jobs on each of ten actual-calendar placeholders",
+      "passed": true
+    },
+    {
+      "name": "Actual customer outcomes and runtime procedure selections remain unclaimed",
+      "passed": true
+    },
+    {
+      "name": "Complete machine plan preserves exact grant/baseline/milestone input",
+      "passed": true
+    }
+  ],
+  "results": {
+    "checks": 28,
+    "passed": 28,
+    "input_sources": 92,
+    "output_sources": 101,
+    "non_a2a_sources": 85,
+    "selected_a2a_source_ids": [
+      "a2a-analysis-installed-product",
+      "a2a-analysis-operating",
+      "a2a-analysis-customer-receiving",
+      "a2a-analysis-native-service",
+      "a2a-merchant-operator",
+      "a2a-merchant-commissioning",
+      "a2a-analysis-command",
+      "a2a-analysis-python-owner",
+      "a2a-merchant-workspace",
+      "a2a-original-sdk",
+      "a2a-customer-commissioning-calendar",
+      "a2a-customer-commissioning-job-register"
+    ],
+    "original_observation_ids": [
+      "a2a-source-transfer-89178"
+    ],
+    "prospective_jobs": 30,
+    "actual_customer_purchases_recorded": 0
+  },
+  "publication_scope": "Complete source integration and prospective appendix only. The canonical manuscript and generated reader are published by their existing serial owner."
+}

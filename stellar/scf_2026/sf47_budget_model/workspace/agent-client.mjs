@@ -739,6 +739,13 @@ export class GrantWorkspaceClient {
     sha(body.expectedPreviewSha256); requestId(body.requestId);
     return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
   }
+  statementInspect(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    exact(inputs, ['sourceFormat', 'source', 'statementOptions'], ['sourceFormat', 'source']);
+    need(inputs.sourceFormat === 'OFX' || inputs.sourceFormat === 'MT940', 'GRANT_INVALID_INPUT',
+      'Choose an original OFX / QFX or MT940 source format.'); object(inputs.source, 'Original bank source');
+    return this.#request('/api/operations/' + caseId + '/statement-inspect', {body:{expectedVersion, inputs}, mutation:false});
+  }
   statementPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Statement inputs');
     return this.#request('/api/operations/' + caseId + '/statement-preview', {body:{expectedVersion, inputs}, mutation:false});

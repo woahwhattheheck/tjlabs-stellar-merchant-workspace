@@ -158,6 +158,24 @@ The caller retains a full version before a transition and validates the resultin
 For the original equipped reviewer Page, continue with the same edited application. Receive the next actual saved revision of its selected native plan, review the original package and answer changes, resolve the affected targets, and retain the full export before reopening that file and the saved browser draft. Restore the preceding version through **Saved versions** to continue either editorial state. Use the saved original plan revisions and their native calculations as the inputs to this journey.
 
 
+## Prepare customer operating work from the selected packages
+
+In **Planning**, use **Customer operating procedure** after choosing the
+original source revision and work packages. Enter the customer, operating owner,
+useful result and receiving instructions. An optional complete Command finder
+catalog lets each package retain an actual command or toolkit registration with
+its original source and runtime.
+
+**Create operating plan from selected work packages** downloads the complete
+editable JSON and keeps a prepared copy in this planning review. Save the
+submission to retain it. Import that JSON into **Command finder → Operating
+plans** to order detailed work, set actual due dates, enter exact command
+arguments and save recorded results as successive operating revisions.
+
+The [complete procedure guide](GRANT_OPERATING_PLANS.md) includes the same
+installed CLI and source-bound handover. It uses the native work-package scope,
+costs and relative windows already selected here.
+
 ## Review the required content
 
 **Required content** connects the nine answers to the issuer's current published criteria. Record an editorial status and a precise note locating the supporting content. The status is the operator's review decision.

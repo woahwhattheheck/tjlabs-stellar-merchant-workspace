@@ -350,6 +350,16 @@ lists their original kinds. File transfer streams bytes to disk through the
 maintained writer, retains its lease and checkpoints, and publishes a completed
 receiving manifest after all selected files have arrived.
 
+A native draft review is retained as one complete original response for the
+selected workspace, product, draft and saved review contents. Planning and
+chunked download therefore use the same bytes, including its original export
+timestamp. Keep the receiving plan and its SHA to reopen that exact review
+after closing the host or editing the draft. An edited candidate, configuration
+or selection produces another retained review. Select a new plan explicitly
+when receiving that later edition; preserve the older receiving directory for
+its original files. Each generated review has the host's existing 256,000,000-byte
+snapshot limit.
+
 ## Reopen the received source on another host
 
 Restore a completed source-packet member through the original importer:
@@ -431,7 +441,10 @@ WebDAV product. This standalone adoption carries the complete 7E4E client from
 merged at 7ba091229f268777abf265fcb7dccd8c581ee4d7, including its original native
 intent and profile binding, retained file transport and same-destination restore.
 The standalone package manifest identifies the selected product revision and
-its exact installed files.
+its exact installed files. The retained native review download and exact-SHA
+reopen behavior adopts [public PR2575](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2575),
+merge 5b0b9955ff6b3afcc700ac61a0c3b7be33335ae4, which completed the original
+CMS source, publication, buyer-file receiving and full portable restore.
 
 The full [native workspace guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/webdav/README.md),
 [managed Applications guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/webdav/APPLICATIONS.md),

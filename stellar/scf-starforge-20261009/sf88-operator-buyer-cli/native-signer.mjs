@@ -4,7 +4,8 @@ import { readFile, lstat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, isAbsolute, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createNativeBuyerSigner, readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/adapter.mjs';
+import { createNativeBuyerSigner } from '../sf103-native-buyer-signer/adapter.mjs';
+import { readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/diagnostics.mjs';
 import { NETWORKS } from '../sf86-rpc-transfer-reconcile/terms.mjs';
 
 const NETWORK = 'stellar:testnet';

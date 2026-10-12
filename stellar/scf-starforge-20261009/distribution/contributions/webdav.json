@@ -50,6 +50,7 @@
     "stellar-forge/mcp-merchant-operator/WEBDAV_CLIENT.md",
     "stellar-forge/mcp-merchant-operator/webdav-workspace-connection.example.json",
     "stellar-forge/mcp-merchant-operator/examples/webdav-reviewed-edition.mjs",
-    "stellar-forge/mcp-merchant-operator/examples/webdav-reviewed-edition.example.json"
+    "stellar-forge/mcp-merchant-operator/examples/webdav-reviewed-edition.example.json",
+    "stellar-forge/mcp-merchant-operator/webdav-publisher-downloads.mjs"
   ]
 }

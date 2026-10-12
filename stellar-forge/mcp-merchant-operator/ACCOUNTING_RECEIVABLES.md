@@ -2,12 +2,14 @@
 
 This interface operates the merchant's existing invoices, customer receipts, allocations and Stellar payment requests through the same accounting owner used by the other merchant tools. A quotation can become an editable draft, a reviewed draft can become an issued invoice, and an issued balance can become a printable wallet request. A returned transaction is matched to the original request before the native accounting engine records its receipt and allocation.
 
+[Customer remittance receiving](ACCOUNTING_REMITTANCES.md) adds complete CSV intake, exact native review, atomic allocation, retained source delivery and stable-request recovery to the same accounting owner.
+
 The interfaces are:
 
 - Installed command: `starforge merchant-accounting-receivables`.
 - Typed JavaScript client: `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables`.
 - Durable operation and download helpers: `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables/operations`.
-- MCP tools: the 46 names beginning with `merchant_accounting_receivables_`, plus the existing accounting owner, customer and file tools.
+- MCP tools: the declared names beginning with `merchant_accounting_receivables_`, plus the existing accounting owner, customer and file tools.
 
 The selected distribution's package name is `@tokenjunkielabs/starforge-merchant`. Check the installed package manifest if consuming a differently named distribution; the export suffixes above remain the integration points. From a source checkout, the equivalent command is:
 

@@ -19,7 +19,9 @@ dependency cache, complete database and files through independent receiving.
 | A published Baserow candidate | **starforge baserow-rails customer prepare** | Original selected rows, page chain, source identities and all applicable attachment bytes |
 | A customer packet | **starforge baserow-rails receive** | Ruby delivery that reopens and copies without its original publisher |
 | An existing finalized SF100 room | **starforge baserow-rails dataset** | The original direct Ruby dataset receiver and exact provider/query identity |
-| A received dataset and an existing Rails application | [Rails application setup](../../stellar/scf-starforge-20261009/sf30-seller-sdk/developer/ruby-client/examples/rails_dataset/operator/README.md) | Authenticated source selection, complete previews, background imports, history and file receiving |
+| A received dataset and an existing Rails application | [Rails application setup](../../stellar/scf-starforge-20261009/sf30-seller-sdk/developer/ruby-client/examples/rails_dataset/operator/README.md) | Complete source profiles and rows, application field mapping, full previews, background imports, history and file receiving |
+| A source whose application mapping needs to be chosen or corrected | **Rails operator → Read source and configure fields**, or **starforge baserow-rails dataset-source** | Retained original source, allowed target fields and actual unique keys, a revised mapping review and the original transactional import |
+| An installed application's current source and mapping | **starforge baserow-rails dataset-mapping-lifecycle** | Real authenticated forms and full CLI operations, complete working records and a copied application that reopens independently |
 | An original native delivery, published Baserow source or existing customer output | **Applications → Ruby customer commissioning**, or **starforge ruby-customer-workspace serve** | Reviewed original source, retained customer/registration UUIDs, complete Rails commissioning, result receiving and same-directory continuation |
 | A selected host Ruby executable | **Applications → Ruby environments**, or **starforge ruby-runtime serve** | Private Bundler installation, exact lock, full logs and resumable customer operations |
 | A commissioned application directory | **Applications → Received Rails application**, or **starforge ruby-runtime launch** | The original Rails operator over its own managed database, source, previews and history |
@@ -73,6 +75,12 @@ encoding/null decisions, exact published run and candidate, every selected
 native dataset page, complete JSONL/CSV/review files and the original selected
 attachments. File references retain their row, provider field, file index and
 customer column alias.
+
+The operator can receive and profile every original source row before a mapping
+is chosen. The source browser keeps exact values, missing and empty values, full
+CSV/JSONL and a complete source handoff. Its mapping form lists the application's
+allowed fields and real unique keys; an established stream keeps its original
+key mapping. Saving a mapping creates a new retained review of the same source.
 
 The Rails importer binds the original logical source/query and configured target
 scope to its stream. It compares every row, retains source values and applied

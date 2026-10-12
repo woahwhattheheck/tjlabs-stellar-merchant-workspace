@@ -152,6 +152,9 @@ def source_parent(source,relative):
   s=parent.lstat()
   if not stat.S_ISDIR(s.st_mode) or stat.S_ISLNK(s.st_mode) or s.st_uid!=os.getuid() or parent.resolve()!=parent:raise RuntimeError("ORIGINAL_SOURCE_PARENT_CHANGED")
  return parent/parts[-1]
+SIGNER_SOURCE_REPAIR={"schema":"stellar-forge.openaq-buyer-source-repair.v1","repository":"woahwhattheheck/tjlabs-stellar-merchant-workspace","baseCommit":"c7ac4399e3bb419fafd42395841bace7d089036a","reason":"Import the original native signing diagnostic validator from its actual diagnostics module; preserve the original signer adapter and all request/payment behavior.","before":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs","gitBlob":"053825b1862f3a5b3fc42aaa248f6b8aa6401254","bytes":13420,"sha256":"66d744c89f3e23157ba895f228729d6b294893260202cfdfe830cb7a8215461c"},"after":{"path":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs","gitBlob":"c12720ce4f432e24f4972523021d71fa9d85e2ce","bytes":13483,"sha256":"b30f43740c9d0a7f99439ac8e6876aea6284d15efad71cf5168bed9d8c705cc0"}}
+def source_body_matches(raw,item):
+ return len(raw)==item["bytes"] and digest(raw)==item["sha256"] and hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()==item["gitBlob"]
 def verify_source_file(path,item):
  try:
   before=path.lstat()
@@ -159,7 +162,8 @@ def verify_source_file(path,item):
  if not stat.S_ISREG(before.st_mode) or stat.S_ISLNK(before.st_mode) or before.st_uid!=os.getuid() or path.resolve()!=path:raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
  raw=path.read_bytes();after=path.lstat()
  if (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns)!=(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns):raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
- if len(raw)!=item["bytes"] or digest(raw)!=item["sha256"] or hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()!=item["gitBlob"]:raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
+ if not source_body_matches(raw,item):
+  if item!=SIGNER_SOURCE_REPAIR["before"] or not source_body_matches(raw,SIGNER_SOURCE_REPAIR["after"]):raise RuntimeError("ORIGINAL_SOURCE_FILE_CHANGED:"+str(path))
  return True
 def source_manifest(raw):
  if digest(raw)!=SOURCE_MANIFEST_SHA:raise RuntimeError("ORIGINAL_SOURCE_MANIFEST_CHANGED")
@@ -290,6 +294,32 @@ def receive_assets(source,raw=None):
  exact(source/"SOURCE-ASSETS.json",encoded(selection))
  say({"phase":"ORIGINAL_RUNTIME_ASSETS_READY","files":SOURCE_ASSET_COUNT,"totalSourceFiles":SOURCE_FILE_COUNT+SOURCE_ASSET_COUNT,"sha256":SOURCE_ASSETS_SHA})
 
+def apply_signer_source_repair(source):
+ item=SIGNER_SOURCE_REPAIR["before"];post=SIGNER_SOURCE_REPAIR["after"]
+ target=source_parent(source,item["path"])
+ if not verify_source_file(target,item):raise RuntimeError("ORIGINAL_SIGNER_SOURCE_REQUIRED")
+ info=target.lstat();raw=target.read_bytes()
+ exact(CONTROL/"source-signing-import-repair.json",encoded(SIGNER_SOURCE_REPAIR))
+ if not source_body_matches(raw,post):
+  if not source_body_matches(raw,item):raise RuntimeError("ORIGINAL_SIGNER_SOURCE_PREIMAGE_CHANGED")
+  original=b"import { createNativeBuyerSigner, readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/adapter.mjs';"
+  replacement=b"import { createNativeBuyerSigner } from '../sf103-native-buyer-signer/adapter.mjs';\nimport { readNativeSigningDiagnostic } from '../sf103-native-buyer-signer/diagnostics.mjs';"
+  if raw.count(original)!=1:raise RuntimeError("ORIGINAL_SIGNER_IMPORT_CHANGED")
+  corrected=raw.replace(original,replacement)
+  if not source_body_matches(corrected,post):raise RuntimeError("ORIGINAL_SIGNER_POSTIMAGE_CHANGED")
+  pending=target.with_name(target.name+"."+post["gitBlob"]+".pending")
+  exact(pending,corrected)
+  current=target.lstat()
+  identity=lambda value:(value.st_dev,value.st_ino,value.st_size,value.st_mtime_ns,value.st_ctime_ns)
+  if identity(info)!=identity(current) or target.read_bytes()!=raw:raise RuntimeError("ORIGINAL_SIGNER_SOURCE_MOVED")
+  os.replace(pending,target)
+  parent=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY)
+  try:os.fsync(parent)
+  finally:os.close(parent)
+ if not verify_source_file(target,post):raise RuntimeError("ORIGINAL_SIGNER_CORRECTION_INCOMPLETE")
+ exact(source/"SOURCE-REPAIRS.json",encoded(SIGNER_SOURCE_REPAIR))
+ say({"phase":"ORIGINAL_SIGNER_IMPORT_READY","path":item["path"],"before":item["gitBlob"],"after":post["gitBlob"]})
+
 def main(journey,stream_source=False,assets=None):
  CONTROL.mkdir(mode=0o700,exist_ok=True);owned(CONTROL)
  fd=os.open(CONTROL/"operation.lock",os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
@@ -344,7 +374,10 @@ def main(journey,stream_source=False,assets=None):
     selected_head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=source,text=True,pass_fds=(fd,)).strip()
     if selected_head!=COMMIT:raise RuntimeError("ORIGINAL_SOURCE_COMMIT_CHANGED")
     dirty=subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=source,text=True,pass_fds=(fd,))
-    if dirty:raise RuntimeError("ORIGINAL_TRACKED_SOURCE_CHANGED")
+    if dirty:
+     expected_dirty=" M "+SIGNER_SOURCE_REPAIR["after"]["path"]+"\n"
+     if dirty!=expected_dirty or not source_body_matches(source_parent(source,SIGNER_SOURCE_REPAIR["after"]["path"]).read_bytes(),SIGNER_SOURCE_REPAIR["after"]):raise RuntimeError("ORIGINAL_TRACKED_SOURCE_CHANGED")
+   apply_signer_source_repair(source)
    # The exact original SF88 profile supplies all original buyer SDK versions.
    original=source/"stellar/scf-starforge-20261009/sf88-operator-buyer-cli"
    for name in ("package.json","package-lock.json"):exact(deps/name,(original/name).read_bytes())
@@ -390,7 +423,7 @@ def main(journey,stream_source=False,assets=None):
     archive.write(native/name,name)
    archive.write(source/"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/OPERATING.md","OPERATING.md")
    archive.writestr("SOURCE.json",encoded({"repository":REPOSITORY,"commit":COMMIT,"operator":expected["operation"],
-    "product":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study","journeySha256":expected["journeySha256"]}))
+    "product":"stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study","journeySha256":expected["journeySha256"],"sourceRepair":SIGNER_SOURCE_REPAIR}))
   temporary.chmod(0o600)
   data=temporary.read_bytes()
   if target.exists():
