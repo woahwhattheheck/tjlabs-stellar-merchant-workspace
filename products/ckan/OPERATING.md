@@ -222,7 +222,11 @@ Its CLI and seven refresh tools expose this same workflow.
 For a DCAT-US document project, choose **DCAT catalog migration** and select its
 existing private workspace directory and installed runtime. Set the common port
 and private environment file as needed; **SCF_DCAT_PYTHON** selects the prepared
-Python executable. The ordinary Review, Save, Start and Open actions retain the
+Python executable. The default **original** profile requires Python 3.13; for an
+actual prepared Python 3.12 interpreter, also set
+**SCF_DCAT_RUNTIME_PROFILE=portable-python312** in that same environment. See
+[the portable runtime guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md).
+The ordinary Review, Save, Start and Open actions retain the
 original project, source, runtime and interpreter selection. The authenticated
 startup check opens that same project with Catalogue migration selected. Use
 Stop before opening a separate standalone writer. The

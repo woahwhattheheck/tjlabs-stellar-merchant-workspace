@@ -2,6 +2,7 @@
 import { join, relative, isAbsolute, resolve, dirname, basename, delimiter } from 'node:path';
 import { realpath, lstat, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
+import { dcatRuntimeSelection } from '../../sf30-seller-sdk/ckan/dcat-workspace.mjs';
 import { inspectMerchantRuntime } from '../../sf46-release/runtime-package.mjs';
 import { applicationEnvironment as readApplicationEnvironment } from './application-environment.mjs';
 import { absolute, need, plain, digest, json, canonical, regular, readJSON } from './storage.mjs';
@@ -38,7 +39,7 @@ export function dcatApplication(common) {
       field('workspaceDirectory', 'Catalogue workspace', 'path', true,
         'Select the original private DCAT-US project directory. Source editions, reviews, release selection and rollback history remain in that project.'),
       ...common.map(item => item.name === 'environmentFile' ? { ...item,
-        description: 'Use the existing private environment JSON for SCF_DCAT_PYTHON when the prepared Python executable has a specific path. Values stay on this host.' } : item),
+        description: 'Use the existing private environment JSON for SCF_DCAT_PYTHON and an explicit SCF_DCAT_RUNTIME_PROFILE. Choose original for Python 3.13 or portable-python312 for Python 3.12. Values stay on this host.' } : item),
     ],
   };
 }
@@ -97,7 +98,7 @@ async function verifySource(root, files) {
   }
 }
 async function selectedPythonCommand(environment) {
-  const command = environment.SCF_DCAT_PYTHON || 'python3.13';
+  const { command, runtimeProfile } = dcatRuntimeSelection(environment);
   need(typeof command === 'string' && command && !command.includes('\0'),
     'APPLICATION_DCAT_PYTHON_INVALID');
   const candidates = isAbsolute(command) || command.includes('/') || command.includes('\\')
@@ -108,7 +109,7 @@ async function selectedPythonCommand(environment) {
       const executable = join(await realpath(dirname(candidate)), basename(candidate));
       await access(executable, constants.X_OK);
       const target = await realpath(executable), info = await lstat(target);
-      if (info.isFile()) return { command, executable };
+      if (info.isFile()) return { command, executable, runtimeProfile };
     } catch (error) {
       if (!['ENOENT', 'ENOTDIR', 'EACCES'].includes(error.code)) throw error;
     }
@@ -120,8 +121,9 @@ async function verifyPython(selection, environment) {
   need(plain(selection) && typeof selection.command === 'string' && typeof selection.executable === 'string' &&
     Array.isArray(selection.inputs) && selection.inputs.length > 0, 'APPLICATION_DCAT_PYTHON_SELECTION_INVALID');
   const current = await selectedPythonCommand(environment);
-  need(current.command === selection.command && current.executable === selection.executable,
-    'APPLICATION_DCAT_PYTHON_CHANGED', 'The launched environment selects a different Python executable.');
+  need(current.command === selection.command && current.executable === selection.executable &&
+    current.runtimeProfile === (selection.runtimeProfile ?? 'original'),
+    'APPLICATION_DCAT_PYTHON_CHANGED', 'The launched environment selects a different Python executable or interpreter profile.');
   for (const expected of selection.inputs) {
     need(plain(expected) && expected.exists === true &&
       ['file', 'executable-link'].includes(expected.kind), 'APPLICATION_DCAT_PYTHON_SELECTION_INVALID');
@@ -140,7 +142,8 @@ async function verifyPython(selection, environment) {
     }
   }
   await access(selection.executable, constants.X_OK);
-  return { command: selection.command, executable: selection.executable };
+  return { command: selection.command, executable: selection.executable,
+    runtimeProfile: current.runtimeProfile };
 }
 
 export async function prepareDcatApplication(settings, { inputPath, selectedExecutable, applicationEnvironment, runtimeDirectory } = {}) {
@@ -153,7 +156,8 @@ export async function prepareDcatApplication(settings, { inputPath, selectedExec
   const { environment } = await applicationEnvironment(settings.environmentFile);
   const pythonCommand = await selectedPythonCommand(environment);
   const pythonSelected = await selectedExecutable(pythonCommand.executable);
-  const python = { command: pythonCommand.command, executable: pythonSelected.executable, inputs: pythonSelected.inputs };
+  const python = { command: pythonCommand.command, executable: pythonSelected.executable,
+    runtimeProfile: pythonCommand.runtimeProfile, inputs: pythonSelected.inputs };
   const manifestFile = join(runtime.directory, 'package', 'manifest.json');
   const manifest = await readJSON(manifestFile);
   need(Array.isArray(manifest.files), 'APPLICATION_DCAT_SOURCE_MANIFEST_REQUIRED');
@@ -228,6 +232,9 @@ export async function dcatStartup(request, text, context = {}) {
     startup.catalogOrigin === verified.project.catalogOrigin &&
     startup.sourceKind === verified.project.sourceKind,
   'APPLICATION_DCAT_STARTUP_PROJECT_CHANGED');
+  const execution = { command: verified.python.command, runtimeProfile: verified.python.runtimeProfile };
+  need(plain(startup.dcatRuntime) && equal(startup.dcatRuntime, execution), 'APPLICATION_DCAT_STARTUP_PYTHON_CHANGED',
+    'The original workspace started with a different interpreter selection.');
   let url;
   try { url = new URL(startup.url); } catch { need(false, 'APPLICATION_DCAT_STARTUP_URL_INVALID'); }
   need(url.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) &&
@@ -251,6 +258,8 @@ export async function dcatStartup(request, text, context = {}) {
     actual.project.catalogOrigin === verified.project.catalogOrigin &&
     actual.project.sourceKind === verified.project.sourceKind,
   'APPLICATION_DCAT_STARTUP_IDENTITY_CHANGED');
+  need(plain(actual.dcatRuntime) && equal(actual.dcatRuntime, execution), 'APPLICATION_DCAT_STARTUP_PYTHON_CHANGED',
+    'The authenticated workspace reports a different interpreter selection.');
   return {
     url: url.href,
     original: { schema: STARTUP, pid: actual.pid, instanceId: actual.instanceId,

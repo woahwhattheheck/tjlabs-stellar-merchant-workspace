@@ -26,7 +26,8 @@ const usage = [
   '  dcat archive --workspace DIR --out FILE.ckanw',
   '  dcat inspect-archive --file FILE.ckanw [--sha256 HASH]',
   '  dcat receive --file FILE.ckanw --sha256 HASH --workspace NEW_DIR',
-  'Set SCF_DCAT_PYTHON to the absolute Python 3.13 executable prepared by DCAT_ENGINE.md.',
+  'Set SCF_DCAT_PYTHON to the prepared interpreter; the default profile original requires Python 3.13.',
+  'For prepared Python 3.12, explicitly set SCF_DCAT_RUNTIME_PROFILE=portable-python312; see PORTABLE_RUNTIME.md.',
   'Catalog originals, corrected candidates, full reviews and release history remain in the same saved project.',
 ].join('\n');
 const output = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
@@ -78,7 +79,8 @@ export async function main(supplied = process.argv.slice(2)) {
       const state = project.status();
       process.stdout.write(JSON.stringify({ schema: 'stellar-forge.dcat-workbench-startup.v1', pid: process.pid, directory: project.directory,
         projectCreatedAt: state.createdAt, catalogOrigin: state.catalogOrigin, sourceKind: state.sourceKind,
-        instanceId: web.instanceId, origin: web.origin, url: web.url }) + '\n');
+        instanceId: web.instanceId, origin: web.origin, url: web.url,
+        dcatRuntime: project.dcatRuntime() }) + '\n');
       served = true; let ending = false;
       const shutdown = async () => {
         if (ending) return; ending = true;

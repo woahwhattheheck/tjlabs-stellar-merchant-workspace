@@ -81,6 +81,7 @@ review_catalog(
     identity_mappings=None,
     normalize_v3=False,
     original_root=None,
+    runtime_profile="original",
 )
 ~~~
 
@@ -151,4 +152,4 @@ The engine never edits the retained source bytes. It returns complete derived re
 
 ## Explicit Python 3.12 execution
 
-The default `original` profile retains the upstream Python 3.13 requirement. The host may explicitly select `--runtime-profile portable-python312`, or pass `runtime_profile="portable-python312"` to the Python API, for actual Python 3.12. This profile retains every original source, dependency, schema, format and conservation check, and records its own interpreter declaration in native review metadata. See the complete source packet's `PORTABLE_RUNTIME.md` and exact lock-derived `portable-runtime-requirements.txt` for installation and the complete original catalog operation.
+The default `original` profile retains the upstream Python 3.13 requirement. The host may explicitly select `--runtime-profile portable-python312`, or pass `runtime_profile="portable-python312"` to the Python API, for actual Python 3.12. This profile retains every original source, dependency, schema, format and conservation check, and records its own interpreter declaration in native review metadata. The Node application selects this flag from `SCF_DCAT_RUNTIME_PROFILE=portable-python312` in its original host environment. Set `SCF_DCAT_PYTHON` to the prepared interpreter as well. See the adjacent [PORTABLE_RUNTIME.md](PORTABLE_RUNTIME.md) and exact lock-derived `portable-runtime-requirements.txt` for complete installation instructions and the retained original catalog operation.

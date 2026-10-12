@@ -61,6 +61,8 @@ export function validateDcatState(value) {
     if (review.comparisonId) collectionItem(value.catalogs, review.comparisonId);
     if (review.candidateId) collectionItem(value.catalogs, review.candidateId);
     need(review.normalizeV3 === undefined || typeof review.normalizeV3 === 'boolean', 'DCAT_PROJECT_INVALID');
+    need(review.runtimeProfile === undefined || ['original', 'portable-python312'].includes(review.runtimeProfile),
+      'DCAT_PROJECT_INVALID');
     if (['READY', 'NEEDS_CORRECTION'].includes(review.status)) {
       need(HASH.test(review.reportSha256 ?? '') && HASH.test(review.reviewSha256 ?? '') &&
         Number.isSafeInteger(review.reportBytes) && review.reportBytes > 0 && review.reportBytes <= MAX_REPORT,
@@ -96,14 +98,23 @@ async function externalCatalog(file) {
     return raw;
   } finally { await handle.close(); }
 }
+/** The host selects an explicit interpreter contract; catalogue JSON cannot change it. */
+export function dcatRuntimeSelection(environment = process.env) {
+  const runtimeProfile = environment.SCF_DCAT_RUNTIME_PROFILE ?? 'original';
+  need(['original', 'portable-python312'].includes(runtimeProfile),
+    'DCAT_RUNTIME_PROFILE_INVALID', 'Set SCF_DCAT_RUNTIME_PROFILE to original or portable-python312.');
+  const command = environment.SCF_DCAT_PYTHON ||
+    (runtimeProfile === 'portable-python312' ? 'python3.12' : 'python3.13');
+  need(typeof command === 'string' && command.length <= 4096 &&
+    !command.includes('\0'), 'DCAT_RUNTIME_INVALID');
+  return { command, runtimeProfile };
+}
 function runEngine(input, environment, signal, progress) {
-  const executable = environment.SCF_DCAT_PYTHON || 'python3.13';
-  need(typeof executable === 'string' && executable.length <= 4096 &&
-    !executable.includes('\0'), 'DCAT_RUNTIME_INVALID');
+  const runtime = dcatRuntimeSelection(environment), executable = runtime.command;
   return new Promise((resolve, reject) => {
     let settled = false, stdoutBytes = 0, stderrBytes = 0;
     const stdout = [], stderr = [];
-    const process = spawn(executable, ['-B', engine], {
+    const process = spawn(executable, ['-B', engine, '--runtime-profile', runtime.runtimeProfile], {
       env: { ...environment, PYTHONDONTWRITEBYTECODE: '1', PYTHONHASHSEED: '0' },
       stdio: ['pipe', 'pipe', 'pipe'], shell: false,
     });
@@ -118,7 +129,7 @@ function runEngine(input, environment, signal, progress) {
       finish(fault('DCAT_REVIEW_CANCELLED', 'The migration review was cancelled.'));
     };
     process.on('error', error => finish(fault('DCAT_RUNTIME_UNAVAILABLE',
-      'Start the installed Python 3.13 migration environment with SCF_DCAT_PYTHON. ' + (error.code ?? ''))));
+      'Start the prepared ' + runtime.runtimeProfile + ' migration environment with SCF_DCAT_PYTHON. ' + (error.code ?? ''))));
     process.stdout.on('data', chunk => {
       stdoutBytes += chunk.length;
       if (stdoutBytes > MAX_REPORT) {
@@ -182,6 +193,12 @@ function validateReportBinding(report, selected, catalogs) {
   need(object(report) && report.schema === 'migration-review.v1' && HASH.test(report.review_sha256 ?? '') &&
     report.source?.sha256 === source.sha256 && report.source?.bytes === source.bytes,
     'DCAT_REVIEW_BINDING_CHANGED');
+  if (selected.runtimeProfile !== undefined) {
+    need(object(report.engine) && (selected.runtimeProfile === 'original'
+      ? report.engine.runtime_profile === undefined
+      : report.engine.runtime_profile?.id === 'portable-python312.v1'),
+      'DCAT_REVIEW_RUNTIME_CHANGED', 'The saved review must retain its selected interpreter profile.', 409);
+  }
   need(comparison ? report.comparison?.sha256 === comparison.sha256 && report.comparison?.bytes === comparison.bytes :
     report.comparison === null, 'DCAT_REVIEW_BINDING_CHANGED');
   const expectedMode = candidate ? 'review_candidate' : report.source.profile === '3.0' ?
@@ -222,7 +239,8 @@ export async function validateDcatWorkspaceFiles(directory, state) {
     need(digest(raw) === digest(bytes(item)), 'DCAT_RELEASE_CHANGED');
   }
 }
-export function createDcatWorkspace({ directory, state, launch, persist, environment }) {
+export function createDcatWorkspace({ directory, state, launch, persist, environment = process.env }) {
+  const executionEnvironment = { ...environment };
   if (state.dcat === undefined) state.dcat = emptyState();
   validateDcatState(state.dcat);
   const current = state.dcat;
@@ -265,6 +283,7 @@ export function createDcatWorkspace({ directory, state, launch, persist, environ
     await persist(); return structuredClone(saved);
   }
   return {
+    dcatRuntime: () => dcatRuntimeSelection(executionEnvironment),
     importDcatCatalog(input) {
       const expectedSha256 = input.expectedSha256 ?? null;
       need(expectedSha256 === null || HASH.test(expectedSha256), 'DCAT_INPUT_HASH_INVALID');
@@ -281,6 +300,7 @@ export function createDcatWorkspace({ directory, state, launch, persist, environ
       }), catalogId: value };
     },
     prepareDcatReview(input) {
+      const runtime = dcatRuntimeSelection(executionEnvironment);
       const source = item('catalogs', input.sourceId);
       const comparison = input.comparisonId ? item('catalogs', input.comparisonId) : null;
       const candidate = input.candidateId ? item('catalogs', input.candidateId) : null;
@@ -288,7 +308,8 @@ export function createDcatWorkspace({ directory, state, launch, persist, environ
       need(input.normalizeV3 === undefined || typeof input.normalizeV3 === 'boolean', 'DCAT_NORMALIZATION_INVALID');
       const value = randomUUID(), selected = { id: value, sourceId: source.id, comparisonId: comparison?.id ?? null,
         candidateId: candidate?.id ?? null, label: text(input.label ?? source.label + ' review', 'a review label'),
-        normalizeV3: input.normalizeV3 ?? false, status: 'PREPARING', createdAt: stamp(), summary: null };
+        normalizeV3: input.normalizeV3 ?? false, runtimeProfile: runtime.runtimeProfile,
+        status: 'PREPARING', createdAt: stamp(), summary: null };
       return { ...launch('review DCAT migration', async (signal, progress) => {
         current.reviews.push(selected); await persist();
         try {
@@ -299,7 +320,7 @@ export function createDcatWorkspace({ directory, state, launch, persist, environ
           if (comparison) Object.assign(inputBytes, { comparison_base64: (await catalogBytes(comparison)).toString('base64'),
             comparison_profile: comparison.profile });
           if (candidate) inputBytes.candidate_base64 = (await catalogBytes(candidate)).toString('base64');
-          const completed = await runEngine(inputBytes, environment, signal, progress);
+          const completed = await runEngine(inputBytes, executionEnvironment, signal, progress);
           const result = validateReportBinding(completed.result, selected, current.catalogs);
           need(result.source?.sha256 === source.sha256 && HASH.test(result.review_sha256 ?? '') &&
             (typeof result.candidate_base64 === 'string' || result.candidate_base64 === null && result.candidate === null && !result.can_receive),

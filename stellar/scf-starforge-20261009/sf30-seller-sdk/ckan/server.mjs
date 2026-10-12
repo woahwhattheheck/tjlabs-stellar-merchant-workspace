@@ -166,7 +166,8 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
         if (parts[0] === 'launch' && parts.length === 1) {
           const state = workbench.status();
           return json(response, { schema: 'stellar-forge.ckan-workbench-listener.v1', instanceId,
-            pid: process.pid, directory: workbench.directory, project: {
+            pid: process.pid, directory: workbench.directory,
+            ...(state.sourceKind === 'dcat-us' ? { dcatRuntime: workbench.dcatRuntime() } : {}), project: {
               schema: state.schema, createdAt: state.createdAt, catalogOrigin: state.catalogOrigin, sourceKind: state.sourceKind ?? 'ckan',
               ...(state.authTokenEnv ? { authTokenEnv: state.authTokenEnv } : {}),
             } });

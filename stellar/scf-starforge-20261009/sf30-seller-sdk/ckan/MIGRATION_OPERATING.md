@@ -19,7 +19,11 @@ The installed source contribution includes the additional **dcat** command.
 Its migration engine uses the selected Python runtime and the original pinned
 GSA converter and schema dependencies. Set **SCF_DCAT_PYTHON** to the prepared
 Python executable when it is installed at a specific path; the default is
-**python3.13**. Keep that runtime with the immutable installed application
+**python3.13**. An actual Python 3.12 host can explicitly select
+**SCF_DCAT_RUNTIME_PROFILE=portable-python312** with the same prepared interpreter.
+[The portable setup guide](PORTABLE_RUNTIME.md) includes the complete original locked
+package selection and native runtime check. Setting only **SCF_DCAT_PYTHON** keeps
+the **original** Python 3.13 profile. Keep that runtime with the immutable installed application
 revision used for the customer delivery. The complete
 [engine setup guide](DCAT_ENGINE.md) gives the exact original dependency
 selection and Python preparation commands.
@@ -72,7 +76,10 @@ Keep that file private to the operating account. The original Applications
 environment loader reads it at preparation and launch. A bare default
 **python3.13** is resolved through that same environment's PATH; use an absolute
 **SCF_DCAT_PYTHON** path when the customer delivery needs a particular prepared
-interpreter.
+interpreter. For prepared Python 3.12, add
+**"SCF_DCAT_RUNTIME_PROFILE": "portable-python312"** to that same private JSON
+object. The interpreter path and profile are both bound into the application
+selection and checked again against the authenticated running workspace.
 
 Use the ordinary **Review → Save → Start → Open** flow. The preparation binds the
 project's original directory, creation time, publisher origin and DCAT-US source

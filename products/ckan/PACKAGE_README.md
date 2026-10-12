@@ -31,8 +31,12 @@ and the full [product operating guide](source/products/ckan/OPERATING.md).
 
 For DCAT-US migration, prepare the original Python 3.13 converter dependencies in
 [DCAT_ENGINE.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/DCAT_ENGINE.md).
-Set `SCF_DCAT_PYTHON` to that prepared interpreter when it has a specific path,
-then initialize the project with its actual publisher origin:
+Set `SCF_DCAT_PYTHON` to that prepared interpreter when it has a specific path.
+An actual Python 3.12 host can instead follow the complete locked setup in
+[PORTABLE_RUNTIME.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/PORTABLE_RUNTIME.md)
+and explicitly set `SCF_DCAT_RUNTIME_PROFILE=portable-python312` together with
+its interpreter path. The default profile remains `original`.
+Then initialize the project with its actual publisher origin:
 
 ~~~sh
 starforge dcat init \
