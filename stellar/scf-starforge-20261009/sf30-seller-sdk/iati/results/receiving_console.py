@@ -14,12 +14,7 @@ import threading
 import zipfile
 
 HERE = Path(__file__).resolve().parent
-# Direct script execution puts results/ first. Keep its workspace.py out of
-# top-level imports so the original XML workspace remains the shared base.
-if sys.path and Path(sys.path[0] or os.curdir).resolve() == HERE:
-    sys.path[0] = str(HERE.parent)
-else:
-    sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE.parent))
 from iati_workspace import IatiWorkspace, InputError
 from server import OperatorServer
 from managed import require_binding, startup

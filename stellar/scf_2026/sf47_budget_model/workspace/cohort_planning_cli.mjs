@@ -6,8 +6,8 @@ import { readFile, stat, open, link, unlink } from "node:fs/promises";
 import { resolve, dirname, basename, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import {
-  COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, COHORT_PLAN_COMPARISON_SCHEMA, CohortPlanningError,
-  seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv, compareCohortPlans, exportCohortPlanComparisonCsv
+  COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, CohortPlanningError,
+  seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv
 } from "./cohort_planning.mjs";
 
 const EDITION_SCHEMA = "stellar-forge.sf47-cohort-plan-edition.v1";
@@ -19,7 +19,6 @@ const HELP = [
   "  node cohort_planning_cli.mjs seed --native-seed seed.json [options]",
   "  node cohort_planning_cli.mjs evaluate --input plan.json [--native-seed seed.json] [--output report.json]",
   "  node cohort_planning_cli.mjs csv --input report.json [--output report.csv]",
-  "  node cohort_planning_cli.mjs compare --baseline earlier.json --candidate later.json [--output comparison.json]",
   "",
   "Seed options:",
   "  --as-of ISO_TIMESTAMP       Explicit observation time; defaults to native seed time.",
@@ -31,10 +30,7 @@ const HELP = [
   "  --output FILE             Create a new output file; omit or use - for stdout.",
   "",
   "evaluate accepts a plan, complete planning report, or saved planning edition.",
-  "compare accepts two complete plans, planning reports, or saved planning editions.",
-  "csv accepts a planning report, saved planning edition, or complete plan comparison.",
-  "Comparison JSON carries both original documents and recalculated reports.",
-  "compare also accepts --name TEXT and --note TEXT for the retained comparison review.",
+  "csv accepts a complete planning report or saved planning edition.",
   "Use --input - to read JSON from stdin. A native seed must be a separate file.",
   "Files are created atomically and existing destinations are preserved.",
   "All amounts and hours in plan JSON use decimal text; atomic prices use integer text.",
@@ -53,10 +49,9 @@ function parse(argv) {
   const allowed = {
     seed: ["native-seed", "as-of", "window-start", "draft-id", "plan-id", "plan-revision", "name", "output"],
     evaluate: ["input", "native-seed", "output"],
-    csv: ["input", "output"],
-    compare: ["baseline", "candidate", "name", "note", "output"]
+    csv: ["input", "output"]
   }[command];
-  if (!allowed) fail("INVALID_COMMAND", "Choose seed, evaluate, compare or csv.", "command");
+  if (!allowed) fail("INVALID_COMMAND", "Choose seed, evaluate or csv.", "command");
   for (let i = 1; i < argv.length; i += 2) {
     const flag = argv[i], key = flag.startsWith("--") ? flag.slice(2) : "";
     if (!allowed.includes(key)) fail("INVALID_ARGUMENT", "Unsupported argument " + flag + ".", "arguments");
@@ -64,10 +59,8 @@ function parse(argv) {
     if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) fail("INVALID_ARGUMENT", flag + " requires one value.", flag);
     options[key] = argv[i + 1];
   }
-  const required = command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
-  for (const key of required) if (!options[key]) fail("INVALID_ARGUMENT", "--" + key + " is required.", key);
-  if (command === "compare" && options.baseline === "-" && options.candidate === "-")
-    fail("INVALID_ARGUMENT", "Read at most one comparison source from stdin; use a file for the other.", "input");
+  const required = command === "seed" ? "native-seed" : "input";
+  if (!options[required]) fail("INVALID_ARGUMENT", "--" + required + " is required.", required);
   if (options["native-seed"] === "-") fail("INVALID_ARGUMENT", "Use a separate file for the native seed.", "native-seed");
   return { command, options };
 }
@@ -151,12 +144,8 @@ async function main(argv) {
     const input = planFrom(await readJson(options.input));
     const nativeSeed = options["native-seed"] ? await readJson(options["native-seed"]) : undefined;
     result = evaluateCohortPlan(input, { nativeSeed });
-  } else if (command === "compare") {
-    const baseline = await readJson(options.baseline), candidate = await readJson(options.candidate);
-    result = compareCohortPlans(baseline, candidate, { ...(options.name !== undefined ? { title: options.name } : {}), ...(options.note !== undefined ? { note: options.note } : {}) });
   } else {
-    const document = await readJson(options.input);
-    result = document?.schema === COHORT_PLAN_COMPARISON_SCHEMA ? exportCohortPlanComparisonCsv(document) : exportCohortPlanCsv(reportFrom(document));
+    result = exportCohortPlanCsv(reportFrom(await readJson(options.input)));
   }
   await output(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n", options.output);
 }

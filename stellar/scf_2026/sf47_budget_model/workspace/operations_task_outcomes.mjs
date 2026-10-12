@@ -23,14 +23,6 @@ function setPath(object, path, value) {
 }
 function choice(values) {return values.map(v=>[v,label(v)]);}
 function same(a,b) {return JSON.stringify(a)===JSON.stringify(b);}
-function receiveDraftRows(current, incoming) {
-  for(const [id,row] of incoming){
-    const retained=current[id];
-    if(retained&&(!same(retained.inputs,row.inputs)||String(retained.note||'')!==row.note))
-      throw Error('The retained draft or save note differs. Download the current editor recovery before reconciling the complete writing.');
-  }
-  for(const [id,row] of incoming)if(!Object.hasOwn(current,id))current[id]=row;
-}
 function terminalRejection(error) {
   const status=Number(error.status ?? error.details?.status ?? error.statusCode);
   return status>=400&&status<500&&![408,429].includes(status)&&error.code!=='REQUEST_CONFLICT';
@@ -299,27 +291,16 @@ export function mountTaskOutcomes({container,current,api,saveApi=api,session={},
           if(value.caseId!==caseId&&value.caseId!==currentCase.program.origin?.programId)throw Error('This recovery belongs to another case.');
           if(value.planContentSha256!==currentCase.plan.contentSha256)throw Error('This recovery belongs to another pinned plan.');
           if(value.pending)throw Error('Recover the original pending save in its original case before transferring this editor recovery.');
-          const incoming=Object.entries(value.drafts||{}).map(([id,row])=>{
-            if(!row||typeof row!=='object'||Array.isArray(row))throw Error('Use the complete retained draft and save note.');
-            validateInput(row.inputs);if(id!==row.inputs.id)throw Error('The recovery draft identity differs.');
-            if(row.note!==undefined&&typeof row.note!=='string')throw Error('Keep the complete original save note as text.');
-            const received={inputs:clone(row.inputs),note:row.note??''};
-            if(row.basedOn!==undefined){
-              if(!Number.isSafeInteger(row.basedOn)||row.basedOn<0||row.basedOn>row.inputs.expectedRevision)
-                throw Error('Keep the original saved revision used to begin this draft.');
-              received.basedOn=row.basedOn;
-            }
-            return [id,received];
-          });
-          receiveDraftRows(session.drafts,incoming);
-          const id=value.selection?.mode==='draft'&&Object.hasOwn(session.drafts,value.selection.id)
-            ?value.selection.id:incoming[0]?.[0];
-          if(id)session.selection={id,mode:'draft'};
+          for(const [id,row] of Object.entries(value.drafts||{})){
+            if(session.drafts[id]&&!same(session.drafts[id].inputs,row.inputs))throw Error('An existing draft with this identity differs. Download it before reconciling the two complete inputs.');
+          }
+          const incoming=Object.entries(value.drafts||{}).map(([id,row])=>{validateInput(row.inputs);if(id!==row.inputs.id)throw Error('The recovery draft identity differs.');return [id,{inputs:clone(row.inputs),note:String(row.note||'')}];});
+          for(const [id,row] of incoming)session.drafts[id]=row;
+          const id=Object.keys(value.drafts||{})[0];if(id)session.selection={id,mode:'draft'};
         }else{
           const inputs=value.inputs||value;validateInput(inputs);
           if(session.drafts[inputs.id]&&!same(session.drafts[inputs.id].inputs,inputs))throw Error('A different retained draft already uses this identity.');
-          if(!Object.hasOwn(session.drafts,inputs.id))session.drafts[inputs.id]={inputs:clone(inputs),note:''};
-          session.selection={id:inputs.id,mode:'draft'};
+          session.drafts[inputs.id]={inputs:clone(inputs),note:''};session.selection={id:inputs.id,mode:'draft'};
         }
         selected=null;persist();render();notify('Complete draft input received. Review it against the current original case before saving.');
       });

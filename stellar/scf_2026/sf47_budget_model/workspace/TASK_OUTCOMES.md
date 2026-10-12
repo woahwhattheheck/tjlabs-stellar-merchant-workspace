@@ -128,12 +128,10 @@ that still matches those inputs; any later writing remains retained.
 
 **Download complete input** produces the exact input object accepted by the CLI
 and client preview. **Import draft input** opens that complete object for
-editing. Importing identical input preserves its current save note and original
-revision label. A recovery that conflicts with the current draft or note leaves
-all existing writing intact for reconciliation.
+editing. Conflicting existing drafts remain available for reconciliation.
 
-**Download editor recovery** retains every unfinished input, full save note,
-original revision label, selected draft and pending request. Recover a pending save in its original case before moving that
+**Download editor recovery** retains every unfinished input, selected view and
+pending request. Recover a pending save in its original case before moving that
 editor recovery. A receiving copy can import a completed recovery when its
 original case binding and pinned plan match. Save a Draft edition when work
 needs to travel through the full operating-case handover.
