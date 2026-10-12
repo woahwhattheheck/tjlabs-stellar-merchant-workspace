@@ -4,6 +4,7 @@ import {readFile,writeFile,mkdir,rename,stat,open,link} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {dirname,join,isAbsolute} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 const config=JSON.parse(await readFile(process.argv[2],'utf8'));
 assert.equal(config.schema,'stellar-forge.iati-results-browser-selection.v1');
 for(const key of ['sourceRoot','root','output','playwright','chromium','connectionFile','merchantRoot'])assert.ok(isAbsolute(config[key]),'Select absolute '+key);
@@ -52,7 +53,7 @@ try{
  assert.equal(h.digest('hex'),original.sources[0].sha256);assert.equal(rawBytes,original.sources[0].bytes);
  await checkpoint('original-client-source',{workspaceId:inventory.workspaceId,projection:projection.projection.id,source:original.sources[0].sha256,bytes:rawBytes,indicatorPage:page.rows.length,totalIndicators:page.total});
 
- const {chromium}=await import(pathToFileURL(config.playwright));
+ const {chromium}=await import(pathToFileURL(createRequire(import.meta.url).resolve(config.playwright)));
  const profile=join(config.output,'browser-profile');
  browser=await chromium.launchPersistentContext(profile,{executablePath:config.chromium,headless:true,viewport:{width:1440,height:1000},
   acceptDownloads:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--single-process','--no-zygote']});
