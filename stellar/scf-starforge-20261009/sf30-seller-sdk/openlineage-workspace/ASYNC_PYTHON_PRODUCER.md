@@ -249,3 +249,9 @@ The complete operated path retains these outputs under the selected async direct
 The failed-token phase observes real HTTP 401 responses and the SDK's held-terminal release. The interruption phase holds the original writer, observes a new actual HTTP 503 in that attempt, interrupts the original SDK process and resumes its same saved plan. The response-loss phase forwards the actual request to the original receiver, retains its real committed response and drops that response once; it verifies the native retry's original acknowledgement and START-before-terminal journal order. Every later receipt is compared to the receiver's original source bytes and operation result.
 
 Complete customer delivery is recorded only after all producer archives, original run attachments, full workspace export, independent receiving and cold native replay have completed. The same source contains the whole journey; the native owner's returned result identifies its actual execution.
+
+## Complete application source editions
+
+The cumulative async application is version 6 and exports 80 original application files. The four async files are added to the exact 76-file Quality v5 selection. Import retains the original 35-file legacy edition, 40-file version 2, both 48- and 55-file version 3 editions, 66-file Service Levels version 4, and 76-file Quality version 5. Their saved workspace identities, event bytes, policies, assessments, reviews and decisions travel with their selected original application.
+
+The native continuation receives the complete version 6 application with its full editable workspace. The package-level `@tokenjunkielabs/starforge-merchant/seller/openlineage/async-producer` export and the existing CLI select the same launcher; the source inventory includes the Python leaf, launcher, full guide and native continuation.

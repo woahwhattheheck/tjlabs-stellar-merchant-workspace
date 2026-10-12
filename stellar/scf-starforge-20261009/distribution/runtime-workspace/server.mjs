@@ -45,7 +45,12 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/managed.mjs', 'managed.mjs', 'text/javascript; charset=utf-8'],
     ['/applications.mjs', 'applications.mjs', 'text/javascript; charset=utf-8'],
     ['/application-library.mjs', 'application-library.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-groups.mjs', 'application-groups.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-groups.css', 'application-groups.css', 'text/css; charset=utf-8'],
     ['/application-drafts.mjs', 'application-drafts.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-setup.mjs', 'application-setup.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-setup-library.mjs', 'application-setup-library.mjs', 'text/javascript; charset=utf-8'],
+    ['/application-setup-codec.mjs', 'application-setup-codec.mjs', 'text/javascript; charset=utf-8'],
     ['/application-review.mjs', 'application-review.mjs', 'text/javascript; charset=utf-8'],
     ['/openapi-application.mjs', 'openapi-application.mjs', 'text/javascript; charset=utf-8'],
     ['/accounting-application.mjs', 'accounting-application.mjs', 'text/javascript; charset=utf-8'],
@@ -148,6 +153,14 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
         return send(200, await model.logs(params(url, ['runtimeId', 'operationId'])));
       if (req.method === 'GET' && url.pathname === '/api/handoff') {
         const value = params(url, ['runtimeId']); return send(200, await model.handoff(value.runtimeId));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/application-groups/state') {
+        const value = params(url, ['groupId', 'runId', 'limit', 'cursor']);
+        if (value.limit !== undefined) {
+          need(/^[1-9][0-9]?$/.test(value.limit), 'APPLICATION_GROUP_PAGE_INVALID');
+          value.limit = Number(value.limit);
+        }
+        return send(200, await model.applicationGroupsState(value));
       }
       if (req.method === 'GET' && url.pathname === '/api/applications/state') {
         const value = params(url, ['historyLimit']);
@@ -276,6 +289,20 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
         const value = await body(req, ['runtimeId', 'context', 'input'], openApiSetupBodyLimit(action));
         return send(200, await model.applicationsOpenApiSetup({ ...value, action }));
       }
+      if (url.pathname === '/api/application-groups/save')
+        return send(201, await model.applicationGroupsSave(await body(req, ['requestId', 'groupId', 'expectedRevision', 'label', 'applicationIds'])));
+      if (url.pathname === '/api/application-groups/review')
+        return send(200, await model.applicationGroupsReview({ ...await body(req, ['groupId', 'runId']), navigationOrigin: origin }));
+      if (url.pathname === '/api/application-groups/start')
+        return send(202, await model.applicationGroupsStart(await body(req, ['groupId', 'requestId', 'reviewId'])));
+      if (url.pathname === '/api/application-groups/continue')
+        return send(202, await model.applicationGroupsContinue(await body(req, ['groupId', 'runId', 'applicationId', 'expectedVersion'])));
+      if (url.pathname === '/api/application-groups/apply-review')
+        return send(200, await model.applicationGroupsApplyReview(await body(req, ['groupId', 'runId', 'reviewId', 'expectedVersion'])));
+      if (url.pathname === '/api/application-groups/member')
+        return send(202, await model.applicationGroupsMember(await body(req, ['groupId', 'runId', 'applicationId', 'action', 'expectedVersion'])));
+      if (url.pathname === '/api/application-groups/stop')
+        return send(202, await model.applicationGroupsStop(await body(req, ['groupId', 'runId'])));
       if (url.pathname === '/api/applications/review')
         return send(200, await model.applicationsReview(await body(req, ['runtimeId', 'kind', 'settings', 'label', 'applicationId', 'expectedRevision', 'homeId'])));
       if (url.pathname === '/api/applications/save')

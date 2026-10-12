@@ -1,0 +1,23 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "dbt-projects",
+  "description": "Original dbt artifacts, lineage and retained project operations",
+  "commands": {
+    "dbt-project": "stellar/scf-starforge-20261009/sf30-seller-sdk/dbt-artifacts/cli.mjs"
+  },
+  "commandDescriptions": {
+    "dbt-project": "Review original dbt artifacts, compare project editions, retain outcomes and reopen complete editable handovers"
+  },
+  "exports": {
+    "./seller/dbt-project": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/dbt-artifacts/client.mjs",
+    "./seller/dbt-project/postgres": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/dbt-artifacts/postgres.mjs",
+    "./merchant/dbt-project": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/dbt-artifacts/mcp.mjs"
+  },
+  "applicationProviders": {
+    "dbt-projects": "stellar/scf-starforge-20261009/sf30-seller-sdk/dbt-artifacts/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "dbt-projects": "stellar/scf-starforge-20261009/sf30-seller-sdk/dbt-artifacts/merchant-provider.mjs"
+  },
+  "browserAssets": []
+}

@@ -146,6 +146,11 @@ try:
   data=item["content"].encode("utf-8")
   if hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()!=item["sha"]:raise RuntimeError("Captured original blob changed: "+item["path"])
   (incoming/(item["sha"]+".blob")).write_bytes(data)
+ # All original source is now verified in the native receiver input files.
+ # Release the retained JSON bodies before the source/build/install children.
+ for name in ("incoming","metadata","commit_candidates","receiver_source"):
+  _original_source.pop(name,None)
+ del metadata,candidates,matched,captured,item,data,receiver_source
  object_directory=root/"source-receiving"
  arguments=[sys.executable,str(toolkit/"git-object-receiving.py"),"--metadata",str(root/"source-metadata.json.gz"),"--commit",source,"--directory",str(object_directory),"--incoming",str(incoming)]
  for donor in _original_source.get("donor_repositories",[]):

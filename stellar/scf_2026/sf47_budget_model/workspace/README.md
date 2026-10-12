@@ -214,6 +214,12 @@ Use the saved plan's source digest, revision number, change note and complete ex
 
 **Delivery operations → Budget performance** connects a selected reporting period to the pinned package budget, original contributor work, issued invoices, payment/refund allocations and native asset quantities. Review opening/period/closing positions, package and contributor performance, invoice aging and full source rows. The complete handover includes JSON/CSV/offline HTML and the original operating case; importing it reopens the selected dates. Use [PERFORMANCE.md](PERFORMANCE.md) for the browser, CLI, HTTP, typed client and Merchant workflow.
 
+## Bring complete source tables into the actual ledger
+
+**Delivery operations → Bulk ledger intake** receives complete contributor, work, supplier-invoice and cash CSV/TSV/JSON tables with original file attachments, explicit column mapping, cross-file references, grouped invoice lines and payment allocations. Operators review every native record before applying the whole intake in one original case transaction. The full input, resulting record map, original files and interrupted-request recovery remain available in the browser and complete case export.
+
+Use [LEDGER_INTAKE.md](LEDGER_INTAKE.md) for the operator workflow, templates, CLI builder and complete HTTP, typed client and Merchant MCP interfaces.
+
 ## Original currencies, customer payment credits and portfolio cash
 
 Use [Original currencies in operating forecasts](CURRENCY.md) to keep quoted amounts, delivery estimates, explicit dated exchange rates and native payment credits through Forecast and Portfolio. The complete [loadable input example](examples/native-currency-forecast.json) demonstrates a foreign quote, a USD estimate, event-dependent terms and exact milestone rounding. Original cash records retain their recorded USD values; the cash and allocation views expose incomplete financial coverage alongside operational scheduling.
@@ -237,3 +243,9 @@ The matching Python and Node managed launch readers identify the full installed 
 ## Original implementation evidence
 
 The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete SF74 commissioning source into the existing operating case. Operators select exact task, measurement and separate technical/customer receiving observations, link the original work/purchases/deployments and saved Installation editions, and freeze a source-verified review. The original Completion, typed client/MCP, CLI and full case export/reopen retain the same evidence and request identities. The [original receiving journey](BUYER_RECEIVING_JOURNEY.md) can include this phase on its explicitly selected original case.
+
+## Operate a complete supplier account
+
+**Delivery operations → Supplier accounts** brings the selected contributor or supplier, original work, invoice lines, review states, source documents and observed payments/refunds into one account. Operators can record and edit original supplier/work/invoice data, attach documents, retain actual cash allocations, and review opening/period/closing balances and invoice aging for selected dates.
+
+**Download complete account handover** includes the complete account JSON, all invoice/work/cash/activity CSVs, readable offline HTML and the original operating case with every retained attachment. Import that complete ZIP to reopen the same supplier and dates. The [Supplier accounts guide](PAYABLES.md) covers browser recovery, native commands, typed client, CLI, Merchant MCP and the source joins with Engagements, Statements, Ledger Intake and Budget Performance.

@@ -6,6 +6,8 @@ import { BuyerResult, VerifiedFile } from './result.mjs';
 import { absolute, intent, digest, object, need, BuyerError, safeCode, now,
   readJson, writeJson, syncDirectory } from './store.mjs';
 
+import { normalizeInboxDiagnostic } from './inbox-diagnostics.mjs';
+
 const SCHEMA = 'stellar-forge.node-buyer-inbox-command.v1';
 const INBOX = 'stellar-forge.sf88.buyer-inbox.v1';
 const worker = fileURLToPath(new URL('./inbox-worker.mjs', import.meta.url));
@@ -23,14 +25,21 @@ export class InboxResult {
     this.process = Object.freeze({ exitCode:run.exitCode ?? null,
       exitSignal:run.exitSignal ?? null, errorCode:run.errorCode ?? run.output?.error ?? null });
     this.commandDirectory = commandDirectory;
+    this.diagnostic = normalizeInboxDiagnostic(run.output?.diagnostic ?? run.diagnostic);
     Object.freeze(this);
   }
 }
 
 export class InboxError extends BuyerError {
   constructor(code, result, details = {}) {
-    super(code, { result, ...details });
+    const diagnostic = result.diagnostic;
+    super(code, { result, ...details, ...(diagnostic ? { diagnostic,
+      ...(diagnostic.status === 'SAVED' && result.commandDirectory
+        ? { diagnosticPath:join(result.commandDirectory, diagnostic.file) } : {}) } : {}) });
     this.name = 'InboxError';
+  }
+  toJSON() {
+    return { ...super.toJSON(), ...(this.diagnostic ? { diagnostic:this.diagnostic } : {}) };
   }
 }
 

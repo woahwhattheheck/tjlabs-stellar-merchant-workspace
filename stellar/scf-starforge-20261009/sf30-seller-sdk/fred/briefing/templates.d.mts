@@ -35,8 +35,9 @@ export interface FredBriefingMeaningChange {
   series: string | null; field: 'title' | 'units' | 'frequency' | 'seasonalAdjustment' | 'sourceMode' | 'timeBasis';
   before: unknown; after: unknown;
 }
+export type FredBriefingMaterializationSchema = 'stellar-forge.fred-briefing-materialization.v1' | 'stellar-forge.fred-briefing-materialization.v2';
 export interface FredBriefingMaterialization {
-  schema: 'stellar-forge.fred-briefing-materialization.v1'; previewId: string; templateId: string;
+  schema: FredBriefingMaterializationSchema; previewId: string; templateId: string;
   originReviewId: string; originCaptureId: string; captureId: string; selection: FredNormalizedBriefing;
   window: { anchorDate: string; observedAnchorDate: string; anchorBasis: FredBriefingTemplateAnchor | 'explicit';
     start: string; end: string; policy: FredBriefingTemplateWindow };
@@ -74,10 +75,13 @@ export interface FredBriefingSuccessorRecord {
 }
 export interface FredMaterializeBriefingInput {
   template: FredBriefingTemplate; model: FredOriginalModel; captureId: string; anchorDate?: string | null;
+  /** Retained v1 reconstruction only; new materializations default to the current schema. */
+  schema?: FredBriefingMaterializationSchema;
 }
 export interface FredBriefingChangesOptions { offset?: number; limit?: number; changesOnly?: boolean }
 export declare const FRED_BRIEFING_TEMPLATE: 'stellar-forge.fred-briefing-template.v1';
-export declare const FRED_BRIEFING_MATERIALIZATION: 'stellar-forge.fred-briefing-materialization.v1';
+export declare const FRED_BRIEFING_MATERIALIZATION_V1: 'stellar-forge.fred-briefing-materialization.v1';
+export declare const FRED_BRIEFING_MATERIALIZATION: 'stellar-forge.fred-briefing-materialization.v2';
 export declare const FRED_BRIEFING_CHANGES: 'stellar-forge.fred-briefing-changes.v1';
 export declare const FRED_BRIEFING_SUCCESSOR: 'stellar-forge.fred-briefing-successor.v1';
 export declare const FRED_TEMPLATE_ANCHORS: readonly FredBriefingTemplateAnchor[];

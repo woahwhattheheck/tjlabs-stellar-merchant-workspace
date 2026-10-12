@@ -19,6 +19,10 @@ const actions = new Set([
   'publisher.publish',
   'publisher.activateSnapshot',
   'publisher.collect',
+  'publisher.facilitators.history',
+  'publisher.facilitators.inspect',
+  'publisher.facilitators.review',
+  'publisher.facilitators.stage',
   'publisher.release.stage',
   'publisher.release.inspect',
   'publisher.release.activate',
@@ -62,7 +66,7 @@ function requireModel(value, name, methods) {
 
 /** Compose original models once. Supplied models are borrowed; only owned models close. */
 export async function openSocrataOperator({directory, workspace: suppliedWorkspace,
-  publisher: suppliedPublisher, appToken = process.env.SOCRATA_APP_TOKEN, ...backendOptions} = {}) {
+  publisher: suppliedPublisher, facilitators, appToken = process.env.SOCRATA_APP_TOKEN, ...backendOptions} = {}) {
   if (typeof directory !== 'string' || !directory.trim()) throw new TypeError('A workspace directory is required.');
   if (suppliedWorkspace !== undefined)
     requireModel(suppliedWorkspace, 'workspace', ['state', 'act', 'readExport', 'close']);
@@ -81,7 +85,7 @@ export async function openSocrataOperator({directory, workspace: suppliedWorkspa
   const getPublisher = async () => {
     if (publisher) return publisher;
     if (!openingPublisher) openingPublisher = import('./publisher.mjs')
-      .then(({openSocrataPublisher}) => openSocrataPublisher({directory: join(resolve(directory), 'publisher')}))
+      .then(({openSocrataPublisher}) => openSocrataPublisher({directory: join(resolve(directory), 'publisher'), facilitators}))
       .then(value => { publisher = value; return value; })
       .catch(error => { openingPublisher = undefined; throw error; });
     return openingPublisher;
@@ -101,7 +105,7 @@ export async function openSocrataOperator({directory, workspace: suppliedWorkspa
     }),
     readExport: (exportId, filename) => run(() => base.readExport(exportId, filename)),
     readPublisherExport: (kind, id) => run(async () => {
-      if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review'].includes(kind))
+      if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review'].includes(kind))
         throw Object.assign(new TypeError('Choose an original publisher export kind.'), {code: 'INVALID_DOWNLOAD'});
       return (await getPublisher()).readExport(kind, id);
     }),
