@@ -40,6 +40,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `grpc-merchant` | Native gRPC contracts, reflection, message streams, merchant releases, contract upgrades and retained service health | gRPC merchant product; original gRPC authoring | [Operating and receiving guide](selections/GRPC_MERCHANT.md) |
 | `research-workspace` | Research questions, original Documents and managed Pipelines, source review, merchant operation and complete customer files | Research dossiers; Runtime management | [Operating and receiving guide](../../../products/research/RECEIVING.md) |
 | `webdav-operator` | WebDAV or Nextcloud file editions, native merchant and customer, complete remote operator and source receiving | WebDAV source and merchant workspace; Runtime management | [Operating guide](../../../products/webdav/OPERATING.md) |
 | `eurostat` | Eurostat official source editions, exact economic reports, native publication and complete customer receiving | Eurostat economic editions; Runtime management | [Operating guide](../../../products/eurostat/OPERATING.md) |
@@ -93,6 +94,7 @@ its dependency profile from the complete installed workflow linked above:
 
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
+| `grpc-merchant` | `--native --feature grpc --feature schema --feature openapi --feature mcp --operator` |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `redis-applications` | `--native --feature redis --feature schema --feature openapi --feature mcp --operator` |

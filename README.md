@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Operate a native gRPC service as a merchant | **Applications → gRPC merchant product** or `starforge grpc-product` | Original protobuf/reflection source, unary and bidirectional message calls, seller releases, contract upgrades, retained service health and all customer files |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
 | Operate site weather and deliver original observations | **Applications → Site weather operations** or `starforge nws-product` | [Complete selected installation](products/nws-site-weather/README.md), retained NWS source and wire bytes, 30 merchant tools, original Applications reopen and customer receiving |
 | Receive scientific data and review a provider handoff | [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md) | Original grid/station-table capture, native dataset editions, reviewed provider profile, merchant delivery and complete customer receiving |
