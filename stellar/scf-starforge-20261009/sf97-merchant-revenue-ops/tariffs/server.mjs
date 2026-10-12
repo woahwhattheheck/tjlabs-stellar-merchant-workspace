@@ -12,15 +12,18 @@ export async function handleTariffRequest({req,res,url,workspace,prefix='/api',a
   try {
     authorize();
     const path = url.pathname.slice(prefix.length);
-    if (url.hash || (url.search && (!['/source','/repricing/source'].includes(path) ||
-        [...url.searchParams.keys()].some(key=>key!=='version') || url.searchParams.getAll('version').length !== 1)))
+    const queryKey = ['/source','/repricing/source'].includes(path) ? 'version' :
+      path === '/bundle' ? 'selectionRequestId' : null;
+    if (url.hash || (url.search && (queryKey === null ||
+        [...url.searchParams.keys()].some(key=>key!==queryKey) || url.searchParams.getAll(queryKey).length !== 1)))
       throw error('TARIFF_URL_INVALID','Use the selected tariff operation and its documented parameters.',400);
     if (req.method === 'GET' || req.method === 'HEAD') {
       if (path === '/state') json(200,await workspace.state());
       else if (path === '/source') json(200,await workspace.source(url.searchParams.get('version')));
       else if (path === '/repricing/source') json(200,await workspace.repricingSource(url.searchParams.get('version')));
       else if (path === '/plans') json(200,await workspace.list());
-      else if (path === '/bundle') reply(200,'application/json; charset=utf-8',await workspace.bundle(),
+      else if (path === '/bundle') reply(200,'application/json; charset=utf-8',await workspace.bundle(
+        url.searchParams.has('selectionRequestId') ? {selectionRequestId:url.searchParams.get('selectionRequestId')} : {}),
         {'content-disposition':'attachment; filename="tariff-portfolio.json"'});
       else {
         const file = /^\/plans\/([a-f0-9-]{36})\/files\/([^/]+)$/.exec(path);
@@ -46,11 +49,12 @@ export async function handleTariffRequest({req,res,url,workspace,prefix='/api',a
     }
     const actions = {
       '/preview':'preview', '/plans':'save', '/selection':'selection', '/selection/commit':'commitSelection',
-      '/receive':'receive', '/repricing/preview':'previewRepricing', '/repricing/save':'saveRepricing',
+      '/portfolio/inspect':'inspectPortfolio', '/receive':'receive',
+      '/repricing/preview':'previewRepricing', '/repricing/save':'saveRepricing',
       '/repricing/stage':'stageRepricing'
     };
     if (!Object.hasOwn(actions,path)) throw error('TARIFF_ROUTE_NOT_FOUND','Tariff operation not found.',404);
-    const input = await body(path === '/receive' ? 64*1024*1024 : 16*1024*1024);
+    const input = await body(['/portfolio/inspect','/receive'].includes(path) ? 64*1024*1024 : 16*1024*1024);
     json(200,await workspace[actions[path]](input));
   } catch (failure) {
     json(failure.status ?? (failure instanceof TypeError || failure instanceof RangeError ? 422 : 500),
