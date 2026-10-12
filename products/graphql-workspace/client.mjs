@@ -98,7 +98,7 @@ export async function inspectReceivedGraphqlFiles(directory) {
   for (const selected of manifest.files) {
     const path = resolve(root, selected.name);
     if (await realpath(path) !== path) reject('A received native path was replaced by a symbolic link.');
-    const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     try {
       const before = await handle.stat(), digest = createHash('sha256'), buffer = Buffer.alloc(1024 * 1024);
       if (!before.isFile() || before.size !== selected.bytes) reject('A received native file changed its type or length: ' + selected.name);
