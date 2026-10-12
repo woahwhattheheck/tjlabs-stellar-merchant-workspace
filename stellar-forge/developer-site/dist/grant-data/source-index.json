@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 35575,
-    "sha256": "144d8c3610c8b9c4573627fad7f6462730157c0699283b9b2ebc2f1ff34611e0",
-    "git_blob": "2b7afdb43e2c78203fd6a5b0f6c892ba5c0974cd"
+    "bytes": 36164,
+    "sha256": "c0384914d78e373833f1885457e840834bd79cd44f95a0056f4800991af40689",
+    "git_blob": "50495942c7fde13ddefc4eb455b8046b8cf08258"
   },
   "request": {
     "basis": "prospective",
@@ -1497,7 +1497,7 @@
         "canonical_projection": "Complete native Canvas section serialization. Original chapter prose and every table cell retained; native table whitespace is projected by the original customer-section receiver."
       }
     ],
-    "current_application_sha256": "144d8c3610c8b9c4573627fad7f6462730157c0699283b9b2ebc2f1ff34611e0",
+    "current_application_sha256": "c0384914d78e373833f1885457e840834bd79cd44f95a0056f4800991af40689",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
     "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
     "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
@@ -1565,7 +1565,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "6e71ffbe2f2ba5ef3333754a540659e9c4e06daa",
+      "projector_git_blob": "8804fc2974f467fa30e6fcf7f19dee1661f4553d",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
@@ -1575,7 +1575,7 @@
       },
       "shell_example_normalization": "ASCII option indentation restored only inside fenced shell examples after Canvas rich-text transport; command arguments, values and quoted data retained.",
       "reviewer_entry_git_blob": "b3a90814b409ee61299e020ee1c80cb67fc97243",
-      "delivery_plan_git_blob": "94b07bce19cc899f5f4e8855c09153832c88e89a",
+      "delivery_plan_git_blob": "147bf91a14bec60148a1e98db6d78b80a79caa61",
       "a2a_projector_git_blob": "0c02b1393f804eb005bdd40a609cb71eff4a2420",
       "a2a_source_catalogue": {
         "schema": "stellar-forge.a2a-grant-source-catalogue.v1",
@@ -1656,8 +1656,8 @@
     "route": "/grant-submission.html",
     "application_route": "/grant-data/application.md",
     "source_index_route": "/grant-data/source-index.json",
-    "application_sha256": "144d8c3610c8b9c4573627fad7f6462730157c0699283b9b2ebc2f1ff34611e0",
-    "application_git_blob": "2b7afdb43e2c78203fd6a5b0f6c892ba5c0974cd",
+    "application_sha256": "c0384914d78e373833f1885457e840834bd79cd44f95a0056f4800991af40689",
+    "application_git_blob": "50495942c7fde13ddefc4eb455b8046b8cf08258",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "export_schema": "stellar-forge.grant-submission-export.v1",
     "form_map_schema": "stellar-forge.grant-form-map.v1",
@@ -1718,8 +1718,8 @@
     "schema": "stellar-forge.grant-review-round-integration.v1",
     "route": "/grant-review-round.html",
     "submission_route": "/grant-submission.html",
-    "application_sha256": "144d8c3610c8b9c4573627fad7f6462730157c0699283b9b2ebc2f1ff34611e0",
-    "application_git_blob": "2b7afdb43e2c78203fd6a5b0f6c892ba5c0974cd",
+    "application_sha256": "c0384914d78e373833f1885457e840834bd79cd44f95a0056f4800991af40689",
+    "application_git_blob": "50495942c7fde13ddefc4eb455b8046b8cf08258",
     "draft_schema": "stellar-forge.grant-submission-draft.v1",
     "draft_export_schema": "stellar-forge.grant-submission-export.v1",
     "review_schema": "stellar-forge.grant-review-round.v1",
