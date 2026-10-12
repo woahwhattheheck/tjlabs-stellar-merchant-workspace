@@ -28,6 +28,17 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables payment-receive --directory /private/accounting --id UUID --input /private/receive-payment.json\n' +
   'starforge receivables payment-cancel --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
   'starforge receivables payment-file --directory /private/accounting --id UUID --name payment-request.html --out /private/new-request.html\n\n' +
+  'Customer credit and order release:\n' +
+  'starforge receivables credit-control --directory /private/accounting [--customer UUID] [--search TEXT]\n' +
+  'starforge receivables credit-policy --directory /private/accounting --id UUID\n' +
+  'starforge receivables credit-policy-save --directory /private/accounting --input /private/policy.json\n' +
+  'starforge receivables credit-assess --directory /private/accounting --invoice UUID --input /private/workspace.json [--out /private/assessment.json]\n' +
+  'starforge receivables credit-decision-save --directory /private/accounting --invoice UUID --input /private/reviewed-decision.json\n' +
+  'starforge receivables credit-decision --directory /private/accounting --id UUID\n' +
+  'starforge receivables credit-withdraw --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
+  'starforge receivables credit-decision-file --directory /private/accounting --id UUID --name decision.html --out /private/new-decision.html\n' +
+  'starforge receivables credit-control-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n' +
+  'Issue through the original apply --action issue command with the reviewed invoice and creditDecisionId. Assessments use the current account date.\n\n' +
   'Cash receipt planning:\n' +
   'starforge receivables cash-plans --directory /private/accounting [--status ACTIVE] [--search TEXT]\n' +
   'starforge receivables cash-plan --directory /private/accounting --id UUID [--edition UUID]\n' +
@@ -125,6 +136,22 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     const receivables = await new ReceivablesWorkspace(workspace).init();
     let result;
     if (command === 'state') result = await receivables.state({asOf});
+    else if (command === 'credit-control') result=await receivables.creditControl({customerId:flags.customer,search:flags.search});
+    else if (command === 'credit-policy') result=await receivables.creditPolicy(flags.id);
+    else if (command === 'credit-policy-save') result=await receivables.saveCreditPolicy(await input(flags.input));
+    else if (command === 'credit-assess') {
+      result=await receivables.previewCreditAssessment(flags.invoice,await input(flags.input));
+      if(flags.out)await newFile(flags.out,Buffer.from(json(result)));
+    }
+    else if (command === 'credit-decision-save') result=await receivables.saveCreditDecision(flags.invoice,await input(flags.input));
+    else if (command === 'credit-decision') result=await receivables.creditDecision(flags.id);
+    else if (command === 'credit-withdraw') result=await receivables.withdrawCreditDecision(flags.id,await input(flags.input));
+    else if (command === 'credit-control-operation') result=await receivables.creditControlOperation(flags.request);
+    else if (command === 'credit-decision-file') {
+      const file=await receivables.creditDecisionFile(flags.id,flags.name);
+      await newFile(flags.out,file.bytes);
+      result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
+    }
     else if (command === 'cash-plans') result=await receivables.cashPlans({status:flags.status,search:flags.search});
     else if (command === 'cash-plan') result=await receivables.cashPlan(flags.id,{editionId:flags.edition});
     else if (command === 'cash-plan-preview') {
@@ -231,4 +258,4 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
   } finally { await workspace.close(); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
-  runReceivablesCli().catch(error => { process.stderr.write(json({error: {code: error.code ?? 'RECEIVABLES_FAILED', message: error.message}})); process.exitCode = 1; });
+  runReceivablesCli().catch(error => { process.stderr.write(json({error: {code: error.code ?? 'RECEIVABLES_FAILED', message: error.message,...(error.details?{details:error.details}:{})}})); process.exitCode = 1; });
