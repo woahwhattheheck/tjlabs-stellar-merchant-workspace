@@ -1,0 +1,33 @@
+{
+  "schema": "commons.conapi-complete-programme-source.v1",
+  "operation": "CONAPI-WORKFLOW-RECEIVING-DSCEB3-20261012",
+  "originalOperation": "SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012",
+  "applicationRef": "e5520a2a962ccebc461d478edf6aebb4b6c7fb20",
+  "files": [
+    {
+      "path": "supplier_programme.py",
+      "bytes": 24537,
+      "sha256": "b2f2892fda8324bab77dd4bf3ae8a76d55efa7b9908a6c762366f4c682b6f99e"
+    },
+    {
+      "path": "run_conapi.mjs",
+      "bytes": 42582,
+      "sha256": "01e533d8379214b94703d8bfd4902ae4dc6b979ee5c42acb06c958c659abcd2a"
+    },
+    {
+      "path": "preserve_delivery.py",
+      "bytes": 13071,
+      "sha256": "5a637dea893af24144b7ceb570f2ffe8219e560fed739f00be203167d6229f3c"
+    },
+    {
+      "path": "continue_conapi.py",
+      "bytes": 10105,
+      "sha256": "88bc053d58dd00a71eaf04c3b88b5985a2a8cace16a461d7e66e8f169e0978c0"
+    },
+    {
+      "path": "OPERATING.md",
+      "bytes": 14209,
+      "sha256": "03392ee682705b5caefb13d2353006fbeca7e46e50167e54fee1d1457cea7297"
+    }
+  ]
+}
