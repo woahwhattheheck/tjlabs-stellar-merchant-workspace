@@ -138,6 +138,16 @@ def register(subparsers, common):
             target.add_argument("--installation", help="Original installation ID; omit for a new installation")
             target.add_argument("--expected-revision", type=int, required=True)
             target.add_argument("--document", help="Optional complete current editable installation JSON")
+    for verb in ("installation-workflows", "installation-workflow-seed"):
+        target = command(verb, "Read or receive complete original customer operating periods", case=True, output=True)
+        target.add_argument("--expected-version", type=int, required=True)
+        target.add_argument("--source", required=True, help="Original attached recurring-work source ZIP")
+        target.add_argument("--expected-source-sha256", required=True)
+        if verb == "installation-workflow-seed":
+            target.add_argument("--cycle", action="append", required=True, help="Original selected cycle ID; repeat for every selected period")
+            target.add_argument("--installation", help="Original Installation ID; omit for a new Installation")
+            target.add_argument("--expected-revision", type=int, required=True)
+            target.add_argument("--document", help="Optional complete current editable Installation JSON")
     target = command("installation-show", "Reopen one whole saved installation and its selected original records", case=True, output=True)
     target.add_argument("--installation", required=True)
     target.add_argument("--revision", type=int, help="Exact saved edition; omission opens the latest")
@@ -350,6 +360,21 @@ def operate(workspace, args):
                     raise Problem("Installation input must be a complete UTF-8 JSON document.",
                                   422, "INVALID_JSON") from exc
             result = ops.seed_workshare_installation(args.case, selected)
+    elif action in ("installation-workflows", "installation-workflow-seed"):
+        selected = {"expectedVersion": args.expected_version, "sourceId": args.source,
+                    "expectedSourceSha256": args.expected_source_sha256}
+        if action == "installation-workflows":
+            result = ops.installation_workflows(args.case, selected)
+        else:
+            selected.update({"cycleIds": args.cycle, "installationId": args.installation,
+                             "expectedRevision": args.expected_revision})
+            if args.document:
+                from operations_installations import MAX_DOCUMENT_BYTES
+                try:
+                    selected["document"] = json.loads(read_bytes(args.document, MAX_DOCUMENT_BYTES))
+                except (UnicodeError, ValueError) as exc:
+                    raise Problem("Use the complete UTF-8 Installation document.", 422, "INVALID_JSON") from exc
+            result = ops.seed_workflow_installation(args.case, selected)
     elif action == "installation-show":
         result = ops.installation(args.case, args.installation, args.revision)
     elif action == "installation-history":
