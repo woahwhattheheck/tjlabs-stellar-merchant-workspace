@@ -71,3 +71,15 @@ The Merchant operator exposes **merchant_grant_amendment_calendar_export**. Supp
 The maintained implementation is in **operations_amendment_calendar.py** and **operations_amendment_calendar.mjs**, with additive joins in the original amendment page, Operations, HTTP, CLI, typed client, Merchant tools and both managed source selectors.
 
 The original complete **amendment_receiving.py** remains the operating journey for this amendment operation. Its retained preview files continue to hold the immutable native preview; derived calendar timestamps are excluded from those original checkpoint artifacts. Reuse the original operated root when continuing that journey. Keep the original case, complete calendar exports and desktop/phone receiving outputs together in the same source-owner Slack thread.
+
+## Full original-case and browser receiving command
+
+Run the complete operator from this source checkout, reusing the original amendment operating root:
+
+    python3 stellar/scf_2026/sf47_budget_model/workspace/amendment_calendar_receiving.py --root /absolute/path/to/amendment-operating-work --source-commit PINNED_SOURCE_SHA --chromium /absolute/path/to/chromium
+
+The operator first resumes the original ten-phase amendment journey, then exports the selected original saved edition, receives the complete case into another native workspace, and opens the same edition through the real browser. It reviews every row, downloads the whole paired calendar while the changed-entry filter is selected, follows the original package into current Completion, captures desktop and phone views, and reopens the saved case in a fresh browser context. Both native and browser downloads are received with their complete native manifests and all dated/undated rows.
+
+To continue a recovered original amended case on an independent host, add **--archive /absolute/path/to/complete-case.zip --archive-sha256 ORIGINAL_SHA256**. That route imports the complete case through its original native API and retains the source archive selection. **--amendment** can select an exact saved amendment; otherwise the newest native amendment head is used.
+
+Results remain under **output/calendar-impact/** in the same original root. The complete returned package is **amendment-calendar-receiving.zip**. It includes the native and browser paired exports, original operated case, cold received amendment, full source selection, native receiving result, and desktop/phone/reopen images. Use **--node** and **--playwright** only when the receiving host’s existing installation is outside the runtime environment defaults.
