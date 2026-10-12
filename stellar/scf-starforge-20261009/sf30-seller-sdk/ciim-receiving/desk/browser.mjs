@@ -437,7 +437,7 @@ async function comparisons() {
     return [el('code',r.identifier,'mono'),status(r.change),before,after,changes];
   });
   add(p,grid(['Original identifier','Change','Earlier','Later','Changed fields'],rows),pager(result,async offset=>{comparisonOffset=offset;await render();}),
-    reviewForm('comparison.review',{comparisonId:selectedComparison},{label:'Review the complete edition comparison',scope:'Named review covers the complete '+result.total+'-record comparison, including pages outside this view.'}));
+    reviewForm('comparison.review',{comparisonId:selectedComparison},{label:'Review the complete edition comparison',scope:'Named review covers the complete '+result.counts.records+'-record comparison. Filters and pages affect the display only.'}));
   root.append(p);return root;
 }
 function checkboxList(id, items) {
