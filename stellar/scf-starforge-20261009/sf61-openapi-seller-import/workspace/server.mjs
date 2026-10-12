@@ -69,7 +69,7 @@ async function uploadSelection(req) {
 const constantEqual = (a,b) => typeof a === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) &&
   timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-export async function startWorkspace({ parent, port=0, noSignals=false, oauthConnections=[], env=process.env, allowLoopbackOAuth=false, oauthLookup }={}) {
+export async function startWorkspace({ parent, port=0, noSignals=false, oauthConnections=[], env=process.env, allowLoopbackOAuth=false, oauthLookup, productWorkspace }={}) {
   const runtimeEnv={...env};
   const output = await privateParent(parent);
   if (!Number.isInteger(port) || port<0 || port>65535) throw new TypeError('Port must be 0–65535');
@@ -142,7 +142,8 @@ export async function startWorkspace({ parent, port=0, noSignals=false, oauthCon
     transports:merchantTransportSummary(active.upstreams),
     operationBindings:active.tickets.bindings,
     ...(active.tickets.bindings.length ? {operationConsole:active.session.operations.operationControlUrl ?? active.session.operations.merchantOperationsUrl} : {}),
-    ...(active.acceptance?{acceptance:active.acceptance}:{})} : {state:'STOPPED'}),customer:customerView()});
+    ...(active.acceptance?{acceptance:active.acceptance}:{})} : {state:'STOPPED'}),customer:customerView(),
+    ...(productWorkspace?{productWorkspace:productWorkspace.navigation}:{})});
   async function closeCustomer() {
     if(!customerActive) return;
     const result=await completeCommerceShutdown(customerActive.session,customerActive.console.close());
@@ -171,6 +172,7 @@ export async function startWorkspace({ parent, port=0, noSignals=false, oauthCon
           !oauth.acceptCallbackRequest(req,url)) return send(403,{error:'Use the exact local workspace origin'});
       if(req.method==='GET'&&oauth.returned(res,url))return;
       if(await oauth.callback(req,res,url))return;
+      if(productWorkspace&&await productWorkspace.servePublic(req,res,url))return;
       if(await serveCacheWorkspaceAsset(req,res,pathname))return;
       if (req.method==='GET' && STATIC.has(pathname)) {
         const asset=STATIC.get(pathname);
@@ -178,6 +180,7 @@ export async function startWorkspace({ parent, port=0, noSignals=false, oauthCon
       }
       if (!pathname.startsWith('/api/')) return send(404,{error:'Not found'});
       if (!constantEqual(req.headers['x-workspace-token'],token)) return send(401,{error:'Open the complete workspace URL printed by the launcher'});
+      if(productWorkspace&&await productWorkspace.api(req,res,url))return;
       if (req.method==='GET') {
         if (pathname.startsWith('/api/package-transfer/')) return await packageTransfer.get(pathname,url,send);
         if (pathname.startsWith('/api/har/')) return await (await har()).get(pathname,url,send,res);
@@ -437,6 +440,9 @@ export async function startWorkspace({ parent, port=0, noSignals=false, oauthCon
   const close=()=>{
     if(closing)return closing;
     const disposing=(async()=>{
+      // Accepted product handovers use this original server for native package
+      // and captured-source calls. Drain those chains before closing its listener.
+      if(productWorkspace)await productWorkspace.close();
       shuttingDown=true;
       const errors=[];
       const attempt=async action=>{try{await action();}catch(error){errors.push(error);}};

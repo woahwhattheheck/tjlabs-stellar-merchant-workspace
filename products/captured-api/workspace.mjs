@@ -256,7 +256,7 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
   tokenEnv = 'MCP_ACCESS_TOKEN', environment = process.env, managedBindingSha256 } = {}) {
   let profile = await readCapturedApi(directory);
   const ownership = await lease(profile.directory);
-  let consoleSession, mcp, started, closing, initial, launchBinding;
+  let consoleSession, productWorkspace, mcp, started, closing, initial, launchBinding;
   let closeState = 'CLOSED', openingFailure, closed = false, keepAlive, closeStartedAt;
   let mcpClosed = false, consoleClosed = false;
   const inspectBinding = async () => {
@@ -289,6 +289,9 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
     // The original agent may still need its original browser while it drains.
     if ((!mcp || mcpClosed) && consoleSession && !consoleClosed)
       await attempt(async () => { await consoleSession.close(); consoleClosed = true; });
+    // Opening can fail before the native listener returns its close handle.
+    if ((!mcp || mcpClosed) && !consoleSession && productWorkspace)
+      await attempt(() => productWorkspace.close());
     if (!errors.length) await attempt(async () => {
       if (initial) await write(join(profile.directory, SESSION),
         record(closeState, { stoppedAt: new Date().toISOString() }), true);
@@ -325,6 +328,8 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
       ...(launchBinding ? { bindingSha256: launchBinding.bindingSha256, resourceId: launchBinding.resourceId } : {}) };
     await write(join(profile.directory, SESSION), { ...initial, state: 'STARTING' }, true);
     if (profile.console.ownership === 'PRODUCT') {
+      const { createCapturedHandoverWeb } = await import('./handover-web.mjs');
+      productWorkspace = await createCapturedHandoverWeb({directory:profile.directory});
       const { startWorkspace } = await import('../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs');
       if (launchBinding?.browserOAuth) {
         const { startManagedOpenApiWorkspace } =
@@ -335,7 +340,7 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
           '--managed-launch-sha256', launchBinding.browserOAuth.bindingSha256,
         ], { startWorkspace: async options => {
           // Keep the original session if native post-start validation needs cleanup.
-          consoleSession = await startWorkspace({ ...options, noSignals: true });
+          consoleSession = await startWorkspace({ ...options, noSignals: true, productWorkspace });
           return consoleSession;
         }, env: environment, announce: () => {} });
       } else {
@@ -343,7 +348,7 @@ export async function openCapturedApi({ directory, port = 0, mcpPort = 0, browse
           ? await (await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/oauth-connections/host.mjs'))
             .readOAuthHostConnections(profile.oauthConnectionsFile) : [];
         consoleSession = await startWorkspace({ parent: profile.projectsDirectory, port,
-          noSignals: true, oauthConnections, env: environment });
+          noSignals: true, oauthConnections, env: environment, productWorkspace });
       }
       ownership.assertHeld();
       await write(profile.console.urlFile, consoleSession.url + '\n', true);

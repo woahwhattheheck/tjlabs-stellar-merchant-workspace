@@ -8,6 +8,7 @@ import {
   inspectCapturedHandover, reviewCapturedHandoverReceive, receiveCapturedHandover,
   inspectCapturedHandoverReceive,
 } from './handover.mjs';
+import { exportCapturedHandoverArchive, receiveCapturedHandoverArchive } from './handover-archive.mjs';
 import { METADATA_LIMIT, decode } from './handover-files.mjs';
 
 const HELP = 'Complete captured merchant handover\n\n' +
@@ -18,6 +19,10 @@ const HELP = 'Complete captured merchant handover\n\n' +
   '       --review-sha256 ORIGINAL_REVIEW_SHA256\n' +
   '  starforge captured-api handover inspect --bundle PRIVATE_HANDOVER\n' +
   '       [--manifest-sha256 ORIGINAL_HANDOVER_MANIFEST_SHA256]\n' +
+  '  starforge captured-api handover file-export --bundle PRIVATE_HANDOVER\n' +
+  '       --out NEW_PRIVATE_FILE_DIRECTORY --manifest-sha256 ORIGINAL_MANIFEST_SHA256\n' +
+  '  starforge captured-api handover file-import --file ORIGINAL.sfhandover\n' +
+  '       --out NEW_PRIVATE_COLLECTION --file-sha256 ORIGINAL_FILE_SHA256 --file-bytes ORIGINAL_BYTES\n' +
   '  starforge captured-api handover receive-review --dir RECEIVING_PRODUCT\n' +
   '       --bundle PRIVATE_HANDOVER [--manifest-sha256 ORIGINAL_MANIFEST_SHA256]\n' +
   '       [--names PRIVATE_PACKAGE_NAME_MAP.json]\n' +
@@ -78,6 +83,17 @@ export async function runCapturedHandoverCLI(args = process.argv.slice(2)) {
   } else if (command === 'inspect') {
     const input = options(rest,['--bundle','--manifest-sha256'],['--bundle']);
     result = await inspectCapturedHandover({bundle:input.get('--bundle'),expectedManifestSha256:input.get('--manifest-sha256')});
+  } else if (command === 'file-export') {
+    const input = options(rest,['--bundle','--out','--manifest-sha256'],['--bundle','--out','--manifest-sha256']);
+    result = await exportCapturedHandoverArchive({bundle:input.get('--bundle'),directory:input.get('--out'),
+      expectedManifestSha256:input.get('--manifest-sha256')});
+  } else if (command === 'file-import') {
+    const input = options(rest,['--file','--out','--file-sha256','--file-bytes'],['--file','--out','--file-sha256','--file-bytes']);
+    const expectedBytes=Number(input.get('--file-bytes'));
+    if(!Number.isSafeInteger(expectedBytes)||expectedBytes<1)
+      throw error('Use the complete original archive byte count.');
+    result = await receiveCapturedHandoverArchive({path:resolve(input.get('--file')),directory:input.get('--out'),
+      expectedSha256:input.get('--file-sha256'),expectedBytes});
   } else if (command === 'receive-review' || command === 'receive') {
     const allowed = ['--dir','--bundle','--manifest-sha256','--names'];
     if (command === 'receive') allowed.push('--review-sha256');

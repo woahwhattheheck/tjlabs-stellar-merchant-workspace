@@ -346,6 +346,15 @@ async function saved(name,value) {
   routeSheet?.saved(name);
 }
 function runtime(value) {
+  const productLink=$('product-workspace-link'),navigation=value.productWorkspace;
+  productLink.hidden=true;
+  if(navigation&&typeof navigation.label==='string'&&typeof navigation.href==='string') {
+    const destination=new URL(navigation.href,location.origin);
+    if(destination.origin===location.origin&&destination.pathname.startsWith('/')) {
+      destination.hash=token;productLink.href=destination.href;
+      productLink.textContent=navigation.label;productLink.hidden=false;
+    }
+  }
   customerOpen=Boolean(value.customer);customerPanel.renderRuntime(value.customer);available();
   renderCredentialRuntime($('credential-runtime'),value.credentials,{make});
   renderTransportRuntime($('transport-runtime'),value.transports);

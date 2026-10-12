@@ -10,7 +10,16 @@ const LAUNCH = 'stellar-forge.captured-api-launch.v1';
 const STARTUP = 'stellar-forge.captured-api-managed-session.v1';
 const HASH = /^[a-f0-9]{64}$/;
 const ENVIRONMENT_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
-const sourceFiles = ['managed.mjs', 'workspace.mjs', 'cli.mjs', 'application-provider.mjs'];
+const sourceFiles = [
+  'managed.mjs', 'workspace.mjs', 'cli.mjs', 'application-provider.mjs',
+  'handover.mjs', 'handover-files.mjs', 'handover-desk.mjs', 'handover-web.mjs',
+  'handover-archive.mjs', 'handover-upload.mjs',
+  'web/index.html', 'web/browser.mjs', 'web/style.css',
+].map(name => PRODUCT + name).concat([
+  'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs',
+  'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/browser.mjs',
+  'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/index.html',
+]);
 
 function options(settings) {
   return { directory: absolute(settings.workspaceDirectory), port: settings.port ?? 0,
@@ -59,7 +68,7 @@ export async function prepareCapturedApiApplication(settings, context) {
   need(ENVIRONMENT_NAME.test(selectedOptions.tokenEnv), 'APPLICATION_CAPTURED_API_TOKEN_ENV',
     'Enter the original MCP token environment-variable name.');
   const runtime = await inspectMerchantRuntime(runtimeDirectory, { load: false });
-  const inputs = await Promise.all(sourceFiles.map(name => inputPath(join(runtime.sourceRoot, PRODUCT + name), 'file')));
+  const inputs = await Promise.all(sourceFiles.map(name => inputPath(join(runtime.sourceRoot, name), 'file')));
   const managed = inputs[0], url = pathToFileURL(managed.path);
   need(HASH.test(managed.sha256 ?? ''), 'APPLICATION_CAPTURED_API_SOURCE_CHANGED');
   url.searchParams.set('capturedApiSource', managed.sha256);
@@ -150,6 +159,11 @@ export function capturedApiStartup(request, text) {
     (selected.port === 0 || Number(browserUrl.port || 80) === selected.port),
   'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
   const links = [];
+  if (value.consoleOwnership === 'PRODUCT') {
+    const handover = new URL(browserUrl.href);
+    handover.pathname = '/captured-handover/';
+    links.push({ label: 'Merchant handover', url: handover.href });
+  }
   if (selected.browserOnly) {
     need(value.mcpUrl === null, 'APPLICATION_CAPTURED_API_STARTUP_CHANGED');
   } else {
