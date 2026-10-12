@@ -129,8 +129,8 @@ function operatingGuide(context,exportId){
    'reopened by the installed receiver. Query filters can make the purchased output a subset of that full source study.','',
   'Use the installed OpenAQ Buyer command with this directory and the exact SHA256 of delivery.json:',
   '',
-  '    openaq-buyer receive --source /ABS/DELIVERY --sha256 MANIFEST_FILE_SHA256 --dir /ABS/RECEIVED --id RECEIVING_ID',
-  '    openaq-buyer reopen --dir /ABS/RECEIVED','',
+  '    starforge openaq-buyer receive --source /ABS/DELIVERY --sha256 MANIFEST_FILE_SHA256 --dir /ABS/RECEIVED --id RECEIVING_ID',
+  '    starforge openaq-buyer reopen --dir /ABS/RECEIVED','',
   'The receiver verifies every declared member and calls the original SF88 Dataset archive receiver and OpenAQ project receiver. '+
    'It does not start a page, contact OpenAQ, sign or purchase. It retains source bytes under files/, the native session under session/, '+
    'and the original editable scientific source under study/selected/. Import that original study.tgz with the maintained OpenAQ '+

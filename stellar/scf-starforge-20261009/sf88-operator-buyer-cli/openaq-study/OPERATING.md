@@ -4,6 +4,15 @@ Use one reviewed OpenAQ study through its existing merchant release and the orig
 
 The scientific study and the purchased Dataset are distinct parts of the same handover. The study contains the original capture, HTTP source and receipts, source review, and reports. The Dataset contains the rows returned for the customer’s exact query. Filters can select fewer rows than the full study. The receiving manifest binds both to the same reviewed publication.
 
+## Complete a customer delivery
+
+1. **Handoff:** finish the seller’s original stage and study export, then run `handoff`. Keep its returned `handoffSha256` and exact output directory.
+2. **Acquire:** pass that file digest into `prepare` with the existing Buyer, original intent, selected requirement and budget. Use `inspect` to review the returned native request, then `run` through the original approval channel.
+3. **Export:** after the native session is `COMPLETE`, run `export`. Keep the returned full delivery directory and `manifestSha256`.
+4. **Receive:** transfer that complete directory, use its exact digest in `receive`, then use `reopen` on the returned receiving directory.
+
+Take identifiers, native statuses and digests directly from each command’s JSON result. The detailed steps below explain the original seller and Buyer inputs, full file contents, and continuation after an interruption.
+
 ## Installed command and source entry
 
 The OpenAQ distribution contribution registers `openaq-buyer` and exports `./buyer/openaq-study` with adjacent TypeScript declarations. Keep the complete selected distribution and its original native dependencies. The source entry is:
@@ -12,7 +21,7 @@ The OpenAQ distribution contribution registers `openaq-buyer` and exports `./buy
 node stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/cli.mjs help
 ~~~
 
-The examples below use `openaq-buyer` for that registered command. When working directly from a source checkout, substitute `node /ABS/SOURCE/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/cli.mjs`.
+The existing `openaq-studies` selection installs the `starforge` executable. The examples below use `starforge openaq-buyer` for the registered command. When working directly from a source checkout, substitute `node /ABS/SOURCE/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/openaq-study/cli.mjs`.
 
 Node runs the original Buyer and output engines. The original OpenAQ/Frictionless tooling and portable Dataset receiver also use the selected Python runtime. `--python` chooses Python for the Dataset session archive; the OpenAQ source command retains the installation’s original source-runtime configuration.
 
@@ -39,7 +48,7 @@ Read [the merchant operating guide](../../sf30-seller-sdk/openaq/MERCHANT_OPERAT
 ## 2. Produce the complete source-bound handoff
 
 ~~~sh
-openaq-buyer handoff \
+starforge openaq-buyer handoff \
   --project /ABS/PRIVATE/original-openaq \
   --stage ORIGINAL_STAGE_UUID \
   --export ORIGINAL_EXPORT_UUID \
@@ -58,7 +67,7 @@ The handoff reads the saved preparation, stage, capture, review and export; reop
 The command returns `handoffSha256`, the SHA-256 of the entire `handoff.json` file, along with both file descriptors. Preserve that exact file digest. The `sha256` inside the JSON is its canonical semantic identity; the file digest is the command’s input for later receiving.
 
 ~~~sh
-openaq-buyer handoff-inspect \
+starforge openaq-buyer handoff-inspect \
   --dir /ABS/PRIVATE/handoff \
   --sha256 HANDOFF_FILE_SHA256
 ~~~
@@ -76,7 +85,7 @@ The Buyer’s operator directory here is the SF88 operator workspace. It is not 
 A complete-source query can retain all fields and page over the study:
 
 ~~~sh
-openaq-buyer prepare \
+starforge openaq-buyer prepare \
   --dir /ABS/PRIVATE/acquisition \
   --handoff /ABS/PRIVATE/handoff \
   --handoff-sha256 HANDOFF_FILE_SHA256 \
@@ -93,7 +102,7 @@ openaq-buyer prepare \
 For a supported filtered query, use the actual native query names:
 
 ~~~sh
-openaq-buyer prepare \
+starforge openaq-buyer prepare \
   --dir /ABS/PRIVATE/pm25-acquisition \
   --handoff /ABS/PRIVATE/handoff \
   --handoff-sha256 HANDOFF_FILE_SHA256 \
@@ -125,8 +134,8 @@ Preparation returns the selected session directory and native status. It perform
 ## 4. Review, approve, and acquire
 
 ~~~sh
-openaq-buyer inspect --dir /ABS/PRIVATE/acquisition
-openaq-buyer run --dir /ABS/PRIVATE/acquisition
+starforge openaq-buyer inspect --dir /ABS/PRIVATE/acquisition
+starforge openaq-buyer run --dir /ABS/PRIVATE/acquisition
 ~~~
 
 Inspect shows the original release, source review, exact URL, payment terms, limits, native page state and next page. The run invokes the unchanged native Dataset executor using the retained original operator. Each page reaches the existing approval channel and original SF36 ledger before any paid dispatch. Use the existing local terminal/browser approval mode and configured environment. A command cannot change that mode or signer on the fly.
@@ -140,7 +149,7 @@ The process retains the wrapper lease while the original native page engine owns
 Use `inspect` first. If the original native run lock belongs to a proven-dead process, the existing native recovery command reads its host/PID/nonce and existing files:
 
 ~~~sh
-openaq-buyer recover --dir /ABS/PRIVATE/acquisition
+starforge openaq-buyer recover --dir /ABS/PRIVATE/acquisition
 ~~~
 
 The recovery command does not replay the page. A native `RECONCILIATION_REQUIRED` result can describe paid-but-unconfirmed, lost-output, unpaid or expired-generation work. Continue through that original result and the existing SF36/SF88 recovery authority.
@@ -148,14 +157,14 @@ The recovery command does not replay the page. A native `RECONCILIATION_REQUIRED
 For an actual original unpaid continuation with the reviewed attempt digest:
 
 ~~~sh
-openaq-buyer run --dir /ABS/PRIVATE/acquisition \
+starforge openaq-buyer run --dir /ABS/PRIVATE/acquisition \
   --retry-unpaid --expected-attempt-sha256 ORIGINAL_ATTEMPT_SHA256
 ~~~
 
 For an original released/expired generation, retain the full native continuation selection in a private JSON file, including its original history/source/proof fields:
 
 ~~~sh
-openaq-buyer run --dir /ABS/PRIVATE/acquisition \
+starforge openaq-buyer run --dir /ABS/PRIVATE/acquisition \
   --retry-expired /ABS/PRIVATE/original-expired-selection.json \
   --expected-attempt-sha256 ORIGINAL_ATTEMPT_SHA256
 ~~~
@@ -167,9 +176,9 @@ If the first native initialization was interrupted before a complete session def
 ## 5. Receive the original accounting and full data room
 
 ~~~sh
-openaq-buyer account --dir /ABS/PRIVATE/acquisition
-openaq-buyer account --dir /ABS/PRIVATE/acquisition --finalize
-openaq-buyer deliver \
+starforge openaq-buyer account --dir /ABS/PRIVATE/acquisition
+starforge openaq-buyer account --dir /ABS/PRIVATE/acquisition --finalize
+starforge openaq-buyer deliver \
   --dir /ABS/PRIVATE/acquisition \
   --out /ABS/PRIVATE/dataset-output
 ~~~
@@ -191,7 +200,7 @@ The original builder binds its output directory to the selected complete session
 ## 6. Export the complete customer handover
 
 ~~~sh
-openaq-buyer export \
+starforge openaq-buyer export \
   --dir /ABS/PRIVATE/acquisition \
   --out /ABS/PRIVATE/customer-delivery \
   --id ORIGINAL_CUSTOMER_EXPORT_ID
@@ -220,7 +229,7 @@ The complete directory includes:
 Inspect before transfer:
 
 ~~~sh
-openaq-buyer export-inspect \
+starforge openaq-buyer export-inspect \
   --dir /ABS/PRIVATE/customer-delivery \
   --sha256 DELIVERY_MANIFEST_FILE_SHA256
 ~~~
@@ -234,7 +243,7 @@ Repeated export with the same directory, ID and request reopens its completed ma
 On the receiving host, keep the copied complete delivery in its private directory. Choose a new private receiving directory:
 
 ~~~sh
-openaq-buyer receive \
+starforge openaq-buyer receive \
   --source /ABS/PRIVATE/copied-customer-delivery \
   --sha256 DELIVERY_MANIFEST_FILE_SHA256 \
   --dir /ABS/PRIVATE/received \
@@ -253,7 +262,7 @@ The returned paths contain:
 The receiver preserves the original logical source and page identities. Its typed Dataset view points to the actual local output files without rewriting the original native report. It verifies the original source-page intent, body hash, evidence hash, row count and cursor sequence against every acquired page.
 
 ~~~sh
-openaq-buyer reopen --dir /ABS/PRIVATE/received
+starforge openaq-buyer reopen --dir /ABS/PRIVATE/received
 ~~~
 
 After the first complete receiving, reopen uses its retained `files/` and works after the donor directory is gone. The receiver’s original records and native engines own subsequent replay. Choose a new explicit receiving directory when moving a completed receiving to another host; do not relabel an old live process or mutate its local paths to resemble a new owner.
@@ -265,7 +274,7 @@ Open `files/dataset/review.html` and the original HTML report under `study/selec
 Use the existing OpenAQ CLI’s original receive action with a new private project directory and its selected project configuration:
 
 ~~~sh
-openaq receive \
+starforge openaq receive \
   --workspace /ABS/PRIVATE/editable-openaq \
   --config /ABS/PRIVATE/project.json \
   --archive /ABS/PRIVATE/received/files/study.tgz \
