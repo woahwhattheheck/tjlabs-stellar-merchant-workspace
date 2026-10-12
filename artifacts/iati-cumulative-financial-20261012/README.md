@@ -44,3 +44,27 @@ Set I to the absolute materialized `stellar/scf-starforge-20261009/sf30-seller-s
 The organisation acquisition file contains the complete original successful publisher receipt expected by the programme. The original full organisation XML is 99,013 bytes/SHA256 c18e63db2d543eaeb5525a4df21cd16561f0316dab831789bfdd176e1accdfce. The original activity gzip is 647,227 bytes/SHA256 4df991d0ce8bbcc2ff44d0c71644f9f6fb2f4b10c9edd037294d146634433645 and expands to the complete 8,496,890-byte publisher XML/SHA256 98a6bad80d60aa8deaa35fe1a593313515649a9fae7456895d1bfed4ac4a756d. The original SNV ZIP is retained without re-encoding its member bytes.
 
 6966 owns the Results publication and original SNV receiving; CB2A owns financial PR388; A5F3 composes the cumulative source; the accepting root operator owns the one complete financial native programme. This engineering source capsule contains no executed customer workspace, console connection token or derived private case archive.
+
+## Complete retrieval through text-only connectors
+
+The same gzip is also stored as four unchanged ASCII base64 parts, each within the provider's inline file limit. Read all four files completely at the same immutable carrier ref. Do not fetch the large binary through a connector that exposes an empty inline content field. Verify each original ASCII body before joining:
+
+| File | ASCII bytes | SHA256 |
+| --- | ---: | --- |
+| complete-source.base64.part01 | 500000 | 27a23c9e3605e51ba061d2142cae72e571be45ff20c504e954587bb6c5179b58 |
+| complete-source.base64.part02 | 500000 | 52f7cb1103c7de7a6c54af4c24b0c1c84ba91ea503383d8baa67439319699707 |
+| complete-source.base64.part03 | 500000 | 4a5a8cbb55328bfca0114122757beef7940fb3f0da3e4a043899bec0fbec0110 |
+| complete-source.base64.part04 | 308312 | 1009f4a25f24dda97c5a427b7568096cef2e82f768b68b35f2485293dc917d0e |
+
+Concatenate their exact ASCII bodies in part order and base64-decode once. The result must match the original gzip size/SHA above. Inflate once and verify the whole JSON identity before running the original installer. These transport leaves do not change the source packet or source selection.
+
+```python
+import base64, hashlib
+from pathlib import Path
+parts = [Path('complete-source.base64.part%02d' % index).read_bytes() for index in range(1, 5)]
+packed = base64.b64decode(b''.join(parts), validate=True)
+assert len(packed) == 1356234
+assert hashlib.sha256(packed).hexdigest() == '16b47a862197774812b59c3d7680355c17e1198a7df060e0624ce579d096a24b'
+# Retain this complete verified byte sequence through the original private
+# create-only file publication before passing its path to prepare_source.py.
+```
