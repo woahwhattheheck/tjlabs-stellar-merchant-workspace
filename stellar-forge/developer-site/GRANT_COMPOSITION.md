@@ -194,3 +194,13 @@ while retaining the original four-reader sourcePins contract.
 ## Prepare a saved draft from the command line
 
 The complete developer-site component includes [the native draft exporter](GRANT_EXPORT.md). Run `node stellar-forge/developer-site/grant-export.mjs --draft /private/scf/saved-submission.json --out /private/scf/new-export` to prepare the existing saved draft without opening another browser. It uses the same submission, planning and handover models, retains manual edits and complete history, and produces exact field text, counts, full printing and a native draft that the original workspace can reopen. Application-only receiving requires its matching source index and original URL.
+
+## Receive installation and recurring buyer work
+
+The canonical “9A. Current demonstration and operator journey” includes “Product selection, installation and recurring buyer work”. Receive that complete accepted subsection through the ordinary `--manuscript` path. The existing section receiver updates it in place and keeps every other customer chapter.
+
+The chapter carries the selected Source Builds guide and Request Collections authoring guide. The original source registration receives them as `installation-source-builds` and `request-collection-authoring`, retaining each exact repository, source commit and path. A later selected source updates that record and removes an obsolete blob pin through the same existing receiver.
+
+Keep the installation and planning capabilities together: selecting and comparing an immutable product edition, continuing its retained source build and installation, authoring a reusable plan from the original saved provider catalogue, preparing and reopening a named period, creating or resuming its original collection, and preserving prepared operator state in the existing receiving workflow. Measured native outcomes continue to come from the original operated case.
+
+The product is part of the existing starting foundation. The unchanged six priced packages fund the remaining customer-specific source integration, deployment, independent buyer operation and maintainer handover.
