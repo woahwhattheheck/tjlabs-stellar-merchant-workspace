@@ -399,7 +399,7 @@ export async function startApplication(runtime, { env = process.env, python } = 
     try {
       authorize(runtime, request);
       const url = new URL(request.url, runtime.profile.origin);
-      if (url.origin !== runtime.profile.origin) fail('APP_ORIGIN_DENIED', 403);
+      if (url.origin !== new URL(runtime.profile.origin).origin) fail('APP_ORIGIN_DENIED', 403);
       if (url.pathname.startsWith(CONTROL_PATH + '/')) return await control(request, response, url);
       const route = runtime.routes.find(item => item.path === url.pathname);
       if (!route || request.method !== 'POST' || url.search) fail('APP_ROUTE_NOT_FOUND', 404);
