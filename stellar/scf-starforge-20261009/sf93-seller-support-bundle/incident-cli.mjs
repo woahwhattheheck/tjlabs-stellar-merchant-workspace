@@ -6,11 +6,14 @@ import {initializeIncidentStore,readPrivateFile,openIncidentStore} from './incid
 import {resolveDestination} from './notifications.mjs';
 import {inspectSlackDestination} from './notifications-slack.mjs';
 import {runIncidentWatch} from './watch.mjs';
+import {reviewObjectSource} from './object-source.mjs';
 import {acknowledgeIncident,configureIncidents,incidentStatus,remindIncident,
   operateNotification,pruneIncidents,exportIncident} from './incident-operator.mjs';
 
 const usage=`SF93 merchant incident operations (Node 22+, Linux flock)
 
+review-object --session ORIGINAL_DIRECTORY [--max-bytes N] [--max-chunks N] [--timeout-ms N]
+              [--financial-after-seconds N] [--output-after-seconds N]
 init      --state NEW_DIRECTORY --config PRIVATE_CONFIG
 run       --state DIRECTORY
 status    --state DIRECTORY [--details]
@@ -23,13 +26,15 @@ configure --state DIRECTORY --config PRIVATE_CONFIG --config-revision N
 prune     --state DIRECTORY
 export    --state DIRECTORY --incident ID --revision N --workspace PRIVATE_SF74_FILE --route ID --out NEW_DIRECTORY
 
+review-object reads the original saved buyer and returns its exact registration for operator review.
+It performs no purchase, assembly, finalization or notification. See OBJECT_MONITORING.md.
 run owns only the watcher. SIGINT/SIGTERM finishes its current state write and releases its kernel lease.
 Notifications use the configured webhook URL/signing key or Slack token environment reference.
 destination reads the current Slack actor/workspace; its command sends no notification.
 status contains private merchant operational metadata; --details also includes acknowledgment notes.
 See INCIDENT_OPERATIONS.md for original runtime startup, webhook signature and case import.
 `;
-const shapes={init:['config'],run:[],status:[],destination:[],ack:['incident','revision','by','note-file'],
+const shapes={'review-object':['session','max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'],init:['config'],run:[],status:[],destination:[],ack:['incident','revision','by','note-file'],
   notify:['incident','revision'],retry:['event','attempts','by'],cancel:['event','attempts','by'],
   configure:['config','config-revision'],prune:[],export:['incident','revision','workspace','route','out']};
 function parse(args) {
@@ -40,23 +45,41 @@ function parse(args) {
     const flag=flags[i];
     if(command==='status'&&flag==='--details'&&!Object.hasOwn(values,'details')){values.details=true;continue;}
     const key=flag.slice(2);
-    if(!flag.startsWith('--')||!['state',...shapes[command]].includes(key)||Object.hasOwn(values,key)||
+    if(!flag.startsWith('--')||!(command==='review-object'?shapes[command]:['state',...shapes[command]]).includes(key)||Object.hasOwn(values,key)||
         !flags[i+1]||flags[i+1].startsWith('--'))throw new TypeError(usage);
     values[key]=flags[++i];
   }
-  const required=['state',...shapes[command].filter(key=>key!=='note-file')];
+  const required=command==='review-object'?['session']:['state',...shapes[command].filter(key=>key!=='note-file')];
   if(required.some(key=>!values[key]))throw new TypeError(usage);
   for(const key of ['revision','attempts','config-revision'])if(values[key]!==undefined) {
     if(!/^(0|[1-9]\d*)$/.test(values[key]))throw new TypeError('Expected an exact integer for --'+key);
     values[key]=Number(values[key]);
     if(!Number.isSafeInteger(values[key])||values[key]<(key==='attempts'?0:1))throw new TypeError('Invalid --'+key);
   }
+  for(const key of ['max-bytes','max-chunks','timeout-ms','financial-after-seconds','output-after-seconds'])if(values[key]!==undefined) {
+    if(!/^(0|[1-9]\d*)$/.test(values[key]))throw new TypeError('Expected an exact integer for --'+key);
+    values[key]=Number(values[key]);
+    if(!Number.isSafeInteger(values[key]))throw new TypeError('Invalid --'+key);
+  }
   return {command,values};
 }
 const privateText=async(path,max)=>new TextDecoder('utf-8',{fatal:true}).decode(await readPrivateFile(resolve(path),max));
 export async function main(args=process.argv.slice(2)) {
   const parsed=parse(args);if(!parsed){process.stdout.write(usage);return;}
-  const {command,values:v}=parsed,directory=resolve(v.state);let result;
+  const {command,values:v}=parsed;
+  if(command==='review-object') {
+    const controller=new AbortController(),stop=()=>controller.abort();
+    process.once('SIGINT',stop);process.once('SIGTERM',stop);
+    try {
+      const names={'max-bytes':'maxBytes','max-chunks':'maxChunks','timeout-ms':'timeoutMs',
+        'financial-after-seconds':'financialAfterSeconds','output-after-seconds':'outputAfterSeconds'};
+      const input={directory:resolve(v.session),...Object.fromEntries(Object.entries(names)
+        .filter(([flag])=>v[flag]!==undefined).map(([flag,key])=>[key,v[flag]]))};
+      const result=await reviewObjectSource(input,{signal:controller.signal});
+      process.stdout.write(JSON.stringify(result,null,2)+'\n');return result;
+    } finally {process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+  }
+  const directory=resolve(v.state);let result;
   const incident={directory,id:v.incident,expectedRevision:v.revision};
   if(command==='init'||command==='configure') {
     const config=JSON.parse(await privateText(v.config,65_536));
