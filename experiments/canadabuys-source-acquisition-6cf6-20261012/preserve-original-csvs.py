@@ -111,6 +111,7 @@ def main():
     if prior.get("phase") == "SAVING":
         raise ValueError("Reconcile the retained pending Library request before continuing its save.")
     previous_results = {item["local_path"]: item for item in prior.get("result", {}).get("results", [])}
+    previous_requests = {item["local_path"]: item for item in prior.get("requests", [])}
     previous_files = {item["local_path"]: item for item in prior.get("files", [])}
     selected_files, pending = [], []
     for item in requests:
@@ -126,6 +127,9 @@ def main():
                     "version_reason": "Continue the same original CanadaBuys source receiving."}
             if previous.get("current_version_number") is not None:
                 item["expected_current_version"] = previous["current_version_number"]
+        elif previous and previous.get("status") != "succeeded" and str(path) in previous_requests:
+            # Retain a failed replacement\'s identity and version guard on continuation.
+            item = dict(previous_requests[str(path)])
         pending.append(item)
     if not pending:
         print(json.dumps({"status": "COMPLETE", "retained_delivery": str(result_path),
