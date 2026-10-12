@@ -65,15 +65,31 @@ export async function start(args, dependencies = {}) {
   const session = await originalLaunch(args.slice(separator + 1));
   if (!session || typeof session.url !== 'string' || typeof session.close !== 'function')
     throw new Error('Original SF82 did not start a live seller session');
-  let operations;
+  const owners = new Map([['seller', session]]);
+  let operations, closing = null;
+  // Remove only owners whose original close completed. A retry continues the
+  // same remaining listeners without closing an already-finished owner again.
+  function close() {
+    if (closing) return closing;
+    closing = Promise.allSettled([...owners].map(async ([name, owner]) => {
+      await owner.close();
+      owners.delete(name);
+    })).then(results => {
+      if (results.some(result => result.status === 'rejected'))
+        throw new Error('Operator listeners did not fully close');
+    }).catch(error => { closing = null; throw error; });
+    return closing;
+  }
   try {
     operations = await originalOps(session, { port: Number(port) });
+    if (typeof operations?.close === 'function') owners.set('operations', operations);
     if (!operations || typeof operations.url !== 'string' ||
         typeof operations.close !== 'function') throw new TypeError('Original SF30 operations did not start');
-  } catch (error) { await session.close().catch(() => {}); throw error; }
-  let closing = null;
-  const close = () => closing ??= Promise.allSettled([operations.close(), session.close()])
-    .then(results => { if (results.some(r => r.status === 'rejected')) throw new Error('Operator listeners did not fully close'); });
+  } catch (error) {
+    try { await close(); }
+    catch (closeError) { closeError.cause ??= error; closeError.close = close; throw closeError; }
+    throw error;
+  }
   const capture = `node ${JSON.stringify(fileURLToPath(import.meta.url))} capture --seller ${session.url} --ops ${operations.url} --support-parent ${JSON.stringify(support)}`;
   const result = {
     schema: 'stellar-forge.seller-pilot-ops.v1', state: 'RUNNING',
