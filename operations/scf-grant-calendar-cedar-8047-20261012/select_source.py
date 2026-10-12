@@ -20,6 +20,7 @@ OPERATION = "operations/scf-grant-calendar-cedar-8047-20261012"
 MANAGED = FAMILY + "/workspace/managed_launch.py"
 SCHEMA = "stellar-forge.scf-calendar-source-receiving.v1"
 FULFILLMENT = ("build_customer_handover.py", "restore_workspace.py", "CUSTOMER_HANDOVER.md", "select_source.py")
+PLANNING_FULFILLMENT = FULFILLMENT + ("build_plan_handover.py", "PLAN_HANDOVER.md")
 RELATIVE = re.compile(r'''["']((?:\.\.?/|stellar/|stellar-forge/|operations/)[^"'\r\n]+)["']''')
 ADJACENT = re.compile(r'''["']([A-Za-z0-9_.-]+\.(?:mjs|js|py|json|jsonl|css|html|md|txt|csv|yaml|yml|sql|ts|mts|cjs))["']''')
 SOURCE_SUFFIXES = {".mjs", ".js", ".py", ".ts", ".mts", ".cjs", ".json"}
@@ -53,7 +54,10 @@ def write_original(path, raw):
     pending.unlink()
 
 
-def receive(repo, revision, fulfillment_revision, output):
+def receive(repo, revision, fulfillment_revision, output, profile="calendar"):
+    if profile not in ("calendar", "planning"):
+        raise ValueError("Choose the maintained calendar or planning source profile.")
+    fulfillment_files = PLANNING_FULFILLMENT if profile == "planning" else FULFILLMENT
     for selected_revision in dict.fromkeys((revision, fulfillment_revision)):
         present = subprocess.run(["git", "cat-file", "-e", selected_revision + "^{commit}"],
                                  cwd=repo, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -65,11 +69,13 @@ def receive(repo, revision, fulfillment_revision, output):
         mode, kind, identity = metadata.split()
         if kind == "blob":
             tree[path] = {"mode": mode, "gitBlob": identity}
-    excluded = {OPERATION + "/" + name for name in FULFILLMENT}
+    excluded = {OPERATION + "/" + name for name in fulfillment_files}
     base = sorted(path for path in tree if (path.startswith(FAMILY + "/") or path.startswith(OPERATION + "/")) and path not in excluded)
     if MANAGED not in tree:
         raise ValueError("Select the original grant runtime with managed_launch.py.")
     identity = {"schema": SCHEMA, "repository": REPOSITORY, "commit": revision, "fulfillmentCommit": fulfillment_revision}
+    if profile == "planning":
+        identity["profile"] = profile
     output.mkdir(parents=True, exist_ok=True, mode=0o700)
     with (output / ".source-receiving.lock").open("a") as lease:
         fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -156,7 +162,7 @@ def receive(repo, revision, fulfillment_revision, output):
             raise ValueError("The original repository license differs from its selected Git object.")
         write_original(output / "LICENSE", license_raw)
         fulfillment = []
-        for name in FULFILLMENT:
+        for name in fulfillment_files:
             relative = OPERATION + "/" + name
             expected = git(repo, "rev-parse", fulfillment_revision + ":" + relative).decode().strip()
             raw = git(repo, "show", fulfillment_revision + ":" + relative)
@@ -179,13 +185,15 @@ def main(argv=None):
     parser.add_argument("--ref", required=True, help="Complete operated Git source revision")
     parser.add_argument("--fulfillment-ref", required=True, help="Complete published Git revision of the source selector, builder, restore helper and guide")
     parser.add_argument("--output", required=True, type=Path, help="New private source snapshot, or the same retained snapshot for exact continuation")
+    parser.add_argument("--profile", choices=("calendar", "planning"), default="calendar",
+                        help="Calendar receives its original four fulfillment leaves; planning also receives its builder and opening guide")
     args = parser.parse_args(argv)
     if not re.fullmatch(r"[0-9a-f]{40}", args.ref):
         parser.error("--ref requires a complete original Git revision")
     if not re.fullmatch(r"[0-9a-f]{40}", args.fulfillment_ref):
         parser.error("--fulfillment-ref requires a complete published Git revision")
     try:
-        result = receive(args.repo.expanduser().resolve(strict=True), args.ref, args.fulfillment_ref, args.output.expanduser().resolve())
+        result = receive(args.repo.expanduser().resolve(strict=True), args.ref, args.fulfillment_ref, args.output.expanduser().resolve(), args.profile)
     except (OSError, ValueError, KeyError, TypeError, StopIteration, subprocess.CalledProcessError) as error:
         print(json.dumps({"stage": "ERROR", "message": str(error)}), file=sys.stderr)
         return 1
