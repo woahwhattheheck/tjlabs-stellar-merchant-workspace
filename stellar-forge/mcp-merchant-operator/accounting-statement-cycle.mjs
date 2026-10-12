@@ -4,7 +4,7 @@ import {open,mkdir,realpath,lstat,rename,unlink,link} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
 import {resolve,join,dirname} from 'node:path';
 import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
-import {writePrivate,privateSupportDirectory} from './config.mjs';
+import {writePrivate,privateSupportDirectory} from './host-files.mjs';
 import {accountingStatementSelection,accountingStatementPreview,accountingStatementRetentionArguments,connectAccountingStatementClient} from './accounting-statement-client.mjs';
 import {exportAccountingStatement,downloadAccountingStatementStatus} from './accounting-statement-cli.mjs';
 
