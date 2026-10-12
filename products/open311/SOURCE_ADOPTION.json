@@ -4,7 +4,7 @@
   "source_commit": "23132498a928e33f253ede095d00e2168814a5cf",
   "source_pull_request": 2513,
   "target_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "target_base_commit": "c603e45d9090db9912405f585eb20d647cf644cd",
+  "target_base_commit": "d6b918db4d87b553c21b63e42c64718b909fb75f",
   "selection": "open311-follow-through",
   "source_files": [
     {
@@ -1154,7 +1154,11 @@
       "merchant_configuration": "open311FollowThroughWorkspaces",
       "workspace_database": "open311-follow-through.sqlite",
       "installation": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/follow-through/INSTALL.md",
-      "core_commissioning": "operations/request311-follow-through-8e5f-20261012/core-commissioning/"
+      "core_commissioning": "operations/request311-follow-through-8e5f-20261012/core-commissioning/",
+      "operating_program": "operations/request311-follow-through-8e5f-20261012/operate-follow-through.mjs",
+      "operating_launcher": "operations/request311-follow-through-8e5f-20261012/launch-follow-through.py",
+      "operating_source": "operations/request311-follow-through-8e5f-20261012/source-packet.json",
+      "complete_installed_source_producer": "operations/request311-follow-through-8e5f-20261012/prepare-installed-source.py"
     }
   },
   "initial_source": {
@@ -1163,10 +1167,10 @@
   },
   "shared_contracts_observed_at": "faa3cf93020be2514b376f6a4d9c5c8a93bfda10",
   "previous_adoption": {
-    "source_commit": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f",
-    "source_pull_request": 2453,
-    "target_pull_request": 404,
-    "target_merge_commit": "978fac495329c4cf98af7e996de0e0e04249e499"
+    "source_commit": "23132498a928e33f253ede095d00e2168814a5cf",
+    "source_pull_request": 2513,
+    "target_pull_request": 524,
+    "target_merge_commit": "c2527e49d638c8d2a189a9035d1d151c9fdb4b16"
   },
   "source_updates": [
     {
@@ -1410,6 +1414,23 @@
         "operations/request311-follow-through-8e5f-20261012/core-commissioning/result.json",
         "operations/request311-follow-through-8e5f-20261012/core-commissioning/README.md"
       ]
+    },
+    {
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc",
+      "paths": [
+        "operations/request311-follow-through-8e5f-20261012/operate-follow-through.mjs",
+        "operations/request311-follow-through-8e5f-20261012/deliver-archive.py",
+        "operations/request311-follow-through-8e5f-20261012/launch-follow-through.py",
+        "operations/request311-follow-through-8e5f-20261012/README.md",
+        "operations/request311-follow-through-8e5f-20261012/source-packet.json",
+        "operations/request311-follow-through-8e5f-20261012/prepare-installed-source.py",
+        "operations/open311-collection-8e5f-20261012/run_native.py",
+        "operations/open311-collection-8e5f-20261012/receive_native.py",
+        "operations/open311-collection-8e5f-20261012/launch_native.py",
+        "operations/open311-collection-8e5f-20261012/README.md"
+      ]
     }
   ],
   "previous_adoptions": [
@@ -1466,6 +1487,12 @@
       "source_pull_request": 2453,
       "target_pull_request": 404,
       "target_merge_commit": "978fac495329c4cf98af7e996de0e0e04249e499"
+    },
+    {
+      "source_commit": "23132498a928e33f253ede095d00e2168814a5cf",
+      "source_pull_request": 2513,
+      "target_pull_request": 524,
+      "target_merge_commit": "c2527e49d638c8d2a189a9035d1d151c9fdb4b16"
     }
   ],
   "selections": [
@@ -1514,39 +1541,43 @@
     },
     {
       "path": "operations/open311-collection-8e5f-20261012/launch_native.py",
-      "git_blob": "b305c2f51e9820cca26bf323b6db9150da60ca8a",
       "mode": "100644",
-      "bytes": 12299,
-      "sha256": "d33da5a9825206504630bf8340f525121a69a85bb480224ade0c63d9cec0dd78",
-      "source_commit": "b0086d00aec0ca9a6d781d0e939206ff3a305b89",
-      "source_pull_request": 2417
+      "git_blob": "826cf213f73a8e23eebdb2f34747bf4c0453c122",
+      "bytes": 16067,
+      "sha256": "41e44c7736bce7fbab240fa39dfe1501f90628a6c9d9cacd09d60aeab8396718",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
     },
     {
       "path": "operations/open311-collection-8e5f-20261012/README.md",
-      "git_blob": "bbd4630e9e280fc4348fffe1cc8e8cda895e1a03",
       "mode": "100644",
-      "bytes": 21364,
-      "source_commit": "3cb7d7ab61321c1ca4d73dfc2d52a8661a6d910f",
-      "source_pull_request": 2453,
-      "sha256": "5611beb440307ccb5b61057c401703cbc355243f32d557b2c8499d5cddbc1fae"
+      "git_blob": "1a61cad5a2f1d3dbe06ffc49aaec0495ef5b2fd7",
+      "bytes": 25103,
+      "sha256": "807af6cf7e333bfe30b829a7f3731e319fb499bd8504975061fc6b7196599a74",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
     },
     {
       "path": "operations/open311-collection-8e5f-20261012/receive_native.py",
-      "git_blob": "430c1691eb3c08b9c7114321f1c951af82857092",
       "mode": "100644",
-      "bytes": 14559,
-      "sha256": "fbb844fedcdcb1f3ea5d7fe4e7274ac79fb25077984b5ff7f9517986a992a443",
-      "source_commit": "b0086d00aec0ca9a6d781d0e939206ff3a305b89",
-      "source_pull_request": 2417
+      "git_blob": "615ca52f8a97b579d43567c610a32e45f5ce66c3",
+      "bytes": 25080,
+      "sha256": "348b34e5a7050c8efeabca284cf6cf95a1fb5dd6b1e0d7ec54df64333fa11108",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
     },
     {
       "path": "operations/open311-collection-8e5f-20261012/run_native.py",
-      "git_blob": "23cd38c71b5c8e845c3b31fd1c4b1661661ef2c4",
       "mode": "100644",
-      "bytes": 18216,
-      "sha256": "58b994e15464cdad99cdbc1ffa35d79f3676e5592fc2d4f0f86a9357536c12e2",
-      "source_commit": "b1cc5ba862f3f18c41f6971eb638dbc2b8c1a1d9",
-      "source_pull_request": 2403
+      "git_blob": "906d1c2240517e4bac9fd5a95bf720e7ccd0f9d5",
+      "bytes": 21155,
+      "sha256": "57e3085cc96d0373468222038aff4b1a044ae642bc590bced356bbb33e52d676",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
     },
     {
       "path": "operations/open311-collection-8e5f-20261012/source-packet.json",
@@ -1664,6 +1695,66 @@
       "source_commit": "23132498a928e33f253ede095d00e2168814a5cf",
       "source_pull_request": 2513,
       "source_merge_commit": "02e32f219b5fa267e53ce5bba8d8fb1ed825a4f9"
+    },
+    {
+      "path": "operations/request311-follow-through-8e5f-20261012/deliver-archive.py",
+      "mode": "100644",
+      "git_blob": "0c7e2db26eabca28cec217c8bced5c0e037c0cbf",
+      "bytes": 8795,
+      "sha256": "0892ce2c93d3d0a06ae475822e2bbf7e8e0f8a208d03882a17ebbde297a87682",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
+    },
+    {
+      "path": "operations/request311-follow-through-8e5f-20261012/launch-follow-through.py",
+      "mode": "100644",
+      "git_blob": "ab39dc0fbcf3f040fb02742526b6fc629b99d9b7",
+      "bytes": 12184,
+      "sha256": "552e5f3a9424bc48d2f7d6db66ed3cf4a422a6ae7a3c130c8c81824c074cd0eb",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
+    },
+    {
+      "path": "operations/request311-follow-through-8e5f-20261012/operate-follow-through.mjs",
+      "mode": "100644",
+      "git_blob": "02d672971d11bef8ae7dbf6af209b2c4f88e978a",
+      "bytes": 45952,
+      "sha256": "2c4a1a1199da34f3212249de9b360396730b72b948c3a3752f492d52b3150682",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
+    },
+    {
+      "path": "operations/request311-follow-through-8e5f-20261012/prepare-installed-source.py",
+      "mode": "100644",
+      "git_blob": "8a342d5be7d00fa7aede019876511a9e74df8d89",
+      "bytes": 6623,
+      "sha256": "f4fa0ad84b44faec839a6c18221188d4d564d02d0213e2baeed3eed5896991dd",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
+    },
+    {
+      "path": "operations/request311-follow-through-8e5f-20261012/README.md",
+      "mode": "100644",
+      "git_blob": "e9812cf6a7b1f09a764d2e4bd9e8adafca05aaf7",
+      "bytes": 10890,
+      "sha256": "ecf6f5d71e6a0b9ab995fd0408304e6e4f02690f300558e49d8b14a44acffc38",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
+    },
+    {
+      "path": "operations/request311-follow-through-8e5f-20261012/source-packet.json",
+      "mode": "100644",
+      "git_blob": "197be5bab0767a02a8cf3326044302279fb6213a",
+      "bytes": 81092,
+      "sha256": "6781a5190360b6f2725793031c71926785edc7a2b7e0d736e74795e27ff56315",
+      "source_commit": "cd62af5a5a828493209968046b89138cc016b8a8",
+      "source_pull_request": 2527,
+      "source_merge_commit": "560bd767fe33bd0bacc6cb0f9bffc9a122f42bbc"
     }
   ],
   "source_merge_commit": "02e32f219b5fa267e53ce5bba8d8fb1ed825a4f9"

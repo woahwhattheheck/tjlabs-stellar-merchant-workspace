@@ -278,6 +278,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
         onOpen:(tab,detail)=>{
           if(!available())return;
           if(tab==='forecast'&&detail?.inputs){
+            if(view.forecastDraft)download(JSON.stringify(view.forecastDraft,null,2)+'\n',c.program.id+'-forecast-draft-before-cash-continuation.json');
             view.forecastId=null;view.forecastDraft=JSON.parse(JSON.stringify(detail.inputs));
           }
           view.tab=tab;render();

@@ -76,7 +76,7 @@ Choose **Open tranche completion** to review the current receipt selection and c
 
 Each saved forecast keeps its complete original input and source snapshot. After a correction, the account derives a current continuation by resolving every retained corrected cash reference to the current terminal observation.
 
-**Open current inputs** opens that complete input in the existing Forecast editor. It carries the actual current cash IDs and case version and runs the original forecast preview. Review dates, remaining work and cash, then save a new edition through the normal Forecast operation. **Download complete inputs** retains the full editable input for CLI or agent use.
+**Open current inputs** opens that complete input in the existing Forecast editor. It carries the actual current cash IDs and case version and runs the original forecast preview. Review dates, remaining work and cash, then save a new edition through the normal Forecast operation. **Download complete inputs** retains the full editable input for CLI or agent use. Opening a current continuation first downloads any earlier unsaved forecast draft so that input remains available.
 
 These continuations are available immediately after saving and whenever the account is reopened. Their original forecast identity and every source correction ID travel with the account report.
 

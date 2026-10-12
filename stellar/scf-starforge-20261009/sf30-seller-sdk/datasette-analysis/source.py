@@ -226,9 +226,9 @@ def handover(value):
     require(record.get("schema") == HANDOVER_SCHEMA and isinstance(record.get("delivery"), dict),
             "DATASETTE_HANDOVER_SCHEMA_INVALID")
     delivery = dict(record["delivery"])
-    require(delivery.get("kind") in {"retained-source", "finalized", "native-edition"},
+    require(delivery.get("kind") in {"retained-source", "finalized", "native-edition", "csv-source"},
             "DATASETTE_HANDOVER_KIND_INVALID")
-    for key in ("manifest", "room", "session", "edition"):
+    for key in ("manifest", "room", "session", "edition", "csv", "parser", "metadata"):
         selected = delivery.get(key)
         if selected is not None:
             require(isinstance(selected, str) and selected and "\0" not in selected,
@@ -373,6 +373,130 @@ def read_retained(value):
             "review": record.get("review", {})}
 
 
+
+def read_csv_source(value, *, node):
+    """Import an original CSV through the installed supplier parser and SDK.
+
+    This is a retained CSV source, with its original file and parser output.
+    It never supplies Datasette page or HTTP continuation records.
+    """
+    import subprocess
+
+    selected = handover(value)
+    record, delivery = selected["record"], selected["record"]["delivery"]
+    require(delivery["kind"] == "csv-source", "DATASETTE_CSV_SOURCE_REQUIRED")
+    for field in ("csv", "parser"):
+        require(isinstance(delivery.get(field), str) and Path(delivery[field]).is_absolute(),
+                "DATASETTE_CSV_SOURCE_PATH_REQUIRED", field)
+    original = regular(Path(delivery["csv"]))
+    parser_raw = regular(Path(delivery["parser"]))
+    require(isinstance(delivery.get("sha256"), str) and HASH.fullmatch(delivery["sha256"])
+            and sha(original) == delivery["sha256"], "DATASETTE_CSV_SOURCE_CHANGED")
+    require(isinstance(delivery.get("parser_sha256"), str) and HASH.fullmatch(delivery["parser_sha256"])
+            and sha(parser_raw) == delivery["parser_sha256"], "DATASETTE_CSV_PARSER_CHANGED")
+    try:
+        original.decode("utf-8")
+    except UnicodeDecodeError:
+        raise SourceError("DATASETTE_CSV_UTF8_REQUIRED") from None
+    source = normalize_source(record.get("source", {}))
+    require(source.get("captured_at"), "DATASETTE_CSV_IMPORT_TIME_REQUIRED")
+    source["capture_time_basis"] = "local-original-file-import"
+    metadata_raw, metadata = None, None
+    if delivery.get("metadata") is not None:
+        metadata_raw = regular(Path(delivery["metadata"]))
+        require(isinstance(delivery.get("metadata_sha256"), str)
+                and HASH.fullmatch(delivery["metadata_sha256"])
+                and sha(metadata_raw) == delivery["metadata_sha256"],
+                "DATASETTE_CSV_METADATA_CHANGED")
+        metadata = parse(metadata_raw)
+        require(isinstance(metadata, dict), "DATASETTE_CSV_METADATA_OBJECT_REQUIRED")
+
+    # parseCSV is the maintained supplier product parser; its original row
+    # numbers, line numbers, ordered headers and raw strings are retained.
+    program = (
+        "import{readFile}from'node:fs/promises';import{pathToFileURL}from'node:url';"
+        "let s='';for await(const b of process.stdin)s+=b;const p=JSON.parse(s);"
+        "const m=await import(pathToFileURL(p.parser));"
+        "const bytes=await readFile(p.csv);const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);"
+        "const parsed=m.parseCSV(text,{delimiter:','});"
+        "process.stdout.write(JSON.stringify({schema:'stellar-forge.original-csv-parser.v1',"
+        "columns:parsed.columns,rows:parsed.rows})+'\\n');"
+    )
+    require(isinstance(node, (str, os.PathLike)) and os.fspath(node)
+            and "\0" not in os.fspath(node), "DATASETTE_NATIVE_NODE_REQUIRED")
+    try:
+        process = subprocess.run(
+            [os.fspath(node), "--input-type=module", "--eval", program],
+            input=encoded({"parser": delivery["parser"], "csv": delivery["csv"]}),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
+            check=False, timeout=180)
+    except subprocess.TimeoutExpired:
+        raise SourceError("DATASETTE_CSV_PARSE_TIMEOUT") from None
+    except OSError as error:
+        raise SourceError("DATASETTE_CSV_PARSER_UNAVAILABLE", str(error)) from None
+    require(process.returncode == 0, "DATASETTE_CSV_PARSE_FAILED",
+            process.stderr[:8192].decode("utf-8", errors="replace"))
+    require(len(process.stdout) <= MAX_FILE, "DATASETTE_CSV_PARSER_CAPACITY")
+    parsed = parse(process.stdout)
+    require(isinstance(parsed, dict)
+            and parsed.get("schema") == "stellar-forge.original-csv-parser.v1"
+            and isinstance(parsed.get("rows"), list), "DATASETTE_CSV_PARSER_RESULT_INVALID")
+    columns = parsed.get("columns")
+    mapping, type_column = reviewed_columns(columns, record.get("column_mapping"))
+    keys = record.get("review", {}).get("keys", [])
+    require(isinstance(keys, list) and all(isinstance(key, str) and key in columns for key in keys)
+            and len(keys) == len(set(keys)), "DATASETTE_CSV_KEYS_INVALID")
+    kinds = json.dumps({column: "string" for column in columns},
+                       ensure_ascii=False, separators=(",", ":"))
+    rows = []
+    for ordinal, item in enumerate(parsed["rows"], 1):
+        require(isinstance(item, dict) and isinstance(item.get("raw"), dict)
+                and set(item["raw"]) == set(columns)
+                and all(isinstance(item["raw"][column], str) for column in columns)
+                and type(item.get("rowNumber")) is int and item["rowNumber"] >= 1
+                and type(item.get("lineNumber")) is int and item["lineNumber"] >= 1,
+                "DATASETTE_CSV_ROW_INVALID", str(ordinal))
+        rows.append({**{mapping[column]: item["raw"][column] for column in columns},
+                     type_column: kinds})
+    require(regular(Path(delivery["csv"])) == original
+            and regular(Path(delivery["parser"])) == parser_raw,
+            "DATASETTE_CSV_INPUT_CHANGED_DURING_IMPORT")
+    if metadata_raw is not None:
+        require(regular(Path(delivery["metadata"])) == metadata_raw,
+                "DATASETTE_CSV_METADATA_CHANGED")
+    review = {**record.get("review", {}), "keys": keys,
+              "representation": "original-csv-strings-v1"}
+    source.update(source_mode="original-csv", format="csv",
+                  source_columns=columns, column_mapping=mapping, type_column=type_column,
+                  native_types={column: ["string"] for column in columns},
+                  row_count=len(rows), consistency="RETAINED_ORIGINAL_FILE",
+                  csv_sha256=sha(original), parser_sha256=sha(parser_raw),
+                  parser_result_sha256=sha(process.stdout),
+                  handover_sha256=selected["sha256"],
+                  publisher_metadata=metadata,
+                  csv_row_locator="Retained parser rowNumber and lineNumber; original row order.")
+    identity = sha(encoded({"format": "original-csv-strings-v1",
+        "csv_sha256": sha(original), "parser_sha256": sha(parser_raw),
+        "metadata_sha256": sha(metadata_raw) if metadata_raw is not None else None,
+        "mapping": mapping, "review": review,
+        "source": {key: source.get(key) for key in
+                   ("url", "title", "publisher", "publisherEdition", "license")}}))
+    originals = [
+        {"name": Path(delivery["csv"]).name, "raw": original,
+         "content_type": "text/csv; charset=utf-8", "role": "complete-original-csv"},
+        {"name": "csv-parser-result.json", "raw": process.stdout,
+         "content_type": "application/json", "role": "original-csv-parser-result"},
+        {"name": "supplier-report.mjs", "raw": parser_raw,
+         "content_type": "text/javascript", "role": "maintained-original-csv-parser"},
+        {"name": "handover.json", "raw": selected["raw"],
+         "content_type": "application/json", "role": "original-handover"}]
+    if metadata_raw is not None:
+        originals.append({"name": Path(delivery["metadata"]).name, "raw": metadata_raw,
+                          "content_type": "application/json", "role": "original-publisher-metadata"})
+    return {"id": identity, "source": source, "columns": [*mapping.values(), type_column],
+            "rows": rows, "originals": originals, "handover": record, "review": review}
+
+
 def source_document(directory, *, collections, edition):
     """Use the original portable ResponseDocument format, including every page."""
     from stellar_forge_buyer.storage import private_directory, write
@@ -427,6 +551,14 @@ def source_document(directory, *, collections, edition):
            if source.get("capture_time_basis") == "native-capture-commit"
            else "Capture time describes retrieval. ")
         + "Source license and attribution: " + license_text)
+    transform_name = "Datasette reviewed exact-source customer projection v1"
+    if source.get("source_mode") == "original-csv":
+        scope = f"Complete original CSV; {len(edition['rows'])} rows and all original columns."
+        description = ("Every CSV field remains its original string, including blank fields and "
+                       "published zero amounts. The retained parser output preserves original row "
+                       "and line numbers. Import time records local receipt of the original file. "
+                       "Source license and attribution: " + license_text)
+        transform_name = "Original supplier CSV through maintained parser and Analysis response import v1"
     manifest = {"schema": "stellar-forge.analysis-source-document.v1",
                 "title": source["title"], "format": "json", "complete": True,
                 "document": content(projection, "json", "application/json"),
@@ -434,7 +566,7 @@ def source_document(directory, *, collections, edition):
                 "provenance": {"kind": "public-source", "publisher": source["publisher"],
                     "sourceUrl": source["url"], "capturedAt": source["captured_at"],
                     "scope": scope[:500], "description": description[:12000],
-                    "transform": {"name": "Datasette reviewed exact-source customer projection v1",
+                    "transform": {"name": transform_name,
                         "sourceUrl": "https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/source.py",
                         "sha256": sha(regular(Path(__file__)))}}}
     target = directory / "source.json"

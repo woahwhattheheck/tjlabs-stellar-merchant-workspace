@@ -262,13 +262,21 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
     controls();status();
   }
   async function loadReport(){
-    const sequence=++loadSequence,selection=cleanSelection(session.selection);report=null;session.selectedId=null;session.page=0;render();
+    const sequence=++loadSequence,selection=cleanSelection(session.selection),selectedId=session.selectedId||null,target=selectedId?record(selectedId):null;
+    if(target){
+      if(['network','currency','asset'].some(key=>selection[key]!==null&&selection[key]!==target[key]))
+        for(const key of ['network','currency','asset'])selection[key]=target[key];
+      if(selection.startDate&&target.date<selection.startDate)selection.startDate=target.date;
+      if(!selection.endDate||target.date>selection.endDate)selection.endDate=target.date;
+    }
+    report=null;session.page=0;render();
     const query=new URLSearchParams({expectedVersion:String(current.program.version)});
     for(const [key,value] of Object.entries(selection))if(value!==null)query.set(key,value);
     const value=await api(prefix+'/cash-account?'+query);
     if(!available()||sequence!==loadSequence)return;
     if(value.schema!==REPORT_SCHEMA||value.case.id!==caseId||value.case.version!==current.program.version)throw new Error('The account differs from the selected original case.');
     report=value;session.selection={...value.selection,startDate:value.selection.startDate||''};
+    session.selectedId=value.transactions.some(row=>row.id===selectedId)?selectedId:null;
     notice='Opened the original account through '+date(value.selection.endDate)+'.';schedule();render();
   }
   async function run(action){
@@ -316,11 +324,11 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
       const expectedAction=pending.kind==='correction'?'cash.correction':pending.body.action;
       if(result.id!==caseId||result.action!==expectedAction)throw new Error('The result differs from the retained original cash request.');
       session.result=clone(result);session.pending=null;session.reviewed=null;
-      if(pending.body.action==='source.add'&&session.previousRequest?.body?.action==='source.add'&&!session.previousRequest.recovered&&session.previousRequest.after?.draftId===pending.after.draftId&&pretty(session.previousRequest.body.data)===pretty(pending.body.data))
+      if(pending.body.action==='source.add'&&session.previousRequest?.body?.action==='source.add'&&!session.previousRequest.recovered&&session.previousRequest.after?.draftId===pending.after?.draftId&&pretty(session.previousRequest.body.data)===pretty(pending.body.data))
         session.previousRequest.recovered={requestId:pending.body.requestId,result:clone(result),recordedAt:new Date().toISOString()};
-      if(pending.after.kind==='source'&&session.draft?.draftId===pending.after.draftId){
+      if(pending.after?.kind==='source'&&session.draft?.draftId===pending.after?.draftId){
         session.draft.data.sourceIds||=[];if(!session.draft.data.sourceIds.includes(result.recordId))session.draft.data.sourceIds.push(result.recordId);session.draft.expectedVersion=result.version;
-      }else if(pending.after.kind==='draft'&&session.draft?.draftId===pending.after.draftId)session.draft=null;
+      }else if(pending.after?.kind==='draft'&&session.draft?.draftId===pending.after?.draftId)session.draft=null;
       if(result.replacementCashId||result.recordId)session.selectedId=result.replacementCashId||result.recordId;
       await persist();
       if(available()){const next=await api(prefix);await onCase(next,result);}
@@ -365,7 +373,7 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
     const key=node.dataset.caField;if(!key)return;
     if(key.startsWith('select.')){const selectedKey=key.slice(7);session.selection[selectedKey]=['network','currency','asset'].includes(selectedKey)?JSON.parse(node.value):node.value;report=null;loadSequence++;session.selectedId=null;session.page=0;schedule();render();return;}
     if(key.startsWith('filter.')){session.filters||={};session.filters[key.slice(7)]=node.value;session.page=0;schedule();render();return;}
-    if(!session.draft)return;setField(key,node.multiple?Array.from(node.selectedOptions).map(option=>option.value):node.value);session.reviewed=null;schedule();
+    if(!session.draft)return;setField(key,node.multiple?Array.from(node.selectedOptions).map(option=>option.value):node.value);session.reviewed=null;root.querySelector('.cash-account-review')?.remove();schedule();
   });
   root.addEventListener('submit',event=>event.preventDefault());
   root.addEventListener('click',event=>{
@@ -396,13 +404,13 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
       const selected=action==='account'?report?.accounts.find(row=>row.key===id):{network:null,currency:null,asset:null};
       if(!selected)return;
       for(const key of ['network','currency','asset'])session.selection[key]=selected[key];
-      session.panel='transactions';run(loadReport);return;
+      session.selectedId=null;session.panel='transactions';run(loadReport);return;
     }
     if(action==='panel'){session.panel=id;session.page=0;schedule();render();return;}
     if(action==='previous'||action==='next'){session.page+=action==='next'?1:-1;render();return;}
     if(action==='load'){run(loadReport);return;}
     if(action==='refresh'){run(async()=>{const next=await api(prefix);await onCase(next,{version:next.program.version,action:'refresh'});});return;}
-    if(action==='detail'){session.panel='transactions';session.selectedId=id;session.filters={query:'',state:'',direction:'',category:'',periodOnly:false};schedule();render();return;}
+    if(action==='detail'){run(async()=>{if(!record(id))throw new Error('The original cash observation is unavailable in this case.');session.panel='transactions';session.selectedId=id;session.filters={query:'',state:'',direction:'',category:'',periodOnly:false};await loadReport();});return;}
     if(action==='close-detail'){session.selectedId=null;schedule();render();return;}
     if(action==='download-record'){const original=record(id);if(original)download(original,id+'.json');return;}
     if(action==='source'){run(async()=>{const response=await api(prefix+'/sources/'+id,undefined,{download:true});download(await response.blob(),sourceName(id));});return;}
@@ -442,6 +450,6 @@ export function mountCashAccounts({container,current,api,saveApi=api,session,mut
     }
     render();await loadReport();render();
   }
-  const ready=initialize();
+  const ready=initialize().catch(problem=>{if(available())throw problem;});
   return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;loadSequence++;clearTimeout(saveTimer);persist();}};
 }

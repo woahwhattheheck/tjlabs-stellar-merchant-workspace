@@ -7,7 +7,7 @@ import {createHash, randomUUID} from "node:crypto";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const usage = "node prepare.mjs template|prepare --profile cocart|blockscout --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]";
+const usage = "node prepare.mjs template|prepare --profile cocart|blockscout|queryfarm|ars-air-quality --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]";
 function parse(argv) {
   const [command, ...args] = argv;
   if (!["template", "prepare"].includes(command)) throw new Error(usage);
@@ -18,7 +18,7 @@ function parse(argv) {
       throw new Error(usage);
     result[key] = args[i + 1];
   }
-  if (!["cocart", "blockscout"].includes(result.profile) || !result.seed || !result.out ||
+  if (!["cocart", "blockscout", "queryfarm", "ars-air-quality"].includes(result.profile) || !result.seed || !result.out ||
       (command === "prepare" && !result.bindings) || (command === "template" && result.bindings)) throw new Error(usage);
   return result;
 }
