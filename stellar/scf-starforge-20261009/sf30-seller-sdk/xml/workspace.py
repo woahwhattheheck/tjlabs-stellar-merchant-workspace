@@ -23,6 +23,9 @@ import zipfile
 from xml_source import InputError, MAX_SOURCE, inventory, validate_plan, extract, dataset_spec
 
 HERE = Path(__file__).resolve().parent
+# The retained catalogue database shares the original OAI backup member allowance.
+# Individual XML sources keep their independent MAX_SOURCE limit.
+MAX_DATABASE = 16 * MAX_SOURCE
 HEX = re.compile(r"[0-9a-f]{64}\Z")
 VERSION = "stellar-forge.xml-workspace.v1"
 BUILD = "stellar-forge.xml-build.v1"
@@ -247,7 +250,7 @@ class Workspace:
         db_path = self.root / "workspace.sqlite"
         if not db_path.exists():
             private_write(db_path, b"")
-        regular(db_path)
+        regular(db_path, max_bytes=MAX_DATABASE)
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.executescript("""

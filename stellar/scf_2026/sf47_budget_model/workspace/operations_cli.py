@@ -10,6 +10,8 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_commercial_cli as commercial_cli
+import operations_installation_returns_cli as installation_returns_cli
 import operations_ledger_intake as ledger_intake
 
 
@@ -56,6 +58,39 @@ def register(subparsers, common):
     target.add_argument("--expected-version", type=int, required=True)
     target.add_argument("--expected-report-sha256", required=True)
     target.add_argument("--output", required=True)
+    target = command("work-intakes", "List retained work and invoice source intakes", case=True, output=True)
+    target = command("work-intake-show", "Read source rows, saved mappings, editions and original record links", case=True, output=True)
+    target.add_argument("--intake", required=True)
+    target.add_argument("--revision", type=int)
+    target = command("work-intake-upload", "Open an intake from an original CSV/TSV file or case source", case=True, output=True)
+    mutation(target, version=True)
+    original = target.add_mutually_exclusive_group(required=True)
+    original.add_argument("--file", help="Original delimited file, up to the native source limit")
+    original.add_argument("--source", help="Existing original case source ID")
+    target.add_argument("--name", required=True)
+    target.add_argument("--kind", choices=("WORK", "INVOICES"), required=True)
+    target.add_argument("--format", help="UTF-8 JSON with explicit delimiter, encoding, header row, dates and decimal separators")
+    target.add_argument("--source-url", default="")
+    target.add_argument("--observed-at")
+    target = command("work-intake-preview", "Review proposed original records and duplicate decisions without changing the case", case=True, output=True)
+    target.add_argument("--intake", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--revision", type=int)
+    target.add_argument("--document", help="Complete edited intake document JSON; omission uses the saved edition")
+    for verb in ("save", "apply"):
+        target = command("work-intake-" + verb, "Save mapping corrections" if verb == "save" else "Apply the complete reviewed import in one original transaction", case=True, output=True)
+        mutation(target, version=True)
+        target.add_argument("--intake", required=True)
+        target.add_argument("--expected-revision", type=int, required=True)
+        target.add_argument("--document", help="Complete intake document JSON; omission uses the current saved edition")
+        target.add_argument("--expected-preview-sha256", required=verb == "apply")
+    command("amendments", "Read saved plan revisions, amendment editions and applied baseline history", case=True, output=True)
+    target = command("amendment-show", "Read one complete original amendment and its native history", case=True, output=True)
+    target.add_argument("--amendment", required=True)
+    target.add_argument("--revision", type=int)
+    target = command("amendment-preview", "Compare a selected native planning revision against the same recorded case", case=True, output=True)
+    target.add_argument("--inputs", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -216,6 +251,14 @@ def register(subparsers, common):
     target.add_argument("--output", required=True)
     target = command("completion-calendar", "Read payment-derived completion clocks and original award dates", case=True, output=True)
     target.add_argument("--as-of", help="Explicit YYYY-MM-DD calendar date; defaults to current UTC date")
+    target = command("delivery-calendar", "Read the original grant deadlines and complete delivery agenda", case=True, output=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to current UTC date")
+    target.add_argument("--expected-version", type=int, help="Require the selected original case version")
+    target = command("delivery-calendar-export", "Export the complete grant delivery calendar as ICS, CSV or JSON", case=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to current UTC date")
+    target.add_argument("--format", dest="calendar_format", choices=("ics", "csv", "json"), default="ics")
+    target.add_argument("--expected-version", type=int, help="Require the selected original case version")
+    target.add_argument("--output", required=True, help="New destination for the complete calendar file")
     target = command("completion-seed", "Open the original tranche assignments without saving", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(1, 2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -232,6 +275,15 @@ def register(subparsers, common):
     target = command("completion-export", "Download the frozen form preparation and its exact selected sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    for verb in ("statement-preview", "statement-receive"):
+        target = command(verb, "Reconcile an original account CSV or receive its reviewed cash observations", case=True, output=True)
+        target.add_argument("--inputs", required=True, help="Complete statement input JSON, or mapping with original source metadata when --file is supplied")
+        target.add_argument("--file", help="Original UTF-8 statement CSV; exact bytes join the declared source metadata")
+        if verb == "statement-receive":
+            mutation(target, version=True)
+            target.add_argument("--expected-preview-sha256", required=True)
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
     target = command("forecast-preview", "Calculate a dated forecast from current original records", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Forecast input JSON file")
     target.add_argument("--expected-version", type=int, required=True)
@@ -271,6 +323,8 @@ def register(subparsers, common):
     selection(target); mutation(target)
     target.add_argument("--file", required=True)
 
+    commercial_cli.register(command)
+    installation_returns_cli.register(command, mutation)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -351,6 +405,10 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if action == "installation-returns" or action.startswith("installation-return-"):
+        return installation_returns_cli.operate(ops, args, read_bytes, publish)
+    if action.startswith("commercial-"):
+        return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
@@ -360,6 +418,58 @@ def operate(workspace, args):
     elif action == "supplier-account-export":
         return {"caseId": args.case, "output": publish(args.output, ops.export_supplier_account(
             args.case, args.contributor, args.start_date, args.end_date, args.expected_version, args.expected_report_sha256))}
+    elif action == "work-intakes":
+        result = {"intakes": ops.list_work_intakes(args.case)}
+    elif action == "work-intake-show":
+        result = ops.work_intake(args.case, args.intake, args.revision)
+    elif action in ("work-intake-upload", "work-intake-preview", "work-intake-save", "work-intake-apply"):
+        def intake_json(filename):
+            try:
+                value = json.loads(read_bytes(filename))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Use a complete UTF-8 JSON intake object.", 422, "INVALID_JSON") from exc
+            if not isinstance(value, dict):
+                raise Problem("Use a complete intake object.", 422, "INVALID_JSON")
+            return value
+        if action == "work-intake-upload":
+            data = {"name": args.name, "kind": args.kind}
+            if args.format:
+                data["format"] = intake_json(args.format)
+            if args.source:
+                data["sourceId"] = args.source
+            else:
+                data["file"] = {"filename": Path(args.file).name,
+                    "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii"),
+                    "mediaType": "text/tab-separated-values" if Path(args.file).suffix.lower() == ".tsv" else "text/csv",
+                    "sourceUrl": args.source_url}
+                if args.observed_at:
+                    data["file"]["observedAt"] = args.observed_at
+        else:
+            data = {"intakeId": args.intake}
+            if args.document:
+                data["document"] = intake_json(args.document)
+            if action == "work-intake-preview":
+                if args.revision is not None:
+                    data["revision"] = args.revision
+            else:
+                data["expectedRevision"] = args.expected_revision
+                if args.expected_preview_sha256:
+                    data["expectedPreviewSha256"] = args.expected_preview_sha256
+        if action == "work-intake-preview":
+            result = ops.preview_work_intake(args.case, {"expectedVersion": args.expected_version, **data})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "requestId": args.request_id,
+                "actor": args.actor, "note": args.note, "action": action.replace("work-intake-", "work-intake."), "data": data})
+    elif action == "amendments":
+        result = ops.amendments(args.case)
+    elif action == "amendment-show":
+        result = ops.amendment(args.case, args.amendment, args.revision)
+    elif action == "amendment-preview":
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use complete UTF-8 amendment inputs.", 422, "INVALID_AMENDMENT") from exc
+        result = ops.preview_amendment(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":
@@ -391,6 +501,30 @@ def operate(workspace, args):
         result = ops.forecast(args.case, args.forecast)
     elif action == "forecast-export":
         return {"forecastId": args.forecast, "output": publish(args.output, ops.export_forecast(args.case, args.forecast))}
+    elif action in ("statement-preview", "statement-receive"):
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_BUNDLE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Statement inputs must be complete UTF-8 JSON.", 422, "INVALID_STATEMENT") from exc
+        if not isinstance(inputs, dict):
+            raise Problem("Use one complete statement input object.", 422, "INVALID_STATEMENT")
+        if args.file:
+            source = inputs.get("source")
+            if not isinstance(source, dict):
+                raise Problem("Retain source filename, observation time and optional URL in the mapping JSON.", 422, "INVALID_STATEMENT")
+            filename = Path(args.file).name
+            if source.get("filename", filename) != filename:
+                raise Problem("The selected CSV filename differs from the declared original source.", 409, "STATEMENT_SOURCE_CONFLICT")
+            encoded = base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")
+            if source.get("contentBase64", encoded) != encoded:
+                raise Problem("The selected CSV differs from the retained input bytes.", 409, "STATEMENT_SOURCE_CONFLICT")
+            inputs["source"] = {**source, "filename": filename, "contentBase64": encoded}
+        if action == "statement-preview":
+            result = ops.preview_statement(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "statement.receive",
+                "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action in ("buyer-preview", "buyer-receive"):
         original = {"filename": Path(args.file).name,
                     "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}
@@ -519,6 +653,12 @@ def operate(workspace, args):
                 "data": {**selected, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "completion-calendar":
         result = ops.completion_calendar(args.case, args.as_of)
+    elif action == "delivery-calendar":
+        result = ops.delivery_calendar(args.case, args.as_of, args.expected_version)
+    elif action == "delivery-calendar-export":
+        return {"caseId": args.case, "format": args.calendar_format,
+                "output": publish(args.output, ops.export_delivery_calendar(
+                    args.case, args.as_of, args.calendar_format, args.expected_version))}
     elif action == "completion-seed":
         result = ops.seed_completion(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "completion-export":

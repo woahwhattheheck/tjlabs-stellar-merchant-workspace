@@ -10,3 +10,14 @@ h1,h2,h3{overflow-wrap:anywhere}
 .space-before-18 { margin-top: 18px; }
 .space-before-20 { margin-top: 20px; }
 .clipboard-field { position: fixed; opacity: 0; pointer-events: none; }
+
+/* Saved original RPC editions use the desk's existing neutral operator controls. */
+.rpc-picker { margin: 18px 0; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.rpc-picker > .form-grid { margin: 12px 0; grid-template-columns: minmax(0,1fr); }
+.rpc-read-results { margin-top: 14px; min-width: 0; }
+.rpc-read-results .data-table { min-width: 540px; }
+.rpc-read-results .button-row { gap: 6px; }
+.rpc-result-summary { margin: 12px 0; }
+.rpc-result-summary .facts { margin-bottom: 8px; }
+.rpc-inspection { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--line); }
+.rpc-inspection > pre { margin-bottom: 12px; }

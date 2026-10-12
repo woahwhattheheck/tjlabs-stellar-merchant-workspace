@@ -37,6 +37,18 @@ sudo install -d -o datagouv -g datagouv -m 0700 /var/lib/datagouv-publisher
 
 If the account already exists, use it; do not create a second identity. The received source and the administrator's release input remain administrator-controlled.
 
+Check the account and selected runtime before creating an installation:
+
+~~~sh
+sudo python3 /opt/datagouv-source/products/datagouv/admin/publisher_admin.py preflight \
+  --node /opt/node-v24/bin/node \
+  --user datagouv \
+  --port 8429
+~~~
+
+This command verifies that the account's UID and primary GID are mapped by the current Linux kernel namespace, then runs the native Node/SQLite capability check as that account. It creates no installation, workspace or service. A successful result retains the selected runtime identity. An unmapped account returns `SERVICE_ACCOUNT_UNMAPPED` before initialization; a passwd entry alone does not establish usable ownership. Some restricted containers map only UID/GID 0. Continue the same selected deployment on an existing Linux host with the unprivileged account mapped; running the service as root does not complete this requirement. The install command performs the same account check before creating its managed directory.
+
+
 To bind the customer's already received workspace:
 
 ~~~sh

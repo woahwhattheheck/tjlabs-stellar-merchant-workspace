@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "openlineage-workspace",
-  "description": "Original OpenLineage operations with native producers, schema changes, dataset quality, service levels, staff decisions and complete customer handover",
+  "description": "OpenLineage operations with original synchronous and asynchronous producers, schema and quality review, service levels and complete customer receiving",
   "commands": {
     "openlineage": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/cli.mjs"
   },
   "commandDescriptions": {
-    "openlineage": "Operate lineage workspaces and native producers, review schema and dataset quality, manage service levels, retain staff decisions and deliver complete editable applications"
+    "openlineage": "Operate original lineage and native producers, review schema and dataset quality, manage service levels, retain staff decisions and deliver complete editable workspaces"
   },
   "exports": {
     "./seller/openlineage": {
@@ -34,7 +34,9 @@
     "./seller/openlineage/quality": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-client.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-client.mjs"
-    }
+    },
+    "./seller/openlineage/async-producer": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/async-producer.mjs",
+    "./seller/openlineage/java-runtime-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs"
   },
   "applicationProviders": {
     "openlineage-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs"
@@ -50,5 +52,8 @@
   ],
   "merchantProviders": {
     "openlineage-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/merchant-provider.mjs"
-  }
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs"
+  ]
 }

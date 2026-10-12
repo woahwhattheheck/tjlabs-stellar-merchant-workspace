@@ -15,8 +15,43 @@ const capture = {
   captureId: id, kind: { type: 'string', enum: ['releases', 'record'] }, ocid: id, noticeId: id,
   updatedFrom: { type: 'string', maxLength: 64 }, updatedTo: { type: 'string', maxLength: 64 },
   stages: { type: 'array', maxItems: 30, items: { type: 'string', maxLength: 64 } },
-  limit: { type: 'integer', minimum: 1, maximum: 10000 },
+  limit: { type: 'integer', minimum: 1, maximum: 100 },
 };
+
+const sourceCollections = ['selections', 'windows', 'work', 'documents', 'receivings', 'documentBodies'];
+const sourceIds = { type: 'array', minItems: 1, maxItems: 10000, uniqueItems: true, items: id };
+const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
+const jsonObject = { type: 'object', additionalProperties: true };
+const sourceBaseline = { type: 'array', maxItems: 10000, items: object({
+  ocid: id, entryId: { type: ['string', 'null'], maxLength: 256 }
+}, ['ocid', 'entryId']) };
+const sourceRequest = object(Object.fromEntries(Object.entries(capture).filter(([key]) => key !== 'captureId')), ['kind']);
+const sourceSelection = object({
+  id, label: { type: 'string', maxLength: 1024 }, provider: { type: 'string', enum: ['find-tender'] },
+  request: sourceRequest, ocids: sourceIds, owner: { type: 'string', maxLength: 256 },
+  enabled: { type: 'boolean' }, acquireDocuments: { type: 'boolean' },
+  documentEditionScope: { type: 'string', enum: ['current', 'all-retained'] },
+  documentHosts: { type: 'array', maxItems: 100, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z0-9.-]+$', maxLength: 253 } },
+  attachments: { type: 'array', maxItems: 10000, items: object({
+    ocid: id, entryId: id, referenceUrl: { type: 'string', maxLength: 8192 }, document: jsonObject
+  }, ['ocid', 'referenceUrl', 'document']) },
+  reviewPolicy: object({ administrativePointers: { type: 'array', maxItems: 1000, uniqueItems: true,
+    items: { type: 'string', maxLength: 8192 } } }, ['administrativePointers'])
+}, ['id', 'provider', 'request', 'ocids']);
+const acquisition = {
+  type: 'object', required: ['operationId', 'requestedUrl', 'retrievedAt', 'sha256', 'bytes'],
+  properties: {
+    operationId: { type: 'string', minLength: 1, maxLength: 4096 },
+    requestedUrl: { type: 'string', minLength: 1, maxLength: 8192 },
+    finalUrl: { type: ['string', 'null'], maxLength: 8192 },
+    retrievedAt: { type: ['string', 'null'], maxLength: 64 },
+    completedBy: { type: 'string', maxLength: 64 },
+    transport: { type: 'string', minLength: 1, maxLength: 256 },
+    status: { type: ['integer', 'null'], minimum: 200, maximum: 299 },
+    sha256: digest, bytes: { type: 'integer', minimum: 0, maximum: 128 * 1024 * 1024 }
+  }, additionalProperties: true
+};
+
 export const definitions = [
   ['merchant_ocds_workspaces', 'List host-declared OCDS workspace aliases, retained input aliases and original service ownership.', {}, [], read],
   ['merchant_ocds_open', 'Open one original saved OCDS workspace and its loopback operator interface. Browser, client and MCP use the same SQLite model.', selected, ['workspace'], { idempotent: true }],
@@ -42,8 +77,8 @@ export const definitions = [
   ['merchant_ocds_receiving', 'Read the complete retained receiving record for an original package, including incoming review context and source identity.', {
     ...selected, packageId: digest,
   }, ['workspace', 'packageId'], read],
-  ['merchant_ocds_inputs', 'List host-declared input and completed SF100 delivery aliases, or inspect one current original input byte count and SHA256.', {
-    ...selected, input: alias,
+  ['merchant_ocds_inputs', 'List host-declared input, completed SF100 delivery and source-handoff aliases. Inspect an input SHA256 or a sourceDelivery handoff ID before adopting it.', {
+    ...selected, input: alias, sourceDelivery: alias,
   }, ['workspace'], read],
   ['merchant_ocds_import', 'Import one exact host-declared UTF-8 OCDS source. The SHA256 and current global workspace revision are checked immediately before the original import.', {
     ...selected, input: alias, expectedSha256: digest, expectedRevision: revision,
@@ -91,5 +126,52 @@ export const definitions = [
   ['merchant_ocds_delivery_adopt', 'Verify a completed original SF100 delivery, reconstruct every selected package, and receive it through the native OCDS transaction. Original source bytes, page chain, snapshot and buyer intents remain linked.', {
     ...selected, delivery: alias, expectedRevision: revision,
   }, ['workspace', 'delivery', 'expectedRevision'], mutation],
+  ['merchant_ocds_source_state', 'Read one complete page of saved publisher selections, source windows, assigned reviews, original-document metadata or source receivings. Continue page.nextOffset; original arrays and acquisition metadata are retained.', {
+    ...selected, collection: { type: 'string', enum: sourceCollections }, offset, limit
+  }, ['workspace'], read],
+  ['merchant_ocds_source_selection_save', 'Save a publisher selection through the original native source engine. expectedRevision is this saved selection revision, or zero for a new selection. Explicit attachment references retain the original publisher document object.', {
+    ...selected, selection: sourceSelection, expectedRevision: revision
+  }, ['workspace', 'selection', 'expectedRevision'], mutation],
+  ['merchant_ocds_source_window', 'Read one complete native source window, including capture checkpoints, original observations and assigned review IDs.', {
+    ...selected, windowId: id
+  }, ['workspace', 'windowId'], read],
+  ['merchant_ocds_source_refresh', 'Start a fresh observation of selected saved publishers and original document URLs, or resume windowId alone. Native capture checkpoints and the source-window lease survive interruptions. A started response is asynchronous; read that window until complete.', {
+    ...selected, windowId: id, name: { type: 'string', minLength: 1, maxLength: 1024 },
+    selectionIds: sourceIds, baseline: sourceBaseline, context: jsonObject
+  }, ['workspace'], { ...mutation, openWorld: true }],
+  ['merchant_ocds_source_pause', 'Request a pause of the selected running source window. Read that same window to observe its saved interruption and resume it by ID.', {
+    ...selected, windowId: id
+  }, ['workspace', 'windowId'], { idempotent: true }],
+  ['merchant_ocds_source_review', 'Read the selected assigned change review and its original before/after comparison and document associations.', {
+    ...selected, reviewId: id
+  }, ['workspace', 'reviewId'], read],
+  ['merchant_ocds_source_review_save', 'Assign, progress or resolve the selected native source review. expectedRevision belongs to this review; preserve its immutable comparison. Every status needs a saved owner and resolved additionally needs a nonblank resolution.', {
+    ...selected, reviewId: id, expectedRevision: revision,
+    status: { type: 'string', enum: ['pending', 'reviewing', 'resolved'] },
+    owner: { type: 'string', maxLength: 256 }, nextAction: { type: 'string', maxLength: 8192 },
+    resolution: { type: 'string', maxLength: 65536 }
+  }, ['workspace', 'reviewId', 'expectedRevision', 'status'], mutation],
+  ['merchant_ocds_source_observation_adopt', 'Adopt a complete original Find a Tender record response from an inspected host input and its existing acquisition metadata. The original SHA256, bytes, request URL and saved OCID are checked. Use null retrievedAt with the real completedBy bound when that provider omitted retrieval time; preserve its transport and operation ID. Resume the returned window to finish document acquisition and review.', {
+    ...selected, input: alias, expectedSha256: digest, selectionId: id, selectionIds: sourceIds,
+    windowId: id, name: { type: 'string', maxLength: 1024 }, baseline: sourceBaseline, context: jsonObject,
+    expectedWindowRevision: revision, observation: acquisition
+  }, ['workspace', 'input', 'expectedSha256', 'selectionId', 'observation'], { idempotent: true }],
+  ['merchant_ocds_source_original_import', 'Attach the complete original acquired document from an inspected host input to its saved publisher reference. Retain the actual successful HTTP receipt, original bytes and operation ID. A repeated operation reuses its existing body and adds any newly available native entry bindings.', {
+    ...selected, input: alias, expectedSha256: digest, selectionId: id, referenceId: id, ocid: id,
+    documentId: { type: ['string', 'integer', 'null'], maxLength: 256 }, observation: acquisition
+  }, ['workspace', 'input', 'expectedSha256', 'selectionId', 'observation'], { idempotent: true }],
+  ['merchant_ocds_source_document_export', 'Retain one exact original document edition by its reference ID and SHA256. Use the existing listed-file reader for the complete binary bytes.', {
+    ...selected, documentId: id, expectedSha256: digest
+  }, ['workspace', 'documentId', 'expectedSha256'], mutation],
+  ['merchant_ocds_source_handoff_export', 'Freeze and retain one full native client handoff, including original OCDS bodies, binary documents, observations, assigned reviews and editable receiving material. expectedRevision pins the shared native snapshot. Read every listed file through the existing file reader.', {
+    ...selected, expectedRevision: revision, ocids: sourceIds
+  }, ['workspace', 'expectedRevision', 'ocids'], mutation],
+  ['merchant_ocds_source_handoff_receive', 'Receive the exact original handoff from a host-declared sourceDelivery alias. expectedHandoffId pins the inspected manifest before any mutation; expectedRevision is the destination global workspace revision. Read original receiving context after a lost response.', {
+    ...selected, sourceDelivery: alias, expectedHandoffId: digest, expectedRevision: revision
+  }, ['workspace', 'sourceDelivery', 'expectedHandoffId', 'expectedRevision'], { idempotent: true }],
+  ['merchant_ocds_source_receiving', 'Read a complete retained source-operations receiving by its original package ID, including preserved incoming work, selections and acquisition context.', {
+    ...selected, packageId: digest
+  }, ['workspace', 'packageId'], read],
+
 ];
 export function ocdsWorkspaceTools(tool) { return definitions.map(definition => tool(...definition)); }

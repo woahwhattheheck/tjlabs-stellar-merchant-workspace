@@ -2,6 +2,21 @@
 
 This complete native operation consumes the original Merchant Performance customer programme and carries its saved recipient case through customer receiving, an original invoice, a dated calendar and full source delivery.
 
+## Continue the existing native04 operation
+
+The maintained `continue-native04.py` entry point carries the original native04 archive through the complete Performance and financial continuation in one process. Its input is the existing receiving operation's full JSON payload, including the original archive selection, exact source packets and native archive helpers. The current receiving owner supplies that retained payload and preserves its saved operation and output paths.
+
+```sh
+python3 experiments/merchant-performance-financial-84df-20261012/continue-native04.py \
+  < /ABS/retained-native04-input.json
+```
+
+Use the same original payload and native04 root on restart. The caller verifies the saved archive identity, recovers exact existing members, retains a separate journal for each attempt, and waits for child-process cleanup before saving the complete resulting archive. Its `githubReaderPath` input can select the already-retained original source reader on the receiving host; each reused source blob is checked against its declared complete bytes.
+
+After the original Performance result reaches `COMPLETE`, a new financial operation receives the complete 474-file financial source into the separate `work/financial-source` tree. If an existing financial journal already binds `work/source`, the caller keeps that exact root and operation identity: it protects all 411 original Performance paths and receives the 63 other financial source files there. It retains the complete source-adoption request and every previous body before the first change. An interrupted replay accepts only those exact declared preimages or postimages and completes the same source request.
+
+The original `performance-financial.mjs` helper then continues the saved case, quotation, invoice and calendar under its retained source root and request IDs. The following manual source-receive and helper commands remain useful for an operator who is already inside that same retained process; the complete continuation entry point composes those maintained operations with the archive receiving and save lifecycle.
+
 ## Source and existing input
 
 The complete current Pricing/Commercial source is retained in canonical Git blob598a222c3ca2fa480359e33dca02955e9f22f00e in woahwhattheheck/tjlabs-stellar-merchant-workspace: 8,072,936 UTF-8 bytes, SHA256 31e20a31de004333d72d8fc3161ed7a0b82681b22f5b5c9703a9d9c819cb5723. It carries the complete411-file current source and the frozen181-file original tariff source separately, including the twelve original workspace browser assets needed by the integrated listener. Preserve both original source roots and the saved operation paths.

@@ -1,6 +1,6 @@
 // MIT. Declarations for original receivables command line operations and file delivery.
 import type {
-  AccountingReceivablesClient, CompleteInvoicePreview, NativeRecord, PaymentRequestPreview, RefundPreview, CreditDispositionPreview,
+  AccountingReceivablesClient, CompleteInvoicePreview, NativeRecord, PaymentRequestPreview, RefundPreview, CreditDispositionPreview, BankPostingPreview,
   ReceivablesArgumentsMap, ReceivablesFileMetadata, ReceivablesFileSelection, ReceivablesMutation,
   ReceivablesMutationResult, RequestLookupResult
 } from './accounting-receivables-client.mjs';
@@ -17,7 +17,8 @@ export type ReceivablesPreparePreview =
   ({kind: 'invoice_issue'; preview: CompleteInvoicePreview} |
     {kind: 'payment_create'; preview: PaymentRequestPreview} |
     {kind: 'refund_commit'; preview: RefundPreview} |
-    {kind: 'credit_disposition_apply'; preview: CreditDispositionPreview});
+    {kind: 'credit_disposition_apply'; preview: CreditDispositionPreview} |
+    {kind: 'bank_receipts_post'; preview: BankPostingPreview});
 export type ReceivablesPrepareOptions = ReceivablesPrepareArguments | ReceivablesPreparePreview;
 export interface PreparedReceivablesOperation<K extends ReceivablesMutation = ReceivablesMutation> {
   directory: string; kind: K; requestSha256: string; arguments: ReceivablesArgumentsMap[K]; phase: 'PREPARED';
@@ -38,6 +39,9 @@ export function prepareAccountingReceivablesOperation(
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPreparePreview & {kind: 'credit_disposition_apply'},
 ): Promise<PreparedReceivablesOperation<'credit_disposition_apply'>>;
+export function prepareAccountingReceivablesOperation(
+  options: ReceivablesPreparePreview & {kind: 'bank_receipts_post'},
+): Promise<PreparedReceivablesOperation<'bank_receipts_post'>>;
 export function prepareAccountingReceivablesOperation(
   options: ReceivablesPrepareOptions,
 ): Promise<PreparedReceivablesOperation>;

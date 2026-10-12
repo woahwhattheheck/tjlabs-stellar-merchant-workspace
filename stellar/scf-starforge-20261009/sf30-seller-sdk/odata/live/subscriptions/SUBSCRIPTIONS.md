@@ -54,6 +54,22 @@ starforge odata --workspace /absolute/private/odata-workspace serve --port 0 --s
 
 The console gains a Subscriptions link at /subscriptions/. The connection retains ownership of its configured publisher/customer destinations. Use the subscription backup controls for those destinations; the source console's workspace download exports its original source/capture/live workspace.
 
+### Save the connection in Applications
+
+The original **OData source and live merchant** card accepts an optional
+`subscriptionConnection` path. Select the same private connection used by this
+operator, Review and Save the application, then Start and choose **Open
+subscriptions**. The connection's exact bytes and configured directories join
+the original managed input review. Its digest is bound to the loaded operator,
+private launch record and live listener before Applications accepts the URL.
+
+Managed Stop drains this operator with the original OData server. Reopening the
+saved entry preserves its original publisher/customer directories, editions,
+requests and receiving histories. Review any edited connection before a new
+Start. Subscription backups retain their own complete native stores; the source
+workspace backup retains the source/capture/live workspace. See
+[OData in Applications](../APPLICATIONS.md) for the settings and receiving path.
+
 ## Complete publisher and customer workflow
 
 Each command reads one JSON request. Preserve that file for retries. The local UI and MCP provider accept the same native object.
@@ -256,3 +272,13 @@ Analysis exports preserve the original receiver's limits: 64 value/state columns
 Keep the complete selected source package with a delivered customer edition. The native engine, original collection canonicalizer, source receiver and customer proof implementation form its replay lineage. A changed native format or key/type rule should retain the compatible original implementation for published editions.
 
 The worked native programme belongs alongside these source files and its exact original inputs. Source review and successful native/customer operation are separate records. Report an edition as operated after its original native result and complete receiving artifacts have returned.
+
+## Complete managed receiving from a finished connection
+
+[MANAGED_RECEIVING.md](MANAGED_RECEIVING.md) provides the complete maintained
+Applications continuation. **managed-review** captures the actual READY runtime,
+connection and every completed publisher/customer identity. **managed-receive**
+uses the original saved card through Start, full native backup/download and
+independent restore, Stop and same-entry reopen. It retains original requests
+and resumes the same output; a completed result has both managed operations
+closed and the complete downloaded source/history inventories verified.

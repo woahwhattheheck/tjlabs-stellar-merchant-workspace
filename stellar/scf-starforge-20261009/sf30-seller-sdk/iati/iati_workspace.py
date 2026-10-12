@@ -163,6 +163,24 @@ def completed_packet_matches(output, sources, schema, metadata, entries):
                     return False
         return True
 
+def reconcile_export_stage(output, stage):
+    """Reconcile this original private publication stage while its lease is held."""
+    if stage.exists() or stage.is_symlink():
+        info = stage.lstat()
+        if not stat.S_ISREG(info.st_mode) or (os.name == "posix" and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
+            raise InputError("Export stage is not an operator-owned private file")
+        if output.exists() and not output.is_symlink() and os.path.samefile(stage, output):
+            if info.st_nlink != 2:
+                raise InputError("Published export has an unexpected additional hard link")
+            stage.unlink()
+            sync_dir(output.parent)
+        else:
+            if info.st_nlink != 1:
+                raise InputError("Incomplete export has an unexpected hard link")
+            preserved = stage.with_name(stage.name + ".interrupted-" + os.urandom(8).hex())
+            os.rename(stage, preserved)
+            sync_dir(output.parent)
+
 def packet_write(output, sources, schema, metadata):
     """Stage the complete archive, then publish atomically without replacing a file."""
     entries = {name: {"bytes": regular(path, MAX_METADATA if name.endswith(".json") else MAX_PACKET).st_size,
@@ -176,21 +194,7 @@ def packet_write(output, sources, schema, metadata):
         raise InputError("Packet manifest exceeds 64 MiB")
     stage = output.parent / ("." + output.name + ".iati-export.partial")
     with export_lease(output):
-        if stage.exists() or stage.is_symlink():
-            info = stage.lstat()
-            if not stat.S_ISREG(info.st_mode) or (os.name == "posix" and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
-                raise InputError("Export stage is not an operator-owned private file")
-            if output.exists() and not output.is_symlink() and os.path.samefile(stage, output):
-                if info.st_nlink != 2:
-                    raise InputError("Published export has an unexpected additional hard link")
-                stage.unlink()
-                sync_dir(output.parent)
-            else:
-                if info.st_nlink != 1:
-                    raise InputError("Incomplete export has an unexpected hard link")
-                preserved = stage.with_name(stage.name + ".interrupted-" + os.urandom(8).hex())
-                os.rename(stage, preserved)
-                sync_dir(output.parent)
+        reconcile_export_stage(output, stage)
         if output.exists() or output.is_symlink():
             if not completed_packet_matches(output, sources, schema, metadata, entries):
                 raise InputError("Completed output belongs to a different export; choose another output path")
@@ -282,6 +286,14 @@ class IatiWorkspace(Workspace):
         self.organisation = OrganisationPlanner(self)
         from refresh import IatiRefresh
         self.refresh = IatiRefresh(self)
+        from organisation_reconciliation import OrganisationReconciliation
+        self.reconciliation = OrganisationReconciliation(self)
+        from results.workspace import IatiResults
+        self.results = IatiResults(self)
+        from amp import AmpWorkspace
+        self.amp = AmpWorkspace(self)
+        from geography import IatiGeography
+        self.geography = IatiGeography(self)
 
     def presets(self):
         return source_presets()
@@ -298,6 +310,8 @@ class IatiWorkspace(Workspace):
             result["portfolios"] = self.portfolios()
             result["publishing"] = {"projects":len(self.publishing.list())}
             result["refresh"] = {"plans": len(self.refresh.plans())}
+            result["results"] = {"projects": len(self.results.inventory()["projects"])}
+            result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -810,4 +824,16 @@ class IatiWorkspace(Workspace):
         from organisation.portable import PACKET as ORGANISATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
             return self.organisation.receive({"path": path})
+        from results.transfer import PACKET as RESULTS_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RESULTS_PACKET:
+            return self.results.receive(path)
+        from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
+            return self.reconciliation.receive({"path": path})
+        from amp.portable import SCHEMA as AMP_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
+            return self.amp.receive(path)
+        from geography_portable import PACKET as GEOGRAPHY_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == GEOGRAPHY_PACKET:
+            return self.geography.receive({"path": path})
         return super().import_packet(path)

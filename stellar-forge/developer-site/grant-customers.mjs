@@ -5,6 +5,10 @@ const OPENFN = '## OpenFn: paid workflow commissioning and complete receiving';
 const REFERRAL = '## Referral implementation: source changes, returned outcomes and complete receiving';
 const RISINGWAVE = '## Recurring subscription delivery and streaming-data commissioning';
 const OPENLINEAGE = '## OpenLineage service operations and complete customer receiving';
+const A2A = '## A2A analytical services: complete agent work, merchant delivery and customer receiving';
+const CUSTOMER_WORKSHARES = '## External buyer onboarding and study-operations commissioning';
+const AIR_QUALITY = '## Air-quality reporting and complete customer receiving';
+const MUNICIPAL = '## Municipal source operations, service reporting and reviewed GIS delivery';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
@@ -15,6 +19,44 @@ const OPENFN_PARAGRAPHS = [
 const clean = value => String(value).replaceAll('\r\n', '\n').trim() + '\n';
 const quoted = value => value.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&');
 function need(value, message) { if (!value) throw new Error(message); }
+
+// Commons repository visibility was received from the original GitHub repository.
+// Its source identities remain in the canonical manuscript and source register;
+// the public reader opens the complete accompanying workflow for these cases.
+const PRIVATE_SOURCE_REPOSITORIES = new Set(['woahwhattheheck/commons']);
+const PRIVATE_SOURCE_WORKFLOWS = [
+  [/\/opportunities\/openfn-commissioning-\d{8}(?:\/|$)/, 'openfn-paid-workflow-commissioning-and-complete-receiving'],
+  [/\/case_assets\/elimu-gravity-referral-implementation-\d{8}-450e(?:\/|$)/, 'referral-implementation-source-changes-returned-outcomes-and-complete-receiving'],
+  [/\/case_assets\/risingwave-subscription-delivery-pilot-\d{8}(?:\/|$)/, 'recurring-subscription-delivery-and-streaming-data-commissioning'],
+  [/\/opportunities\/medstar_shadow_study_2026\/workspace(?:\/|$)/, 'external-buyer-onboarding-and-study-operations-commissioning'],
+  [/\/operations\/scf-a2a-native-analysis-0c7a-\d{8}(?:\/|$)/, 'a2a-analytical-services-complete-agent-work-merchant-delivery-and-customer-receiving'],
+  [/\/pull\/35713(?:[/?#]|$)/, 'environmental-data-installations'],
+  [/\/pull\/35612(?:[/?#]|$)/, 'portable-map-releases-and-customer-commissioning'],
+  [/\/pull\/35577(?:[/?#]|$)/, 'wholesale-order-commissioning-and-complete-erp-receiving'],
+];
+function privateGitSource(reference) {
+  if (typeof reference !== 'string') return false;
+  const match = reference.match(/^https:\/\/github\.com\/([^/?#]+\/[^/?#]+)(?:[/?#]|$)/i);
+  return Boolean(match && PRIVATE_SOURCE_REPOSITORIES.has(match[1].toLowerCase()));
+}
+function workflowForPrivateSource(reference) {
+  if (!privateGitSource(reference)) return null;
+  const pathname = reference.slice('https://github.com'.length).split(/[?#]/, 1)[0];
+  const match = PRIVATE_SOURCE_WORKFLOWS.find(([pattern]) => pattern.test(pathname));
+  return match ? '../grant-companion.html#' + match[1] : '../grant-companion.html';
+}
+function projectPrivateSourceLinks(markdown, { application = false } = {}) {
+  return markdown.replace(/\[([^\]]+)\]\((https:\/\/github\.com\/[^)\s]+)\)/gi, (whole, label, url) => {
+    if (!privateGitSource(url)) return whole;
+    // The application's first study example should open its complete public
+    // workflow, rather than a private implementation file.
+    if (application && /\/opportunities\/medstar_shadow_study_2026\/workspace\//.test(url.slice('https://github.com'.length).split(/[?#]/, 1)[0])
+        && label === 'implemented workspace and integration handover') {
+      return '[study-operations workflow and receiving](./product-and-finance.md#external-buyer-onboarding-and-study-operations-commissioning)';
+    }
+    return label;
+  });
+}
 
 /** Keep public source links and the substantive labels of private correspondence. */
 export function projectGrantMarkdown(markdown, { application = false } = {}) {
@@ -28,9 +70,19 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
       .replace(/§9A connects this task to the existing six funded packages\./g,
         'The [complete customer workflow](./product-and-finance.md#environmental-provider-intake-complete-source-editions-commissioning-and-receiving) connects this task to the existing six funded packages.')
       .replace(/operating sequence and six-package linkage are included in §9A\./g,
-        'operating sequence and six-package linkage are included in the [product and financing companion](./product-and-finance.md#federal-awards-complete-funding-research-workshares-and-receiving).');
+        'operating sequence and six-package linkage are included in the [product and financing companion](./product-and-finance.md#federal-awards-complete-funding-research-workshares-and-receiving).')
+      .replace('The complete A2A customer chapter defines the service operator',
+        'The [complete A2A customer chapter](./product-and-finance.md#a2a-analytical-services-complete-agent-work-merchant-delivery-and-customer-receiving) defines the service operator')
+      .replace('included in the OpenLineage customer chapter.',
+        'included in the [OpenLineage customer chapter](./product-and-finance.md#openlineage-service-operations-and-complete-customer-receiving).');
   }
-  return clean(value);
+  // Restore shell option indentation changed by Canvas rich-text whitespace.
+  // Limit normalization to option-leading whitespace inside explicit shell examples.
+  value = value.replace(/(^|\n)(\x60{3,}|~{3,})(sh|bash|shell)[ \t]*\n([\s\S]*?)\n\2(?=\n|$)/g,
+    (whole, lead, fence, language, body) => lead + fence + language + '\n' +
+      body.replace(/^([ \u00a0]*\u00a0[ \u00a0]*)(?=--[A-Za-z0-9-]+(?:[ \t]|$))/gm,
+        indentation => indentation.replaceAll('\u00a0', ' ')) + '\n' + fence);
+  return clean(projectPrivateSourceLinks(value, { application }));
 }
 
 /** Select real H1/H2 headings while preserving headings quoted inside fenced examples. */
@@ -95,6 +147,13 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
   for (const incoming of acceptedCustomerSections(manuscript)) {
     companion = installSection(companion, incoming.heading, projectGrantMarkdown(incoming.text));
   }
+  for (const heading of [
+    '## Current alternatives, commercial units and customer value',
+    '## Customer value and delivery economics',
+  ]) {
+    const incoming = section(manuscript, heading);
+    if (incoming) companion = installSection(companion, heading, projectGrantMarkdown(incoming.text));
+  }
   const incoming = OPENFN_PARAGRAPHS.map(prefix => paragraph(manuscript, prefix));
   need(incoming.every(Boolean) || incoming.every(value => value === null), 'Select both accepted OpenFn paragraphs from the complete canonical manuscript.');
   if (incoming.every(Boolean)) {
@@ -113,13 +172,21 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
 export function projectGrantSourceIndex(value) {
   if (Array.isArray(value)) return value.map(projectGrantSourceIndex).filter(item => item !== undefined);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).flatMap(([key, item]) => {
+    const restrictedReference = privateGitSource(value.url) ? value.url : null;
+    const projected = Object.fromEntries(Object.entries(value).flatMap(([key, item]) => {
       if (key === 'canonical_manuscript') return [];
       const publicItem = projectGrantSourceIndex(item);
       return publicItem === undefined ? [] : [[key, publicItem]];
     }));
+    if (restrictedReference) {
+      projected.access = 'authenticated-source';
+      projected.reader_url = workflowForPrivateSource(restrictedReference);
+    }
+    return projected;
   }
-  return typeof value === 'string' && /^https:\/\/(?:tokenjunkielabs\.slack\.com\/|mail\.google\.com\/mail\/)/.test(value) ? undefined : value;
+  if (typeof value === 'string' && (privateGitSource(value)
+      || /^https:\/\/(?:tokenjunkielabs\.slack\.com\/|mail\.google\.com\/mail\/)/.test(value))) return undefined;
+  return value;
 }
 
 /** Follow each retained customer source URL when rebuilding the public source register. */
@@ -131,7 +198,16 @@ export function receiveGrantCustomerSources(index, companion) {
     const previous = at < 0 ? {} : index.sources[at];
     const source = { ...previous, id, kind: 'published-source', label: previous.label || title,
       repository: url.split('/').slice(3, 5).join('/'), commit, path, url };
-    if (previous.url && previous.url !== url) delete source.git_blob;
+    // A projected register retains the repository, commit and path even when its
+    // private URL is omitted. Compare those identities before reusing a blob pin.
+    if ((previous.url && previous.url !== url) ||
+        (previous.commit && previous.commit !== commit) ||
+        (previous.path && previous.path !== path) ||
+        (previous.repository && previous.repository !== source.repository)) delete source.git_blob;
+    if (previous.access === 'authenticated-source') {
+      delete source.access;
+      delete source.reader_url;
+    }
     if (at < 0) index.sources.push(source); else index.sources[at] = source;
   };
   const federal = section(companion, FEDERAL)?.text || '';
@@ -172,6 +248,20 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-payment-plans\/README\.md)/, billing);
   receive('merchant-xero-customer-receiving', 'Accountant document receiving and complete customer handover',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/merchant-settlement-accounting\/receivables\/xero\/README\.md)/, billing);
+  receive('merchant-service-renewal-operation', 'Accepted customer service renewal and merchant support operation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf74-merchant-support-console\/SERVICE_RENEWALS\.md)/, billing);
+  receive('merchant-accepted-service-calendar', 'Accepted renewal periods and complete financial receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-service-agreements\/README\.md)#accepted-service-renewals/, billing);
+  receive('grant-operating-case', 'Grant Operations complete delivery, cash and customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/OPERATING\.md)/, companion);
+  receive('grant-supplier-accounts', 'Original supplier work, invoices and dated account receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/PAYABLES\.md)/, companion);
+  receive('grant-account-statements', 'Reviewed original account statements and cash movements',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/STATEMENTS\.md)/, companion);
+  receive('grant-installation-portfolio', 'Dated installation capacity and original operating forecast',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/PORTFOLIO\.md)/, companion);
+  receive('grant-application-handoff', 'Complete grant case and saved Application customer handoff',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/HANDOFF\.md)/, companion);
   const lineage = section(companion, OPENLINEAGE)?.text || '';
   receive('openlineage-installed-operations', 'OpenLineage operations — installed product',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/openlineage\/OPERATING\.md)/, lineage);
@@ -185,6 +275,40 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(\.swarm-delivery\/openlineage-service-levels-bbbd-\d{8}\/SERVICE_LEVELS_RECEIVING\.mjs)/, lineage);
   receive('openlineage-quality-operator', 'OpenLineage dataset quality operations',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/openlineage-workspace\/QUALITY_OPERATOR\.md)/, lineage);
+  receive("analysis-openlineage-operations", "Analysis source, query and workbook lineage publication",
+    /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf88-operator-buyer-cli\/python\/ANALYSIS_LINEAGE\.md)/, lineage);
+  receive("analysis-openlineage-native-receiving", "Analysis and OpenLineage complete native receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf88-operator-buyer-cli\/python\/examples\/ANALYSIS_LINEAGE_NATIVE\.md)/, lineage);
+  const analytical = section(companion, A2A)?.text || '';
+  receive("a2a-analysis-installed-product", "Complete analytical service and merchant product",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/a2a-analysis\/README\.md)/, analytical);
+  receive("a2a-analysis-operating", "Analytical service installed operation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/a2a-analysis\/OPERATING\.md)/, analytical);
+  receive("a2a-analysis-customer-receiving", "Complete analytical output and workspace receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/a2a-analysis\/RECEIVING\.md)/, analytical);
+  receive("a2a-analysis-native-service", "Native A2A analytical procedures and task authority",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar-forge\/a2a-analysis-agent\/README\.md)/, analytical);
+  receive("a2a-merchant-operator", "Merchant Agent, publication and release operation",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/a2a\/OPERATOR\.md)/, analytical);
+  receive("a2a-merchant-commissioning", "Original merchant A2A commissioning source",
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/a2a\/receiving\/commission\.mjs)/, analytical);
+  receive("a2a-complete-native-programme", "Complete analytical service native commissioning entry",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(operations\/scf-a2a-native-analysis-0c7a-\d{8}\/RUN_NATIVE\.md)/, analytical);
+  const workshares = section(companion, CUSTOMER_WORKSHARES)?.text || '';
+  receive("medstar-study-workspace", "Study operations original application",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/README\.md)/, workshares);
+  receive("medstar-study-integration", "Study operations implementation and customer receiving",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/INTEGRATION_HANDOVER\.md)/, workshares);
+  receive("medstar-study-api", "Study review, comparison and report API",
+    /https:\/\/github\.com\/woahwhattheheck\/commons\/blob\/([a-f0-9]{40})\/(opportunities\/medstar_shadow_study_2026\/workspace\/API_CONTRACT\.md)/, workshares);
+  const airQuality = section(companion, AIR_QUALITY)?.text || '';
+  receive('openaq-customer-operation', 'Air-quality reporting and complete customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/openaq\/README\.md)/, airQuality);
+  const municipal = section(companion, MUNICIPAL)?.text || '';
+  receive('municipal-installed-gis-receiving', 'Municipal source operations and GIS receiving installation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/open311\/gis\/INSTALL\.md)/, municipal);
+  receive('municipal-native-format-interchange', 'Municipal GIS original format interchange result',
+    /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(operations\/open311-gis-8e5f-\d{8}\/format-interchange-result\.json)/, municipal);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

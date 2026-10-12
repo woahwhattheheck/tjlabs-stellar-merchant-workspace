@@ -65,7 +65,7 @@ def export_project(workspace: ReadingWorkspace, destination) -> dict:
         tables = {table: [dict(r) for r in db.execute("SELECT " + ",".join(columns) + " FROM " + table + " ORDER BY rowid")]
                   for table, columns in TABLES.items()}
         assets = [dict(r) for r in db.execute("SELECT * FROM assets ORDER BY sha")]
-        manifest = {"schema": PORTABLE, "workspace_schema": SCHEMA, "tables": tables, "originals": assets}
+        manifest = {"schema": PORTABLE, "workspace_schema": SCHEMA, "capabilities": ["source-ranges-v1"], "tables": tables, "originals": assets}
         encoded = (canonical(manifest) + "\n").encode()
         if len(encoded) > MAX_MANIFEST:
             raise ReadingError("MANIFEST_LIMIT", "Project metadata exceeds the 64 MiB portable manifest limit.")
@@ -109,6 +109,8 @@ def receive_project(archive_path, directory, *, max_total_bytes=20 * 1024**3) ->
         manifest = json.loads(raw.decode("utf-8", "strict"))
         if manifest.get("schema") != PORTABLE or manifest.get("workspace_schema") != SCHEMA:
             raise ReadingError("PROJECT_VERSION")
+        if not isinstance(manifest.get("capabilities", []), list) or any(c not in ("source-ranges-v1",) for c in manifest.get("capabilities", [])):
+            raise ReadingError("PROJECT_CAPABILITY_REQUIRED")
         assets, tables = manifest.get("originals"), manifest.get("tables")
         if not isinstance(assets, list) or not isinstance(tables, dict) or set(tables) != set(TABLES):
             raise ReadingError("PROJECT_STRUCTURE")
@@ -167,13 +169,11 @@ def receive_project(archive_path, directory, *, max_total_bytes=20 * 1024**3) ->
                         raise ReadingError("PROJECT_REFERENCE")
                     if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                         raise ReadingError("PROJECT_DATABASE")
-                # Re-read saved selections through the same live source reader.
+                # Re-read every retained list revision and captured range through
+                # the same original source reader, including earlier revisions.
+                from .reading_selections import validate_handover_records
+                validate_handover_records(workspace)
                 status = workspace.status()
-                for reading_list in status["reading_lists"]:
-                    for item in reading_list["items"]:
-                        selected = workspace.passage(item["resource_id"], item["ordinal"], expected_sha=item["sha"])
-                        if any(selected[k] != item[k] for k in ("digest", "start_byte", "end_byte", "start_line", "end_line")):
-                            raise ReadingError("PROJECT_SELECTION")
             if file_digest(source) != (source_sha, source_size):
                 raise ReadingError("ARCHIVE_CHANGED")
             return {"directory": str(target), "archive_sha256": source_sha, "archive_bytes": source_size,
@@ -188,8 +188,9 @@ def _report_rows(workspace, *, list_id=None, list_revision=None, query=None, sna
         raise ReadingError("REPORT_SELECTION", "Choose a reading list or a search query.")
     if list_id:
         record = workspace.head("list", list_id, revision=list_revision)
+        context = {}
         for item in record["items"]:
-            p = workspace.passage(item["resource_id"], item["ordinal"], expected_sha=item["sha"])
+            p = workspace.selected_passage(item, context=context)
             yield {**item, "text": p["body"]}
     else:
         offset, pinned = 0, snapshot
@@ -218,17 +219,40 @@ def export_report(workspace, destination, *, format="html", list_id=None, list_r
         snapshot, heading, note = page["snapshot"], "Reading results", "Search: " + query
     selection = {"list_id": list_id, "list_revision": list_revision, "query": query,
                  "snapshot": snapshot, "resource_id": resource_id}
+    handovers, seen = [], set()
+    if list_id:
+        from .reading_selections import handover_summary
+        for item in record["items"]:
+            handover_id = item.get("citation", {}).get("handover_id")
+            if handover_id and handover_id not in seen:
+                source_record = workspace.head("handover", handover_id, revision=1)
+                handovers.append(handover_summary(source_record) | {"source": source_record["manifest"]["capture"]["source"]})
+                seen.add(handover_id)
+    handover_by_id = {entry["id"]: entry for entry in handovers}
     count = 0
     with new_output(destination) as temporary, temporary.open("w", encoding="utf-8", newline="") as output:
         if format == "html":
-            output.write('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + html.escape(heading) + '</title><style>body{font:16px/1.6 system-ui,sans-serif;color:#252525;background:#f4f4f2;margin:0}main{max-width:960px;margin:32px auto;padding:24px}article{background:white;border:1px solid #ccc;padding:22px;margin:22px 0}h1{font-size:30px;line-height:1.2}h2{font-size:20px}pre{font:14px/1.7 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}small{color:#555}p{white-space:pre-wrap}details{overflow-wrap:anywhere}@media(max-width:500px){main{padding:16px;margin:0}article{padding:14px}}</style><main><h1>' + html.escape(heading) + '</h1><p>' + html.escape(note) + '</p><small>Complete selected passages from retained originals. Byte ranges use an exclusive end; line numbers count line-feed separators. Original files are included in the separate editable reading project.</small>')
+            output.write('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + html.escape(heading) + '</title><style>body{font:16px/1.6 system-ui,sans-serif;color:#252525;background:#f4f4f2;margin:0}main{max-width:960px;margin:32px auto;padding:24px}article{background:white;border:1px solid #ccc;padding:22px;margin:22px 0}h1{font-size:30px;line-height:1.2}h2{font-size:20px}pre{font:14px/1.7 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}small{color:#555}p{white-space:pre-wrap}details{overflow-wrap:anywhere}@media(max-width:500px){main{padding:16px;margin:0}article{padding:14px}}</style><main><h1>' + html.escape(heading) + '</h1><p>' + html.escape(note) + '</p><small>Complete selected passages from retained originals. Byte ranges use an exclusive end. Native reading passages count LF separators; research handover passages retain the original CRLF, CR and LF line convention. Original files are included in the editable reading project.</small>')
+            for handover in handovers:
+                q = handover["query"]
+                output.write('<section><h2>Original research question</h2><p>' + html.escape(q["q"]) + '</p><p>' +
+                    html.escape(("All words across each original file" if q["mode"] == "all" else "Any word across each original file") +
+                    (("; saved search revision " + str(q["savedQuery"]["revision"])) if q.get("savedQuery") else "")) +
+                    '</p><small>Captured build: ' + q["build"] + '<br>Selection: ' + handover["capture_sha256"] +
+                    '<br>Original collection revision: ' + str(handover["collection"]["revision"]) + '</small></section>')
         elif format == "json":
-            output.write('{"schema":"stellar-forge.sf88.reading-report.v1","title":' + canonical(heading) + ',"note":' + canonical(note) + ',"selection":' + canonical(selection) + ',"items":[')
+            output.write('{"schema":"stellar-forge.sf88.reading-report.v1","title":' + canonical(heading) + ',"note":' + canonical(note) + ',"selection":' + canonical(selection) + ',"handovers":' + canonical(handovers) + ',"items":[')
         else:
             writer = csv.writer(output)
-            columns = ("name", "start_line", "end_line", "start_byte", "end_byte", "note", "text", "resource_id", "sha", "ordinal", "digest")
+            columns = ("name", "start_line", "end_line", "start_byte", "end_byte", "note", "text", "resource_id", "sha", "ordinal", "digest", "line_convention", "handover_id", "selection_id", "original_query", "query_mode", "search_build")
             writer.writerow(columns)
         for row in _report_rows(workspace, **selection):
+            citation = row.get("citation", {})
+            original = handover_by_id.get(citation.get("handover_id"), {}).get("query", {})
+            row = {**row, "line_convention": row.get("line_convention", "LF"),
+                   "handover_id": citation.get("handover_id", ""), "selection_id": citation.get("selection_id", ""),
+                   "original_query": original.get("q", ""), "query_mode": original.get("mode", ""),
+                   "search_build": original.get("build", "")}
             if format == "html":
                 output.write('<article><h2>' + html.escape(row["name"]) + '</h2><small>Lines ' + str(row["start_line"]) + '–' + str(row["end_line"]) + '</small><p>' + html.escape(row["note"]) + '</p><pre>' + html.escape(row["text"]) + '</pre><details><summary>Source reference</summary><p>Original SHA-256: ' + row["sha"] + '<br>Bytes: ' + str(row["start_byte"]) + '–' + str(row["end_byte"]) + '<br>Passage SHA-256: ' + row["digest"] + '</p></details></article>')
             elif format == "json":

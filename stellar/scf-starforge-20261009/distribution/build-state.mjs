@@ -1,7 +1,7 @@
 // MIT. Continue one immutable distribution in its original output directory.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { constants } from 'node:fs';
-import { open, mkdir, lstat, realpath, readdir, link, unlink } from 'node:fs/promises';
+import { open, mkdir, lstat, realpath, readdir, link, unlink, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve, posix, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -266,11 +266,11 @@ export async function openDistributionBuild({ output, resume = false, manifest, 
   else { await mkdir(root, { mode: 0o700 }); await directory(root); await syncDirectory(dirname(root)); }
   const owned = await lease(root);
   try {
-    const allowed = new Set(['build.lock', 'build.json', 'package', 'pack-work', archiveName,
+    const allowed = new Set(['build.lock', 'build.json', 'package', 'pack-work', 'npm-cache', 'pack-tmp', archiveName,
       'distribution.json', 'distribution.json.pending']);
     for (const entry of await readdir(root, { withFileTypes: true })) {
       need(allowed.has(entry.name) && !entry.isSymbolicLink() &&
-        (['package', 'pack-work'].includes(entry.name) ? entry.isDirectory() : entry.isFile()),
+        (['package', 'pack-work', 'npm-cache', 'pack-tmp'].includes(entry.name) ? entry.isDirectory() : entry.isFile()),
       'DISTRIBUTION_UNEXPECTED_OUTPUT', entry.name);
     }
     const expected = new Set(files.map(file => relativePath(file.path)));
@@ -338,8 +338,14 @@ export async function openDistributionBuild({ output, resume = false, manifest, 
         if (!observed) {
           need(!retained, 'DISTRIBUTION_ACKNOWLEDGED_ARCHIVE_MISSING');
           onProgress('packing', { files: files.length });
-          const packed = JSON.parse(execFileSync(npm, ['pack', '--ignore-scripts', '--json', '--pack-destination', pack],
+          // Keep npm's cache and temporary writes under this build's lease.
+          // A full shared home cache must not prevent an isolated source pack.
+          const cache = join(root, 'npm-cache'), temporary = join(root, 'pack-tmp');
+          await directory(cache, true); await directory(temporary, true);
+          const packed = JSON.parse(execFileSync(npm,
+            ['pack', '--ignore-scripts', '--json', '--cache', cache, '--pack-destination', pack],
             { cwd: stage, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+              env: { ...process.env, TMPDIR: temporary, TMP: temporary, TEMP: temporary },
               stdio: ['ignore', 'pipe', 'pipe', ...(owned ? [owned.fd] : [])] }));
           need(Array.isArray(packed) && packed.length === 1 && packed[0]?.filename === archiveName,
             'DISTRIBUTION_NPM_RESULT_INVALID');
@@ -347,6 +353,12 @@ export async function openDistributionBuild({ output, resume = false, manifest, 
           need(packed[0].size === observed.bytes && packed[0].integrity === observed.integrity &&
             packed[0].unpackedSize === installedBytes, 'DISTRIBUTION_NPM_ARCHIVE_MISMATCH');
         }
+        // Successful and resumed archives no longer need reproducible npm data.
+        // Failed npm runs retain these directories for the same leased resume.
+        for (const disposable of [join(root, 'npm-cache'), join(root, 'pack-tmp')]) {
+          if (await info(disposable)) { await directory(disposable); await rm(disposable, { recursive: true }); }
+        }
+        await syncDirectory(root);
         await immutableRecord(pack, 'pack.json', { sourceCommit: intent.sourceCommit, manifestSha256: intent.manifestSha256,
           filename: archiveName, sha256: observed.sha256, integrity: observed.integrity,
           size: observed.bytes, unpackedSize: installedBytes });

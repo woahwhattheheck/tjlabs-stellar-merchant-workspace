@@ -511,9 +511,36 @@ function renderRepricingSource() {
     : selectionChanged
       ? 'Choose Load payment choices to apply the selected review. The form currently contains '+repricingSource.label+'.'
       : repricingSource.sourcePackageAvailable
-        ? 'Original authoring inputs are attached to this workspace. The price change can include updated source selections for the existing release workflow.'
+        ? 'A retained merchant source package is attached. Review the price change to see the complete application prepared for its release.'
         : 'These amounts are tied to this saved seller configuration. The saved merchant USD valuations, costs and volume targets carry forward into the exported terms.';
   if (stale && repricingPreview) { repricingPreview = null; $('repricing-review').hidden = true; }
+}
+function repricingPackageLabel(source) {
+  return source?.kind === 'PYTHON_MERCHANT_PACKAGE' ? 'Python application'
+    : source?.kind === 'API_MERCHANT_PACKAGE' ? 'API merchant' : 'Merchant source';
+}
+function renderRepricingPackage(source) {
+  const target = $('repricing-package-review');
+  target.replaceChildren(); target.hidden = !source;
+  if (!source) return;
+  target.append(text('h4',repricingPackageLabel(source)+' release package'));
+  if (source.kind === 'PYTHON_MERCHANT_PACKAGE' && source.python) {
+    const python = source.python;
+    const rows = [['Application',typeof python.entry === 'string' ? python.entry : JSON.stringify(python.entry)],
+      ['Retained files',python.fileCount],['Application size',python.totalBytes+' bytes']];
+    target.append(facts(rows),text('p','The complete Python application, helper modules and assets are retained with this price change. The existing release console stages and runs that same application.','muted small'));
+    const detail = document.createElement('details'); detail.className = 'coverage-detail';
+    detail.append(text('summary','Application and source identity'));
+    const values = document.createElement('dl');
+    for (const [label,value] of [['Application SHA-256',python.applicationSha256],
+      ['Execution SHA-256',python.executionSha256],['Original source SHA-256',source.originalSourceSha256],
+      ['Python interpreter',python.interpreter]]) {
+      if (value !== null && value !== undefined) values.append(text('dt',label),text('dd',value));
+    }
+    detail.append(values); target.append(detail);
+  } else {
+    target.append(text('p','The reviewed payment amounts are carried into the retained authoring package for the existing seller release workflow.','muted small'));
+  }
 }
 function repricingFileLink(decision,name,label) {
   const anchor = text('a',label);
@@ -537,6 +564,7 @@ function renderRepricingHistory() {
     description.append(text('div',item.label,'history-title'),
       text('div',item.savedAt+' · '+count+' payment choice'+(count === 1 ? '' : 's')+' changed','history-meta'),
       text('div','Based on '+(item.sourceLabel ?? item.sourceVersion),'history-source'));
+    if (item.sourcePackage) description.append(text('div',repricingPackageLabel(item.sourcePackage)+' source retained','history-source'));
     const available = new Set([...repricingFiles(item),'manifest.json']), primary = document.createElement('div');
     primary.className = 'history-files';
     for (const name of ['launch-seller.json','seller.json','terms.json','decision.json']) if (available.has(name)) {
@@ -687,6 +715,7 @@ function renderRepricingReview(result) {
       button.addEventListener('click',()=>renderRepricingTerms(row,true)); return button; }]]));
   renderRepricingTerms(result.changes[0]);
   renderQuoteConversion(result.quoteConversion);
+  renderRepricingPackage(result.sourcePackage);
   $('repricing-proposed-hash').textContent = result.proposedSellerSha256;
 }
 function payload() {

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><link rel="stylesheet" href="/refresh.css"><script src="/refresh.js" defer></script><link rel="stylesheet" href="/organisation.css"><script src="/organisation.js" defer></script><script src="/app.js" defer></script></head>
+<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><link rel="stylesheet" href="/refresh.css"><script src="/refresh.js" defer></script><link rel="stylesheet" href="/organisation.css"><script src="/organisation.js" defer></script><link rel="stylesheet" href="/results.css"><script src="/results.js" defer></script><link rel="stylesheet" href="/organisation_reconciliation.css"><script src="/organisation_reconciliation_ui.mjs" defer></script><link rel="stylesheet" href="/amp.css"><script src="/amp.js" defer></script><link rel="stylesheet" href="/geography.css"><script src="/geography.js" defer></script><script src="/app.js" defer></script></head>
 <body>
 <header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">IA</span><div><strong>IATI</strong><span>Aid finance workspace</span></div></div>
 <div class="top-actions"><span class="connection" id="connection">Opening source workspace</span><button id="reload" type="button">Refresh saved work</button></div></header>
@@ -9,7 +9,7 @@
 <aside class="sidebar"><p class="eyebrow">Original publisher data</p><nav aria-label="Workspace">
 <button data-view="overview" class="active">Overview</button><button data-view="sources">Publisher sources</button>
 <button data-view="portfolios">Portfolio review</button><button id="rf-open-view" data-view="refresh">Publisher refresh</button><button data-view="query">Explore data</button>
-<button id="dqa-open" data-view="dqa">Data quality</button><button id="pub-open-view" data-view="publishing">Participant publishing</button><button id="org-open-view" data-view="organisation">Organisation planning</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
+<button id="dqa-open" data-view="dqa">Data quality</button><button id="pub-open-view" data-view="publishing">Participant publishing</button><button id="org-open-view" data-view="organisation">Organisation planning</button><button data-view="amp">AMP commissioning</button><button id="geo-open-view" data-view="geography">Publisher geography</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
 <div class="sidebar-note"><strong>Source first</strong><p>Keep reported values, currencies, dates and transaction types together. Each saved portfolio retains its original XML and dataset lineage.</p></div></aside>
 <main id="main" aria-busy="true">
 <div id="status" role="status" aria-live="polite">Opening the original workspace…</div>
@@ -25,7 +25,7 @@
 <label>Complete XML file<input id="source-file" type="file" accept=".xml,.iati,application/xml,text/xml" required></label><p class="fine">The original source bytes are retained before projection. The file limit is 256 MiB.</p>
 <button type="submit" class="primary">Retain and inspect source</button></form>
 <article class="card"><h2>Open retained edition</h2><label>Source<select id="source-select"></select></label><button id="source-open">Open source profile</button><div id="source-identity" class="identity"></div></article></div>
-<article class="card"><div class="card-title"><h2>Source profile</h2><button id="source-to-portfolio">Use this source in a portfolio</button><button id="source-to-organisation" hidden>Use in organisation planning</button></div>
+<article class="card"><div class="card-title"><h2>Source profile</h2><button id="source-to-portfolio">Use this source in a portfolio</button><button id="source-to-organisation" hidden>Use in organisation planning</button><button id="source-to-geography">Use in geography review</button></div>
 <div id="source-profile" class="empty">Choose a retained publisher edition.</div></article></section>
 
 <section data-panel="portfolios" hidden><div class="heading"><div><p class="eyebrow">02 · Explicit selection</p><h1>Portfolio review</h1><p>Each saved revision retains the selected publisher sources and builds its activity, transaction and budget datasets.</p></div></div>
@@ -443,6 +443,172 @@
   <form id="org-receive-form" class="card"><h2>Receive and reopen a complete organisation package</h2><label>Original package ZIP<input id="org-receive-file" type="file" accept=".zip,application/zip" required></label>
    <p>Receive into this workspace to reconstruct the saved organisation plans, complete originals, exact corrections, reviews and releases.</p>
    <button type="submit" class="primary">Receive and reopen complete work</button><div id="org-receive-result"></div></form>
+ </div>
+</section>
+
+
+<section data-panel="amp" hidden>
+ <div class="heading"><div><p class="eyebrow">Installed aid management</p><h1>AMP commissioning</h1><p class="lede">Map an original IATI portfolio to its installed AMP programme, review complete financial records, receive the native projects and carry the following edition forward.</p></div></div>
+ <div id="amp-inventory" class="metrics"></div>
+ <div class="amp-card">
+  <div class="amp-controls"><label>Operator name<input id="amp-actor" maxlength="160" autocomplete="name"></label><label>Saved commissioning plan<select id="amp-plan-select"></select></label><button id="amp-open" type="button">Open plan</button><button id="amp-save" type="button">Save mapping and decisions</button><button id="amp-restore-draft" type="button" hidden>Restore browser draft</button><button id="amp-recover" type="button" hidden>Receive original operation</button></div>
+  <p id="amp-draft-note" class="amp-note" role="status"></p><p id="amp-pending-note" class="amp-note" role="status"></p><div id="amp-plan-metrics" class="metrics"></div><pre id="amp-plan-summary"></pre>
+  <details><summary>Existing AMP login for native capture and receiving</summary><div class="amp-grid"><label>AMP username<input id="amp-native-user" autocomplete="username"></label><label>AMP password<input id="amp-native-password" type="password" autocomplete="current-password"></label></div><p class="amp-note">The login is used for the selected native operation. The commissioning archive carries the account and workspace identity.</p></details>
+ </div>
+ <nav class="amp-tabs" aria-label="AMP workflow"><button type="button" data-amp-tab="source" aria-selected="true">Native source</button><button type="button" data-amp-tab="mapping" aria-selected="false">Activity mapping</button><button type="button" data-amp-tab="review" aria-selected="false">Financial review</button><button type="button" data-amp-tab="receiving" aria-selected="false">Native receiving</button><button type="button" data-amp-tab="handover" aria-selected="false">Handover and next edition</button></nav>
+ <div data-amp-panel="source">
+  <div class="amp-card"><h2>Retained native source</h2><div class="amp-controls"><label>Installed programme capture<select id="amp-capture-select"></select></label><button id="amp-capture-open" type="button">Open full capture</button></div><pre id="amp-capture-summary"></pre>
+   <details><summary>Complete original native responses</summary><label>Original response<select id="amp-source-kind"><option value="projectsJson">Selected full projects</option><option value="fieldsJson">Installed field metadata</option><option value="valuesJson">Installed possible values</option><option value="sessionJson">Original account session</option><option value="layoutJson">Installed workspace and version</option></select></label><textarea id="amp-capture-json" class="amp-source" readonly spellcheck="false" aria-label="Complete original native JSON"></textarea></details>
+  </div>
+  <form id="amp-native-capture-form" class="amp-card"><h2>Capture the installed AMP programme</h2><div class="amp-grid three">
+   <label>Capture name<input id="amp-native-name" required maxlength="160"></label><label>Programme label<input id="amp-native-label" maxlength="160"></label><label>Original REST base URL<input id="amp-native-url" type="url" required placeholder="https://your-installed-amp/rest"></label>
+   <label>Installed AMP version<input id="amp-native-version" required maxlength="160"></label><label>Workspace ID<input id="amp-native-workspace" inputmode="numeric" required></label><label>Original user ID, when known<input id="amp-native-user-id" inputmode="numeric"></label>
+  </div><label>Complete selected native project IDs<textarea id="amp-native-project-ids" rows="3" spellcheck="false"></textarea></label><label>Country, programme and original selection coverage<textarea id="amp-native-coverage" required rows="3"></textarea></label><button type="submit">Capture full native programme</button>
+  <p class="amp-note">This reads the actual installed fields, possible values, account, workspace and every selected complete project. Project IDs come from the original native export or programme selection.</p></form>
+  <form id="amp-capture-import-form" class="amp-card"><h2>Receive an original capture</h2><label>Complete capture JSON<input id="amp-capture-import" type="file" accept=".json,application/json" required></label><button type="submit">Retain original native capture</button></form>
+  <form id="amp-new-form" class="amp-card"><h2>Create a commissioning plan</h2><div class="amp-grid">
+   <label>Plan name<input id="amp-name" required maxlength="160"></label><label>Original saved IATI portfolio<select id="amp-portfolio" required></select></label><label>Original portfolio revision<input id="amp-portfolio-revision" inputmode="numeric" required></label>
+   <label class="amp-full">Commissioning scope and reporting responsibilities<textarea id="amp-notes" rows="3"></textarea></label>
+  </div><button type="submit">Create complete source selection</button><p class="amp-note">Choose the installed capture above. Saved IATI portfolios remain available in Portfolio review.</p></form>
+ </div>
+ <div data-amp-panel="mapping" hidden>
+  <form id="amp-activity-form" class="amp-card"><h2>Activity correspondence</h2><div class="amp-grid">
+   <label>Original reporting organisation reference<input id="amp-activity-publisher" required></label><label>Original IATI activity identifier<input id="amp-activity-id" required></label>
+   <label>Captured native project or complete new draft<select id="amp-activity-target" required></select></label><label>Correspondence review<input id="amp-activity-note" required></label>
+  </div><button type="submit">Add or replace activity mapping</button><div id="amp-activity-links" class="amp-table"></div></form>
+  <div class="amp-grid">
+   <form id="amp-currency-form" class="amp-card"><h2>Reported currency</h2><label>Original currency code<input id="amp-currency-code" required maxlength="12"></label><label>Installed currency<select id="amp-currency-native" required></select></label><label>Currency correspondence<input id="amp-currency-note" required></label><button type="submit">Add currency mapping</button><div id="amp-currency-links" class="amp-table"></div></form>
+   <form id="amp-measure-form" class="amp-card"><h2>Financial family</h2><label>Original transaction type<select id="amp-measure-type"><option value="2">2 · Outgoing commitment</option><option value="3">3 · Disbursement</option><option value="4">4 · Expenditure</option></select></label><label>Installed actual adjustment category<select id="amp-measure-adjustment" required></select></label><label>Category interpretation<input id="amp-measure-note" required></label><button type="submit">Add financial mapping</button><div id="amp-measure-links" class="amp-table"></div></form>
+  </div>
+  <form id="amp-draft-form" class="amp-card"><h2>Complete new native project</h2><label>Draft name<input id="amp-project-draft-id" required maxlength="160"></label><label>Complete native project JSON<textarea id="amp-project-draft-json" class="amp-source" required spellcheck="false"></textarea></label><p class="amp-note">Retain the original IATI identifier and the installed programme's complete required fields. Use the captured native values for country, organisations, sectors, programme and project classifications.</p><button type="submit">Retain complete project draft</button></form>
+  <div class="amp-card"><h2>Complete mapping document</h2><p>Use this document for a complete programme mapping, including activity links, exact native IDs, full project drafts and row decisions.</p><textarea id="amp-definition" class="amp-source" spellcheck="false" aria-label="Complete AMP mapping definition"></textarea><button id="amp-definition-apply" type="button">Load complete mapping</button></div>
+ </div>
+ <div data-amp-panel="review" hidden>
+  <div class="amp-card"><h2>Original financial records</h2><div class="amp-controls"><label>Decision state<select id="amp-row-state"><option value="">All records</option><option value="review">Review</option><option value="included">Included</option><option value="excluded">Excluded</option></select></label><button id="amp-rows-prev" type="button">Previous records</button><button id="amp-rows-next" type="button">Next records</button><span id="amp-row-page" class="amp-note"></span></div><div id="amp-rows" class="amp-table"></div>
+   <details><summary>Amounts by original reporting dimensions</summary><div id="amp-financial-groups" class="amp-table"></div></details>
+<details open><summary>Complete native project field review</summary><pre id="amp-destination-review"></pre></details>
+  </div>
+  <form id="amp-row-form" class="amp-card"><h2>Selected record decision</h2><div class="amp-grid"><div><h3>Original record</h3><pre id="amp-row-original"></pre></div><div><h3>Mapping findings</h3><pre id="amp-row-findings"></pre><h3>Prepared financial proposal</h3><pre id="amp-row-proposal"></pre></div></div>
+   <details><summary>Existing native funding and transaction register</summary><div id="amp-native-register" class="amp-table"></div></details>
+   <div class="amp-grid three"><label>Decision<select id="amp-row-action"><option value="review">Review</option><option value="include">Include</option><option value="exclude">Exclude from native update</option></select></label><label>Original funding ID<input id="amp-row-funding" inputmode="numeric"></label><label>Installed donor ID<input id="amp-row-donor" inputmode="numeric"></label><label>Original transaction ID for a correction<input id="amp-row-transaction" inputmode="numeric"></label><label>Reported date<select id="amp-row-date"><option value="transaction-date">Original transaction date</option><option value="value-date">Original value date</option></select></label><label class="amp-full">Decision and scope note<textarea id="amp-row-note" required rows="3"></textarea></label></div>
+   <details><summary>Full new funding and transaction configuration</summary><div class="amp-grid"><label>New funding JSON<textarea id="amp-row-funding-json" spellcheck="false"></textarea></label><label>Native transaction fields<textarea id="amp-row-transaction-json" spellcheck="false"></textarea></label></div></details><button id="amp-row-save" type="submit">Save complete record decision</button>
+  </form>
+  <div class="amp-card"><h2>Decide a complete programme scope</h2><p>Apply one reviewed decision to the full original selection. Included rows retain their own reported amount, currency, financial family and date.</p>
+   <div class="amp-grid three"><label>Reporting organisation reference<input id="amp-bulk-publisher"></label><label>IATI activity identifier<input id="amp-bulk-activity"></label><label>Reported currency<input id="amp-bulk-currency"></label><label>Transaction type<input id="amp-bulk-type"></label><label>Original collection<select id="amp-bulk-collection"><option value="">Both collections</option><option value="transactions">Transactions</option><option value="budgets">Budgets</option></select></label><label class="amp-check"><input id="amp-bulk-undecided" type="checkbox" checked> Undecided rows only</label></div>
+   <button id="amp-bulk-preview" type="button">Preview every selected row</button><pre id="amp-bulk-summary"></pre><div id="amp-bulk-groups" class="amp-table"></div>
+   <div class="amp-grid three"><label>Whole-scope decision<select id="amp-bulk-action"><option value="review">Review</option><option value="include">Include</option><option value="exclude">Exclude from native update</option></select></label><label>Original funding ID, for one selected project<input id="amp-bulk-funding" inputmode="numeric"></label><label>Installed donor<select id="amp-bulk-donor"></select></label><label>Reported date<select id="amp-bulk-date"><option value="transaction-date">Original transaction date</option><option value="value-date">Original value date</option></select></label><label class="amp-full">Decision and scope note<textarea id="amp-bulk-note" rows="3"></textarea></label></div>
+   <details><summary>Complete common funding and transaction configuration</summary><div class="amp-grid"><label>New funding JSON<textarea id="amp-bulk-funding-json" spellcheck="false"></textarea></label><label>Common native transaction fields<textarea id="amp-bulk-transaction-json" spellcheck="false"></textarea></label></div></details><button id="amp-bulk-apply" type="button">Apply decision to the complete previewed scope</button>
+  </div>
+  <div class="amp-card"><h2>Complete financial review</h2><div class="amp-grid"><label>Review decision<select id="amp-review-decision"><option value="approve">Approve complete mapped scope</option><option value="changes">Changes required</option></select></label><label>Review note<textarea id="amp-review-note" rows="3"></textarea></label></div><button id="amp-review" type="button">Save named review</button><button id="amp-prepare" type="button">Prepare complete native projects</button></div>
+ </div>
+ <div data-amp-panel="receiving" hidden>
+  <div class="amp-card"><h2>Submit and receive the complete native projects</h2><p>The saved source and named financial review select the full native requests. Each original native update retains its returned project and field-level receiving result.</p><button id="amp-start" type="button">Run prepared native update</button><div class="amp-controls"><label>Original native operation<select id="amp-run-select"></select></label><button id="amp-run-open" type="button">Open native progress</button><button id="amp-continue" type="button">Continue original operation</button></div><pre id="amp-run-summary"></pre><div id="amp-run-steps" class="amp-table"></div></div>
+  <div class="amp-card"><h2>Receive an interrupted native result</h2><p>Select the original step and the actual project returned by AMP. Receiving compares the complete request with that current native project.</p><div class="amp-grid"><label>Original step<select id="amp-reconcile-step"></select></label><label>Actual received project ID<input id="amp-reconcile-native-id" inputmode="numeric"></label><label class="amp-full">Receiving note<textarea id="amp-reconcile-note" rows="3"></textarea></label></div><button id="amp-reconcile" type="button">Read and reconcile original result</button></div>
+  <div class="amp-card"><h2>Complete native operation history</h2><div id="amp-events"></div><button id="amp-more-events" type="button">Read next event page</button></div>
+ </div>
+ <div data-amp-panel="handover" hidden>
+  <div class="amp-card"><h2>Complete commissioning handover</h2><p>The portable archive carries the application source, original IATI portfolio editions, AMP capture, full mapping and review history, complete requests and actual native receiving records.</p><div class="amp-controls"><button id="amp-export" type="button">Download complete application handover</button><button id="amp-report" type="button">Readable commissioning report</button><button id="amp-analysis" type="button">Full financial analysis</button><button id="amp-rows-file" type="button">Every original financial row</button><button id="amp-requests" type="button">Complete native project requests</button><button id="amp-comparison" type="button">Following-edition comparison</button></div></div>
+  <form id="amp-receive-form" class="amp-card"><h2>Reopen complete work</h2><label>Original AMP handover ZIP<input id="amp-receive-file" type="file" accept=".zip,application/zip" required></label><button type="submit">Receive and reopen complete handover</button><pre id="amp-receive-result"></pre></form>
+  <form id="amp-advance-form" class="amp-card"><h2>Following publisher edition</h2><p>Continue from the selected saved plan and a fresh native capture. Confirmed native transaction IDs follow unchanged original records; changed records return with their full before-and-after comparison.</p><div class="amp-grid">
+   <label>Following plan name<input id="amp-next-name" required maxlength="160"></label><label>Following saved IATI portfolio<select id="amp-next-portfolio" required></select></label><label>Following portfolio revision<input id="amp-next-revision" inputmode="numeric" required></label><label>Fresh capture of the same AMP programme<select id="amp-next-capture" required></select></label><label class="amp-full">Following-edition scope<textarea id="amp-next-notes" rows="3"></textarea></label>
+  </div><details><summary>Explicit correspondence for changed source identifiers</summary><label>Complete before / after row-key pairs with their review note<textarea id="amp-next-pairs" rows="5" spellcheck="false"></textarea></label></details><button id="amp-advance" type="submit">Create following-edition plan</button></form>
+  <div class="amp-card"><h2>Complete plan revision history</h2><div id="amp-history" class="amp-table"></div></div>
+ </div>
+</section>
+
+
+<section data-panel="geography" hidden>
+ <div class="heading"><div><p class="eyebrow">Publisher geography</p><h1>Where activities are reported.</h1><p>Review the locations in the original publisher XML. Keep missing coordinates, reported precision, administrative areas and analyst findings together in a saved edition.</p></div></div>
+ <div class="grid two">
+  <article class="card"><h2>Saved geographic review</h2><label>Review<select id="geo-review-select"></select></label>
+   <div class="row"><label>Revision<input id="geo-open-revision" type="number" min="1" placeholder="Latest saved revision"></label><button id="geo-open" type="button">Open review</button><button id="geo-new" type="button">New review</button><button id="geo-refresh" type="button">Refresh saved work</button></div>
+   <div id="geo-identity" class="identity"></div><p id="geo-historical" class="geo-notice" hidden></p>
+  </article>
+  <article class="card"><h2>Coverage belongs to the source</h2><p>Map points show valid reported coordinates. Activities without locations and records with missing or invalid positions stay in the register. Exactness and reach remain the publisher's separate codes.</p><p class="fine">Reported IATI positions use latitude, then longitude. GeoJSON uses longitude, then latitude. Financial values remain with their source activities and are not multiplied or allocated across map points.</p></article>
+ </div>
+ <div id="geo-pending" class="geo-notice" hidden><strong id="geo-pending-title">A complete request is retained</strong><p id="geo-pending-message"></p><div class="row"><button id="geo-retry" type="button">Continue the same request</button><button id="geo-revise-rejected" type="button" hidden>Retain rejection and revise</button></div></div>
+ <nav class="geo-tabs" aria-label="Geographic review stages">
+  <button type="button" data-geo-tab="selection" aria-current="step">1 · Select sources</button>
+  <button type="button" data-geo-tab="locations">2 · Review locations</button>
+  <button type="button" data-geo-tab="history">3 · Compare history</button>
+  <button type="button" data-geo-tab="handover">4 · Receive and export</button>
+ </nav>
+ <div id="geo-counts" class="metrics"></div>
+ <div data-geo-panel="selection">
+  <form id="geo-form" class="card">
+   <div class="card-title"><h2 id="geo-form-title">Create a geographic review</h2><span id="geo-mode" class="badge">New selection</span></div>
+   <div class="grid two"><label>Review name<input id="geo-name" maxlength="160" required></label><label>Purpose and notes<textarea id="geo-notes" rows="3"></textarea></label></div>
+   <fieldset><legend>Complete retained publisher editions</legend><div id="geo-sources" class="source-choices"></div><p class="fine">Use Publisher sources to retain another complete activity XML file. Source identifiers below select exact bytes.</p><button id="geo-to-sources" type="button">Open publisher source intake</button></fieldset>
+   <details><summary>Activity selection and narrative language</summary><div class="grid two">
+    <label>Activity identifiers, one per line<textarea id="geo-activity-ids" rows="4" spellcheck="false"></textarea></label>
+    <label>Preferred narrative language<input id="geo-language" maxlength="100" placeholder="Leave empty to retain the source preference"></label></div><p class="fine">An empty activity selection retains every activity in these sources. Full original narrative and location fields remain available in the register and packet.</p></details>
+   <fieldset><legend>Related portfolio and baseline</legend><div class="grid three">
+    <label>Existing portfolio, if applicable<select id="geo-portfolio"></select></label>
+    <label>Exact portfolio revision<input id="geo-portfolio-revision" type="number" min="1" placeholder="Select an explicit revision"></label>
+    <label>Baseline geographic revision<select id="geo-baseline"></select></label></div><p class="fine">The portfolio is retained as context. It does not create a financial allocation to locations.</p></fieldset>
+   <details><summary>Publisher attribution and acquisition evidence</summary><p class="fine">Retain source-specific publisher, URL, acquisition time, licence and citation when available. These are your supplied provenance fields; no retrieval or licence is inferred.</p><div id="geo-acquisition"></div></details>
+   <fieldset><legend>Named review</legend><div class="grid three">
+    <label>Status<select id="geo-review-status"><option value="draft">Draft</option><option value="reviewed">Reviewed</option><option value="needs-correction">Needs correction</option></select></label>
+    <label>Reviewer<input id="geo-reviewer" maxlength="160"></label>
+    <label>Review note<textarea id="geo-review-note" rows="3"></textarea></label></div></fieldset>
+   <div class="form-actions"><button id="geo-save" type="submit" class="primary" data-geo-save>Save the complete review revision</button><span id="geo-draft-note" class="fine"></span></div>
+  </form>
+  <article class="card"><div class="card-title"><h2>Selected source and coordinate coverage</h2><span id="geo-coverage-revision" class="badge"></span></div><div id="geo-coverage" class="empty">Save or open a review to read its native coverage.</div></article>
+ </div>
+ <div data-geo-panel="locations" hidden>
+  <form id="geo-filter-form" class="card"><h2>Read one saved edition</h2><p id="geo-locations-revision" class="identity"></p>
+   <div class="grid three">
+    <label>Source edition<select id="geo-filter-source"></select></label>
+    <label>Search original location records<input id="geo-filter-search" type="search"></label>
+    <label>Exact activity identifier<input id="geo-filter-activity" spellcheck="false"></label>
+    <label>Coordinate status<select id="geo-filter-coordinate"><option value="">All records</option><option value="valid">Valid reported position</option><option value="missing">Location missing a position</option><option value="invalid">Invalid reported position</option><option value="not-reported">Activity has no location</option></select></label>
+    <label>Analyst decision<select id="geo-filter-decision"><option value="">All decisions</option><option value="unreviewed">Unreviewed</option><option value="accepted">Accepted</option><option value="needs-correction">Needs correction</option><option value="note">Note</option></select></label>
+    <label>Publisher exactness code<input id="geo-filter-exactness" spellcheck="false"></label>
+    <label>Publisher location class code<input id="geo-filter-class" spellcheck="false"></label>
+    <label>Publisher location reach code<input id="geo-filter-reach" spellcheck="false"></label>
+   </div><div class="row"><button type="submit">Read matching records and points</button><button id="geo-clear-filters" type="button">Clear filters</button></div>
+  </form>
+  <article class="card"><div class="card-title"><h2>Reported coordinate map</h2><span id="geo-map-count" class="badge">No saved edition selected</span></div>
+   <p class="fine">Longitude runs left to right; latitude runs bottom to top. The graticule is a coordinate reference, with no inferred country boundary or place lookup. Select a point or a register row to inspect its complete source fields.</p>
+   <div class="geo-map-tools"><button id="geo-zoom-in" type="button" aria-label="Zoom in">Zoom in</button><button id="geo-zoom-out" type="button" aria-label="Zoom out">Zoom out</button><button id="geo-map-reset" type="button">Whole coordinate extent</button><button id="geo-map-fit" type="button">Fit loaded points</button><button id="geo-pan-left" type="button" aria-label="Pan west">West</button><button id="geo-pan-right" type="button" aria-label="Pan east">East</button><button id="geo-pan-up" type="button" aria-label="Pan north">North</button><button id="geo-pan-down" type="button" aria-label="Pan south">South</button></div>
+   <div class="geo-map-wrap"><svg id="geo-map" viewBox="0 0 1000 500" role="img" aria-labelledby="geo-map-title geo-map-description"><title id="geo-map-title">Original reported IATI locations</title><desc id="geo-map-description">Valid positions from the selected saved review. All other source records remain in the register.</desc><g id="geo-grid"></g><g id="geo-map-points"></g></svg></div>
+   <p id="geo-map-status" class="fine" aria-live="polite">Open a saved review to load its coordinate page.</p><div class="row"><button id="geo-more-points" type="button">Load the next coordinate page</button></div>
+  </article>
+  <article class="card"><div class="card-title"><h2>Complete source register</h2><span id="geo-rows-count" class="badge"></span></div><div id="geo-rows" class="empty">Choose a saved review.</div>
+   <div class="row"><button id="geo-rows-prev" type="button">Previous records</button><span id="geo-rows-page" class="fine"></span><button id="geo-rows-next" type="button">Next records</button></div>
+  </article>
+  <div class="grid two">
+   <article class="card"><h2>Selected location and original fields</h2><div id="geo-detail" class="empty">Open a register row or a map point.</div></article>
+   <form id="geo-finding-form" class="card"><h2>Record an analyst finding</h2><p id="geo-finding-selection" class="identity">No source record selected.</p>
+    <label>Decision<select id="geo-finding-decision"><option value="note">Note</option><option value="accepted">Accepted</option><option value="needs-correction">Needs correction</option></select></label>
+    <label>Named reviewer<input id="geo-finding-reviewer" maxlength="160" required></label><label>Finding note<textarea id="geo-finding-note" rows="5" required></textarea></label>
+    <p class="fine">A finding refers to this exact source and row. It does not rewrite publisher XML or invent a location.</p><button id="geo-prepare-finding" type="submit">Prepare this finding</button>
+   </form>
+  </div>
+  <article class="card"><div class="card-title"><h2>Findings in this revision</h2><button id="geo-save-findings" type="button" class="primary" data-geo-save>Save the complete review revision</button></div><div id="geo-findings" class="empty">No analyst findings prepared.</div></article>
+ </div>
+ <div data-geo-panel="history" hidden>
+  <article class="card"><h2>Saved revision history</h2><p>Open an earlier edition to inspect its exact sources, location rows, map and findings.</p><div id="geo-history" class="empty">Open a saved review.</div></article>
+  <form id="geo-compare-form" class="card"><h2>Compare full geographic editions</h2><div class="grid two">
+   <label>Earlier revision<select id="geo-compare-before"></select></label><label>Later revision<select id="geo-compare-after"></select></label></div>
+   <details><summary>Explicit source replacement pairs</summary><label>Optional pairs as JSON<textarea id="geo-compare-pairs" rows="4" placeholder='[{"before":"complete-source-sha","after":"complete-source-sha"}]' spellcheck="false"></textarea></label><p class="fine">Pair original source hashes when comparing replacement publisher files. Ambiguous or changed location identities remain visible in the native comparison.</p></details>
+   <button id="geo-compare" type="submit">Compare saved editions</button><div id="geo-comparison" class="empty">Choose two saved revisions.</div>
+  </form>
+ </div>
+ <div data-geo-panel="handover" hidden>
+  <div class="grid two">
+   <article class="card"><h2>Complete selected handover</h2><p id="geo-export-selection" class="identity">Open a saved review.</p><div class="stack">
+    <button type="button" class="primary" data-geo-export="packet">Download the complete source and review packet</button>
+    <button type="button" data-geo-export="geojson">Download complete GeoJSON</button>
+    <button type="button" data-geo-export="csv">Download every location row as CSV</button>
+    <button type="button" data-geo-export="json">Download complete review JSON</button>
+    <button type="button" data-geo-export="html">Download the readable geographic report</button></div>
+    <p class="fine">Exports bind the displayed saved revision. The complete packet carries original publisher XML, review definitions, requests, native location editions and history for independent receiving.</p><div id="geo-export-result"></div>
+   </article>
+   <form id="geo-receive-form" class="card"><h2>Receive and reopen complete work</h2><label>Original geographic review packet<input id="geo-receive-file" type="file" accept=".zip,application/zip" required></label>
+    <p>The native receiver verifies the complete packet and reconstructs its saved source, editions, findings and history in this workspace.</p><button id="geo-receive" type="submit" class="primary">Receive the complete packet</button><div id="geo-receive-result"></div>
+   </form>
+  </div>
  </div>
 </section>
 

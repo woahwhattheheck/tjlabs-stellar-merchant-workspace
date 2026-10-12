@@ -1,6 +1,9 @@
 // MIT. Original IATI console client. All values and native query parameters retain their source strings.
+import { createOrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
 import { open, lstat, realpath } from 'node:fs/promises';
 import { constants } from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { Readable } from 'node:stream';
 import { isAbsolute, resolve, dirname } from 'node:path';
 const HASH=/^[0-9a-f]{64}$/;
 const problem=(code,message)=>Object.assign(new Error(message),{code:'IATI_'+code});
@@ -8,6 +11,50 @@ const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)
 const hash=value=>{if(!HASH.test(value??''))throw problem('SELECTION','Use the full retained source, plan, build or portfolio SHA-256.');return value;};
 const revision=value=>{if(value!==undefined&&(!Number.isSafeInteger(value)||value<1))throw problem('REVISION','Select a positive original portfolio revision.');return value;};
 const query=values=>{const q=new URLSearchParams();for(const[key,value]of Object.entries(values))if(value!==undefined)q.set(key,String(value));return q.toString();};
+
+
+// Original consoles use HTTP/1.0. Use the same native HTTP carrier as Merchant:
+// affected built-in Undici versions crash on socket EOF while a body is paused
+// (nodejs/undici#5360). Request/Response keep the public body APIs; node:http
+// carries the socket and Readable adapters preserve backpressure and cancellation.
+function originalConsoleResponse(url, options) {
+ const input=new Request(url,{...options,redirect:'error',duplex:'half'});
+ const headers=Object.fromEntries(input.headers);
+ if(!input.headers.has('content-length')){
+  if(typeof options.body==='string'||Buffer.isBuffer(options.body))
+   headers['content-length']=String(Buffer.byteLength(options.body));
+  else if(options.body instanceof Blob)headers['content-length']=String(options.body.size);
+ }
+ return new Promise((resolveResponse,reject)=>{
+  const outgoing=httpRequest(url,{method:input.method,headers,signal:input.signal},incoming=>{
+   incoming.once('error',reject);
+   try{
+    const status=incoming.statusCode??0;
+    if([301,302,303,307,308].includes(status))
+     throw problem('REDIRECT','The original local console cannot redirect this request.');
+    const responseHeaders=new Headers();
+    for(let index=0;index<incoming.rawHeaders.length;index+=2)
+     responseHeaders.append(incoming.rawHeaders[index],incoming.rawHeaders[index+1]);
+    const empty=[204,205,304].includes(status)||input.method==='HEAD';
+    const response=new Response(empty?null:Readable.toWeb(incoming,{strategy:{highWaterMark:incoming.readableHighWaterMark,size:chunk=>chunk.byteLength}}),{
+     status,statusText:incoming.statusMessage??'',headers:responseHeaders});
+    Object.defineProperty(response,'url',{value:url});
+    if(empty)incoming.resume();
+    resolveResponse(response);
+   }catch(error){incoming.destroy(error);reject(error);}
+  });
+  outgoing.once('error',reject);
+  if(input.body){
+   const source=Readable.fromWeb(input.body);
+   const sourceError=error=>outgoing.destroy(error);
+   source.once('error',sourceError);
+   outgoing.once('close',()=>{
+    source.off('error',sourceError);source.unpipe(outgoing);source.destroy();
+   });
+   source.pipe(outgoing);
+  }else outgoing.end();
+ });
+}
 
 /** Connect to the exact private URL printed by the original local IATI server.
  * The client borrows that running workspace and never stops its process.
@@ -25,6 +72,8 @@ export class IatiWorkspaceClient{
     throw problem('CONNECTION','Use the complete loopback console URL without altering its private fragment.');
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>900000)throw problem('TIMEOUT','Choose a request timeout from 1 to 900000 milliseconds.');
   this.#origin=selected.origin;this.#token=selected.hash.slice(1);this.#timeout=timeoutMs;
+  Object.defineProperty(this, 'organisationReconciliation', { enumerable: true, value:
+   createOrganisationReconciliationClient((path, options) => this.#request(path, options)) });
  }
  get origin(){return this.#origin;}
  async #request(path,{body,headers={},signal,raw=false,maximum=16*1024*1024}={}){
@@ -32,7 +81,7 @@ export class IatiWorkspaceClient{
   const signals=[this.#controller.signal,AbortSignal.timeout(this.#timeout),...(signal?[signal]:[])];
   const selected=AbortSignal.any(signals);
   const task=(async()=>{
-   const response=await fetch(this.#origin+path,{method:body===undefined?'GET':'POST',redirect:'error',
+   const response=await originalConsoleResponse(this.#origin+path,{method:body===undefined?'GET':'POST',redirect:'error',
     headers:{...headers,authorization:'Bearer '+this.#token},signal:selected,
     ...(body===undefined?{}:{body,...(typeof body==='string'||Buffer.isBuffer(body)||body instanceof Blob?{}:{duplex:'half'})})});
    if(raw&&response.ok)return response;
@@ -225,6 +274,165 @@ export class IatiWorkspaceClient{
  organisationReceive({body,bytes},options={}){
   if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose the complete original organisation ZIP up to 4 GiB.');
   return this.#request('/api/iati/organisation/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
+ }
+
+ // Results reuse this exact borrowed console and its original request journal.
+ #resultsPost(route,value,options={}){if(!object(value))throw problem('INPUT','Use a complete results definition.');
+  const data=JSON.stringify(value);if(Buffer.byteLength(data)>64*1024*1024)throw problem('INPUT_LIMIT','The complete results selection exceeds 64 MiB.');
+  return this.#request('/api/iati/results/'+route,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body:data});}
+ resultsInventory(options){return this.#request('/api/iati/results',{...options,maximum:64*1024*1024});}
+ resultsSource(source,options){return this.#resultsPost('source',{source:hash(source)},options);}
+ resultsIndicators(projection,{offset=0,limit=50,search='',measure='',...options}={}){
+  if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>100||typeof search!=='string'||search.length>256||typeof measure!=='string')
+   throw problem('PAGE','Select an original projection, nonnegative offset, 1–100 rows and bounded search.');
+  return this.#request('/api/iati/results/indicators?'+query({projection:hash(projection),offset,limit,search,measure}),{...options,maximum:64*1024*1024});}
+ resultsIndicator(projection,key,options){return this.#request('/api/iati/results/indicator?'+query({projection:hash(projection),key:hash(key)}),{...options,maximum:64*1024*1024});}
+ resultsPreview(definition,options){return this.#resultsPost('preview',definition,options);}
+ resultsSave(input,options){return this.#resultsPost('save',input,options);}
+ resultsCompare(input,options){return this.#resultsPost('compare',input,options);}
+ resultsAdopt(input,options){return this.#resultsPost('adopt',input,options);}
+ resultsCancel(input,options){return this.#resultsPost('cancel',input,options);}
+ resultsRequest(requestId,options){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the original complete results request ID.');
+  return this.#request('/api/iati/results/operation?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ resultsProject(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/results/project?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ resultsReport(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/results/report?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ resultsHistory(id,options){return this.#request('/api/iati/results/history?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ resultsComparisons(id,options){return this.#request('/api/iati/results/comparisons?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ resultsExport(id,{revision:selectedRevision,reportOnly=false,...options}={}){
+  if(typeof reportOnly!=='boolean')throw problem('EXPORT','Select the complete editable project or report-only packet.');
+  return this.#request('/api/iati/results/'+(reportOnly?'report/export':'export')+'?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});}
+ resultsOriginalSource(source,options){return this.#request('/api/iati/results/source/download?'+query({source:hash(source)}),{...options,raw:true});}
+ resultsReceive({body,bytes,sha256},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose the complete original results packet up to 4 GiB.');
+  if(sha256!==undefined)hash(sha256);
+  return this.#request('/api/iati/results/receive',{...options,maximum:64*1024*1024,body,
+   headers:{'content-type':'application/zip','content-length':String(bytes),'X-IATI-Results-Bytes':String(bytes),...(sha256===undefined?{}:{'X-IATI-Results-Sha256':sha256})}});}
+
+
+ // AMP uses the same original authenticated console and full retained native JSON strings.
+ #ampPost(route,input,options={}){
+  if(!object(input))throw problem('AMP_INPUT','Supply the complete original AMP action.');
+  if(!['decision/preview','native/continue'].includes(route)&&
+    (typeof input.requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(input.requestId)))
+   throw problem('AMP_REQUEST','Retain the original AMP requestId.');
+  const body=JSON.stringify(input);if(Buffer.byteLength(body)>64*1024*1024)throw problem('AMP_INPUT','Supply a complete AMP JSON request within 64 MiB.');
+  return this.#request('/api/iati/amp/'+route,{...options,body,headers:{'content-type':'application/json'},maximum:64*1024*1024});
+ }
+ ampStatus(options={}){return this.#request('/api/iati/amp/status',{...options,maximum:64*1024*1024});}
+ ampCapture(id,options={}){return this.#request('/api/iati/amp/capture?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampPlan(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/amp/plan?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ ampHistory(id,options={}){return this.#request('/api/iati/amp/history?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampRows(input,options={}){
+  if(!object(input))throw problem('AMP_PAGE','Select an original AMP plan and page.');
+  const selected={...input,id:hash(input.id),revision:revision(input.revision),offset:input.offset??0,limit:input.limit??50};
+  if(!Number.isSafeInteger(selected.offset)||selected.offset<0||selected.offset>1000000||!Number.isSafeInteger(selected.limit)||selected.limit<1||selected.limit>250||
+    selected.state!==undefined&&!['included','excluded','review'].includes(selected.state))throw problem('AMP_PAGE','Select an original financial row page.');
+  return this.#request('/api/iati/amp/rows?'+query(selected),{...options,maximum:64*1024*1024});
+ }
+ ampRuns(id,options={}){return this.#request('/api/iati/amp/runs?'+query({id:id===undefined?undefined:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampRun(id,options={}){return this.#request('/api/iati/amp/run?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ ampEvents(id,{after=0,limit=100,...options}={}){
+  if(!Number.isSafeInteger(after)||after<0||!Number.isSafeInteger(limit)||limit<1||limit>250)throw problem('AMP_PAGE','Select an original native event page.');
+  return this.#request('/api/iati/amp/events?'+query({id:hash(id),after,limit}),{...options,maximum:64*1024*1024});
+ }
+ ampRequest(requestId,options={}){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('AMP_REQUEST','Use the original AMP requestId.');return this.#request('/api/iati/amp/request?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ ampCaptureImport(input,options){return this.#ampPost('capture',input,options);}
+ ampSave(input,options){return this.#ampPost('plan',input,options);}
+ ampDecisionPreview(input,options){return this.#ampPost('decision/preview',input,options);}
+ ampDecisions(input,options){return this.#ampPost('decision/apply',input,options);}
+ ampAdvance(input,options){return this.#ampPost('advance',input,options);}
+ ampReview(input,options){return this.#ampPost('review',input,options);}
+ ampPrepare(input,options){return this.#ampPost('prepare',input,options);}
+ ampNativeCapture(input,options){return this.#ampPost('native/capture',input,options);}
+ ampNativeStart(input,options){return this.#ampPost('native/start',input,options);}
+ ampNativeContinue(input,options){return this.#ampPost('native/continue',input,options);}
+ ampNativeReconcile(input,options){return this.#ampPost('native/reconcile',input,options);}
+ ampExport(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/amp/export?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});}
+ ampFile(id,kind,{revision:selectedRevision,...options}={}){
+  if(!['analysis','sourceRows','comparison','prepared','report'].includes(kind))throw problem('AMP_FILE','Select the complete original AMP file.');
+  return this.#request('/api/iati/amp/file?'+query({id:hash(id),revision:revision(selectedRevision),kind}),{...options,raw:true});
+ }
+ ampAsset(sha256,options={}){return this.#request('/api/iati/amp/asset?'+query({sha256:hash(sha256)}),{...options,raw:true});}
+ ampReceive({body,bytes},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('AMP_PACKET','Choose the complete AMP handover ZIP up to 4 GiB.');
+  return this.#request('/api/iati/amp/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
+ }
+
+
+ // Saved geography uses the original complete activity source; no amount is allocated per location.
+ #geographyPost(path,input,options){
+  if(!object(input))throw problem('GEOGRAPHY_INPUT','Use the complete original geography request object.');
+  const body=JSON.stringify(input);
+  if(Buffer.byteLength(body)>64*1024*1024)throw problem('GEOGRAPHY_INPUT','The complete geography request exceeds 64 MiB.');
+  return this.#request('/api/iati/geography/'+path,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body});
+ }
+ #geographyRows(input,points){
+  if(!object(input))throw problem('GEOGRAPHY_QUERY','Use an exact saved review and revision.');
+  const selected={...input},allowed=new Set(['id','revision','source','search','activityId','rowId','coordinateStatus','decision','exactness','locationClass','locationReach','offset','limit']);
+  if(Object.keys(selected).some(key=>!allowed.has(key)))throw problem('GEOGRAPHY_QUERY','The geography query contains an unknown field.');
+  hash(selected.id);if(selected.revision===undefined)throw problem('REVISION','Choose the explicit saved geographic revision.');revision(selected.revision);
+  for(const key of ['source','rowId'])if(selected[key]!==undefined&&selected[key]!=='')hash(selected[key]);
+  for(const key of ['search','activityId','coordinateStatus','decision','exactness','locationClass','locationReach'])if(selected[key]!==undefined&&typeof selected[key]!=='string')throw problem('GEOGRAPHY_QUERY','Keep original geography filters as exact scalar strings.');
+  if(selected.coordinateStatus!==undefined&&!['','valid','missing','invalid','not-reported'].includes(selected.coordinateStatus))throw problem('GEOGRAPHY_QUERY','Choose a reported coordinate status.');
+  if(selected.decision!==undefined&&!['','accepted','needs-correction','note','unreviewed'].includes(selected.decision))throw problem('GEOGRAPHY_QUERY','Choose a saved analyst decision or unreviewed records.');
+  if(points&&selected.coordinateStatus!==undefined&&!['','valid'].includes(selected.coordinateStatus))throw problem('GEOGRAPHY_POINTS','Map points use valid reported coordinates.');
+  selected.offset??=0;selected.limit??=50;
+  if(!Number.isSafeInteger(selected.offset)||selected.offset<0||selected.offset>1000000||!Number.isSafeInteger(selected.limit)||selected.limit<1||selected.limit>1000)throw problem('GEOGRAPHY_PAGE','Choose an original geographic page of 1–1000 records.');
+  return selected;
+ }
+ geographyState(options){return this.#request('/api/iati/geography/state',{...options,maximum:64*1024*1024});}
+ /** Read the retained original request and its exact historical result before any caller-controlled retry. */
+ geographyRequest(requestId,options){
+  if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(requestId))throw problem('GEOGRAPHY_REQUEST','Read the original geographic requestId.');
+  return this.#request('/api/iati/geography/requests/'+encodeURIComponent(requestId),{...options,maximum:129*1024*1024});
+ }
+ geographyReview(id,{revision:selectedRevision,...options}={}){
+  return this.#request('/api/iati/geography/reviews/'+hash(id)+'?'+query({revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});
+ }
+ geographyHistory(id,options){return this.#request('/api/iati/geography/reviews/'+hash(id)+'/history',{...options,maximum:64*1024*1024});}
+ geographyReport(id,{revision:selectedRevision,...options}={}){
+  return this.#request('/api/iati/geography/reviews/'+hash(id)+'/report?'+query({revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});
+ }
+ /** Keep this complete object and requestId unchanged after a lost response or CAS conflict. */
+ geographySave(input,options){
+  if(!object(input)||typeof input.requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(input.requestId))throw problem('GEOGRAPHY_REQUEST','Retain one original geographic requestId.');
+  if((input.id===undefined)!==(input.expectedRevision===undefined))throw problem('REVISION','An edit requires its exact id and expectedRevision together.');
+  if(input.id!==undefined){hash(input.id);revision(input.expectedRevision);}
+  if(input.sources!==undefined&&(!Array.isArray(input.sources)||input.sources.length>32||input.sources.some(id=>!HASH.test(id))))throw problem('GEOGRAPHY_SOURCES','Select the complete publisher source IDs.');
+  if(input.portfolio!=null){if(!object(input.portfolio)||input.portfolio.revision===undefined)throw problem('GEOGRAPHY_PORTFOLIO','Link the explicit original portfolio revision.');hash(input.portfolio.id);revision(input.portfolio.revision);}
+  return this.#geographyPost('reviews',input,options);
+ }
+ geographyRows(input,options){return this.#geographyPost('rows',this.#geographyRows(input,false),options);}
+ geographyPoints(input,options){return this.#geographyPost('points',this.#geographyRows(input,true),options);}
+ geographyCompare(input,options){
+  if(!object(input))throw problem('GEOGRAPHY_COMPARE','Select the exact before and after review revisions.');
+  hash(input.id);if(input.beforeRevision===undefined||input.afterRevision===undefined)throw problem('REVISION','Choose both saved geography revisions.');
+  revision(input.beforeRevision);revision(input.afterRevision);
+  if(input.beforeRevision>=input.afterRevision)throw problem('GEOGRAPHY_COMPARE','Compare an earlier and later revision of the same review.');
+  if(input.pairs!==undefined){if(!Array.isArray(input.pairs))throw problem('GEOGRAPHY_COMPARE','Pass the explicit replacement source pairs.');for(const pair of input.pairs){if(!object(pair))throw problem('GEOGRAPHY_COMPARE','Each replacement identifies both complete source editions.');hash(pair.before);hash(pair.after);}}
+  return this.#geographyPost('compare',input,options);
+ }
+ geographyComparison(id,options){return this.#request('/api/iati/geography/comparisons/'+hash(id),{...options,maximum:64*1024*1024});}
+ geographyComparisonChanges(id,{native,offset=0,limit=50,...options}={}){
+  hash(native);if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>250)throw problem('GEOGRAPHY_PAGE','Choose a bounded original native change page.');
+  return this.#request('/api/iati/geography/comparisons/'+hash(id)+'/changes?'+query({native,offset,limit}),{...options,maximum:64*1024*1024});
+ }
+ /** Returns the saved native descriptor; its artifact id differs from the content SHA. */
+ geographyExport(input,options){
+  if(!object(input))throw problem('GEOGRAPHY_EXPORT','Select one complete saved geography export.');
+  hash(input.id);revision(input.revision);
+  if(!['packet','geojson','csv','json','html'].includes(input.format))throw problem('GEOGRAPHY_EXPORT','Choose packet, GeoJSON, CSV, JSON or HTML.');
+  return this.#geographyPost('export',input,options);
+ }
+ /** Consume or cancel the complete original file stream and verify its descriptor bytes/SHA. */
+ geographyDownload(artifactId,options){return this.#request('/api/iati/geography/download/'+hash(artifactId),{...options,raw:true});}
+ geographyReceive(input,options){
+  if(!object(input)||typeof input.path!=='string'||!input.path||input.path.includes('\0'))throw problem('GEOGRAPHY_RECEIVE','Select the original complete local packet path.');
+  return this.#geographyPost('receive',input,options);
+ }
+ geographyReceivePacket({body,bytes},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('GEOGRAPHY_PACKET','Choose the complete original geography ZIP up to 4 GiB.');
+  return this.#request('/api/iati/geography/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
  }
 
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));

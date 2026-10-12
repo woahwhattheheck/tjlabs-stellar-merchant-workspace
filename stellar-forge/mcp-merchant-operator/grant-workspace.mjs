@@ -402,11 +402,12 @@ export class MerchantGrantWorkspaces {
     if (verb === 'browser') return client.browser();
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
-    const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', cases:'cases', case:'case',
-      case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
-      portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
+    const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
+      case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
+      portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion', delivery_calendar:'delivery-calendar',
+      work_intakes:'work-intakes',work_intake:'work-intake',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
-      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
+      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {
@@ -423,6 +424,33 @@ export class MerchantGrantWorkspaces {
       original=verb === 'ledger_intake_preview'
         ? await client.ledgerIntakePreview(caseId,{...body,document})
         : await client.ledgerIntakeApply(caseId,{...body,document});
+    }
+    else if (verb === 'statement_preview') original=await client.statementPreview(args.caseId,args.expectedVersion,
+      await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES));
+    else if (verb === 'statement_receive') {
+      const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
+      original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
+    }
+    else if (verb === 'installation_return_seed') {
+      const {caseId,...body}=rest; original=await client.installationReturnSeed(caseId,body);
+    }
+    else if (['installation_return_preview','installation_return_review_preview','installation_return','installation_return_stage'].includes(verb)) {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const selected=await this.#modelInputs(alias,args,'Installation receiving');
+      const methods={installation_return_preview:'installationReturnPreview',
+        installation_return_review_preview:'installationReturnReviewPreview',
+        installation_return:'installationReturn',installation_return_stage:'installationReturnStage'};
+      original=await client[methods[verb]](caseId,{...body,inputs:selected});
+    }
+    else if (verb === 'work_intake_upload') {
+      const {caseId,...body}=rest;original=await client.workIntakeUpload(caseId,body);
+    }
+    else if (['work_intake_preview','work_intake_save','work_intake_apply'].includes(verb)) {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      if(inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined)
+        body.document=await this.#modelInputs(alias,args,'Work intake',GRANT_MAX_BUNDLE_BYTES);
+      const method={work_intake_preview:'workIntakePreview',work_intake_save:'workIntakeSave',work_intake_apply:'workIntakeApply'}[verb];
+      original=await client[method](caseId,body);
     }
     else if (verb === 'installation_seed') original=await client.installationSeed(args.caseId,args.expectedVersion);
     else if (verb === 'installation_workshares') {
@@ -449,6 +477,23 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'commercial_connections') original=await client.commercialConnections();
+    else if (verb === 'commercial_connection_configure') original=await client.commercialConfigureConnection(rest);
+    else if (verb === 'commercial_customers') original=await client.commercialCustomers(args.endpointId);
+    else if (verb === 'commercial_list') original=await client.commercialList(args.caseId);
+    else if (verb === 'commercial') original=await client.commercialDetail(args.caseId,args.billingId);
+    else if (verb === 'commercial_schedule'||verb === 'commercial_prepare') {
+      const {caseId,...body}=rest;
+      original=verb==='commercial_schedule'?await client.commercialSchedule(caseId,body):
+        await client.commercialPrepare(caseId,body);
+    }
+    else if (verb === 'commercial_draft'||verb === 'commercial_issue') {
+      const {caseId,billingId,milestoneId,...body}=rest;
+      original=verb==='commercial_draft'?await client.commercialDraft(caseId,billingId,milestoneId,body):
+        await client.commercialIssue(caseId,billingId,milestoneId,body);
+    }
+    else if (verb === 'commercial_preview') original=await client.commercialPreview(args.caseId,args.billingId,args.milestoneId);
+    else if (verb === 'commercial_refresh') original=await client.commercialRefresh(args.caseId,args.billingId);
     else if (verb === 'cohort_seed') original=await client.cohortSeed(args.caseId,args.expectedVersion,args.tranche);
     else if (verb === 'cohort_preview') original=await client.cohortPreview(args.caseId,args.expectedVersion,
       await this.#modelInputs(alias,args,'Cohort',GRANT_MAX_BUNDLE_BYTES));
@@ -476,6 +521,8 @@ export class MerchantGrantWorkspaces {
         completion_submit:'completionSubmit',completion_decision:'completionDecision'}[verb];
       original=await client[method](caseId,body);
     }
+    else if (verb === 'amendment_preview') original = await client.amendmentPreview(args.caseId, args.expectedVersion,
+      await this.#modelInputs(alias, args, 'Plan amendment'));
     else if (verb === 'forecast_preview') original = await client.forecastPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Forecast'));
     else if (verb === 'forecast_save') {
@@ -521,7 +568,7 @@ export class MerchantGrantWorkspaces {
       } else { const {caseId, ...fields} = body; original = await client.attach(caseId, selected.bytes, fields); }
     } else throw failure('GRANT_TOOL_UNKNOWN', 'Choose an original grant operation.');
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
-      ['planId','caseId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind',
+      ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',

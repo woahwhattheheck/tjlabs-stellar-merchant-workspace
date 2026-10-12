@@ -3,17 +3,58 @@
   "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
   "ref": "33b3375dc168304a5026be21bfb0d2b1c149f084",
   "sourceCohort": {
-    "id": "research-ris-pr407-396c-20261012",
+    "id": "research-ris-pr407-pr438-396c-20261012",
     "release": {
       "pullRequest": 407,
       "merge": "33b3375dc168304a5026be21bfb0d2b1c149f084"
     },
     "selection": "Complete current Research and Python source, registered Research client support, original Developer Portal assets, and actual native/conditional Analysis module dependencies",
     "originalSourceLocationsPreserved": true,
-    "sourceBodyChanges": 0
+    "sourceBodyChanges": 1,
+    "predecessor": {
+      "kitPullRequest": 456,
+      "kitMerge": "00e6d4764d77ca04d19fa86dcba9a820038c8d9a",
+      "sourceEnvelope": {
+        "bytes": 22356044,
+        "sha256": "9d2f4d9154e4fc9d7060cd8861d609db192a6fc1416c4685fe33bba573504ce4"
+      },
+      "engineManifest": {
+        "bytes": 439463,
+        "sha256": "6bdb7cfb12e6701a7341ec7dd0da4f5ef1d2318294fd41b7be82483b099d8d77"
+      },
+      "sourceFiles": 1444,
+      "sourceBytes": 20803604
+    },
+    "overlays": [
+      {
+        "reason": "Accept the original reviewed RIS record identity when a source has no DOI",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "pullRequest": 438,
+        "merge": "ce1b2b35af6a6377697196fca1ce8ca6571904b9",
+        "publicRelease": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2473,
+          "merge": "90ca7ac31f345cb21cc30e3c381a43e589dc5e79"
+        },
+        "before": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/normalize.mjs",
+          "gitBlobSha": "9a7b47e9c1cd7c56bdf08e9fa716b99771c3f11e",
+          "bytes": 11762,
+          "sha256": "ae557b68fb51e70a61b56d7cf542d456ff6f1ea1179169dfb3abe4bf3e3d53d0",
+          "mode": "100644"
+        },
+        "after": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/normalize.mjs",
+          "gitBlobSha": "913bd1701968d2e1f26bf0f4d492319e35257741",
+          "bytes": 11824,
+          "sha256": "5aed0b101634b06ac58db045c3a364960ae724c8b3d615928bd108e508c6daf0",
+          "mode": "100644"
+        }
+      }
+    ]
   },
   "sourceFiles": 1444,
-  "sourceBytes": 20803604,
+  "sourceBytes": 20803666,
   "files": [
     {
       "path": "LICENSE",
@@ -8648,9 +8689,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/normalize.mjs",
-      "gitBlobSha": "9a7b47e9c1cd7c56bdf08e9fa716b99771c3f11e",
-      "bytes": 11762,
-      "sha256": "ae557b68fb51e70a61b56d7cf542d456ff6f1ea1179169dfb3abe4bf3e3d53d0",
+      "gitBlobSha": "913bd1701968d2e1f26bf0f4d492319e35257741",
+      "bytes": 11824,
+      "sha256": "5aed0b101634b06ac58db045c3a364960ae724c8b3d615928bd108e508c6daf0",
       "mode": "100644"
     },
     {

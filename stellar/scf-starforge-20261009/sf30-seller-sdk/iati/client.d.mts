@@ -1,10 +1,13 @@
+import type { OrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
+import type { AmpStatus, AmpCapture, AmpPlan, AmpSelection, AmpDecisionState, AmpRows, AmpRunSummary, AmpRun, AmpEvents, AmpRequest, AmpAction, AmpCaptureInput, AmpCaptureResult, AmpSave, AmpSaved, AmpScope, AmpScopePreview, AmpDecisions, AmpAdvance, AmpReview, AmpPrepare, AmpNativeCapture, AmpNativeStart, AmpNativeStarted, AmpCredentials, AmpNativeReconcile, AmpNativeReceived, AmpFileKind, AmpReceiving } from './amp_client.mjs';
+export type * from './amp_client.mjs';
 import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
 export type * from './organisation_client.mjs';
 /** MIT. Typed access to the original IATI console. Financial and identifier values remain strings. */
 export type Sha256 = string;
 export type ExactDecimalString = string;
 export type CalendarDate = string;
-export type Collection = 'activities' | 'transactions' | 'budgets';
+export type Collection = 'activities' | 'transactions' | 'budgets' | 'locations';
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export interface RequestOptions { signal?: AbortSignal }
 export interface RevisionOptions extends RequestOptions { revision?: number }
@@ -439,7 +442,218 @@ export interface RefreshReceiving {
  historyCount:number;pendingRequest:RefreshPrepared|null;portfolio:RefreshNativeSelection;reportFiles:string[];
 }
 
+
+/** Original IATI 2.03 results. All reported and calculated decimal values are strings. */
+export interface ResultsSelection {
+ indicatorKeys?:Sha256[]; activityIds?:string[]; resultTypes?:string[]; measures?:string[];
+ periodFrom?:CalendarDate|''; periodTo?:CalendarDate|''; includeUndated?:boolean;
+}
+export interface ResultsInterpretation {
+ indicatorKey:Sha256; unitLabel:string; direction:'reported'|'higher'|'lower'|'none'; note:string;
+}
+export type ResultsPair = {periodKey:Sha256;actualKey:Sha256;note:string} & (
+ {targetKey:Sha256;baselineKey:Sha256|null;operation:'inspect'|'difference'|'target-ratio'} |
+ {targetKey:Sha256;baselineKey:Sha256;operation:'baseline-progress'} |
+ {targetKey:null;baselineKey:Sha256;operation:'baseline-change'}
+);
+export interface ResultsDefinition {
+ name:string; sources:Sha256[]; notes?:string; selection?:ResultsSelection; review?:Review;
+ interpretations?:ResultsInterpretation[]; bindings?:ResultsPair[];
+}
+export type ResultsSave = ResultsDefinition & {requestId:string} &
+ ({id?:never;expectedRevision?:never}|{id:Sha256;expectedRevision:number});
+export interface ResultsCompare {
+ requestId:string; id:Sha256; beforeRevision:number; afterRevision:number;
+ /** Only unmatched source-bound indicators need an explicit one-to-one correspondence. */
+ pairs:Array<{before:Sha256;after:Sha256;note:string}>;
+}
+export interface ResultsAdopt {
+ requestId:string; id:Sha256; expectedRevision:number; selectedRevision:number; actor:string; note:string;
+}
+export type ResultsCancel = {requestId:string;reason:string} & (
+ {targetKind:'save';targetInput:ResultsSave}|{targetKind:'compare';targetInput:ResultsCompare}|{targetKind:'adopt';targetInput:ResultsAdopt});
+export interface ResultsFinding {code:string;message:string;locator:string;severity:string;source?:Sha256}
+export interface ResultsProjectionRecord {
+ id:Sha256;source:Pick<SourceSummary,'id'|'label'|'name'|'bytes'>;analysisContractSha256:Sha256;file:FileIdentity;
+}
+export interface ResultsValue {
+ key:Sha256;source:Sha256;locator:string;indicatorKey:Sha256;periodKey:Sha256|null;
+ kind:'baseline'|'target'|'actual';attributes:Record<string,string>;rawValue:string|null;
+ decimal:ExactDecimalString|null;measure:string;year:string|null;isoDate:string|null;
+ dateDay:CalendarDate|null;original:JsonValue;originalSha256:Sha256;findings:ResultsFinding[];
+ [key:string]:unknown;
+}
+export interface ResultsPeriod {
+ key:Sha256;source:Sha256;locator:string;indicatorKey:Sha256;
+ targets:ResultsValue[];actuals:ResultsValue[];findings:ResultsFinding[];[key:string]:unknown;
+}
+export interface ResultsIndicator {
+ key:Sha256;source:Sha256;locator:string;activityId:string;activityKey:Sha256;resultKey:Sha256;
+ reportingOrgRef:string;title:string;resultTitle:string;resultType:string;
+ measure:string;measureLabel:string;ascending:boolean|null;aggregationStatus:boolean|null;
+ baselines:ResultsValue[];periods:ResultsPeriod[];contentSha256:Sha256;sourceValuesSha256:Sha256;
+ sourcePeriodCount:number;findings:ResultsFinding[];[key:string]:unknown;
+}
+export interface ResultsReport {
+ schema:'stellar-forge.iati-results-report.v1';reportSha256:Sha256;analysisContract:Record<string,unknown>;
+ selection:ResultsSelection;activities:Array<Record<string,unknown>>;results:Array<Record<string,unknown>>;
+ coverage:Array<{source:Pick<SourceSummary,'id'|'label'|'name'|'bytes'>;projectionSha256:Sha256;sourceCounts:Record<string,number>}>;
+ counts:Record<string,number>;indicators:ResultsIndicator[];interpretations:ResultsInterpretation[];
+ bindings:ResultsPair[];comparisons:Array<Record<string,unknown>>;findings:ResultsFinding[];aggregation:string;
+}
+export interface ResultsEdition {
+ schema:'stellar-forge.iati-results-edition.v1';id:Sha256;revision:number;parentRevision:number|null;
+ createdAt:string;savedAt:string;definition:Required<ResultsDefinition>;projections:ResultsProjectionRecord[];
+ report:ResultsReport;sha256:Sha256;
+}
+export interface ResultsSavedComparison {
+ schema:'stellar-forge.iati-results-saved-comparison.v1';id:Sha256;project:Sha256;
+ beforeRevision:number;afterRevision:number;beforeEditionSha256:Sha256;afterEditionSha256:Sha256;
+ comparison:{schema:'stellar-forge.iati-results-comparison.v1';sha256:Sha256;
+ selectionChanged:boolean;interpretationChanged:boolean;pairs:Array<Record<string,unknown>>;
+ removedIndicators:Sha256[];addedIndicators:Sha256[];[key:string]:unknown};recordedAt:string;
+}
+export interface ResultsReceiving {
+ schema:'stellar-forge.iati-results-receipt.v1';id:Sha256;project:Sha256;snapshotSha256:Sha256;
+ snapshotFile:FileIdentity;file:FileIdentity & {manifestSha256:Sha256};receivedAt:string;
+ selectedRevision:number;selectedEditionSha256:Sha256;localHeadBefore:number|null;localHeadAfter:number;
+ preservedExistingHead:boolean;sourceIds:Sha256[];editions:number[];reviewMeaning:string;requestMeaning:string;
+}
+export interface ResultsHeadSelection {
+ schema:'stellar-forge.iati-results-head-selection.v1';id:Sha256;previousRevision:number;
+ selectedRevision:number;selectedSha256:Sha256;actor:string;note:string;recordedAt:string;
+}
+export interface ResultsCancelled {
+ schema:'stellar-forge.iati-results-cancelled-request.v1';requestId:string;kind:'save'|'compare'|'adopt';
+ project:Sha256|'';inputSha256:Sha256;cancelledAt:string;cancellationRequestId:string;reason:string;
+}
+export interface ResultsInventory {
+ schema:'stellar-forge.iati-results-inventory.v1';workspaceId:Sha256;analysisContract:Record<string,unknown>;
+ projects:Array<{id:Sha256;revision:number;name:string;review:Review;savedAt:string;sha256:Sha256;counts:Record<string,number>}>;
+ projections:ResultsProjectionRecord[];receipts:ResultsReceiving[];
+}
+export interface ResultsSource {
+ projection:ResultsProjectionRecord;counts:Record<string,number>;findings:ResultsFinding[];sourceMetadata:Record<string,unknown>;
+}
+export interface ResultsPreview {definition:Required<ResultsDefinition>;projections:ResultsProjectionRecord[];report:ResultsReport}
+export type ResultsOperation =
+ {requestId:string;found:false}|
+ {requestId:string;found:true;kind:'save'|'compare'|'adopt'|'cancel';state:'COMPLETE'|'CANCELLED';inputSha256:Sha256;
+ input:ResultsSave|ResultsCompare|ResultsAdopt|ResultsCancel;response:ResultsEdition|ResultsSavedComparison|ResultsHeadSelection|ResultsCancelled};
+
+
+/** Saved geography retains complete location associations and original source-relative identities. */
+export type GeographyCoordinateStatus = 'valid' | 'missing' | 'invalid' | 'not-reported';
+export type GeographyDecision = 'accepted' | 'needs-correction' | 'note';
+export interface GeographyAcquisition {
+  source: Sha256; publisher: string; url: string; retrievedAt: string; license: string; citation: string;
+}
+export interface GeographyFinding {
+  source: Sha256; rowId: Sha256; decision: GeographyDecision; reviewer: string; note: string;
+}
+export interface GeographyDefinition {
+  name: string; notes: string; sources: Sha256[];
+  selection: { activityIds: string[]; language: string };
+  /** This keeps activity finance in its original portfolio; no location allocation is inferred. */
+  portfolio: { id: Sha256; revision: number } | null;
+  acquisition: GeographyAcquisition[]; review: Review; baselineRevision: number | null;
+  findings: GeographyFinding[];
+}
+export type GeographySave = GeographyDefinition & { requestId: string } &
+  ({ id?: never; expectedRevision?: never } | { id: Sha256; expectedRevision: number });
+export interface GeographyCounts {
+  sources: number; rows: number; activities: number; locations: number; mapped: number;
+  unlocated: number; invalid: number; activitiesWithoutLocation: number;
+  activitiesWithCoordinates: number; activitiesWithoutCoordinates: number; recordsWithIssues: number;
+}
+export interface GeographyReport {
+  schema: 'stellar-forge.iati-geography-report.v1';
+  counts: GeographyCounts;
+  bySource: Array<Omit<GeographyCounts,'sources'> & { source: Sha256; reportingOrgRefs: string[] }>;
+  coordinateStatuses: Record<GeographyCoordinateStatus,number>;
+  decisions: Record<GeographyDecision | 'unreviewed',number>;
+  portfolio: null | { id: Sha256; revision: number; definitionSha256: Sha256; financialReview: Review; counts: PortfolioCounts };
+  semantics: Record<string,string>;
+}
+export interface GeographyReview extends GeographyDefinition {
+  schema: 'stellar-forge.iati-geography-review.v1'; id: Sha256; revision: number;
+  editions: Array<{ source: Sha256; locations: NativeBuild }>;
+  report: GeographyReport; definitionSha256: Sha256;
+  created: number; updated: number; previousRevision: number | null;
+}
+export interface GeographyContract {
+  schema: 'stellar-forge.iati-geography-contract.v1'; standard: '2.03'; asOf: CalendarDate; crs: string;
+  sourceAxisOrder: ['latitude','longitude']; geojsonAxisOrder: ['longitude','latitude'];
+  coordinateStatuses: GeographyCoordinateStatus[];
+  exactness: Record<string,string>; locationClass: Record<string,string>; locationReach: Record<string,string>;
+  semantics: Record<string,string>; sources: string[];
+}
+/** The original lookup binds a request to its persistent workspace and exact saved historical revision. */
+export type GeographyRequestRecord =
+  | { schema: 'stellar-forge.iati-geography-request.v1'; status: 'NOT_RECORDED'; requestId: string; workspaceSha256: Sha256 }
+  | { schema: 'stellar-forge.iati-geography-request.v1'; status: 'RECORDED'; requestId: string; workspaceSha256: Sha256; requestSha256: Sha256; request: GeographySave; review: GeographyReview };
+export interface GeographyState {
+  schema: 'stellar-forge.iati-geography-state.v1'; workspaceSha256: Sha256; contract: GeographyContract;
+  reviews: Array<Pick<GeographyReview,'id'|'revision'|'name'|'review'|'sources'|'report'|'updated'>>;
+}
+export interface GeographyPoint {
+  source: Sha256; row_id: Sha256; activity_id: string; title: string; reporting_org_ref: string;
+  location_name: string; location_ref: string; coordinate_status: GeographyCoordinateStatus;
+  location_present: 'true' | 'false'; exactness: string; location_class: string; location_reach: string;
+  /** Original native decimal strings. Only valid reported points appear in geographyPoints. */
+  latitude: string; longitude: string; finding: GeographyFinding | null;
+}
+export interface GeographyRow extends GeographyPoint {
+  location_ordinal: string; location_count: string; identity_basis: string;
+  position_text: string; srs_name: string; feature_designation: string;
+  name_narratives_json: string; descriptions_json: string; activity_descriptions_json: string;
+  location_ids_json: string; administrative_json: string; point_json: string; record_json: string; issues_json: string;
+  /** Other original activity-context columns remain unchanged scalar strings. */
+  [column: string]: unknown;
+}
+export interface GeographyRowsInput {
+  id: Sha256; revision: number; source?: Sha256 | ''; rowId?: Sha256 | '';
+  search?: string; activityId?: string; coordinateStatus?: GeographyCoordinateStatus | '';
+  decision?: GeographyDecision | 'unreviewed' | ''; exactness?: string; locationClass?: string; locationReach?: string;
+  offset?: number; limit?: number;
+}
+export interface GeographyPage<Row extends GeographyPoint = GeographyRow> {
+  id: Sha256; revision: number; offset: number; limit: number; total: number; rows: Row[]; nextOffset: number | null;
+}
+export interface GeographyCompare {
+  id: Sha256; beforeRevision: number; afterRevision: number;
+  /** Explicitly pair replacement publisher editions; common source IDs are paired natively. */
+  pairs?: Array<{before: Sha256; after: Sha256}>;
+}
+export interface GeographyComparison {
+  schema: 'stellar-forge.iati-geography-comparison.v1'; id: Sha256; review: Sha256;
+  beforeRevision: number; afterRevision: number;
+  pairs: Array<{before: Sha256; after: Sha256}>;
+  comparisons: Array<{before: Sha256; after: Sha256; native: NativeComparison}>;
+  sourcesRemoved: Sha256[]; sourcesAdded: Sha256[];
+  counts: {added: number; removed: number; changed: number; unchanged: number};
+  definitionChanges: Record<string,{before:unknown;after:unknown}>;
+  findingChanges: Array<{source:Sha256;rowId:Sha256;before:GeographyFinding|null;after:GeographyFinding|null}>;
+  beforeReport: GeographyReport; afterReport: GeographyReport; semantics: string;
+}
+export type GeographyExportFormat = 'packet' | 'geojson' | 'csv' | 'json' | 'html';
+export interface GeographyExportInput {
+  id: Sha256; revision?: number; format: GeographyExportFormat;
+  /** Optional original local destination, checked by the native exporter. */
+  output?: string;
+}
+export interface GeographyExportDescriptor {
+  /** Native artifact identity; use this for download, not the file content SHA. */
+  id: Sha256; path: string; filename: string; bytes: number; sha256: Sha256; url: string;
+  format: GeographyExportFormat; selectionSha256: Sha256; review: Sha256; revision: number; contentType: string;
+}
+export interface GeographyReceiving {
+  schema: string; review: GeographyReview; history: GeographyReview[]; comparisons: GeographyComparison[];
+  requests: number; sourceCount: number; packet: GeographyExportDescriptor;
+}
+
 export declare class IatiWorkspaceClient {
+  readonly organisationReconciliation: OrganisationReconciliationClient;
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
   state(options?: RequestOptions): Promise<WorkspaceState>;
@@ -462,7 +676,7 @@ export declare class IatiWorkspaceClient {
   /** Consume or cancel the returned full native stream; this is never a reconstructed file. */
   export(kind: 'project' | 'dataset' | 'changes' | 'portfolio' | 'report', id: Sha256, options?: RevisionOptions): Promise<Response>;
   ingest(input: SourceInput, options?: RequestOptions): Promise<Source>;
-  receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject>;
+  receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject | ResultsReceiving>;
   dqaProviders(options?: RequestOptions): Promise<{ providers: DqaProvider[] }>;
   dqaSaveProvider(input: DqaProviderSave, options?: RequestOptions): Promise<DqaProvider>;
   dqaCapture(input: DqaCapture, options?: RequestOptions): Promise<DqaAssessment>;
@@ -526,6 +740,72 @@ export declare class IatiWorkspaceClient {
   organisationExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
   organisationFile(id: Sha256, kind: OrganisationFileKind, options?: RevisionOptions): Promise<Response>;
   organisationReceive(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<OrganisationReceiving>;
+
+
+  resultsInventory(options?:RequestOptions):Promise<ResultsInventory>;
+  resultsSource(source:Sha256,options?:RequestOptions):Promise<ResultsSource>;
+  resultsIndicators(projection:Sha256,options?:RequestOptions & {offset?:number;limit?:number;search?:string;measure?:string}):Promise<{
+    projection:ResultsProjectionRecord;sourceCounts:Record<string,number>;rows:Array<Record<string,unknown>>;total:number;offset:number;nextOffset:number|null}>;
+  resultsIndicator(projection:Sha256,key:Sha256,options?:RequestOptions):Promise<ResultsIndicator>;
+  resultsPreview(input:ResultsDefinition,options?:RequestOptions):Promise<ResultsPreview>;
+  resultsSave(input:ResultsSave,options?:RequestOptions):Promise<ResultsEdition>;
+  resultsCompare(input:ResultsCompare,options?:RequestOptions):Promise<ResultsSavedComparison>;
+  resultsAdopt(input:ResultsAdopt,options?:RequestOptions):Promise<ResultsHeadSelection>;
+  resultsCancel(input:ResultsCancel,options?:RequestOptions):Promise<ResultsCancelled>;
+  resultsRequest(requestId:string,options?:RequestOptions):Promise<ResultsOperation>;
+  resultsProject(id:Sha256,options?:RevisionOptions):Promise<ResultsEdition>;
+  resultsReport(id:Sha256,options?:RevisionOptions):Promise<{edition:ResultsEdition;report:ResultsReport}>;
+  resultsHistory(id:Sha256,options?:RequestOptions):Promise<{id:Sha256;headRevision:number;editions:ResultsEdition[]}>;
+  resultsComparisons(id:Sha256,options?:RequestOptions):Promise<{comparisons:ResultsSavedComparison[]}>;
+  /** The caller must consume/cancel the complete returned file stream. */
+  resultsExport(id:Sha256,options?:RevisionOptions & {reportOnly?:boolean}):Promise<Response>;
+  resultsOriginalSource(source:Sha256,options?:RequestOptions):Promise<Response>;
+  resultsReceive(input:Pick<PacketInput,'body'|'bytes'> & {sha256?:Sha256},options?:RequestOptions):Promise<ResultsReceiving>;
+
+
+  ampStatus(options?:RequestOptions):Promise<AmpStatus>;
+  ampCapture(id:Sha256,options?:RequestOptions):Promise<AmpCapture>;
+  ampPlan(id:Sha256,options?:RevisionOptions):Promise<AmpPlan>;
+  ampHistory(id:Sha256,options?:RequestOptions):Promise<{history:AmpPlan[]}>;
+  ampRows(input:AmpSelection&{offset?:number;limit?:number;state?:AmpDecisionState},options?:RequestOptions):Promise<AmpRows>;
+  ampRuns(id?:Sha256,options?:RequestOptions):Promise<{runs:AmpRunSummary[]}>;
+  ampRun(id:Sha256,options?:RequestOptions):Promise<AmpRun>;
+  ampEvents(id:Sha256,options?:RequestOptions&{after?:number;limit?:number}):Promise<AmpEvents>;
+  ampRequest(requestId:string,options?:RequestOptions):Promise<AmpRequest>;
+  ampCaptureImport(input:AmpAction&{capture:AmpCaptureInput},options?:RequestOptions):Promise<AmpCaptureResult>;
+  ampSave(input:AmpSave,options?:RequestOptions):Promise<AmpSaved>;
+  ampDecisionPreview(input:AmpSelection&{selection:AmpScope},options?:RequestOptions):Promise<AmpScopePreview>;
+  ampDecisions(input:AmpDecisions,options?:RequestOptions):Promise<AmpSaved>;
+  ampAdvance(input:AmpAdvance,options?:RequestOptions):Promise<AmpSaved>;
+  ampReview(input:AmpReview,options?:RequestOptions):Promise<AmpSaved>;
+  ampPrepare(input:AmpPrepare,options?:RequestOptions):Promise<AmpSaved>;
+  ampNativeCapture(input:AmpNativeCapture,options?:RequestOptions):Promise<AmpCaptureResult>;
+  ampNativeStart(input:AmpNativeStart,options?:RequestOptions):Promise<AmpNativeStarted>;
+  ampNativeContinue(input:{runId:Sha256;credentials:AmpCredentials},options?:RequestOptions):Promise<AmpNativeStarted>;
+  ampNativeReconcile(input:AmpNativeReconcile,options?:RequestOptions):Promise<AmpNativeReceived>;
+  ampExport(id:Sha256,options?:RevisionOptions):Promise<Response>;
+  ampFile(id:Sha256,kind:AmpFileKind,options?:RevisionOptions):Promise<Response>;
+  ampAsset(sha256:Sha256,options?:RequestOptions):Promise<Response>;
+  ampReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<AmpReceiving>;
+
+
+  geographyState(options?: RequestOptions): Promise<GeographyState>;
+  geographyRequest(requestId: string, options?: RequestOptions): Promise<GeographyRequestRecord>;
+  geographyReview(id: Sha256, options?: RevisionOptions): Promise<GeographyReview>;
+  geographyHistory(id: Sha256, options?: RequestOptions): Promise<GeographyReview[]>;
+  geographyReport(id: Sha256, options?: RevisionOptions): Promise<GeographyReport & Pick<GeographyReview,'id'|'revision'|'name'|'review'|'definitionSha256'>>;
+  /** Retain the complete original request and requestId after uncertain outcomes. No automatic replay. */
+  geographySave(input: GeographySave, options?: RequestOptions): Promise<GeographyReview>;
+  geographyRows(input: GeographyRowsInput, options?: RequestOptions): Promise<GeographyPage<GeographyRow>>;
+  geographyPoints(input: Omit<GeographyRowsInput,'coordinateStatus'> & {coordinateStatus?: 'valid' | ''}, options?: RequestOptions): Promise<GeographyPage<GeographyPoint>>;
+  geographyCompare(input: GeographyCompare, options?: RequestOptions): Promise<GeographyComparison>;
+  geographyComparison(id: Sha256, options?: RequestOptions): Promise<GeographyComparison>;
+  geographyComparisonChanges(id: Sha256, options: RequestOptions & {native: Sha256; offset?: number; limit?: number}): Promise<ChangePage>;
+  geographyExport(input: GeographyExportInput, options?: RequestOptions): Promise<GeographyExportDescriptor>;
+  /** Consume or cancel the complete native file; verify its original descriptor size and SHA-256. */
+  geographyDownload(artifactId: Sha256, options?: RequestOptions): Promise<Response>;
+  geographyReceive(input: {path: string}, options?: RequestOptions): Promise<GeographyReceiving>;
+  geographyReceivePacket(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<GeographyReceiving>;
 
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;

@@ -64,6 +64,9 @@ class IatiGeography:
                     review_id TEXT NOT NULL,revision INTEGER NOT NULL,source TEXT NOT NULL,
                     row_id TEXT NOT NULL,decision TEXT NOT NULL,body TEXT NOT NULL,
                     PRIMARY KEY(review_id,revision,source,row_id));
+                CREATE TABLE IF NOT EXISTS iati_geo_source_metadata(
+                    review_id TEXT NOT NULL,source TEXT NOT NULL,body TEXT NOT NULL,
+                    PRIMARY KEY(review_id,source));
                 CREATE TABLE IF NOT EXISTS iati_geo_exports(
                     id TEXT PRIMARY KEY,body TEXT NOT NULL);
             """)
@@ -104,6 +107,21 @@ class IatiGeography:
             return [load_json(row["body"]) for row in self.db.execute(
                 "SELECT body FROM iati_geo_reviews WHERE id=? AND revision<=? ORDER BY revision",
                 (ident, selected["revision"]))]
+
+    def request(self, ident):
+        if not isinstance(ident, str) or not REQUEST.fullmatch(ident):
+            raise InputError("Select the complete original geography requestId")
+        with self.mutex:
+            row = self.db.execute("SELECT * FROM iati_geo_requests WHERE id=?", (ident,)).fetchone()
+            if row is None:
+                return {"schema": "stellar-forge.iati-geography-request.v1",
+                        "status": "NOT_RECORDED", "requestId": ident,
+                        "workspaceSha256": self.workspace_sha256}
+            return {"schema": "stellar-forge.iati-geography-request.v1",
+                    "status": "RECORDED", "requestId": ident,
+                    "workspaceSha256": self.workspace_sha256,
+                    "requestSha256": row["request_sha"], "request": load_json(row["body"]),
+                    "review": self.review(row["review_id"], row["revision"])}
 
     def _definition(self, raw, prior_revisions=None):
         exact_object(raw, (*DEFINITION_FIELDS, "requestId", "id", "expectedRevision"), "Geography review")
@@ -330,6 +348,25 @@ class IatiGeography:
                 "coordinateStatuses": statuses, "decisions": decisions, "portfolio": linked,
                 "semantics": CONTRACT["semantics"]}
 
+    def source_metadata(self, ident, source):
+        """Preserve this review's original publisher inventory across receiving."""
+        row = self.db.execute(
+            "SELECT body FROM iati_geo_source_metadata WHERE review_id=? AND source=?",
+            (checked_id(ident), checked_id(source))).fetchone()
+        return load_json(row["body"]) if row is not None else self.ws.source(source)
+
+    def _capture_sources(self, ident, sources, supplied=None):
+        for source in sorted(sources):
+            value = supplied[source] if supplied is not None else self.source_metadata(ident, source)
+            body = json_bytes(value).decode()
+            prior = self.db.execute(
+                "SELECT body FROM iati_geo_source_metadata WHERE review_id=? AND source=?",
+                (ident, source)).fetchone()
+            if prior is not None and load_json(prior["body"]) != value:
+                raise InputError("This geography review retains different original source metadata")
+            self.db.execute("INSERT OR IGNORE INTO iati_geo_source_metadata VALUES(?,?,?)",
+                            (ident, source, body))
+
     def _insert(self, value):
         self.db.execute("INSERT INTO iati_geo_reviews VALUES(?,?,?)",
                         (value["id"], value["revision"], json_bytes(value).decode()))
@@ -364,6 +401,7 @@ class IatiGeography:
             if len(json_bytes(value)) > MAX_METADATA:
                 raise InputError("The complete geography review exceeds 64 MiB")
             with self.db:
+                self._capture_sources(ident, definition["sources"])
                 self._insert(value)
                 self.db.execute("INSERT INTO iati_geo_requests VALUES(?,?,?,?,?)",
                                 (request, request_sha, ident, revision, json_bytes(raw).decode()))

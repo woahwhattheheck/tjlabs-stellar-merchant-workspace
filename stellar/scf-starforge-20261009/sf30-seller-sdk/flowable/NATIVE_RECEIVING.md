@@ -1,6 +1,6 @@
-# Native Flowable process operations and customer receiving
+# Native Flowable process and decision operations and customer receiving
 
-This source runs the original Flowable 8.0.0 REST application and the complete operator product. The live engine owns process execution, task assignment, migration validation and history.
+This source runs the original Flowable 8.0.0 REST application and the complete operator product. The live engine owns process execution, task assignment, migration validation, DMN evaluation and operating history.
 
 ## Original engine
 
@@ -27,6 +27,44 @@ Complete engine portfolios retain deployments, definitions, running processes, c
 
 The operator source has a neutral industrial layout. The native browser records the overview, definitions, migrations and actual task completion.
 
+## Native decision editions and operating history
+
+The same original REST application exposes the DMN service at
+`/flowable-rest/dmn-api`. The launcher waits for the actual native decision
+endpoint and saves a separate `dmnConnection` beside the original process
+connection. Both use the same private engine and its host-owned credentials.
+
+The decision programme deploys the six complete resources in
+[the native decision catalog](fixtures/decisions/decision-catalog.json).
+It runs all four authored business cases against each edition:
+
+| Native family | Input | First edition | Second edition |
+| --- | --- | --- | --- |
+| Grant eligibility | Exact decimal `10000.1250` and integer `922337203685477580612345` | Specialist review | Standard review |
+| Grant eligibility | Exact decimal `50.2500` and the same large integer | Standard review | Standard review |
+| Vendor review | Screening score 75 | Routine review | Enhanced review |
+| Onboarding | Contractor, remote true | Contractor onboarding | Remote onboarding |
+
+These are editable demonstration rules with their original XML and native
+Flowable results. The actual browser then prepares, reviews and evaluates
+the second grant edition, opens its native execution audit, and retains
+screenshots of the decision portfolio, evaluation and audit.
+
+The complete decision capture includes all native definition versions,
+deployment resources, execution records and original audit bytes. The
+installed continuation evaluates the current native rule through the typed
+SDK, installed CLI and authenticated MCP connection, using the same saved
+connection and original body. Its final complete export is received through
+the original MCP file stream, adopted and cold reopened with every process
+and decision revision.
+
+The native journey reports its original engine mutations and retained
+responses. A completed decision result contains all eight versioned case
+evaluations, the actual browser operation, source hashes, historic audit
+downloads and the installed continuation. The selected contribution
+publishes the full native DMN contract and source catalogue beside the
+operator's [decision guide](../../../../products/flowable-merchant/DECISIONS.md).
+
 ## Run with the complete original source
 
 Use an existing Linux worker with the complete source and Node24 or later:
@@ -50,7 +88,7 @@ The host keeps its mode-0600 application-environment.private.json outside the jo
 
 ## Receive source and build the original selected product
 
-receive-source-release.py consumes one complete commons.flowable-build-source.v1 JSON packet containing the original signed Git commit capture, complete tree and selected full source members. Every member carries its original Git object ID, bytes, SHA-256 and Base64 content.
+receive-source-release.py consumes one complete commons.flowable-build-source.v1 JSON packet containing the original signed Git commit capture, complete tree and selected full source members. Every member carries its original Git object ID, bytes, SHA-256 and Base64 content. The original tree retains each blob entry's native size metadata, including when its other metadata is compacted for transfer.
 
 The receiver reconstructs the original Git objects with the maintained git-object-receiving.py, builds the flowable-merchant selection using the maintained distribution builder, inspects the whole selected product archive, and creates an editable complete-source ZIP plus a separate commons.flowable-source-release.v1 manifest.
 
@@ -64,6 +102,8 @@ python3 receive-source-release.py \
 source-release-result.json identifies the complete source ZIP, source manifest, selected release and original distribution receipt. With --native-directory, the same invocation prepares, installs and inspects the original selected runtime, continues the native launcher, and joins its completed workspace export to the source, installed runtime and selected release. Interrupted dependency installation resumes in the retained runtime; interrupted archive preparation uses the maintained installer's original recovery workflow, preserving the earlier directory.
 
 ## Complete receiving outputs
+
+The native programme resumes interrupted portfolio captures and preparation with their original frozen inputs. After a pre-dispatch interruption, it retains the refreshed prepared revision and saves a dispatch input for that review. When a native request was already dispatched, continuation uses its original saved input and native readback. The installed SDK, CLI and MCP hooks likewise reopen current preparation records instead of caching an interrupted result. Interrupted readback can continue with the same reconciliation request.
 
 A completed original native run produces delivery.json, journey/journey.json, native-receiving-manifest.json and flowable-complete-native-receiving.zip. The completed scope is complete-native-process-history-and-cold-receiving. The archive contains the closed original journey workspaces, source downloads, two full workspace exports, native operation reports, installed product receiving results and browser images.
 

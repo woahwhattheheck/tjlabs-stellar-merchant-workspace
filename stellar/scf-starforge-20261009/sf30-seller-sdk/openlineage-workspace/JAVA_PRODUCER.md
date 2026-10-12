@@ -88,6 +88,50 @@ The Node wrapper waits for the original child to close before releasing its
 writer or command output files, including after cancellation. No replacement
 workspace or producer operation is created to resume preparation.
 
+## Receive a complete runtime on another host
+
+The native runtime can be transferred independently of the original host's Maven cache. After a successful original preparation, export the complete runtime:
+
+```sh
+node /absolute/application/JAVA_PRODUCER.mjs runtime-export \
+  --runtime /absolute/prepared-java-runtime \
+  --out /absolute/delivery/openlineage-java-runtime.json
+```
+
+The package retains the unchanged Java source, POM, runtime intent, complete resolved JAR files, original successful Maven command and its complete output. Every file has its original byte count and SHA-256. The emitted package is independent of the lineage workspace export; carry both complete files through the customer's existing delivery route.
+
+On the receiving host, use the delivered application's original launcher:
+
+```sh
+node /absolute/received/application/JAVA_PRODUCER.mjs runtime-verify \
+  --input /absolute/delivery/openlineage-java-runtime.json
+
+node /absolute/received/application/JAVA_PRODUCER.mjs runtime-receive \
+  --input /absolute/delivery/openlineage-java-runtime.json \
+  --runtime /absolute/customer/java-runtime
+```
+
+Receiving verifies the complete package before writing its selected runtime. It preserves the original source and preparation under `origin/`, writes every dependency under the receiving directory, and rebuilds the classpath from those local paths. The source and POM must match the received application's selected edition. The dependency order, names, hashes and complete bytes remain the original prepared selection.
+
+The original receiving descriptor and original-file publication helpers support continuation in the same directory after an interrupted copy. Repeating the same completed package verifies and reuses that runtime. A different package needs a different receiving directory. A received runtime may itself be exported and received on another host, carrying its original receiving descriptor.
+
+Use that received runtime with the existing `emit` operation. It requires the selected JDK with its source launcher; Maven and the original Maven cache are no longer needed. `prepare --offline` also verifies and reuses the received runtime without starting a resolver. The emitted receipt records receiving provenance separately from the original successful preparation.
+
+Version 7 workspace packages include the runtime receiving programme while continuing to accept complete version 6 applications and all earlier supported editions. The product's maintained Java and Python senders remain the original integration points. A producer's operation directory is separate from its runtime: carry its retained input files, serialized events, wire bodies, replies and receipts when continuing the same delivery. Select the receiving workspace's current connection and receiving producer credentials. Private `java-config-*.yaml` files contain the original host's token and remain with that host's secret configuration.
+
+Run the complete native customer programme using an existing prepared runtime and the selected Python environment:
+
+```sh
+node /absolute/application/JAVA_RUNTIME_RECEIVING.mjs \
+  /absolute/private/customer-runtime-receiving \
+  --runtime /absolute/prepared-java-runtime \
+  --python /absolute/prepared-python/bin/python
+```
+
+It receives original events through the released Python and Java SDKs, retains both clients' actual requests while the original writer is occupied, exports the complete workspace, receives an independent application and runtime, moves the original producer operations, resumes their exact native requests, and verifies repeat-safe completion. The received Java classpath is entirely local and preparation uses a deliberately absent resolver. Every original request is compared with its committed receiver object and decoded SDK serialization.
+
+The programme's private directory contains the complete runtime package, editable workspace package, receiving descriptors, original native operations and their customer continuations. Its checkpoint records each completed stage and retains an interrupted stage for continuation in that same directory.
+
 ## Emit complete original inputs
 
 Start the original lineage workspace and use its current connection file.

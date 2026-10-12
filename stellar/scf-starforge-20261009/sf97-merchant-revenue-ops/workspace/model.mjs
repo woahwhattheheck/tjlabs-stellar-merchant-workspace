@@ -537,7 +537,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
   async function stageRepricing({decision,reviewSha256} = {}) {
     if (!releaseStore) throw fault('RELEASE_STORE_REQUIRED','Configure the original seller release store to stage this saved decision.');
     const entry = await findDecision(decision);
-    if (!entry.value.sourcePackage) throw fault('RELEASE_SOURCE_REQUIRED','This decision has no retained original API merchant package.');
+    if (!entry.value.sourcePackage) throw fault('RELEASE_SOURCE_REQUIRED','This decision has no retained merchant source package.');
     if (reviewSha256 !== entry.value.reviewSha256)
       throw fault('PRICE_REVIEW_CHANGED','Reload the saved price decision before staging its release.',409);
     const previous = await stageReceipt(decision);

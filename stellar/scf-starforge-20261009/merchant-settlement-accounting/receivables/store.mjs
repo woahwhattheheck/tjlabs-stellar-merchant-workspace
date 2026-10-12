@@ -9,6 +9,9 @@ import {PaymentRequestsWorkspace} from './payment-requests-workspace.mjs';
 import {RefundsWorkspace} from './refunds-workspace.mjs';
 import {CollectionsWorkspace} from './collections-workspace.mjs';
 import {CashPlanningWorkspace} from './cash-planning-workspace.mjs';
+import {CreditControlWorkspace} from './credit-control-workspace.mjs';
+import {BankReceiptsWorkspace} from './bank-receipts-workspace.mjs';
+import {bankAccountRows, bankAccountSummary} from './bank-receipts.mjs';
 import {refundRows, dispositionRows, refundTransferFingerprints} from './refunds.mjs';
 import {paymentRequestSummary, requestRows} from './payment-requests.mjs';
 import {createInvoiceTransferVerifier} from './payment-requests-verifier.mjs';
@@ -85,6 +88,8 @@ export class ReceivablesWorkspace {
     this.refundsWorkspace = new RefundsWorkspace(this);
     this.collectionsWorkspace = new CollectionsWorkspace(this);
     this.cashPlanningWorkspace = new CashPlanningWorkspace(this);
+    this.creditControlWorkspace = new CreditControlWorkspace(this);
+    this.bankReceiptsWorkspace = new BankReceiptsWorkspace(this);
   }
   async init() {
     await this.statements.init();
@@ -129,11 +134,17 @@ export class ReceivablesWorkspace {
     if (record.allocationId) result.allocation = structuredClone(this._allocation(record.allocationId));
     if (record.settings) result.issuer = structuredClone(data.issuer);
     if (record.cashPlanId) Object.assign(result,this.cashPlanningWorkspace.result(record));
+    if (record.creditPolicyId || record.creditDecisionId || record.creditRelease)
+      Object.assign(result, this.creditControlWorkspace.result(record));
     if (record.collectionCaseId) {
       result.collectionCase = this.collectionsWorkspace.summary(record.collectionCaseId, record.collectionAsOf ?? asOf);
       result.workspaceId = this.collectionsWorkspace.workspaceId();
       if (record.collectionEventId) result.collectionEvent = structuredClone(this.collectionsWorkspace.row(record.collectionCaseId).events.find(row => row.id === record.collectionEventId));
     }
+    if (record.bankAccountId) result.bankAccount = bankAccountSummary(bankAccountRows(data).find(row => row.id === record.bankAccountId));
+    if (record.bankImportId) result.bankImport = this.bankReceiptsWorkspace.summary(record.bankImportId, data);
+    if (record.bankPostingId) result.bankPosting = this.bankReceiptsWorkspace.postingSummary(record.bankImportId, record.bankPostingId, data);
+    if (record.receiptIds) result.receipts = record.receiptIds.map(id => receiptSummary(this._receipt(id), data, asOf));
     if (record.invoiceIds) result.invoices = record.invoiceIds.map(id => invoiceSummary(this._invoice(id), data, asOf));
     if (record.allocationIds) result.allocations = record.allocationIds.map(id => structuredClone(this._allocation(id)));
     if (record.refundId) {
@@ -186,6 +197,8 @@ export class ReceivablesWorkspace {
         reason: row.document.reason, customerId: row.document.customer.id})),
       paymentRequests: requestRows(data).map(row => paymentRequestSummary(row, data, asOf)),
       refunds: this.refundsWorkspace.summaries(data, asOf),
+      bankAccounts: bankAccountRows(data).map(bankAccountSummary),
+      bankImports: this.bankReceiptsWorkspace.summaries(data),
       creditDispositions: dispositionRows(data).map(row => this.refundsWorkspace.dispositionSummary(row.id, data)),
       allocations: data.allocations, aging: agingReport(data, asOf),
       history: this.workspace.state.history.filter(row => row.action.startsWith('receivables_')).slice(-200).reverse()});
@@ -199,6 +212,15 @@ export class ReceivablesWorkspace {
   async reportPaymentReturn(id, value) { return this.paymentRequestWorkspace.reportReturn(id, value); }
   async receivePaymentRequest(id, value) { return this.paymentRequestWorkspace.receive(id, value); }
   async paymentRequestFile(id, name) { return this.paymentRequestWorkspace.file(id, name); }
+  async creditControl(query = {}) { return this.creditControlWorkspace.control(query); }
+  async creditPolicy(id) { return this.creditControlWorkspace.policy(id); }
+  async saveCreditPolicy(value) { return this.creditControlWorkspace.savePolicy(value); }
+  async previewCreditAssessment(invoiceId, value) { return this.creditControlWorkspace.preview(invoiceId, value); }
+  async saveCreditDecision(invoiceId, value) { return this.creditControlWorkspace.saveDecision(invoiceId, value); }
+  async creditDecision(id) { return this.creditControlWorkspace.detail(id); }
+  async withdrawCreditDecision(id, value) { return this.creditControlWorkspace.withdraw(id, value); }
+  async creditDecisionFile(id, name) { return this.creditControlWorkspace.file(id, name); }
+  async creditControlOperation(requestId) { return this.creditControlWorkspace.operation(requestId); }
   async cashPlans(query = {}) { return this.cashPlanningWorkspace.list(query); }
   async previewCashPlan(value) { return this.cashPlanningWorkspace.preview(value); }
   async cashPlan(id, query = {}) { return this.cashPlanningWorkspace.detail(id, query); }
@@ -231,6 +253,18 @@ export class ReceivablesWorkspace {
   async refundFile(id, name) { return this.refundsWorkspace.refundFile(id, name); }
   async previewCreditDisposition(value) { return this.refundsWorkspace.previewCreditDisposition(value); }
   async applyCreditDisposition(value) { return this.refundsWorkspace.applyCreditDisposition(value); }
+  async bankAccounts(query = {}) { return this.bankReceiptsWorkspace.bankAccounts(query); }
+  async saveBankAccount(value) { return this.bankReceiptsWorkspace.saveBankAccount(value); }
+  async inspectBankSource(value) { return this.bankReceiptsWorkspace.inspectBankSource(value); }
+  async importBankSource(value) { return this.bankReceiptsWorkspace.importBankSource(value); }
+  async bankImports(query = {}) { return this.bankReceiptsWorkspace.bankImports(query); }
+  async bankImport(id, query = {}) { return this.bankReceiptsWorkspace.bankImport(id, query); }
+  async previewBankPosting(id, value) { return this.bankReceiptsWorkspace.previewBankPosting(id, value); }
+  async postBankReceipts(id, value) { return this.bankReceiptsWorkspace.postBankReceipts(id, value); }
+  async ignoreBankRows(id, value) { return this.bankReceiptsWorkspace.ignoreBankRows(id, value); }
+  async restoreBankRows(id, value) { return this.bankReceiptsWorkspace.restoreBankRows(id, value); }
+  async closeBankImport(id, value) { return this.bankReceiptsWorkspace.closeBankImport(id, value); }
+  async bankImportFile(id, name) { return this.bankReceiptsWorkspace.bankImportFile(id, name); }
   async settings(value) {
     return this._mutate('settings_saved', value, async data => {
       data.issuer = normalizeIssuer(value, data.issuer.version + 1); return {settings: true};
@@ -318,11 +352,12 @@ export class ReceivablesWorkspace {
       return {bytes, name: id + '-' + name, type: 'application/json; charset=utf-8'};
     });
   }
-  _preview(id) {
+  _preview(id, {includeCredit = true} = {}) {
     const invoice = this._invoice(id);
     need(invoice.status === 'DRAFT', 'INVOICE_ALREADY_ISSUED', 'Choose an editable invoice draft.', 409);
     const document = invoiceDocument(invoice, this._customer(invoice.draft.customerId), this.data().issuer);
-    return {document, previewSha256: sha(json(document)), expectedVersion: invoice.version, revision: this.workspace.state.revision};
+    return {document, previewSha256: sha(json(document)), expectedVersion: invoice.version, revision: this.workspace.state.revision,
+      ...(includeCredit ? this.creditControlWorkspace.previewMetadata(id) : {})};
   }
   async preview(id) { return this.workspace.serial(async () => this._preview(id)); }
   async _retain(document) {
@@ -347,13 +382,14 @@ export class ReceivablesWorkspace {
   async issue(id, value) {
     identifier(id, 'invoice');
     return this._mutate('invoice_issued', {...value, invoiceId: id}, async (data, actor) => {
-      const invoice = this._invoice(id), preview = this._preview(id);
+      const invoice = this._invoice(id), preview = this._preview(id, {includeCredit: false});
       need(value.expectedVersion === invoice.version, 'STALE_INVOICE', 'Reload the current draft before issuing.', 409);
       need(typeof value.previewSha256 === 'string' && HEX.test(value.previewSha256) &&
         value.previewSha256 === preview.previewSha256, 'INVOICE_PREVIEW_CHANGED',
         'Review the current invoice preview before issuing its retained document.', 409);
       need(data.issuer.name.length > 0, 'MERCHANT_NAME_REQUIRED', 'Save the merchant name in document settings.');
       need(minor(invoice.draft.totals.total, invoice.draft.currency) > 0n, 'EMPTY_INVOICE', 'The issued invoice total must be positive.');
+      const creditCheck = this.creditControlWorkspace.checkIssue(id, value);
       const number = data.issuer.invoicePrefix + '-' + invoice.draft.issueDate.slice(0, 4) + '-' + String(data.invoiceSequence + 1).padStart(6, '0');
       need(!data.invoices.some(row => row.number === number), 'INVOICE_NUMBER_EXISTS', 'The next document number is already used.', 409);
       const document = invoiceDocument(invoice, this._customer(invoice.draft.customerId), data.issuer, number, at(), actor);
@@ -362,7 +398,7 @@ export class ReceivablesWorkspace {
       Object.assign(invoice, {status: 'ISSUED', number, document, ...retained, issuedAt: document.issuedAt,
         version: invoice.version + 1, updatedAt: at()});
       invoice.history.push({at: at(), actor, action: 'issued', number, previewSha256: preview.previewSha256});
-      return {invoiceId: id};
+      return {invoiceId: id, ...this.creditControlWorkspace.consumeIssue(creditCheck, invoice, actor)};
     });
   }
   async voidInvoice(id, value) {
@@ -498,7 +534,7 @@ export class ReceivablesWorkspace {
       need(invoice.document.customer.id === receipt.customerId &&
         currencyKey(invoice.document.currency) === currencyKey(receipt.currency),
         'ALLOCATION_IDENTITY_MISMATCH', 'The invoice and receipt must have the same customer, currency and precision.', 409);
-      need(allocatedDate >= invoice.document.issueDate && allocatedDate >= receipt.receivedDate,
+      need(allocatedDate >= invoice.document.issueDate && allocatedDate >= (receipt.accountingDate ?? receipt.receivedDate),
         'INVALID_ALLOCATION_DATE', 'Allocate on or after both the invoice and receipt dates.');
       need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
         'Receive or adopt this payment’s original verified outgoing return before making another allocation.', 409);
@@ -544,7 +580,7 @@ export class ReceivablesWorkspace {
     return this._mutate('payment_voided', {...value, receiptId: id}, async (data, actor) => {
       const receipt = this._receipt(id), voidDate = dateValue(value.voidDate, 'void date'), reason = field(value.reason, 'void reason', 3000);
       need(receipt.status === 'RECORDED', 'RECEIPT_ALREADY_VOID', 'This receipt is already void.', 409);
-      need(voidDate >= receipt.receivedDate, 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
+      need(voidDate >= (receipt.accountingDate ?? receipt.receivedDate), 'INVALID_VOID_DATE', 'The void date must be on or after the received date.');
       need(data.allocations.filter(row => row.receiptId === id).every(row => row.releasedDate && row.releasedDate <= voidDate),
         'RECEIPT_HAS_ALLOCATIONS', 'Release this receipt’s allocations before the selected void date.', 409);
       need(receiptUnreconciledRefunds(receipt, data, '9999-12-31').length === 0, 'UNRECONCILED_REFUND_RETURN',
@@ -606,7 +642,8 @@ export class ReceivablesWorkspace {
           result.files.push({...file, name: 'documents/' + file.name});
         }
       }
-      for (const file of await this.refundsWorkspace.customerFiles(customerId, result.value.asOf)) {
+      for (const file of [...await this.refundsWorkspace.customerFiles(customerId, result.value.asOf),
+        ...await this.bankReceiptsWorkspace.customerFiles(customerId, result.value.asOf)]) {
         totalBytes += file.bytes.length;
         need(totalBytes <= 128_000_000, 'CUSTOMER_EXPORT_LIMIT', 'This customer export exceeds 128 MB. Select an earlier account date or individual documents.');
         result.files.push(file);
