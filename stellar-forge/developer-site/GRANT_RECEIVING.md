@@ -154,7 +154,8 @@ captures include the missing-source view and original units, dates, publisher
 and method. The original Site home then leads back to the same grant entry.
 
 Finally, the receiver restores the original grant URL, scroll and explicit
-viewport. It removes only its own page listeners and read-only route guard.
+viewport. Scroll restoration is nonanimated, and the actual horizontal and
+vertical coordinates must return within one pixel before completion. It removes only its own page listeners and read-only route guard.
 The owner retains the listener/browser lifecycle. Completion is not recorded
 until the original view is restored.
 

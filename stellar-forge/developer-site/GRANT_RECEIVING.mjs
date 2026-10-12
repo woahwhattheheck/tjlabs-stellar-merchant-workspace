@@ -444,7 +444,9 @@ export async function inspectGrantApplication(page, {
     try {
       await page.setViewportSize(initialViewport);
       await responseBytes(await page.goto(initialUrl, { waitUntil: 'load', timeout: 30000 }), '/grant.html');
-      await page.evaluate(scroll => window.scrollTo(scroll.x, scroll.y), initial.scroll);
+      await page.evaluate(scroll => window.scrollTo({ left: scroll.x, top: scroll.y, behavior: 'instant' }), initial.scroll);
+      await page.waitForFunction(scroll => Math.abs(scrollX - scroll.x) <= 1 && Math.abs(scrollY - scroll.y) <= 1,
+        initial.scroll, { timeout: 5000 });
       need(page.url() === initialUrl && same(page.viewportSize(), initialViewport), 'The original reader view did not restore.');
       restored = true;
     } catch (error) { failures.push('Original view restore: ' + String(error.message || error)); }
