@@ -241,7 +241,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
           if(url.search)throw new TypeError('Unexpected incident profile query');
           json(res,200,incidentDesk.profiles());return;
         }
-        const match=/^\/api\/incidents\/([a-z0-9][a-z0-9_-]{0,63})(?:\/(configure|destination|start|stop)|\/notifications\/([a-f0-9-]{36})\/(retry|cancel)|\/([a-f0-9-]{36})(?:\/(ack|notify|case))?)?$/.exec(route);
+        const match=/^\/api\/incidents\/([a-z0-9][a-z0-9_-]{0,63})(?:\/(configure|destination|inspect-object|start|stop)|\/notifications\/([a-f0-9-]{36})\/(retry|cancel)|\/([a-f0-9-]{36})(?:\/(ack|notify|case))?)?$/.exec(route);
         if(!match){json(res,404,{error:'NOT_FOUND'});return;}
         const [,source,operation,eventId,eventAction,incidentId,incidentAction]=match;
         if(req.method==='GET'&&!operation&&!eventId&&!incidentAction) {
@@ -262,6 +262,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
         let result;
         if(operation==='configure')result=await incidentDesk.configure(source,input);
         else if(operation==='destination')result=await incidentDesk.inspectDestination(source,input);
+        else if(operation==='inspect-object')result=await incidentDesk.inspectObject(source,input);
         else if(operation==='start')result=await incidentDesk.start(source,input);
         else if(operation==='stop') {
           if(Object.keys(input).length)throw new TypeError('Unexpected stop input');

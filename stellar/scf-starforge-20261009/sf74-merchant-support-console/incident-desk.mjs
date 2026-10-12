@@ -5,7 +5,9 @@ const add=(parent,tag,text,className='')=>{const n=document.createElement(tag);i
 const button=(parent,text,action,className='secondary')=>{const n=add(parent,'button',text,className);n.type='button';n.addEventListener('click',action);return n;};
 const labels={ENDPOINT_UNAVAILABLE:'Endpoint unavailable',OBSERVER_INCOMPLETE:'Incomplete observations',HTTP_5XX:'Server errors',
   DISCONNECTED:'Interrupted connections',DELIVERY_UNAVAILABLE:'Delivery unavailable',DELIVERY_BACKLOG:'Delivery backlog',
-  DELIVERY_EXHAUSTED:'Delivery attempts exhausted'};
+  DELIVERY_EXHAUSTED:'Delivery attempts exhausted',OBJECT_SOURCE_UNAVAILABLE:'Object source unavailable',
+  OBJECT_IDENTITY_CHANGED:'Object identity changed',OBJECT_OUTPUT_INTEGRITY:'Object output integrity',
+  OBJECT_FINANCIAL_UNRESOLVED:'Unresolved buyer financial view',OBJECT_FINALIZED_OUTPUT_INCOMPLETE:'Finalized request with incomplete output'};
 const human=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^\w/,c=>c.toUpperCase());
 const when=value=>value?new Date(value).toLocaleString():'—';
 const terminal=new Set(['DELIVERED','CANCELLED']);
@@ -14,6 +16,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const abort=new AbortController();
   let destroyed=false,busy=false,sequence=0,selection=0,offset=0,timer=null,current=null,detail=null,selectedId=null;
   let configDirty=false,loadedConfigRevision=null,prepared=null;
+  let objectReview=null,objectEpoch=0,objectChoicesKey='';
   const downloads=new Set();
   root.id='incidents';root.className='card incident-desk';root.hidden=true;
   const heading=add(root,'div',undefined,'section-heading'),copy=add(heading,'div');
@@ -32,6 +35,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const applyFilter=add(selectionForm,'button','Filter','secondary');applyFilter.type='submit';
   const status=add(root,'p','Loading incident sources…','status');status.id='incident-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const counters=add(root,'div',undefined,'incident-counters');
+  const objectStatus=add(root,'section',undefined,'runtime-captures');objectStatus.id='incident-object-status';objectStatus.hidden=true;
 
   const workerPanel=add(root,'div',undefined,'incident-worker');
   const workerCopy=add(workerPanel,'div');add(workerCopy,'h3','Watcher');
@@ -58,6 +62,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const detailTitle=add(detailCopy,'h3',''),detailIdentity=add(detailCopy,'p','','hint');
   const closeDetail=button(detailHeader,'Close incident',()=>{if(busy)return;selection++;sequence++;selectedId=null;detail=null;clearPrepared();drawDetail();drawList();schedule();});
   const facts=add(details,'div',undefined,'scope');
+  const objectDetails=add(details,'div',undefined,'runtime-captures');objectDetails.id='incident-object-captures';
   const acknowledgeForm=add(details,'form',undefined,'incident-ack-form');
   const operatorLabel=add(acknowledgeForm,'label','Operator name'),operator=add(operatorLabel,'input');
   operator.id='incident-operator';operator.required=true;operator.maxLength=160;operator.autocomplete='name';
@@ -78,7 +83,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const casePanel=add(details,'div',undefined,'incident-case-panel');
   add(casePanel,'h3','Continue in the merchant case');
   add(casePanel,'p','Prepare the incident’s original captures with the route and draft terms currently selected in this workspace. Review the handoff, then open it in Cases.');
-  const routeLabel=add(casePanel,'label','Advertised route ID'),routeId=add(routeLabel,'input');routeId.id='incident-case-route';routeId.maxLength=80;routeId.required=true;routeId.autocomplete='off';
+  const routeLabel=add(casePanel,'label','Captured route or Object source ID'),routeId=add(routeLabel,'input');routeId.id='incident-case-route';routeId.maxLength=80;routeId.required=true;routeId.autocomplete='off';
   const routeChoices=add(casePanel,'datalist');routeChoices.id='incident-route-choices';routeId.setAttribute('list',routeChoices.id);
   const captureStatus=add(casePanel,'p','','hint');
   const caseButtons=add(casePanel,'div',undefined,'actions');
@@ -93,12 +98,34 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   add(configPanel,'summary','Watcher registration and notification settings');
   const configSummary=add(configPanel,'p','','hint');
   add(configPanel,'p','Edit the registered merchants, observation thresholds and notification destination. Existing queued messages retain their selected destination; an operator reminder selects the current destination.');
+  const objectPanel=add(configPanel,'section',undefined,'incident-object-registration');objectPanel.hidden=true;
+  add(objectPanel,'h3','Watch a saved Object buyer');
+  add(objectPanel,'p','Select a session registered by this console’s private startup configuration. Inspect its original identity and saved bytes, then add the reviewed selection to this configuration draft.');
+  const objectForm=add(objectPanel,'form'),objectGrid=add(objectForm,'div',undefined,'form-grid');
+  const objectSourceLabel=add(objectGrid,'label','Registered Object session'),objectSource=add(objectSourceLabel,'select');objectSource.id='incident-object-source';
+  const objectIdLabel=add(objectGrid,'label','Watcher source ID'),objectId=add(objectIdLabel,'input');objectId.id='incident-object-id';objectId.required=true;objectId.maxLength=64;objectId.pattern='[A-Za-z0-9_-]{1,64}';
+  const objectNameLabel=add(objectGrid,'label','Source label'),objectName=add(objectNameLabel,'input');objectName.id='incident-object-label';objectName.required=true;objectName.maxLength=120;
+  const objectLimits={};
+  for(const [key,label,value,min,max] of [
+    ['maxBytes','Maximum object bytes to inspect',1073741824,0,Number.MAX_SAFE_INTEGER],
+    ['maxChunks','Maximum original chunks',1000,1,100000],
+    ['timeoutMs','Inspection deadline (milliseconds)',30000,100,300000],
+    ['financialAfterSeconds','Unresolved financial view age (seconds)',300,1,31536000],
+    ['outputAfterSeconds','Finalized-output age (seconds)',300,1,31536000]]) {
+    const labelNode=add(objectGrid,'label',label),input=add(labelNode,'input');input.type='number';
+    input.id='incident-object-'+key;input.value=String(value);input.min=String(min);input.max=String(max);input.step='1';input.required=true;objectLimits[key]=input;
+  }
+  const objectActions=add(objectForm,'div',undefined,'actions');
+  const inspectObject=add(objectActions,'button','Inspect saved Object','secondary');inspectObject.type='submit';inspectObject.id='incident-object-inspect';
+  const objectDraft=button(objectActions,'Add or replace source in draft',addObjectDraft);objectDraft.id='incident-object-add';
+  const objectReviewStatus=add(objectPanel,'p','No Object inspection selected.','hint');objectReviewStatus.setAttribute('role','status');
+  const objectReviewFacts=add(objectPanel,'div',undefined,'scope');
   const configForm=add(configPanel,'form');
   const configLabel=add(configForm,'label','Current watcher configuration'),configText=add(configLabel,'textarea');
   configText.id='incident-config-json';configText.rows=14;configText.spellcheck=false;configText.maxLength=60000;
   const configActions=add(configForm,'div',undefined,'actions');
   const saveConfig=add(configActions,'button','Apply configuration');saveConfig.type='submit';saveConfig.id='incident-config-save';
-  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;drawConfig();controls();});
+  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;invalidateObject();drawConfig();controls();});
   const verify=button(configActions,'Verify Slack workspace',()=>perform('destination',()=>({expectedConfigRevision:current.configRevision})));verify.id='incident-destination';
   const destinationStatus=add(configPanel,'p','','hint');destinationStatus.setAttribute('role','status');
 
@@ -123,15 +150,99 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     openCase.disabled=busy||!prepared;closeDetail.disabled=busy;
     configText.disabled=busy||!current;saveConfig.disabled=busy||!current||loadedConfigRevision===null||!configDirty;reloadConfig.disabled=busy||!current;
     verify.disabled=busy||current?.config.notification?.transport!=='slack';
+    for(const input of [objectSource,objectId,objectName,...Object.values(objectLimits)])input.disabled=busy||!current;
+    inspectObject.disabled=busy||!current||!objectSource.value||loadedConfigRevision!==current.configRevision;
+    objectDraft.disabled=busy||!objectReview||!current||loadedConfigRevision!==current.configRevision;
     for(const node of queueRows.querySelectorAll('button'))node.disabled=busy||!operator.value.trim();
   }
   function drawConfig() {
     if(!current)return;
+    drawObjectChoices();
+    if(objectReview&&objectReview.configRevision!==current.configRevision)invalidateObject('Watcher settings changed. Inspect this session against the current revision.');
     if(!configDirty&&loadedConfigRevision!==current.configRevision) {
       configText.value=JSON.stringify(current.config,null,2);loadedConfigRevision=current.configRevision;
     }
     configSummary.textContent='Loaded revision '+loadedConfigRevision+' · current revision '+current.configRevision+
       (configDirty?' · unsaved edits':'')+(configDirty&&loadedConfigRevision!==current.configRevision?' · reload current settings before applying a new edit.':'');
+  }
+  function invalidateObject(message='Inspect the selected Object before adding it to this draft.') {
+    objectEpoch++;objectReview=null;objectReviewFacts.replaceChildren();objectReviewStatus.textContent=message;objectReviewStatus.className='hint';
+  }
+  function objectInput() {
+    const limits=Object.fromEntries(Object.entries(objectLimits).map(([key,input])=>[key,Number(input.value)]));
+    if(Object.values(limits).some(value=>!Number.isSafeInteger(value)))throw new Error('Use whole numbers for the Object observation limits.');
+    return {objectSourceId:objectSource.value,expectedConfigRevision:current.configRevision,...limits};
+  }
+  function objectFormKey(){return JSON.stringify({profile:source.value,input:objectInput(),id:objectId.value,label:objectName.value});}
+  function drawObjectChoices() {
+    const choices=current.source.objectSessions??[],key=JSON.stringify({source:current.source.id,choices});
+    objectPanel.hidden=!choices.length;
+    if(key===objectChoicesKey)return;
+    objectChoicesKey=key;invalidateObject();const prior=objectSource.value;objectSource.replaceChildren();
+    for(const choice of choices)add(objectSource,'option',choice.label).value=choice.id;
+    if(choices.some(choice=>choice.id===prior))objectSource.value=prior;
+    const chosen=choices.find(choice=>choice.id===objectSource.value);
+    objectId.value=chosen?.id??'';objectName.value=chosen?.label??'';
+  }
+  async function inspectSavedObject() {
+    if(busy||!current||!objectForm.reportValidity()||loadedConfigRevision!==current.configRevision)return;
+    invalidateObject('Inspecting the original saved session and its bytes…');
+    const epoch=objectEpoch,profile=source.value,key=objectFormKey(),input=objectInput();
+    busy=true;sequence++;clearTimeout(timer);controls();
+    try {
+      const result=await api(base()+'/inspect-object',input);
+      if(destroyed||epoch!==objectEpoch||profile!==source.value||key!==objectFormKey())return;
+      if(result.source?.id!==profile||result.objectSourceId!==input.objectSourceId||result.configRevision!==input.expectedConfigRevision)
+        throw new Error('The Object review returned a different source or configuration revision.');
+      objectReview={result,configRevision:result.configRevision,key};
+      const addFact=(label,value)=>{const row=add(objectReviewFacts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));};
+      addFact('Original session',result.object.sessionId);addFact('Source intent',result.object.sourceIntentId);
+      addFact('Session file SHA-256',result.object.sessionSha256);addFact('Configuration SHA-256',result.object.configurationSha256);
+      addFact('Saved output',result.output.status+' · '+result.output.verifiedBytes+' / '+result.output.bytes+' bytes');
+      addFact('Verified chunks',result.output.verifiedChunks+' / '+result.output.chunks);addFact('Observed',when(result.observedAt));
+      objectReviewStatus.textContent='Read-only inspection retained. Review the identity and limits, then add this exact selection to the draft.';
+      say('Original Object inspected. Apply configuration explicitly after reviewing the draft.');
+    } catch(error) {
+      if(!destroyed&&epoch===objectEpoch){objectReview=null;objectReviewStatus.textContent=error.message;objectReviewStatus.className='status error';say(error.message,true);}
+    } finally {busy=false;controls();schedule();}
+  }
+  function addObjectDraft() {
+    if(busy||!objectReview||!current||!objectForm.reportValidity())return;
+    try {
+      if(objectReview.configRevision!==current.configRevision||loadedConfigRevision!==current.configRevision||objectReview.key!==objectFormKey())
+        throw new Error('The reviewed Object selection or watcher settings changed. Inspect it again.');
+      const config=JSON.parse(configText.value),id=objectId.value;
+      if(!Array.isArray(config.merchants)||['__proto__','constructor','prototype'].includes(id))throw new Error('Use a valid watcher configuration and source ID.');
+      const row={id,label:objectName.value,object:objectReview.result.object},index=config.merchants.findIndex(item=>item.id===id);
+      if(index<0){if(config.merchants.length>=8)throw new Error('The watcher already has eight sources. Remove or replace a source in the draft first.');config.merchants.push(row);}
+      else config.merchants[index]=row;
+      configText.value=JSON.stringify(config,null,2);configDirty=true;
+      objectReviewStatus.textContent='Exact reviewed Object added to the draft. Apply configuration to register it with the existing watcher.';
+      drawConfig();controls();say('Configuration draft updated. Other sources and notification settings are preserved.');
+    } catch(error){say(error.message,true);}
+  }
+  function objectFacts(parent,summary,title) {
+    const box=add(parent,'section',undefined,'runtime-capture');add(box,'h4',title);
+    const f=summary.financial,o=summary.output;
+    add(box,'p','Coverage: '+human(summary.coverage)+' · Output: '+human(o.state)+' · Observed '+when(summary.observedAt),'hint');
+    add(box,'p','Finalized requests: '+f.finalizedRequests+' · Unresolved: '+f.unresolvedRequests+
+      ' · Not attempted: '+f.notAttemptedRequests+' · No payment required: '+f.noPaymentRequests);
+    add(box,'p','Verified bytes: '+(o.verifiedBytes??'unknown')+' / '+(o.expectedBytes??'unknown')+
+      ' · Chunks: '+(o.verifiedChunks??'unknown')+' / '+(o.chunks??'unknown'),'hint');
+    add(box,'p','Original session '+summary.selection.sessionId+' · Intent '+summary.selection.sourceIntentId,'hint');
+    if(summary.nativeCodes.length)add(box,'p',summary.nativeCodes.join(', '),'status error');
+    const original=add(box,'details',undefined,'source-details');add(original,'summary','Recorded selection, financial view and output');
+    add(original,'pre',JSON.stringify(summary,null,2)).tabIndex=0;
+  }
+  function drawObjects() {
+    objectStatus.replaceChildren();const objects=current.merchants.filter(row=>row.kind==='OBJECT_SESSION');
+    objectStatus.hidden=!objects.length;if(!objects.length)return;
+    add(objectStatus,'h3','Saved buyer observations');
+    add(objectStatus,'p','Finalized request counts are retained native views. They are separate from verified output and do not report a monetary total or a fresh ledger query.','hint');
+    for(const row of objects) {
+      if(row.observation)objectFacts(objectStatus,row.observation,row.label);
+      else {const box=add(objectStatus,'section',undefined,'runtime-capture');add(box,'h4',row.label);add(box,'p','No retained read-only observation yet. Start the existing watcher to inspect this registered source.','hint');}
+    }
   }
   function drawList() {
     listRows.replaceChildren();if(!current)return;
@@ -151,12 +262,13 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     const worker=current.worker;
     workerState.textContent=(worker.ownership==='console'?'This console · ':worker.ownership==='external'?'Recorded external service · ':'')+human(worker.status);
     workerObserved.textContent='Last sweep: '+when(worker.recorded?.lastSweepAt)+(worker.error?' · '+human(worker.error):'');
-    badge.textContent=current.source.label;drawConfig();controls();
+    badge.textContent=current.source.label;drawConfig();drawObjects();controls();
   }
   function fact(label,value){const row=add(facts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));}
   function drawDetail() {
-    details.hidden=!detail;if(!detail){controls();return;}
+    details.hidden=!detail;objectDetails.replaceChildren();if(!detail){controls();return;}
     const incident=detail.incident;
+    for(const [side,summary]of Object.entries(detail.objectObservations??{}))objectFacts(objectDetails,summary,human(side)+' original Object capture');
     routeChoices.replaceChildren();
     for(const choice of detail.routes??[]){const option=add(routeChoices,'option');option.value=choice.id;option.label=choice.method+' '+(choice.path??'')+' · '+choice.sides.join(' and ');}
     captureStatus.textContent=Object.entries(detail.captureProblems??{}).map(([side,problem])=>human(side)+' capture: '+problem.detail).join(' ');
@@ -224,7 +336,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
         destinationStatus.textContent=result.accepted?'Verified workspace '+result.teamId+' · actor '+result.actorId+' · channel '+result.channelId:human(result.reason);
         say(result.accepted?'Slack workspace and actor verified.':'Slack verification needs attention.',!result.accepted);
       } else {
-        if(action==='configure'){configDirty=false;loadedConfigRevision=null;destinationStatus.textContent='';}
+        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();destinationStatus.textContent='';}
         if(action==='ack')notes.value='';
         say(action==='start'?'Watcher start requested. Its state appears above.':action==='stop'?'This console’s watcher stopped and drained.':
           action==='configure'?'Watcher configuration applied.':action==='ack'?'Incident acknowledged.':action==='notify'?'Operator reminder queued.':'Operation completed.');
@@ -271,12 +383,20 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   }
   selectionForm.addEventListener('submit',event=>{event.preventDefault();if(busy)return;offset=0;refresh();},{signal:abort.signal});
   source.addEventListener('change',()=>{selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
+    invalidateObject();objectChoicesKey='';objectStatus.replaceChildren();objectStatus.hidden=true;
     destinationStatus.textContent='';merchant.value='';routeId.value='';configText.value='';configSummary.textContent='Loading settings…';listRows.replaceChildren();
     clearPrepared();drawDetail();refresh();},{signal:abort.signal});
   operator.addEventListener('input',controls,{signal:abort.signal});
   routeId.addEventListener('input',()=>{clearPrepared();controls();},{signal:abort.signal});
   acknowledgeForm.addEventListener('submit',event=>{event.preventDefault();if(!acknowledgeForm.reportValidity())return;
     perform('ack',()=>({expectedRevision:detail.incident.revision,by:operator.value.trim(),notes:notes.value}),true);},{signal:abort.signal});
+  objectForm.addEventListener('submit',event=>{event.preventDefault();inspectSavedObject();},{signal:abort.signal});
+  objectSource.addEventListener('change',()=>{
+    invalidateObject();const chosen=current?.source.objectSessions?.find(row=>row.id===objectSource.value);
+    objectId.value=chosen?.id??'';objectName.value=chosen?.label??'';controls();
+  },{signal:abort.signal});
+  for(const input of [objectId,objectName,...Object.values(objectLimits)])
+    input.addEventListener('input',()=>{invalidateObject();controls();},{signal:abort.signal});
   configText.addEventListener('input',()=>{configDirty=true;drawConfig();controls();},{signal:abort.signal});
   configForm.addEventListener('submit',event=>{event.preventDefault();let config;
     try{config=JSON.parse(configText.value);}catch{say('Enter valid configuration JSON before applying settings.',true);return;}

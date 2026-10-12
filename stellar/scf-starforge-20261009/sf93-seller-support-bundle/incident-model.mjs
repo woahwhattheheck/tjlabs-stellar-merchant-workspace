@@ -2,6 +2,7 @@
 import {randomUUID} from 'node:crypto';
 import {activeIncident, kinds, merchantBinding} from './incident-config.mjs';
 import {queueNotification, terminalNotification} from './notifications.mjs';
+import {objectObservationSignals} from './object-observation.mjs';
 
 const cumulative=['started','completed','responses','success','challenge','clientError','serverError','other','disconnected'];
 const iso=now=>new Date(now).toISOString();
@@ -26,6 +27,7 @@ export function updateConfiguration(state,config,digest,env,now) {
   state.merchants=merchants;
 }
 function signalsFor(config,merchant,observation,previous,now) {
+  if(merchant.object)return objectObservationSignals(merchant,observation,now);
   const packet=observation.packet;
   if(!packet) return {signals:{ENDPOINT_UNAVAILABLE:{bad:true,values:{}}},error:observation.error};
   const o=packet.report.observation,captured=Date.parse(o.capturedAt),start=Date.parse(o.startedAt);
@@ -87,6 +89,8 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
   const row=state.merchants[merchant.id];
   const result=signalsFor(state.config,merchant,observation,row.previous,now);
   row.lastAttemptAt=iso(now);row.lastError=result.error ?? null;
+  if(merchant.object&&result.packet?.object)row.objectObservation={observedAt:result.packet.object.generatedAt,
+    ...result.packet.object.summary};
   let currentCapture;
   const capture=async()=>{
     if(currentCapture!==undefined)return currentCapture;
@@ -114,7 +118,7 @@ export async function applyObservation(state,merchant,observation,saveCapture,en
     condition.goodStreak=signal.bad?0:Math.min(100,condition.goodStreak+1);
     let incident=state.incidents.find(item=>item.id===condition.incidentId&&activeIncident(item));
     if(signal.bad) {
-      if(!incident&&condition.badStreak>=state.config.failurePolls) {
+      if(!incident&&condition.badStreak>=(signal.openAfter??state.config.failurePolls)) {
         const before=result.packet?await capture():row.lastCapture;
         incident={id:randomUUID(),merchantId:merchant.id,merchantLabel:merchant.label,binding:row.binding,kind,
           status:'OPEN',revision:1,openedAt:iso(now),updatedAt:iso(now),lastObservedAt:iso(now),closedAt:null,

@@ -2,12 +2,13 @@
 import {createHash} from 'node:crypto';
 import {loopbackOrigin} from './bundle.mjs';
 import {slackTeamId,slackChannelId} from './notifications-slack.mjs';
+import {normalizeObjectSource,OBJECT_KINDS} from './object-observation.mjs';
 
 export const CONFIG_SCHEMA = 'stellar-forge.seller-watch-config.v1';
 export const hash = value => createHash('sha256').update(value).digest('hex');
 export const idPattern = /^[A-Za-z0-9_-]{1,64}$/;
 export const kinds = ['ENDPOINT_UNAVAILABLE','OBSERVER_INCOMPLETE','HTTP_5XX',
-  'DISCONNECTED','DELIVERY_UNAVAILABLE','DELIVERY_BACKLOG','DELIVERY_EXHAUSTED'];
+  'DISCONNECTED','DELIVERY_UNAVAILABLE','DELIVERY_BACKLOG','DELIVERY_EXHAUSTED',...OBJECT_KINDS];
 export const activeIncident = item => ['OPEN','ACKNOWLEDGED'].includes(item.status);
 const fail = field => {throw new TypeError('SF93_CONFIG_INVALID: '+field);};
 function fields(value, names, label) {
@@ -52,10 +53,15 @@ export function compileConfig(input) {
   if (!Array.isArray(c.merchants) || c.merchants.length<1 || c.merchants.length>8) fail('1..8 merchants required');
   const ids = new Set();
   for (const value of c.merchants) {
-    const m = fields(value,['id','label','seller','ops','delivery'],'merchant');
+    const m = fields(value,['id','label','seller','ops','delivery','object'],'merchant');
     const id = text(m.id,64,'merchant.id',idPattern);
     if (ids.has(id) || ['__proto__','constructor','prototype'].includes(id)) fail('duplicate or reserved merchant.id');
     ids.add(id);
+    if (m.object !== undefined) {
+      if (m.seller !== undefined || m.ops !== undefined || m.delivery !== undefined) fail('object source cannot also select seller endpoints');
+      result.merchants.push({id,label:text(m.label ?? id,120,'merchant.label'),object:normalizeObjectSource(m.object)});
+      continue;
+    }
     let delivery = null;
     if (m.delivery != null) {
       const d = fields(m.delivery,['required','oldestPendingSeconds','exhausted'],'merchant.delivery');
@@ -98,7 +104,9 @@ export function compileConfig(input) {
   return result;
 }
 export const configHash = config => hash(JSON.stringify(config));
-export const merchantBinding = (config, merchant) => hash(JSON.stringify({id:merchant.id,
+export const merchantBinding = (config, merchant) => merchant.object
+  ? hash(JSON.stringify({id:merchant.id,object:merchant.object,failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls}))
+  : hash(JSON.stringify({id:merchant.id,
   seller:merchant.seller,ops:merchant.ops,delivery:merchant.delivery,
   failurePolls:config.failurePolls,recoveryPolls:config.recoveryPolls,
   windowMinutes:config.windowMinutes,httpErrors:config.httpErrors,disconnects:config.disconnects}));
