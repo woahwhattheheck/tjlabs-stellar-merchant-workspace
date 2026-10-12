@@ -28,7 +28,7 @@ The producer builds the complete ZIP and checks every archived member. It stages
 
 The actual reply uses the full response object for `result`. The save module validates its finalized file identity, size, name and version, applies returned file attributes, and retains the original request and response. A repeated completed save reopens its retained reply. An interrupted dispatch is reconciled from the actual tool result before the same artifact continues.
 
-The ZIP, full bidder guide and execution record are saved through this supported tool path. The module is the exact 6,048-byte save-only implementation reused from the exercised Aviary transport; its complete original v2 source and provenance are retained in `input.json` and materialized under `history/official-library/`.
+The ZIP, full bidder guide and execution record are saved through this supported tool path. The selected module is the 6,449-byte save-only implementation. It accepts the requested basename or the service's observed positive numbered collision name, such as `START_HERE(3).md`, while retaining the actual returned filename. The complete 6,048-byte predecessor and original Aviary v2 source remain in the input history.
 
 ## Inspect and finish the delivery
 
@@ -48,17 +48,19 @@ The original receiving owner completed all 17 native, HTTP, browser and cold-rec
 
 The original complete receiving ZIP is 15,336,675 bytes / SHA-256 `f86dbf2930c59bbf816d2bbf0a7a3e97eefc1fb5b80f2564d1c41ecad184c4ec`. The five images were captured in that original run and reviewed from the retained bytes after its producer disconnected.
 
+The final complete archive was built at 23:15:31 UTC and saved successfully: 15,397,701 bytes / SHA-256 `376dd609c018a93c5f0d9c41cb4e07545f33e02b3130750dc205a1f936b66abc`. It includes the complete original application, workspaces, packages, screens, START_HERE and actual visual review. The final 3,925-byte guide also saved successfully under the service-assigned name `START_HERE(3).md`. The old bridge rejected that returned name locally; the current bridge reconciles the original successful reply without repeating the save.
+
 The saved execution record is 26,594 bytes / SHA-256 `1fbe38cd3775af1e26c553b3a90595003322e683f38ea8a20f027346b9d5846c`. These are the original receiving owner's retained results; publishing this source does not launch another case or replace the completed execution.
 
 The supported save bridge emits `name=filename`. The producer now uses `event_name` for its event parameter, retaining the filename field and the unchanged request/reply protocol. This is the same two-name substitution that completed the actual three saves.
 
 Current merchant main and the complete 37-file application packet already contain the exact 51,500-byte blank-commodity-code correction, SHA-256 `25e608ab4095944b10bc81ca0174b2d055bda4055d03a788ce7026f307b39835`. The original page pin in the receiving fixture and integrated selection remains deliberately unchanged: the maintained `UI_ADOPTION` flow preserves both complete page versions and the original phase binding.
 
-`accepted-receiving-source.json` records the source correction, exact original result identity, receiving-owner attribution and unchanged application/fixture/runner bindings. The full prior PR710 producer and entry are retained in the input's `published-710/` history. The previous complete input remains available through its immutable Git blob.
+`accepted-receiving-source.json` records the source correction, exact original result identity, receiving-owner attribution and unchanged application/fixture/runner bindings. The full prior PR710 producer, entry and save bridge are retained in the input's `published-710/` history. The previous complete input remains available through its immutable Git blob.
 
 ## Source and history
 
-The complete input is **2,859,018 bytes**, SHA-256 `c4cdeb2a52423d2e2f3f3bfed2207f9de682fe9032c5a554590199d0b63290a3`. Its unchanged 37-file application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`.
+The complete input is **2,868,712 bytes**, SHA-256 `5d1c04127ebc9f0c0ef60345de495781dca31b90817098ccb027de29b0f73df1`. Its unchanged 37-file application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`.
 
 The current fixture preserves the original captures, documents, supplier profile and expected results. The official tender and award row extracts retain every selected column. Authored amendments, operating documents and the entered supplier records are identified as examples in the fixture. The application retains the owner's faster CSV scanner, indexed publication lookup and the merged blank/wildcard commodity-code correction.
 

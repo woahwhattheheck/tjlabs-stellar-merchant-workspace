@@ -2,7 +2,7 @@
   "schema": "commons.canadabuys.accepted-receiving-source-adoption.v1",
   "operationId": "CANADABUYS-BIDDER-DESK-6BA15-20261012",
   "receivingOperationId": "CANADABUYS-BIDDER-DESK-RECEIVING-6BA15-20261012",
-  "reason": "Publish the exact filename-bearing save event correction exercised by the original complete receiving owner.",
+  "reason": "Publish the exact filename-bearing save event correction and the observed numbered Library filename collision handling from the original completed receiving and saves.",
   "previous": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
     "mainCommit": "9760e032c74386660816c7debfa5385eadf97f36",
@@ -25,6 +25,12 @@
       "blob": "e24c45292029ce19c229f38613473e7dfcfd6b82",
       "bytes": 2815260,
       "sha256": "60de2486a2db1d2f7fe702d2d6e6feb2dd25338805f4111d77a33f34cffd47cf"
+    },
+    "bridge": {
+      "path": "official_library_save_bridge.py",
+      "blob": "eaffebaf6bcd9e36b8ef4b9d87813826227c0591",
+      "bytes": 6048,
+      "sha256": "e9715e42eea200b04489da61f05e5058bd21dc5c817f3830a379b7c541afe21d"
     }
   },
   "selected": {
@@ -37,7 +43,18 @@
       "before": "def event(name, **values):\n    print(json.dumps({\"event\": name, \"at\": time.strftime(\"%Y-%m-%dT%H:%M:%SZ\", time.gmtime()), **values}, ensure_ascii=False), flush=True)",
       "after": "def event(event_name, **values):\n    print(json.dumps({\"event\": event_name, \"at\": time.strftime(\"%Y-%m-%dT%H:%M:%SZ\", time.gmtime()), **values}, ensure_ascii=False), flush=True)"
     },
-    "allOtherProducerBytesUnchanged": true
+    "allOtherProducerBytesUnchanged": true,
+    "bridge": {
+      "path": "official_library_save_bridge.py",
+      "bytes": 6449,
+      "sha256": "1e31a986b70f5cb54c8feec6a14147fffa281294affd0056912df575c35f602c"
+    },
+    "bridgeCorrection": {
+      "requestedNameRule": "The exact requested basename or that basename with Library's observed positive numbered suffix before its final extension.",
+      "originalAndSelectedResponseChecks": "Unchanged succeeded operation, source bytes, staged bytes, returned file IDs, size, integer version and full raw tool response; actual returned file_name is retained.",
+      "changedCode": "One imported regular-expression module, the library_name_matches helper, and its call in the existing name check.",
+      "providerRequestsRepeated": 0
+    }
   },
   "sourceContinuity": {
     "applicationPacket": {
@@ -103,12 +120,37 @@
       "file_id": "file_00000000ed8081f5985666c3d174b43b",
       "library_file_id": "libfile_02cbfefddb088191affe2f267b1fd607",
       "status": "succeeded"
+    },
+    "finalCompleteArchive": {
+      "bytes": 15397701,
+      "sha256": "376dd609c018a93c5f0d9c41cb4e07545f33e02b3130750dc205a1f936b66abc",
+      "file_id": "file_00000000899082308b2d7cce440f3128",
+      "library_file_id": "libfile_5bb15dbea11881919848b87d52532ef1",
+      "status": "succeeded",
+      "builtAtUtc": "2026-10-12T23:15:31Z",
+      "includes": "Complete original application, workspaces, packages, screenshots, START_HERE and the actual visual review."
+    },
+    "finalGuide": {
+      "requestedName": "START_HERE.md",
+      "returnedName": "START_HERE(3).md",
+      "bytes": 3925,
+      "file_id": "file_00000000ca6881f5b3a6c8e758b0ce41",
+      "library_file_id": "libfile_cbccfa52026081918f9aecf70b0ff921",
+      "status": "succeeded",
+      "sourceSha256SuppliedToThisIntegrator": false
+    },
+    "numberedCollision": {
+      "observedBy": "Original receiving owner /root in the retained final save response",
+      "previousLocalValidation": "The old strict file_name equality rejected the actual successful guide response.",
+      "recovery": "Validate the complete retained successful response with the selected name rule; no repeated save.",
+      "terminalObservation": "The original 3299 transport subsequently disconnected before the owner's final reconciliation readback."
     }
   },
   "retention": {
     "previousFullProducer": "published-710/complete_canadabuys_delivery.py",
     "previousFullEntry": "published-710/continue.py",
     "previousCompleteInput": "retained original Git blob e24c45292029ce19c229f38613473e7dfcfd6b82",
-    "previousSourceAndAttemptsPreserved": true
+    "previousSourceAndAttemptsPreserved": true,
+    "previousFullBridge": "published-710/official_library_save_bridge.py"
   }
 }

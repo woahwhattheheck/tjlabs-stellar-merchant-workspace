@@ -13,8 +13,8 @@ import sys
 HERE = Path(__file__).resolve().parent
 PINS = {
   "input.json": {
-    "bytes": 2859018,
-    "sha256": "c4cdeb2a52423d2e2f3f3bfed2207f9de682fe9032c5a554590199d0b63290a3"
+    "bytes": 2868712,
+    "sha256": "5d1c04127ebc9f0c0ef60345de495781dca31b90817098ccb027de29b0f73df1"
   },
   "complete_canadabuys_delivery.py": {
     "bytes": 28319,
@@ -37,16 +37,16 @@ PINS = {
     "sha256": "cb7bc950f51f7fcc8413006d3337e7bf4c473f9c6277861d303c7e26e187d933"
   },
   "official_library_save_bridge.py": {
-    "bytes": 6048,
-    "sha256": "e9715e42eea200b04489da61f05e5058bd21dc5c817f3830a379b7c541afe21d"
+    "bytes": 6449,
+    "sha256": "1e31a986b70f5cb54c8feec6a14147fffa281294affd0056912df575c35f602c"
   },
   "runtime-attempt-history.json": {
     "sha256": "70050b45a6e2671c9658e96921793d34af60ab2a49b7c0ec24cca2d484187a53",
     "bytes": 16535
   },
   "accepted-receiving-source.json": {
-    "bytes": 4904,
-    "sha256": "41238de645a725ef2abdfdf53ca6ec1e23dca4aeb38c998305ac36a7ac819997"
+    "bytes": 7327,
+    "sha256": "5fd231c372fba1e4d79b18e04a4f6836a76ad762871f299dd251f0ed61d5fcb2"
   }
 }
 
